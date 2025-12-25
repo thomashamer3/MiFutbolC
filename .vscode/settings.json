@@ -1,0 +1,6 @@
+{
+    "docwriter.language": "English",
+    "docwriter.style": "Doxygen",
+    "docwriter.progress.trackClasses": true,
+    "docwriter.progress.trackTypes": true
+}
