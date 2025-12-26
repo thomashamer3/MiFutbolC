@@ -25,10 +25,7 @@ static int obtener_siguiente_id_camiseta()
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT COALESCE(MIN(t1.id + 1), 1) "
-                       "FROM camiseta t1 "
-                       "LEFT JOIN camiseta t2 ON t1.id + 1 = t2.id "
-                       "WHERE t2.id IS NULL",
+                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM camiseta)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM camiseta)",
                        -1, &stmt, NULL);
 
     int id = 1; // Default si la tabla está vacía
@@ -41,9 +38,28 @@ static int obtener_siguiente_id_camiseta()
 }
 
 /**
+ * @brief Verifica si hay camisetas registradas en la base de datos
+ *
+ * @return 1 si hay al menos una camiseta, 0 si no hay ninguna
+ */
+static int hay_camisetas()
+{
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &stmt, NULL);
+
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    return count > 0;
+}
+
+/**
  * @brief Crea una nueva camiseta en la base de datos
  *
- * Solicita al usuario el nombre de la camiseta y la inserta en la tabla 'camiseta'.
+ * Solicita al usuario el nombre y número de la camiseta y la inserta en la tabla 'camiseta'.
  * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
  * La columna 'sorteada' se inicializa en 0 por defecto.
  */
@@ -51,7 +67,7 @@ void crear_camiseta()
 {
     clear_screen();
     char nombre[50];
-    input_string("Nombre: ", nombre, 50);
+    input_string("Nombre y Numero: ", nombre, 50);
 
     int id = obtener_siguiente_id_camiseta();
 
@@ -152,6 +168,13 @@ void eliminar_camiseta()
 {
     clear_screen();
     print_header("ELIMINAR CAMISETA");
+
+    if (!hay_camisetas())
+    {
+        printf("No hay camisetas para eliminar.\n");
+        pause_console();
+        return;
+    }
 
     printf("Camisetas disponibles:\n\n");
     listar_camisetas();

@@ -26,7 +26,8 @@ void exportar_todo()
     exportar_camisetas_txt();
     exportar_camisetas_json();
     exportar_camisetas_html();
-
+ 
+    //ARREGLAR ESTO
     exportar_partidos_csv();
     exportar_partidos_txt();
     exportar_partidos_json();

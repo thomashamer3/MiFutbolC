@@ -3260,7 +3260,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l03159" name="l03159"></a><span class="lineno"> 3159</span><span class="comment">** [sqlite3_errmsg()].</span></div>
 <div class="line"><a id="l03160" name="l03160"></a><span class="lineno"> 3160</span><span class="comment">*/</span></div>
 <div class="line"><a id="l03161" name="l03161"></a><span class="lineno"> 3161</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_get_table(</div>
-<div class="line"><a id="l03162" name="l03162"></a><span class="lineno"> 3162</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,          <span class="comment">/* An open database */</span></div>
+<div class="line"><a id="l03162" name="l03162"></a><span class="lineno"> 3162</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,          <span class="comment">/* An open database */</span></div>
 <div class="line"><a id="l03163" name="l03163"></a><span class="lineno"> 3163</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSql,     <span class="comment">/* SQL to be evaluated */</span></div>
 <div class="line"><a id="l03164" name="l03164"></a><span class="lineno"> 3164</span>    <span class="keywordtype">char</span> ***pazResult,    <span class="comment">/* Results of the query */</span></div>
 <div class="line"><a id="l03165" name="l03165"></a><span class="lineno"> 3165</span>    <span class="keywordtype">int</span> *pnRow,           <span class="comment">/* Number of result rows written here */</span></div>
@@ -4314,12 +4314,12 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l04213" name="l04213"></a><span class="lineno"> 4213</span><span class="comment">** was invoked incorrectly by the application.  In that case, the</span></div>
 <div class="line"><a id="l04214" name="l04214"></a><span class="lineno"> 4214</span><span class="comment">** error code and message may or may not be set.</span></div>
 <div class="line"><a id="l04215" name="l04215"></a><span class="lineno"> 4215</span><span class="comment">*/</span></div>
-<div class="line"><a id="l04216" name="l04216"></a><span class="lineno"> 4216</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_errcode(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db);</div>
-<div class="line"><a id="l04217" name="l04217"></a><span class="lineno"> 4217</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_extended_errcode(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db);</div>
+<div class="line"><a id="l04216" name="l04216"></a><span class="lineno"> 4216</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_errcode(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>);</div>
+<div class="line"><a id="l04217" name="l04217"></a><span class="lineno"> 4217</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_extended_errcode(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>);</div>
 <div class="line"><a id="l04218" name="l04218"></a><span class="lineno"> 4218</span>SQLITE_API <span class="keyword">const</span> <span class="keywordtype">char</span> *sqlite3_errmsg(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a>*);</div>
 <div class="line"><a id="l04219" name="l04219"></a><span class="lineno"> 4219</span>SQLITE_API <span class="keyword">const</span> <span class="keywordtype">void</span> *sqlite3_errmsg16(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a>*);</div>
 <div class="line"><a id="l04220" name="l04220"></a><span class="lineno"> 4220</span>SQLITE_API <span class="keyword">const</span> <span class="keywordtype">char</span> *sqlite3_errstr(<span class="keywordtype">int</span>);</div>
-<div class="line"><a id="l04221" name="l04221"></a><span class="lineno"> 4221</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_error_offset(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db);</div>
+<div class="line"><a id="l04221" name="l04221"></a><span class="lineno"> 4221</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_error_offset(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>);</div>
 <div class="line"><a id="l04222" name="l04222"></a><span class="lineno"> 4222</span> </div>
 <div class="line"><a id="l04223" name="l04223"></a><span class="lineno"> 4223</span><span class="comment">/*</span></div>
 <div class="line"><a id="l04224" name="l04224"></a><span class="lineno"> 4224</span><span class="comment">** CAPI3REF: Set Error Codes And Message</span></div>
@@ -4347,7 +4347,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l04246" name="l04246"></a><span class="lineno"> 4246</span><span class="comment">** messages and error codes and thus behave more like a core SQLite</span></div>
 <div class="line"><a id="l04247" name="l04247"></a><span class="lineno"> 4247</span><span class="comment">** feature from the point of view of an application.</span></div>
 <div class="line"><a id="l04248" name="l04248"></a><span class="lineno"> 4248</span><span class="comment">*/</span></div>
-<div class="line"><a id="l04249" name="l04249"></a><span class="lineno"> 4249</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_set_errmsg(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keywordtype">int</span> errcode, <span class="keyword">const</span> <span class="keywordtype">char</span> *zErrMsg);</div>
+<div class="line"><a id="l04249" name="l04249"></a><span class="lineno"> 4249</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_set_errmsg(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keywordtype">int</span> errcode, <span class="keyword">const</span> <span class="keywordtype">char</span> *zErrMsg);</div>
 <div class="line"><a id="l04250" name="l04250"></a><span class="lineno"> 4250</span> </div>
 <div class="line"><a id="l04251" name="l04251"></a><span class="lineno"> 4251</span><span class="comment">/*</span></div>
 <div class="line"><a id="l04252" name="l04252"></a><span class="lineno"> 4252</span><span class="comment">** CAPI3REF: Prepared Statement Object</span></div>
@@ -4641,21 +4641,21 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l04540" name="l04540"></a><span class="lineno"> 4540</span><span class="comment">** sqlite3_prepare_v3() with a zero prepFlags parameter.</span></div>
 <div class="line"><a id="l04541" name="l04541"></a><span class="lineno"> 4541</span><span class="comment">*/</span></div>
 <div class="line"><a id="l04542" name="l04542"></a><span class="lineno"> 4542</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare(</div>
-<div class="line"><a id="l04543" name="l04543"></a><span class="lineno"> 4543</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04543" name="l04543"></a><span class="lineno"> 4543</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04544" name="l04544"></a><span class="lineno"> 4544</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSql,       <span class="comment">/* SQL statement, UTF-8 encoded */</span></div>
 <div class="line"><a id="l04545" name="l04545"></a><span class="lineno"> 4545</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04546" name="l04546"></a><span class="lineno"> 4546</span>    sqlite3_stmt **ppStmt,  <span class="comment">/* OUT: Statement handle */</span></div>
 <div class="line"><a id="l04547" name="l04547"></a><span class="lineno"> 4547</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> **pzTail     <span class="comment">/* OUT: Pointer to unused portion of zSql */</span></div>
 <div class="line"><a id="l04548" name="l04548"></a><span class="lineno"> 4548</span>);</div>
 <div class="line"><a id="l04549" name="l04549"></a><span class="lineno"> 4549</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare_v2(</div>
-<div class="line"><a id="l04550" name="l04550"></a><span class="lineno"> 4550</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04550" name="l04550"></a><span class="lineno"> 4550</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04551" name="l04551"></a><span class="lineno"> 4551</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSql,       <span class="comment">/* SQL statement, UTF-8 encoded */</span></div>
 <div class="line"><a id="l04552" name="l04552"></a><span class="lineno"> 4552</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04553" name="l04553"></a><span class="lineno"> 4553</span>    sqlite3_stmt **ppStmt,  <span class="comment">/* OUT: Statement handle */</span></div>
 <div class="line"><a id="l04554" name="l04554"></a><span class="lineno"> 4554</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> **pzTail     <span class="comment">/* OUT: Pointer to unused portion of zSql */</span></div>
 <div class="line"><a id="l04555" name="l04555"></a><span class="lineno"> 4555</span>);</div>
 <div class="line"><a id="l04556" name="l04556"></a><span class="lineno"> 4556</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare_v3(</div>
-<div class="line"><a id="l04557" name="l04557"></a><span class="lineno"> 4557</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04557" name="l04557"></a><span class="lineno"> 4557</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04558" name="l04558"></a><span class="lineno"> 4558</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSql,       <span class="comment">/* SQL statement, UTF-8 encoded */</span></div>
 <div class="line"><a id="l04559" name="l04559"></a><span class="lineno"> 4559</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04560" name="l04560"></a><span class="lineno"> 4560</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> prepFlags, <span class="comment">/* Zero or more SQLITE_PREPARE_ flags */</span></div>
@@ -4663,21 +4663,21 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l04562" name="l04562"></a><span class="lineno"> 4562</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> **pzTail     <span class="comment">/* OUT: Pointer to unused portion of zSql */</span></div>
 <div class="line"><a id="l04563" name="l04563"></a><span class="lineno"> 4563</span>);</div>
 <div class="line"><a id="l04564" name="l04564"></a><span class="lineno"> 4564</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare16(</div>
-<div class="line"><a id="l04565" name="l04565"></a><span class="lineno"> 4565</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04565" name="l04565"></a><span class="lineno"> 4565</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04566" name="l04566"></a><span class="lineno"> 4566</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> *zSql,       <span class="comment">/* SQL statement, UTF-16 encoded */</span></div>
 <div class="line"><a id="l04567" name="l04567"></a><span class="lineno"> 4567</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04568" name="l04568"></a><span class="lineno"> 4568</span>    sqlite3_stmt **ppStmt,  <span class="comment">/* OUT: Statement handle */</span></div>
 <div class="line"><a id="l04569" name="l04569"></a><span class="lineno"> 4569</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> **pzTail     <span class="comment">/* OUT: Pointer to unused portion of zSql */</span></div>
 <div class="line"><a id="l04570" name="l04570"></a><span class="lineno"> 4570</span>);</div>
 <div class="line"><a id="l04571" name="l04571"></a><span class="lineno"> 4571</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare16_v2(</div>
-<div class="line"><a id="l04572" name="l04572"></a><span class="lineno"> 4572</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04572" name="l04572"></a><span class="lineno"> 4572</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04573" name="l04573"></a><span class="lineno"> 4573</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> *zSql,       <span class="comment">/* SQL statement, UTF-16 encoded */</span></div>
 <div class="line"><a id="l04574" name="l04574"></a><span class="lineno"> 4574</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04575" name="l04575"></a><span class="lineno"> 4575</span>    sqlite3_stmt **ppStmt,  <span class="comment">/* OUT: Statement handle */</span></div>
 <div class="line"><a id="l04576" name="l04576"></a><span class="lineno"> 4576</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> **pzTail     <span class="comment">/* OUT: Pointer to unused portion of zSql */</span></div>
 <div class="line"><a id="l04577" name="l04577"></a><span class="lineno"> 4577</span>);</div>
 <div class="line"><a id="l04578" name="l04578"></a><span class="lineno"> 4578</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_prepare16_v3(</div>
-<div class="line"><a id="l04579" name="l04579"></a><span class="lineno"> 4579</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l04579" name="l04579"></a><span class="lineno"> 4579</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l04580" name="l04580"></a><span class="lineno"> 4580</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> *zSql,       <span class="comment">/* SQL statement, UTF-16 encoded */</span></div>
 <div class="line"><a id="l04581" name="l04581"></a><span class="lineno"> 4581</span>    <span class="keywordtype">int</span> nByte,              <span class="comment">/* Maximum length of zSql in bytes. */</span></div>
 <div class="line"><a id="l04582" name="l04582"></a><span class="lineno"> 4582</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> prepFlags, <span class="comment">/* Zero or more SQLITE_PREPARE_ flags */</span></div>
@@ -5823,7 +5823,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l05722" name="l05722"></a><span class="lineno"> 5722</span><span class="comment">** statement in which the function is running.</span></div>
 <div class="line"><a id="l05723" name="l05723"></a><span class="lineno"> 5723</span><span class="comment">*/</span></div>
 <div class="line"><a id="l05724" name="l05724"></a><span class="lineno"> 5724</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_function(</div>
-<div class="line"><a id="l05725" name="l05725"></a><span class="lineno"> 5725</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l05725" name="l05725"></a><span class="lineno"> 5725</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l05726" name="l05726"></a><span class="lineno"> 5726</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zFunctionName,</div>
 <div class="line"><a id="l05727" name="l05727"></a><span class="lineno"> 5727</span>    <span class="keywordtype">int</span> nArg,</div>
 <div class="line"><a id="l05728" name="l05728"></a><span class="lineno"> 5728</span>    <span class="keywordtype">int</span> eTextRep,</div>
@@ -5833,7 +5833,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l05732" name="l05732"></a><span class="lineno"> 5732</span>    <span class="keywordtype">void</span> (*xFinal)(<a class="code hl_struct" href="structsqlite3__context.html">sqlite3_context</a>*)</div>
 <div class="line"><a id="l05733" name="l05733"></a><span class="lineno"> 5733</span>);</div>
 <div class="line"><a id="l05734" name="l05734"></a><span class="lineno"> 5734</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_function16(</div>
-<div class="line"><a id="l05735" name="l05735"></a><span class="lineno"> 5735</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l05735" name="l05735"></a><span class="lineno"> 5735</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l05736" name="l05736"></a><span class="lineno"> 5736</span>    <span class="keyword">const</span> <span class="keywordtype">void</span> *zFunctionName,</div>
 <div class="line"><a id="l05737" name="l05737"></a><span class="lineno"> 5737</span>    <span class="keywordtype">int</span> nArg,</div>
 <div class="line"><a id="l05738" name="l05738"></a><span class="lineno"> 5738</span>    <span class="keywordtype">int</span> eTextRep,</div>
@@ -5843,7 +5843,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l05742" name="l05742"></a><span class="lineno"> 5742</span>    <span class="keywordtype">void</span> (*xFinal)(<a class="code hl_struct" href="structsqlite3__context.html">sqlite3_context</a>*)</div>
 <div class="line"><a id="l05743" name="l05743"></a><span class="lineno"> 5743</span>);</div>
 <div class="line"><a id="l05744" name="l05744"></a><span class="lineno"> 5744</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_function_v2(</div>
-<div class="line"><a id="l05745" name="l05745"></a><span class="lineno"> 5745</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l05745" name="l05745"></a><span class="lineno"> 5745</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l05746" name="l05746"></a><span class="lineno"> 5746</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zFunctionName,</div>
 <div class="line"><a id="l05747" name="l05747"></a><span class="lineno"> 5747</span>    <span class="keywordtype">int</span> nArg,</div>
 <div class="line"><a id="l05748" name="l05748"></a><span class="lineno"> 5748</span>    <span class="keywordtype">int</span> eTextRep,</div>
@@ -5854,7 +5854,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l05753" name="l05753"></a><span class="lineno"> 5753</span>    <span class="keywordtype">void</span>(*xDestroy)(<span class="keywordtype">void</span>*)</div>
 <div class="line"><a id="l05754" name="l05754"></a><span class="lineno"> 5754</span>);</div>
 <div class="line"><a id="l05755" name="l05755"></a><span class="lineno"> 5755</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_window_function(</div>
-<div class="line"><a id="l05756" name="l05756"></a><span class="lineno"> 5756</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l05756" name="l05756"></a><span class="lineno"> 5756</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l05757" name="l05757"></a><span class="lineno"> 5757</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zFunctionName,</div>
 <div class="line"><a id="l05758" name="l05758"></a><span class="lineno"> 5758</span>    <span class="keywordtype">int</span> nArg,</div>
 <div class="line"><a id="l05759" name="l05759"></a><span class="lineno"> 5759</span>    <span class="keywordtype">int</span> eTextRep,</div>
@@ -6988,7 +6988,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l06887" name="l06887"></a><span class="lineno"> 6887</span><span class="comment">** threads should mutex-protect calls to this API and should make their own</span></div>
 <div class="line"><a id="l06888" name="l06888"></a><span class="lineno"> 6888</span><span class="comment">** private copy of the result prior to releasing the mutex.</span></div>
 <div class="line"><a id="l06889" name="l06889"></a><span class="lineno"> 6889</span><span class="comment">*/</span></div>
-<div class="line"><a id="l06890" name="l06890"></a><span class="lineno"> 6890</span>SQLITE_API <span class="keyword">const</span> <span class="keywordtype">char</span> *sqlite3_db_name(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keywordtype">int</span> N);</div>
+<div class="line"><a id="l06890" name="l06890"></a><span class="lineno"> 6890</span>SQLITE_API <span class="keyword">const</span> <span class="keywordtype">char</span> *sqlite3_db_name(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keywordtype">int</span> N);</div>
 <div class="line"><a id="l06891" name="l06891"></a><span class="lineno"> 6891</span> </div>
 <div class="line"><a id="l06892" name="l06892"></a><span class="lineno"> 6892</span><span class="comment">/*</span></div>
 <div class="line"><a id="l06893" name="l06893"></a><span class="lineno"> 6893</span><span class="comment">** CAPI3REF: Return The Filename For A Database Connection</span></div>
@@ -7020,7 +7020,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l06919" name="l06919"></a><span class="lineno"> 6919</span><span class="comment">** &lt;li&gt; [sqlite3_filename_wal()]</span></div>
 <div class="line"><a id="l06920" name="l06920"></a><span class="lineno"> 6920</span><span class="comment">** &lt;/ul&gt;</span></div>
 <div class="line"><a id="l06921" name="l06921"></a><span class="lineno"> 6921</span><span class="comment">*/</span></div>
-<div class="line"><a id="l06922" name="l06922"></a><span class="lineno"> 6922</span>SQLITE_API sqlite3_filename sqlite3_db_filename(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDbName);</div>
+<div class="line"><a id="l06922" name="l06922"></a><span class="lineno"> 6922</span>SQLITE_API sqlite3_filename sqlite3_db_filename(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDbName);</div>
 <div class="line"><a id="l06923" name="l06923"></a><span class="lineno"> 6923</span> </div>
 <div class="line"><a id="l06924" name="l06924"></a><span class="lineno"> 6924</span><span class="comment">/*</span></div>
 <div class="line"><a id="l06925" name="l06925"></a><span class="lineno"> 6925</span><span class="comment">** CAPI3REF: Determine if a database is read-only</span></div>
@@ -7030,7 +7030,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l06929" name="l06929"></a><span class="lineno"> 6929</span><span class="comment">** of connection D is read-only, 0 if it is read/write, or -1 if N is not</span></div>
 <div class="line"><a id="l06930" name="l06930"></a><span class="lineno"> 6930</span><span class="comment">** the name of a database on connection D.</span></div>
 <div class="line"><a id="l06931" name="l06931"></a><span class="lineno"> 6931</span><span class="comment">*/</span></div>
-<div class="line"><a id="l06932" name="l06932"></a><span class="lineno"> 6932</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_db_readonly(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDbName);</div>
+<div class="line"><a id="l06932" name="l06932"></a><span class="lineno"> 6932</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_db_readonly(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDbName);</div>
 <div class="line"><a id="l06933" name="l06933"></a><span class="lineno"> 6933</span> </div>
 <div class="line"><a id="l06934" name="l06934"></a><span class="lineno"> 6934</span><span class="comment">/*</span></div>
 <div class="line"><a id="l06935" name="l06935"></a><span class="lineno"> 6935</span><span class="comment">** CAPI3REF: Determine the transaction state of a database</span></div>
@@ -7208,7 +7208,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07107" name="l07107"></a><span class="lineno"> 7107</span><span class="comment">** &lt;/pre&gt;&lt;/blockquote&gt;</span></div>
 <div class="line"><a id="l07108" name="l07108"></a><span class="lineno"> 7108</span><span class="comment">*/</span></div>
 <div class="line"><a id="l07109" name="l07109"></a><span class="lineno"> 7109</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_autovacuum_pages(</div>
-<div class="line"><a id="l07110" name="l07110"></a><span class="lineno"> 7110</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l07110" name="l07110"></a><span class="lineno"> 7110</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l07111" name="l07111"></a><span class="lineno"> 7111</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>(*)(<span class="keywordtype">void</span>*,<span class="keyword">const</span> <span class="keywordtype">char</span>*,<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>,<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>,<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>),</div>
 <div class="line"><a id="l07112" name="l07112"></a><span class="lineno"> 7112</span>    <span class="keywordtype">void</span>*,</div>
 <div class="line"><a id="l07113" name="l07113"></a><span class="lineno"> 7113</span>    <span class="keywordtype">void</span>(*)(<span class="keywordtype">void</span>*)</div>
@@ -7503,7 +7503,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07402" name="l07402"></a><span class="lineno"> 7402</span><span class="comment">** any errors are encountered while loading the schema.</span></div>
 <div class="line"><a id="l07403" name="l07403"></a><span class="lineno"> 7403</span><span class="comment">*/</span></div>
 <div class="line"><a id="l07404" name="l07404"></a><span class="lineno"> 7404</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_table_column_metadata(</div>
-<div class="line"><a id="l07405" name="l07405"></a><span class="lineno"> 7405</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                <span class="comment">/* Connection handle */</span></div>
+<div class="line"><a id="l07405" name="l07405"></a><span class="lineno"> 7405</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                <span class="comment">/* Connection handle */</span></div>
 <div class="line"><a id="l07406" name="l07406"></a><span class="lineno"> 7406</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zDbName,        <span class="comment">/* Database name or NULL */</span></div>
 <div class="line"><a id="l07407" name="l07407"></a><span class="lineno"> 7407</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zTableName,     <span class="comment">/* Table name */</span></div>
 <div class="line"><a id="l07408" name="l07408"></a><span class="lineno"> 7408</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zColumnName,    <span class="comment">/* Column name */</span></div>
@@ -7559,7 +7559,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07458" name="l07458"></a><span class="lineno"> 7458</span><span class="comment">** See also the [load_extension() SQL function].</span></div>
 <div class="line"><a id="l07459" name="l07459"></a><span class="lineno"> 7459</span><span class="comment">*/</span></div>
 <div class="line"><a id="l07460" name="l07460"></a><span class="lineno"> 7460</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_load_extension(</div>
-<div class="line"><a id="l07461" name="l07461"></a><span class="lineno"> 7461</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,          <span class="comment">/* Load the extension into this database connection */</span></div>
+<div class="line"><a id="l07461" name="l07461"></a><span class="lineno"> 7461</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,          <span class="comment">/* Load the extension into this database connection */</span></div>
 <div class="line"><a id="l07462" name="l07462"></a><span class="lineno"> 7462</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zFile,    <span class="comment">/* Name of the shared library containing extension */</span></div>
 <div class="line"><a id="l07463" name="l07463"></a><span class="lineno"> 7463</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zProc,    <span class="comment">/* Entry point.  Derived from zFile if 0 */</span></div>
 <div class="line"><a id="l07464" name="l07464"></a><span class="lineno"> 7464</span>    <span class="keywordtype">char</span> **pzErrMsg       <span class="comment">/* Put error message here if not 0 */</span></div>
@@ -7590,7 +7590,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07489" name="l07489"></a><span class="lineno"> 7489</span><span class="comment">** remains disabled. This will prevent SQL injections from giving attackers</span></div>
 <div class="line"><a id="l07490" name="l07490"></a><span class="lineno"> 7490</span><span class="comment">** access to extension loading capabilities.</span></div>
 <div class="line"><a id="l07491" name="l07491"></a><span class="lineno"> 7491</span><span class="comment">*/</span></div>
-<div class="line"><a id="l07492" name="l07492"></a><span class="lineno"> 7492</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_enable_load_extension(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keywordtype">int</span> onoff);</div>
+<div class="line"><a id="l07492" name="l07492"></a><span class="lineno"> 7492</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_enable_load_extension(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keywordtype">int</span> onoff);</div>
 <div class="line"><a id="l07493" name="l07493"></a><span class="lineno"> 7493</span> </div>
 <div class="line"><a id="l07494" name="l07494"></a><span class="lineno"> 7494</span><span class="comment">/*</span></div>
 <div class="line"><a id="l07495" name="l07495"></a><span class="lineno"> 7495</span><span class="comment">** CAPI3REF: Automatically Load Statically Linked Extensions</span></div>
@@ -7957,13 +7957,13 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07856" name="l07856"></a><span class="lineno"> 7856</span><span class="comment">** See also: [sqlite3_drop_modules()]</span></div>
 <div class="line"><a id="l07857" name="l07857"></a><span class="lineno"> 7857</span><span class="comment">*/</span></div>
 <div class="line"><a id="l07858" name="l07858"></a><span class="lineno"> 7858</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_module(</div>
-<div class="line"><a id="l07859" name="l07859"></a><span class="lineno"> 7859</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,               <span class="comment">/* SQLite connection to register module with */</span></div>
+<div class="line"><a id="l07859" name="l07859"></a><span class="lineno"> 7859</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,               <span class="comment">/* SQLite connection to register module with */</span></div>
 <div class="line"><a id="l07860" name="l07860"></a><span class="lineno"> 7860</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zName,         <span class="comment">/* Name of the module */</span></div>
 <div class="line"><a id="l07861" name="l07861"></a><span class="lineno"> 7861</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsqlite3__module.html">sqlite3_module</a> *p,   <span class="comment">/* Methods for the module */</span></div>
 <div class="line"><a id="l07862" name="l07862"></a><span class="lineno"> 7862</span>    <span class="keywordtype">void</span> *pClientData          <span class="comment">/* Client data for xCreate/xConnect */</span></div>
 <div class="line"><a id="l07863" name="l07863"></a><span class="lineno"> 7863</span>);</div>
 <div class="line"><a id="l07864" name="l07864"></a><span class="lineno"> 7864</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_create_module_v2(</div>
-<div class="line"><a id="l07865" name="l07865"></a><span class="lineno"> 7865</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,               <span class="comment">/* SQLite connection to register module with */</span></div>
+<div class="line"><a id="l07865" name="l07865"></a><span class="lineno"> 7865</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,               <span class="comment">/* SQLite connection to register module with */</span></div>
 <div class="line"><a id="l07866" name="l07866"></a><span class="lineno"> 7866</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zName,         <span class="comment">/* Name of the module */</span></div>
 <div class="line"><a id="l07867" name="l07867"></a><span class="lineno"> 7867</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsqlite3__module.html">sqlite3_module</a> *p,   <span class="comment">/* Methods for the module */</span></div>
 <div class="line"><a id="l07868" name="l07868"></a><span class="lineno"> 7868</span>    <span class="keywordtype">void</span> *pClientData,         <span class="comment">/* Client data for xCreate/xConnect */</span></div>
@@ -7983,7 +7983,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l07882" name="l07882"></a><span class="lineno"> 7882</span><span class="comment">** See also: [sqlite3_create_module()]</span></div>
 <div class="line"><a id="l07883" name="l07883"></a><span class="lineno"> 7883</span><span class="comment">*/</span></div>
 <div class="line"><a id="l07884" name="l07884"></a><span class="lineno"> 7884</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_drop_modules(</div>
-<div class="line"><a id="l07885" name="l07885"></a><span class="lineno"> 7885</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                <span class="comment">/* Remove modules from this connection */</span></div>
+<div class="line"><a id="l07885" name="l07885"></a><span class="lineno"> 7885</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                <span class="comment">/* Remove modules from this connection */</span></div>
 <div class="line"><a id="l07886" name="l07886"></a><span class="lineno"> 7886</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> **azKeep         <span class="comment">/* Except, do not remove the ones named here */</span></div>
 <div class="line"><a id="l07887" name="l07887"></a><span class="lineno"> 7887</span>);</div>
 <div class="line"><a id="l07888" name="l07888"></a><span class="lineno"> 7888</span> </div>
@@ -10035,7 +10035,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l09934" name="l09934"></a><span class="lineno"> 9934</span><span class="comment">** ^The use of this interface is only necessary if the default setting</span></div>
 <div class="line"><a id="l09935" name="l09935"></a><span class="lineno"> 9935</span><span class="comment">** is found to be suboptimal for a particular application.</span></div>
 <div class="line"><a id="l09936" name="l09936"></a><span class="lineno"> 9936</span><span class="comment">*/</span></div>
-<div class="line"><a id="l09937" name="l09937"></a><span class="lineno"> 9937</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_wal_autocheckpoint(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keywordtype">int</span> N);</div>
+<div class="line"><a id="l09937" name="l09937"></a><span class="lineno"> 9937</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_wal_autocheckpoint(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keywordtype">int</span> N);</div>
 <div class="line"><a id="l09938" name="l09938"></a><span class="lineno"> 9938</span> </div>
 <div class="line"><a id="l09939" name="l09939"></a><span class="lineno"> 9939</span><span class="comment">/*</span></div>
 <div class="line"><a id="l09940" name="l09940"></a><span class="lineno"> 9940</span><span class="comment">** CAPI3REF: Checkpoint a database</span></div>
@@ -10057,7 +10057,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l09956" name="l09956"></a><span class="lineno"> 9956</span><span class="comment">** start a callback but which do not need the full power (and corresponding</span></div>
 <div class="line"><a id="l09957" name="l09957"></a><span class="lineno"> 9957</span><span class="comment">** complication) of [sqlite3_wal_checkpoint_v2()].</span></div>
 <div class="line"><a id="l09958" name="l09958"></a><span class="lineno"> 9958</span><span class="comment">*/</span></div>
-<div class="line"><a id="l09959" name="l09959"></a><span class="lineno"> 9959</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_wal_checkpoint(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb);</div>
+<div class="line"><a id="l09959" name="l09959"></a><span class="lineno"> 9959</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_wal_checkpoint(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb);</div>
 <div class="line"><a id="l09960" name="l09960"></a><span class="lineno"> 9960</span> </div>
 <div class="line"><a id="l09961" name="l09961"></a><span class="lineno"> 9961</span><span class="comment">/*</span></div>
 <div class="line"><a id="l09962" name="l09962"></a><span class="lineno"> 9962</span><span class="comment">** CAPI3REF: Checkpoint a database</span></div>
@@ -10157,7 +10157,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l10056" name="l10056"></a><span class="lineno">10056</span><span class="comment">** from SQL.</span></div>
 <div class="line"><a id="l10057" name="l10057"></a><span class="lineno">10057</span><span class="comment">*/</span></div>
 <div class="line"><a id="l10058" name="l10058"></a><span class="lineno">10058</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_wal_checkpoint_v2(</div>
-<div class="line"><a id="l10059" name="l10059"></a><span class="lineno">10059</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l10059" name="l10059"></a><span class="lineno">10059</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l10060" name="l10060"></a><span class="lineno">10060</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb,                <span class="comment">/* Name of attached database (or NULL) */</span></div>
 <div class="line"><a id="l10061" name="l10061"></a><span class="lineno">10061</span>    <span class="keywordtype">int</span> eMode,                      <span class="comment">/* SQLITE_CHECKPOINT_* value */</span></div>
 <div class="line"><a id="l10062" name="l10062"></a><span class="lineno">10062</span>    <span class="keywordtype">int</span> *pnLog,                     <span class="comment">/* OUT: Size of WAL log in frames */</span></div>
@@ -10894,10 +10894,10 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l10793" name="l10793"></a><span class="lineno">10793</span><span class="comment">*/</span></div>
 <div class="line"><a id="l10794" name="l10794"></a><span class="lineno">10794</span><span class="preprocessor">#if defined(SQLITE_ENABLE_PREUPDATE_HOOK)</span></div>
 <div class="line"><a id="l10795" name="l10795"></a><span class="lineno">10795</span>SQLITE_API <span class="keywordtype">void</span> *sqlite3_preupdate_hook(</div>
-<div class="line"><a id="l10796" name="l10796"></a><span class="lineno">10796</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l10796" name="l10796"></a><span class="lineno">10796</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l10797" name="l10797"></a><span class="lineno">10797</span>    <span class="keywordtype">void</span>(*xPreUpdate)(</div>
 <div class="line"><a id="l10798" name="l10798"></a><span class="lineno">10798</span>        <span class="keywordtype">void</span> *pCtx,                   <span class="comment">/* Copy of third arg to preupdate_hook() */</span></div>
-<div class="line"><a id="l10799" name="l10799"></a><span class="lineno">10799</span>        <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                  <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l10799" name="l10799"></a><span class="lineno">10799</span>        <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                  <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l10800" name="l10800"></a><span class="lineno">10800</span>        <span class="keywordtype">int</span> op,                       <span class="comment">/* SQLITE_UPDATE, DELETE or INSERT */</span></div>
 <div class="line"><a id="l10801" name="l10801"></a><span class="lineno">10801</span>        <span class="keywordtype">char</span> <span class="keyword">const</span> *zDb,              <span class="comment">/* Database name */</span></div>
 <div class="line"><a id="l10802" name="l10802"></a><span class="lineno">10802</span>        <span class="keywordtype">char</span> <span class="keyword">const</span> *zName,            <span class="comment">/* Table name */</span></div>
@@ -11003,7 +11003,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l10902" name="l10902"></a><span class="lineno">10902</span><span class="comment">** [SQLITE_ENABLE_SNAPSHOT] compile-time option is used.</span></div>
 <div class="line"><a id="l10903" name="l10903"></a><span class="lineno">10903</span><span class="comment">*/</span></div>
 <div class="line"><a id="l10904" name="l10904"></a><span class="lineno">10904</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_snapshot_get(</div>
-<div class="line"><a id="l10905" name="l10905"></a><span class="lineno">10905</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l10905" name="l10905"></a><span class="lineno">10905</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l10906" name="l10906"></a><span class="lineno">10906</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSchema,</div>
 <div class="line"><a id="l10907" name="l10907"></a><span class="lineno">10907</span>    <a class="code hl_struct" href="structsqlite3__snapshot.html">sqlite3_snapshot</a> **ppSnapshot</div>
 <div class="line"><a id="l10908" name="l10908"></a><span class="lineno">10908</span>);</div>
@@ -11052,7 +11052,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l10951" name="l10951"></a><span class="lineno">10951</span><span class="comment">** [SQLITE_ENABLE_SNAPSHOT] compile-time option is used.</span></div>
 <div class="line"><a id="l10952" name="l10952"></a><span class="lineno">10952</span><span class="comment">*/</span></div>
 <div class="line"><a id="l10953" name="l10953"></a><span class="lineno">10953</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_snapshot_open(</div>
-<div class="line"><a id="l10954" name="l10954"></a><span class="lineno">10954</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l10954" name="l10954"></a><span class="lineno">10954</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l10955" name="l10955"></a><span class="lineno">10955</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSchema,</div>
 <div class="line"><a id="l10956" name="l10956"></a><span class="lineno">10956</span>    <a class="code hl_struct" href="structsqlite3__snapshot.html">sqlite3_snapshot</a> *pSnapshot</div>
 <div class="line"><a id="l10957" name="l10957"></a><span class="lineno">10957</span>);</div>
@@ -11123,7 +11123,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11022" name="l11022"></a><span class="lineno">11022</span><span class="comment">** This interface is only available if SQLite is compiled with the</span></div>
 <div class="line"><a id="l11023" name="l11023"></a><span class="lineno">11023</span><span class="comment">** [SQLITE_ENABLE_SNAPSHOT] option.</span></div>
 <div class="line"><a id="l11024" name="l11024"></a><span class="lineno">11024</span><span class="comment">*/</span></div>
-<div class="line"><a id="l11025" name="l11025"></a><span class="lineno">11025</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_snapshot_recover(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb);</div>
+<div class="line"><a id="l11025" name="l11025"></a><span class="lineno">11025</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_snapshot_recover(<a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>, <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb);</div>
 <div class="line"><a id="l11026" name="l11026"></a><span class="lineno">11026</span> </div>
 <div class="line"><a id="l11027" name="l11027"></a><span class="lineno">11027</span><span class="comment">/*</span></div>
 <div class="line"><a id="l11028" name="l11028"></a><span class="lineno">11028</span><span class="comment">** CAPI3REF: Serialize a database</span></div>
@@ -11170,7 +11170,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11069" name="l11069"></a><span class="lineno">11069</span><span class="comment">** [SQLITE_OMIT_DESERIALIZE] option.</span></div>
 <div class="line"><a id="l11070" name="l11070"></a><span class="lineno">11070</span><span class="comment">*/</span></div>
 <div class="line"><a id="l11071" name="l11071"></a><span class="lineno">11071</span>SQLITE_API <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *sqlite3_serialize(</div>
-<div class="line"><a id="l11072" name="l11072"></a><span class="lineno">11072</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,           <span class="comment">/* The database connection */</span></div>
+<div class="line"><a id="l11072" name="l11072"></a><span class="lineno">11072</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,           <span class="comment">/* The database connection */</span></div>
 <div class="line"><a id="l11073" name="l11073"></a><span class="lineno">11073</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSchema,   <span class="comment">/* Which DB to serialize. ex: &quot;main&quot;, &quot;temp&quot;, ... */</span></div>
 <div class="line"><a id="l11074" name="l11074"></a><span class="lineno">11074</span>    sqlite3_int64 *piSize, <span class="comment">/* Write size of the DB here, if not NULL */</span></div>
 <div class="line"><a id="l11075" name="l11075"></a><span class="lineno">11075</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> mFlags    <span class="comment">/* Zero or more SQLITE_SERIALIZE_* flags */</span></div>
@@ -11237,7 +11237,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11136" name="l11136"></a><span class="lineno">11136</span><span class="comment">** [SQLITE_OMIT_DESERIALIZE] option.</span></div>
 <div class="line"><a id="l11137" name="l11137"></a><span class="lineno">11137</span><span class="comment">*/</span></div>
 <div class="line"><a id="l11138" name="l11138"></a><span class="lineno">11138</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_deserialize(</div>
-<div class="line"><a id="l11139" name="l11139"></a><span class="lineno">11139</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,            <span class="comment">/* The database connection */</span></div>
+<div class="line"><a id="l11139" name="l11139"></a><span class="lineno">11139</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,            <span class="comment">/* The database connection */</span></div>
 <div class="line"><a id="l11140" name="l11140"></a><span class="lineno">11140</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zSchema,    <span class="comment">/* Which DB to reopen with the deserialization */</span></div>
 <div class="line"><a id="l11141" name="l11141"></a><span class="lineno">11141</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *pData,   <span class="comment">/* The serialized database content */</span></div>
 <div class="line"><a id="l11142" name="l11142"></a><span class="lineno">11142</span>    sqlite3_int64 szDb,     <span class="comment">/* Number of bytes in the deserialization */</span></div>
@@ -11383,7 +11383,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11282" name="l11282"></a><span class="lineno">11282</span><span class="comment">**   SELECT ... FROM &lt;rtree&gt; WHERE &lt;rtree col&gt; MATCH $zGeom(... params ...)</span></div>
 <div class="line"><a id="l11283" name="l11283"></a><span class="lineno">11283</span><span class="comment">*/</span></div>
 <div class="line"><a id="l11284" name="l11284"></a><span class="lineno">11284</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_rtree_geometry_callback(</div>
-<div class="line"><a id="l11285" name="l11285"></a><span class="lineno">11285</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l11285" name="l11285"></a><span class="lineno">11285</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l11286" name="l11286"></a><span class="lineno">11286</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zGeom,</div>
 <div class="line"><a id="l11287" name="l11287"></a><span class="lineno">11287</span>    <span class="keywordtype">int</span> (*xGeom)(<a class="code hl_struct" href="structsqlite3__rtree__geometry.html">sqlite3_rtree_geometry</a>*, <span class="keywordtype">int</span>, sqlite3_rtree_dbl*,<span class="keywordtype">int</span>*),</div>
 <div class="line"><a id="l11288" name="l11288"></a><span class="lineno">11288</span>    <span class="keywordtype">void</span> *pContext</div>
@@ -11410,7 +11410,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11309" name="l11309"></a><span class="lineno">11309</span><span class="comment">**   SELECT ... FROM &lt;rtree&gt; WHERE &lt;rtree col&gt; MATCH $zQueryFunc(... params ...)</span></div>
 <div class="line"><a id="l11310" name="l11310"></a><span class="lineno">11310</span><span class="comment">*/</span></div>
 <div class="line"><a id="l11311" name="l11311"></a><span class="lineno">11311</span>SQLITE_API <span class="keywordtype">int</span> sqlite3_rtree_query_callback(</div>
-<div class="line"><a id="l11312" name="l11312"></a><span class="lineno">11312</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,</div>
+<div class="line"><a id="l11312" name="l11312"></a><span class="lineno">11312</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,</div>
 <div class="line"><a id="l11313" name="l11313"></a><span class="lineno">11313</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zQueryFunc,</div>
 <div class="line"><a id="l11314" name="l11314"></a><span class="lineno">11314</span>    <span class="keywordtype">int</span> (*xQueryFunc)(<a class="code hl_struct" href="structsqlite3__rtree__query__info.html">sqlite3_rtree_query_info</a>*),</div>
 <div class="line"><a id="l11315" name="l11315"></a><span class="lineno">11315</span>    <span class="keywordtype">void</span> *pContext,</div>
@@ -11524,7 +11524,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l11423" name="l11423"></a><span class="lineno">11423</span><span class="comment">** to the database when the session object is created.</span></div>
 <div class="line"><a id="l11424" name="l11424"></a><span class="lineno">11424</span><span class="comment">*/</span></div>
 <div class="line"><a id="l11425" name="l11425"></a><span class="lineno">11425</span>SQLITE_API <span class="keywordtype">int</span> sqlite3session_create(</div>
-<div class="line"><a id="l11426" name="l11426"></a><span class="lineno">11426</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Database handle */</span></div>
+<div class="line"><a id="l11426" name="l11426"></a><span class="lineno">11426</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Database handle */</span></div>
 <div class="line"><a id="l11427" name="l11427"></a><span class="lineno">11427</span>    <span class="keyword">const</span> <span class="keywordtype">char</span> *zDb,                <span class="comment">/* Name of db (e.g. &quot;main&quot;) */</span></div>
 <div class="line"><a id="l11428" name="l11428"></a><span class="lineno">11428</span>    sqlite3_session **ppSession     <span class="comment">/* OUT: New session object */</span></div>
 <div class="line"><a id="l11429" name="l11429"></a><span class="lineno">11429</span>);</div>
@@ -12743,7 +12743,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l12642" name="l12642"></a><span class="lineno">12642</span><span class="comment">** and therefore subject to change.</span></div>
 <div class="line"><a id="l12643" name="l12643"></a><span class="lineno">12643</span><span class="comment">*/</span></div>
 <div class="line"><a id="l12644" name="l12644"></a><span class="lineno">12644</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply(</div>
-<div class="line"><a id="l12645" name="l12645"></a><span class="lineno">12645</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l12645" name="l12645"></a><span class="lineno">12645</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l12646" name="l12646"></a><span class="lineno">12646</span>    <span class="keywordtype">int</span> nChangeset,                 <span class="comment">/* Size of changeset in bytes */</span></div>
 <div class="line"><a id="l12647" name="l12647"></a><span class="lineno">12647</span>    <span class="keywordtype">void</span> *pChangeset,               <span class="comment">/* Changeset blob */</span></div>
 <div class="line"><a id="l12648" name="l12648"></a><span class="lineno">12648</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -12758,7 +12758,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l12657" name="l12657"></a><span class="lineno">12657</span>    <span class="keywordtype">void</span> *pCtx                      <span class="comment">/* First argument passed to xConflict */</span></div>
 <div class="line"><a id="l12658" name="l12658"></a><span class="lineno">12658</span>);</div>
 <div class="line"><a id="l12659" name="l12659"></a><span class="lineno">12659</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply_v2(</div>
-<div class="line"><a id="l12660" name="l12660"></a><span class="lineno">12660</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l12660" name="l12660"></a><span class="lineno">12660</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l12661" name="l12661"></a><span class="lineno">12661</span>    <span class="keywordtype">int</span> nChangeset,                 <span class="comment">/* Size of changeset in bytes */</span></div>
 <div class="line"><a id="l12662" name="l12662"></a><span class="lineno">12662</span>    <span class="keywordtype">void</span> *pChangeset,               <span class="comment">/* Changeset blob */</span></div>
 <div class="line"><a id="l12663" name="l12663"></a><span class="lineno">12663</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -12775,7 +12775,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l12674" name="l12674"></a><span class="lineno">12674</span>    <span class="keywordtype">int</span> flags                       <span class="comment">/* SESSION_CHANGESETAPPLY_* flags */</span></div>
 <div class="line"><a id="l12675" name="l12675"></a><span class="lineno">12675</span>);</div>
 <div class="line"><a id="l12676" name="l12676"></a><span class="lineno">12676</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply_v3(</div>
-<div class="line"><a id="l12677" name="l12677"></a><span class="lineno">12677</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l12677" name="l12677"></a><span class="lineno">12677</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l12678" name="l12678"></a><span class="lineno">12678</span>    <span class="keywordtype">int</span> nChangeset,                 <span class="comment">/* Size of changeset in bytes */</span></div>
 <div class="line"><a id="l12679" name="l12679"></a><span class="lineno">12679</span>    <span class="keywordtype">void</span> *pChangeset,               <span class="comment">/* Changeset blob */</span></div>
 <div class="line"><a id="l12680" name="l12680"></a><span class="lineno">12680</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -13179,7 +13179,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l13078" name="l13078"></a><span class="lineno">13078</span><span class="comment">** no guarantees are made as to the size of the chunks of data returned.</span></div>
 <div class="line"><a id="l13079" name="l13079"></a><span class="lineno">13079</span><span class="comment">*/</span></div>
 <div class="line"><a id="l13080" name="l13080"></a><span class="lineno">13080</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply_strm(</div>
-<div class="line"><a id="l13081" name="l13081"></a><span class="lineno">13081</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l13081" name="l13081"></a><span class="lineno">13081</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l13082" name="l13082"></a><span class="lineno">13082</span>    <span class="keywordtype">int</span> (*xInput)(<span class="keywordtype">void</span> *pIn, <span class="keywordtype">void</span> *pData, <span class="keywordtype">int</span> *pnData), <span class="comment">/* Input function */</span></div>
 <div class="line"><a id="l13083" name="l13083"></a><span class="lineno">13083</span>    <span class="keywordtype">void</span> *pIn,                                          <span class="comment">/* First arg for xInput */</span></div>
 <div class="line"><a id="l13084" name="l13084"></a><span class="lineno">13084</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -13194,7 +13194,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l13093" name="l13093"></a><span class="lineno">13093</span>    <span class="keywordtype">void</span> *pCtx                      <span class="comment">/* First argument passed to xConflict */</span></div>
 <div class="line"><a id="l13094" name="l13094"></a><span class="lineno">13094</span>);</div>
 <div class="line"><a id="l13095" name="l13095"></a><span class="lineno">13095</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply_v2_strm(</div>
-<div class="line"><a id="l13096" name="l13096"></a><span class="lineno">13096</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l13096" name="l13096"></a><span class="lineno">13096</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l13097" name="l13097"></a><span class="lineno">13097</span>    <span class="keywordtype">int</span> (*xInput)(<span class="keywordtype">void</span> *pIn, <span class="keywordtype">void</span> *pData, <span class="keywordtype">int</span> *pnData), <span class="comment">/* Input function */</span></div>
 <div class="line"><a id="l13098" name="l13098"></a><span class="lineno">13098</span>    <span class="keywordtype">void</span> *pIn,                                          <span class="comment">/* First arg for xInput */</span></div>
 <div class="line"><a id="l13099" name="l13099"></a><span class="lineno">13099</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -13211,7 +13211,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l13110" name="l13110"></a><span class="lineno">13110</span>    <span class="keywordtype">int</span> flags</div>
 <div class="line"><a id="l13111" name="l13111"></a><span class="lineno">13111</span>);</div>
 <div class="line"><a id="l13112" name="l13112"></a><span class="lineno">13112</span>SQLITE_API <span class="keywordtype">int</span> sqlite3changeset_apply_v3_strm(</div>
-<div class="line"><a id="l13113" name="l13113"></a><span class="lineno">13113</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *db,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
+<div class="line"><a id="l13113" name="l13113"></a><span class="lineno">13113</span>    <a class="code hl_struct" href="structsqlite3.html">sqlite3</a> *<a class="code hl_variable" href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a>,                    <span class="comment">/* Apply change to &quot;main&quot; db of this handle */</span></div>
 <div class="line"><a id="l13114" name="l13114"></a><span class="lineno">13114</span>    <span class="keywordtype">int</span> (*xInput)(<span class="keywordtype">void</span> *pIn, <span class="keywordtype">void</span> *pData, <span class="keywordtype">int</span> *pnData), <span class="comment">/* Input function */</span></div>
 <div class="line"><a id="l13115" name="l13115"></a><span class="lineno">13115</span>    <span class="keywordtype">void</span> *pIn,                                          <span class="comment">/* First arg for xInput */</span></div>
 <div class="line"><a id="l13116" name="l13116"></a><span class="lineno">13116</span>    <span class="keywordtype">int</span>(*xFilter)(</div>
@@ -14090,6 +14090,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l13989" name="l13989"></a><span class="lineno">13989</span> </div>
 <div class="line"><a id="l13990" name="l13990"></a><span class="lineno">13990</span><span class="comment">/******** End of fts5.h *********/</span></div>
 <div class="line"><a id="l13991" name="l13991"></a><span class="lineno">13991</span><span class="preprocessor">#endif </span><span class="comment">/* SQLITE3_H */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="adb_8c_html_ad6e663497d2c934364b3bcf07496b30b"><div class="ttname"><a href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a></div><div class="ttdeci">sqlite3 * db</div><div class="ttdoc">Puntero global a la conexión de la base de datos SQLite.</div><div class="ttdef"><b>Definition</b> db.c:21</div></div>
 <div class="ttc" id="astruct_fts5_extension_api_html"><div class="ttname"><a href="struct_fts5_extension_api.html">Fts5ExtensionApi</a></div><div class="ttdef"><b>Definition</b> sqlite3.c:13902</div></div>
 <div class="ttc" id="astruct_fts5_phrase_iter_html"><div class="ttname"><a href="struct_fts5_phrase_iter.html">Fts5PhraseIter</a></div><div class="ttdef"><b>Definition</b> sqlite3.c:13600</div></div>
 <div class="ttc" id="astructfts5__api_html"><div class="ttname"><a href="structfts5__api.html">fts5_api</a></div><div class="ttdef"><b>Definition</b> sqlite3.c:14252</div></div>
@@ -14125,7 +14126,7 @@ $(function(){initNavTree('sqlite3_8h_source.html',''); initResizable(true); });
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>sqlite3.h</b></li>
-    <li class="footer">Generated on Wed Dec 24 2025 16:24:08 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Fri Dec 26 2025 17:16:37 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

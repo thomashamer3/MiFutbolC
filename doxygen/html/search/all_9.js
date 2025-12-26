@@ -11,5 +11,7 @@ var searchData=
   ['indexlistterm_8',['IndexListTerm',['../struct_index_list_term.html',1,'']]],
   ['indexsample_9',['IndexSample',['../struct_index_sample.html',1,'']]],
   ['initdata_10',['InitData',['../struct_init_data.html',1,'']]],
-  ['integrityck_11',['IntegrityCk',['../struct_integrity_ck.html',1,'']]]
+  ['input_5fint_11',['input_int',['../utils_8c.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c'],['../utils_8h.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c']]],
+  ['input_5fstring_12',['input_string',['../utils_8c.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c']]],
+  ['integrityck_13',['IntegrityCk',['../struct_integrity_ck.html',1,'']]]
 ];

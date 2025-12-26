@@ -102,22 +102,73 @@ $(function(){initNavTree('struct_menu_item.html',''); initResizable(true); });
   <div class="headertitle"><div class="title">MenuItem Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Estructura que representa un elemento de menú  
+ <a href="#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="models_8h_source.html">models.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a795f80bca58972563d430feb8bd6d362" id="r_a795f80bca58972563d430feb8bd6d362"><td class="memItemLeft" align="right" valign="top"><a id="a795f80bca58972563d430feb8bd6d362" name="a795f80bca58972563d430feb8bd6d362"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>opcion</b></td></tr>
+<tr class="memitem:a795f80bca58972563d430feb8bd6d362" id="r_a795f80bca58972563d430feb8bd6d362"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a795f80bca58972563d430feb8bd6d362">opcion</a></td></tr>
 <tr class="separator:a795f80bca58972563d430feb8bd6d362"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae39e85d425914d6b72483382c5fa1fef" id="r_ae39e85d425914d6b72483382c5fa1fef"><td class="memItemLeft" align="right" valign="top"><a id="ae39e85d425914d6b72483382c5fa1fef" name="ae39e85d425914d6b72483382c5fa1fef"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>texto</b></td></tr>
+<tr class="memitem:ae39e85d425914d6b72483382c5fa1fef" id="r_ae39e85d425914d6b72483382c5fa1fef"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae39e85d425914d6b72483382c5fa1fef">texto</a></td></tr>
 <tr class="separator:ae39e85d425914d6b72483382c5fa1fef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ef8f830904edc98065f2777f7543b00" id="r_a3ef8f830904edc98065f2777f7543b00"><td class="memItemLeft" align="right" valign="top"><a id="a3ef8f830904edc98065f2777f7543b00" name="a3ef8f830904edc98065f2777f7543b00"></a>
-MenuAction&#160;</td><td class="memItemRight" valign="bottom"><b>accion</b></td></tr>
+<tr class="memitem:a3ef8f830904edc98065f2777f7543b00" id="r_a3ef8f830904edc98065f2777f7543b00"><td class="memItemLeft" align="right" valign="top"><a class="el" href="models_8h.html#a5029ba4b47d4bbc01b35b027661ceeb4">MenuAction</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3ef8f830904edc98065f2777f7543b00">accion</a></td></tr>
 <tr class="separator:a3ef8f830904edc98065f2777f7543b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68af1d93d4cc12f4c1c2102c6adcbe12" id="r_a68af1d93d4cc12f4c1c2102c6adcbe12"><td class="memItemLeft" align="right" valign="top"><a id="a68af1d93d4cc12f4c1c2102c6adcbe12" name="a68af1d93d4cc12f4c1c2102c6adcbe12"></a>
 void(*&#160;</td><td class="memItemRight" valign="bottom"><b>accion</b> )()</td></tr>
 <tr class="separator:a68af1d93d4cc12f4c1c2102c6adcbe12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Estructura que representa un elemento de menú </p>
+<p>Esta estructura define los componentes de un elemento en un menú interactivo, incluyendo la opción numérica, el texto descriptivo y la acción asociada. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a3ef8f830904edc98065f2777f7543b00" name="a3ef8f830904edc98065f2777f7543b00"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ef8f830904edc98065f2777f7543b00">&#9670;&#160;</a></span>accion</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="models_8h.html#a5029ba4b47d4bbc01b35b027661ceeb4">MenuAction</a> MenuItem::accion</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Función a ejecutar cuando se selecciona la opción </p>
+
+</div>
+</div>
+<a id="a795f80bca58972563d430feb8bd6d362" name="a795f80bca58972563d430feb8bd6d362"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a795f80bca58972563d430feb8bd6d362">&#9670;&#160;</a></span>opcion</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MenuItem::opcion</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Número de opción del menú </p>
+
+</div>
+</div>
+<a id="ae39e85d425914d6b72483382c5fa1fef" name="ae39e85d425914d6b72483382c5fa1fef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae39e85d425914d6b72483382c5fa1fef">&#9670;&#160;</a></span>texto</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * MenuItem::texto</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Texto descriptivo de la opción </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following files:<ul>
 <li><a class="el" href="models_8h_source.html">models.h</a></li>
 <li><a class="el" href="menu_8h_source.html">menu.h</a></li>
@@ -128,7 +179,7 @@ void(*&#160;</td><td class="memItemRight" valign="bottom"><b>accion</b> )()</td>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="struct_menu_item.html">MenuItem</a></li>
-    <li class="footer">Generated on Wed Dec 24 2025 16:24:08 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Fri Dec 26 2025 17:16:37 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

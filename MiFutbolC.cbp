@@ -31,10 +31,26 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="analisis.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="analisis.h" />
+		<Unit filename="cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cJSON.h" />
+		<Unit filename="cJSON_Utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cJSON_Utils.h" />
 		<Unit filename="camiseta.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="camiseta.h" />
+		<Unit filename="cancha.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cancha.h" />
 		<Unit filename="db.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -51,10 +67,18 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_all.h" />
+		<Unit filename="import.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="import.h" />
 		<Unit filename="lesion.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="lesion.h" />
+		<Unit filename="logros.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="logros.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -56,3 +56,14 @@ void eliminar_partido();
  * Verifica que la camiseta especificada exista antes de actualizar.
  */
 void modificar_partido();
+
+/**
+ * @brief Permite buscar partidos según diferentes criterios
+ *
+ * Presenta un submenú con opciones para buscar partidos por:
+ * - Camiseta utilizada
+ * - Número de goles
+ * - Número de asistencias
+ * - Cancha donde se jugó
+ */
+void buscar_partidos();

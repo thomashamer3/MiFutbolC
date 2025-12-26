@@ -13,6 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -44,6 +45,7 @@ int input_int(const char *msg)
  *
  * Muestra el mensaje proporcionado y lee una cadena desde la entrada estándar,
  * eliminando el carácter de nueva línea al final.
+ * Valida que la entrada contenga solo letras y espacios.
  *
  * @param msg El mensaje a mostrar al usuario.
  * @param buffer El buffer donde se almacenará la cadena leída.
@@ -51,11 +53,32 @@ int input_int(const char *msg)
  */
 void input_string(const char *msg, char *buffer, int size)
 {
-    printf("%s", msg);
+    int valid = 0;
 
-    if (fgets(buffer, size, stdin))
+    while (!valid)
     {
-        buffer[strcspn(buffer, "\n")] = 0;
+        printf("%s", msg);
+
+        if (fgets(buffer, size, stdin))
+        {
+            buffer[strcspn(buffer, "\n")] = 0;
+
+            // Validar que contenga solo letras, espacios y números
+            valid = 1;
+            for (int i = 0; buffer[i] != '\0'; i++)
+            {
+                if (!isalpha(buffer[i]) && !isspace(buffer[i]) && !isdigit(buffer[i]))
+                {
+                    valid = 0;
+                    break;
+                }
+            }
+
+            if (!valid)
+            {
+                printf("Entrada inválida. Solo se permiten letras, espacios y números.\n");
+            }
+        }
     }
 }
 

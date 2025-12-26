@@ -76,7 +76,7 @@ var annotated_dup =
     [ "MemJournal", "struct_mem_journal.html", null ],
     [ "MemPage", "struct_mem_page.html", null ],
     [ "MemStore", "struct_mem_store.html", null ],
-    [ "MenuItem", "struct_menu_item.html", null ],
+    [ "MenuItem", "struct_menu_item.html", "struct_menu_item" ],
     [ "MergeEngine", "struct_merge_engine.html", null ],
     [ "Module", "struct_module.html", null ],
     [ "NameContext", "struct_name_context.html", null ],

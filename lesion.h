@@ -49,4 +49,3 @@ void eliminar_lesion();
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
 void menu_lesiones();
-

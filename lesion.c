@@ -16,10 +16,7 @@ static int obtener_siguiente_id_lesion()
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT COALESCE(MIN(t1.id + 1), 1) "
-                       "FROM lesion t1 "
-                       "LEFT JOIN lesion t2 ON t1.id + 1 = t2.id "
-                       "WHERE t2.id IS NULL",
+                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM lesion)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM lesion)",
                        -1, &stmt, NULL);
 
     int id = 1; // Default si la tabla está vacía
@@ -29,6 +26,25 @@ static int obtener_siguiente_id_lesion()
     }
     sqlite3_finalize(stmt);
     return id;
+}
+
+/**
+ * @brief Verifica si hay lesiones registradas en la base de datos
+ *
+ * @return 1 si hay al menos una lesión, 0 si no hay ninguna
+ */
+static int hay_lesiones()
+{
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &stmt, NULL);
+
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    return count > 0;
 }
 
 /**
@@ -112,6 +128,13 @@ void editar_lesion()
     clear_screen();
     print_header("EDITAR LESION");
 
+    if (!hay_lesiones())
+    {
+        printf("No hay lesiones para editar.\n");
+        pause_console();
+        return;
+    }
+
     printf("Lesiones disponibles:\n\n");
     listar_lesiones();
 
@@ -156,6 +179,13 @@ void eliminar_lesion()
 {
     clear_screen();
     print_header("ELIMINAR LESION");
+
+    if (!hay_lesiones())
+    {
+        printf("No hay lesiones para eliminar.\n");
+        pause_console();
+        return;
+    }
 
     printf("Lesiones disponibles:\n\n");
     listar_lesiones();

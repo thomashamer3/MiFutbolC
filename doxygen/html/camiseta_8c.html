@@ -104,10 +104,10 @@ $(function(){initNavTree('camiseta_8c.html',''); initResizable(true); });
 
 <p>Funciones para gestionar camisetas (jerseys)  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;camiseta.h&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="camiseta_8h_source.html">camiseta.h</a>&quot;</code><br />
 <code>#include &quot;menu.h&quot;</code><br />
-<code>#include &quot;db.h&quot;</code><br />
-<code>#include &quot;utils.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="db_8h_source.html">db.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;stdlib.h&gt;</code><br />
 <code>#include &lt;time.h&gt;</code><br />
@@ -126,8 +126,8 @@ Functions</h2></td></tr>
 <tr class="memitem:aced1f57fdf7df5d9ba033b7e85a8b3d9" id="r_aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aced1f57fdf7df5d9ba033b7e85a8b3d9">eliminar_camiseta</a> ()</td></tr>
 <tr class="memdesc:aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina una camiseta de la base de datos.  <br /></td></tr>
 <tr class="separator:aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57af5be49fc0faacf80d0310202a1576" id="r_a57af5be49fc0faacf80d0310202a1576"><td class="memItemLeft" align="right" valign="top"><a id="a57af5be49fc0faacf80d0310202a1576" name="a57af5be49fc0faacf80d0310202a1576"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>sortear_camiseta</b> ()</td></tr>
+<tr class="memitem:a57af5be49fc0faacf80d0310202a1576" id="r_a57af5be49fc0faacf80d0310202a1576"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a57af5be49fc0faacf80d0310202a1576">sortear_camiseta</a> ()</td></tr>
+<tr class="memdesc:a57af5be49fc0faacf80d0310202a1576"><td class="mdescLeft">&#160;</td><td class="mdescRight">Realiza un sorteo aleatorio entre las camisetas disponibles.  <br /></td></tr>
 <tr class="separator:a57af5be49fc0faacf80d0310202a1576"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09be974ef1c53a7219f4a7b1842d75dd" id="r_a09be974ef1c53a7219f4a7b1842d75dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a09be974ef1c53a7219f4a7b1842d75dd">menu_camisetas</a> ()</td></tr>
 <tr class="memdesc:a09be974ef1c53a7219f4a7b1842d75dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el menú principal de gestión de camisetas.  <br /></td></tr>
@@ -154,7 +154,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>sortear_camiseta</b> 
 </div><div class="memdoc">
 
 <p>Crea una nueva camiseta en la base de datos. </p>
-<p>Solicita al usuario el nombre de la camiseta y la inserta en la tabla 'camiseta'. La columna 'sorteada' se inicializa en 0 por defecto. </p>
+<p>Solicita al usuario el nombre y número de la camiseta y la inserta en la tabla 'camiseta'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. La columna 'sorteada' se inicializa en 0 por defecto. </p>
 
 </div>
 </div>
@@ -238,13 +238,36 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>sortear_camiseta</b> 
 
 </div>
 </div>
+<a id="a57af5be49fc0faacf80d0310202a1576" name="a57af5be49fc0faacf80d0310202a1576"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57af5be49fc0faacf80d0310202a1576">&#9670;&#160;</a></span>sortear_camiseta()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sortear_camiseta </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Realiza un sorteo aleatorio entre las camisetas disponibles. </p>
+<p>Selecciona aleatoriamente una camiseta que no haya sido sorteada previamente. Si todas las camisetas han sido sorteadas, reinicia el sorteo marcando todas como no sorteadas. Muestra el resultado del sorteo y actualiza el estado de la camiseta seleccionada.</p>
+<dl class="section note"><dt>Note</dt><dd>Utiliza la función srand() con time(NULL) para generar números aleatorios </dd>
+<dd>
+Limita el sorteo a un máximo de 100 camisetas por simplicidad </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="camiseta_8c.html">camiseta.c</a></li>
-    <li class="footer">Generated on Wed Dec 24 2025 16:24:08 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Fri Dec 26 2025 17:16:37 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

@@ -1,7 +1,9 @@
 #include "export.h"
 #include "db.h"
 #include "utils.h"
+#include "cJSON.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #define EXPORT_PATH "data"
 
@@ -69,24 +71,24 @@ void exportar_camisetas_json()
     if (!f)
         return;
 
-    fprintf(f, "[\n");
+    cJSON *root = cJSON_CreateArray();
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta", -1, &stmt, NULL);
 
-    int first = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (!first)
-            fprintf(f, ",\n");
-        fprintf(f,
-                "  { \"id\": %d, \"nombre\": \"%s\" }",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1));
-        first = 0;
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
+        cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
+        cJSON_AddItemToArray(root, item);
     }
 
-    fprintf(f, "\n]");
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+
+    free(json_string);
+    cJSON_Delete(root);
     sqlite3_finalize(stmt);
     fclose(f);
 }
@@ -193,27 +195,27 @@ void exportar_lesiones_json()
     if (!f)
         return;
 
-    fprintf(f, "[\n");
+    cJSON *root = cJSON_CreateArray();
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "SELECT id, jugador, tipo, descripcion, fecha FROM lesion", -1, &stmt, NULL);
 
-    int first = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (!first)
-            fprintf(f, ",\n");
-        fprintf(f,
-                "  { \"id\": %d, \"jugador\": \"%s\", \"tipo\": \"%s\", \"descripcion\": \"%s\", \"fecha\": \"%s\" }",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4));
-        first = 0;
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
+        cJSON_AddStringToObject(item, "jugador", (const char *)sqlite3_column_text(stmt, 1));
+        cJSON_AddStringToObject(item, "tipo", (const char *)sqlite3_column_text(stmt, 2));
+        cJSON_AddStringToObject(item, "descripcion", (const char *)sqlite3_column_text(stmt, 3));
+        cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 4));
+        cJSON_AddItemToArray(root, item);
     }
 
-    fprintf(f, "\n]");
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+
+    free(json_string);
+    cJSON_Delete(root);
     sqlite3_finalize(stmt);
     fclose(f);
 }
@@ -257,7 +259,7 @@ void exportar_lesiones_html()
  * @brief Exporta los partidos a un archivo CSV
  *
  * Crea un archivo CSV con todos los partidos registrados en la base de datos,
- * incluyendo cancha, fecha, goles, asistencias y camiseta. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_partidos_csv()
 {
@@ -265,21 +267,29 @@ void exportar_partidos_csv()
     if (!f)
         return;
 
-    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta\n");
+    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT p.cancha,p.fecha_hora,p.goles,p.asistencias,c.nombre "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id",
+                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                       "JOIN cancha can ON p.cancha_id = can.id",
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s,%s,%d,%d,%s\n",
+        fprintf(f, "%s,%s,%d,%d,%s,%d,%d,%d,%d,%d,%d,%s\n",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+                sqlite3_column_text(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6),
+                sqlite3_column_int(stmt, 7),
+                sqlite3_column_int(stmt, 8),
+                sqlite3_column_int(stmt, 9),
+                sqlite3_column_int(stmt, 10),
+                sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
     fclose(f);
@@ -289,7 +299,7 @@ void exportar_partidos_csv()
  * @brief Exporta los partidos a un archivo de texto plano
  *
  * Crea un archivo de texto con un listado formateado de todos los partidos
- * registrados, incluyendo cancha, fecha, goles, asistencias y camiseta. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_partidos_txt()
 {
@@ -301,17 +311,25 @@ void exportar_partidos_txt()
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT p.cancha,p.fecha_hora,p.goles,p.asistencias,c.nombre "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id",
+                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                       "JOIN cancha can ON p.cancha_id = can.id",
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s | %s | G:%d A:%d | %s\n",
+        fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%d Cli:%d Dia:%d RG:%d Can:%d EA:%d | %s\n",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+                sqlite3_column_text(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6),
+                sqlite3_column_int(stmt, 7),
+                sqlite3_column_int(stmt, 8),
+                sqlite3_column_int(stmt, 9),
+                sqlite3_column_int(stmt, 10),
+                sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
     fclose(f);
@@ -321,7 +339,7 @@ void exportar_partidos_txt()
  * @brief Exporta los partidos a un archivo JSON
  *
  * Crea un archivo JSON con un array de objetos representando todos los partidos
- * registrados, incluyendo cancha, fecha, goles, asistencias y camiseta. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_partidos_json()
 {
@@ -329,30 +347,38 @@ void exportar_partidos_json()
     if (!f)
         return;
 
-    fprintf(f, "[\n");
+    cJSON *root = cJSON_CreateArray();
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT p.cancha,p.fecha_hora,p.goles,p.asistencias,c.nombre "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id",
+                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                       "JOIN cancha can ON p.cancha_id = can.id",
                        -1, &stmt, NULL);
 
-    int first = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (!first)
-            fprintf(f, ",\n");
-        fprintf(f,
-                "  { \"cancha\":\"%s\", \"fecha\":\"%s\", \"goles\":%d, \"asistencias\":%d, \"camiseta\":\"%s\" }",
-                sqlite3_column_text(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4));
-        first = 0;
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "cancha", (const char *)sqlite3_column_text(stmt, 0));
+        cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
+        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
+        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
+        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
+        cJSON_AddNumberToObject(item, "resultado", sqlite3_column_int(stmt, 5));
+        cJSON_AddNumberToObject(item, "clima", sqlite3_column_int(stmt, 6));
+        cJSON_AddNumberToObject(item, "dia", sqlite3_column_int(stmt, 7));
+        cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
+        cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
+        cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
+        cJSON_AddStringToObject(item, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
+        cJSON_AddItemToArray(root, item);
     }
 
-    fprintf(f, "\n]");
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+
+    free(json_string);
+    cJSON_Delete(root);
     sqlite3_finalize(stmt);
     fclose(f);
 }
@@ -365,22 +391,30 @@ void exportar_partidos_html()
 
     fprintf(f,
             "<html><body><h1>Partidos</h1><table border='1'>"
-            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th></tr>");
+            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</th><th>Rendimiento General</th><th>Cansancio</th><th>Estado Animo</th><th>Comentario Personal</th></tr>");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT p.cancha,p.fecha_hora,p.goles,p.asistencias,c.nombre "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id",
+                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                       "JOIN cancha can ON p.cancha_id = can.id",
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
         fprintf(f,
-                "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td></tr>",
+                "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+                sqlite3_column_text(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6),
+                sqlite3_column_int(stmt, 7),
+                sqlite3_column_int(stmt, 8),
+                sqlite3_column_int(stmt, 9),
+                sqlite3_column_int(stmt, 10),
+                sqlite3_column_text(stmt, 11));
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
@@ -431,7 +465,7 @@ void exportar_estadisticas_json()
     if (!f)
         return;
 
-    fprintf(f, "[\n");
+    cJSON *root = cJSON_CreateArray();
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -440,21 +474,21 @@ void exportar_estadisticas_json()
                        "GROUP BY c.id",
                        -1, &stmt, NULL);
 
-    int first = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (!first)
-            fprintf(f, ",\n");
-        fprintf(f,
-                "  { \"camiseta\":\"%s\", \"goles\":%d, \"asistencias\":%d, \"partidos\":%d }",
-                sqlite3_column_text(stmt, 0),
-                sqlite3_column_int(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3));
-        first = 0;
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 0));
+        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
+        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
+        cJSON_AddNumberToObject(item, "partidos", sqlite3_column_int(stmt, 3));
+        cJSON_AddItemToArray(root, item);
     }
 
-    fprintf(f, "\n]");
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+
+    free(json_string);
+    cJSON_Delete(root);
     sqlite3_finalize(stmt);
     fclose(f);
 }

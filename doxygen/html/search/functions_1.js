@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['editar_5fcamiseta_0',['editar_camiseta',['../camiseta_8c.html#af2f9f8f2fb70b4e11707f5718685f363',1,'camiseta.c']]],
-  ['eliminar_5fcamiseta_1',['eliminar_camiseta',['../camiseta_8c.html#aced1f57fdf7df5d9ba033b7e85a8b3d9',1,'camiseta.c']]]
+  ['clear_5fscreen_0',['clear_screen',['../utils_8c.html#a4953d1edcbbfc7e420c423ded1d5621a',1,'clear_screen():&#160;utils.c'],['../utils_8h.html#a4953d1edcbbfc7e420c423ded1d5621a',1,'clear_screen():&#160;utils.c']]],
+  ['confirmar_1',['confirmar',['../utils_8c.html#afeb331de177fe4ee0a4fa0df6a245b5d',1,'confirmar(const char *msg):&#160;utils.c'],['../utils_8h.html#afeb331de177fe4ee0a4fa0df6a245b5d',1,'confirmar(const char *msg):&#160;utils.c']]],
+  ['crear_5fcamiseta_2',['crear_camiseta',['../camiseta_8c.html#a6b62ed98786c1db8381be43da6a1d46e',1,'crear_camiseta():&#160;camiseta.c'],['../camiseta_8h.html#a6b62ed98786c1db8381be43da6a1d46e',1,'crear_camiseta():&#160;camiseta.c']]],
+  ['crear_5flesion_3',['crear_lesion',['../lesion_8h.html#a62975cec6310e16cdda4bba451a3cbcf',1,'lesion.c']]],
+  ['crear_5fpartido_4',['crear_partido',['../partido_8h.html#af6cddadff7f7ea970c09f0650e7d6b9b',1,'partido.c']]]
 ];

@@ -44,19 +44,24 @@ int db_init()
         printf("Error abriendo DB\n");
         return 0;
     }
-    const char *sql =
+    const char *sql_create =
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
         " sorteada INTEGER DEFAULT 0);"
 
-        "CREATE TABLE IF NOT EXISTS partido ("
+        "CREATE TABLE IF NOT EXISTS cancha ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " cancha TEXT NOT NULL,"
+        " nombre TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS partido ("
+        " id INTEGER PRIMARY KEY,"
+        " cancha_id INTEGER NOT NULL,"
         " fecha_hora TEXT NOT NULL,"
         " goles INTEGER NOT NULL,"
         " asistencias INTEGER NOT NULL,"
         " camiseta_id INTEGER NOT NULL,"
+        " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
 
         "CREATE TABLE IF NOT EXISTS lesion ("
@@ -64,19 +69,38 @@ int db_init()
         " jugador TEXT NOT NULL,"
         " tipo TEXT NOT NULL,"
         " descripcion TEXT NOT NULL,"
-        " fecha TEXT NOT NULL);"
+        " fecha TEXT NOT NULL);";
 
-        "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;";
-
-    if (sqlite3_exec(db, sql, 0, 0, 0) != SQLITE_OK)
+    if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
-        // Ignore error if column already exists
-        if (sqlite3_errcode(db) != SQLITE_ERROR)
-        {
-            printf("Error creando tablas\n");
-            return 0;
-        }
+        printf("Error creando tablas\n");
+        return 0;
     }
+
+    // Add columns if they don't exist
+    const char *alter_sorteada = "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_sorteada, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_resultado = "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_resultado, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_clima = "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_clima, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_dia = "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_dia, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_rendimiento_general = "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_rendimiento_general, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_cansancio = "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_cansancio, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_estado_animo = "ALTER TABLE partido ADD COLUMN estado_animo INTEGER DEFAULT 0;";
+    sqlite3_exec(db, alter_estado_animo, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_comentario_personal = "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';";
+    sqlite3_exec(db, alter_comentario_personal, 0, 0, 0); // Ignore errors if column already exists
 
     return 1;
 }

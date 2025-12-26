@@ -1,2 +1,6 @@
 D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/sqlite3.c:27566: warning: member with no name found.
 D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/sqlite3.c:59494: warning: member with no name found.
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:46: warning: argument 'msg' from the argument list of input_string has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:46: warning: argument 'buffer' from the argument list of input_string has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:46: warning: argument 'size' from the argument list of input_string has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.h:61: warning: argument 'titulo' from the argument list of print_header has multiple @param documentation sections

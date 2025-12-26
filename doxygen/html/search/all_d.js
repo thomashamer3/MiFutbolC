@@ -5,8 +5,17 @@ var searchData=
   ['mempage_2',['MemPage',['../struct_mem_page.html',1,'']]],
   ['memstore_3',['MemStore',['../struct_mem_store.html',1,'']]],
   ['memvalue_4',['MemValue',['../unionsqlite3__value_1_1_mem_value.html',1,'sqlite3_value']]],
-  ['menu_5fcamisetas_5',['menu_camisetas',['../camiseta_8c.html#a09be974ef1c53a7219f4a7b1842d75dd',1,'camiseta.c']]],
-  ['menuitem_6',['MenuItem',['../struct_menu_item.html',1,'']]],
-  ['mergeengine_7',['MergeEngine',['../struct_merge_engine.html',1,'']]],
-  ['module_8',['Module',['../struct_module.html',1,'']]]
+  ['menu_5fcamisetas_5',['menu_camisetas',['../camiseta_8c.html#a09be974ef1c53a7219f4a7b1842d75dd',1,'menu_camisetas():&#160;camiseta.c'],['../camiseta_8h.html#a09be974ef1c53a7219f4a7b1842d75dd',1,'menu_camisetas():&#160;camiseta.c']]],
+  ['menu_5festadisticas_6',['menu_estadisticas',['../estadisticas_8c.html#a0c608fe89e28fc3d3645630331d6e80d',1,'menu_estadisticas():&#160;estadisticas.c'],['../estadisticas_8h.html#a0c608fe89e28fc3d3645630331d6e80d',1,'menu_estadisticas():&#160;estadisticas.c']]],
+  ['menu_5flesiones_7',['menu_lesiones',['../lesion_8h.html#a65e7ffa6b36f4ce41d45f65ab8e6b0f9',1,'lesion.c']]],
+  ['menu_5fpartidos_8',['menu_partidos',['../partido_8h.html#a7984ef3fc73408368d48512b5b422089',1,'partido.c']]],
+  ['menuaction_9',['MenuAction',['../models_8h.html#a5029ba4b47d4bbc01b35b027661ceeb4',1,'models.h']]],
+  ['menuitem_10',['MenuItem',['../struct_menu_item.html',1,'']]],
+  ['mergeengine_11',['MergeEngine',['../struct_merge_engine.html',1,'']]],
+  ['models_2eh_12',['models.h',['../models_8h.html',1,'']]],
+  ['modificar_5fpartido_13',['modificar_partido',['../partido_8h.html#addd8e753d7935565b82ada223cbbfd59',1,'partido.c']]],
+  ['module_14',['Module',['../struct_module.html',1,'']]],
+  ['mostrar_5festadisticas_5fgenerales_15',['mostrar_estadisticas_generales',['../estadisticas_8c.html#a9a54e160a0fcddeaff7bfc2da60ae5ba',1,'mostrar_estadisticas_generales():&#160;estadisticas.c'],['../estadisticas_8h.html#a9a54e160a0fcddeaff7bfc2da60ae5ba',1,'mostrar_estadisticas_generales():&#160;estadisticas.c']]],
+  ['mostrar_5festadisticas_5fpor_5fanio_16',['mostrar_estadisticas_por_anio',['../estadisticas_8c.html#a1df246ce25ca4ee196be975ee38b7d6d',1,'mostrar_estadisticas_por_anio():&#160;estadisticas.c'],['../estadisticas_8h.html#a1df246ce25ca4ee196be975ee38b7d6d',1,'mostrar_estadisticas_por_anio():&#160;estadisticas.c']]],
+  ['mostrar_5festadisticas_5fpor_5fmes_17',['mostrar_estadisticas_por_mes',['../estadisticas_8c.html#aa6e461370c6a9bc5b5ed593fd419bdbd',1,'mostrar_estadisticas_por_mes():&#160;estadisticas.c'],['../estadisticas_8h.html#aa6e461370c6a9bc5b5ed593fd419bdbd',1,'mostrar_estadisticas_por_mes():&#160;estadisticas.c']]]
 ];

@@ -48,4 +48,3 @@ void editar_camiseta();
  * verifica que exista y solicita confirmación antes de eliminar.
  */
 void eliminar_camiseta();
-
