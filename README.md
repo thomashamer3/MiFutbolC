@@ -1,4 +1,4 @@
-1# MiFutbolC - Proyecto De Uso Personal
+# MiFutbolC - Proyecto De Uso Personal
 
 ## Descripción
 
