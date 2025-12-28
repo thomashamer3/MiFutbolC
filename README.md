@@ -291,4 +291,10 @@ Proyecto desarrollado por Thomas Hamer como ejemplo educativo y de uso personal 
 - Compatible con Windows (probado en Windows 11).
 - La interfaz es completamente textual, no requiere GUI.
 
+## Manual de Usuario
+
+Para una guía detallada de uso del programa, incluyendo instrucciones paso a paso para cada funcionalidad, ejemplos de uso y solución de problemas comunes, consulta el [Manual de Usuario](manual_usuario.md).
+
+Este manual incluye capturas de pantalla de los menús y secciones del programa para facilitar la navegación.
+
 Para más información, consulta la documentación generada con Doxygen o revisa el código fuente comentado.

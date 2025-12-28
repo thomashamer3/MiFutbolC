@@ -44,16 +44,17 @@ static int obtener_siguiente_id_camiseta()
  */
 static int hay_camisetas()
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &stmt, NULL);
+    if (db == NULL) return 0;
 
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, "SELECT id FROM camiseta LIMIT 1", -1, &stmt, NULL) != SQLITE_OK)
     {
-        count = sqlite3_column_int(stmt, 0);
+        return 0;
     }
+
+    int has = sqlite3_step(stmt) == SQLITE_ROW;
     sqlite3_finalize(stmt);
-    return count > 0;
+    return has;
 }
 
 /**
@@ -126,6 +127,13 @@ void editar_camiseta()
     clear_screen();
     print_header("EDITAR CAMISETA");
 
+    if (!hay_camisetas())
+    {
+        printf("No hay camisetas para editar.\n");
+        pause_console();
+        return;
+    }
+
     printf("Camisetas disponibles:\n\n");
     listar_camisetas();
 
@@ -190,7 +198,7 @@ void eliminar_camiseta()
         return;
     }
 
-    if (!confirmar("�Seguro que desea eliminar esta camiseta?"))
+    if (!confirmar("Seguro que desea eliminar esta camiseta?"))
         return;
 
     sqlite3_stmt *stmt;

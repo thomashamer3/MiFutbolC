@@ -111,7 +111,7 @@
 
 1766857565 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 
-1766815579 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1766963344 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"menu.h"
 	"db.h"
@@ -142,7 +142,7 @@
 
 1766779596 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1766957424 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1766957994 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"
