@@ -115,6 +115,7 @@ MiFutbolC/
 │   ├── doxyfile           # Configuración de Doxygen
 │   └── html/              # Documentación HTML
 └── obj/                   # Archivos objeto de compilación
+```
 
 ## Base de Datos
 
