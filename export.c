@@ -4,8 +4,90 @@
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <direct.h>
+#include <string.h>
 
 #define EXPORT_PATH "data"
+
+static char* get_full_path(const char* filename)
+{
+    static char path[1024];
+    _getcwd(path, sizeof(path));
+    strcat(path, "\\");
+    strcat(path, EXPORT_PATH);
+    strcat(path, "\\");
+    strcat(path, filename);
+    return path;
+}
+
+/**
+ * @brief Convierte el número de resultado a texto
+ *
+ * @param resultado Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA)
+ * @return Cadena de texto correspondiente al resultado
+ */
+static const char *resultado_to_text(int resultado)
+{
+    switch (resultado)
+    {
+    case 1:
+        return "VICTORIA";
+    case 2:
+        return "EMPATE";
+    case 3:
+        return "DERROTA";
+    default:
+        return "DESCONOCIDO";
+    }
+}
+
+/**
+ * @brief Convierte el número de clima a texto
+ *
+ * @param clima Número del clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio)
+ * @return Cadena de texto correspondiente al clima
+ */
+static const char *clima_to_text(int clima)
+{
+    switch (clima)
+    {
+    case 1:
+        return "Despejado";
+    case 2:
+        return "Nublado";
+    case 3:
+        return "Lluvia";
+    case 4:
+        return "Ventoso";
+    case 5:
+        return "Mucho Calor";
+    case 6:
+        return "Mucho Frio";
+    default:
+        return "DESCONOCIDO";
+    }
+}
+
+/**
+ * @brief Convierte el número de dia a texto
+ *
+ * @param dia Número del dia (1=Dia, 2=Tarde, 3=Noche)
+ * @return Cadena de texto correspondiente al dia
+ */
+static const char *dia_to_text(int dia)
+{
+    switch (dia)
+    {
+    case 1:
+        return "Dia";
+    case 2:
+        return "Tarde";
+    case 3:
+        return "Noche";
+    default:
+        return "DESCONOCIDO";
+    }
+}
 
 /**
  * @brief Exporta las camisetas a un archivo CSV
@@ -15,6 +97,20 @@
  */
 void exportar_camisetas_csv()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de camisetas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/camisetas.csv", "w");
     if (!f)
         return;
@@ -30,6 +126,7 @@ void exportar_camisetas_csv()
                 sqlite3_column_text(stmt, 1));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("camisetas.csv"));
     fclose(f);
 }
 
@@ -41,6 +138,20 @@ void exportar_camisetas_csv()
  */
 void exportar_camisetas_txt()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de camisetas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/camisetas.txt", "w");
     if (!f)
         return;
@@ -56,6 +167,7 @@ void exportar_camisetas_txt()
                 sqlite3_column_text(stmt, 1));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("camisetas.txt"));
     fclose(f);
 }
 
@@ -67,6 +179,20 @@ void exportar_camisetas_txt()
  */
 void exportar_camisetas_json()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de camisetas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/camisetas.json", "w");
     if (!f)
         return;
@@ -90,6 +216,7 @@ void exportar_camisetas_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("camisetas.json"));
     fclose(f);
 }
 
@@ -101,6 +228,20 @@ void exportar_camisetas_json()
  */
 void exportar_camisetas_html()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de camisetas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/camisetas.html", "w");
     if (!f)
         return;
@@ -120,6 +261,7 @@ void exportar_camisetas_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("camisetas.html"));
     fclose(f);
 }
 
@@ -133,6 +275,20 @@ void exportar_camisetas_html()
  */
 void exportar_lesiones_csv()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de lesiones para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/lesiones.csv", "w");
     if (!f)
         return;
@@ -151,6 +307,7 @@ void exportar_lesiones_csv()
                 sqlite3_column_text(stmt, 4));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("lesiones.csv"));
     fclose(f);
 }
 
@@ -162,6 +319,20 @@ void exportar_lesiones_csv()
  */
 void exportar_lesiones_txt()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de lesiones para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/lesiones.txt", "w");
     if (!f)
         return;
@@ -180,6 +351,7 @@ void exportar_lesiones_txt()
                 sqlite3_column_text(stmt, 4));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("lesiones.txt"));
     fclose(f);
 }
 
@@ -191,6 +363,20 @@ void exportar_lesiones_txt()
  */
 void exportar_lesiones_json()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de lesiones para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/lesiones.json", "w");
     if (!f)
         return;
@@ -217,6 +403,7 @@ void exportar_lesiones_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("lesiones.json"));
     fclose(f);
 }
 
@@ -228,6 +415,20 @@ void exportar_lesiones_json()
  */
 void exportar_lesiones_html()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de lesiones para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/lesiones.html", "w");
     if (!f)
         return;
@@ -250,6 +451,7 @@ void exportar_lesiones_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("lesiones.html"));
     fclose(f);
 }
 
@@ -263,6 +465,20 @@ void exportar_lesiones_html()
  */
 void exportar_partidos_csv()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/partidos.csv", "w");
     if (!f)
         return;
@@ -277,21 +493,22 @@ void exportar_partidos_csv()
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s,%s,%d,%d,%s,%d,%d,%d,%d,%d,%d,%s\n",
+        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
                 sqlite3_column_text(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
+                resultado_to_text(sqlite3_column_int(stmt, 5)),
+                clima_to_text(sqlite3_column_int(stmt, 6)),
+                dia_to_text(sqlite3_column_int(stmt, 7)),
                 sqlite3_column_int(stmt, 8),
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
                 sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("partidos.csv"));
     fclose(f);
 }
 
@@ -303,6 +520,20 @@ void exportar_partidos_csv()
  */
 void exportar_partidos_txt()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/partidos.txt", "w");
     if (!f)
         return;
@@ -317,21 +548,22 @@ void exportar_partidos_txt()
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%d Cli:%d Dia:%d RG:%d Can:%d EA:%d | %s\n",
+        fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
                 sqlite3_column_text(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
+                resultado_to_text(sqlite3_column_int(stmt, 5)),
+                clima_to_text(sqlite3_column_int(stmt, 6)),
+                dia_to_text(sqlite3_column_int(stmt, 7)),
                 sqlite3_column_int(stmt, 8),
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
                 sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("partidos.txt"));
     fclose(f);
 }
 
@@ -343,6 +575,20 @@ void exportar_partidos_txt()
  */
 void exportar_partidos_json()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/partidos.json", "w");
     if (!f)
         return;
@@ -364,9 +610,9 @@ void exportar_partidos_json()
         cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
         cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
         cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
-        cJSON_AddNumberToObject(item, "resultado", sqlite3_column_int(stmt, 5));
-        cJSON_AddNumberToObject(item, "clima", sqlite3_column_int(stmt, 6));
-        cJSON_AddNumberToObject(item, "dia", sqlite3_column_int(stmt, 7));
+        cJSON_AddStringToObject(item, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
+        cJSON_AddStringToObject(item, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
+        cJSON_AddStringToObject(item, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
         cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
         cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
         cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
@@ -380,11 +626,26 @@ void exportar_partidos_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("partidos.json"));
     fclose(f);
 }
 
 void exportar_partidos_html()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/partidos.html", "w");
     if (!f)
         return;
@@ -402,15 +663,15 @@ void exportar_partidos_html()
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
         fprintf(f,
-                "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
+                "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
                 sqlite3_column_text(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
+                resultado_to_text(sqlite3_column_int(stmt, 5)),
+                clima_to_text(sqlite3_column_int(stmt, 6)),
+                dia_to_text(sqlite3_column_int(stmt, 7)),
                 sqlite3_column_int(stmt, 8),
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
@@ -418,10 +679,64 @@ void exportar_partidos_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("partidos.html"));
     fclose(f);
 }
 
 /* ===================== ESTADISTICAS ===================== */
+
+/**
+ * @brief Exporta las estadísticas a un archivo CSV
+ *
+ * Crea un archivo CSV con las estadísticas agrupadas por camiseta,
+ * incluyendo nombre, suma de goles, suma de asistencias, número de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ */
+void exportar_estadisticas_csv()
+{
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de estadisticas para exportar.\n");
+        return;
+    }
+
+    FILE *f = fopen(EXPORT_PATH "/estadisticas.csv", "w");
+    if (!f)
+        return;
+
+    fprintf(f, "Camiseta,Goles,Asistencias,Partidos,Victorias,Empates,Derrotas\n");
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db,
+                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*), "
+                       "SUM(CASE WHEN p.resultado=1 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=2 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=3 THEN 1 ELSE 0 END) "
+                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                       "GROUP BY c.id",
+                       -1, &stmt, NULL);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "%s,%d,%d,%d,%d,%d,%d\n",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1),
+                sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6));
+
+    sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.csv"));
+    fclose(f);
+}
 
 /**
  * @brief Exporta las estadísticas a un archivo de texto plano
@@ -431,25 +746,46 @@ void exportar_partidos_html()
  */
 void exportar_estadisticas_txt()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de estadisticas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/estadisticas.txt", "w");
     if (!f)
         return;
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*) "
+                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*), "
+                       "SUM(CASE WHEN p.resultado=1 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=2 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=3 THEN 1 ELSE 0 END) "
                        "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
                        "GROUP BY c.id",
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s | G:%d A:%d P:%d\n",
+        fprintf(f, "%s | G:%d A:%d P:%d V:%d E:%d D:%d\n",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_int(stmt, 1),
                 sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3));
+                sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6));
 
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.txt"));
     fclose(f);
 }
 
@@ -461,6 +797,20 @@ void exportar_estadisticas_txt()
  */
 void exportar_estadisticas_json()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de estadisticas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/estadisticas.json", "w");
     if (!f)
         return;
@@ -469,7 +819,10 @@ void exportar_estadisticas_json()
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*) "
+                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*), "
+                       "SUM(CASE WHEN p.resultado=1 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=2 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=3 THEN 1 ELSE 0 END) "
                        "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
                        "GROUP BY c.id",
                        -1, &stmt, NULL);
@@ -481,6 +834,9 @@ void exportar_estadisticas_json()
         cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
         cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
         cJSON_AddNumberToObject(item, "partidos", sqlite3_column_int(stmt, 3));
+        cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 4));
+        cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 5));
+        cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 6));
         cJSON_AddItemToArray(root, item);
     }
 
@@ -490,35 +846,57 @@ void exportar_estadisticas_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.json"));
     fclose(f);
 }
 
 void exportar_estadisticas_html()
 {
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    if (count == 0)
+    {
+        printf("No hay registros de estadisticas para exportar.\n");
+        return;
+    }
+
     FILE *f = fopen(EXPORT_PATH "/estadisticas.html", "w");
     if (!f)
         return;
 
     fprintf(f,
             "<html><body><h1>Estadisticas</h1><table border='1'>"
-            "<tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</th></tr>");
+            "<tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</th><th>Victorias</th><th>Empates</th><th>Derrotas</th></tr>");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*) "
+                       "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*), "
+                       "SUM(CASE WHEN p.resultado=1 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=2 THEN 1 ELSE 0 END), "
+                       "SUM(CASE WHEN p.resultado=3 THEN 1 ELSE 0 END) "
                        "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
                        "GROUP BY c.id",
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
         fprintf(f,
-                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td></tr>",
+                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>",
                 sqlite3_column_text(stmt, 0),
                 sqlite3_column_int(stmt, 1),
                 sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3));
+                sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6));
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.html"));
     fclose(f);
 }

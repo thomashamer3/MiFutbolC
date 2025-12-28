@@ -10,6 +10,7 @@
 #include "cJSON.h"
 #include "db.h"
 #include "utils.h"
+#include "menu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,19 +48,7 @@ static char *read_file_content(const char *filename)
     return content;
 }
 
-/**
- * @brief Solicita al usuario la ruta de un archivo.
- *
- * @param prompt Mensaje a mostrar al usuario.
- * @param buffer Buffer donde almacenar la ruta.
- * @param buffer_size Tamaño del buffer.
- */
-static void solicitar_archivo(const char *prompt, char *buffer, size_t buffer_size)
-{
-    printf("%s: ", prompt);
-    fgets(buffer, buffer_size, stdin);
-    buffer[strcspn(buffer, "\n")] = 0; // Remover newline
-}
+
 
 /**
  * @brief Importa camisetas desde archivo JSON.
@@ -68,14 +57,7 @@ static void solicitar_archivo(const char *prompt, char *buffer, size_t buffer_si
  */
 void importar_camisetas_json()
 {
-    char filename[256];
-    solicitar_archivo("Ingrese la ruta del archivo JSON de camisetas", filename, sizeof(filename));
-
-    if (strlen(filename) == 0)
-    {
-        printf("Operación cancelada.\n");
-        return;
-    }
+    const char *filename = "data/camisetas.json";
 
     char *content = read_file_content(filename);
     if (!content)
@@ -151,14 +133,7 @@ void importar_camisetas_json()
  */
 void importar_partidos_json()
 {
-    char filename[256];
-    solicitar_archivo("Ingrese la ruta del archivo JSON de partidos", filename, sizeof(filename));
-
-    if (strlen(filename) == 0)
-    {
-        printf("Operación cancelada.\n");
-        return;
-    }
+    const char *filename = "data/partidos.json";
 
     char *content = read_file_content(filename);
     if (!content)
@@ -296,17 +271,7 @@ void importar_partidos_json()
     printf("Importación de partidos completada\n");
 }
 
-/**
- * @brief Importa estadísticas desde archivo JSON.
- *
- * Lee el archivo data/estadisticas.json y procesa las estadísticas.
- * Nota: Las estadísticas son calculadas dinámicamente, no se almacenan.
- */
-void importar_estadisticas_json()
-{
-    printf("Las estadísticas se calculan dinámicamente desde los partidos.\n");
-    printf("No es necesario importar estadísticas desde JSON.\n");
-}
+
 
 /**
  * @brief Importa lesiones desde archivo JSON.
@@ -315,14 +280,7 @@ void importar_estadisticas_json()
  */
 void importar_lesiones_json()
 {
-    char filename[256];
-    solicitar_archivo("Ingrese la ruta del archivo JSON de lesiones", filename, sizeof(filename));
-
-    if (strlen(filename) == 0)
-    {
-        printf("Operación cancelada.\n");
-        return;
-    }
+    const char *filename = "data/lesiones.json";
 
     char *content = read_file_content(filename);
     if (!content)
@@ -403,19 +361,140 @@ void importar_lesiones_json()
 }
 
 /**
- * @brief Importa todos los datos desde archivos JSON.
+ * @brief Importa estadísticas desde archivo JSON.
  *
- * Ejecuta todas las funciones de importación para cargar todos los datos.
+ * Lee el archivo JSON de estadísticas y las procesa.
  */
-void importar_todo_json()
+void importar_estadisticas_json()
 {
-    print_header("IMPORTANDO DATOS DESDE JSON");
+    const char *filename = "data/estadisticas.json";
 
+    char *content = read_file_content(filename);
+    if (!content)
+        return;
+
+    cJSON *json = cJSON_Parse(content);
+    free(content);
+
+    if (!json)
+    {
+        printf("Error: JSON de estadísticas inválido\n");
+        return;
+    }
+
+    if (!cJSON_IsArray(json))
+    {
+        printf("Error: El JSON de estadísticas debe ser un array\n");
+        cJSON_Delete(json);
+        return;
+    }
+
+    int count = cJSON_GetArraySize(json);
+    printf("Importando %d estadísticas...\n", count);
+
+    for (int i = 0; i < count; i++)
+    {
+        cJSON *item = cJSON_GetArrayItem(json, i);
+        if (!cJSON_IsObject(item))
+            continue;
+
+        cJSON *camiseta_json = cJSON_GetObjectItem(item, "camiseta");
+        cJSON *goles_json = cJSON_GetObjectItem(item, "goles");
+        cJSON *asistencias_json = cJSON_GetObjectItem(item, "asistencias");
+        cJSON *partidos_json = cJSON_GetObjectItem(item, "partidos");
+
+        if (!cJSON_IsString(camiseta_json) || !cJSON_IsNumber(goles_json) ||
+                !cJSON_IsNumber(asistencias_json) || !cJSON_IsNumber(partidos_json))
+            continue;
+
+        const char *camiseta = camiseta_json->valuestring;
+        int goles = goles_json->valueint;
+        int asistencias = asistencias_json->valueint;
+        int partidos = partidos_json->valueint;
+
+        printf("Estadística de '%s': Goles=%d, Asistencias=%d, Partidos=%d\n", camiseta, goles, asistencias, partidos);
+    }
+
+    cJSON_Delete(json);
+    printf("Importación de estadísticas completada\n");
+}
+
+/**
+ * @brief Importa camisetas desde archivo JSON con pausa.
+ */
+static void importar_camisetas_con_pausa()
+{
+    printf("Importando camisetas...\n");
+    importar_camisetas_json();
+    printf("Importacion de camisetas completada.\n");
+    pause_console();
+}
+
+/**
+ * @brief Importa partidos desde archivo JSON con pausa.
+ */
+static void importar_partidos_con_pausa()
+{
+    printf("Importando partidos...\n");
+    importar_partidos_json();
+    printf("Importacion de partidos completada.\n");
+    pause_console();
+}
+
+/**
+ * @brief Importa lesiones desde archivo JSON con pausa.
+ */
+static void importar_lesiones_con_pausa()
+{
+    printf("Importando lesiones...\n");
+    importar_lesiones_json();
+    printf("Importacion de lesiones completada.\n");
+    pause_console();
+}
+
+/**
+ * @brief Importa estadísticas desde archivo JSON con pausa.
+ */
+static void importar_estadisticas_con_pausa()
+{
+    printf("Importando estadísticas...\n");
+    importar_estadisticas_json();
+    printf("Importacion de estadísticas completada.\n");
+    pause_console();
+}
+
+/**
+ * @brief Importa todos los datos desde archivos JSON con pausa.
+ */
+static void importar_todo_con_pausa()
+{
+    printf("Importando todo...\n");
     importar_camisetas_json();
     importar_partidos_json();
-    importar_estadisticas_json();
     importar_lesiones_json();
-
-    printf("\nImportaciones Completadas Correctamente.\n");
+    importar_estadisticas_json();
+    printf("Importacion de todo completada.\n");
     pause_console();
+}
+
+/**
+ * @brief Menu para importar datos desde archivos JSON según selección del usuario.
+ *
+ * Esta función muestra un menú para que el usuario seleccione qué datos importar:
+ * camisetas, partidos, lesiones, estadísticas, todo o volver.
+ * Llama a las funciones de importación correspondientes desde archivos JSON.
+ * Al final, muestra un mensaje de confirmación y pausa la consola.
+ */
+void menu_importar()
+{
+    MenuItem items[] =
+    {
+        {1, "Camisetas", importar_camisetas_con_pausa},
+        {2, "Partidos", importar_partidos_con_pausa},
+        {3, "Lesiones", importar_lesiones_con_pausa},
+        {4, "Estadisticas", importar_estadisticas_con_pausa},
+        {5, "Todo", importar_todo_con_pausa},
+        {0, "Volver", NULL}
+    };
+    ejecutar_menu("IMPORTAR DATOS DESDE JSON", items, 6);
 }

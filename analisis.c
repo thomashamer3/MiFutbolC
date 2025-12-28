@@ -196,20 +196,20 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
 
     if (diff_goles > 0.5 && diff_rendimiento > 0.5)
     {
-        printf("¡Excelente! Estás en racha ascendente. Sigue así, tu esfuerzo está dando frutos.\n");
-        printf("Manten la consistencia y continúa trabajando duro en los entrenamientos.\n");
+        printf("Excelente Estas en racha ascendente. Sigue asi, tu esfuerzo está dando frutos.\n");
+        printf("Manten la consistencia y continua trabajando duro en los entrenamientos.\n");
     }
     else if (diff_goles < -0.5 || diff_rendimiento < -0.5)
     {
-        printf("No te desanimes. Todos tenemos días dificiles. Analiza que puedes mejorar:\n");
-        printf("- Revisa tu preparación física y técnica.\n");
+        printf("No te desanimes. Todos tenemos dias dificiles. Analiza que puedes mejorar:\n");
+        printf("- Revisa tu preparación física y tecnica.\n");
         printf("- Habla con tu entrenador sobre estrategias.\n");
         printf("- Recuerda: el fútbol es un deporte de perseverancia.\n");
     }
     else
     {
         printf("Buen trabajo manteniendo el nivel. La consistencia es clave en el futbol.\n");
-        printf("Sigue entrenando y mantén la motivación alta. ¡Cada partido es una oportunidad!\n");
+        printf("Sigue entrenando y manten la motivacion alta. Cada partido es una oportunidad!\n");
     }
 }
 

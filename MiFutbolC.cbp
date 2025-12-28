@@ -91,6 +91,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="partido.h" />
+		<Unit filename="recurso.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
 		<Unit filename="sqlite3.c">
 			<Option compilerVar="CC" />
 		</Unit>

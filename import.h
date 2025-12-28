@@ -28,23 +28,6 @@ void importar_camisetas_json();
  */
 void importar_partidos_json();
 
-/** @} */
-
-/** @name Funciones de importación de estadísticas */
-/** @{ */
-
-/**
- * @brief Importa estadísticas desde archivo JSON
- *
- * Lee el archivo JSON de estadísticas y las procesa en la base de datos.
- */
-void importar_estadisticas_json();
-
-/** @} */
-
-/** @name Funciones de importación de lesiones */
-/** @{ */
-
 /**
  * @brief Importa lesiones desde archivo JSON
  *
@@ -52,16 +35,13 @@ void importar_estadisticas_json();
  */
 void importar_lesiones_json();
 
-/** @} */
-
-/** @name Función general de importación */
-/** @{ */
-
 /**
- * @brief Importa todos los datos desde archivos JSON
+ * @brief Importa estadísticas desde archivo JSON
  *
- * Ejecuta todas las funciones de importación para cargar todos los datos.
+ * Lee el archivo JSON de estadísticas y las procesa.
  */
-void importar_todo_json();
+void importar_estadisticas_json();
 
 /** @} */
+
+void menu_importar();

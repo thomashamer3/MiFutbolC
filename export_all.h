@@ -7,7 +7,7 @@
  */
 
 /**
- * @brief Exporta todos los datos del sistema en todos los formatos disponibles
+ * @brief Menu para exportar todos los datos del sistema en todos los formatos disponibles
  *
  * Esta función ejecuta todas las funciones de exportación para camisetas,
  * partidos, estadísticas y lesiones, generando archivos en formatos
@@ -16,4 +16,4 @@
  * @note Los archivos se generan en el directorio 'data/' del proyecto
  * @note Esta operación puede tomar tiempo dependiendo de la cantidad de datos
  */
-void exportar_todo();
+void menu_exportar();

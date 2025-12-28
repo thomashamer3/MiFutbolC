@@ -23,9 +23,9 @@ void ejecutar_menu(const char *titulo, MenuItem *items, int cantidad)
         print_header(titulo);
 
         for (int i = 0; i < cantidad; i++)
-            printf("%d %s\n", items[i].opcion, items[i].texto);
+            printf("%d.%s\n", items[i].opcion, items[i].texto);
 
-        opcion = input_int("> ");
+        opcion = input_int(">");
 
         for (int i = 0; i < cantidad; i++)
         {

@@ -91,16 +91,26 @@ int existe_id(const char *tabla, int id);
  */
 int confirmar(const char *msg);
 
+
+
 /**
- * @brief Obtiene la ruta del directorio de exportaciones.
- *
- * Construye y devuelve la ruta completa del directorio donde se almacenan
- * los archivos exportados. El directorio se crea si no existe.
- * En Windows, se ubica en el escritorio del usuario; en sistemas Unix/Linux,
- * en el directorio home del usuario.
- *
- * @return Un puntero a una cadena estática con la ruta del directorio.
+ * @brief Pide el nombre del usuario en la primera ejecución
  */
-char* obtener_directorio_exports();
+void pedir_nombre_usuario();
+
+/**
+ * @brief Muestra el nombre actual del usuario
+ */
+void mostrar_nombre_usuario();
+
+/**
+ * @brief Permite editar el nombre del usuario
+ */
+void editar_nombre_usuario();
+
+/**
+ * @brief Menú de gestión de usuario
+ */
+void menu_usuario();
 
 #endif

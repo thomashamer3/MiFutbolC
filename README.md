@@ -1,4 +1,4 @@
-1# MiFutbolC - Proyecto De Uso Personal
+# MiFutbolC - Proyecto De Uso Personal
 
 ## Descripción
 
@@ -11,8 +11,8 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 - **Gestión de Camisetas**: Crear, listar, editar y eliminar camisetas de fútbol.
 - **Gestión de Canchas**: Gestionar canchas de fútbol.
 - **Gestión de Partidos**: Registrar partidos con detalles como cancha, goles, asistencias y camiseta utilizada.
-- **Estadisticas**: Visualizar estadísticas agregadas del sistema.
-- **Analisis de Rendimiento**: Comparar el rendimiento de los últimos 5 partidos con promedios generales y calcular rachas de victorias y derrotas.
+- **Estadísticas**: Visualizar estadísticas agregadas del sistema.
+- **Análisis de Rendimiento**: Comparar el rendimiento de los últimos 5 partidos con promedios generales y calcular rachas de victorias y derrotas.
 - **Gestión de Lesiones**: Registrar y gestionar lesiones de jugadores.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos.
 - **Exportación de Datos**: Exportar todos los datos en formatos CSV, TXT, JSON y HTML.
@@ -24,6 +24,7 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 
 - **Compilador C**: Compatible con GCC o MinGW (incluido en CodeBlocks).
 - **SQLite3**: Biblioteca incluida en el proyecto (sqlite3.c y sqlite3.h).
+- **cJSON**: Biblioteca incluida en el proyecto (cJSON.c y cJSON.h), bajo licencia MIT.
 - **Sistema Operativo**: Windows, Linux o macOS.
 - **Herramientas de Desarrollo**:
   - CodeBlocks (recomendado para compilar el proyecto .cbp).
@@ -45,7 +46,7 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 3. Compila todos los archivos fuente:
 
 ```bash
-gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c -I.
+gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c cJSON_Utils.c -I.
 ```
 
 4. Ejecuta el programa:
@@ -61,9 +62,9 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 1. **Camisetas**: Gestionar camisetas (crear, listar, editar, eliminar).
 2. **Canchas**: Gestionar canchas de fútbol.
 3. **Partidos**: Gestionar partidos (crear, listar, modificar, eliminar).
-4. **Estadisticas**: Mostrar estadísticas generales del sistema.
+4. **Estadísticas**: Mostrar estadísticas generales del sistema.
 5. **Logros**: Gestionar logros y badges.
-6. **Analisis**: Mostrar análisis de rendimiento.
+6. **Análisis**: Mostrar análisis de rendimiento.
 7. **Lesiones**: Gestionar lesiones de jugadores.
 8. **Exportar Todo**: Exportar todos los datos en múltiples formatos.
 9. **Importar Todo**: Importar todos los datos desde archivos JSON.
@@ -78,10 +79,12 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 
 ## Estructura del Proyecto
 
+```
 MiFutbolC/
 ├── main.c                 # Punto de entrada del programa
 ├── db.c / db.h            # Gestión de la base de datos SQLite
 ├── menu.c / menu.h        # Sistema de menús interactivos
+├── menu_camisetas.h       # Declaraciones específicas para menús de camisetas
 ├── models.h               # Definiciones de estructuras comunes
 ├── camiseta.c / camiseta.h # Gestión de camisetas
 ├── partido.c / partido.h   # Gestión de partidos
@@ -89,27 +92,30 @@ MiFutbolC/
 ├── analisis.c / analisis.h # Análisis de rendimiento
 ├── cancha.c / cancha.h    # Gestión de canchas
 ├── logros.c / logros.h    # Gestión de logros
-├── lesion.c / lesion.h     # Gestión de lesiones
+├── lesion.c / lesion.h    # Gestión de lesiones
 ├── export.c / export.h     # Funciones de exportación individuales
 ├── export_all.c / export_all.h # Exportación completa de datos
 ├── import.c / import.h     # Funciones de importación desde JSON
 ├── utils.c / utils.h       # Utilidades auxiliares
-├── cJSON.c / cJSON.h       # Biblioteca cJSON para manejo de JSON
+├── cjson/                 # Directorio de la biblioteca cJSON
+│   ├── cJSON.c / cJSON.h       # Biblioteca cJSON para manejo de JSON
+│   └── cJSON_Utils.c / cJSON_Utils.h # Utilidades adicionales para cJSON
 ├── sqlite3.c / sqlite3.h   # Biblioteca SQLite embebida
 ├── MiFutbolC.cbp          # Proyecto CodeBlocks
 ├── data/                  # Directorio de datos
 │   ├── mifutbol.db        # Base de datos SQLite
 │   ├── *.csv              # Archivos exportados en CSV
-│   ├──*.txt              # Archivos exportados en TXT
+│   ├── *.txt              # Archivos exportados en TXT
 │   ├── *.json             # Archivos exportados en JSON
-│   └──*.html             # Archivos exportados en HTML
+│   └── *.html             # Archivos exportados en HTML
 ├── bin/                   # Binarios compilados
 │   └── Debug/
 │       └── MiFutbolC.exe
 ├── doxygen/               # Documentación generada
 │   ├── doxyfile           # Configuración de Doxygen
 │   └── html/              # Documentación HTML
-└── obj/                   # Archivos objeto de compilación
+└── obj/                   # Archivos objeto de compilación y archivos temporales
+```
 
 ## Base de Datos
 
@@ -118,8 +124,11 @@ El proyecto utiliza SQLite para almacenar datos. La base de datos se crea autom�
 ### Tablas Principales
 
 - **camiseta**: Almacena información de camisetas (ID, nombre, sorteada).
-- **partido**: Registra partidos (ID, cancha, fecha/hora, goles, asistencias, camiseta_id).
-- **lesion**: Gestiona lesiones (ID, jugador, tipo, fecha, duración).
+- **cancha**: Gestiona canchas de fútbol (ID, nombre, ubicacion).
+- **partido**: Registra partidos (ID, cancha_id, fecha/hora, goles, asistencias, rendimiento, cansancio, animo, camiseta_id).
+- **lesion**: Gestiona lesiones (ID, jugador, tipo, fecha, duracion).
+- **logros**: Almacena logros y badges (ID, nombre, descripcion, nivel, objetivo, categoria).
+- **estadisticas**: Contiene estadísticas calculadas (ID, tipo, valor, camiseta_id).
 
 ### Inicialización
 
@@ -214,7 +223,7 @@ El sistema de menús implementa un patrón de Comando simplificado:
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `main.c`, presenta las opciones principales del sistema (Camisetas, Canchas, Partidos, Estadisticas, Logros, Analisis, Lesiones, Exportar Todo, Importar Todo, Salir).
+- **Menú Principal**: Gestionado en `main.c`, presenta las opciones principales del sistema (Camisetas, Canchas, Partidos, Estadísticas, Logros, Análisis, Lesiones, Exportar Todo, Importar Todo, Salir).
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `models.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
 - **Navegación**: La función `ejecutar_menu()` maneja la lógica de mostrar opciones, leer selección del usuario y ejecutar la acción correspondiente.

@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "db.h"
+#include "menu.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -161,11 +162,22 @@ void print_header(const char *titulo)
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
 
+    char *nombre_usuario = get_user_name();
+    if (!nombre_usuario)
+    {
+        nombre_usuario = "Usuario Desconocido";
+    }
+
     printf("========================================\n");
-    printf(" Usuario: Hamer\n");
+    printf(" Usuario: %s\n", nombre_usuario);
     printf(" Fecha  : %s\n", fecha);
     printf(" %s\n", titulo);
     printf("========================================\n\n");
+
+    if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
+    {
+        free(nombre_usuario);
+    }
 }
 
 void pause_console()
@@ -194,28 +206,95 @@ int confirmar(const char *msg)
 }
 
 /**
- * @brief Obtiene la ruta del directorio de exportaciones.
- *
- * Construye y devuelve la ruta completa del directorio donde se almacenan
- * los archivos exportados. El directorio se crea si no existe.
- * En Windows, se ubica en el escritorio del usuario; en sistemas Unix/Linux,
- * en el directorio home del usuario.
- *
- * @return Un puntero a una cadena estática con la ruta del directorio.
+ * @brief Pide el nombre del usuario en la primera ejecución
  */
-char* obtener_directorio_exports()
+void pedir_nombre_usuario()
 {
-    static char path[512];
-    char *home;
+    char nombre[100];
+    printf("!Bienvenido a MiFutbolC!\n");
+    printf("Por favor, ingresa tu Nombre: ");
 
-#ifdef _WIN32
-    home = getenv("USERPROFILE");
-    snprintf(path, sizeof(path), "%s\\Desktop\\MiFutbolC Exports", home);
-#else
-    home = getenv("HOME");
-    snprintf(path, sizeof(path), "%s/Desktop/MiFutbolC Exports", home);
-#endif
+    fgets(nombre, sizeof(nombre), stdin);
+    nombre[strcspn(nombre, "\n")] = 0;
 
-    MKDIR(path);
-    return path;
+    // Validar que no esté vacío
+    while (strlen(nombre) == 0)
+    {
+        printf("El nombre no puede estar vacio. Ingresa tu nombre: ");
+        fgets(nombre, sizeof(nombre), stdin);
+        nombre[strcspn(nombre, "\n")] = 0;
+    }
+
+    if (set_user_name(nombre))
+    {
+        printf("!Bienvenido, %s!\n", nombre);
+    }
+    else
+    {
+        printf("Error al guardar el nombre. Intenta nuevamente.\n");
+    }
+    pause_console();
+}
+
+/**
+ * @brief Muestra el nombre actual del usuario
+ */
+void mostrar_nombre_usuario()
+{
+    char *nombre = get_user_name();
+    if (nombre)
+    {
+        printf("Tu nombre actual es: %s\n", nombre);
+        free(nombre);
+    }
+    else
+    {
+        printf("No se pudo obtener el nombre del usuario.\n");
+    }
+    pause_console();
+}
+
+/**
+ * @brief Permite editar el nombre del usuario
+ */
+void editar_nombre_usuario()
+{
+    char nombre[100];
+    printf("Ingresa tu nuevo nombre: ");
+
+    fgets(nombre, sizeof(nombre), stdin);
+    nombre[strcspn(nombre, "\n")] = 0; // Remover newline
+
+    // Validar que no esté vacío
+    while (strlen(nombre) == 0)
+    {
+        printf("El nombre no puede estar vacio. Ingresa tu nuevo nombre: ");
+        fgets(nombre, sizeof(nombre), stdin);
+        nombre[strcspn(nombre, "\n")] = 0;
+    }
+
+    if (set_user_name(nombre))
+    {
+        printf("Nombre actualizado exitosamente a: %s\n", nombre);
+    }
+    else
+    {
+        printf("Error al actualizar el nombre.\n");
+    }
+    pause_console();
+}
+
+/**
+ * @brief Menú de gestión de usuario
+ */
+void menu_usuario()
+{
+    MenuItem items[] =
+    {
+        {1, "Mostrar Nombre", mostrar_nombre_usuario},
+        {2, "Editar Nombre", editar_nombre_usuario},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("USUARIO", items, 3);
 }

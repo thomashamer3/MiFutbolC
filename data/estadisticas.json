@@ -1,3 +1,9 @@
-[
-  { "camiseta":"Hamer 10", "goles":1, "asistencias":4, "partidos":1 }
-]
+[{
+		"camiseta":	"Ejemplo 11",
+		"goles":	3,
+		"asistencias":	4,
+		"partidos":	2,
+		"victorias":	1,
+		"empates":	0,
+		"derrotas":	1
+	}]

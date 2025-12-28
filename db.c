@@ -8,6 +8,8 @@
 
 #include "db.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -69,7 +71,11 @@ int db_init()
         " jugador TEXT NOT NULL,"
         " tipo TEXT NOT NULL,"
         " descripcion TEXT NOT NULL,"
-        " fecha TEXT NOT NULL);";
+        " fecha TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS usuario ("
+        " id INTEGER PRIMARY KEY,"
+        " nombre TEXT NOT NULL);";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
@@ -115,4 +121,61 @@ void db_close()
 {
     if (db)
         sqlite3_close(db);
+}
+
+/**
+ * @brief Obtiene el nombre del usuario de la base de datos
+ *
+ * Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe.
+ * Si no hay usuario registrado, devuelve NULL.
+ *
+ * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
+ */
+char* get_user_name()
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT nombre FROM usuario LIMIT 1;";
+    char *nombre = NULL;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *temp = (const char*)sqlite3_column_text(stmt, 0);
+            if (temp)
+            {
+                nombre = strdup(temp);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return nombre;
+}
+
+/**
+ * @brief Establece o actualiza el nombre del usuario en la base de datos
+ *
+ * Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.
+ *
+ * @param nombre El nombre del usuario a guardar
+ * @return 1 si la operación fue exitosa, 0 en caso de error
+ */
+int set_user_name(const char* nombre)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "INSERT OR REPLACE INTO usuario (id, nombre) VALUES (1, ?);";
+    int result = 0;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            result = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return result;
 }

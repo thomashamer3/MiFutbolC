@@ -71,6 +71,7 @@ static void query(const char *titulo, const char *sql)
  */
 void mostrar_estadisticas_generales()
 {
+    clear_screen();
     print_header("ESTADISTICAS");
     query("Camiseta con mas Goles",
           "SELECT c.nombre, IFNULL(SUM(p.goles),0) "
@@ -156,8 +157,8 @@ void mostrar_estadisticas_generales()
  */
 void mostrar_estadisticas_por_mes()
 {
+    clear_screen();
     print_header("ESTADISTICAS POR MES");
-
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
@@ -194,7 +195,7 @@ void mostrar_estadisticas_por_mes()
     }
 
     if (!hay)
-        printf("No hay estadísticas disponibles.\n");
+        printf("No hay estadisticas disponibles.\n");
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -208,8 +209,8 @@ void mostrar_estadisticas_por_mes()
  */
 void mostrar_estadisticas_por_anio()
 {
+    clear_screen();
     print_header("ESTADISTICAS POR ANIO");
-
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
@@ -235,7 +236,7 @@ void mostrar_estadisticas_por_anio()
         if (strcmp(current_anio, anio) != 0)
         {
             if (hay) printf("\n");
-            printf("Año: %s\n", anio);
+            printf("Anio: %s\n", anio);
             printf("----------------------------------------\n");
             strcpy(current_anio, anio);
         }
@@ -261,7 +262,7 @@ void menu_estadisticas()
     {
         {1, "Generales", mostrar_estadisticas_generales},
         {2, "Por Mes", mostrar_estadisticas_por_mes},
-        {3, "Por Año", mostrar_estadisticas_por_anio},
+        {3, "Por Anio", mostrar_estadisticas_por_anio},
         {0, "Volver", NULL}
     };
 

@@ -2,7 +2,7 @@
  * @file camiseta.c
  * @brief Funciones para gestionar camisetas (jerseys)
  * @author Usuario
- * @date 2024
+ * @date 2025
  */
 
 #include "camiseta.h"

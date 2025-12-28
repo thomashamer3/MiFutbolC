@@ -79,6 +79,13 @@ void exportar_partidos_html();
 /** @{ */
 
 /**
+ * @brief Exporta las estadísticas generales a formato CSV
+ *
+ * Genera un archivo CSV con las estadísticas agregadas del sistema.
+ */
+void exportar_estadisticas_csv();
+
+/**
  * @brief Exporta las estadísticas generales a formato TXT
  *
  * Genera un archivo de texto con las estadísticas agregadas del sistema.

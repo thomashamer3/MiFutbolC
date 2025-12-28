@@ -108,9 +108,15 @@ $(function(){initNavTree('db_8h_source.html',''); initResizable(true); });
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keywordtype">int</span> <a class="code hl_function" href="db_8h.html#a68444176bb98032c54b65b982312cfa6">db_init</a>();</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span></div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keywordtype">void</span> <a class="code hl_function" href="db_8h.html#a9130d3b5560da57a53135491d888c7b7">db_close</a>();</div>
-<div class="ttc" id="adb_8c_html_ad6e663497d2c934364b3bcf07496b30b"><div class="ttname"><a href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a></div><div class="ttdeci">sqlite3 * db</div><div class="ttdoc">Puntero global a la conexión de la base de datos SQLite.</div><div class="ttdef"><b>Definition</b> db.c:21</div></div>
-<div class="ttc" id="adb_8h_html_a68444176bb98032c54b65b982312cfa6"><div class="ttname"><a href="db_8h.html#a68444176bb98032c54b65b982312cfa6">db_init</a></div><div class="ttdeci">int db_init()</div><div class="ttdoc">Inicializa la conexión a la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:38</div></div>
-<div class="ttc" id="adb_8h_html_a9130d3b5560da57a53135491d888c7b7"><div class="ttname"><a href="db_8h.html#a9130d3b5560da57a53135491d888c7b7">db_close</a></div><div class="ttdeci">void db_close()</div><div class="ttdoc">Cierra la conexión a la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:114</div></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="keywordtype">char</span>* <a class="code hl_function" href="db_8h.html#a39fef26de49fd814ed415e3b49e3903b">get_user_name</a>();</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span></div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="keywordtype">int</span> <a class="code hl_function" href="db_8h.html#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* nombre);</div>
+<div class="ttc" id="adb_8c_html_ad6e663497d2c934364b3bcf07496b30b"><div class="ttname"><a href="db_8c.html#ad6e663497d2c934364b3bcf07496b30b">db</a></div><div class="ttdeci">sqlite3 * db</div><div class="ttdoc">Puntero global a la conexión de la base de datos SQLite.</div><div class="ttdef"><b>Definition</b> db.c:23</div></div>
+<div class="ttc" id="adb_8h_html_a39fef26de49fd814ed415e3b49e3903b"><div class="ttname"><a href="db_8h.html#a39fef26de49fd814ed415e3b49e3903b">get_user_name</a></div><div class="ttdeci">char * get_user_name()</div><div class="ttdoc">Obtiene el nombre del usuario de la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:134</div></div>
+<div class="ttc" id="adb_8h_html_a68444176bb98032c54b65b982312cfa6"><div class="ttname"><a href="db_8h.html#a68444176bb98032c54b65b982312cfa6">db_init</a></div><div class="ttdeci">int db_init()</div><div class="ttdoc">Inicializa la conexión a la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:40</div></div>
+<div class="ttc" id="adb_8h_html_a74ed9cccce806cf8c1f4c84f00a84344"><div class="ttname"><a href="db_8h.html#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a></div><div class="ttdeci">int set_user_name(const char *nombre)</div><div class="ttdoc">Establece o actualiza el nombre del usuario en la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:164</div></div>
+<div class="ttc" id="adb_8h_html_a9130d3b5560da57a53135491d888c7b7"><div class="ttname"><a href="db_8h.html#a9130d3b5560da57a53135491d888c7b7">db_close</a></div><div class="ttdeci">void db_close()</div><div class="ttdoc">Cierra la conexión a la base de datos.</div><div class="ttdef"><b>Definition</b> db.c:120</div></div>
 <div class="ttc" id="astructsqlite3_html"><div class="ttname"><a href="structsqlite3.html">sqlite3</a></div><div class="ttdef"><b>Definition</b> sqlite3.c:18280</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
@@ -118,7 +124,7 @@ $(function(){initNavTree('db_8h_source.html',''); initResizable(true); });
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8h.html">db.h</a></li>
-    <li class="footer">Generated on Fri Dec 26 2025 17:16:30 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Sun Dec 28 2025 18:39:19 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

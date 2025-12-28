@@ -1,3 +1,7 @@
-[
-
-]
+[{
+		"id":	1,
+		"jugador":	"Hamer",
+		"tipo":	"Tendinitis Rotuliana",
+		"descripcion":	"Inflamacion tendon rotuliano rodilla izquierda",
+		"fecha":	"28/12/2025 18:08"
+	}]

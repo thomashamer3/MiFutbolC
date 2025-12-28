@@ -108,6 +108,8 @@ $(function(){initNavTree('db_8c.html',''); initResizable(true); });
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="db_8h_source.html">db.h</a>&quot;</code><br />
 <code>#include &lt;stdio.h&gt;</code><br />
+<code>#include &lt;stdlib.h&gt;</code><br />
+<code>#include &lt;string.h&gt;</code><br />
 <code>#include &lt;sys/stat.h&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
@@ -123,6 +125,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a9130d3b5560da57a53135491d888c7b7" id="r_a9130d3b5560da57a53135491d888c7b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9130d3b5560da57a53135491d888c7b7">db_close</a> ()</td></tr>
 <tr class="memdesc:a9130d3b5560da57a53135491d888c7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cierra la conexión a la base de datos.  <br /></td></tr>
 <tr class="separator:a9130d3b5560da57a53135491d888c7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39fef26de49fd814ed415e3b49e3903b" id="r_a39fef26de49fd814ed415e3b49e3903b"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a39fef26de49fd814ed415e3b49e3903b">get_user_name</a> ()</td></tr>
+<tr class="memdesc:a39fef26de49fd814ed415e3b49e3903b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el nombre del usuario de la base de datos.  <br /></td></tr>
+<tr class="separator:a39fef26de49fd814ed415e3b49e3903b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74ed9cccce806cf8c1f4c84f00a84344" id="r_a74ed9cccce806cf8c1f4c84f00a84344"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a> (const char *nombre)</td></tr>
+<tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece o actualiza el nombre del usuario en la base de datos.  <br /></td></tr>
+<tr class="separator:a74ed9cccce806cf8c1f4c84f00a84344"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -195,6 +203,54 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a39fef26de49fd814ed415e3b49e3903b" name="a39fef26de49fd814ed415e3b49e3903b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39fef26de49fd814ed415e3b49e3903b">&#9670;&#160;</a></span>get_user_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * get_user_name </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene el nombre del usuario de la base de datos. </p>
+<p>Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe. Si no hay usuario registrado, devuelve NULL.</p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con el nombre del usuario, o NULL si no existe </dd></dl>
+
+</div>
+</div>
+<a id="a74ed9cccce806cf8c1f4c84f00a84344" name="a74ed9cccce806cf8c1f4c84f00a84344"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a74ed9cccce806cf8c1f4c84f00a84344">&#9670;&#160;</a></span>set_user_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int set_user_name </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>nombre</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Establece o actualiza el nombre del usuario en la base de datos. </p>
+<p>Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nombre</td><td>El nombre del usuario a guardar </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 si la operación fue exitosa, 0 en caso de error </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Variable Documentation</h2>
 <a id="ad6e663497d2c934364b3bcf07496b30b" name="ad6e663497d2c934364b3bcf07496b30b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad6e663497d2c934364b3bcf07496b30b">&#9670;&#160;</a></span>db</h2>
@@ -219,7 +275,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8c.html">db.c</a></li>
-    <li class="footer">Generated on Fri Dec 26 2025 17:16:37 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Sun Dec 28 2025 18:39:26 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

@@ -34,3 +34,23 @@ int db_init();
  * Finaliza la conexión activa a la base de datos SQLite y libera los recursos asociados.
  */
 void db_close();
+
+/**
+ * @brief Obtiene el nombre del usuario de la base de datos
+ *
+ * Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe.
+ * Si no hay usuario registrado, devuelve NULL.
+ *
+ * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
+ */
+char* get_user_name();
+
+/**
+ * @brief Establece o actualiza el nombre del usuario en la base de datos
+ *
+ * Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.
+ *
+ * @param nombre El nombre del usuario a guardar
+ * @return 1 si la operación fue exitosa, 0 en caso de error
+ */
+int set_user_name(const char* nombre);

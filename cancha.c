@@ -122,6 +122,7 @@ void listar_canchas()
  */
 void eliminar_cancha()
 {
+    clear_screen();
     print_header("ELIMINAR CANCHA");
 
     if (!hay_canchas())
@@ -166,6 +167,7 @@ void eliminar_cancha()
  */
 void modificar_cancha()
 {
+    clear_screen();
     print_header("MODIFICAR CANCHA");
 
     if (!hay_canchas())

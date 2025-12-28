@@ -4,6 +4,7 @@ var export_8h =
     [ "exportar_camisetas_html", "export_8h.html#a0c289b8d0dbfc6b786f218d69a000940", null ],
     [ "exportar_camisetas_json", "export_8h.html#a8602ec3b414c89da49bf897be2e83818", null ],
     [ "exportar_camisetas_txt", "export_8h.html#a37023c535504f30c43dd98e5b3ea6323", null ],
+    [ "exportar_estadisticas_csv", "export_8h.html#a9f0eb85d9b1f30b28b8b815d0dc16b32", null ],
     [ "exportar_estadisticas_html", "export_8h.html#a532cfe356da98e66cbc7584d29e4a8cd", null ],
     [ "exportar_estadisticas_json", "export_8h.html#a18a8382d9891be482ba406d2ded69cde", null ],
     [ "exportar_estadisticas_txt", "export_8h.html#aca1f3044873bca6487683322ee1ca3b8", null ],

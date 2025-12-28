@@ -395,18 +395,18 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
         {
         case 0:
             estado_texto = "[NO INICIADO]";
-            color = "\x1b[31m";//rojo
+            color = "\x1b[31m"; // rojo
             break;
         case 1:
             estado_texto = "[EN PROGRESO]";
-            color = "\x1b[33m";//amarillo
+            color = "\x1b[33m"; // amarillo
             break;
         case 2:
             estado_texto = "[COMPLETADO]";
             color = "\x1b[32m"; // Verde
             break;
         }
-//ARREGLAR COLOR CONSOLA
+        // ARREGLAR COLOR CONSOLA
         printf("%s%s %s\x1b[0m\n", color, LOGROS[i].nombre, estado_texto);
         printf("   %s\n", LOGROS[i].descripcion);
         printf("   Progreso: %d/%d\n\n", progreso, LOGROS[i].objetivo);
@@ -423,19 +423,28 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
  */
 void mostrar_todos_logros()
 {
+    clear_screen();
     print_header("TODOS LOS LOGROS");
 
-    // Listar camisetas disponibles
     printf("Camisetas disponibles:\n");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta ORDER BY id", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
+    int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
+        count++;
     }
     sqlite3_finalize(stmt);
 
-    int camiseta_id = input_int("ID de la camiseta: ");
+    if (count == 0)
+    {
+        printf("No hay camisetas cargadas.\n");
+        pause_console();
+        return;
+    }
+
+    int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
 
     if (!existe_id("camiseta", camiseta_id))
     {
@@ -452,19 +461,29 @@ void mostrar_todos_logros()
  */
 void mostrar_logros_completados()
 {
+    clear_screen();
     print_header("LOGROS COMPLETADOS");
 
-    // Listar camisetas disponibles
+    // Listar camisetas disponibles (solo las que tienen partidos)
     printf("Camisetas disponibles:\n");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta ORDER BY id", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
+    int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
+        count++;
     }
     sqlite3_finalize(stmt);
 
-    int camiseta_id = input_int("ID de la camiseta: ");
+    if (count == 0)
+    {
+        printf("No hay camisetas cargadas.\n");
+        pause_console();
+        return;
+    }
+
+    int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
 
     if (!existe_id("camiseta", camiseta_id))
     {
@@ -481,19 +500,29 @@ void mostrar_logros_completados()
  */
 void mostrar_logros_en_progreso()
 {
+    clear_screen();
     print_header("LOGROS EN PROGRESO");
 
-    // Listar camisetas disponibles
+    // Listar camisetas disponibles (solo las que tienen partidos)
     printf("Camisetas disponibles:\n");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta ORDER BY id", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
+    int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
+        count++;
     }
     sqlite3_finalize(stmt);
 
-    int camiseta_id = input_int("ID de la camiseta: ");
+    if (count == 0)
+    {
+        printf("No hay camisetas cargadas.\n");
+        pause_console();
+        return;
+    }
+
+    int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
 
     if (!existe_id("camiseta", camiseta_id))
     {
