@@ -1,3 +1,11 @@
+/**
+ * @file export.c
+ * @brief Funciones para exportar datos de la base de datos a diferentes formatos
+ *
+ * Este archivo contiene funciones para exportar datos de camisetas, lesiones,
+ * partidos y estadísticas a formatos CSV, TXT, JSON y HTML.
+ */
+
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -9,6 +17,15 @@
 
 #define EXPORT_PATH "data"
 
+/**
+ * @brief Construye la ruta completa para un archivo de exportación
+ *
+ * Combina el directorio de trabajo actual con la ruta de exportación definida
+ * y el nombre del archivo proporcionado para crear una ruta completa.
+ *
+ * @param filename Nombre del archivo a exportar
+ * @return Cadena de caracteres con la ruta completa del archivo
+ */
 static char* get_full_path(const char* filename)
 {
     static char path[1024];
@@ -630,6 +647,12 @@ void exportar_partidos_json()
     fclose(f);
 }
 
+/**
+ * @brief Exporta los partidos a un archivo HTML
+ *
+ * Crea un archivo HTML con una tabla que muestra todos los partidos
+ * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ */
 void exportar_partidos_html()
 {
     sqlite3_stmt *check_stmt;
@@ -850,6 +873,12 @@ void exportar_estadisticas_json()
     fclose(f);
 }
 
+/**
+ * @brief Exporta las estadísticas a un archivo HTML
+ *
+ * Crea un archivo HTML con una tabla que muestra las estadísticas
+ * agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias, número de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ */
 void exportar_estadisticas_html()
 {
     sqlite3_stmt *check_stmt;

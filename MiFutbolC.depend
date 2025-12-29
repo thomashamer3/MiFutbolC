@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1766859415 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1766979967 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	<stddef.h>
 	<stdio.h>
 	<stdlib.h>
@@ -109,7 +109,7 @@
 	<direct.h>
 	<sys/stat.h>
 
-1766857565 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1766979784 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 
 1766963344 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
@@ -122,13 +122,14 @@
 
 1766724396 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1766957207 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1766979445 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
 	"utils.h"
 	"camiseta.h"
 	<stdio.h>
+	<string.h>
 
 1766701019 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
 
@@ -142,7 +143,7 @@
 
 1766779596 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1766957994 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1766979652 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"

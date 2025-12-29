@@ -4,7 +4,7 @@
 #include "utils.h"
 #include "camiseta.h"
 #include <stdio.h>
-
+#include <string.h>
 /**
  * @brief Convierte el número de resultado a texto
  *
@@ -337,8 +337,20 @@ void eliminar_partido()
     pause_console();
 }
 
+/**
+ * @brief Variable global para almacenar el ID del partido actualmente siendo modificado
+ *
+ * Esta variable se utiliza en las funciones de modificación para identificar
+ * qué partido se está editando en el menú de modificación.
+ */
 static int current_partido_id;
 
+/**
+ * @brief Modifica la cancha de un partido existente
+ *
+ * Muestra la lista de canchas disponibles, solicita el nuevo ID de cancha,
+ * verifica que exista y actualiza el campo cancha_id en la base de datos.
+ */
 static void modificar_cancha_partido()
 {
     printf("Canchas disponibles:\n");
@@ -362,11 +374,21 @@ static void modificar_cancha_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica la fecha y hora de un partido existente
+ *
+ * Solicita al usuario la nueva fecha en formato dd/mm/yyyy y la nueva hora en formato hh:mm,
+ * combina ambos en una cadena y actualiza el campo fecha_hora en la base de datos.
+ */
 static void modificar_fecha_hora_partido()
 {
     char fecha[20], hora[10], fecha_hora[30];
-    input_string("Nueva fecha (dd/mm/yyyy): ", fecha, sizeof(fecha));
-    input_string("Nueva hora (hh:mm): ", hora, sizeof(hora));
+    printf("Nueva fecha (dd/mm/yyyy): ");
+    fgets(fecha, sizeof(fecha), stdin);
+    fecha[strcspn(fecha, "\n")] = 0;
+    printf("Nueva hora (hh:mm): ");
+    fgets(hora, sizeof(hora), stdin);
+    hora[strcspn(hora, "\n")] = 0;
     sprintf(fecha_hora, "%s %s", fecha, hora);
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "UPDATE partido SET fecha_hora=? WHERE id=?", -1, &stmt, NULL);
@@ -378,6 +400,11 @@ static void modificar_fecha_hora_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el número de goles de un partido existente
+ *
+ * Solicita al usuario el nuevo número de goles y actualiza el campo goles en la base de datos.
+ */
 static void modificar_goles_partido()
 {
     int goles = input_int("Nuevos goles: ");
@@ -391,6 +418,11 @@ static void modificar_goles_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el número de asistencias de un partido existente
+ *
+ * Solicita al usuario el nuevo número de asistencias y actualiza el campo asistencias en la base de datos.
+ */
 static void modificar_asistencias_partido()
 {
     int asistencias = input_int("Nuevas asistencias: ");
@@ -404,6 +436,11 @@ static void modificar_asistencias_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el resultado de un partido existente
+ *
+ * Solicita al usuario el nuevo resultado (VICTORIA, EMPATE, DERROTA) y actualiza el campo resultado en la base de datos.
+ */
 static void modificar_resultado_partido()
 {
     int resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
@@ -421,6 +458,12 @@ static void modificar_resultado_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica la camiseta utilizada en un partido existente
+ *
+ * Muestra la lista de camisetas disponibles, solicita el nuevo ID de camiseta,
+ * verifica que exista y actualiza el campo camiseta_id en la base de datos.
+ */
 static void modificar_camiseta_partido()
 {
     listar_camisetas();
@@ -440,6 +483,12 @@ static void modificar_camiseta_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el clima de un partido existente
+ *
+ * Solicita al usuario el nuevo clima (Despejado, Nublado, Lluvia, Ventoso, Mucho Calor, Mucho Frio)
+ * y actualiza el campo clima en la base de datos.
+ */
 static void modificar_clima_partido()
 {
     int clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
@@ -457,6 +506,11 @@ static void modificar_clima_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el día de un partido existente
+ *
+ * Solicita al usuario el nuevo día (Dia, Tarde, Noche) y actualiza el campo dia en la base de datos.
+ */
 static void modificar_dia_partido()
 {
     int dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
@@ -474,6 +528,33 @@ static void modificar_dia_partido()
     pause_console();
 }
 
+/**
+ * @brief Modifica el comentario personal de un partido existente
+ *
+ * Solicita al usuario el nuevo comentario personal y actualiza el campo comentario_personal en la base de datos.
+ */
+static void modificar_comentario_partido()
+{
+    char comentario[256];
+    printf("Nuevo comentario personal: ");
+    fgets(comentario, sizeof(comentario), stdin);
+    comentario[strcspn(comentario, "\n")] = 0;
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE partido SET comentario_personal=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, comentario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Comentario modificado correctamente\n");
+    pause_console();
+}
+
+/**
+ * @brief Modifica todos los campos de un partido existente
+ *
+ * Solicita al usuario nuevos valores para todos los campos del partido (cancha, fecha, hora, goles, asistencias, resultado, camiseta, clima, dia)
+ * y actualiza todos los campos en la base de datos en una sola operación.
+ */
 static void modificar_todo_partido()
 {
     int cancha_id, goles, asistencias, camiseta, resultado, clima, dia;
@@ -583,11 +664,12 @@ void modificar_partido()
         {6, "Camiseta", modificar_camiseta_partido},
         {7, "Clima", modificar_clima_partido},
         {8, "Dia", modificar_dia_partido},
-        {9, "Modificar Todo", modificar_todo_partido},
+        {9, "Comentario", modificar_comentario_partido},
+        {10, "Modificar Todo", modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR PARTIDO", items, 10);
+    ejecutar_menu("MODIFICAR PARTIDO", items, 11);
 }
 /**
  * @brief Busca partidos por camiseta utilizada

@@ -91,8 +91,6 @@ int existe_id(const char *tabla, int id);
  */
 int confirmar(const char *msg);
 
-
-
 /**
  * @brief Pide el nombre del usuario en la primera ejecución
  */
