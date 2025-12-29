@@ -31,7 +31,7 @@ void listar_lesiones();
  * Muestra la lista de lesiones disponibles, solicita el ID a editar,
  * verifica que exista y permite cambiar todos los campos de la lesión.
  */
-void editar_lesion();
+void modificar_lesion();
 
 /**
  * @brief Elimina una lesión de la base de datos

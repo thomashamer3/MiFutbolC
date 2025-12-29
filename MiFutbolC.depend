@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1766979967 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1766982229 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	<stddef.h>
 	<stdio.h>
 	<stdlib.h>
@@ -191,14 +191,15 @@
 
 1766859124 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.h
 
-1766724451 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
+1766982209 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
 
-1766727268 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
+1766982689 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
 	"lesion.h"
 	"menu.h"
 	"db.h"
 	"utils.h"
 	<stdio.h>
+	<string.h>
 
 1766688365 d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.h
 

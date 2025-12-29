@@ -3,6 +3,9 @@
 #include "db.h"
 #include "utils.h"
 #include <stdio.h>
+#include <string.h>
+
+static int current_lesion_id;
 
 /**
  * @brief Obtiene el siguiente ID disponible para una nueva lesión
@@ -117,20 +120,97 @@ void listar_lesiones()
 }
 
 /**
- * @brief Permite editar el tipo y descripción de una lesión existente
- *
- * Muestra la lista de lesiones disponibles, solicita el ID a editar,
- * verifica que exista y permite cambiar el tipo y descripción de la lesión.
- * La fecha de la lesión no se modifica.
+ * @brief Modifica el tipo de una lesión existente
  */
-void editar_lesion()
+static void modificar_tipo_lesion()
+{
+    char tipo[100];
+    input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Tipo modificado correctamente\n");
+    pause_console();
+}
+
+/**
+ * @brief Modifica la descripción de una lesión existente
+ */
+static void modificar_descripcion_lesion()
+{
+    char descripcion[200];
+    input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE lesion SET descripcion=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, descripcion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Descripcion modificada correctamente\n");
+    pause_console();
+}
+
+/**
+ * @brief Modifica la fecha de una lesión existente
+ */
+static void modificar_fecha_lesion()
+{
+    char fecha[20], hora[10], fecha_hora[30];
+    printf("Nueva fecha (dd/mm/yyyy): ");
+    fgets(fecha, sizeof(fecha), stdin);
+    fecha[strcspn(fecha, "\n")] = 0;
+    printf("Nueva hora (hh:mm): ");
+    fgets(hora, sizeof(hora), stdin);
+    hora[strcspn(hora, "\n")] = 0;
+    sprintf(fecha_hora, "%s %s", fecha, hora);
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE lesion SET fecha=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, fecha_hora, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Fecha modificada correctamente\n");
+    pause_console();
+}
+
+/**
+ * @brief Modifica todos los campos de una lesión existente
+ */
+static void modificar_todo_lesion()
+{
+    char tipo[100], descripcion[200], fecha[20];
+    input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
+    input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
+    input_string("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=?, descripcion=?, fecha=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Lesion modificada correctamente\n");
+    pause_console();
+}
+
+/**
+ * @brief Permite modificar una lesión existente
+ *
+ * Muestra la lista de lesiones disponibles, solicita el ID a modificar,
+ * verifica que exista y muestra un menú con opciones para modificar campos individuales o todos.
+ */
+void modificar_lesion()
 {
     clear_screen();
-    print_header("EDITAR LESION");
+    print_header("MODIFICAR LESION");
 
     if (!hay_lesiones())
     {
-        printf("No hay lesiones para editar.\n");
+        printf("No hay lesiones para modificar.\n");
         pause_console();
         return;
     }
@@ -138,34 +218,26 @@ void editar_lesion()
     printf("Lesiones disponibles:\n\n");
     listar_lesiones();
 
-    int id = input_int("\nID a editar (0 para cancelar): ");
-    if (id == 0)
-        return;
+    int id = input_int("\nID Lesion a Modificar (0 para cancelar): ");
 
     if (!existe_id("lesion", id))
     {
-        printf("ID inexistente\n");
-        pause_console();
+        printf("La Lesion no Existe\n");
         return;
     }
 
-    char tipo[100], descripcion[200];
-    input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
-    input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
+    current_lesion_id = id;
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "UPDATE lesion SET tipo=?, descripcion=? WHERE id=?",
-                       -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, id);
+    MenuItem items[] =
+    {
+        {1, "Tipo", modificar_tipo_lesion},
+        {2, "Descripcion", modificar_descripcion_lesion},
+        {3, "Fecha", modificar_fecha_lesion},
+        {4, "Modificar Todo", modificar_todo_lesion},
+        {0, "Volver", NULL}
+    };
 
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    printf("\nLesion actualizada correctamente\n");
-    pause_console();
+    ejecutar_menu("MODIFICAR LESION", items, 5);
 }
 
 /**
@@ -230,7 +302,7 @@ void menu_lesiones()
     {
         {1, "Crear", crear_lesion},
         {2, "Listar", listar_lesiones},
-        {3, "Editar", editar_lesion},
+        {3, "Modificar", modificar_lesion},
         {4, "Eliminar", eliminar_lesion},
         {0, "Volver", NULL}
     };

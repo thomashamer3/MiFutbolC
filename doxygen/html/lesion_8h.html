@@ -115,9 +115,9 @@ Functions</h2></td></tr>
 <tr class="memitem:afa8e77e458392d580db808c040c640cf" id="r_afa8e77e458392d580db808c040c640cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afa8e77e458392d580db808c040c640cf">listar_lesiones</a> ()</td></tr>
 <tr class="memdesc:afa8e77e458392d580db808c040c640cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra un listado de todas las lesiones registradas.  <br /></td></tr>
 <tr class="separator:afa8e77e458392d580db808c040c640cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07eacc03deb978ef542410eee391679a" id="r_a07eacc03deb978ef542410eee391679a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a07eacc03deb978ef542410eee391679a">editar_lesion</a> ()</td></tr>
-<tr class="memdesc:a07eacc03deb978ef542410eee391679a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite editar los datos de una lesión existente.  <br /></td></tr>
-<tr class="separator:a07eacc03deb978ef542410eee391679a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1daccb22e6099fdff8d743d8ab5103a0" id="r_a1daccb22e6099fdff8d743d8ab5103a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1daccb22e6099fdff8d743d8ab5103a0">modificar_lesion</a> ()</td></tr>
+<tr class="memdesc:a1daccb22e6099fdff8d743d8ab5103a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite editar los datos de una lesión existente.  <br /></td></tr>
+<tr class="separator:a1daccb22e6099fdff8d743d8ab5103a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a069cb77f4e555bc58c6cdc96799a39a6" id="r_a069cb77f4e555bc58c6cdc96799a39a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a069cb77f4e555bc58c6cdc96799a39a6">eliminar_lesion</a> ()</td></tr>
 <tr class="memdesc:a069cb77f4e555bc58c6cdc96799a39a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina una lesión de la base de datos.  <br /></td></tr>
 <tr class="separator:a069cb77f4e555bc58c6cdc96799a39a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,28 +147,6 @@ Functions</h2></td></tr>
 <p>Crea una nueva lesión en la base de datos. </p>
 <p>Solicita al usuario los datos de la lesión (jugador, tipo, fecha, duración) y la inserta en la tabla 'lesion'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.</p>
 <p>Solicita al usuario el tipo y descripción de la lesión, obtiene la fecha actual y la inserta en la tabla 'lesion'. El nombre del jugador se establece automáticamente como "Hamer". Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. </p>
-
-</div>
-</div>
-<a id="a07eacc03deb978ef542410eee391679a" name="a07eacc03deb978ef542410eee391679a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07eacc03deb978ef542410eee391679a">&#9670;&#160;</a></span>editar_lesion()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void editar_lesion </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Permite editar los datos de una lesión existente. </p>
-<p>Muestra la lista de lesiones disponibles, solicita el ID a editar, verifica que exista y permite cambiar todos los campos de la lesión.</p>
-<p>Permite editar los datos de una lesión existente.</p>
-<p>Muestra la lista de lesiones disponibles, solicita el ID a editar, verifica que exista y permite cambiar el tipo y descripción de la lesión. La fecha de la lesión no se modifica. </p>
 
 </div>
 </div>
@@ -234,13 +212,35 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a1daccb22e6099fdff8d743d8ab5103a0" name="a1daccb22e6099fdff8d743d8ab5103a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1daccb22e6099fdff8d743d8ab5103a0">&#9670;&#160;</a></span>modificar_lesion()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void modificar_lesion </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Permite editar los datos de una lesión existente. </p>
+<p>Muestra la lista de lesiones disponibles, solicita el ID a editar, verifica que exista y permite cambiar todos los campos de la lesión.</p>
+<p>Permite editar los datos de una lesión existente.</p>
+<p>Muestra la lista de lesiones disponibles, solicita el ID a modificar, verifica que exista y muestra un menú con opciones para modificar campos individuales o todos. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lesion_8h.html">lesion.h</a></li>
-    <li class="footer">Generated on Mon Dec 29 2025 00:49:17 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Mon Dec 29 2025 01:41:28 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

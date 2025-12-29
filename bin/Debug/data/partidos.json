@@ -1,0 +1,27 @@
+[{
+		"cancha":	"Predio Talleres",
+		"fecha":	"20/12/2025 20:00",
+		"goles":	1,
+		"asistencias":	1,
+		"camiseta":	"Bastard Munchen Hamer 33",
+		"resultado":	"DERROTA",
+		"clima":	"Despejado",
+		"dia":	"Noche",
+		"rendimiento_general":	7,
+		"cansancio":	9,
+		"estado_animo":	9,
+		"comentario_personal":	"Nos Golearon"
+	}, {
+		"cancha":	"Predio Talleres",
+		"fecha":	"28/12/2025 21:35",
+		"goles":	0,
+		"asistencias":	3,
+		"camiseta":	"Real Madrid",
+		"resultado":	"DERROTA",
+		"clima":	"Despejado",
+		"dia":	"Noche",
+		"rendimiento_general":	6,
+		"cansancio":	7,
+		"estado_animo":	8,
+		"comentario_personal":	"Perdi chances de gol"
+	}]

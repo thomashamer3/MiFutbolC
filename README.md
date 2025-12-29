@@ -13,7 +13,7 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 - **Gestión de Partidos**: Registrar partidos con detalles como cancha, goles, asistencias y camiseta utilizada.
 - **Estadísticas**: Visualizar estadísticas agregadas del sistema.
 - **Análisis de Rendimiento**: Comparar el rendimiento de los últimos 5 partidos con promedios generales y calcular rachas de victorias y derrotas.
-- **Gestión de Lesiones**: Registrar y gestionar lesiones de jugadores.
+- **Gestión de Lesiones**: Registrar, listar, editar (con menú para modificar campos individuales o todos) y eliminar lesiones de jugadores.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos.
 - **Exportación de Datos**: Exportar todos los datos en formatos CSV, TXT, JSON y HTML.
 - **Interfaz de Menú**: Navegación intuitiva mediante menús interactivos.
