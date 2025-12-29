@@ -6,6 +6,7 @@ var files_dup =
     [ "db.h", "db_8h.html", "db_8h" ],
     [ "estadisticas.c", "estadisticas_8c.html", "estadisticas_8c" ],
     [ "estadisticas.h", "estadisticas_8h.html", "estadisticas_8h" ],
+    [ "export.c", "export_8c.html", "export_8c" ],
     [ "export.h", "export_8h.html", "export_8h" ],
     [ "export_all.c", "export__all_8c.html", "export__all_8c" ],
     [ "export_all.h", "export__all_8h.html", "export__all_8h" ],

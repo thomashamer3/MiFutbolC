@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.13.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>MiFutbolC: export.h File Reference</title>
+<title>MiFutbolC: export.c File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -70,7 +70,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('export_8h.html',''); initResizable(true); });
+$(function(){initNavTree('export_8c.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -96,73 +96,84 @@ $(function(){initNavTree('export_8h.html',''); initResizable(true); });
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">export.h File Reference</div></div>
+  <div class="summary">
+<a href="#define-members">Macros</a> &#124;
+<a href="#func-members">Functions</a>  </div>
+  <div class="headertitle"><div class="title">export.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Declaraciones de funciones para exportar datos en MiFutbolC.  
+<p>Funciones para exportar datos de la base de datos a diferentes formatos.  
 <a href="#details">More...</a></p>
-
-<p><a href="export_8h_source.html">Go to the source code of this file.</a></p>
-<table class="memberdecls">
+<div class="textblock"><code>#include &quot;<a class="el" href="export_8h_source.html">export.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="db_8h_source.html">db.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="utils_8h_source.html">utils.h</a>&quot;</code><br />
+<code>#include &quot;cJSON.h&quot;</code><br />
+<code>#include &lt;stdio.h&gt;</code><br />
+<code>#include &lt;stdlib.h&gt;</code><br />
+<code>#include &lt;direct.h&gt;</code><br />
+<code>#include &lt;string.h&gt;</code><br />
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a627f4c6e2b3a40a122f4303affea486b" id="r_a627f4c6e2b3a40a122f4303affea486b"><td class="memItemLeft" align="right" valign="top"><a id="a627f4c6e2b3a40a122f4303affea486b" name="a627f4c6e2b3a40a122f4303affea486b"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>EXPORT_PATH</b>&#160;&#160;&#160;&quot;data&quot;</td></tr>
+<tr class="separator:a627f4c6e2b3a40a122f4303affea486b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr><td colspan="2"><div class="groupHeader">Funciones de exportación de camisetas</div></td></tr>
 <tr class="memitem:a600864a55de7b44fb471114222e6c205" id="r_a600864a55de7b44fb471114222e6c205"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a600864a55de7b44fb471114222e6c205">exportar_camisetas_csv</a> ()</td></tr>
-<tr class="memdesc:a600864a55de7b44fb471114222e6c205"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de camisetas a formato CSV.  <br /></td></tr>
+<tr class="memdesc:a600864a55de7b44fb471114222e6c205"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las camisetas a un archivo CSV.  <br /></td></tr>
 <tr class="separator:a600864a55de7b44fb471114222e6c205"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37023c535504f30c43dd98e5b3ea6323" id="r_a37023c535504f30c43dd98e5b3ea6323"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a37023c535504f30c43dd98e5b3ea6323">exportar_camisetas_txt</a> ()</td></tr>
-<tr class="memdesc:a37023c535504f30c43dd98e5b3ea6323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de camisetas a formato TXT.  <br /></td></tr>
+<tr class="memdesc:a37023c535504f30c43dd98e5b3ea6323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las camisetas a un archivo de texto plano.  <br /></td></tr>
 <tr class="separator:a37023c535504f30c43dd98e5b3ea6323"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8602ec3b414c89da49bf897be2e83818" id="r_a8602ec3b414c89da49bf897be2e83818"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8602ec3b414c89da49bf897be2e83818">exportar_camisetas_json</a> ()</td></tr>
-<tr class="memdesc:a8602ec3b414c89da49bf897be2e83818"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de camisetas a formato JSON.  <br /></td></tr>
+<tr class="memdesc:a8602ec3b414c89da49bf897be2e83818"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las camisetas a un archivo JSON.  <br /></td></tr>
 <tr class="separator:a8602ec3b414c89da49bf897be2e83818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c289b8d0dbfc6b786f218d69a000940" id="r_a0c289b8d0dbfc6b786f218d69a000940"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0c289b8d0dbfc6b786f218d69a000940">exportar_camisetas_html</a> ()</td></tr>
-<tr class="memdesc:a0c289b8d0dbfc6b786f218d69a000940"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de camisetas a formato HTML.  <br /></td></tr>
+<tr class="memdesc:a0c289b8d0dbfc6b786f218d69a000940"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las camisetas a un archivo HTML.  <br /></td></tr>
 <tr class="separator:a0c289b8d0dbfc6b786f218d69a000940"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader">Funciones de exportación de partidos</div></td></tr>
-<tr class="memitem:a323e1a7c7457cb1c2a4cd337c7b6fc5c" id="r_a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a323e1a7c7457cb1c2a4cd337c7b6fc5c">exportar_partidos_csv</a> ()</td></tr>
-<tr class="memdesc:a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de partidos a formato CSV.  <br /></td></tr>
-<tr class="separator:a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4f5a9245c99023b9fa54a9fffb1a935" id="r_aa4f5a9245c99023b9fa54a9fffb1a935"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa4f5a9245c99023b9fa54a9fffb1a935">exportar_partidos_txt</a> ()</td></tr>
-<tr class="memdesc:aa4f5a9245c99023b9fa54a9fffb1a935"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de partidos a formato TXT.  <br /></td></tr>
-<tr class="separator:aa4f5a9245c99023b9fa54a9fffb1a935"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a175db8e197e890ebab57761c861bbece" id="r_a175db8e197e890ebab57761c861bbece"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a175db8e197e890ebab57761c861bbece">exportar_partidos_json</a> ()</td></tr>
-<tr class="memdesc:a175db8e197e890ebab57761c861bbece"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de partidos a formato JSON.  <br /></td></tr>
-<tr class="separator:a175db8e197e890ebab57761c861bbece"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a097a10882ad493c84d6f2dfcfc1f02df" id="r_a097a10882ad493c84d6f2dfcfc1f02df"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a097a10882ad493c84d6f2dfcfc1f02df">exportar_partidos_html</a> ()</td></tr>
-<tr class="memdesc:a097a10882ad493c84d6f2dfcfc1f02df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de partidos a formato HTML.  <br /></td></tr>
-<tr class="separator:a097a10882ad493c84d6f2dfcfc1f02df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader">Funciones de exportación de estadísticas</div></td></tr>
-<tr class="memitem:a9f0eb85d9b1f30b28b8b815d0dc16b32" id="r_a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f0eb85d9b1f30b28b8b815d0dc16b32">exportar_estadisticas_csv</a> ()</td></tr>
-<tr class="memdesc:a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas generales a formato CSV.  <br /></td></tr>
-<tr class="separator:a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aca1f3044873bca6487683322ee1ca3b8" id="r_aca1f3044873bca6487683322ee1ca3b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aca1f3044873bca6487683322ee1ca3b8">exportar_estadisticas_txt</a> ()</td></tr>
-<tr class="memdesc:aca1f3044873bca6487683322ee1ca3b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas generales a formato TXT.  <br /></td></tr>
-<tr class="separator:aca1f3044873bca6487683322ee1ca3b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18a8382d9891be482ba406d2ded69cde" id="r_a18a8382d9891be482ba406d2ded69cde"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a18a8382d9891be482ba406d2ded69cde">exportar_estadisticas_json</a> ()</td></tr>
-<tr class="memdesc:a18a8382d9891be482ba406d2ded69cde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas generales a formato JSON.  <br /></td></tr>
-<tr class="separator:a18a8382d9891be482ba406d2ded69cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a532cfe356da98e66cbc7584d29e4a8cd" id="r_a532cfe356da98e66cbc7584d29e4a8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a532cfe356da98e66cbc7584d29e4a8cd">exportar_estadisticas_html</a> ()</td></tr>
-<tr class="memdesc:a532cfe356da98e66cbc7584d29e4a8cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas generales a formato HTML.  <br /></td></tr>
-<tr class="separator:a532cfe356da98e66cbc7584d29e4a8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader">Funciones de exportación de lesiones</div></td></tr>
 <tr class="memitem:aa1529e2eecf9bd53ad9120f79f9cfef4" id="r_aa1529e2eecf9bd53ad9120f79f9cfef4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa1529e2eecf9bd53ad9120f79f9cfef4">exportar_lesiones_csv</a> ()</td></tr>
-<tr class="memdesc:aa1529e2eecf9bd53ad9120f79f9cfef4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de lesiones a formato CSV.  <br /></td></tr>
+<tr class="memdesc:aa1529e2eecf9bd53ad9120f79f9cfef4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las lesiones a un archivo CSV.  <br /></td></tr>
 <tr class="separator:aa1529e2eecf9bd53ad9120f79f9cfef4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7eb86597a3317d570a39982f7c52e319" id="r_a7eb86597a3317d570a39982f7c52e319"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7eb86597a3317d570a39982f7c52e319">exportar_lesiones_txt</a> ()</td></tr>
-<tr class="memdesc:a7eb86597a3317d570a39982f7c52e319"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de lesiones a formato TXT.  <br /></td></tr>
+<tr class="memdesc:a7eb86597a3317d570a39982f7c52e319"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las lesiones a un archivo de texto plano.  <br /></td></tr>
 <tr class="separator:a7eb86597a3317d570a39982f7c52e319"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33db2d3d74ee1413a3fd936d6badb10" id="r_aa33db2d3d74ee1413a3fd936d6badb10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa33db2d3d74ee1413a3fd936d6badb10">exportar_lesiones_json</a> ()</td></tr>
-<tr class="memdesc:aa33db2d3d74ee1413a3fd936d6badb10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de lesiones a formato JSON.  <br /></td></tr>
+<tr class="memdesc:aa33db2d3d74ee1413a3fd936d6badb10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las lesiones a un archivo JSON.  <br /></td></tr>
 <tr class="separator:aa33db2d3d74ee1413a3fd936d6badb10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf23d386c46207088bc3d52a732298e2" id="r_acf23d386c46207088bc3d52a732298e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acf23d386c46207088bc3d52a732298e2">exportar_lesiones_html</a> ()</td></tr>
-<tr class="memdesc:acf23d386c46207088bc3d52a732298e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta la lista de lesiones a formato HTML.  <br /></td></tr>
+<tr class="memdesc:acf23d386c46207088bc3d52a732298e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las lesiones a un archivo HTML.  <br /></td></tr>
 <tr class="separator:acf23d386c46207088bc3d52a732298e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a323e1a7c7457cb1c2a4cd337c7b6fc5c" id="r_a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a323e1a7c7457cb1c2a4cd337c7b6fc5c">exportar_partidos_csv</a> ()</td></tr>
+<tr class="memdesc:a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta los partidos a un archivo CSV.  <br /></td></tr>
+<tr class="separator:a323e1a7c7457cb1c2a4cd337c7b6fc5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4f5a9245c99023b9fa54a9fffb1a935" id="r_aa4f5a9245c99023b9fa54a9fffb1a935"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa4f5a9245c99023b9fa54a9fffb1a935">exportar_partidos_txt</a> ()</td></tr>
+<tr class="memdesc:aa4f5a9245c99023b9fa54a9fffb1a935"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta los partidos a un archivo de texto plano.  <br /></td></tr>
+<tr class="separator:aa4f5a9245c99023b9fa54a9fffb1a935"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a175db8e197e890ebab57761c861bbece" id="r_a175db8e197e890ebab57761c861bbece"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a175db8e197e890ebab57761c861bbece">exportar_partidos_json</a> ()</td></tr>
+<tr class="memdesc:a175db8e197e890ebab57761c861bbece"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta los partidos a un archivo JSON.  <br /></td></tr>
+<tr class="separator:a175db8e197e890ebab57761c861bbece"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a097a10882ad493c84d6f2dfcfc1f02df" id="r_a097a10882ad493c84d6f2dfcfc1f02df"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a097a10882ad493c84d6f2dfcfc1f02df">exportar_partidos_html</a> ()</td></tr>
+<tr class="memdesc:a097a10882ad493c84d6f2dfcfc1f02df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta los partidos a un archivo HTML.  <br /></td></tr>
+<tr class="separator:a097a10882ad493c84d6f2dfcfc1f02df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f0eb85d9b1f30b28b8b815d0dc16b32" id="r_a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f0eb85d9b1f30b28b8b815d0dc16b32">exportar_estadisticas_csv</a> ()</td></tr>
+<tr class="memdesc:a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas a un archivo CSV.  <br /></td></tr>
+<tr class="separator:a9f0eb85d9b1f30b28b8b815d0dc16b32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca1f3044873bca6487683322ee1ca3b8" id="r_aca1f3044873bca6487683322ee1ca3b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aca1f3044873bca6487683322ee1ca3b8">exportar_estadisticas_txt</a> ()</td></tr>
+<tr class="memdesc:aca1f3044873bca6487683322ee1ca3b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas a un archivo de texto plano.  <br /></td></tr>
+<tr class="separator:aca1f3044873bca6487683322ee1ca3b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18a8382d9891be482ba406d2ded69cde" id="r_a18a8382d9891be482ba406d2ded69cde"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a18a8382d9891be482ba406d2ded69cde">exportar_estadisticas_json</a> ()</td></tr>
+<tr class="memdesc:a18a8382d9891be482ba406d2ded69cde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas a un archivo JSON.  <br /></td></tr>
+<tr class="separator:a18a8382d9891be482ba406d2ded69cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a532cfe356da98e66cbc7584d29e4a8cd" id="r_a532cfe356da98e66cbc7584d29e4a8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a532cfe356da98e66cbc7584d29e4a8cd">exportar_estadisticas_html</a> ()</td></tr>
+<tr class="memdesc:a532cfe356da98e66cbc7584d29e4a8cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas a un archivo HTML.  <br /></td></tr>
+<tr class="separator:a532cfe356da98e66cbc7584d29e4a8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declaraciones de funciones para exportar datos en MiFutbolC. </p>
-<p>Este archivo contiene las declaraciones de las funciones de exportación que permiten guardar los datos del sistema en diferentes formatos: CSV, TXT, JSON y HTML para camisetas, partidos, estadísticas y lesiones. </p>
+<div class="textblock"><p>Funciones para exportar datos de la base de datos a diferentes formatos. </p>
+<p>Este archivo contiene funciones para exportar datos de camisetas, lesiones, partidos y estadísticas a formatos CSV, TXT, JSON y HTML. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a600864a55de7b44fb471114222e6c205" name="a600864a55de7b44fb471114222e6c205"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a600864a55de7b44fb471114222e6c205">&#9670;&#160;</a></span>exportar_camisetas_csv()</h2>
@@ -179,8 +190,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de camisetas a formato CSV. </p>
-<p>Genera un archivo CSV con todos los registros de camisetas, incluyendo ID, nombre y estado de sorteo.</p>
+<p>Exporta las camisetas a un archivo CSV. </p>
 <p>Exporta la lista de camisetas a formato CSV.</p>
 <p>Crea un archivo CSV con todas las camisetas registradas en la base de datos, incluyendo ID y nombre. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -201,8 +211,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de camisetas a formato HTML. </p>
-<p>Genera una página HTML con una tabla que muestra todas las camisetas.</p>
+<p>Exporta las camisetas a un archivo HTML. </p>
 <p>Exporta la lista de camisetas a formato HTML.</p>
 <p>Crea un archivo HTML con una tabla que muestra todas las camisetas registradas, incluyendo ID y nombre. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -223,8 +232,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de camisetas a formato JSON. </p>
-<p>Genera un archivo JSON con un array de objetos representando las camisetas.</p>
+<p>Exporta las camisetas a un archivo JSON. </p>
 <p>Exporta la lista de camisetas a formato JSON.</p>
 <p>Crea un archivo JSON con un array de objetos representando todas las camisetas registradas, incluyendo ID y nombre. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -245,8 +253,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de camisetas a formato TXT. </p>
-<p>Genera un archivo de texto plano con la lista formateada de camisetas.</p>
+<p>Exporta las camisetas a un archivo de texto plano. </p>
 <p>Exporta la lista de camisetas a formato TXT.</p>
 <p>Crea un archivo de texto con un listado formateado de todas las camisetas registradas, incluyendo ID y nombre. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -267,8 +274,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta las estadísticas generales a formato CSV. </p>
-<p>Genera un archivo CSV con las estadísticas agregadas del sistema.</p>
+<p>Exporta las estadísticas a un archivo CSV. </p>
 <p>Exporta las estadísticas generales a formato CSV.</p>
 <p>Crea un archivo CSV con las estadísticas agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias, número de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -289,8 +295,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta las estadísticas generales a formato HTML. </p>
-<p>Genera una página HTML con las estadísticas presentadas en formato web.</p>
+<p>Exporta las estadísticas a un archivo HTML. </p>
 <p>Exporta las estadísticas generales a formato HTML.</p>
 <p>Crea un archivo HTML con una tabla que muestra las estadísticas agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias, número de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -311,8 +316,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta las estadísticas generales a formato JSON. </p>
-<p>Genera un archivo JSON con un objeto conteniendo todas las estadísticas.</p>
+<p>Exporta las estadísticas a un archivo JSON. </p>
 <p>Exporta las estadísticas generales a formato JSON.</p>
 <p>Crea un archivo JSON con un array de objetos representando las estadísticas agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias y número de partidos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -333,8 +337,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta las estadísticas generales a formato TXT. </p>
-<p>Genera un archivo de texto con las estadísticas agregadas del sistema.</p>
+<p>Exporta las estadísticas a un archivo de texto plano. </p>
 <p>Exporta las estadísticas generales a formato TXT.</p>
 <p>Crea un archivo de texto con un listado formateado de las estadísticas agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias y número de partidos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -355,8 +358,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de lesiones a formato CSV. </p>
-<p>Genera un archivo CSV con todos los registros de lesiones, incluyendo ID, jugador, tipo, fecha y duración.</p>
+<p>Exporta las lesiones a un archivo CSV. </p>
 <p>Exporta la lista de lesiones a formato CSV.</p>
 <p>Crea un archivo CSV con todas las lesiones registradas en la base de datos, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -377,8 +379,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de lesiones a formato HTML. </p>
-<p>Genera una página HTML con una tabla que muestra todas las lesiones.</p>
+<p>Exporta las lesiones a un archivo HTML. </p>
 <p>Exporta la lista de lesiones a formato HTML.</p>
 <p>Crea un archivo HTML con una tabla que muestra todas las lesiones registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -399,8 +400,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de lesiones a formato JSON. </p>
-<p>Genera un archivo JSON con un array de objetos representando las lesiones.</p>
+<p>Exporta las lesiones a un archivo JSON. </p>
 <p>Exporta la lista de lesiones a formato JSON.</p>
 <p>Crea un archivo JSON con un array de objetos representando todas las lesiones registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -421,8 +421,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de lesiones a formato TXT. </p>
-<p>Genera un archivo de texto plano con la lista formateada de lesiones.</p>
+<p>Exporta las lesiones a un archivo de texto plano. </p>
 <p>Exporta la lista de lesiones a formato TXT.</p>
 <p>Crea un archivo de texto con un listado formateado de todas las lesiones registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -443,8 +442,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de partidos a formato CSV. </p>
-<p>Genera un archivo CSV con todos los registros de partidos, incluyendo ID, cancha, fecha/hora, goles, asistencias y camiseta.</p>
+<p>Exporta los partidos a un archivo CSV. </p>
 <p>Exporta la lista de partidos a formato CSV.</p>
 <p>Crea un archivo CSV con todos los partidos registrados en la base de datos, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -465,8 +463,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de partidos a formato HTML. </p>
-<p>Genera una página HTML con una tabla que muestra todos los partidos.</p>
+<p>Exporta los partidos a un archivo HTML. </p>
 <p>Exporta la lista de partidos a formato HTML.</p>
 <p>Crea un archivo HTML con una tabla que muestra todos los partidos registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -487,8 +484,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de partidos a formato JSON. </p>
-<p>Genera un archivo JSON con un array de objetos representando los partidos.</p>
+<p>Exporta los partidos a un archivo JSON. </p>
 <p>Exporta la lista de partidos a formato JSON.</p>
 <p>Crea un archivo JSON con un array de objetos representando todos los partidos registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -509,8 +505,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta la lista de partidos a formato TXT. </p>
-<p>Genera un archivo de texto plano con la lista formateada de partidos.</p>
+<p>Exporta los partidos a un archivo de texto plano. </p>
 <p>Exporta la lista de partidos a formato TXT.</p>
 <p>Crea un archivo de texto con un listado formateado de todos los partidos registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
 
@@ -521,7 +516,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="export_8h.html">export.h</a></li>
+    <li class="navelem"><a class="el" href="export_8c.html">export.c</a></li>
     <li class="footer">Generated on Mon Dec 29 2025 00:49:17 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
