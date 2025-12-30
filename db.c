@@ -192,6 +192,10 @@ int db_init()
     const char *alter_comentario_personal = "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';";
     sqlite3_exec(db, alter_comentario_personal, 0, 0, 0); // Ignore errors if column already exists
 
+    // Crear directorios de importación y exportación al iniciar
+    get_import_dir();
+    get_export_dir();
+
     return 1;
 }
 
