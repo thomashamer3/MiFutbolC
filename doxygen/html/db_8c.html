@@ -110,15 +110,22 @@ $(function(){initNavTree('db_8c.html',''); initResizable(true); });
 <code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;stdlib.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
+<code>#include &lt;errno.h&gt;</code><br />
 <code>#include &lt;sys/stat.h&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:a33f0483b64221b258b080bba5882cf3c" id="r_a33f0483b64221b258b080bba5882cf3c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a33f0483b64221b258b080bba5882cf3c">MKDIR</a>(path)</td></tr>
 <tr class="separator:a33f0483b64221b258b080bba5882cf3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d6eeb8a5e599f740e04f680be444f1a" id="r_a8d6eeb8a5e599f740e04f680be444f1a"><td class="memItemLeft" align="right" valign="top"><a id="a8d6eeb8a5e599f740e04f680be444f1a" name="a8d6eeb8a5e599f740e04f680be444f1a"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>STRDUP</b>&#160;&#160;&#160;strdup</td></tr>
+<tr class="separator:a8d6eeb8a5e599f740e04f680be444f1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a6ee385ce9ce821efd7b6b736a1134938" id="r_a6ee385ce9ce821efd7b6b736a1134938"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6ee385ce9ce821efd7b6b736a1134938">get_executable_dir</a> (char *buffer, size_t size)</td></tr>
+<tr class="memdesc:a6ee385ce9ce821efd7b6b736a1134938"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el directorio del ejecutable.  <br /></td></tr>
+<tr class="separator:a6ee385ce9ce821efd7b6b736a1134938"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68444176bb98032c54b65b982312cfa6" id="r_a68444176bb98032c54b65b982312cfa6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a68444176bb98032c54b65b982312cfa6">db_init</a> ()</td></tr>
 <tr class="memdesc:a68444176bb98032c54b65b982312cfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa la base de datos.  <br /></td></tr>
 <tr class="separator:a68444176bb98032c54b65b982312cfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,6 +138,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a74ed9cccce806cf8c1f4c84f00a84344" id="r_a74ed9cccce806cf8c1f4c84f00a84344"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a> (const char *nombre)</td></tr>
 <tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece o actualiza el nombre del usuario en la base de datos.  <br /></td></tr>
 <tr class="separator:a74ed9cccce806cf8c1f4c84f00a84344"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc24ac8e4815ebbf5a74985607b0991b" id="r_afc24ac8e4815ebbf5a74985607b0991b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc24ac8e4815ebbf5a74985607b0991b">get_data_dir</a> ()</td></tr>
+<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de datos.  <br /></td></tr>
+<tr class="separator:afc24ac8e4815ebbf5a74985607b0991b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -200,6 +210,56 @@ Variables</h2></td></tr>
 <p>Inicializa la conexión a la base de datos.</p>
 <p>Crea el directorio de datos si no existe, abre la conexión a la base de datos y crea las tablas necesarias (camiseta, partido, lesion) si no existen. También añade la columna 'sorteada' a la tabla camiseta si no está presente.</p>
 <dl class="section return"><dt>Returns</dt><dd>1 si la inicialización fue exitosa, 0 en caso de error </dd></dl>
+
+</div>
+</div>
+<a id="afc24ac8e4815ebbf5a74985607b0991b" name="afc24ac8e4815ebbf5a74985607b0991b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc24ac8e4815ebbf5a74985607b0991b">&#9670;&#160;</a></span>get_data_dir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * get_data_dir </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene la ruta del directorio de datos. </p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de datos </dd></dl>
+
+</div>
+</div>
+<a id="a6ee385ce9ce821efd7b6b736a1134938" name="a6ee385ce9ce821efd7b6b736a1134938"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ee385ce9ce821efd7b6b736a1134938">&#9670;&#160;</a></span>get_executable_dir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void get_executable_dir </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene el directorio del ejecutable. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">buffer</td><td>Buffer donde se almacenará la ruta </td></tr>
+    <tr><td class="paramname">size</td><td>Tamaño del buffer </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -275,7 +335,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8c.html">db.c</a></li>
-    <li class="footer">Generated on Mon Dec 29 2025 01:41:28 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Tue Dec 30 2025 01:07:20 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

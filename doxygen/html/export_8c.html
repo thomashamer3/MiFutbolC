@@ -97,6 +97,7 @@ $(function(){initNavTree('export_8c.html',''); initResizable(true); });
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">export.c File Reference</div></div>
@@ -114,6 +115,12 @@ $(function(){initNavTree('export_8c.html',''); initResizable(true); });
 <code>#include &lt;direct.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
 </div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_estadisticas.html">Estadisticas</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Estructura para almacenar estadísticas de partidos.  <a href="struct_estadisticas.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:a627f4c6e2b3a40a122f4303affea486b" id="r_a627f4c6e2b3a40a122f4303affea486b"><td class="memItemLeft" align="right" valign="top"><a id="a627f4c6e2b3a40a122f4303affea486b" name="a627f4c6e2b3a40a122f4303affea486b"></a>
@@ -170,11 +177,107 @@ Functions</h2></td></tr>
 <tr class="memitem:a532cfe356da98e66cbc7584d29e4a8cd" id="r_a532cfe356da98e66cbc7584d29e4a8cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a532cfe356da98e66cbc7584d29e4a8cd">exportar_estadisticas_html</a> ()</td></tr>
 <tr class="memdesc:a532cfe356da98e66cbc7584d29e4a8cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta las estadísticas a un archivo HTML.  <br /></td></tr>
 <tr class="separator:a532cfe356da98e66cbc7584d29e4a8cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb2e7fc997aa65efe894c2f5bfa4924b" id="r_adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb2e7fc997aa65efe894c2f5bfa4924b">exportar_analisis_csv</a> ()</td></tr>
+<tr class="memdesc:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo CSV.  <br /></td></tr>
+<tr class="separator:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a5c954a22222d0e397d9d43e3052d54" id="r_a0a5c954a22222d0e397d9d43e3052d54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0a5c954a22222d0e397d9d43e3052d54">exportar_analisis_txt</a> ()</td></tr>
+<tr class="memdesc:a0a5c954a22222d0e397d9d43e3052d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo de texto plano.  <br /></td></tr>
+<tr class="separator:a0a5c954a22222d0e397d9d43e3052d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58769fdb80e85bf94724f4f04e8840e5" id="r_a58769fdb80e85bf94724f4f04e8840e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a58769fdb80e85bf94724f4f04e8840e5">exportar_analisis_json</a> ()</td></tr>
+<tr class="memdesc:a58769fdb80e85bf94724f4f04e8840e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo JSON.  <br /></td></tr>
+<tr class="separator:a58769fdb80e85bf94724f4f04e8840e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeb2a1a2af14fdd6d12c8e0604ad7300" id="r_adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adeb2a1a2af14fdd6d12c8e0604ad7300">exportar_analisis_html</a> ()</td></tr>
+<tr class="memdesc:adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo HTML.  <br /></td></tr>
+<tr class="separator:adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Funciones para exportar datos de la base de datos a diferentes formatos. </p>
 <p>Este archivo contiene funciones para exportar datos de camisetas, lesiones, partidos y estadísticas a formatos CSV, TXT, JSON y HTML. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="adb2e7fc997aa65efe894c2f5bfa4924b" name="adb2e7fc997aa65efe894c2f5bfa4924b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb2e7fc997aa65efe894c2f5bfa4924b">&#9670;&#160;</a></span>exportar_analisis_csv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void exportar_analisis_csv </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Exporta el análisis de rendimiento a un archivo CSV. </p>
+<p>Exporta el análisis de rendimiento a formato CSV.</p>
+<p>Crea un archivo CSV con las estadísticas generales, últimos 5 partidos, rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+
+</div>
+</div>
+<a id="adeb2a1a2af14fdd6d12c8e0604ad7300" name="adeb2a1a2af14fdd6d12c8e0604ad7300"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adeb2a1a2af14fdd6d12c8e0604ad7300">&#9670;&#160;</a></span>exportar_analisis_html()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void exportar_analisis_html </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Exporta el análisis de rendimiento a un archivo HTML. </p>
+<p>Exporta el análisis de rendimiento a formato HTML.</p>
+<p>Crea una página HTML con las estadísticas presentadas en formato web. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+
+</div>
+</div>
+<a id="a58769fdb80e85bf94724f4f04e8840e5" name="a58769fdb80e85bf94724f4f04e8840e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58769fdb80e85bf94724f4f04e8840e5">&#9670;&#160;</a></span>exportar_analisis_json()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void exportar_analisis_json </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Exporta el análisis de rendimiento a un archivo JSON. </p>
+<p>Exporta el análisis de rendimiento a formato JSON.</p>
+<p>Crea un archivo JSON con un objeto conteniendo todas las estadísticas del análisis de rendimiento. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+
+</div>
+</div>
+<a id="a0a5c954a22222d0e397d9d43e3052d54" name="a0a5c954a22222d0e397d9d43e3052d54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a5c954a22222d0e397d9d43e3052d54">&#9670;&#160;</a></span>exportar_analisis_txt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void exportar_analisis_txt </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Exporta el análisis de rendimiento a un archivo de texto plano. </p>
+<p>Exporta el análisis de rendimiento a formato TXT.</p>
+<p>Crea un archivo de texto con las estadísticas generales, últimos 5 partidos, rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+
+</div>
+</div>
 <a id="a600864a55de7b44fb471114222e6c205" name="a600864a55de7b44fb471114222e6c205"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a600864a55de7b44fb471114222e6c205">&#9670;&#160;</a></span>exportar_camisetas_csv()</h2>
 
@@ -517,7 +620,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="export_8c.html">export.c</a></li>
-    <li class="footer">Generated on Mon Dec 29 2025 01:41:28 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Tue Dec 30 2025 01:07:20 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

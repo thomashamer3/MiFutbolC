@@ -68,6 +68,20 @@ static void exportar_estadisticas_todo()
 }
 
 /**
+ * @brief Exporta análisis en todos los formatos.
+ */
+static void exportar_analisis_todo()
+{
+    printf("Exportando analisis...\n");
+    exportar_analisis_csv();
+    exportar_analisis_txt();
+    exportar_analisis_json();
+    exportar_analisis_html();
+    printf("Exportacion de analisis completada.\n");
+    pause_console();
+}
+
+/**
  * @brief Exporta todos los datos en todos los formatos.
  */
 static void exportar_todo()
@@ -92,6 +106,11 @@ static void exportar_todo()
     exportar_estadisticas_txt();
     exportar_estadisticas_json();
     exportar_estadisticas_html();
+
+    exportar_analisis_csv();
+    exportar_analisis_txt();
+    exportar_analisis_json();
+    exportar_analisis_html();
     printf("Exportacion de todo completada.\n");
     pause_console();
 }
@@ -100,7 +119,7 @@ static void exportar_todo()
  * @brief Menu para exportar datos del sistema en múltiples formatos según selección del usuario.
  *
  * Esta función muestra un menú para que el usuario seleccione qué datos exportar:
- * camisetas, partidos, lesiones, estadísticas, todo o volver.
+ * camisetas, partidos, lesiones, estadísticas, análisis, todo o volver.
  * Llama a las funciones de exportación correspondientes en formatos CSV, TXT, JSON y HTML.
  * Al final, muestra un mensaje de confirmación y pausa la consola.
  */
@@ -112,8 +131,9 @@ void menu_exportar()
         {2, "Partidos", exportar_partidos_todo},
         {3, "Lesiones", exportar_lesiones_todo},
         {4, "Estadisticas", exportar_estadisticas_todo},
-        {5, "Todo", exportar_todo},
+        {5, "Analisis", exportar_analisis_todo},
+        {6, "Todo", exportar_todo},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 6);
+    ejecutar_menu("EXPORTAR DATOS", items, 7);
 }

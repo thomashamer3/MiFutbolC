@@ -54,3 +54,10 @@ char* get_user_name();
  * @return 1 si la operación fue exitosa, 0 en caso de error
  */
 int set_user_name(const char* nombre);
+
+/**
+ * @brief Obtiene la ruta del directorio de datos
+ *
+ * @return Puntero a cadena con la ruta del directorio de datos
+ */
+const char* get_data_dir();

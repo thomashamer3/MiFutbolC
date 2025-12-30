@@ -57,7 +57,9 @@ static char *read_file_content(const char *filename)
  */
 void importar_camisetas_json()
 {
-    const char *filename = "data/camisetas.json";
+    char filename[1024];
+    strcpy(filename, get_data_dir());
+    strncat(filename, "\\camisetas.json", sizeof(filename) - strlen(filename) - 1);
 
     char *content = read_file_content(filename);
     if (!content)
@@ -133,7 +135,9 @@ void importar_camisetas_json()
  */
 void importar_partidos_json()
 {
-    const char *filename = "data/partidos.json";
+    char filename[1024];
+    strcpy(filename, get_data_dir());
+    strncat(filename, "\\partidos.json", sizeof(filename) - strlen(filename) - 1);
 
     char *content = read_file_content(filename);
     if (!content)
@@ -280,7 +284,9 @@ void importar_partidos_json()
  */
 void importar_lesiones_json()
 {
-    const char *filename = "data/lesiones.json";
+    char filename[1024];
+    strcpy(filename, get_data_dir());
+    strncat(filename, "\\lesiones.json", sizeof(filename) - strlen(filename) - 1);
 
     char *content = read_file_content(filename);
     if (!content)
@@ -367,7 +373,9 @@ void importar_lesiones_json()
  */
 void importar_estadisticas_json()
 {
-    const char *filename = "data/estadisticas.json";
+    char filename[1024];
+    strcpy(filename, get_data_dir());
+    strncat(filename, "\\estadisticas.json", sizeof(filename) - strlen(filename) - 1);
 
     char *content = read_file_content(filename);
     if (!content)

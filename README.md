@@ -14,8 +14,10 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 - **Estadísticas**: Visualizar estadísticas agregadas del sistema.
 - **Análisis de Rendimiento**: Comparar el rendimiento de los últimos 5 partidos con promedios generales y calcular rachas de victorias y derrotas.
 - **Gestión de Lesiones**: Registrar, listar, editar (con menú para modificar campos individuales o todos) y eliminar lesiones de jugadores.
+- **Sistema de Logros**: Logros y badges gamificados basados en rendimiento.
+- **Gestión de Usuario**: Sistema de nombres de usuario personalizados con persistencia.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos.
-- **Exportación de Datos**: Exportar todos los datos en formatos CSV, TXT, JSON y HTML.
+- **Exportación de Datos**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML.
 - **Interfaz de Menú**: Navegación intuitiva mediante menús interactivos.
 - **Base de Datos SQLite**: Almacenamiento persistente y eficiente de datos.
 - **Documentación Doxygen**: Generación automática de documentación técnica.
@@ -32,14 +34,21 @@ El proyecto está diseñado para ser una herramienta completa para el seguimient
 
 ## Instalación y Compilación
 
-### Opción 1: Usando CodeBlocks (Recomendado)
+### Opción 1: Instalador Automático (Recomendado para Usuarios Finales)
+
+1. Navega a la carpeta `installer/`.
+2. Ejecuta el archivo `MiFutbolC_Setup.exe`.
+3. Sigue las instrucciones del instalador.
+4. El programa se instalará automáticamente con todos los archivos necesarios.
+
+### Opción 2: Usando CodeBlocks (Para Desarrolladores)
 
 1. Instala CodeBlocks desde [codeblocks.org](https://www.codeblocks.org/).
 2. Abre el archivo `MiFutbolC.cbp` con CodeBlocks.
 3. Compila el proyecto seleccionando "Build" > "Build".
 4. El ejecutable se generará en `bin/Debug/MiFutbolC.exe`.
 
-### Opción 2: Compilación Manual con GCC
+### Opción 3: Compilación Manual con GCC
 
 1. Asegúrate de tener GCC instalado.
 2. Navega al directorio raíz del proyecto.
@@ -66,8 +75,9 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 5. **Logros**: Gestionar logros y badges.
 6. **Análisis**: Mostrar análisis de rendimiento.
 7. **Lesiones**: Gestionar lesiones de jugadores.
-8. **Exportar Todo**: Exportar todos los datos en múltiples formatos.
-9. **Importar Todo**: Importar todos los datos desde archivos JSON.
+8. **Exportar**: Menú de exportación con opciones individuales por módulo.
+9. **Importar**: Importar todos los datos desde archivos JSON.
+10. **Usuario**: Gestionar información del usuario (ver/cambiar nombre).
 0. **Salir**: Cerrar el programa.
 
 ### Ejemplo de Uso

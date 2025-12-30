@@ -141,3 +141,39 @@ void exportar_lesiones_json();
 void exportar_lesiones_html();
 
 /** @} */
+
+/** @name Funciones de exportación de análisis */
+/** @{ */
+
+/**
+ * @brief Exporta el análisis de rendimiento a formato CSV
+ *
+ * Genera un archivo CSV con las estadísticas generales, últimos 5 partidos,
+ * rachas y análisis motivacional.
+ */
+void exportar_analisis_csv();
+
+/**
+ * @brief Exporta el análisis de rendimiento a formato TXT
+ *
+ * Genera un archivo de texto con las estadísticas generales, últimos 5 partidos,
+ * rachas y análisis motivacional.
+ */
+void exportar_analisis_txt();
+
+/**
+ * @brief Exporta el análisis de rendimiento a formato JSON
+ *
+ * Genera un archivo JSON con un objeto conteniendo todas las estadísticas
+ * del análisis de rendimiento.
+ */
+void exportar_analisis_json();
+
+/**
+ * @brief Exporta el análisis de rendimiento a formato HTML
+ *
+ * Genera una página HTML con las estadísticas presentadas en formato web.
+ */
+void exportar_analisis_html();
+
+/** @} */

@@ -1,4 +1,0 @@
-LISTADO DE PARTIDOS
-
-El Roca Predio | 28/12/2025 17:58 | G:1 A:0 | Ejemplo 11 | Res:DERROTA Cli:Despejado Dia:Noche RG:5 Can:4 EA:8 | maso menos
-El Roca Predio | 28/12/2025 18:21 | G:2 A:4 | Ejemplo 11 | Res:VICTORIA Cli:Lluvia Dia:Noche RG:8 Can:9 EA:8 | Bien

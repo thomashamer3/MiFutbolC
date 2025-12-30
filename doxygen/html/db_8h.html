@@ -123,6 +123,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a74ed9cccce806cf8c1f4c84f00a84344" id="r_a74ed9cccce806cf8c1f4c84f00a84344"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a> (const char *nombre)</td></tr>
 <tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece o actualiza el nombre del usuario en la base de datos.  <br /></td></tr>
 <tr class="separator:a74ed9cccce806cf8c1f4c84f00a84344"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc24ac8e4815ebbf5a74985607b0991b" id="r_afc24ac8e4815ebbf5a74985607b0991b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc24ac8e4815ebbf5a74985607b0991b">get_data_dir</a> ()</td></tr>
+<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de datos.  <br /></td></tr>
+<tr class="separator:afc24ac8e4815ebbf5a74985607b0991b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -176,6 +179,26 @@ Variables</h2></td></tr>
 <p>Inicializa la conexión a la base de datos.</p>
 <p>Crea el directorio de datos si no existe, abre la conexión a la base de datos y crea las tablas necesarias (camiseta, partido, lesion) si no existen. También añade la columna 'sorteada' a la tabla camiseta si no está presente.</p>
 <dl class="section return"><dt>Returns</dt><dd>1 si la inicialización fue exitosa, 0 en caso de error </dd></dl>
+
+</div>
+</div>
+<a id="afc24ac8e4815ebbf5a74985607b0991b" name="afc24ac8e4815ebbf5a74985607b0991b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc24ac8e4815ebbf5a74985607b0991b">&#9670;&#160;</a></span>get_data_dir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * get_data_dir </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene la ruta del directorio de datos. </p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de datos </dd></dl>
 
 </div>
 </div>
@@ -260,7 +283,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8h.html">db.h</a></li>
-    <li class="footer">Generated on Mon Dec 29 2025 01:41:28 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Tue Dec 30 2025 01:07:20 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

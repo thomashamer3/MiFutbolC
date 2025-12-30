@@ -16,14 +16,21 @@ Bienvenido a **MiFutbolC**, un sistema de gestión de datos para fútbol desarro
 
 ## Instalación y Compilación
 
-### Opción 1: Usando CodeBlocks
+### Opción 1: Instalador Automático (Recomendado)
+
+1. Navega a la carpeta `installer/` del proyecto
+2. Ejecuta el archivo `MiFutbolC_Setup.exe`
+3. Sigue las instrucciones del instalador
+4. El programa se instalará automáticamente con todos los archivos necesarios
+
+### Opción 2: Usando CodeBlocks
 
 1. Descarga e instala CodeBlocks desde [codeblocks.org](https://www.codeblocks.org/)
 2. Abre el archivo `MiFutbolC.cbp` con CodeBlocks
 3. Selecciona "Build" > "Build" para compilar
 4. El ejecutable se generará en `bin/Debug/MiFutbolC.exe`
 
-### Opción 2: Compilación Manual
+### Opción 3: Compilación Manual
 
 ```bash
 gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c cJSON_Utils.c -I.
@@ -46,9 +53,9 @@ El menú principal ofrece las siguientes opciones:
 5. **Logros** - Gestionar logros y badges
 6. **Análisis** - Ver análisis de rendimiento
 7. **Lesiones** - Gestionar lesiones de jugadores
-8. **Exportar** - Exportar datos
-9. **Importar** - Importar datos
-10. **Usuario** - Gestionar usuario
+8. **Exportar** - Menú de exportación con opciones individuales por módulo
+9. **Importar** - Importar datos desde archivos JSON
+10. **Usuario** - Gestionar información del usuario (ver/cambiar nombre)
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -218,7 +225,16 @@ Selecciona "6" en el menú principal para ver el análisis de rendimiento, que i
 
 ## Exportar Datos
 
-Selecciona "8" en el menú principal para exportar todos los datos en múltiples formatos (CSV, TXT, JSON, HTML). Los archivos se guardarán en el directorio `data/`.
+Selecciona "8" en el menú principal para acceder al menú de exportación. Este menú ofrece opciones para exportar datos de diferentes módulos por separado:
+
+1. **Camisetas** - Exportar datos de camisetas
+2. **Partidos** - Exportar datos de partidos
+3. **Estadísticas** - Exportar estadísticas generales
+4. **Lesiones** - Exportar datos de lesiones
+5. **Análisis** - Exportar análisis de rendimiento
+6. **Todo** - Exportar todos los datos
+
+Cada opción permite exportar en múltiples formatos (CSV, TXT, JSON, HTML). Los archivos se guardarán en el directorio `data/`.
 
 ![Exportar datos](images/menuexportar.png)
 
@@ -267,4 +283,4 @@ MiFutbolC es una herramienta completa para el seguimiento y análisis de datos r
 ---
 
 *Manual generado con Pandoc*
-*Última actualización: (28/12/2025)*
+*Última actualización: (30/12/2025)*

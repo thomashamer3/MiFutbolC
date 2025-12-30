@@ -30,6 +30,7 @@ var annotated_dup =
     [ "DblquoteStr", "struct_dblquote_str.html", null ],
     [ "DistinctCtx", "struct_distinct_ctx.html", null ],
     [ "EdupBuf", "struct_edup_buf.html", null ],
+    [ "Estadisticas", "struct_estadisticas.html", null ],
     [ "et_info", "structet__info.html", null ],
     [ "Expr", "struct_expr.html", null ],
     [ "ExprList", "struct_expr_list.html", "struct_expr_list" ],

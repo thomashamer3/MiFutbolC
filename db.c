@@ -10,23 +10,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <direct.h>
+#include <windows.h>
+#include <shlobj.h>
 #define MKDIR(path) _mkdir(path)
+#define STRDUP _strdup
 #else
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
+#define STRDUP strdup
 #endif
 
 /** Puntero global a la base de datos SQLite */
 sqlite3 *db = NULL;
 
 /** Directorio donde se almacena la base de datos */
-static const char *DB_DIR = "data";
+static char DB_DIR[1024];
 
 /** Ruta completa al archivo de la base de datos */
-static const char *DB_PATH = "data/mifutbol.db";
+static char DB_PATH[1024];
+
+/**
+ * @brief Obtiene el directorio del ejecutable
+ *
+ * @param buffer Buffer donde se almacenará la ruta
+ * @param size Tamaño del buffer
+ */
+void get_executable_dir(char *buffer, size_t size)
+{
+#ifdef _WIN32
+    GetModuleFileName(NULL, buffer, size);
+    // Remover el nombre del archivo para obtener solo el directorio
+    char *last_backslash = strrchr(buffer, '\\');
+    if (last_backslash)
+    {
+        *last_backslash = '\0';
+    }
+#else
+    // Para otros sistemas operativos
+    strcpy(buffer, ".");
+#endif
+}
 
 /**
  * @brief Inicializa la base de datos
@@ -39,11 +66,32 @@ static const char *DB_PATH = "data/mifutbol.db";
  */
 int db_init()
 {
-    MKDIR(DB_DIR);
+    // Obtener el directorio del ejecutable
+    char exe_dir[1024];
+    get_executable_dir(exe_dir, sizeof(exe_dir));
+
+    memset(DB_DIR, 0, sizeof(DB_DIR));
+    strcpy(DB_DIR, exe_dir);
+    strncat(DB_DIR, "\\data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
+
+    memset(DB_PATH, 0, sizeof(DB_PATH));
+    strcpy(DB_PATH, exe_dir);
+    strncat(DB_PATH, "\\data\\mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
+
+    // Crear directorio si no existe
+    if (MKDIR(DB_DIR) != 0)
+    {
+        // Si el directorio ya existe, no es error
+        if (errno != EEXIST)
+        {
+            printf("Error creando directorio: %s\n", strerror(errno));
+            return 0;
+        }
+    }
 
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
-        printf("Error abriendo DB\n");
+        printf("Error abriendo DB: %s\n", sqlite3_errmsg(db));
         return 0;
     }
     const char *sql_create =
@@ -144,7 +192,7 @@ char* get_user_name()
             const char *temp = (const char*)sqlite3_column_text(stmt, 0);
             if (temp)
             {
-                nombre = strdup(temp);
+                nombre = STRDUP(temp);
             }
         }
         sqlite3_finalize(stmt);
@@ -178,4 +226,14 @@ int set_user_name(const char* nombre)
     }
 
     return result;
+}
+
+/**
+ * @brief Obtiene la ruta del directorio de datos
+ *
+ * @return Puntero a cadena con la ruta del directorio de datos
+ */
+const char* get_data_dir()
+{
+    return DB_DIR;
 }
