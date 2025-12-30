@@ -2,9 +2,9 @@
 
 ## Descripción
 
-MiFutbolC es un sistema de gestión de datos para fútbol desarrollado en lenguaje C. Permite administrar camisetas, canchas, partidos, estadísticas, logros, análisis de rendimiento, lesiones y exportar datos en múltiples formatos. Utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente.
+MiFutbolC es un sistema de gestión de datos para fútbol desarrollado en lenguaje C. Permite administrar camisetas, canchas, partidos, estadísticas, logros, análisis de rendimiento, lesiones, exportar datos en múltiples formatos y importar datos desde archivos. Utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente.
 
-El proyecto está diseñado para ser una herramienta completa para el seguimiento y análisis de datos relacionados con el fútbol, desde la gestión de equipamiento hasta el registro de partidos, canchas y lesiones.
+El proyecto está diseñado para ser una herramienta completa para el seguimiento y análisis de datos relacionados con el fútbol, desde la gestión de equipamiento hasta el registro de partidos, canchas y lesiones, con capacidades avanzadas de exportación e importación de datos.
 
 ## Características Principales
 

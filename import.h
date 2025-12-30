@@ -44,4 +44,103 @@ void importar_estadisticas_json();
 
 /** @} */
 
+/** @name Funciones de importación desde TXT */
+/** @{ */
+
+/**
+ * @brief Importa camisetas desde archivo TXT
+ *
+ * Lee el archivo TXT de camisetas y las inserta en la base de datos.
+ */
+void importar_camisetas_txt();
+
+/**
+ * @brief Importa partidos desde archivo TXT
+ *
+ * Lee el archivo TXT de partidos y los inserta en la base de datos.
+ */
+void importar_partidos_txt();
+
+/**
+ * @brief Importa lesiones desde archivo TXT
+ *
+ * Lee el archivo TXT de lesiones y las inserta en la base de datos.
+ */
+void importar_lesiones_txt();
+
+/**
+ * @brief Importa estadísticas desde archivo TXT
+ *
+ * Lee el archivo TXT de estadísticas y las procesa.
+ */
+void importar_estadisticas_txt();
+
+/** @} */
+
+/** @name Funciones de importación desde CSV */
+/** @{ */
+
+/**
+ * @brief Importa camisetas desde archivo CSV
+ *
+ * Lee el archivo CSV de camisetas y las inserta en la base de datos.
+ */
+void importar_camisetas_csv();
+
+/**
+ * @brief Importa partidos desde archivo CSV
+ *
+ * Lee el archivo CSV de partidos y los inserta en la base de datos.
+ */
+void importar_partidos_csv();
+
+/**
+ * @brief Importa lesiones desde archivo CSV
+ *
+ * Lee el archivo CSV de lesiones y las inserta en la base de datos.
+ */
+void importar_lesiones_csv();
+
+/**
+ * @brief Importa estadísticas desde archivo CSV
+ *
+ * Lee el archivo CSV de estadísticas y las procesa.
+ */
+void importar_estadisticas_csv();
+
+/** @} */
+
+/** @name Funciones de importación desde HTML */
+/** @{ */
+
+/**
+ * @brief Importa camisetas desde archivo HTML
+ *
+ * Lee el archivo HTML de camisetas y las inserta en la base de datos.
+ */
+void importar_camisetas_html();
+
+/**
+ * @brief Importa partidos desde archivo HTML
+ *
+ * Lee el archivo HTML de partidos y los inserta en la base de datos.
+ */
+void importar_partidos_html();
+
+/**
+ * @brief Importa lesiones desde archivo HTML
+ *
+ * Lee el archivo HTML de lesiones y las inserta en la base de datos.
+ */
+void importar_lesiones_html();
+
+/**
+ * @brief Importa estadísticas desde archivo HTML
+ *
+ * Lee el archivo HTML de estadísticas y las procesa.
+ */
+void importar_estadisticas_html();
+
+/** @} */
+
 void menu_importar();

@@ -1,0 +1,23 @@
+{
+	"generales":	{
+		"total_partidos":	2,
+		"avg_goles":	0.5,
+		"avg_asistencias":	2,
+		"avg_rendimiento":	6.5,
+		"avg_cansancio":	8,
+		"avg_animo":	8.5
+	},
+	"ultimos5":	{
+		"total_partidos":	2,
+		"avg_goles":	0.5,
+		"avg_asistencias":	2,
+		"avg_rendimiento":	6.5,
+		"avg_cansancio":	8,
+		"avg_animo":	8.5
+	},
+	"rachas":	{
+		"mejor_racha_victorias":	0,
+		"peor_racha_derrotas":	2
+	},
+	"mensaje_motivacional":	"Buen trabajo manteniendo el nivel. La consistencia es clave en el futbol. Sigue entrenando y manten la motivacion alta. Cada partido es una oportunidad!"
+}

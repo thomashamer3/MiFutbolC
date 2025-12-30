@@ -2,5 +2,8 @@
     "docwriter.language": "English",
     "docwriter.style": "Doxygen",
     "docwriter.progress.trackClasses": true,
-    "docwriter.progress.trackTypes": true
+    "docwriter.progress.trackTypes": true,
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}"
+    ]
 }

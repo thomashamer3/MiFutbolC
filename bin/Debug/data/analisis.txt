@@ -1,0 +1,24 @@
+ANALISIS DE RENDIMIENTO
+
+ESTADISTICAS GENERALES:
+Total Partidos: 2
+Promedio Goles: 0.50
+Promedio Asistencias: 2.00
+Promedio Rendimiento: 6.50
+Promedio Cansancio: 8.00
+Promedio Estado Animo: 8.50
+
+ULTIMOS 5 PARTIDOS:
+Total Partidos: 2
+Promedio Goles: 0.50
+Promedio Asistencias: 2.00
+Promedio Rendimiento: 6.50
+Promedio Cansancio: 8.00
+Promedio Estado Animo: 8.50
+
+RACHAS:
+Mejor racha de victorias: 0 partidos
+Peor racha de derrotas: 2 partidos
+
+ANALISIS MOTIVACIONAL:
+Buen trabajo manteniendo el nivel. La consistencia es clave en el futbol. Sigue entrenando y manten la motivacion alta. Cada partido es una oportunidad!

@@ -245,7 +245,7 @@ void mostrar_analisis()
     printf("Asistencias:  %.1f vs %.1f\n", ultimos5.avg_asistencias, generales.avg_asistencias);
     printf("Rendimiento:  %.1f vs %.1f\n", ultimos5.avg_rendimiento, generales.avg_rendimiento);
     printf("Cansancio:    %.1f vs %.1f\n", ultimos5.avg_cansancio, generales.avg_cansancio);
-    printf("Estado Ánimo: %.1f vs %.1f\n", ultimos5.avg_animo, generales.avg_animo);
+    printf("Estado Animo: %.1f vs %.1f\n", ultimos5.avg_animo, generales.avg_animo);
 
     printf("\nRACHAS:\n");
     printf("----------------------------------------\n");

@@ -28,23 +28,20 @@ typedef struct
     int total_partidos;
 } Estadisticas;
 
-#define EXPORT_PATH "data"
-
 /**
  * @brief Construye la ruta completa para un archivo de exportación
  *
- * Combina el directorio de trabajo actual con la ruta de exportación definida
- * y el nombre del archivo proporcionado para crear una ruta completa.
+ * Combina el directorio de datos con el nombre del archivo proporcionado
+ * para crear una ruta completa.
  *
  * @param filename Nombre del archivo a exportar
  * @return Cadena de caracteres con la ruta completa del archivo
  */
-static char* get_full_path(const char* filename)
+static char* get_export_path(const char* filename)
 {
     static char path[1024];
-    _getcwd(path, sizeof(path));
-    strcat(path, "\\");
-    strcat(path, EXPORT_PATH);
+    const char* data_dir = get_data_dir();
+    strcpy(path, data_dir);
     strcat(path, "\\");
     strcat(path, filename);
     return path;
@@ -141,7 +138,7 @@ void exportar_camisetas_csv()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/camisetas.csv", "w");
+    FILE *f = fopen(get_export_path("camisetas.csv"), "w");
     if (!f)
         return;
 
@@ -156,7 +153,7 @@ void exportar_camisetas_csv()
                 sqlite3_column_text(stmt, 1));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("camisetas.csv"));
+    printf("Archivo exportado a: %s\n", get_export_path("camisetas.csv"));
     fclose(f);
 }
 
@@ -182,7 +179,7 @@ void exportar_camisetas_txt()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/camisetas.txt", "w");
+    FILE *f = fopen(get_export_path("camisetas.txt"), "w");
     if (!f)
         return;
 
@@ -197,7 +194,7 @@ void exportar_camisetas_txt()
                 sqlite3_column_text(stmt, 1));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("camisetas.txt"));
+    printf("Archivo exportado a: %s\n", get_export_path("camisetas.txt"));
     fclose(f);
 }
 
@@ -223,7 +220,7 @@ void exportar_camisetas_json()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/camisetas.json", "w");
+    FILE *f = fopen(get_export_path("camisetas.json"), "w");
     if (!f)
         return;
 
@@ -246,7 +243,7 @@ void exportar_camisetas_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("camisetas.json"));
+    printf("Archivo exportado a: %s\n", get_export_path("camisetas.json"));
     fclose(f);
 }
 
@@ -272,7 +269,7 @@ void exportar_camisetas_html()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/camisetas.html", "w");
+    FILE *f = fopen(get_export_path("camisetas.html"), "w");
     if (!f)
         return;
 
@@ -291,7 +288,7 @@ void exportar_camisetas_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("camisetas.html"));
+    printf("Archivo exportado a: %s\n", get_export_path("camisetas.html"));
     fclose(f);
 }
 
@@ -319,7 +316,7 @@ void exportar_lesiones_csv()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/lesiones.csv", "w");
+    FILE *f = fopen(get_export_path("lesiones.csv"), "w");
     if (!f)
         return;
 
@@ -337,7 +334,7 @@ void exportar_lesiones_csv()
                 sqlite3_column_text(stmt, 4));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("lesiones.csv"));
+    printf("Archivo exportado a: %s\n", get_export_path("lesiones.csv"));
     fclose(f);
 }
 
@@ -363,7 +360,7 @@ void exportar_lesiones_txt()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/lesiones.txt", "w");
+    FILE *f = fopen(get_export_path("lesiones.txt"), "w");
     if (!f)
         return;
 
@@ -381,7 +378,7 @@ void exportar_lesiones_txt()
                 sqlite3_column_text(stmt, 4));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("lesiones.txt"));
+    printf("Archivo exportado a: %s\n", get_export_path("lesiones.txt"));
     fclose(f);
 }
 
@@ -407,7 +404,7 @@ void exportar_lesiones_json()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/lesiones.json", "w");
+    FILE *f = fopen(get_export_path("lesiones.json"), "w");
     if (!f)
         return;
 
@@ -433,7 +430,7 @@ void exportar_lesiones_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("lesiones.json"));
+    printf("Archivo exportado a: %s\n", get_export_path("lesiones.json"));
     fclose(f);
 }
 
@@ -459,7 +456,7 @@ void exportar_lesiones_html()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/lesiones.html", "w");
+    FILE *f = fopen(get_export_path("lesiones.html"), "w");
     if (!f)
         return;
 
@@ -481,7 +478,7 @@ void exportar_lesiones_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("lesiones.html"));
+    printf("Archivo exportado a: %s\n", get_export_path("lesiones.html"));
     fclose(f);
 }
 
@@ -509,7 +506,7 @@ void exportar_partidos_csv()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/partidos.csv", "w");
+    FILE *f = fopen(get_export_path("partidos.csv"), "w");
     if (!f)
         return;
 
@@ -538,7 +535,7 @@ void exportar_partidos_csv()
                 sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("partidos.csv"));
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.csv"));
     fclose(f);
 }
 
@@ -564,7 +561,7 @@ void exportar_partidos_txt()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/partidos.txt", "w");
+    FILE *f = fopen(get_export_path("partidos.txt"), "w");
     if (!f)
         return;
 
@@ -593,7 +590,7 @@ void exportar_partidos_txt()
                 sqlite3_column_text(stmt, 11));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("partidos.txt"));
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.txt"));
     fclose(f);
 }
 
@@ -619,7 +616,7 @@ void exportar_partidos_json()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/partidos.json", "w");
+    FILE *f = fopen(get_export_path("partidos.json"), "w");
     if (!f)
         return;
 
@@ -656,7 +653,7 @@ void exportar_partidos_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("partidos.json"));
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.json"));
     fclose(f);
 }
 
@@ -682,7 +679,7 @@ void exportar_partidos_html()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/partidos.html", "w");
+    FILE *f = fopen(get_export_path("partidos.html"), "w");
     if (!f)
         return;
 
@@ -715,7 +712,7 @@ void exportar_partidos_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("partidos.html"));
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.html"));
     fclose(f);
 }
 
@@ -743,7 +740,7 @@ void exportar_estadisticas_csv()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/estadisticas.csv", "w");
+    FILE *f = fopen(get_export_path("estadisticas.csv"), "w");
     if (!f)
         return;
 
@@ -770,7 +767,7 @@ void exportar_estadisticas_csv()
                 sqlite3_column_int(stmt, 6));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.csv"));
+    printf("Archivo exportado a: %s\n", get_export_path("estadisticas.csv"));
     fclose(f);
 }
 
@@ -796,7 +793,7 @@ void exportar_estadisticas_txt()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/estadisticas.txt", "w");
+    FILE *f = fopen(get_export_path("estadisticas.txt"), "w");
     if (!f)
         return;
 
@@ -821,7 +818,7 @@ void exportar_estadisticas_txt()
                 sqlite3_column_int(stmt, 6));
 
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.txt"));
+    printf("Archivo exportado a: %s\n", get_export_path("estadisticas.txt"));
     fclose(f);
 }
 
@@ -847,7 +844,7 @@ void exportar_estadisticas_json()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/estadisticas.json", "w");
+    FILE *f = fopen(get_export_path("estadisticas.json"), "w");
     if (!f)
         return;
 
@@ -882,7 +879,7 @@ void exportar_estadisticas_json()
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.json"));
+    printf("Archivo exportado a: %s\n", get_export_path("estadisticas.json"));
     fclose(f);
 }
 
@@ -908,7 +905,7 @@ void exportar_estadisticas_html()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/estadisticas.html", "w");
+    FILE *f = fopen(get_export_path("estadisticas.html"), "w");
     if (!f)
         return;
 
@@ -939,7 +936,7 @@ void exportar_estadisticas_html()
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_full_path("estadisticas.html"));
+    printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
     fclose(f);
 }
 
@@ -1091,7 +1088,7 @@ void exportar_analisis_csv()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/analisis.csv", "w");
+    FILE *f = fopen(get_export_path("analisis.csv"), "w");
     if (!f)
         return;
 
@@ -1118,7 +1115,7 @@ void exportar_analisis_csv()
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
     fprintf(f, "Mensaje,%s\n", msg);
 
-    printf("Archivo exportado a: %s\n", get_full_path("analisis.csv"));
+    printf("Archivo exportado a: %s\n", get_export_path("analisis.csv"));
     fclose(f);
 }
 
@@ -1144,7 +1141,7 @@ void exportar_analisis_txt()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/analisis.txt", "w");
+    FILE *f = fopen(get_export_path("analisis.txt"), "w");
     if (!f)
         return;
 
@@ -1181,7 +1178,7 @@ void exportar_analisis_txt()
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
     fprintf(f, "ANALISIS MOTIVACIONAL:\n%s\n", msg);
 
-    printf("Archivo exportado a: %s\n", get_full_path("analisis.txt"));
+    printf("Archivo exportado a: %s\n", get_export_path("analisis.txt"));
     fclose(f);
 }
 
@@ -1207,7 +1204,7 @@ void exportar_analisis_json()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/analisis.json", "w");
+    FILE *f = fopen(get_export_path("analisis.json"), "w");
     if (!f)
         return;
 
@@ -1252,7 +1249,7 @@ void exportar_analisis_json()
 
     free(json_string);
     cJSON_Delete(root);
-    printf("Archivo exportado a: %s\n", get_full_path("analisis.json"));
+    printf("Archivo exportado a: %s\n", get_export_path("analisis.json"));
     fclose(f);
 }
 
@@ -1278,7 +1275,7 @@ void exportar_analisis_html()
         return;
     }
 
-    FILE *f = fopen(EXPORT_PATH "/analisis.html", "w");
+    FILE *f = fopen(get_export_path("analisis.html"), "w");
     if (!f)
         return;
 
@@ -1323,7 +1320,7 @@ void exportar_analisis_html()
     fprintf(f, "<p>%s</p>", msg);
 
     fprintf(f, "</body></html>");
-    printf("Archivo exportado a: %s\n", get_full_path("analisis.html"));
+    printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
     fclose(f);
 }
 

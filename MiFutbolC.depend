@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1766982229 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1767071898 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	<stddef.h>
 	<stdio.h>
 	<stdlib.h>
@@ -146,7 +146,7 @@
 
 1766779596 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1767065398 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1767076488 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -210,7 +210,7 @@
 
 1766701235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.h
 
-1766955866 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
+1767075890 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
 	"analisis.h"
 	"db.h"
 	"utils.h"
@@ -260,9 +260,9 @@
 1766774181 d:\anime\libros\lenguaje c\proyectos\mifutbolc\cjson_utils.h
 	"cJSON.h"
 
-1766905442 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
+1767072051 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1767059557 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1767076194 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -271,6 +271,7 @@
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	"sqlite3.h"
 
 1766777361 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sfd.c
 	<stdio.h>
