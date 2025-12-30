@@ -234,13 +234,13 @@ Selecciona "8" en el menú principal para acceder al menú de exportación. Este
 5. **Análisis** - Exportar análisis de rendimiento
 6. **Todo** - Exportar todos los datos
 
-Cada opción permite exportar en múltiples formatos (CSV, TXT, JSON, HTML). Los archivos se guardarán en el directorio `data/`.
+Cada opción permite exportar en múltiples formatos (CSV, TXT, JSON, HTML). Los archivos se guardarán en el Escritorio (Windows) o directorio home (Unix/Linux) con nombres descriptivos como `camisetas.csv`, `partidos.html`, etc. El usuario puede elegir el formato para cada módulo.
 
 ![Exportar datos](images/menuexportar.png)
 
 ## Importar Datos
 
-Selecciona "9" en el menú principal para importar datos desde archivos JSON. Los archivos deben estar en el directorio `data/` con nombres específicos.
+Selecciona "9" en el menú principal para importar datos Los archivos deben estar ubicados en el directorio `Documents/MiFutbolC/Importaciones` (o `%USERPROFILE%\Documents\MiFutbolC\Importaciones` en Windows, `./importaciones` en el directorio del ejecutable en Unix/Linux) con nombres específicos, generados por la función de exportación.
 
 ![Importar datos](images/menuimportar.png)
 
@@ -266,8 +266,8 @@ Selecciona "10" en el menú principal para cambiar el nombre de usuario o ver in
 
 ### Error al conectar con la base de datos
 
-- Verifica que el directorio `data/` existe y tienes permisos de escritura
-- El programa creará automáticamente la base de datos si no existe
+- Verifica que el directorio `data/` (o `%APPDATA%\MiFutbolC\data\` en Windows, `data/` en el directorio del ejecutable en Unix/Linux) existe y tienes permisos de escritura
+- El programa creará automáticamente la base de datos `mifutbol.db` si no existe
 
 ### Datos no se guardan
 

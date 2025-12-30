@@ -83,7 +83,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1767064066 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1767115497 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	<stdio.h>
 	<stdlib.h>
@@ -94,7 +94,7 @@
 	<shlobj.h>
 	<sys/stat.h>
 
-1767059494 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
+1767115458 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
 	"sqlite3.h"
 
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
@@ -146,7 +146,7 @@
 
 1766779596 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1767076488 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1767117887 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -262,7 +262,7 @@
 
 1767072051 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1767076194 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1767119292 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"

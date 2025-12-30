@@ -129,7 +129,7 @@ MiFutbolC/
 
 ## Base de Datos
 
-El proyecto utiliza SQLite para almacenar datos. La base de datos se crea automáticamente en `data/mifutbol.db` al ejecutar el programa por primera vez.
+El proyecto utiliza SQLite para almacenar datos. La base de datos se crea automáticamente en `data/mifutbol.db` al ejecutar el programa por primera vez. En Windows, se guarda en `%APPDATA%\MiFutbolC\data\mifutbol.db`, y en Unix/Linux, en el directorio del ejecutable `data/mifutbol.db`.
 
 ### Tablas Principales
 
@@ -156,7 +156,7 @@ El sistema permite exportar datos en múltiples formatos:
 - **JSON**: Formato estructurado para integración con otras aplicaciones.
 - **HTML**: Páginas web con tablas para visualización en navegador.
 
-Los archivos exportados se guardan en el directorio `data/` con nombres descriptivos como `camisetas.csv`, `partidos.html`, etc.
+Los archivos exportados se guardan en el Escritorio (Windows) o directorio home (Unix/Linux) con nombres descriptivos como `camisetas.csv`, `partidos.html`, etc. El usuario puede elegir el formato (CSV, TXT, JSON, HTML) para cada módulo.
 
 ## Módulo de Estadísticas
 
@@ -252,7 +252,7 @@ Además de las exportaciones individuales, el módulo `export_all.c / export_all
 
 Además de las exportaciones, el módulo `import.c / import.h` proporciona la función `importar_todo()` que:
 
-- Permite importar datos desde archivos JSON generados por la función de exportación.
+- Permite importar datos desde archivos JSON ubicados en el directorio `Documents/MiFutbolC/Importaciones` (o `%USERPROFILE%\Documents\MiFutbolC\Importaciones` en Windows, `./importaciones` en el directorio del ejecutable en Unix/Linux), generados por la función de exportación.
 - Valida la estructura de los datos JSON antes de insertarlos en la base de datos.
 - Maneja errores de importación y proporciona feedback al usuario.
 - Facilita la restauración de datos desde copias de seguridad.

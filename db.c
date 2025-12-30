@@ -33,6 +33,12 @@ static char DB_DIR[1024];
 /** Ruta completa al archivo de la base de datos */
 static char DB_PATH[1024];
 
+/** Directorio de exportaciones */
+static char EXPORT_DIR[1024];
+
+/** Directorio de importaciones */
+static char IMPORT_DIR[1024];
+
 /**
  * @brief Obtiene el directorio del ejecutable
  *
@@ -66,28 +72,58 @@ void get_executable_dir(char *buffer, size_t size)
  */
 int db_init()
 {
-    // Obtener el directorio del ejecutable
+#ifdef _WIN32
+    // Usar AppData\Local para la base de datos (oculta, interna)
+    char appdata_path[MAX_PATH];
+    if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appdata_path) != S_OK)
+    {
+        printf("Error obteniendo AppData path\n");
+        return 0;
+    }
+
+    memset(DB_DIR, 0, sizeof(DB_DIR));
+    strcpy(DB_DIR, appdata_path);
+    strncat(DB_DIR, "\\MiFutbolC\\data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
+
+    memset(DB_PATH, 0, sizeof(DB_PATH));
+    strcpy(DB_PATH, appdata_path);
+    strncat(DB_PATH, "\\MiFutbolC\\data\\mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
+
+    // Crear directorios si no existen
+    char temp_path[MAX_PATH];
+    strcpy(temp_path, appdata_path);
+    strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+    if (MKDIR(temp_path) != 0 && errno != EEXIST)
+    {
+        printf("Error creando directorio MiFutbolC: %s\n", strerror(errno));
+        return 0;
+    }
+
+    if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
+    {
+        printf("Error creando directorio data: %s\n", strerror(errno));
+        return 0;
+    }
+#else
+    // Para otros sistemas operativos, usar directorio del ejecutable
     char exe_dir[1024];
     get_executable_dir(exe_dir, sizeof(exe_dir));
 
     memset(DB_DIR, 0, sizeof(DB_DIR));
     strcpy(DB_DIR, exe_dir);
-    strncat(DB_DIR, "\\data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
+    strncat(DB_DIR, "/data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
     strcpy(DB_PATH, exe_dir);
-    strncat(DB_PATH, "\\data\\mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
+    strncat(DB_PATH, "/data/mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
 
     // Crear directorio si no existe
-    if (MKDIR(DB_DIR) != 0)
+    if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
     {
-        // Si el directorio ya existe, no es error
-        if (errno != EEXIST)
-        {
-            printf("Error creando directorio: %s\n", strerror(errno));
-            return 0;
-        }
+        printf("Error creando directorio: %s\n", strerror(errno));
+        return 0;
     }
+#endif
 
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
@@ -236,4 +272,104 @@ int set_user_name(const char* nombre)
 const char* get_data_dir()
 {
     return DB_DIR;
+}
+
+/**
+ * @brief Obtiene la ruta del directorio de exportaciones
+ *
+ * @return Puntero a cadena con la ruta del directorio de exportaciones
+ */
+const char* get_export_dir()
+{
+    if (EXPORT_DIR[0] == '\0')
+    {
+#ifdef _WIN32
+        // Usar Documents para exportaciones (visible para el usuario)
+        char documents_path[MAX_PATH];
+        if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
+        {
+            printf("Error obteniendo Documents path\n");
+            return NULL;
+        }
+
+        memset(EXPORT_DIR, 0, sizeof(EXPORT_DIR));
+        strcpy(EXPORT_DIR, documents_path);
+        strncat(EXPORT_DIR, "\\MiFutbolC\\Exportaciones", sizeof(EXPORT_DIR) - strlen(EXPORT_DIR) - 1);
+
+        // Crear directorios si no existen
+        char temp_path[MAX_PATH];
+        strcpy(temp_path, documents_path);
+        strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+        if (MKDIR(temp_path) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
+            return NULL;
+        }
+
+        if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio Exportaciones: %s\n", strerror(errno));
+            return NULL;
+        }
+#else
+        // Para otros sistemas operativos
+        strcpy(EXPORT_DIR, "./exportaciones");
+        if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio exportaciones: %s\n", strerror(errno));
+            return NULL;
+        }
+#endif
+    }
+    return EXPORT_DIR;
+}
+
+/**
+ * @brief Obtiene la ruta del directorio de importaciones
+ *
+ * @return Puntero a cadena con la ruta del directorio de importaciones
+ */
+const char* get_import_dir()
+{
+    if (IMPORT_DIR[0] == '\0')
+    {
+#ifdef _WIN32
+        // Usar Documents para importaciones (visible para el usuario)
+        char documents_path[MAX_PATH];
+        if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
+        {
+            printf("Error obteniendo Documents path\n");
+            return NULL;
+        }
+
+        memset(IMPORT_DIR, 0, sizeof(IMPORT_DIR));
+        strcpy(IMPORT_DIR, documents_path);
+        strncat(IMPORT_DIR, "\\MiFutbolC\\Importaciones", sizeof(IMPORT_DIR) - strlen(IMPORT_DIR) - 1);
+
+        // Crear directorios si no existen
+        char temp_path[MAX_PATH];
+        strcpy(temp_path, documents_path);
+        strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+        if (MKDIR(temp_path) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
+            return NULL;
+        }
+
+        if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio Importaciones: %s\n", strerror(errno));
+            return NULL;
+        }
+#else
+        // Para otros sistemas operativos
+        strcpy(IMPORT_DIR, "./importaciones");
+        if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
+        {
+            printf("Error creando directorio importaciones: %s\n", strerror(errno));
+            return NULL;
+        }
+#endif
+    }
+    return IMPORT_DIR;
 }

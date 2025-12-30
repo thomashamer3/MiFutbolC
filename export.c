@@ -16,6 +16,24 @@
 #include <string.h>
 
 /**
+ * @brief Elimina espacios en blanco al final de una cadena.
+ *
+ * @param str Cadena a recortar.
+ * @return Puntero a la cadena recortada.
+ */
+static char *trim_trailing_spaces(char *str)
+{
+    if (!str) return NULL;
+    char *end = str + strlen(str) - 1;
+    while (end > str && *end == ' ')
+    {
+        *end = '\0';
+        end--;
+    }
+    return str;
+}
+
+/**
  * @brief Estructura para almacenar estadísticas de partidos
  */
 typedef struct
@@ -40,8 +58,10 @@ typedef struct
 static char* get_export_path(const char* filename)
 {
     static char path[1024];
-    const char* data_dir = get_data_dir();
-    strcpy(path, data_dir);
+    const char* export_dir = get_export_dir();
+    if (!export_dir)
+        return NULL;
+    strcpy(path, export_dir);
     strcat(path, "\\");
     strcat(path, filename);
     return path;
@@ -520,8 +540,11 @@ void exportar_partidos_csv()
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
+        trim_trailing_spaces(cancha_trimmed);
         fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
-                sqlite3_column_text(stmt, 0),
+                cancha_trimmed,
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
@@ -533,6 +556,8 @@ void exportar_partidos_csv()
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
                 sqlite3_column_text(stmt, 11));
+        free(cancha_trimmed);
+    }
 
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("partidos.csv"));
@@ -575,8 +600,11 @@ void exportar_partidos_txt()
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
+        trim_trailing_spaces(cancha_trimmed);
         fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
-                sqlite3_column_text(stmt, 0),
+                cancha_trimmed,
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
@@ -588,6 +616,8 @@ void exportar_partidos_txt()
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
                 sqlite3_column_text(stmt, 11));
+        free(cancha_trimmed);
+    }
 
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("partidos.txt"));
@@ -631,8 +661,10 @@ void exportar_partidos_json()
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
+        trim_trailing_spaces(cancha_trimmed);
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "cancha", (const char *)sqlite3_column_text(stmt, 0));
+        cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
         cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
         cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
         cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
@@ -645,6 +677,7 @@ void exportar_partidos_json()
         cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
         cJSON_AddStringToObject(item, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
         cJSON_AddItemToArray(root, item);
+        free(cancha_trimmed);
     }
 
     char *json_string = cJSON_Print(root);
@@ -695,9 +728,12 @@ void exportar_partidos_html()
                        -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
+        trim_trailing_spaces(cancha_trimmed);
         fprintf(f,
                 "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
-                sqlite3_column_text(stmt, 0),
+                cancha_trimmed,
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
@@ -709,6 +745,8 @@ void exportar_partidos_html()
                 sqlite3_column_int(stmt, 9),
                 sqlite3_column_int(stmt, 10),
                 sqlite3_column_text(stmt, 11));
+        free(cancha_trimmed);
+    }
 
     fprintf(f, "</table></body></html>");
     sqlite3_finalize(stmt);

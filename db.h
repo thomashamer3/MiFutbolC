@@ -61,3 +61,17 @@ int set_user_name(const char* nombre);
  * @return Puntero a cadena con la ruta del directorio de datos
  */
 const char* get_data_dir();
+
+/**
+ * @brief Obtiene la ruta del directorio de exportaciones
+ *
+ * @return Puntero a cadena con la ruta del directorio de exportaciones
+ */
+const char* get_export_dir();
+
+/**
+ * @brief Obtiene la ruta del directorio de importaciones
+ *
+ * @return Puntero a cadena con la ruta del directorio de importaciones
+ */
+const char* get_import_dir();

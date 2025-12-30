@@ -77,8 +77,8 @@ static char *read_file_content(const char *filename)
 void importar_camisetas_json()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\camisetas.json", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\camisetas.json", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -157,8 +157,8 @@ strncat(filename, "\\camisetas.json", sizeof(filename) - strlen(filename) - 1);
 void importar_partidos_json()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\partidos.json", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\partidos.json", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -262,6 +262,22 @@ strncat(filename, "\\partidos.json", sizeof(filename) - strlen(filename) - 1);
             continue;
         }
 
+        // Verificar si ya existe un partido con los mismos datos
+        sqlite3_stmt *dup_stmt;
+        sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido WHERE cancha_id = ? AND fecha_hora = ? AND camiseta_id = ?", -1, &dup_stmt, NULL);
+        sqlite3_bind_int(dup_stmt, 1, cancha_id);
+        sqlite3_bind_text(dup_stmt, 2, fecha, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(dup_stmt, 3, camiseta_id);
+        sqlite3_step(dup_stmt);
+        int exists = sqlite3_column_int(dup_stmt, 0);
+        sqlite3_finalize(dup_stmt);
+
+        if (exists)
+        {
+            printf("Partido ya existe, omitiendo...\n");
+            continue;
+        }
+
         // Obtener siguiente ID para partido
         int partido_id = 1;
         sqlite3_stmt *max_stmt;
@@ -308,8 +324,8 @@ strncat(filename, "\\partidos.json", sizeof(filename) - strlen(filename) - 1);
 void importar_lesiones_json()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\lesiones.json", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\lesiones.json", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -418,8 +434,8 @@ void importar_estadisticas_json()
     }
 
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\estadisticas.json", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\estadisticas.json", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -752,8 +768,8 @@ static void importar_todo_txt_con_pausa()
 void importar_camisetas_txt()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\camisetas.txt", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\camisetas.txt", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -825,8 +841,8 @@ strncat(filename, "\\camisetas.txt", sizeof(filename) - strlen(filename) - 1);
 void importar_partidos_txt()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\partidos.txt", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\partidos.txt", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -919,6 +935,22 @@ strncat(filename, "\\partidos.txt", sizeof(filename) - strlen(filename) - 1);
                 continue;
             }
 
+            // Verificar si ya existe un partido con los mismos datos
+            sqlite3_stmt *dup_stmt;
+            sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido WHERE cancha_id = ? AND fecha_hora = ? AND camiseta_id = ?", -1, &dup_stmt, NULL);
+            sqlite3_bind_int(dup_stmt, 1, cancha_id);
+            sqlite3_bind_text(dup_stmt, 2, fecha, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(dup_stmt, 3, camiseta_id);
+            sqlite3_step(dup_stmt);
+            int exists = sqlite3_column_int(dup_stmt, 0);
+            sqlite3_finalize(dup_stmt);
+
+            if (exists)
+            {
+                printf("Partido ya existe, omitiendo...\n");
+                continue;
+            }
+
             // Obtener siguiente ID para partido
             int partido_id = 1;
             sqlite3_stmt *max_stmt;
@@ -966,8 +998,8 @@ strncat(filename, "\\partidos.txt", sizeof(filename) - strlen(filename) - 1);
 void importar_lesiones_txt()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\lesiones.txt", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\lesiones.txt", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1060,8 +1092,8 @@ void importar_estadisticas_txt()
     }
 
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\estadisticas.txt", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\estadisticas.txt", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1160,8 +1192,8 @@ strncat(filename, "\\estadisticas.txt", sizeof(filename) - strlen(filename) - 1)
 void importar_camisetas_csv()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\camisetas.csv", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\camisetas.csv", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1232,8 +1264,8 @@ strncat(filename, "\\camisetas.csv", sizeof(filename) - strlen(filename) - 1);
 void importar_partidos_csv()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\partidos.csv", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\partidos.csv", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1326,6 +1358,22 @@ strncat(filename, "\\partidos.csv", sizeof(filename) - strlen(filename) - 1);
                 continue;
             }
 
+            // Verificar si ya existe un partido con los mismos datos
+            sqlite3_stmt *dup_stmt;
+            sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido WHERE cancha_id = ? AND fecha_hora = ? AND camiseta_id = ?", -1, &dup_stmt, NULL);
+            sqlite3_bind_int(dup_stmt, 1, cancha_id);
+            sqlite3_bind_text(dup_stmt, 2, fecha, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(dup_stmt, 3, camiseta_id);
+            sqlite3_step(dup_stmt);
+            int exists = sqlite3_column_int(dup_stmt, 0);
+            sqlite3_finalize(dup_stmt);
+
+            if (exists)
+            {
+                printf("Partido ya existe, omitiendo...\n");
+                continue;
+            }
+
             // Obtener siguiente ID para partido
             int partido_id = 1;
             sqlite3_stmt *max_stmt;
@@ -1373,8 +1421,8 @@ strncat(filename, "\\partidos.csv", sizeof(filename) - strlen(filename) - 1);
 void importar_lesiones_csv()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\lesiones.csv", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\lesiones.csv", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1467,8 +1515,8 @@ void importar_estadisticas_csv()
     }
 
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\estadisticas.csv", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\estadisticas.csv", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1563,8 +1611,8 @@ strncat(filename, "\\estadisticas.csv", sizeof(filename) - strlen(filename) - 1)
 void importar_camisetas_html()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\camisetas.html", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\camisetas.html", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1637,8 +1685,8 @@ strncat(filename, "\\camisetas.html", sizeof(filename) - strlen(filename) - 1);
 void importar_partidos_html()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\partidos.html", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\partidos.html", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1814,8 +1862,8 @@ strncat(filename, "\\partidos.html", sizeof(filename) - strlen(filename) - 1);
 void importar_lesiones_html()
 {
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\lesiones.html", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\lesiones.html", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
@@ -1926,8 +1974,8 @@ void importar_estadisticas_html()
     }
 
     char filename[1024];
-    strcpy(filename, get_data_dir());
-strncat(filename, "\\estadisticas.html", sizeof(filename) - strlen(filename) - 1);
+    strcpy(filename, get_import_dir());
+    strncat(filename, "\\estadisticas.html", sizeof(filename) - strlen(filename) - 1);
 
     printf("Importando desde: %s\n", filename);
 
