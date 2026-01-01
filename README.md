@@ -64,6 +64,19 @@ gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c estadisticas.c analisis
 ./MiFutbolC
 ```
 
+### Opción 4: Usando el Script Bash (Linux)
+
+1. Asegúrate de tener GCC instalado.
+2. Navega al directorio raíz del proyecto.
+3. Haz el script ejecutable y ejecútalo:
+
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+Este script compila automáticamente todos los archivos fuente con advertencias habilitadas y símbolos de depuración, y ejecuta el programa si la compilación es exitosa.
+
 ## Uso
 
 Al ejecutar el programa, se presenta un menú principal con las siguientes opciones:
