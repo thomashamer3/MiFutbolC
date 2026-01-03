@@ -6,20 +6,22 @@
 #include "export_records_rankings.h"
 #include "db.h"
 #include "utils.h"
+#include "export.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /**
  * @brief Función auxiliar para exportar récords a CSV
  */
-static void exportar_record_csv(const char *titulo, const char *sql, const char *filename)
+static void exportar_record_csv(const char *titulo, const char *sql, const char *filepath)
 {
     sqlite3_stmt *stmt;
-    FILE *file = fopen(filename, "w");
+    FILE *file = fopen(filepath, "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo %s\n", filename);
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -39,20 +41,20 @@ static void exportar_record_csv(const char *titulo, const char *sql, const char 
     }
 
     fclose(file);
-    printf("Exportado a %s\n", filename);
+    printf("Exportado a %s\n", filepath);
 }
 
 /**
  * @brief Función auxiliar para exportar combinaciones a CSV
  */
-static void exportar_combinacion_csv(const char *titulo, const char *sql, const char *filename)
+static void exportar_combinacion_csv(const char *titulo, const char *sql, const char *filepath)
 {
     sqlite3_stmt *stmt;
-    FILE *file = fopen(filename, "w");
+    FILE *file = fopen(filepath, "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo %s\n", filename);
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -73,20 +75,20 @@ static void exportar_combinacion_csv(const char *titulo, const char *sql, const 
     }
 
     fclose(file);
-    printf("Exportado a %s\n", filename);
+    printf("Exportado a %s\n", filepath);
 }
 
 /**
  * @brief Función auxiliar para exportar temporadas a CSV
  */
-static void exportar_temporada_csv(const char *titulo, const char *sql, const char *filename)
+static void exportar_temporada_csv(const char *titulo, const char *sql, const char *filepath)
 {
     sqlite3_stmt *stmt;
-    FILE *file = fopen(filename, "w");
+    FILE *file = fopen(filepath, "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo %s\n", filename);
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -106,7 +108,7 @@ static void exportar_temporada_csv(const char *titulo, const char *sql, const ch
     }
 
     fclose(file);
-    printf("Exportado a %s\n", filename);
+    printf("Exportado a %s\n", filepath);
 }
 
 /**
@@ -119,7 +121,7 @@ void exportar_record_goles_partido_csv()
                         "FROM partido p "
                         "JOIN camiseta c ON p.camiseta_id = c.id "
                         "ORDER BY p.goles DESC LIMIT 1",
-                        "record_goles_partido.csv");
+                        get_export_path("record_goles_partido.csv"));
 }
 
 /**
@@ -132,7 +134,7 @@ void exportar_record_asistencias_partido_csv()
                         "FROM partido p "
                         "JOIN camiseta c ON p.camiseta_id = c.id "
                         "ORDER BY p.asistencias DESC LIMIT 1",
-                        "record_asistencias_partido.csv");
+                        get_export_path("record_asistencias_partido.csv"));
 }
 
 /**
@@ -147,7 +149,7 @@ void exportar_mejor_combinacion_cancha_camiseta_csv()
                              "JOIN camiseta c ON p.camiseta_id = c.id "
                              "GROUP BY p.cancha_id, p.camiseta_id "
                              "ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1",
-                             "mejor_combinacion_cancha_camiseta.csv");
+                             get_export_path("mejor_combinacion_cancha_camiseta.csv"));
 }
 
 /**
@@ -162,7 +164,7 @@ void exportar_peor_combinacion_cancha_camiseta_csv()
                              "JOIN camiseta c ON p.camiseta_id = c.id "
                              "GROUP BY p.cancha_id, p.camiseta_id "
                              "ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1",
-                             "peor_combinacion_cancha_camiseta.csv");
+                             get_export_path("peor_combinacion_cancha_camiseta.csv"));
 }
 
 /**
@@ -175,7 +177,7 @@ void exportar_mejor_temporada_csv()
                            "FROM partido p "
                            "GROUP BY strftime('%Y', p.fecha_hora) "
                            "ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1",
-                           "mejor_temporada.csv");
+                           get_export_path("mejor_temporada.csv"));
 }
 
 /**
@@ -188,7 +190,7 @@ void exportar_peor_temporada_csv()
                            "FROM partido p "
                            "GROUP BY strftime('%Y', p.fecha_hora) "
                            "ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1",
-                           "peor_temporada.csv");
+                           get_export_path("peor_temporada.csv"));
 }
 
 /**
@@ -196,11 +198,11 @@ void exportar_peor_temporada_csv()
  */
 void exportar_records_rankings_txt()
 {
-    FILE *file = fopen("records_rankings.txt", "w");
+    FILE *file = fopen(get_export_path("records_rankings.txt"), "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo records_rankings.txt\n");
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -276,7 +278,7 @@ void exportar_records_rankings_txt()
     }
 
     fclose(file);
-    printf("Exportado a records_rankings.txt\n");
+    printf("Exportado a %s\n", get_export_path("records_rankings.txt"));
 }
 
 /**
@@ -284,11 +286,11 @@ void exportar_records_rankings_txt()
  */
 void exportar_records_rankings_json()
 {
-    FILE *file = fopen("records_rankings.json", "w");
+    FILE *file = fopen(get_export_path("records_rankings.json"), "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo records_rankings.json\n");
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -421,7 +423,7 @@ void exportar_records_rankings_json()
     fprintf(file, "}\n");
 
     fclose(file);
-    printf("Exportado a records_rankings.json\n");
+    printf("Exportado a %s\n", get_export_path("records_rankings.json"));
 }
 
 /**
@@ -429,11 +431,11 @@ void exportar_records_rankings_json()
  */
 void exportar_records_rankings_html()
 {
-    FILE *file = fopen("records_rankings.html", "w");
+    FILE *file = fopen(get_export_path("records_rankings.html"), "w");
 
     if (!file)
     {
-        printf("Error al crear el archivo records_rankings.html\n");
+        printf("Error al crear el archivo\n");
         return;
     }
 
@@ -545,5 +547,5 @@ void exportar_records_rankings_html()
     fprintf(file, "</html>\n");
 
     fclose(file);
-    printf("Exportado a records_rankings.html\n");
+    printf("Exportado a %s\n", get_export_path("records_rankings.html"));
 }

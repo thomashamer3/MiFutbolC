@@ -28,7 +28,8 @@ void exportar_estadisticas_generales_csv()
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_generales.csv"), "w");
+    const char *filepath = get_export_path("estadisticas_generales.csv");
+    FILE *file = fopen(filepath, "w");
     if (!file)
     {
         printf("Error creando archivo CSV\n");
@@ -127,7 +128,7 @@ void exportar_estadisticas_generales_csv()
     sqlite3_finalize(stmt);
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", get_export_path("estadisticas_generales.csv"));
+    printf("Estadisticas generales exportadas a %s\n", filepath);
 }
 
 /**
@@ -149,7 +150,8 @@ void exportar_estadisticas_generales_txt()
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_generales.txt"), "w");
+    const char *filepath = get_export_path("estadisticas_generales.txt");
+    FILE *file = fopen(filepath, "w");
     if (!file)
     {
         printf("Error creando archivo TXT\n");
@@ -250,7 +252,7 @@ void exportar_estadisticas_generales_txt()
     sqlite3_finalize(stmt);
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", get_export_path("estadisticas_generales.txt"));
+    printf("Estadisticas generales exportadas a %s\n", filepath);
 }
 
 /**
@@ -272,7 +274,8 @@ void exportar_estadisticas_generales_json()
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_generales.json"), "w");
+    const char *filepath = get_export_path("estadisticas_generales.json");
+    FILE *file = fopen(filepath, "w");
     if (!file)
     {
         printf("Error creando archivo JSON\n");
@@ -398,7 +401,7 @@ void exportar_estadisticas_generales_json()
     fprintf(file, "}\n");
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", get_export_path("estadisticas_generales.json"));
+    printf("Estadisticas generales exportadas a %s\n", filepath);
 }
 
 /**
@@ -420,7 +423,8 @@ void exportar_estadisticas_generales_html()
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_generales.html"), "w");
+    const char *filepath = get_export_path("estadisticas_generales.html");
+    FILE *file = fopen(filepath, "w");
     if (!file)
     {
         printf("Error creando archivo HTML\n");
@@ -530,7 +534,7 @@ void exportar_estadisticas_generales_html()
     fprintf(file, "</html>\n");
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", get_export_path("estadisticas_generales.html"));
+    printf("Estadisticas generales exportadas a %s\n", filepath);
 }
 
 /**

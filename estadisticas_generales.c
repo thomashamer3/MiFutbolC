@@ -634,12 +634,6 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
         double rendimiento = sqlite3_column_double(stmt, 1);
 
         printf("%-30s : %.2f", remover_tildes(periodo), rendimiento);
-
-        // Agregar nota sobre problemas con tildes como se menciona en la tarea
-        if (strcmp(periodo, "Antiguos (primeros 5)") == 0)
-        {
-            printf(", Problemas con las Tildes de ascci, eliminar las tildes");
-        }
         printf("\n");
     }
 

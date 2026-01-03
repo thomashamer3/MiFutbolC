@@ -84,7 +84,15 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            printf("Anio: %s\n", sqlite3_column_text(stmt, 0));
+            const char* year = (const char*)sqlite3_column_text(stmt, 0);
+            if (year)
+            {
+                printf("Anio: %s\n", year);
+            }
+            else
+            {
+                printf("Anio: Desconocido\n");
+            }
             printf("Rendimiento Promedio: %.2f\n", sqlite3_column_double(stmt, 1));
             printf("Partidos Jugados: %d\n", sqlite3_column_int(stmt, 2));
         }
@@ -177,10 +185,7 @@ void mostrar_mejor_temporada()
     print_header("MEJOR TEMPORADA");
 
     mostrar_temporada("Mejor Temporada",
-                      "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
-                      "FROM partido p "
-                      "GROUP BY strftime('%Y', p.fecha_hora) "
-                      "ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
+                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
 
     pause_console();
 }
@@ -194,10 +199,7 @@ void mostrar_peor_temporada()
     print_header("PEOR TEMPORADA");
 
     mostrar_temporada("Peor Temporada",
-                      "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
-                      "FROM partido p "
-                      "GROUP BY strftime('%Y', p.fecha_hora) "
-                      "ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
+                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
 
     pause_console();
 }

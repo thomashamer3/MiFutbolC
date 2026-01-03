@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 /**
  * @brief Función auxiliar para ejecutar consultas SQL y mostrar resultados.
@@ -34,8 +35,15 @@ static void query(const char *titulo, const char *sql)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        snprintf(nombre, sizeof(nombre), "%s",
-                 sqlite3_column_text(stmt, 0));
+        const char* text = (const char*)sqlite3_column_text(stmt, 0);
+        if (text)
+        {
+            snprintf(nombre, sizeof(nombre), "%s", text);
+        }
+        else
+        {
+            snprintf(nombre, sizeof(nombre), "%s", "Desconocido");
+        }
 
         // Check if the second column is integer or real
         if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
@@ -78,17 +86,17 @@ void mostrar_consistencia_rendimiento()
           "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
 
     // Calcular desviación estándar
-    query("Desviación Estándar del Rendimiento",
+    query("Desviacion Estandar del Rendimiento",
           "SELECT ROUND(SQRT(AVG(rendimiento_general * rendimiento_general) - AVG(rendimiento_general) * AVG(rendimiento_general)), 2) FROM partido");
 
     // Calcular coeficiente de variación
-    query("Coeficiente de Variación (%)",
+    query("Coeficiente de Variacion (%)",
           "SELECT ROUND((SQRT(AVG(rendimiento_general * rendimiento_general) - AVG(rendimiento_general) * AVG(rendimiento_general)) / AVG(rendimiento_general) * 100), 2) FROM partido");
 
     // Mostrar rango de rendimiento
-    query("Rango de Rendimiento (Mínimo)",
+    query("Rango de Rendimiento (Minimo)",
           "SELECT MIN(rendimiento_general) FROM partido");
-    query("Rango de Rendimiento (Máximo)",
+    query("Rango de Rendimiento (Maximo)",
           "SELECT MAX(rendimiento_general) FROM partido");
 
     pause_console();
@@ -102,7 +110,7 @@ void mostrar_consistencia_rendimiento()
 void mostrar_partidos_outliers()
 {
     clear_screen();
-    print_header("PARTIDOS ATÍPICOS");
+    print_header("PARTIDOS ATIPICOS");
 
     // Calcular límites para outliers (1.5 * IQR)
     printf("\nPartidos con rendimiento excepcionalmente alto:\n");
@@ -171,8 +179,8 @@ void mostrar_dependencia_contexto()
           "SELECT clima, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC");
 
     // Rendimiento por día de semana
-    query("Rendimiento por Día de Semana",
-          "SELECT CASE strftime('%w', fecha_hora) WHEN '0' THEN 'Domingo' WHEN '1' THEN 'Lunes' WHEN '2' THEN 'Martes' WHEN '3' THEN 'Miércoles' WHEN '4' THEN 'Jueves' WHEN '5' THEN 'Viernes' WHEN '6' THEN 'Sábado' END AS dia, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY strftime('%w', fecha_hora) ORDER BY AVG(rendimiento_general) DESC");
+    query("Rendimiento por Dia de Semana",
+          "SELECT CASE strftime('%w', fecha_hora) WHEN '0' THEN 'Domingo' WHEN '1' THEN 'Lunes' WHEN '2' THEN 'Martes' WHEN '3' THEN 'Miércoles' WHEN '4' THEN 'Jueves' WHEN '5' THEN 'Viernes' WHEN '6' THEN 'Sábado' ELSE 'Desconocido' END AS dia, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY dia ORDER BY AVG(rendimiento_general) DESC");
 
     // Rendimiento por resultado
     query("Rendimiento por Resultado",
@@ -191,8 +199,8 @@ void mostrar_impacto_real_cansancio()
     clear_screen();
     print_header("IMPACTO REAL DEL CANSANCIO");
 
-    // Correlación entre cansancio y rendimiento
-    query("Correlación Cansancio-Rendimiento",
+    // Correlacion entre cansancio y rendimiento
+    query("Correlacion Cansancio-Rendimiento",
           "SELECT ROUND((COUNT(*) * SUM(cansancio * rendimiento_general) - SUM(cansancio) * SUM(rendimiento_general)) / "
           "(SQRT((COUNT(*) * SUM(cansancio * cansancio) - SUM(cansancio) * SUM(cansancio)) * "
           "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
@@ -230,15 +238,15 @@ void mostrar_impacto_real_estado_animo()
     clear_screen();
     print_header("IMPACTO REAL DEL ESTADO DE ÁNIMO");
 
-    // Correlación entre estado de ánimo y rendimiento
-    query("Correlación Estado de Ánimo-Rendimiento",
+    // Correlacion entre estado de ánimo y rendimiento
+    query("Correlacion Estado de Animo-Rendimiento",
           "SELECT ROUND((COUNT(*) * SUM(estado_animo * rendimiento_general) - SUM(estado_animo) * SUM(rendimiento_general)) / "
           "(SQRT((COUNT(*) * SUM(estado_animo * estado_animo) - SUM(estado_animo) * SUM(estado_animo)) * "
           "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
           "FROM partido");
 
     // Rendimiento por nivel de estado de ánimo
-    query("Rendimiento por Nivel de Estado de Ánimo",
+    query("Rendimiento por Nivel de Estado de Animo",
           "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, "
           "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, "
           "ROUND(AVG(goles), 2) AS goles_promedio, "
@@ -248,7 +256,7 @@ void mostrar_impacto_real_estado_animo()
           "ORDER BY rendimiento_promedio DESC");
 
     // Impacto en resultados
-    query("Resultados por Nivel de Estado de Ánimo",
+    query("Resultados por Nivel de Estado de Animo",
           "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, "
           "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
           "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
@@ -269,8 +277,8 @@ void mostrar_eficiencia_goles_vs_rendimiento()
     clear_screen();
     print_header("EFICIENCIA: GOLES POR PARTIDO VS RENDIMIENTO");
 
-    // Correlación entre goles y rendimiento
-    query("Correlación Goles-Rendimiento",
+    // Correlacion entre goles y rendimiento
+    query("Correlacion Goles-Rendimiento",
           "SELECT ROUND((COUNT(*) * SUM(goles * rendimiento_general) - SUM(goles) * SUM(rendimiento_general)) / "
           "(SQRT((COUNT(*) * SUM(goles * goles) - SUM(goles) * SUM(goles)) * "
           "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
@@ -302,8 +310,8 @@ void mostrar_eficiencia_asistencias_vs_cansancio()
     clear_screen();
     print_header("EFICIENCIA: ASISTENCIAS VS CANSANCIO");
 
-    // Correlación entre asistencias y cansancio
-    query("Correlación Asistencias-Cansancio",
+    // Correlacion entre asistencias y cansancio
+    query("Correlacion Asistencias-Cansancio",
           "SELECT ROUND((COUNT(*) * SUM(asistencias * cansancio) - SUM(asistencias) * SUM(cansancio)) / "
           "(SQRT((COUNT(*) * SUM(asistencias * asistencias) - SUM(asistencias) * SUM(asistencias)) * "
           "(COUNT(*) * SUM(cansancio * cansancio) - SUM(cansancio) * SUM(cansancio)))), 4) "
@@ -411,7 +419,7 @@ void mostrar_partidos_exigentes_bien_rendidos()
 void mostrar_partidos_faciles_mal_rendidos()
 {
     clear_screen();
-    print_header("PARTIDOS FÁCILES MAL RENDIDOS");
+    print_header("PARTIDOS FACILES MAL RENDIDOS");
 
     printf("\nPartidos con bajo cansancio y bajo rendimiento:\n");
     printf("----------------------------------------\n");
