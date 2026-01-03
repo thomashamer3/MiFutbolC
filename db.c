@@ -155,7 +155,9 @@ int db_init()
         " jugador TEXT NOT NULL,"
         " tipo TEXT NOT NULL,"
         " descripcion TEXT NOT NULL,"
-        " fecha TEXT NOT NULL);"
+        " fecha TEXT NOT NULL,"
+        " camiseta_id INTEGER NOT NULL,"
+        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
 
         "CREATE TABLE IF NOT EXISTS usuario ("
         " id INTEGER PRIMARY KEY,"
@@ -191,6 +193,9 @@ int db_init()
 
     const char *alter_comentario_personal = "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';";
     sqlite3_exec(db, alter_comentario_personal, 0, 0, 0); // Ignore errors if column already exists
+
+    const char *alter_lesion_partido_id = "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;";
+    sqlite3_exec(db, alter_lesion_partido_id, 0, 0, 0); // Ignore errors if column already exists
 
     // Crear directorios de importación y exportación al iniciar
     get_import_dir();

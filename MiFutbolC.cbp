@@ -35,9 +35,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="analisis.h" />
-		<Unit filename="cJSON.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="cJSON.h" />
 		<Unit filename="cJSON_Utils.c">
 			<Option compilerVar="CC" />
@@ -59,6 +56,26 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="estadisticas.h" />
+		<Unit filename="estadisticas_anio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_anio.h" />
+		<Unit filename="estadisticas_generales.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_generales.h" />
+		<Unit filename="estadisticas_lesiones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_lesiones.h" />
+		<Unit filename="estadisticas_mes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_mes.h" />
+		<Unit filename="estadisticas_meta.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_meta.h" />
 		<Unit filename="export.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -67,6 +84,42 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_all.h" />
+		<Unit filename="export_all_mejorado.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_all_mejorado.h" />
+		<Unit filename="export_camisetas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_camisetas.h" />
+		<Unit filename="export_camisetas_mejorado.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_camisetas_mejorado.h" />
+		<Unit filename="export_estadisticas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_estadisticas.h" />
+		<Unit filename="export_estadisticas_generales.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_estadisticas_generales.h" />
+		<Unit filename="export_lesiones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_lesiones.h" />
+		<Unit filename="export_lesiones_mejorado.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_lesiones_mejorado.h" />
+		<Unit filename="export_partidos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_partidos.h" />
+		<Unit filename="export_records_rankings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_records_rankings.h" />
 		<Unit filename="import.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -91,6 +144,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="partido.h" />
+		<Unit filename="records_rankings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="records_rankings.h" />
 		<Unit filename="recurso.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>

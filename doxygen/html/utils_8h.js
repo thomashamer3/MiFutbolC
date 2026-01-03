@@ -12,5 +12,6 @@ var utils_8h =
     [ "mostrar_nombre_usuario", "utils_8h.html#a3870f65d49580ad3d42ffd2a4a8e8c9b", null ],
     [ "pause_console", "utils_8h.html#a5ce7464bfaea97ff6484a00d78b150a3", null ],
     [ "pedir_nombre_usuario", "utils_8h.html#ac54f6f5e76af4fbc3514b0028822f102", null ],
-    [ "print_header", "utils_8h.html#a53a0c6c2a6a2667a4c0b0a3eaf78f617", null ]
+    [ "print_header", "utils_8h.html#a53a0c6c2a6a2667a4c0b0a3eaf78f617", null ],
+    [ "remover_tildes", "utils_8h.html#a64f980d336dc8739bf2b92cb5b569ec6", null ]
 ];

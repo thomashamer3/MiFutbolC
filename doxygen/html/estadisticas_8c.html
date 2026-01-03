@@ -102,103 +102,54 @@ $(function(){initNavTree('estadisticas_8c.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 
-<p>Módulo para mostrar estadísticas de camisetas en partidos de fútbol.  
+<p>Módulo principal para el menú de estadísticas en partidos de fútbol.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="estadisticas_8h_source.html">estadisticas.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="db_8h_source.html">db.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="utils_8h_source.html">utils.h</a>&quot;</code><br />
+<code>#include &quot;estadisticas_generales.h&quot;</code><br />
+<code>#include &quot;estadisticas_mes.h&quot;</code><br />
+<code>#include &quot;estadisticas_anio.h&quot;</code><br />
+<code>#include &quot;records_rankings.h&quot;</code><br />
+<code>#include &quot;estadisticas_meta.h&quot;</code><br />
 <code>#include &quot;menu.h&quot;</code><br />
-<code>#include &lt;stdio.h&gt;</code><br />
-<code>#include &lt;string.h&gt;</code><br />
+<code>#include &lt;stdlib.h&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a9a54e160a0fcddeaff7bfc2da60ae5ba" id="r_a9a54e160a0fcddeaff7bfc2da60ae5ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a54e160a0fcddeaff7bfc2da60ae5ba">mostrar_estadisticas_generales</a> ()</td></tr>
-<tr class="memdesc:a9a54e160a0fcddeaff7bfc2da60ae5ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra las estadísticas principales de las camisetas.  <br /></td></tr>
-<tr class="separator:a9a54e160a0fcddeaff7bfc2da60ae5ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa6e461370c6a9bc5b5ed593fd419bdbd" id="r_aa6e461370c6a9bc5b5ed593fd419bdbd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa6e461370c6a9bc5b5ed593fd419bdbd">mostrar_estadisticas_por_mes</a> ()</td></tr>
-<tr class="memdesc:aa6e461370c6a9bc5b5ed593fd419bdbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra estadísticas históricas agrupadas por mes.  <br /></td></tr>
-<tr class="separator:aa6e461370c6a9bc5b5ed593fd419bdbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1df246ce25ca4ee196be975ee38b7d6d" id="r_a1df246ce25ca4ee196be975ee38b7d6d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1df246ce25ca4ee196be975ee38b7d6d">mostrar_estadisticas_por_anio</a> ()</td></tr>
-<tr class="memdesc:a1df246ce25ca4ee196be975ee38b7d6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra estadísticas históricas agrupadas por año.  <br /></td></tr>
-<tr class="separator:a1df246ce25ca4ee196be975ee38b7d6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c608fe89e28fc3d3645630331d6e80d" id="r_a0c608fe89e28fc3d3645630331d6e80d"><td class="memItemLeft" align="right" valign="top"><a id="a0c608fe89e28fc3d3645630331d6e80d" name="a0c608fe89e28fc3d3645630331d6e80d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas</b> ()</td></tr>
 <tr class="memdesc:a0c608fe89e28fc3d3645630331d6e80d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el menú de estadísticas con opciones para ver estadísticas generales, por mes o por año. <br /></td></tr>
 <tr class="separator:a0c608fe89e28fc3d3645630331d6e80d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61b27b4794c6180d932a38397903d184" id="r_a61b27b4794c6180d932a38397903d184"><td class="memItemLeft" align="right" valign="top"><a id="a61b27b4794c6180d932a38397903d184" name="a61b27b4794c6180d932a38397903d184"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas_generales</b> ()</td></tr>
+<tr class="memdesc:a61b27b4794c6180d932a38397903d184"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el sub-menú de estadísticas generales. <br /></td></tr>
+<tr class="separator:a61b27b4794c6180d932a38397903d184"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1fbb73a6d2aac483fd571f94c5350ea" id="r_ad1fbb73a6d2aac483fd571f94c5350ea"><td class="memItemLeft" align="right" valign="top"><a id="ad1fbb73a6d2aac483fd571f94c5350ea" name="ad1fbb73a6d2aac483fd571f94c5350ea"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas_partidos</b> ()</td></tr>
+<tr class="memdesc:ad1fbb73a6d2aac483fd571f94c5350ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el sub-menú de estadísticas de partidos. <br /></td></tr>
+<tr class="separator:ad1fbb73a6d2aac483fd571f94c5350ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77595b97147418abace2e0b2ff9d9587" id="r_a77595b97147418abace2e0b2ff9d9587"><td class="memItemLeft" align="right" valign="top"><a id="a77595b97147418abace2e0b2ff9d9587" name="a77595b97147418abace2e0b2ff9d9587"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas_goles</b> ()</td></tr>
+<tr class="memdesc:a77595b97147418abace2e0b2ff9d9587"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el sub-menú de estadísticas de goles. <br /></td></tr>
+<tr class="separator:a77595b97147418abace2e0b2ff9d9587"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a892d73b3311cf294683690d6d06acbb0" id="r_a892d73b3311cf294683690d6d06acbb0"><td class="memItemLeft" align="right" valign="top"><a id="a892d73b3311cf294683690d6d06acbb0" name="a892d73b3311cf294683690d6d06acbb0"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas_asistencias</b> ()</td></tr>
+<tr class="memdesc:a892d73b3311cf294683690d6d06acbb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el sub-menú de estadísticas de asistencias. <br /></td></tr>
+<tr class="separator:a892d73b3311cf294683690d6d06acbb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0fc9907cded36cf67519b94a3bec881" id="r_ac0fc9907cded36cf67519b94a3bec881"><td class="memItemLeft" align="right" valign="top"><a id="ac0fc9907cded36cf67519b94a3bec881" name="ac0fc9907cded36cf67519b94a3bec881"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_estadisticas_rendimiento</b> ()</td></tr>
+<tr class="memdesc:ac0fc9907cded36cf67519b94a3bec881"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el sub-menú de estadísticas de rendimiento. <br /></td></tr>
+<tr class="separator:ac0fc9907cded36cf67519b94a3bec881"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Módulo para mostrar estadísticas de camisetas en partidos de fútbol. </p>
-<p>Este archivo contiene funciones para consultar y mostrar estadísticas relacionadas con camisetas, como goles, asistencias y partidos jugados. </p>
-</div><h2 class="groupheader">Function Documentation</h2>
-<a id="a9a54e160a0fcddeaff7bfc2da60ae5ba" name="a9a54e160a0fcddeaff7bfc2da60ae5ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a54e160a0fcddeaff7bfc2da60ae5ba">&#9670;&#160;</a></span>mostrar_estadisticas_generales()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void mostrar_estadisticas_generales </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Muestra las estadísticas principales de las camisetas. </p>
-<p>Muestra estadísticas generales del sistema.</p>
-<p>Esta función imprime un encabezado y ejecuta varias consultas para mostrar estadísticas como la camiseta con más goles, asistencias, partidos jugados y la suma de goles más asistencias. Al final, pausa la consola. </p>
-
-</div>
-</div>
-<a id="a1df246ce25ca4ee196be975ee38b7d6d" name="a1df246ce25ca4ee196be975ee38b7d6d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1df246ce25ca4ee196be975ee38b7d6d">&#9670;&#160;</a></span>mostrar_estadisticas_por_anio()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void mostrar_estadisticas_por_anio </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Muestra estadísticas históricas agrupadas por año. </p>
-<p>Esta función muestra estadísticas individuales por camiseta agrupadas por año, incluyendo partidos jugados, goles, asistencias y promedios por partido. </p>
-
-</div>
-</div>
-<a id="aa6e461370c6a9bc5b5ed593fd419bdbd" name="aa6e461370c6a9bc5b5ed593fd419bdbd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa6e461370c6a9bc5b5ed593fd419bdbd">&#9670;&#160;</a></span>mostrar_estadisticas_por_mes()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void mostrar_estadisticas_por_mes </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Muestra estadísticas históricas agrupadas por mes. </p>
-<p>Esta función muestra estadísticas individuales por camiseta agrupadas por mes, incluyendo partidos jugados, goles, asistencias y promedios por partido. </p>
-
-</div>
-</div>
-</div><!-- contents -->
+<div class="textblock"><p>Módulo principal para el menú de estadísticas en partidos de fútbol. </p>
+<p>Este archivo contiene la función principal del menú de estadísticas que permite acceder a las diferentes opciones de visualización de estadísticas. </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="estadisticas_8c.html">estadisticas.c</a></li>
-    <li class="footer">Generated on Tue Dec 30 2025 15:33:23 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

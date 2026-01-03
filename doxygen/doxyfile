@@ -117,7 +117,14 @@ INPUT                  = \
 	"..\camiseta.h" \
 	"..\menu.c" \
 	"..\partido.h" \
-	"..\export_all.c" 
+	"..\export_all.c" \
+	"..\export_all_mejorado.h" \
+	"..\export_all_mejorado.c" \
+	"..\export_camisetas_mejorado.h" \
+	"..\export_camisetas_mejorado.c" \
+	"..\export_lesiones_mejorado.h" \
+	"..\export_lesiones_mejorado.c" \
+	"..\import.h"
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO

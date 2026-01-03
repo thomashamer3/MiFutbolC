@@ -42,6 +42,15 @@ void modificar_lesion();
 void eliminar_lesion();
 
 /**
+ * @brief Muestra las estadísticas de lesiones
+ *
+ * Calcula y muestra estadísticas como total de lesiones, lesiones por tipo,
+ * por camiseta, por mes, mes con más lesiones, tiempo promedio entre lesiones,
+ * rendimiento promedio antes y después de lesiones, y si baja el rendimiento previo.
+ */
+void mostrar_estadisticas_lesiones();
+
+/**
  * @brief Muestra el menú principal de gestión de lesiones
  *
  * Presenta un menú interactivo con opciones para crear, listar, editar

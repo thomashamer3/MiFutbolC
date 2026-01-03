@@ -298,3 +298,32 @@ void menu_usuario()
 
     ejecutar_menu("USUARIO", items, 3);
 }
+
+/**
+ * @brief Remueve tildes y caracteres acentuados de una cadena
+ *
+ * Convierte caracteres acentuados a su equivalente sin tilde.
+ *
+ * @param str La cadena a procesar
+ * @return La cadena sin tildes
+ */
+char* remover_tildes(const char *str)
+{
+    static char buffer[256];
+    int i, j = 0;
+
+    for (i = 0; str[i] != '\0' && i < sizeof(buffer) - 1; i++)
+    {
+        unsigned char c = str[i];
+        if (c == 0xE1 || c == 0xC1) buffer[j++] = 'a'; // á, Á
+        else if (c == 0xE9 || c == 0xC9) buffer[j++] = 'e'; // é, É
+        else if (c == 0xED || c == 0xCD) buffer[j++] = 'i'; // í, Í
+        else if (c == 0xF3 || c == 0xD3) buffer[j++] = 'o'; // ó, Ó
+        else if (c == 0xFA || c == 0xDA) buffer[j++] = 'u'; // ú, Ú
+        else if (c == 0xF1 || c == 0xD1) buffer[j++] = 'n'; // ñ, Ñ
+        else if (c == 0xFC || c == 0xDC) buffer[j++] = 'u'; // ü, Ü
+        else buffer[j++] = str[i];
+    }
+    buffer[j] = '\0';
+    return buffer;
+}

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['set_5fuser_5fname_0',['set_user_name',['../db_8c.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c'],['../db_8h.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c']]],
-  ['sortear_5fcamiseta_1',['sortear_camiseta',['../camiseta_8c.html#a57af5be49fc0faacf80d0310202a1576',1,'camiseta.c']]]
+  ['remover_5ftildes_0',['remover_tildes',['../utils_8c.html#a64f980d336dc8739bf2b92cb5b569ec6',1,'remover_tildes(const char *str):&#160;utils.c'],['../utils_8h.html#a64f980d336dc8739bf2b92cb5b569ec6',1,'remover_tildes(const char *str):&#160;utils.c']]],
+  ['resultado_5fto_5ftext_1',['resultado_to_text',['../export_8c.html#a630ee8617ddc08a5936e6373d61c398f',1,'resultado_to_text(int resultado):&#160;export.c'],['../export_8h.html#a630ee8617ddc08a5936e6373d61c398f',1,'resultado_to_text(int resultado):&#160;export.c']]]
 ];

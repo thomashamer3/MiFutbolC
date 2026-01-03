@@ -8,5 +8,6 @@ var searchData=
   ['trigevent_5',['TrigEvent',['../struct_trig_event.html',1,'']]],
   ['trigger_6',['Trigger',['../struct_trigger.html',1,'']]],
   ['triggerprg_7',['TriggerPrg',['../struct_trigger_prg.html',1,'']]],
-  ['triggerstep_8',['TriggerStep',['../struct_trigger_step.html',1,'']]]
+  ['triggerstep_8',['TriggerStep',['../struct_trigger_step.html',1,'']]],
+  ['trim_5ftrailing_5fspaces_9',['trim_trailing_spaces',['../export_8c.html#a3e6d44e14bb23a116efa66bca83c5392',1,'trim_trailing_spaces(char *str):&#160;export.c'],['../export_8h.html#a3e6d44e14bb23a116efa66bca83c5392',1,'trim_trailing_spaces(char *str):&#160;export.c']]]
 ];

@@ -2,8 +2,11 @@
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
+#include "estadisticas_lesiones.h"
+#include "camiseta.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static int current_lesion_id;
 
@@ -53,32 +56,47 @@ static int hay_lesiones()
 /**
  * @brief Crea una nueva lesión en la base de datos
  *
- * Solicita al usuario el tipo y descripción de la lesión, obtiene la fecha actual
- * y la inserta en la tabla 'lesion'. El nombre del jugador se establece automáticamente
- * como "Hamer". Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
+ * Solicita al usuario el tipo, descripción de la lesión, el ID de la camiseta asociada
+ * y la inserta en la tabla 'lesion'. El nombre del jugador se obtiene del usuario actual.
+ * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
  */
 void crear_lesion()
 {
     clear_screen();
     char tipo[100], descripcion[200], fecha[20];
+    int camiseta_id;
 
     input_string("Tipo de lesion: ", tipo, sizeof(tipo));
     input_string("Descripcion: ", descripcion, sizeof(descripcion));
+    camiseta_id = input_int("ID de la Camiseta Asociada: ");
     get_datetime(fecha, sizeof(fecha));
+
+    char *jugador = get_user_name();
+    if (!jugador)
+    {
+        jugador = "Usuario Desconocido";
+    }
 
     int id = obtener_siguiente_id_lesion();
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha) VALUES(?,?,?,?,?)",
+                       "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id) VALUES(?,?,?,?,?,?)",
                        -1, &stmt, NULL);
     sqlite3_bind_int(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, "Hamer", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 6, camiseta_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
+
+    if (strcmp(jugador, "Usuario Desconocido") != 0)
+    {
+        free(jugador);
+    }
+
     printf("\nLesion creada correctamente\n");
     pause_console();
 }
@@ -177,20 +195,40 @@ static void modificar_fecha_lesion()
 }
 
 /**
+ * @brief Modifica la camiseta de una lesión existente
+ */
+static void modificar_camiseta_lesion()
+{
+    listar_camisetas();
+    int camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "UPDATE lesion SET camiseta_id=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, camiseta_id);
+    sqlite3_bind_int(stmt, 2, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Camiseta modificada correctamente\n");
+    pause_console();
+}
+
+/**
  * @brief Modifica todos los campos de una lesión existente
  */
 static void modificar_todo_lesion()
 {
     char tipo[100], descripcion[200], fecha[20];
+    int camiseta_id;
     input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
     input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
     input_string("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
+    camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=?, descripcion=?, fecha=? WHERE id=?", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=?, descripcion=?, fecha=?, camiseta_id=? WHERE id=?", -1, &stmt, NULL);
     sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 4, current_lesion_id);
+    sqlite3_bind_int(stmt, 4, camiseta_id);
+    sqlite3_bind_int(stmt, 5, current_lesion_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     printf("Lesion modificada correctamente\n");
@@ -233,11 +271,12 @@ void modificar_lesion()
         {1, "Tipo", modificar_tipo_lesion},
         {2, "Descripcion", modificar_descripcion_lesion},
         {3, "Fecha", modificar_fecha_lesion},
-        {4, "Modificar Todo", modificar_todo_lesion},
+        {4, "Camiseta", modificar_camiseta_lesion},
+        {5, "Modificar Todo", modificar_todo_lesion},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR LESION", items, 5);
+    ejecutar_menu("MODIFICAR LESION", items, 6);
 }
 
 /**
@@ -304,7 +343,8 @@ void menu_lesiones()
         {2, "Listar", listar_lesiones},
         {3, "Modificar", modificar_lesion},
         {4, "Eliminar", eliminar_lesion},
+        {5, "Estadisticas", mostrar_estadisticas_lesiones},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("LESIONES", items, 5);
+    ejecutar_menu("LESIONES", items, 6);
 }

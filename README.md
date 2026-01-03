@@ -1,23 +1,52 @@
-# MiFutbolC - Proyecto De Uso Personal
+# MiFutbolC - Sistema de Gestión de Fútbol
 
 ## Descripción
 
-MiFutbolC es un sistema de gestión de datos para fútbol desarrollado en lenguaje C. Permite administrar camisetas, canchas, partidos, estadísticas, logros, análisis de rendimiento, lesiones, exportar datos en múltiples formatos y importar datos desde archivos. Utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente.
+MiFutbolC es un sistema completo de gestión y análisis de datos para fútbol desarrollado en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol, incluyendo camisetas, canchas, partidos, estadísticas avanzadas, logros gamificados, análisis de rendimiento, gestión de lesiones, y funciones completas de importación/exportación de datos.
 
-El proyecto está diseñado para ser una herramienta completa para el seguimiento y análisis de datos relacionados con el fútbol, desde la gestión de equipamiento hasta el registro de partidos, canchas y lesiones, con capacidades avanzadas de exportación e importación de datos.
+El sistema utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente, ofreciendo una solución robusta para el seguimiento y análisis de datos futbolísticos.
+
+## Características Principales
+
+- **Gestión Completa de Equipamiento**: Crear, listar, editar y eliminar camisetas de fútbol con seguimiento de uso.
+- **Gestión de Infraestructura**: Administrar canchas de fútbol con información detallada de ubicación.
+- **Registro de Partidos**: Registrar partidos completos con detalles como cancha, goles, asistencias, rendimiento, estado físico/mental y camiseta utilizada.
+- **Estadísticas Avanzadas**: Visualizar estadísticas agregadas del sistema con análisis profundos de estados físicos y mentales.
+- **Análisis Temporal**: Estadísticas históricas de rendimiento agrupadas por año y mes para seguimiento de progreso.
+- **Meta-Análisis**: Análisis profundo incluyendo consistencia de rendimiento, partidos atípicos, dependencia del contexto, impacto real del cansancio y estado de ánimo.
+- **Evaluación de Rendimiento**: Comparar el rendimiento de los últimos partidos con promedios generales y calcular rachas de victorias/derrotas.
+- **Análisis Físico y Mental**: Evaluación detallada de rendimiento por niveles de cansancio, comparación de goles con diferentes estados físicos, análisis de impacto del estado de ánimo.
+- **Sistema de Récords**: Récords históricos completos incluyendo mejores rachas, combinaciones óptimas, temporadas destacadas y partidos extremos.
+- **Gestión de Salud**: Registrar, listar, editar y eliminar lesiones de jugadores con seguimiento detallado.
+- **Sistema Gamificado**: Logros y badges basados en rendimiento para motivar el uso continuo.
+- **Personalización**: Sistema de nombres de usuario personalizados con persistencia entre sesiones.
+- **Importación de Datos**: Importar datos desde archivos JSON a la base de datos para restauración de copias de seguridad.
+- **Exportación Multiformato**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML para diferentes usos.
+- **Exportación Avanzada**: Exportación mejorada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento.
+- **Exportación Selectiva**: Exportación de partidos con características específicas (más goles, más asistencias, etc.).
+- **Interfaz Intuitiva**: Navegación mediante menús interactivos con estructura jerárquica.
+- **Almacenamiento Robusto**: Base de datos SQLite para almacenamiento persistente y eficiente.
+- **Documentación Automática**: Generación de documentación técnica con Doxygen.
 
 ## Características Principales
 
 - **Gestión de Camisetas**: Crear, listar, editar y eliminar camisetas de fútbol.
 - **Gestión de Canchas**: Gestionar canchas de fútbol.
 - **Gestión de Partidos**: Registrar partidos con detalles como cancha, goles, asistencias y camiseta utilizada.
-- **Estadísticas**: Visualizar estadísticas agregadas del sistema.
+- **Estadísticas**: Visualizar estadísticas agregadas del sistema, incluyendo análisis de estados físicos y mentales.
+- **Estadísticas por Año y Mes**: Análisis histórico de rendimiento agrupado por año y mes.
+- **Estadísticas Avanzadas y Meta-Análisis**: Análisis profundo incluyendo consistencia de rendimiento, partidos atípicos, dependencia del contexto, impacto real del cansancio y estado de ánimo, eficiencia en goles vs rendimiento, y rendimiento por esfuerzo.
 - **Análisis de Rendimiento**: Comparar el rendimiento de los últimos 5 partidos con promedios generales y calcular rachas de victorias y derrotas.
+- **Análisis de Estados Físicos y Mentales**: Rendimiento por niveles de cansancio, comparación de goles con cansancio alto vs bajo, partidos jugados con alto cansancio, caída de rendimiento por cansancio acumulado, rendimiento por estado de ánimo, goles y asistencias según estado de ánimo, y estado de ánimo ideal para jugar.
+- **Récords y Rankings**: Sistema completo de récords históricos incluyendo mejores rachas, combinaciones óptimas cancha+camiseta, temporadas destacadas, y partidos extremos.
 - **Gestión de Lesiones**: Registrar, listar, editar (con menú para modificar campos individuales o todos) y eliminar lesiones de jugadores.
 - **Sistema de Logros**: Logros y badges gamificados basados en rendimiento.
 - **Gestión de Usuario**: Sistema de nombres de usuario personalizados con persistencia.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos.
 - **Exportación de Datos**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML.
+- **Exportación Mejorada**: Exportación avanzada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento.
+- **Análisis Mejorado**: Funcionalidades avanzadas de análisis con estadísticas mejoradas.
+- **Exportación por Categorías Específicas**: Exportación de partidos con más goles, más asistencias, menos goles recientes, menos asistencias recientes.
 - **Interfaz de Menú**: Navegación intuitiva mediante menús interactivos.
 - **Base de Datos SQLite**: Almacenamiento persistente y eficiente de datos.
 - **Documentación Doxygen**: Generación automática de documentación técnica.

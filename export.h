@@ -7,138 +7,43 @@
  * CSV, TXT, JSON y HTML para camisetas, partidos, estadísticas y lesiones.
  */
 
-/** @name Funciones de exportación de camisetas */
+#ifndef EXPORT_H
+#define EXPORT_H
+
+/** @name Funciones utilitarias */
 /** @{ */
 
 /**
- * @brief Exporta la lista de camisetas a formato CSV
+ * @brief Elimina espacios en blanco al final de una cadena.
  *
- * Genera un archivo CSV con todos los registros de camisetas,
- * incluyendo ID, nombre y estado de sorteo.
+ * @param str Cadena a recortar.
+ * @return Puntero a la cadena recortada.
  */
-void exportar_camisetas_csv();
+char *trim_trailing_spaces(char *str);
 
 /**
- * @brief Exporta la lista de camisetas a formato TXT
+ * @brief Convierte el número de resultado a texto
  *
- * Genera un archivo de texto plano con la lista formateada de camisetas.
+ * @param resultado Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA)
+ * @return Cadena de texto correspondiente al resultado
  */
-void exportar_camisetas_txt();
+const char *resultado_to_text(int resultado);
 
 /**
- * @brief Exporta la lista de camisetas a formato JSON
+ * @brief Convierte el número de clima a texto
  *
- * Genera un archivo JSON con un array de objetos representando las camisetas.
+ * @param clima Número del clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio)
+ * @return Cadena de texto correspondiente al clima
  */
-void exportar_camisetas_json();
+const char *clima_to_text(int clima);
 
 /**
- * @brief Exporta la lista de camisetas a formato HTML
+ * @brief Convierte el número de dia a texto
  *
- * Genera una página HTML con una tabla que muestra todas las camisetas.
+ * @param dia Número del dia (1=Dia, 2=Tarde, 3=Noche)
+ * @return Cadena de texto correspondiente al dia
  */
-void exportar_camisetas_html();
-
-/** @} */
-
-/** @name Funciones de exportación de partidos */
-/** @{ */
-
-/**
- * @brief Exporta la lista de partidos a formato CSV
- *
- * Genera un archivo CSV con todos los registros de partidos,
- * incluyendo ID, cancha, fecha/hora, goles, asistencias y camiseta.
- */
-void exportar_partidos_csv();
-
-/**
- * @brief Exporta la lista de partidos a formato TXT
- *
- * Genera un archivo de texto plano con la lista formateada de partidos.
- */
-void exportar_partidos_txt();
-
-/**
- * @brief Exporta la lista de partidos a formato JSON
- *
- * Genera un archivo JSON con un array de objetos representando los partidos.
- */
-void exportar_partidos_json();
-
-/**
- * @brief Exporta la lista de partidos a formato HTML
- *
- * Genera una página HTML con una tabla que muestra todos los partidos.
- */
-void exportar_partidos_html();
-
-/** @} */
-
-/** @name Funciones de exportación de estadísticas */
-/** @{ */
-
-/**
- * @brief Exporta las estadísticas generales a formato CSV
- *
- * Genera un archivo CSV con las estadísticas agregadas del sistema.
- */
-void exportar_estadisticas_csv();
-
-/**
- * @brief Exporta las estadísticas generales a formato TXT
- *
- * Genera un archivo de texto con las estadísticas agregadas del sistema.
- */
-void exportar_estadisticas_txt();
-
-/**
- * @brief Exporta las estadísticas generales a formato JSON
- *
- * Genera un archivo JSON con un objeto conteniendo todas las estadísticas.
- */
-void exportar_estadisticas_json();
-
-/**
- * @brief Exporta las estadísticas generales a formato HTML
- *
- * Genera una página HTML con las estadísticas presentadas en formato web.
- */
-void exportar_estadisticas_html();
-
-/** @} */
-
-/** @name Funciones de exportación de lesiones */
-/** @{ */
-
-/**
- * @brief Exporta la lista de lesiones a formato CSV
- *
- * Genera un archivo CSV con todos los registros de lesiones,
- * incluyendo ID, jugador, tipo, fecha y duración.
- */
-void exportar_lesiones_csv();
-
-/**
- * @brief Exporta la lista de lesiones a formato TXT
- *
- * Genera un archivo de texto plano con la lista formateada de lesiones.
- */
-void exportar_lesiones_txt();
-
-/**
- * @brief Exporta la lista de lesiones a formato JSON
- *
- * Genera un archivo JSON con un array de objetos representando las lesiones.
- */
-void exportar_lesiones_json();
-
-/**
- * @brief Exporta la lista de lesiones a formato HTML
- *
- * Genera una página HTML con una tabla que muestra todas las lesiones.
- */
-void exportar_lesiones_html();
+const char *dia_to_text(int dia);
 
 /** @} */
 
@@ -177,3 +82,17 @@ void exportar_analisis_json();
 void exportar_analisis_html();
 
 /** @} */
+
+/**
+ * @brief Construye la ruta completa para un archivo de exportación
+ *
+ * Combina el directorio de datos con el nombre del archivo proporcionado
+ * para crear una ruta completa.
+ *
+ * @param filename Nombre del archivo a exportar
+ * @return Cadena de caracteres con la ruta completa del archivo
+ */
+char *get_export_path(const char *filename);
+
+/** @} */
+#endif

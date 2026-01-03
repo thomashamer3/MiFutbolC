@@ -10,5 +10,6 @@ var searchData=
   ['dbclientdata_7',['DbClientData',['../struct_db_client_data.html',1,'']]],
   ['dbfixer_8',['DbFixer',['../struct_db_fixer.html',1,'']]],
   ['dblquotestr_9',['DblquoteStr',['../struct_dblquote_str.html',1,'']]],
-  ['distinctctx_10',['DistinctCtx',['../struct_distinct_ctx.html',1,'']]]
+  ['dia_5fto_5ftext_10',['dia_to_text',['../export_8c.html#ae82023dc6bfe9f991e161496cd7a5af4',1,'dia_to_text(int dia):&#160;export.c'],['../export_8h.html#ae82023dc6bfe9f991e161496cd7a5af4',1,'dia_to_text(int dia):&#160;export.c']]],
+  ['distinctctx_11',['DistinctCtx',['../struct_distinct_ctx.html',1,'']]]
 ];

@@ -3,7 +3,8 @@
  * @brief Declaraciones de funciones para importar datos en MiFutbolC
  *
  * Este archivo contiene las declaraciones de las funciones de importación
- * que permiten cargar los datos del sistema desde archivos JSON.
+ * que permiten cargar los datos del sistema desde archivos en diferentes formatos.
+ * Las funciones están organizadas por tipo de dato y formato de archivo.
  */
 
 /** @name Funciones de importación de camisetas */
@@ -143,4 +144,11 @@ void importar_estadisticas_html();
 
 /** @} */
 
+/**
+ * @brief Muestra el menú principal de importación
+ *
+ * Esta función muestra un menú interactivo que permite al usuario
+ * seleccionar qué tipo de datos desea importar y desde qué formato.
+ * Proporciona acceso a todas las funciones de importación disponibles.
+ */
 void menu_importar();

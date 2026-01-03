@@ -153,6 +153,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>editar_nombre_usuario
 void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_usuario</b> ()</td></tr>
 <tr class="memdesc:a66c3afc7bd2e95ef7674a73523db2941"><td class="mdescLeft">&#160;</td><td class="mdescRight">Menú de gestión de usuario. <br /></td></tr>
 <tr class="separator:a66c3afc7bd2e95ef7674a73523db2941"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64f980d336dc8739bf2b92cb5b569ec6" id="r_a64f980d336dc8739bf2b92cb5b569ec6"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a64f980d336dc8739bf2b92cb5b569ec6">remover_tildes</a> (const char *str)</td></tr>
+<tr class="memdesc:a64f980d336dc8739bf2b92cb5b569ec6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remueve tildes y caracteres acentuados de una cadena.  <br /></td></tr>
+<tr class="separator:a64f980d336dc8739bf2b92cb5b569ec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declaraciones de funciones utilitarias para entrada/salida y manejo de datos. </p>
@@ -405,13 +408,40 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>menu_usuario</b> ()</
 
 </div>
 </div>
+<a id="a64f980d336dc8739bf2b92cb5b569ec6" name="a64f980d336dc8739bf2b92cb5b569ec6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64f980d336dc8739bf2b92cb5b569ec6">&#9670;&#160;</a></span>remover_tildes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * remover_tildes </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>str</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Remueve tildes y caracteres acentuados de una cadena. </p>
+<p>Convierte caracteres acentuados a su equivalente sin tilde.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>La cadena a procesar </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>La cadena sin tildes </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Tue Dec 30 2025 15:33:23 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

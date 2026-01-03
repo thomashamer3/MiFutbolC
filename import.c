@@ -67,8 +67,6 @@ static char *read_file_content(const char *filename)
     return content;
 }
 
-
-
 /**
  * @brief Importa camisetas desde archivo JSON.
  *
@@ -136,7 +134,7 @@ void importar_camisetas_json()
 
         // Insertar
         sqlite3_stmt *stmt;
-        sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)", -1, &stmt, NULL);
+        sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
         sqlite3_bind_int(stmt, 1, id);
         sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
         sqlite3_step(stmt);
@@ -817,7 +815,7 @@ void importar_camisetas_txt()
 
             // Insertar
             sqlite3_stmt *stmt;
-            sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)", -1, &stmt, NULL);
+            sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
             sqlite3_bind_int(stmt, 1, id);
             sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
             sqlite3_step(stmt);
@@ -1240,7 +1238,7 @@ void importar_camisetas_csv()
 
             // Insertar
             sqlite3_stmt *stmt;
-            sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)", -1, &stmt, NULL);
+            sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
             sqlite3_bind_int(stmt, 1, id);
             sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
             sqlite3_step(stmt);
@@ -1661,7 +1659,7 @@ void importar_camisetas_html()
 
         // Insertar
         sqlite3_stmt *stmt;
-        sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)", -1, &stmt, NULL);
+        sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
         sqlite3_bind_int(stmt, 1, id);
         sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
         sqlite3_step(stmt);

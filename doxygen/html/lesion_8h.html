@@ -121,6 +121,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a069cb77f4e555bc58c6cdc96799a39a6" id="r_a069cb77f4e555bc58c6cdc96799a39a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a069cb77f4e555bc58c6cdc96799a39a6">eliminar_lesion</a> ()</td></tr>
 <tr class="memdesc:a069cb77f4e555bc58c6cdc96799a39a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina una lesión de la base de datos.  <br /></td></tr>
 <tr class="separator:a069cb77f4e555bc58c6cdc96799a39a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af62a703d7f0185c4ac4ffbcb9a08365f" id="r_af62a703d7f0185c4ac4ffbcb9a08365f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af62a703d7f0185c4ac4ffbcb9a08365f">mostrar_estadisticas_lesiones</a> ()</td></tr>
+<tr class="memdesc:af62a703d7f0185c4ac4ffbcb9a08365f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra las estadísticas de lesiones.  <br /></td></tr>
+<tr class="separator:af62a703d7f0185c4ac4ffbcb9a08365f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65e7ffa6b36f4ce41d45f65ab8e6b0f9" id="r_a65e7ffa6b36f4ce41d45f65ab8e6b0f9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a65e7ffa6b36f4ce41d45f65ab8e6b0f9">menu_lesiones</a> ()</td></tr>
 <tr class="memdesc:a65e7ffa6b36f4ce41d45f65ab8e6b0f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el menú principal de gestión de lesiones.  <br /></td></tr>
 <tr class="separator:a65e7ffa6b36f4ce41d45f65ab8e6b0f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,7 +149,7 @@ Functions</h2></td></tr>
 
 <p>Crea una nueva lesión en la base de datos. </p>
 <p>Solicita al usuario los datos de la lesión (jugador, tipo, fecha, duración) y la inserta en la tabla 'lesion'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.</p>
-<p>Solicita al usuario el tipo y descripción de la lesión, obtiene la fecha actual y la inserta en la tabla 'lesion'. El nombre del jugador se establece automáticamente como "Hamer". Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. </p>
+<p>Solicita al usuario el tipo, descripción de la lesión, el ID de la camiseta asociada y la inserta en la tabla 'lesion'. El nombre del jugador se obtiene del usuario actual. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. </p>
 
 </div>
 </div>
@@ -234,13 +237,33 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af62a703d7f0185c4ac4ffbcb9a08365f" name="af62a703d7f0185c4ac4ffbcb9a08365f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af62a703d7f0185c4ac4ffbcb9a08365f">&#9670;&#160;</a></span>mostrar_estadisticas_lesiones()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mostrar_estadisticas_lesiones </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Muestra las estadísticas de lesiones. </p>
+<p>Calcula y muestra estadísticas como total de lesiones, lesiones por tipo, por camiseta, por mes, mes con más lesiones, tiempo promedio entre lesiones, rendimiento promedio antes y después de lesiones, y si baja el rendimiento previo. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lesion_8h.html">lesion.h</a></li>
-    <li class="footer">Generated on Tue Dec 30 2025 15:33:23 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

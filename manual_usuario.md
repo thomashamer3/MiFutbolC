@@ -2,9 +2,27 @@
 
 ## Introducción
 
-Bienvenido a **MiFutbolC**, un sistema de gestión de datos para fútbol desarrollado en lenguaje C. Esta aplicación permite administrar camisetas, canchas, partidos, estadísticas, logros, análisis de rendimiento, lesiones y exportar datos en múltiples formatos. Utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente.
+Bienvenido a **MiFutbolC**, el sistema completo de gestión y análisis de datos para fútbol desarrollado en lenguaje C. Esta aplicación profesional le permite administrar todos los aspectos relacionados con el fútbol, desde la gestión de equipamiento hasta el análisis avanzado de rendimiento.
 
 ![Logo MiFutbolC](images/MiFutbolC.png)
+
+### ¿Qué es MiFutbolC?
+
+MiFutbolC es una herramienta integral diseñada para:
+- Gestionar camisetas, canchas y partidos de fútbol
+- Analizar estadísticas y rendimiento de manera profesional
+- Realizar seguimiento de lesiones y salud de jugadores
+- Exportar e importar datos en múltiples formatos
+- Ofrecer un sistema gamificado de logros y recompensas
+
+### Beneficios Clave
+
+**Gestión Completa**: Todo lo relacionado con el fútbol en un solo lugar
+**Análisis Profesional**: Estadísticas avanzadas y meta-análisis
+**Seguimiento de Salud**: Gestión detallada de lesiones
+**Exportación Flexible**: Múltiples formatos para diferentes necesidades
+**Sistema Gamificado**: Logros y badges para motivar el uso continuo
+**Personalización**: Configuración de usuario y preferencias
 
 ## Requisitos del Sistema
 
@@ -167,12 +185,79 @@ El menú principal ofrece las siguientes opciones:
 
 ## Estadísticas
 
-Selecciona "4" en el menú principal para ver estadísticas generales del sistema, incluyendo:
+Selecciona "4" en el menú principal para acceder al menú de estadísticas. Este menú ofrece una amplia variedad de análisis estadísticos, incluyendo estadísticas generales, análisis detallados de estados físicos y mentales, estadísticas históricas por año y mes, estadísticas avanzadas y meta-análisis, y récords y rankings.
+
+### Estadísticas Generales
 
 - Camiseta con más goles
 - Camiseta con más asistencias
 - Camiseta con más partidos
 - Camiseta con más goles + asistencias
+- Camiseta con mejor rendimiento general promedio
+- Camiseta con mejor estado de ánimo promedio
+- Camiseta con menos cansancio promedio
+- Camiseta con más victorias
+- Camiseta con más empates
+- Camiseta con más derrotas
+- Camiseta más sorteada
+
+### Estadísticas por Año y Mes
+
+- **Estadísticas por Año**: Análisis histórico agrupado por año, mostrando partidos jugados, goles, asistencias y promedios por camiseta.
+- **Estadísticas por Mes**: Análisis histórico agrupado por mes, mostrando estadísticas detalladas por camiseta.
+
+### Estadísticas Avanzadas y Meta-Análisis
+
+El menú incluye funciones avanzadas de análisis profundo:
+
+- **Consistencia del Rendimiento**: Análisis de variabilidad, desviación estándar y coeficiente de variación del rendimiento.
+- **Partidos Atípicos**: Identificación de partidos con rendimiento excepcionalmente alto o bajo.
+- **Dependencia del Contexto**: Análisis de cómo el rendimiento varía según clima, día de semana y resultado.
+- **Impacto Real del Cansancio**: Correlación entre cansancio y rendimiento, incluyendo resultados por nivel de cansancio.
+- **Impacto Real del Estado de Ánimo**: Correlación entre estado de ánimo y rendimiento, con análisis por niveles.
+- **Eficiencia: Goles por Partido vs Rendimiento**: Relación entre producción de goles y rendimiento general.
+- **Eficiencia: Asistencias vs Cansancio**: Cómo el cansancio afecta la capacidad de asistir.
+- **Rendimiento por Esfuerzo**: Análisis de rendimiento obtenido por unidad de cansancio.
+- **Partidos Exigentes Bien Rendidos**: Partidos difíciles con buen rendimiento.
+- **Partidos Fáciles Mal Rendidos**: Partidos fáciles con bajo rendimiento.
+
+### Récords y Rankings
+
+Sistema completo de récords históricos:
+
+- **Récords Individuales**: Máximo de goles y asistencias en un partido.
+- **Combinaciones Óptimas**: Mejor y peor combinación cancha + camiseta.
+- **Temporadas**: Mejor y peor temporada por rendimiento promedio.
+- **Rendimiento Extremo**: Partidos con mejor y peor rendimiento general.
+- **Combinaciones**: Partidos con mejor combinación de goles + asistencias.
+- **Partidos Especiales**: Partidos sin goles, sin asistencias, rachas goleadoras y no goleadoras.
+- **Rachas**: Mejor racha goleadora y peor racha (sin goles).
+
+### Análisis de Estados Físicos y Mentales
+
+El menú de estadísticas incluye funciones avanzadas para analizar el impacto de los estados físicos y mentales:
+
+- **Rendimiento por Nivel de Cansancio**: Analiza el rendimiento promedio según niveles de cansancio (Bajo 1-3, Medio 4-7, Alto 8-10)
+- **Goles con Cansancio Alto vs Bajo**: Compara los goles marcados con cansancio alto versus bajo (usando el promedio como referencia)
+- **Partidos con Cansancio Alto**: Muestra el número total de partidos jugados con nivel de cansancio mayor a 7
+- **Caída de Rendimiento por Cansancio Acumulado**: Compara el rendimiento en los partidos recientes con alto cansancio vs partidos antiguos con alto cansancio
+- **Rendimiento por Estado de Animo**: Analiza el rendimiento promedio según niveles de estado de ánimo (Bajo 1-3, Medio 4-7, Alto 8-10)
+- **Goles por Estado de Animo**: Muestra los goles marcados según el estado de ánimo del jugador
+- **Asistencias por Estado de Animo**: Analiza las asistencias realizadas según el estado de ánimo
+- **Estado de Animo Ideal para Jugar**: Identifica el nivel de estado de ánimo que produce el mejor rendimiento promedio
+
+### Estadísticas por Clima y Día de la Semana
+
+- **Rendimiento Promedio por Clima**: Análisis del rendimiento según condiciones climáticas
+- **Goles por Clima**: Total de goles marcados en diferentes climas
+- **Asistencias por Clima**: Asistencias realizadas según clima
+- **Clima Mejor Rendimiento**: Identificación del clima donde se rinde mejor
+- **Clima Peor Rendimiento**: Identificación del clima donde se rinde peor
+- **Mejor Día de la Semana**: Día con mejor rendimiento promedio
+- **Peor Día de la Semana**: Día con peor rendimiento promedio
+- **Goles Promedio por Día**: Goles marcados por día de la semana
+- **Asistencias Promedio por Día**: Asistencias por día de la semana
+- **Rendimiento Promedio por Día**: Rendimiento general por día de la semana
 
 ![Estadísticas](images/menuestadisticas.png)
 
@@ -241,11 +326,36 @@ Selecciona "6" en el menú principal para ver el análisis de rendimiento, que i
 Selecciona "8" en el menú principal para acceder al menú de exportación. Este menú ofrece opciones para exportar datos de diferentes módulos por separado:
 
 1. **Camisetas** - Exportar datos de camisetas
-2. **Partidos** - Exportar datos de partidos
-3. **Estadísticas** - Exportar estadísticas generales
-4. **Lesiones** - Exportar datos de lesiones
+2. **Partidos** - Exportar datos de partidos (incluyendo submenú para partidos específicos)
+3. **Lesiones** - Exportar datos de lesiones
+4. **Estadísticas** - Exportar estadísticas generales
 5. **Análisis** - Exportar análisis de rendimiento
 6. **Todo** - Exportar todos los datos
+7. **Analisis Avanzado** - Exportación mejorada con análisis integrado
+
+### Submenú de Exportar Partidos
+
+El menú de exportar partidos incluye opciones adicionales:
+- **Todos los Partidos** - Exportar todos los partidos
+- **Partido con Mas Goles** - Exportar el partido con más goles
+- **Partido con Mas Asistencias** - Exportar el partido con más asistencias
+- **Partido Menos Goles Reciente** - Exportar el partido más reciente con menos goles
+- **Partido Menos Asistencias Reciente** - Exportar el partido más reciente con menos asistencias
+
+### Submenú de Exportar Estadísticas Generales
+
+El menú de exportar estadísticas generales incluye:
+- **Estadisticas Generales** - Exportar estadísticas generales completas
+- **Estadisticas Por Mes** - Exportar estadísticas por mes
+- **Estadisticas Por Anio** - Exportar estadísticas por año
+- **Records & Rankings** - Exportar récords y rankings
+
+### Exportación Mejorada
+
+La opción "Analisis Avanzado" proporciona exportación mejorada con:
+- **Camisetas con Analisis Avanzado** - Exportación de camisetas con análisis integrado
+- **Lesiones con Analisis de Impacto** - Exportación de lesiones con análisis de impacto
+- **Todo con Analisis Avanzado** - Exportación completa con análisis avanzado
 
 Cada opción permite exportar en múltiples formatos (CSV, TXT, JSON, HTML). Los archivos se guardarán en el Escritorio (Windows) o directorio home (Unix/Linux) con nombres descriptivos como `camisetas.csv`, `partidos.html`, etc. El usuario puede elegir el formato para cada módulo.
 
@@ -296,4 +406,4 @@ MiFutbolC es una herramienta completa para el seguimiento y análisis de datos r
 ---
 
 *Manual generado con Pandoc*
-*Última actualización: (30/12/2025)*
+*Última actualización: (03/01/2026)*

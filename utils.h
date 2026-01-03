@@ -111,4 +111,14 @@ void editar_nombre_usuario();
  */
 void menu_usuario();
 
+/**
+ * @brief Remueve tildes y caracteres acentuados de una cadena
+ *
+ * Convierte caracteres acentuados a su equivalente sin tilde.
+ *
+ * @param str La cadena a procesar
+ * @return La cadena sin tildes
+ */
+char* remover_tildes(const char *str);
+
 #endif
