@@ -9,6 +9,7 @@
 #include "menu.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 /**
  * @brief Función auxiliar para ejecutar consultas SQL y mostrar resultados de récords
@@ -83,7 +84,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            printf("Año: %d\n", sqlite3_column_int(stmt, 0));
+            printf("Anio: %s\n", sqlite3_column_text(stmt, 0));
             printf("Rendimiento Promedio: %.2f\n", sqlite3_column_double(stmt, 1));
             printf("Partidos Jugados: %d\n", sqlite3_column_int(stmt, 2));
         }
@@ -103,7 +104,7 @@ void mostrar_record_goles_partido()
     clear_screen();
     print_header("RECORD DE GOLES EN UN PARTIDO");
 
-    mostrar_record("Récord de Goles en un Partido",
+    mostrar_record("Record de Goles en un Partido",
                    "SELECT p.goles, c.nombre, p.fecha_hora "
                    "FROM partido p "
                    "JOIN camiseta c ON p.camiseta_id = c.id "
@@ -120,7 +121,7 @@ void mostrar_record_asistencias_partido()
     clear_screen();
     print_header("RECORD DE ASISTENCIAS EN UN PARTIDO");
 
-    mostrar_record("Récord de Asistencias en un Partido",
+    mostrar_record("Record de Asistencias en un Partido",
                    "SELECT p.asistencias, c.nombre, p.fecha_hora "
                    "FROM partido p "
                    "JOIN camiseta c ON p.camiseta_id = c.id "
@@ -137,7 +138,7 @@ void mostrar_mejor_combinacion_cancha_camiseta()
     clear_screen();
     print_header("MEJOR COMBINACION CANCHA + CAMISETA");
 
-    mostrar_combinacion("Mejor Combinación Cancha + Camiseta",
+    mostrar_combinacion("Mejor Combinacion Cancha + Camiseta",
                         "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
                         "FROM partido p "
                         "JOIN cancha ca ON p.cancha_id = ca.id "
@@ -156,7 +157,7 @@ void mostrar_peor_combinacion_cancha_camiseta()
     clear_screen();
     print_header("PEOR COMBINACION CANCHA + CAMISETA");
 
-    mostrar_combinacion("Peor Combinación Cancha + Camiseta",
+    mostrar_combinacion("Peor Combinacion Cancha + Camiseta",
                         "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
                         "FROM partido p "
                         "JOIN cancha ca ON p.cancha_id = ca.id "
@@ -285,7 +286,7 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
 
     sqlite3_stmt *stmt;
 
-    printf("\nPartido con Mejor Combinación Goles+Asistencias\n");
+    printf("\nPartido con Mejor Combinacion Goles+Asistencias\n");
     printf("----------------------------------------\n");
 
     if (sqlite3_prepare_v2(db,
@@ -302,7 +303,7 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
             printf("Camiseta: %s\n", sqlite3_column_text(stmt, 2));
             printf("Goles: %d\n", sqlite3_column_int(stmt, 3));
             printf("Asistencias: %d\n", sqlite3_column_int(stmt, 4));
-            printf("Combinación: %d\n", sqlite3_column_int(stmt, 5));
+            printf("Combinacion: %d\n", sqlite3_column_int(stmt, 5));
         }
         else
         {
