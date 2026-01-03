@@ -35,6 +35,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="analisis.h" />
+		<Unit filename="cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="cJSON.h" />
 		<Unit filename="cJSON_Utils.c">
 			<Option compilerVar="CC" />
