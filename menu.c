@@ -12,6 +12,7 @@ void ejecutar_menu(const char *titulo, MenuItem *items, int cantidad)
     {
         // Clear screen each iteration to provide a clean, focused interface and prevent menu clutter from previous interactions.
         clear_screen();
+
         print_header(titulo);
 
         // Display all menu options to give user clear visibility of available actions.

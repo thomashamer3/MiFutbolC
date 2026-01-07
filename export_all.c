@@ -17,6 +17,7 @@
 #include "export_records_rankings.h"
 #include "utils.h"
 #include "menu.h"
+#include "ascii_art.h"
 #include <stdio.h>
 
 /**
