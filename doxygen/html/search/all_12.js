@@ -8,7 +8,7 @@ var searchData=
   ['selectdest_5',['SelectDest',['../struct_select_dest.html',1,'']]],
   ['set_5fuser_5fname_6',['set_user_name',['../db_8c.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c'],['../db_8h.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c']]],
   ['sortctx_7',['SortCtx',['../struct_sort_ctx.html',1,'']]],
-  ['sortear_5fcamiseta_8',['sortear_camiseta',['../camiseta_8c.html#a57af5be49fc0faacf80d0310202a1576',1,'camiseta.c']]],
+  ['sortear_5fcamiseta_8',['sortear_camiseta',['../camiseta_8c.html#a57af5be49fc0faacf80d0310202a1576',1,'sortear_camiseta():&#160;camiseta.c'],['../camiseta_8h.html#a57af5be49fc0faacf80d0310202a1576',1,'sortear_camiseta():&#160;camiseta.c']]],
   ['sorterfile_9',['SorterFile',['../struct_sorter_file.html',1,'']]],
   ['sorterlist_10',['SorterList',['../struct_sorter_list.html',1,'']]],
   ['sorterrecord_11',['SorterRecord',['../struct_sorter_record.html',1,'']]],

@@ -10,14 +10,8 @@
 
 static int current_lesion_id;
 
-/**
- * @brief Obtiene el siguiente ID disponible para una nueva lesión
- *
- * Busca el ID más pequeño disponible reutilizando espacios de IDs eliminados.
- * Utiliza una consulta SQL que encuentra el primer hueco en la secuencia de IDs.
- *
- * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
- */
+// Obtains the next available ID by reusing deleted IDs to maintain efficient ID management
+// and prevent unnecessary growth of the ID sequence, which improves database performance over time.
 static int obtener_siguiente_id_lesion()
 {
     sqlite3_stmt *stmt;

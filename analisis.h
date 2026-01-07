@@ -1,69 +1,94 @@
 /**
  * @file analisis.h
- * @brief Declaraciones de funciones para el análisis de rendimiento en MiFutbolC
+ * @brief API de análisis estadístico de rendimiento deportivo
  *
- * Este archivo contiene las declaraciones de las funciones relacionadas con
- * el análisis de partidos, incluyendo comparación de últimos partidos con promedios
- * generales y cálculo de rachas.
+ * Proporciona interfaz para análisis cuantitativo de datos de partidos,
+ * incluyendo métricas comparativas, patrones temporales y evaluación
+ * de tendencias de rendimiento utilizando consultas SQL optimizadas
+ * sobre base de datos SQLite3.
  */
 
 /**
- * @brief Muestra el análisis de rendimiento
+ * @brief Ejecuta análisis integral de rendimiento
  *
- * Calcula y muestra estadísticas comparativas entre los últimos 5 partidos
- * y los promedios generales, incluyendo rachas de victorias y derrotas.
- * Proporciona mensajes motivacionales y realistas basados en el rendimiento.
+ * Realiza comparación estadística entre últimos 5 partidos vs promedio general,
+ * calcula rachas de victorias/derrotas y genera retroalimentación motivacional
+ * basada en algoritmos de comparación de métricas clave.
  */
 void mostrar_analisis();
 
 /**
- * @brief Muestra la evolución temporal del rendimiento del jugador
+ * @brief Interfaz para análisis temporal de métricas deportivas
  *
- * Incluye análisis mensual de goles, asistencias y rendimiento, comparación
- * de mejores/peores meses históricos, inicio vs fin de año, meses fríos vs cálidos,
- * y progreso total del jugador.
+ * Implementa análisis longitudinal agrupado por períodos mensuales,
+ * permitiendo identificación de patrones estacionales y tendencias
+ * de evolución en variables como goles, asistencias y rendimiento general.
  */
 void mostrar_evolucion_temporal();
 
 /**
- * @brief Muestra la evolución mensual de goles
+ * @brief Visualiza evolución mensual de estadística de gol
+ *
+ * Consulta base de datos para agrupar y promediar métricas de gol
+ * por períodos mensuales, ordenados cronológicamente descendente.
  */
 void evolucion_mensual_goles();
 
 /**
- * @brief Muestra la evolución mensual de asistencias
+ * @brief Visualiza evolución mensual de estadística de asistencia
+ *
+ * Consulta base de datos para agrupar y promediar métricas de asistencia
+ * por períodos mensuales, ordenados cronológicamente descendente.
  */
 void evolucion_mensual_asistencias();
 
 /**
- * @brief Muestra la evolución mensual de rendimiento
+ * @brief Visualiza evolución mensual de rendimiento general
+ *
+ * Consulta base de datos para agrupar y promediar métricas de rendimiento
+ * por períodos mensuales, ordenados cronológicamente descendente.
  */
 void evolucion_mensual_rendimiento();
 
 /**
- * @brief Muestra el mejor mes histórico
+ * @brief Identifica mes histórico de máximo rendimiento
+ *
+ * Ejecuta consulta SQL con agregación GROUP BY para determinar
+ * el mes con mayor promedio de rendimiento_general histórico.
  */
 void mejor_mes_historico();
 
 /**
- * @brief Muestra el peor mes histórico
+ * @brief Identifica mes histórico de mínimo rendimiento
+ *
+ * Ejecuta consulta SQL con agregación GROUP BY para determinar
+ * el mes con menor promedio de rendimiento_general histórico.
  */
 void peor_mes_historico();
 
 /**
- * @brief Compara el rendimiento al inicio vs fin de año
+ * @brief Compara rendimiento semestral inicio vs fin de año
+ *
+ * Divide datos en dos períodos semestrales (Ene-Jun vs Jul-Dic)
+ * y calcula métricas comparativas para detectar variaciones
+ * cíclicas anuales en el rendimiento deportivo.
  */
 void inicio_vs_fin_anio();
 
 /**
- * @brief Compara el rendimiento en meses fríos vs cálidos
+ * @brief Evalúa impacto de condiciones climáticas en rendimiento
  *
- * Meses fríos: junio, julio, agosto, septiembre
- * Meses cálidos: diciembre, enero, febrero, marzo, abril
+ * Clasifica partidos por temporada climática (fríos: Jun-Sep,
+ * cálidos: Dic-Abr) y compara métricas promedio para identificar
+ * correlaciones entre variables ambientales y rendimiento atlético.
  */
 void meses_frios_vs_calidos();
 
 /**
- * @brief Muestra el progreso total del jugador
+ * @brief Sintetiza trayectoria completa de desarrollo del jugador
+ *
+ * Calcula métricas globales de carrera incluyendo total de partidos,
+ * promedios históricos y análisis de tendencia mediante comparación
+ * de primeros vs últimos partidos para evaluar evolución longitudinal.
  */
 void progreso_total_jugador();

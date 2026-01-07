@@ -55,6 +55,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="db.h" />
+		<Unit filename="equipo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="equipo.h" />
 		<Unit filename="estadisticas.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -158,6 +162,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="sqlite3.h" />
+		<Unit filename="torneo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="torneo.h" />
 		<Unit filename="utils.c">
 			<Option compilerVar="CC" />
 		</Unit>

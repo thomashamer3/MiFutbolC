@@ -1,6 +1,10 @@
 /**
  * @file estadisticas_generales.h
- * @brief Declaraciones de funciones para mostrar estadísticas generales
+ * @brief API de consultas estadísticas globales de rendimiento deportivo
+ *
+ * Define interfaz para análisis cuantitativo de métricas agregadas por partidos,
+ * incluyendo segmentación por clima, día semanal, cansancio y estado anímico,
+ * utilizando consultas SQL preparadas con funciones de agrupamiento y JOINs.
  */
 
 #ifndef ESTADISTICAS_GENERALES_H

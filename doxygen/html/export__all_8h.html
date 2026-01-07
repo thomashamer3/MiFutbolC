@@ -102,7 +102,7 @@ $(function(){initNavTree('export__all_8h.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 
-<p>Declaraciones de funciones para exportación completa en MiFutbolC.  
+<p>Interfaz de Programación de Aplicaciones (API) para exportación completa de datos.  
 <a href="#details">More...</a></p>
 
 <p><a href="export__all_8h_source.html">Go to the source code of this file.</a></p>
@@ -110,12 +110,13 @@ $(function(){initNavTree('export__all_8h.html',''); initResizable(true); });
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ad0ad0f028f778c8763398bcca0d55e38" id="r_ad0ad0f028f778c8763398bcca0d55e38"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad0ad0f028f778c8763398bcca0d55e38">menu_exportar</a> ()</td></tr>
-<tr class="memdesc:ad0ad0f028f778c8763398bcca0d55e38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Menu para exportar todos los datos del sistema en todos los formatos disponibles.  <br /></td></tr>
+<tr class="memdesc:ad0ad0f028f778c8763398bcca0d55e38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interfaz de usuario para exportación completa de datos.  <br /></td></tr>
 <tr class="separator:ad0ad0f028f778c8763398bcca0d55e38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declaraciones de funciones para exportación completa en MiFutbolC. </p>
-<p>Este archivo contiene las declaraciones de las funciones que permiten exportar todos los datos del sistema de una sola vez en múltiples formatos. </p>
+<div class="textblock"><p>Interfaz de Programación de Aplicaciones (API) para exportación completa de datos. </p>
+<p>Este archivo define la API pública para el sistema de exportación completa en MiFutbolC. Proporciona funciones para exportar todos los datos del sistema de manera integral, generando archivos en múltiples formatos para diferentes usos y aplicaciones.</p>
+<dl class="section note"><dt>Note</dt><dd>Todas las funciones declaradas aquí son parte de la API pública y pueden ser llamadas desde otros módulos del sistema. La exportación completa genera una copia de seguridad integral de todos los datos disponibles. </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="ad0ad0f028f778c8763398bcca0d55e38" name="ad0ad0f028f778c8763398bcca0d55e38"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad0ad0f028f778c8763398bcca0d55e38">&#9670;&#160;</a></span>menu_exportar()</h2>
@@ -132,12 +133,28 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Menu para exportar todos los datos del sistema en todos los formatos disponibles. </p>
-<p>Esta función ejecuta todas las funciones de exportación para camisetas, partidos, estadísticas y lesiones, generando archivos en formatos CSV, TXT, JSON y HTML para cada tipo de dato.</p>
-<dl class="section note"><dt>Note</dt><dd>Los archivos se generan en el directorio 'data/' del proyecto </dd>
+<p>Interfaz de usuario para exportación completa de datos. </p>
+<p>Inicia un menú interactivo que sirve como punto de entrada principal para todas las funciones de exportación del sistema. Este menú permite a los usuarios seleccionar qué categorías de datos exportar y en qué formato.</p>
+<p>La función implementa un sistema de menú jerárquico que organiza las opciones de exportación en categorías lógicas:</p><ul>
+<li>Datos básicos: camisetas, partidos, lesiones</li>
+<li>Estadísticas: básicas, generales, por periodo</li>
+<li>Análisis: avanzados y específicos</li>
+<li>Exportación completa: todos los datos disponibles</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>Los archivos generados se guardan en el directorio 'data/' del proyecto </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Esta operación puede consumir tiempo y recursos significativos dependiendo de la cantidad de datos, especialmente al exportar todos los datos disponibles.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd>exportar_camisetas_todo() </dd>
 <dd>
-Esta operación puede tomar tiempo dependiendo de la cantidad de datos</dd></dl>
-<p>Menu para exportar todos los datos del sistema en todos los formatos disponibles.</p>
+exportar_partidos_todo() </dd>
+<dd>
+exportar_lesiones_todo() </dd>
+<dd>
+exportar_estadisticas_todo() </dd>
+<dd>
+exportar_analisis_todo() </dd>
+<dd>
+exportar_todo()</dd></dl>
+<p>Interfaz de usuario para exportación completa de datos.</p>
 <p>Esta función muestra un menú para que el usuario seleccione qué datos exportar: camisetas, partidos, lesiones, estadísticas, análisis, estadísticas detalladas, todo o volver. Llama a las funciones de exportación correspondientes en formatos CSV, TXT, JSON y HTML. Al final, muestra un mensaje de confirmación y pausa la consola. </p>
 
 </div>
@@ -148,7 +165,7 @@ Esta operación puede tomar tiempo dependiendo de la cantidad de datos</dd></dl>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="export__all_8h.html">export_all.h</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

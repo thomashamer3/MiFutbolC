@@ -137,12 +137,48 @@ const char *dia_to_text(int dia)
     }
 }
 
+/* ===================== HELPER FUNCTIONS (STATIC) ===================== */
+
+/* Forward declarations of static functions */
+static void calcular_estadisticas_generales(Estadisticas *stats);
+static void calcular_estadisticas_ultimos5(Estadisticas *stats);
+static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas);
+static int has_partido_records();
+
+/**
+ * Verifica si hay registros de partidos en la base de datos.
+ * Centraliza la lógica de verificación para evitar duplicación de código.
+ * Retorna 1 si hay registros, 0 si no hay.
+ */
+static int has_partido_records()
+{
+    sqlite3_stmt *check_stmt;
+    int count = 0;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+    return count > 0;
+}
+
+/**
+ * Calcula todas las estadísticas necesarias para el análisis.
+ * Centraliza la lógica de cálculo para evitar duplicación de código.
+ */
+static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *ultimos5, int *mejor_racha_v, int *peor_racha_d)
+{
+    calcular_estadisticas_generales(generales);
+    calcular_estadisticas_ultimos5(ultimos5);
+    calcular_rachas(mejor_racha_v, peor_racha_d);
+}
+
 /* ===================== ANALISIS ===================== */
 
 /**
- * @brief Calcula estadísticas generales de todos los partidos
- *
- * @param stats Puntero a la estructura donde almacenar las estadísticas
+ * Calcula estadísticas generales de todos los partidos.
+ * Esta función es utilizada por el análisis de rendimiento para obtener métricas globales.
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
@@ -264,22 +300,12 @@ static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estad
 }
 
 /**
- * @brief Exporta el análisis de rendimiento a un archivo CSV
- *
- * Crea un archivo CSV con las estadísticas generales, últimos 5 partidos,
- * rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Exporta el análisis de rendimiento a un archivo CSV.
+ * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
  */
 void exportar_analisis_csv()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
+    if (!has_partido_records())
     {
         printf("No hay registros de partidos para exportar analisis.\n");
         return;
@@ -295,9 +321,7 @@ void exportar_analisis_csv()
     Estadisticas ultimos5 = {0};
     int mejor_racha_v, peor_racha_d;
 
-    calcular_estadisticas_generales(&generales);
-    calcular_estadisticas_ultimos5(&ultimos5);
-    calcular_rachas(&mejor_racha_v, &peor_racha_d);
+    calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
     fprintf(f, "Generales,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
             generales.avg_goles, generales.avg_asistencias, generales.avg_rendimiento,
@@ -317,22 +341,12 @@ void exportar_analisis_csv()
 }
 
 /**
- * @brief Exporta el análisis de rendimiento a un archivo de texto plano
- *
- * Crea un archivo de texto con las estadísticas generales, últimos 5 partidos,
- * rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Exporta el análisis de rendimiento a un archivo de texto plano.
+ * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
  */
 void exportar_analisis_txt()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
+    if (!has_partido_records())
     {
         printf("No hay registros de partidos para exportar analisis.\n");
         return;
@@ -348,9 +362,7 @@ void exportar_analisis_txt()
     Estadisticas ultimos5 = {0};
     int mejor_racha_v, peor_racha_d;
 
-    calcular_estadisticas_generales(&generales);
-    calcular_estadisticas_ultimos5(&ultimos5);
-    calcular_rachas(&mejor_racha_v, &peor_racha_d);
+    calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
     fprintf(f, "ESTADISTICAS GENERALES:\n");
     fprintf(f, "Total Partidos: %d\n", generales.total_partidos);
@@ -380,22 +392,12 @@ void exportar_analisis_txt()
 }
 
 /**
- * @brief Exporta el análisis de rendimiento a un archivo JSON
- *
- * Crea un archivo JSON con un objeto conteniendo todas las estadísticas
- * del análisis de rendimiento. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Exporta el análisis de rendimiento a un archivo JSON.
+ * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
  */
 void exportar_analisis_json()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
+    if (!has_partido_records())
     {
         printf("No hay registros de partidos para exportar analisis.\n");
         return;
@@ -411,9 +413,7 @@ void exportar_analisis_json()
     Estadisticas ultimos5 = {0};
     int mejor_racha_v, peor_racha_d;
 
-    calcular_estadisticas_generales(&generales);
-    calcular_estadisticas_ultimos5(&ultimos5);
-    calcular_rachas(&mejor_racha_v, &peor_racha_d);
+    calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
     cJSON *generales_obj = cJSON_CreateObject();
     cJSON_AddNumberToObject(generales_obj, "total_partidos", generales.total_partidos);
@@ -451,22 +451,12 @@ void exportar_analisis_json()
 }
 
 /**
- * @brief Exporta el análisis de rendimiento a un archivo HTML
- *
- * Crea una página HTML con las estadísticas presentadas en formato web.
- * El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Exporta el análisis de rendimiento a un archivo HTML.
+ * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
  */
 void exportar_analisis_html()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
+    if (!has_partido_records())
     {
         printf("No hay registros de partidos para exportar analisis.\n");
         return;
@@ -482,9 +472,7 @@ void exportar_analisis_html()
     Estadisticas ultimos5 = {0};
     int mejor_racha_v, peor_racha_d;
 
-    calcular_estadisticas_generales(&generales);
-    calcular_estadisticas_ultimos5(&ultimos5);
-    calcular_rachas(&mejor_racha_v, &peor_racha_d);
+    calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
     fprintf(f, "<h2>Estadisticas Generales</h2>");
     fprintf(f, "<table border='1'>");

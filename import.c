@@ -37,6 +37,8 @@ static char *trim_trailing_spaces(char *str)
 /**
  * @brief Lee el contenido completo de un archivo de texto.
  *
+ * Para permitir el análisis eficiente del contenido sin múltiples lecturas de disco.
+ *
  * @param filename Ruta del archivo a leer.
  * @return Puntero al contenido del archivo o NULL si hay error.
  */

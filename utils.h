@@ -112,6 +112,32 @@ void editar_nombre_usuario();
 void menu_usuario();
 
 /**
+ * @brief Formatea una fecha para mostrar en el formato dd/mm/yyyy hh:mm
+ *
+ * Convierte una fecha en formato de almacenamiento a formato de visualización.
+ * Actualmente ambos formatos son iguales (dd/mm/yyyy hh:mm), pero esta función
+ * permite cambiar el formato de almacenamiento en el futuro sin afectar la visualización.
+ *
+ * @param input_date Fecha de entrada en formato de almacenamiento
+ * @param output_buffer Buffer donde se almacenará la fecha formateada
+ * @param buffer_size Tamaño máximo del buffer
+ */
+void format_date_for_display(const char *input_date, char *output_buffer, int buffer_size);
+
+/**
+ * @brief Convierte una fecha en formato de visualización a formato de almacenamiento
+ *
+ * Convierte una fecha en formato dd/mm/yyyy hh:mm a formato de almacenamiento.
+ * Actualmente ambos formatos son iguales, pero esta función permite cambiar
+ * el formato de almacenamiento en el futuro.
+ *
+ * @param display_date Fecha en formato de visualización (dd/mm/yyyy hh:mm)
+ * @param storage_buffer Buffer donde se almacenará la fecha en formato de almacenamiento
+ * @param buffer_size Tamaño máximo del buffer
+ */
+void convert_display_date_to_storage(const char *display_date, char *storage_buffer, int buffer_size);
+
+/**
  * @brief Remueve tildes y caracteres acentuados de una cadena
  *
  * Convierte caracteres acentuados a su equivalente sin tilde.

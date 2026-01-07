@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['remover_5ftildes_0',['remover_tildes',['../utils_8c.html#a64f980d336dc8739bf2b92cb5b569ec6',1,'remover_tildes(const char *str):&#160;utils.c'],['../utils_8h.html#a64f980d336dc8739bf2b92cb5b569ec6',1,'remover_tildes(const char *str):&#160;utils.c']]],
-  ['resultado_5fto_5ftext_1',['resultado_to_text',['../export_8c.html#a630ee8617ddc08a5936e6373d61c398f',1,'resultado_to_text(int resultado):&#160;export.c'],['../export_8h.html#a630ee8617ddc08a5936e6373d61c398f',1,'resultado_to_text(int resultado):&#160;export.c']]]
+  ['pause_5fconsole_0',['pause_console',['../utils_8c.html#a5ce7464bfaea97ff6484a00d78b150a3',1,'pause_console():&#160;utils.c'],['../utils_8h.html#a5ce7464bfaea97ff6484a00d78b150a3',1,'pause_console():&#160;utils.c']]],
+  ['pedir_5fnombre_5fusuario_1',['pedir_nombre_usuario',['../utils_8c.html#ac54f6f5e76af4fbc3514b0028822f102',1,'pedir_nombre_usuario():&#160;utils.c'],['../utils_8h.html#ac54f6f5e76af4fbc3514b0028822f102',1,'pedir_nombre_usuario():&#160;utils.c']]],
+  ['print_5fheader_2',['print_header',['../utils_8c.html#a53a0c6c2a6a2667a4c0b0a3eaf78f617',1,'print_header(const char *titulo):&#160;utils.c'],['../utils_8h.html#a53a0c6c2a6a2667a4c0b0a3eaf78f617',1,'print_header(const char *titulo):&#160;utils.c']]]
 ];

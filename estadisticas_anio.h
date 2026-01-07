@@ -1,16 +1,21 @@
 /**
  * @file estadisticas_anio.h
- * @brief Declaraciones de funciones para mostrar estadísticas por año
+ * @brief API de análisis estadístico anual de rendimiento deportivo
+ *
+ * Define interfaz para consultas de agregación temporal por año,
+ * implementando JOINs SQL y funciones de agrupamiento para métricas
+ * longitudinales de partidos y camisetas.
  */
 
 #ifndef ESTADISTICAS_ANIO_H
 #define ESTADISTICAS_ANIO_H
 
 /**
- * @brief Muestra estadísticas históricas agrupadas por año
+ * @brief Ejecuta consulta de estadísticas agrupadas por año
  *
- * Esta función muestra estadísticas individuales por camiseta agrupadas por año,
- * incluyendo partidos jugados, goles, asistencias y promedios por partido.
+ * Realiza agregación SQL con funciones SUM, COUNT y AVG sobre tabla partido,
+ * unida con camiseta para presentación ordenada por año descendente y
+ * goles totales descendentes dentro de cada año.
  */
 void mostrar_estadisticas_por_anio();
 

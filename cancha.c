@@ -7,8 +7,8 @@
 /**
  * @brief Obtiene el siguiente ID disponible para una nueva cancha
  *
- * Busca el ID más pequeño disponible reutilizando espacios de IDs eliminados.
- * Utiliza una consulta SQL que encuentra el primer hueco en la secuencia de IDs.
+ * Mantiene IDs secuenciales reutilizando espacios de eliminaciones para
+ * evitar IDs excesivamente altos y facilitar la navegación del usuario.
  *
  * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
  */
@@ -31,6 +31,9 @@ static int obtener_siguiente_id_cancha()
 /**
  * @brief Verifica si hay canchas registradas en la base de datos
  *
+ * Previene operaciones en datasets vacíos y permite mostrar mensajes
+ * informativos apropiados al usuario.
+ *
  * @return 1 si hay al menos una cancha, 0 si no hay ninguna
  */
 static int hay_canchas()
@@ -50,8 +53,8 @@ static int hay_canchas()
 /**
  * @brief Crea una nueva cancha en la base de datos
  *
- * Solicita al usuario el nombre de la cancha y lo inserta en la tabla 'cancha'.
- * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
+ * Permite a los usuarios agregar canchas para asignación en partidos,
+ * reutilizando IDs eliminados para mantener la secuencia.
  */
 void crear_cancha()
 {
@@ -77,10 +80,8 @@ void crear_cancha()
 /**
  * @brief Muestra un listado de todas las canchas registradas
  *
- * Consulta la base de datos y muestra en pantalla todas las canchas
- * con sus respectivos datos: ID y nombre.
- *
- * @note Si no hay canchas registradas, muestra un mensaje informativo
+ * Proporciona visibilidad de canchas disponibles para selección
+ * en partidos y operaciones de gestión.
  */
 void listar_canchas()
 {
@@ -110,15 +111,10 @@ void listar_canchas()
 }
 
 /**
- * @brief Elimina una cancha de la base de datos.
+ * @brief Elimina una cancha de la base de datos
  *
- * Esta función permite al usuario eliminar una cancha existente. Primero muestra
- * la lista de canchas disponibles, solicita el ID de la cancha a eliminar,
- * verifica que la cancha exista, solicita confirmación al usuario y finalmente
- * elimina el registro de la base de datos si se confirma.
- *
- * @note Si la cancha no existe, muestra un mensaje de error y no realiza la eliminación.
- * @note Si el usuario no confirma la eliminación, la operación se cancela.
+ * Permite remover canchas obsoletas mientras mantiene integridad
+ * de datos con validaciones y confirmaciones de usuario.
  */
 void eliminar_cancha()
 {
@@ -162,8 +158,8 @@ void eliminar_cancha()
 /**
  * @brief Permite modificar el nombre de una cancha existente
  *
- * Muestra la lista de canchas disponibles, solicita el ID a modificar,
- * verifica que exista y permite cambiar el nombre de la cancha.
+ * Permite correcciones en nombres de canchas sin necesidad
+ * de eliminar y recrear registros, mejorando usabilidad.
  */
 void modificar_cancha()
 {
@@ -209,9 +205,8 @@ void modificar_cancha()
 /**
  * @brief Muestra el menú principal de gestión de canchas
  *
- * Presenta un menú interactivo con opciones para crear, listar, modificar
- * y eliminar canchas. Utiliza la función ejecutar_menu para manejar
- * la navegación del menú y delega las operaciones a las funciones correspondientes.
+ * Proporciona interfaz centralizada para operaciones CRUD de canchas,
+ * facilitando la navegación y delegación de tareas específicas.
  */
 void menu_canchas()
 {

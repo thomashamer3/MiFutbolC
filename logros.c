@@ -345,7 +345,68 @@ static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progre
 }
 
 /**
+ * @brief Obtiene el nombre de una camiseta desde la base de datos
+ *
+ * Para mostrar información contextual al usuario, recupera el nombre asociado al ID.
+ *
+ * @param camiseta_id ID de la camiseta
+ * @param nombre Buffer para almacenar el nombre
+ */
+static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
+{
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, camiseta_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        strcpy(nombre, (const char *)sqlite3_column_text(stmt, 0));
+    }
+    else
+    {
+        printf("Camiseta no encontrada.\n");
+    }
+    sqlite3_finalize(stmt);
+}
+
+/**
+ * @brief Muestra un logro individual con su estado y progreso
+ *
+ * Para mantener consistencia visual, centraliza la lógica de impresión de cada logro.
+ *
+ * @param logro Puntero al logro
+ * @param estado Estado del logro (0,1,2)
+ * @param progreso Progreso actual
+ */
+static void mostrar_logro_individual(const Logro *logro, int estado, int progreso)
+{
+    const char *estado_texto;
+    const char *color;
+
+    switch (estado)
+    {
+    case 0:
+        estado_texto = "[NO INICIADO]";
+        color = "\x1b[31m"; // rojo
+        break;
+    case 1:
+        estado_texto = "[EN PROGRESO]";
+        color = "\x1b[33m"; // amarillo
+        break;
+    case 2:
+        estado_texto = "[COMPLETADO]";
+        color = "\x1b[32m"; // Verde
+        break;
+    }
+    // ARREGLAR COLOR CONSOLA
+    printf("%s%s %s\x1b[0m\n", color, logro->nombre, estado_texto);
+    printf("   %s\n", logro->descripcion);
+    printf("   Progreso: %d/%d\n\n", progreso, logro->objetivo);
+}
+
+/**
  * @brief Muestra los logros de una camiseta específica
+ *
+ * Para proporcionar feedback al usuario, lista logros filtrados según el criterio seleccionado.
  *
  * @param camiseta_id ID de la camiseta
  * @param filtro 0: Todos, 1: Solo completados, 2: Solo en progreso
@@ -353,22 +414,9 @@ static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progre
 static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 {
     char nombre_camiseta[100];
-    sqlite3_stmt *stmt;
+    obtener_nombre_camiseta(camiseta_id, nombre_camiseta);
 
-    // Obtener nombre de la camiseta
-    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, camiseta_id);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        strcpy(nombre_camiseta, (const char *)sqlite3_column_text(stmt, 0));
-    }
-    else
-    {
-        printf("Camiseta no encontrada.\n");
-        sqlite3_finalize(stmt);
-        return;
-    }
-    sqlite3_finalize(stmt);
+    if (strlen(nombre_camiseta) == 0) return; // Error already printed
 
     printf("\nLOGROS DE: %s\n", nombre_camiseta);
     printf("========================================\n\n");
@@ -387,29 +435,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
             continue; // Solo en progreso
 
         mostrados++;
-
-        const char *estado_texto;
-        const char *color;
-
-        switch (estado)
-        {
-        case 0:
-            estado_texto = "[NO INICIADO]";
-            color = "\x1b[31m"; // rojo
-            break;
-        case 1:
-            estado_texto = "[EN PROGRESO]";
-            color = "\x1b[33m"; // amarillo
-            break;
-        case 2:
-            estado_texto = "[COMPLETADO]";
-            color = "\x1b[32m"; // Verde
-            break;
-        }
-        // ARREGLAR COLOR CONSOLA
-        printf("%s%s %s\x1b[0m\n", color, LOGROS[i].nombre, estado_texto);
-        printf("   %s\n", LOGROS[i].descripcion);
-        printf("   Progreso: %d/%d\n\n", progreso, LOGROS[i].objetivo);
+        mostrar_logro_individual(&LOGROS[i], estado, progreso);
     }
 
     if (mostrados == 0)
@@ -419,13 +445,12 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 }
 
 /**
- * @brief Muestra todos los logros disponibles con su estado
+ * @brief Lista camisetas que tienen partidos asociados
+ *
+ * Para evitar mostrar camisetas sin logros, filtra solo las que han jugado partidos.
  */
-void mostrar_todos_logros()
+static void listar_camisetas_con_partidos()
 {
-    clear_screen();
-    print_header("TODOS LOS LOGROS");
-
     printf("Camisetas disponibles:\n");
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
@@ -441,19 +466,53 @@ void mostrar_todos_logros()
     {
         printf("No hay camisetas cargadas.\n");
         pause_console();
-        return;
     }
+}
 
+/**
+ * @brief Permite al usuario seleccionar una camiseta válida
+ *
+ * Valida la selección para asegurar que la camiseta existe antes de proceder.
+ *
+ * @return ID de la camiseta o -1 si inválida
+ */
+static int seleccionar_camiseta()
+{
     int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
-
     if (!existe_id("camiseta", camiseta_id))
     {
         printf("La camiseta no existe.\n");
-        return;
+        return -1;
     }
+    return camiseta_id;
+}
 
-    mostrar_logros_camiseta(camiseta_id, 0); // 0 = mostrar todos
+/**
+ * @brief Muestra logros con un filtro específico
+ *
+ * Centraliza la lógica común de mostrar logros para diferentes vistas,
+ * reduciendo duplicación de código y mejorando mantenibilidad.
+ *
+ * @param titulo Título de la vista
+ * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
+ */
+static void mostrar_logros_con_filtro(const char *titulo, int filtro)
+{
+    clear_screen();
+    print_header(titulo);
+    listar_camisetas_con_partidos();
+    int camiseta_id = seleccionar_camiseta();
+    if (camiseta_id == -1) return;
+    mostrar_logros_camiseta(camiseta_id, filtro);
     pause_console();
+}
+
+/**
+ * @brief Muestra todos los logros disponibles con su estado
+ */
+void mostrar_todos_logros()
+{
+    mostrar_logros_con_filtro("TODOS LOS LOGROS", 0);
 }
 
 /**
@@ -461,38 +520,7 @@ void mostrar_todos_logros()
  */
 void mostrar_logros_completados()
 {
-    clear_screen();
-    print_header("LOGROS COMPLETADOS");
-
-    // Listar camisetas disponibles (solo las que tienen partidos)
-    printf("Camisetas disponibles:\n");
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
-        count++;
-    }
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("No hay camisetas cargadas.\n");
-        pause_console();
-        return;
-    }
-
-    int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
-
-    if (!existe_id("camiseta", camiseta_id))
-    {
-        printf("La camiseta no existe.\n");
-        return;
-    }
-
-    mostrar_logros_camiseta(camiseta_id, 1); // 1 = solo completados
-    pause_console();
+    mostrar_logros_con_filtro("LOGROS COMPLETADOS", 1);
 }
 
 /**
@@ -500,38 +528,7 @@ void mostrar_logros_completados()
  */
 void mostrar_logros_en_progreso()
 {
-    clear_screen();
-    print_header("LOGROS EN PROGRESO");
-
-    // Listar camisetas disponibles (solo las que tienen partidos)
-    printf("Camisetas disponibles:\n");
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
-        count++;
-    }
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("No hay camisetas cargadas.\n");
-        pause_console();
-        return;
-    }
-
-    int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
-
-    if (!existe_id("camiseta", camiseta_id))
-    {
-        printf("La camiseta no existe.\n");
-        return;
-    }
-
-    mostrar_logros_camiseta(camiseta_id, 2); // 2 = solo en progreso
-    pause_console();
+    mostrar_logros_con_filtro("LOGROS EN PROGRESO", 2);
 }
 
 /**

@@ -1,52 +1,50 @@
 /**
  * @file cancha.h
- * @brief Declaraciones de funciones para la gestión de canchas en MiFutbolC
+ * @brief API de gestión CRUD para entidades de canchas deportivas
  *
- * Este archivo contiene las declaraciones de las funciones relacionadas con
- * la gestión de canchas de fútbol, incluyendo creación, listado, modificación
- * y eliminación de registros de canchas.
+ * Define interfaz para operaciones de base de datos sobre tabla 'cancha',
+ * implementando patrón de reutilización de IDs mediante consultas SQL
+ * recursivas y validaciones de integridad referencial.
  */
 
 /**
- * @brief Muestra el menú principal de gestión de canchas
+ * @brief Interfaz de menú para operaciones de gestión de canchas
  *
- * Presenta un menú interactivo con opciones para crear, listar, modificar
- * y eliminar canchas. Utiliza la función ejecutar_menu para manejar
- * la navegación del menú y delega las operaciones a las funciones correspondientes.
+ * Implementa patrón de menú interactivo delegando a funciones especializadas
+ * para cada operación CRUD, utilizando estructura MenuItem para navegación.
  */
 void menu_canchas();
 
 /**
- * @brief Crea una nueva cancha en la base de datos
+ * @brief Inserta nueva entidad cancha en base de datos
  *
- * Solicita al usuario el nombre de la cancha y lo inserta en la tabla 'cancha'.
- * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
+ * Ejecuta algoritmo de asignación de ID secuencial mediante consulta
+ * recursiva SQL, insertando registro con binding de parámetros
+ * para prevenir inyección SQL.
  */
 void crear_cancha();
 
 /**
- * @brief Muestra un listado de todas las canchas registradas
+ * @brief Recupera y visualiza conjunto completo de canchas
  *
- * Consulta la base de datos y muestra en pantalla todas las canchas
- * con sus respectivos datos: ID y nombre.
- *
- * @note Si no hay canchas registradas, muestra un mensaje informativo
+ * Realiza consulta SELECT ordenada por ID, iterando sobre resultados
+ * para presentación tabular en interfaz de consola.
  */
 void listar_canchas();
 
 /**
- * @brief Permite eliminar una cancha existente
+ * @brief Elimina entidad cancha con validaciones de integridad
  *
- * Muestra la lista de canchas disponibles, solicita el ID a eliminar,
- * verifica que exista y solicita confirmación antes de proceder con
- * la eliminación del registro de la base de datos.
+ * Implementa protocolo de eliminación segura con confirmación de usuario,
+ * validación de existencia previa y manejo de restricciones referenciales
+ * mediante operaciones DELETE condicionales.
  */
 void eliminar_cancha();
 
 /**
- * @brief Permite modificar el nombre de una cancha existente
+ * @brief Actualiza atributo nombre de entidad cancha existente
  *
- * Muestra la lista de canchas disponibles, solicita el ID a modificar,
- * verifica que exista y permite cambiar el nombre de la cancha.
+ * Ejecuta UPDATE con validación de existencia y binding de parámetros,
+ * permitiendo correcciones sin requerir eliminación/recreación del registro.
  */
 void modificar_cancha();

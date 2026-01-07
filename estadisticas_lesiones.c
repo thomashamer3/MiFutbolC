@@ -7,7 +7,10 @@
 #include <string.h>
 
 /**
- * @brief Muestra el total de lesiones
+ * @brief Cuenta total de incidentes médicos registrados
+ *
+ * Proporciona métrica base para evaluación de frecuencia de lesiones
+ * y contextualización de otros indicadores estadísticos.
  */
 static void mostrar_total_lesiones()
 {
@@ -21,7 +24,10 @@ static void mostrar_total_lesiones()
 }
 
 /**
- * @brief Muestra lesiones por tipo
+ * @brief Clasifica incidentes médicos por categorías diagnósticas
+ *
+ * Facilita identificación de patrones de tipos de lesiones más frecuentes
+ * para diseño de programas preventivos específicos.
  */
 static void mostrar_lesiones_por_tipo()
 {
@@ -36,7 +42,10 @@ static void mostrar_lesiones_por_tipo()
 }
 
 /**
- * @brief Muestra lesiones por camiseta
+ * @brief Distribuye incidentes médicos por jugadores/camisetas
+ *
+ * Identifica jugadores con mayor susceptibilidad a lesiones para
+ * intervenciones preventivas individualizadas.
  */
 static void mostrar_lesiones_por_camiseta()
 {
@@ -53,7 +62,10 @@ static void mostrar_lesiones_por_camiseta()
 }
 
 /**
- * @brief Muestra lesiones por mes
+ * @brief Analiza distribución temporal mensual de incidentes
+ *
+ * Detecta períodos de mayor riesgo estacional para optimizar
+ * preparación física y estrategias preventivas.
  */
 static void mostrar_lesiones_por_mes()
 {
@@ -72,7 +84,10 @@ static void mostrar_lesiones_por_mes()
 }
 
 /**
- * @brief Muestra el mes con más lesiones
+ * @brief Identifica período de mayor riesgo lesional
+ *
+ * Determina mes con mayor incidencia para focalizar medidas
+ * preventivas y ajuste de cargas de entrenamiento.
  */
 static void mostrar_mes_con_mas_lesiones()
 {
@@ -92,7 +107,10 @@ static void mostrar_mes_con_mas_lesiones()
 }
 
 /**
- * @brief Muestra el tiempo promedio entre lesiones
+ * @brief Evalúa frecuencia temporal de recidivas lesionales
+ *
+ * Calcula intervalos promedio entre lesiones consecutivas para
+ * identificar patrones de recuperación y riesgo de reinjury.
  */
 static void mostrar_tiempo_promedio_entre_lesiones()
 {
@@ -141,7 +159,10 @@ static void mostrar_tiempo_promedio_entre_lesiones()
 }
 
 /**
- * @brief Calcula rendimiento promedio antes de lesiones
+ * @brief Evalúa impacto lesional en rendimiento atlético
+ *
+ * Compara métricas de producción (goles + asistencias) antes y después
+ * de incidentes médicos para cuantificar efectos en desempeño deportivo.
  */
 static double calcular_rendimiento_promedio_antes()
 {
@@ -159,7 +180,10 @@ static double calcular_rendimiento_promedio_antes()
 }
 
 /**
- * @brief Calcula rendimiento promedio después de lesiones
+ * @brief Evalúa impacto lesional en rendimiento atlético
+ *
+ * Compara métricas de producción (goles + asistencias) antes y después
+ * de incidentes médicos para cuantificar efectos en desempeño deportivo.
  */
 static double calcular_rendimiento_promedio_despues()
 {
@@ -178,6 +202,9 @@ static double calcular_rendimiento_promedio_despues()
 
 /**
  * @brief Muestra rendimiento promedio antes y después de lesiones
+ *
+ * Proporciona evidencia cuantitativa sobre impacto de lesiones
+ * en capacidad productiva del jugador para planificación de rehabilitación.
  */
 static void mostrar_rendimiento_promedio()
 {
@@ -189,7 +216,11 @@ static void mostrar_rendimiento_promedio()
 }
 
 /**
- * @brief Muestra todas las estadísticas de lesiones
+ * @brief Ejecuta análisis integral de estadísticas lesionales
+ *
+ * Coordina múltiples consultas estadísticas para proporcionar
+ * panorama completo de patrones de lesiones y sus correlaciones
+ * con rendimiento deportivo.
  */
 void mostrar_estadisticas_lesiones()
 {

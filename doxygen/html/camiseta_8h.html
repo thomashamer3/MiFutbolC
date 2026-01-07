@@ -102,7 +102,7 @@ $(function(){initNavTree('camiseta_8h.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 
-<p>Declaraciones de funciones para la gestión de camisetas en MiFutbolC.  
+<p>API pública para gestión de camisetas en MiFutbolC.  
 <a href="#details">More...</a></p>
 
 <p><a href="camiseta_8h_source.html">Go to the source code of this file.</a></p>
@@ -110,24 +110,27 @@ $(function(){initNavTree('camiseta_8h.html',''); initResizable(true); });
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a09be974ef1c53a7219f4a7b1842d75dd" id="r_a09be974ef1c53a7219f4a7b1842d75dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a09be974ef1c53a7219f4a7b1842d75dd">menu_camisetas</a> ()</td></tr>
-<tr class="memdesc:a09be974ef1c53a7219f4a7b1842d75dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el menú principal de gestión de camisetas.  <br /></td></tr>
+<tr class="memdesc:a09be974ef1c53a7219f4a7b1842d75dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra el menú interactivo de gestión de camisetas.  <br /></td></tr>
 <tr class="separator:a09be974ef1c53a7219f4a7b1842d75dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b62ed98786c1db8381be43da6a1d46e" id="r_a6b62ed98786c1db8381be43da6a1d46e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6b62ed98786c1db8381be43da6a1d46e">crear_camiseta</a> ()</td></tr>
 <tr class="memdesc:a6b62ed98786c1db8381be43da6a1d46e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crea una nueva camiseta en la base de datos.  <br /></td></tr>
 <tr class="separator:a6b62ed98786c1db8381be43da6a1d46e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a205f8b7f9ed47552ab6be5e33db64764" id="r_a205f8b7f9ed47552ab6be5e33db64764"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a205f8b7f9ed47552ab6be5e33db64764">listar_camisetas</a> ()</td></tr>
-<tr class="memdesc:a205f8b7f9ed47552ab6be5e33db64764"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra un listado de todas las camisetas registradas.  <br /></td></tr>
+<tr class="memdesc:a205f8b7f9ed47552ab6be5e33db64764"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lista todas las camisetas registradas.  <br /></td></tr>
 <tr class="separator:a205f8b7f9ed47552ab6be5e33db64764"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2f9f8f2fb70b4e11707f5718685f363" id="r_af2f9f8f2fb70b4e11707f5718685f363"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af2f9f8f2fb70b4e11707f5718685f363">editar_camiseta</a> ()</td></tr>
-<tr class="memdesc:af2f9f8f2fb70b4e11707f5718685f363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite editar el nombre de una camiseta existente.  <br /></td></tr>
+<tr class="memdesc:af2f9f8f2fb70b4e11707f5718685f363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Edita el nombre de una camiseta existente.  <br /></td></tr>
 <tr class="separator:af2f9f8f2fb70b4e11707f5718685f363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aced1f57fdf7df5d9ba033b7e85a8b3d9" id="r_aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aced1f57fdf7df5d9ba033b7e85a8b3d9">eliminar_camiseta</a> ()</td></tr>
 <tr class="memdesc:aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina una camiseta de la base de datos.  <br /></td></tr>
 <tr class="separator:aced1f57fdf7df5d9ba033b7e85a8b3d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57af5be49fc0faacf80d0310202a1576" id="r_a57af5be49fc0faacf80d0310202a1576"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a57af5be49fc0faacf80d0310202a1576">sortear_camiseta</a> ()</td></tr>
+<tr class="memdesc:a57af5be49fc0faacf80d0310202a1576"><td class="mdescLeft">&#160;</td><td class="mdescRight">Realiza un sorteo aleatorio entre camisetas disponibles.  <br /></td></tr>
+<tr class="separator:a57af5be49fc0faacf80d0310202a1576"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declaraciones de funciones para la gestión de camisetas en MiFutbolC. </p>
-<p>Este archivo contiene las declaraciones de las funciones relacionadas con la gestión de camisetas de fútbol, incluyendo creación, listado, edición y eliminación de registros de camisetas. </p>
+<div class="textblock"><p>API pública para gestión de camisetas en MiFutbolC. </p>
+<p>Define la interfaz pública para operaciones CRUD de camisetas y funcionalidades de sorteo. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a6b62ed98786c1db8381be43da6a1d46e" name="a6b62ed98786c1db8381be43da6a1d46e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6b62ed98786c1db8381be43da6a1d46e">&#9670;&#160;</a></span>crear_camiseta()</h2>
@@ -145,8 +148,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Crea una nueva camiseta en la base de datos. </p>
-<p>Solicita al usuario el nombre de la camiseta y la inserta en la tabla 'camiseta'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. La columna 'sorteada' se inicializa en 0 por defecto.</p>
-<p>Solicita al usuario el nombre y número de la camiseta y la inserta en la tabla 'camiseta'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. La columna 'sorteada' se inicializa en 0 por defecto. </p>
+<p>Permite a los usuarios agregar camisetas para gestión y sorteos, reutilizando IDs eliminados para mantener la secuencia. </p>
 
 </div>
 </div>
@@ -165,8 +167,9 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Permite editar el nombre de una camiseta existente. </p>
-<p>Muestra la lista de camisetas disponibles, solicita el ID a editar, verifica que exista y permite cambiar el nombre. </p>
+<p>Edita el nombre de una camiseta existente. </p>
+<p>Edita el nombre de una camiseta existente.</p>
+<p>Permite correcciones en la información de camisetas sin necesidad de eliminar y recrear registros, mejorando la usabilidad. </p>
 
 </div>
 </div>
@@ -186,7 +189,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Elimina una camiseta de la base de datos. </p>
-<p>Muestra la lista de camisetas disponibles, solicita el ID a eliminar, verifica que exista y solicita confirmación antes de eliminar. </p>
+<p>Permite remover camisetas que ya no son necesarias mientras mantiene la integridad de los datos con validaciones y confirmaciones. </p>
 
 </div>
 </div>
@@ -205,8 +208,9 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Muestra un listado de todas las camisetas registradas. </p>
-<p>Consulta la base de datos y muestra en pantalla todas las camisetas con sus respectivos IDs y nombres. Si no hay camisetas, muestra un mensaje informativo. </p>
+<p>Lista todas las camisetas registradas. </p>
+<p>Lista todas las camisetas registradas.</p>
+<p>Proporciona visibilidad a los usuarios de las camisetas disponibles para facilitar la toma de decisiones en otras operaciones. </p>
 
 </div>
 </div>
@@ -225,9 +229,30 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Muestra el menú principal de gestión de camisetas. </p>
-<p>Presenta un menú interactivo con opciones para crear, listar, editar y eliminar camisetas. Utiliza la función ejecutar_menu para manejar la navegación del menú y delega las operaciones a las funciones correspondientes.</p>
-<p>Presenta un menú interactivo con opciones para crear, listar, editar, eliminar y sortear camisetas. Utiliza la función ejecutar_menu para manejar la navegación del menú. </p>
+<p>Muestra el menú interactivo de gestión de camisetas. </p>
+<p>Muestra el menú interactivo de gestión de camisetas.</p>
+<p>Proporciona una interfaz estructurada para las operaciones de gestión de camisetas, centralizando el acceso a todas las funcionalidades. </p>
+
+</div>
+</div>
+<a id="a57af5be49fc0faacf80d0310202a1576" name="a57af5be49fc0faacf80d0310202a1576"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57af5be49fc0faacf80d0310202a1576">&#9670;&#160;</a></span>sortear_camiseta()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sortear_camiseta </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Realiza un sorteo aleatorio entre camisetas disponibles. </p>
+<p>Realiza un sorteo aleatorio entre camisetas disponibles.</p>
+<p>Permite sorteos continuos reutilizando camisetas ya sorteadas cuando se agotan las disponibles, manteniendo la funcionalidad del sistema sin necesidad de intervención manual del usuario. </p>
 
 </div>
 </div>
@@ -237,7 +262,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="camiseta_8h.html">camiseta.h</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

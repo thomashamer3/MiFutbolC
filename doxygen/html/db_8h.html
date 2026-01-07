@@ -103,7 +103,7 @@ $(function(){initNavTree('db_8h.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 
-<p>Declaraciones para la gestión de la base de datos en MiFutbolC.  
+<p>API de persistencia de datos relacional con SQLite3.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;sqlite3.h&quot;</code><br />
 </div>
@@ -112,36 +112,36 @@ $(function(){initNavTree('db_8h.html',''); initResizable(true); });
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a68444176bb98032c54b65b982312cfa6" id="r_a68444176bb98032c54b65b982312cfa6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a68444176bb98032c54b65b982312cfa6">db_init</a> ()</td></tr>
-<tr class="memdesc:a68444176bb98032c54b65b982312cfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa la conexión a la base de datos.  <br /></td></tr>
+<tr class="memdesc:a68444176bb98032c54b65b982312cfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa infraestructura completa de persistencia.  <br /></td></tr>
 <tr class="separator:a68444176bb98032c54b65b982312cfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9130d3b5560da57a53135491d888c7b7" id="r_a9130d3b5560da57a53135491d888c7b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9130d3b5560da57a53135491d888c7b7">db_close</a> ()</td></tr>
-<tr class="memdesc:a9130d3b5560da57a53135491d888c7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cierra la conexión a la base de datos.  <br /></td></tr>
+<tr class="memdesc:a9130d3b5560da57a53135491d888c7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finaliza conexión y libera recursos del motor SQLite.  <br /></td></tr>
 <tr class="separator:a9130d3b5560da57a53135491d888c7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39fef26de49fd814ed415e3b49e3903b" id="r_a39fef26de49fd814ed415e3b49e3903b"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a39fef26de49fd814ed415e3b49e3903b">get_user_name</a> ()</td></tr>
-<tr class="memdesc:a39fef26de49fd814ed415e3b49e3903b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el nombre del usuario de la base de datos.  <br /></td></tr>
+<tr class="memdesc:a39fef26de49fd814ed415e3b49e3903b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recupera configuración de usuario desde tabla relacional.  <br /></td></tr>
 <tr class="separator:a39fef26de49fd814ed415e3b49e3903b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74ed9cccce806cf8c1f4c84f00a84344" id="r_a74ed9cccce806cf8c1f4c84f00a84344"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a> (const char *nombre)</td></tr>
-<tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece o actualiza el nombre del usuario en la base de datos.  <br /></td></tr>
+<tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Persiste configuración de usuario en base de datos.  <br /></td></tr>
 <tr class="separator:a74ed9cccce806cf8c1f4c84f00a84344"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc24ac8e4815ebbf5a74985607b0991b" id="r_afc24ac8e4815ebbf5a74985607b0991b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc24ac8e4815ebbf5a74985607b0991b">get_data_dir</a> ()</td></tr>
-<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de datos.  <br /></td></tr>
+<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Proporciona ruta absoluta al directorio de datos internos.  <br /></td></tr>
 <tr class="separator:afc24ac8e4815ebbf5a74985607b0991b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0a310a1a5b9daa761dcd4452d6ff083" id="r_ab0a310a1a5b9daa761dcd4452d6ff083"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab0a310a1a5b9daa761dcd4452d6ff083">get_export_dir</a> ()</td></tr>
-<tr class="memdesc:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de exportaciones.  <br /></td></tr>
+<tr class="memdesc:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determina ubicación canónica para archivos de exportación.  <br /></td></tr>
 <tr class="separator:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a383e9ba7b4280151a07afe5b79a054d3" id="r_a383e9ba7b4280151a07afe5b79a054d3"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a383e9ba7b4280151a07afe5b79a054d3">get_import_dir</a> ()</td></tr>
-<tr class="memdesc:a383e9ba7b4280151a07afe5b79a054d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de importaciones.  <br /></td></tr>
+<tr class="memdesc:a383e9ba7b4280151a07afe5b79a054d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determina ubicación canónica para archivos de importación.  <br /></td></tr>
 <tr class="separator:a383e9ba7b4280151a07afe5b79a054d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:ad6e663497d2c934364b3bcf07496b30b" id="r_ad6e663497d2c934364b3bcf07496b30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsqlite3.html">sqlite3</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad6e663497d2c934364b3bcf07496b30b">db</a></td></tr>
-<tr class="memdesc:ad6e663497d2c934364b3bcf07496b30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Puntero global a la conexión de la base de datos SQLite.  <br /></td></tr>
+<tr class="memdesc:ad6e663497d2c934364b3bcf07496b30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instancia global de conexión SQLite3.  <br /></td></tr>
 <tr class="separator:ad6e663497d2c934364b3bcf07496b30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declaraciones para la gestión de la base de datos en MiFutbolC. </p>
-<p>Este archivo contiene las declaraciones de las funciones y variables relacionadas con la inicialización y cierre de la conexión a la base de datos SQLite utilizada por el sistema. </p>
+<div class="textblock"><p>API de persistencia de datos relacional con SQLite3. </p>
+<p>Define interfaz para operaciones de base de datos utilizando motor SQLite3, implementando patrón Singleton para conexión global, configuración automática de esquema relacional y gestión de directorios específicos del sistema operativo. Soporta evolución de esquema mediante ALTER TABLE dinámicos. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a9130d3b5560da57a53135491d888c7b7" name="a9130d3b5560da57a53135491d888c7b7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9130d3b5560da57a53135491d888c7b7">&#9670;&#160;</a></span>db_close()</h2>
@@ -158,9 +158,10 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Cierra la conexión a la base de datos. </p>
-<p>Finaliza la conexión activa a la base de datos SQLite y libera los recursos asociados.</p>
-<p>Libera los recursos asociados con la conexión a la base de datos SQLite, cerrando la conexión de manera segura si está abierta. </p>
+<p>Finaliza conexión y libera recursos del motor SQLite. </p>
+<p>Cierra handle de base de datos de manera ordenada, asegurando commit de transacciones pendientes y liberación de memoria.</p>
+<p>Finaliza conexión y libera recursos del motor SQLite.</p>
+<p>Evita fugas de memoria cerrando conexiones SQLite activas de manera ordenada durante el cierre de la aplicación. </p>
 
 </div>
 </div>
@@ -179,12 +180,12 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Inicializa la conexión a la base de datos. </p>
-<p>Abre la conexión a la base de datos SQLite y crea las tablas necesarias si no existen. La base de datos se almacena en el archivo 'data/mifutbol.db'.</p>
-<dl class="section return"><dt>Returns</dt><dd>0 si la inicialización fue exitosa, código de error en caso contrario</dd></dl>
-<p>Inicializa la conexión a la base de datos.</p>
-<p>Crea el directorio de datos si no existe, abre la conexión a la base de datos y crea las tablas necesarias (camiseta, partido, lesion) si no existen. También añade la columna 'sorteada' a la tabla camiseta si no está presente.</p>
-<dl class="section return"><dt>Returns</dt><dd>1 si la inicialización fue exitosa, 0 en caso de error </dd></dl>
+<p>Inicializa infraestructura completa de persistencia. </p>
+<p>Ejecuta secuencia de configuración: rutas del SO, conexión SQLite, creación de esquema relacional completo, adición de columnas faltantes y preparación de directorios auxiliares para import/export.</p>
+<dl class="section return"><dt>Returns</dt><dd>1 si configuración completa exitosa, 0 en caso de error crítico</dd></dl>
+<p>Inicializa infraestructura completa de persistencia.</p>
+<p>Orquesta configuración de rutas, conexión a base de datos, creación de esquema y preparación de directorios auxiliares.</p>
+<dl class="section return"><dt>Returns</dt><dd>1 si inicialización completa exitosa, 0 en caso de error </dd></dl>
 
 </div>
 </div>
@@ -203,7 +204,11 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de datos. </p>
+<p>Proporciona ruta absoluta al directorio de datos internos. </p>
+<p>Retorna ubicación del sistema de archivos donde se almacenan archivos persistentes de la aplicación (base de datos, configuración).</p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero constante a string con path del directorio de datos</dd></dl>
+<p>Proporciona ruta absoluta al directorio de datos internos.</p>
+<p>Facilita operaciones de archivo que requieren ubicación de datos persistentes, manteniendo separación entre datos de aplicación y usuario.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de datos </dd></dl>
 
 </div>
@@ -223,7 +228,11 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de exportaciones. </p>
+<p>Determina ubicación canónica para archivos de exportación. </p>
+<p>Configura directorio visible al usuario (Documents en Windows) para almacenamiento de datos exportados en formatos externos, facilitando backup y portabilidad de información.</p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero constante a string con path del directorio de exportaciones</dd></dl>
+<p>Determina ubicación canónica para archivos de exportación.</p>
+<p>Configura directorio visible al usuario para almacenamiento de datos exportados, permitiendo fácil acceso y backup de información.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de exportaciones </dd></dl>
 
 </div>
@@ -243,7 +252,11 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de importaciones. </p>
+<p>Determina ubicación canónica para archivos de importación. </p>
+<p>Configura directorio accesible al usuario para colocación de archivos fuente de datos, permitiendo carga masiva desde formatos externos mediante operaciones de importación.</p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero constante a string con path del directorio de importaciones</dd></dl>
+<p>Determina ubicación canónica para archivos de importación.</p>
+<p>Configura directorio visible al usuario para colocación de archivos de importación, facilitando carga masiva de datos.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de importaciones </dd></dl>
 
 </div>
@@ -263,8 +276,11 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene el nombre del usuario de la base de datos. </p>
-<p>Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe. Si no hay usuario registrado, devuelve NULL.</p>
+<p>Recupera configuración de usuario desde tabla relacional. </p>
+<p>Ejecuta consulta SELECT preparada sobre tabla 'usuario' con límite de resultado único, retornando configuración personalizada.</p>
+<dl class="section return"><dt>Returns</dt><dd>Puntero dinámico a string con nombre de usuario, NULL si no existe</dd></dl>
+<p>Recupera configuración de usuario desde tabla relacional.</p>
+<p>Permite adaptar la interfaz y mensajes según el usuario identificado, mejorando la experiencia personalizada de la aplicación.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con el nombre del usuario, o NULL si no existe </dd></dl>
 
 </div>
@@ -284,8 +300,17 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Establece o actualiza el nombre del usuario en la base de datos. </p>
-<p>Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.</p>
+<p>Persiste configuración de usuario en base de datos. </p>
+<p>Utiliza INSERT OR REPLACE para upsert de configuración personal, permitiendo actualización atómica de preferencias del usuario.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nombre</td><td>String con identificador de usuario a almacenar </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 si operación de escritura exitosa, 0 en caso de error de BD</dd></dl>
+<p>Persiste configuración de usuario en base de datos.</p>
+<p>Almacena nombre de usuario en tabla dedicada para mantener consistencia en configuraciones personales entre ejecuciones.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">nombre</td><td>El nombre del usuario a guardar </td></tr>
@@ -317,8 +342,8 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Puntero global a la conexión de la base de datos SQLite. </p>
-<p>Esta variable externa mantiene la conexión activa a la base de datos durante toda la ejecución del programa. Se inicializa en <a class="el" href="db_8c.html#a68444176bb98032c54b65b982312cfa6" title="Inicializa la base de datos.">db_init()</a> y se cierra en <a class="el" href="db_8c.html#a9130d3b5560da57a53135491d888c7b7" title="Cierra la conexión a la base de datos.">db_close()</a>.</p>
+<p>Instancia global de conexión SQLite3. </p>
+<p>Puntero singleton que mantiene estado de conexión activa durante ciclo de vida de la aplicación, utilizado por todas las operaciones de consulta y modificación de datos.</p>
 <p>Puntero global a la base de datos SQLite </p>
 
 </div>
@@ -329,7 +354,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8h.html">db.h</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

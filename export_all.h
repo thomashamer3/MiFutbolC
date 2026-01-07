@@ -1,19 +1,39 @@
 /**
  * @file export_all.h
- * @brief Declaraciones de funciones para exportación completa en MiFutbolC
+ * @brief Interfaz de Programación de Aplicaciones (API) para exportación completa de datos
  *
- * Este archivo contiene las declaraciones de las funciones que permiten
- * exportar todos los datos del sistema de una sola vez en múltiples formatos.
+ * Este archivo define la API pública para el sistema de exportación completa en MiFutbolC.
+ * Proporciona funciones para exportar todos los datos del sistema de manera integral,
+ * generando archivos en múltiples formatos para diferentes usos y aplicaciones.
+ *
+ * @note Todas las funciones declaradas aquí son parte de la API pública y pueden ser
+ *       llamadas desde otros módulos del sistema. La exportación completa genera
+ *       una copia de seguridad integral de todos los datos disponibles.
  */
 
 /**
- * @brief Menu para exportar todos los datos del sistema en todos los formatos disponibles
+ * @brief Interfaz de usuario para exportación completa de datos
  *
- * Esta función ejecuta todas las funciones de exportación para camisetas,
- * partidos, estadísticas y lesiones, generando archivos en formatos
- * CSV, TXT, JSON y HTML para cada tipo de dato.
+ * Inicia un menú interactivo que sirve como punto de entrada principal para todas
+ * las funciones de exportación del sistema. Este menú permite a los usuarios
+ * seleccionar qué categorías de datos exportar y en qué formato.
  *
- * @note Los archivos se generan en el directorio 'data/' del proyecto
- * @note Esta operación puede tomar tiempo dependiendo de la cantidad de datos
+ * @details La función implementa un sistema de menú jerárquico que organiza las opciones
+ *          de exportación en categorías lógicas:
+ *          - Datos básicos: camisetas, partidos, lesiones
+ *          - Estadísticas: básicas, generales, por periodo
+ *          - Análisis: avanzados y específicos
+ *          - Exportación completa: todos los datos disponibles
+ *
+ * @note Los archivos generados se guardan en el directorio 'data/' del proyecto
+ * @warning Esta operación puede consumir tiempo y recursos significativos dependiendo
+ *          de la cantidad de datos, especialmente al exportar todos los datos disponibles.
+ *
+ * @see exportar_camisetas_todo()
+ * @see exportar_partidos_todo()
+ * @see exportar_lesiones_todo()
+ * @see exportar_estadisticas_todo()
+ * @see exportar_analisis_todo()
+ * @see exportar_todo()
  */
 void menu_exportar();

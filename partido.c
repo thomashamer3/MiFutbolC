@@ -118,19 +118,15 @@ static int hay_partidos()
 }
 
 /**
- * @brief Crea un nuevo partido en la base de datos
+ * @brief Verifica que existan canchas y camisetas antes de crear un partido
  *
- * Solicita al usuario los datos del partido (cancha_id, goles, asistencias, camiseta, resultado)
- * y lo inserta en la tabla 'partido'. Obtiene la fecha y hora actual automáticamente.
- * Verifica que la cancha y camiseta seleccionadas existan antes de insertar.
- * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
+ * Para mantener la integridad de los datos, se asegura de que haya entidades relacionadas
+ * disponibles antes de permitir la creación de un nuevo partido.
+ *
+ * @return 1 si hay entidades disponibles, 0 si no
  */
-void crear_partido()
+static int verificar_prerrequisitos_partido()
 {
-    char fecha[20], comentario_personal[256];
-    int cancha_id, goles, asistencias, camiseta, resultado, rendimiento_general, cansancio, estado_animo, clima, dia;
-
-    // Verificar si hay canchas y camisetas registradas
     sqlite3_stmt *stmt_count_canchas;
     sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM cancha", -1, &stmt_count_canchas, NULL);
     sqlite3_step(stmt_count_canchas);
@@ -147,10 +143,18 @@ void crear_partido()
     {
         printf("No se puede crear un partido porque no hay canchas ni camisetas registradas.\n");
         pause_console();
-        return;
+        return 0;
     }
+    return 1;
+}
 
-    // Listar canchas disponibles
+/**
+ * @brief Muestra la lista de canchas disponibles para selección
+ *
+ * Facilita la selección de cancha al usuario mostrando las opciones disponibles.
+ */
+static void listar_canchas_disponibles()
+{
     printf("Canchas disponibles:\n");
     sqlite3_stmt *stmt_canchas;
     sqlite3_prepare_v2(db, "SELECT id, nombre FROM cancha ORDER BY id", -1, &stmt_canchas, NULL);
@@ -159,59 +163,92 @@ void crear_partido()
         printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
     }
     sqlite3_finalize(stmt_canchas);
+}
 
-    cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
-    if (!existe_id("cancha", cancha_id))
+/**
+ * @brief Recopila todos los datos necesarios para un partido desde el usuario
+ *
+ * Valida cada entrada para asegurar que los datos sean correctos antes de proceder.
+ * Utiliza bucles para reintentar entradas inválidas, mejorando la experiencia del usuario.
+ *
+ * @param cancha_id Puntero al ID de la cancha
+ * @param goles Puntero a los goles
+ * @param asistencias Puntero a las asistencias
+ * @param camiseta Puntero al ID de la camiseta
+ * @param resultado Puntero al resultado
+ * @param rendimiento_general Puntero al rendimiento general
+ * @param cansancio Puntero al cansancio
+ * @param estado_animo Puntero al estado de ánimo
+ * @param comentario_personal Cadena para el comentario personal
+ * @param clima Puntero al clima
+ * @param dia Puntero al día
+ */
+static void recopilar_datos_partido(int *cancha_id, int *goles, int *asistencias, int *camiseta, int *resultado, int *rendimiento_general, int *cansancio, int *estado_animo, char *comentario_personal, int *clima, int *dia)
+{
+    *cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
+    if (!existe_id("cancha", *cancha_id))
         return;
-
-    goles = input_int("Goles: ");
-    asistencias = input_int("Asistencias: ");
-    resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (resultado < 1 || resultado > 3)
+    *goles = input_int("Goles: ");
+    *asistencias = input_int("Asistencias: ");
+    *resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
+    while (*resultado < 1 || *resultado > 3)
     {
-        resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+        *resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
     }
     listar_camisetas();
-    camiseta = input_int("ID Camiseta: ");
-
-    if (!existe_id("camiseta", camiseta))
+    *camiseta = input_int("ID Camiseta: ");
+    if (!existe_id("camiseta", *camiseta))
         return;
-
-    rendimiento_general = input_int("Rendimiento general (1-10): ");
-    while (rendimiento_general < 1 || rendimiento_general > 10)
+    *rendimiento_general = input_int("Rendimiento general (1-10): ");
+    while (*rendimiento_general < 1 || *rendimiento_general > 10)
     {
-        rendimiento_general = input_int("Rendimiento invalido. Ingrese entre 1 y 10: ");
+        *rendimiento_general = input_int("Rendimiento invalido. Ingrese entre 1 y 10: ");
     }
-
-    cansancio = input_int("Cansancio (1-10): ");
-    while (cansancio < 1 || cansancio > 10)
+    *cansancio = input_int("Cansancio (1-10): ");
+    while (*cansancio < 1 || *cansancio > 10)
     {
-        cansancio = input_int("Cansancio invalido. Ingrese entre 1 y 10:  ");
+        *cansancio = input_int("Cansancio invalido. Ingrese entre 1 y 10:  ");
     }
-
-    estado_animo = input_int("Estado de Animo (1-10): ");
-    while (estado_animo < 1 || estado_animo > 10)
+    *estado_animo = input_int("Estado de Animo (1-10): ");
+    while (*estado_animo < 1 || *estado_animo > 10)
     {
-        estado_animo = input_int("Estado de Animo invalido. Ingrese entre 1 y 10: ");
+        *estado_animo = input_int("Estado de Animo invalido. Ingrese entre 1 y 10: ");
     }
-
-    input_string("Comentario personal: ", comentario_personal, sizeof(comentario_personal));
-
-    clima = input_int("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):");
-    while (clima < 1 || clima > 6)
+    input_string("Comentario personal: ", comentario_personal, 256);
+    *clima = input_int("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):");
+    while (*clima < 1 || *clima > 6)
     {
-        clima = input_int("Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
+        *clima = input_int("Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
     }
-
-    dia = input_int("Dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (dia < 1 || dia > 3)
+    *dia = input_int("Dia (1=Dia, 2=Tarde, 3=Noche): ");
+    while (*dia < 1 || *dia > 3)
     {
-        dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
+        *dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
     }
+}
 
-    get_datetime(fecha, sizeof(fecha));
-
-    int id = obtener_siguiente_id_partido();
+/**
+ * @brief Inserta un nuevo partido en la base de datos
+ *
+ * Utiliza prepared statements para evitar inyección SQL y asegurar integridad de datos.
+ * Maneja errores de SQLite para informar al usuario si la inserción falla.
+ *
+ * @param id ID del partido
+ * @param cancha_id ID de la cancha
+ * @param fecha Fecha y hora
+ * @param goles Número de goles
+ * @param asistencias Número de asistencias
+ * @param camiseta ID de la camiseta
+ * @param resultado Resultado del partido
+ * @param rendimiento_general Rendimiento general
+ * @param cansancio Nivel de cansancio
+ * @param estado_animo Estado de ánimo
+ * @param comentario_personal Comentario personal
+ * @param clima Condición climática
+ * @param dia Momento del día
+ */
+static void insertar_partido(int id, int cancha_id, char *fecha, int goles, int asistencias, int camiseta, int resultado, int rendimiento_general, int cansancio, int estado_animo, char *comentario_personal, int clima, int dia)
+{
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia)"
@@ -243,6 +280,25 @@ void crear_partido()
 }
 
 /**
+ * @brief Crea un nuevo partido en la base de datos
+ *
+ * Coordina la verificación de prerrequisitos, recopilación de datos y inserción
+ * para asegurar un proceso robusto y modular de creación de partidos.
+ */
+void crear_partido()
+{
+    if (!verificar_prerrequisitos_partido()) return;
+    int cancha_id, goles, asistencias, camiseta, resultado, rendimiento_general, cansancio, estado_animo, clima, dia;
+    char comentario_personal[256];
+    listar_canchas_disponibles();
+    recopilar_datos_partido(&cancha_id, &goles, &asistencias, &camiseta, &resultado, &rendimiento_general, &cansancio, &estado_animo, comentario_personal, &clima, &dia);
+    char fecha[20];
+    get_datetime(fecha, sizeof(fecha));
+    int id = obtener_siguiente_id_partido();
+    insertar_partido(id, cancha_id, fecha, goles, asistencias, camiseta, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia);
+}
+
+/**
  * @brief Muestra un listado de todos los partidos registrados
  *
  * Consulta la base de datos y muestra en pantalla todos los partidos
@@ -261,17 +317,21 @@ void listar_partidos()
     sqlite3_prepare_v2(db,
                        "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
                        "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id ORDER BY fecha_hora DESC",
+                       "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id DESC",
                        -1, &stmt, NULL);
 
     int hay = 0;
+    char fecha_formateada[20];
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        // Formatear la fecha para visualización
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
+
         printf("%d |Cancha:%s |Fecha:%s | G:%d A:%d |Camiseta:%s | %s |Clima:%s |Dia:%s\n",
                sqlite3_column_int(stmt, 0),
                sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
+               fecha_formateada,
                sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4),
                sqlite3_column_text(stmt, 5),
@@ -550,65 +610,78 @@ static void modificar_comentario_partido()
 }
 
 /**
- * @brief Modifica todos los campos de un partido existente
+ * @brief Recopila datos completos para modificar un partido
  *
- * Solicita al usuario nuevos valores para todos los campos del partido (cancha, fecha, hora, goles, asistencias, resultado, camiseta, clima, dia)
- * y actualiza todos los campos en la base de datos en una sola operación.
+ * Solicita al usuario todos los campos necesarios para actualizar un partido,
+ * validando cada entrada para asegurar consistencia de datos.
+ *
+ * @param cancha_id Puntero al ID de cancha
+ * @param fecha Cadena para fecha
+ * @param hora Cadena para hora
+ * @param goles Puntero a goles
+ * @param asistencias Puntero a asistencias
+ * @param camiseta Puntero a ID camiseta
+ * @param resultado Puntero a resultado
+ * @param clima Puntero a clima
+ * @param dia Puntero a día
  */
-static void modificar_todo_partido()
+static void recopilar_datos_completos_partido(int *cancha_id, char *fecha, char *hora, int *goles, int *asistencias, int *camiseta, int *resultado, int *clima, int *dia)
 {
-    int cancha_id, goles, asistencias, camiseta, resultado, clima, dia;
-    char fecha[20], hora[10], fecha_hora[30];
-    // Listar canchas disponibles
-    printf("Canchas disponibles:\n");
-    sqlite3_stmt *stmt_canchas;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM cancha ORDER BY id", -1, &stmt_canchas, NULL);
-    while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
-    {
-        printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
-    }
-    sqlite3_finalize(stmt_canchas);
-    cancha_id = input_int("Nuevo ID Cancha: ");
-    if (!existe_id("cancha", cancha_id))
+    listar_canchas_disponibles();
+    *cancha_id = input_int("Nuevo ID Cancha: ");
+    if (!existe_id("cancha", *cancha_id))
         return;
-    input_string("Nueva fecha (dd/mm/yyyy): ", fecha, sizeof(fecha));
-    input_string("Nueva hora (hh:mm): ", hora, sizeof(hora));
-    sprintf(fecha_hora, "%s %s", fecha, hora);
-    goles = input_int("Nuevos goles: ");
-    asistencias = input_int("Nuevas asistencias: ");
-    printf("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    resultado = input_int("Nuevo resultado: ");
-    while (resultado < 1 || resultado > 3)
+    input_string("Nueva fecha (dd/mm/yyyy): ", fecha, 20);
+    input_string("Nueva hora (hh:mm): ", hora, 10);
+    *goles = input_int("Nuevos goles: ");
+    *asistencias = input_int("Nuevas asistencias: ");
+    *resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
+    while (*resultado < 1 || *resultado > 3)
     {
-        printf("Resultado invalido. Ingrese 1, 2 o 3: ");
-        resultado = input_int("Nuevo resultado: ");
+        *resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
     }
     listar_camisetas();
-    camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", camiseta))
+    *camiseta = input_int("Nuevo ID camiseta: ");
+    if (!existe_id("camiseta", *camiseta))
     {
         printf("La camiseta no existe\n");
         return;
     }
-    printf("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    clima = input_int("Nuevo clima: ");
-    while (clima < 1 || clima > 6)
+    *clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
+    while (*clima < 1 || *clima > 6)
     {
-        printf("Clima invalido. Ingrese entre 1 y 6: ");
-        clima = input_int("Nuevo clima: ");
+        *clima = input_int("Clima invalido. Ingrese entre 1 y 6: ");
     }
-    printf("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
-    dia = input_int("Nuevo dia: ");
-    while (dia < 1 || dia > 3)
+    *dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
+    while (*dia < 1 || *dia > 3)
     {
-        printf("Dia invalido. Ingrese 1, 2 o 3: ");
-        dia = input_int("Nuevo dia: ");
+        *dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
     }
+}
+
+/**
+ * @brief Actualiza todos los campos de un partido en la base de datos
+ *
+ * Realiza una actualización completa de un partido utilizando prepared statements
+ * para prevenir inyección SQL y asegurar atomicidad de la operación.
+ *
+ * @param cancha_id ID de la cancha
+ * @param fecha_hora Fecha y hora combinadas
+ * @param goles Número de goles
+ * @param asistencias Número de asistencias
+ * @param camiseta ID de la camiseta
+ * @param resultado Resultado del partido
+ * @param clima Condición climática
+ * @param dia Momento del día
+ */
+static void actualizar_partido_completo(int cancha_id, char *fecha_hora, int goles, int asistencias, int camiseta, int resultado, int clima, int dia)
+{
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "UPDATE partido "
                        "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, camiseta_id=?, resultado=?, clima=?, dia=? "
                        "WHERE id=?",
+
                        -1, &stmt, NULL);
     sqlite3_bind_int(stmt, 1, cancha_id);
     sqlite3_bind_text(stmt, 2, fecha_hora, -1, SQLITE_TRANSIENT);
@@ -623,6 +696,22 @@ static void modificar_todo_partido()
     sqlite3_finalize(stmt);
     printf("Partido Modificado Correctamente\n");
     pause_console();
+}
+
+/**
+ * @brief Modifica todos los campos de un partido existente
+ *
+ * Coordina la recopilación de datos y actualización para simplificar
+ * la modificación completa de un partido en una sola operación.
+ */
+static void modificar_todo_partido()
+{
+    int cancha_id, goles, asistencias, camiseta, resultado, clima, dia;
+    char fecha[20], hora[10];
+    recopilar_datos_completos_partido(&cancha_id, fecha, hora, &goles, &asistencias, &camiseta, &resultado, &clima, &dia);
+    char fecha_hora[30];
+    sprintf(fecha_hora, "%s %s", fecha, hora);
+    actualizar_partido_completo(cancha_id, fecha_hora, goles, asistencias, camiseta, resultado, clima, dia);
 }
 /**
  * @brief Permite modificar los datos de un partido existente

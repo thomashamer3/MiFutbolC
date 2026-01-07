@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['trim_5ftrailing_5fspaces_0',['trim_trailing_spaces',['../export_8c.html#a3e6d44e14bb23a116efa66bca83c5392',1,'trim_trailing_spaces(char *str):&#160;export.c'],['../export_8h.html#a3e6d44e14bb23a116efa66bca83c5392',1,'trim_trailing_spaces(char *str):&#160;export.c']]]
+  ['set_5fuser_5fname_0',['set_user_name',['../db_8c.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c'],['../db_8h.html#a74ed9cccce806cf8c1f4c84f00a84344',1,'set_user_name(const char *nombre):&#160;db.c']]],
+  ['sortear_5fcamiseta_1',['sortear_camiseta',['../camiseta_8c.html#a57af5be49fc0faacf80d0310202a1576',1,'sortear_camiseta():&#160;camiseta.c'],['../camiseta_8h.html#a57af5be49fc0faacf80d0310202a1576',1,'sortear_camiseta():&#160;camiseta.c']]]
 ];

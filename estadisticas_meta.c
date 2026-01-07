@@ -14,15 +14,8 @@
 #include <math.h>
 #include <time.h>
 
-/**
- * @brief Función auxiliar para ejecutar consultas SQL y mostrar resultados.
- *
- * Esta función ejecuta una consulta SQL preparada y muestra los resultados
- * en formato de tabla con el título proporcionado.
- *
- * @param titulo El título a mostrar antes de los resultados.
- * @param sql La consulta SQL a ejecutar.
- */
+// Static helper to execute SQL queries and display results in a formatted way,
+// ensuring consistent output format across different statistical analyses without code duplication.
 static void query(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt;

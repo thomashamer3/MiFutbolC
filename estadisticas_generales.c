@@ -1,9 +1,10 @@
 /**
  * @file estadisticas_generales.c
- * @brief Módulo para mostrar estadísticas generales de camisetas en partidos de fútbol.
+ * @brief Módulo de análisis estadístico global de rendimiento deportivo
  *
- * Este archivo contiene funciones para consultar y mostrar estadísticas
- * generales relacionadas con camisetas, como goles, asistencias y partidos jugados.
+ * Implementa consultas SQL para métricas agregadas de partidos,
+ * incluyendo análisis por clima, día de semana, cansancio y estado anímico,
+ * utilizando funciones de agrupamiento y JOINs para insights comprehensivos.
  */
 
 #include "estadisticas_generales.h"

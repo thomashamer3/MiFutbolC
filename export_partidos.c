@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include <direct.h>
 #include <string.h>
-/* ===================== PARTIDOS ===================== */
+
+/* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 
 /**
- * @brief Exporta los partidos a un archivo CSV
- *
- * Crea un archivo CSV con todos los partidos registrados en la base de datos,
- * incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Checks if there are any partido records in the database.
+ * Returns 1 if records exist, 0 if no records found.
+ * This avoids duplicating the count check in every export function.
  */
-void exportar_partidos_csv()
+static int has_partido_records()
 {
     sqlite3_stmt *check_stmt;
     int count = 0;
@@ -24,24 +24,35 @@ void exportar_partidos_csv()
         count = sqlite3_column_int(check_stmt, 0);
     }
     sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar.\n");
-        return;
-    }
+    return count > 0;
+}
 
-    FILE *f = fopen(get_export_path("partidos.csv"), "w");
-    if (!f)
-        return;
-
-    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
-
+/**
+ * Executes the standard partido query and returns the statement.
+ * This centralizes the common SQL query used by most export functions.
+ */
+static sqlite3_stmt* execute_partido_query(const char* order_by_clause)
+{
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id",
-                       -1, &stmt, NULL);
+    char query[512];
+    snprintf(query, sizeof(query),
+             "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+             "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+             "JOIN cancha can ON p.cancha_id = can.id %s",
+             order_by_clause ? order_by_clause : "");
+    sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
+    return stmt;
+}
+
+
+
+/**
+ * Writes partido data in CSV format to the given file.
+ * Handles the common CSV formatting logic.
+ */
+static void write_partido_csv(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -62,46 +73,15 @@ void exportar_partidos_csv()
                 sqlite3_column_text(stmt, 11));
         free(cancha_trimmed);
     }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partidos.csv"));
-    fclose(f);
 }
 
 /**
- * @brief Exporta los partidos a un archivo de texto plano
- *
- * Crea un archivo de texto con un listado formateado de todos los partidos
- * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Writes partido data in TXT format to the given file.
+ * Handles the common TXT formatting logic.
  */
-void exportar_partidos_txt()
+static void write_partido_txt(FILE *f, sqlite3_stmt *stmt, const char *title)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar.\n");
-        return;
-    }
-
-    FILE *f = fopen(get_export_path("partidos.txt"), "w");
-    if (!f)
-        return;
-
-    fprintf(f, "LISTADO DE PARTIDOS\n\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id",
-                       -1, &stmt, NULL);
+    fprintf(f, "%s\n\n", title);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -122,114 +102,73 @@ void exportar_partidos_txt()
                 sqlite3_column_text(stmt, 11));
         free(cancha_trimmed);
     }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partidos.txt"));
-    fclose(f);
 }
 
 /**
- * @brief Exporta los partidos a un archivo JSON
- *
- * Crea un archivo JSON con un array de objetos representando todos los partidos
- * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Writes partido data in JSON format to the given file.
+ * Handles the common JSON formatting logic.
  */
-void exportar_partidos_json()
+static void write_partido_json(FILE *f, sqlite3_stmt *stmt, int is_array)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar.\n");
-        return;
-    }
+    cJSON *root = is_array ? cJSON_CreateArray() : cJSON_CreateObject();
 
-    FILE *f = fopen(get_export_path("partidos.json"), "w");
-    if (!f)
-        return;
-
-    cJSON *root = cJSON_CreateArray();
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id",
-                       -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+    if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
         trim_trailing_spaces(cancha_trimmed);
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
-        cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
-        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
-        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
-        cJSON_AddStringToObject(item, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
-        cJSON_AddStringToObject(item, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
-        cJSON_AddStringToObject(item, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
-        cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
-        cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
-        cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
-        cJSON_AddStringToObject(item, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
-        cJSON_AddItemToArray(root, item);
+
+        if (is_array)
+        {
+            cJSON *item = cJSON_CreateObject();
+            cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
+            cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
+            cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
+            cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
+            cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
+            cJSON_AddStringToObject(item, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
+            cJSON_AddStringToObject(item, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
+            cJSON_AddStringToObject(item, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
+            cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
+            cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
+            cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
+            cJSON_AddStringToObject(item, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
+            cJSON_AddItemToArray(root, item);
+        }
+        else
+        {
+            cJSON_AddStringToObject(root, "cancha", cancha_trimmed);
+            cJSON_AddStringToObject(root, "fecha", (const char *)sqlite3_column_text(stmt, 1));
+            cJSON_AddNumberToObject(root, "goles", sqlite3_column_int(stmt, 2));
+            cJSON_AddNumberToObject(root, "asistencias", sqlite3_column_int(stmt, 3));
+            cJSON_AddStringToObject(root, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
+            cJSON_AddStringToObject(root, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
+            cJSON_AddStringToObject(root, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
+            cJSON_AddStringToObject(root, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
+            cJSON_AddNumberToObject(root, "rendimiento_general", sqlite3_column_int(stmt, 8));
+            cJSON_AddNumberToObject(root, "cansancio", sqlite3_column_int(stmt, 9));
+            cJSON_AddNumberToObject(root, "estado_animo", sqlite3_column_int(stmt, 10));
+            cJSON_AddStringToObject(root, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
+        }
+
         free(cancha_trimmed);
     }
 
     char *json_string = cJSON_Print(root);
     fprintf(f, "%s", json_string);
-
     free(json_string);
     cJSON_Delete(root);
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partidos.json"));
-    fclose(f);
 }
 
 /**
- * @brief Exporta los partidos a un archivo HTML
- *
- * Crea un archivo HTML con una tabla que muestra todos los partidos
- * registrados, incluyendo cancha, fecha, goles, asistencias, camiseta y otros campos. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * Writes partido data in HTML format to the given file.
+ * Handles the common HTML formatting logic.
  */
-void exportar_partidos_html()
+static void write_partido_html(FILE *f, sqlite3_stmt *stmt, const char *title)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar.\n");
-        return;
-    }
-
-    FILE *f = fopen(get_export_path("partidos.html"), "w");
-    if (!f)
-        return;
-
     fprintf(f,
-            "<html><body><h1>Partidos</h1><table border='1'>"
-            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</th><th>Rendimiento General</th><th>Cansancio</th><th>Estado Animo</th><th>Comentario Personal</th></tr>");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id",
-                       -1, &stmt, NULL);
+            "<html><body><h1>%s</h1><table border='1'>"
+            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</th><th>Rendimiento General</th><th>Cansancio</th><th>Estado Animo</th><th>Comentario Personal</th></tr>",
+            title);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -253,7 +192,102 @@ void exportar_partidos_html()
     }
 
     fprintf(f, "</table></body></html>");
+}
+
+/* ===================== PARTIDOS ===================== */
+
+/**
+ * Export all partidos to CSV format.
+ * Uses helper functions to keep the main function concise.
+ */
+void exportar_partidos_csv()
+{
+    if (!has_partido_records())
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
+    FILE *f = fopen(get_export_path("partidos.csv"), "w");
+    if (!f)
+        return;
+
+    sqlite3_stmt *stmt = execute_partido_query(NULL);
+    write_partido_csv(f, stmt);
     sqlite3_finalize(stmt);
+
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.csv"));
+    fclose(f);
+}
+
+/**
+ * Export all partidos to TXT format.
+ * Uses helper functions to keep the main function concise.
+ */
+void exportar_partidos_txt()
+{
+    if (!has_partido_records())
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
+    FILE *f = fopen(get_export_path("partidos.txt"), "w");
+    if (!f)
+        return;
+
+    sqlite3_stmt *stmt = execute_partido_query(NULL);
+    write_partido_txt(f, stmt, "LISTADO DE PARTIDOS");
+    sqlite3_finalize(stmt);
+
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.txt"));
+    fclose(f);
+}
+
+/**
+ * Export all partidos to JSON format.
+ * Uses helper functions to keep the main function concise.
+ */
+void exportar_partidos_json()
+{
+    if (!has_partido_records())
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
+    FILE *f = fopen(get_export_path("partidos.json"), "w");
+    if (!f)
+        return;
+
+    sqlite3_stmt *stmt = execute_partido_query(NULL);
+    write_partido_json(f, stmt, 1); // 1 = is_array
+    sqlite3_finalize(stmt);
+
+    printf("Archivo exportado a: %s\n", get_export_path("partidos.json"));
+    fclose(f);
+}
+
+/**
+ * Export all partidos to HTML format.
+ * Uses helper functions to keep the main function concise.
+ */
+void exportar_partidos_html()
+{
+    if (!has_partido_records())
+    {
+        printf("No hay registros de partidos para exportar.\n");
+        return;
+    }
+
+    FILE *f = fopen(get_export_path("partidos.html"), "w");
+    if (!f)
+        return;
+
+    sqlite3_stmt *stmt = execute_partido_query(NULL);
+    write_partido_html(f, stmt, "Partidos");
+    sqlite3_finalize(stmt);
+
     printf("Archivo exportado a: %s\n", get_export_path("partidos.html"));
     fclose(f);
 }
@@ -1219,3 +1253,4 @@ void exportar_partido_menos_asistencias_reciente_html()
     printf("Archivo exportado a: %s\n", get_export_path("partido_menos_asistencias_reciente.html"));
     fclose(f);
 }
+

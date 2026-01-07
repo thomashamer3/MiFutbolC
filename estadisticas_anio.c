@@ -1,9 +1,9 @@
 /**
  * @file estadisticas_anio.c
- * @brief Módulo para mostrar estadísticas históricas agrupadas por año.
+ * @brief Módulo de análisis estadístico temporal anual
  *
- * Este archivo contiene funciones para consultar y mostrar estadísticas
- * individuales por camiseta agrupadas por año.
+ * Implementa consultas SQL para agregación de métricas deportivas por año,
+ * permitiendo evaluación de rendimiento longitudinal y tendencias históricas.
  */
 
 #include "estadisticas_anio.h"
@@ -13,10 +13,10 @@
 #include <string.h>
 
 /**
- * @brief Muestra estadísticas históricas agrupadas por año
+ * @brief Visualiza evolución anual del rendimiento deportivo
  *
- * Esta función muestra estadísticas individuales por camiseta agrupadas por año,
- * incluyendo partidos jugados, goles, asistencias y promedios por partido.
+ * Agrega métricas por año para identificar patrones estacionales,
+ * comparar rendimiento interanual y evaluar progreso a largo plazo.
  */
 void mostrar_estadisticas_por_anio()
 {

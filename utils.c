@@ -25,12 +25,8 @@
 #endif
 
 /**
- * @brief Solicita al usuario un número entero.
- *
- * Muestra el mensaje proporcionado y lee un entero desde la entrada estándar.
- *
- * @param msg El mensaje a mostrar al usuario.
- * @return El número entero ingresado por el usuario.
+ * Permite la entrada de valores numéricos por parte del usuario,
+ * facilitando la configuración de parámetros enteros en el sistema.
  */
 int input_int(const char *msg)
 {
@@ -42,15 +38,8 @@ int input_int(const char *msg)
 }
 
 /**
- * @brief Solicita al usuario una cadena de texto.
- *
- * Muestra el mensaje proporcionado y lee una cadena desde la entrada estándar,
- * eliminando el carácter de nueva línea al final.
- * Valida que la entrada contenga solo letras y espacios.
- *
- * @param msg El mensaje a mostrar al usuario.
- * @param buffer El buffer donde se almacenará la cadena leída.
- * @param size El tamaño máximo del buffer.
+ * Valida la entrada de texto para asegurar la integridad de los datos y prevenir errores en el procesamiento posterior,
+ * aceptando solo caracteres alfanuméricos y espacios.
  */
 void input_string(const char *msg, char *buffer, int size)
 {
@@ -84,12 +73,8 @@ void input_string(const char *msg, char *buffer, int size)
 }
 
 /**
- * @brief Obtiene la fecha y hora actual en formato legible.
- *
- * Formatea la fecha y hora actual en el formato "dd/mm/yyyy hh:mm".
- *
- * @param buffer El buffer donde se almacenará la cadena formateada.
- * @param size El tamaño máximo del buffer.
+ * Proporciona una representación legible de la fecha y hora actual para mostrar en interfaces de usuario,
+ * mejorando la experiencia al contextualizar acciones con el tiempo.
  */
 void get_datetime(char *buffer, int size)
 {
@@ -98,12 +83,8 @@ void get_datetime(char *buffer, int size)
 }
 
 /**
- * @brief Obtiene un timestamp actual en formato compacto.
- *
- * Formatea la fecha y hora actual en el formato "yyyymmdd_hhmm" para usar en nombres de archivos.
- *
- * @param buffer El buffer donde se almacenará la cadena formateada.
- * @param size El tamaño máximo del buffer.
+ * Genera un identificador temporal compacto para usar en nombres de archivos,
+ * asegurando unicidad y orden cronológico en exportaciones y backups.
  */
 void get_timestamp(char *buffer, int size)
 {
@@ -112,13 +93,8 @@ void get_timestamp(char *buffer, int size)
 }
 
 /**
- * @brief Verifica si existe un ID en una tabla de la base de datos.
- *
- * Ejecuta una consulta SQL para comprobar si un ID específico existe en la tabla indicada.
- *
- * @param tabla El nombre de la tabla a consultar.
- * @param id El ID a verificar.
- * @return 1 si el ID existe, 0 en caso contrario.
+ * Verifica la existencia de registros en la base de datos para mantener la integridad referencial
+ * y evitar operaciones inválidas que puedan corromper los datos.
  */
 int existe_id(const char *tabla, int id)
 {
@@ -135,10 +111,8 @@ int existe_id(const char *tabla, int id)
 }
 
 /**
- * @brief Limpia la pantalla de la consola.
- *
- * Ejecuta el comando apropiado para limpiar la pantalla dependiendo del sistema operativo.
- * En Windows usa "cls", en sistemas Unix/Linux usa "clear".
+ * Limpia la pantalla de la consola para proporcionar una interfaz limpia y organizada,
+ * mejorando la legibilidad de la información mostrada.
  */
 void clear_screen()
 {
@@ -150,12 +124,8 @@ void clear_screen()
 }
 
 /**
- * @brief Imprime un encabezado formateado en la consola.
- *
- * Muestra un encabezado con el nombre del usuario, la fecha actual y el título proporcionado,
- * rodeado de líneas decorativas.
- *
- * @param titulo El título a mostrar en el encabezado.
+ * Muestra información contextual del usuario y fecha para personalizar la experiencia
+ * y registrar el momento de las operaciones.
  */
 void print_header(const char *titulo)
 {
@@ -180,6 +150,10 @@ void print_header(const char *titulo)
     }
 }
 
+/**
+ * Pausa la ejecución para permitir al usuario revisar información antes de continuar,
+ * mejorando la interacción controlada.
+ */
 void pause_console()
 {
     printf("\nPresione ENTER para continuar...");
@@ -187,13 +161,8 @@ void pause_console()
 }
 
 /**
- * @brief Solicita confirmación al usuario (Sí/No).
- *
- * Muestra el mensaje proporcionado seguido de "(S/N):" y lee la respuesta del usuario.
- * Acepta 's' o 'S' como afirmativo.
- *
- * @param msg El mensaje a mostrar al usuario.
- * @return 1 si el usuario confirma (sí), 0 en caso contrario.
+ * Solicita confirmación binaria del usuario para operaciones críticas,
+ * previniendo acciones accidentales que puedan afectar datos.
  */
 int confirmar(const char *msg)
 {
@@ -206,7 +175,8 @@ int confirmar(const char *msg)
 }
 
 /**
- * @brief Pide el nombre del usuario en la primera ejecución
+ * Recopila la identidad del usuario en el inicio para personalizar la aplicación
+ * y mantener un registro de uso.
  */
 void pedir_nombre_usuario()
 {
@@ -237,7 +207,8 @@ void pedir_nombre_usuario()
 }
 
 /**
- * @brief Muestra el nombre actual del usuario
+ * Permite al usuario verificar su identidad actual almacenada,
+ * facilitando la gestión de su perfil.
  */
 void mostrar_nombre_usuario()
 {
@@ -255,7 +226,7 @@ void mostrar_nombre_usuario()
 }
 
 /**
- * @brief Permite editar el nombre del usuario
+ * Habilita la actualización de la identidad del usuario para mantener la información actualizada y personalizada.
  */
 void editar_nombre_usuario()
 {
@@ -285,7 +256,7 @@ void editar_nombre_usuario()
 }
 
 /**
- * @brief Menú de gestión de usuario
+ * Proporciona una interfaz estructurada para gestionar opciones relacionadas con el perfil del usuario.
  */
 void menu_usuario()
 {
@@ -300,12 +271,32 @@ void menu_usuario()
 }
 
 /**
- * @brief Remueve tildes y caracteres acentuados de una cadena
- *
- * Convierte caracteres acentuados a su equivalente sin tilde.
- *
- * @param str La cadena a procesar
- * @return La cadena sin tildes
+ * Adapta fechas del almacenamiento interno a un formato amigable para la visualización,
+ * permitiendo flexibilidad en formatos futuros.
+ */
+void format_date_for_display(const char *input_date, char *output_buffer, int buffer_size)
+{
+    // Actualmente el formato de almacenamiento y visualización son iguales
+    // Copiar directamente la fecha de entrada a la salida
+    strncpy(output_buffer, input_date, buffer_size - 1);
+    output_buffer[buffer_size - 1] = '\0';
+}
+
+/**
+ * Convierte fechas ingresadas por el usuario a un formato interno consistente,
+ * facilitando el almacenamiento y procesamiento uniforme.
+ */
+void convert_display_date_to_storage(const char *display_date, char *storage_buffer, int buffer_size)
+{
+    // Actualmente el formato de almacenamiento y visualización son iguales
+    // Copiar directamente la fecha de visualización al almacenamiento
+    strncpy(storage_buffer, display_date, buffer_size - 1);
+    storage_buffer[buffer_size - 1] = '\0';
+}
+
+/**
+ * Normaliza cadenas de texto removiendo caracteres acentuados para asegurar compatibilidad con sistemas que no los soportan
+ * y mejorar la consistencia en búsquedas.
  */
 char* remover_tildes(const char *str)
 {

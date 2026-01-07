@@ -154,7 +154,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Crea una nueva camiseta en la base de datos. </p>
-<p>Solicita al usuario el nombre y número de la camiseta y la inserta en la tabla 'camiseta'. Utiliza el ID más pequeño disponible para reutilizar IDs eliminados. La columna 'sorteada' se inicializa en 0 por defecto. </p>
+<p>Permite a los usuarios agregar camisetas para gestión y sorteos, reutilizando IDs eliminados para mantener la secuencia. </p>
 
 </div>
 </div>
@@ -174,7 +174,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Permite editar el nombre de una camiseta existente. </p>
-<p>Muestra la lista de camisetas disponibles, solicita el ID a editar, verifica que exista y permite cambiar el nombre. </p>
+<p>Edita el nombre de una camiseta existente.</p>
+<p>Permite correcciones en la información de camisetas sin necesidad de eliminar y recrear registros, mejorando la usabilidad. </p>
 
 </div>
 </div>
@@ -194,7 +195,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Elimina una camiseta de la base de datos. </p>
-<p>Muestra la lista de camisetas disponibles, solicita el ID a eliminar, verifica que exista y solicita confirmación antes de eliminar. </p>
+<p>Permite remover camisetas que ya no son necesarias mientras mantiene la integridad de los datos con validaciones y confirmaciones. </p>
 
 </div>
 </div>
@@ -214,7 +215,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Muestra un listado de todas las camisetas registradas. </p>
-<p>Consulta la base de datos y muestra en pantalla todas las camisetas con sus respectivos IDs y nombres. Si no hay camisetas, muestra un mensaje informativo. </p>
+<p>Lista todas las camisetas registradas.</p>
+<p>Proporciona visibilidad a los usuarios de las camisetas disponibles para facilitar la toma de decisiones en otras operaciones. </p>
 
 </div>
 </div>
@@ -234,7 +236,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Muestra el menú principal de gestión de camisetas. </p>
-<p>Presenta un menú interactivo con opciones para crear, listar, editar, eliminar y sortear camisetas. Utiliza la función ejecutar_menu para manejar la navegación del menú. </p>
+<p>Muestra el menú interactivo de gestión de camisetas.</p>
+<p>Proporciona una interfaz estructurada para las operaciones de gestión de camisetas, centralizando el acceso a todas las funcionalidades. </p>
 
 </div>
 </div>
@@ -254,10 +257,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Realiza un sorteo aleatorio entre las camisetas disponibles. </p>
-<p>Selecciona aleatoriamente una camiseta que no haya sido sorteada previamente. Si todas las camisetas han sido sorteadas, reinicia el sorteo marcando todas como no sorteadas. Muestra el resultado del sorteo y actualiza el estado de la camiseta seleccionada.</p>
-<dl class="section note"><dt>Note</dt><dd>Utiliza la función srand() con time(NULL) para generar números aleatorios </dd>
-<dd>
-Limita el sorteo a un máximo de 100 camisetas por simplicidad </dd></dl>
+<p>Realiza un sorteo aleatorio entre camisetas disponibles.</p>
+<p>Permite sorteos continuos reutilizando camisetas ya sorteadas cuando se agotan las disponibles, manteniendo la funcionalidad del sistema sin necesidad de intervención manual del usuario. </p>
 
 </div>
 </div>
@@ -267,7 +268,7 @@ Limita el sorteo a un máximo de 100 camisetas por simplicidad </dd></dl>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="camiseta_8c.html">camiseta.c</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

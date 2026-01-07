@@ -2,7 +2,7 @@
 
 ## Descripción
 
-MiFutbolC es un sistema completo de gestión y análisis de datos para fútbol desarrollado en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol, incluyendo camisetas, canchas, partidos, estadísticas avanzadas, logros gamificados, análisis de rendimiento, gestión de lesiones, y funciones completas de importación/exportación de datos.
+MiFutbolC es un sistema completo de gestión y análisis de datos para fútbol desarrollado en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol, incluyendo camisetas, canchas, partidos, equipos, torneos, estadísticas avanzadas, logros gamificados, análisis de rendimiento, gestión de lesiones, y funciones completas de importación/exportación de datos.
 
 El sistema utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente, ofreciendo una solución robusta para el seguimiento y análisis de datos futbolísticos.
 
@@ -10,6 +10,8 @@ El sistema utiliza SQLite como base de datos para almacenar toda la información
 
 - **Gestión Completa de Equipamiento**: Crear, listar, editar y eliminar camisetas de fútbol con seguimiento de uso.
 - **Gestión de Infraestructura**: Administrar canchas de fútbol con información detallada de ubicación.
+- **Gestión de Equipos**: Crear, gestionar y administrar equipos de fútbol con jugadores, posiciones y formaciones (Arqueros, Defensores, Mediocampistas, Delanteros) para diferentes modalidades (Fútbol 5, 7, 8, 11).
+- **Gestión de Torneos**: Organizar y administrar torneos con diferentes formatos (Round Robin, Grupos con Final, Copa Simple, Eliminación Directa, etc.), tipos de estructura (Ida y Vuelta, Solo Ida, Eliminación Directa), fixtures, resultados, tablas de posiciones y estadísticas avanzadas.
 - **Registro de Partidos**: Registrar partidos completos con detalles como cancha, goles, asistencias, rendimiento, estado físico/mental y camiseta utilizada.
 - **Estadísticas Avanzadas**: Visualizar estadísticas agregadas del sistema con análisis profundos de estados físicos y mentales.
 - **Análisis Temporal**: Estadísticas históricas de rendimiento agrupadas por año y mes para seguimiento de progreso.
@@ -27,6 +29,8 @@ El sistema utiliza SQLite como base de datos para almacenar toda la información
 - **Interfaz Intuitiva**: Navegación mediante menús interactivos con estructura jerárquica.
 - **Almacenamiento Robusto**: Base de datos SQLite para almacenamiento persistente y eficiente.
 - **Documentación Automática**: Generación de documentación técnica con Doxygen.
+- **Estadísticas por Clima y Día de la Semana**: Análisis detallado del rendimiento según condiciones climáticas y días de la semana.
+- **Estadísticas de Lesiones**: Análisis completo de lesiones incluyendo tipos, frecuencia por camiseta, distribución mensual y impacto en rendimiento.
 
 ## Características Principales
 
@@ -44,7 +48,7 @@ El sistema utiliza SQLite como base de datos para almacenar toda la información
 - **Gestión de Usuario**: Sistema de nombres de usuario personalizados con persistencia.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos.
 - **Exportación de Datos**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML.
-- **Exportación Mejorada**: Exportación avanzada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento.
+- **Exportación Mejorada**: Exportación avanzada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento. Las funciones mejoradas incluyen estadísticas avanzadas como eficiencia de goles/asistencias, porcentaje de victorias, análisis de lesiones, métricas de rendimiento, evaluación de gravedad de lesiones, comparación de rendimiento antes/después de lesiones, e identificación de patrones de lesiones.
 - **Análisis Mejorado**: Funcionalidades avanzadas de análisis con estadísticas mejoradas.
 - **Exportación por Categorías Específicas**: Exportación de partidos con más goles, más asistencias, menos goles recientes, menos asistencias recientes.
 - **Interfaz de Menú**: Navegación intuitiva mediante menús interactivos.
@@ -84,7 +88,7 @@ El sistema utiliza SQLite como base de datos para almacenar toda la información
 3. Compila todos los archivos fuente:
 
 ```bash
-gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c cJSON_Utils.c -I.
+gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c cJSON_Utils.c -I.
 ```
 
 4. Ejecuta el programa:
@@ -112,14 +116,16 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 
 1. **Camisetas**: Gestionar camisetas (crear, listar, editar, eliminar).
 2. **Canchas**: Gestionar canchas de fútbol.
-3. **Partidos**: Gestionar partidos (crear, listar, modificar, eliminar).
-4. **Estadísticas**: Mostrar estadísticas generales del sistema.
-5. **Logros**: Gestionar logros y badges.
-6. **Análisis**: Mostrar análisis de rendimiento.
-7. **Lesiones**: Gestionar lesiones de jugadores.
-8. **Exportar**: Menú de exportación con opciones individuales por módulo.
-9. **Importar**: Importar todos los datos desde archivos JSON.
-10. **Usuario**: Gestionar información del usuario (ver/cambiar nombre).
+3. **Equipos**: Gestionar equipos de fútbol (crear, listar, editar, eliminar).
+4. **Torneos**: Gestionar torneos (crear, listar, editar, eliminar).
+5. **Partidos**: Gestionar partidos (crear, listar, modificar, eliminar).
+6. **Estadísticas**: Mostrar estadísticas generales del sistema.
+7. **Logros**: Gestionar logros y badges.
+8. **Análisis**: Mostrar análisis de rendimiento.
+9. **Lesiones**: Gestionar lesiones de jugadores.
+10. **Exportar**: Menú de exportación con opciones individuales por módulo.
+11. **Importar**: Importar todos los datos desde archivos JSON.
+12. **Usuario**: Gestionar información del usuario (ver/cambiar nombre).
 0. **Salir**: Cerrar el programa.
 
 ### Ejemplo de Uso
@@ -131,7 +137,7 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 
 ## Estructura del Proyecto
 
-```
+```bash
 MiFutbolC/
 ├── main.c                 # Punto de entrada del programa
 ├── db.c / db.h            # Gestión de la base de datos SQLite
@@ -140,6 +146,8 @@ MiFutbolC/
 ├── models.h               # Definiciones de estructuras comunes
 ├── camiseta.c / camiseta.h # Gestión de camisetas
 ├── partido.c / partido.h   # Gestión de partidos
+├── equipo.c / equipo.h     # Gestión de equipos
+├── torneo.c / torneo.h     # Gestión de torneos
 ├── estadisticas.c / estadisticas.h # Cálculo y visualización de estadísticas
 ├── analisis.c / analisis.h # Análisis de rendimiento
 ├── cancha.c / cancha.h    # Gestión de canchas
@@ -177,7 +185,9 @@ El proyecto utiliza SQLite para almacenar datos. La base de datos se crea autom�
 
 - **camiseta**: Almacena información de camisetas (ID, nombre, sorteada).
 - **cancha**: Gestiona canchas de fútbol (ID, nombre, ubicacion).
-- **partido**: Registra partidos (ID, cancha_id, fecha/hora, goles, asistencias, rendimiento, cansancio, animo, camiseta_id).
+- **equipo**: Gestiona equipos de fútbol (ID, nombre, ciudad, estadio, entrenador).
+- **torneo**: Organiza torneos (ID, nombre, tipo, fecha_inicio, fecha_fin, estado).
+- **partido**: Registra partidos (ID, cancha_id, equipo_local_id, equipo_visitante_id, torneo_id, fecha/hora, goles_local, goles_visitante, rendimiento, cansancio, animo, camiseta_id).
 - **lesion**: Gestiona lesiones (ID, jugador, tipo, fecha, duracion).
 - **logros**: Almacena logros y badges (ID, nombre, descripcion, nivel, objetivo, categoria).
 - **estadisticas**: Contiene estadísticas calculadas (ID, tipo, valor, camiseta_id).
@@ -233,6 +243,29 @@ El sistema de logros y badges (`logros.c`) implementa un sistema de recompensas 
 - **Interfaz de Menú**: Navegación intuitiva para explorar los logros disponibles.
 
 Este sistema utiliza consultas SQL para calcular estadísticas acumuladas y determinar el estado de cada logro, proporcionando una experiencia gamificada para motivar el uso continuo del sistema.
+
+## Módulo de Gestión de Equipos
+
+El módulo de gestión de equipos (`equipo.c / equipo.h`) permite crear, gestionar y administrar equipos de fútbol con diferentes configuraciones:
+
+- **Tipos de Equipos**: Soporte para equipos fijos (guardados en base de datos) y momentáneos (temporales).
+- **Modalidades de Fútbol**: Compatible con Fútbol 5, Fútbol 7, Fútbol 8 y Fútbol 11.
+- **Posiciones de Jugadores**: Definición de posiciones estándar (Arquero, Defensor, Mediocampista, Delantero) con posibilidad de designar capitanes.
+- **Gestión de Plantillas**: Cada equipo puede tener hasta 11 jugadores con información completa (nombre, número, posición, capitán).
+- **Operaciones CRUD**: Crear, listar, modificar y eliminar equipos con validación de datos.
+
+## Módulo de Gestión de Torneos
+
+El módulo de gestión de torneos (`torneo.c / torneo.h`) proporciona un sistema completo para organizar y administrar competiciones futbolísticas:
+
+- **Tipos de Torneo**: Soporte para diferentes estructuras de partidos (Ida y Vuelta, Solo Ida, Eliminación Directa, Grupos y Eliminación).
+- **Formatos Disponibles**: Múltiples formatos incluyendo Round Robin, Grupos con Final, Copa Simple, Eliminación Directa por Fases, etc.
+- **Gestión de Equipos**: Asociación de equipos existentes a torneos con equipos fijos opcionales.
+- **Administración Avanzada**: Funciones para mostrar fixtures, ingresar resultados, ver tablas de posiciones y gestionar fases de eliminación.
+- **Estadísticas de Torneos**: Seguimiento de estadísticas de jugadores por torneo, mejores goleadores, asistidores, historial de equipos.
+- **Dashboard en Tiempo Real**: Visualización de información actualizada incluyendo posición actual, próximos partidos y últimos resultados.
+- **Reportes y Exportación**: Generación de reportes completos y exportación de tablas de posiciones y estadísticas.
+- **Finalización de Torneos**: Sistema para cerrar torneos y guardar historial completo de todos los equipos participantes.
 
 ## Utilidades y Funciones Auxiliares
 

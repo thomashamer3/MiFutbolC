@@ -1,17 +1,21 @@
 /**
  * @file estadisticas_lesiones.h
- * @brief Declaraciones de funciones para estadísticas de lesiones en MiFutbolC
+ * @brief API de análisis estadístico de incidentes médicos deportivos
+ *
+ * Define interfaz para consultas de agregación lesional utilizando SQL JOINs
+ * entre tablas lesion, partido y camiseta, implementando cálculos temporales
+ * y análisis correlacional rendimiento-lesión.
  */
 
 #ifndef ESTADISTICAS_LESIONES_H
 #define ESTADISTICAS_LESIONES_H
 
 /**
- * @brief Muestra las estadísticas de lesiones
+ * @brief Ejecuta análisis estadístico integral de lesiones
  *
- * Calcula y muestra estadísticas como total de lesiones, lesiones por tipo,
- * por camiseta, por mes, mes con más lesiones, tiempo promedio entre lesiones,
- * rendimiento promedio antes y después de lesiones, y si baja el rendimiento previo.
+ * Coordina múltiples consultas SQL para generar reporte comprehensivo
+ * incluyendo métricas demográficas, temporales y de impacto en rendimiento,
+ * utilizando funciones de agregación y subconsultas para análisis avanzado.
  */
 void mostrar_estadisticas_lesiones();
 

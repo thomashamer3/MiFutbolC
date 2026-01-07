@@ -138,16 +138,16 @@ Functions</h2></td></tr>
 <tr class="memdesc:ae82023dc6bfe9f991e161496cd7a5af4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte el número de dia a texto.  <br /></td></tr>
 <tr class="separator:ae82023dc6bfe9f991e161496cd7a5af4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb2e7fc997aa65efe894c2f5bfa4924b" id="r_adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb2e7fc997aa65efe894c2f5bfa4924b">exportar_analisis_csv</a> ()</td></tr>
-<tr class="memdesc:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo CSV.  <br /></td></tr>
+<tr class="memdesc:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a formato CSV.  <br /></td></tr>
 <tr class="separator:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a5c954a22222d0e397d9d43e3052d54" id="r_a0a5c954a22222d0e397d9d43e3052d54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0a5c954a22222d0e397d9d43e3052d54">exportar_analisis_txt</a> ()</td></tr>
-<tr class="memdesc:a0a5c954a22222d0e397d9d43e3052d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo de texto plano.  <br /></td></tr>
+<tr class="memdesc:a0a5c954a22222d0e397d9d43e3052d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a formato TXT.  <br /></td></tr>
 <tr class="separator:a0a5c954a22222d0e397d9d43e3052d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58769fdb80e85bf94724f4f04e8840e5" id="r_a58769fdb80e85bf94724f4f04e8840e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a58769fdb80e85bf94724f4f04e8840e5">exportar_analisis_json</a> ()</td></tr>
-<tr class="memdesc:a58769fdb80e85bf94724f4f04e8840e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo JSON.  <br /></td></tr>
+<tr class="memdesc:a58769fdb80e85bf94724f4f04e8840e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a formato JSON.  <br /></td></tr>
 <tr class="separator:a58769fdb80e85bf94724f4f04e8840e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adeb2a1a2af14fdd6d12c8e0604ad7300" id="r_adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adeb2a1a2af14fdd6d12c8e0604ad7300">exportar_analisis_html</a> ()</td></tr>
-<tr class="memdesc:adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a un archivo HTML.  <br /></td></tr>
+<tr class="memdesc:adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a formato HTML.  <br /></td></tr>
 <tr class="separator:adeb2a1a2af14fdd6d12c8e0604ad7300"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -221,9 +221,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta el análisis de rendimiento a un archivo CSV. </p>
-<p>Exporta el análisis de rendimiento a formato CSV.</p>
-<p>Crea un archivo CSV con las estadísticas generales, últimos 5 partidos, rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+<p>Exporta el análisis de rendimiento a formato CSV. </p>
+<p>Exporta el análisis de rendimiento a un archivo CSV. Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas. </p>
 
 </div>
 </div>
@@ -242,9 +241,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta el análisis de rendimiento a un archivo HTML. </p>
-<p>Exporta el análisis de rendimiento a formato HTML.</p>
-<p>Crea una página HTML con las estadísticas presentadas en formato web. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+<p>Exporta el análisis de rendimiento a formato HTML. </p>
+<p>Exporta el análisis de rendimiento a un archivo HTML. Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas. </p>
 
 </div>
 </div>
@@ -263,9 +261,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta el análisis de rendimiento a un archivo JSON. </p>
-<p>Exporta el análisis de rendimiento a formato JSON.</p>
-<p>Crea un archivo JSON con un objeto conteniendo todas las estadísticas del análisis de rendimiento. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+<p>Exporta el análisis de rendimiento a formato JSON. </p>
+<p>Exporta el análisis de rendimiento a un archivo JSON. Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas. </p>
 
 </div>
 </div>
@@ -284,9 +281,8 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exporta el análisis de rendimiento a un archivo de texto plano. </p>
-<p>Exporta el análisis de rendimiento a formato TXT.</p>
-<p>Crea un archivo de texto con las estadísticas generales, últimos 5 partidos, rachas y análisis motivacional. El archivo se guarda en la ruta definida por EXPORT_PATH. </p>
+<p>Exporta el análisis de rendimiento a formato TXT. </p>
+<p>Exporta el análisis de rendimiento a un archivo de texto plano. Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas. </p>
 
 </div>
 </div>
@@ -375,7 +371,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="export_8c.html">export.c</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

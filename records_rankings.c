@@ -12,7 +12,8 @@
 #include <time.h>
 
 /**
- * @brief Función auxiliar para ejecutar consultas SQL y mostrar resultados de récords
+ * Ejecuta consulta SQL y muestra resultado de récord simple.
+ * Reutilizable para diferentes tipos de récords con formato consistente.
  */
 static void mostrar_record(const char *titulo, const char *sql)
 {
@@ -44,7 +45,8 @@ static void mostrar_record(const char *titulo, const char *sql)
 }
 
 /**
- * @brief Función auxiliar para mostrar combinaciones cancha + camiseta
+ * Muestra resultados de combinaciones cancha-camiseta.
+ * Necesario para mantener formato consistente en consultas complejas de rendimiento.
  */
 static void mostrar_combinacion(const char *titulo, const char *sql)
 {
@@ -318,25 +320,29 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
 }
 
 /**
- * @brief Muestra los partidos sin goles
+ * Muestra lista de partidos que cumplen una condición específica.
+ * Reutilizable para diferentes criterios de filtrado de partidos.
  */
-void mostrar_partidos_sin_goles()
+static void mostrar_lista_partidos(const char *header, const char *titulo, const char *condicion, const char *mensaje_vacio)
 {
     clear_screen();
-    print_header("PARTIDOS SIN GOLES");
+    print_header(header);
 
     sqlite3_stmt *stmt;
 
-    printf("\nPartidos sin Goles\n");
+    printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db,
-                           "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias "
-                           "FROM partido p "
-                           "JOIN camiseta c ON p.camiseta_id = c.id "
-                           "WHERE p.goles = 0 "
-                           "ORDER BY p.fecha_hora DESC",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    char sql[256];
+    snprintf(sql, sizeof(sql),
+             "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias "
+             "FROM partido p "
+             "JOIN camiseta c ON p.camiseta_id = c.id "
+             "WHERE %s "
+             "ORDER BY p.fecha_hora DESC",
+             condicion);
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
     {
         int count = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -352,7 +358,7 @@ void mostrar_partidos_sin_goles()
 
         if (count == 0)
         {
-            printf("No hay partidos sin goles.\n");
+            printf("%s\n", mensaje_vacio);
         }
         else
         {
@@ -366,109 +372,110 @@ void mostrar_partidos_sin_goles()
 }
 
 /**
+ * @brief Muestra los partidos sin goles
+ */
+void mostrar_partidos_sin_goles()
+{
+    mostrar_lista_partidos("PARTIDOS SIN GOLES", "Partidos sin Goles",
+                           "p.goles = 0", "No hay partidos sin goles.");
+}
+
+/**
  * @brief Muestra los partidos sin asistencias
  */
 void mostrar_partidos_sin_asistencias()
 {
-    clear_screen();
-    print_header("PARTIDOS SIN ASISTENCIAS");
-
-    sqlite3_stmt *stmt;
-
-    printf("\nPartidos sin Asistencias\n");
-    printf("----------------------------------------\n");
-
-    if (sqlite3_prepare_v2(db,
-                           "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias "
-                           "FROM partido p "
-                           "JOIN camiseta c ON p.camiseta_id = c.id "
-                           "WHERE p.asistencias = 0 "
-                           "ORDER BY p.fecha_hora DESC",
-                           -1, &stmt, NULL) == SQLITE_OK)
-    {
-        int count = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            printf("ID: %d | Fecha: %s | Camiseta: %s | Goles: %d | Asistencias: %d\n",
-                   sqlite3_column_int(stmt, 0),
-                   sqlite3_column_text(stmt, 1),
-                   sqlite3_column_text(stmt, 2),
-                   sqlite3_column_int(stmt, 3),
-                   sqlite3_column_int(stmt, 4));
-            count++;
-        }
-
-        if (count == 0)
-        {
-            printf("No hay partidos sin asistencias.\n");
-        }
-        else
-        {
-            printf("\nTotal: %d partidos\n", count);
-        }
-
-        sqlite3_finalize(stmt);
-    }
-
-    pause_console();
+    mostrar_lista_partidos("PARTIDOS SIN ASISTENCIAS", "Partidos sin Asistencias",
+                           "p.asistencias = 0", "No hay partidos sin asistencias.");
 }
 
-/****
- * @brief Función auxiliar para calcular rachas
+/**
+ * Estructura para almacenar información de racha.
+ * Necesaria para devolver múltiples valores de la función de cálculo de rachas.
  */
-static void calcular_racha(const char *titulo, int tipo_racha)
+typedef struct
+{
+    int mejor_racha;
+    int inicio_racha;
+    int fin_racha;
+} RachaInfo;
+
+/**
+ * Calcula la mejor racha consecutiva basada en condición específica.
+ * Separado del display para permitir reutilización y testing independiente.
+ */
+static RachaInfo calcular_mejor_racha(int tipo_racha)
 {
     sqlite3_stmt *stmt;
+    RachaInfo resultado = {0, -1, -1};
     int racha_actual = 0;
-    int mejor_racha = 0;
-    int inicio_racha = -1;
-    int fin_racha = -1;
     int temp_inicio = -1;
-
-    printf("\n%s\n", titulo);
-    printf("----------------------------------------\n");
 
     if (sqlite3_prepare_v2(db,
                            "SELECT id, goles FROM partido ORDER BY fecha_hora ASC",
-                           -1, &stmt, NULL) == SQLITE_OK)
+                           -1, &stmt, NULL) != SQLITE_OK)
     {
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            int id = sqlite3_column_int(stmt, 0);
-            int goles = sqlite3_column_int(stmt, 1);
-            int condicion = (tipo_racha == 1) ? (goles > 0) : (goles == 0); // 1: scoring streak, 0: non-scoring streak
-
-            if (condicion)
-            {
-                if (racha_actual == 0)
-                {
-                    temp_inicio = id;
-                }
-                racha_actual++;
-                if (racha_actual > mejor_racha)
-                {
-                    mejor_racha = racha_actual;
-                    inicio_racha = temp_inicio;
-                    fin_racha = id;
-                }
-            }
-            else
-            {
-                racha_actual = 0;
-            }
-        }
-        sqlite3_finalize(stmt);
+        return resultado;
     }
 
-    if (mejor_racha > 0)
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("Mejor Racha: %d partidos\n", mejor_racha);
-        printf("Desde partido ID %d hasta ID %d\n", inicio_racha, fin_racha);
+        int id = sqlite3_column_int(stmt, 0);
+        int goles = sqlite3_column_int(stmt, 1);
+        int condicion = (tipo_racha == 1) ? (goles > 0) : (goles == 0);
+
+        if (condicion)
+        {
+            if (racha_actual == 0)
+            {
+                temp_inicio = id;
+            }
+            racha_actual++;
+            if (racha_actual > resultado.mejor_racha)
+            {
+                resultado.mejor_racha = racha_actual;
+                resultado.inicio_racha = temp_inicio;
+                resultado.fin_racha = id;
+            }
+        }
+        else
+        {
+            racha_actual = 0;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return resultado;
+}
+
+/**
+ * Muestra información de racha en pantalla.
+ * Separado del cálculo para claridad de responsabilidades.
+ */
+static void mostrar_racha_info(const char *titulo, RachaInfo racha)
+{
+    printf("\n%s\n", titulo);
+    printf("----------------------------------------\n");
+
+    if (racha.mejor_racha > 0)
+    {
+        printf("Mejor Racha: %d partidos\n", racha.mejor_racha);
+        printf("Desde partido ID %d hasta ID %d\n", racha.inicio_racha, racha.fin_racha);
     }
     else
     {
         printf("No hay rachas disponibles.\n");
     }
+}
+
+/**
+ * Función principal para mostrar rachas.
+ * Coordina cálculo y display de rachas consecutivas.
+ */
+static void mostrar_racha(const char *titulo, int tipo_racha)
+{
+    RachaInfo racha = calcular_mejor_racha(tipo_racha);
+    mostrar_racha_info(titulo, racha);
 }
 
 /**
@@ -479,8 +486,7 @@ void mostrar_mejor_racha_goleadora()
     clear_screen();
     print_header("MEJOR RACHA GOLEADORA");
 
-    calcular_racha("Mejor Racha Goleadora (partidos consecutivos con goles)",
-                   1); // 1 para racha goleadora
+    mostrar_racha("Mejor Racha Goleadora (partidos consecutivos con goles)", 1);
 
     pause_console();
 }
@@ -493,8 +499,7 @@ void mostrar_peor_racha()
     clear_screen();
     print_header("PEOR RACHA");
 
-    calcular_racha("Peor Racha (partidos consecutivos sin goles)",
-                   0); // 0 para racha sin goles
+    mostrar_racha("Peor Racha (partidos consecutivos sin goles)", 0);
 
     pause_console();
 }
@@ -507,18 +512,18 @@ void mostrar_partidos_consecutivos_anotando()
     clear_screen();
     print_header("PARTIDOS CONSECUTIVOS ANOTANDO");
 
-    calcular_racha("Partidos Consecutivos Anotando",
-                   1); // Mismo que mejor racha goleadora
+    mostrar_racha("Partidos Consecutivos Anotando", 1);
 
     pause_console();
 }
 
 /**
- * @brief Muestra el menú de récords y rankings
+ * Construye array de opciones del menú de récords y rankings.
+ * Centralizado aquí para mantener consistencia y facilitar mantenimiento.
  */
-void menu_records_rankings()
+static MenuItem* construir_menu_records()
 {
-    MenuItem items[] =
+    static MenuItem items[] =
     {
         {1, "Record de Goles en un Partido", mostrar_record_goles_partido},
         {2, "Record de Asistencias", mostrar_record_asistencias_partido},
@@ -536,6 +541,14 @@ void menu_records_rankings()
         {14, "Partidos Consecutivos Anotando", mostrar_partidos_consecutivos_anotando},
         {0, "Volver", NULL}
     };
+    return items;
+}
 
+/**
+ * @brief Muestra el menú de récords y rankings
+ */
+void menu_records_rankings()
+{
+    MenuItem *items = construir_menu_records();
     ejecutar_menu("RECORDS & RANKINGS", items, 15);
 }

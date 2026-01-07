@@ -1,633 +1,368 @@
+/**
+ * @file export_estadisticas_generales.c
+ * @brief Funciones de exportación de estadísticas
+ */
+
 #include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <direct.h>
 #include <string.h>
-/** @name Funciones de exportación de estadísticas detalladas */
-/** @{ */
 
-/**
- * @brief Exporta las estadísticas generales a formato CSV
- */
-void exportar_estadisticas_generales_csv()
+/* ============================================================================
+ * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
+ * ============================================================================ */
+
+static const char *SQL_COUNT_PARTIDOS = "SELECT COUNT(*) FROM partido";
+
+static const char *SQL_BEST_BY_METRIC =
+    "SELECT c.nombre, %s FROM partido p "
+    "JOIN camiseta c ON p.camiseta_id = c.id "
+    "GROUP BY c.id ORDER BY 2 %s LIMIT 1";
+
+static const char *SQL_STATS_MONTH =
+    "SELECT substr(fecha_hora, 4, 7), c.nombre, COUNT(*), SUM(goles), SUM(asistencias), "
+    "ROUND(AVG(goles), 2), ROUND(AVG(asistencias), 2) "
+    "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+    "GROUP BY substr(fecha_hora, 4, 7), c.id "
+    "ORDER BY substr(fecha_hora, 4, 7) DESC, SUM(goles) DESC";
+
+/* ============================================================================
+ * HELPER ESTÁTICOS
+ * ============================================================================ */
+
+/** @brief Verifica si hay partidos para exportar */
+static int has_partidos(void)
 {
-    sqlite3_stmt *check_stmt;
+    sqlite3_stmt *stmt;
     int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    int result = 0;
+
+    if (sqlite3_prepare_v2(db, SQL_COUNT_PARTIDOS, -1, &stmt, NULL) == SQLITE_OK)
     {
-        count = sqlite3_column_int(check_stmt, 0);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            count = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+        result = count > 0;
     }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
+
+    return result;
+}
+
+/** @brief Obtiene top 1 por métrica (reutilizable) */
+static int get_top_camiseta(const char *metric, const char *orderDir,
+                            char *nombre, int *valor)
+{
+    sqlite3_stmt *stmt = NULL;
+    char query[512];
+    int result = 0;
+
+    snprintf(query, sizeof(query), SQL_BEST_BY_METRIC, metric, orderDir);
+
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) == SQLITE_OK)
     {
-        printf("No hay registros de partidos para exportar estadisticas generales.\n");
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            strcpy(nombre, (const char *)sqlite3_column_text(stmt, 0));
+            *valor = sqlite3_column_int(stmt, 1);
+            result = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return result;
+}
+
+/** @brief Escribe estadística en JSON */
+static void json_write_stat(cJSON *json, const char *cat,
+                            const char *nombre, int valor)
+{
+    cJSON *stat = cJSON_CreateObject();
+    cJSON_AddStringToObject(stat, "camiseta", nombre);
+    cJSON_AddNumberToObject(stat, "valor", valor);
+    cJSON_AddItemToObject(json, cat, stat);
+}
+
+/** @brief Escribe estadísticas en formato CSV */
+static void write_stats_csv(FILE *file, const char *category,
+                            const char *metric, const char *order,
+                            const char *label)
+{
+    char nombre[256];
+    int valor;
+    if (get_top_camiseta(metric, order, nombre, &valor))
+    {
+        fprintf(file, "%s,%s,%d\n", label, nombre, valor);
+    }
+}
+
+/** @brief Escribe estadísticas en formato TXT */
+static void write_stats_txt(FILE *file, const char *category,
+                            const char *metric, const char *order,
+                            const char *label)
+{
+    char nombre[256];
+    int valor;
+    if (get_top_camiseta(metric, order, nombre, &valor))
+    {
+        fprintf(file, "%s: %s (%d)\n", label, nombre, valor);
+    }
+}
+
+/** @brief Escribe estadísticas en formato HTML */
+static void write_stats_html(FILE *file, const char *category,
+                             const char *metric, const char *order,
+                             const char *label)
+{
+    char nombre[256];
+    int valor;
+    if (get_top_camiseta(metric, order, nombre, &valor))
+    {
+        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", label, nombre, valor);
+    }
+}
+
+/** @brief Construye objeto JSON con estadísticas generales */
+static cJSON *json_build_estadisticas(void)
+{
+    cJSON *root = cJSON_CreateObject();
+    if (!root) return NULL;
+
+    char nombre[256];
+    int valor;
+
+    if (get_top_camiseta("SUM(goles)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_goles", nombre, valor);
+    if (get_top_camiseta("SUM(asistencias)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_asistencias", nombre, valor);
+    if (get_top_camiseta("COUNT(*)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_partidos", nombre, valor);
+    if (get_top_camiseta("SUM(goles+asistencias)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_goles_asistencias", nombre, valor);
+    if (get_top_camiseta("AVG(rendimiento_general)", "DESC", nombre, &valor))
+        json_write_stat(root, "mejor_rendimiento", nombre, valor);
+    if (get_top_camiseta("AVG(estado_animo)", "DESC", nombre, &valor))
+        json_write_stat(root, "mejor_estado_animo", nombre, valor);
+    if (get_top_camiseta("AVG(cansancio)", "ASC", nombre, &valor))
+        json_write_stat(root, "menos_cansancio", nombre, valor);
+    if (get_top_camiseta("SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_victorias", nombre, valor);
+    if (get_top_camiseta("SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_empates", nombre, valor);
+    if (get_top_camiseta("SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+        json_write_stat(root, "mas_derrotas", nombre, valor);
+
+    return root;
+}
+
+/* ============================================================================
+ * EXPORTACIÓN ESTADÍSTICAS GENERALES (4 formatos)
+ * ============================================================================ */
+
+void exportar_estadisticas_generales_csv(void)
+{
+    if (!has_partidos())
+    {
+        printf("No hay registros.\n");
         return;
     }
 
-    const char *filepath = get_export_path("estadisticas_generales.csv");
-    FILE *file = fopen(filepath, "w");
+    const char *path = get_export_path("estadisticas_generales.csv");
+    FILE *file = fopen(path, "w");
     if (!file)
     {
-        printf("Error creando archivo CSV\n");
+        printf("Error CSV\n");
         return;
     }
 
     fprintf(file, "Categoria,Camiseta,Valor\n");
 
-    // Camiseta con mas Goles
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Goles,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Asistencias,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Partidos
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Partidos,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Goles + Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Goles+Asistencias,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Rendimiento General promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mejor Rendimiento General Promedio,%s,%.2f\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Estado de Animo promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mejor Estado de Animo Promedio,%s,%.2f\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con menos Cansancio promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 ASC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Menos Cansancio Promedio,%s,%.2f\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Victorias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 1 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Victorias,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Empates
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 2 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Empates,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Derrotas
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 3 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Derrotas,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta mas Sorteada
-    sqlite3_prepare_v2(db, "SELECT c.nombre, c.sorteada FROM camiseta c ORDER BY c.sorteada DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Mas Sorteada,%s,%d\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
+    write_stats_csv(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
+    write_stats_csv(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
+    write_stats_csv(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
+    write_stats_csv(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
+    write_stats_csv(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
+    write_stats_csv(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
+    write_stats_csv(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
+    write_stats_csv(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
+    write_stats_csv(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
+    write_stats_csv(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", filepath);
+    printf("Exportado: %s\n", path);
 }
 
-/**
- * @brief Exporta las estadísticas generales a formato TXT
- */
-void exportar_estadisticas_generales_txt()
+void exportar_estadisticas_generales_txt(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas generales.\n");
+        printf("No hay registros.\n");
         return;
     }
 
-    const char *filepath = get_export_path("estadisticas_generales.txt");
-    FILE *file = fopen(filepath, "w");
+    const char *path = get_export_path("estadisticas_generales.txt");
+    FILE *file = fopen(path, "w");
     if (!file)
     {
-        printf("Error creando archivo TXT\n");
+        printf("Error TXT\n");
         return;
     }
 
-    fprintf(file, "ESTADISTICAS GENERALES\n");
-    fprintf(file, "======================\n\n");
+    fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
 
-    sqlite3_stmt *stmt;
-
-    // Camiseta con mas Goles
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Goles: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Asistencias: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Partidos
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Partidos: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Goles + Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Goles+Asistencias: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Rendimiento General promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mejor Rendimiento General Promedio: %s (%.2f)\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Estado de Animo promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mejor Estado de Animo Promedio: %s (%.2f)\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con menos Cansancio promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 ASC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con menos Cansancio Promedio: %s (%.2f)\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Victorias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 1 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Victorias: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Empates
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 2 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Empates: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Derrotas
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 3 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta con mas Derrotas: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta mas Sorteada
-    sqlite3_prepare_v2(db, "SELECT c.nombre, c.sorteada FROM camiseta c ORDER BY c.sorteada DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "Camiseta mas Sorteada: %s (%d)\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
+    write_stats_txt(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
+    write_stats_txt(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
+    write_stats_txt(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
+    write_stats_txt(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
+    write_stats_txt(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
+    write_stats_txt(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
+    write_stats_txt(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
+    write_stats_txt(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
+    write_stats_txt(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
+    write_stats_txt(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
 
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", filepath);
+    printf("Exportado: %s\n", path);
 }
 
-/**
- * @brief Exporta las estadísticas generales a formato JSON
- */
-void exportar_estadisticas_generales_json()
+void exportar_estadisticas_generales_json(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas generales.\n");
+        printf("No hay registros.\n");
         return;
     }
 
-    const char *filepath = get_export_path("estadisticas_generales.json");
-    FILE *file = fopen(filepath, "w");
+    const char *path = get_export_path("estadisticas_generales.json");
+    FILE *file = fopen(path, "w");
     if (!file)
     {
-        printf("Error creando archivo JSON\n");
+        printf("Error JSON\n");
         return;
     }
 
-    fprintf(file, "{\n");
-    fprintf(file, "  \"estadisticas_generales\": {\n");
+    cJSON *root = cJSON_CreateObject();
+    cJSON *stats = json_build_estadisticas();
+    if (stats) cJSON_AddItemToObject(root, "estadisticas_generales", stats);
 
-    sqlite3_stmt *stmt;
-    int first = 1;
+    char *json_str = cJSON_Print(root);
+    fprintf(file, "%s", json_str);
 
-    // Camiseta con mas Goles
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "    \"mas_goles\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-        first = 0;
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_asistencias\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Partidos
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_partidos\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Goles + Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_goles_asistencias\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Rendimiento General promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mejor_rendimiento_general\": {\"camiseta\": \"%s\", \"valor\": %.2f}", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Estado de Animo promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mejor_estado_animo\": {\"camiseta\": \"%s\", \"valor\": %.2f}", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con menos Cansancio promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 ASC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"menos_cansancio\": {\"camiseta\": \"%s\", \"valor\": %.2f}", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Victorias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 1 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_victorias\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Empates
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 2 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_empates\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Derrotas
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 3 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_derrotas\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta mas Sorteada
-    sqlite3_prepare_v2(db, "SELECT c.nombre, c.sorteada FROM camiseta c ORDER BY c.sorteada DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!first)
-            fprintf(file, ",\n");
-        fprintf(file, "    \"mas_sorteada\": {\"camiseta\": \"%s\", \"valor\": %d}", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    fprintf(file, "\n  }\n");
-    fprintf(file, "}\n");
-
+    free(json_str);
+    cJSON_Delete(root);
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", filepath);
+    printf("Exportado: %s\n", path);
 }
 
-/**
- * @brief Exporta las estadísticas generales a formato HTML
- */
-void exportar_estadisticas_generales_html()
+void exportar_estadisticas_generales_html(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas generales.\n");
+        printf("No hay registros.\n");
         return;
     }
 
-    const char *filepath = get_export_path("estadisticas_generales.html");
-    FILE *file = fopen(filepath, "w");
+    const char *path = get_export_path("estadisticas_generales.html");
+    FILE *file = fopen(path, "w");
     if (!file)
     {
-        printf("Error creando archivo HTML\n");
+        printf("Error HTML\n");
         return;
     }
 
-    fprintf(file, "<!DOCTYPE html>\n");
-    fprintf(file, "<html>\n");
-    fprintf(file, "<head><title>Estadisticas Generales</title></head>\n");
-    fprintf(file, "<body>\n");
-    fprintf(file, "<h1>Estadisticas Generales</h1>\n");
-    fprintf(file, "<table border='1'>\n");
+    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
+    fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
     fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
 
-    sqlite3_stmt *stmt;
+    write_stats_html(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
+    write_stats_html(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
+    write_stats_html(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
+    write_stats_html(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
+    write_stats_html(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
+    write_stats_html(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
+    write_stats_html(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
+    write_stats_html(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
+    write_stats_html(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
+    write_stats_html(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
 
-    // Camiseta con mas Goles
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Goles</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Asistencias</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Partidos
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Partidos</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Goles + Asistencias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Goles+Asistencias</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Rendimiento General promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mejor Rendimiento General Promedio</td><td>%s</td><td>%.2f</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mejor Estado de Animo promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mejor Estado de Animo Promedio</td><td>%s</td><td>%.2f</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con menos Cansancio promedio
-    sqlite3_prepare_v2(db, "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id GROUP BY c.id ORDER BY 2 ASC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Menos Cansancio Promedio</td><td>%s</td><td>%.2f</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_double(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Victorias
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 1 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Victorias</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Empates
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 2 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Empates</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta con mas Derrotas
-    sqlite3_prepare_v2(db, "SELECT c.nombre, COUNT(*) FROM partido p JOIN camiseta c ON p.camiseta_id=c.id WHERE p.resultado = 3 GROUP BY c.id ORDER BY 2 DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Derrotas</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    // Camiseta mas Sorteada
-    sqlite3_prepare_v2(db, "SELECT c.nombre, c.sorteada FROM camiseta c ORDER BY c.sorteada DESC LIMIT 1", -1, &stmt, NULL);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "<tr><td>Mas Sorteada</td><td>%s</td><td>%d</td></tr>\n", sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1));
-    }
-    sqlite3_finalize(stmt);
-
-    fprintf(file, "</table>\n");
-    fprintf(file, "</body>\n");
-    fprintf(file, "</html>\n");
-
+    fprintf(file, "</table>\n</body>\n</html>\n");
     fclose(file);
-    printf("Estadisticas generales exportadas a %s\n", filepath);
+    printf("Exportado: %s\n", path);
 }
 
-/**
- * @brief Exporta las estadísticas por mes a formato CSV
- */
-void exportar_estadisticas_por_mes_csv()
+/* ============================================================================
+ * EXPORTACIÓN POR MES
+ * ============================================================================ */
+
+void exportar_estadisticas_por_mes_csv(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por mes.\n");
+        printf("No hay registros.\n");
         return;
     }
 
     FILE *file = fopen(get_export_path("estadisticas_por_mes.csv"), "w");
     if (!file)
     {
-        printf("Error creando archivo CSV\n");
+        printf("Error CSV\n");
         return;
     }
 
-    fprintf(file, "Mes-Anio,Camiseta,Partidos,Total Goles,Total Asistencias,Avg Goles,Avg Asistencias\n");
+    fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias FROM partido p JOIN camiseta c ON p.camiseta_id = c.id GROUP BY mes_anio, c.id ORDER BY mes_anio DESC, total_goles DESC", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f\n",
-                sqlite3_column_text(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
+                sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
                 sqlite3_column_double(stmt, 6));
     }
 
     sqlite3_finalize(stmt);
     fclose(file);
-    printf("Estadisticas por mes exportadas a %s\n", get_export_path("estadisticas_por_mes.csv"));
+    printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.csv"));
 }
 
-/**
- * @brief Exporta las estadísticas por mes a formato TXT
- */
-void exportar_estadisticas_por_mes_txt()
+void exportar_estadisticas_por_mes_txt(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por mes.\n");
+        printf("No hay registros.\n");
         return;
     }
 
     FILE *file = fopen(get_export_path("estadisticas_por_mes.txt"), "w");
     if (!file)
     {
-        printf("Error creando archivo TXT\n");
+        printf("Error TXT\n");
         return;
     }
 
-    fprintf(file, "ESTADISTICAS POR MES\n");
-    fprintf(file, "====================\n\n");
+    fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias FROM partido p JOIN camiseta c ON p.camiseta_id = c.id GROUP BY mes_anio, c.id ORDER BY mes_anio DESC, total_goles DESC", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
 
-    char current_mes[8] = "";
+    char current[8] = "";
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *mes_anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_mes, mes_anio) != 0)
+        const char *month = (const char *)sqlite3_column_text(stmt, 0);
+        if (strcmp(current, month) != 0)
         {
-            strcpy(current_mes, mes_anio);
-            fprintf(file, "\n%s:\n", mes_anio);
+            strcpy(current, month);
+            fprintf(file, "\n%s:\n", month);
         }
 
-        fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f G, %.2f A)\n",
+        fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
                 sqlite3_column_text(stmt, 1),
                 sqlite3_column_int(stmt, 2),
                 sqlite3_column_int(stmt, 3),
@@ -638,427 +373,132 @@ void exportar_estadisticas_por_mes_txt()
 
     sqlite3_finalize(stmt);
     fclose(file);
-    printf("Estadisticas por mes exportadas a %s\n", get_export_path("estadisticas_por_mes.txt"));
+    printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.txt"));
 }
 
 /**
- * @brief Exporta las estadísticas por mes a formato JSON
+ * @brief Exporta estadísticas por mes en formato JSON
  */
-void exportar_estadisticas_por_mes_json()
+void exportar_estadisticas_por_mes_json(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por mes.\n");
+        printf("No hay registros.\n");
         return;
     }
 
     FILE *file = fopen(get_export_path("estadisticas_por_mes.json"), "w");
     if (!file)
     {
-        printf("Error creando archivo JSON\n");
+        printf("Error JSON\n");
         return;
     }
 
     cJSON *root = cJSON_CreateObject();
-    cJSON *meses = cJSON_CreateObject();
-
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias FROM partido p JOIN camiseta c ON p.camiseta_id = c.id GROUP BY mes_anio, c.id ORDER BY mes_anio DESC, total_goles DESC", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
 
-    char current_mes[8] = "";
-    cJSON *current_mes_obj = NULL;
+    char current[8] = "";
+    cJSON *current_array = NULL;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *mes_anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_mes, mes_anio) != 0)
+        const char *month = (const char *)sqlite3_column_text(stmt, 0);
+        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
+        int partidos = sqlite3_column_int(stmt, 2);
+        int goles = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+        double avg_goles = sqlite3_column_double(stmt, 5);
+        double avg_asistencias = sqlite3_column_double(stmt, 6);
+
+        if (strcmp(current, month) != 0)
         {
-            strcpy(current_mes, mes_anio);
-            current_mes_obj = cJSON_CreateObject();
-            cJSON_AddItemToObject(meses, mes_anio, current_mes_obj);
+            if (current_array)
+            {
+                cJSON_AddItemToObject(root, current, current_array);
+            }
+            strcpy(current, month);
+            current_array = cJSON_CreateArray();
         }
 
-        cJSON *camiseta_obj = cJSON_CreateObject();
-        cJSON_AddNumberToObject(camiseta_obj, "partidos", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(camiseta_obj, "total_goles", sqlite3_column_int(stmt, 3));
-        cJSON_AddNumberToObject(camiseta_obj, "total_asistencias", sqlite3_column_int(stmt, 4));
-        cJSON_AddNumberToObject(camiseta_obj, "avg_goles", sqlite3_column_double(stmt, 5));
-        cJSON_AddNumberToObject(camiseta_obj, "avg_asistencias", sqlite3_column_double(stmt, 6));
-        cJSON_AddItemToObject(current_mes_obj, (const char *)sqlite3_column_text(stmt, 1), camiseta_obj);
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "camiseta", camiseta);
+        cJSON_AddNumberToObject(item, "partidos", partidos);
+        cJSON_AddNumberToObject(item, "goles", goles);
+        cJSON_AddNumberToObject(item, "asistencias", asistencias);
+        cJSON_AddNumberToObject(item, "avg_goles", avg_goles);
+        cJSON_AddNumberToObject(item, "avg_asistencias", avg_asistencias);
+        cJSON_AddItemToArray(current_array, item);
     }
 
-    cJSON_AddItemToObject(root, "estadisticas_por_mes", meses);
+    if (current_array)
+    {
+        cJSON_AddItemToObject(root, current, current_array);
+    }
 
-    char *json_string = cJSON_Print(root);
-    fprintf(file, "%s", json_string);
+    char *json_str = cJSON_Print(root);
+    fprintf(file, "%s", json_str);
 
-    free(json_string);
+    free(json_str);
     cJSON_Delete(root);
-    sqlite3_finalize(stmt);
     fclose(file);
-    printf("Estadisticas por mes exportadas a %s\n", get_export_path("estadisticas_por_mes.json"));
+    printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.json"));
 }
 
 /**
- * @brief Exporta las estadísticas por mes a formato HTML
+ * @brief Exporta estadísticas por mes en formato HTML
  */
-void exportar_estadisticas_por_mes_html()
+void exportar_estadisticas_por_mes_html(void)
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    if (!has_partidos())
     {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por mes.\n");
+        printf("No hay registros.\n");
         return;
     }
 
     FILE *file = fopen(get_export_path("estadisticas_por_mes.html"), "w");
     if (!file)
     {
-        printf("Error creando archivo HTML\n");
+        printf("Error HTML\n");
         return;
     }
 
-    fprintf(file, "<!DOCTYPE html>\n");
-    fprintf(file, "<html>\n");
-    fprintf(file, "<head><title>Estadisticas Por Mes</title></head>\n");
-    fprintf(file, "<body>\n");
-    fprintf(file, "<h1>Estadisticas Por Mes</h1>\n");
+    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
+    fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias FROM partido p JOIN camiseta c ON p.camiseta_id = c.id GROUP BY mes_anio, c.id ORDER BY mes_anio DESC, total_goles DESC", -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
 
-    char current_mes[8] = "";
+    char current[8] = "";
+    int hay = 0;
+
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *mes_anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_mes, mes_anio) != 0)
+        const char *month = (const char *)sqlite3_column_text(stmt, 0);
+        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
+        int partidos = sqlite3_column_int(stmt, 2);
+        int goles = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+        double avg_goles = sqlite3_column_double(stmt, 5);
+        double avg_asistencias = sqlite3_column_double(stmt, 6);
+
+        if (strcmp(current, month) != 0)
         {
-            strcpy(current_mes, mes_anio);
-            if (current_mes[0] != '\0')
-            {
-                fprintf(file, "</table>\n");
-            }
-            fprintf(file, "<h2>%s</h2>\n", mes_anio);
-            fprintf(file, "<table border='1'>\n");
-            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Total Goles</th><th>Total Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>\n");
+            if (hay) fprintf(file, "</table><br>");
+            fprintf(file, "<h2>%s</h2><table border='1'>", month);
+            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
+            strcpy(current, month);
         }
 
-        fprintf(file, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>\n",
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6));
+        fprintf(file,
+                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
+                camiseta, partidos, goles, asistencias, avg_goles, avg_asistencias);
+        hay = 1;
     }
 
-    fprintf(file, "</table>\n");
-    fprintf(file, "</body>\n");
-    fprintf(file, "</html>\n");
+    if (hay) fprintf(file, "</table>");
 
-    sqlite3_finalize(stmt);
+    fprintf(file, "</body></html>\n");
     fclose(file);
-    printf("Estadisticas por mes exportadas a %s\n", get_export_path("estadisticas_por_mes.html"));
-}
-
-/**
- * @brief Exporta las estadísticas por año a formato CSV
- */
-void exportar_estadisticas_por_anio_csv()
-{
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por anio.\n");
-        return;
-    }
-
-    FILE *file = fopen(get_export_path("estadisticas_por_anio.csv"), "w");
-    if (!file)
-    {
-        printf("Error creando archivo CSV\n");
-        return;
-    }
-
-    fprintf(file, "Anio,Camiseta,Partidos,Total Goles,Total Asistencias,Avg Goles,Avg Asistencias,Victorias,Empates,Derrotas\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, "
-                       "SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, "
-                       "ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias, "
-                       "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-                       "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
-                       "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "GROUP BY anio, c.id ORDER BY anio DESC, total_goles DESC",
-                       -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f,%d,%d,%d\n",
-                sqlite3_column_text(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9));
-    }
-
-    sqlite3_finalize(stmt);
-    fclose(file);
-    printf("Estadisticas por anio exportadas a %s\n", get_export_path("estadisticas_por_anio.csv"));
-}
-
-/**
- * @brief Exporta las estadísticas por año a formato TXT
- */
-void exportar_estadisticas_por_anio_txt()
-{
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por anio.\n");
-        return;
-    }
-
-    FILE *file = fopen(get_export_path("estadisticas_por_anio.txt"), "w");
-    if (!file)
-    {
-        printf("Error creando archivo TXT\n");
-        return;
-    }
-
-    fprintf(file, "ESTADISTICAS POR ANIO\n");
-    fprintf(file, "=====================\n\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, "
-                       "SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, "
-                       "ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias, "
-                       "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-                       "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
-                       "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "GROUP BY anio, c.id ORDER BY anio DESC, total_goles DESC",
-                       -1, &stmt, NULL);
-
-    char current_anio[5] = "";
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_anio, anio) != 0)
-        {
-            strcpy(current_anio, anio);
-            fprintf(file, "\n%s:\n", anio);
-        }
-
-        fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f G, %.2f A), %dV %dE %dD\n",
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9));
-    }
-
-    sqlite3_finalize(stmt);
-    fclose(file);
-    printf("Estadisticas por anio exportadas a %s\n", get_export_path("estadisticas_por_anio.txt"));
-}
-
-/**
- * @brief Exporta las estadísticas por año a formato JSON
- */
-void exportar_estadisticas_por_anio_json()
-{
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por anio.\n");
-        return;
-    }
-
-    FILE *file = fopen(get_export_path("estadisticas_por_anio.json"), "w");
-    if (!file)
-    {
-        printf("Error creando archivo JSON\n");
-        return;
-    }
-
-    cJSON *root = cJSON_CreateObject();
-    cJSON *anios = cJSON_CreateObject();
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, "
-                       "SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, "
-                       "ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias, "
-                       "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-                       "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
-                       "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "GROUP BY anio, c.id ORDER BY anio DESC, total_goles DESC",
-                       -1, &stmt, NULL);
-
-    char current_anio[5] = "";
-    cJSON *current_anio_obj = NULL;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_anio, anio) != 0)
-        {
-            strcpy(current_anio, anio);
-            current_anio_obj = cJSON_CreateObject();
-            cJSON_AddItemToObject(anios, anio, current_anio_obj);
-        }
-
-        cJSON *camiseta_obj = cJSON_CreateObject();
-        cJSON_AddNumberToObject(camiseta_obj, "partidos", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(camiseta_obj, "total_goles", sqlite3_column_int(stmt, 3));
-        cJSON_AddNumberToObject(camiseta_obj, "total_asistencias", sqlite3_column_int(stmt, 4));
-        cJSON_AddNumberToObject(camiseta_obj, "avg_goles", sqlite3_column_double(stmt, 5));
-        cJSON_AddNumberToObject(camiseta_obj, "avg_asistencias", sqlite3_column_double(stmt, 6));
-        cJSON_AddNumberToObject(camiseta_obj, "victorias", sqlite3_column_int(stmt, 7));
-        cJSON_AddNumberToObject(camiseta_obj, "empates", sqlite3_column_int(stmt, 8));
-        cJSON_AddNumberToObject(camiseta_obj, "derrotas", sqlite3_column_int(stmt, 9));
-        cJSON_AddItemToObject(current_anio_obj, (const char *)sqlite3_column_text(stmt, 1), camiseta_obj);
-    }
-
-    cJSON_AddItemToObject(root, "estadisticas_por_anio", anios);
-
-    char *json_string = cJSON_Print(root);
-    fprintf(file, "%s", json_string);
-
-    free(json_string);
-    cJSON_Delete(root);
-    sqlite3_finalize(stmt);
-    fclose(file);
-    printf("Estadisticas por anio exportadas a %s\n", get_export_path("estadisticas_por_anio.json"));
-}
-
-/**
- * @brief Exporta las estadísticas por año a formato HTML
- */
-void exportar_estadisticas_por_anio_html()
-{
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        printf("No hay registros de partidos para exportar estadisticas por anio.\n");
-        return;
-    }
-
-    FILE *file = fopen(get_export_path("estadisticas_por_anio.html"), "w");
-    if (!file)
-    {
-        printf("Error creando archivo HTML\n");
-        return;
-    }
-
-    fprintf(file, "<!DOCTYPE html>\n");
-    fprintf(file, "<html>\n");
-    fprintf(file, "<head><title>Estadisticas Por Anio</title></head>\n");
-    fprintf(file, "<body>\n");
-    fprintf(file, "<h1>Estadisticas Por Anio</h1>\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, "
-                       "SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, "
-                       "ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias, "
-                       "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-                       "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
-                       "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "GROUP BY anio, c.id ORDER BY anio DESC, total_goles DESC",
-                       -1, &stmt, NULL);
-
-    char current_anio[5] = "";
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current_anio, anio) != 0)
-        {
-            strcpy(current_anio, anio);
-            if (current_anio[0] != '\0')
-            {
-                fprintf(file, "</table>\n");
-            }
-            fprintf(file, "<h2>%s</h2>\n", anio);
-            fprintf(file, "<table border='1'>\n");
-            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Total Goles</th><th>Total Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th><th>Victorias</th><th>Empates</th><th>Derrotas</th></tr>\n");
-        }
-
-        fprintf(file, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d</td><td>%d</td></tr>\n",
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9));
-    }
-
-    fprintf(file, "</table>\n");
-    fprintf(file, "</body>\n");
-    fprintf(file, "</html>\n");
-
-    sqlite3_finalize(stmt);
-    fclose(file);
-    printf("Estadisticas por anio exportadas a %s\n", get_export_path("estadisticas_por_anio.html"));
+    printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.html"));
 }

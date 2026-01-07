@@ -17,6 +17,8 @@
 /**
  * @brief Convierte el número de resultado a texto
  *
+ * Proporciona representación legible de resultados para la interfaz de usuario.
+ *
  * @param resultado Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA)
  * @return Cadena de texto correspondiente al resultado
  */
@@ -50,6 +52,8 @@ typedef struct
 
 /**
  * @brief Calcula estadísticas generales de todos los partidos
+ *
+ * Establece línea base de rendimiento histórico para comparaciones.
  *
  * @param stats Puntero a la estructura donde almacenar las estadísticas
  */
@@ -148,6 +152,9 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
 
 /**
  * @brief Muestra los últimos 5 partidos
+ *
+ * Facilita la visualización rápida del rendimiento reciente para contextualizar
+ * las estadísticas comparativas.
  */
 static void mostrar_ultimos5_partidos()
 {
@@ -183,7 +190,46 @@ static void mostrar_ultimos5_partidos()
 }
 
 /**
+ * @brief Muestra comparación de estadísticas últimos 5 vs general
+ *
+ * Permite identificar tendencias recientes respecto al rendimiento histórico
+ * para tomar decisiones de mejora.
+ *
+ * @param ultimos Estadísticas de últimos 5 partidos
+ * @param generales Estadísticas generales
+ */
+static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos, const Estadisticas *generales)
+{
+    printf("\nCOMPARACION ULTIMOS 5 VS PROMEDIO GENERAL:\n");
+    printf("----------------------------------------\n");
+    printf("Goles:        %.1f vs %.1f\n", ultimos->avg_goles, generales->avg_goles);
+    printf("Asistencias:  %.1f vs %.1f\n", ultimos->avg_asistencias, generales->avg_asistencias);
+    printf("Rendimiento:  %.1f vs %.1f\n", ultimos->avg_rendimiento, generales->avg_rendimiento);
+    printf("Cansancio:    %.1f vs %.1f\n", ultimos->avg_cansancio, generales->avg_cansancio);
+    printf("Estado Animo: %.1f vs %.1f\n", ultimos->avg_animo, generales->avg_animo);
+}
+
+/**
+ * @brief Muestra rachas de victorias y derrotas
+ *
+ * Ayuda a entender patrones de consistencia en el rendimiento competitivo.
+ *
+ * @param mejor_racha_v Mejor racha de victorias
+ * @param peor_racha_d Peor racha de derrotas
+ */
+static void mostrar_rachas(int mejor_racha_v, int peor_racha_d)
+{
+    printf("\nRACHAS:\n");
+    printf("----------------------------------------\n");
+    printf("Mejor racha de victorias: %d partidos\n", mejor_racha_v);
+    printf("Peor racha de derrotas: %d partidos\n", peor_racha_d);
+}
+
+/**
  * @brief Genera un mensaje motivacional basado en el rendimiento
+ *
+ * Proporciona retroalimentación psicológica para mantener la motivación
+ * y enfoque en el desarrollo deportivo.
  *
  * @param ultimos Puntero a estadísticas de últimos 5 partidos
  * @param generales Puntero a estadísticas generales
@@ -240,20 +286,8 @@ void mostrar_analisis()
     }
 
     mostrar_ultimos5_partidos();
-
-    printf("\nCOMPARACION ULTIMOS 5 VS PROMEDIO GENERAL:\n");
-    printf("----------------------------------------\n");
-    printf("Goles:        %.1f vs %.1f\n", ultimos5.avg_goles, generales.avg_goles);
-    printf("Asistencias:  %.1f vs %.1f\n", ultimos5.avg_asistencias, generales.avg_asistencias);
-    printf("Rendimiento:  %.1f vs %.1f\n", ultimos5.avg_rendimiento, generales.avg_rendimiento);
-    printf("Cansancio:    %.1f vs %.1f\n", ultimos5.avg_cansancio, generales.avg_cansancio);
-    printf("Estado Animo: %.1f vs %.1f\n", ultimos5.avg_animo, generales.avg_animo);
-
-    printf("\nRACHAS:\n");
-    printf("----------------------------------------\n");
-    printf("Mejor racha de victorias: %d partidos\n", mejor_racha_v);
-    printf("Peor racha de derrotas: %d partidos\n", peor_racha_d);
-
+    mostrar_comparacion_estadisticas(&ultimos5, &generales);
+    mostrar_rachas(mejor_racha_v, peor_racha_d);
     mensaje_motivacional(&ultimos5, &generales);
 
     pause_console();

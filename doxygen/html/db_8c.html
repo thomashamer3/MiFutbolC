@@ -123,35 +123,32 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a6ee385ce9ce821efd7b6b736a1134938" id="r_a6ee385ce9ce821efd7b6b736a1134938"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6ee385ce9ce821efd7b6b736a1134938">get_executable_dir</a> (char *buffer, size_t size)</td></tr>
-<tr class="memdesc:a6ee385ce9ce821efd7b6b736a1134938"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el directorio del ejecutable.  <br /></td></tr>
-<tr class="separator:a6ee385ce9ce821efd7b6b736a1134938"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68444176bb98032c54b65b982312cfa6" id="r_a68444176bb98032c54b65b982312cfa6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a68444176bb98032c54b65b982312cfa6">db_init</a> ()</td></tr>
-<tr class="memdesc:a68444176bb98032c54b65b982312cfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa la base de datos.  <br /></td></tr>
+<tr class="memdesc:a68444176bb98032c54b65b982312cfa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa el entorno completo de persistencia de datos.  <br /></td></tr>
 <tr class="separator:a68444176bb98032c54b65b982312cfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9130d3b5560da57a53135491d888c7b7" id="r_a9130d3b5560da57a53135491d888c7b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9130d3b5560da57a53135491d888c7b7">db_close</a> ()</td></tr>
-<tr class="memdesc:a9130d3b5560da57a53135491d888c7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cierra la conexión a la base de datos.  <br /></td></tr>
+<tr class="memdesc:a9130d3b5560da57a53135491d888c7b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Libera recursos de conexión a base de datos.  <br /></td></tr>
 <tr class="separator:a9130d3b5560da57a53135491d888c7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39fef26de49fd814ed415e3b49e3903b" id="r_a39fef26de49fd814ed415e3b49e3903b"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a39fef26de49fd814ed415e3b49e3903b">get_user_name</a> ()</td></tr>
-<tr class="memdesc:a39fef26de49fd814ed415e3b49e3903b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el nombre del usuario de la base de datos.  <br /></td></tr>
+<tr class="memdesc:a39fef26de49fd814ed415e3b49e3903b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recupera identidad del usuario para personalización.  <br /></td></tr>
 <tr class="separator:a39fef26de49fd814ed415e3b49e3903b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74ed9cccce806cf8c1f4c84f00a84344" id="r_a74ed9cccce806cf8c1f4c84f00a84344"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a74ed9cccce806cf8c1f4c84f00a84344">set_user_name</a> (const char *nombre)</td></tr>
-<tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece o actualiza el nombre del usuario en la base de datos.  <br /></td></tr>
+<tr class="memdesc:a74ed9cccce806cf8c1f4c84f00a84344"><td class="mdescLeft">&#160;</td><td class="mdescRight">Persiste identidad del usuario para sesiones futuras.  <br /></td></tr>
 <tr class="separator:a74ed9cccce806cf8c1f4c84f00a84344"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc24ac8e4815ebbf5a74985607b0991b" id="r_afc24ac8e4815ebbf5a74985607b0991b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc24ac8e4815ebbf5a74985607b0991b">get_data_dir</a> ()</td></tr>
-<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de datos.  <br /></td></tr>
+<tr class="memdesc:afc24ac8e4815ebbf5a74985607b0991b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Proporciona acceso al directorio de almacenamiento interno.  <br /></td></tr>
 <tr class="separator:afc24ac8e4815ebbf5a74985607b0991b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0a310a1a5b9daa761dcd4452d6ff083" id="r_ab0a310a1a5b9daa761dcd4452d6ff083"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab0a310a1a5b9daa761dcd4452d6ff083">get_export_dir</a> ()</td></tr>
-<tr class="memdesc:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de exportaciones.  <br /></td></tr>
+<tr class="memdesc:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece ubicación accesible para archivos exportados.  <br /></td></tr>
 <tr class="separator:ab0a310a1a5b9daa761dcd4452d6ff083"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a383e9ba7b4280151a07afe5b79a054d3" id="r_a383e9ba7b4280151a07afe5b79a054d3"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a383e9ba7b4280151a07afe5b79a054d3">get_import_dir</a> ()</td></tr>
-<tr class="memdesc:a383e9ba7b4280151a07afe5b79a054d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la ruta del directorio de importaciones.  <br /></td></tr>
+<tr class="memdesc:a383e9ba7b4280151a07afe5b79a054d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establece ubicación accesible para archivos a importar.  <br /></td></tr>
 <tr class="separator:a383e9ba7b4280151a07afe5b79a054d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:ad6e663497d2c934364b3bcf07496b30b" id="r_ad6e663497d2c934364b3bcf07496b30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsqlite3.html">sqlite3</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad6e663497d2c934364b3bcf07496b30b">db</a> = NULL</td></tr>
-<tr class="memdesc:ad6e663497d2c934364b3bcf07496b30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Puntero global a la conexión de la base de datos SQLite.  <br /></td></tr>
+<tr class="memdesc:ad6e663497d2c934364b3bcf07496b30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instancia global de conexión SQLite3.  <br /></td></tr>
 <tr class="separator:ad6e663497d2c934364b3bcf07496b30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -192,8 +189,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Cierra la conexión a la base de datos. </p>
-<p>Libera los recursos asociados con la conexión a la base de datos SQLite, cerrando la conexión de manera segura si está abierta. </p>
+<p>Libera recursos de conexión a base de datos. </p>
+<p>Finaliza conexión y libera recursos del motor SQLite.</p>
+<p>Evita fugas de memoria cerrando conexiones SQLite activas de manera ordenada durante el cierre de la aplicación. </p>
 
 </div>
 </div>
@@ -212,10 +210,10 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Inicializa la base de datos. </p>
-<p>Inicializa la conexión a la base de datos.</p>
-<p>Crea el directorio de datos si no existe, abre la conexión a la base de datos y crea las tablas necesarias (camiseta, partido, lesion) si no existen. También añade la columna 'sorteada' a la tabla camiseta si no está presente.</p>
-<dl class="section return"><dt>Returns</dt><dd>1 si la inicialización fue exitosa, 0 en caso de error </dd></dl>
+<p>Inicializa el entorno completo de persistencia de datos. </p>
+<p>Inicializa infraestructura completa de persistencia.</p>
+<p>Orquesta configuración de rutas, conexión a base de datos, creación de esquema y preparación de directorios auxiliares.</p>
+<dl class="section return"><dt>Returns</dt><dd>1 si inicialización completa exitosa, 0 en caso de error </dd></dl>
 
 </div>
 </div>
@@ -234,38 +232,10 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de datos. </p>
+<p>Proporciona acceso al directorio de almacenamiento interno. </p>
+<p>Proporciona ruta absoluta al directorio de datos internos.</p>
+<p>Facilita operaciones de archivo que requieren ubicación de datos persistentes, manteniendo separación entre datos de aplicación y usuario.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de datos </dd></dl>
-
-</div>
-</div>
-<a id="a6ee385ce9ce821efd7b6b736a1134938" name="a6ee385ce9ce821efd7b6b736a1134938"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ee385ce9ce821efd7b6b736a1134938">&#9670;&#160;</a></span>get_executable_dir()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void get_executable_dir </td>
-          <td>(</td>
-          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Obtiene el directorio del ejecutable. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">buffer</td><td>Buffer donde se almacenará la ruta </td></tr>
-    <tr><td class="paramname">size</td><td>Tamaño del buffer </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -284,7 +254,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de exportaciones. </p>
+<p>Establece ubicación accesible para archivos exportados. </p>
+<p>Determina ubicación canónica para archivos de exportación.</p>
+<p>Configura directorio visible al usuario para almacenamiento de datos exportados, permitiendo fácil acceso y backup de información.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de exportaciones </dd></dl>
 
 </div>
@@ -304,7 +276,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene la ruta del directorio de importaciones. </p>
+<p>Establece ubicación accesible para archivos a importar. </p>
+<p>Determina ubicación canónica para archivos de importación.</p>
+<p>Configura directorio visible al usuario para colocación de archivos de importación, facilitando carga masiva de datos.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con la ruta del directorio de importaciones </dd></dl>
 
 </div>
@@ -324,8 +298,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Obtiene el nombre del usuario de la base de datos. </p>
-<p>Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe. Si no hay usuario registrado, devuelve NULL.</p>
+<p>Recupera identidad del usuario para personalización. </p>
+<p>Recupera configuración de usuario desde tabla relacional.</p>
+<p>Permite adaptar la interfaz y mensajes según el usuario identificado, mejorando la experiencia personalizada de la aplicación.</p>
 <dl class="section return"><dt>Returns</dt><dd>Puntero a cadena con el nombre del usuario, o NULL si no existe </dd></dl>
 
 </div>
@@ -345,8 +320,9 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Establece o actualiza el nombre del usuario en la base de datos. </p>
-<p>Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.</p>
+<p>Persiste identidad del usuario para sesiones futuras. </p>
+<p>Persiste configuración de usuario en base de datos.</p>
+<p>Almacena nombre de usuario en tabla dedicada para mantener consistencia en configuraciones personales entre ejecuciones.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">nombre</td><td>El nombre del usuario a guardar </td></tr>
@@ -370,7 +346,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Puntero global a la conexión de la base de datos SQLite. </p>
+<p>Instancia global de conexión SQLite3. </p>
 <p>Puntero global a la base de datos SQLite </p>
 
 </div>
@@ -381,7 +357,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="db_8c.html">db.c</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

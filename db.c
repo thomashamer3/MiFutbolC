@@ -40,37 +40,14 @@ static char EXPORT_DIR[1024];
 static char IMPORT_DIR[1024];
 
 /**
- * @brief Obtiene el directorio del ejecutable
+ * @brief Configura rutas y directorios para almacenamiento de datos
  *
- * @param buffer Buffer donde se almacenará la ruta
- * @param size Tamaño del buffer
+ * Establece ubicaciones específicas del sistema operativo para
+ * base de datos interna y directorios de usuario accesibles.
+ *
+ * @return 1 si configuración exitosa, 0 en caso de error
  */
-void get_executable_dir(char *buffer, size_t size)
-{
-#ifdef _WIN32
-    GetModuleFileName(NULL, buffer, size);
-    // Remover el nombre del archivo para obtener solo el directorio
-    char *last_backslash = strrchr(buffer, '\\');
-    if (last_backslash)
-    {
-        *last_backslash = '\0';
-    }
-#else
-    // Para otros sistemas operativos
-    strcpy(buffer, ".");
-#endif
-}
-
-/**
- * @brief Inicializa la base de datos
- *
- * Crea el directorio de datos si no existe, abre la conexión a la base de datos
- * y crea las tablas necesarias (camiseta, partido, lesion) si no existen.
- * También añade la columna 'sorteada' a la tabla camiseta si no está presente.
- *
- * @return 1 si la inicialización fue exitosa, 0 en caso de error
- */
-int db_init()
+static int setup_database_paths()
 {
 #ifdef _WIN32
     // Usar AppData\Local para la base de datos (oculta, interna)
@@ -105,17 +82,12 @@ int db_init()
         return 0;
     }
 #else
-    // Para otros sistemas operativos, usar directorio del ejecutable
-    char exe_dir[1024];
-    get_executable_dir(exe_dir, sizeof(exe_dir));
-
+    // Para otros sistemas operativos, usar directorio actual
     memset(DB_DIR, 0, sizeof(DB_DIR));
-    strcpy(DB_DIR, exe_dir);
-    strncat(DB_DIR, "/data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
+    strcpy(DB_DIR, "./data");
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy(DB_PATH, exe_dir);
-    strncat(DB_PATH, "/data/mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
+    strcpy(DB_PATH, "./data/mifutbol.db");
 
     // Crear directorio si no existe
     if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
@@ -124,12 +96,37 @@ int db_init()
         return 0;
     }
 #endif
+    return 1;
+}
 
+/**
+ * @brief Establece conexión activa con base de datos SQLite
+ *
+ * Abre archivo de base de datos y configura puntero global para
+ * operaciones subsiguientes de consulta y modificación.
+ *
+ * @return 1 si conexión exitosa, 0 en caso de error
+ */
+static int create_database_connection()
+{
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
         printf("Error abriendo DB: %s\n", sqlite3_errmsg(db));
         return 0;
     }
+    return 1;
+}
+
+/**
+ * @brief Crea esquema completo de tablas si no existen
+ *
+ * Define estructura relacional completa incluyendo todas las entidades,
+ * restricciones de integridad referencial y valores por defecto.
+ *
+ * @return 1 si creación exitosa, 0 en caso de error
+ */
+static int create_database_schema()
+{
     const char *sql_create =
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -161,41 +158,174 @@ int db_init()
 
         "CREATE TABLE IF NOT EXISTS usuario ("
         " id INTEGER PRIMARY KEY,"
-        " nombre TEXT NOT NULL);";
+        " nombre TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS equipo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " tipo INTEGER NOT NULL,"
+        " tipo_futbol INTEGER NOT NULL,"
+        " num_jugadores INTEGER NOT NULL,"
+        " partido_id INTEGER DEFAULT -1);"
+
+        "CREATE TABLE IF NOT EXISTS jugador ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " equipo_id INTEGER NOT NULL,"
+        " nombre TEXT NOT NULL,"
+        " numero INTEGER NOT NULL,"
+        " posicion INTEGER NOT NULL,"
+        " es_capitan INTEGER NOT NULL,"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+
+        "CREATE TABLE IF NOT EXISTS torneo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " tiene_equipo_fijo INTEGER NOT NULL,"
+        " equipo_fijo_id INTEGER DEFAULT -1,"
+        " cantidad_equipos INTEGER NOT NULL,"
+        " tipo_torneo INTEGER NOT NULL,"
+        " formato_torneo INTEGER NOT NULL,"
+        " fase_actual TEXT DEFAULT 'Fase de Grupos');"
+
+        "CREATE TABLE IF NOT EXISTS equipo_torneo ("
+        " torneo_id INTEGER NOT NULL,"
+        " equipo_id INTEGER NOT NULL,"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
+        " PRIMARY KEY(torneo_id, equipo_id));"
+
+        "CREATE TABLE IF NOT EXISTS partido_torneo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " torneo_id INTEGER NOT NULL,"
+        " equipo1_id INTEGER NOT NULL,"
+        " equipo2_id INTEGER NOT NULL,"
+        " fecha TEXT,"
+        " goles_equipo1 INTEGER DEFAULT 0,"
+        " goles_equipo2 INTEGER DEFAULT 0,"
+        " estado TEXT,"
+        " fase TEXT DEFAULT 'Fase de Grupos',"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(equipo1_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(equipo2_id) REFERENCES equipo(id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_torneo_estadisticas ("
+        " torneo_id INTEGER NOT NULL,"
+        " equipo_id INTEGER NOT NULL,"
+        " partidos_jugados INTEGER DEFAULT 0,"
+        " partidos_ganados INTEGER DEFAULT 0,"
+        " partidos_empatados INTEGER DEFAULT 0,"
+        " partidos_perdidos INTEGER DEFAULT 0,"
+        " goles_favor INTEGER DEFAULT 0,"
+        " goles_contra INTEGER DEFAULT 0,"
+        " puntos INTEGER DEFAULT 0,"
+        " estado TEXT DEFAULT 'Activo',"
+        " PRIMARY KEY(torneo_id, equipo_id),"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+
+        "CREATE TABLE IF NOT EXISTS jugador_estadisticas ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " jugador_id INTEGER NOT NULL,"
+        " torneo_id INTEGER NOT NULL,"
+        " equipo_id INTEGER NOT NULL,"
+        " goles INTEGER DEFAULT 0,"
+        " asistencias INTEGER DEFAULT 0,"
+        " tarjetas_amarillas INTEGER DEFAULT 0,"
+        " tarjetas_rojas INTEGER DEFAULT 0,"
+        " minutos_jugados INTEGER DEFAULT 0,"
+        " FOREIGN KEY(jugador_id) REFERENCES jugador(id),"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_historial ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " equipo_id INTEGER NOT NULL,"
+        " torneo_id INTEGER NOT NULL,"
+        " posicion_final INTEGER,"
+        " partidos_jugados INTEGER DEFAULT 0,"
+        " partidos_ganados INTEGER DEFAULT 0,"
+        " partidos_empatados INTEGER DEFAULT 0,"
+        " partidos_perdidos INTEGER DEFAULT 0,"
+        " goles_favor INTEGER DEFAULT 0,"
+        " goles_contra INTEGER DEFAULT 0,"
+        " mejor_goleador TEXT,"
+        " goles_mejor_goleador INTEGER DEFAULT 0,"
+        " fecha_inicio TEXT,"
+        " fecha_fin TEXT,"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
+
+        "CREATE TABLE IF NOT EXISTS torneo_fases ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " torneo_id INTEGER NOT NULL,"
+        " nombre_fase TEXT NOT NULL,"
+        " descripcion TEXT,"
+        " orden INTEGER NOT NULL,"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_fase ("
+        " torneo_id INTEGER NOT NULL,"
+        " equipo_id INTEGER NOT NULL,"
+        " fase_id INTEGER NOT NULL,"
+        " grupo TEXT,"
+        " posicion_en_grupo INTEGER DEFAULT 0,"
+        " clasificado INTEGER DEFAULT 0,"
+        " eliminado INTEGER DEFAULT 0,"
+        " PRIMARY KEY(torneo_id, equipo_id, fase_id),"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(fase_id) REFERENCES torneo_fases(id));";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
         printf("Error creando tablas\n");
         return 0;
     }
+    return 1;
+}
 
-    // Add columns if they don't exist
-    const char *alter_sorteada = "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_sorteada, 0, 0, 0); // Ignore errors if column already exists
+/**
+ * @brief Agrega columnas faltantes por evolución del esquema
+ *
+ * Ejecuta sentencias ALTER TABLE para añadir campos nuevos sin
+ * afectar datos existentes, ignorando errores de columnas duplicadas.
+ */
+static void add_missing_columns()
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN estado_animo INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';",
+        "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
+        NULL
+    };
 
-    const char *alter_resultado = "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_resultado, 0, 0, 0); // Ignore errors if column already exists
+    for (int i = 0; alter_statements[i] != NULL; i++)
+    {
+        sqlite3_exec(db, alter_statements[i], 0, 0, 0); // Ignore errors if column already exists
+    }
+}
 
-    const char *alter_clima = "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_clima, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_dia = "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_dia, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_rendimiento_general = "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_rendimiento_general, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_cansancio = "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_cansancio, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_estado_animo = "ALTER TABLE partido ADD COLUMN estado_animo INTEGER DEFAULT 0;";
-    sqlite3_exec(db, alter_estado_animo, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_comentario_personal = "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';";
-    sqlite3_exec(db, alter_comentario_personal, 0, 0, 0); // Ignore errors if column already exists
-
-    const char *alter_lesion_partido_id = "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;";
-    sqlite3_exec(db, alter_lesion_partido_id, 0, 0, 0); // Ignore errors if column already exists
+/**
+ * @brief Inicializa el entorno completo de persistencia de datos
+ *
+ * Orquesta configuración de rutas, conexión a base de datos,
+ * creación de esquema y preparación de directorios auxiliares.
+ *
+ * @return 1 si inicialización completa exitosa, 0 en caso de error
+ */
+int db_init()
+{
+    if (!setup_database_paths()) return 0;
+    if (!create_database_connection()) return 0;
+    if (!create_database_schema()) return 0;
+    add_missing_columns();
 
     // Crear directorios de importación y exportación al iniciar
     get_import_dir();
@@ -205,10 +335,10 @@ int db_init()
 }
 
 /**
- * @brief Cierra la conexión a la base de datos
+ * @brief Libera recursos de conexión a base de datos
  *
- * Libera los recursos asociados con la conexión a la base de datos SQLite,
- * cerrando la conexión de manera segura si está abierta.
+ * Evita fugas de memoria cerrando conexiones SQLite activas
+ * de manera ordenada durante el cierre de la aplicación.
  */
 void db_close()
 {
@@ -217,10 +347,10 @@ void db_close()
 }
 
 /**
- * @brief Obtiene el nombre del usuario de la base de datos
+ * @brief Recupera identidad del usuario para personalización
  *
- * Consulta la tabla 'usuario' y devuelve el nombre del usuario si existe.
- * Si no hay usuario registrado, devuelve NULL.
+ * Permite adaptar la interfaz y mensajes según el usuario identificado,
+ * mejorando la experiencia personalizada de la aplicación.
  *
  * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
  */
@@ -247,9 +377,10 @@ char* get_user_name()
 }
 
 /**
- * @brief Establece o actualiza el nombre del usuario en la base de datos
+ * @brief Persiste identidad del usuario para sesiones futuras
  *
- * Inserta un nuevo registro en la tabla 'usuario' si no existe, o actualiza el existente.
+ * Almacena nombre de usuario en tabla dedicada para mantener
+ * consistencia en configuraciones personales entre ejecuciones.
  *
  * @param nombre El nombre del usuario a guardar
  * @return 1 si la operación fue exitosa, 0 en caso de error
@@ -274,7 +405,10 @@ int set_user_name(const char* nombre)
 }
 
 /**
- * @brief Obtiene la ruta del directorio de datos
+ * @brief Proporciona acceso al directorio de almacenamiento interno
+ *
+ * Facilita operaciones de archivo que requieren ubicación de datos
+ * persistentes, manteniendo separación entre datos de aplicación y usuario.
  *
  * @return Puntero a cadena con la ruta del directorio de datos
  */
@@ -284,7 +418,10 @@ const char* get_data_dir()
 }
 
 /**
- * @brief Obtiene la ruta del directorio de exportaciones
+ * @brief Establece ubicación accesible para archivos exportados
+ *
+ * Configura directorio visible al usuario para almacenamiento de
+ * datos exportados, permitiendo fácil acceso y backup de información.
  *
  * @return Puntero a cadena con la ruta del directorio de exportaciones
  */
@@ -334,7 +471,10 @@ const char* get_export_dir()
 }
 
 /**
- * @brief Obtiene la ruta del directorio de importaciones
+ * @brief Establece ubicación accesible para archivos a importar
+ *
+ * Configura directorio visible al usuario para colocación de
+ * archivos de importación, facilitando carga masiva de datos.
  *
  * @return Puntero a cadena con la ruta del directorio de importaciones
  */

@@ -13,6 +13,7 @@ var annotated_dup =
     [ "BtShared", "struct_bt_shared.html", null ],
     [ "BusyHandler", "struct_busy_handler.html", null ],
     [ "CallCount", "struct_call_count.html", null ],
+    [ "CamisetaDataMejorado", "struct_camiseta_data_mejorado.html", null ],
     [ "CellArray", "struct_cell_array.html", null ],
     [ "CellInfo", "struct_cell_info.html", null ],
     [ "CheckOnCtx", "struct_check_on_ctx.html", null ],

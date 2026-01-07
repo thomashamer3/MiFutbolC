@@ -143,6 +143,8 @@ Functions</h2></td></tr>
 
 <p>Exporta datos de lesiones a formato CSV con análisis avanzado. </p>
 <p>Exporta los datos de lesiones incluyendo estadísticas avanzadas como impacto en rendimiento, partidos antes y después de la lesión, y comparación de rendimiento.</p>
+<dl class="section pre"><dt>Precondition</dt><dd>La base de datos debe contener registros en la tabla 'lesion' </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Crea el archivo 'lesiones_mejorado.csv' en el directorio de exportación</dd></dl>
 <p>Exporta datos de lesiones a formato CSV con análisis avanzado.</p>
 <p>Crea un archivo CSV con estadísticas avanzadas incluyendo impacto en rendimiento.</p>
 <p>Esta función exporta los datos de lesiones con métricas avanzadas como:</p><ul>
@@ -176,6 +178,8 @@ Functions</h2></td></tr>
 
 <p>Exporta datos de lesiones a formato HTML con análisis avanzado. </p>
 <p>Exporta los datos de lesiones en formato HTML con estadísticas avanzadas y análisis de impacto para visualización en navegadores web.</p>
+<dl class="section pre"><dt>Precondition</dt><dd>La base de datos debe contener registros en la tabla 'lesion' </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Crea el archivo 'lesiones_mejorado.html' en el directorio de exportación</dd></dl>
 <p>Exporta datos de lesiones a formato HTML con análisis avanzado.</p>
 <p>Crea un archivo HTML con estadísticas avanzadas y análisis de impacto.</p>
 <p>Esta función exporta los datos de lesiones en formato HTML con métricas avanzadas como:</p><ul>
@@ -209,6 +213,24 @@ Functions</h2></td></tr>
 
 <p>Exporta datos de lesiones a formato JSON con análisis avanzado. </p>
 <p>Exporta los datos de lesiones en formato JSON con estadísticas avanzadas y análisis de impacto para fácil procesamiento por otras aplicaciones.</p>
+<p>Estructura del JSON: </p><div class="fragment"><div class="line">[</div>
+<div class="line">  {</div>
+<div class="line">    <span class="stringliteral">&quot;id&quot;</span>: N,</div>
+<div class="line">    <span class="stringliteral">&quot;jugador&quot;</span>: <span class="stringliteral">&quot;Nombre&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;tipo&quot;</span>: <span class="stringliteral">&quot;Tipo de lesión&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;descripcion&quot;</span>: <span class="stringliteral">&quot;Descripción&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;fecha&quot;</span>: <span class="stringliteral">&quot;YYYY-MM-DD&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;camiseta_nombre&quot;</span>: <span class="stringliteral">&quot;Nombre de camiseta&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;partidos_antes_lesion&quot;</span>: N,</div>
+<div class="line">    <span class="stringliteral">&quot;partidos_despues_lesion&quot;</span>: N,</div>
+<div class="line">    <span class="stringliteral">&quot;rendimiento_antes&quot;</span>: N.N,</div>
+<div class="line">    <span class="stringliteral">&quot;rendimiento_despues&quot;</span>: N.N,</div>
+<div class="line">    <span class="stringliteral">&quot;impacto_rendimiento&quot;</span>: N.N</div>
+<div class="line">  },</div>
+<div class="line">  ...</div>
+<div class="line">]</div>
+</div><!-- fragment --><dl class="section pre"><dt>Precondition</dt><dd>La base de datos debe contener registros en la tabla 'lesion' </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Crea el archivo 'lesiones_mejorado.json' en el directorio de exportación</dd></dl>
 <p>Exporta datos de lesiones a formato JSON con análisis avanzado.</p>
 <p>Crea un archivo JSON con estadísticas avanzadas y análisis de impacto.</p>
 <p>Esta función exporta los datos de lesiones en formato JSON con métricas avanzadas como:</p><ul>
@@ -242,6 +264,8 @@ Functions</h2></td></tr>
 
 <p>Exporta datos de lesiones a formato TXT con análisis avanzado. </p>
 <p>Exporta los datos de lesiones en formato de texto con estadísticas avanzadas y análisis de impacto en un formato legible.</p>
+<dl class="section pre"><dt>Precondition</dt><dd>La base de datos debe contener registros en la tabla 'lesion' </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Crea el archivo 'lesiones_mejorado.txt' en el directorio de exportación</dd></dl>
 <p>Exporta datos de lesiones a formato TXT con análisis avanzado.</p>
 <p>Crea un archivo de texto con estadísticas avanzadas y análisis de impacto.</p>
 <p>Esta función exporta los datos de lesiones en formato de texto legible con métricas avanzadas como:</p><ul>
@@ -264,7 +288,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="export__lesiones__mejorado_8h.html">export_lesiones_mejorado.h</a></li>
-    <li class="footer">Generated on Sat Jan 3 2026 01:56:48 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>
