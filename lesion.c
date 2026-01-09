@@ -214,7 +214,7 @@ static void modificar_todo_lesion()
     int camiseta_id;
     input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
     input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
-    input_string("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
+    input_date("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
     camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=?, descripcion=?, fecha=?, camiseta_id=? WHERE id=?", -1, &stmt, NULL);

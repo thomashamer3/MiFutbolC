@@ -16,6 +16,8 @@ var searchData=
   ['importar_5fpartidos_5fhtml_13',['importar_partidos_html',['../import_8h.html#a2c324f9c6feaf360a84a4cb8adbc677e',1,'import.h']]],
   ['importar_5fpartidos_5fjson_14',['importar_partidos_json',['../import_8h.html#a22e431b61a3145fc9e5163be3624f820',1,'import.h']]],
   ['importar_5fpartidos_5ftxt_15',['importar_partidos_txt',['../import_8h.html#ab08844a279b0b384d9002f5c12e40215',1,'import.h']]],
-  ['input_5fint_16',['input_int',['../utils_8c.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c'],['../utils_8h.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c']]],
-  ['input_5fstring_17',['input_string',['../utils_8c.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c']]]
+  ['input_5fdate_16',['input_date',['../utils_8c.html#a2d355624a4738917e8ee615af4d4e52b',1,'input_date(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a2d355624a4738917e8ee615af4d4e52b',1,'input_date(const char *msg, char *buffer, int size):&#160;utils.c']]],
+  ['input_5fdouble_17',['input_double',['../utils_8c.html#a1ab91dab4391216db23fb180ed1ae49c',1,'input_double(const char *msg):&#160;utils.c'],['../utils_8h.html#a1ab91dab4391216db23fb180ed1ae49c',1,'input_double(const char *msg):&#160;utils.c']]],
+  ['input_5fint_18',['input_int',['../utils_8c.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c'],['../utils_8h.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c']]],
+  ['input_5fstring_19',['input_string',['../utils_8c.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c']]]
 ];

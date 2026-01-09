@@ -128,15 +128,6 @@ Functions</h2></td></tr>
 <tr class="memitem:ab3488a55725a79b3b86467600676aed4" id="r_ab3488a55725a79b3b86467600676aed4"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab3488a55725a79b3b86467600676aed4">get_export_path</a> (const char *filename)</td></tr>
 <tr class="memdesc:ab3488a55725a79b3b86467600676aed4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construye la ruta completa para un archivo de exportación.  <br /></td></tr>
 <tr class="separator:ab3488a55725a79b3b86467600676aed4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a630ee8617ddc08a5936e6373d61c398f" id="r_a630ee8617ddc08a5936e6373d61c398f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a630ee8617ddc08a5936e6373d61c398f">resultado_to_text</a> (int resultado)</td></tr>
-<tr class="memdesc:a630ee8617ddc08a5936e6373d61c398f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte el número de resultado a texto.  <br /></td></tr>
-<tr class="separator:a630ee8617ddc08a5936e6373d61c398f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aca802402bf45520003a233e27d8eaaab" id="r_aca802402bf45520003a233e27d8eaaab"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aca802402bf45520003a233e27d8eaaab">clima_to_text</a> (int clima)</td></tr>
-<tr class="memdesc:aca802402bf45520003a233e27d8eaaab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte el número de clima a texto.  <br /></td></tr>
-<tr class="separator:aca802402bf45520003a233e27d8eaaab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae82023dc6bfe9f991e161496cd7a5af4" id="r_ae82023dc6bfe9f991e161496cd7a5af4"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae82023dc6bfe9f991e161496cd7a5af4">dia_to_text</a> (int dia)</td></tr>
-<tr class="memdesc:ae82023dc6bfe9f991e161496cd7a5af4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte el número de dia a texto.  <br /></td></tr>
-<tr class="separator:ae82023dc6bfe9f991e161496cd7a5af4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb2e7fc997aa65efe894c2f5bfa4924b" id="r_adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb2e7fc997aa65efe894c2f5bfa4924b">exportar_analisis_csv</a> ()</td></tr>
 <tr class="memdesc:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exporta el análisis de rendimiento a formato CSV.  <br /></td></tr>
 <tr class="separator:adb2e7fc997aa65efe894c2f5bfa4924b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -154,58 +145,6 @@ Functions</h2></td></tr>
 <div class="textblock"><p>Funciones para exportar datos de la base de datos a diferentes formatos. </p>
 <p>Este archivo contiene funciones para exportar datos de lesiones, partidos, estadísticas y análisis a formatos CSV, TXT, JSON y HTML. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="aca802402bf45520003a233e27d8eaaab" name="aca802402bf45520003a233e27d8eaaab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aca802402bf45520003a233e27d8eaaab">&#9670;&#160;</a></span>clima_to_text()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char * clima_to_text </td>
-          <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>clima</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Convierte el número de clima a texto. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">clima</td><td>Número del clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Cadena de texto correspondiente al clima </dd></dl>
-
-</div>
-</div>
-<a id="ae82023dc6bfe9f991e161496cd7a5af4" name="ae82023dc6bfe9f991e161496cd7a5af4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae82023dc6bfe9f991e161496cd7a5af4">&#9670;&#160;</a></span>dia_to_text()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char * dia_to_text </td>
-          <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dia</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Convierte el número de dia a texto. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">dia</td><td>Número del dia (1=Dia, 2=Tarde, 3=Noche) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Cadena de texto correspondiente al dia </dd></dl>
-
-</div>
-</div>
 <a id="adb2e7fc997aa65efe894c2f5bfa4924b" name="adb2e7fc997aa65efe894c2f5bfa4924b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adb2e7fc997aa65efe894c2f5bfa4924b">&#9670;&#160;</a></span>exportar_analisis_csv()</h2>
 
@@ -313,32 +252,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a630ee8617ddc08a5936e6373d61c398f" name="a630ee8617ddc08a5936e6373d61c398f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a630ee8617ddc08a5936e6373d61c398f">&#9670;&#160;</a></span>resultado_to_text()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char * resultado_to_text </td>
-          <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>resultado</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Convierte el número de resultado a texto. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">resultado</td><td>Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Cadena de texto correspondiente al resultado </dd></dl>
-
-</div>
-</div>
 <a id="a3e6d44e14bb23a116efa66bca83c5392" name="a3e6d44e14bb23a116efa66bca83c5392"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3e6d44e14bb23a116efa66bca83c5392">&#9670;&#160;</a></span>trim_trailing_spaces()</h2>
 
@@ -371,7 +284,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="export_8c.html">export.c</a></li>
-    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Fri Jan 9 2026 04:11:12 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

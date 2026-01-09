@@ -14,28 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/**
- * @brief Convierte el número de resultado a texto
- *
- * Proporciona representación legible de resultados para la interfaz de usuario.
- *
- * @param resultado Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA)
- * @return Cadena de texto correspondiente al resultado
- */
-static const char *resultado_to_text(int resultado)
-{
-    switch (resultado)
-    {
-    case 1:
-        return "VICTORIA";
-    case 2:
-        return "EMPATE";
-    case 3:
-        return "DERROTA";
-    default:
-        return "DESCONOCIDO";
-    }
-}
+
 
 /**
  * @brief Estructura para almacenar estadísticas de partidos

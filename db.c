@@ -274,7 +274,21 @@ static int create_database_schema()
         " PRIMARY KEY(torneo_id, equipo_id, fase_id),"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(fase_id) REFERENCES torneo_fases(id));";
+        " FOREIGN KEY(fase_id) REFERENCES torneo_fases(id));"
+
+        "CREATE TABLE IF NOT EXISTS settings ("
+        " id INTEGER PRIMARY KEY,"
+        " theme INTEGER DEFAULT 0,"
+        " language INTEGER DEFAULT 0);"
+
+        "CREATE TABLE IF NOT EXISTS financiamiento ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " tipo INTEGER NOT NULL,"
+        " categoria INTEGER NOT NULL,"
+        " descripcion TEXT NOT NULL,"
+        " monto REAL NOT NULL,"
+        " item_especifico TEXT);";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {

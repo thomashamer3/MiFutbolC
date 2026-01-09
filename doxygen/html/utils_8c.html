@@ -108,6 +108,7 @@ $(function(){initNavTree('utils_8c.html',''); initResizable(true); });
 <div class="textblock"><code>#include &quot;<a class="el" href="utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="db_8h_source.html">db.h</a>&quot;</code><br />
 <code>#include &quot;menu.h&quot;</code><br />
+<code>#include &quot;ascii_art.h&quot;</code><br />
 <code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;string.h&gt;</code><br />
 <code>#include &lt;time.h&gt;</code><br />
@@ -125,9 +126,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a79dd1c09a9bc0cc85b65a6910272b876" id="r_a79dd1c09a9bc0cc85b65a6910272b876"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a79dd1c09a9bc0cc85b65a6910272b876">input_int</a> (const char *msg)</td></tr>
 <tr class="memdesc:a79dd1c09a9bc0cc85b65a6910272b876"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solicita al usuario un número entero.  <br /></td></tr>
 <tr class="separator:a79dd1c09a9bc0cc85b65a6910272b876"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ab91dab4391216db23fb180ed1ae49c" id="r_a1ab91dab4391216db23fb180ed1ae49c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1ab91dab4391216db23fb180ed1ae49c">input_double</a> (const char *msg)</td></tr>
+<tr class="memdesc:a1ab91dab4391216db23fb180ed1ae49c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solicita al usuario un número de punto flotante.  <br /></td></tr>
+<tr class="separator:a1ab91dab4391216db23fb180ed1ae49c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a103bb737a1c620d2f4ecc32ffaf4ceee" id="r_a103bb737a1c620d2f4ecc32ffaf4ceee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a103bb737a1c620d2f4ecc32ffaf4ceee">input_string</a> (const char *msg, char *buffer, int size)</td></tr>
 <tr class="memdesc:a103bb737a1c620d2f4ecc32ffaf4ceee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solicita al usuario una cadena de texto.  <br /></td></tr>
 <tr class="separator:a103bb737a1c620d2f4ecc32ffaf4ceee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d355624a4738917e8ee615af4d4e52b" id="r_a2d355624a4738917e8ee615af4d4e52b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2d355624a4738917e8ee615af4d4e52b">input_date</a> (const char *msg, char *buffer, int size)</td></tr>
+<tr class="memdesc:a2d355624a4738917e8ee615af4d4e52b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solicita al usuario una fecha con formato específico.  <br /></td></tr>
+<tr class="separator:a2d355624a4738917e8ee615af4d4e52b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a334e472147e832eee83d51634f837c91" id="r_a334e472147e832eee83d51634f837c91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a334e472147e832eee83d51634f837c91">get_datetime</a> (char *buffer, int size)</td></tr>
 <tr class="memdesc:a334e472147e832eee83d51634f837c91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene la fecha y hora actual en formato legible.  <br /></td></tr>
 <tr class="separator:a334e472147e832eee83d51634f837c91"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,7 +168,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a66c3afc7bd2e95ef7674a73523db2941" id="r_a66c3afc7bd2e95ef7674a73523db2941"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a66c3afc7bd2e95ef7674a73523db2941">menu_usuario</a> ()</td></tr>
 <tr class="memdesc:a66c3afc7bd2e95ef7674a73523db2941"><td class="mdescLeft">&#160;</td><td class="mdescRight">Menú de gestión de usuario.  <br /></td></tr>
 <tr class="separator:a66c3afc7bd2e95ef7674a73523db2941"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41ba299b1bb3f37c227c68266d9905b7" id="r_a41ba299b1bb3f37c227c68266d9905b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41ba299b1bb3f37c227c68266d9905b7">format_date_for_display</a> (const char *input_date, char *output_buffer, int buffer_size)</td></tr>
+<tr class="memitem:a41ba299b1bb3f37c227c68266d9905b7" id="r_a41ba299b1bb3f37c227c68266d9905b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41ba299b1bb3f37c227c68266d9905b7">format_date_for_display</a> (const char *<a class="el" href="#a2d355624a4738917e8ee615af4d4e52b">input_date</a>, char *output_buffer, int buffer_size)</td></tr>
 <tr class="memdesc:a41ba299b1bb3f37c227c68266d9905b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formatea una fecha para mostrar en el formato dd/mm/yyyy hh:mm.  <br /></td></tr>
 <tr class="separator:a41ba299b1bb3f37c227c68266d9905b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a689b6f626164888beb2b82cb5f02fb6a" id="r_a689b6f626164888beb2b82cb5f02fb6a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a689b6f626164888beb2b82cb5f02fb6a">convert_display_date_to_storage</a> (const char *display_date, char *storage_buffer, int buffer_size)</td></tr>
@@ -170,6 +177,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a64f980d336dc8739bf2b92cb5b569ec6" id="r_a64f980d336dc8739bf2b92cb5b569ec6"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a64f980d336dc8739bf2b92cb5b569ec6">remover_tildes</a> (const char *str)</td></tr>
 <tr class="memdesc:a64f980d336dc8739bf2b92cb5b569ec6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remueve tildes y caracteres acentuados de una cadena.  <br /></td></tr>
 <tr class="separator:a64f980d336dc8739bf2b92cb5b569ec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a630ee8617ddc08a5936e6373d61c398f" id="r_a630ee8617ddc08a5936e6373d61c398f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a630ee8617ddc08a5936e6373d61c398f">resultado_to_text</a> (int resultado)</td></tr>
+<tr class="memdesc:a630ee8617ddc08a5936e6373d61c398f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte un valor de resultado a texto.  <br /></td></tr>
+<tr class="separator:a630ee8617ddc08a5936e6373d61c398f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca802402bf45520003a233e27d8eaaab" id="r_aca802402bf45520003a233e27d8eaaab"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aca802402bf45520003a233e27d8eaaab">clima_to_text</a> (int clima)</td></tr>
+<tr class="memdesc:aca802402bf45520003a233e27d8eaaab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte un valor de clima a texto.  <br /></td></tr>
+<tr class="separator:aca802402bf45520003a233e27d8eaaab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae82023dc6bfe9f991e161496cd7a5af4" id="r_ae82023dc6bfe9f991e161496cd7a5af4"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae82023dc6bfe9f991e161496cd7a5af4">dia_to_text</a> (int dia)</td></tr>
+<tr class="memdesc:ae82023dc6bfe9f991e161496cd7a5af4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte un valor de día a texto.  <br /></td></tr>
+<tr class="separator:ae82023dc6bfe9f991e161496cd7a5af4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Funciones utilitarias para entrada/salida, manejo de fechas y operaciones de base de datos. </p>
@@ -211,6 +227,34 @@ Functions</h2></td></tr>
 
 <p>Limpia la pantalla de la consola. </p>
 <p>Limpia la pantalla de la consola para proporcionar una interfaz limpia y organizada, mejorando la legibilidad de la información mostrada. </p>
+
+</div>
+</div>
+<a id="aca802402bf45520003a233e27d8eaaab" name="aca802402bf45520003a233e27d8eaaab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca802402bf45520003a233e27d8eaaab">&#9670;&#160;</a></span>clima_to_text()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * clima_to_text </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>clima</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convierte un valor de clima a texto. </p>
+<p>Convierte el número de clima a texto.</p>
+<p>Convierte un valor de clima a texto</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">clima</td><td>El valor numérico del clima </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>La representación textual del clima </dd></dl>
 
 </div>
 </div>
@@ -260,6 +304,34 @@ Functions</h2></td></tr>
 
 <p>Convierte una fecha en formato de visualización a formato de almacenamiento. </p>
 <p>Convierte fechas ingresadas por el usuario a un formato interno consistente, facilitando el almacenamiento y procesamiento uniforme. </p>
+
+</div>
+</div>
+<a id="ae82023dc6bfe9f991e161496cd7a5af4" name="ae82023dc6bfe9f991e161496cd7a5af4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae82023dc6bfe9f991e161496cd7a5af4">&#9670;&#160;</a></span>dia_to_text()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * dia_to_text </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dia</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convierte un valor de día a texto. </p>
+<p>Convierte el número de dia a texto.</p>
+<p>Convierte un valor de día a texto</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dia</td><td>El valor numérico del día </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>La representación textual del día </dd></dl>
 
 </div>
 </div>
@@ -381,6 +453,55 @@ Functions</h2></td></tr>
 
 <p>Obtiene un timestamp actual en formato compacto. </p>
 <p>Genera un identificador temporal compacto para usar en nombres de archivos, asegurando unicidad y orden cronológico en exportaciones y backups. </p>
+
+</div>
+</div>
+<a id="a2d355624a4738917e8ee615af4d4e52b" name="a2d355624a4738917e8ee615af4d4e52b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d355624a4738917e8ee615af4d4e52b">&#9670;&#160;</a></span>input_date()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void input_date </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>msg</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Solicita al usuario una fecha con formato específico. </p>
+<p>Valida la entrada de fecha para asegurar el formato correcto, aceptando solo dígitos, barras diagonales (/) y dos puntos (:). </p>
+
+</div>
+</div>
+<a id="a1ab91dab4391216db23fb180ed1ae49c" name="a1ab91dab4391216db23fb180ed1ae49c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ab91dab4391216db23fb180ed1ae49c">&#9670;&#160;</a></span>input_double()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double input_double </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>msg</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Solicita al usuario un número de punto flotante. </p>
+<p>Permite la entrada de valores de punto flotante por parte del usuario, facilitando la configuración de parámetros decimales en el sistema. Acepta tanto punto como coma como separador decimal, y maneja separadores de miles. </p>
 
 </div>
 </div>
@@ -529,7 +650,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Imprime un encabezado con el título proporcionado. </p>
-<p>Muestra información contextual del usuario y fecha para personalizar la experiencia y registrar el momento de las operaciones. </p>
+<p>Muestra información contextual del usuario y fecha para personalizar la experiencia y registrar el momento de las operaciones, incluyendo arte ASCII contextual. </p>
 
 </div>
 </div>
@@ -553,13 +674,41 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a630ee8617ddc08a5936e6373d61c398f" name="a630ee8617ddc08a5936e6373d61c398f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a630ee8617ddc08a5936e6373d61c398f">&#9670;&#160;</a></span>resultado_to_text()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * resultado_to_text </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>resultado</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convierte un valor de resultado a texto. </p>
+<p>Convierte el número de resultado a texto.</p>
+<p>Convierte un valor de resultado a texto</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">resultado</td><td>El valor numérico del resultado </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>La representación textual del resultado </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="utils_8c.html">utils.c</a></li>
-    <li class="footer">Generated on Wed Jan 7 2026 03:24:56 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Fri Jan 9 2026 04:11:12 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

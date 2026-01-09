@@ -68,74 +68,7 @@ char *get_export_path(const char *filename)
     return path;
 }
 
-/**
- * @brief Convierte el número de resultado a texto
- *
- * @param resultado Número del resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA)
- * @return Cadena de texto correspondiente al resultado
- */
-const char *resultado_to_text(int resultado)
-{
-    switch (resultado)
-    {
-    case 1:
-        return "VICTORIA";
-    case 2:
-        return "EMPATE";
-    case 3:
-        return "DERROTA";
-    default:
-        return "DESCONOCIDO";
-    }
-}
 
-/**
- * @brief Convierte el número de clima a texto
- *
- * @param clima Número del clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio)
- * @return Cadena de texto correspondiente al clima
- */
-const char *clima_to_text(int clima)
-{
-    switch (clima)
-    {
-    case 1:
-        return "Despejado";
-    case 2:
-        return "Nublado";
-    case 3:
-        return "Lluvia";
-    case 4:
-        return "Ventoso";
-    case 5:
-        return "Mucho Calor";
-    case 6:
-        return "Mucho Frio";
-    default:
-        return "DESCONOCIDO";
-    }
-}
-
-/**
- * @brief Convierte el número de dia a texto
- *
- * @param dia Número del dia (1=Dia, 2=Tarde, 3=Noche)
- * @return Cadena de texto correspondiente al dia
- */
-const char *dia_to_text(int dia)
-{
-    switch (dia)
-    {
-    case 1:
-        return "Dia";
-    case 2:
-        return "Tarde";
-    case 3:
-        return "Noche";
-    default:
-        return "DESCONOCIDO";
-    }
-}
 
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 

@@ -21,6 +21,16 @@
 int input_int(const char *msg);
 
 /**
+ * @brief Solicita al usuario un número de punto flotante.
+ *
+ * Muestra el mensaje proporcionado y lee un double desde la entrada estándar.
+ *
+ * @param msg El mensaje a mostrar al usuario.
+ * @return El número double ingresado por el usuario.
+ */
+double input_double(const char *msg);
+
+/**
  * @brief Solicita al usuario una cadena de texto.
  *
  * Muestra el mensaje proporcionado y lee una cadena desde la entrada estándar,
@@ -31,6 +41,18 @@ int input_int(const char *msg);
  * @param size El tamaño máximo del buffer.
  */
 void input_string(const char *msg, char *buffer, int size);
+
+/**
+ * @brief Solicita al usuario una fecha con formato específico.
+ *
+ * Muestra el mensaje proporcionado y lee una cadena desde la entrada estándar,
+ * validando que contenga solo dígitos, barras diagonales (/) y dos puntos (:).
+ *
+ * @param msg El mensaje a mostrar al usuario.
+ * @param buffer El buffer donde se almacenará la cadena leída.
+ * @param size El tamaño máximo del buffer.
+ */
+void input_date(const char *msg, char *buffer, int size);
 
 /**
  * @brief Obtiene la fecha y hora actual en formato legible.
@@ -146,5 +168,29 @@ void convert_display_date_to_storage(const char *display_date, char *storage_buf
  * @return La cadena sin tildes
  */
 char* remover_tildes(const char *str);
+
+/**
+ * @brief Convierte un valor de resultado a texto
+ *
+ * @param resultado El valor numérico del resultado
+ * @return La representación textual del resultado
+ */
+const char *resultado_to_text(int resultado);
+
+/**
+ * @brief Convierte un valor de clima a texto
+ *
+ * @param clima El valor numérico del clima
+ * @return La representación textual del clima
+ */
+const char *clima_to_text(int clima);
+
+/**
+ * @brief Convierte un valor de día a texto
+ *
+ * @param dia El valor numérico del día
+ * @return La representación textual del día
+ */
+const char *dia_to_text(int dia);
 
 #endif

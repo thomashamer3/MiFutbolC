@@ -85,10 +85,11 @@ El menú principal ofrece las siguientes opciones:
 6. **Logros** - Gestionar logros y badges
 7. **Análisis** - Ver análisis de rendimiento
 8. **Lesiones** - Gestionar lesiones de jugadores
-9. **Exportar** - Menú de exportación con opciones individuales por módulo
-10. **Importar** - Importar datos desde archivos JSON
-11. **Usuario** - Gestionar información del usuario (ver/cambiar nombre)
+9. **Financiamiento** - Gestionar finanzas del equipo (ingresos y gastos)
+10. **Exportar** - Menú de exportación con opciones individuales por módulo
+11. **Importar** - Importar datos desde archivos JSON
 12. **Torneos** - Gestionar torneos de fútbol
+13. **Ajustes** - Configurar temas de interfaz e idioma
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -444,6 +445,138 @@ Selecciona "6" en el menú principal para ver el análisis de rendimiento, que i
 
 ![Gestión de lesiones](images/menulesiones.png)
 
+## Gestión Financiera
+
+Selecciona "9" en el menú principal para acceder al módulo de gestión financiera del equipo. Este módulo permite registrar y controlar todos los ingresos y gastos relacionados con el fútbol.
+
+### Agregar Transacción Financiera
+
+1. Selecciona "9" en el menú principal
+2. Elige "1" para agregar una nueva transacción
+3. Selecciona el tipo (Ingreso o Gasto)
+4. Elige la categoría apropiada:
+   - Transporte
+   - Equipamiento
+   - Cuotas
+   - Torneos
+   - Arbitraje
+   - Canchas
+   - Medicina
+   - Otros
+5. Ingresa la descripción y monto
+6. Especifica el item específico si aplica
+
+### Listar Transacciones
+
+1. Selecciona "9" en el menú principal
+2. Elige "2" para ver todas las transacciones financieras
+
+### Modificar Transacción
+
+1. Selecciona "9" en el menú principal
+2. Elige "3" para modificar una transacción existente
+3. Ingresa el ID de la transacción a modificar
+
+### Eliminar Transacción
+
+1. Selecciona "9" en el menú principal
+2. Elige "4" para eliminar una transacción
+3. Confirma la eliminación
+
+### Ver Resumen Financiero
+
+1. Selecciona "9" en el menú principal
+2. Elige "5" para ver un resumen completo de ingresos y gastos
+
+### Ver Balance de Gastos
+
+1. Selecciona "9" en el menú principal
+2. Elige "6" para analizar el balance por categorías
+
+### Exportar Datos Financieros
+
+1. Selecciona "9" en el menú principal
+2. Elige "7" para exportar las transacciones financieras
+
+![Gestión financiera](images/menufinanciamiento.png)
+
+## Simulación de Partidos
+
+El sistema incluye una función avanzada de simulación de partidos que permite crear equipos momentáneos y simular partidos completos con visualización en tiempo real.
+
+### Crear Equipos para Simulación
+
+1. Ve al menú de Equipos (opción 4)
+2. Selecciona "Crear Equipo Momentáneo"
+3. Elige "Dos equipos (Local y Visitante)"
+4. Crea ambos equipos con sus jugadores y posiciones
+
+### Gestionar Equipos
+
+Para cada equipo puedes:
+- Modificar jugadores existentes
+- Agregar nuevos jugadores
+- Eliminar jugadores
+- Cambiar el capitán
+
+### Iniciar Simulación
+
+1. Desde el menú de gestión de equipos momentáneos
+2. Selecciona "3. Simular partido"
+3. La simulación comenzará automáticamente
+
+### Cómo Funciona la Simulación
+
+- **Duración**: 60 minutos simulados
+- **Eventos**: Goles, asistencias, oportunidades y faltas generadas aleatoriamente
+- **Visualización**: Cancha de fútbol animada en ASCII
+- **Estadísticas**: Registro detallado de todos los eventos por jugador
+- **Resultado**: Marcador final y resumen completo
+
+### Características de la Simulación
+
+- Cancha animada con balón en movimiento
+- Eventos en tiempo real (cada segundo = un minuto de partido)
+- Estadísticas detalladas de goles y asistencias
+- Determinación automática de resultado
+- No se guardan datos (equipos momentáneos)
+
+## Configuración (Ajustes)
+
+Selecciona "13" en el menú principal para acceder al menú de configuración del sistema.
+
+### Cambiar Tema de Interfaz
+
+1. Selecciona "13" en el menú principal
+2. Elige "1" para cambiar el tema
+3. Selecciona uno de los temas disponibles:
+   - Claro
+   - Oscuro
+   - Azul
+   - Verde
+   - Rojo
+   - Púrpura
+   - Clásico
+   - Alto Contraste
+
+### Cambiar Idioma
+
+1. Selecciona "13" en el menú principal
+2. Elige "2" para cambiar el idioma
+3. Selecciona entre Español e Inglés
+
+### Ver Configuración Actual
+
+1. Selecciona "13" en el menú principal
+2. Elige "3" para ver la configuración actual
+
+### Restablecer Valores por Defecto
+
+1. Selecciona "13" en el menú principal
+2. Elige "4" para restablecer configuración por defecto
+
+![Menú de ajustes](images/menuajustes.png)
+
 ## Exportar Datos
 
 Selecciona "8" en el menú principal para acceder al menú de exportación. Este menú ofrece opciones para exportar datos de diferentes módulos por separado:
@@ -529,4 +662,4 @@ MiFutbolC es una herramienta completa para el seguimiento y análisis de datos r
 ---
 
 *Manual generado con Pandoc*
-*Última actualización: (07/01/2026)*
+*Última actualización: (09/01/2026)*

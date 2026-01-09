@@ -36,6 +36,7 @@ static void exportar_camisetas_todo()
     exportar_camisetas_json();
     exportar_camisetas_html();
     printf("Exportacion de camisetas completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -54,6 +55,7 @@ static void exportar_partidos_todo()
     exportar_partidos_json();
     exportar_partidos_html();
     printf("Exportacion de partidos completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -72,6 +74,7 @@ static void exportar_lesiones_todo()
     exportar_lesiones_json();
     exportar_lesiones_html();
     printf("Exportacion de lesiones completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -90,6 +93,7 @@ static void exportar_estadisticas_todo()
     exportar_estadisticas_json();
     exportar_estadisticas_html();
     printf("Exportacion de estadisticas completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -108,6 +112,7 @@ static void exportar_analisis_todo()
     exportar_analisis_json();
     exportar_analisis_html();
     printf("Exportacion de analisis completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -126,6 +131,7 @@ static void exportar_estadisticas_generales_todo()
     exportar_estadisticas_generales_json();
     exportar_estadisticas_generales_html();
     printf("Exportacion de estadisticas generales completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -144,6 +150,7 @@ static void exportar_estadisticas_por_mes_todo()
     exportar_estadisticas_por_mes_json();
     exportar_estadisticas_por_mes_html();
     printf("Exportacion de estadisticas por mes completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -162,6 +169,7 @@ static void exportar_estadisticas_por_anio_todo()
     exportar_estadisticas_por_anio_json();
     exportar_estadisticas_por_anio_html();
     printf("Exportacion de estadisticas por anio completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -185,6 +193,7 @@ static void exportar_records_rankings_todo()
     exportar_records_rankings_json();
     exportar_records_rankings_html();
     printf("Exportacion de records & rankings completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -203,6 +212,7 @@ static void exportar_partido_mas_goles_todo()
     exportar_partido_mas_goles_json();
     exportar_partido_mas_goles_html();
     printf("Exportacion completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -217,6 +227,7 @@ static void exportar_partido_mas_asistencias_todo()
     exportar_partido_mas_asistencias_json();
     exportar_partido_mas_asistencias_html();
     printf("Exportacion completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -231,6 +242,7 @@ static void exportar_partido_menos_goles_reciente_todo()
     exportar_partido_menos_goles_reciente_json();
     exportar_partido_menos_goles_reciente_html();
     printf("Exportacion completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -250,6 +262,7 @@ static void exportar_partido_menos_asistencias_reciente_todo()
     exportar_partido_menos_asistencias_reciente_json();
     exportar_partido_menos_asistencias_reciente_html();
     printf("Exportacion completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -356,6 +369,7 @@ static void exportar_todo()
     exportar_records_rankings_html();
 
     printf("Exportacion de todo completada.\n");
+    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 

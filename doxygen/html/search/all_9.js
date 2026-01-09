@@ -28,7 +28,9 @@ var searchData=
   ['indexlistterm_25',['IndexListTerm',['../struct_index_list_term.html',1,'']]],
   ['indexsample_26',['IndexSample',['../struct_index_sample.html',1,'']]],
   ['initdata_27',['InitData',['../struct_init_data.html',1,'']]],
-  ['input_5fint_28',['input_int',['../utils_8c.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c'],['../utils_8h.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c']]],
-  ['input_5fstring_29',['input_string',['../utils_8c.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c']]],
-  ['integrityck_30',['IntegrityCk',['../struct_integrity_ck.html',1,'']]]
+  ['input_5fdate_28',['input_date',['../utils_8c.html#a2d355624a4738917e8ee615af4d4e52b',1,'input_date(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a2d355624a4738917e8ee615af4d4e52b',1,'input_date(const char *msg, char *buffer, int size):&#160;utils.c']]],
+  ['input_5fdouble_29',['input_double',['../utils_8c.html#a1ab91dab4391216db23fb180ed1ae49c',1,'input_double(const char *msg):&#160;utils.c'],['../utils_8h.html#a1ab91dab4391216db23fb180ed1ae49c',1,'input_double(const char *msg):&#160;utils.c']]],
+  ['input_5fint_30',['input_int',['../utils_8c.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c'],['../utils_8h.html#a79dd1c09a9bc0cc85b65a6910272b876',1,'input_int(const char *msg):&#160;utils.c']]],
+  ['input_5fstring_31',['input_string',['../utils_8c.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c'],['../utils_8h.html#a103bb737a1c620d2f4ecc32ffaf4ceee',1,'input_string(const char *msg, char *buffer, int size):&#160;utils.c']]],
+  ['integrityck_32',['IntegrityCk',['../struct_integrity_ck.html',1,'']]]
 ];

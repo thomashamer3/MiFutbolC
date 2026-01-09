@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "db.h"
 #include "menu.h"
+#include "ascii_art.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -34,6 +35,88 @@ int input_int(const char *msg)
     printf("%s", msg);
     scanf("%d", &v);
     getchar();
+    return v;
+}
+
+/**
+ * Permite la entrada de valores de punto flotante por parte del usuario,
+ * facilitando la configuración de parámetros decimales en el sistema.
+ * Acepta tanto punto como coma como separador decimal, y maneja separadores de miles.
+ */
+double input_double(const char *msg)
+{
+    char buffer[100];
+    char processed[100];
+    double v = 0.0;
+    int valid = 0;
+
+    while (!valid)
+    {
+        printf("%s", msg);
+
+        if (fgets(buffer, sizeof(buffer), stdin))
+        {
+            // Remover newline
+            buffer[strcspn(buffer, "\n")] = 0;
+
+            // Procesar el buffer para manejar separadores de miles y decimales
+            int j = 0;
+            int has_decimal = 0;
+
+            for (int i = 0; buffer[i] != '\0' && j < sizeof(processed) - 1; i++)
+            {
+                char c = buffer[i];
+
+                if (c == ',' && !has_decimal)
+                {
+                    // Primera coma encontrada, tratar como separador decimal
+                    processed[j++] = '.';
+                    has_decimal = 1;
+                }
+                else if (c == '.' && !has_decimal)
+                {
+                    // Verificar si es un separador de miles o decimal
+                    // Si hay dígitos después y estamos en una posición que sugiere separador de miles
+                    int remaining_digits = 0;
+                    for (int k = i + 1; buffer[k] != '\0'; k++)
+                    {
+                        if (isdigit(buffer[k])) remaining_digits++;
+                        else if (buffer[k] == ',' || buffer[k] == '.') break;
+                    }
+
+                    // Si hay exactamente 3 dígitos antes del siguiente separador, es separador de miles
+                    if (remaining_digits >= 3)
+                    {
+                        // Omitir este punto (separador de miles)
+                        continue;
+                    }
+                    else
+                    {
+                        // Es separador decimal
+                        processed[j++] = '.';
+                        has_decimal = 1;
+                    }
+                }
+                else if (isdigit(c))
+                {
+                    processed[j++] = c;
+                }
+                // Ignorar otros caracteres
+            }
+            processed[j] = '\0';
+
+            // Intentar convertir a double
+            if (sscanf(processed, "%lf", &v) == 1)
+            {
+                valid = 1;
+            }
+            else
+            {
+                printf("Entrada inválida. Ingrese un número válido (ej: 250, 1.500, 12.500, 250.000): ");
+            }
+        }
+    }
+
     return v;
 }
 
@@ -67,6 +150,41 @@ void input_string(const char *msg, char *buffer, int size)
             if (!valid)
             {
                 printf("Entrada inválida. Solo se permiten letras, espacios y números.\n");
+            }
+        }
+    }
+}
+
+/**
+ * Valida la entrada de fecha para asegurar el formato correcto,
+ * aceptando solo dígitos, barras diagonales (/) y dos puntos (:).
+ */
+void input_date(const char *msg, char *buffer, int size)
+{
+    int valid = 0;
+
+    while (!valid)
+    {
+        printf("%s", msg);
+
+        if (fgets(buffer, size, stdin))
+        {
+            buffer[strcspn(buffer, "\n")] = 0;
+
+            // Validar que contenga solo dígitos, barras diagonales y dos puntos
+            valid = 1;
+            for (int i = 0; buffer[i] != '\0'; i++)
+            {
+                if (!isdigit(buffer[i]) && buffer[i] != '/' && buffer[i] != ':')
+                {
+                    valid = 0;
+                    break;
+                }
+            }
+
+            if (!valid)
+            {
+                printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/) y dos puntos (:).\n");
             }
         }
     }
@@ -125,7 +243,7 @@ void clear_screen()
 
 /**
  * Muestra información contextual del usuario y fecha para personalizar la experiencia
- * y registrar el momento de las operaciones.
+ * y registrar el momento de las operaciones, incluyendo arte ASCII contextual.
  */
 void print_header(const char *titulo)
 {
@@ -138,10 +256,67 @@ void print_header(const char *titulo)
         nombre_usuario = "Usuario Desconocido";
     }
 
+    // Mostrar arte ASCII contextual según el título del menú
+    if (strstr(titulo, "MI FUTBOL C"))
+    {
+        printf("%s\n", ASCII_BIENVENIDA);
+    }
+    else if (strstr(titulo, "CAMISETA") || strstr(titulo, "CAMISETAS"))
+    {
+        printf("%s\n", ASCII_CAMISETA);
+    }
+    else if (strstr(titulo, "CANCHAS"))
+    {
+        printf("%s\n", ASCII_CANCHA);
+    }
+    else if (strstr(titulo, "PARTIDO") || strstr(titulo, "PARTIDOS"))
+    {
+        printf("%s\n", ASCII_FUTBOL);
+    }
+    else if (strstr(titulo, "EQUIPOS"))
+    {
+        printf("%s\n", ASCII_EQUIPO);
+    }
+    else if (strstr(titulo, "ESTADISTICA") || strstr(titulo, "ESTADISTICAS"))
+    {
+        printf("%s\n", ASCII_ESTADISTICAS);
+    }
+    else if (strstr(titulo, "LOGROS"))
+    {
+        printf("%s\n", ASCII_LOGROS);
+    }
+    else if (strstr(titulo, "ANALISIS") || strstr(titulo, "EVOLUCION TEMPORAL"))
+    {
+        printf("%s\n", ASCII_ANALISIS);
+    }
+    else if (strstr(titulo, "LESIONES"))
+    {
+        printf("%s\n", ASCII_LESIONES);
+    }
+    else if (strstr(titulo, "FINANCIAMIENTO"))
+    {
+        printf("%s\n", ASCII_FINANCIAMIENTO);
+    }
+    else if (strstr(titulo, "EXPORTAR"))
+    {
+        printf("%s\n", ASCII_EXPORTAR);
+    }
+    else if (strstr(titulo, "IMPORTAR"))
+    {
+        printf("%s\n", ASCII_IMPORTAR);
+    }
+    else if (strstr(titulo, "TORNEOS"))
+    {
+        printf("%s\n", ASCII_TORNEOS);
+    }
+    else if (strstr(titulo, "AJUSTES") || strstr(titulo, "SETTINGS"))
+    {
+        printf("%s\n", ASCII_AJUSTES);
+    }
+
     printf("========================================\n");
     printf(" Usuario: %s\n", nombre_usuario);
     printf(" Fecha  : %s\n", fecha);
-    printf(" %s\n", titulo);
     printf("========================================\n\n");
 
     if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
@@ -181,7 +356,8 @@ int confirmar(const char *msg)
 void pedir_nombre_usuario()
 {
     char nombre[100];
-    printf("!Bienvenido a MiFutbolC!\n");
+    clear_screen();
+    printf("%s\n", ASCII_BIENVENIDA);
     printf("Por favor, ingresa tu Nombre: ");
 
     fgets(nombre, sizeof(nombre), stdin);
@@ -317,4 +493,73 @@ char* remover_tildes(const char *str)
     }
     buffer[j] = '\0';
     return buffer;
+}
+
+/**
+ * Convierte un valor de resultado a texto
+ *
+ * @param resultado El valor numérico del resultado
+ * @return La representación textual del resultado
+ */
+const char *resultado_to_text(int resultado)
+{
+    switch (resultado)
+    {
+    case 1:
+        return "VICTORIA";
+    case 2:
+        return "EMPATE";
+    case 3:
+        return "DERROTA";
+    default:
+        return "DESCONOCIDO";
+    }
+}
+
+/**
+ * Convierte un valor de clima a texto
+ *
+ * @param clima El valor numérico del clima
+ * @return La representación textual del clima
+ */
+const char *clima_to_text(int clima)
+{
+    switch (clima)
+    {
+    case 1:
+        return "Despejado";
+    case 2:
+        return "Nublado";
+    case 3:
+        return "Lluvia";
+    case 4:
+        return "Ventoso";
+    case 5:
+        return "Mucho Calor";
+    case 6:
+        return "Mucho Frio";
+    default:
+        return "DESCONOCIDO";
+    }
+}
+
+/**
+ * Convierte un valor de día a texto
+ *
+ * @param dia El valor numérico del día
+ * @return La representación textual del día
+ */
+const char *dia_to_text(int dia)
+{
+    switch (dia)
+    {
+    case 1:
+        return "Dia";
+    case 2:
+        return "Tarde";
+    case 3:
+        return "Noche";
+    default:
+        return "DESCONOCIDO";
+    }
 }

@@ -8,7 +8,7 @@ var searchData=
   ['cellinfo_5',['CellInfo',['../struct_cell_info.html',1,'']]],
   ['checkonctx_6',['CheckOnCtx',['../struct_check_on_ctx.html',1,'']]],
   ['clear_5fscreen_7',['clear_screen',['../utils_8c.html#a4953d1edcbbfc7e420c423ded1d5621a',1,'clear_screen():&#160;utils.c'],['../utils_8h.html#a4953d1edcbbfc7e420c423ded1d5621a',1,'clear_screen():&#160;utils.c']]],
-  ['clima_5fto_5ftext_8',['clima_to_text',['../export_8c.html#aca802402bf45520003a233e27d8eaaab',1,'clima_to_text(int clima):&#160;export.c'],['../export_8h.html#aca802402bf45520003a233e27d8eaaab',1,'clima_to_text(int clima):&#160;export.c']]],
+  ['clima_5fto_5ftext_8',['clima_to_text',['../utils_8c.html#aca802402bf45520003a233e27d8eaaab',1,'clima_to_text(int clima):&#160;utils.c'],['../utils_8h.html#aca802402bf45520003a233e27d8eaaab',1,'clima_to_text(int clima):&#160;utils.c'],['../export_8h.html#aca802402bf45520003a233e27d8eaaab',1,'clima_to_text(int clima):&#160;utils.c']]],
   ['collseq_9',['CollSeq',['../struct_coll_seq.html',1,'']]],
   ['column_10',['Column',['../struct_column.html',1,'']]],
   ['compareinfo_11',['compareInfo',['../structcompare_info.html',1,'']]],

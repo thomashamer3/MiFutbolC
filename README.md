@@ -22,6 +22,10 @@ El sistema utiliza SQLite como base de datos para almacenar toda la información
 - **Gestión de Salud**: Registrar, listar, editar y eliminar lesiones de jugadores con seguimiento detallado.
 - **Sistema Gamificado**: Logros y badges basados en rendimiento para motivar el uso continuo.
 - **Personalización**: Sistema de nombres de usuario personalizados con persistencia entre sesiones.
+- **Configuración Avanzada**: Sistema de configuración con temas de interfaz (claro, oscuro, azul, verde, rojo, púrpura, clásico, alto contraste) e idiomas (español, inglés).
+- **Gestión Financiera**: Sistema completo de gestión financiera del equipo con ingresos y gastos categorizados (transporte, equipamiento, cuotas, torneos, arbitraje, canchas, medicina, otros).
+- **Arte ASCII Mejorado**: Arte ASCII animado para simulaciones de partidos, pantalla de bienvenida y diferentes secciones del sistema.
+- **Simulación de Partidos**: Simulación completa de partidos entre equipos momentáneos con cancha animada en ASCII, eventos aleatorios y estadísticas detalladas.
 - **Importación de Datos**: Importar datos desde archivos JSON a la base de datos para restauración de copias de seguridad.
 - **Exportación Multiformato**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML para diferentes usos.
 - **Exportación Avanzada**: Exportación mejorada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento.

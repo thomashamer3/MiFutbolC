@@ -2,3 +2,9 @@ D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/export.h:97: warning: unbalanced 
 D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/sqlite3.c:27566: warning: member with no name found.
 D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/sqlite3.c:59494: warning: member with no name found.
 D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/db.h:52: warning: argument 'nombre' from the argument list of set_user_name has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/export.h:33: warning: argument 'clima' from the argument list of clima_to_text has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/export.h:41: warning: argument 'dia' from the argument list of dia_to_text has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/export.h:25: warning: argument 'resultado' from the argument list of resultado_to_text has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:520: warning: argument 'clima' from the argument list of clima_to_text has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:547: warning: argument 'dia' from the argument list of dia_to_text has multiple @param documentation sections
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/utils.c:499: warning: argument 'resultado' from the argument list of resultado_to_text has multiple @param documentation sections
