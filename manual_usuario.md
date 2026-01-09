@@ -80,8 +80,8 @@ El menú principal ofrece las siguientes opciones:
 1. **Camisetas** - Gestionar camisetas de fútbol
 2. **Canchas** - Gestionar canchas de fútbol
 3. **Partidos** - Gestionar partidos
-4. **Equipos** - Gestionar equipos de fútbol
-5. **Estadísticas** - Ver estadísticas generales y avanzadas
+4. **Equipos** - Gestionar equipos de fútbol (fijos y momentáneos, simulación de partidos)
+5. **Estadísticas** - Ver estadísticas generales, avanzadas y meta-análisis
 6. **Logros** - Gestionar logros y badges
 7. **Análisis** - Ver análisis de rendimiento
 8. **Lesiones** - Gestionar lesiones de jugadores
@@ -89,7 +89,7 @@ El menú principal ofrece las siguientes opciones:
 10. **Exportar** - Menú de exportación con opciones individuales por módulo
 11. **Importar** - Importar datos desde archivos JSON
 12. **Torneos** - Gestionar torneos de fútbol
-13. **Ajustes** - Configurar temas de interfaz e idioma
+13. **Ajustes** - Configurar temas de interfaz, idioma y usuario
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -188,48 +188,57 @@ El menú principal ofrece las siguientes opciones:
 
 ## Gestión de Equipos
 
-Selecciona "3" en el menú principal para acceder al menú de gestión de equipos. Este menú permite crear, gestionar y administrar equipos de fútbol con diferentes configuraciones.
+Selecciona "4" en el menú principal para acceder al menú de gestión de equipos. Este menú permite crear, gestionar y administrar equipos de fútbol con diferentes configuraciones, incluyendo equipos fijos (guardados en base de datos) y equipos momentáneos para simulaciones.
 
 ### Crear un Equipo
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "1" para crear un nuevo equipo
-3. Selecciona el tipo de equipo (Fijo o Momentáneo)
+3. Selecciona el tipo de equipo:
+   - **Fijo**: Se guarda permanentemente en la base de datos
+   - **Momentáneo**: Solo para uso temporal/simulación
 4. Elige la modalidad de fútbol (Fútbol 5, 7, 8 o 11)
 5. Ingresa el nombre del equipo
 6. Agrega jugadores con sus posiciones (Arquero, Defensor, Mediocampista, Delantero)
 7. Designa un capitán si es necesario
-8. El equipo se guardará en la base de datos (si es fijo)
+8. Para equipos fijos, se guardará en la base de datos
 
 ### Listar Equipos
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "2" para listar todos los equipos
 3. Se mostrarán todos los equipos con sus jugadores y formaciones
 
 ### Modificar un Equipo
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "3" para modificar un equipo
 3. Ingresa el ID del equipo a modificar
 4. Actualiza la información del equipo y sus jugadores
 
 ### Eliminar un Equipo
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "4" para eliminar un equipo
 3. Ingresa el ID del equipo a eliminar
 4. Confirma la eliminación
+
+### Simular Partido
+
+1. Selecciona "4" en el menú principal
+2. Elige "5" para simular un partido
+3. Crea equipos momentáneos o usa equipos existentes
+4. La simulación mostrará una cancha animada en ASCII con eventos en tiempo real
 
 ![Gestión de equipos](images/menuequipos.png)
 
 ## Gestión de Torneos
 
-Selecciona "4" en el menú principal para acceder al menú de gestión de torneos. Este menú permite organizar y administrar competiciones futbolísticas completas.
+Selecciona "12" en el menú principal para acceder al menú de gestión de torneos. Este menú permite organizar y administrar competiciones futbolísticas completas.
 
 ### Crear un Torneo
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "1" para crear un nuevo torneo
 3. Ingresa el nombre del torneo
 4. Selecciona si tiene equipo fijo
@@ -239,26 +248,26 @@ Selecciona "4" en el menú principal para acceder al menú de gestión de torneo
 
 ### Listar Torneos
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "2" para listar todos los torneos
 
 ### Modificar un Torneo
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "3" para modificar un torneo
 3. Ingresa el ID del torneo a modificar
 4. Actualiza la configuración del torneo
 
 ### Eliminar un Torneo
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "4" para eliminar un torneo
 3. Ingresa el ID del torneo a eliminar
 4. Confirma la eliminación
 
 ### Administrar un Torneo
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "5" para administrar un torneo
 3. Selecciona el torneo a administrar
 4. Accede a funciones avanzadas:
@@ -297,7 +306,7 @@ Selecciona "4" en el menú principal para acceder al menú de gestión de torneo
 
 ## Estadísticas
 
-Selecciona "4" en el menú principal para acceder al menú de estadísticas. Este menú ofrece una amplia variedad de análisis estadísticos, incluyendo estadísticas generales, análisis detallados de estados físicos y mentales, estadísticas históricas por año y mes, estadísticas avanzadas y meta-análisis, y récords y rankings.
+Selecciona "5" en el menú principal para acceder al menú de estadísticas. Este menú ofrece una amplia variedad de análisis estadísticos, incluyendo estadísticas generales, análisis detallados de estados físicos y mentales, estadísticas históricas por año y mes, estadísticas avanzadas y meta-análisis, y récords y rankings.
 
 ### Estadísticas Generales
 
@@ -387,28 +396,28 @@ El módulo de estadísticas de lesiones proporciona un análisis completo de las
 
 ## Logros
 
-Selecciona "5" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
+Selecciona "6" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
 
 ### Ver Todos los Logros
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "1" para ver todos los logros
 
 ### Ver Logros Completados
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "2" para ver logros completados
 
 ### Ver Logros en Progreso
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "3" para ver logros en progreso
 
 ![Logros](images/menulogros.png)
 
 ## Análisis de Rendimiento
 
-Selecciona "6" en el menú principal para ver el análisis de rendimiento, que incluye:
+Selecciona "7" en el menú principal para ver el análisis de rendimiento, que incluye:
 
 - Comparación de los últimos 5 partidos con promedios generales
 - Cálculo de rachas de victorias y derrotas
@@ -418,7 +427,7 @@ Selecciona "6" en el menú principal para ver el análisis de rendimiento, que i
 
 ### Registrar una Lesión
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "1" para registrar una nueva lesión
 3. Ingresa el nombre del jugador
 4. Selecciona el tipo de lesión
@@ -426,19 +435,19 @@ Selecciona "6" en el menú principal para ver el análisis de rendimiento, que i
 
 ### Listar Lesiones
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "2" para listar todas las lesiones
 
 ### Editar una Lesión
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "3" para editar una lesión
 3. Ingresa el ID de la lesión a editar
 4. Modifica los datos según sea necesario
 
 ### Eliminar una Lesión
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "4" para eliminar una lesión
 3. Ingresa el ID de la lesión a eliminar
 4. Confirma la eliminación
@@ -579,7 +588,7 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ## Exportar Datos
 
-Selecciona "8" en el menú principal para acceder al menú de exportación. Este menú ofrece opciones para exportar datos de diferentes módulos por separado:
+Selecciona "10" en el menú principal para acceder al menú de exportación. Este menú ofrece opciones para exportar datos de diferentes módulos por separado:
 
 1. **Camisetas** - Exportar datos de camisetas
 2. **Partidos** - Exportar datos de partidos (incluyendo submenú para partidos específicos)
@@ -619,15 +628,9 @@ Cada opción permite exportar en múltiples formatos (CSV, TXT, JSON, HTML). Los
 
 ## Importar Datos
 
-Selecciona "9" en el menú principal para importar datos Los archivos deben estar ubicados en el directorio `Documents/MiFutbolC/Importaciones` (o `%USERPROFILE%\Documents\MiFutbolC\Importaciones` en Windows, `./importaciones` en el directorio del ejecutable en Unix/Linux) con nombres específicos, generados por la función de exportación.
+Selecciona "11" en el menú principal para importar datos. Los archivos deben estar ubicados en el directorio `Documents/MiFutbolC/Importaciones` (o `%USERPROFILE%\Documents\MiFutbolC\Importaciones` en Windows, `./importaciones` en el directorio del ejecutable en Unix/Linux) con nombres específicos, generados por la función de exportación.
 
 ![Importar datos](images/menuimportar.png)
-
-## Gestión de Usuario
-
-Selecciona "10" en el menú principal para cambiar el nombre de usuario o ver información del usuario actual.
-
-![Gestión de usuario](images/menuusuarios.png)
 
 ## Consejos de Uso
 
@@ -663,3 +666,4 @@ MiFutbolC es una herramienta completa para el seguimiento y análisis de datos r
 
 *Manual generado con Pandoc*
 *Última actualización: (09/01/2026)*
+
