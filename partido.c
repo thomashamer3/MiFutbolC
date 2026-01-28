@@ -5,10 +5,92 @@
 #include "camiseta.h"
 #include "equipo.h"
 #include "ascii_art.h"
+#include "entrenador_ia.h"
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include <stdlib.h>
+#include <time.h>
+#include <process.h>
+#include <memory.h>
 
+// Prototipos de funciones estáticas usadas antes de su definición
+static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
+static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo);
+static void guardar_estadisticas_equipo(const Equipo *equipo, int const *estadisticas, int const *asistencias,
+                                        int resultado, int cancha_id, char const *fecha_simulacion);
+
+/**
+ * @brief Estructura para agrupar los datos de un partido
+ *
+ * Esta estructura se utiliza para reducir el número de parámetros en funciones
+ * y mejorar la organización del código.
+ */
+typedef struct
+{
+    int cancha_id;
+    int goles;
+    int asistencias;
+    int camiseta;
+    int resultado;
+    int rendimiento_general;
+    int cansancio;
+    int estado_animo;
+    char comentario_personal[256];
+    int clima;
+    int dia;
+} DatosPartido;
+
+/**
+ * @brief Estructura para agrupar estadísticas de un partido
+ *
+ * Esta estructura se utiliza para reducir el número de parámetros en funciones
+ * de simulación y resultados, agrupando las estadísticas de ambos equipos.
+ */
+typedef struct
+{
+    int estadisticas_local[11];
+    int estadisticas_visitante[11];
+    int asistencias_local[11];
+    int asistencias_visitante[11];
+    int goles_local;
+    int goles_visitante;
+} EstadisticasPartido;
+
+/**
+ * @brief Estructura para agrupar datos de simulación de partido
+ *
+ * Esta estructura agrupa todos los datos necesarios para la simulación
+ * y guardado de resultados de un partido, reduciendo la cantidad de
+ * parámetros en las funciones relacionadas.
+ */
+typedef struct
+{
+    Equipo equipo_local;
+    Equipo equipo_visitante;
+    int estadisticas_local[11];
+    int estadisticas_visitante[11];
+    int asistencias_local[11];
+    int asistencias_visitante[11];
+    int goles_local;
+    int goles_visitante;
+} DatosSimulacion;
+
+/**
+ * @brief Generates a random number using standard rand()
+ *
+ * This function provides a simple random number generator for non-critical uses.
+ * For cryptographic applications, consider using a CSPRNG library.
+ *
+ * @param max Maximum value (exclusive)
+ * @return Random number in range [0, max)
+ */
+static int secure_rand(int max)
+{
+    if (max <= 0)
+        return 0;
+    return (unsigned int)rand() % max;
+}
 
 /**
  * @brief Obtiene el siguiente ID disponible para un nuevo partido
@@ -107,59 +189,62 @@ static void listar_canchas_disponibles()
  * Valida cada entrada para asegurar que los datos sean correctos antes de proceder.
  * Utiliza bucles para reintentar entradas inválidas, mejorando la experiencia del usuario.
  *
- * @param cancha_id Puntero al ID de la cancha
- * @param goles Puntero a los goles
- * @param asistencias Puntero a las asistencias
- * @param camiseta Puntero al ID de la camiseta
- * @param resultado Puntero al resultado
- * @param rendimiento_general Puntero al rendimiento general
- * @param cansancio Puntero al cansancio
- * @param estado_animo Puntero al estado de ánimo
- * @param comentario_personal Cadena para el comentario personal
- * @param clima Puntero al clima
- * @param dia Puntero al día
+ * @param datos Puntero a la estructura DatosPartido que contendrá los datos recopilados
  */
-static void recopilar_datos_partido(int *cancha_id, int *goles, int *asistencias, int *camiseta, int *resultado, int *rendimiento_general, int *cansancio, int *estado_animo, char *comentario_personal, int *clima, int *dia)
+static void recopilar_datos_partido(DatosPartido *datos)
 {
-    *cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
-    if (!existe_id("cancha", *cancha_id))
+    // Initialize all fields to safe default values
+    datos->cancha_id = 0;
+    datos->goles = 0;
+    datos->asistencias = 0;
+    datos->camiseta = 0;
+    datos->resultado = 0;
+    datos->rendimiento_general = 0;
+    datos->cansancio = 0;
+    datos->estado_animo = 0;
+    datos->clima = 0;
+    datos->dia = 0;
+    strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
+
+    datos->cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
+    if (!existe_id("cancha", datos->cancha_id))
         return;
-    *goles = input_int("Goles: ");
-    *asistencias = input_int("Asistencias: ");
-    *resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (*resultado < 1 || *resultado > 3)
+    datos->goles = input_int("Goles: ");
+    datos->asistencias = input_int("Asistencias: ");
+    datos->resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
+    while (datos->resultado < 1 || datos->resultado > 3)
     {
-        *resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+        datos->resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
     }
     listar_camisetas();
-    *camiseta = input_int("ID Camiseta: ");
-    if (!existe_id("camiseta", *camiseta))
+    datos->camiseta = input_int("ID Camiseta: ");
+    if (!existe_id("camiseta", datos->camiseta))
         return;
-    *rendimiento_general = input_int("Rendimiento general (1-10): ");
-    while (*rendimiento_general < 1 || *rendimiento_general > 10)
+    datos->rendimiento_general = input_int("Rendimiento general (1-10): ");
+    while (datos->rendimiento_general < 1 || datos->rendimiento_general > 10)
     {
-        *rendimiento_general = input_int("Rendimiento invalido. Ingrese entre 1 y 10: ");
+        datos->rendimiento_general = input_int("Rendimiento invalido. Ingrese entre 1 y 10: ");
     }
-    *cansancio = input_int("Cansancio (1-10): ");
-    while (*cansancio < 1 || *cansancio > 10)
+    datos->cansancio = input_int("Cansancio (1-10): ");
+    while (datos->cansancio < 1 || datos->cansancio > 10)
     {
-        *cansancio = input_int("Cansancio invalido. Ingrese entre 1 y 10:  ");
+        datos->cansancio = input_int("Cansancio invalido. Ingrese entre 1 y 10:  ");
     }
-    *estado_animo = input_int("Estado de Animo (1-10): ");
-    while (*estado_animo < 1 || *estado_animo > 10)
+    datos->estado_animo = input_int("Estado de Animo (1-10): ");
+    while (datos->estado_animo < 1 || datos->estado_animo > 10)
     {
-        *estado_animo = input_int("Estado de Animo invalido. Ingrese entre 1 y 10: ");
+        datos->estado_animo = input_int("Estado de Animo invalido. Ingrese entre 1 y 10: ");
     }
-    input_string("Comentario personal: ", comentario_personal, 256);
-    *clima = input_int("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):");
-    while (*clima < 1 || *clima > 6)
+    input_string("Comentario personal: ", datos->comentario_personal, 256);
+    datos->clima = input_int("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):");
+    while (datos->clima < 1 || datos->clima > 6)
     {
-        *clima = input_int("Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
+        datos->clima = input_int("Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
     }
-    *dia = input_int("Dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (*dia < 1 || *dia > 3)
+    datos->dia = input_int("Dia (1=Dia, 2=Tarde, 3=Noche): ");
+    while (datos->dia < 1 || datos->dia > 3)
     {
-        *dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
+        datos->dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
     }
 }
 
@@ -170,20 +255,10 @@ static void recopilar_datos_partido(int *cancha_id, int *goles, int *asistencias
  * Maneja errores de SQLite para informar al usuario si la inserción falla.
  *
  * @param id ID del partido
- * @param cancha_id ID de la cancha
+ * @param datos Puntero a la estructura DatosPartido que contiene los datos del partido
  * @param fecha Fecha y hora
- * @param goles Número de goles
- * @param asistencias Número de asistencias
- * @param camiseta ID de la camiseta
- * @param resultado Resultado del partido
- * @param rendimiento_general Rendimiento general
- * @param cansancio Nivel de cansancio
- * @param estado_animo Estado de ánimo
- * @param comentario_personal Comentario personal
- * @param clima Condición climática
- * @param dia Momento del día
  */
-static void insertar_partido(int id, int cancha_id, char *fecha, int goles, int asistencias, int camiseta, int resultado, int rendimiento_general, int cansancio, int estado_animo, char *comentario_personal, int clima, int dia)
+static void insertar_partido(int id, DatosPartido const *datos, char const *fecha)
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -191,18 +266,18 @@ static void insertar_partido(int id, int cancha_id, char *fecha, int goles, int 
                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        -1, &stmt, NULL);
     sqlite3_bind_int(stmt, 1, id);
-    sqlite3_bind_int(stmt, 2, cancha_id);
+    sqlite3_bind_int(stmt, 2, datos->cancha_id);
     sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 4, goles);
-    sqlite3_bind_int(stmt, 5, asistencias);
-    sqlite3_bind_int(stmt, 6, camiseta);
-    sqlite3_bind_int(stmt, 7, resultado);
-    sqlite3_bind_int(stmt, 8, rendimiento_general);
-    sqlite3_bind_int(stmt, 9, cansancio);
-    sqlite3_bind_int(stmt, 10, estado_animo);
-    sqlite3_bind_text(stmt, 11, comentario_personal, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 12, clima);
-    sqlite3_bind_int(stmt, 13, dia);
+    sqlite3_bind_int(stmt, 4, datos->goles);
+    sqlite3_bind_int(stmt, 5, datos->asistencias);
+    sqlite3_bind_int(stmt, 6, datos->camiseta);
+    sqlite3_bind_int(stmt, 7, datos->resultado);
+    sqlite3_bind_int(stmt, 8, datos->rendimiento_general);
+    sqlite3_bind_int(stmt, 9, datos->cansancio);
+    sqlite3_bind_int(stmt, 10, datos->estado_animo);
+    sqlite3_bind_text(stmt, 11, datos->comentario_personal, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 12, datos->clima);
+    sqlite3_bind_int(stmt, 13, datos->dia);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -223,15 +298,20 @@ static void insertar_partido(int id, int cancha_id, char *fecha, int goles, int 
  */
 void crear_partido()
 {
-    if (!verificar_prerrequisitos_partido()) return;
-    int cancha_id, goles, asistencias, camiseta, resultado, rendimiento_general, cansancio, estado_animo, clima, dia;
-    char comentario_personal[256];
+    // Activar IA antes de crear partido
+    activar_ia_antes_partido();
+
+    if (!verificar_prerrequisitos_partido())
+        return;
+
+    DatosPartido datos;
     listar_canchas_disponibles();
-    recopilar_datos_partido(&cancha_id, &goles, &asistencias, &camiseta, &resultado, &rendimiento_general, &cansancio, &estado_animo, comentario_personal, &clima, &dia);
+    recopilar_datos_partido(&datos);
+
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
     int id = obtener_siguiente_id_partido();
-    insertar_partido(id, cancha_id, fecha, goles, asistencias, camiseta, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia);
+    insertar_partido(id, &datos, fecha);
 }
 
 /**
@@ -378,14 +458,16 @@ static void modificar_cancha_partido()
  */
 static void modificar_fecha_hora_partido()
 {
-    char fecha[20], hora[10], fecha_hora[30];
+    char fecha[20];
+    char hora[10];
+    char fecha_hora[30];
     printf("Nueva fecha (dd/mm/yyyy): ");
     fgets(fecha, sizeof(fecha), stdin);
     fecha[strcspn(fecha, "\n")] = 0;
     printf("Nueva hora (hh:mm): ");
     fgets(hora, sizeof(hora), stdin);
     hora[strcspn(hora, "\n")] = 0;
-    sprintf(fecha_hora, "%s %s", fecha, hora);
+    snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "UPDATE partido SET fecha_hora=? WHERE id=?", -1, &stmt, NULL);
     sqlite3_bind_text(stmt, 1, fecha_hora, -1, SQLITE_TRANSIENT);
@@ -551,47 +633,42 @@ static void modificar_comentario_partido()
  * Solicita al usuario todos los campos necesarios para actualizar un partido,
  * validando cada entrada para asegurar consistencia de datos.
  *
- * @param cancha_id Puntero al ID de cancha
- * @param fecha Cadena para fecha
- * @param hora Cadena para hora
- * @param goles Puntero a goles
- * @param asistencias Puntero a asistencias
- * @param camiseta Puntero a ID camiseta
- * @param resultado Puntero a resultado
- * @param clima Puntero a clima
- * @param dia Puntero a día
+ * @param datos Puntero a la estructura DatosPartido donde almacenar los datos
  */
-static void recopilar_datos_completos_partido(int *cancha_id, char *fecha, char *hora, int *goles, int *asistencias, int *camiseta, int *resultado, int *clima, int *dia)
+static void recopilar_datos_completos_partido(DatosPartido *datos)
 {
     listar_canchas_disponibles();
-    *cancha_id = input_int("Nuevo ID Cancha: ");
-    if (!existe_id("cancha", *cancha_id))
+    datos->cancha_id = input_int("Nuevo ID Cancha: ");
+    if (!existe_id("cancha", datos->cancha_id))
         return;
+    char fecha[20];
+    char hora[10];
     input_date("Nueva fecha (dd/mm/yyyy): ", fecha, 20);
     input_date("Nueva hora (hh:mm): ", hora, 10);
-    *goles = input_int("Nuevos goles: ");
-    *asistencias = input_int("Nuevas asistencias: ");
-    *resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (*resultado < 1 || *resultado > 3)
+    snprintf(datos->comentario_personal, sizeof(datos->comentario_personal), "%s %s", fecha, hora);
+    datos->goles = input_int("Nuevos goles: ");
+    datos->asistencias = input_int("Nuevas asistencias: ");
+    datos->resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
+    while (datos->resultado < 1 || datos->resultado > 3)
     {
-        *resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
+        datos->resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
     }
     listar_camisetas();
-    *camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", *camiseta))
+    datos->camiseta = input_int("Nuevo ID camiseta: ");
+    if (!existe_id("camiseta", datos->camiseta))
     {
         printf("La camiseta no existe\n");
         return;
     }
-    *clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    while (*clima < 1 || *clima > 6)
+    datos->clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
+    while (datos->clima < 1 || datos->clima > 6)
     {
-        *clima = input_int("Clima invalido. Ingrese entre 1 y 6: ");
+        datos->clima = input_int("Clima invalido. Ingrese entre 1 y 6: ");
     }
-    *dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (*dia < 1 || *dia > 3)
+    datos->dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
+    while (datos->dia < 1 || datos->dia > 3)
     {
-        *dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
+        datos->dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
     }
 }
 
@@ -601,16 +678,10 @@ static void recopilar_datos_completos_partido(int *cancha_id, char *fecha, char 
  * Realiza una actualización completa de un partido utilizando prepared statements
  * para prevenir inyección SQL y asegurar atomicidad de la operación.
  *
- * @param cancha_id ID de la cancha
+ * @param datos Puntero a la estructura DatosPartido con los datos a actualizar
  * @param fecha_hora Fecha y hora combinadas
- * @param goles Número de goles
- * @param asistencias Número de asistencias
- * @param camiseta ID de la camiseta
- * @param resultado Resultado del partido
- * @param clima Condición climática
- * @param dia Momento del día
  */
-static void actualizar_partido_completo(int cancha_id, char *fecha_hora, int goles, int asistencias, int camiseta, int resultado, int clima, int dia)
+static void actualizar_partido_completo(DatosPartido const *datos, char const *fecha_hora)
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -619,14 +690,14 @@ static void actualizar_partido_completo(int cancha_id, char *fecha_hora, int gol
                        "WHERE id=?",
 
                        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, cancha_id);
+    sqlite3_bind_int(stmt, 1, datos->cancha_id);
     sqlite3_bind_text(stmt, 2, fecha_hora, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, goles);
-    sqlite3_bind_int(stmt, 4, asistencias);
-    sqlite3_bind_int(stmt, 5, camiseta);
-    sqlite3_bind_int(stmt, 6, resultado);
-    sqlite3_bind_int(stmt, 7, clima);
-    sqlite3_bind_int(stmt, 8, dia);
+    sqlite3_bind_int(stmt, 3, datos->goles);
+    sqlite3_bind_int(stmt, 4, datos->asistencias);
+    sqlite3_bind_int(stmt, 5, datos->camiseta);
+    sqlite3_bind_int(stmt, 6, datos->resultado);
+    sqlite3_bind_int(stmt, 7, datos->clima);
+    sqlite3_bind_int(stmt, 8, datos->dia);
     sqlite3_bind_int(stmt, 9, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -642,12 +713,9 @@ static void actualizar_partido_completo(int cancha_id, char *fecha_hora, int gol
  */
 static void modificar_todo_partido()
 {
-    int cancha_id, goles, asistencias, camiseta, resultado, clima, dia;
-    char fecha[20], hora[10];
-    recopilar_datos_completos_partido(&cancha_id, fecha, hora, &goles, &asistencias, &camiseta, &resultado, &clima, &dia);
-    char fecha_hora[30];
-    sprintf(fecha_hora, "%s %s", fecha, hora);
-    actualizar_partido_completo(cancha_id, fecha_hora, goles, asistencias, camiseta, resultado, clima, dia);
+    DatosPartido datos;
+    recopilar_datos_completos_partido(&datos);
+    actualizar_partido_completo(&datos, datos.comentario_personal);
 }
 /**
  * @brief Permite modificar los datos de un partido existente
@@ -696,8 +764,7 @@ void modificar_partido()
 
     ejecutar_menu("MODIFICAR PARTIDO", items, 11);
 }
-/**
- * @brief Busca partidos por camiseta utilizada
+/** @brief Busca partidos por camiseta utilizada
  *
  * Solicita el ID de la camiseta y muestra todos los partidos donde se utilizó esa camiseta.
  */
@@ -919,13 +986,362 @@ void buscar_partidos()
 }
 
 /**
- * @brief Simula un partido entre dos equipos guardados en la base de datos
+ * @brief Maneja un gol marcado por el equipo local durante la simulación
  *
- * Permite al usuario seleccionar dos equipos existentes de la base de datos
- * y simular un partido entre ellos. Los resultados se guardan automáticamente
- * en la base de datos incluyendo estadísticas de goles y asistencias.
+ * @param equipo_local Puntero al equipo local
+ * @param minuto Minuto del partido
+ * @param jugador_idx Índice del jugador que marcó
+ * @param asistente_idx Índice del asistente
+ * @param estadisticas_local Array de estadísticas locales
+ * @param asistencias_local Array de asistencias locales
+ * @param goles_local Puntero al contador de goles locales
  */
-void simular_partido_guardados();
+static void manejar_gol_local(Equipo const *equipo_local, int minuto, int jugador_idx, int asistente_idx,
+                              int *estadisticas_local, int *asistencias_local, int *goles_local)
+{
+    if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
+    {
+        asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
+    }
+
+    (*goles_local)++;
+    estadisticas_local[jugador_idx]++;
+    if (asistente_idx != jugador_idx)
+    {
+        asistencias_local[asistente_idx]++;
+    }
+
+    printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
+    printf("   Gol de %s (%d) para %s\n",
+           equipo_local->jugadores[jugador_idx].nombre,
+           equipo_local->jugadores[jugador_idx].numero,
+           equipo_local->nombre);
+    if (asistente_idx != jugador_idx)
+    {
+        printf("   Asistencia de %s (%d)\n",
+               equipo_local->jugadores[asistente_idx].nombre,
+               equipo_local->jugadores[asistente_idx].numero);
+    }
+}
+
+/**
+ * @brief Maneja un gol marcado por el equipo visitante durante la simulación
+ *
+ * @param equipo_visitante Puntero al equipo visitante
+ * @param minuto Minuto del partido
+ * @param jugador_idx Índice del jugador que marcó
+ * @param asistente_idx Índice del asistente
+ * @param estadisticas_visitante Array de estadísticas visitantes
+ * @param asistencias_visitante Array de asistencias visitantes
+ * @param goles_visitante Puntero al contador de goles visitantes
+ */
+static void manejar_gol_visitante(Equipo const *equipo_visitante, int minuto, int jugador_idx, int asistente_idx,
+                                  int *estadisticas_visitante, int *asistencias_visitante, int *goles_visitante)
+{
+    if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
+    {
+        asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
+    }
+
+    (*goles_visitante)++;
+    estadisticas_visitante[jugador_idx]++;
+    if (asistente_idx != jugador_idx)
+    {
+        asistencias_visitante[asistente_idx]++;
+    }
+
+    printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
+    printf("   Gol de %s (%d) para %s\n",
+           equipo_visitante->jugadores[jugador_idx].nombre,
+           equipo_visitante->jugadores[jugador_idx].numero,
+           equipo_visitante->nombre);
+    if (asistente_idx != jugador_idx)
+    {
+        printf("   Asistencia de %s (%d)\n",
+               equipo_visitante->jugadores[asistente_idx].nombre,
+               equipo_visitante->jugadores[asistente_idx].numero);
+    }
+}
+
+/**
+ * @brief Verifica si hay suficientes equipos para simular un partido
+ *
+ * @return 1 si hay al menos 2 equipos, 0 si no
+ */
+static int verificar_equipos_disponibles()
+{
+    sqlite3_stmt *stmt_count;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM equipo", -1, &stmt_count, NULL);
+    sqlite3_step(stmt_count);
+    int total_equipos = sqlite3_column_int(stmt_count, 0);
+    sqlite3_finalize(stmt_count);
+
+    if (total_equipos < 2)
+    {
+        printf("Se necesitan al menos 2 equipos guardados para simular un partido.\n");
+        printf("Por favor, cree equipos primero.\n");
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Muestra la lista de equipos disponibles
+ */
+static void mostrar_equipos_disponibles()
+{
+    printf("=== EQUIPOS DISPONIBLES ===\n\n");
+    sqlite3_stmt *stmt_equipos;
+    sqlite3_prepare_v2(db, "SELECT id, nombre FROM equipo ORDER BY id", -1, &stmt_equipos, NULL);
+
+    while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
+    {
+        printf("%d. %s\n", sqlite3_column_int(stmt_equipos, 0),
+               sqlite3_column_text(stmt_equipos, 1));
+    }
+    sqlite3_finalize(stmt_equipos);
+}
+
+/**
+ * @brief Selecciona los equipos local y visitante
+ *
+ * @param equipo_local_id Puntero al ID del equipo local
+ * @param equipo_visitante_id Puntero al ID del equipo visitante
+ */
+static void seleccionar_equipos(int *equipo_local_id, int *equipo_visitante_id)
+{
+    // Seleccionar equipo local
+    do
+    {
+        *equipo_local_id = input_int("\nSeleccione el equipo LOCAL (ID): ");
+        if (!existe_id("equipo", *equipo_local_id))
+        {
+            printf("Equipo no encontrado. Intente nuevamente.\n");
+        }
+    }
+    while (!existe_id("equipo", *equipo_local_id));
+
+    // Seleccionar equipo visitante (diferente al local)
+    do
+    {
+        *equipo_visitante_id = input_int("Seleccione el equipo VISITANTE (ID): ");
+        if (*equipo_visitante_id == *equipo_local_id)
+        {
+            printf("El equipo visitante debe ser diferente al local.\n");
+        }
+        else if (!existe_id("equipo", *equipo_visitante_id))
+        {
+            printf("Equipo no encontrado. Intente nuevamente.\n");
+        }
+    }
+    while (*equipo_visitante_id == *equipo_local_id || !existe_id("equipo", *equipo_visitante_id));
+}
+
+/**
+ * @brief Carga los equipos desde la base de datos
+ *
+ * @param equipo_local_id ID del equipo local
+ * @param equipo_visitante_id ID del equipo visitante
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ * @return 1 si se cargaron exitosamente, 0 si hubo error
+ */
+static int cargar_equipos(int equipo_local_id, int equipo_visitante_id, Equipo *equipo_local, Equipo *equipo_visitante)
+{
+    memset(equipo_local, 0, sizeof(Equipo));
+    memset(equipo_visitante, 0, sizeof(Equipo));
+
+    if (!cargar_equipo_desde_bd(equipo_local_id, equipo_local))
+    {
+        printf("Error al cargar el equipo local.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (!cargar_equipo_desde_bd(equipo_visitante_id, equipo_visitante))
+    {
+        printf("Error al cargar el equipo visitante.\n");
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Muestra la información inicial del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ */
+static void mostrar_inicio_partido(Equipo const *equipo_local, Equipo const *equipo_visitante)
+{
+    printf("\n*** INICIANDO SIMULACION ***\n");
+    printf("EQUIPO LOCAL: %s\n", equipo_local->nombre);
+    printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante->nombre);
+}
+
+/**
+ * @brief Muestra la alineación de los equipos
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ */
+static void mostrar_alineacion(Equipo const *equipo_local, Equipo const *equipo_visitante)
+{
+    clear_screen();
+    printf("%s\n", ASCII_SIMULACION);
+    printf("                    SIMULACION DE PARTIDO\n\n");
+
+    printf("=== %s VS %s ===\n\n", equipo_local->nombre, equipo_visitante->nombre);
+
+    // Mostrar cancha inicial
+    mostrar_cancha_animada(0, 0);
+
+    // Mostrar equipos alineados
+    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
+    for (int i = 0; i < equipo_local->num_jugadores; i++)
+    {
+        printf("  %d. %s", equipo_local->jugadores[i].numero, equipo_local->jugadores[i].nombre);
+        if (equipo_local->jugadores[i].es_capitan)
+            printf(" (C)");
+        printf("\n");
+    }
+
+    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
+    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
+    {
+        printf("  %d. %s", equipo_visitante->jugadores[i].numero, equipo_visitante->jugadores[i].nombre);
+        if (equipo_visitante->jugadores[i].es_capitan)
+            printf(" (C)");
+        printf("\n");
+    }
+
+    printf("\n*** INICIO DEL PARTIDO ***\n");
+    printf("La simulacion comenzara automaticamente en 3 segundos...\n");
+    Sleep(3000);
+}
+
+/**
+ * @brief Ejecuta la lógica de simulación del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ * @param estadisticas Puntero a la estructura con todas las estadísticas del partido
+ */
+static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equipo_visitante,
+                                   EstadisticasPartido *estadisticas)
+{
+    for (int minuto = 1; minuto <= 60; minuto++)
+    {
+        clear_screen();
+        print_header("SIMULACION DE PARTIDO");
+
+        printf("=== %s %d - %d %s ===\n\n",
+               equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
+        printf("MINUTO: %d\n\n", minuto);
+
+        // Generar eventos aleatorios
+        int evento = secure_rand(100);
+
+        if (evento < 2) // Gol local
+        {
+            int jugador_idx = secure_rand(equipo_local->num_jugadores);
+            int asistente_idx = secure_rand(equipo_local->num_jugadores);
+            if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
+            {
+                asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
+            }
+
+            manejar_gol_local(equipo_local, minuto, jugador_idx, asistente_idx,
+                              estadisticas->estadisticas_local, estadisticas->asistencias_local, &estadisticas->goles_local);
+        }
+        else if (evento < 4) // Gol visitante
+        {
+            int jugador_idx = secure_rand(equipo_visitante->num_jugadores);
+            int asistente_idx = secure_rand(equipo_visitante->num_jugadores);
+            if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
+            {
+                asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
+            }
+
+            manejar_gol_visitante(equipo_visitante, minuto, jugador_idx, asistente_idx,
+                                  estadisticas->estadisticas_visitante, estadisticas->asistencias_visitante, &estadisticas->goles_visitante);
+        }
+        else if (evento < 10)
+        {
+            printf("*** Oportunidad de gol ***\n");
+        }
+        else
+        {
+            printf("*** El partido continúa... ***\n");
+        }
+
+        mostrar_cancha_animada(minuto, (evento < 4) ? 1 : 0);
+        Sleep(1000);
+    }
+}
+
+/**
+ * @brief Muestra los resultados finales del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ * @param estadisticas Puntero a la estructura con todas las estadísticas del partido
+ */
+static void mostrar_resultados(Equipo const *equipo_local, Equipo const *equipo_visitante,
+                               EstadisticasPartido const *estadisticas)
+{
+    // Resultados finales
+    clear_screen();
+    print_header("FIN DEL PARTIDO");
+
+    printf("*** RESULTADO FINAL ***\n\n");
+    printf("*** 60 MINUTOS COMPLETADOS ***\n\n");
+
+    printf("*** %s %d - %d %s ***\n\n",
+           equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
+
+    if (estadisticas->goles_local > estadisticas->goles_visitante)
+    {
+        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_local->nombre);
+    }
+    else if (estadisticas->goles_visitante > estadisticas->goles_local)
+    {
+        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_visitante->nombre);
+    }
+    else
+    {
+        printf("*** ¡EMPATE! ***\n\n");
+    }
+
+    // Mostrar estadísticas
+    printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
+
+    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
+    for (int i = 0; i < equipo_local->num_jugadores; i++)
+    {
+        if (estadisticas->estadisticas_local[i] > 0 || estadisticas->asistencias_local[i] > 0)
+        {
+            printf("  %s (%d): %d Goles, %d Asistencias\n",
+                   equipo_local->jugadores[i].nombre,
+                   equipo_local->jugadores[i].numero,
+                   estadisticas->estadisticas_local[i], estadisticas->asistencias_local[i]);
+        }
+    }
+
+    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
+    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
+    {
+        if (estadisticas->estadisticas_visitante[i] > 0 || estadisticas->asistencias_visitante[i] > 0)
+        {
+            printf("  %s (%d): %d Goles, %d Asistencias\n",
+                   equipo_visitante->jugadores[i].nombre,
+                   equipo_visitante->jugadores[i].numero,
+                   estadisticas->estadisticas_visitante[i], estadisticas->asistencias_visitante[i]);
+        }
+    }
+}
 
 /**
  * @brief Carga un equipo desde la base de datos por su ID
@@ -939,89 +1355,103 @@ static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo)
     sqlite3_stmt *stmt_equipo;
     const char *sql_equipo = "SELECT nombre, tipo, tipo_futbol, num_jugadores FROM equipo WHERE id = ?";
 
-    if (sqlite3_prepare_v2(db, sql_equipo, -1, &stmt_equipo, 0) == SQLITE_OK)
+    if (sqlite3_prepare_v2(db, sql_equipo, -1, &stmt_equipo, 0) != SQLITE_OK)
     {
-        sqlite3_bind_int(stmt_equipo, 1, equipo_id);
-
-        if (sqlite3_step(stmt_equipo) == SQLITE_ROW)
-        {
-            equipo->id = equipo_id;
-            strncpy(equipo->nombre, (const char*)sqlite3_column_text(stmt_equipo, 0), sizeof(equipo->nombre));
-            equipo->tipo = sqlite3_column_int(stmt_equipo, 1);
-            equipo->tipo_futbol = sqlite3_column_int(stmt_equipo, 2);
-            equipo->num_jugadores = sqlite3_column_int(stmt_equipo, 3);
-            equipo->partido_id = -1;
-
-            sqlite3_finalize(stmt_equipo);
-
-            // Cargar jugadores
-            sqlite3_stmt *stmt_jugadores;
-            const char *sql_jugadores = "SELECT nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero";
-
-            if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt_jugadores, 0) == SQLITE_OK)
-            {
-                sqlite3_bind_int(stmt_jugadores, 1, equipo_id);
-
-                int jugador_idx = 0;
-                while (sqlite3_step(stmt_jugadores) == SQLITE_ROW && jugador_idx < 11)
-                {
-                    strncpy(equipo->jugadores[jugador_idx].nombre,
-                            (const char*)sqlite3_column_text(stmt_jugadores, 0),
-                            sizeof(equipo->jugadores[jugador_idx].nombre));
-                    equipo->jugadores[jugador_idx].numero = sqlite3_column_int(stmt_jugadores, 1);
-                    equipo->jugadores[jugador_idx].posicion = sqlite3_column_int(stmt_jugadores, 2);
-                    equipo->jugadores[jugador_idx].es_capitan = sqlite3_column_int(stmt_jugadores, 3);
-                    jugador_idx++;
-                }
-
-                sqlite3_finalize(stmt_jugadores);
-                return 1;
-            }
-        }
-        sqlite3_finalize(stmt_equipo);
+        return 0;
     }
-    return 0;
+
+    sqlite3_bind_int(stmt_equipo, 1, equipo_id);
+
+    if (sqlite3_step(stmt_equipo) != SQLITE_ROW)
+    {
+        sqlite3_finalize(stmt_equipo);
+        return 0;
+    }
+
+    equipo->id = equipo_id;
+    strncpy_s(equipo->nombre, sizeof(equipo->nombre), (const char *)sqlite3_column_text(stmt_equipo, 0), _TRUNCATE);
+    equipo->tipo = sqlite3_column_int(stmt_equipo, 1);
+    equipo->tipo_futbol = sqlite3_column_int(stmt_equipo, 2);
+    equipo->num_jugadores = sqlite3_column_int(stmt_equipo, 3);
+    equipo->partido_id = -1;
+
+    sqlite3_finalize(stmt_equipo);
+
+    // Cargar jugadores
+    return cargar_jugadores_equipo(equipo_id, equipo);
 }
 
 /**
- * @brief Guarda los resultados de una simulación de partido en la base de datos
+ * @brief Carga los jugadores de un equipo desde la base de datos
  *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param goles_local Goles marcados por el equipo local
- * @param goles_visitante Goles marcados por el equipo visitante
- * @param estadisticas_local Array con estadísticas de goles por jugador local
- * @param estadisticas_visitante Array con estadísticas de goles por jugador visitante
- * @param asistencias_local Array con estadísticas de asistencias por jugador local
- * @param asistencias_visitante Array con estadísticas de asistencias por jugador visitante
+ * @param equipo_id ID del equipo cuyos jugadores se cargarán
+ * @param equipo Puntero al equipo donde cargar los jugadores
+ * @return 1 si se cargaron exitosamente, 0 si hubo error
  */
-static void guardar_resultados_simulacion(Equipo *equipo_local, Equipo *equipo_visitante,
-        int goles_local, int goles_visitante,
-        int *estadisticas_local, int *estadisticas_visitante,
-        int *asistencias_local, int *asistencias_visitante)
+static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo)
 {
-    char fecha_simulacion[20];
-    get_datetime(fecha_simulacion, sizeof(fecha_simulacion));
+    sqlite3_stmt *stmt_jugadores;
+    const char *sql_jugadores = "SELECT nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero";
 
-    // Determinar resultado
-    int resultado_local, resultado_visitante;
+    if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt_jugadores, 0) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt_jugadores, 1, equipo_id);
+
+    int jugador_idx = 0;
+    while (sqlite3_step(stmt_jugadores) == SQLITE_ROW && jugador_idx < 11)
+    {
+        strncpy_s(equipo->jugadores[jugador_idx].nombre,
+                  sizeof(equipo->jugadores[jugador_idx].nombre),
+                  (const char *)sqlite3_column_text(stmt_jugadores, 0),
+                  _TRUNCATE);
+        equipo->jugadores[jugador_idx].numero = sqlite3_column_int(stmt_jugadores, 1);
+        equipo->jugadores[jugador_idx].posicion = sqlite3_column_int(stmt_jugadores, 2);
+        equipo->jugadores[jugador_idx].es_capitan = sqlite3_column_int(stmt_jugadores, 3);
+        jugador_idx++;
+    }
+
+    sqlite3_finalize(stmt_jugadores);
+    return 1;
+}
+
+/**
+ * @brief Determina el resultado de un partido basado en los goles
+ *
+ * @param goles_local Goles del equipo local
+ * @param goles_visitante Goles del equipo visitante
+ * @param resultado_local Puntero para almacenar el resultado del equipo local
+ * @param resultado_visitante Puntero para almacenar el resultado del equipo visitante
+ */
+static void determinar_resultado_partido(int goles_local, int goles_visitante,
+        int *resultado_local, int *resultado_visitante)
+{
     if (goles_local > goles_visitante)
     {
-        resultado_local = 1; // VICTORIA
-        resultado_visitante = 3; // DERROTA
+        *resultado_local = 1;     // VICTORIA
+        *resultado_visitante = 3; // DERROTA
     }
     else if (goles_visitante > goles_local)
     {
-        resultado_local = 3; // DERROTA
-        resultado_visitante = 1; // VICTORIA
+        *resultado_local = 3;     // DERROTA
+        *resultado_visitante = 1; // VICTORIA
     }
     else
     {
-        resultado_local = 2; // EMPATE
-        resultado_visitante = 2; // EMPATE
+        *resultado_local = 2;     // EMPATE
+        *resultado_visitante = 2; // EMPATE
     }
+}
 
-    // Obtener una cancha por defecto (la primera disponible)
+/**
+ * @brief Obtiene el ID de una cancha por defecto
+ *
+ * @return ID de la cancha por defecto
+ */
+static int obtener_cancha_defecto()
+{
     int cancha_id = 1;
     sqlite3_stmt *stmt_cancha;
     sqlite3_prepare_v2(db, "SELECT id FROM cancha ORDER BY id LIMIT 1", -1, &stmt_cancha, NULL);
@@ -1030,40 +1460,348 @@ static void guardar_resultados_simulacion(Equipo *equipo_local, Equipo *equipo_v
         cancha_id = sqlite3_column_int(stmt_cancha, 0);
     }
     sqlite3_finalize(stmt_cancha);
+    return cancha_id;
+}
+
+/**
+ * @brief Guarda los resultados de una simulación de partido en la base de datos
+ *
+ * @param datos_simulacion Puntero a la estructura con todos los datos de la simulación
+ */
+static void guardar_resultados_simulacion(DatosSimulacion const *datos_simulacion)
+{
+    char fecha_simulacion[20] = "2023-01-01 00:00";
+    get_datetime(fecha_simulacion, sizeof(fecha_simulacion));
+
+    // Determinar resultados
+    int resultado_local;
+    int resultado_visitante;
+    determinar_resultado_partido(datos_simulacion->goles_local, datos_simulacion->goles_visitante,
+                                 &resultado_local, &resultado_visitante);
+
+    // Obtener cancha por defecto
+    int cancha_id = obtener_cancha_defecto();
 
     // Guardar estadísticas para cada jugador del equipo local
-    for (int i = 0; i < equipo_local->num_jugadores; i++)
-    {
-        if (estadisticas_local[i] > 0 || asistencias_local[i] > 0)
-        {
-            // Buscar o crear camiseta para este jugador
-            int camiseta_id = 1; // Usar camiseta por defecto
-
-            int partido_id = obtener_siguiente_id_partido();
-            insertar_partido(partido_id, cancha_id, fecha_simulacion,
-                             estadisticas_local[i], asistencias_local[i],
-                             camiseta_id, resultado_local, 8, 5, 7,
-                             "Partido simulado", 1, 1);
-        }
-    }
+    guardar_estadisticas_equipo(&datos_simulacion->equipo_local, datos_simulacion->estadisticas_local,
+                                datos_simulacion->asistencias_local, resultado_local, cancha_id, fecha_simulacion);
 
     // Guardar estadísticas para cada jugador del equipo visitante
-    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
+    guardar_estadisticas_equipo(&datos_simulacion->equipo_visitante, datos_simulacion->estadisticas_visitante,
+                                datos_simulacion->asistencias_visitante, resultado_visitante, cancha_id, fecha_simulacion);
+
+    printf("*** RESULTADOS GUARDADOS EN LA BASE DE DATOS ***\n");
+}
+
+/**
+ * @brief Guarda las estadísticas de un equipo en la base de datos
+ *
+ * @param equipo Puntero al equipo
+ * @param estadisticas Array con estadísticas de goles por jugador
+ * @param asistencias Array con estadísticas de asistencias por jugador
+ * @param resultado Resultado del equipo
+ * @param cancha_id ID de la cancha
+ * @param fecha_simulacion Fecha de la simulación
+ */
+static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadisticas, int const *asistencias,
+                                        int resultado, int cancha_id, char const *fecha_simulacion)
+{
+    for (int i = 0; i < equipo->num_jugadores; i++)
     {
-        if (estadisticas_visitante[i] > 0 || asistencias_visitante[i] > 0)
+        if (estadisticas[i] > 0 || asistencias[i] > 0)
         {
             // Buscar o crear camiseta para este jugador
             int camiseta_id = 1; // Usar camiseta por defecto
 
+            DatosPartido datos = {0};
+            datos.cancha_id = cancha_id;
+            datos.goles = estadisticas[i];
+            datos.asistencias = asistencias[i];
+            datos.camiseta = camiseta_id;
+            datos.resultado = resultado;
+            datos.rendimiento_general = 8;
+            datos.cansancio = 5;
+            datos.estado_animo = 7;
+            strncpy_s(datos.comentario_personal, sizeof(datos.comentario_personal), "Partido simulado", _TRUNCATE);
+            datos.clima = 1;
+            datos.dia = 1;
+
             int partido_id = obtener_siguiente_id_partido();
-            insertar_partido(partido_id, cancha_id, fecha_simulacion,
-                             estadisticas_visitante[i], asistencias_visitante[i],
-                             camiseta_id, resultado_visitante, 8, 5, 7,
-                             "Partido simulado", 1, 1);
+            insertar_partido(partido_id, &datos, fecha_simulacion);
+        }
+    }
+}
+
+/**
+ * @brief Verifica si hay suficientes equipos para simular un partido
+ *
+ * @return 1 si hay al menos 2 equipos, 0 si no
+ */
+/**
+ * @brief Selecciona los equipos local y visitante para la simulación
+ *
+ * @param equipo_local_id Puntero al ID del equipo local seleccionado
+ * @param equipo_visitante_id Puntero al ID del equipo visitante seleccionado
+ * @return 1 si la selección fue exitosa, 0 si hubo error
+ */
+static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visitante_id)
+{
+    // Seleccionar equipo local
+    do
+    {
+        *equipo_local_id = input_int("\nSeleccione el equipo LOCAL (ID): ");
+        if (!existe_id("equipo", *equipo_local_id))
+        {
+            printf("Equipo no encontrado. Intente nuevamente.\n");
+        }
+    }
+    while (!existe_id("equipo", *equipo_local_id));
+
+    // Seleccionar equipo visitante (diferente al local)
+    do
+    {
+        *equipo_visitante_id = input_int("Seleccione el equipo VISITANTE (ID): ");
+        if (*equipo_visitante_id == *equipo_local_id)
+        {
+            printf("El equipo visitante debe ser diferente al local.\n");
+        }
+        else if (!existe_id("equipo", *equipo_visitante_id))
+        {
+            printf("Equipo no encontrado. Intente nuevamente.\n");
+        }
+    }
+    while (*equipo_visitante_id == *equipo_local_id || !existe_id("equipo", *equipo_visitante_id));
+
+    return 1;
+}
+
+/**
+ * @brief Carga los equipos seleccionados desde la base de datos
+ *
+ * @param equipo_local_id ID del equipo local
+ * @param equipo_visitante_id ID del equipo visitante
+ * @param equipo_local Puntero al equipo local donde cargar los datos
+ * @param equipo_visitante Puntero al equipo visitante donde cargar los datos
+ * @return 1 si la carga fue exitosa, 0 si hubo error
+ */
+static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitante_id,
+                                        Equipo *equipo_local, Equipo *equipo_visitante)
+{
+    if (!cargar_equipo_desde_bd(equipo_local_id, equipo_local))
+    {
+        printf("Error al cargar el equipo local.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (!cargar_equipo_desde_bd(equipo_visitante_id, equipo_visitante))
+    {
+        printf("Error al cargar el equipo visitante.\n");
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Muestra la información inicial del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ */
+static void mostrar_informacion_inicial(Equipo const *equipo_local, Equipo const *equipo_visitante)
+{
+    printf("\n*** INICIANDO SIMULACION ***\n");
+    printf("EQUIPO LOCAL: %s\n", equipo_local->nombre);
+    printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante->nombre);
+}
+
+/**
+ * @brief Muestra la alineación de los equipos antes del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ */
+static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante)
+{
+    clear_screen();
+    printf("%s\n", ASCII_SIMULACION);
+    printf("                    SIMULACION DE PARTIDO\n\n");
+
+    printf("=== %s VS %s ===\n\n", equipo_local->nombre, equipo_visitante->nombre);
+
+    // Mostrar cancha inicial
+    mostrar_cancha_animada(0, 0);
+
+    // Mostrar equipos alineados
+    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
+    for (int i = 0; i < equipo_local->num_jugadores; i++)
+    {
+        printf("  %d. %s", equipo_local->jugadores[i].numero, equipo_local->jugadores[i].nombre);
+        if (equipo_local->jugadores[i].es_capitan)
+            printf(" (C)");
+        printf("\n");
+    }
+
+    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
+    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
+    {
+        printf("  %d. %s", equipo_visitante->jugadores[i].numero, equipo_visitante->jugadores[i].nombre);
+        if (equipo_visitante->jugadores[i].es_capitan)
+            printf(" (C)");
+        printf("\n");
+    }
+
+    printf("\n*** INICIO DEL PARTIDO ***\n");
+    printf("La simulacion comenzara automaticamente en 3 segundos...\n");
+    Sleep(3000);
+}
+
+/**
+ * @brief Ejecuta la simulación del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ * @param estadisticas Puntero a la estructura donde almacenar las estadísticas
+ * @return 1 si la simulación fue exitosa, 0 si hubo error
+ */
+static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante,
+                                       EstadisticasPartido *estadisticas)
+{
+    for (int minuto = 1; minuto <= 60; minuto++)
+    {
+        clear_screen();
+        print_header("SIMULACION DE PARTIDO");
+
+        printf("=== %s %d - %d %s ===\n\n",
+               equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
+        printf("MINUTO: %d\n\n", minuto);
+
+        // Generar eventos aleatorios usando CSPRNG
+        int evento = secure_rand(100);
+
+        if (evento < 2) // Gol local
+        {
+            int jugador_idx = secure_rand(equipo_local->num_jugadores);
+            int asistente_idx = secure_rand(equipo_local->num_jugadores);
+            if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
+            {
+                asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
+            }
+
+            manejar_gol_local(equipo_local, minuto, jugador_idx, asistente_idx,
+                              estadisticas->estadisticas_local, estadisticas->asistencias_local, &estadisticas->goles_local);
+        }
+        else if (evento < 4) // Gol visitante
+        {
+            int jugador_idx = secure_rand(equipo_visitante->num_jugadores);
+            int asistente_idx = secure_rand(equipo_visitante->num_jugadores);
+            if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
+            {
+                asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
+            }
+
+            manejar_gol_visitante(equipo_visitante, minuto, jugador_idx, asistente_idx,
+                                  estadisticas->estadisticas_visitante, estadisticas->asistencias_visitante, &estadisticas->goles_visitante);
+        }
+        else if (evento < 10)
+        {
+            printf("*** Oportunidad de gol ***\n");
+        }
+        else
+        {
+            printf("*** El partido continúa... ***\n");
+        }
+
+        mostrar_cancha_animada(minuto, (evento < 4) ? 1 : 0);
+        Sleep(1000);
+    }
+
+    return 1;
+}
+
+/**
+ * @brief Muestra los resultados finales del partido
+ *
+ * @param equipo_local Puntero al equipo local
+ * @param equipo_visitante Puntero al equipo visitante
+ * @param estadisticas Puntero a la estructura con las estadísticas del partido
+ */
+static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const *equipo_visitante,
+                                       EstadisticasPartido const *estadisticas)
+{
+    // Resultados finales
+    clear_screen();
+    print_header("FIN DEL PARTIDO");
+
+    printf("*** RESULTADO FINAL ***\n\n");
+    printf("*** 60 MINUTOS COMPLETADOS ***\n\n");
+
+    printf("*** %s %d - %d %s ***\n\n",
+           equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
+
+    if (estadisticas->goles_local > estadisticas->goles_visitante)
+    {
+        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_local->nombre);
+    }
+    else if (estadisticas->goles_visitante > estadisticas->goles_local)
+    {
+        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_visitante->nombre);
+    }
+    else
+    {
+        printf("*** ¡EMPATE! ***\n\n");
+    }
+
+    // Mostrar estadísticas
+    printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
+
+    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
+    for (int i = 0; i < equipo_local->num_jugadores; i++)
+    {
+        if (estadisticas->estadisticas_local[i] > 0 || estadisticas->asistencias_local[i] > 0)
+        {
+            printf("  %s (%d): %d Goles, %d Asistencias\n",
+                   equipo_local->jugadores[i].nombre,
+                   equipo_local->jugadores[i].numero,
+                   estadisticas->estadisticas_local[i], estadisticas->asistencias_local[i]);
         }
     }
 
-    printf("*** RESULTADOS GUARDADOS EN LA BASE DE DATOS ***\n");
+    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
+    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
+    {
+        if (estadisticas->estadisticas_visitante[i] > 0 || estadisticas->asistencias_visitante[i] > 0)
+        {
+            printf("  %s (%d): %d Goles, %d Asistencias\n",
+                   equipo_visitante->jugadores[i].nombre,
+                   equipo_visitante->jugadores[i].numero,
+                   estadisticas->estadisticas_visitante[i], estadisticas->asistencias_visitante[i]);
+        }
+    }
+}
+
+/**
+ * @brief Crea la estructura de datos de simulación a partir de las estadísticas
+ *
+ * @param equipo_local Equipo local
+ * @param equipo_visitante Equipo visitante
+ * @param estadisticas Estadísticas del partido
+ * @return Estructura de datos de simulación completa
+ */
+static DatosSimulacion crear_datos_simulacion(Equipo equipo_local, Equipo equipo_visitante,
+        EstadisticasPartido const *estadisticas)
+{
+    DatosSimulacion datos_simulacion = {0};
+    datos_simulacion.equipo_local = equipo_local;
+    datos_simulacion.equipo_visitante = equipo_visitante;
+    memcpy(datos_simulacion.estadisticas_local, estadisticas->estadisticas_local, sizeof(estadisticas->estadisticas_local));
+    memcpy(datos_simulacion.estadisticas_visitante, estadisticas->estadisticas_visitante, sizeof(estadisticas->estadisticas_visitante));
+    memcpy(datos_simulacion.asistencias_local, estadisticas->asistencias_local, sizeof(estadisticas->asistencias_local));
+    memcpy(datos_simulacion.asistencias_visitante, estadisticas->asistencias_visitante, sizeof(estadisticas->asistencias_visitante));
+    datos_simulacion.goles_local = estadisticas->goles_local;
+    datos_simulacion.goles_visitante = estadisticas->goles_visitante;
+    return datos_simulacion;
 }
 
 /**
@@ -1079,257 +1817,47 @@ void simular_partido_guardados()
     print_header("SIMULAR PARTIDO CON EQUIPOS GUARDADOS");
 
     // Verificar que hay al menos 2 equipos disponibles
-    sqlite3_stmt *stmt_count;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM equipo", -1, &stmt_count, NULL);
-    sqlite3_step(stmt_count);
-    int total_equipos = sqlite3_column_int(stmt_count, 0);
-    sqlite3_finalize(stmt_count);
-
-    if (total_equipos < 2)
+    if (!verificar_equipos_disponibles())
     {
-        printf("Se necesitan al menos 2 equipos guardados para simular un partido.\n");
-        printf("Por favor, cree equipos primero.\n");
-        pause_console();
         return;
     }
 
     // Mostrar equipos disponibles
-    printf("=== EQUIPOS DISPONIBLES ===\n\n");
-    sqlite3_stmt *stmt_equipos;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM equipo ORDER BY id", -1, &stmt_equipos, NULL);
+    mostrar_equipos_disponibles();
 
-    while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
-    {
-        printf("%d. %s\n", sqlite3_column_int(stmt_equipos, 0),
-               sqlite3_column_text(stmt_equipos, 1));
-    }
-    sqlite3_finalize(stmt_equipos);
-
-    // Seleccionar equipo local
+    // Seleccionar equipos
     int equipo_local_id;
-    do
-    {
-        equipo_local_id = input_int("\nSeleccione el equipo LOCAL (ID): ");
-        if (!existe_id("equipo", equipo_local_id))
-        {
-            printf("Equipo no encontrado. Intente nuevamente.\n");
-        }
-    }
-    while (!existe_id("equipo", equipo_local_id));
-
-    // Seleccionar equipo visitante (diferente al local)
     int equipo_visitante_id;
-    do
-    {
-        equipo_visitante_id = input_int("Seleccione el equipo VISITANTE (ID): ");
-        if (equipo_visitante_id == equipo_local_id)
-        {
-            printf("El equipo visitante debe ser diferente al local.\n");
-        }
-        else if (!existe_id("equipo", equipo_visitante_id))
-        {
-            printf("Equipo no encontrado. Intente nuevamente.\n");
-        }
-    }
-    while (equipo_visitante_id == equipo_local_id || !existe_id("equipo", equipo_visitante_id));
+    seleccionar_equipos(&equipo_local_id, &equipo_visitante_id);
 
     // Cargar equipos desde la base de datos
-    Equipo equipo_local, equipo_visitante;
-
-    if (!cargar_equipo_desde_bd(equipo_local_id, &equipo_local))
+    Equipo equipo_local;
+    Equipo equipo_visitante;
+    if (!cargar_equipos(equipo_local_id, equipo_visitante_id, &equipo_local, &equipo_visitante))
     {
-        printf("Error al cargar el equipo local.\n");
-        pause_console();
         return;
     }
 
-    if (!cargar_equipo_desde_bd(equipo_visitante_id, &equipo_visitante))
-    {
-        printf("Error al cargar el equipo visitante.\n");
-        pause_console();
-        return;
-    }
+    // Mostrar información inicial
+    mostrar_inicio_partido(&equipo_local, &equipo_visitante);
 
-    // Simular el partido
-    printf("\n*** INICIANDO SIMULACION ***\n");
-    printf("EQUIPO LOCAL: %s\n", equipo_local.nombre);
-    printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante.nombre);
+    // Mostrar alineación y comenzar partido
+    mostrar_alineacion(&equipo_local, &equipo_visitante);
 
     // Preparar arrays para estadísticas
-    int estadisticas_local[11] = {0};
-    int estadisticas_visitante[11] = {0};
-    int asistencias_local[11] = {0};
-    int asistencias_visitante[11] = {0};
+    EstadisticasPartido estadisticas = {0};
 
-    // Simular partido (código simplificado basado en simular_partido existente)
-    clear_screen();
-    printf("%s\n", ASCII_SIMULACION);
-    printf("                    SIMULACION DE PARTIDO\n\n");
+    // Ejecutar simulación del partido
+    simular_partido_logica(&equipo_local, &equipo_visitante, &estadisticas);
 
-    printf("=== %s VS %s ===\n\n", equipo_local.nombre, equipo_visitante.nombre);
+    // Mostrar resultados finales
+    mostrar_resultados(&equipo_local, &equipo_visitante, &estadisticas);
 
-    // Mostrar cancha inicial
-    mostrar_cancha_animada(0, 0);
-
-    // Mostrar equipos alineados
-    printf("EQUIPO LOCAL (%s):\n", equipo_local.nombre);
-    for (int i = 0; i < equipo_local.num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_local.jugadores[i].numero, equipo_local.jugadores[i].nombre);
-        if (equipo_local.jugadores[i].es_capitan) printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante.nombre);
-    for (int i = 0; i < equipo_visitante.num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_visitante.jugadores[i].numero, equipo_visitante.jugadores[i].nombre);
-        if (equipo_visitante.jugadores[i].es_capitan) printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\n*** INICIO DEL PARTIDO ***\n");
-    printf("La simulacion comenzara automaticamente en 3 segundos...\n");
-    Sleep(3000);
-
-    // Simulación simplificada de 60 minutos
-    int goles_local = 0, goles_visitante = 0;
-    for (int minuto = 1; minuto <= 60; minuto++)
-    {
-        clear_screen();
-        print_header("SIMULACION DE PARTIDO");
-
-        printf("=== %s %d - %d %s ===\n\n",
-               equipo_local.nombre, goles_local, goles_visitante, equipo_visitante.nombre);
-        printf("MINUTO: %d\n\n", minuto);
-
-        // Generar eventos aleatorios
-        int evento = rand() % 100;
-
-        if (evento < 2)   // Gol local
-        {
-            int jugador_idx = rand() % equipo_local.num_jugadores;
-            int asistente_idx = rand() % equipo_local.num_jugadores;
-            if (asistente_idx == jugador_idx && equipo_local.num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_local.num_jugadores;
-            }
-
-            goles_local++;
-            estadisticas_local[jugador_idx]++;
-            if (asistente_idx != jugador_idx)
-            {
-                asistencias_local[asistente_idx]++;
-            }
-
-            printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
-            printf("   Gol de %s (%d) para %s\n",
-                   equipo_local.jugadores[jugador_idx].nombre,
-                   equipo_local.jugadores[jugador_idx].numero,
-                   equipo_local.nombre);
-            if (asistente_idx != jugador_idx)
-            {
-                printf("   Asistencia de %s (%d)\n",
-                       equipo_local.jugadores[asistente_idx].nombre,
-                       equipo_local.jugadores[asistente_idx].numero);
-            }
-        }
-        else if (evento < 4)   // Gol visitante
-        {
-            int jugador_idx = rand() % equipo_visitante.num_jugadores;
-            int asistente_idx = rand() % equipo_visitante.num_jugadores;
-            if (asistente_idx == jugador_idx && equipo_visitante.num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_visitante.num_jugadores;
-            }
-
-            goles_visitante++;
-            estadisticas_visitante[jugador_idx]++;
-            if (asistente_idx != jugador_idx)
-            {
-                asistencias_visitante[asistente_idx]++;
-            }
-
-            printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
-            printf("   Gol de %s (%d) para %s\n",
-                   equipo_visitante.jugadores[jugador_idx].nombre,
-                   equipo_visitante.jugadores[jugador_idx].numero,
-                   equipo_visitante.nombre);
-            if (asistente_idx != jugador_idx)
-            {
-                printf("   Asistencia de %s (%d)\n",
-                       equipo_visitante.jugadores[asistente_idx].nombre,
-                       equipo_visitante.jugadores[asistente_idx].numero);
-            }
-        }
-        else if (evento < 10)
-        {
-            printf("*** Oportunidad de gol ***\n");
-        }
-        else
-        {
-            printf("*** El partido continúa... ***\n");
-        }
-
-        mostrar_cancha_animada(minuto, (evento < 4) ? 1 : 0);
-        Sleep(1000);
-    }
-
-    // Resultados finales
-    clear_screen();
-    print_header("FIN DEL PARTIDO");
-
-    printf("*** RESULTADO FINAL ***\n\n");
-    printf("*** 60 MINUTOS COMPLETADOS ***\n\n");
-
-    printf("*** %s %d - %d %s ***\n\n",
-           equipo_local.nombre, goles_local, goles_visitante, equipo_visitante.nombre);
-
-    if (goles_local > goles_visitante)
-    {
-        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_local.nombre);
-    }
-    else if (goles_visitante > goles_local)
-    {
-        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_visitante.nombre);
-    }
-    else
-    {
-        printf("*** ¡EMPATE! ***\n\n");
-    }
-
-    // Mostrar estadísticas
-    printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
-
-    printf("EQUIPO LOCAL (%s):\n", equipo_local.nombre);
-    for (int i = 0; i < equipo_local.num_jugadores; i++)
-    {
-        if (estadisticas_local[i] > 0 || asistencias_local[i] > 0)
-        {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_local.jugadores[i].nombre,
-                   equipo_local.jugadores[i].numero,
-                   estadisticas_local[i], asistencias_local[i]);
-        }
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante.nombre);
-    for (int i = 0; i < equipo_visitante.num_jugadores; i++)
-    {
-        if (estadisticas_visitante[i] > 0 || asistencias_visitante[i] > 0)
-        {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_visitante.jugadores[i].nombre,
-                   equipo_visitante.jugadores[i].numero,
-                   estadisticas_visitante[i], asistencias_visitante[i]);
-        }
-    }
+    // Crear estructura de datos de simulación
+    DatosSimulacion datos_simulacion = crear_datos_simulacion(equipo_local, equipo_visitante, &estadisticas);
 
     // Guardar resultados en la base de datos
-    guardar_resultados_simulacion(&equipo_local, &equipo_visitante,
-                                  goles_local, goles_visitante,
-                                  estadisticas_local, estadisticas_visitante,
-                                  asistencias_local, asistencias_visitante);
+    guardar_resultados_simulacion(&datos_simulacion);
 
     printf("\nPresione Enter para volver al menu...");
     getchar();

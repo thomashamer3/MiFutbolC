@@ -1,20 +1,6 @@
 var searchData=
 [
-  ['menu_5fcamisetas_0',['menu_camisetas',['../camiseta_8c.html#a09be974ef1c53a7219f4a7b1842d75dd',1,'menu_camisetas():&#160;camiseta.c'],['../camiseta_8h.html#a09be974ef1c53a7219f4a7b1842d75dd',1,'menu_camisetas():&#160;camiseta.c']]],
-  ['menu_5festadisticas_1',['menu_estadisticas',['../estadisticas_8c.html#a0c608fe89e28fc3d3645630331d6e80d',1,'menu_estadisticas():&#160;estadisticas.c'],['../estadisticas_8h.html#a0c608fe89e28fc3d3645630331d6e80d',1,'menu_estadisticas():&#160;estadisticas.c']]],
-  ['menu_5festadisticas_5fasistencias_2',['menu_estadisticas_asistencias',['../estadisticas_8c.html#a892d73b3311cf294683690d6d06acbb0',1,'menu_estadisticas_asistencias():&#160;estadisticas.c'],['../estadisticas_8h.html#a892d73b3311cf294683690d6d06acbb0',1,'menu_estadisticas_asistencias():&#160;estadisticas.c']]],
-  ['menu_5festadisticas_5fgenerales_3',['menu_estadisticas_generales',['../estadisticas_8c.html#a61b27b4794c6180d932a38397903d184',1,'menu_estadisticas_generales():&#160;estadisticas.c'],['../estadisticas_8h.html#a61b27b4794c6180d932a38397903d184',1,'menu_estadisticas_generales():&#160;estadisticas.c']]],
-  ['menu_5festadisticas_5fgoles_4',['menu_estadisticas_goles',['../estadisticas_8c.html#a77595b97147418abace2e0b2ff9d9587',1,'menu_estadisticas_goles():&#160;estadisticas.c'],['../estadisticas_8h.html#a77595b97147418abace2e0b2ff9d9587',1,'menu_estadisticas_goles():&#160;estadisticas.c']]],
-  ['menu_5festadisticas_5fpartidos_5',['menu_estadisticas_partidos',['../estadisticas_8c.html#ad1fbb73a6d2aac483fd571f94c5350ea',1,'menu_estadisticas_partidos():&#160;estadisticas.c'],['../estadisticas_8h.html#ad1fbb73a6d2aac483fd571f94c5350ea',1,'menu_estadisticas_partidos():&#160;estadisticas.c']]],
-  ['menu_5festadisticas_5frendimiento_6',['menu_estadisticas_rendimiento',['../estadisticas_8c.html#ac0fc9907cded36cf67519b94a3bec881',1,'menu_estadisticas_rendimiento():&#160;estadisticas.c'],['../estadisticas_8h.html#ac0fc9907cded36cf67519b94a3bec881',1,'menu_estadisticas_rendimiento():&#160;estadisticas.c']]],
-  ['menu_5fexportar_7',['menu_exportar',['../export__all_8h.html#ad0ad0f028f778c8763398bcca0d55e38',1,'menu_exportar():&#160;export_all.c'],['../export__all_8c.html#ad0ad0f028f778c8763398bcca0d55e38',1,'menu_exportar():&#160;export_all.c']]],
-  ['menu_5fexportar_5fmejorado_8',['menu_exportar_mejorado',['../export__all__mejorado_8h.html#ade28bb04457995ed29cc2742b8ef37c8',1,'menu_exportar_mejorado():&#160;export_all_mejorado.c'],['../export__all__mejorado_8c.html#ade28bb04457995ed29cc2742b8ef37c8',1,'menu_exportar_mejorado():&#160;export_all_mejorado.c']]],
-  ['menu_5fimportar_9',['menu_importar',['../import_8h.html#ab47cf3fe3ac772acefc8f2f75e52d9d9',1,'import.h']]],
-  ['menu_5flesiones_10',['menu_lesiones',['../lesion_8h.html#a65e7ffa6b36f4ce41d45f65ab8e6b0f9',1,'lesion.c']]],
-  ['menu_5fpartidos_11',['menu_partidos',['../partido_8h.html#a7984ef3fc73408368d48512b5b422089',1,'partido.c']]],
-  ['menu_5fusuario_12',['menu_usuario',['../utils_8c.html#a66c3afc7bd2e95ef7674a73523db2941',1,'menu_usuario():&#160;utils.c'],['../utils_8h.html#a66c3afc7bd2e95ef7674a73523db2941',1,'menu_usuario():&#160;utils.c']]],
-  ['modificar_5flesion_13',['modificar_lesion',['../lesion_8h.html#a1daccb22e6099fdff8d743d8ab5103a0',1,'lesion.c']]],
-  ['modificar_5fpartido_14',['modificar_partido',['../partido_8h.html#addd8e753d7935565b82ada223cbbfd59',1,'partido.c']]],
-  ['mostrar_5festadisticas_5flesiones_15',['mostrar_estadisticas_lesiones',['../lesion_8h.html#af62a703d7f0185c4ac4ffbcb9a08365f',1,'lesion.h']]],
-  ['mostrar_5fnombre_5fusuario_16',['mostrar_nombre_usuario',['../utils_8c.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c'],['../utils_8h.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c']]]
+  ['listar_5fcamisetas_0',['listar_camisetas',['../camiseta_8c.html#a205f8b7f9ed47552ab6be5e33db64764',1,'listar_camisetas():&#160;camiseta.c'],['../camiseta_8h.html#a205f8b7f9ed47552ab6be5e33db64764',1,'listar_camisetas():&#160;camiseta.c']]],
+  ['listar_5flesiones_1',['listar_lesiones',['../lesion_8h.html#afa8e77e458392d580db808c040c640cf',1,'lesion.c']]],
+  ['listar_5fpartidos_2',['listar_partidos',['../partido_8h.html#a52f731d0627519098e6d6d3209b74a44',1,'partido.c']]]
 ];

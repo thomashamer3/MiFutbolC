@@ -49,7 +49,7 @@ void mostrar_estadisticas_por_anio()
             if (hay) printf("\n");
             printf("Anio: %s\n", anio);
             printf("----------------------------------------\n");
-            strcpy(current_anio, anio);
+            strcpy_s(current_anio, sizeof(current_anio), anio);
         }
 
         printf("%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",

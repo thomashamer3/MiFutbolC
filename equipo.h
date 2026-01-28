@@ -128,7 +128,7 @@ void eliminar_equipo();
  *
  * @param equipo Puntero al equipo a mostrar
  */
-void mostrar_equipo(Equipo *equipo);
+void mostrar_equipo(const Equipo *equipo);
 
 /**
  * @brief Obtiene el nombre de una posición

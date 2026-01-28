@@ -17,11 +17,6 @@
 
 static const char *SQL_COUNT_PARTIDOS = "SELECT COUNT(*) FROM partido";
 
-static const char *SQL_BEST_BY_METRIC =
-    "SELECT c.nombre, %s FROM partido p "
-    "JOIN camiseta c ON p.camiseta_id = c.id "
-    "GROUP BY c.id ORDER BY 2 %s LIMIT 1";
-
 static const char *SQL_STATS_MONTH =
     "SELECT substr(fecha_hora, 4, 7), c.nombre, COUNT(*), SUM(goles), SUM(asistencias), "
     "ROUND(AVG(goles), 2), ROUND(AVG(asistencias), 2) "
@@ -61,13 +56,15 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
     char query[512];
     int result = 0;
 
-    snprintf(query, sizeof(query), SQL_BEST_BY_METRIC, metric, orderDir);
+    snprintf(query, sizeof(query), "SELECT c.nombre, %s FROM partido p "
+             "JOIN camiseta c ON p.camiseta_id = c.id "
+             "GROUP BY c.id ORDER BY 2 %s LIMIT 1", metric, orderDir);
 
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) == SQLITE_OK)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy(nombre, (const char *)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0));
             *valor = sqlite3_column_int(stmt, 1);
             result = 1;
         }
@@ -88,7 +85,7 @@ static void json_write_stat(cJSON *json, const char *cat,
 }
 
 /** @brief Escribe estadísticas en formato CSV */
-static void write_stats_csv(FILE *file, const char *category,
+static void write_stats_csv(FILE *file, const char *,
                             const char *metric, const char *order,
                             const char *label)
 {
@@ -101,7 +98,7 @@ static void write_stats_csv(FILE *file, const char *category,
 }
 
 /** @brief Escribe estadísticas en formato TXT */
-static void write_stats_txt(FILE *file, const char *category,
+static void write_stats_txt(FILE *file, const char *,
                             const char *metric, const char *order,
                             const char *label)
 {
@@ -114,7 +111,7 @@ static void write_stats_txt(FILE *file, const char *category,
 }
 
 /** @brief Escribe estadísticas en formato HTML */
-static void write_stats_html(FILE *file, const char *category,
+static void write_stats_html(FILE *file, const char *,
                              const char *metric, const char *order,
                              const char *label)
 {
@@ -358,7 +355,7 @@ void exportar_estadisticas_por_mes_txt(void)
         const char *month = (const char *)sqlite3_column_text(stmt, 0);
         if (strcmp(current, month) != 0)
         {
-            strcpy(current, month);
+            strcpy_s(current, sizeof(current), month);
             fprintf(file, "\n%s:\n", month);
         }
 
@@ -417,7 +414,7 @@ void exportar_estadisticas_por_mes_json(void)
             {
                 cJSON_AddItemToObject(root, current, current_array);
             }
-            strcpy(current, month);
+            strcpy_s(current, sizeof(current), month);
             current_array = cJSON_CreateArray();
         }
 
@@ -487,7 +484,7 @@ void exportar_estadisticas_por_mes_html(void)
             if (hay) fprintf(file, "</table><br>");
             fprintf(file, "<h2>%s</h2><table border='1'>", month);
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
-            strcpy(current, month);
+            strcpy_s(current, sizeof(current), month);
         }
 
         fprintf(file,

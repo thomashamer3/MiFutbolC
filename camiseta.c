@@ -11,7 +11,9 @@
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <process.h>
 
 /**
  * @brief Obtiene el siguiente ID disponible para una nueva camiseta
@@ -256,9 +258,17 @@ static int obtener_ids_disponibles(int ids[], int max)
  * @param count Número de IDs en el array
  * @return ID seleccionado aleatoriamente
  */
-static int seleccionar_id_aleatorio(int ids[], int count)
+static int seleccionar_id_aleatorio(const int ids[], int count)
 {
-    srand(time(NULL));
+    // Seed the random number generator with current time and process ID for better randomness
+    srand((unsigned int)(time(NULL) + _getpid()));
+
+    // Prevent division by zero
+    if (count <= 0)
+    {
+        return -1; // Return error code
+    }
+
     return ids[rand() % count];
 }
 
@@ -280,17 +290,18 @@ static void marcar_camiseta_sorteada(int id)
  * @brief Obtiene el nombre de una camiseta por su ID
  *
  * @param id ID de la camiseta
- * @return Nombre de la camiseta
+ * @return Nombre de la camiseta (debe ser liberado con free)
  */
-static const char* obtener_nombre_camiseta(int id)
+static char* obtener_nombre_camiseta(int id)
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
     const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+    char *copia = strdup(nombre);
     sqlite3_finalize(stmt);
-    return nombre;
+    return copia;
 }
 
 /**
@@ -331,13 +342,22 @@ void sortear_camiseta()
     int count = obtener_ids_disponibles(ids, 150);
     int seleccionado = seleccionar_id_aleatorio(ids, count);
 
-    marcar_camiseta_sorteada(seleccionado);
-    const char *nombre = obtener_nombre_camiseta(seleccionado);
+    // Check if random selection failed
+    if (seleccionado == -1)
+    {
+        printf("Error al seleccionar camiseta aleatoria.\n");
+        pause_console();
+        return;
+    }
 
-    printf("¡CAMISETA SORTEADA!\n\n");
+    marcar_camiseta_sorteada(seleccionado);
+    char *nombre = obtener_nombre_camiseta(seleccionado);
+
+    printf("CAMISETA SORTEADA!\n\n");
     printf("La camiseta seleccionada es: %s\n", nombre);
     printf("Quedan %d camisetas por sortear.\n", disponibles - 1);
 
+    free(nombre);
     pause_console();
 }
 

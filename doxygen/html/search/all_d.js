@@ -25,6 +25,7 @@ var searchData=
   ['modificar_5flesion_22',['modificar_lesion',['../lesion_8h.html#a1daccb22e6099fdff8d743d8ab5103a0',1,'lesion.c']]],
   ['modificar_5fpartido_23',['modificar_partido',['../partido_8h.html#addd8e753d7935565b82ada223cbbfd59',1,'partido.c']]],
   ['module_24',['Module',['../struct_module.html',1,'']]],
-  ['mostrar_5festadisticas_5flesiones_25',['mostrar_estadisticas_lesiones',['../lesion_8h.html#af62a703d7f0185c4ac4ffbcb9a08365f',1,'lesion.h']]],
-  ['mostrar_5fnombre_5fusuario_26',['mostrar_nombre_usuario',['../utils_8c.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c'],['../utils_8h.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c']]]
+  ['mostrar_5fdiferencias_5flesiones_25',['mostrar_diferencias_lesiones',['../lesion_8h.html#a7f2c6201afebdc40ca4915c846478af1',1,'lesion.c']]],
+  ['mostrar_5festadisticas_5flesiones_26',['mostrar_estadisticas_lesiones',['../lesion_8h.html#af62a703d7f0185c4ac4ffbcb9a08365f',1,'lesion.h']]],
+  ['mostrar_5fnombre_5fusuario_27',['mostrar_nombre_usuario',['../utils_8c.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c'],['../utils_8h.html#a3870f65d49580ad3d42ffd2a4a8e8c9b',1,'mostrar_nombre_usuario():&#160;utils.c']]]
 ];

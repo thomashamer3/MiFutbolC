@@ -19,6 +19,6 @@ typedef struct
  * @param items Arreglo de elementos del menú.
  * @param cantidad Número de elementos en el arreglo.
  */
-void ejecutar_menu(const char *titulo, MenuItem *items, int cantidad);
+void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad);
 
 #endif

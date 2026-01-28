@@ -14,8 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 /**
  * @brief Estructura para almacenar estadísticas de partidos
  */
@@ -82,6 +80,43 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 }
 
 /**
+ * @brief Actualiza rachas basado en el resultado del partido
+ *
+ * @param resultado Resultado del partido (1=Victoria, 2=Empate, 3=Derrota)
+ * @param racha_actual_v Puntero a racha actual de victorias
+ * @param max_racha_v Puntero a máxima racha de victorias
+ * @param racha_actual_d Puntero a racha actual de derrotas
+ * @param max_racha_d Puntero a máxima racha de derrotas
+ */
+static void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
+                              int *racha_actual_d, int *max_racha_d)
+{
+    if (resultado == 1)
+    {
+        // VICTORIA
+        (*racha_actual_v)++;
+        if (*racha_actual_v > *max_racha_v)
+            *max_racha_v = *racha_actual_v;
+        *racha_actual_d = 0;
+        return;
+    }
+
+    if (resultado == 3)
+    {
+        // DERROTA
+        (*racha_actual_d)++;
+        if (*racha_actual_d > *max_racha_d)
+            *max_racha_d = *racha_actual_d;
+        *racha_actual_v = 0;
+        return;
+    }
+
+    // EMPATE
+    *racha_actual_v = 0;
+    *racha_actual_d = 0;
+}
+
+/**
  * @brief Calcula la racha más larga de victorias y derrotas
  *
  * @param mejor_racha_victorias Puntero donde almacenar la mejor racha de victorias
@@ -94,34 +129,16 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
                        "SELECT resultado FROM partido ORDER BY fecha_hora",
                        -1, &stmt, NULL);
 
-    int racha_actual_v = 0, max_racha_v = 0;
-    int racha_actual_d = 0, max_racha_d = 0;
+    int racha_actual_v = 0;
+    int max_racha_v = 0;
+    int racha_actual_d = 0;
+    int max_racha_d = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int resultado = sqlite3_column_int(stmt, 0);
-        if (resultado == 1)
-        {
-            // VICTORIA
-            racha_actual_v++;
-            if (racha_actual_v > max_racha_v)
-                max_racha_v = racha_actual_v;
-            racha_actual_d = 0;
-        }
-        else if (resultado == 3)
-        {
-            // DERROTA
-            racha_actual_d++;
-            if (racha_actual_d > max_racha_d)
-                max_racha_d = racha_actual_d;
-            racha_actual_v = 0;
-        }
-        else
-        {
-            // EMPATE
-            racha_actual_v = 0;
-            racha_actual_d = 0;
-        }
+        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v,
+                          &racha_actual_d, &max_racha_d);
     }
 
     *mejor_racha_victorias = max_racha_v;
@@ -142,21 +159,22 @@ static void mostrar_ultimos5_partidos()
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-                       "SELECT fecha_hora, goles, asistencias, rendimiento_general, resultado "
-                       "FROM partido ORDER BY fecha_hora DESC LIMIT 5",
+                       "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
+                       "FROM partido ORDER BY id DESC LIMIT 5",
                        -1, &stmt, NULL);
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
-        int goles = sqlite3_column_int(stmt, 1);
-        int asistencias = sqlite3_column_int(stmt, 2);
-        int rendimiento = sqlite3_column_int(stmt, 3);
-        int resultado = sqlite3_column_int(stmt, 4);
+        int id = sqlite3_column_int(stmt, 0);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+        int goles = sqlite3_column_int(stmt, 2);
+        int asistencias = sqlite3_column_int(stmt, 3);
+        int rendimiento = sqlite3_column_int(stmt, 4);
+        int resultado = sqlite3_column_int(stmt, 5);
 
-        printf("%s | G:%d A:%d | Rend:%d | %s\n",
-               fecha, goles, asistencias, rendimiento, resultado_to_text(resultado));
+        printf("%d | %s | G:%d A:%d | Rend:%d | %s\n",
+               id, fecha, goles, asistencias, rendimiento, resultado_to_text(resultado));
         count++;
     }
 
@@ -241,16 +259,17 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
 }
 
 /**
- * @brief Muestra el análisis completo de rendimiento
+ * @brief Muestra el análisis básico de rendimiento
  */
-void mostrar_analisis()
+static void mostrar_analisis_basico()
 {
     clear_screen();
     print_header("ANALISIS DE RENDIMIENTO");
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
-    int mejor_racha_v, peor_racha_d;
+    int mejor_racha_v;
+    int peor_racha_d;
 
     calcular_estadisticas_generales(&generales);
     calcular_estadisticas_ultimos5(&ultimos5);
@@ -270,6 +289,373 @@ void mostrar_analisis()
     mensaje_motivacional(&ultimos5, &generales);
 
     pause_console();
+}
+
+/**
+ * @brief Estructura para métricas de comparación
+ */
+typedef struct
+{
+    double goles;
+    double asistencias;
+    double rendimiento;
+    int partidos;
+} MetricasComparacion;
+
+/**
+ * @brief Determina el ganador basado en la diferencia
+ *
+ * @param diff Diferencia entre métricas
+ * @param nombre1 Nombre del primer elemento
+ * @param nombre2 Nombre del segundo elemento
+ * @return Nombre del ganador o "Empate"
+ */
+static const char *determinar_ganador(double diff, const char *nombre1, const char *nombre2)
+{
+    if (diff > 0)
+        return nombre1;
+    if (diff < 0)
+        return nombre2;
+    return "Empate";
+}
+
+/**
+ * @brief Calcula métricas para una condición específica
+ */
+static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const char *condicion_sql)
+{
+    sqlite3_stmt *stmt;
+    char sql[512];
+
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
+             "FROM partido WHERE %s", condicion_sql);
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        metricas->partidos = 0;
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        metricas->partidos = sqlite3_column_int(stmt, 0);
+        metricas->goles = sqlite3_column_double(stmt, 1);
+        metricas->asistencias = sqlite3_column_double(stmt, 2);
+        metricas->rendimiento = sqlite3_column_double(stmt, 3);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+/**
+ * @brief Muestra comparación entre dos métricas
+ */
+static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, const MetricasComparacion *m2,
+        const char *nombre1, const char *nombre2)
+{
+    printf("\nCOMPARACION: %s vs %s\n", nombre1, nombre2);
+    printf("----------------------------------------\n");
+
+    if (m1->partidos == 0 && m2->partidos == 0)
+    {
+        printf("No hay datos suficientes para comparar.\n");
+        return;
+    }
+
+    printf("%-15s %-15s %-15s %-15s %-15s\n", "Metrica", nombre1, nombre2, "Diferencia", "Porcentaje");
+    printf("----------------------------------------\n");
+
+    // Goles
+    double diff_goles = m1->goles - m2->goles;
+    double pct_goles = (m2->goles != 0) ? (diff_goles / m2->goles) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Goles", m1->goles, m2->goles, diff_goles, pct_goles);
+
+    // Asistencias
+    double diff_asist = m1->asistencias - m2->asistencias;
+    double pct_asist = (m2->asistencias != 0) ? (diff_asist / m2->asistencias) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Asistencias", m1->asistencias, m2->asistencias, diff_asist, pct_asist);
+
+    // Rendimiento
+    double diff_rend = m1->rendimiento - m2->rendimiento;
+    double pct_rend = (m2->rendimiento != 0) ? (diff_rend / m2->rendimiento) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Rendimiento", m1->rendimiento, m2->rendimiento, diff_rend, pct_rend);
+
+    printf("----------------------------------------\n");
+
+    // Determinar ganadores por métrica
+    printf("GANADORES POR METRICA:\n");
+    printf("  Goles: %s\n", determinar_ganador(diff_goles, nombre1, nombre2));
+    printf("  Asistencias: %s\n", determinar_ganador(diff_asist, nombre1, nombre2));
+    printf("  Rendimiento: %s\n", determinar_ganador(diff_rend, nombre1, nombre2));
+    pause_console();
+}
+
+/**
+ * @brief Compara dos camisetas
+ */
+static void comparar_camisetas()
+{
+    clear_screen();
+    print_header("COMPARADOR: CAMISETAS");
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta ORDER BY ID", -1, &stmt, NULL);
+
+    printf("Camisetas disponibles:\n");
+    printf("----------------------------------------\n");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        printf("%d. %s\n", id, nombre);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count < 2)
+    {
+        printf("Se necesitan al menos 2 camisetas para comparar.\n");
+        pause_console();
+        return;
+    }
+
+    int id1;
+    int id2;
+    printf("\nIngrese ID de primera camiseta: ");
+    scanf("%d", &id1);
+    printf("Ingrese ID de segunda camiseta: ");
+    scanf("%d", &id2);
+
+    // Validar que existen
+    char sql1[128];
+    char sql2[128];
+    snprintf(sql1, sizeof(sql1), "camiseta_id = %d", id1);
+    snprintf(sql2, sizeof(sql2), "camiseta_id = %d", id2);
+
+    MetricasComparacion m1 = {0};
+    MetricasComparacion m2 = {0};
+    calcular_metricas_por_condicion(&m1, sql1);
+    calcular_metricas_por_condicion(&m2, sql2);
+
+    char nombre1[256] = "Camiseta A";
+    char nombre2[256] = "Camiseta B";
+
+    // Obtener nombres reales
+    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id1);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        snprintf(nombre1, sizeof(nombre1), "%s", (const char *)sqlite3_column_text(stmt, 0));
+    sqlite3_finalize(stmt);
+
+    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id2);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        snprintf(nombre2, sizeof(nombre2), "%s", (const char *)sqlite3_column_text(stmt, 0));
+    sqlite3_finalize(stmt);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+}
+
+/**
+ * @brief Compara dos torneos
+ */
+static void comparar_torneos()
+{
+    clear_screen();
+    print_header("COMPARADOR: TORNEOS");
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "SELECT id, nombre FROM torneo ORDER BY nombre", -1, &stmt, NULL);
+
+    printf("Torneos disponibles:\n");
+    printf("----------------------------------------\n");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        printf("%d. %s\n", id, nombre);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count < 2)
+    {
+        printf("Se necesitan al menos 2 torneos para comparar.\n");
+        pause_console();
+        return;
+    }
+
+    int id1;
+    int id2;
+    printf("\nIngrese ID de primer torneo: ");
+    scanf("%d", &id1);
+    printf("Ingrese ID de segundo torneo: ");
+    scanf("%d", &id2);
+
+    // Comparar partidos de cada torneo
+    char sql1[128];
+    char sql2[128];
+    snprintf(sql1, sizeof(sql1), "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = %d)", id1);
+    snprintf(sql2, sizeof(sql2), "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = %d)", id2);
+
+    MetricasComparacion m1 = {0};
+    MetricasComparacion m2 = {0};
+    calcular_metricas_por_condicion(&m1, sql1);
+    calcular_metricas_por_condicion(&m2, sql2);
+
+    char nombre1[256] = "Torneo A";
+    char nombre2[256] = "Torneo B";
+
+    // Obtener nombres reales
+    sqlite3_prepare_v2(db, "SELECT nombre FROM torneo WHERE id = ?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id1);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        snprintf(nombre1, sizeof(nombre1), "%s", (const char *)sqlite3_column_text(stmt, 0));
+    sqlite3_finalize(stmt);
+
+    sqlite3_prepare_v2(db, "SELECT nombre FROM torneo WHERE id = ?", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id2);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        snprintf(nombre2, sizeof(nombre2), "%s", (const char *)sqlite3_column_text(stmt, 0));
+    sqlite3_finalize(stmt);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    pause_console();
+}
+
+/**
+ * @brief Compara dos períodos
+ */
+static void comparar_periodos()
+{
+    clear_screen();
+    print_header("COMPARADOR: PERIODOS");
+
+    printf("Formatos de fecha: YYYY-MM-DD\n");
+    printf("Ejemplo: 2024-01-01 al 2024-06-30\n\n");
+
+    char fecha1_inicio[20];
+    char fecha1_fin[20];
+    char fecha2_inicio[20];
+    char fecha2_fin[20];
+
+    printf("PRIMER PERIODO:\n");
+    printf("Fecha inicio: ");
+    scanf("%19s", fecha1_inicio);
+    printf("Fecha fin: ");
+    scanf("%19s", fecha1_fin);
+
+    printf("\nSEGUNDO PERIODO:\n");
+    printf("Fecha inicio: ");
+    scanf("%19s", fecha2_inicio);
+    printf("Fecha fin: ");
+    scanf("%19s", fecha2_fin);
+
+    char sql1[256];
+    char sql2[256];
+    snprintf(sql1, sizeof(sql1), "fecha_hora BETWEEN '%s' AND '%s'", fecha1_inicio, fecha1_fin);
+    snprintf(sql2, sizeof(sql2), "fecha_hora BETWEEN '%s' AND '%s'", fecha2_inicio, fecha2_fin);
+
+    MetricasComparacion m1 = {0};
+    MetricasComparacion m2 = {0};
+    calcular_metricas_por_condicion(&m1, sql1);
+    calcular_metricas_por_condicion(&m2, sql2);
+
+    char nombre1[256];
+    char nombre2[256];
+    snprintf(nombre1, sizeof(nombre1), "Periodo %s a %s", fecha1_inicio, fecha1_fin);
+    snprintf(nombre2, sizeof(nombre2), "Periodo %s a %s", fecha2_inicio, fecha2_fin);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    pause_console();
+}
+
+/**
+ * @brief Compara dos condiciones
+ */
+static void comparar_condiciones()
+{
+    clear_screen();
+    print_header("COMPARADOR: CONDICIONES");
+
+    printf("Tipos de condicion:\n");
+    printf("1. Clima (0=Soleado, 1=Lluvia, 2=Nublado)\n");
+    printf("2. Dia de la semana (0=Lunes, 1=Martes, ..., 6=Domingo)\n");
+
+    int tipo_condicion;
+    printf("\nSeleccione tipo de condicion (1-2): ");
+    scanf("%d", &tipo_condicion);
+
+    int valor1;
+    int valor2;
+    const char *campo = (tipo_condicion == 1) ? "clima" : "dia";
+    const char *tipo_texto = (tipo_condicion == 1) ? "Clima" : "Dia";
+
+    printf("\nIngrese primer valor: ");
+    scanf("%d", &valor1);
+    printf("Ingrese segundo valor: ");
+    scanf("%d", &valor2);
+
+    char sql1[128];
+    char sql2[128];
+    snprintf(sql1, sizeof(sql1), "%s = %d", campo, valor1);
+    snprintf(sql2, sizeof(sql2), "%s = %d", campo, valor2);
+
+    MetricasComparacion m1 = {0};
+    MetricasComparacion m2 = {0};
+    calcular_metricas_por_condicion(&m1, sql1);
+    calcular_metricas_por_condicion(&m2, sql2);
+
+    char nombre1[256];
+    char nombre2[256];
+    snprintf(nombre1, sizeof(nombre1), "%s %d", tipo_texto, valor1);
+    snprintf(nombre2, sizeof(nombre2), "%s %d", tipo_texto, valor2);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    pause_console();
+}
+
+/**
+ * @brief Muestra el menú del comparador avanzado
+ */
+static void mostrar_comparador_avanzado()
+{
+    clear_screen();
+    print_header("COMPARADOR AVANZADO");
+
+    MenuItem items[] =
+    {
+        {1, "Comparar Camisetas", comparar_camisetas},
+        {2, "Comparar Torneos", comparar_torneos},
+        {3, "Comparar Periodos", comparar_periodos},
+        {4, "Comparar Condiciones", comparar_condiciones},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("COMPARADOR AVANZADO", items, 5);
+}
+
+/**
+ * @brief Muestra el análisis completo de rendimiento
+ */
+void mostrar_analisis()
+{
+    clear_screen();
+    print_header("ANALISIS Y COMPARADOR");
+
+    MenuItem items[] =
+    {
+        {1, "Analisis Basico", mostrar_analisis_basico},
+        {2, "Comparador Avanzado", mostrar_comparador_avanzado},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("ANALISIS Y COMPARADOR", items, 3);
 }
 
 /**
@@ -337,13 +723,13 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
     sqlite3_stmt *stmt;
     char sql[512];
 
-    sprintf(sql,
-            "SELECT strftime('%%m', fecha_hora) as mes, strftime('%%Y', fecha_hora) as anio, "
-            "AVG(%s), COUNT(*) "
-            "FROM partido "
-            "GROUP BY strftime('%%Y', fecha_hora), strftime('%%m', fecha_hora) "
-            "ORDER BY anio DESC, mes DESC",
-            columna);
+    snprintf(sql, sizeof(sql),
+             "SELECT strftime('%%m', fecha_hora) as mes, strftime('%%Y', fecha_hora) as anio, "
+             "AVG(%s), COUNT(*) "
+             "FROM partido "
+             "GROUP BY strftime('%%Y', fecha_hora), strftime('%%m', fecha_hora) "
+             "ORDER BY anio DESC, mes DESC",
+             columna);
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
     {
@@ -570,6 +956,43 @@ static void comparar_meses_frios_calidos()
 }
 
 /**
+ * @brief Calcula y muestra la tendencia de rendimiento
+ *
+ * @param stmt Statement preparado para calcular tendencia
+ */
+static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
+{
+    double avg_primeros = 0;
+    double avg_ultimos = 0;
+    if (sqlite3_step(tend_stmt) == SQLITE_ROW)
+        avg_primeros = sqlite3_column_double(tend_stmt, 0);
+    if (sqlite3_step(tend_stmt) == SQLITE_ROW)
+        avg_ultimos = sqlite3_column_double(tend_stmt, 0);
+
+    double tendencia = avg_ultimos - avg_primeros;
+    printf("\nTENDENCIA:\n");
+    printf("Primeros 5 partidos: %.2f\n", avg_primeros);
+    printf("Últimos 5 partidos: %.2f\n", avg_ultimos);
+
+    const char *tendencia_texto;
+    if (tendencia > 0.5)
+    {
+        tendencia_texto = "ASCENDENTE";
+    }
+    else if (tendencia < -0.5)
+    {
+        tendencia_texto = "DESCENDENTE";
+    }
+    else
+    {
+        tendencia_texto = "ESTABLE";
+    }
+    printf("Tendencia: %s (%.2f)\n", tendencia_texto, tendencia);
+
+    sqlite3_finalize(tend_stmt);
+}
+
+/**
  * @brief Calcula y muestra el progreso total del jugador
  */
 static void calcular_progreso_total()
@@ -592,59 +1015,53 @@ static void calcular_progreso_total()
         return;
     }
 
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int total_partidos = sqlite3_column_int(stmt, 0);
-        double avg_goles = sqlite3_column_double(stmt, 1);
-        double avg_asistencias = sqlite3_column_double(stmt, 2);
-        double avg_rendimiento = sqlite3_column_double(stmt, 3);
-        const char *fecha_inicio = (const char *)sqlite3_column_text(stmt, 4);
-        const char *fecha_fin = (const char *)sqlite3_column_text(stmt, 5);
-
-        printf("PROGRESO TOTAL DEL JUGADOR:\n");
-        printf("----------------------------------------\n");
-        printf("Periodo: %s - %s\n", fecha_inicio ? fecha_inicio : "N/A", fecha_fin ? fecha_fin : "N/A");
-        printf("Total de partidos: %d\n", total_partidos);
-        printf("Promedio de goles: %.2f\n", avg_goles);
-        printf("Promedio de asistencias: %.2f\n", avg_asistencias);
-        printf("Promedio de rendimiento: %.2f\n", avg_rendimiento);
-
-        // Calcular tendencia (comparar primeros vs últimos partidos)
-        if (total_partidos >= 10)
-        {
-            sqlite3_stmt *tend_stmt;
-            const char *tend_sql =
-                "SELECT AVG(rendimiento_general) FROM "
-                "(SELECT rendimiento_general FROM partido ORDER BY fecha_hora ASC LIMIT 5) "
-                "UNION ALL "
-                "SELECT AVG(rendimiento_general) FROM "
-                "(SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 5)";
-
-            if (sqlite3_prepare_v2(db, tend_sql, -1, &tend_stmt, NULL) == SQLITE_OK)
-            {
-                double avg_primeros = 0, avg_ultimos = 0;
-                if (sqlite3_step(tend_stmt) == SQLITE_ROW)
-                    avg_primeros = sqlite3_column_double(tend_stmt, 0);
-                if (sqlite3_step(tend_stmt) == SQLITE_ROW)
-                    avg_ultimos = sqlite3_column_double(tend_stmt, 0);
-
-                double tendencia = avg_ultimos - avg_primeros;
-                printf("\nTENDENCIA:\n");
-                printf("Primeros 5 partidos: %.2f\n", avg_primeros);
-                printf("Últimos 5 partidos: %.2f\n", avg_ultimos);
-                printf("Tendencia: %s (%.2f)\n",
-                       tendencia > 0.5 ? "ASCENDENTE" : (tendencia < -0.5 ? "DESCENDENTE" : "ESTABLE"),
-                       tendencia);
-
-                sqlite3_finalize(tend_stmt);
-            }
-        }
-    }
-    else
+    if (sqlite3_step(stmt) != SQLITE_ROW)
     {
         printf("No hay datos suficientes para calcular el progreso total.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
     }
 
+    int total_partidos = sqlite3_column_int(stmt, 0);
+    double avg_goles = sqlite3_column_double(stmt, 1);
+    double avg_asistencias = sqlite3_column_double(stmt, 2);
+    double avg_rendimiento = sqlite3_column_double(stmt, 3);
+    const char *fecha_inicio = (const char *)sqlite3_column_text(stmt, 4);
+    const char *fecha_fin = (const char *)sqlite3_column_text(stmt, 5);
+
+    printf("PROGRESO TOTAL DEL JUGADOR:\n");
+    printf("----------------------------------------\n");
+    printf("Periodo: %s - %s\n", fecha_inicio ? fecha_inicio : "N/A", fecha_fin ? fecha_fin : "N/A");
+    printf("Total de partidos: %d\n", total_partidos);
+    printf("Promedio de goles: %.2f\n", avg_goles);
+    printf("Promedio de asistencias: %.2f\n", avg_asistencias);
+    printf("Promedio de rendimiento: %.2f\n", avg_rendimiento);
+
+    // Calcular tendencia (comparar primeros vs últimos partidos)
+    if (total_partidos < 10)
+    {
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    sqlite3_stmt *tend_stmt;
+    const char *tend_sql =
+        "SELECT AVG(rendimiento_general) FROM "
+        "(SELECT rendimiento_general FROM partido ORDER BY fecha_hora ASC LIMIT 5) "
+        "UNION ALL "
+        "SELECT AVG(rendimiento_general) FROM "
+        "(SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 5)";
+
+    if (sqlite3_prepare_v2(db, tend_sql, -1, &tend_stmt, NULL) != SQLITE_OK)
+    {
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    mostrar_tendencia(tend_stmt);
     sqlite3_finalize(stmt);
     pause_console();
 }

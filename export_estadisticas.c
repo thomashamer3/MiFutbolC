@@ -189,7 +189,7 @@ static void write_stats_anio_txt(FILE *file)
             if (hay) fprintf(file, "\n");
             fprintf(file, "Anio: %s\n", anio);
             fprintf(file, "----------------------------------------\n");
-            strcpy(current_anio, anio);
+            strcpy_s(current_anio, sizeof(current_anio), anio);
         }
 
         fprintf(file, "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
@@ -222,7 +222,7 @@ static void write_stats_anio_html(FILE *file)
             if (hay) fprintf(file, "</table><br>");
             fprintf(file, "<h2>Anio: %s</h2><table border='1'>", anio);
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/P</th><th>A/P</th></tr>");
-            strcpy(current_anio, anio);
+            strcpy_s(current_anio, sizeof(current_anio), anio);
         }
 
         fprintf(file,
@@ -260,7 +260,7 @@ static void write_stats_anio_json(FILE *file)
             {
                 cJSON_AddItemToObject(root, current_anio, current_anio_array);
             }
-            strcpy(current_anio, anio);
+            strcpy_s(current_anio, sizeof(current_anio), anio);
             current_anio_array = cJSON_CreateArray();
         }
 

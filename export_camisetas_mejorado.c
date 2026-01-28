@@ -50,11 +50,10 @@ typedef struct
  * las funciones de exportación mejorada. Esto evita la duplicación de código y centraliza
  * la lógica de acceso a datos con análisis avanzado.
  *
- * @param[out] camisetas Array de estructuras CamisetaDataMejorado para almacenar los resultados
  * @param[out] count Puntero a entero para almacenar el número de camisetas encontradas
  * @return sqlite3_stmt* Statement preparado para iterar sobre los resultados
  */
-static sqlite3_stmt* obtener_datos_camisetas_mejorado(CamisetaDataMejorado *camisetas, int *count)
+static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
 {
     sqlite3_stmt *check_stmt;
     *count = 0;
@@ -110,7 +109,7 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(CamisetaDataMejorado *cami
 void exportar_camisetas_csv_mejorado()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas_mejorado.csv"), "w");
@@ -159,7 +158,7 @@ void exportar_camisetas_csv_mejorado()
 void exportar_camisetas_txt_mejorado()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas_mejorado.txt"), "w");
@@ -220,7 +219,7 @@ void exportar_camisetas_txt_mejorado()
 void exportar_camisetas_json_mejorado()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas_mejorado.json"), "w");
@@ -278,7 +277,7 @@ void exportar_camisetas_json_mejorado()
 void exportar_camisetas_html_mejorado()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas_mejorado.html"), "w");

@@ -4,7 +4,7 @@
 
 // Use an infinite loop to maintain menu interaction until the user explicitly chooses to exit,
 // ensuring the interface remains responsive and allows repeated selections without restarting the program.
-void ejecutar_menu(const char *titulo, MenuItem *items, int cantidad)
+void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
     int opcion;
 
@@ -22,17 +22,24 @@ void ejecutar_menu(const char *titulo, MenuItem *items, int cantidad)
         opcion = input_int(">");
 
         // Iterate through items to find matching option, allowing flexible menu configuration without hardcoded logic.
+        const MenuItem *selected = NULL;
         for (int i = 0; i < cantidad; i++)
         {
             if (items[i].opcion == opcion)
             {
-                // If action is NULL, treat as exit option to break the menu loop cleanly.
-                if (!items[i].accion)
-                    return;
-
-                // Execute the selected action, delegating control to maintain modular design.
-                items[i].accion();
+                selected = &items[i];
+                break;
             }
+        }
+
+        if (selected)
+        {
+            // If action is NULL, treat as exit option to break the menu loop cleanly.
+            if (!selected->accion)
+                return;
+
+            // Execute the selected action, delegating control to maintain modular design.
+            selected->accion();
         }
     }
 }

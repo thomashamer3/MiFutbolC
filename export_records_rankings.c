@@ -275,7 +275,8 @@ void exportar_records_rankings_txt()
 
     sqlite3_stmt *stmt;
     int valor;
-    const char *camiseta, *fecha;
+    const char *camiseta;
+    const char *fecha;
     const char *cancha;
     double rendimiento;
     int partidos;
@@ -352,7 +353,8 @@ void exportar_records_rankings_json()
 
     sqlite3_stmt *stmt;
     int valor;
-    const char *camiseta, *fecha;
+    const char *camiseta;
+    const char *fecha;
     const char *cancha;
     double rendimiento;
     int partidos;
@@ -465,7 +467,8 @@ void exportar_records_rankings_html()
 
     sqlite3_stmt *stmt;
     int valor;
-    const char *camiseta, *fecha;
+    const char *camiseta;
+    const char *fecha;
     const char *cancha;
     double rendimiento;
     int partidos;

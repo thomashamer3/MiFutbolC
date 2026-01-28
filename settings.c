@@ -18,7 +18,7 @@
 #endif
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANG_SPANISH};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH};
 
 // Textos en diferentes idiomas
 typedef struct
@@ -44,6 +44,12 @@ static const TextEntry text_entries[] =
     {"menu_importar", "Importar", "Import"},
     {"menu_usuario", "Usuario", "User"},
     {"menu_torneos", "Torneos", "Tournaments"},
+    {"menu_temporadas", "Temporadas", "Seasons"},
+    {"menu_temporada", "Temporada", "Season"},
+    {"menu_qr", "Codigos QR", "QR Codes"},
+    {"menu_entrenador_ia", "Entrenador Virtual (IA)", "Virtual Coach (AI)"},
+    {"menu_comparador", "Comparador", "Comparator"},
+    {"menu_comparaciones", "Comparaciones", "Comparisons"},
     {"menu_settings", "Ajustes", "Settings"},
     {"menu_exit", "Salir", "Exit"},
     {"settings_theme", "Tema de Interfaz", "Interface Theme"},
@@ -56,7 +62,7 @@ static const TextEntry text_entries[] =
     {"theme_purple", "Morado", "Purple"},
     {"theme_classic", "Clasico", "Classic"},
     {"theme_high_contrast", "Alto Contraste", "High Contrast"},
-    {"lang_spanish", "Espaniol", "Spanish"},
+    {"lang_spanish", "Español", "Spanish"},
     {"lang_english", "Ingles", "English"},
     {"settings_saved", "Configuracion guardada exitosamente.", "Settings saved successfully."},
     {"invalid_option", "Opcion invalida.", "Invalid option."},
@@ -70,7 +76,7 @@ static const TextEntry text_entries[] =
     {"reset_success", "Configuracion restablecida a valores por defecto.", "Settings reset to default values."},
     {"show_current", "Ver Configuracion Actual", "Show Current Settings"},
     {"reset_defaults", "Restablecer a Valores por Defecto", "Reset to Default Values"},
-    {"welcome_message", "Bienvenido De Vuelta, %s\n", "Welcome Back, %s\n"},
+    {"welcome_message", "Bienvenido De Vuelta", "Welcome Back"},
     {NULL, NULL, NULL} // Terminador
 };
 
@@ -219,7 +225,7 @@ const char* get_text(const char* key)
     {
         if (strcmp(text_entries[i].key, key) == 0)
         {
-            return (current_settings.language == LANG_SPANISH) ?
+            return (current_settings.language == LANGUAGE_SPANISH) ?
                    text_entries[i].spanish : text_entries[i].english;
         }
     }
@@ -407,12 +413,12 @@ static void menu_language_settings()
         switch (opcion)
         {
         case 1:
-            settings_set_language(LANG_SPANISH);
+            settings_set_language(LANGUAGE_SPANISH);
             printf("%s\n", get_text("settings_saved"));
             pause_console();
             break;
         case 2:
-            settings_set_language(LANG_ENGLISH);
+            settings_set_language(LANGUAGE_ENGLISH);
             printf("%s\n", get_text("settings_saved"));
             pause_console();
             break;
@@ -463,7 +469,7 @@ static void show_current_settings()
     print_header(get_text("current_settings"));
 
     printf("Tema: %s\n", get_current_theme_name());
-    printf("Idioma: %s\n", current_settings.language == LANG_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
+    printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
 
     char *usuario = get_user_name();
     if (usuario)
@@ -497,7 +503,7 @@ static void reset_settings_to_defaults()
     if (confirm == 's' || confirm == 'S')
     {
         current_settings.theme = THEME_LIGHT;
-        current_settings.language = LANG_SPANISH;
+        current_settings.language = LANGUAGE_SPANISH;
         settings_apply_theme();
         settings_save();
 

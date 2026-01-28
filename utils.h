@@ -9,6 +9,7 @@
 
 #ifndef UTILS_H
 #define UTILS_H
+#include <stddef.h>
 
 /**
  * @brief Solicita al usuario un número entero.
@@ -168,6 +169,15 @@ void convert_display_date_to_storage(const char *display_date, char *storage_buf
  * @return La cadena sin tildes
  */
 char* remover_tildes(const char *str);
+
+/**
+ * @brief Versión segura y portátil de strnlen que limita la longitud máxima.
+ *
+ * @param s Cadena a medir
+ * @param maxlen Máximo número de caracteres a examinar
+ * @return Longitud de la cadena (máximo `maxlen`)
+ */
+size_t safe_strnlen(const char *s, size_t maxlen);
 
 /**
  * @brief Convierte un valor de resultado a texto

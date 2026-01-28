@@ -45,11 +45,10 @@ typedef struct
  * las funciones de exportación. Esto evita la duplicación de código y centraliza
  * la lógica de acceso a datos.
  *
- * @param[out] camisetas Array de estructuras CamisetaData para almacenar los resultados
  * @param[out] count Puntero a entero para almacenar el número de camisetas encontradas
  * @return sqlite3_stmt* Statement preparado para iterar sobre los resultados
  */
-static sqlite3_stmt* obtener_datos_camisetas(CamisetaData *camisetas, int *count)
+static sqlite3_stmt* obtener_datos_camisetas(int *count)
 {
     sqlite3_stmt *check_stmt;
     *count = 0;
@@ -102,7 +101,7 @@ static sqlite3_stmt* obtener_datos_camisetas(CamisetaData *camisetas, int *count
 void exportar_camisetas_csv()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas.csv"), "w");
@@ -147,7 +146,7 @@ void exportar_camisetas_csv()
 void exportar_camisetas_txt()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas.txt"), "w");
@@ -202,7 +201,7 @@ void exportar_camisetas_txt()
 void exportar_camisetas_json()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas.json"), "w");
@@ -253,7 +252,7 @@ void exportar_camisetas_json()
 void exportar_camisetas_html()
 {
     int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(NULL, &count);
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
     if (!stmt) return;
 
     FILE *f = fopen(get_export_path("camisetas.html"), "w");

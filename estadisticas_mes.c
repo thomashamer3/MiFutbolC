@@ -31,14 +31,14 @@ static void preparar_consulta(sqlite3_stmt **stmt)
  * Muestra el encabezado de un mes cuando cambia.
  * Facilita la organización visual de los datos por períodos mensuales.
  */
-static void mostrar_mes(const char *mes_anio, int *hay, char *current_mes)
+static void mostrar_mes(const char *mes_anio, int const *hay, char *current_mes)
 {
     if (strcmp(current_mes, mes_anio) != 0)
     {
         if (*hay) printf("\n");
         printf("Mes: %s\n", mes_anio);
         printf("----------------------------------------\n");
-        strcpy(current_mes, mes_anio);
+        snprintf(current_mes, sizeof(current_mes), "%s", mes_anio);
     }
 }
 

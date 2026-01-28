@@ -13,6 +13,9 @@
 #include "records_rankings.h"
 #include "estadisticas_meta.h"
 #include "menu.h"
+#include "entrenador_ia.h"
+#include "qr.h"
+#include "utils.h"
 #include <stdlib.h>
 
 /**
@@ -25,6 +28,9 @@
  */
 void menu_estadisticas()
 {
+    // Activar IA al abrir estadísticas
+    activar_ia_estadisticas();
+
     MenuItem items[] =
     {
         {1, "Generales", menu_estadisticas_generales},
@@ -68,6 +74,18 @@ void menu_estadisticas_generales()
  * Esto es crucial para entender cómo factores como el cansancio y la dificultad
  * afectan el desempeño, permitiendo ajustar estrategias para futuros encuentros.
  */
+static void qr_partido_desde_estadisticas()
+{
+    clear_screen();
+    print_header("GENERAR QR DE PARTIDO");
+
+    printf("\nIngresa el ID del partido para generar su código QR:\n");
+    int partido_id = input_int("ID del partido: ");
+
+    generar_qr_partido(partido_id);
+    pause_console();
+}
+
 void menu_estadisticas_partidos()
 {
     MenuItem items[] =
@@ -77,10 +95,11 @@ void menu_estadisticas_partidos()
         {3, "Partidos Atipicos", mostrar_partidos_outliers},
         {4, "Partidos Exigentes Bien Rendidos", mostrar_partidos_exigentes_bien_rendidos},
         {5, "Partidos Faciles Mal Rendidos", mostrar_partidos_faciles_mal_rendidos},
+        {6, "📱 Generar QR de Partido", qr_partido_desde_estadisticas},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS DE PARTIDOS", items, 6);
+    ejecutar_menu("ESTADISTICAS DE PARTIDOS", items, 7);
 }
 
 /**

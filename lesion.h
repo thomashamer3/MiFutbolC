@@ -51,6 +51,16 @@ void eliminar_lesion();
 void mostrar_estadisticas_lesiones();
 
 /**
+ * @brief Muestra diferencias de días entre lesiones consecutivas
+ */
+void mostrar_diferencias_lesiones();
+
+/**
+ * @brief Pregunta al usuario si desea actualizar el estado de las lesiones activas
+ */
+void actualizar_estados_lesiones();
+
+/**
  * @brief Muestra el menú principal de gestión de lesiones
  *
  * Presenta un menú interactivo con opciones para crear, listar, editar

@@ -25,7 +25,10 @@ char *trim_trailing_spaces(char *str)
 {
     if (!str)
         return NULL;
-    char *end = str + strlen(str) - 1;
+    size_t len = strnlen(str, 1024);
+    if (len == 0 || len >= 1024)
+        return str;
+    char *end = str + len - 1;
     while (end > str && *end == ' ')
     {
         *end = '\0';
@@ -62,9 +65,9 @@ char *get_export_path(const char *filename)
     const char *export_dir = get_export_dir();
     if (!export_dir)
         return NULL;
-    strcpy(path, export_dir);
-    strcat(path, "\\");
-    strcat(path, filename);
+    strcpy_s(path, sizeof(path), export_dir);
+    strcat_s(path, sizeof(path), "\\");
+    strcat_s(path, sizeof(path), filename);
     return path;
 }
 
@@ -171,8 +174,10 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
                        "SELECT resultado FROM partido ORDER BY fecha_hora",
                        -1, &stmt, NULL);
 
-    int racha_actual_v = 0, max_racha_v = 0;
-    int racha_actual_d = 0, max_racha_d = 0;
+    int racha_actual_v = 0;
+    int max_racha_v = 0;
+    int racha_actual_d = 0;
+    int max_racha_d = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -252,7 +257,8 @@ void exportar_analisis_csv()
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
-    int mejor_racha_v, peor_racha_d;
+    int mejor_racha_v;
+    int peor_racha_d;
 
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
@@ -293,7 +299,8 @@ void exportar_analisis_txt()
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
-    int mejor_racha_v, peor_racha_d;
+    int mejor_racha_v;
+    int peor_racha_d;
 
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
@@ -344,7 +351,8 @@ void exportar_analisis_json()
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
-    int mejor_racha_v, peor_racha_d;
+    int mejor_racha_v;
+    int peor_racha_d;
 
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 
@@ -403,7 +411,8 @@ void exportar_analisis_html()
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
-    int mejor_racha_v, peor_racha_d;
+    int mejor_racha_v;
+    int peor_racha_d;
 
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
 

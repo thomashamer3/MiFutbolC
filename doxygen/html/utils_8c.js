@@ -20,5 +20,6 @@ var utils_8c =
     [ "pedir_nombre_usuario", "utils_8c.html#ac54f6f5e76af4fbc3514b0028822f102", null ],
     [ "print_header", "utils_8c.html#a53a0c6c2a6a2667a4c0b0a3eaf78f617", null ],
     [ "remover_tildes", "utils_8c.html#a64f980d336dc8739bf2b92cb5b569ec6", null ],
-    [ "resultado_to_text", "utils_8c.html#a630ee8617ddc08a5936e6373d61c398f", null ]
+    [ "resultado_to_text", "utils_8c.html#a630ee8617ddc08a5936e6373d61c398f", null ],
+    [ "safe_strnlen", "utils_8c.html#a8418ddc3b2d610d404ab7ae66c46af47", null ]
 ];

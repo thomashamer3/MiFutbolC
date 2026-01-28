@@ -284,6 +284,28 @@ static const Logro LOGROS[] =
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
 /**
+ * @brief Determina si un logro debe mostrarse según el filtro aplicado
+ *
+ * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
+ * @param estado Estado del logro (0=no iniciado, 1=en progreso, 2=completado)
+ * @return 1 si debe mostrarse, 0 en caso contrario
+ */
+static int should_show_logro(int filtro, int estado)
+{
+    switch (filtro)
+    {
+    case 0:
+        return 1; // Mostrar todos
+    case 1:
+        return estado == 2; // Solo completados
+    case 2:
+        return estado == 1; // Solo en progreso
+    default:
+        return 1;
+    }
+}
+
+/**
  * @brief Obtiene el progreso actual de una camiseta para un logro específico (versión optimizada)
  *
  * @param camiseta_id ID de la camiseta
@@ -295,23 +317,27 @@ static int obtener_progreso_logro(int camiseta_id, const char *tipo)
     // Buscar la consulta correspondiente en el array
     for (size_t i = 0; i < NUM_QUERIES; i++)
     {
-        if (strcmp(tipo, LOGRO_QUERIES[i].tipo) == 0)
+        if (strcmp(tipo, LOGRO_QUERIES[i].tipo) != 0)
         {
-            sqlite3_stmt *stmt;
-            int progreso = 0;
-
-            if (sqlite3_prepare_v2(db, LOGRO_QUERIES[i].sql, -1, &stmt, NULL) == SQLITE_OK)
-            {
-                sqlite3_bind_int(stmt, 1, camiseta_id);
-                if (sqlite3_step(stmt) == SQLITE_ROW)
-                {
-                    progreso = sqlite3_column_int(stmt, 0);
-                }
-                sqlite3_finalize(stmt);
-            }
-
-            return progreso;
+            continue;
         }
+
+        sqlite3_stmt *stmt;
+        int progreso = 0;
+
+        if (sqlite3_prepare_v2(db, LOGRO_QUERIES[i].sql, -1, &stmt, NULL) != SQLITE_OK)
+        {
+            return 0;
+        }
+
+        sqlite3_bind_int(stmt, 1, camiseta_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            progreso = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+
+        return progreso;
     }
 
     // Tipo no encontrado
@@ -359,7 +385,7 @@ static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
     sqlite3_bind_int(stmt, 1, camiseta_id);
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strcpy(nombre, (const char *)sqlite3_column_text(stmt, 0));
+        strcpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0));
     }
     else
     {
@@ -396,6 +422,10 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
         estado_texto = "[COMPLETADO]";
         color = "\x1b[32m"; // Verde
         break;
+    default:
+        estado_texto = "[DESCONOCIDO]";
+        color = "\x1b[37m"; // blanco
+        break;
     }
     // ARREGLAR COLOR CONSOLA
     printf("%s%s %s\x1b[0m\n", color, logro->nombre, estado_texto);
@@ -416,7 +446,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     char nombre_camiseta[100];
     obtener_nombre_camiseta(camiseta_id, nombre_camiseta);
 
-    if (strlen(nombre_camiseta) == 0) return; // Error already printed
+    if (safe_strnlen(nombre_camiseta, sizeof(nombre_camiseta)) == 0) return; // Error already printed
 
     printf("\nLOGROS DE: %s\n", nombre_camiseta);
     printf("========================================\n\n");
@@ -425,7 +455,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 
     for (size_t i = 0; i < NUM_LOGROS; i++)
     {
-        int progreso;
+        int progreso = 0;
         int estado = obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso);
 
         // Aplicar filtro
@@ -442,6 +472,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     {
         printf("No hay logros que mostrar con el filtro seleccionado.\n");
     }
+    pause_console();
 }
 
 /**

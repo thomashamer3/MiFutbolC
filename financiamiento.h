@@ -51,6 +51,20 @@ typedef struct
 } TransaccionFinanciera;
 
 /**
+ * @brief Estructura que representa un presupuesto mensual
+ */
+typedef struct
+{
+    int id;                             /**< Identificador único del presupuesto */
+    char mes_anio[8];                   /**< Mes y año en formato YYYY-MM */
+    int presupuesto_total;              /**< Presupuesto total mensual */
+    int limite_gasto;                   /**< Límite máximo de gasto mensual */
+    int alertas_habilitadas;            /**< Si las alertas están habilitadas (1) o no (0) */
+    char fecha_creacion[11];            /**< Fecha de creación del presupuesto */
+    char fecha_modificacion[11];        /**< Fecha de última modificación */
+} PresupuestoMensual;
+
+/**
  * @brief Interfaz de menú para operaciones CRUD de financiamiento
  */
 void menu_financiamiento();
@@ -104,5 +118,40 @@ const char* get_nombre_categoria(CategoriaFinanciera categoria);
  * @brief Mostrar una transacción financiera
  */
 void mostrar_transaccion(TransaccionFinanciera *transaccion);
+
+/**
+ * @brief Gestión de presupuestos mensuales - menú principal
+ */
+void menu_presupuestos_mensuales();
+
+/**
+ * @brief Configurar presupuesto mensual
+ */
+void configurar_presupuesto_mensual();
+
+/**
+ * @brief Ver estado actual del presupuesto mensual
+ */
+void ver_estado_presupuesto();
+
+/**
+ * @brief Verificar límites de gasto y mostrar alertas
+ */
+void verificar_alertas_presupuesto();
+
+/**
+ * @brief Obtener gastos totales del mes actual
+ */
+int obtener_gastos_mes_actual();
+
+/**
+ * @brief Obtener presupuesto y límite del mes actual
+ */
+int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto);
+
+/**
+ * @brief Mostrar alertas cuando se exceden límites
+ */
+void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite);
 
 #endif

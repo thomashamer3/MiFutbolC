@@ -25,8 +25,8 @@ typedef enum
 
 typedef enum
 {
-    LANG_SPANISH = 0,
-    LANG_ENGLISH = 1
+    LANGUAGE_SPANISH = 0,
+    LANGUAGE_ENGLISH = 1
 } LanguageType;
 
 // Estructura para almacenar configuración

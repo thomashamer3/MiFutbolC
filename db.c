@@ -59,17 +59,17 @@ static int setup_database_paths()
     }
 
     memset(DB_DIR, 0, sizeof(DB_DIR));
-    strcpy(DB_DIR, appdata_path);
-    strncat(DB_DIR, "\\MiFutbolC\\data", sizeof(DB_DIR) - strlen(DB_DIR) - 1);
+    strcpy_s(DB_DIR, sizeof(DB_DIR), appdata_path);
+    strcat_s(DB_DIR, sizeof(DB_DIR), "\\MiFutbolC\\data");
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy(DB_PATH, appdata_path);
-    strncat(DB_PATH, "\\MiFutbolC\\data\\mifutbol.db", sizeof(DB_PATH) - strlen(DB_PATH) - 1);
+    strcpy_s(DB_PATH, sizeof(DB_PATH), appdata_path);
+    strcat_s(DB_PATH, sizeof(DB_PATH), "\\MiFutbolC\\data\\mifutbol.db");
 
     // Crear directorios si no existen
     char temp_path[MAX_PATH];
-    strcpy(temp_path, appdata_path);
-    strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+    strcpy_s(temp_path, sizeof(temp_path), appdata_path);
+    strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
     if (MKDIR(temp_path) != 0 && errno != EEXIST)
     {
         printf("Error creando directorio MiFutbolC: %s\n", strerror(errno));
@@ -84,10 +84,10 @@ static int setup_database_paths()
 #else
     // Para otros sistemas operativos, usar directorio actual
     memset(DB_DIR, 0, sizeof(DB_DIR));
-    strcpy(DB_DIR, "./data");
+    strcpy_s(DB_DIR, sizeof(DB_DIR), "./data");
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy(DB_PATH, "./data/mifutbol.db");
+    strcpy_s(DB_PATH, sizeof(DB_PATH), "./data/mifutbol.db");
 
     // Crear directorio si no existe
     if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
@@ -154,6 +154,7 @@ static int create_database_schema()
         " descripcion TEXT NOT NULL,"
         " fecha TEXT NOT NULL,"
         " camiseta_id INTEGER NOT NULL,"
+        " estado TEXT DEFAULT 'Activa',"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
 
         "CREATE TABLE IF NOT EXISTS usuario ("
@@ -288,7 +289,125 @@ static int create_database_schema()
         " categoria INTEGER NOT NULL,"
         " descripcion TEXT NOT NULL,"
         " monto REAL NOT NULL,"
-        " item_especifico TEXT);";
+        " item_especifico TEXT);"
+
+        "CREATE TABLE IF NOT EXISTS presupuesto_mensual ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " mes_anio TEXT NOT NULL UNIQUE,"  // formato YYYY-MM
+        " presupuesto_total INTEGER NOT NULL,"
+        " limite_gasto INTEGER NOT NULL,"
+        " alertas_habilitadas INTEGER DEFAULT 1,"
+        " fecha_creacion TEXT NOT NULL,"
+        " fecha_modificacion TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS comparacion_historial ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " tipo_comparacion INTEGER NOT NULL,"
+        " entidad_a_id INTEGER NOT NULL,"
+        " entidad_b_id INTEGER NOT NULL,"
+        " score_a REAL,"
+        " score_b REAL,"
+        " ganador INTEGER,"
+        " fecha TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS temporada ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " anio INTEGER NOT NULL,"
+        " fecha_inicio TEXT NOT NULL,"
+        " fecha_fin TEXT NOT NULL,"
+        " estado TEXT DEFAULT 'Planificada',"
+        " descripcion TEXT);"
+
+        "CREATE TABLE IF NOT EXISTS temporada_fase ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " temporada_id INTEGER NOT NULL,"
+        " nombre TEXT NOT NULL,"
+        " tipo_fase TEXT NOT NULL,"
+        " fecha_inicio TEXT NOT NULL,"
+        " fecha_fin TEXT NOT NULL,"
+        " descripcion TEXT,"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+
+        "CREATE TABLE IF NOT EXISTS torneo_temporada ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " torneo_id INTEGER NOT NULL,"
+        " temporada_id INTEGER NOT NULL,"
+        " fase_id INTEGER,"
+        " orden_en_temporada INTEGER,"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
+        " FOREIGN KEY(fase_id) REFERENCES temporada_fase(id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_temporada_fatiga ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " equipo_id INTEGER NOT NULL,"
+        " temporada_id INTEGER NOT NULL,"
+        " fecha TEXT NOT NULL,"
+        " fatiga_acumulada REAL DEFAULT 0,"
+        " partidos_jugados INTEGER DEFAULT 0,"
+        " rendimiento_promedio REAL DEFAULT 0,"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+
+        "CREATE TABLE IF NOT EXISTS jugador_temporada_fatiga ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " jugador_id INTEGER NOT NULL,"
+        " temporada_id INTEGER NOT NULL,"
+        " fecha TEXT NOT NULL,"
+        " fatiga_acumulada REAL DEFAULT 0,"
+        " minutos_jugados_total INTEGER DEFAULT 0,"
+        " rendimiento_promedio REAL DEFAULT 0,"
+        " lesiones_acumuladas INTEGER DEFAULT 0,"
+        " FOREIGN KEY(jugador_id) REFERENCES jugador(id),"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_temporada_evolucion ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " equipo_id INTEGER NOT NULL,"
+        " temporada_id INTEGER NOT NULL,"
+        " fecha_medicion TEXT NOT NULL,"
+        " puntuacion_rendimiento REAL,"
+        " tendencia TEXT,"
+        " partidos_ganados INTEGER DEFAULT 0,"
+        " partidos_totales INTEGER DEFAULT 0,"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+
+        "CREATE TABLE IF NOT EXISTS temporada_resumen ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " temporada_id INTEGER NOT NULL UNIQUE,"
+        " total_partidos INTEGER DEFAULT 0,"
+        " total_goles INTEGER DEFAULT 0,"
+        " promedio_goles_partido REAL DEFAULT 0,"
+        " equipo_campeon_id INTEGER,"
+        " mejor_goleador_jugador_id INTEGER,"
+        " mejor_goleador_goles INTEGER DEFAULT 0,"
+        " total_lesiones INTEGER DEFAULT 0,"
+        " fecha_generacion TEXT NOT NULL,"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
+        " FOREIGN KEY(equipo_campeon_id) REFERENCES equipo(id),"
+        " FOREIGN KEY(mejor_goleador_jugador_id) REFERENCES jugador(id));"
+
+        "CREATE TABLE IF NOT EXISTS mensual_resumen ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " temporada_id INTEGER NOT NULL,"
+        " mes_anio TEXT NOT NULL,"
+        " total_partidos INTEGER DEFAULT 0,"
+        " total_goles INTEGER DEFAULT 0,"
+        " promedio_goles_partido REAL DEFAULT 0,"
+        " partidos_ganados INTEGER DEFAULT 0,"
+        " partidos_empatados INTEGER DEFAULT 0,"
+        " partidos_perdidos INTEGER DEFAULT 0,"
+        " total_lesiones INTEGER DEFAULT 0,"
+        " total_gastos REAL DEFAULT 0,"
+        " total_ingresos REAL DEFAULT 0,"
+        " mejor_equipo_mes INTEGER,"
+        " peor_equipo_mes INTEGER,"
+        " fecha_generacion TEXT NOT NULL,"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
+        " FOREIGN KEY(mejor_equipo_mes) REFERENCES equipo(id),"
+        " FOREIGN KEY(peor_equipo_mes) REFERENCES equipo(id));";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
@@ -453,13 +572,13 @@ const char* get_export_dir()
         }
 
         memset(EXPORT_DIR, 0, sizeof(EXPORT_DIR));
-        strcpy(EXPORT_DIR, documents_path);
-        strncat(EXPORT_DIR, "\\MiFutbolC\\Exportaciones", sizeof(EXPORT_DIR) - strlen(EXPORT_DIR) - 1);
+        strcpy_s(EXPORT_DIR, sizeof(EXPORT_DIR), documents_path);
+        strcat_s(EXPORT_DIR, sizeof(EXPORT_DIR), "\\MiFutbolC\\Exportaciones");
 
         // Crear directorios si no existen
         char temp_path[MAX_PATH];
-        strcpy(temp_path, documents_path);
-        strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+        strcpy_s(temp_path, sizeof(temp_path), documents_path);
+        strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
         if (MKDIR(temp_path) != 0 && errno != EEXIST)
         {
             printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
@@ -473,7 +592,7 @@ const char* get_export_dir()
         }
 #else
         // Para otros sistemas operativos
-        strcpy(EXPORT_DIR, "./exportaciones");
+        strcpy_s(EXPORT_DIR, sizeof(EXPORT_DIR), "./exportaciones");
         if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
         {
             printf("Error creando directorio exportaciones: %s\n", strerror(errno));
@@ -506,13 +625,13 @@ const char* get_import_dir()
         }
 
         memset(IMPORT_DIR, 0, sizeof(IMPORT_DIR));
-        strcpy(IMPORT_DIR, documents_path);
-        strncat(IMPORT_DIR, "\\MiFutbolC\\Importaciones", sizeof(IMPORT_DIR) - strlen(IMPORT_DIR) - 1);
+        strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), documents_path);
+        strcat_s(IMPORT_DIR, sizeof(IMPORT_DIR), "\\MiFutbolC\\Importaciones");
 
         // Crear directorios si no existen
         char temp_path[MAX_PATH];
-        strcpy(temp_path, documents_path);
-        strncat(temp_path, "\\MiFutbolC", sizeof(temp_path) - strlen(temp_path) - 1);
+        strcpy_s(temp_path, sizeof(temp_path), documents_path);
+        strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
         if (MKDIR(temp_path) != 0 && errno != EEXIST)
         {
             printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
@@ -526,7 +645,7 @@ const char* get_import_dir()
         }
 #else
         // Para otros sistemas operativos
-        strcpy(IMPORT_DIR, "./importaciones");
+        strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), "./importaciones");
         if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
         {
             printf("Error creando directorio importaciones: %s\n", strerror(errno));

@@ -3,7 +3,23 @@
     "docwriter.style": "Doxygen",
     "docwriter.progress.trackClasses": true,
     "docwriter.progress.trackTypes": true,
-    "C_Cpp.default.includePath": [
-        "${workspaceFolder}"
-    ]
+
+    "C_Cpp.intelliSenseEngine": "disabled",
+
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--completion-style=detailed",
+        "--query-driver=C:/msys64/mingw64/bin/*",
+        "--std=gnu17"
+    ],
+
+    // SonarLint en modo conectado
+    "sonarlint.connectedMode.project": {
+        "connectionId": "thomashamer3",
+        "projectKey": "thomashamer3_MiFutbolC"
+    },
+
+    // (Opcional) si en el futuro usás compile_commands.json
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json"
 }

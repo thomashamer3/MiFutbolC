@@ -76,26 +76,6 @@ void exportar_lesiones_todo_mejorado()
     pause_console();
 }
 
-/**
- * @brief Exportación completa del sistema con análisis avanzado y compatibilidad
- *
- * Función maestra que realiza una exportación exhaustiva de todos los datos del sistema,
- * incluyendo tanto las versiones mejoradas con análisis avanzado como las versiones originales
- * para mantener compatibilidad con versiones anteriores. Esto es esencial para migraciones
- * y para usuarios que necesitan ambos tipos de datos.
- *
- * @details La exportación completa incluye:
- * - Datos mejorados: Análisis avanzado para toma de decisiones
- * - Datos originales: Compatibilidad con sistemas existentes
- * - Múltiples formatos: Flexibilidad para diferentes usos
- * - Todas las categorías: Camisetas y lesiones completas
- *
- * @note Esta función es la más completa pero también la más lenta, ya que
- *       exporta todos los datos en todos los formatos disponibles.
- *
- * @see exportar_camisetas_todo_mejorado()
- * @see exportar_lesiones_todo_mejorado()
- */
 void exportar_todo_mejorado()
 {
     printf("Exportando todo con analisis avanzado...\n");
@@ -126,24 +106,6 @@ void exportar_todo_mejorado()
     pause_console();
 }
 
-/**
- * @brief Interfaz de usuario para exportación de datos mejorados
- *
- * Proporciona un menú interactivo que centraliza el acceso a todas las opciones
- * de exportación mejorada. Esto permite a los usuarios seleccionar fácilmente
- * qué tipo de datos y análisis necesitan exportar, mejorando la experiencia de usuario
- * y facilitando el acceso a las funciones avanzadas de exportación.
- *
- * @details El menú ofrece opciones para:
- * - Exportar datos específicos (camisetas o lesiones) con análisis avanzado
- * - Exportar todos los datos de manera integral
- * - Mantener una interfaz consistente con el resto del sistema
- *
- * @see ejecutar_menu()
- * @see exportar_camisetas_todo_mejorado()
- * @see exportar_lesiones_todo_mejorado()
- * @see exportar_todo_mejorado()
- */
 void menu_exportar_mejorado()
 {
     MenuItem items[] =

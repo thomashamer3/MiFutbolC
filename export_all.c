@@ -406,14 +406,6 @@ static void menu_exportar_estadisticas_generales()
     ejecutar_menu("EXPORTAR ESTADISTICAS GENERALES", items, 5);
 }
 
-/**
- * @brief Menu para exportar datos del sistema en múltiples formatos según selección del usuario.
- *
- * Esta función muestra un menú para que el usuario seleccione qué datos exportar:
- * camisetas, partidos, lesiones, estadísticas, análisis, estadísticas detalladas, todo o volver.
- * Llama a las funciones de exportación correspondientes en formatos CSV, TXT, JSON y HTML.
- * Al final, muestra un mensaje de confirmación y pausa la consola.
- */
 void menu_exportar()
 {
     MenuItem items[] =
