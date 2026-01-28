@@ -21,5 +21,5 @@
     },
 
     // (Opcional) si en el futuro usás compile_commands.json
-    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json"
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}\\bw-output\\compile_commands.json"
 }

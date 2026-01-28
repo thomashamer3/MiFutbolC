@@ -340,7 +340,7 @@ void show_available_teams_for_modification()
 
         if (!found)
         {
-            printf("No hay equipos registrados para modificar.\n");
+            mostrar_no_hay_registros("equipos registrados para modificar");
             sqlite3_finalize(stmt);
             pause_console();
             return;
@@ -510,7 +510,7 @@ void handle_modify_players(int equipo_id)
 
         if (jugador_count == 0)
         {
-            printf("No hay jugadores registrados para este equipo.\n");
+            mostrar_no_hay_registros("jugadores registrados para este equipo");
             pause_console();
             return;
         }
@@ -1539,7 +1539,7 @@ void mostrar_jugadores_equipo(int equipo_id)
 
         if (!has_jugadores)
         {
-            printf("No hay jugadores registrados para este equipo.\n");
+            mostrar_no_hay_registros("jugadores registrados para este equipo");
         }
 
         sqlite3_finalize(stmt_jugadores);
@@ -2185,7 +2185,7 @@ void listar_equipos()
 
         if (!found)
         {
-            printf("No hay equipos registrados.\n");
+            mostrar_no_hay_registros("equipos registrados");
         }
     }
     else
@@ -2289,7 +2289,7 @@ void eliminar_equipo()
 
         if (!found)
         {
-            printf("No hay equipos registrados para eliminar.\n");
+            mostrar_no_hay_registros("equipos registrados para eliminar");
             sqlite3_finalize(stmt);
             pause_console();
             return;

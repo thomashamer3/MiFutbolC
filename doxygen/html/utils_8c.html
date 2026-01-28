@@ -160,6 +160,39 @@ Functions</h2></td></tr>
 <tr class="memitem:ae82023dc6bfe9f991e161496cd7a5af4" id="r_ae82023dc6bfe9f991e161496cd7a5af4"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae82023dc6bfe9f991e161496cd7a5af4">dia_to_text</a> (int dia)</td></tr>
 <tr class="memdesc:ae82023dc6bfe9f991e161496cd7a5af4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convierte un valor de día a texto.  <br /></td></tr>
 <tr class="separator:ae82023dc6bfe9f991e161496cd7a5af4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac87184b302ce50741e1f93db38ec25a4" id="r_ac87184b302ce50741e1f93db38ec25a4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac87184b302ce50741e1f93db38ec25a4">obtener_nombre_entidad</a> (const char *tabla, int id, char *buffer, size_t size)</td></tr>
+<tr class="memdesc:ac87184b302ce50741e1f93db38ec25a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el nombre de una entidad por su ID desde la base de datos.  <br /></td></tr>
+<tr class="separator:ac87184b302ce50741e1f93db38ec25a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5aea634d91af70b6400a7da87e132fbe" id="r_a5aea634d91af70b6400a7da87e132fbe"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5aea634d91af70b6400a7da87e132fbe">obtener_siguiente_id</a> (const char *tabla)</td></tr>
+<tr class="memdesc:a5aea634d91af70b6400a7da87e132fbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el siguiente ID disponible para una tabla Implementa el patrón usado en camiseta, cancha, lesion, etc.  <br /></td></tr>
+<tr class="separator:a5aea634d91af70b6400a7da87e132fbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a975ffe8ab64e20c463ff43f044ca4d0e" id="r_a975ffe8ab64e20c463ff43f044ca4d0e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a975ffe8ab64e20c463ff43f044ca4d0e">hay_registros</a> (const char *tabla)</td></tr>
+<tr class="memdesc:a975ffe8ab64e20c463ff43f044ca4d0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verifica si hay registros en una tabla.  <br /></td></tr>
+<tr class="separator:a975ffe8ab64e20c463ff43f044ca4d0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e1d46abf5e3d8066903c7be371ba8e0" id="r_a2e1d46abf5e3d8066903c7be371ba8e0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2e1d46abf5e3d8066903c7be371ba8e0">obtener_id_por_nombre</a> (const char *tabla, const char *nombre)</td></tr>
+<tr class="memdesc:a2e1d46abf5e3d8066903c7be371ba8e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtiene el ID de una entidad por nombre.  <br /></td></tr>
+<tr class="separator:a2e1d46abf5e3d8066903c7be371ba8e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7cf09d03184d6fc22a0c4e38b80b18a9" id="r_a7cf09d03184d6fc22a0c4e38b80b18a9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7cf09d03184d6fc22a0c4e38b80b18a9">listar_entidades</a> (const char *tabla, const char *titulo, const char *mensaje_vacio)</td></tr>
+<tr class="memdesc:a7cf09d03184d6fc22a0c4e38b80b18a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lista todas las entidades de una tabla.  <br /></td></tr>
+<tr class="separator:a7cf09d03184d6fc22a0c4e38b80b18a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3d18b1285a5f9b20bebb773f776f675" id="r_ac3d18b1285a5f9b20bebb773f776f675"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac3d18b1285a5f9b20bebb773f776f675">input_int_rango</a> (const char *msg, int min, int max)</td></tr>
+<tr class="memdesc:ac3d18b1285a5f9b20bebb773f776f675"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solicita un entero validado en rango.  <br /></td></tr>
+<tr class="separator:ac3d18b1285a5f9b20bebb773f776f675"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadad3b8f9befb2c77c3f508f0f27c9af" id="r_aadad3b8f9befb2c77c3f508f0f27c9af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aadad3b8f9befb2c77c3f508f0f27c9af">mostrar_no_hay_registros</a> (const char *entidad)</td></tr>
+<tr class="memdesc:aadad3b8f9befb2c77c3f508f0f27c9af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra "no hay registros".  <br /></td></tr>
+<tr class="separator:aadad3b8f9befb2c77c3f508f0f27c9af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad83c1b7fe47daf9e1cac6f19e7b9fbc8" id="r_ad83c1b7fe47daf9e1cac6f19e7b9fbc8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad83c1b7fe47daf9e1cac6f19e7b9fbc8">mostrar_no_existe</a> (const char *entidad)</td></tr>
+<tr class="memdesc:ad83c1b7fe47daf9e1cac6f19e7b9fbc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra "entidad no existe".  <br /></td></tr>
+<tr class="separator:ad83c1b7fe47daf9e1cac6f19e7b9fbc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbfd32cdcab038d75e4b01fd6e2bc2e1" id="r_adbfd32cdcab038d75e4b01fd6e2bc2e1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adbfd32cdcab038d75e4b01fd6e2bc2e1">mostrar_error_operacion</a> (const char *entidad, const char *operacion)</td></tr>
+<tr class="memdesc:adbfd32cdcab038d75e4b01fd6e2bc2e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Muestra error de operación.  <br /></td></tr>
+<tr class="separator:adbfd32cdcab038d75e4b01fd6e2bc2e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a567211379bca18f5faa36d87c1b7ffa3" id="r_a567211379bca18f5faa36d87c1b7ffa3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a567211379bca18f5faa36d87c1b7ffa3">mostrar_pantalla</a> (const char *titulo)</td></tr>
+<tr class="memdesc:a567211379bca18f5faa36d87c1b7ffa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Atajo para clear_screen + print_header.  <br /></td></tr>
+<tr class="separator:a567211379bca18f5faa36d87c1b7ffa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e6d44e14bb23a116efa66bca83c5392" id="r_a3e6d44e14bb23a116efa66bca83c5392"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3e6d44e14bb23a116efa66bca83c5392">trim_trailing_spaces</a> (char *str)</td></tr>
+<tr class="memdesc:a3e6d44e14bb23a116efa66bca83c5392"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina espacios en blanco al final de una cadena.  <br /></td></tr>
+<tr class="separator:a3e6d44e14bb23a116efa66bca83c5392"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Funciones utilitarias para entrada/salida, manejo de fechas y operaciones de base de datos. </p>
@@ -430,6 +463,33 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a975ffe8ab64e20c463ff43f044ca4d0e" name="a975ffe8ab64e20c463ff43f044ca4d0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a975ffe8ab64e20c463ff43f044ca4d0e">&#9670;&#160;</a></span>hay_registros()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int hay_registros </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>tabla</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Verifica si hay registros en una tabla. </p>
+<p>Función genérica para verificar si una tabla tiene al menos un registro. Reemplaza múltiples funciones hay_camisetas(), hay_cancha(), etc.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tabla</td><td>Nombre de la tabla a verificar </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 si hay registros, 0 si está vacía </dd></dl>
+
+</div>
+</div>
 <a id="a2d355624a4738917e8ee615af4d4e52b" name="a2d355624a4738917e8ee615af4d4e52b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2d355624a4738917e8ee615af4d4e52b">&#9670;&#160;</a></span>input_date()</h2>
 
@@ -499,6 +559,35 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ac3d18b1285a5f9b20bebb773f776f675" name="ac3d18b1285a5f9b20bebb773f776f675"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3d18b1285a5f9b20bebb773f776f675">&#9670;&#160;</a></span>input_int_rango()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int input_int_rango </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>msg</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Solicita un entero validado en rango. </p>
+<p>Solicita un entero validado dentro de un rango. </p>
+
+</div>
+</div>
 <a id="a103bb737a1c620d2f4ecc32ffaf4ceee" name="a103bb737a1c620d2f4ecc32ffaf4ceee"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a103bb737a1c620d2f4ecc32ffaf4ceee">&#9670;&#160;</a></span>input_string()</h2>
 
@@ -528,6 +617,35 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7cf09d03184d6fc22a0c4e38b80b18a9" name="a7cf09d03184d6fc22a0c4e38b80b18a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7cf09d03184d6fc22a0c4e38b80b18a9">&#9670;&#160;</a></span>listar_entidades()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void listar_entidades </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>tabla</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>titulo</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>mensaje_vacio</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Lista todas las entidades de una tabla. </p>
+<p>Lista todas las entidades de una tabla (id, nombre) </p>
+
+</div>
+</div>
 <a id="a66c3afc7bd2e95ef7674a73523db2941" name="a66c3afc7bd2e95ef7674a73523db2941"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a66c3afc7bd2e95ef7674a73523db2941">&#9670;&#160;</a></span>menu_usuario()</h2>
 
@@ -548,6 +666,70 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="adbfd32cdcab038d75e4b01fd6e2bc2e1" name="adbfd32cdcab038d75e4b01fd6e2bc2e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbfd32cdcab038d75e4b01fd6e2bc2e1">&#9670;&#160;</a></span>mostrar_error_operacion()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mostrar_error_operacion </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>entidad</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>operacion</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Muestra error de operación. </p>
+<p>Muestra mensaje de error de manera consistente. </p>
+
+</div>
+</div>
+<a id="ad83c1b7fe47daf9e1cac6f19e7b9fbc8" name="ad83c1b7fe47daf9e1cac6f19e7b9fbc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad83c1b7fe47daf9e1cac6f19e7b9fbc8">&#9670;&#160;</a></span>mostrar_no_existe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mostrar_no_existe </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>entidad</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Muestra "entidad no existe". </p>
+<p>Muestra mensaje de "entidad no existe" de manera consistente. </p>
+
+</div>
+</div>
+<a id="aadad3b8f9befb2c77c3f508f0f27c9af" name="aadad3b8f9befb2c77c3f508f0f27c9af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aadad3b8f9befb2c77c3f508f0f27c9af">&#9670;&#160;</a></span>mostrar_no_hay_registros()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mostrar_no_hay_registros </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>entidad</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Muestra "no hay registros". </p>
+<p>Muestra mensaje de "no hay registros" de manera consistente. </p>
+
+</div>
+</div>
 <a id="a3870f65d49580ad3d42ffd2a4a8e8c9b" name="a3870f65d49580ad3d42ffd2a4a8e8c9b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3870f65d49580ad3d42ffd2a4a8e8c9b">&#9670;&#160;</a></span>mostrar_nombre_usuario()</h2>
 
@@ -565,6 +747,119 @@ Functions</h2></td></tr>
 
 <p>Muestra el nombre actual del usuario. </p>
 <p>Permite al usuario verificar su identidad actual almacenada, facilitando la gestión de su perfil. </p>
+
+</div>
+</div>
+<a id="a567211379bca18f5faa36d87c1b7ffa3" name="a567211379bca18f5faa36d87c1b7ffa3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a567211379bca18f5faa36d87c1b7ffa3">&#9670;&#160;</a></span>mostrar_pantalla()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mostrar_pantalla </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>titulo</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Atajo para clear_screen + print_header. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">titulo</td><td>Título a mostrar </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a2e1d46abf5e3d8066903c7be371ba8e0" name="a2e1d46abf5e3d8066903c7be371ba8e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e1d46abf5e3d8066903c7be371ba8e0">&#9670;&#160;</a></span>obtener_id_por_nombre()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int obtener_id_por_nombre </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>tabla</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>nombre</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene el ID de una entidad por nombre. </p>
+<p>Obtiene el ID de una entidad buscándola por nombre. </p>
+
+</div>
+</div>
+<a id="ac87184b302ce50741e1f93db38ec25a4" name="ac87184b302ce50741e1f93db38ec25a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac87184b302ce50741e1f93db38ec25a4">&#9670;&#160;</a></span>obtener_nombre_entidad()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int obtener_nombre_entidad </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>tabla</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>id</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buffer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene el nombre de una entidad por su ID desde la base de datos. </p>
+<p>Obtiene el nombre de una entidad por su ID desde la base de datos. Función genérica para evitar duplicación de código en consultas SQL comunes.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tabla</td><td>Nombre de la tabla (ej: "camiseta", "torneo", "cancha") </td></tr>
+    <tr><td class="paramname">id</td><td>ID de la entidad a buscar </td></tr>
+    <tr><td class="paramname">buffer</td><td>Buffer donde se almacenará el nombre encontrado </td></tr>
+    <tr><td class="paramname">size</td><td>Tamaño máximo del buffer </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 si se encontró la entidad, 0 si no se encontró </dd></dl>
+
+</div>
+</div>
+<a id="a5aea634d91af70b6400a7da87e132fbe" name="a5aea634d91af70b6400a7da87e132fbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5aea634d91af70b6400a7da87e132fbe">&#9670;&#160;</a></span>obtener_siguiente_id()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int obtener_siguiente_id </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>tabla</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtiene el siguiente ID disponible para una tabla Implementa el patrón usado en camiseta, cancha, lesion, etc. </p>
+<p>Obtiene el siguiente ID disponible para una tabla (reutiliza espacios) </p>
 
 </div>
 </div>
@@ -707,13 +1002,39 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a3e6d44e14bb23a116efa66bca83c5392" name="a3e6d44e14bb23a116efa66bca83c5392"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e6d44e14bb23a116efa66bca83c5392">&#9670;&#160;</a></span>trim_trailing_spaces()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * trim_trailing_spaces </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>str</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Elimina espacios en blanco al final de una cadena. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>Cadena a procesar </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>La misma cadena sin espacios finales </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="utils_8c.html">utils.c</a></li>
-    <li class="footer">Generated on Wed Jan 28 2026 03:39:28 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+    <li class="footer">Generated on Wed Jan 28 2026 17:00:43 for MiFutbolC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>
 </body>

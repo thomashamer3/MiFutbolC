@@ -38,7 +38,7 @@ static void mostrar_record(const char *titulo, const char *sql)
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -66,7 +66,7 @@ static void mostrar_combinacion(const char *titulo, const char *sql)
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -100,7 +100,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -235,7 +235,7 @@ void mostrar_partido_mejor_rendimiento_general()
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -272,7 +272,7 @@ void mostrar_partido_peor_rendimiento_general()
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -311,7 +311,7 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
         }
         else
         {
-            printf("No hay datos disponibles.\n");
+            mostrar_no_hay_registros("datos disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -464,7 +464,7 @@ static void mostrar_racha_info(const char *titulo, RachaInfo racha)
     }
     else
     {
-        printf("No hay rachas disponibles.\n");
+        mostrar_no_hay_registros("rachas disponibles");
     }
 }
 

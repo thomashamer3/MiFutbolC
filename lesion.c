@@ -10,43 +10,6 @@
 
 static int current_lesion_id;
 
-// Obtains the next available ID by reusing deleted IDs to maintain efficient ID management
-// and prevent unnecessary growth of the ID sequence, which improves database performance over time.
-static int obtener_siguiente_id_lesion()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM lesion)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM lesion)",
-                       -1, &stmt, NULL);
-
-    int id = 1; // Default si la tabla está vacía
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        id = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return id;
-}
-
-/**
- * @brief Verifica si hay lesiones registradas en la base de datos
- *
- * @return 1 si hay al menos una lesión, 0 si no hay ninguna
- */
-static int hay_lesiones()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &stmt, NULL);
-
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return count > 0;
-}
-
 /**
  * @brief Crea una nueva lesión en la base de datos
  *
@@ -106,7 +69,7 @@ void crear_lesion()
         jugador = "Usuario Desconocido";
     }
 
-    int id = obtener_siguiente_id_lesion();
+    int id = obtener_siguiente_id("lesion");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -140,8 +103,7 @@ void crear_lesion()
  */
 void listar_lesiones()
 {
-    clear_screen();
-    print_header("LISTADO DE LESIONES");
+    mostrar_pantalla("LISTADO DE LESIONES");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -165,7 +127,7 @@ void listar_lesiones()
     }
 
     if (!hay)
-        printf("No hay lesiones cargadas\n");
+        mostrar_no_hay_registros("lesiones");
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -364,12 +326,11 @@ static void modificar_todo_lesion()
  */
 void modificar_lesion()
 {
-    clear_screen();
-    print_header("MODIFICAR LESION");
+    mostrar_pantalla("MODIFICAR LESION");
 
-    if (!hay_lesiones())
+    if (!hay_registros("lesion"))
     {
-        printf("No hay lesiones para modificar.\n");
+        mostrar_no_hay_registros("lesiones");
         pause_console();
         return;
     }
@@ -381,7 +342,7 @@ void modificar_lesion()
 
     if (!existe_id("lesion", id))
     {
-        printf("La Lesion no Existe\n");
+        mostrar_no_existe("lesion");
         return;
     }
 
@@ -410,12 +371,11 @@ void modificar_lesion()
  */
 void eliminar_lesion()
 {
-    clear_screen();
-    print_header("ELIMINAR LESION");
+    mostrar_pantalla("ELIMINAR LESION");
 
-    if (!hay_lesiones())
+    if (!hay_registros("lesion"))
     {
-        printf("No hay lesiones para eliminar.\n");
+        mostrar_no_hay_registros("lesiones");
         pause_console();
         return;
     }
@@ -429,7 +389,7 @@ void eliminar_lesion()
 
     if (!existe_id("lesion", id))
     {
-        printf("ID inexistente\n");
+        mostrar_no_existe("lesion");
         pause_console();
         return;
     }
@@ -539,8 +499,7 @@ void mostrar_diferencias_lesiones()
  */
 void actualizar_estados_lesiones()
 {
-    clear_screen();
-    print_header("ACTUALIZAR ESTADOS DE LESIONES");
+    mostrar_pantalla("ACTUALIZAR ESTADOS DE LESIONES");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -568,7 +527,7 @@ void actualizar_estados_lesiones()
 
     if (lesiones_activas == 0)
     {
-        printf("No hay lesiones que requieran actualización de estado.\n");
+        mostrar_no_hay_registros("lesiones activas");
         pause_console();
         return;
     }

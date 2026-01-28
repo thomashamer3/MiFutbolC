@@ -192,21 +192,8 @@ int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_
  *
  * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
  */
-static int obtener_siguiente_id_financiamiento()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM financiamiento)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM financiamiento)",
-                       -1, &stmt, NULL);
+// FUNCIÓN ELIMINADA: ahora usa obtener_siguiente_id("financiamiento") de utils.c
 
-    int id = 1; // Default si la tabla está vacía
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        id = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return id;
-}
 
 /**
  * @brief Agregar una nueva transacción financiera
@@ -355,7 +342,7 @@ void agregar_transaccion()
     }
 
     // Obtener el ID y asignarlo a la transacción
-    transaccion.id = obtener_siguiente_id_financiamiento();
+    transaccion.id = obtener_siguiente_id("financiamiento");
 
     // Mostrar resumen y confirmar
     clear_screen();
@@ -868,7 +855,7 @@ static void imprimir_ingresos_por_categoria()
 
         if (!found_ingresos)
         {
-            printf("No hay ingresos registrados.\n");
+            mostrar_no_hay_registros("ingresos registrados");
         }
     }
 }
@@ -932,7 +919,7 @@ static void imprimir_estadisticas_equipamiento()
 
         if (!found_equip)
         {
-            printf("No hay compras de equipamiento especificadas.\n");
+            mostrar_no_hay_registros("compras de equipamiento especificadas");
         }
     }
 }
@@ -973,7 +960,7 @@ static void imprimir_balance_mensual()
 
         if (!found_mensual)
         {
-            printf("No hay datos suficientes para mostrar balance mensual.\n");
+            mostrar_no_hay_registros("datos suficientes para mostrar balance mensual");
         }
     }
 }
@@ -995,7 +982,7 @@ void mostrar_resumen_financiero()
 
     if (num_transacciones == 0)
     {
-        printf("\nNo hay transacciones registradas.\n");
+        mostrar_no_hay_registros("transacciones registradas");
         pause_console();
         return;
     }
@@ -1092,7 +1079,7 @@ void ver_balance_gastos()
 
         if (count == 0)
         {
-            printf("No hay gastos registrados.\n");
+            mostrar_no_hay_registros("gastos registrados");
         }
     }
 

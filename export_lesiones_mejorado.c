@@ -199,7 +199,7 @@ void exportar_lesiones_csv_mejorado()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 
@@ -236,7 +236,7 @@ void exportar_lesiones_txt_mejorado()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 
@@ -273,7 +273,7 @@ void exportar_lesiones_json_mejorado()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 
@@ -309,7 +309,7 @@ void exportar_lesiones_html_mejorado()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 

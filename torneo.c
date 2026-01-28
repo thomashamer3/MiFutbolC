@@ -161,7 +161,7 @@ void asociar_equipos_torneo(int torneo_id)
 
         if (!found)
         {
-            printf("No hay equipos registrados para asociar.\n");
+            mostrar_no_hay_registros("equipos registrados para asociar");
             sqlite3_finalize(stmt);
             pause_console();
             return;
@@ -560,7 +560,7 @@ void listar_torneos()
 
         if (!found)
         {
-            printf("No hay torneos registrados.\n");
+            mostrar_no_hay_registros("torneos registrados");
         }
     }
     else
@@ -595,7 +595,7 @@ void modificar_torneo()
 
         if (!found)
         {
-            printf("No hay torneos registrados para modificar.\n");
+            mostrar_no_hay_registros("torneos registrados para modificar");
             sqlite3_finalize(stmt);
             pause_console();
             return;
@@ -734,7 +734,7 @@ static int seleccionar_equipo_disponible(void)
 
     if (!found)
     {
-        printf("No hay equipos registrados.\n");
+        mostrar_no_hay_registros("equipos registrados");
         pause_console();
         return 0;
     }
@@ -989,7 +989,7 @@ static void listar_equipos_asociados(int torneo_id)
 
     if (!has_equipos)
     {
-        printf("No hay equipos asociados a este torneo.\n");
+        mostrar_no_hay_registros("equipos asociados a este torneo");
     }
 
     sqlite3_finalize(stmt_equipos);

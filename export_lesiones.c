@@ -137,7 +137,7 @@ void exportar_lesiones_csv()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 
@@ -165,7 +165,7 @@ void exportar_lesiones_txt()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 
@@ -193,7 +193,7 @@ void exportar_lesiones_json()
 {
     if (!has_lesiones())
     {
-        printf("No hay registros de lesiones para exportar.\n");
+        mostrar_no_hay_registros("lesiones para exportar");
         return;
     }
 

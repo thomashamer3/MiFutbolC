@@ -16,30 +16,6 @@
 #include <process.h>
 
 /**
- * @brief Obtiene el siguiente ID disponible para una nueva camiseta
- *
- * Mantiene IDs secuenciales reutilizando espacios de eliminaciones para
- * evitar IDs excesivamente altos y facilitar la navegación del usuario.
- *
- * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
- */
-static int obtener_siguiente_id_camiseta()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM camiseta)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM camiseta)",
-                       -1, &stmt, NULL);
-
-    int id = 1; // Default si la tabla está vacía
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        id = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return id;
-}
-
-/**
  * @brief Verifica si hay camisetas registradas en la base de datos
  *
  * Previene operaciones en datasets vacíos y permite mostrar mensajes
@@ -47,20 +23,9 @@ static int obtener_siguiente_id_camiseta()
  *
  * @return 1 si hay al menos una camiseta, 0 si no hay ninguna
  */
-static int hay_camisetas()
-{
-    if (db == NULL) return 0;
+// FUNCIÓN ELIMINADA: obtener_siguiente_id_camiseta() - ahora usa obtener_siguiente_id("camiseta") de utils.c
 
-    sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db, "SELECT id FROM camiseta LIMIT 1", -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return 0;
-    }
-
-    int has = sqlite3_step(stmt) == SQLITE_ROW;
-    sqlite3_finalize(stmt);
-    return has;
-}
+// FUNCIÓN ELIMINADA: hay_camisetas() - ahora usa hay_registros("camiseta") de utils.c
 
 /**
  * @brief Crea una nueva camiseta en la base de datos
@@ -74,7 +39,7 @@ void crear_camiseta()
     char nombre[50];
     input_string("Nombre y Numero: ", nombre, 50);
 
-    int id = obtener_siguiente_id_camiseta();
+    int id = obtener_siguiente_id("camiseta");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -114,7 +79,7 @@ void listar_camisetas()
     }
 
     if (!hay)
-        printf("No hay camisetas cargadas\n");
+        mostrar_no_hay_registros("camisetas cargadas");
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -131,9 +96,9 @@ void editar_camiseta()
     clear_screen();
     print_header("EDITAR CAMISETA");
 
-    if (!hay_camisetas())
+    if (!hay_registros("camiseta"))
     {
-        printf("No hay camisetas para editar.\n");
+        mostrar_no_hay_registros("camisetas para editar");
         pause_console();
         return;
     }
@@ -181,9 +146,9 @@ void eliminar_camiseta()
     clear_screen();
     print_header("ELIMINAR CAMISETA");
 
-    if (!hay_camisetas())
+    if (!hay_registros("camiseta"))
     {
-        printf("No hay camisetas para eliminar.\n");
+        mostrar_no_hay_registros("camisetas para eliminar");
         pause_console();
         return;
     }
@@ -294,14 +259,14 @@ static void marcar_camiseta_sorteada(int id)
  */
 static char* obtener_nombre_camiseta(int id)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
-    char *copia = strdup(nombre);
-    sqlite3_finalize(stmt);
-    return copia;
+    char nombre_buffer[256];
+
+    if (obtener_nombre_entidad("camiseta", id, nombre_buffer, sizeof(nombre_buffer)))
+    {
+        return strdup(nombre_buffer);
+    }
+
+    return strdup("Desconocida");
 }
 
 /**

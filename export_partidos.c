@@ -204,7 +204,7 @@ void exportar_partidos_csv()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -228,7 +228,7 @@ void exportar_partidos_txt()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -252,7 +252,7 @@ void exportar_partidos_json()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -276,7 +276,7 @@ void exportar_partidos_html()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -309,7 +309,7 @@ void exportar_partido_mas_goles_csv()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -367,7 +367,7 @@ void exportar_partido_mas_goles_txt()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -425,7 +425,7 @@ void exportar_partido_mas_goles_json()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -487,7 +487,7 @@ void exportar_partido_mas_goles_html()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -549,7 +549,7 @@ void exportar_partido_mas_asistencias_csv()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -607,7 +607,7 @@ void exportar_partido_mas_asistencias_txt()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -665,7 +665,7 @@ void exportar_partido_mas_asistencias_json()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -727,7 +727,7 @@ void exportar_partido_mas_asistencias_html()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -789,7 +789,7 @@ void exportar_partido_menos_goles_reciente_csv()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -847,7 +847,7 @@ void exportar_partido_menos_goles_reciente_txt()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -905,7 +905,7 @@ void exportar_partido_menos_goles_reciente_json()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -967,7 +967,7 @@ void exportar_partido_menos_goles_reciente_html()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -1029,7 +1029,7 @@ void exportar_partido_menos_asistencias_reciente_csv()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 
@@ -1087,7 +1087,7 @@ void exportar_partido_menos_asistencias_reciente_txt()
     sqlite3_finalize(check_stmt);
     if (count == 0)
     {
-        printf("No hay registros de partidos para exportar.\n");
+        mostrar_no_hay_registros("partidos para exportar");
         return;
     }
 

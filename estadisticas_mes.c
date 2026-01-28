@@ -38,7 +38,7 @@ static void mostrar_mes(const char *mes_anio, int const *hay, char *current_mes)
         if (*hay) printf("\n");
         printf("Mes: %s\n", mes_anio);
         printf("----------------------------------------\n");
-        snprintf(current_mes, sizeof(current_mes), "%s", mes_anio);
+        snprintf(current_mes, 20, "%s", mes_anio);
     }
 }
 
@@ -50,15 +50,6 @@ static void mostrar_estadistica(const char *camiseta, int partidos, int total_go
 {
     printf("%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
            camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias);
-}
-
-/**
- * Muestra un mensaje cuando no hay datos disponibles.
- * Informa al usuario sobre la ausencia de estadísticas para mejorar la experiencia.
- */
-static void mostrar_sin_datos()
-{
-    printf("No hay estadisticas disponibles.\n");
 }
 
 /**
@@ -86,7 +77,7 @@ static void procesar_resultados(sqlite3_stmt *stmt)
     }
 
     if (!hay)
-        mostrar_sin_datos();
+        mostrar_no_hay_registros("estadísticas");
 }
 
 /**

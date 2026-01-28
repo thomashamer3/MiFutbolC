@@ -58,7 +58,7 @@ void mostrar_estadisticas_por_anio()
     }
 
     if (!hay)
-        printf("No hay estadísticas disponibles.\n");
+        mostrar_no_hay_registros("estadísticas");
 
     sqlite3_finalize(stmt);
     pause_console();

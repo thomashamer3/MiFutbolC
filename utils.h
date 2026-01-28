@@ -203,4 +203,114 @@ const char *clima_to_text(int clima);
  */
 const char *dia_to_text(int dia);
 
+/**
+ * @brief Obtiene el nombre de una entidad por su ID desde la base de datos
+ *
+ * Función genérica que obtiene el nombre de cualquier entidad (camiseta, torneo, etc.)
+ * dada una tabla y un ID. Evita duplicación de código para consultas comunes.
+ *
+ * @param tabla Nombre de la tabla (ej: "camiseta", "torneo", "cancha")
+ * @param id ID de la entidad a buscar
+ * @param buffer Buffer donde se almacenará el nombre encontrado
+ * @param size Tamaño máximo del buffer
+ * @return 1 si se encontró la entidad, 0 si no se encontró
+ */
+int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size);
+
+/**
+ * @brief Obtiene el siguiente ID disponible para una tabla (reutiliza espacios)
+ *
+ * Función genérica que calcula el siguiente ID disponible reutilizando IDs
+ * eliminados. Implementa el patrón usado en camiseta, cancha, lesion, etc.
+ *
+ * @param tabla Nombre de la tabla (ej: "camiseta", "partido")
+ * @return El ID disponible más pequeño (comenzando desde 1 si está vacía)
+ */
+int obtener_siguiente_id(const char *tabla);
+
+/**
+ * @brief Verifica si hay registros en una tabla
+ *
+ * Función genérica para verificar si una tabla tiene al menos un registro.
+ * Reemplaza múltiples funciones hay_camisetas(), hay_cancha(), etc.
+ *
+ * @param tabla Nombre de la tabla a verificar
+ * @return 1 si hay registros, 0 si está vacía
+ */
+int hay_registros(const char *tabla);
+
+/**
+ * @brief Obtiene el ID de una entidad buscándola por nombre
+ *
+ * Función genérica para obtener un ID cuando se conoce el nombre.
+ * Reemplaza obtener_camiseta_id(), etc.
+ *
+ * @param tabla Nombre de la tabla
+ * @param nombre Nombre de la entidad a buscar
+ * @return ID encontrado, o -1 si no existe
+ */
+int obtener_id_por_nombre(const char *tabla, const char *nombre);
+
+/**
+ * @brief Lista todas las entidades de una tabla (id, nombre)
+ *
+ * Función genérica para mostrar listado de entidades. Limpia pantalla,
+ * muestra encabezado, lista entidades y pausa.
+ *
+ * @param tabla Nombre de la tabla a listar
+ * @param titulo Título a mostrar en el encabezado
+ * @param mensaje_vacio Mensaje si la tabla está vacía
+ */
+void listar_entidades(const char *tabla, const char *titulo, const char *mensaje_vacio);
+
+/**
+ * @brief Solicita un entero validado dentro de un rango
+ *
+ * Función que solicita al usuario un entero y valida que esté en [min, max].
+ * Repite el mensaje de error mientras el valor esté fuera de rango.
+ *
+ * @param msg Mensaje a mostrar al usuario
+ * @param min Valor mínimo permitido (inclusive)
+ * @param max Valor máximo permitido (inclusive)
+ * @return El entero validado dentro del rango
+ */
+int input_int_rango(const char *msg, int min, int max);
+
+/**
+ * @brief Muestra mensaje de "no hay registros" de manera consistente
+ *
+ * @param entidad Nombre de la entidad (ej: "camisetas", "canchas")
+ */
+void mostrar_no_hay_registros(const char *entidad);
+
+/**
+ * @brief Muestra mensaje de "entidad no existe" de manera consistente
+ *
+ * @param entidad Nombre de la entidad (ej: "Camiseta", "Cancha")
+ */
+void mostrar_no_existe(const char *entidad);
+
+/**
+ * @brief Muestra mensaje de error de manera consistente
+ *
+ * @param entidad Nombre de la entidad (ej: "Camiseta", "Cancha")
+ * @param operacion Operación que falló (ej: "guardar", "eliminar")
+ */
+void mostrar_error_operacion(const char *entidad, const char *operacion);
+
+/**
+ * @brief Atajo para clear_screen + print_header
+ *
+ * @param titulo Título a mostrar
+ */
+void mostrar_pantalla(const char *titulo);
+
+/**
+ * @brief Elimina espacios en blanco al final de una cadena
+ *
+ * @param str Cadena a procesar
+ * @return La misma cadena sin espacios finales
+ */
+char* trim_trailing_spaces(char *str);
+
 #endif

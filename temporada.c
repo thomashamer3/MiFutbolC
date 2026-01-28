@@ -130,7 +130,7 @@ void crear_temporada()
     time_t now = time(NULL);
     struct tm current_time;
     localtime_s(&current_time, &now);
-    char current_date[24];
+    char current_date[32];
     snprintf(current_date, sizeof(current_date), "%04d-%02d-%02d",
              current_time.tm_year + 1900,
              current_time.tm_mon + 1,
@@ -313,7 +313,7 @@ void listar_temporadas()
 
         if (!found)
         {
-            printf("No hay temporadas registradas.\n");
+            mostrar_no_hay_registros("temporadas registradas");
         }
     }
     else
@@ -920,7 +920,8 @@ void mostrar_dashboard_temporada(int temporada_id)
         }
         else
         {
-            printf("No hay resumen disponible. Use 'Generar Resumen' para crear uno.\n\n");
+            mostrar_no_existe("resumen disponible");
+            printf("Use 'Generar Resumen' para crear uno.\n\n");
         }
         sqlite3_finalize(stmt);
     }
@@ -948,7 +949,8 @@ void mostrar_dashboard_temporada(int temporada_id)
 
         if (count == 0)
         {
-            printf("   No hay torneos asociados a esta temporada.\n");
+            printf("   ");
+            mostrar_no_hay_registros("torneos asociados a esta temporada");
         }
         sqlite3_finalize(stmt);
     }
@@ -988,7 +990,7 @@ void mostrar_estadisticas_fatiga(int temporada_id)
 
         if (!found)
         {
-            printf("No hay datos de fatiga disponibles.\n");
+            mostrar_no_hay_registros("datos de fatiga disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -1022,7 +1024,7 @@ void mostrar_estadisticas_fatiga(int temporada_id)
 
         if (!found)
         {
-            printf("No hay datos de fatiga de jugadores disponibles.\n");
+            mostrar_no_hay_registros("datos de fatiga de jugadores disponibles");
         }
         sqlite3_finalize(stmt);
     }
@@ -1234,7 +1236,7 @@ void asociar_torneo_temporada(int torneo_id)
 
             if (!found)
             {
-                printf("No hay torneos disponibles para asociar.\n");
+                mostrar_no_hay_registros("torneos disponibles para asociar");
                 sqlite3_finalize(stmt);
                 pause_console();
                 return;
@@ -1561,7 +1563,7 @@ void listar_resumenes_mensuales(int temporada_id)
 
         if (!found)
         {
-            printf("No hay resúmenes mensuales disponibles.\n");
+            mostrar_no_hay_registros("resúmenes mensuales disponibles");
         }
         sqlite3_finalize(stmt);
     }

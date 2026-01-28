@@ -63,7 +63,7 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
 
     if (*count == 0)
     {
-        printf("No hay registros de camisetas para exportar.\n");
+        mostrar_no_hay_registros("camisetas para exportar");
         return NULL;
     }
 

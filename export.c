@@ -16,28 +16,6 @@
 #include <string.h>
 
 /**
- * @brief Elimina espacios en blanco al final de una cadena.
- *
- * @param str Cadena a recortar.
- * @return Puntero a la cadena recortada.
- */
-char *trim_trailing_spaces(char *str)
-{
-    if (!str)
-        return NULL;
-    size_t len = strnlen(str, 1024);
-    if (len == 0 || len >= 1024)
-        return str;
-    char *end = str + len - 1;
-    while (end > str && *end == ' ')
-    {
-        *end = '\0';
-        end--;
-    }
-    return str;
-}
-
-/**
  * @brief Estructura para almacenar estadísticas de partidos
  */
 typedef struct
@@ -245,7 +223,7 @@ void exportar_analisis_csv()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar analisis.\n");
+        mostrar_no_hay_registros("registros de partidos para exportar analisis");
         return;
     }
 
@@ -287,7 +265,7 @@ void exportar_analisis_txt()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar analisis.\n");
+        mostrar_no_hay_registros("registros de partidos para exportar analisis");
         return;
     }
 
@@ -339,7 +317,7 @@ void exportar_analisis_json()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar analisis.\n");
+        mostrar_no_hay_registros("registros de partidos para exportar analisis");
         return;
     }
 
@@ -399,7 +377,7 @@ void exportar_analisis_html()
 {
     if (!has_partido_records())
     {
-        printf("No hay registros de partidos para exportar analisis.\n");
+        mostrar_no_hay_registros("registros de partidos para exportar analisis");
         return;
     }
 

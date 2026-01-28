@@ -212,7 +212,8 @@ int generar_qr_jugador_partido(int partido_id, int jugador_id)
 {
     if (!existe_id("partido", partido_id))
     {
-        printf("El partido con ID %d no existe.\n", partido_id);
+        printf("El partido con ID %d ", partido_id);
+        mostrar_no_existe("no existe");
         return 0;
     }
 
@@ -242,7 +243,8 @@ int generar_qr_temporada(int temporada_id)
 {
     if (!existe_id("temporada", temporada_id))
     {
-        printf("La temporada con ID %d no existe.\n", temporada_id);
+        printf("La temporada con ID %d ", temporada_id);
+        mostrar_no_existe("no existe");
         return 0;
     }
 
@@ -272,7 +274,8 @@ int generar_qr_camiseta(int camiseta_id)
 {
     if (!existe_id("camiseta", camiseta_id))
     {
-        printf("La camiseta con ID %d no existe.\n", camiseta_id);
+        printf("La camiseta con ID %d ", camiseta_id);
+        mostrar_no_existe("no existe");
         return 0;
     }
 

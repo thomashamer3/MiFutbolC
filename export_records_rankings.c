@@ -483,7 +483,7 @@ void exportar_records_rankings_html()
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 
@@ -496,7 +496,7 @@ void exportar_records_rankings_html()
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 
@@ -509,20 +509,20 @@ void exportar_records_rankings_html()
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 
-    // Peor combinación cancha + camiseta
-    fprintf(file, "<h2>Peor Combinacion Cancha + Camiseta</h2>\n");
-    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
+    // Mejor combinación cancha + camiseta
+    fprintf(file, "<h2>Mejor Combinacion Cancha + Camiseta</h2>\n");
+    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
     if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
     {
         fprintf(file, "<p>Cancha: <strong>%s</strong>, Camiseta: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", cancha, camiseta, rendimiento, partidos);
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 
@@ -535,7 +535,7 @@ void exportar_records_rankings_html()
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 
@@ -548,7 +548,7 @@ void exportar_records_rankings_html()
     }
     else
     {
-        fprintf(file, "<p>No hay datos disponibles</p>\n");
+        fprintf(file, "<p>No hay registros disponibles</p>\n");
     }
     if (stmt) sqlite3_finalize(stmt);
 

@@ -301,7 +301,7 @@ void exportar_estadisticas_csv()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas para exportar.\n");
+        mostrar_no_hay_registros("estadísticas para exportar");
         return;
     }
 
@@ -329,7 +329,7 @@ void exportar_estadisticas_txt()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas para exportar.\n");
+        mostrar_no_hay_registros("estadísticas para exportar");
         return;
     }
 
@@ -356,7 +356,7 @@ void exportar_estadisticas_json()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas para exportar.\n");
+        mostrar_no_hay_registros("estadísticas para exportar");
         return;
     }
 
@@ -383,7 +383,7 @@ void exportar_estadisticas_html()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas para exportar.\n");
+        mostrar_no_hay_registros("estadísticas para exportar");
         return;
     }
 
@@ -417,7 +417,7 @@ void exportar_estadisticas_por_anio_csv()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas por año para exportar.\n");
+        mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
     }
 
@@ -442,7 +442,7 @@ void exportar_estadisticas_por_anio_txt()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas por año para exportar.\n");
+        mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
     }
 
@@ -466,7 +466,7 @@ void exportar_estadisticas_por_anio_json()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas por año para exportar.\n");
+        mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
     }
 
@@ -490,7 +490,7 @@ void exportar_estadisticas_por_anio_html()
 {
     if (!has_partidos())
     {
-        printf("No hay registros de estadisticas por año para exportar.\n");
+        mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
     }
 

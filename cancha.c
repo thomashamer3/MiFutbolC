@@ -4,51 +4,7 @@
 #include "utils.h"
 #include <stdio.h>
 
-/**
- * @brief Obtiene el siguiente ID disponible para una nueva cancha
- *
- * Mantiene IDs secuenciales reutilizando espacios de eliminaciones para
- * evitar IDs excesivamente altos y facilitar la navegación del usuario.
- *
- * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
- */
-static int obtener_siguiente_id_cancha()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM cancha)) SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM cancha)",
-                       -1, &stmt, NULL);
 
-    int id = 1; // Default si la tabla está vacía
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        id = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return id;
-}
-
-/**
- * @brief Verifica si hay canchas registradas en la base de datos
- *
- * Previene operaciones en datasets vacíos y permite mostrar mensajes
- * informativos apropiados al usuario.
- *
- * @return 1 si hay al menos una cancha, 0 si no hay ninguna
- */
-static int hay_canchas()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM cancha", -1, &stmt, NULL);
-
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return count > 0;
-}
 
 /**
  * @brief Crea una nueva cancha en la base de datos
@@ -61,7 +17,7 @@ void crear_cancha()
     char nombre[100];
     input_string("Nombre de la cancha: ", nombre, 100);
 
-    int id = obtener_siguiente_id_cancha();
+    int id = obtener_siguiente_id("cancha");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -85,29 +41,7 @@ void crear_cancha()
  */
 void listar_canchas()
 {
-    clear_screen();
-    print_header("LISTADO DE CANCHAS");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT id, nombre FROM cancha ORDER BY id",
-                       -1, &stmt, NULL);
-
-    int hay = 0;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1));
-        hay = 1;
-    }
-
-    if (!hay)
-        printf("No hay canchas cargadas.\n");
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    listar_entidades("cancha", "LISTADO DE CANCHAS", "No hay canchas cargadas.");
 }
 
 /**
@@ -118,12 +52,11 @@ void listar_canchas()
  */
 void eliminar_cancha()
 {
-    clear_screen();
-    print_header("ELIMINAR CANCHA");
+    mostrar_pantalla("ELIMINAR CANCHA");
 
-    if (!hay_canchas())
+    if (!hay_registros("cancha"))
     {
-        printf("No hay canchas para eliminar.\n");
+        mostrar_no_hay_registros("canchas");
         pause_console();
         return;
     }
@@ -135,7 +68,7 @@ void eliminar_cancha()
 
     if (!existe_id("cancha", id))
     {
-        printf("La Cancha no Existe\n");
+        mostrar_no_existe("cancha");
         return;
     }
 
@@ -163,12 +96,11 @@ void eliminar_cancha()
  */
 void modificar_cancha()
 {
-    clear_screen();
-    print_header("MODIFICAR CANCHA");
+    mostrar_pantalla("MODIFICAR CANCHA");
 
-    if (!hay_canchas())
+    if (!hay_registros("cancha"))
     {
-        printf("No hay canchas para modificar.\n");
+        mostrar_no_hay_registros("canchas");
         pause_console();
         return;
     }
@@ -180,7 +112,7 @@ void modificar_cancha()
 
     if (!existe_id("cancha", id))
     {
-        printf("La Cancha no Existe\n");
+        mostrar_no_existe("cancha");
         return;
     }
 

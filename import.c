@@ -17,26 +17,8 @@
 #include <stdbool.h>
 #include "sqlite3.h"
 
-/**
- * @brief Elimina espacios en blanco al final de una cadena.
- *
- * @param str Cadena a recortar.
- * @return Puntero a la cadena recortada.
- */
-static char *trim_trailing_spaces(char *str)
-{
-    if (!str)
-        return NULL;
-    size_t str_len = safe_strnlen(str, 65536);
-    if (str_len == 0) return str;
-    char *end = str + str_len - 1;
-    while (end > str && *end == ' ')
-    {
-        *end = '\0';
-        end--;
-    }
-    return str;
-}
+// trim_trailing_spaces() fue movido a utils.c como funci\u00f3n gen\u00e9rica
+// Se puede usar directamente desde utils.h
 
 /**
  * @brief Lee el contenido completo de un archivo de texto.
@@ -195,25 +177,9 @@ static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre)
 }
 
 /**
- * @brief Obtiene el ID de una camiseta por nombre.
- *
- * @param camiseta_nombre Nombre de la camiseta.
- * @return ID de la camiseta o -1 si no existe.
+ * @brief Obtiene el ID de una camiseta por nombre (usa función genérica de utils)
  */
-static int obtener_camiseta_id(const char *camiseta_nombre)
-{
-    sqlite3_stmt *camiseta_stmt;
-    sqlite3_prepare_v2(db, "SELECT id FROM camiseta WHERE nombre = ?", -1, &camiseta_stmt, NULL);
-    sqlite3_bind_text(camiseta_stmt, 1, camiseta_nombre, -1, SQLITE_TRANSIENT);
-    int camiseta_id = -1;
-    if (sqlite3_step(camiseta_stmt) == SQLITE_ROW)
-    {
-        camiseta_id = sqlite3_column_int(camiseta_stmt, 0);
-    }
-    sqlite3_finalize(camiseta_stmt);
-
-    return camiseta_id;
-}
+#define obtener_camiseta_id(nombre) obtener_id_por_nombre("camiseta", nombre)
 
 /**
  * @brief Verifica si ya existe un partido con los mismos datos.

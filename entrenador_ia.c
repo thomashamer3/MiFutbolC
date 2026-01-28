@@ -327,7 +327,7 @@ void mostrar_historial_consejos()
 
     if (count == 0)
     {
-        printf("No hay historial de consejos aún.\n");
+        mostrar_no_hay_registros("historial de consejos");
     }
 
     pause_console();
@@ -374,7 +374,7 @@ void evaluar_decision_pasada()
 
     if (count == 0)
     {
-        printf("No hay consejos para evaluar.\n");
+        mostrar_no_hay_registros("consejos para evaluar");
         pause_console();
         return;
     }

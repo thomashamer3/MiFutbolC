@@ -392,17 +392,25 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
 }
 
 /**
- * @brief Compara dos camisetas
+ * @brief Función auxiliar para listar entidades y obtener dos IDs
+ * Centraliza lógica repetida en comparadores para evitar duplicación
+ * 
+ * @param tabla Nombre de la tabla a consultar
+ * @param titulo Título a mostrar
+ * @param id1 Puntero para almacenar primer ID
+ * @param id2 Puntero para almacenar segundo ID
+ * @return 1 si se obtuvieron dos IDs válidos, 0 si hay menos de 2 entidades
  */
-static void comparar_camisetas()
+static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
 {
-    clear_screen();
-    print_header("COMPARADOR: CAMISETAS");
-
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM camiseta ORDER BY ID", -1, &stmt, NULL);
+    
+    // Nota: Reemplazar %s en la consulta manualmente
+    char sql[256];
+    snprintf(sql, sizeof(sql), "SELECT id, nombre FROM %s ORDER BY nombre", tabla);
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 
-    printf("Camisetas disponibles:\n");
+    printf("%s disponibles:\n", titulo);
     printf("----------------------------------------\n");
 
     int count = 0;
@@ -417,19 +425,32 @@ static void comparar_camisetas()
 
     if (count < 2)
     {
-        printf("Se necesitan al menos 2 camisetas para comparar.\n");
+        printf("Se necesitan al menos 2 %s para comparar.\n", tabla);
         pause_console();
-        return;
+        return 0;
     }
+
+    printf("\nIngrese ID de primera %s: ", tabla);
+    scanf("%d", id1);
+    printf("Ingrese ID de segunda %s: ", tabla);
+    scanf("%d", id2);
+
+    return 1;
+}
+
+/**
+ * @brief Compara dos camisetas
+ */
+static void comparar_camisetas()
+{
+    clear_screen();
+    print_header("COMPARADOR: CAMISETAS");
 
     int id1;
     int id2;
-    printf("\nIngrese ID de primera camiseta: ");
-    scanf("%d", &id1);
-    printf("Ingrese ID de segunda camiseta: ");
-    scanf("%d", &id2);
+    if (!listar_y_seleccionar_dos_entidades("camiseta", "Camiseta", &id1, &id2))
+        return;
 
-    // Validar que existen
     char sql1[128];
     char sql2[128];
     snprintf(sql1, sizeof(sql1), "camiseta_id = %d", id1);
@@ -443,18 +464,8 @@ static void comparar_camisetas()
     char nombre1[256] = "Camiseta A";
     char nombre2[256] = "Camiseta B";
 
-    // Obtener nombres reales
-    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id1);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-        snprintf(nombre1, sizeof(nombre1), "%s", (const char *)sqlite3_column_text(stmt, 0));
-    sqlite3_finalize(stmt);
-
-    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id2);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-        snprintf(nombre2, sizeof(nombre2), "%s", (const char *)sqlite3_column_text(stmt, 0));
-    sqlite3_finalize(stmt);
+    obtener_nombre_entidad("camiseta", id1, nombre1, sizeof(nombre1));
+    obtener_nombre_entidad("camiseta", id2, nombre2, sizeof(nombre2));
 
     mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
 }
@@ -467,37 +478,11 @@ static void comparar_torneos()
     clear_screen();
     print_header("COMPARADOR: TORNEOS");
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM torneo ORDER BY nombre", -1, &stmt, NULL);
-
-    printf("Torneos disponibles:\n");
-    printf("----------------------------------------\n");
-
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
-        printf("%d. %s\n", id, nombre);
-        count++;
-    }
-    sqlite3_finalize(stmt);
-
-    if (count < 2)
-    {
-        printf("Se necesitan al menos 2 torneos para comparar.\n");
-        pause_console();
-        return;
-    }
-
     int id1;
     int id2;
-    printf("\nIngrese ID de primer torneo: ");
-    scanf("%d", &id1);
-    printf("Ingrese ID de segundo torneo: ");
-    scanf("%d", &id2);
+    if (!listar_y_seleccionar_dos_entidades("torneo", "Torneo", &id1, &id2))
+        return;
 
-    // Comparar partidos de cada torneo
     char sql1[128];
     char sql2[128];
     snprintf(sql1, sizeof(sql1), "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = %d)", id1);
@@ -511,18 +496,8 @@ static void comparar_torneos()
     char nombre1[256] = "Torneo A";
     char nombre2[256] = "Torneo B";
 
-    // Obtener nombres reales
-    sqlite3_prepare_v2(db, "SELECT nombre FROM torneo WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id1);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-        snprintf(nombre1, sizeof(nombre1), "%s", (const char *)sqlite3_column_text(stmt, 0));
-    sqlite3_finalize(stmt);
-
-    sqlite3_prepare_v2(db, "SELECT nombre FROM torneo WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id2);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-        snprintf(nombre2, sizeof(nombre2), "%s", (const char *)sqlite3_column_text(stmt, 0));
-    sqlite3_finalize(stmt);
+    obtener_nombre_entidad("torneo", id1, nombre1, sizeof(nombre1));
+    obtener_nombre_entidad("torneo", id2, nombre2, sizeof(nombre2));
 
     mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
     pause_console();

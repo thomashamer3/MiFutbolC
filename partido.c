@@ -93,49 +93,6 @@ static int secure_rand(int max)
 }
 
 /**
- * @brief Obtiene el siguiente ID disponible para un nuevo partido
- *
- * Busca el ID más pequeño disponible reutilizando espacios de IDs eliminados.
- * Utiliza una consulta SQL que encuentra el primer hueco en la secuencia de IDs.
- *
- * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
- */
-static int obtener_siguiente_id_partido()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM partido WHERE id = 1) THEN 1 ELSE (SELECT MIN(t1.id + 1) FROM partido t1 WHERE NOT EXISTS (SELECT 1 FROM partido t2 WHERE t2.id = t1.id + 1)) END",
-                       -1, &stmt, NULL);
-
-    int id = 1; // Default si la tabla está vacía
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        id = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return id;
-}
-
-/**
- * @brief Verifica si hay partidos registrados en la base de datos
- *
- * @return 1 si hay al menos un partido, 0 si no hay ninguno
- */
-static int hay_partidos()
-{
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &stmt, NULL);
-
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return count > 0;
-}
-
-/**
  * @brief Verifica que existan canchas y camisetas antes de crear un partido
  *
  * Para mantener la integridad de los datos, se asegura de que haya entidades relacionadas
@@ -310,7 +267,7 @@ void crear_partido()
 
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
-    int id = obtener_siguiente_id_partido();
+    int id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
 }
 
@@ -379,9 +336,9 @@ void eliminar_partido()
 {
     print_header("ELIMINAR PARTIDO");
 
-    if (!hay_partidos())
+    if (!hay_registros("partido"))
     {
-        printf("No hay partidos para eliminar.\n");
+        mostrar_no_hay_registros("partidos");
         pause_console();
         return;
     }
@@ -727,9 +684,9 @@ void modificar_partido()
 {
     print_header("MODIFICAR PARTIDO");
 
-    if (!hay_partidos())
+    if (!hay_registros("partido"))
     {
-        printf("No hay partidos para modificar.\n");
+        mostrar_no_hay_registros("partidos");
         pause_console();
         return;
     }
@@ -1526,7 +1483,7 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
             datos.clima = 1;
             datos.dia = 1;
 
-            int partido_id = obtener_siguiente_id_partido();
+            int partido_id = obtener_siguiente_id("partido");
             insertar_partido(partido_id, &datos, fecha_simulacion);
         }
     }
@@ -1543,7 +1500,10 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
  * @param equipo_local_id Puntero al ID del equipo local seleccionado
  * @param equipo_visitante_id Puntero al ID del equipo visitante seleccionado
  * @return 1 si la selección fue exitosa, 0 si hubo error
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visitante_id)
 {
     // Seleccionar equipo local
@@ -1574,6 +1534,7 @@ static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visi
 
     return 1;
 }
+#endif
 
 /**
  * @brief Carga los equipos seleccionados desde la base de datos
@@ -1583,7 +1544,10 @@ static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visi
  * @param equipo_local Puntero al equipo local donde cargar los datos
  * @param equipo_visitante Puntero al equipo visitante donde cargar los datos
  * @return 1 si la carga fue exitosa, 0 si hubo error
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitante_id,
                                         Equipo *equipo_local, Equipo *equipo_visitante)
 {
@@ -1602,26 +1566,34 @@ static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitant
     }
     return 1;
 }
+#endif
 
 /**
  * @brief Muestra la información inicial del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
+ * 
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static void mostrar_informacion_inicial(Equipo const *equipo_local, Equipo const *equipo_visitante)
 {
     printf("\n*** INICIANDO SIMULACION ***\n");
     printf("EQUIPO LOCAL: %s\n", equipo_local->nombre);
     printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante->nombre);
 }
+#endif
 
 /**
  * @brief Muestra la alineación de los equipos antes del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante)
 {
     clear_screen();
@@ -1656,6 +1628,7 @@ static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const 
     printf("La simulacion comenzara automaticamente en 3 segundos...\n");
     Sleep(3000);
 }
+#endif
 
 /**
  * @brief Ejecuta la simulación del partido
@@ -1664,7 +1637,10 @@ static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const 
  * @param equipo_visitante Puntero al equipo visitante
  * @param estadisticas Puntero a la estructura donde almacenar las estadísticas
  * @return 1 si la simulación fue exitosa, 0 si hubo error
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                        EstadisticasPartido *estadisticas)
 {
@@ -1719,6 +1695,7 @@ static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const 
 
     return 1;
 }
+#endif
 
 /**
  * @brief Muestra los resultados finales del partido
@@ -1726,7 +1703,10 @@ static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const 
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
  * @param estadisticas Puntero a la estructura con las estadísticas del partido
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                        EstadisticasPartido const *estadisticas)
 {
@@ -1780,6 +1760,7 @@ static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const 
         }
     }
 }
+#endif
 
 /**
  * @brief Crea la estructura de datos de simulación a partir de las estadísticas

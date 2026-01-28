@@ -289,7 +289,10 @@ static const Logro LOGROS[] =
  * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
  * @param estado Estado del logro (0=no iniciado, 1=en progreso, 2=completado)
  * @return 1 si debe mostrarse, 0 en caso contrario
+ *
+ * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
+#ifdef UNUSED_FUNCTION
 static int should_show_logro(int filtro, int estado)
 {
     switch (filtro)
@@ -304,6 +307,7 @@ static int should_show_logro(int filtro, int estado)
         return 1;
     }
 }
+#endif
 
 /**
  * @brief Obtiene el progreso actual de una camiseta para un logro específico (versión optimizada)
@@ -380,18 +384,7 @@ static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progre
  */
 static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT nombre FROM camiseta WHERE id = ?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, camiseta_id);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        strcpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0));
-    }
-    else
-    {
-        printf("Camiseta no encontrada.\n");
-    }
-    sqlite3_finalize(stmt);
+    obtener_nombre_entidad("camiseta", camiseta_id, nombre, 256);
 }
 
 /**
@@ -470,7 +463,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 
     if (mostrados == 0)
     {
-        printf("No hay logros que mostrar con el filtro seleccionado.\n");
+        mostrar_no_hay_registros("logros que mostrar con el filtro seleccionado");
     }
     pause_console();
 }
@@ -495,7 +488,7 @@ static void listar_camisetas_con_partidos()
 
     if (count == 0)
     {
-        printf("No hay camisetas cargadas.\n");
+        mostrar_no_hay_registros("camisetas cargadas");
         pause_console();
     }
 }
