@@ -305,7 +305,8 @@ void exportar_estadisticas_csv()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas.csv"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas.csv"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo CSV\n");
@@ -333,7 +334,8 @@ void exportar_estadisticas_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas.txt"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas.txt"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo TXT\n");
@@ -360,7 +362,8 @@ void exportar_estadisticas_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas.json"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas.json"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo JSON\n");
@@ -387,7 +390,8 @@ void exportar_estadisticas_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas.html"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas.html"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo HTML\n");
@@ -421,7 +425,8 @@ void exportar_estadisticas_por_anio_csv()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas_por_anio.csv"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.csv"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo CSV\n");
@@ -446,7 +451,8 @@ void exportar_estadisticas_por_anio_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas_por_anio.txt"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.txt"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo TXT\n");
@@ -470,7 +476,8 @@ void exportar_estadisticas_por_anio_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas_por_anio.json"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.json"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo JSON\n");
@@ -494,7 +501,8 @@ void exportar_estadisticas_por_anio_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("estadisticas_por_anio.html"), "w");
+errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.html"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         printf("Error al crear el archivo HTML\n");

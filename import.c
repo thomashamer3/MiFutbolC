@@ -891,7 +891,7 @@ void importar_camisetas_txt()
         int id;
         char nombre[256];
 
-        if (sscanf_s(line, "%d - %[^\n]", &id, nombre, sizeof(nombre)) == 2)
+if (sscanf_s(line, "%d - %[^\n]", &id, nombre, (unsigned)_countof(nombre)) == 2)
         {
             trim_trailing_spaces(nombre);
             // Verificar si ya existe
@@ -1004,7 +1004,7 @@ static int procesar_partido_txt_line(const char *line)
     int estado_animo;
 
     // Formato: CANCHA | FECHA | G:Goles A:Asistencias | CAMISETA | Res:Resultado Cli:Clima Dia:Dia RG:Rendimiento Can:Cansancio EA:EstadoAnimo | Comentario
-    if (sscanf(line, "%[^|] | %[^|] | G:%d A:%d | %[^|] | Res:%[^ ] Cli:%[^ ] Dia:%[^ ] RG:%d Can:%d EA:%d | %[^\n]",
+if (sscanf_s(line, "%[^|] | %[^|] | G:%d A:%d | %[^|] | Res:%[^ ] Cli:%[^ ] Dia:%[^ ] RG:%d Can:%d EA:%d | %[^\n]",
                cancha, fecha, &goles, &asistencias, camiseta,
                resultado_str, clima_str, dia_str, &rendimiento_general, &cansancio, &estado_animo, comentario) != 12)
         return 0;
@@ -1175,7 +1175,7 @@ void importar_lesiones_txt()
         char descripcion[512];
         char fecha[256];
 
-        if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador, sizeof(jugador), tipo, sizeof(tipo), descripcion, sizeof(descripcion), fecha, sizeof(fecha)) == 5)
+if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador, (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo), descripcion, (unsigned)_countof(descripcion), fecha, (unsigned)_countof(fecha)) == 5)
         {
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;
@@ -1276,7 +1276,7 @@ void importar_estadisticas_txt()
         int empates;
         int derrotas;
 
-        if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta, sizeof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
+if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta, (unsigned)_countof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
         {
             // Obtener ID de camiseta
             sqlite3_stmt *camiseta_stmt;
@@ -1604,7 +1604,7 @@ void importar_lesiones_csv()
         char descripcion[512];
         char fecha[256];
 
-        if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%[^\n]", &id, jugador, sizeof(jugador), tipo, sizeof(tipo), descripcion, sizeof(descripcion), fecha, sizeof(fecha)) == 5)
+if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%[^\n]", &id, jugador, (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo), descripcion, (unsigned)_countof(descripcion), fecha, (unsigned)_countof(fecha)) == 5)
         {
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;
@@ -1705,7 +1705,7 @@ void importar_estadisticas_csv()
         int empates;
         int derrotas;
 
-        if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta, sizeof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
+if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta, (unsigned)_countof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
         {
             // Obtener ID de camiseta
             sqlite3_stmt *camiseta_stmt;

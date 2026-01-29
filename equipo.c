@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h>
+#include <Windows.h>
 #include "sqlite3.h"
 
 // Data structures to reduce parameter count in functions

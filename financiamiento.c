@@ -168,7 +168,7 @@ int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_
     int anio = 0;
 
     // Intentar parsear la fecha en formato DD/MM/YYYY
-    if (sscanf(fecha_ddmmyyyy, "%d/%d/%d", &dia, &mes, &anio) != 3)
+if (sscanf_s(fecha_ddmmyyyy, "%d/%d/%d", &dia, &mes, &anio) != 3)
     {
         return 0; // Error en el formato
     }
@@ -1719,7 +1719,7 @@ void modificar_transaccion()
             int year = 0;
             int month = 0;
             int day = 0;
-if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day) == 3)
+if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day, sizeof(fecha_db)) == 3)
             {
                 snprintf(fecha_display, sizeof(fecha_display), "%02d/%02d/%04d", day, month, year);
             }

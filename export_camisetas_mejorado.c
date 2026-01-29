@@ -112,7 +112,8 @@ void exportar_camisetas_csv_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f = fopen(get_export_path("camisetas_mejorado.csv"), "w");
+errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.csv"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         sqlite3_finalize(stmt);
@@ -161,7 +162,8 @@ void exportar_camisetas_txt_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f = fopen(get_export_path("camisetas_mejorado.txt"), "w");
+errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.txt"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         sqlite3_finalize(stmt);
@@ -222,7 +224,8 @@ void exportar_camisetas_json_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f = fopen(get_export_path("camisetas_mejorado.json"), "w");
+errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.json"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         sqlite3_finalize(stmt);
@@ -280,7 +283,8 @@ void exportar_camisetas_html_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f = fopen(get_export_path("camisetas_mejorado.html"), "w");
+errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.html"), "w");
+if (err != 0 || f == NULL)
     if (!f)
     {
         sqlite3_finalize(stmt);

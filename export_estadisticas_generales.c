@@ -169,7 +169,8 @@ void exportar_estadisticas_generales_csv(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.csv");
-    FILE *file = fopen(path, "w");
+errno_t err = fopen_s(&file, path, "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error CSV\n");
@@ -202,7 +203,8 @@ void exportar_estadisticas_generales_txt(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.txt");
-    FILE *file = fopen(path, "w");
+errno_t err = fopen_s(&file, path, "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error TXT\n");
@@ -235,7 +237,8 @@ void exportar_estadisticas_generales_json(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.json");
-    FILE *file = fopen(path, "w");
+errno_t err = fopen_s(&file, path, "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error JSON\n");
@@ -264,7 +267,8 @@ void exportar_estadisticas_generales_html(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.html");
-    FILE *file = fopen(path, "w");
+errno_t err = fopen_s(&file, path, "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error HTML\n");
@@ -303,7 +307,8 @@ void exportar_estadisticas_por_mes_csv(void)
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_por_mes.csv"), "w");
+errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.csv"), "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error CSV\n");
@@ -337,7 +342,8 @@ void exportar_estadisticas_por_mes_txt(void)
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_por_mes.txt"), "w");
+errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.txt"), "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error TXT\n");
@@ -384,7 +390,8 @@ void exportar_estadisticas_por_mes_json(void)
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_por_mes.json"), "w");
+errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.json"), "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error JSON\n");
@@ -453,7 +460,8 @@ void exportar_estadisticas_por_mes_html(void)
         return;
     }
 
-    FILE *file = fopen(get_export_path("estadisticas_por_mes.html"), "w");
+errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.html"), "w");
+if (err != 0 || file == NULL)
     if (!file)
     {
         printf("Error HTML\n");
