@@ -283,31 +283,7 @@ static const Logro LOGROS[] =
 
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
-/**
- * @brief Determina si un logro debe mostrarse según el filtro aplicado
- *
- * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
- * @param estado Estado del logro (0=no iniciado, 1=en progreso, 2=completado)
- * @return 1 si debe mostrarse, 0 en caso contrario
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
- */
-#ifdef UNUSED_FUNCTION
-static int should_show_logro(int filtro, int estado)
-{
-    switch (filtro)
-    {
-    case 0:
-        return 1; // Mostrar todos
-    case 1:
-        return estado == 2; // Solo completados
-    case 2:
-        return estado == 1; // Solo en progreso
-    default:
-        return 1;
-    }
-}
-#endif
+
 
 /**
  * @brief Obtiene el progreso actual de una camiseta para un logro específico (versión optimizada)

@@ -1500,10 +1500,7 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
  * @param equipo_local_id Puntero al ID del equipo local seleccionado
  * @param equipo_visitante_id Puntero al ID del equipo visitante seleccionado
  * @return 1 si la selección fue exitosa, 0 si hubo error
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visitante_id)
 {
     // Seleccionar equipo local
@@ -1534,7 +1531,6 @@ static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visi
 
     return 1;
 }
-#endif
 
 /**
  * @brief Carga los equipos seleccionados desde la base de datos
@@ -1544,10 +1540,7 @@ static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visi
  * @param equipo_local Puntero al equipo local donde cargar los datos
  * @param equipo_visitante Puntero al equipo visitante donde cargar los datos
  * @return 1 si la carga fue exitosa, 0 si hubo error
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitante_id,
                                         Equipo *equipo_local, Equipo *equipo_visitante)
 {
@@ -1566,34 +1559,26 @@ static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitant
     }
     return 1;
 }
-#endif
 
 /**
  * @brief Muestra la información inicial del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
- * 
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static void mostrar_informacion_inicial(Equipo const *equipo_local, Equipo const *equipo_visitante)
 {
     printf("\n*** INICIANDO SIMULACION ***\n");
     printf("EQUIPO LOCAL: %s\n", equipo_local->nombre);
     printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante->nombre);
 }
-#endif
 
 /**
  * @brief Muestra la alineación de los equipos antes del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante)
 {
     clear_screen();
@@ -1628,7 +1613,6 @@ static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const 
     printf("La simulacion comenzara automaticamente en 3 segundos...\n");
     Sleep(3000);
 }
-#endif
 
 /**
  * @brief Ejecuta la simulación del partido
@@ -1637,10 +1621,7 @@ static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const 
  * @param equipo_visitante Puntero al equipo visitante
  * @param estadisticas Puntero a la estructura donde almacenar las estadísticas
  * @return 1 si la simulación fue exitosa, 0 si hubo error
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                        EstadisticasPartido *estadisticas)
 {
@@ -1695,7 +1676,6 @@ static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const 
 
     return 1;
 }
-#endif
 
 /**
  * @brief Muestra los resultados finales del partido
@@ -1703,10 +1683,7 @@ static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const 
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
  * @param estadisticas Puntero a la estructura con las estadísticas del partido
- *
- * NOTA: Función no utilizada actualmente pero se mantiene para futuras funcionalidades
  */
-#ifdef UNUSED_FUNCTION
 static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                        EstadisticasPartido const *estadisticas)
 {
@@ -1760,7 +1737,6 @@ static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const 
         }
     }
 }
-#endif
 
 /**
  * @brief Crea la estructura de datos de simulación a partir de las estadísticas

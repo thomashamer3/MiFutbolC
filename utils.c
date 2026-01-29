@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <stddef.h>
 #ifdef _WIN32
@@ -813,8 +814,9 @@ int input_int_rango(const char *msg, int min, int max)
 void mostrar_no_hay_registros(const char *entidad)
 {
     if (!entidad) return;
+    size_t len = safe_strnlen(entidad, SIZE_MAX);
     printf("No hay %s registrad%s.\n", entidad,
-           (entidad[strlen(entidad)-1] == 'a' || entidad[strlen(entidad)-1] == 'o') ? "o" : "os");
+           (entidad[len-1] == 'a' || entidad[len-1] == 'o') ? "o" : "os");
 }
 
 /**
@@ -851,7 +853,7 @@ char* trim_trailing_spaces(char *str)
 {
     if (!str) return str;
 
-    int len = strlen(str);
+    size_t len = safe_strnlen(str, SIZE_MAX);
     while (len > 0 && (str[len-1] == ' ' || str[len-1] == '\t' || str[len-1] == '\n' || str[len-1] == '\r'))
     {
         str[--len] = '\0';

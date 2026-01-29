@@ -19,7 +19,5 @@
         "connectionId": "thomashamer3",
         "projectKey": "thomashamer3_MiFutbolC"
     },
-
-    // (Opcional) si en el futuro usás compile_commands.json
     "sonarlint.pathToCompileCommands": "${workspaceFolder}\\bw-output\\compile_commands.json"
 }

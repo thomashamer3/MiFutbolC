@@ -431,9 +431,9 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
     }
 
     printf("\nIngrese ID de primera %s: ", tabla);
-    scanf("%d", id1);
+    scanf_s("%d", id1);
     printf("Ingrese ID de segunda %s: ", tabla);
-    scanf("%d", id2);
+    scanf_s("%d", id2);
 
     return 1;
 }
@@ -521,15 +521,15 @@ static void comparar_periodos()
 
     printf("PRIMER PERIODO:\n");
     printf("Fecha inicio: ");
-    scanf("%19s", fecha1_inicio);
+    scanf_s("%19s", fecha1_inicio, sizeof(fecha1_inicio));
     printf("Fecha fin: ");
-    scanf("%19s", fecha1_fin);
+    scanf_s("%19s", fecha1_fin, sizeof(fecha1_fin));
 
     printf("\nSEGUNDO PERIODO:\n");
     printf("Fecha inicio: ");
-    scanf("%19s", fecha2_inicio);
+    scanf_s("%19s", fecha2_inicio, sizeof(fecha2_inicio));
     printf("Fecha fin: ");
-    scanf("%19s", fecha2_fin);
+    scanf_s("%19s", fecha2_fin, sizeof(fecha2_fin));
 
     char sql1[256];
     char sql2[256];
@@ -564,7 +564,7 @@ static void comparar_condiciones()
 
     int tipo_condicion;
     printf("\nSeleccione tipo de condicion (1-2): ");
-    scanf("%d", &tipo_condicion);
+    scanf_s("%d", &tipo_condicion);
 
     int valor1;
     int valor2;
@@ -572,9 +572,9 @@ static void comparar_condiciones()
     const char *tipo_texto = (tipo_condicion == 1) ? "Clima" : "Dia";
 
     printf("\nIngrese primer valor: ");
-    scanf("%d", &valor1);
+    scanf_s("%d", &valor1);
     printf("Ingrese segundo valor: ");
-    scanf("%d", &valor2);
+    scanf_s("%d", &valor2);
 
     char sql1[128];
     char sql2[128];
