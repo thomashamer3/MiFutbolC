@@ -12,36 +12,15 @@
 #include <time.h>
 
 /**
- * Ejecuta consulta SQL y muestra resultado de récord simple.
- * Reutilizable para diferentes tipos de récords con formato consistente.
+ * Función para mostrar récords de goles en un partido
  */
-static void mostrar_record(const char *titulo, const char *sql)
+void mostrar_record_goles_partido()
 {
-    sqlite3_stmt *stmt;
-
-    printf("\n%s\n", titulo);
-    printf("----------------------------------------\n");
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            printf("Valor: %d\n", sqlite3_column_int(stmt, 0));
-            if (sqlite3_column_count(stmt) > 1)
-            {
-                printf("Camiseta: %s\n", sqlite3_column_text(stmt, 1));
-            }
-            if (sqlite3_column_count(stmt) > 2)
-            {
-                printf("Fecha: %s\n", sqlite3_column_text(stmt, 2));
-            }
-        }
-        else
-        {
-            mostrar_no_hay_registros("datos disponibles");
-        }
-        sqlite3_finalize(stmt);
-    }
+    mostrar_record_simple("Record de Goles en un Partido",
+                         "SELECT p.goles, c.nombre, p.fecha_hora "
+                         "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1");
+    pause_console();
 }
 
 /**
@@ -128,15 +107,10 @@ void mostrar_record_goles_partido()
  */
 void mostrar_record_asistencias_partido()
 {
-    clear_screen();
-    print_header("RECORD DE ASISTENCIAS EN UN PARTIDO");
-
-    mostrar_record("Record de Asistencias en un Partido",
-                   "SELECT p.asistencias, c.nombre, p.fecha_hora "
-                   "FROM partido p "
-                   "JOIN camiseta c ON p.camiseta_id = c.id "
-                   "ORDER BY p.asistencias DESC LIMIT 1");
-
+    mostrar_record_simple("Record de Asistencias en un Partido",
+                         "SELECT p.asistencias, c.nombre, p.fecha_hora "
+                         "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1");
     pause_console();
 }
 

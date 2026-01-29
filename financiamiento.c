@@ -1650,7 +1650,7 @@ static void modificar_monto_transaccion(int id_transaccion)
 static void modificar_item_especifico_transaccion(int id_transaccion)
 {
     printf("Nuevo item especifico: ");
-    char nuevo_item[100];
+    char nuevo_item[100] = "";
     input_string("", nuevo_item, sizeof(nuevo_item));
     sqlite3_stmt *stmt;
     const char *sql = "UPDATE financiamiento SET item_especifico = ? WHERE id = ?;";
@@ -1733,7 +1733,7 @@ void modificar_transaccion()
     }
 
     // Obtener datos actuales
-    TransaccionFinanciera transaccion;
+    TransaccionFinanciera transaccion = {0};
     const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
 
     if (sqlite3_prepare_v2(db, sql_obtener, -1, &stmt, 0) == SQLITE_OK)

@@ -31,30 +31,7 @@ static sqlite3_stmt* execute_records_query(const char* sql)
  */
 static void exportar_record_csv(const char *titulo, const char *sql, const char *filepath)
 {
-    sqlite3_stmt *stmt;
-    FILE *file = fopen(filepath, "w");
-
-    if (!file)
-    {
-        printf("Error al crear el archivo\n");
-        return;
-    }
-
-    fprintf(file, "%s\n", titulo);
-    fprintf(file, "Valor,Camiseta,Fecha\n");
-
-    stmt = execute_records_query(sql);
-    if (stmt && sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "%d,%s,%s\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2));
-    }
-
-    if (stmt) sqlite3_finalize(stmt);
-    fclose(file);
-    printf("Exportado a %s\n", filepath);
+    exportar_record_simple_csv(titulo, sql, filepath);
 }
 
 /**

@@ -299,57 +299,7 @@ void exportar_partidos_html()
  */
 void exportar_partido_mas_goles_csv()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        mostrar_no_hay_registros("partidos para exportar");
-        return;
-    }
-
-    FILE *f = fopen(get_export_path("partido_mas_goles.csv"), "w");
-    if (!f)
-        return;
-
-    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
-        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
-    }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partido_mas_goles.csv"));
-    fclose(f);
+    exportar_partido_especifico_csv("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.csv");
 }
 
 /**
@@ -357,57 +307,7 @@ void exportar_partido_mas_goles_csv()
  */
 void exportar_partido_mas_goles_txt()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        mostrar_no_hay_registros("partidos para exportar");
-        return;
-    }
-
-    FILE *f = fopen(get_export_path("partido_mas_goles.txt"), "w");
-    if (!f)
-        return;
-
-    fprintf(f, "PARTIDO CON MAS GOLES\n\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
-        fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
-    }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partido_mas_goles.txt"));
-    fclose(f);
+    exportar_partido_especifico_txt("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.txt", "PARTIDO CON MAS GOLES");
 }
 
 /**
@@ -539,57 +439,7 @@ void exportar_partido_mas_goles_html()
  */
 void exportar_partido_mas_asistencias_csv()
 {
-    sqlite3_stmt *check_stmt;
-    int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    if (count == 0)
-    {
-        mostrar_no_hay_registros("partidos para exportar");
-        return;
-    }
-
-    FILE *f = fopen(get_export_path("partido_mas_asistencias.csv"), "w");
-    if (!f)
-        return;
-
-    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
-        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
-    }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("partido_mas_asistencias.csv"));
-    fclose(f);
+    exportar_partido_especifico_csv("ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_asistencias.csv");
 }
 
 /**
