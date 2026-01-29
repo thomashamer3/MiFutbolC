@@ -119,7 +119,7 @@ Al ejecutar el programa, se presenta un menú principal con las siguientes opcio
 
 ## Estructura del Proyecto
 
-```bash
+```
 MiFutbolC/
 ├── main.c                          # Punto de entrada del programa
 ├── db.c / db.h                     # Gestión de la base de datos SQLite
