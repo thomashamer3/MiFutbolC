@@ -11,11 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <direct.h>
+#include <Windows.h>
+#include <ShlObj.h>
+
+static char error_buf[256];
 
 #ifdef _WIN32
-#include <direct.h>
-#include <windows.h>
-#include <shlobj.h>
 #define MKDIR(path) _mkdir(path)
 #define STRDUP _strdup
 #else
@@ -72,13 +74,15 @@ static int setup_database_paths()
     strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
     if (MKDIR(temp_path) != 0 && errno != EEXIST)
     {
-        printf("Error creando directorio MiFutbolC: %s\n", strerror(errno));
+        strerror_s(error_buf, sizeof(error_buf), errno);
+        printf("Error creando directorio MiFutbolC: %s\n", error_buf);
         return 0;
     }
 
     if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
     {
-        printf("Error creando directorio data: %s\n", strerror(errno));
+        strerror_s(errno, error_buf, sizeof(error_buf));
+        printf("Error creando directorio data: %s\n", error_buf);
         return 0;
     }
 #else
@@ -581,13 +585,15 @@ const char* get_export_dir()
         strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
         if (MKDIR(temp_path) != 0 && errno != EEXIST)
         {
-            printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
+            strerror_s(errno, error_buf, sizeof(error_buf));
+            printf("Error creando directorio MiFutbolC en Documents: %s\n", error_buf);
             return NULL;
         }
 
         if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
         {
-            printf("Error creando directorio Exportaciones: %s\n", strerror(errno));
+            strerror_s(errno, error_buf, sizeof(error_buf));
+            printf("Error creando directorio Exportaciones: %s\n", error_buf);
             return NULL;
         }
 #else
@@ -634,13 +640,15 @@ const char* get_import_dir()
         strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
         if (MKDIR(temp_path) != 0 && errno != EEXIST)
         {
-            printf("Error creando directorio MiFutbolC en Documents: %s\n", strerror(errno));
+            strerror_s(errno, error_buf, sizeof(error_buf));
+            printf("Error creando directorio MiFutbolC en Documents: %s\n", error_buf);
             return NULL;
         }
 
         if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
         {
-            printf("Error creando directorio Importaciones: %s\n", strerror(errno));
+            strerror_s(errno, error_buf, sizeof(error_buf));
+            printf("Error creando directorio Importaciones: %s\n", error_buf);
             return NULL;
         }
 #else

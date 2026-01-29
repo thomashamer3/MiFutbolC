@@ -41,9 +41,10 @@ static void exportar_record_csv(const char *titulo, const char *sql, const char 
 static void exportar_combinacion_csv(const char *titulo, const char *sql, const char *filepath)
 {
     sqlite3_stmt *stmt;
-    FILE *file = fopen(filepath, "w");
+    FILE *file;
+    errno_t err = fopen_s(&file, filepath, "w");
 
-    if (!file)
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -74,9 +75,10 @@ static void exportar_combinacion_csv(const char *titulo, const char *sql, const 
 static void exportar_temporada_csv(const char *titulo, const char *sql, const char *filepath)
 {
     sqlite3_stmt *stmt;
-    FILE *file = fopen(filepath, "w");
+    FILE *file;
+    errno_t err = fopen_s(&file, filepath, "w");
 
-    if (!file)
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -239,9 +241,10 @@ void exportar_peor_temporada_csv()
  */
 void exportar_records_rankings_txt()
 {
-    FILE *file = fopen(get_export_path("records_rankings.txt"), "w");
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("records_rankings.txt"), "w");
 
-    if (!file)
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -317,9 +320,10 @@ void exportar_records_rankings_txt()
  */
 void exportar_records_rankings_json()
 {
-    FILE *file = fopen(get_export_path("records_rankings.json"), "w");
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("records_rankings.json"), "w");
 
-    if (!file)
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -328,92 +332,79 @@ void exportar_records_rankings_json()
     fprintf(file, "{\n");
     fprintf(file, "  \"records_rankings\": {\n");
 
-    sqlite3_stmt *stmt;
-    int valor;
-    const char *camiseta;
-    const char *fecha;
-    const char *cancha;
-    double rendimiento;
-    int partidos;
-    const char *anio;
+    // Helper function to write record data
+    void write_record(const char *key, const char *sql, int (*get_data)(sqlite3_stmt*, int*, const char**, const char**))
+    {
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        int valor;
+        const char *camiseta;
+        const char *fecha;
 
-    // Record de goles
-    fprintf(file, "    \"record_goles\": ");
-    stmt = execute_records_query("SELECT p.goles, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.goles DESC LIMIT 1");
-    if (stmt && get_record_data(stmt, &valor, &camiseta, &fecha))
-    {
-        fprintf(file, "{\"valor\": %d, \"camiseta\": \"%s\", \"fecha\": \"%s\"}", valor, camiseta, fecha);
+        fprintf(file, "    \"%s\": ", key);
+        if (stmt && get_data(stmt, &valor, &camiseta, &fecha))
+        {
+            fprintf(file, "{\"valor\": %d, \"camiseta\": \"%s\", \"fecha\": \"%s\"}", valor, camiseta, fecha);
+        }
+        else
+        {
+            fprintf(file, "null");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Record de asistencias
-    fprintf(file, ",\n    \"record_asistencias\": ");
-    stmt = execute_records_query("SELECT p.asistencias, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.asistencias DESC LIMIT 1");
-    if (stmt && get_record_data(stmt, &valor, &camiseta, &fecha))
+    // Helper function to write combination data
+    void write_combinacion(const char *key, const char *sql, int (*get_data)(sqlite3_stmt*, const char**, const char**, double*, int*))
     {
-        fprintf(file, "{\"valor\": %d, \"camiseta\": \"%s\", \"fecha\": \"%s\"}", valor, camiseta, fecha);
-    }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        const char *cancha;
+        const char *camiseta;
+        double rendimiento;
+        int partidos;
 
-    // Mejor combinación cancha + camiseta
-    fprintf(file, ",\n    \"mejor_combinacion\": ");
-    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
-    if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
-    {
-        fprintf(file, "{\"cancha\": \"%s\", \"camiseta\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", cancha, camiseta, rendimiento, partidos);
+        fprintf(file, "    \"%s\": ", key);
+        if (stmt && get_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
+        {
+            fprintf(file, "{\"cancha\": \"%s\", \"camiseta\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", cancha, camiseta, rendimiento, partidos);
+        }
+        else
+        {
+            fprintf(file, "null");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Peor combinación cancha + camiseta
-    fprintf(file, ",\n    \"peor_combinacion\": ");
-    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
-    if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
+    // Helper function to write temporada data
+    void write_temporada(const char *key, const char *sql, int (*get_data)(sqlite3_stmt*, const char**, double*, int*))
     {
-        fprintf(file, "{\"cancha\": \"%s\", \"camiseta\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", cancha, camiseta, rendimiento, partidos);
-    }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        const char *anio;
+        double rendimiento;
+        int partidos;
 
-    // Mejor temporada
-    fprintf(file, ",\n    \"mejor_temporada\": ");
-    stmt = execute_records_query("SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
-    if (stmt && get_temporada_data(stmt, &anio, &rendimiento, &partidos))
-    {
-        fprintf(file, "{\"anio\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", anio, rendimiento, partidos);
+        fprintf(file, "    \"%s\": ", key);
+        if (stmt && get_data(stmt, &anio, &rendimiento, &partidos))
+        {
+            fprintf(file, "{\"anio\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", anio, rendimiento, partidos);
+        }
+        else
+        {
+            fprintf(file, "null");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Peor temporada
-    fprintf(file, ",\n    \"peor_temporada\": ");
-    stmt = execute_records_query("SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
-    if (stmt && get_temporada_data(stmt, &anio, &rendimiento, &partidos))
-    {
-        fprintf(file, "{\"anio\": \"%s\", \"rendimiento_promedio\": %.2f, \"partidos\": %d}", anio, rendimiento, partidos);
-    }
-    else
-    {
-        fprintf(file, "null");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+    // Write all records
+    write_record("record_goles", "SELECT p.goles, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.goles DESC LIMIT 1", get_record_data);
+    fprintf(file, ",\n");
+    write_record("record_asistencias", "SELECT p.asistencias, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.asistencias DESC LIMIT 1", get_record_data);
+    fprintf(file, ",\n");
+    write_combinacion("mejor_combinacion", "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1", get_combinacion_data);
+    fprintf(file, ",\n");
+    write_combinacion("peor_combinacion", "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1", get_combinacion_data);
+    fprintf(file, ",\n");
+    write_temporada("mejor_temporada", "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1", get_temporada_data);
+    fprintf(file, ",\n");
+    write_temporada("peor_temporada", "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1", get_temporada_data);
 
     fprintf(file, "\n  }\n");
     fprintf(file, "}\n");
@@ -428,9 +419,10 @@ void exportar_records_rankings_json()
  */
 void exportar_records_rankings_html()
 {
-    FILE *file = fopen(get_export_path("records_rankings.html"), "w");
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("records_rankings.html"), "w");
 
-    if (!file)
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -442,92 +434,74 @@ void exportar_records_rankings_html()
     fprintf(file, "<body>\n");
     fprintf(file, "<h1>RECORDS & RANKINGS</h1>\n");
 
-    sqlite3_stmt *stmt;
-    int valor;
-    const char *camiseta;
-    const char *fecha;
-    const char *cancha;
-    double rendimiento;
-    int partidos;
-    const char *anio;
+    // Helper function to write record section
+    void write_record_section(const char *title, const char *sql, int (*get_data)(sqlite3_stmt*, int*, const char**, const char**))
+    {
+        fprintf(file, "<h2>%s</h2>\n", title);
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        int valor;
+        const char *camiseta;
+        const char *fecha;
 
-    // Record de goles
-    fprintf(file, "<h2>Record de Goles en un Partido</h2>\n");
-    stmt = execute_records_query("SELECT p.goles, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.goles DESC LIMIT 1");
-    if (stmt && get_record_data(stmt, &valor, &camiseta, &fecha))
-    {
-        fprintf(file, "<p><strong>%d</strong> (Camiseta: %s, Fecha: %s)</p>\n", valor, camiseta, fecha);
+        if (stmt && get_data(stmt, &valor, &camiseta, &fecha))
+        {
+            fprintf(file, "<p><strong>%d</strong> (Camiseta: %s, Fecha: %s)</p>\n", valor, camiseta, fecha);
+        }
+        else
+        {
+            fprintf(file, "<p>No hay registros disponibles</p>\n");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Record de asistencias
-    fprintf(file, "<h2>Record de Asistencias en un Partido</h2>\n");
-    stmt = execute_records_query("SELECT p.asistencias, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.asistencias DESC LIMIT 1");
-    if (stmt && get_record_data(stmt, &valor, &camiseta, &fecha))
+    // Helper function to write combination section
+    void write_combinacion_section(const char *title, const char *sql, int (*get_data)(sqlite3_stmt*, const char**, const char**, double*, int*))
     {
-        fprintf(file, "<p><strong>%d</strong> (Camiseta: %s, Fecha: %s)</p>\n", valor, camiseta, fecha);
-    }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+        fprintf(file, "<h2>%s</h2>\n", title);
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        const char *cancha;
+        const char *camiseta;
+        double rendimiento;
+        int partidos;
 
-    // Mejor combinación cancha + camiseta
-    fprintf(file, "<h2>Mejor Combinacion Cancha + Camiseta</h2>\n");
-    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
-    if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
-    {
-        fprintf(file, "<p>Cancha: <strong>%s</strong>, Camiseta: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", cancha, camiseta, rendimiento, partidos);
+        if (stmt && get_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
+        {
+            fprintf(file, "<p>Cancha: <strong>%s</strong>, Camiseta: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", cancha, camiseta, rendimiento, partidos);
+        }
+        else
+        {
+            fprintf(file, "<p>No hay registros disponibles</p>\n");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Mejor combinación cancha + camiseta
-    fprintf(file, "<h2>Mejor Combinacion Cancha + Camiseta</h2>\n");
-    stmt = execute_records_query("SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
-    if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
+    // Helper function to write temporada section
+    void write_temporada_section(const char *title, const char *sql, int (*get_data)(sqlite3_stmt*, const char**, double*, int*))
     {
-        fprintf(file, "<p>Cancha: <strong>%s</strong>, Camiseta: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", cancha, camiseta, rendimiento, partidos);
-    }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+        fprintf(file, "<h2>%s</h2>\n", title);
+        sqlite3_stmt *stmt = execute_records_query(sql);
+        const char *anio;
+        double rendimiento;
+        int partidos;
 
-    // Mejor temporada
-    fprintf(file, "<h2>Mejor Temporada</h2>\n");
-    stmt = execute_records_query("SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
-    if (stmt && get_temporada_data(stmt, &anio, &rendimiento, &partidos))
-    {
-        fprintf(file, "<p>Anio: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", anio, rendimiento, partidos);
+        if (stmt && get_data(stmt, &anio, &rendimiento, &partidos))
+        {
+            fprintf(file, "<p>Anio: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", anio, rendimiento, partidos);
+        }
+        else
+        {
+            fprintf(file, "<p>No hay registros disponibles</p>\n");
+        }
+        if (stmt) sqlite3_finalize(stmt);
     }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
 
-    // Peor temporada
-    fprintf(file, "<h2>Peor Temporada</h2>\n");
-    stmt = execute_records_query("SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
-    if (stmt && get_temporada_data(stmt, &anio, &rendimiento, &partidos))
-    {
-        fprintf(file, "<p>Anio: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n", anio, rendimiento, partidos);
-    }
-    else
-    {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
-    }
-    if (stmt) sqlite3_finalize(stmt);
+    // Write all sections
+    write_record_section("Record de Goles en un Partido", "SELECT p.goles, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.goles DESC LIMIT 1", get_record_data);
+    write_record_section("Record de Asistencias en un Partido", "SELECT p.asistencias, c.nombre, p.fecha_hora FROM partido p JOIN camiseta c ON p.camiseta_id = c.id ORDER BY p.asistencias DESC LIMIT 1", get_record_data);
+    write_combinacion_section("Mejor Combinacion Cancha + Camiseta", "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1", get_combinacion_data);
+    write_combinacion_section("Peor Combinacion Cancha + Camiseta", "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p JOIN cancha ca ON p.cancha_id = ca.id JOIN camiseta c ON p.camiseta_id = c.id GROUP BY p.cancha_id, p.camiseta_id ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1", get_combinacion_data);
+    write_temporada_section("Mejor Temporada", "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1", get_temporada_data);
+    write_temporada_section("Peor Temporada", "SELECT strftime('%Y', p.fecha_hora), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p GROUP BY strftime('%Y', p.fecha_hora) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1", get_temporada_data);
 
     fprintf(file, "</body>\n");
     fprintf(file, "</html>\n");

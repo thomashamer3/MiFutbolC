@@ -122,7 +122,7 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion)
     int year = 0;
     int month = 0;
     int day = 0;
-    if (sscanf(transaccion->fecha, "%4d-%2d-%2d", &year, &month, &day) == 3)
+if (sscanf_s(transaccion->fecha, "%4d-%2d-%2d", &year, &month, &day) == 3)
     {
         snprintf(fecha_display, sizeof(fecha_display), "%02d/%02d/%04d", day, month, year);
     }
@@ -1137,11 +1137,26 @@ typedef struct
  */
 static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *html_file, FILE *json_file, cJSON *json_array)
 {
-    if (csv_file) fclose(csv_file);
-    if (txt_file) fclose(txt_file);
-    if (html_file) fclose(html_file);
-    if (json_file) fclose(json_file);
-    if (json_array) cJSON_Delete(json_array);
+if (csv_file) {
+    fclose(csv_file);
+    csv_file = NULL;
+}
+if (txt_file) {
+    fclose(txt_file);
+    txt_file = NULL;
+}
+if (html_file) {
+    fclose(html_file);
+    html_file = NULL;
+}
+if (json_file) {
+    fclose(json_file);
+    json_file = NULL;
+}
+if (json_array) {
+    cJSON_Delete(json_array);
+    json_array = NULL;
+}
 }
 
 /**
@@ -1149,63 +1164,71 @@ static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *h
  */
 static void preparar_archivos_exportacion(ExportPrepParams *params)
 {
+    // Helper function to open a file and handle errors
+    static void abrir_archivo(FILE **file, const char *filename, const char *mode, const char *tipo_archivo) {
+        errno_t err = fopen_s(file, filename, mode);
+        if (err != 0) {
+            printf("Error opening %s file: %s\n", tipo_archivo, filename);
+            return;
+        }
+    }
+
+    // Helper function to close previously opened files
+    static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *html_file) {
+        if (csv_file) fclose(csv_file);
+        if (txt_file) fclose(txt_file);
+        if (html_file) fclose(html_file);
+    }
+
     // CSV
     snprintf(params->csv_filename, 300, "%s\\financiamiento_%s.csv", params->export_dir, params->timestamp);
-    *params->csv_file = fopen(params->csv_filename, "w");
-    if (*params->csv_file)
-    {
+    abrir_archivo(params->csv_file, params->csv_filename, "w", "CSV");
+    if (*params->csv_file) {
         fprintf(*params->csv_file, "ID,Fecha,Tipo,Categoria,Descripcion,Monto,Item_Especifico\n");
     }
 
     // TXT
     snprintf(params->txt_filename, 300, "%s\\financiamiento_%s.txt", params->export_dir, params->timestamp);
-    *params->txt_file = fopen(params->txt_filename, "w");
-    if (*params->txt_file)
-    {
-        fprintf(*params->txt_file, "LISTADO DE TRANSACCIONES FINANCIERAS\n");
-        fprintf(*params->txt_file, "=====================================\n\n");
-    }
-    else
-    {
-        // Close previously opened files on failure
-        if (*params->csv_file) fclose(*params->csv_file);
-        *params->csv_file = NULL;
+    if (*params->csv_file) {
+        abrir_archivo(params->txt_file, params->txt_filename, "w", "TXT");
+        if (*params->txt_file) {
+            fprintf(*params->txt_file, "LISTADO DE TRANSACCIONES FINANCIERAS\n");
+            fprintf(*params->txt_file, "=====================================\n\n");
+        } else {
+            cerrar_archivos_anteriores(*params->csv_file, NULL, NULL);
+            *params->csv_file = NULL;
+            return;
+        }
     }
 
     // HTML
     snprintf(params->html_filename, 300, "%s\\financiamiento_%s.html", params->export_dir, params->timestamp);
-    *params->html_file = fopen(params->html_filename, "w");
-    if (*params->html_file)
-    {
-        fprintf(*params->html_file, "<html><body><h1>Transacciones Financieras</h1>");
-        fprintf(*params->html_file, "<table border='1'><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</th><th>Descripcion</th><th>Monto</th><th>Item Especifico</th></tr>");
-    }
-    else
-    {
-        // Close previously opened files on failure
-        if (*params->csv_file) fclose(*params->csv_file);
-        if (*params->txt_file) fclose(*params->txt_file);
-        *params->csv_file = NULL;
-        *params->txt_file = NULL;
+    if (*params->csv_file && *params->txt_file) {
+        abrir_archivo(params->html_file, params->html_filename, "w", "HTML");
+        if (*params->html_file) {
+            fprintf(*params->html_file, "<html><body><h1>Transacciones Financieras</h1>");
+            fprintf(*params->html_file, "<table border='1'><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</th><th>Descripcion</th><th>Monto</th><th>Item Especifico</th></tr>");
+        } else {
+            cerrar_archivos_anteriores(*params->csv_file, *params->txt_file, NULL);
+            *params->csv_file = NULL;
+            *params->txt_file = NULL;
+            return;
+        }
     }
 
     // JSON
     snprintf(params->json_filename, 300, "%s\\financiamiento_%s.json", params->export_dir, params->timestamp);
-    *params->json_file = fopen(params->json_filename, "w");
-    if (*params->json_file)
-    {
-        *params->json_array = cJSON_CreateArray();
-    }
-    else
-    {
-        // Close previously opened files on failure
-        if (*params->csv_file) fclose(*params->csv_file);
-        if (*params->txt_file) fclose(*params->txt_file);
-        if (*params->html_file) fclose(*params->html_file);
-        *params->csv_file = NULL;
-        *params->txt_file = NULL;
-        *params->html_file = NULL;
-        *params->json_array = NULL;
+    if (*params->csv_file && *params->txt_file && *params->html_file) {
+        abrir_archivo(params->json_file, params->json_filename, "w", "JSON");
+        if (*params->json_file) {
+            *params->json_array = cJSON_CreateArray();
+        } else {
+            cerrar_archivos_anteriores(*params->csv_file, *params->txt_file, *params->html_file);
+            *params->csv_file = NULL;
+            *params->txt_file = NULL;
+            *params->html_file = NULL;
+            *params->json_array = NULL;
+        }
     }
 }
 
@@ -1696,7 +1719,7 @@ void modificar_transaccion()
             int year = 0;
             int month = 0;
             int day = 0;
-            if (sscanf(fecha_db, "%4d-%2d-%2d", &year, &month, &day) == 3)
+if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day) == 3)
             {
                 snprintf(fecha_display, sizeof(fecha_display), "%02d/%02d/%04d", day, month, year);
             }

@@ -1058,7 +1058,12 @@ void exportar_resumen_temporada(int temporada_id)
     char filepath[300];
     snprintf(filepath, sizeof(filepath), "%s\\%s", export_dir, filename);
 
-    FILE *file = fopen(filepath, "w");
+FILE *file;
+errno_t err = fopen_s(&file, filepath, "w");
+if (err != 0) {
+    printf("Error al crear archivo de resumen.\n");
+    return;
+}
     if (!file)
     {
         printf("Error al crear archivo de resumen.\n");
@@ -1597,7 +1602,12 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
     char filepath[300];
     snprintf(filepath, sizeof(filepath), "%s\\%s", export_dir, filename);
 
-    FILE *file = fopen(filepath, "w");
+FILE *file;
+errno_t err = fopen_s(&file, filepath, "w");
+if (err != 0) {
+    printf("Error al crear archivo de resumen mensual.\n");
+    return;
+}
     if (!file)
     {
         printf("Error al crear archivo de resumen mensual.\n");

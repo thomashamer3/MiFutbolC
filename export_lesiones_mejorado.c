@@ -203,8 +203,9 @@ void exportar_lesiones_csv_mejorado()
         return;
     }
 
-    FILE *f = fopen(get_export_path("lesiones_mejorado.csv"), "w");
-    if (!f)
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path("lesiones_mejorado.csv"), "w");
+    if (err != 0 || !f)
     {
         printf("Error al crear el archivo CSV\n");
         return;
@@ -240,8 +241,9 @@ void exportar_lesiones_txt_mejorado()
         return;
     }
 
-    FILE *f = fopen(get_export_path("lesiones_mejorado.txt"), "w");
-    if (!f)
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path("lesiones_mejorado.txt"), "w");
+    if (err != 0 || !f)
     {
         printf("Error al crear el archivo TXT\n");
         return;
@@ -277,8 +279,9 @@ void exportar_lesiones_json_mejorado()
         return;
     }
 
-    FILE *f = fopen(get_export_path("lesiones_mejorado.json"), "w");
-    if (!f)
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path("lesiones_mejorado.json"), "w");
+    if (err != 0 || !f)
     {
         printf("Error al crear el archivo JSON\n");
         return;
@@ -313,8 +316,9 @@ void exportar_lesiones_html_mejorado()
         return;
     }
 
-    FILE *f = fopen(get_export_path("lesiones_mejorado.html"), "w");
-    if (!f)
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path("lesiones_mejorado.html"), "w");
+    if (err != 0 || !f)
     {
         printf("Error al crear el archivo HTML\n");
         return;

@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <time.h>
 #include <stddef.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
@@ -35,7 +36,10 @@ int input_int(const char *msg)
 {
     int v;
     printf("%s", msg);
-    scanf("%d", &v);
+    if (scanf_s("%d", &v) != 1) {
+        v = 0;
+        while (getchar() != '\n'); // Clear input buffer
+    }
     getchar();
     return v;
 }
@@ -1174,8 +1178,9 @@ void mostrar_record_simple(const char *titulo, const char *sql)
  */
 void exportar_record_simple_csv(const char *titulo, const char *sql, const char *filename)
 {
-    FILE *file = fopen(get_export_path(filename), "w");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, get_export_path(filename), "w");
+    if (err != 0 || !file)
     {
         printf("Error al crear el archivo\n");
         return;
@@ -1210,8 +1215,9 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
         return;
     }
 
-    FILE *f = fopen(get_export_path(filename), "w");
-    if (!f) return;
+    FILE *f = NULL;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || !f) return;
 
     write_csv_header(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal");
 
@@ -1248,8 +1254,9 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
         return;
     }
 
-    FILE *f = fopen(get_export_path(filename), "w");
-    if (!f) return;
+    FILE *f = NULL;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || !f) return;
 
     fprintf(f, "%s\n\n", title);
 
@@ -1286,8 +1293,9 @@ void exportar_partido_especifico_json(const char *order_by, const char *filename
         return;
     }
 
-    FILE *f = fopen(get_export_path(filename), "w");
-    if (!f) return;
+    FILE *f = NULL;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || !f) return;
 
     cJSON *root = cJSON_CreateObject();
 
@@ -1329,8 +1337,9 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
         return;
     }
 
-    FILE *f = fopen(get_export_path(filename), "w");
-    if (!f) return;
+    FILE *f = NULL;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || !f) return;
 
     fprintf(f, "<html><body><h1>%s</h1><table border='1'>"
             "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</th><th>Rendimiento General</th><th>Cansancio</th><th>Estado Animo</th><th>Comentario Personal</th></tr>",

@@ -523,6 +523,6 @@ static MenuItem* construir_menu_records()
  */
 void menu_records_rankings()
 {
-    MenuItem *items = construir_menu_records();
+    MenuItem const *items = construir_menu_records();
     ejecutar_menu("RECORDS & RANKINGS", items, 15);
 }

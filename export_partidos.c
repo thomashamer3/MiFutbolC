@@ -208,7 +208,8 @@ void exportar_partidos_csv()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partidos.csv"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partidos.csv"), "w");
     if (!f)
         return;
 
@@ -232,7 +233,8 @@ void exportar_partidos_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partidos.txt"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partidos.txt"), "w");
     if (!f)
         return;
 
@@ -256,7 +258,8 @@ void exportar_partidos_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partidos.json"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partidos.json"), "w");
     if (!f)
         return;
 
@@ -280,7 +283,8 @@ void exportar_partidos_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partidos.html"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partidos.html"), "w");
     if (!f)
         return;
 
@@ -329,7 +333,8 @@ void exportar_partido_mas_goles_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_mas_goles.json"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_mas_goles.json"), "w");
     if (!f)
         return;
 
@@ -391,7 +396,8 @@ void exportar_partido_mas_goles_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_mas_goles.html"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_mas_goles.html"), "w");
     if (!f)
         return;
 
@@ -461,7 +467,8 @@ void exportar_partido_mas_asistencias_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_mas_asistencias.txt"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_mas_asistencias.txt"), "w");
     if (!f)
         return;
 
@@ -519,7 +526,8 @@ void exportar_partido_mas_asistencias_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_mas_asistencias.json"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_mas_asistencias.json"), "w");
     if (!f)
         return;
 
@@ -581,7 +589,8 @@ void exportar_partido_mas_asistencias_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_mas_asistencias.html"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_mas_asistencias.html"), "w");
     if (!f)
         return;
 
@@ -643,7 +652,8 @@ void exportar_partido_menos_goles_reciente_csv()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_goles_reciente.csv"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_goles_reciente.csv"), "w");
     if (!f)
         return;
 
@@ -701,7 +711,8 @@ void exportar_partido_menos_goles_reciente_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_goles_reciente.txt"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_goles_reciente.txt"), "w");
     if (!f)
         return;
 
@@ -759,7 +770,8 @@ void exportar_partido_menos_goles_reciente_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_goles_reciente.json"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_goles_reciente.json"), "w");
     if (!f)
         return;
 
@@ -821,7 +833,8 @@ void exportar_partido_menos_goles_reciente_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_goles_reciente.html"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_goles_reciente.html"), "w");
     if (!f)
         return;
 
@@ -883,7 +896,8 @@ void exportar_partido_menos_asistencias_reciente_csv()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_asistencias_reciente.csv"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_asistencias_reciente.csv"), "w");
     if (!f)
         return;
 
@@ -941,7 +955,8 @@ void exportar_partido_menos_asistencias_reciente_txt()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_asistencias_reciente.txt"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_asistencias_reciente.txt"), "w");
     if (!f)
         return;
 
@@ -999,7 +1014,8 @@ void exportar_partido_menos_asistencias_reciente_json()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_asistencias_reciente.json"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_asistencias_reciente.json"), "w");
     if (!f)
         return;
 
@@ -1061,7 +1077,8 @@ void exportar_partido_menos_asistencias_reciente_html()
         return;
     }
 
-    FILE *f = fopen(get_export_path("partido_menos_asistencias_reciente.html"), "w");
+    FILE *f;
+    fopen_s(&f, get_export_path("partido_menos_asistencias_reciente.html"), "w");
     if (!f)
         return;
 

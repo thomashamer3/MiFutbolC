@@ -30,8 +30,9 @@
  */
 static char *read_file_content(const char *filename)
 {
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return NULL;
@@ -864,8 +865,9 @@ void importar_camisetas_txt()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -889,7 +891,7 @@ void importar_camisetas_txt()
         int id;
         char nombre[256];
 
-        if (sscanf(line, "%d - %[^\n]", &id, nombre) == 2)
+        if (sscanf_s(line, "%d - %[^\n]", &id, nombre, sizeof(nombre)) == 2)
         {
             trim_trailing_spaces(nombre);
             // Verificar si ya existe
@@ -1099,8 +1101,9 @@ void importar_partidos_txt()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1143,8 +1146,9 @@ void importar_lesiones_txt()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1171,7 +1175,7 @@ void importar_lesiones_txt()
         char descripcion[512];
         char fecha[256];
 
-        if (sscanf(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador, tipo, descripcion, fecha) == 5)
+        if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador, sizeof(jugador), tipo, sizeof(tipo), descripcion, sizeof(descripcion), fecha, sizeof(fecha)) == 5)
         {
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;
@@ -1241,8 +1245,9 @@ void importar_estadisticas_txt()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1271,7 +1276,7 @@ void importar_estadisticas_txt()
         int empates;
         int derrotas;
 
-        if (sscanf(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta, &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
+        if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta, sizeof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
         {
             // Obtener ID de camiseta
             sqlite3_stmt *camiseta_stmt;
@@ -1347,8 +1352,9 @@ void importar_camisetas_csv()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1427,9 +1433,9 @@ static int procesar_partido_csv_line(const char *line)
     int estado_animo;
 
     // Formato: cancha,fecha,goles,asistencias,camiseta,resultado,clima,dia,rendimiento_general,cansancio,estado_animo,comentario
-    if (sscanf(line, "%[^,],%[^,],%d,%d,%[^,],%[^,],%[^,],%[^,],%d,%d,%d,%[^\n]",
-               cancha, fecha, &goles, &asistencias, camiseta,
-               resultado_str, clima_str, dia_str, &rendimiento_general, &cansancio, &estado_animo, comentario) != 12)
+    if (sscanf_s(line, "%[^,],%[^,],%d,%d,%[^,],%[^,],%[^,],%[^,],%d,%d,%d,%[^\n]",
+               cancha, sizeof(cancha), fecha, sizeof(fecha), &goles, &asistencias, camiseta, sizeof(camiseta),
+               resultado_str, sizeof(resultado_str), clima_str, sizeof(clima_str), dia_str, sizeof(dia_str), &rendimiento_general, &cansancio, &estado_animo, comentario, sizeof(comentario)) != 12)
         return 0;
 
     int resultado = convertir_resultado(resultado_str);
@@ -1524,8 +1530,9 @@ void importar_partidos_csv()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1568,8 +1575,9 @@ void importar_lesiones_csv()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1596,7 +1604,7 @@ void importar_lesiones_csv()
         char descripcion[512];
         char fecha[256];
 
-        if (sscanf(line, "%d,%[^,],%[^,],%[^,],%[^\n]", &id, jugador, tipo, descripcion, fecha) == 5)
+        if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%[^\n]", &id, jugador, sizeof(jugador), tipo, sizeof(tipo), descripcion, sizeof(descripcion), fecha, sizeof(fecha)) == 5)
         {
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;
@@ -1666,8 +1674,9 @@ void importar_estadisticas_csv()
 
     printf("Importando desde: %s\n", filename);
 
-    FILE *file = fopen(filename, "r");
-    if (!file)
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
     {
         printf("Error: No se pudo abrir el archivo %s\n", filename);
         return;
@@ -1696,7 +1705,7 @@ void importar_estadisticas_csv()
         int empates;
         int derrotas;
 
-        if (sscanf(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta, &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
+        if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta, sizeof(camiseta), &goles, &asistencias, &partidos, &victorias, &empates, &derrotas) == 7)
         {
             // Obtener ID de camiseta
             sqlite3_stmt *camiseta_stmt;

@@ -14,7 +14,7 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 // Configuracion global
@@ -498,7 +498,7 @@ static void reset_settings_to_defaults()
     printf("(S/N): ");
 
     char confirm;
-    scanf(" %c", &confirm);
+scanf_s(" %c", &confirm, 1);
 
     if (confirm == 's' || confirm == 'S')
     {
