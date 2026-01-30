@@ -434,10 +434,10 @@ static int calcular_diferencia_dias(const char* fecha1, const char* fecha2)
     int min2;
 
     // Parsear fecha1 (formato esperado: "DD/MM/YYYY HH:MM" o similar)
-sscanf_s(fecha1, "%d/%d/%d %d:%d", &dia1, &mes1, &ano1, &hora1, &min1);
+    sscanf_s(fecha1, "%d/%d/%d %d:%d", &dia1, &mes1, &ano1, &hora1, &min1);
 
     // Parsear fecha2
-sscanf_s(fecha2, "%d/%d/%d %d:%d", &dia2, &mes2, &ano2, &hora2, &min2);
+    sscanf_s(fecha2, "%d/%d/%d %d:%d", &dia2, &mes2, &ano2, &hora2, &min2);
 
     // Convertir a días desde una fecha base (simplificación)
     int dias1 = ano1 * 365 + mes1 * 30 + dia1;

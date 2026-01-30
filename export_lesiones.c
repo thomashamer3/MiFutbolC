@@ -142,7 +142,8 @@ void exportar_lesiones_csv()
     }
 
     errno_t err = fopen_s(&f, get_export_path("lesiones.csv"), "w");
-    if (err != 0 || f == NULL) {
+    if (err != 0 || f == NULL)
+    {
         printf("Error al crear el archivo CSV\n");
         return;
     }
@@ -169,7 +170,8 @@ void exportar_lesiones_txt()
     }
 
     errno_t err = fopen_s(&f, get_export_path("lesiones.txt"), "w");
-    if (err != 0 || f == NULL) {
+    if (err != 0 || f == NULL)
+    {
         printf("Error al crear el archivo TXT\n");
         return;
     }
@@ -196,7 +198,8 @@ void exportar_lesiones_json()
     }
 
     errno_t err = fopen_s(&f, get_export_path("lesiones.json"), "w");
-    if (err != 0 || f == NULL) {
+    if (err != 0 || f == NULL)
+    {
         printf("Error al crear el archivo JSON\n");
         return;
     }
@@ -222,7 +225,8 @@ void exportar_lesiones_html()
     }
 
     errno_t err = fopen_s(&f, get_export_path("lesiones.html"), "w");
-    if (err != 0 || f == NULL) {
+    if (err != 0 || f == NULL)
+    {
         printf("Error al crear el archivo HTML\n");
         return;
     }

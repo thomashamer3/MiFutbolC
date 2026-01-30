@@ -154,13 +154,13 @@ int generar_qr_png(const char* texto, const char* filename)
     char filepath[500];
     snprintf(filepath, sizeof(filepath), "%s\\%s_qr_data.txt", export_dir, filename);
 
-errno_t err = fopen_s(&file, filepath, "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error al crear archivo de datos QR.\n");
-        return 0;
-    }
+    errno_t err = fopen_s(&file, filepath, "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error al crear archivo de datos QR.\n");
+            return 0;
+        }
 
     fprintf(file, "QR CODE DATA\n");
     fprintf(file, "============\n\n");

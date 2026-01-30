@@ -389,7 +389,7 @@ static int current_partido_id;
  * @param mostrar_lista Función para mostrar lista de opciones (NULL si no aplica)
  */
 static void modificar_campo_partido(const char *campo, const char *prompt, const char *mensaje_exito,
-                                   int min_val, int max_val, void (*mostrar_lista)(void))
+                                    int min_val, int max_val, void (*mostrar_lista)(void))
 {
     if (mostrar_lista)
         mostrar_lista();
@@ -457,7 +457,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
  * @param validar_id Si debe validar que el ID existe
  */
 static void buscar_partidos_generico(const char *header, const char *campo, const char *prompt,
-                                    void (*mostrar_lista)(void), int validar_id)
+                                     void (*mostrar_lista)(void), int validar_id)
 {
     print_header(header);
 
@@ -762,7 +762,7 @@ void modificar_partido()
 /** @brief Busca partidos por camiseta utilizada */
 static void buscar_por_camiseta()
 {
-    buscar_partidos_generico("BUSCAR PARTIDOS POR CAMISETA", "camiseta_id", "ID de la camiseta: ", listar_camisetas, 1);
+    buscar_partidos_generico("BUSCAR PARTIDOS POR CAMISETA", "camiseta_id", "ID de la camiseta: ", &listar_camisetas, 1);
 }
 
 /** @brief Busca partidos por número de goles */
@@ -780,7 +780,7 @@ static void buscar_por_asistencias()
 /** @brief Busca partidos por cancha */
 static void buscar_por_cancha()
 {
-    buscar_partidos_generico("BUSCAR PARTIDOS POR CANCHA", "cancha_id", "ID de la cancha: ", listar_canchas_disponibles, 1);
+    buscar_partidos_generico("BUSCAR PARTIDOS POR CANCHA", "cancha_id", "ID de la cancha: ", &listar_canchas_disponibles, 1);
 }
 
 /**

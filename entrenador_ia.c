@@ -101,8 +101,8 @@ EstadoJugador evaluar_estado_jugador()
         // Calcular días desde último partido
         if (count == 0 && fecha_str)
         {
-struct tm tm_fecha = {0};
-sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
+            struct tm tm_fecha = {0};
+            sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
             tm_fecha.tm_year -= 1900;
             tm_fecha.tm_mon -= 1;
             time_t fecha_partido = mktime(&tm_fecha);
@@ -112,8 +112,8 @@ sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.t
         // Contar partidos consecutivos (últimos 7 días)
         if (fecha_str && count < 7)
         {
-struct tm tm_fecha = {0};
-sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
+            struct tm tm_fecha = {0};
+            sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
             tm_fecha.tm_year -= 1900;
             tm_fecha.tm_mon -= 1;
             time_t fecha_partido = mktime(&tm_fecha);

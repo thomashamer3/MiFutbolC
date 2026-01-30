@@ -169,13 +169,13 @@ void exportar_estadisticas_generales_csv(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.csv");
-errno_t err = fopen_s(&file, path, "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error CSV\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error CSV\n");
+            return;
+        }
 
     fprintf(file, "Categoria,Camiseta,Valor\n");
 
@@ -203,13 +203,13 @@ void exportar_estadisticas_generales_txt(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.txt");
-errno_t err = fopen_s(&file, path, "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error TXT\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error TXT\n");
+            return;
+        }
 
     fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
 
@@ -237,13 +237,13 @@ void exportar_estadisticas_generales_json(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.json");
-errno_t err = fopen_s(&file, path, "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error JSON\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error JSON\n");
+            return;
+        }
 
     cJSON *root = cJSON_CreateObject();
     cJSON *stats = json_build_estadisticas();
@@ -267,13 +267,13 @@ void exportar_estadisticas_generales_html(void)
     }
 
     const char *path = get_export_path("estadisticas_generales.html");
-errno_t err = fopen_s(&file, path, "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error HTML\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error HTML\n");
+            return;
+        }
 
     fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
     fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
@@ -307,13 +307,13 @@ void exportar_estadisticas_por_mes_csv(void)
         return;
     }
 
-errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.csv"), "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error CSV\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.csv"), "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error CSV\n");
+            return;
+        }
 
     fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
 
@@ -342,13 +342,13 @@ void exportar_estadisticas_por_mes_txt(void)
         return;
     }
 
-errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.txt"), "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error TXT\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.txt"), "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error TXT\n");
+            return;
+        }
 
     fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
 
@@ -390,13 +390,13 @@ void exportar_estadisticas_por_mes_json(void)
         return;
     }
 
-errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.json"), "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error JSON\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.json"), "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error JSON\n");
+            return;
+        }
 
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
@@ -460,13 +460,13 @@ void exportar_estadisticas_por_mes_html(void)
         return;
     }
 
-errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.html"), "w");
-if (err != 0 || file == NULL)
-    if (!file)
-    {
-        printf("Error HTML\n");
-        return;
-    }
+    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.html"), "w");
+    if (err != 0 || file == NULL)
+        if (!file)
+        {
+            printf("Error HTML\n");
+            return;
+        }
 
     fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
     fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");

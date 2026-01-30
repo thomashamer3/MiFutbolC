@@ -17,9 +17,9 @@
 void mostrar_record_goles_partido()
 {
     mostrar_record_simple("Record de Goles en un Partido",
-                         "SELECT p.goles, c.nombre, p.fecha_hora "
-                         "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1");
+                          "SELECT p.goles, c.nombre, p.fecha_hora "
+                          "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                          "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1");
     pause_console();
 }
 
@@ -108,9 +108,9 @@ void mostrar_record_goles_partido()
 void mostrar_record_asistencias_partido()
 {
     mostrar_record_simple("Record de Asistencias en un Partido",
-                         "SELECT p.asistencias, c.nombre, p.fecha_hora "
-                         "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1");
+                          "SELECT p.asistencias, c.nombre, p.fecha_hora "
+                          "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
+                          "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1");
     pause_console();
 }
 

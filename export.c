@@ -227,9 +227,9 @@ void exportar_analisis_csv()
         return;
     }
 
-errno_t err = fopen_s(&f, get_export_path("analisis.csv"), "w");
-if (err != 0)
-    return;
+    errno_t err = fopen_s(&f, get_export_path("analisis.csv"), "w");
+    if (err != 0)
+        return;
 
     fprintf(f, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_Cansancio,Promedio_Animo,Total_Partidos\n");
 
@@ -269,9 +269,9 @@ void exportar_analisis_txt()
         return;
     }
 
-errno_t err = fopen_s(&f, get_export_path("analisis.txt"), "w");
-if (err != 0)
-    return;
+    errno_t err = fopen_s(&f, get_export_path("analisis.txt"), "w");
+    if (err != 0)
+        return;
 
     fprintf(f, "ANALISIS DE RENDIMIENTO\n\n");
 
@@ -321,9 +321,9 @@ void exportar_analisis_json()
         return;
     }
 
-errno_t err = fopen_s(&f, get_export_path("analisis.json"), "w");
-if (err != 0)
-    return;
+    errno_t err = fopen_s(&f, get_export_path("analisis.json"), "w");
+    if (err != 0)
+        return;
 
     cJSON *root = cJSON_CreateObject();
 
@@ -381,9 +381,9 @@ void exportar_analisis_html()
         return;
     }
 
-errno_t err = fopen_s(&f, get_export_path("analisis.html"), "w");
-if (err != 0)
-    return;
+    errno_t err = fopen_s(&f, get_export_path("analisis.html"), "w");
+    if (err != 0)
+        return;
 
     fprintf(f, "<html><body><h1>Analisis de Rendimiento</h1>");
 

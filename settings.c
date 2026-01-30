@@ -498,7 +498,7 @@ static void reset_settings_to_defaults()
     printf("(S/N): ");
 
     char confirm;
-scanf_s(" %c", &confirm, 1);
+    scanf_s(" %c", &confirm, 1);
 
     if (confirm == 's' || confirm == 'S')
     {

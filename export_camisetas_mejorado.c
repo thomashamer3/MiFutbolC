@@ -112,13 +112,13 @@ void exportar_camisetas_csv_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.csv"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
+    errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.csv"), "w");
+    if (err != 0 || f == NULL)
+        if (!f)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
 
     // Escribir encabezado CSV con métricas avanzadas
     fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio,eficiencia_goles_por_partido,eficiencia_asistencias_por_partido,relacion_goles_asistencias,porcentaje_victorias,porcentaje_lesiones_por_partido\n");
@@ -162,13 +162,13 @@ void exportar_camisetas_txt_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.txt"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
+    errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.txt"), "w");
+    if (err != 0 || f == NULL)
+        if (!f)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
 
     // Escribir encabezado del archivo de texto con análisis avanzado
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS AVANZADAS\n\n");
@@ -224,13 +224,13 @@ void exportar_camisetas_json_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.json"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
+    errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.json"), "w");
+    if (err != 0 || f == NULL)
+        if (!f)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
 
     // Crear estructura JSON y procesar resultados con métricas avanzadas
     cJSON *root = cJSON_CreateArray();
@@ -283,13 +283,13 @@ void exportar_camisetas_html_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.html"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
+    errno_t err = fopen_s(&f, get_export_path("camisetas_mejorado.html"), "w");
+    if (err != 0 || f == NULL)
+        if (!f)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
 
     // Escribir encabezado HTML y estructura de tabla con métricas avanzadas
     fprintf(f,

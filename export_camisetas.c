@@ -294,7 +294,8 @@ static void write_html_footer(FILE *f, void *)
  */
 void exportar_camisetas_csv()
 {
-    ExportConfig config = {
+    ExportConfig config =
+    {
         .filename = "camisetas.csv",
         .context = NULL,
         .write_header = write_csv_header,
@@ -316,13 +317,13 @@ void exportar_camisetas_txt()
     sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
     if (!stmt) return;
 
-errno_t err = fopen_s(&f, get_export_path("camisetas.txt"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
+    errno_t err = fopen_s(&f, get_export_path("camisetas.txt"), "w");
+    if (err != 0 || f == NULL)
+        if (!f)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
 
     // Escribir encabezado del archivo de texto
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
@@ -369,7 +370,8 @@ if (err != 0 || f == NULL)
 void exportar_camisetas_json()
 {
     cJSON *root = cJSON_CreateArray();
-    ExportConfig config = {
+    ExportConfig config =
+    {
         .filename = "camisetas.json",
         .context = root,
         .write_header = NULL,  // No header needed for JSON
@@ -387,7 +389,8 @@ void exportar_camisetas_json()
  */
 void exportar_camisetas_html()
 {
-    ExportConfig config = {
+    ExportConfig config =
+    {
         .filename = "camisetas.html",
         .context = NULL,
         .write_header = write_html_header,

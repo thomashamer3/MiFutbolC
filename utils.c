@@ -36,7 +36,8 @@ int input_int(const char *msg)
 {
     int v;
     printf("%s", msg);
-    if (scanf_s("%d", &v) != 1) {
+    if (scanf_s("%d", &v) != 1)
+    {
         v = 0;
         while (getchar() != '\n'); // Clear input buffer
     }
