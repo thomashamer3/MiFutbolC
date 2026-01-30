@@ -17,14 +17,14 @@ void crear_cancha()
     char nombre[100];
     input_string("Nombre de la cancha: ", nombre, 100);
 
-    int id = obtener_siguiente_id("cancha");
+    long long id = obtener_siguiente_id("cancha");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "INSERT INTO cancha(id, nombre) VALUES(?, ?)",
                        -1, &stmt, NULL);
 
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int(stmt, 1, (int)id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);

@@ -8,7 +8,7 @@
 #include "entrenador_ia.h"
 #include <stdio.h>
 #include <string.h>
-#include <Windows.h>
+#include <windows.h>
 #include <stdlib.h>
 #include <time.h>
 #include <process.h>
@@ -215,14 +215,14 @@ static void recopilar_datos_partido(DatosPartido *datos)
  * @param datos Puntero a la estructura DatosPartido que contiene los datos del partido
  * @param fecha Fecha y hora
  */
-static void insertar_partido(int id, DatosPartido const *datos, char const *fecha)
+static void insertar_partido(long long id, DatosPartido const *datos, char const *fecha)
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia)"
                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_int(stmt, 2, datos->cancha_id);
     sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 4, datos->goles);
@@ -238,7 +238,7 @@ static void insertar_partido(int id, DatosPartido const *datos, char const *fech
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
-        printf("Partido creado correctamente con ID %d\n", id);
+        printf("Partido creado correctamente con ID %lld\n", id);
     }
     else
     {
@@ -267,7 +267,7 @@ void crear_partido()
 
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
-    int id = obtener_siguiente_id("partido");
+    long long id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
 }
 
@@ -427,7 +427,7 @@ static void modificar_campo_partido(const char *campo, const char *prompt, const
  * @param mensaje_exito Mensaje de éxito
  * @param buffer_size Tamaño del buffer para input
  */
-static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, size_t buffer_size)
+static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, int buffer_size)
 {
     char valor[buffer_size];
     printf("%s", prompt);
@@ -518,7 +518,7 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
  */
 static void modificar_cancha_partido()
 {
-    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 0, 0, listar_canchas_disponibles);
+    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 0, 0, &listar_canchas_disponibles);
 }
 
 /**
@@ -1347,7 +1347,7 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
             datos.clima = 1;
             datos.dia = 1;
 
-            int partido_id = obtener_siguiente_id("partido");
+            long long partido_id = obtener_siguiente_id("partido");
             insertar_partido(partido_id, &datos, fecha_simulacion);
         }
     }

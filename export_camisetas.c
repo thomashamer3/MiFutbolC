@@ -145,7 +145,7 @@ static void export_camisetas_generic(ExportConfig *config)
 /**
  * @brief Escribe el encabezado CSV
  */
-static void write_csv_header(FILE *f, void *context)
+static void write_csv_header(FILE *f, void *)
 {
     fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio\n");
 }
@@ -153,7 +153,7 @@ static void write_csv_header(FILE *f, void *context)
 /**
  * @brief Escribe una fila CSV
  */
-static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f\n",
             sqlite3_column_int(stmt, 0),
@@ -173,7 +173,7 @@ static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
 /**
  * @brief Escribe el encabezado TXT
  */
-static void write_txt_header(FILE *f, void *context)
+static void write_txt_header(FILE *f, void *)
 {
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
 }
@@ -181,7 +181,7 @@ static void write_txt_header(FILE *f, void *context)
 /**
  * @brief Escribe una fila TXT
  */
-static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f, "ID: %d - Nombre: %s\n"
             "  Goles Totales: %d\n"
@@ -211,7 +211,7 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
 /**
  * @brief Escribe una fila JSON (agrega objeto al array)
  */
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_json_row(FILE *, sqlite3_stmt *stmt, void *context)
 {
     cJSON *root = (cJSON *)context;
     cJSON *item = cJSON_CreateObject();
@@ -245,7 +245,7 @@ static void write_json_footer(FILE *f, void *context)
 /**
  * @brief Escribe el encabezado HTML
  */
-static void write_html_header(FILE *f, void *context)
+static void write_html_header(FILE *f, void *)
 {
     fprintf(f,
             "<html><body><h1>Camisetas con Estadisticas</h1><table border='1'>"
@@ -255,7 +255,7 @@ static void write_html_header(FILE *f, void *context)
 /**
  * @brief Escribe una fila HTML
  */
-static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f,
             "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
@@ -276,7 +276,7 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
 /**
  * @brief Escribe el pie HTML
  */
-static void write_html_footer(FILE *f, void *context)
+static void write_html_footer(FILE *f, void *)
 {
     fprintf(f, "</table></body></html>");
 }

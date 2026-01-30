@@ -69,13 +69,13 @@ void crear_lesion()
         jugador = "Usuario Desconocido";
     }
 
-    int id = obtener_siguiente_id("lesion");
+    long long id = obtener_siguiente_id("lesion");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado) VALUES(?,?,?,?,?,?,?)",
                        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);

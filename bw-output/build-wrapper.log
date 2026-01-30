@@ -1,656 +1,605 @@
-Thu Jan 29 16:19:47 2026: build-wrapper, version 6.76 (win-x86-64)
-Thu Jan 29 16:19:47 2026: isWow64: 0
-Thu Jan 29 16:19:47 2026: windows version: 10.0, service pack: 0.0, build number: 26200, product type: 1
-Thu Jan 29 16:19:47 2026: current directory: D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
-Thu Jan 29 16:19:47 2026: cwd: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC>
-Thu Jan 29 16:19:47 2026: out-dir absolute path: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\bw-output>
-Thu Jan 29 16:19:47 2026: command line received: <gcc -Wall -g analisis.c cJSON.c cJSON_Utils.c camiseta.c cancha.c db.c estadisticas.c estadisticas_meta.c estadisticas_anio.c estadisticas_generales.c estadisticas_lesiones.c estadisticas_mes.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_estadisticas.c export_estadisticas_generales.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_records_rankings.c import.c lesion.c logros.c main.c menu.c partido.c records_rankings.c sqlite3.c utils.c equipo.c torneo.c temporada.c financiamiento.c settings.c entrenador_ia.c qr.c -o MiFutbolC>
-Thu Jan 29 16:19:47 2026: initializing json file
-Thu Jan 29 16:19:47 2026: starting debug cycle
-Thu Jan 29 16:19:47 2026: process created with pid: 15192
-Thu Jan 29 16:19:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\gcc.exe>
-Thu Jan 29 16:19:47 2026: command line: <gcc -Wall -g analisis.c cJSON.c cJSON_Utils.c camiseta.c cancha.c db.c estadisticas.c estadisticas_meta.c estadisticas_anio.c estadisticas_generales.c estadisticas_lesiones.c estadisticas_mes.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_estadisticas.c export_estadisticas_generales.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_records_rankings.c import.c lesion.c logros.c main.c menu.c partido.c records_rankings.c sqlite3.c utils.c equipo.c torneo.c temporada.c financiamiento.c settings.c entrenador_ia.c qr.c -o MiFutbolC>
-Thu Jan 29 16:19:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:47 2026: isWow64: 0
-Thu Jan 29 16:19:47 2026: VirtualQueryEx 0000000000010BDE
-Thu Jan 29 16:19:47 2026: 	Offset 3038
-Thu Jan 29 16:19:47 2026: 	VirtualQueryEx Base	BaseAddr: 0000000000010000	AllocationBase: 0000000000010000	AllocationProtect: 0x4	Protect: 0x4	State: 0x1000	RegionSize: 131072	Type: 0x20000
-Thu Jan 29 16:19:47 2026: Read environment of size 6091
-Thu Jan 29 16:19:47 2026: candidate file: <analisis.c>
-Thu Jan 29 16:19:47 2026: candidate file: <cJSON.c>
-Thu Jan 29 16:19:47 2026: candidate file: <cJSON_Utils.c>
-Thu Jan 29 16:19:47 2026: candidate file: <camiseta.c>
-Thu Jan 29 16:19:47 2026: candidate file: <cancha.c>
-Thu Jan 29 16:19:47 2026: candidate file: <db.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas_meta.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas_anio.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas_generales.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas_lesiones.c>
-Thu Jan 29 16:19:47 2026: candidate file: <estadisticas_mes.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_all.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_all_mejorado.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_camisetas.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_camisetas_mejorado.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_estadisticas.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_estadisticas_generales.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_lesiones.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_lesiones_mejorado.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_partidos.c>
-Thu Jan 29 16:19:47 2026: candidate file: <export_records_rankings.c>
-Thu Jan 29 16:19:47 2026: candidate file: <import.c>
-Thu Jan 29 16:19:47 2026: candidate file: <lesion.c>
-Thu Jan 29 16:19:47 2026: candidate file: <logros.c>
-Thu Jan 29 16:19:47 2026: candidate file: <main.c>
-Thu Jan 29 16:19:47 2026: candidate file: <menu.c>
-Thu Jan 29 16:19:47 2026: candidate file: <partido.c>
-Thu Jan 29 16:19:47 2026: candidate file: <records_rankings.c>
-Thu Jan 29 16:19:47 2026: candidate file: <sqlite3.c>
-Thu Jan 29 16:19:47 2026: candidate file: <utils.c>
-Thu Jan 29 16:19:47 2026: candidate file: <equipo.c>
-Thu Jan 29 16:19:47 2026: candidate file: <torneo.c>
-Thu Jan 29 16:19:47 2026: candidate file: <temporada.c>
-Thu Jan 29 16:19:47 2026: candidate file: <financiamiento.c>
-Thu Jan 29 16:19:47 2026: candidate file: <settings.c>
-Thu Jan 29 16:19:47 2026: candidate file: <entrenador_ia.c>
-Thu Jan 29 16:19:47 2026: candidate file: <qr.c>
-Thu Jan 29 16:19:47 2026: env0: <=D:=D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC>
-Thu Jan 29 16:19:47 2026: env1: <ALLUSERSPROFILE=C:\ProgramData>
-Thu Jan 29 16:19:47 2026: env2: <AMDRMPATH=C:\Program Files\AMD\RyzenMaster\>
-Thu Jan 29 16:19:47 2026: env3: <API_FOOTBALL_KEY=2ff7036485b6424eaabfd6b16b62b12c>
-Thu Jan 29 16:19:47 2026: env4: <APPDATA=C:\Users\tefii\AppData\Roaming>
-Thu Jan 29 16:19:47 2026: env5: <ChocolateyInstall=C:\ProgramData\chocolatey>
-Thu Jan 29 16:19:47 2026: env6: <ChocolateyLastPathUpdate=134123794690947269>
-Thu Jan 29 16:19:47 2026: env7: <CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_23492_MBRQXLVXNXMFGKOY>
-Thu Jan 29 16:19:47 2026: env8: <CommonProgramFiles=C:\Program Files\Common Files>
-Thu Jan 29 16:19:47 2026: env9: <CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files>
-Thu Jan 29 16:19:47 2026: env10: <CommonProgramW6432=C:\Program Files\Common Files>
-Thu Jan 29 16:19:47 2026: env11: <COMPUTERNAME=HAMERPC>
-Thu Jan 29 16:19:47 2026: env12: <ComSpec=C:\WINDOWS\system32\cmd.exe>
-Thu Jan 29 16:19:47 2026: env13: <CONDA_PROMPT_MODIFIER=False>
-Thu Jan 29 16:19:47 2026: env14: <CYGWIN=wincmdln>
-Thu Jan 29 16:19:47 2026: env15: <DriverData=C:\Windows\System32\Drivers\DriverData>
-Thu Jan 29 16:19:47 2026: env16: <EFC_6012_1262719628=1>
-Thu Jan 29 16:19:47 2026: env17: <EFC_6012_1592913036=1>
-Thu Jan 29 16:19:47 2026: env18: <EFC_6012_2283032206=1>
-Thu Jan 29 16:19:47 2026: env19: <EFC_6012_2775293581=1>
-Thu Jan 29 16:19:47 2026: env20: <EFC_6012_3789132940=1>
-Thu Jan 29 16:19:47 2026: env21: <FOOTBALL_DATA_API_KEY=2ff7036485b6424eaabfd6b16b62b12c>
-Thu Jan 29 16:19:47 2026: env22: <FPS_BROWSER_APP_PROFILE_STRING=Internet Explorer>
-Thu Jan 29 16:19:47 2026: env23: <FPS_BROWSER_USER_PROFILE_STRING=Default>
-Thu Jan 29 16:19:47 2026: env24: <GIT_INSTALL_ROOT=C:\Users\tefii\scoop\apps\git\current>
-Thu Jan 29 16:19:47 2026: env25: <HOMEDRIVE=C:>
-Thu Jan 29 16:19:47 2026: env26: <HOMEPATH=\Users\tefii>
-Thu Jan 29 16:19:47 2026: env27: <LOCALAPPDATA=C:\Users\tefii\AppData\Local>
-Thu Jan 29 16:19:47 2026: env28: <LOGONSERVER=\\HAMERPC>
-Thu Jan 29 16:19:47 2026: env29: <NUMBER_OF_PROCESSORS=12>
-Thu Jan 29 16:19:47 2026: env30: <OneDrive=C:\Users\tefii\OneDrive>
-Thu Jan 29 16:19:47 2026: env31: <OS=Windows_NT>
-Thu Jan 29 16:19:47 2026: env32: <Path=C:\Program Files\PowerShell\7;c:\Users\tefii\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;c:\Users\tefii\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Python314\Scripts\;C:\Python314\;C:\Python313\Scripts\;C:\Python313\;C:\Program Files (x86)\oh-my-posh\bin\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\ProgramData\chocolatey\bin;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Calibre2\;C:\sqlite;C:\Program Files (x86)\PowerShell\7\;C:\Program Files\PowerShell\7\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\ProgramData\mingw64\mingw64\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\180\Tools\Binn\;C:\Program Files\Microsoft SQL Server\170\DTS\Binn\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\Pandoc\;C:\Program Files\nodejs\;C:\Program Files\LLVM\bin;C:\Users\tefii\AppData\Local\Programs\oh-my-posh\bin\;C:\Users\tefii\.local\bin;C:\Users\tefii\.console-ninja\.bin;C:\Users\tefii\scoop\shims;C:\Users\tefii\AppData\Local\Microsoft\WindowsApps;C:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\tefii\AppData\Local\Programs\mongosh\;C:\Users\tefii\AppData\Local\GitHubDesktop\bin;C:\Users\tefii\AppData\Local\UniGetUI\Chocolatey\bin;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Links;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\Fastfetch-cli.Fastfetch_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\MinGW\bin;C:\sqlite;C:\Users\tefii\.dotnet\tools;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\JohnMacFarlane.Pandoc_Microsoft.Winget.Source_8wekyb3d8bbwe\pandoc-3.8.3;C:\Users\tefii\AppData\Local\Programs\MiKTeX\miktex\bin\x64\;C:\Users\tefii\AppData\Roaming\npm;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\cURL.cURL_Microsoft.Winget.Source_8wekyb3d8bbwe\curl-8.18.0_2-win64-mingw/bin;;C:\Users\tefii\AppData\Local\Programs\Ollama;c:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\bundled\scripts\noConfigScripts;C:\Users\tefii\.console-ninja\.bin>
-Thu Jan 29 16:19:47 2026: env33: <PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL>
-Thu Jan 29 16:19:47 2026: env34: <POSH_CURSOR_COLUMN=1>
-Thu Jan 29 16:19:47 2026: env35: <POSH_CURSOR_LINE=13>
-Thu Jan 29 16:19:47 2026: env36: <POSH_INSTALLER=manual>
-Thu Jan 29 16:19:47 2026: env37: <POSH_SESSION_ID=57c4a849-b140-4967-a824-426f1cefb0f5>
-Thu Jan 29 16:19:47 2026: env38: <POSH_SHELL=pwsh>
-Thu Jan 29 16:19:47 2026: env39: <POSH_SHELL_VERSION=7.5.4>
-Thu Jan 29 16:19:47 2026: env40: <POSH_THEMES_PATH=C:\Users\tefii\AppData\Local\Programs\oh-my-posh\themes\>
-Thu Jan 29 16:19:47 2026: env41: <POWERLINE_COMMAND=oh-my-posh>
-Thu Jan 29 16:19:47 2026: env42: <POWERSHELL_DISTRIBUTION_CHANNEL=MSI:Windows 10 Pro>
-Thu Jan 29 16:19:47 2026: env43: <POWERSHELL_TELEMETRY_OPTOUT=1>
-Thu Jan 29 16:19:47 2026: env44: <PROCESSOR_ARCHITECTURE=AMD64>
-Thu Jan 29 16:19:47 2026: env45: <PROCESSOR_IDENTIFIER=AMD64 Family 23 Model 8 Stepping 2, AuthenticAMD>
-Thu Jan 29 16:19:47 2026: env46: <PROCESSOR_LEVEL=23>
-Thu Jan 29 16:19:47 2026: env47: <PROCESSOR_REVISION=0802>
-Thu Jan 29 16:19:47 2026: env48: <ProgramData=C:\ProgramData>
-Thu Jan 29 16:19:47 2026: env49: <ProgramFiles=C:\Program Files>
-Thu Jan 29 16:19:47 2026: env50: <ProgramFiles(x86)=C:\Program Files (x86)>
-Thu Jan 29 16:19:47 2026: env51: <ProgramW6432=C:\Program Files>
-Thu Jan 29 16:19:47 2026: env52: <PROMPT=$P$G>
-Thu Jan 29 16:19:47 2026: env53: <PSModulePath=C:\Users\tefii\OneDrive\Documentos\PowerShell\Modules;C:\Program Files\PowerShell\Modules;c:\program files\powershell\7\Modules;C:\Users\tefii\scoop\modules;C:\Users\tefii\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules;C:\Program Files\Microsoft SQL Server\170\Tools\PowerShell\Modules\>
-Thu Jan 29 16:19:47 2026: env54: <PUBLIC=C:\Users\Public>
-Thu Jan 29 16:19:47 2026: env55: <PYENV_VIRTUALENV_DISABLE_PROMPT=1>
-Thu Jan 29 16:19:47 2026: env56: <SESSIONNAME=Console>
-Thu Jan 29 16:19:47 2026: env57: <SystemDrive=C:>
-Thu Jan 29 16:19:47 2026: env58: <SystemRoot=C:\WINDOWS>
-Thu Jan 29 16:19:47 2026: env59: <TEMP=C:\Users\tefii\AppData\Local\Temp>
-Thu Jan 29 16:19:47 2026: env60: <TMP=C:\Users\tefii\AppData\Local\Temp>
-Thu Jan 29 16:19:47 2026: env61: <USERDOMAIN=HamerPc>
-Thu Jan 29 16:19:47 2026: env62: <USERDOMAIN_ROAMINGPROFILE=HamerPc>
-Thu Jan 29 16:19:47 2026: env63: <USERNAME=HamerPc>
-Thu Jan 29 16:19:47 2026: env64: <USERPROFILE=C:\Users\tefii>
-Thu Jan 29 16:19:47 2026: env65: <VBOX_MSI_INSTALL_PATH=C:\Program Files\Oracle\VirtualBox\>
-Thu Jan 29 16:19:47 2026: env66: <VIRTUAL_ENV_DISABLE_PROMPT=1>
-Thu Jan 29 16:19:47 2026: env67: <VSCODE_PYTHON_AUTOACTIVATE_GUARD=1>
-Thu Jan 29 16:19:47 2026: env68: <windir=C:\WINDOWS>
-Thu Jan 29 16:19:47 2026: env69: <BLACKBOX_ACTIVE=true>
-Thu Jan 29 16:19:47 2026: env70: <TERM_PROGRAM=vscode>
-Thu Jan 29 16:19:47 2026: env71: <TERM_PROGRAM_VERSION=1.108.2>
-Thu Jan 29 16:19:47 2026: env72: <LANG=es_ES.UTF-8>
-Thu Jan 29 16:19:47 2026: env73: <COLORTERM=truecolor>
-Thu Jan 29 16:19:47 2026: env74: <PYDEVD_DISABLE_FILE_VALIDATION=1>
-Thu Jan 29 16:19:47 2026: env75: <VSCODE_DEBUGPY_ADAPTER_ENDPOINTS=c:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\.noConfigDebugAdapterEndpoints\endpoint-c8ec9bcfe87477de.txt>
-Thu Jan 29 16:19:47 2026: env76: <BUNDLED_DEBUGPY_PATH=c:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\bundled\libs\debugpy>
-Thu Jan 29 16:19:47 2026: env77: <PYTHONSTARTUP=c:\Users\tefii\AppData\Roaming\Code\User\workspaceStorage\868213a557cb076439dd782f50418468\ms-python.python\pythonrc.py>
-Thu Jan 29 16:19:47 2026: env78: <PYTHON_BASIC_REPL=1>
-Thu Jan 29 16:19:47 2026: env79: <GIT_ASKPASS=c:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\resources\app\extensions\git\dist\askpass.sh>
-Thu Jan 29 16:19:47 2026: env80: <VSCODE_GIT_ASKPASS_NODE=C:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\Code.exe>
-Thu Jan 29 16:19:47 2026: env81: <VSCODE_GIT_ASKPASS_EXTRA_ARGS=>
-Thu Jan 29 16:19:47 2026: env82: <VSCODE_GIT_ASKPASS_MAIN=c:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\resources\app\extensions\git\dist\askpass-main.js>
-Thu Jan 29 16:19:47 2026: env83: <VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-aba0a5ee58-sock>
-Thu Jan 29 16:19:47 2026: env84: <VSCODE_INJECTION=1>
-Thu Jan 29 16:19:47 2026: env85: <_NO_DEBUG_HEAP=1>
-Thu Jan 29 16:19:47 2026: process created with pid: 13572
-Thu Jan 29 16:19:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT analisis.c -quiet -dumpdir MiFutbolC- -dumpbase analisis.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:47 2026: isWow64: 0
-Thu Jan 29 16:19:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13572
-Thu Jan 29 16:19:48 2026: process with pid 13572 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 17852
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccr3Znn8.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17852
-Thu Jan 29 16:19:48 2026: process with pid 17852 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 17692
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cJSON.c -quiet -dumpdir MiFutbolC- -dumpbase cJSON.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17692
-Thu Jan 29 16:19:48 2026: process with pid 17692 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 11820
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccxmRdpr.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 11820
-Thu Jan 29 16:19:48 2026: process with pid 11820 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 13232
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cJSON_Utils.c -quiet -dumpdir MiFutbolC- -dumpbase cJSON_Utils.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13232
-Thu Jan 29 16:19:48 2026: process with pid 13232 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 17748
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccbToIIY.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17748
-Thu Jan 29 16:19:48 2026: process with pid 17748 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 22308
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT camiseta.c -quiet -dumpdir MiFutbolC- -dumpbase camiseta.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 22308
-Thu Jan 29 16:19:48 2026: process with pid 22308 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 13792
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccDJdbUI.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 13792
-Thu Jan 29 16:19:48 2026: process with pid 13792 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 10052
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cancha.c -quiet -dumpdir MiFutbolC- -dumpbase cancha.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 10052
-Thu Jan 29 16:19:48 2026: process with pid 10052 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 17736
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccPDK3kz.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17736
-Thu Jan 29 16:19:48 2026: process with pid 17736 exit with code: 0 (0x0)
-Thu Jan 29 16:19:48 2026: process created with pid: 17456
-Thu Jan 29 16:19:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT db.c -quiet -dumpdir MiFutbolC- -dumpbase db.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:48 2026: isWow64: 0
-Thu Jan 29 16:19:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17456
-Thu Jan 29 16:19:50 2026: process with pid 17456 exit with code: 1 (0x1)
-Thu Jan 29 16:19:50 2026: process created with pid: 19524
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 19524
-Thu Jan 29 16:19:50 2026: process with pid 19524 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 24436
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccHgo1TV.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 24436
-Thu Jan 29 16:19:50 2026: process with pid 24436 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 22652
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_meta.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_meta.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 22652
-Thu Jan 29 16:19:50 2026: process with pid 22652 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 24564
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccJC8D3q.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 24564
-Thu Jan 29 16:19:50 2026: process with pid 24564 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 23576
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_anio.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_anio.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23576
-Thu Jan 29 16:19:50 2026: process with pid 23576 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 16268
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc1y7kP6.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 16268
-Thu Jan 29 16:19:50 2026: process with pid 16268 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 15872
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_generales.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_generales.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 15872
-Thu Jan 29 16:19:50 2026: process with pid 15872 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 21492
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccx4M0AW.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 21492
-Thu Jan 29 16:19:50 2026: process with pid 21492 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 20208
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_lesiones.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_lesiones.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20208
-Thu Jan 29 16:19:50 2026: process with pid 20208 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 23528
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccfkv1RY.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 23528
-Thu Jan 29 16:19:50 2026: process with pid 23528 exit with code: 0 (0x0)
-Thu Jan 29 16:19:50 2026: process created with pid: 7868
-Thu Jan 29 16:19:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_mes.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_mes.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:50 2026: isWow64: 0
-Thu Jan 29 16:19:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 7868
-Thu Jan 29 16:19:51 2026: process with pid 7868 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 22864
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccik6or3.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 22864
-Thu Jan 29 16:19:51 2026: process with pid 22864 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 16280
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export.c -quiet -dumpdir MiFutbolC- -dumpbase export.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 16280
-Thu Jan 29 16:19:51 2026: process with pid 16280 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 23612
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccZsxy2r.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 23612
-Thu Jan 29 16:19:51 2026: process with pid 23612 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 14376
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_all.c -quiet -dumpdir MiFutbolC- -dumpbase export_all.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14376
-Thu Jan 29 16:19:51 2026: process with pid 14376 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 22468
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccK3jEp1.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 22468
-Thu Jan 29 16:19:51 2026: process with pid 22468 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 23608
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_all_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_all_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23608
-Thu Jan 29 16:19:51 2026: process with pid 23608 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 18776
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccjS6qhI.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 18776
-Thu Jan 29 16:19:51 2026: process with pid 18776 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 14544
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_camisetas.c -quiet -dumpdir MiFutbolC- -dumpbase export_camisetas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14544
-Thu Jan 29 16:19:51 2026: process with pid 14544 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 21388
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccqqSxnz.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 21388
-Thu Jan 29 16:19:51 2026: process with pid 21388 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 8248
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_camisetas_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_camisetas_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 8248
-Thu Jan 29 16:19:51 2026: process with pid 8248 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 22380
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccBar9Pz.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 22380
-Thu Jan 29 16:19:51 2026: process with pid 22380 exit with code: 0 (0x0)
-Thu Jan 29 16:19:51 2026: process created with pid: 17468
-Thu Jan 29 16:19:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_estadisticas.c -quiet -dumpdir MiFutbolC- -dumpbase export_estadisticas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:51 2026: isWow64: 0
-Thu Jan 29 16:19:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17468
-Thu Jan 29 16:19:52 2026: process with pid 17468 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 17612
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccx46jyB.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17612
-Thu Jan 29 16:19:52 2026: process with pid 17612 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 23276
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_estadisticas_generales.c -quiet -dumpdir MiFutbolC- -dumpbase export_estadisticas_generales.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23276
-Thu Jan 29 16:19:52 2026: process with pid 23276 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 16524
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccxY98uL.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 16524
-Thu Jan 29 16:19:52 2026: process with pid 16524 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 18580
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_lesiones.c -quiet -dumpdir MiFutbolC- -dumpbase export_lesiones.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18580
-Thu Jan 29 16:19:52 2026: process with pid 18580 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 20780
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccBgwkD4.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 20780
-Thu Jan 29 16:19:52 2026: process with pid 20780 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 1968
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_lesiones_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_lesiones_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 1968
-Thu Jan 29 16:19:52 2026: process with pid 1968 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 8784
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccbdnzSA.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 8784
-Thu Jan 29 16:19:52 2026: process with pid 8784 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 7900
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_partidos.c -quiet -dumpdir MiFutbolC- -dumpbase export_partidos.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 7900
-Thu Jan 29 16:19:52 2026: process with pid 7900 exit with code: 1 (0x1)
-Thu Jan 29 16:19:52 2026: process created with pid: 20252
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_records_rankings.c -quiet -dumpdir MiFutbolC- -dumpbase export_records_rankings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20252
-Thu Jan 29 16:19:52 2026: process with pid 20252 exit with code: 1 (0x1)
-Thu Jan 29 16:19:52 2026: process created with pid: 18752
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT import.c -quiet -dumpdir MiFutbolC- -dumpbase import.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18752
-Thu Jan 29 16:19:52 2026: process with pid 18752 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 17084
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccJqjqaE.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17084
-Thu Jan 29 16:19:52 2026: process with pid 17084 exit with code: 0 (0x0)
-Thu Jan 29 16:19:52 2026: process created with pid: 23768
-Thu Jan 29 16:19:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT lesion.c -quiet -dumpdir MiFutbolC- -dumpbase lesion.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:52 2026: isWow64: 0
-Thu Jan 29 16:19:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23768
-Thu Jan 29 16:19:53 2026: process with pid 23768 exit with code: 0 (0x0)
-Thu Jan 29 16:19:53 2026: process created with pid: 16600
-Thu Jan 29 16:19:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc6LUQdJ.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:53 2026: isWow64: 0
-Thu Jan 29 16:19:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 16600
-Thu Jan 29 16:19:53 2026: process with pid 16600 exit with code: 0 (0x0)
-Thu Jan 29 16:19:53 2026: process created with pid: 23504
-Thu Jan 29 16:19:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT logros.c -quiet -dumpdir MiFutbolC- -dumpbase logros.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:53 2026: isWow64: 0
-Thu Jan 29 16:19:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23504
-Thu Jan 29 16:19:53 2026: process with pid 23504 exit with code: 0 (0x0)
-Thu Jan 29 16:19:53 2026: process created with pid: 22888
-Thu Jan 29 16:19:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccPeYCy1.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:53 2026: isWow64: 0
-Thu Jan 29 16:19:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 22888
-Thu Jan 29 16:19:53 2026: process with pid 22888 exit with code: 0 (0x0)
-Thu Jan 29 16:19:53 2026: process created with pid: 23288
-Thu Jan 29 16:19:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT main.c -quiet -dumpdir MiFutbolC- -dumpbase main.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:53 2026: isWow64: 0
-Thu Jan 29 16:19:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23288
-Thu Jan 29 16:19:54 2026: process with pid 23288 exit with code: 0 (0x0)
-Thu Jan 29 16:19:54 2026: process created with pid: 17756
-Thu Jan 29 16:19:54 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:54 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccznLDqw.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:54 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:54 2026: isWow64: 0
-Thu Jan 29 16:19:54 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17756
-Thu Jan 29 16:19:54 2026: process with pid 17756 exit with code: 0 (0x0)
-Thu Jan 29 16:19:54 2026: process created with pid: 20540
-Thu Jan 29 16:19:54 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:54 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT menu.c -quiet -dumpdir MiFutbolC- -dumpbase menu.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:54 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:54 2026: isWow64: 0
-Thu Jan 29 16:19:54 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20540
-Thu Jan 29 16:19:54 2026: process with pid 20540 exit with code: 0 (0x0)
-Thu Jan 29 16:19:54 2026: process created with pid: 22996
-Thu Jan 29 16:19:54 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:54 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccXAuwjc.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:54 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:54 2026: isWow64: 0
-Thu Jan 29 16:19:54 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 22996
-Thu Jan 29 16:19:54 2026: process with pid 22996 exit with code: 0 (0x0)
-Thu Jan 29 16:19:54 2026: process created with pid: 8520
-Thu Jan 29 16:19:54 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:54 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT partido.c -quiet -dumpdir MiFutbolC- -dumpbase partido.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:54 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:54 2026: isWow64: 0
-Thu Jan 29 16:19:54 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 8520
-Thu Jan 29 16:19:55 2026: process with pid 8520 exit with code: 0 (0x0)
-Thu Jan 29 16:19:55 2026: process created with pid: 14632
-Thu Jan 29 16:19:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:19:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccCeNe0b.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:55 2026: isWow64: 0
-Thu Jan 29 16:19:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 14632
-Thu Jan 29 16:19:55 2026: process with pid 14632 exit with code: 0 (0x0)
-Thu Jan 29 16:19:55 2026: process created with pid: 16724
-Thu Jan 29 16:19:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT records_rankings.c -quiet -dumpdir MiFutbolC- -dumpbase records_rankings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:55 2026: isWow64: 0
-Thu Jan 29 16:19:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 16724
-Thu Jan 29 16:19:55 2026: process with pid 16724 exit with code: 1 (0x1)
-Thu Jan 29 16:19:55 2026: process created with pid: 23480
-Thu Jan 29 16:19:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:19:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT sqlite3.c -quiet -dumpdir MiFutbolC- -dumpbase sqlite3.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:19:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:19:55 2026: isWow64: 0
-Thu Jan 29 16:19:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23480
-Thu Jan 29 16:20:03 2026: process with pid 23480 exit with code: 0 (0x0)
-Thu Jan 29 16:20:03 2026: process created with pid: 8644
-Thu Jan 29 16:20:03 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:03 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc11aIhy.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:03 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:03 2026: isWow64: 0
-Thu Jan 29 16:20:03 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 8644
-Thu Jan 29 16:20:04 2026: process with pid 8644 exit with code: 0 (0x0)
-Thu Jan 29 16:20:04 2026: process created with pid: 23460
-Thu Jan 29 16:20:04 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:04 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT utils.c -quiet -dumpdir MiFutbolC- -dumpbase utils.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:04 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:04 2026: isWow64: 0
-Thu Jan 29 16:20:04 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 23460
-Thu Jan 29 16:20:04 2026: process with pid 23460 exit with code: 1 (0x1)
-Thu Jan 29 16:20:04 2026: process created with pid: 18736
-Thu Jan 29 16:20:04 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:04 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT equipo.c -quiet -dumpdir MiFutbolC- -dumpbase equipo.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:04 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:04 2026: isWow64: 0
-Thu Jan 29 16:20:04 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18736
-Thu Jan 29 16:20:05 2026: process with pid 18736 exit with code: 0 (0x0)
-Thu Jan 29 16:20:05 2026: process created with pid: 24412
-Thu Jan 29 16:20:05 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:05 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccaIB0Ys.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:05 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:05 2026: isWow64: 0
-Thu Jan 29 16:20:05 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 24412
-Thu Jan 29 16:20:05 2026: process with pid 24412 exit with code: 0 (0x0)
-Thu Jan 29 16:20:05 2026: process created with pid: 10764
-Thu Jan 29 16:20:05 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:05 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT torneo.c -quiet -dumpdir MiFutbolC- -dumpbase torneo.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:05 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:05 2026: isWow64: 0
-Thu Jan 29 16:20:05 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 10764
-Thu Jan 29 16:20:06 2026: process with pid 10764 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 15516
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccI8ROLw.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 15516
-Thu Jan 29 16:20:06 2026: process with pid 15516 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 22092
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT temporada.c -quiet -dumpdir MiFutbolC- -dumpbase temporada.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 22092
-Thu Jan 29 16:20:06 2026: process with pid 22092 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 14408
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccMZ1KPR.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 14408
-Thu Jan 29 16:20:06 2026: process with pid 14408 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 14320
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT financiamiento.c -quiet -dumpdir MiFutbolC- -dumpbase financiamiento.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14320
-Thu Jan 29 16:20:06 2026: process with pid 14320 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 24356
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccogcrSx.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 24356
-Thu Jan 29 16:20:06 2026: process with pid 24356 exit with code: 0 (0x0)
-Thu Jan 29 16:20:06 2026: process created with pid: 15136
-Thu Jan 29 16:20:06 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:06 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT settings.c -quiet -dumpdir MiFutbolC- -dumpbase settings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:06 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:06 2026: isWow64: 0
-Thu Jan 29 16:20:06 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 15136
-Thu Jan 29 16:20:07 2026: process with pid 15136 exit with code: 0 (0x0)
-Thu Jan 29 16:20:07 2026: process created with pid: 5412
-Thu Jan 29 16:20:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccb65Q2v.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:07 2026: isWow64: 0
-Thu Jan 29 16:20:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 5412
-Thu Jan 29 16:20:07 2026: process with pid 5412 exit with code: 0 (0x0)
-Thu Jan 29 16:20:07 2026: process created with pid: 17808
-Thu Jan 29 16:20:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT entrenador_ia.c -quiet -dumpdir MiFutbolC- -dumpbase entrenador_ia.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:07 2026: isWow64: 0
-Thu Jan 29 16:20:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17808
-Thu Jan 29 16:20:08 2026: process with pid 17808 exit with code: 0 (0x0)
-Thu Jan 29 16:20:08 2026: process created with pid: 23136
-Thu Jan 29 16:20:08 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:08 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccnQ60jy.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:08 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:08 2026: isWow64: 0
-Thu Jan 29 16:20:08 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 23136
-Thu Jan 29 16:20:08 2026: process with pid 23136 exit with code: 0 (0x0)
-Thu Jan 29 16:20:08 2026: process created with pid: 24068
-Thu Jan 29 16:20:08 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
-Thu Jan 29 16:20:08 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT qr.c -quiet -dumpdir MiFutbolC- -dumpbase qr.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:08 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:08 2026: isWow64: 0
-Thu Jan 29 16:20:08 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 24068
-Thu Jan 29 16:20:08 2026: process with pid 24068 exit with code: 0 (0x0)
-Thu Jan 29 16:20:08 2026: process created with pid: 17960
-Thu Jan 29 16:20:08 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
-Thu Jan 29 16:20:08 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccr6ZzoI.o C:\Users\tefii\AppData\Local\Temp\cc1lnfa7.s>
-Thu Jan 29 16:20:08 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
-Thu Jan 29 16:20:08 2026: isWow64: 0
-Thu Jan 29 16:20:08 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17960
-Thu Jan 29 16:20:08 2026: process with pid 17960 exit with code: 0 (0x0)
-Thu Jan 29 16:20:08 2026: process with pid 15192 exit with code: 1 (0x1)
-Thu Jan 29 16:20:08 2026: finalizing json file
+Fri Jan 30 00:04:47 2026: build-wrapper, version 6.76 (win-x86-64)
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: windows version: 10.0, service pack: 0.0, build number: 26200, product type: 1
+Fri Jan 30 00:04:47 2026: current directory: D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
+Fri Jan 30 00:04:47 2026: cwd: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC>
+Fri Jan 30 00:04:47 2026: out-dir absolute path: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\bw-output>
+Fri Jan 30 00:04:47 2026: command line received: <gcc -Wall -g analisis.c cJSON.c cJSON_Utils.c camiseta.c cancha.c db.c estadisticas.c estadisticas_meta.c estadisticas_anio.c estadisticas_generales.c estadisticas_lesiones.c estadisticas_mes.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_estadisticas.c export_estadisticas_generales.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_records_rankings.c import.c lesion.c logros.c main.c menu.c partido.c records_rankings.c sqlite3.c utils.c equipo.c torneo.c temporada.c financiamiento.c settings.c comparator.c entrenador_ia.c qr.c -o MiFutbolC>
+Fri Jan 30 00:04:47 2026: initializing json file
+Fri Jan 30 00:04:47 2026: starting debug cycle
+Fri Jan 30 00:04:47 2026: process created with pid: 2336
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\gcc.exe>
+Fri Jan 30 00:04:47 2026: command line: <gcc -Wall -g analisis.c cJSON.c cJSON_Utils.c camiseta.c cancha.c db.c estadisticas.c estadisticas_meta.c estadisticas_anio.c estadisticas_generales.c estadisticas_lesiones.c estadisticas_mes.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_estadisticas.c export_estadisticas_generales.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_records_rankings.c import.c lesion.c logros.c main.c menu.c partido.c records_rankings.c sqlite3.c utils.c equipo.c torneo.c temporada.c financiamiento.c settings.c comparator.c entrenador_ia.c qr.c -o MiFutbolC>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: VirtualQueryEx 0000000000010BF8
+Fri Jan 30 00:04:47 2026: 	Offset 3064
+Fri Jan 30 00:04:47 2026: 	VirtualQueryEx Base	BaseAddr: 0000000000010000	AllocationBase: 0000000000010000	AllocationProtect: 0x4	Protect: 0x4	State: 0x1000	RegionSize: 131072	Type: 0x20000
+Fri Jan 30 00:04:47 2026: Read environment of size 6219
+Fri Jan 30 00:04:47 2026: candidate file: <analisis.c>
+Fri Jan 30 00:04:47 2026: candidate file: <cJSON.c>
+Fri Jan 30 00:04:47 2026: candidate file: <cJSON_Utils.c>
+Fri Jan 30 00:04:47 2026: candidate file: <camiseta.c>
+Fri Jan 30 00:04:47 2026: candidate file: <cancha.c>
+Fri Jan 30 00:04:47 2026: candidate file: <db.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas_meta.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas_anio.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas_generales.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas_lesiones.c>
+Fri Jan 30 00:04:47 2026: candidate file: <estadisticas_mes.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_all.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_all_mejorado.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_camisetas.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_camisetas_mejorado.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_estadisticas.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_estadisticas_generales.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_lesiones.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_lesiones_mejorado.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_partidos.c>
+Fri Jan 30 00:04:47 2026: candidate file: <export_records_rankings.c>
+Fri Jan 30 00:04:47 2026: candidate file: <import.c>
+Fri Jan 30 00:04:47 2026: candidate file: <lesion.c>
+Fri Jan 30 00:04:47 2026: candidate file: <logros.c>
+Fri Jan 30 00:04:47 2026: candidate file: <main.c>
+Fri Jan 30 00:04:47 2026: candidate file: <menu.c>
+Fri Jan 30 00:04:47 2026: candidate file: <partido.c>
+Fri Jan 30 00:04:47 2026: candidate file: <records_rankings.c>
+Fri Jan 30 00:04:47 2026: candidate file: <sqlite3.c>
+Fri Jan 30 00:04:47 2026: candidate file: <utils.c>
+Fri Jan 30 00:04:47 2026: candidate file: <equipo.c>
+Fri Jan 30 00:04:47 2026: candidate file: <torneo.c>
+Fri Jan 30 00:04:47 2026: candidate file: <temporada.c>
+Fri Jan 30 00:04:47 2026: candidate file: <financiamiento.c>
+Fri Jan 30 00:04:47 2026: candidate file: <settings.c>
+Fri Jan 30 00:04:47 2026: candidate file: <comparator.c>
+Fri Jan 30 00:04:47 2026: candidate file: <entrenador_ia.c>
+Fri Jan 30 00:04:47 2026: candidate file: <qr.c>
+Fri Jan 30 00:04:47 2026: env0: <ALLUSERSPROFILE=C:\ProgramData>
+Fri Jan 30 00:04:47 2026: env1: <AMDRMPATH=C:\Program Files\AMD\RyzenMaster\>
+Fri Jan 30 00:04:47 2026: env2: <API_FOOTBALL_KEY=2ff7036485b6424eaabfd6b16b62b12c>
+Fri Jan 30 00:04:47 2026: env3: <APPDATA=C:\Users\tefii\AppData\Roaming>
+Fri Jan 30 00:04:47 2026: env4: <BLACKBOX_ACTIVE=true>
+Fri Jan 30 00:04:47 2026: env5: <BUNDLED_DEBUGPY_PATH=c:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\bundled\libs\debugpy>
+Fri Jan 30 00:04:47 2026: env6: <CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_17576_UKKULJOSODJNUZTY>
+Fri Jan 30 00:04:47 2026: env7: <COLORTERM=truecolor>
+Fri Jan 30 00:04:47 2026: env8: <COMMONPROGRAMFILES=C:\Program Files\Common Files>
+Fri Jan 30 00:04:47 2026: env9: <COMPUTERNAME=HAMERPC>
+Fri Jan 30 00:04:47 2026: env10: <COMSPEC=C:\WINDOWS\system32\cmd.exe>
+Fri Jan 30 00:04:47 2026: env11: <CONDA_PROMPT_MODIFIER=False>
+Fri Jan 30 00:04:47 2026: env12: <ChocolateyInstall=C:\ProgramData\chocolatey>
+Fri Jan 30 00:04:47 2026: env13: <ChocolateyLastPathUpdate=134123794690947269>
+Fri Jan 30 00:04:47 2026: env14: <CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files>
+Fri Jan 30 00:04:47 2026: env15: <CommonProgramW6432=C:\Program Files\Common Files>
+Fri Jan 30 00:04:47 2026: env16: <CYGWIN=wincmdln>
+Fri Jan 30 00:04:47 2026: env17: <DriverData=C:\Windows\System32\Drivers\DriverData>
+Fri Jan 30 00:04:47 2026: env18: <EFC_9612_1262719628=1>
+Fri Jan 30 00:04:47 2026: env19: <EFC_9612_1592913036=1>
+Fri Jan 30 00:04:47 2026: env20: <EFC_9612_2283032206=1>
+Fri Jan 30 00:04:47 2026: env21: <EFC_9612_2775293581=1>
+Fri Jan 30 00:04:47 2026: env22: <EFC_9612_3789132940=1>
+Fri Jan 30 00:04:47 2026: env23: <EXEPATH=C:\Users\tefii\scoop\apps\git\2.52.0\bin>
+Fri Jan 30 00:04:47 2026: env24: <FOOTBALL_DATA_API_KEY=2ff7036485b6424eaabfd6b16b62b12c>
+Fri Jan 30 00:04:47 2026: env25: <GIT_ASKPASS=c:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\resources\app\extensions\git\dist\askpass.sh>
+Fri Jan 30 00:04:47 2026: env26: <GIT_INSTALL_ROOT=C:\Users\tefii\scoop\apps\git\current>
+Fri Jan 30 00:04:47 2026: env27: <HOME=C:\Users\tefii>
+Fri Jan 30 00:04:47 2026: env28: <HOMEDRIVE=C:>
+Fri Jan 30 00:04:47 2026: env29: <HOMEPATH=\Users\tefii>
+Fri Jan 30 00:04:47 2026: env30: <LANG=es_ES.UTF-8>
+Fri Jan 30 00:04:47 2026: env31: <LOCALAPPDATA=C:\Users\tefii\AppData\Local>
+Fri Jan 30 00:04:47 2026: env32: <LOGONSERVER=\\HAMERPC>
+Fri Jan 30 00:04:47 2026: env33: <MSYSTEM=MINGW64>
+Fri Jan 30 00:04:47 2026: env34: <NUMBER_OF_PROCESSORS=12>
+Fri Jan 30 00:04:47 2026: env35: <OS=Windows_NT>
+Fri Jan 30 00:04:47 2026: env36: <OneDrive=C:\Users\tefii\OneDrive>
+Fri Jan 30 00:04:47 2026: env37: <PATH=C:\Users\tefii\scoop\apps\git\2.52.0\mingw64\bin;C:\Users\tefii\scoop\apps\git\2.52.0\usr\bin;C:\Users\tefii\bin;C:\Program Files\PowerShell\7;C:\Users\tefii\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;C:\Users\tefii\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Python314\Scripts;C:\Python314;C:\Python313\Scripts;C:\Python313;C:\Program Files (x86)\oh-my-posh\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\WINDOWS\System32\OpenSSH;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\ProgramData\chocolatey\bin;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Calibre2;C:\sqlite;C:\Program Files (x86)\PowerShell\7;C:\Program Files\PowerShell\7;C:\Program Files\dotnet;C:\Program Files\Microsoft SQL Server\170\Tools\Binn;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn;C:\ProgramData\mingw64\mingw64\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Microsoft SQL Server\170\Tools\Binn;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\180\Tools\Binn;C:\Program Files\Microsoft SQL Server\170\DTS\Binn;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit;C:\Program Files\Pandoc;C:\Program Files\nodejs;C:\Users\tefii\AppData\Local\Programs\oh-my-posh\bin;C:\Users\tefii\.local\bin;C:\Users\tefii\.console-ninja\.bin;C:\Users\tefii\scoop\shims;C:\Users\tefii\AppData\Local\Microsoft\WindowsApps;C:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\tefii\AppData\Local\Programs\mongosh;C:\Users\tefii\AppData\Local\GitHubDesktop\bin;C:\Users\tefii\AppData\Local\UniGetUI\Chocolatey\bin;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Links;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\Fastfetch-cli.Fastfetch_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\MinGW\bin;C:\sqlite;C:\Users\tefii\.dotnet\tools;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\JohnMacFarlane.Pandoc_Microsoft.Winget.Source_8wekyb3d8bbwe\pandoc-3.8.3;C:\Users\tefii\AppData\Local\Programs\MiKTeX\miktex\bin\x64;C:\Users\tefii\AppData\Roaming\npm;C:\Users\tefii\AppData\Local\Microsoft\WinGet\Packages\cURL.cURL_Microsoft.Winget.Source_8wekyb3d8bbwe\curl-8.18.0_2-win64-mingw\bin;C:\Users\tefii\AppData\Local\Programs\Ollama;C:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\bundled\scripts\noConfigScripts;C:\Users\tefii\.console-ninja\.bin>
+Fri Jan 30 00:04:47 2026: env38: <PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL>
+Fri Jan 30 00:04:47 2026: env39: <PLINK_PROTOCOL=ssh>
+Fri Jan 30 00:04:47 2026: env40: <POSH_CURSOR_COLUMN=1>
+Fri Jan 30 00:04:47 2026: env41: <POSH_CURSOR_LINE=13>
+Fri Jan 30 00:04:47 2026: env42: <POSH_INSTALLER=manual>
+Fri Jan 30 00:04:47 2026: env43: <POSH_SESSION_ID=c5ae31af-27e4-4e4f-ae22-d83da1998532>
+Fri Jan 30 00:04:47 2026: env44: <POSH_SHELL=pwsh>
+Fri Jan 30 00:04:47 2026: env45: <POSH_SHELL_VERSION=7.5.4>
+Fri Jan 30 00:04:47 2026: env46: <POSH_THEMES_PATH=C:\Users\tefii\AppData\Local\Programs\oh-my-posh\themes\>
+Fri Jan 30 00:04:47 2026: env47: <POWERLINE_COMMAND=oh-my-posh>
+Fri Jan 30 00:04:47 2026: env48: <POWERSHELL_DISTRIBUTION_CHANNEL=MSI:Windows 10 Pro>
+Fri Jan 30 00:04:47 2026: env49: <POWERSHELL_TELEMETRY_OPTOUT=1>
+Fri Jan 30 00:04:47 2026: env50: <PROCESSOR_ARCHITECTURE=AMD64>
+Fri Jan 30 00:04:47 2026: env51: <PROCESSOR_IDENTIFIER=AMD64 Family 23 Model 8 Stepping 2, AuthenticAMD>
+Fri Jan 30 00:04:47 2026: env52: <PROCESSOR_LEVEL=23>
+Fri Jan 30 00:04:47 2026: env53: <PROCESSOR_REVISION=0802>
+Fri Jan 30 00:04:47 2026: env54: <PROGRAMFILES=C:\Program Files>
+Fri Jan 30 00:04:47 2026: env55: <PSModulePath=C:\Users\tefii\OneDrive\Documentos\PowerShell\Modules;C:\Program Files\PowerShell\Modules;c:\program files\powershell\7\Modules;C:\Users\tefii\scoop\modules;C:\Users\tefii\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules;C:\Program Files\Microsoft SQL Server\170\Tools\PowerShell\Modules\>
+Fri Jan 30 00:04:47 2026: env56: <PUBLIC=C:\Users\Public>
+Fri Jan 30 00:04:47 2026: env57: <PWD=D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC>
+Fri Jan 30 00:04:47 2026: env58: <PYDEVD_DISABLE_FILE_VALIDATION=1>
+Fri Jan 30 00:04:47 2026: env59: <PYENV_VIRTUALENV_DISABLE_PROMPT=1>
+Fri Jan 30 00:04:47 2026: env60: <PYTHONSTARTUP=c:\Users\tefii\AppData\Roaming\Code\User\workspaceStorage\868213a557cb076439dd782f50418468\ms-python.python\pythonrc.py>
+Fri Jan 30 00:04:47 2026: env61: <PYTHON_BASIC_REPL=1>
+Fri Jan 30 00:04:47 2026: env62: <ProgramData=C:\ProgramData>
+Fri Jan 30 00:04:47 2026: env63: <ProgramFiles(x86)=C:\Program Files (x86)>
+Fri Jan 30 00:04:47 2026: env64: <ProgramW6432=C:\Program Files>
+Fri Jan 30 00:04:47 2026: env65: <SESSIONNAME=Console>
+Fri Jan 30 00:04:47 2026: env66: <SHLVL=1>
+Fri Jan 30 00:04:47 2026: env67: <SYSTEMDRIVE=C:>
+Fri Jan 30 00:04:47 2026: env68: <SYSTEMROOT=C:\WINDOWS>
+Fri Jan 30 00:04:47 2026: env69: <TEMP=C:\Users\tefii\AppData\Local\Temp>
+Fri Jan 30 00:04:47 2026: env70: <TERM=xterm-256color>
+Fri Jan 30 00:04:47 2026: env71: <TERM_PROGRAM=vscode>
+Fri Jan 30 00:04:47 2026: env72: <TERM_PROGRAM_VERSION=1.108.2>
+Fri Jan 30 00:04:47 2026: env73: <TMP=C:\Users\tefii\AppData\Local\Temp>
+Fri Jan 30 00:04:47 2026: env74: <USERDOMAIN=HamerPc>
+Fri Jan 30 00:04:47 2026: env75: <USERDOMAIN_ROAMINGPROFILE=HamerPc>
+Fri Jan 30 00:04:47 2026: env76: <USERNAME=HamerPc>
+Fri Jan 30 00:04:47 2026: env77: <USERPROFILE=C:\Users\tefii>
+Fri Jan 30 00:04:47 2026: env78: <VBOX_MSI_INSTALL_PATH=C:\Program Files\Oracle\VirtualBox\>
+Fri Jan 30 00:04:47 2026: env79: <VIRTUAL_ENV_DISABLE_PROMPT=1>
+Fri Jan 30 00:04:47 2026: env80: <VSCODE_DEBUGPY_ADAPTER_ENDPOINTS=c:\Users\tefii\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\.noConfigDebugAdapterEndpoints\endpoint-c8ec9bcfe87477de.txt>
+Fri Jan 30 00:04:47 2026: env81: <VSCODE_GIT_ASKPASS_EXTRA_ARGS=>
+Fri Jan 30 00:04:47 2026: env82: <VSCODE_GIT_ASKPASS_MAIN=c:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\resources\app\extensions\git\dist\askpass-main.js>
+Fri Jan 30 00:04:47 2026: env83: <VSCODE_GIT_ASKPASS_NODE=C:\Users\tefii\AppData\Local\Programs\Microsoft VS Code\Code.exe>
+Fri Jan 30 00:04:47 2026: env84: <VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-aba0a5ee58-sock>
+Fri Jan 30 00:04:47 2026: env85: <VSCODE_INJECTION=1>
+Fri Jan 30 00:04:47 2026: env86: <VSCODE_PYTHON_AUTOACTIVATE_GUARD=1>
+Fri Jan 30 00:04:47 2026: env87: <WINDIR=C:\WINDOWS>
+Fri Jan 30 00:04:47 2026: env88: <_=./build-wrapper-win-x86-64.exe>
+Fri Jan 30 00:04:47 2026: env89: <_NO_DEBUG_HEAP=1>
+Fri Jan 30 00:04:47 2026: process created with pid: 14592
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT analisis.c -quiet -dumpdir MiFutbolC- -dumpbase analisis.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14592
+Fri Jan 30 00:04:47 2026: process with pid 14592 exit with code: 0 (0x0)
+Fri Jan 30 00:04:47 2026: process created with pid: 16012
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccKfTW3P.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 16012
+Fri Jan 30 00:04:47 2026: process with pid 16012 exit with code: 0 (0x0)
+Fri Jan 30 00:04:47 2026: process created with pid: 19316
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cJSON.c -quiet -dumpdir MiFutbolC- -dumpbase cJSON.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 19316
+Fri Jan 30 00:04:47 2026: process with pid 19316 exit with code: 0 (0x0)
+Fri Jan 30 00:04:47 2026: process created with pid: 2612
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccTkBzZN.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 2612
+Fri Jan 30 00:04:47 2026: process with pid 2612 exit with code: 0 (0x0)
+Fri Jan 30 00:04:47 2026: process created with pid: 18428
+Fri Jan 30 00:04:47 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:47 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cJSON_Utils.c -quiet -dumpdir MiFutbolC- -dumpbase cJSON_Utils.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:47 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:47 2026: isWow64: 0
+Fri Jan 30 00:04:47 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18428
+Fri Jan 30 00:04:48 2026: process with pid 18428 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 6304
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccPUSiyU.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 6304
+Fri Jan 30 00:04:48 2026: process with pid 6304 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 18656
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT camiseta.c -quiet -dumpdir MiFutbolC- -dumpbase camiseta.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18656
+Fri Jan 30 00:04:48 2026: process with pid 18656 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 21196
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccrYop2b.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 21196
+Fri Jan 30 00:04:48 2026: process with pid 21196 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 4984
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT cancha.c -quiet -dumpdir MiFutbolC- -dumpbase cancha.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 4984
+Fri Jan 30 00:04:48 2026: process with pid 4984 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 17360
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc7xYx8C.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17360
+Fri Jan 30 00:04:48 2026: process with pid 17360 exit with code: 0 (0x0)
+Fri Jan 30 00:04:48 2026: process created with pid: 13216
+Fri Jan 30 00:04:48 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:48 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT db.c -quiet -dumpdir MiFutbolC- -dumpbase db.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:48 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:48 2026: isWow64: 0
+Fri Jan 30 00:04:48 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13216
+Fri Jan 30 00:04:50 2026: process with pid 13216 exit with code: 1 (0x1)
+Fri Jan 30 00:04:50 2026: process created with pid: 14132
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14132
+Fri Jan 30 00:04:50 2026: process with pid 14132 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 3632
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccdMwSSN.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 3632
+Fri Jan 30 00:04:50 2026: process with pid 3632 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 2576
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_meta.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_meta.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 2576
+Fri Jan 30 00:04:50 2026: process with pid 2576 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 19004
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccrUx6A7.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 19004
+Fri Jan 30 00:04:50 2026: process with pid 19004 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 14388
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_anio.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_anio.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14388
+Fri Jan 30 00:04:50 2026: process with pid 14388 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 5404
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccT5i3fG.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 5404
+Fri Jan 30 00:04:50 2026: process with pid 5404 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 16084
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_generales.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_generales.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 16084
+Fri Jan 30 00:04:50 2026: process with pid 16084 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 668
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccXSzLJp.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 668
+Fri Jan 30 00:04:50 2026: process with pid 668 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 6840
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_lesiones.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_lesiones.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 6840
+Fri Jan 30 00:04:50 2026: process with pid 6840 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 17948
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc9rVeMk.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 17948
+Fri Jan 30 00:04:50 2026: process with pid 17948 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 18592
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT estadisticas_mes.c -quiet -dumpdir MiFutbolC- -dumpbase estadisticas_mes.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18592
+Fri Jan 30 00:04:50 2026: process with pid 18592 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 13324
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccDogoip.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 13324
+Fri Jan 30 00:04:50 2026: process with pid 13324 exit with code: 0 (0x0)
+Fri Jan 30 00:04:50 2026: process created with pid: 20436
+Fri Jan 30 00:04:50 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:50 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export.c -quiet -dumpdir MiFutbolC- -dumpbase export.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:50 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:50 2026: isWow64: 0
+Fri Jan 30 00:04:50 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20436
+Fri Jan 30 00:04:51 2026: process with pid 20436 exit with code: 1 (0x1)
+Fri Jan 30 00:04:51 2026: process created with pid: 2332
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_all.c -quiet -dumpdir MiFutbolC- -dumpbase export_all.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 2332
+Fri Jan 30 00:04:51 2026: process with pid 2332 exit with code: 0 (0x0)
+Fri Jan 30 00:04:51 2026: process created with pid: 3988
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cc6vPZsM.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 3988
+Fri Jan 30 00:04:51 2026: process with pid 3988 exit with code: 0 (0x0)
+Fri Jan 30 00:04:51 2026: process created with pid: 19720
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_all_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_all_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 19720
+Fri Jan 30 00:04:51 2026: process with pid 19720 exit with code: 0 (0x0)
+Fri Jan 30 00:04:51 2026: process created with pid: 12224
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cch69Prl.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 12224
+Fri Jan 30 00:04:51 2026: process with pid 12224 exit with code: 0 (0x0)
+Fri Jan 30 00:04:51 2026: process created with pid: 17508
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_camisetas.c -quiet -dumpdir MiFutbolC- -dumpbase export_camisetas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17508
+Fri Jan 30 00:04:51 2026: process with pid 17508 exit with code: 1 (0x1)
+Fri Jan 30 00:04:51 2026: process created with pid: 20012
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_camisetas_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_camisetas_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20012
+Fri Jan 30 00:04:51 2026: process with pid 20012 exit with code: 1 (0x1)
+Fri Jan 30 00:04:51 2026: process created with pid: 2696
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_estadisticas.c -quiet -dumpdir MiFutbolC- -dumpbase export_estadisticas.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 2696
+Fri Jan 30 00:04:51 2026: process with pid 2696 exit with code: 1 (0x1)
+Fri Jan 30 00:04:51 2026: process created with pid: 13780
+Fri Jan 30 00:04:51 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:51 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_estadisticas_generales.c -quiet -dumpdir MiFutbolC- -dumpbase export_estadisticas_generales.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:51 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:51 2026: isWow64: 0
+Fri Jan 30 00:04:51 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13780
+Fri Jan 30 00:04:51 2026: process with pid 13780 exit with code: 1 (0x1)
+Fri Jan 30 00:04:52 2026: process created with pid: 18952
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_lesiones.c -quiet -dumpdir MiFutbolC- -dumpbase export_lesiones.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 18952
+Fri Jan 30 00:04:52 2026: process with pid 18952 exit with code: 1 (0x1)
+Fri Jan 30 00:04:52 2026: process created with pid: 17240
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_lesiones_mejorado.c -quiet -dumpdir MiFutbolC- -dumpbase export_lesiones_mejorado.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17240
+Fri Jan 30 00:04:52 2026: process with pid 17240 exit with code: 0 (0x0)
+Fri Jan 30 00:04:52 2026: process created with pid: 18448
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccHvdagI.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 18448
+Fri Jan 30 00:04:52 2026: process with pid 18448 exit with code: 0 (0x0)
+Fri Jan 30 00:04:52 2026: process created with pid: 19372
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_partidos.c -quiet -dumpdir MiFutbolC- -dumpbase export_partidos.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 19372
+Fri Jan 30 00:04:52 2026: process with pid 19372 exit with code: 1 (0x1)
+Fri Jan 30 00:04:52 2026: process created with pid: 14908
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT export_records_rankings.c -quiet -dumpdir MiFutbolC- -dumpbase export_records_rankings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14908
+Fri Jan 30 00:04:52 2026: process with pid 14908 exit with code: 1 (0x1)
+Fri Jan 30 00:04:52 2026: process created with pid: 7148
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT import.c -quiet -dumpdir MiFutbolC- -dumpbase import.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 7148
+Fri Jan 30 00:04:52 2026: process with pid 7148 exit with code: 1 (0x1)
+Fri Jan 30 00:04:52 2026: process created with pid: 21088
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT lesion.c -quiet -dumpdir MiFutbolC- -dumpbase lesion.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 21088
+Fri Jan 30 00:04:52 2026: process with pid 21088 exit with code: 0 (0x0)
+Fri Jan 30 00:04:52 2026: process created with pid: 10848
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccxEnpSM.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 10848
+Fri Jan 30 00:04:52 2026: process with pid 10848 exit with code: 0 (0x0)
+Fri Jan 30 00:04:52 2026: process created with pid: 5084
+Fri Jan 30 00:04:52 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:52 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT logros.c -quiet -dumpdir MiFutbolC- -dumpbase logros.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:52 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:52 2026: isWow64: 0
+Fri Jan 30 00:04:52 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 5084
+Fri Jan 30 00:04:53 2026: process with pid 5084 exit with code: 0 (0x0)
+Fri Jan 30 00:04:53 2026: process created with pid: 2592
+Fri Jan 30 00:04:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccIlGO2R.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:53 2026: isWow64: 0
+Fri Jan 30 00:04:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 2592
+Fri Jan 30 00:04:53 2026: process with pid 2592 exit with code: 0 (0x0)
+Fri Jan 30 00:04:53 2026: process created with pid: 17424
+Fri Jan 30 00:04:53 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:53 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT main.c -quiet -dumpdir MiFutbolC- -dumpbase main.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:53 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:53 2026: isWow64: 0
+Fri Jan 30 00:04:53 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 17424
+Fri Jan 30 00:04:55 2026: process with pid 17424 exit with code: 0 (0x0)
+Fri Jan 30 00:04:55 2026: process created with pid: 20896
+Fri Jan 30 00:04:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccFQizy5.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:55 2026: isWow64: 0
+Fri Jan 30 00:04:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 20896
+Fri Jan 30 00:04:55 2026: process with pid 20896 exit with code: 0 (0x0)
+Fri Jan 30 00:04:55 2026: process created with pid: 15896
+Fri Jan 30 00:04:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT menu.c -quiet -dumpdir MiFutbolC- -dumpbase menu.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:55 2026: isWow64: 0
+Fri Jan 30 00:04:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 15896
+Fri Jan 30 00:04:55 2026: process with pid 15896 exit with code: 0 (0x0)
+Fri Jan 30 00:04:55 2026: process created with pid: 9812
+Fri Jan 30 00:04:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccU2m5Hy.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:55 2026: isWow64: 0
+Fri Jan 30 00:04:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 9812
+Fri Jan 30 00:04:55 2026: process with pid 9812 exit with code: 0 (0x0)
+Fri Jan 30 00:04:55 2026: process created with pid: 16388
+Fri Jan 30 00:04:55 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:55 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT partido.c -quiet -dumpdir MiFutbolC- -dumpbase partido.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:55 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:55 2026: isWow64: 0
+Fri Jan 30 00:04:55 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 16388
+Fri Jan 30 00:04:57 2026: process with pid 16388 exit with code: 0 (0x0)
+Fri Jan 30 00:04:57 2026: process created with pid: 7744
+Fri Jan 30 00:04:57 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:04:57 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\cctoHtHM.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:57 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:57 2026: isWow64: 0
+Fri Jan 30 00:04:57 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 7744
+Fri Jan 30 00:04:57 2026: process with pid 7744 exit with code: 0 (0x0)
+Fri Jan 30 00:04:57 2026: process created with pid: 21232
+Fri Jan 30 00:04:57 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:57 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT records_rankings.c -quiet -dumpdir MiFutbolC- -dumpbase records_rankings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:57 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:57 2026: isWow64: 0
+Fri Jan 30 00:04:57 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 21232
+Fri Jan 30 00:04:57 2026: process with pid 21232 exit with code: 1 (0x1)
+Fri Jan 30 00:04:57 2026: process created with pid: 13644
+Fri Jan 30 00:04:57 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:04:57 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT sqlite3.c -quiet -dumpdir MiFutbolC- -dumpbase sqlite3.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:04:57 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:04:57 2026: isWow64: 0
+Fri Jan 30 00:04:57 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13644
+Fri Jan 30 00:05:04 2026: process with pid 13644 exit with code: 0 (0x0)
+Fri Jan 30 00:05:04 2026: process created with pid: 13192
+Fri Jan 30 00:05:04 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:04 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccBeIrsG.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:04 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:04 2026: isWow64: 0
+Fri Jan 30 00:05:04 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 13192
+Fri Jan 30 00:05:05 2026: process with pid 13192 exit with code: 0 (0x0)
+Fri Jan 30 00:05:05 2026: process created with pid: 14388
+Fri Jan 30 00:05:05 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:05 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT utils.c -quiet -dumpdir MiFutbolC- -dumpbase utils.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:05 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:05 2026: isWow64: 0
+Fri Jan 30 00:05:05 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 14388
+Fri Jan 30 00:05:05 2026: process with pid 14388 exit with code: 1 (0x1)
+Fri Jan 30 00:05:05 2026: process created with pid: 20560
+Fri Jan 30 00:05:05 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:05 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT equipo.c -quiet -dumpdir MiFutbolC- -dumpbase equipo.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:05 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:05 2026: isWow64: 0
+Fri Jan 30 00:05:05 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20560
+Fri Jan 30 00:05:07 2026: process with pid 20560 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 14168
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccAoYeFX.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 14168
+Fri Jan 30 00:05:07 2026: process with pid 14168 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 15880
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT torneo.c -quiet -dumpdir MiFutbolC- -dumpbase torneo.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 15880
+Fri Jan 30 00:05:07 2026: process with pid 15880 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 5528
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccZNv04t.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 5528
+Fri Jan 30 00:05:07 2026: process with pid 5528 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 348
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT temporada.c -quiet -dumpdir MiFutbolC- -dumpbase temporada.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 348
+Fri Jan 30 00:05:07 2026: process with pid 348 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 18592
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccU92wkg.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 18592
+Fri Jan 30 00:05:07 2026: process with pid 18592 exit with code: 0 (0x0)
+Fri Jan 30 00:05:07 2026: process created with pid: 13324
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT financiamiento.c -quiet -dumpdir MiFutbolC- -dumpbase financiamiento.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 13324
+Fri Jan 30 00:05:07 2026: process with pid 13324 exit with code: 1 (0x1)
+Fri Jan 30 00:05:07 2026: process created with pid: 20436
+Fri Jan 30 00:05:07 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:07 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT settings.c -quiet -dumpdir MiFutbolC- -dumpbase settings.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:07 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:07 2026: isWow64: 0
+Fri Jan 30 00:05:07 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 20436
+Fri Jan 30 00:05:09 2026: process with pid 20436 exit with code: 0 (0x0)
+Fri Jan 30 00:05:09 2026: process created with pid: 1548
+Fri Jan 30 00:05:09 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:09 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccV5t1Ii.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:09 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:09 2026: isWow64: 0
+Fri Jan 30 00:05:09 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 1548
+Fri Jan 30 00:05:09 2026: process with pid 1548 exit with code: 0 (0x0)
+Fri Jan 30 00:05:09 2026: process created with pid: 21280
+Fri Jan 30 00:05:09 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:09 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT comparator.c -quiet -dumpdir MiFutbolC- -dumpbase comparator.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:09 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:09 2026: isWow64: 0
+Fri Jan 30 00:05:09 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 21280
+Fri Jan 30 00:05:09 2026: process with pid 21280 exit with code: 1 (0x1)
+Fri Jan 30 00:05:09 2026: process created with pid: 8660
+Fri Jan 30 00:05:09 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:09 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT entrenador_ia.c -quiet -dumpdir MiFutbolC- -dumpbase entrenador_ia.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:09 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:09 2026: isWow64: 0
+Fri Jan 30 00:05:09 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 8660
+Fri Jan 30 00:05:09 2026: process with pid 8660 exit with code: 0 (0x0)
+Fri Jan 30 00:05:09 2026: process created with pid: 21356
+Fri Jan 30 00:05:09 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe>
+Fri Jan 30 00:05:09 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/as.exe --gdwarf-5 -o C:\Users\tefii\AppData\Local\Temp\ccClQFJz.o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:09 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:09 2026: isWow64: 0
+Fri Jan 30 00:05:09 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\lib\gcc\x86_64-w64-mingw32\15.2.0\..\..\..\..\x86_64-w64-mingw32\bin\as.exe with pid: 21356
+Fri Jan 30 00:05:09 2026: process with pid 21356 exit with code: 0 (0x0)
+Fri Jan 30 00:05:09 2026: process created with pid: 10716
+Fri Jan 30 00:05:09 2026: image path name: <C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe>
+Fri Jan 30 00:05:09 2026: command line: <C:/ProgramData/mingw64/mingw64/bin/../libexec/gcc/x86_64-w64-mingw32/15.2.0/cc1.exe -quiet -iprefix C:/ProgramData/mingw64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/ -D_REENTRANT qr.c -quiet -dumpdir MiFutbolC- -dumpbase qr.c -dumpbase-ext .c -mtune=core2 -march=nocona -g -Wall -o C:\Users\tefii\AppData\Local\Temp\ccbrm67k.s>
+Fri Jan 30 00:05:09 2026: working directory: <D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC\>
+Fri Jan 30 00:05:09 2026: isWow64: 0
+Fri Jan 30 00:05:09 2026: skipping process C:\ProgramData\mingw64\mingw64\bin\..\libexec\gcc\x86_64-w64-mingw32\15.2.0\cc1.exe with pid: 10716
+Fri Jan 30 00:05:09 2026: process with pid 10716 exit with code: 1 (0x1)
+Fri Jan 30 00:05:09 2026: process with pid 2336 exit with code: 1 (0x1)
+Fri Jan 30 00:05:09 2026: finalizing json file

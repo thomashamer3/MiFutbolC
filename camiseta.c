@@ -39,13 +39,13 @@ void crear_camiseta()
     char nombre[50];
     input_string("Nombre y Numero: ", nombre, 50);
 
-    int id = obtener_siguiente_id("camiseta");
+    long long id = obtener_siguiente_id("camiseta");
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
                        "INSERT INTO camiseta(id, nombre) VALUES(?, ?)",
                        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);

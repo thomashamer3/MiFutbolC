@@ -342,7 +342,7 @@ void agregar_transaccion()
     }
 
     // Obtener el ID y asignarlo a la transacción
-    transaccion.id = obtener_siguiente_id("financiamiento");
+    transaccion.id = (int)obtener_siguiente_id("financiamiento");
 
     // Mostrar resumen y confirmar
     clear_screen();
@@ -1719,7 +1719,7 @@ void modificar_transaccion()
             int year = 0;
             int month = 0;
             int day = 0;
-if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day, sizeof(fecha_db)) == 3)
+if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day) == 3)
             {
                 snprintf(fecha_display, sizeof(fecha_display), "%02d/%02d/%04d", day, month, year);
             }

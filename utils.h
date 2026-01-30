@@ -226,7 +226,7 @@ int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
  * @param tabla Nombre de la tabla (ej: "camiseta", "partido")
  * @return El ID disponible más pequeño (comenzando desde 1 si está vacía)
  */
-int obtener_siguiente_id(const char *tabla);
+long long obtener_siguiente_id(const char *tabla);
 
 /**
  * @brief Verifica si hay registros en una tabla
