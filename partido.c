@@ -8,7 +8,7 @@
 #include "entrenador_ia.h"
 #include <stdio.h>
 #include <string.h>
-#include <windows.h>
+#include <Windows.h>
 #include <stdlib.h>
 #include <time.h>
 #include <process.h>

@@ -174,11 +174,10 @@ static void import_txt_csv_generic(const char *extension, bool skip_header,
  *
  * @param extension Extensión del archivo.
  * @param parser Función para parsear una fila HTML.
- * @param exists Función para verificar existencia.
  * @param insert Función para insertar.
  */
 static void import_html_generic(const char *extension, int (*parser)(char **),
-                                int (*exists)(void *), void (*insert)(void *))
+                                void (*insert)(void *))
 {
     char filename[1024];
     build_filename(extension, filename, sizeof(filename));
