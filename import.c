@@ -891,7 +891,7 @@ void importar_camisetas_txt()
         int id;
         char nombre[256];
 
-if (sscanf_s(line, "%d - %[^\n]", &id, nombre, (unsigned)_countof(nombre)) == 2)
+if (sscanf_s(line, "%d - %s", &id, nombre, (unsigned)_countof(nombre)) == 2)
         {
             trim_trailing_spaces(nombre);
             // Verificar si ya existe
@@ -1005,8 +1005,8 @@ static int procesar_partido_txt_line(const char *line)
 
     // Formato: CANCHA | FECHA | G:Goles A:Asistencias | CAMISETA | Res:Resultado Cli:Clima Dia:Dia RG:Rendimiento Can:Cansancio EA:EstadoAnimo | Comentario
 if (sscanf_s(line, "%[^|] | %[^|] | G:%d A:%d | %[^|] | Res:%[^ ] Cli:%[^ ] Dia:%[^ ] RG:%d Can:%d EA:%d | %[^\n]",
-               cancha, fecha, &goles, &asistencias, camiseta,
-               resultado_str, clima_str, dia_str, &rendimiento_general, &cansancio, &estado_animo, comentario) != 12)
+               cancha, sizeof(cancha), fecha, sizeof(fecha), &goles, &asistencias, camiseta, sizeof(camiseta),
+               resultado_str, sizeof(resultado_str), clima_str, sizeof(clima_str), dia_str, sizeof(dia_str), &rendimiento_general, &cansancio, &estado_animo, comentario, sizeof(comentario)) != 12)
         return 0;
 
     int resultado = convertir_resultado(resultado_str);
@@ -1378,8 +1378,8 @@ void importar_camisetas_csv()
         int id;
         char nombre[256];
 
-        if (sscanf(line, "%d,%[^\n]", &id, nombre) == 2)
-        {
+if (sscanf_s(line, "%d,%s", &id, nombre, (unsigned)_countof(nombre)) == 2)
+{
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;
             sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta WHERE id = ?", -1, &check_stmt, NULL);
@@ -1604,7 +1604,7 @@ void importar_lesiones_csv()
         char descripcion[512];
         char fecha[256];
 
-if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%[^\n]", &id, jugador, (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo), descripcion, (unsigned)_countof(descripcion), fecha, (unsigned)_countof(fecha)) == 5)
+if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%s", &id, jugador, (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo), descripcion, (unsigned)_countof(descripcion), fecha, (unsigned)_countof(fecha)) == 5)
         {
             // Verificar si ya existe
             sqlite3_stmt *check_stmt;

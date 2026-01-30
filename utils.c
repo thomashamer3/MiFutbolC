@@ -182,7 +182,7 @@ double input_double(const char *msg)
 
         process_numeric_input(buffer, processed, sizeof(processed));
 
-        if (sscanf(processed, "%lf", &v) == 1)
+        if (sscanf_s(processed, "%lf", &v) == 1)
             return v;
         printf("Entrada inválida. Ingrese un número válido (ej: 250, 1.500, "
                "12.500, 250.000): ");
