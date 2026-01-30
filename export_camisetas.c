@@ -16,29 +16,6 @@
 #include <string.h>
 
 /**
- * @brief Estructura para almacenar datos de camiseta
- *
- * Esta estructura centraliza los datos de camiseta que se utilizan en todas
- * las funciones de exportación, evitando la duplicación de código y facilitando
- * el mantenimiento.
- */
-typedef struct
-{
-    int id;
-    const char *nombre;
-    int total_goles;
-    int total_asistencias;
-    int total_partidos;
-    int victorias;
-    int empates;
-    int derrotas;
-    int total_lesiones;
-    double rendimiento_promedio;
-    double cansancio_promedio;
-    double estado_animo_promedio;
-} CamisetaData;
-
-/**
  * @brief Obtiene los datos de camisetas de la base de datos
  *
  * Función estática que encapsula la consulta SQL común utilizada por todas
@@ -89,53 +66,242 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
     return stmt;
 }
 
+/**
+ * @brief Configuración para exportación genérica
+ *
+ * Estructura que define los parámetros para una exportación genérica,
+ * permitiendo reutilizar el código común para diferentes formatos.
+ */
+typedef struct
+{
+    const char *filename;           /**< Nombre del archivo de salida */
+    void *context;                  /**< Contexto adicional (ej. cJSON root para JSON) */
+    void (*write_header)(FILE *f, void *context); /**< Función para escribir encabezado */
+    void (*write_row)(FILE *f, sqlite3_stmt *stmt, void *context); /**< Función para escribir fila */
+    void (*write_footer)(FILE *f, void *context); /**< Función para escribir pie */
+} ExportConfig;
+
+/**
+ * @brief Abre un archivo de exportación con manejo de errores
+ *
+ * Función auxiliar que encapsula la apertura de archivos de exportación
+ * y el manejo de errores, evitando duplicación de código.
+ *
+ * @param filename Nombre del archivo a abrir
+ * @param stmt Statement de SQLite para liberar en caso de error
+ * @return FILE* Puntero al archivo abierto, o NULL si falla
+ */
+static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
+{
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || f == NULL)
+    {
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+    return f;
+}
+
+/**
+ * @brief Función genérica para exportar camisetas
+ *
+ * Implementa el flujo común de exportación utilizando una configuración
+ * que define cómo escribir encabezado, filas y pie para cada formato.
+ *
+ * @param config Configuración de exportación
+ */
+static void export_camisetas_generic(ExportConfig *config)
+{
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
+    if (!stmt) return;
+
+    FILE *f = open_export_file(config->filename, stmt);
+    if (!f) return;
+
+    // Escribir encabezado
+    if (config->write_header)
+        config->write_header(f, config->context);
+
+    // Procesar filas
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        config->write_row(f, stmt, config->context);
+    }
+
+    // Escribir pie
+    if (config->write_footer)
+        config->write_footer(f, config->context);
+
+    sqlite3_finalize(stmt);
+    printf("Archivo exportado a: %s\n", get_export_path(config->filename));
+    fclose(f);
+}
+
+/** @name Funciones auxiliares para exportación */
+/** @{ */
+
+/**
+ * @brief Escribe el encabezado CSV
+ */
+static void write_csv_header(FILE *f, void *context)
+{
+    fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio\n");
+}
+
+/**
+ * @brief Escribe una fila CSV
+ */
+static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
+{
+    fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f\n",
+            sqlite3_column_int(stmt, 0),
+            sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3),
+            sqlite3_column_int(stmt, 4),
+            sqlite3_column_int(stmt, 5),
+            sqlite3_column_int(stmt, 6),
+            sqlite3_column_int(stmt, 7),
+            sqlite3_column_int(stmt, 8),
+            sqlite3_column_double(stmt, 9),
+            sqlite3_column_double(stmt, 10),
+            sqlite3_column_double(stmt, 11));
+}
+
+/**
+ * @brief Escribe el encabezado TXT
+ */
+static void write_txt_header(FILE *f, void *context)
+{
+    fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
+}
+
+/**
+ * @brief Escribe una fila TXT
+ */
+static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
+{
+    fprintf(f, "ID: %d - Nombre: %s\n"
+            "  Goles Totales: %d\n"
+            "  Asistencias Totales: %d\n"
+            "  Partidos Totales: %d\n"
+            "  Victorias: %d\n"
+            "  Empates: %d\n"
+            "  Derrotas: %d\n"
+            "  Lesiones Totales: %d\n"
+            "  Rendimiento Promedio: %.2f\n"
+            "  Cansancio Promedio: %.2f\n"
+            "  Estado de Animo Promedio: %.2f\n\n",
+            sqlite3_column_int(stmt, 0),
+            sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3),
+            sqlite3_column_int(stmt, 4),
+            sqlite3_column_int(stmt, 5),
+            sqlite3_column_int(stmt, 6),
+            sqlite3_column_int(stmt, 7),
+            sqlite3_column_int(stmt, 8),
+            sqlite3_column_double(stmt, 9),
+            sqlite3_column_double(stmt, 10),
+            sqlite3_column_double(stmt, 11));
+}
+
+/**
+ * @brief Escribe una fila JSON (agrega objeto al array)
+ */
+static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context)
+{
+    cJSON *root = (cJSON *)context;
+    cJSON *item = cJSON_CreateObject();
+    cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
+    cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
+    cJSON_AddNumberToObject(item, "total_goles", sqlite3_column_int(stmt, 2));
+    cJSON_AddNumberToObject(item, "total_asistencias", sqlite3_column_int(stmt, 3));
+    cJSON_AddNumberToObject(item, "total_partidos", sqlite3_column_int(stmt, 4));
+    cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 5));
+    cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 6));
+    cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 7));
+    cJSON_AddNumberToObject(item, "total_lesiones", sqlite3_column_int(stmt, 8));
+    cJSON_AddNumberToObject(item, "rendimiento_promedio", sqlite3_column_double(stmt, 9));
+    cJSON_AddNumberToObject(item, "cansancio_promedio", sqlite3_column_double(stmt, 10));
+    cJSON_AddNumberToObject(item, "estado_animo_promedio", sqlite3_column_double(stmt, 11));
+    cJSON_AddItemToArray(root, item);
+}
+
+/**
+ * @brief Escribe el pie JSON (imprime el JSON al archivo)
+ */
+static void write_json_footer(FILE *f, void *context)
+{
+    cJSON *root = (cJSON *)context;
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+    free(json_string);
+    cJSON_Delete(root);
+}
+
+/**
+ * @brief Escribe el encabezado HTML
+ */
+static void write_html_header(FILE *f, void *context)
+{
+    fprintf(f,
+            "<html><body><h1>Camisetas con Estadisticas</h1><table border='1'>"
+            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th></tr>");
+}
+
+/**
+ * @brief Escribe una fila HTML
+ */
+static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
+{
+    fprintf(f,
+            "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
+            sqlite3_column_int(stmt, 0),
+            sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3),
+            sqlite3_column_int(stmt, 4),
+            sqlite3_column_int(stmt, 5),
+            sqlite3_column_int(stmt, 6),
+            sqlite3_column_int(stmt, 7),
+            sqlite3_column_int(stmt, 8),
+            sqlite3_column_double(stmt, 9),
+            sqlite3_column_double(stmt, 10),
+            sqlite3_column_double(stmt, 11));
+}
+
+/**
+ * @brief Escribe el pie HTML
+ */
+static void write_html_footer(FILE *f, void *context)
+{
+    fprintf(f, "</table></body></html>");
+}
+
+/** @} */
+
 /** @name Funciones de exportación de camisetas */
 /** @{ */
 
 /**
  * @brief Exporta las camisetas a un archivo CSV
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
+ * Utiliza la función genérica de exportación para evitar duplicación de código.
  * El formato CSV es ideal para importación en hojas de cálculo y análisis de datos.
  */
 void exportar_camisetas_csv()
 {
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-
-errno_t err = fopen_s(&f, get_export_path("camisetas.csv"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    // Escribir encabezado CSV
-    fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio\n");
-
-    // Procesar cada fila de resultados
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_double(stmt, 9),
-                sqlite3_column_double(stmt, 10),
-                sqlite3_column_double(stmt, 11));
-    }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("camisetas.csv"));
-    fclose(f);
+    ExportConfig config = {
+        .filename = "camisetas.csv",
+        .context = NULL,
+        .write_header = write_csv_header,
+        .write_row = write_csv_row,
+        .write_footer = NULL
+    };
+    export_camisetas_generic(&config);
 }
 
 /**
@@ -197,104 +363,38 @@ if (err != 0 || f == NULL)
 /**
  * @brief Exporta las camisetas a un archivo JSON
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
+ * Utiliza la función genérica de exportación para evitar duplicación de código.
  * El formato JSON es ideal para APIs y aplicaciones web que necesitan datos estructurados.
  */
 void exportar_camisetas_json()
 {
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-
-errno_t err = fopen_s(&f, get_export_path("camisetas.json"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    // Crear estructura JSON y procesar resultados
     cJSON *root = cJSON_CreateArray();
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
-        cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
-        cJSON_AddNumberToObject(item, "total_goles", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(item, "total_asistencias", sqlite3_column_int(stmt, 3));
-        cJSON_AddNumberToObject(item, "total_partidos", sqlite3_column_int(stmt, 4));
-        cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 5));
-        cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 6));
-        cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 7));
-        cJSON_AddNumberToObject(item, "total_lesiones", sqlite3_column_int(stmt, 8));
-        cJSON_AddNumberToObject(item, "rendimiento_promedio", sqlite3_column_double(stmt, 9));
-        cJSON_AddNumberToObject(item, "cansancio_promedio", sqlite3_column_double(stmt, 10));
-        cJSON_AddNumberToObject(item, "estado_animo_promedio", sqlite3_column_double(stmt, 11));
-        cJSON_AddItemToArray(root, item);
-    }
-
-    // Escribir JSON al archivo y liberar recursos
-    char *json_string = cJSON_Print(root);
-    fprintf(f, "%s", json_string);
-
-    free(json_string);
-    cJSON_Delete(root);
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("camisetas.json"));
-    fclose(f);
+    ExportConfig config = {
+        .filename = "camisetas.json",
+        .context = root,
+        .write_header = NULL,  // No header needed for JSON
+        .write_row = write_json_row,
+        .write_footer = write_json_footer
+    };
+    export_camisetas_generic(&config);
 }
 
 /**
  * @brief Exporta las camisetas a un archivo HTML
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
+ * Utiliza la función genérica de exportación para evitar duplicación de código.
  * El formato HTML es ideal para visualización en navegadores web y reportes interactivos.
  */
 void exportar_camisetas_html()
 {
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-
-errno_t err = fopen_s(&f, get_export_path("camisetas.html"), "w");
-if (err != 0 || f == NULL)
-    if (!f)
-    {
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    // Escribir encabezado HTML y estructura de tabla
-    fprintf(f,
-            "<html><body><h1>Camisetas con Estadisticas</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th></tr>");
-
-    // Procesar cada fila de resultados y generar filas HTML
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(f,
-                "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_double(stmt, 9),
-                sqlite3_column_double(stmt, 10),
-                sqlite3_column_double(stmt, 11));
-    }
-
-    // Cerrar estructura HTML
-    fprintf(f, "</table></body></html>");
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("camisetas.html"));
-    fclose(f);
+    ExportConfig config = {
+        .filename = "camisetas.html",
+        .context = NULL,
+        .write_header = write_html_header,
+        .write_row = write_html_row,
+        .write_footer = write_html_footer
+    };
+    export_camisetas_generic(&config);
 }
 
 /** @} */ /* End of Doxygen group */

@@ -14,6 +14,82 @@
 #include <string.h>
 #include <time.h>
 
+/**
+ * @brief Función auxiliar para generar el CASE WHEN para clima
+ * @return Cadena SQL con el CASE WHEN para convertir clima numérico a texto
+ */
+static const char* get_clima_case_sql()
+{
+    return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' END";
+}
+
+/**
+ * @brief Función auxiliar para generar el CASE WHEN para niveles (estado_animo/cansancio)
+ * @param columna Nombre de la columna ('estado_animo' o 'cansancio')
+ * @return Cadena SQL con el CASE WHEN para convertir rangos numéricos a texto
+ */
+static const char* get_nivel_case_sql(const char* columna)
+{
+    static char sql[256];
+    snprintf(sql, sizeof(sql),
+             "CASE WHEN %s <= 3 THEN 'Bajo (1-3)' WHEN %s <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END",
+             columna, columna);
+    return sql;
+}
+
+/**
+ * @brief Función genérica para mostrar estadísticas por día de la semana
+ * @param titulo Título a mostrar
+ * @param columna Columna a promediar ('rendimiento_general', 'goles', 'asistencias')
+ * @param order_by Orden ('DESC' o 'ASC')
+ * @param limit Límite de resultados (0 para sin límite)
+ */
+static void mostrar_por_dia_semana(const char* titulo, const char* columna, const char* order_by, int limit)
+{
+    clear_screen();
+    print_header(titulo);
+
+    // Usar la funcion para remover tildes de los textos
+    printf("\n%s\n", remover_tildes(titulo));
+    printf("----------------------------------------\n");
+
+    sqlite3_stmt *stmt;
+    char sql[1024];
+    const char* limit_clause = (limit > 0) ? " LIMIT 1" : "";
+
+    snprintf(sql, sizeof(sql),
+             "WITH dias_semana AS ("
+             "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
+             "SELECT 1, 'Lunes' UNION ALL "
+             "SELECT 2, 'Martes' UNION ALL "
+             "SELECT 3, 'Miercoles' UNION ALL "
+             "SELECT 4, 'Jueves' UNION ALL "
+             "SELECT 5, 'Viernes' UNION ALL "
+             "SELECT 6, 'Sabado'"
+             ") "
+             "SELECT ds.dia_nombre, "
+             "ROUND(COALESCE(AVG(p.%s), 0), 2) AS promedio "
+             "FROM dias_semana ds "
+             "LEFT JOIN partido p ON CAST(strftime('%%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
+             "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
+             "GROUP BY ds.dia_num, ds.dia_nombre "
+             "ORDER BY promedio %s%s",
+             columna, order_by, limit_clause);
+
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
+        double promedio = sqlite3_column_double(stmt, 1);
+
+        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 // Array de días de la semana en español
 const char* dias[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"};
 
@@ -242,8 +318,11 @@ void mostrar_rendimiento_promedio_por_clima()
     clear_screen();
     print_header("RENDIMIENTO PROMEDIO POR CLIMA");
 
-    query("Rendimiento Promedio por Clima",
-          "SELECT CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' END AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY clima");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY clima",
+             get_clima_case_sql());
+    query("Rendimiento Promedio por Clima", sql);
 
     pause_console();
 }
@@ -256,8 +335,11 @@ void mostrar_goles_por_clima()
     clear_screen();
     print_header("GOLES POR CLIMA");
 
-    query("Goles por Clima",
-          "SELECT CASE clima WHEN 1 THEN 'Despejado' WHEN 2 THEN 'Nublado' WHEN 3 THEN 'Lluvia' WHEN 4 THEN 'Ventoso' WHEN 5 THEN 'Mucho Calor' WHEN 6 THEN 'Mucho Frio' END AS clima_texto, SUM(goles) FROM partido GROUP BY clima ORDER BY clima");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS clima_texto, SUM(goles) FROM partido GROUP BY clima ORDER BY clima",
+             get_clima_case_sql());
+    query("Goles por Clima", sql);
 
     pause_console();
 }
@@ -270,8 +352,11 @@ void mostrar_asistencias_por_clima()
     clear_screen();
     print_header("ASISTENCIAS POR CLIMA");
 
-    query("Asistencias por Clima",
-          "SELECT CASE clima WHEN 1 THEN 'Despejado' WHEN 2 THEN 'Nublado' WHEN 3 THEN 'Lluvia' WHEN 4 THEN 'Ventoso' WHEN 5 THEN 'Mucho Calor' WHEN 6 THEN 'Mucho Frio' END AS clima_texto, SUM(asistencias) FROM partido GROUP BY clima ORDER BY clima");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS clima_texto, SUM(asistencias) FROM partido GROUP BY clima ORDER BY clima",
+             get_clima_case_sql());
+    query("Asistencias por Clima", sql);
 
     pause_console();
 }
@@ -284,8 +369,11 @@ void mostrar_clima_mejor_rendimiento()
     clear_screen();
     print_header("CLIMA DONDE SE RINDE MEJOR");
 
-    query("Clima con Mejor Rendimiento Promedio",
-          "SELECT CASE clima WHEN 1 THEN 'Despejado' WHEN 2 THEN 'Nublado' WHEN 3 THEN 'Lluvia' WHEN 4 THEN 'Ventoso' WHEN 5 THEN 'Mucho Calor' WHEN 6 THEN 'Mucho Frio' END AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC LIMIT 1");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC LIMIT 1",
+             get_clima_case_sql());
+    query("Clima con Mejor Rendimiento Promedio", sql);
 
     pause_console();
 }
@@ -298,8 +386,11 @@ void mostrar_clima_peor_rendimiento()
     clear_screen();
     print_header("CLIMA DONDE SE RINDE PEOR");
 
-    query("Clima con Peor Rendimiento Promedio",
-          "SELECT CASE clima WHEN 1 THEN 'Despejado' WHEN 2 THEN 'Nublado' WHEN 3 THEN 'Lluvia' WHEN 4 THEN 'Ventoso' WHEN 5 THEN 'Mucho Calor' WHEN 6 THEN 'Mucho Frio' END AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) ASC LIMIT 1");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) ASC LIMIT 1",
+             get_clima_case_sql());
+    query("Clima con Peor Rendimiento Promedio", sql);
 
     pause_console();
 }
@@ -309,45 +400,7 @@ void mostrar_clima_peor_rendimiento()
  */
 void mostrar_mejor_dia_semana()
 {
-    clear_screen();
-    print_header("MEJOR DIA DE LA SEMANA");
-
-    // Usar la funcion para remover tildes de los textos
-    printf("\n%s\n", remover_tildes("Mejor Dia de la Semana"));
-    printf("----------------------------------------\n");
-
-    // Crear una consulta que garantice que todos los días de la semana aparezcan
-    sqlite3_stmt *stmt;
-    const char *sql = "WITH dias_semana AS ("
-                      "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
-                      "SELECT 1, 'Lunes' UNION ALL "
-                      "SELECT 2, 'Martes' UNION ALL "
-                      "SELECT 3, 'Miercoles' UNION ALL "
-                      "SELECT 4, 'Jueves' UNION ALL "
-                      "SELECT 5, 'Viernes' UNION ALL "
-                      "SELECT 6, 'Sabado'"
-                      ") "
-                      "SELECT ds.dia_nombre, "
-                      "ROUND(COALESCE(AVG(p.rendimiento_general), 0), 2) AS promedio_rendimiento "
-                      "FROM dias_semana ds "
-                      "LEFT JOIN partido p ON CAST(strftime('%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
-                      "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
-                      "GROUP BY ds.dia_num, ds.dia_nombre "
-                      "ORDER BY promedio_rendimiento DESC LIMIT 1";
-
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
-        double promedio = sqlite3_column_double(stmt, 1);
-
-        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_por_dia_semana("MEJOR DIA DE LA SEMANA", "rendimiento_general", "DESC", 1);
 }
 
 /**
@@ -355,45 +408,7 @@ void mostrar_mejor_dia_semana()
  */
 void mostrar_peor_dia_semana()
 {
-    clear_screen();
-    print_header("PEOR DIA DE LA SEMANA");
-
-    // Usar la funcion para remover tildes de los textos
-    printf("\n%s\n", remover_tildes("Peor Dia de la Semana"));
-    printf("----------------------------------------\n");
-
-    // Crear una consulta que garantice que todos los días de la semana aparezcan
-    sqlite3_stmt *stmt;
-    const char *sql = "WITH dias_semana AS ("
-                      "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
-                      "SELECT 1, 'Lunes' UNION ALL "
-                      "SELECT 2, 'Martes' UNION ALL "
-                      "SELECT 3, 'Miercoles' UNION ALL "
-                      "SELECT 4, 'Jueves' UNION ALL "
-                      "SELECT 5, 'Viernes' UNION ALL "
-                      "SELECT 6, 'Sabado'"
-                      ") "
-                      "SELECT ds.dia_nombre, "
-                      "ROUND(COALESCE(AVG(p.rendimiento_general), 0), 2) AS promedio_rendimiento "
-                      "FROM dias_semana ds "
-                      "LEFT JOIN partido p ON CAST(strftime('%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
-                      "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
-                      "GROUP BY ds.dia_num, ds.dia_nombre "
-                      "ORDER BY promedio_rendimiento ASC LIMIT 1";
-
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
-        double promedio = sqlite3_column_double(stmt, 1);
-
-        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_por_dia_semana("PEOR DIA DE LA SEMANA", "rendimiento_general", "ASC", 1);
 }
 
 /**
@@ -401,45 +416,7 @@ void mostrar_peor_dia_semana()
  */
 void mostrar_goles_promedio_por_dia()
 {
-    clear_screen();
-    print_header("GOLES PROMEDIO POR DIA");
-
-    // Usar la funcion para remover tildes de los textos
-    printf("\n%s\n", remover_tildes("Goles Promedio por Dia"));
-    printf("----------------------------------------\n");
-
-    // Crear una consulta que garantice que todos los días de la semana aparezcan
-    sqlite3_stmt *stmt;
-    const char *sql = "WITH dias_semana AS ("
-                      "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
-                      "SELECT 1, 'Lunes' UNION ALL "
-                      "SELECT 2, 'Martes' UNION ALL "
-                      "SELECT 3, 'Miercoles' UNION ALL "
-                      "SELECT 4, 'Jueves' UNION ALL "
-                      "SELECT 5, 'Viernes' UNION ALL "
-                      "SELECT 6, 'Sabado'"
-                      ") "
-                      "SELECT ds.dia_nombre, "
-                      "ROUND(COALESCE(AVG(p.goles), 0), 2) AS promedio_goles "
-                      "FROM dias_semana ds "
-                      "LEFT JOIN partido p ON CAST(strftime('%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
-                      "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
-                      "GROUP BY ds.dia_num, ds.dia_nombre "
-                      "ORDER BY ds.dia_num";
-
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
-        double promedio = sqlite3_column_double(stmt, 1);
-
-        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_por_dia_semana("GOLES PROMEDIO POR DIA", "goles", "ds.dia_num", 0);
 }
 
 /**
@@ -447,45 +424,7 @@ void mostrar_goles_promedio_por_dia()
  */
 void mostrar_asistencias_promedio_por_dia()
 {
-    clear_screen();
-    print_header("ASISTENCIAS PROMEDIO POR DIA");
-
-    // Usar la funcion para remover tildes de los textos
-    printf("\n%s\n", remover_tildes("Asistencias Promedio por Dia"));
-    printf("----------------------------------------\n");
-
-    // Crear una consulta que garantice que todos los días de la semana aparezcan
-    sqlite3_stmt *stmt;
-    const char *sql = "WITH dias_semana AS ("
-                      "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
-                      "SELECT 1, 'Lunes' UNION ALL "
-                      "SELECT 2, 'Martes' UNION ALL "
-                      "SELECT 3, 'Miercoles' UNION ALL "
-                      "SELECT 4, 'Jueves' UNION ALL "
-                      "SELECT 5, 'Viernes' UNION ALL "
-                      "SELECT 6, 'Sabado'"
-                      ") "
-                      "SELECT ds.dia_nombre, "
-                      "ROUND(COALESCE(AVG(p.asistencias), 0), 2) AS promedio_asistencias "
-                      "FROM dias_semana ds "
-                      "LEFT JOIN partido p ON CAST(strftime('%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
-                      "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
-                      "GROUP BY ds.dia_num, ds.dia_nombre "
-                      "ORDER BY ds.dia_num";
-
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
-        double promedio = sqlite3_column_double(stmt, 1);
-
-        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_por_dia_semana("ASISTENCIAS PROMEDIO POR DIA", "asistencias", "ds.dia_num", 0);
 }
 
 /**
@@ -493,45 +432,7 @@ void mostrar_asistencias_promedio_por_dia()
  */
 void mostrar_rendimiento_promedio_por_dia()
 {
-    clear_screen();
-    print_header("RENDIMIENTO PROMEDIO POR DIA");
-
-    // Usar la funcion para remover tildes de los textos
-    printf("\n%s\n", remover_tildes("Rendimiento Promedio por Dia"));
-    printf("----------------------------------------\n");
-
-    // Crear una consulta que garantice que todos los días de la semana aparezcan
-    sqlite3_stmt *stmt;
-    const char *sql = "WITH dias_semana AS ("
-                      "SELECT 0 AS dia_num, 'Domingo' AS dia_nombre UNION ALL "
-                      "SELECT 1, 'Lunes' UNION ALL "
-                      "SELECT 2, 'Martes' UNION ALL "
-                      "SELECT 3, 'Miercoles' UNION ALL "
-                      "SELECT 4, 'Jueves' UNION ALL "
-                      "SELECT 5, 'Viernes' UNION ALL "
-                      "SELECT 6, 'Sabado'"
-                      ") "
-                      "SELECT ds.dia_nombre, "
-                      "ROUND(COALESCE(AVG(p.rendimiento_general), 0), 2) AS promedio_rendimiento "
-                      "FROM dias_semana ds "
-                      "LEFT JOIN partido p ON CAST(strftime('%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
-                      "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
-                      "GROUP BY ds.dia_num, ds.dia_nombre "
-                      "ORDER BY ds.dia_num";
-
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *dia = (const char *)sqlite3_column_text(stmt, 0);
-        double promedio = sqlite3_column_double(stmt, 1);
-
-        printf("%-30s : %.2f\n", remover_tildes(dia), promedio);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_por_dia_semana("RENDIMIENTO PROMEDIO POR DIA", "rendimiento_general", "ds.dia_num", 0);
 }
 
 /**
@@ -542,8 +443,11 @@ void mostrar_rendimiento_por_nivel_cansancio()
     clear_screen();
     print_header("RENDIMIENTO POR NIVEL DE CANSANCIO");
 
-    query("Rendimiento por Nivel de Cansancio",
-          "SELECT CASE WHEN cansancio <= 3 THEN 'Bajo (1-3)' WHEN cansancio <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_cansancio, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY CASE WHEN cansancio <= 3 THEN 'Bajo (1-3)' WHEN cansancio <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END ORDER BY rendimiento_promedio DESC");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS nivel_cansancio, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
+             get_nivel_case_sql("cansancio"), get_nivel_case_sql("cansancio"));
+    query("Rendimiento por Nivel de Cansancio", sql);
 
     pause_console();
 }
@@ -651,8 +555,11 @@ void mostrar_rendimiento_por_estado_animo()
     clear_screen();
     print_header("RENDIMIENTO POR ESTADO DE ANIMO");
 
-    query("Rendimiento por Estado de Animo",
-          "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END ORDER BY rendimiento_promedio DESC");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
+             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    query("Rendimiento por Estado de Animo", sql);
 
     pause_console();
 }
@@ -665,8 +572,11 @@ void mostrar_goles_por_estado_animo()
     clear_screen();
     print_header("GOLES POR ESTADO DE ANIMO");
 
-    query("Goles por Estado de Animo",
-          "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos FROM partido GROUP BY CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END ORDER BY promedio_goles DESC");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS nivel_animo, SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_goles DESC",
+             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    query("Goles por Estado de Animo", sql);
 
     pause_console();
 }
@@ -693,8 +603,11 @@ void mostrar_estado_animo_ideal()
     clear_screen();
     print_header("ESTADO DE ANIMO IDEAL PARA JUGAR");
 
-    query("Estado de Animo Ideal",
-          "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM partido GROUP BY CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END ORDER BY rendimiento_promedio DESC LIMIT 1");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC LIMIT 1",
+             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    query("Estado de Animo Ideal", sql);
 
     pause_console();
 }

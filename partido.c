@@ -379,32 +379,146 @@ void eliminar_partido()
 static int current_partido_id;
 
 /**
- * @brief Modifica la cancha de un partido existente
+ * @brief Función genérica para modificar un campo entero de un partido
  *
- * Muestra la lista de canchas disponibles, solicita el nuevo ID de cancha,
- * verifica que exista y actualiza el campo cancha_id en la base de datos.
+ * @param campo Nombre del campo en la base de datos
+ * @param prompt Texto para solicitar el nuevo valor
+ * @param mensaje_exito Mensaje de éxito
+ * @param min_val Valor mínimo válido (0 si no aplica)
+ * @param max_val Valor máximo válido (0 si no aplica)
+ * @param mostrar_lista Función para mostrar lista de opciones (NULL si no aplica)
  */
-static void modificar_cancha_partido()
+static void modificar_campo_partido(const char *campo, const char *prompt, const char *mensaje_exito,
+                                   int min_val, int max_val, void (*mostrar_lista)(void))
 {
-    printf("Canchas disponibles:\n");
-    sqlite3_stmt *stmt_canchas;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM cancha ORDER BY id", -1, &stmt_canchas, NULL);
-    while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
+    if (mostrar_lista)
+        mostrar_lista();
+
+    int valor = input_int(prompt);
+
+    if (min_val != 0 || max_val != 0)
     {
-        printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
+        while (valor < min_val || valor > max_val)
+        {
+            char prompt_error[256];
+            snprintf(prompt_error, sizeof(prompt_error), "Valor invalido. Ingrese entre %d y %d: ", min_val, max_val);
+            valor = input_int(prompt_error);
+        }
     }
-    sqlite3_finalize(stmt_canchas);
-    int cancha_id = input_int("Nuevo ID Cancha: ");
-    if (!existe_id("cancha", cancha_id))
-        return;
+
+    char sql[256];
+    snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
+
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET cancha_id=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, cancha_id);
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Cancha modificada correctamente\n");
+    printf("%s\n", mensaje_exito);
     pause_console();
+}
+
+/**
+ * @brief Función genérica para modificar un campo de texto de un partido
+ *
+ * @param campo Nombre del campo en la base de datos
+ * @param prompt Texto para solicitar el nuevo valor
+ * @param mensaje_exito Mensaje de éxito
+ * @param buffer_size Tamaño del buffer para input
+ */
+static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, size_t buffer_size)
+{
+    char valor[buffer_size];
+    printf("%s", prompt);
+    fgets(valor, sizeof(valor), stdin);
+    valor[strcspn(valor, "\n")] = 0;
+
+    char sql[256];
+    snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("%s\n", mensaje_exito);
+    pause_console();
+}
+
+/**
+ * @brief Función genérica para buscar partidos por un criterio
+ *
+ * @param header Título del header
+ * @param campo Campo por el que buscar
+ * @param prompt Texto para solicitar el valor de búsqueda
+ * @param mostrar_lista Función para mostrar lista de opciones (NULL si no aplica)
+ * @param validar_id Si debe validar que el ID existe
+ */
+static void buscar_partidos_generico(const char *header, const char *campo, const char *prompt,
+                                    void (*mostrar_lista)(void), int validar_id)
+{
+    print_header(header);
+
+    if (mostrar_lista)
+        mostrar_lista();
+
+    int valor = input_int(prompt);
+
+    if (validar_id && !existe_id(campo, valor))
+    {
+        printf("El %s no existe.\n", campo);
+        pause_console();
+        return;
+    }
+
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
+             "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+             "JOIN cancha can ON p.cancha_id = can.id "
+             "WHERE p.%s = ?",
+             campo);
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, valor);
+
+    int hay = 0;
+    char fecha_formateada[20];
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        // Formatear la fecha para visualización
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
+
+        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
+               sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1),
+               fecha_formateada,
+               sqlite3_column_int(stmt, 3),
+               sqlite3_column_int(stmt, 4),
+               sqlite3_column_text(stmt, 5),
+               resultado_to_text(sqlite3_column_int(stmt, 6)),
+               clima_to_text(sqlite3_column_int(stmt, 7)),
+               dia_to_text(sqlite3_column_int(stmt, 8)));
+        hay = 1;
+    }
+
+    if (!hay)
+        printf("No se encontraron partidos con ese criterio.\n");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+/**
+ * @brief Modifica la cancha de un partido existente
+ */
+static void modificar_cancha_partido()
+{
+    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 0, 0, listar_canchas_disponibles);
 }
 
 /**
@@ -437,60 +551,26 @@ static void modificar_fecha_hora_partido()
 
 /**
  * @brief Modifica el número de goles de un partido existente
- *
- * Solicita al usuario el nuevo número de goles y actualiza el campo goles en la base de datos.
  */
 static void modificar_goles_partido()
 {
-    int goles = input_int("Nuevos goles: ");
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET goles=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, goles);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Goles modificados correctamente\n");
-    pause_console();
+    modificar_campo_partido("goles", "Nuevos goles: ", "Goles modificados correctamente", 0, 0, NULL);
 }
 
 /**
  * @brief Modifica el número de asistencias de un partido existente
- *
- * Solicita al usuario el nuevo número de asistencias y actualiza el campo asistencias en la base de datos.
  */
 static void modificar_asistencias_partido()
 {
-    int asistencias = input_int("Nuevas asistencias: ");
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET asistencias=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, asistencias);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Asistencias modificadas correctamente\n");
-    pause_console();
+    modificar_campo_partido("asistencias", "Nuevas asistencias: ", "Asistencias modificadas correctamente", 0, 0, NULL);
 }
 
 /**
  * @brief Modifica el resultado de un partido existente
- *
- * Solicita al usuario el nuevo resultado (VICTORIA, EMPATE, DERROTA) y actualiza el campo resultado en la base de datos.
  */
 static void modificar_resultado_partido()
 {
-    int resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (resultado < 1 || resultado > 3)
-    {
-        resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
-    }
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET resultado=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, resultado);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Resultado modificado correctamente\n");
-    pause_console();
+    modificar_campo_partido("resultado", "Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ", "Resultado modificado correctamente", 1, 3, NULL);
 }
 
 /**
@@ -520,68 +600,26 @@ static void modificar_camiseta_partido()
 
 /**
  * @brief Modifica el clima de un partido existente
- *
- * Solicita al usuario el nuevo clima (Despejado, Nublado, Lluvia, Ventoso, Mucho Calor, Mucho Frio)
- * y actualiza el campo clima en la base de datos.
  */
 static void modificar_clima_partido()
 {
-    int clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    while (clima < 1 || clima > 6)
-    {
-        clima = input_int("Clima invalido. Ingrese entre 1 y 6: ");
-    }
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET clima=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, clima);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Clima modificado correctamente\n");
-    pause_console();
+    modificar_campo_partido("clima", "Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ", "Clima modificado correctamente", 1, 6, NULL);
 }
 
 /**
  * @brief Modifica el día de un partido existente
- *
- * Solicita al usuario el nuevo día (Dia, Tarde, Noche) y actualiza el campo dia en la base de datos.
  */
 static void modificar_dia_partido()
 {
-    int dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (dia < 1 || dia > 3)
-    {
-        dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
-    }
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET dia=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, dia);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Dia modificado correctamente\n");
-    pause_console();
+    modificar_campo_partido("dia", "Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ", "Dia modificado correctamente", 1, 3, NULL);
 }
 
 /**
  * @brief Modifica el comentario personal de un partido existente
- *
- * Solicita al usuario el nuevo comentario personal y actualiza el campo comentario_personal en la base de datos.
  */
 static void modificar_comentario_partido()
 {
-    char comentario[256];
-    printf("Nuevo comentario personal: ");
-    fgets(comentario, sizeof(comentario), stdin);
-    comentario[strcspn(comentario, "\n")] = 0;
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET comentario_personal=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, comentario, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("Comentario modificado correctamente\n");
-    pause_console();
+    modificar_campo_texto_partido("comentario_personal", "Nuevo comentario personal: ", "Comentario modificado correctamente", 256);
 }
 
 /**
@@ -721,202 +759,28 @@ void modificar_partido()
 
     ejecutar_menu("MODIFICAR PARTIDO", items, 11);
 }
-/** @brief Busca partidos por camiseta utilizada
- *
- * Solicita el ID de la camiseta y muestra todos los partidos donde se utilizó esa camiseta.
- */
+/** @brief Busca partidos por camiseta utilizada */
 static void buscar_por_camiseta()
 {
-    print_header("BUSCAR PARTIDOS POR CAMISETA");
-
-    listar_camisetas();
-    int camiseta_id = input_int("ID de la camiseta: ");
-
-    if (!existe_id("camiseta", camiseta_id))
-    {
-        printf("La camiseta no existe.\n");
-        return;
-    }
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "WHERE p.camiseta_id = ?",
-                       -1, &stmt, NULL);
-
-    sqlite3_bind_int(stmt, 1, camiseta_id);
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
-        hay = 1;
-    }
-
-    if (!hay)
-        printf("No se encontraron partidos con esa camiseta.\n");
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    buscar_partidos_generico("BUSCAR PARTIDOS POR CAMISETA", "camiseta_id", "ID de la camiseta: ", listar_camisetas, 1);
 }
 
-/**
- * @brief Busca partidos por número de goles
- *
- * Solicita el número de goles y muestra todos los partidos con ese número de goles.
- */
+/** @brief Busca partidos por número de goles */
 static void buscar_por_goles()
 {
-    print_header("BUSCAR PARTIDOS POR GOLES");
-
-    int goles = input_int("Número de goles: ");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "WHERE p.goles = ?",
-                       -1, &stmt, NULL);
-
-    sqlite3_bind_int(stmt, 1, goles);
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
-        hay = 1;
-    }
-
-    if (!hay)
-        printf("No se encontraron partidos con %d goles.\n", goles);
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    buscar_partidos_generico("BUSCAR PARTIDOS POR GOLES", "goles", "Número de goles: ", NULL, 0);
 }
 
-/**
- * @brief Busca partidos por número de asistencias
- *
- * Solicita el número de asistencias y muestra todos los partidos con ese número de asistencias.
- */
+/** @brief Busca partidos por número de asistencias */
 static void buscar_por_asistencias()
 {
-    print_header("BUSCAR PARTIDOS POR ASISTENCIAS");
-
-    int asistencias = input_int("Número de asistencias: ");
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "WHERE p.asistencias = ?",
-                       -1, &stmt, NULL);
-
-    sqlite3_bind_int(stmt, 1, asistencias);
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
-        hay = 1;
-    }
-
-    if (!hay)
-        printf("No se encontraron partidos con %d asistencias.\n", asistencias);
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    buscar_partidos_generico("BUSCAR PARTIDOS POR ASISTENCIAS", "asistencias", "Número de asistencias: ", NULL, 0);
 }
 
-/**
- * @brief Busca partidos por cancha
- *
- * Solicita el ID de la cancha y muestra todos los partidos jugados en esa cancha.
- */
+/** @brief Busca partidos por cancha */
 static void buscar_por_cancha()
 {
-    print_header("BUSCAR PARTIDOS POR CANCHA");
-
-    // Listar canchas disponibles
-    printf("Canchas disponibles:\n");
-    sqlite3_stmt *stmt_canchas;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM cancha ORDER BY id", -1, &stmt_canchas, NULL);
-    while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
-    {
-        printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
-    }
-    sqlite3_finalize(stmt_canchas);
-
-    int cancha_id = input_int("ID de la cancha: ");
-
-    if (!existe_id("cancha", cancha_id))
-    {
-        printf("La cancha no existe.\n");
-        return;
-    }
-
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id "
-                       "WHERE p.cancha_id = ?",
-                       -1, &stmt, NULL);
-
-    sqlite3_bind_int(stmt, 1, cancha_id);
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
-        hay = 1;
-    }
-
-    if (!hay)
-        printf("No se encontraron partidos en esa cancha.\n");
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    buscar_partidos_generico("BUSCAR PARTIDOS POR CANCHA", "cancha_id", "ID de la cancha: ", listar_canchas_disponibles, 1);
 }
 
 /**
@@ -1485,255 +1349,6 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
 
             int partido_id = obtener_siguiente_id("partido");
             insertar_partido(partido_id, &datos, fecha_simulacion);
-        }
-    }
-}
-
-/**
- * @brief Verifica si hay suficientes equipos para simular un partido
- *
- * @return 1 si hay al menos 2 equipos, 0 si no
- */
-/**
- * @brief Selecciona los equipos local y visitante para la simulación
- *
- * @param equipo_local_id Puntero al ID del equipo local seleccionado
- * @param equipo_visitante_id Puntero al ID del equipo visitante seleccionado
- * @return 1 si la selección fue exitosa, 0 si hubo error
- */
-static int seleccionar_equipos_simulacion(int *equipo_local_id, int *equipo_visitante_id)
-{
-    // Seleccionar equipo local
-    do
-    {
-        *equipo_local_id = input_int("\nSeleccione el equipo LOCAL (ID): ");
-        if (!existe_id("equipo", *equipo_local_id))
-        {
-            printf("Equipo no encontrado. Intente nuevamente.\n");
-        }
-    }
-    while (!existe_id("equipo", *equipo_local_id));
-
-    // Seleccionar equipo visitante (diferente al local)
-    do
-    {
-        *equipo_visitante_id = input_int("Seleccione el equipo VISITANTE (ID): ");
-        if (*equipo_visitante_id == *equipo_local_id)
-        {
-            printf("El equipo visitante debe ser diferente al local.\n");
-        }
-        else if (!existe_id("equipo", *equipo_visitante_id))
-        {
-            printf("Equipo no encontrado. Intente nuevamente.\n");
-        }
-    }
-    while (*equipo_visitante_id == *equipo_local_id || !existe_id("equipo", *equipo_visitante_id));
-
-    return 1;
-}
-
-/**
- * @brief Carga los equipos seleccionados desde la base de datos
- *
- * @param equipo_local_id ID del equipo local
- * @param equipo_visitante_id ID del equipo visitante
- * @param equipo_local Puntero al equipo local donde cargar los datos
- * @param equipo_visitante Puntero al equipo visitante donde cargar los datos
- * @return 1 si la carga fue exitosa, 0 si hubo error
- */
-static int cargar_equipos_seleccionados(int equipo_local_id, int equipo_visitante_id,
-                                        Equipo *equipo_local, Equipo *equipo_visitante)
-{
-    if (!cargar_equipo_desde_bd(equipo_local_id, equipo_local))
-    {
-        printf("Error al cargar el equipo local.\n");
-        pause_console();
-        return 0;
-    }
-
-    if (!cargar_equipo_desde_bd(equipo_visitante_id, equipo_visitante))
-    {
-        printf("Error al cargar el equipo visitante.\n");
-        pause_console();
-        return 0;
-    }
-    return 1;
-}
-
-/**
- * @brief Muestra la información inicial del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- */
-static void mostrar_informacion_inicial(Equipo const *equipo_local, Equipo const *equipo_visitante)
-{
-    printf("\n*** INICIANDO SIMULACION ***\n");
-    printf("EQUIPO LOCAL: %s\n", equipo_local->nombre);
-    printf("EQUIPO VISITANTE: %s\n\n", equipo_visitante->nombre);
-}
-
-/**
- * @brief Muestra la alineación de los equipos antes del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- */
-static void mostrar_alineacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante)
-{
-    clear_screen();
-    printf("%s\n", ASCII_SIMULACION);
-    printf("                    SIMULACION DE PARTIDO\n\n");
-
-    printf("=== %s VS %s ===\n\n", equipo_local->nombre, equipo_visitante->nombre);
-
-    // Mostrar cancha inicial
-    mostrar_cancha_animada(0, 0);
-
-    // Mostrar equipos alineados
-    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
-    for (int i = 0; i < equipo_local->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_local->jugadores[i].numero, equipo_local->jugadores[i].nombre);
-        if (equipo_local->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
-    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_visitante->jugadores[i].numero, equipo_visitante->jugadores[i].nombre);
-        if (equipo_visitante->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\n*** INICIO DEL PARTIDO ***\n");
-    printf("La simulacion comenzara automaticamente en 3 segundos...\n");
-    Sleep(3000);
-}
-
-/**
- * @brief Ejecuta la simulación del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param estadisticas Puntero a la estructura donde almacenar las estadísticas
- * @return 1 si la simulación fue exitosa, 0 si hubo error
- */
-static int ejecutar_simulacion_partido(Equipo const *equipo_local, Equipo const *equipo_visitante,
-                                       EstadisticasPartido *estadisticas)
-{
-    for (int minuto = 1; minuto <= 60; minuto++)
-    {
-        clear_screen();
-        print_header("SIMULACION DE PARTIDO");
-
-        printf("=== %s %d - %d %s ===\n\n",
-               equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
-        printf("MINUTO: %d\n\n", minuto);
-
-        // Generar eventos aleatorios usando CSPRNG
-        int evento = secure_rand(100);
-
-        if (evento < 2) // Gol local
-        {
-            int jugador_idx = secure_rand(equipo_local->num_jugadores);
-            int asistente_idx = secure_rand(equipo_local->num_jugadores);
-            if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
-            }
-
-            manejar_gol_local(equipo_local, minuto, jugador_idx, asistente_idx,
-                              estadisticas->estadisticas_local, estadisticas->asistencias_local, &estadisticas->goles_local);
-        }
-        else if (evento < 4) // Gol visitante
-        {
-            int jugador_idx = secure_rand(equipo_visitante->num_jugadores);
-            int asistente_idx = secure_rand(equipo_visitante->num_jugadores);
-            if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
-            }
-
-            manejar_gol_visitante(equipo_visitante, minuto, jugador_idx, asistente_idx,
-                                  estadisticas->estadisticas_visitante, estadisticas->asistencias_visitante, &estadisticas->goles_visitante);
-        }
-        else if (evento < 10)
-        {
-            printf("*** Oportunidad de gol ***\n");
-        }
-        else
-        {
-            printf("*** El partido continúa... ***\n");
-        }
-
-        mostrar_cancha_animada(minuto, (evento < 4) ? 1 : 0);
-        Sleep(1000);
-    }
-
-    return 1;
-}
-
-/**
- * @brief Muestra los resultados finales del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param estadisticas Puntero a la estructura con las estadísticas del partido
- */
-static void mostrar_resultados_finales(Equipo const *equipo_local, Equipo const *equipo_visitante,
-                                       EstadisticasPartido const *estadisticas)
-{
-    // Resultados finales
-    clear_screen();
-    print_header("FIN DEL PARTIDO");
-
-    printf("*** RESULTADO FINAL ***\n\n");
-    printf("*** 60 MINUTOS COMPLETADOS ***\n\n");
-
-    printf("*** %s %d - %d %s ***\n\n",
-           equipo_local->nombre, estadisticas->goles_local, estadisticas->goles_visitante, equipo_visitante->nombre);
-
-    if (estadisticas->goles_local > estadisticas->goles_visitante)
-    {
-        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_local->nombre);
-    }
-    else if (estadisticas->goles_visitante > estadisticas->goles_local)
-    {
-        printf("*** ¡%s GANA EL PARTIDO! ***\n\n", equipo_visitante->nombre);
-    }
-    else
-    {
-        printf("*** ¡EMPATE! ***\n\n");
-    }
-
-    // Mostrar estadísticas
-    printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
-
-    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
-    for (int i = 0; i < equipo_local->num_jugadores; i++)
-    {
-        if (estadisticas->estadisticas_local[i] > 0 || estadisticas->asistencias_local[i] > 0)
-        {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_local->jugadores[i].nombre,
-                   equipo_local->jugadores[i].numero,
-                   estadisticas->estadisticas_local[i], estadisticas->asistencias_local[i]);
-        }
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
-    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
-    {
-        if (estadisticas->estadisticas_visitante[i] > 0 || estadisticas->asistencias_visitante[i] > 0)
-        {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_visitante->jugadores[i].nombre,
-                   equipo_visitante->jugadores[i].numero,
-                   estadisticas->estadisticas_visitante[i], estadisticas->asistencias_visitante[i]);
         }
     }
 }

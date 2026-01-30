@@ -21,6 +21,393 @@
 // Se puede usar directamente desde utils.h
 
 /**
+ * @brief Estructura para almacenar datos de una camiseta.
+ */
+typedef struct
+{
+    int id;
+    char nombre[256];
+} CamisetaData;
+
+/**
+ * @brief Estructura para almacenar datos de una lesión.
+ */
+typedef struct
+{
+    int id;
+    char jugador[256];
+    char tipo[256];
+    char descripcion[512];
+    char fecha[256];
+} LesionData;
+
+/**
+ * @brief Estructura para almacenar datos de estadísticas.
+ */
+typedef struct
+{
+    char camiseta[256];
+    int goles;
+    int asistencias;
+    int partidos;
+    int victorias;
+    int empates;
+    int derrotas;
+} EstadisticaData;
+
+/**
+ * @brief Construye el nombre del archivo completo.
+ *
+ * @param extension Extensión del archivo (e.g., "json").
+ * @param filename Buffer para almacenar el nombre completo.
+ * @param size Tamaño del buffer.
+ */
+static void build_filename(const char *extension, char *filename, size_t size)
+{
+    strcpy_s(filename, size, get_import_dir());
+    size_t filename_len = safe_strnlen(filename, size);
+    strncat_s(filename, size, "\\", size - filename_len - 1);
+    strncat_s(filename, size, extension, size - filename_len - 1);
+}
+
+/**
+ * @brief Función genérica para importar desde JSON.
+ *
+ * @param extension Extensión del archivo.
+ * @param parser Función para parsear un item JSON.
+ */
+static void import_json_generic(const char *extension, int (*parser)(cJSON const *))
+{
+    char filename[1024];
+    build_filename(extension, filename, sizeof(filename));
+
+    printf("Importando desde: %s\n", filename);
+
+    char *content = read_file_content(filename);
+    if (!content)
+        return;
+
+    cJSON *json = cJSON_Parse(content);
+    free(content);
+
+    if (!json)
+    {
+        printf("Error: JSON invalido\n");
+        return;
+    }
+
+    if (!cJSON_IsArray(json))
+    {
+        printf("Error: El JSON debe ser un array\n");
+        cJSON_Delete(json);
+        return;
+    }
+
+    int total = cJSON_GetArraySize(json);
+    printf("Importando %d items...\n", total);
+
+    int imported = 0;
+    for (int i = 0; i < total; i++)
+    {
+        cJSON const *item = cJSON_GetArrayItem(json, i);
+        if (parser(item))
+            imported++;
+    }
+
+    cJSON_Delete(json);
+    printf("Importacion completada. %d items importados\n", imported);
+}
+
+/**
+ * @brief Función genérica para importar desde TXT/CSV.
+ *
+ * @param extension Extensión del archivo.
+ * @param skip_header Si se debe saltar la primera línea.
+ * @param parser Función para parsear una línea.
+ */
+static void import_txt_csv_generic(const char *extension, bool skip_header, int (*parser)(const char *))
+{
+    char filename[1024];
+    build_filename(extension, filename, sizeof(filename));
+
+    printf("Importando desde: %s\n", filename);
+
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
+    {
+        printf("Error: No se pudo abrir el archivo %s\n", filename);
+        return;
+    }
+
+    printf("Importando desde %s...\n", extension);
+    char line[2048];
+    int count = 0;
+
+    if (skip_header)
+    {
+        [{
+	"resource": "/d:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/import.c",
+	"owner": "sonarlint",
+	"code": "c:S1066",
+	"severity": 4,
+	"message": "Merge this \"if\" statement with the enclosing one. [+1 location]",
+	"source": "sonarqube",
+	"startLineNumber": 149,
+	"startColumn": 9,
+	"endLineNumber": 149,
+	"endColumn": 11,
+	"modelVersionId": 564,
+	"origin": "extHost2"
+}] (fgets(line, sizeof(line), file) == NULL)
+        {
+            printf("Error: Archivo vacío o formato incorrecto\n");
+            fclose(file);
+            return;
+        }
+    }
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (parser(line))
+            count++;
+    }
+
+    fclose(file);
+    printf("Importacion desde %s completada. %d items importados\n", extension, count);
+}
+
+/**
+ * @brief Función genérica para importar desde HTML.
+ *
+ * @param extension Extensión del archivo.
+ * @param parser Función para parsear una fila HTML.
+ * @param exists Función para verificar existencia.
+ * @param insert Función para insertar.
+ */
+static void import_html_generic(const char *extension, int (*parser)(char **), int (*exists)(void *), void (*insert)(void *))
+{
+    char filename[1024];
+    build_filename(extension, filename, sizeof(filename));
+
+    printf("Importando desde: %s\n", filename);
+
+    char *content = read_file_content(filename);
+    if (!content)
+        return;
+
+    printf("Importando desde HTML...\n");
+    int count = 0;
+    char *ptr = content;
+
+    while ((ptr = strstr(ptr, "<tr>")) != NULL)
+    {
+        ptr += 4; // Saltar <tr>
+        if (parser(&ptr))
+            count++;
+    }
+
+    free(content);
+    printf("Importacion desde HTML completada. %d items importados\n", count);
+}
+
+/**
+ * @brief Wrapper genérico para funciones con pausa.
+ *
+ * @param msg Mensaje a imprimir.
+ * @param func Función a ejecutar.
+ * @param msg2 Mensaje final.
+ */
+static void wrapper_con_pausa(const char *msg, void (*func)(), const char *msg2)
+{
+    printf("%s\n", msg);
+    func();
+    printf("%s\n", msg2);
+    pause_console();
+}
+
+/**
+ * @brief Parsea e inserta una camiseta desde JSON.
+ *
+ * @param item Objeto JSON de la camiseta.
+ * @return 1 si se insertó correctamente, 0 si no.
+ */
+static int parse_camiseta_json(cJSON const *item)
+{
+    if (!cJSON_IsObject(item))
+        return 0;
+
+    cJSON const *id_json = cJSON_GetObjectItem(item, "id");
+    cJSON const *nombre_json = cJSON_GetObjectItem(item, "nombre");
+
+    if (!cJSON_IsNumber(id_json) || !cJSON_IsString(nombre_json))
+        return 0;
+
+    int id = id_json->valueint;
+    const char *nombre = nombre_json->valuestring;
+
+    // Verificar si ya existe
+    sqlite3_stmt *check_stmt;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta WHERE id = ?", -1, &check_stmt, NULL);
+    sqlite3_bind_int(check_stmt, 1, id);
+    sqlite3_step(check_stmt);
+    int exists = sqlite3_column_int(check_stmt, 0);
+    sqlite3_finalize(check_stmt);
+
+    if (exists)
+    {
+        printf("Camiseta ID %d ya existe, omitiendo...\n", id);
+        return 0;
+    }
+
+    // Insertar
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    printf("Camiseta '%s' importada correctamente\n", nombre);
+    return 1;
+}
+
+/**
+ * @brief Parsea e inserta una lesión desde JSON.
+ *
+ * @param item Objeto JSON de la lesión.
+ * @return 1 si se insertó correctamente, 0 si no.
+ */
+static int parse_lesion_json(cJSON const *item)
+{
+    if (!cJSON_IsObject(item))
+        return 0;
+
+    cJSON const *id_json = cJSON_GetObjectItem(item, "id");
+    cJSON const *jugador_json = cJSON_GetObjectItem(item, "jugador");
+    cJSON const *tipo_json = cJSON_GetObjectItem(item, "tipo");
+    cJSON const *descripcion_json = cJSON_GetObjectItem(item, "descripcion");
+    cJSON const *fecha_json = cJSON_GetObjectItem(item, "fecha");
+    if (!cJSON_IsNumber(id_json) || !cJSON_IsString(jugador_json) ||
+            !cJSON_IsString(tipo_json) || !cJSON_IsString(descripcion_json) ||
+            !cJSON_IsString(fecha_json))
+        return 0;
+
+    int id = id_json->valueint;
+    const char *jugador = jugador_json->valuestring;
+    const char *tipo = tipo_json->valuestring;
+    const char *descripcion = descripcion_json->valuestring;
+    const char *fecha = fecha_json->valuestring;
+
+    // Verificar si ya existe
+    sqlite3_stmt *check_stmt;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion WHERE id = ?", -1, &check_stmt, NULL);
+    sqlite3_bind_int(check_stmt, 1, id);
+    sqlite3_step(check_stmt);
+    int exists = sqlite3_column_int(check_stmt, 0);
+    sqlite3_finalize(check_stmt);
+
+    if (exists)
+    {
+        printf("Lesion ID %d ya existe, omitiendo...\n", id);
+        return 0;
+    }
+
+    // Insertar lesión
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha) VALUES(?, ?, ?, ?, ?)", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    printf("Lesion de '%s' importada correctamente\n", jugador);
+    return 1;
+}
+
+/**
+ * @brief Parsea e inserta estadísticas desde JSON.
+ *
+ * @param item Objeto JSON de las estadísticas.
+ * @return 1 si se insertó correctamente, 0 si no.
+ */
+static int parse_estadistica_json(cJSON const *item)
+{
+    if (!cJSON_IsObject(item))
+        return 0;
+
+    cJSON const *camiseta_json = cJSON_GetObjectItem(item, "camiseta");
+    cJSON const *goles_json = cJSON_GetObjectItem(item, "goles");
+    cJSON const *asistencias_json = cJSON_GetObjectItem(item, "asistencias");
+    cJSON const *partidos_json = cJSON_GetObjectItem(item, "partidos");
+    cJSON const *victorias_json = cJSON_GetObjectItem(item, "victorias");
+    cJSON const *empates_json = cJSON_GetObjectItem(item, "empates");
+    cJSON const *derrotas_json = cJSON_GetObjectItem(item, "derrotas");
+
+    if (!cJSON_IsString(camiseta_json) || !cJSON_IsNumber(goles_json) ||
+            !cJSON_IsNumber(asistencias_json) || !cJSON_IsNumber(partidos_json))
+        return 0;
+
+    const char *camiseta = camiseta_json->valuestring;
+    int goles = goles_json->valueint;
+    int asistencias = asistencias_json->valueint;
+    int partidos = partidos_json->valueint;
+    int victorias = victorias_json ? victorias_json->valueint : 0;
+    int empates = empates_json ? empates_json->valueint : 0;
+    int derrotas = derrotas_json ? derrotas_json->valueint : 0;
+
+    // Obtener ID de camiseta
+    sqlite3_stmt *camiseta_stmt;
+    sqlite3_prepare_v2(db, "SELECT id FROM camiseta WHERE nombre = ?", -1, &camiseta_stmt, NULL);
+    sqlite3_bind_text(camiseta_stmt, 1, camiseta, -1, SQLITE_TRANSIENT);
+    int camiseta_id = -1;
+    if (sqlite3_step(camiseta_stmt) == SQLITE_ROW)
+    {
+        camiseta_id = sqlite3_column_int(camiseta_stmt, 0);
+    }
+    sqlite3_finalize(camiseta_stmt);
+
+    if (camiseta_id == -1)
+    {
+        printf("Camiseta '%s' no encontrada, omitiendo estadística...\n", camiseta);
+        return 0;
+    }
+
+    // Verificar si ya existe estadística para esta camiseta
+    sqlite3_stmt *check_stmt;
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM estadistica WHERE camiseta_id = ?", -1, &check_stmt, NULL);
+    sqlite3_bind_int(check_stmt, 1, camiseta_id);
+    sqlite3_step(check_stmt);
+    int exists = sqlite3_column_int(check_stmt, 0);
+    sqlite3_finalize(check_stmt);
+
+    if (exists)
+    {
+        printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n", camiseta);
+        return 0;
+    }
+
+    // Insertar estadística
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, "INSERT INTO estadistica(camiseta_id, goles, asistencias, partidos, victorias, empates, derrotas) VALUES(?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, camiseta_id);
+    sqlite3_bind_int(stmt, 2, goles);
+    sqlite3_bind_int(stmt, 3, asistencias);
+    sqlite3_bind_int(stmt, 4, partidos);
+    sqlite3_bind_int(stmt, 5, victorias);
+    sqlite3_bind_int(stmt, 6, empates);
+    sqlite3_bind_int(stmt, 7, derrotas);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    printf("Estadistica de '%s' importada correctamente\n", camiseta);
+    return 1;
+}
+
+/**
  * @brief Lee el contenido completo de un archivo de texto.
  *
  * Para permitir el análisis eficiente del contenido sin múltiples lecturas de disco.
@@ -69,78 +456,7 @@ static char *read_file_content(const char *filename)
  */
 void importar_camisetas_json()
 {
-    char filename[1024];
-    strcpy_s(filename, sizeof(filename), get_import_dir());
-    size_t filename_len = safe_strnlen(filename, sizeof(filename));
-    strncat_s(filename, sizeof(filename), "\\camisetas.json", sizeof(filename) - filename_len - 1);
-
-    printf("Importando desde: %s\n", filename);
-
-    char *content = read_file_content(filename);
-    if (!content)
-        return;
-
-    cJSON *json = cJSON_Parse(content);
-    free(content);
-
-    if (!json)
-    {
-        printf("Error: JSON de camisetas invalido\n");
-        return;
-    }
-
-    if (!cJSON_IsArray(json))
-    {
-        printf("Error: El JSON de camisetas debe ser un array\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    int count = cJSON_GetArraySize(json);
-    printf("Importando %d camisetas...\n", count);
-
-    for (int i = 0; i < count; i++)
-    {
-        cJSON const *item = cJSON_GetArrayItem(json, i);
-        if (!cJSON_IsObject(item))
-            continue;
-
-        cJSON const *id_json = cJSON_GetObjectItem(item, "id");
-        cJSON const *nombre_json = cJSON_GetObjectItem(item, "nombre");
-
-        if (!cJSON_IsNumber(id_json) || !cJSON_IsString(nombre_json))
-            continue;
-
-        int id = id_json->valueint;
-        const char *nombre = nombre_json->valuestring;
-
-        // Verificar si ya existe
-        sqlite3_stmt *check_stmt;
-        sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta WHERE id = ?", -1, &check_stmt, NULL);
-        sqlite3_bind_int(check_stmt, 1, id);
-        sqlite3_step(check_stmt);
-        int exists = sqlite3_column_int(check_stmt, 0);
-        sqlite3_finalize(check_stmt);
-
-        if (exists)
-        {
-            printf("Camiseta ID %d ya existe, omitiendo...\n", id);
-            continue;
-        }
-
-        // Insertar
-        sqlite3_stmt *stmt;
-        sqlite3_prepare_v2(db, "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)", -1, &stmt, NULL);
-        sqlite3_bind_int(stmt, 1, id);
-        sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-
-        printf("Camiseta '%s' importada correctamente\n", nombre);
-    }
-
-    cJSON_Delete(json);
-    printf("Importacion de camisetas completada\n");
+    import_json_generic("camisetas.json", parse_camiseta_json, NULL, NULL);
 }
 
 /**
