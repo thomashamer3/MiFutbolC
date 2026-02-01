@@ -11,8 +11,6 @@
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
-static const char *SQL_COUNT_PARTIDOS = "SELECT COUNT(*) FROM partido";
-
 static const char *SQL_STATS_BY_CAMISETA =
     "SELECT c.nombre, SUM(p.goles), SUM(p.asistencias), COUNT(*), "
     "SUM(CASE WHEN p.resultado=1 THEN 1 ELSE 0 END), "

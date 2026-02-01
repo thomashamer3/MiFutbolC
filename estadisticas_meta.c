@@ -115,6 +115,43 @@ void mostrar_consistencia_rendimiento()
 }
 
 /**
+ * @brief Función genérica para mostrar partidos con ciertos criterios SQL
+ */
+static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion, const char *sql)
+{
+    clear_screen();
+    print_header(titulo);
+
+    printf("\n%s\n", descripcion);
+    printf("----------------------------------------\n");
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
+
+        printf("ID: %d, Fecha: %s, Cansancio: %d, Rendimiento: %d, Goles: %d, Asistencias: %d, Resultado: %s\n",
+               sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1),
+               sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3),
+               sqlite3_column_int(stmt, 4),
+               sqlite3_column_int(stmt, 5),
+               resultado_str);
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+/**
  * @brief Muestra los partidos atípicos (muy buenos/muy malos)
  *
  * Identifica partidos con rendimiento significativamente diferente al promedio.
@@ -385,42 +422,14 @@ void mostrar_rendimiento_por_esfuerzo()
  */
 void mostrar_partidos_exigentes_bien_rendidos()
 {
-    clear_screen();
-    print_header("PARTIDOS EXIGENTES BIEN RENDIDOS");
-
-    printf("\nPartidos con alto cansancio y buen rendimiento:\n");
-    printf("----------------------------------------\n");
-
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha_hora, cansancio, rendimiento_general, goles, asistencias, resultado "
-                      "FROM partido "
-                      "WHERE cansancio > 7 AND rendimiento_general > (SELECT AVG(rendimiento_general) FROM partido) "
-                      "ORDER BY rendimiento_general DESC, cansancio DESC";
-
-    if (!preparar_stmt_export(&stmt, sql))
-    {
-        printf("Error al consultar la base de datos.\n");
-        pause_console();
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
-
-        printf("ID: %d, Fecha: %s, Cansancio: %d, Rendimiento: %d, Goles: %d, Asistencias: %d, Resultado: %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_int(stmt, 5),
-               resultado_str);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_partidos_con_sql(
+        "PARTIDOS EXIGENTES BIEN RENDIDOS",
+        "Partidos con alto cansancio y buen rendimiento:",
+        "SELECT id, fecha_hora, cansancio, rendimiento_general, goles, asistencias, resultado "
+        "FROM partido "
+        "WHERE cansancio > 7 AND rendimiento_general > (SELECT AVG(rendimiento_general) FROM partido) "
+        "ORDER BY rendimiento_general DESC, cansancio DESC"
+    );
 }
 
 /**
@@ -430,40 +439,12 @@ void mostrar_partidos_exigentes_bien_rendidos()
  */
 void mostrar_partidos_faciles_mal_rendidos()
 {
-    clear_screen();
-    print_header("PARTIDOS FACILES MAL RENDIDOS");
-
-    printf("\nPartidos con bajo cansancio y bajo rendimiento:\n");
-    printf("----------------------------------------\n");
-
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha_hora, cansancio, rendimiento_general, goles, asistencias, resultado "
-                      "FROM partido "
-                      "WHERE cansancio <= 3 AND rendimiento_general < (SELECT AVG(rendimiento_general) FROM partido) "
-                      "ORDER BY rendimiento_general ASC, cansancio ASC";
-
-    if (!preparar_stmt_export(&stmt, sql))
-    {
-        printf("Error al consultar la base de datos.\n");
-        pause_console();
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
-
-        printf("ID: %d, Fecha: %s, Cansancio: %d, Rendimiento: %d, Goles: %d, Asistencias: %d, Resultado: %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_int(stmt, 5),
-               resultado_str);
-    }
-
-    sqlite3_finalize(stmt);
-
-    pause_console();
+    mostrar_partidos_con_sql(
+        "PARTIDOS FACILES MAL RENDIDOS",
+        "Partidos con bajo cansancio y bajo rendimiento:",
+        "SELECT id, fecha_hora, cansancio, rendimiento_general, goles, asistencias, resultado "
+        "FROM partido "
+        "WHERE cansancio <= 3 AND rendimiento_general < (SELECT AVG(rendimiento_general) FROM partido) "
+        "ORDER BY rendimiento_general ASC, cansancio ASC"
+    );
 }

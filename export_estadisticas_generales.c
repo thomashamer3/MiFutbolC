@@ -15,8 +15,6 @@
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
-static const char *SQL_COUNT_PARTIDOS = "SELECT COUNT(*) FROM partido";
-
 static const char *SQL_STATS_MONTH =
     "SELECT substr(fecha_hora, 4, 7), c.nombre, COUNT(*), SUM(goles), SUM(asistencias), "
     "ROUND(AVG(goles), 2), ROUND(AVG(asistencias), 2) "

@@ -141,6 +141,83 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 /**
+ * @brief Función genérica para cargar y validar un archivo JSON
+ * @param json_filename Nombre del archivo JSON (ej: "partidos.json")
+ * @param entity_name Nombre de la entidad para mensajes (ej: "partidos")
+ * @return puntero a cJSON si es válido y es un array, NULL en caso contrario
+ */
+static cJSON *cargar_json_array(const char *json_filename, const char *entity_name, int *out_count)
+{
+    char filename[1024];
+    build_filename(json_filename, filename, sizeof(filename));
+
+    printf("Importando desde: %s\n", filename);
+
+    char *content = read_file_content(filename);
+    if (!content)
+        return NULL;
+
+    cJSON *json = cJSON_Parse(content);
+    free(content);
+
+    if (!json)
+    {
+        printf("Error: JSON de %s invalido\n", entity_name);
+        return NULL;
+    }
+
+    if (!cJSON_IsArray(json))
+    {
+        printf("Error: El JSON de %s debe ser un array\n", entity_name);
+        cJSON_Delete(json);
+        return NULL;
+    }
+
+    int count = cJSON_GetArraySize(json);
+    printf("Importando %d %s...\n", count, entity_name);
+    
+    if (out_count)
+        *out_count = count;
+
+    return json;
+}
+
+/**
+ * @brief Función genérica para abrir archivos de texto (CSV/TXT) para importación
+ * @param txt_filename Nombre del archivo (ej: "lesiones.csv")
+ * @param skip_header Si es true, salta la primera línea
+ * @return FILE* abierto o NULL si hay error
+ */
+static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip_header)
+{
+    char filename[1024];
+    build_filename(txt_filename, filename, sizeof(filename));
+
+    printf("Importando desde: %s\n", filename);
+
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r");
+    if (err != 0 || !file)
+    {
+        printf("Error: No se pudo abrir el archivo %s\n", filename);
+        return NULL;
+    }
+
+    if (skip_header)
+    {
+        char line[1024];
+        if (fgets(line, sizeof(line), file) == NULL)
+        {
+            printf("Error: Archivo vacío o formato incorrecto\n");
+            fclose(file);
+            return NULL;
+        }
+    }
+
+    return file;
+}
+
+/**
  * @brief Verifica si existe un registro por ID en la tabla dada.
  */
 static int id_existe_en_tabla(const char *tabla, int id)
@@ -559,33 +636,10 @@ static int procesar_partido_json_item(cJSON const *item)
  */
 void importar_partidos_json()
 {
-    char filename[1024];
-    build_filename("partidos.json", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    char *content = read_file_content(filename);
-    if (!content)
-        return;
-
-    cJSON *json = cJSON_Parse(content);
-    free(content);
-
+    int count;
+    cJSON *json = cargar_json_array("partidos.json", "partidos", &count);
     if (!json)
-    {
-        printf("Error: JSON de partidos invalido\n");
         return;
-    }
-
-    if (!cJSON_IsArray(json))
-    {
-        printf("Error: El JSON de partidos debe ser un array\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    int count = cJSON_GetArraySize(json);
-    printf("Importando %d partidos...\n", count);
 
     int imported = 0;
     for (int i = 0; i < count; i++)
@@ -607,33 +661,10 @@ void importar_partidos_json()
  */
 void importar_lesiones_json()
 {
-    char filename[1024];
-    build_filename("lesiones.json", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    char *content = read_file_content(filename);
-    if (!content)
-        return;
-
-    cJSON *json = cJSON_Parse(content);
-    free(content);
-
+    int count;
+    cJSON *json = cargar_json_array("lesiones.json", "lesiones", &count);
     if (!json)
-    {
-        printf("Error: JSON de lesiones invalido\n");
         return;
-    }
-
-    if (!cJSON_IsArray(json))
-    {
-        printf("Error: El JSON de lesiones debe ser un array\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    int count = cJSON_GetArraySize(json);
-    printf("Importando %d lesiones...\n", count);
 
     for (int i = 0; i < count; i++)
     {
@@ -684,33 +715,10 @@ void importar_estadisticas_json()
     if (!crear_tabla_estadisticas())
         return;
 
-    char filename[1024];
-    build_filename("estadisticas.json", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    char *content = read_file_content(filename);
-    if (!content)
-        return;
-
-    cJSON *json = cJSON_Parse(content);
-    free(content);
-
+    int count;
+    cJSON *json = cargar_json_array("estadisticas.json", "estadisticas", &count);
     if (!json)
-    {
-        printf("Error: JSON de estadisticas invalido\n");
         return;
-    }
-
-    if (!cJSON_IsArray(json))
-    {
-        printf("Error: El JSON de estadisticas debe ser un array\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    int count = cJSON_GetArraySize(json);
-    printf("Importando %d estadisticas...\n", count);
 
     for (int i = 0; i < count; i++)
     {
@@ -979,30 +987,13 @@ static void importar_todo_txt_con_pausa()
  */
 void importar_camisetas_txt()
 {
-    char filename[1024];
-    build_filename("camisetas.txt", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("camisetas.txt", true);
+    if (!file)
         return;
-    }
 
     printf("Importando camisetas desde TXT...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (LISTADO DE CAMISETAS)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1179,30 +1170,13 @@ static int procesar_partido_txt_line(const char *line)
  */
 void importar_partidos_txt()
 {
-    char filename[1024];
-    build_filename("partidos.txt", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("partidos.txt", true);
+    if (!file)
         return;
-    }
 
     printf("Importando partidos desde TXT...\n");
     char line[2048];
     int count = 0;
-
-    // Saltar la primera línea (LISTADO DE PARTIDOS)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1224,30 +1198,13 @@ void importar_partidos_txt()
  */
 void importar_lesiones_txt()
 {
-    char filename[1024];
-    build_filename("lesiones.txt", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("lesiones.txt", true);
+    if (!file)
         return;
-    }
 
     printf("Importando lesiones desde TXT...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (LISTADO DE LESIONES)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1296,30 +1253,13 @@ void importar_estadisticas_txt()
     if (!crear_tabla_estadisticas())
         return;
 
-    char filename[1024];
-    build_filename("estadisticas.txt", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("estadisticas.txt", true);
+    if (!file)
         return;
-    }
 
     printf("Importando estadisticas desde TXT...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (LISTADO DE ESTADISTICAS)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1384,30 +1324,13 @@ void importar_estadisticas_txt()
  */
 void importar_camisetas_csv()
 {
-    char filename[1024];
-    build_filename("camisetas.csv", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("camisetas.csv", true);
+    if (!file)
         return;
-    }
 
     printf("Importando camisetas desde CSV...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (cabecera)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1524,30 +1447,13 @@ static int procesar_partido_csv_line(const char *line)
  */
 void importar_partidos_csv()
 {
-    char filename[1024];
-    build_filename("partidos.csv", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("partidos.csv", true);
+    if (!file)
         return;
-    }
 
     printf("Importando partidos desde CSV...\n");
     char line[2048];
     int count = 0;
-
-    // Saltar la primera línea (cabecera)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1569,30 +1475,13 @@ void importar_partidos_csv()
  */
 void importar_lesiones_csv()
 {
-    char filename[1024];
-    build_filename("lesiones.csv", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("lesiones.csv", true);
+    if (!file)
         return;
-    }
 
     printf("Importando lesiones desde CSV...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (cabecera)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {
@@ -1641,30 +1530,13 @@ void importar_estadisticas_csv()
     if (!crear_tabla_estadisticas())
         return;
 
-    char filename[1024];
-    build_filename("estadisticas.csv", filename, sizeof(filename));
-
-    printf("Importando desde: %s\n", filename);
-
-    FILE *file = NULL;
-    errno_t err = fopen_s(&file, filename, "r");
-    if (err != 0 || !file)
-    {
-        printf("Error: No se pudo abrir el archivo %s\n", filename);
+    FILE *file = abrir_archivo_texto_importacion("estadisticas.csv", true);
+    if (!file)
         return;
-    }
 
     printf("Importando estadisticas desde CSV...\n");
     char line[1024];
     int count = 0;
-
-    // Saltar la primera línea (cabecera)
-    if (fgets(line, sizeof(line), file) == NULL)
-    {
-        printf("Error: Archivo vacío o formato incorrecto\n");
-        fclose(file);
-        return;
-    }
 
     while (fgets(line, sizeof(line), file))
     {

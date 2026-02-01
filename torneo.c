@@ -52,12 +52,6 @@ static void aplicar_actualizacion_formato(int torneo_id, int tipo, int formato)
     printf("Aplicar actualización de formato no completamente implementado.\n");
 }
 
-static void actualizar_formato_4_6_equipos(int torneo_id)
-{
-    (void)torneo_id;
-    printf("Actualizar formato 4-6 equipos no completamente implementado.\n");
-}
-
 /**
  * Traduce valores enumerados de tipos de torneo a nombres legibles para la interfaz de usuario,
  * facilitando la comprensión de las opciones disponibles.
@@ -116,6 +110,113 @@ const char* get_nombre_formato_torneo(FormatoTorneos formato)
         return "Eliminacion directa por fases";
     default:
         return "Desconocido";
+    }
+}
+
+/**
+ * @brief Función genérica para listar torneos
+ */
+static int listar_torneos_generico(const char *no_records_msg)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT id, nombre FROM torneo ORDER BY id;";
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("Error al obtener la lista de torneos: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    printf("\n=== TORNEOS DISPONIBLES ===\n\n");
+
+    int found = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        found = 1;
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+        printf("%d. %s\n", id, nombre);
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (!found)
+    {
+        mostrar_no_hay_registros(no_records_msg);
+        return 0;
+    }
+
+    return 1;
+}
+
+/**
+ * @brief Función genérica para obtener formato según cantidad de equipos y opción
+ */
+static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *tipo, FormatoTorneos *formato)
+{
+    *tipo = SOLO_IDA;
+    *formato = LIGA_SIMPLE;
+
+    if (cantidad >= 4 && cantidad <= 6)
+    {
+        if (opcion == 1)
+        {
+            *formato = ROUND_ROBIN;
+            *tipo = IDA_Y_VUELTA;
+        }
+        else if (opcion == 2)
+        {
+            *formato = MINI_GRUPO_CON_FINAL;
+            *tipo = GRUPOS_Y_ELIMINACION;
+        }
+    }
+    else if (cantidad >= 7 && cantidad <= 12)
+    {
+        switch (opcion)
+        {
+        case 2:
+            *formato = LIGA_DOBLE;
+            *tipo = IDA_Y_VUELTA;
+            break;
+        case 3:
+            *formato = GRUPOS_CON_FINAL;
+            *tipo = GRUPOS_Y_ELIMINACION;
+            break;
+        case 4:
+            *formato = COPA_SIMPLE;
+            *tipo = ELIMINACION_DIRECTA;
+            break;
+        default:
+        break;
+        }
+    }
+    else if (cantidad >= 13 && cantidad <= 20)
+    {
+        *tipo = GRUPOS_Y_ELIMINACION;
+        *formato = GRUPOS_ELIMINACION;
+        switch (opcion)
+        {
+        case 2:
+            *formato = COPA_REPECHAJE;
+            *tipo = ELIMINACION_DIRECTA;
+            break;
+        case 3:
+            *formato = LIGA_GRANDE;
+            *tipo = IDA_Y_VUELTA;
+            break;
+        default:
+            break;
+        }
+    }
+    else if (cantidad >= 21)
+    {
+        *tipo = GRUPOS_Y_ELIMINACION;
+        *formato = MULTIPLES_GRUPOS;
+        if (opcion == 2)
+        {
+            *formato = ELIMINACION_FASES;
+            *tipo = ELIMINACION_DIRECTA;
+        }
     }
 }
 
@@ -342,30 +443,14 @@ static int input_torneo_data(Torneo *torneo)
 static void determine_formato_torneo(Torneo *torneo)
 {
     int cantidad = torneo->cantidad_equipos;
+    int opcion = 0;
 
     if (cantidad >= 4 && cantidad <= 6)
     {
         printf("\nPara 4-6 equipos, seleccione el formato:\n");
         printf("1. Round-robin (sistema liga)\n");
         printf("2. Mini grupo con final\n");
-
-        int opcion = input_int(">");
-        if (opcion == 1)
-        {
-            torneo->formato_torneo = ROUND_ROBIN;
-            torneo->tipo_torneo = IDA_Y_VUELTA;
-        }
-        else if (opcion == 2)
-        {
-            torneo->formato_torneo = MINI_GRUPO_CON_FINAL;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-        }
-        else
-        {
-            printf("Opcion invalida. Se seleccionará Round-robin por defecto.\n");
-            torneo->formato_torneo = ROUND_ROBIN;
-            torneo->tipo_torneo = IDA_Y_VUELTA;
-        }
+        opcion = input_int(">");
     }
     else if (cantidad >= 7 && cantidad <= 12)
     {
@@ -374,31 +459,7 @@ static void determine_formato_torneo(Torneo *torneo)
         printf("2. Liga doble\n");
         printf("3. Grupos + final\n");
         printf("4. Copa simple\n");
-
-        int opcion = input_int(">");
-        switch (opcion)
-        {
-        case 1:
-            torneo->formato_torneo = LIGA_SIMPLE;
-            torneo->tipo_torneo = SOLO_IDA;
-            break;
-        case 2:
-            torneo->formato_torneo = LIGA_DOBLE;
-            torneo->tipo_torneo = IDA_Y_VUELTA;
-            break;
-        case 3:
-            torneo->formato_torneo = GRUPOS_CON_FINAL;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-            break;
-        case 4:
-            torneo->formato_torneo = COPA_SIMPLE;
-            torneo->tipo_torneo = ELIMINACION_DIRECTA;
-            break;
-        default:
-            printf("Opcion invalida. Se seleccionará Liga simple por defecto.\n");
-            torneo->formato_torneo = LIGA_SIMPLE;
-            torneo->tipo_torneo = SOLO_IDA;
-        }
+        opcion = input_int(">");
     }
     else if (cantidad >= 13 && cantidad <= 20)
     {
@@ -406,57 +467,24 @@ static void determine_formato_torneo(Torneo *torneo)
         printf("1. Grupos (4-5 grupos) + eliminacion\n");
         printf("2. Copa + repechaje\n");
         printf("3. Liga grande\n");
-
-        int opcion = input_int(">");
-        switch (opcion)
-        {
-        case 1:
-            torneo->formato_torneo = GRUPOS_ELIMINACION;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-            break;
-        case 2:
-            torneo->formato_torneo = COPA_REPECHAJE;
-            torneo->tipo_torneo = ELIMINACION_DIRECTA;
-            break;
-        case 3:
-            torneo->formato_torneo = LIGA_GRANDE;
-            torneo->tipo_torneo = IDA_Y_VUELTA;
-            break;
-        default:
-            printf("Opcion invalida. Se seleccionará Grupos + eliminacion por defecto.\n");
-            torneo->formato_torneo = GRUPOS_ELIMINACION;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-        }
+        opcion = input_int(">");
     }
     else if (cantidad >= 21)
     {
         printf("\nPara 21 o mas equipos, seleccione el formato:\n");
         printf("1. Multiples grupos\n");
         printf("2. Eliminacion directa por fases\n");
-
-        int opcion = input_int(">");
-        switch (opcion)
-        {
-        case 1:
-            torneo->formato_torneo = MULTIPLES_GRUPOS;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-            break;
-        case 2:
-            torneo->formato_torneo = ELIMINACION_FASES;
-            torneo->tipo_torneo = ELIMINACION_DIRECTA;
-            break;
-        default:
-            printf("Opcion invalida. Se seleccionará Multiples grupos por defecto.\n");
-            torneo->formato_torneo = MULTIPLES_GRUPOS;
-            torneo->tipo_torneo = GRUPOS_Y_ELIMINACION;
-        }
+        opcion = input_int(">");
     }
     else
     {
         printf("Cantidad de equipos no válida. Se seleccionará formato por defecto.\n");
         torneo->formato_torneo = ROUND_ROBIN;
         torneo->tipo_torneo = IDA_Y_VUELTA;
+        return;
     }
+
+    obtener_formato_por_cantidad(opcion, cantidad, &torneo->tipo_torneo, &torneo->formato_torneo);
 }
 
 /**
@@ -541,17 +569,19 @@ void listar_torneos()
     clear_screen();
     print_header("LISTAR TORNEOS");
 
+    if (!listar_torneos_generico("torneos registrados"))
+    {
+        pause_console();
+        return;
+    }
+
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo ORDER BY id;";
 
     if (preparar_stmt(sql, &stmt))
     {
-        printf("\n=== LISTA DE TORNEOS ===\n\n");
-
-        int found = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            found = 1;
             Torneo torneo;
             torneo.id = sqlite3_column_int(stmt, 0);
             strncpy_s(torneo.nombre, sizeof(torneo.nombre), (const char*)sqlite3_column_text(stmt, 1), sizeof(torneo.nombre));
@@ -565,11 +595,6 @@ void listar_torneos()
             listar_equipos_asociados(torneo.id);
 
             printf("----------------------------------------\n");
-        }
-
-        if (!found)
-        {
-            mostrar_no_hay_registros("torneos registrados");
         }
     }
     else
@@ -586,38 +611,11 @@ void modificar_torneo()
     clear_screen();
     print_header("MODIFICAR TORNEO");
 
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre FROM torneo ORDER BY id;";
-
-    if (preparar_stmt(sql, &stmt))
+    if (!listar_torneos_generico("torneos registrados para modificar"))
     {
-        printf("\n=== TORNEOS DISPONIBLES ===\n\n");
-
-        int found = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            found = 1;
-            int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
-        }
-
-        if (!found)
-        {
-            mostrar_no_hay_registros("torneos registrados para modificar");
-            sqlite3_finalize(stmt);
-            pause_console();
-            return;
-        }
-    }
-    else
-    {
-        printf("Error al obtener la lista de torneos: %s\n", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
         pause_console();
         return;
     }
-    sqlite3_finalize(stmt);
 
     int torneo_id = input_int("\nIngrese el ID del torneo a modificar (0 para cancelar): ");
 
@@ -631,6 +629,7 @@ void modificar_torneo()
     }
 
     Torneo torneo = {0};
+    sqlite3_stmt *stmt;
     const char *sql_torneo = "SELECT nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo WHERE id = ?;";
 
     if (preparar_stmt(sql_torneo, &stmt))
@@ -690,38 +689,11 @@ void eliminar_torneo()
     clear_screen();
     print_header("ELIMINAR TORNEO");
 
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre FROM torneo ORDER BY id;";
-
-    if (preparar_stmt(sql, &stmt))
+    if (!listar_torneos_generico("torneos registrados para eliminar"))
     {
-        printf("\n=== TORNEOS DISPONIBLES ===\n\n");
-
-        int found = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            found = 1;
-            int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
-        }
-
-        if (!found)
-        {
-            mostrar_no_hay_registros("torneos registrados para eliminar");
-            sqlite3_finalize(stmt);
-            pause_console();
-            return;
-        }
-    }
-    else
-    {
-        printf("Error al obtener la lista de torneos: %s\n", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
         pause_console();
         return;
     }
-    sqlite3_finalize(stmt);
 
     int torneo_id = input_int("\nIngrese el ID del torneo a eliminar (0 para cancelar): ");
 
@@ -741,6 +713,7 @@ void eliminar_torneo()
         return;
     }
 
+    sqlite3_stmt *stmt;
     const char *sqls[] =
     {
         "DELETE FROM equipo_fase WHERE torneo_id = ?;",
@@ -898,159 +871,53 @@ static void actualizar_equipo_fijo(int torneo_id)
 }
 
 /**
- * @brief Obtiene formato y tipo para 7-12 equipos según opción seleccionada
- */
-static void obtener_formato_7_12(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
-{
-    *tipo = SOLO_IDA;
-    *formato = LIGA_SIMPLE;
-
-    switch (opcion)
-    {
-    case 1:
-        break;
-    case 2:
-        *formato = LIGA_DOBLE;
-        *tipo = IDA_Y_VUELTA;
-        break;
-    case 3:
-        *formato = GRUPOS_CON_FINAL;
-        *tipo = GRUPOS_Y_ELIMINACION;
-        break;
-    case 4:
-        *formato = COPA_SIMPLE;
-        *tipo = ELIMINACION_DIRECTA;
-        break;
-    default:
-        printf("Opcion invalida. Se seleccionará Liga simple por defecto.\n");
-    }
-}
-
-/**
- * @brief Maneja la actualización de formato para 7-12 equipos
- */
-static void actualizar_formato_7_12_equipos(int torneo_id)
-{
-    printf("\nPara 7-12 equipos, seleccione el formato:\n");
-    printf("1. Liga simple\n");
-    printf("2. Liga doble\n");
-    printf("3. Grupos + final\n");
-    printf("4. Copa simple\n");
-
-    int opcion = input_int(">");
-    TipoTorneos tipo;
-    FormatoTorneos formato;
-
-    obtener_formato_7_12(opcion, &tipo, &formato);
-    aplicar_actualizacion_formato(torneo_id, tipo, formato);
-}
-
-/**
- * @brief Obtiene formato y tipo para 13-20 equipos según opción seleccionada
- */
-static void obtener_formato_13_20(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
-{
-    *tipo = GRUPOS_Y_ELIMINACION;
-    *formato = GRUPOS_ELIMINACION;
-
-    switch (opcion)
-    {
-    case 1:
-        break;
-    case 2:
-        *formato = COPA_REPECHAJE;
-        *tipo = ELIMINACION_DIRECTA;
-        break;
-    case 3:
-        *formato = LIGA_GRANDE;
-        *tipo = IDA_Y_VUELTA;
-        break;
-    default:
-        printf("Opcion invalida. Se seleccionará Grupos + eliminacion por defecto.\n");
-    }
-}
-
-/**
- * @brief Maneja la actualización de formato para 13-20 equipos
- */
-static void actualizar_formato_13_20_equipos(int torneo_id)
-{
-    printf("\nPara 13-20 equipos, seleccione el formato:\n");
-    printf("1. Grupos (4-5 grupos) + eliminacion\n");
-    printf("2. Copa + repechaje\n");
-    printf("3. Liga grande\n");
-
-    int opcion = input_int(">");
-    TipoTorneos tipo;
-    FormatoTorneos formato;
-
-    obtener_formato_13_20(opcion, &tipo, &formato);
-    aplicar_actualizacion_formato(torneo_id, tipo, formato);
-}
-
-/**
- * @brief Obtiene formato y tipo para 21+ equipos según opción seleccionada
- */
-static void obtener_formato_21(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
-{
-    *tipo = GRUPOS_Y_ELIMINACION;
-    *formato = MULTIPLES_GRUPOS;
-
-    switch (opcion)
-    {
-    case 1:
-        break;
-    case 2:
-        *formato = ELIMINACION_FASES;
-        *tipo = ELIMINACION_DIRECTA;
-        break;
-    default:
-        printf("Opcion invalida. Se seleccionará Multiples grupos por defecto.\n");
-    }
-}
-
-/**
- * @brief Maneja la actualización de formato para 21+ equipos
- */
-static void actualizar_formato_21_equipos(int torneo_id)
-{
-    printf("\nPara 21 o mas equipos, seleccione el formato:\n");
-    printf("1. Multiples grupos\n");
-    printf("2. Eliminacion directa por fases\n");
-
-    int opcion = input_int(">");
-    TipoTorneos tipo;
-    FormatoTorneos formato;
-
-    obtener_formato_21(opcion, &tipo, &formato);
-    aplicar_actualizacion_formato(torneo_id, tipo, formato);
-}
-
-/**
  * @brief Maneja la actualización de tipo y formato de torneo
  */
 static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
 {
+    int opcion = 0;
+
     if (cantidad >= 4 && cantidad <= 6)
     {
-        actualizar_formato_4_6_equipos(torneo_id);
+        printf("\nPara 4-6 equipos, seleccione el formato:\n");
+        printf("1. Round-robin (sistema liga)\n");
+        printf("2. Mini grupo con final\n");
+        opcion = input_int(">");
     }
     else if (cantidad >= 7 && cantidad <= 12)
     {
-        actualizar_formato_7_12_equipos(torneo_id);
+        printf("\nPara 7-12 equipos, seleccione el formato:\n");
+        printf("1. Liga simple\n");
+        printf("2. Liga doble\n");
+        printf("3. Grupos + final\n");
+        printf("4. Copa simple\n");
+        opcion = input_int(">");
     }
     else if (cantidad >= 13 && cantidad <= 20)
     {
-        actualizar_formato_13_20_equipos(torneo_id);
+        printf("\nPara 13-20 equipos, seleccione el formato:\n");
+        printf("1. Grupos (4-5 grupos) + eliminacion\n");
+        printf("2. Copa + repechaje\n");
+        printf("3. Liga grande\n");
+        opcion = input_int(">");
     }
     else if (cantidad >= 21)
     {
-        actualizar_formato_21_equipos(torneo_id);
+        printf("\nPara 21 o mas equipos, seleccione el formato:\n");
+        printf("1. Multiples grupos\n");
+        printf("2. Eliminacion directa por fases\n");
+        opcion = input_int(">");
     }
     else
     {
         printf("Cantidad de equipos no válida. No se actualizara el formato.\n");
+        return;
     }
+
+    TipoTorneos tipo;
+    FormatoTorneos formato;
+    obtener_formato_por_cantidad(opcion, cantidad, &tipo, &formato);
+    aplicar_actualizacion_formato(torneo_id, tipo, formato);
 }
 
 /**

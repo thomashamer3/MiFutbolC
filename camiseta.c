@@ -32,30 +32,6 @@ static int obtener_total(const char *sql)
     return total;
 }
 
-static void trim_whitespace(char *str)
-{
-    if (!str)
-        return;
-
-    size_t total = strlen_s(str, SIZE_MAX);
-    if (total == 0)
-        return;
-
-    char const *start = str;
-    while (*start && isspace((unsigned char)*start))
-        start++;
-
-    char const *end = start + strlen_s(start, SIZE_MAX);
-    while (end > start && isspace((unsigned char)*(end - 1)))
-        end--;
-
-    size_t len = (size_t)(end - start);
-    if (start != str)
-        memmove(str, start, len + 1);
-    else
-        str[len] = '\0';
-}
-
 static void solicitar_nombre_camiseta(const char *prompt, char *buffer, int size)
 {
     while (1)

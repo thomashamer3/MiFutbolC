@@ -422,4 +422,10 @@ FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg);
  */
 int has_records(const char *table_name);
 
+/**
+ * @brief Elimina espacios en blanco al inicio y final de una cadena
+ * @param str Cadena a limpiar (se modifica in-place)
+ */
+void trim_whitespace(char *str);
+
 #endif

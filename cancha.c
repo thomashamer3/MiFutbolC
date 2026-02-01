@@ -12,30 +12,6 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
-static void trim_whitespace(char *str)
-{
-    if (!str)
-        return;
-
-    size_t total = strlen_s(str, SIZE_MAX);
-    if (total == 0)
-        return;
-
-    char const *start = str;
-    while (*start && isspace((unsigned char)*start))
-        start++;
-
-    char const *end = start + strlen_s(start, SIZE_MAX);
-    while (end > start && isspace((unsigned char)*(end - 1)))
-        end--;
-
-    size_t len = (size_t)(end - start);
-    if (start != str)
-        memmove(str, start, len + 1);
-    else
-        str[len] = '\0';
-}
-
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
 {
     while (1)

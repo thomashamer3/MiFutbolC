@@ -19,8 +19,6 @@
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
-static const char *SQL_COUNT_LESIONES = "SELECT COUNT(*) FROM lesion";
-
 static const char *SQL_LESIONES_AVANZADO =
     "SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, c.nombre as camiseta_nombre, "
     "(SELECT COUNT(*) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha) as partidos_antes_lesion, "

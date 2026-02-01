@@ -11,8 +11,6 @@
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
-static const char *SQL_COUNT_LESIONES = "SELECT COUNT(*) FROM lesion";
-
 static const char *SQL_LESIONES = "SELECT id, jugador, tipo, descripcion, fecha FROM lesion";
 
 /* ============================================================================

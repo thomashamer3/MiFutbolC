@@ -212,7 +212,7 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion)
     printf("ID: %d\n", transaccion->id);
 
     // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para mostrar
-    char fecha_display[11] = "";
+    char fecha_display[11] = {0};
     mostrar_fecha_display(transaccion->fecha, fecha_display, sizeof(fecha_display));
     printf("Fecha: %s\n", fecha_display);
 

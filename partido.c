@@ -39,6 +39,47 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 /**
+ * @brief Muestra la información de un partido desde un statement preparado
+ * 
+ * Esta función genérica imprime todos los detalles de un partido obtenido
+ * de una consulta SQL. Asume que el statement tiene las columnas en el orden:
+ * id, cancha, fecha_hora, goles, asistencias, camiseta, resultado, 
+ * rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio
+ *
+ * @param stmt Statement preparado con los datos del partido
+ * @return 1 si se mostró al menos un partido, 0 si no hay resultados
+ */
+static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
+{
+    int hay = 0;
+    char fecha_formateada[20];
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        // Formatear la fecha para visualización
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
+
+        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
+        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
+        printf("Fecha: %s\n", fecha_formateada);
+        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
+        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
+        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
+        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
+        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
+        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
+        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
+        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
+        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
+        printf("----------------------------------------\n");
+        hay = 1;
+    }
+
+    return hay;
+}
+
+/**
  * @brief Estructura para agrupar los datos de un partido
  *
  * Esta estructura se utiliza para reducir el número de parámetros en funciones
@@ -472,30 +513,7 @@ void listar_partidos()
         return;
     }
 
-    int hay = 0;
-    char fecha_formateada[20];
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        // Formatear la fecha para visualización
-        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
-
-        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Fecha: %s\n", fecha_formateada);
-        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
-        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
-        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
-        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
-        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
-        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
-        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
-        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
-        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
-        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
-        printf("----------------------------------------\n");
-        hay = 1;
-    }
+    int hay = mostrar_partidos_desde_stmt(stmt);
 
     if (!hay)
         printf("No hay partidos cargados.\n");
@@ -687,30 +705,7 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
     }
     sqlite3_bind_int(stmt, 1, valor);
 
-    int hay = 0;
-    char fecha_formateada[20];
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        // Formatear la fecha para visualización
-        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
-
-        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Fecha: %s\n", fecha_formateada);
-        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
-        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
-        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
-        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
-        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
-        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
-        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
-        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
-        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
-        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
-        printf("----------------------------------------\n");
-        hay = 1;
-    }
+    int hay = mostrar_partidos_desde_stmt(stmt);
 
     if (!hay)
         printf("No se encontraron partidos con ese criterio.\n");

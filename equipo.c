@@ -70,30 +70,6 @@ static int ejecutar_update_id(const char *sql, int id)
     return result;
 }
 
-static void trim_whitespace(char *str)
-{
-    if (!str)
-        return;
-
-    size_t total = strlen_s(str, SIZE_MAX);
-    if (total == 0)
-        return;
-
-    const char *start = str;
-    while (*start && isspace((unsigned char)*start))
-        start++;
-
-    const char *end = start + strlen_s(start, SIZE_MAX);
-    while (end > start && isspace((unsigned char)*(end - 1)))
-        end--;
-
-    size_t len = (size_t)(end - start);
-    if (start != str)
-        memmove(str, start, len + 1);
-    else
-        str[len] = '\0';
-}
-
 static void solicitar_nombre_equipo(const char *prompt, char *buffer, int size)
 {
     while (1)
