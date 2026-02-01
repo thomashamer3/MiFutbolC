@@ -16,6 +16,16 @@
 
 // ========== FUNCIONES AUXILIARES ==========
 
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
 const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
 {
     switch (tipo)
@@ -36,7 +46,7 @@ int get_temporada_actual_id()
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT id FROM temporada WHERE estado = 'Activa' ORDER BY fecha_inicio DESC LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -54,7 +64,7 @@ int fecha_en_temporada(const char* fecha, int temporada_id)
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT COUNT(*) FROM temporada WHERE id = ? AND ? BETWEEN fecha_inicio AND fecha_fin;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, fecha, -1, SQLITE_STATIC);
@@ -77,7 +87,7 @@ static void obtener_nombre_temporada(int temporada_id, char *nombre_buf, size_t 
 {
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT nombre FROM temporada WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -153,7 +163,7 @@ void crear_temporada()
     sqlite3_stmt *stmt = NULL;
     const char *sql = "INSERT INTO temporada (nombre, anio, fecha_inicio, fecha_fin, estado, descripcion) VALUES (?, ?, ?, ?, ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_text(stmt, 1, temporada.nombre, -1, SQLITE_STATIC);
         sqlite3_bind_int(stmt, 2, temporada.anio);
@@ -191,7 +201,7 @@ void crear_fases_temporada_defecto(int temporada_id)
     char fecha_fin[20] = "";
     int anio = 0;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -239,7 +249,7 @@ void crear_fases_temporada_defecto(int temporada_id)
     const char *sql_insert = "INSERT INTO temporada_fase (temporada_id, nombre, tipo_fase, fecha_inicio, fecha_fin, descripcion) VALUES (?, ?, ?, ?, ?, ?);";
 
     // Pretemporada
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, "Pretemporada", -1, SQLITE_STATIC);
@@ -252,7 +262,7 @@ void crear_fases_temporada_defecto(int temporada_id)
     }
 
     // Temporada Regular
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, "Temporada Regular", -1, SQLITE_STATIC);
@@ -265,7 +275,7 @@ void crear_fases_temporada_defecto(int temporada_id)
     }
 
     // Postemporada
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, "Postemporada", -1, SQLITE_STATIC);
@@ -288,7 +298,7 @@ void listar_temporadas()
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT id, nombre, anio, fecha_inicio, fecha_fin, estado FROM temporada ORDER BY anio DESC, fecha_inicio DESC;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         printf("\n=== TEMPORADAS ===\n\n");
 
@@ -360,7 +370,7 @@ void modificar_temporada()
         input_string("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
 
         const char *sql = "UPDATE temporada SET nombre = ? WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             sqlite3_bind_text(stmt, 1, nuevo_nombre, -1, SQLITE_STATIC);
             sqlite3_bind_int(stmt, 2, temporada_id);
@@ -380,7 +390,7 @@ void modificar_temporada()
         input_string("", nueva_fecha_fin, sizeof(nueva_fecha_fin));
 
         const char *sql = "UPDATE temporada SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             sqlite3_bind_text(stmt, 1, nueva_fecha_inicio, -1, SQLITE_STATIC);
             sqlite3_bind_text(stmt, 2, nueva_fecha_fin, -1, SQLITE_STATIC);
@@ -397,7 +407,7 @@ void modificar_temporada()
         input_string("Nueva descripción: ", nueva_descripcion, sizeof(nueva_descripcion));
 
         const char *sql = "UPDATE temporada SET descripcion = ? WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             sqlite3_bind_text(stmt, 1, nueva_descripcion, -1, SQLITE_STATIC);
             sqlite3_bind_int(stmt, 2, temporada_id);
@@ -434,7 +444,7 @@ void modificar_temporada()
         }
 
         const char *sql = "UPDATE temporada SET estado = ? WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             sqlite3_bind_text(stmt, 1, nuevo_estado, -1, SQLITE_STATIC);
             sqlite3_bind_int(stmt, 2, temporada_id);
@@ -487,7 +497,7 @@ void eliminar_temporada()
 
         for (int i = 0; sqls[i] != NULL; i++)
         {
-            if (sqlite3_prepare_v2(db, sqls[i], -1, &stmt, 0) == SQLITE_OK)
+            if (preparar_stmt(sqls[i], &stmt))
             {
                 sqlite3_bind_int(stmt, 1, temporada_id);
                 sqlite3_step(stmt);
@@ -517,7 +527,7 @@ float calcular_fatiga_equipo(int equipo_id, int dias_recientes)
              "WHERE et.equipo_id = ? AND pt.fecha >= date('now', '-%d days');", dias_recientes);
 
     float fatiga = 0.0f;
-    if (sqlite3_prepare_v2(db, sql_query, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_query, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
 
@@ -544,7 +554,7 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes)
              "WHERE je.jugador_id = ? AND pt.fecha >= date('now', '-%d days');", dias_recientes);
 
     float fatiga = 0.0f;
-    if (sqlite3_prepare_v2(db, sql_query, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_query, &stmt))
     {
         sqlite3_bind_int(stmt, 1, jugador_id);
 
@@ -577,7 +587,7 @@ void actualizar_fatiga_equipo(int equipo_id, int temporada_id, [[maybe_unused]] 
                       "(SELECT COUNT(*) FROM partido_torneo pt JOIN equipo_torneo et ON pt.torneo_id = et.torneo_id "
                       " WHERE et.equipo_id = ?), ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
         sqlite3_bind_int(stmt, 2, temporada_id);
@@ -611,7 +621,7 @@ void actualizar_fatiga_jugador(int jugador_id, int temporada_id, [[maybe_unused]
                                "WHERE j.id = ?;";
 
     int lesiones_count = 0;
-    if (sqlite3_prepare_v2(db, sql_lesiones, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_lesiones, &stmt))
     {
         sqlite3_bind_int(stmt, 1, jugador_id);
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -627,7 +637,7 @@ void actualizar_fatiga_jugador(int jugador_id, int temporada_id, [[maybe_unused]
                       "VALUES (?, ?, date('now'), ?, "
                       "(SELECT COALESCE(SUM(minutos_jugados), 0) FROM jugador_estadisticas WHERE jugador_id = ?), ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, jugador_id);
         sqlite3_bind_int(stmt, 2, temporada_id);
@@ -653,7 +663,7 @@ void actualizar_evolucion_equipo(int equipo_id, int temporada_id)
 
     int partidos_total = 0;
     int partidos_ganados = 0;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
         sqlite3_bind_int(stmt, 2, temporada_id);
@@ -678,7 +688,7 @@ void actualizar_evolucion_equipo(int equipo_id, int temporada_id)
                              "(equipo_id, temporada_id, fecha_medicion, puntuacion_rendimiento, tendencia, partidos_ganados, partidos_totales) "
                              "VALUES (?, ?, date('now'), ?, ?, ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
         sqlite3_bind_int(stmt, 2, temporada_id);
@@ -710,7 +720,7 @@ void generar_resumen_temporada(int temporada_id)
     int total_partidos = 0;
     int total_goles = 0;
     int total_lesiones = 0;
-    if (sqlite3_prepare_v2(db, sql_stats, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_stats, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -733,7 +743,7 @@ void generar_resumen_temporada(int temporada_id)
                               "WHERE tt.temporada_id = ? "
                               "ORDER BY ete.puntos DESC, ete.goles_favor DESC LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql_campeon, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_campeon, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -753,7 +763,7 @@ void generar_resumen_temporada(int temporada_id)
                                "WHERE tt.temporada_id = ? "
                                "GROUP BY je.jugador_id ORDER BY total_goles DESC LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql_goleador, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_goleador, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -772,7 +782,7 @@ void generar_resumen_temporada(int temporada_id)
                              "total_lesiones, fecha_generacion) "
                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, date('now'));";
 
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_int(stmt, 2, total_partidos);
@@ -817,7 +827,7 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
     float promedio2 = 0.0f;
 
     // Temporada 1
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada1_id);
 
@@ -835,7 +845,7 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
     }
 
     // Temporada 2
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada2_id);
 
@@ -879,7 +889,7 @@ void mostrar_dashboard_temporada(int temporada_id)
     char estado[20] = "";
     char fecha_inicio[20] = "";
     char fecha_fin[20] = "";
-    if (sqlite3_prepare_v2(db, sql_temporada, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_temporada, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -901,7 +911,7 @@ void mostrar_dashboard_temporada(int temporada_id)
     const char *sql_resumen = "SELECT total_partidos, total_goles, promedio_goles_partido, total_lesiones "
                               "FROM temporada_resumen WHERE temporada_id = ?;";
 
-    if (sqlite3_prepare_v2(db, sql_resumen, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_resumen, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -934,7 +944,7 @@ void mostrar_dashboard_temporada(int temporada_id)
                               "LEFT JOIN temporada_fase tf ON tt.fase_id = tf.id "
                               "WHERE tt.temporada_id = ? ORDER BY tt.orden_en_temporada;";
 
-    if (sqlite3_prepare_v2(db, sql_torneos, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_torneos, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -973,7 +983,7 @@ void mostrar_estadisticas_fatiga(int temporada_id)
                               "WHERE etf.temporada_id = ? "
                               "ORDER BY etf.fatiga_acumulada DESC;";
 
-    if (sqlite3_prepare_v2(db, sql_equipos, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_equipos, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1006,7 +1016,7 @@ void mostrar_estadisticas_fatiga(int temporada_id)
                                 "WHERE jtf.temporada_id = ? "
                                 "ORDER BY jtf.fatiga_acumulada DESC LIMIT 10;";
 
-    if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_jugadores, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1039,7 +1049,7 @@ void exportar_resumen_temporada(int temporada_id)
     const char *sql_temporada = "SELECT nombre FROM temporada WHERE id = ?;";
     char nombre_temporada[100] = "";
 
-    if (sqlite3_prepare_v2(db, sql_temporada, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_temporada, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1082,7 +1092,7 @@ void exportar_resumen_temporada(int temporada_id)
                               "LEFT JOIN jugador j ON tr.mejor_goleador_jugador_id = j.id "
                               "WHERE tr.temporada_id = ?;";
 
-    if (sqlite3_prepare_v2(db, sql_resumen, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_resumen, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1227,7 +1237,7 @@ void asociar_torneo_temporada(int torneo_id)
         const char *sql = "SELECT id, nombre FROM torneo WHERE id NOT IN "
                           "(SELECT torneo_id FROM torneo_temporada) ORDER BY id;";
 
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             printf("\n=== TORNEOS DISPONIBLES ===\n\n");
 
@@ -1271,7 +1281,7 @@ void asociar_torneo_temporada(int torneo_id)
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO torneo_temporada (torneo_id, temporada_id) VALUES (?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
         sqlite3_bind_int(stmt, 2, temporada_id);
@@ -1312,7 +1322,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     int partidos_ganados = 0;
     int partidos_empatados = 0;
     int partidos_perdidos = 0;
-    if (sqlite3_prepare_v2(db, sql_partidos, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_partidos, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);
@@ -1333,7 +1343,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     // Contar lesiones del mes
     const char *sql_lesiones = "SELECT COUNT(*) FROM lesion WHERE strftime('%Y-%m', fecha) = ?;";
     int total_lesiones = 0;
-    if (sqlite3_prepare_v2(db, sql_lesiones, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_lesiones, &stmt))
     {
         sqlite3_bind_text(stmt, 1, mes_anio, -1, SQLITE_STATIC);
 
@@ -1352,7 +1362,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
 
     float total_gastos = 0.0f;
     float total_ingresos = 0.0f;
-    if (sqlite3_prepare_v2(db, sql_finanzas, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_finanzas, &stmt))
     {
         sqlite3_bind_text(stmt, 1, mes_anio, -1, SQLITE_STATIC);
 
@@ -1378,7 +1388,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
                               "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
                               "GROUP BY e.id ORDER BY puntos DESC LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql_equipos, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_equipos, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);
@@ -1402,7 +1412,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
                            "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
                            "GROUP BY e.id ORDER BY puntos ASC LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql_peor, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_peor, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);
@@ -1421,7 +1431,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
                              "total_gastos, total_ingresos, mejor_equipo_mes, peor_equipo_mes, fecha_generacion) "
                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'));";
 
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);
@@ -1451,7 +1461,7 @@ void mostrar_resumen_mensual(int temporada_id, const char* mes_anio)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT * FROM mensual_resumen WHERE temporada_id = ? AND mes_anio = ?;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);
@@ -1526,7 +1536,7 @@ void listar_resumenes_mensuales(int temporada_id)
     const char *sql_temporada = "SELECT nombre FROM temporada WHERE id = ?;";
     char nombre_temporada[100] = "";
 
-    if (sqlite3_prepare_v2(db, sql_temporada, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_temporada, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1544,7 +1554,7 @@ void listar_resumenes_mensuales(int temporada_id)
                       "total_lesiones, total_gastos, total_ingresos "
                       "FROM mensual_resumen WHERE temporada_id = ? ORDER BY mes_anio;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1584,7 +1594,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
     const char *sql_temporada = "SELECT nombre FROM temporada WHERE id = ?;";
     char nombre_temporada[100] = "";
 
-    if (sqlite3_prepare_v2(db, sql_temporada, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_temporada, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -1622,7 +1632,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
     // Copiar contenido del resumen mensual al archivo
     const char *sql = "SELECT * FROM mensual_resumen WHERE temporada_id = ? AND mes_anio = ?;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
         sqlite3_bind_text(stmt, 2, mes_anio, -1, SQLITE_STATIC);

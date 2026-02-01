@@ -6,6 +6,9 @@
  * el análisis avanzado de estadísticas de fútbol.
  */
 
+#ifndef ESTADISTICAS_META_H
+#define ESTADISTICAS_META_H
+
 /**
  * @brief Muestra la consistencia del rendimiento (variabilidad)
  */
@@ -55,3 +58,5 @@ void mostrar_partidos_exigentes_bien_rendidos();
  * @brief Muestra partidos fáciles mal rendidos
  */
 void mostrar_partidos_faciles_mal_rendidos();
+
+#endif

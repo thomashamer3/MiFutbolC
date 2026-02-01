@@ -6,6 +6,64 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char *NOMBRES_MESES[] =
+{
+    "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+};
+
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static const char *mes_a_nombre(const char *mes_str)
+{
+    int mes = mes_str ? atoi(mes_str) : 0;
+    if (mes >= 1 && mes <= 12)
+    {
+        return NOMBRES_MESES[mes];
+    }
+    return "Desconocido";
+}
+
+static double calcular_julianday(const char *fecha)
+{
+    sqlite3_stmt *stmt_jd;
+    double jd = 0;
+
+    if (!preparar_stmt(&stmt_jd, "SELECT julianday(?)"))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt_jd, 1, fecha, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(stmt_jd) == SQLITE_ROW)
+    {
+        jd = sqlite3_column_double(stmt_jd, 0);
+    }
+    sqlite3_finalize(stmt_jd);
+    return jd;
+}
+
+static double calcular_promedio_rendimiento(const char *sql)
+{
+    sqlite3_stmt *stmt;
+    double avg = 0;
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        avg = sqlite3_column_double(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    return avg;
+}
+
 /**
  * @brief Cuenta total de incidentes médicos registrados
  *
@@ -15,7 +73,11 @@
 static void mostrar_total_lesiones()
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM lesion", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM lesion"))
+    {
+        return;
+    }
+
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         printf("Total de lesiones: %d\n", sqlite3_column_int(stmt, 0));
@@ -32,7 +94,10 @@ static void mostrar_total_lesiones()
 static void mostrar_lesiones_por_tipo()
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT tipo, COUNT(*) FROM lesion GROUP BY tipo ORDER BY COUNT(*) DESC", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT tipo, COUNT(*) FROM lesion GROUP BY tipo ORDER BY COUNT(*) DESC"))
+    {
+        return;
+    }
     printf("Lesiones por tipo:\n");
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -50,9 +115,11 @@ static void mostrar_lesiones_por_tipo()
 static void mostrar_lesiones_por_camiseta()
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT c.numero, c.nombre, COUNT(l.id) FROM camiseta c LEFT JOIN lesion l ON c.id = l.camiseta_id GROUP BY c.id ORDER BY COUNT(l.id) DESC",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt,
+                       "SELECT c.numero, c.nombre, COUNT(l.id) FROM camiseta c LEFT JOIN lesion l ON c.id = l.camiseta_id GROUP BY c.id ORDER BY COUNT(l.id) DESC"))
+    {
+        return;
+    }
     printf("Lesiones por camiseta:\n");
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -70,15 +137,15 @@ static void mostrar_lesiones_por_camiseta()
 static void mostrar_lesiones_por_mes()
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC"))
+    {
+        return;
+    }
     printf("Lesiones por mes:\n");
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char* mes_str = (const char*)sqlite3_column_text(stmt, 0);
-        int mes = mes_str ? atoi(mes_str) : 0;
-        const char* nombre_mes[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
-        const char* nombre = (mes >= 1 && mes <= 12) ? nombre_mes[mes] : "Desconocido";
-        printf("%s (%d)\n", nombre, sqlite3_column_int(stmt, 1));
+        const char *mes_str = (const char *)sqlite3_column_text(stmt, 0);
+        printf("%s (%d)\n", mes_a_nombre(mes_str), sqlite3_column_int(stmt, 1));
     }
     sqlite3_finalize(stmt);
 }
@@ -92,12 +159,15 @@ static void mostrar_lesiones_por_mes()
 static void mostrar_mes_con_mas_lesiones()
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC LIMIT 1", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC LIMIT 1"))
+    {
+        return;
+    }
+
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int mes = atoi((const char*)sqlite3_column_text(stmt, 0));
-        const char* nombre_mes[] = {"", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
-        printf("Mes Con mas Lesiones:%s\n", nombre_mes[mes]);
+        const char *mes_str = (const char *)sqlite3_column_text(stmt, 0);
+        printf("Mes Con mas Lesiones:%s\n", mes_a_nombre(mes_str));
     }
     else
     {
@@ -116,7 +186,10 @@ static void mostrar_tiempo_promedio_entre_lesiones()
 {
     // Obtener todas las fechas de lesiones ordenadas por camiseta y fecha
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT camiseta_id, fecha FROM lesion ORDER BY camiseta_id, fecha", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT camiseta_id, fecha FROM lesion ORDER BY camiseta_id, fecha"))
+    {
+        return;
+    }
 
     double total_dias = 0;
     int count = 0;
@@ -127,16 +200,7 @@ static void mostrar_tiempo_promedio_entre_lesiones()
     {
         int camiseta = sqlite3_column_int(stmt, 0);
         const char* fecha = (const char*)sqlite3_column_text(stmt, 1);
-        double jd = 0;
-        // Calcular día juliano
-        sqlite3_stmt *stmt_jd;
-        sqlite3_prepare_v2(db, "SELECT julianday(?)", -1, &stmt_jd, NULL);
-        sqlite3_bind_text(stmt_jd, 1, fecha, -1, SQLITE_TRANSIENT);
-        if (sqlite3_step(stmt_jd) == SQLITE_ROW)
-        {
-            jd = sqlite3_column_double(stmt_jd, 0);
-        }
-        sqlite3_finalize(stmt_jd);
+        double jd = calcular_julianday(fecha);
 
         if (camiseta == prev_camiseta && prev_jd > 0)
         {
@@ -166,17 +230,8 @@ static void mostrar_tiempo_promedio_entre_lesiones()
  */
 static double calcular_rendimiento_promedio_antes()
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha < l.fecha",
-                       -1, &stmt, NULL);
-    double avg = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        avg = sqlite3_column_double(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return avg;
+    return calcular_promedio_rendimiento(
+               "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha < l.fecha");
 }
 
 /**
@@ -187,17 +242,8 @@ static double calcular_rendimiento_promedio_antes()
  */
 static double calcular_rendimiento_promedio_despues()
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha > l.fecha",
-                       -1, &stmt, NULL);
-    double avg = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        avg = sqlite3_column_double(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return avg;
+    return calcular_promedio_rendimiento(
+               "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha > l.fecha");
 }
 
 /**

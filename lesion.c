@@ -11,6 +11,73 @@
 static int current_lesion_id;
 
 /**
+ * @brief Preparar statement y reportar errores
+ */
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Obtener estado por opción
+ */
+static const char *estado_por_opcion(int opcion)
+{
+    switch (opcion)
+    {
+    case 1:
+        return "ACTIVA";
+    case 2:
+        return "EN_TRATAMIENTO";
+    case 3:
+        return "MEJORANDO";
+    case 4:
+        return "RECUPERADO";
+    case 5:
+        return "RECAÍDA";
+    default:
+        return NULL;
+    }
+}
+
+/**
+ * @brief Ejecutar update simple con texto
+ */
+static void ejecutar_update_texto(const char *sql, const char *valor, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+}
+
+/**
+ * @brief Ejecutar update simple con entero
+ */
+static void ejecutar_update_int(const char *sql, int valor, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_bind_int(stmt, 2, id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+}
+
+/**
  * @brief Crea una nueva lesión en la base de datos
  *
  * Solicita al usuario el tipo, descripción de la lesión, el ID de la camiseta asociada
@@ -39,27 +106,12 @@ void crear_lesion()
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
     int opcion_estado = input_int("Seleccione estado inicial (1-5): ");
-    switch (opcion_estado)
+    const char *estado_sel = estado_por_opcion(opcion_estado);
+    if (!estado_sel)
     {
-    case 1:
-        strcpy_s(estado, sizeof(estado), "ACTIVA");
-        break;
-    case 2:
-        strcpy_s(estado, sizeof(estado), "EN_TRATAMIENTO");
-        break;
-    case 3:
-        strcpy_s(estado, sizeof(estado), "MEJORANDO");
-        break;
-    case 4:
-        strcpy_s(estado, sizeof(estado), "RECUPERADO");
-        break;
-    case 5:
-        strcpy_s(estado, sizeof(estado), "RECAÍDA");
-        break;
-    default:
-        strcpy_s(estado, sizeof(estado), "ACTIVA");
-        break;
+        estado_sel = "ACTIVA";
     }
+    strcpy_s(estado, sizeof(estado), estado_sel);
 
     get_datetime(fecha, sizeof(fecha));
 
@@ -72,9 +124,16 @@ void crear_lesion()
     long long id = obtener_siguiente_id("lesion");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado) VALUES(?,?,?,?,?,?,?)",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado) VALUES(?,?,?,?,?,?,?)",
+                &stmt))
+    {
+        if (strcmp(jugador, "Usuario Desconocido") != 0)
+        {
+            free(jugador);
+        }
+        return;
+    }
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
@@ -106,23 +165,31 @@ void listar_lesiones()
     mostrar_pantalla("LISTADO DE LESIONES");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT id, tipo, descripcion, fecha, estado FROM lesion ORDER BY fecha DESC",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "SELECT id, jugador, tipo, descripcion, fecha, camiseta_id, estado, partido_id FROM lesion ORDER BY fecha DESC",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     int hay = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char* estado = (const char*)sqlite3_column_text(stmt, 4);
-        const char* estado_display = estado ? estado : "ACTIVA"; // Default si es NULL
+        const char *estado = (const char *)sqlite3_column_text(stmt, 6);
+        const char *estado_display = estado ? estado : "ACTIVA"; // Default si es NULL
+        int partido_id = sqlite3_column_int(stmt, 7);
 
-        printf("ID: %d | Tipo: %s | Descripcion: %s | Fecha: %s | Estado: %s\n",
+        printf("ID: %d | Jugador: %s | Tipo: %s | Descripcion: %s | Fecha: %s | Camiseta ID: %d | Estado: %s | Partido ID: %d\n",
                sqlite3_column_int(stmt, 0),
                sqlite3_column_text(stmt, 1),
                sqlite3_column_text(stmt, 2),
                sqlite3_column_text(stmt, 3),
-               estado_display);
+               sqlite3_column_text(stmt, 4),
+               sqlite3_column_int(stmt, 5),
+               estado_display,
+               partido_id);
         hay = 1;
     }
 
@@ -140,12 +207,7 @@ static void modificar_tipo_lesion()
 {
     char tipo[100];
     input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_lesion_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    ejecutar_update_texto("UPDATE lesion SET tipo=? WHERE id=?", tipo, current_lesion_id);
     printf("Tipo modificado correctamente\n");
     pause_console();
 }
@@ -157,12 +219,7 @@ static void modificar_descripcion_lesion()
 {
     char descripcion[200];
     input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET descripcion=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, descripcion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_lesion_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    ejecutar_update_texto("UPDATE lesion SET descripcion=? WHERE id=?", descripcion, current_lesion_id);
     printf("Descripcion modificada correctamente\n");
     pause_console();
 }
@@ -182,12 +239,7 @@ static void modificar_fecha_lesion()
     fgets(hora, sizeof(hora), stdin);
     hora[strcspn(hora, "\n")] = 0;
     snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET fecha=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, fecha_hora, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_lesion_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    ejecutar_update_texto("UPDATE lesion SET fecha=? WHERE id=?", fecha_hora, current_lesion_id);
     printf("Fecha modificada correctamente\n");
     pause_console();
 }
@@ -199,12 +251,7 @@ static void modificar_camiseta_lesion()
 {
     listar_camisetas();
     int camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET camiseta_id=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, camiseta_id);
-    sqlite3_bind_int(stmt, 2, current_lesion_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id, current_lesion_id);
     printf("Camiseta modificada correctamente\n");
     pause_console();
 }
@@ -222,37 +269,15 @@ static void modificar_estado_lesion()
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
     int opcion_estado = input_int("Seleccione nuevo estado (1-5): ");
-    char estado[50];
-
-    switch (opcion_estado)
+    const char *estado = estado_por_opcion(opcion_estado);
+    if (!estado)
     {
-    case 1:
-        strcpy_s(estado, sizeof(estado), "ACTIVA");
-        break;
-    case 2:
-        strcpy_s(estado, sizeof(estado), "EN_TRATAMIENTO");
-        break;
-    case 3:
-        strcpy_s(estado, sizeof(estado), "MEJORANDO");
-        break;
-    case 4:
-        strcpy_s(estado, sizeof(estado), "RECUPERADO");
-        break;
-    case 5:
-        strcpy_s(estado, sizeof(estado), "RECAÍDA");
-        break;
-    default:
         printf("Opción inválida\n");
         pause_console();
         return;
     }
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET estado=? WHERE id=?", -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, estado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_lesion_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    ejecutar_update_texto("UPDATE lesion SET estado=? WHERE id=?", estado, current_lesion_id);
     printf("Estado modificado correctamente a: %s\n", estado);
     pause_console();
 }
@@ -282,30 +307,21 @@ static void modificar_todo_lesion()
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
     int opcion_estado = input_int("Seleccione estado (1-5): ");
-    switch (opcion_estado)
+    const char *estado_sel = estado_por_opcion(opcion_estado);
+    if (!estado_sel)
     {
-    case 1:
-        strcpy_s(estado, sizeof(estado), "ACTIVA");
-        break;
-    case 2:
-        strcpy_s(estado, sizeof(estado), "EN_TRATAMIENTO");
-        break;
-    case 3:
-        strcpy_s(estado, sizeof(estado), "MEJORANDO");
-        break;
-    case 4:
-        strcpy_s(estado, sizeof(estado), "RECUPERADO");
-        break;
-    case 5:
-        strcpy_s(estado, sizeof(estado), "RECAÍDA");
-        break;
-    default:
-        strcpy_s(estado, sizeof(estado), "ACTIVA");
-        break;
+        estado_sel = "ACTIVA";
     }
+    strcpy_s(estado, sizeof(estado), estado_sel);
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE lesion SET tipo=?, descripcion=?, fecha=?, camiseta_id=?, estado=? WHERE id=?", -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "UPDATE lesion SET tipo=?, descripcion=?, fecha=?, camiseta_id=?, estado=? WHERE id=?",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
@@ -330,7 +346,7 @@ void modificar_lesion()
 
     if (!hay_registros("lesion"))
     {
-        mostrar_no_hay_registros("lesiones");
+        mostrar_no_hay_registros("lesion");
         pause_console();
         return;
     }
@@ -398,9 +414,11 @@ void eliminar_lesion()
         return;
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "DELETE FROM lesion WHERE id=?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt("DELETE FROM lesion WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
@@ -417,7 +435,7 @@ void eliminar_lesion()
  * @param fecha2 Segunda fecha en formato string
  * @return Diferencia en días (positivo si fecha2 es posterior a fecha1)
  */
-static int calcular_diferencia_dias(const char* fecha1, const char* fecha2)
+static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
 {
     // Para simplificar, usaremos una conversión básica
     // En un sistema real, se debería usar una librería de fechas más robusta
@@ -455,9 +473,11 @@ void mostrar_diferencias_lesiones()
     print_header("DIFERENCIAS ENTRE LESIONES");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT id, fecha, tipo FROM lesion ORDER BY fecha ASC",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt("SELECT id, fecha, tipo FROM lesion ORDER BY fecha ASC", &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     char fecha_anterior[50] = "";
     int primera_lesion = 1;
@@ -467,8 +487,8 @@ void mostrar_diferencias_lesiones()
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int id = sqlite3_column_int(stmt, 0);
-        const char* fecha_actual = (const char*)sqlite3_column_text(stmt, 1);
-        const char* tipo = (const char*)sqlite3_column_text(stmt, 2);
+        const char *fecha_actual = (const char *)sqlite3_column_text(stmt, 1);
+        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
 
         if (!primera_lesion)
         {
@@ -502,9 +522,13 @@ void actualizar_estados_lesiones()
     mostrar_pantalla("ACTUALIZAR ESTADOS DE LESIONES");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT id, tipo, descripcion, fecha, estado FROM lesion WHERE estado != 'RECUPERADO' ORDER BY fecha DESC",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "SELECT id, tipo, descripcion, fecha, estado FROM lesion WHERE estado != 'RECUPERADO' ORDER BY fecha DESC",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     int lesiones_activas = 0;
 
@@ -513,10 +537,10 @@ void actualizar_estados_lesiones()
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int id = sqlite3_column_int(stmt, 0);
-        const char* tipo = (const char*)sqlite3_column_text(stmt, 1);
-        const char* descripcion = (const char*)sqlite3_column_text(stmt, 2);
-        const char* fecha = (const char*)sqlite3_column_text(stmt, 3);
-        const char* estado = (const char*)sqlite3_column_text(stmt, 4);
+        const char *tipo = (const char *)sqlite3_column_text(stmt, 1);
+        const char *descripcion = (const char *)sqlite3_column_text(stmt, 2);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 3);
+        const char *estado = (const char *)sqlite3_column_text(stmt, 4);
 
         printf("ID: %d | Tipo: %s | Estado actual: %s | Fecha: %s\n", id, tipo, estado, fecha);
         printf("  Descripción: %s\n\n", descripcion);

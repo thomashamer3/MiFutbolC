@@ -11,6 +11,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
+{
+    FILE *file;
+    const char *path = get_export_path(filename);
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+    {
+        printf("%s\n", error_msg);
+        return NULL;
+    }
+    return file;
+}
+
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -35,7 +53,7 @@ static int has_partidos(void)
     int count = 0;
     int result = 0;
 
-    if (sqlite3_prepare_v2(db, SQL_COUNT_PARTIDOS, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(&stmt, SQL_COUNT_PARTIDOS))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -50,7 +68,7 @@ static int has_partidos(void)
 
 /** @brief Obtiene top 1 por métrica (reutilizable) */
 static int get_top_camiseta(const char *metric, const char *orderDir,
-                            char *nombre, int *valor)
+                            char *nombre, size_t nombre_size, int *valor)
 {
     sqlite3_stmt *stmt = NULL;
     char query[512];
@@ -60,11 +78,11 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
              "JOIN camiseta c ON p.camiseta_id = c.id "
              "GROUP BY c.id ORDER BY 2 %s LIMIT 1", metric, orderDir);
 
-    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(&stmt, query))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre, nombre_size, (const char *)sqlite3_column_text(stmt, 0));
             *valor = sqlite3_column_int(stmt, 1);
             result = 1;
         }
@@ -91,7 +109,7 @@ static void write_stats_csv(FILE *file, const char *,
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, &valor))
+    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
     {
         fprintf(file, "%s,%s,%d\n", label, nombre, valor);
     }
@@ -104,7 +122,7 @@ static void write_stats_txt(FILE *file, const char *,
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, &valor))
+    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
     {
         fprintf(file, "%s: %s (%d)\n", label, nombre, valor);
     }
@@ -117,7 +135,7 @@ static void write_stats_html(FILE *file, const char *,
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, &valor))
+    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
     {
         fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", label, nombre, valor);
     }
@@ -132,25 +150,25 @@ static cJSON *json_build_estadisticas(void)
     char nombre[256];
     int valor;
 
-    if (get_top_camiseta("SUM(goles)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(goles)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_goles", nombre, valor);
-    if (get_top_camiseta("SUM(asistencias)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(asistencias)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_asistencias", nombre, valor);
-    if (get_top_camiseta("COUNT(*)", "DESC", nombre, &valor))
+    if (get_top_camiseta("COUNT(*)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_partidos", nombre, valor);
-    if (get_top_camiseta("SUM(goles+asistencias)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(goles+asistencias)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_goles_asistencias", nombre, valor);
-    if (get_top_camiseta("AVG(rendimiento_general)", "DESC", nombre, &valor))
+    if (get_top_camiseta("AVG(rendimiento_general)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mejor_rendimiento", nombre, valor);
-    if (get_top_camiseta("AVG(estado_animo)", "DESC", nombre, &valor))
+    if (get_top_camiseta("AVG(estado_animo)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mejor_estado_animo", nombre, valor);
-    if (get_top_camiseta("AVG(cansancio)", "ASC", nombre, &valor))
+    if (get_top_camiseta("AVG(cansancio)", "ASC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "menos_cansancio", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_victorias", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_empates", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", nombre, &valor))
+    if (get_top_camiseta("SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
         json_write_stat(root, "mas_derrotas", nombre, valor);
 
     return root;
@@ -168,14 +186,11 @@ void exportar_estadisticas_generales_csv(void)
         return;
     }
 
-    const char *path = get_export_path("estadisticas_generales.csv");
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error CSV\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.csv", "Error CSV");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "Categoria,Camiseta,Valor\n");
 
@@ -191,7 +206,7 @@ void exportar_estadisticas_generales_csv(void)
     write_stats_csv(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
 
     fclose(file);
-    printf("Exportado: %s\n", path);
+    printf("Exportado: %s\n", get_export_path("estadisticas_generales.csv"));
 }
 
 void exportar_estadisticas_generales_txt(void)
@@ -202,14 +217,11 @@ void exportar_estadisticas_generales_txt(void)
         return;
     }
 
-    const char *path = get_export_path("estadisticas_generales.txt");
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error TXT\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.txt", "Error TXT");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
 
@@ -225,7 +237,7 @@ void exportar_estadisticas_generales_txt(void)
     write_stats_txt(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
 
     fclose(file);
-    printf("Exportado: %s\n", path);
+    printf("Exportado: %s\n", get_export_path("estadisticas_generales.txt"));
 }
 
 void exportar_estadisticas_generales_json(void)
@@ -236,14 +248,11 @@ void exportar_estadisticas_generales_json(void)
         return;
     }
 
-    const char *path = get_export_path("estadisticas_generales.json");
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error JSON\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.json", "Error JSON");
+    if (!file)
+    {
+        return;
+    }
 
     cJSON *root = cJSON_CreateObject();
     cJSON *stats = json_build_estadisticas();
@@ -255,7 +264,7 @@ void exportar_estadisticas_generales_json(void)
     free(json_str);
     cJSON_Delete(root);
     fclose(file);
-    printf("Exportado: %s\n", path);
+    printf("Exportado: %s\n", get_export_path("estadisticas_generales.json"));
 }
 
 void exportar_estadisticas_generales_html(void)
@@ -266,14 +275,11 @@ void exportar_estadisticas_generales_html(void)
         return;
     }
 
-    const char *path = get_export_path("estadisticas_generales.html");
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error HTML\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.html", "Error HTML");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
     fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
@@ -292,7 +298,7 @@ void exportar_estadisticas_generales_html(void)
 
     fprintf(file, "</table>\n</body>\n</html>\n");
     fclose(file);
-    printf("Exportado: %s\n", path);
+    printf("Exportado: %s\n", get_export_path("estadisticas_generales.html"));
 }
 
 /* ============================================================================
@@ -307,18 +313,20 @@ void exportar_estadisticas_por_mes_csv(void)
         return;
     }
 
-    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.csv"), "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error CSV\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_por_mes.csv", "Error CSV");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    {
+        fclose(file);
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -342,18 +350,20 @@ void exportar_estadisticas_por_mes_txt(void)
         return;
     }
 
-    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.txt"), "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error TXT\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_por_mes.txt", "Error TXT");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    {
+        fclose(file);
+        return;
+    }
 
     char current[8] = "";
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -390,17 +400,20 @@ void exportar_estadisticas_por_mes_json(void)
         return;
     }
 
-    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.json"), "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error JSON\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_por_mes.json", "Error JSON");
+    if (!file)
+    {
+        return;
+    }
 
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    {
+        cJSON_Delete(root);
+        fclose(file);
+        return;
+    }
 
     char current[8] = "";
     cJSON *current_array = NULL;
@@ -460,19 +473,21 @@ void exportar_estadisticas_por_mes_html(void)
         return;
     }
 
-    errno_t err = fopen_s(&file, get_export_path("estadisticas_por_mes.html"), "w");
-    if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error HTML\n");
-            return;
-        }
+    FILE *file = abrir_archivo_exportacion("estadisticas_por_mes.html", "Error HTML");
+    if (!file)
+    {
+        return;
+    }
 
     fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
     fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_MONTH, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    {
+        fclose(file);
+        return;
+    }
 
     char current[8] = "";
     int hay = 0;

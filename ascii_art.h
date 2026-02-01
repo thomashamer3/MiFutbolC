@@ -19,19 +19,7 @@
     "|  |  |  | |  | |  |     |  `--'  |     |  |     |  |_)  | |  `--'  | |  `----.|  `----.\n" \
     "|__|  |__| |__| |__|      \\______/      |__|     |______/   \\______/  |_______| \\______|\n" \
     "                    Sistema de Gestion Futbolistica\n" \
-    "                          MiFutbolC v3.0\n\n"
-
-/**
- * @brief Arte ASCII para exportaciones exitosas
- */
-#define ASCII_EXPORT_EXITOSO \
-    "╔══════════════════════════════════════════════════════════════╗\n" \
-    "║                    EXPORTACION EXITOSA                      ║\n" \
-    "║                                                              ║\n" \
-    "║  ✓ Archivos generados correctamente                          ║\n" \
-    "║  ✓ Datos exportados en multiples formatos                   ║\n" \
-    "║  ✓ Listos para analisis y reportes                          ║\n" \
-    "╚══════════════════════════════════════════════════════════════╝\n"
+    "                          MiFutbolC v3.5\n\n"
 
 /**
  * @brief Arte ASCII para camisetas
@@ -171,6 +159,37 @@
     "  / ___ \\ | | |_| \\__ \\ ||  __/\\__ \\\n" \
     " /_/   \\_\\/ |\\__,_|___/\\__\\___||___/\n" \
     "        |__/                        \n"
+
+/**
+ * @brief Arte ASCII para QR
+ */
+#define ASCII_QR \
+    "   ___  ____  \n" \
+    "  / _ \\|  _ \\ \n" \
+    " | | | | |_) |\n" \
+    " | |_| |  _ < \n" \
+    "  \\___\\_|_| \\_\\\n"
+
+/**
+ * @brief Arte ASCII para temporada
+ */
+#define ASCII_TEMPORADA \
+    "  _____                                        _       \n" \
+    " |_   _|__ _ __ ___  _ __   ___  _ __ __ _  __| | __ _ \n" \
+    "   | |/ _ \\ '_ ` _ \\| '_ \\ / _ \\| '__/ _` |/ _` |/ _` |\n" \
+    "   | |  __/ | | | | | |_) | (_) | | | (_| | (_| | (_| |\n" \
+    "   |_|\\___|_| |_| |_| .__/ \\___/|_|  \\__,_|\\__,_|\\__,_|\n" \
+    "                    |_|                                \n"
+
+/**
+ * @brief Arte ASCII para entrenador IA
+ */
+#define ASCII_ENTRENADOR_IA \
+    "  _____       _                            _              ___    _    \n" \
+    " | ____|_ __ | |_ _ __ ___ _ __   __ _  __| | ___  _ __  |_ _|  / \\   \n" \
+    " |  _| | '_ \\| __| '__/ _ \\ '_ \\ / _` |/ _` |/ _ \\| '__|  | |  / _ \\  \n" \
+    " | |___| | | | |_| | |  __/ | | | (_| | (_| | (_) | |     | | / ___ \\ \n" \
+    " |_____|_| |_|\\__|_|  \\___|_| |_|\\__,_|\\__,_|\\___/|_|    |___/_/   \\_\\\n"
 
 /**
  * @brief Genera cancha de fútbol animada con balón en movimiento

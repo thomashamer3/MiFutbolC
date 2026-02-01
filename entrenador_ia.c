@@ -8,6 +8,51 @@
 #include <time.h>
 #include <math.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
+}
+
+static int parsear_fecha_ddmmaa(const char *fecha_str, struct tm *tm_fecha)
+{
+    if (!fecha_str)
+    {
+        return 0;
+    }
+
+    memset(tm_fecha, 0, sizeof(*tm_fecha));
+    if (sscanf_s(fecha_str, "%d/%d/%d", &tm_fecha->tm_mday, &tm_fecha->tm_mon, &tm_fecha->tm_year) != 3)
+    {
+        return 0;
+    }
+
+    tm_fecha->tm_year -= 1900;
+    tm_fecha->tm_mon -= 1;
+    return 1;
+}
+
+static int dias_desde_fecha(const char *fecha_str, time_t ahora)
+{
+    struct tm tm_fecha;
+    if (!parsear_fecha_ddmmaa(fecha_str, &tm_fecha))
+    {
+        return 0;
+    }
+
+    time_t fecha_partido = mktime(&tm_fecha);
+    return (int)((ahora - fecha_partido) / (60 * 60 * 24));
+}
+
+static void agregar_consejo(Consejo **consejos, int *num_consejos, const char *mensaje,
+                            NivelConsejo nivel, CategoriaConsejo categoria)
+{
+    *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
+    (*consejos)[*num_consejos].mensaje = strdup(mensaje);
+    (*consejos)[*num_consejos].nivel = nivel;
+    (*consejos)[*num_consejos].categoria = categoria;
+    (*num_consejos)++;
+}
+
 // Tabla para historial de consejos
 static const char *CREATE_CONSEJOS_TABLE =
     "CREATE TABLE IF NOT EXISTS consejos_historial ("
@@ -76,7 +121,7 @@ EstadoJugador evaluar_estado_jugador()
         "FROM partido "
         "ORDER BY fecha_hora DESC LIMIT 10;"; // Últimos 10 partidos
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    if (!preparar_stmt(&stmt, sql))
     {
         return estado;
     }
@@ -101,26 +146,13 @@ EstadoJugador evaluar_estado_jugador()
         // Calcular días desde último partido
         if (count == 0 && fecha_str)
         {
-            struct tm tm_fecha = {0};
-            sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
-            tm_fecha.tm_year -= 1900;
-            tm_fecha.tm_mon -= 1;
-            time_t fecha_partido = mktime(&tm_fecha);
-            dias_sin_jugar = (int)((now - fecha_partido) / (60 * 60 * 24));
+            dias_sin_jugar = dias_desde_fecha(fecha_str, now);
         }
 
         // Contar partidos consecutivos (últimos 7 días)
-        if (fecha_str && count < 7)
+        if (fecha_str && count < 7 && dias_desde_fecha(fecha_str, now) <= 7)
         {
-            struct tm tm_fecha = {0};
-            sscanf_s(fecha_str, "%d-%d-%d", &tm_fecha.tm_year, &tm_fecha.tm_mon, &tm_fecha.tm_mday);
-            tm_fecha.tm_year -= 1900;
-            tm_fecha.tm_mon -= 1;
-            time_t fecha_partido = mktime(&tm_fecha);
-            if ((int)((now - fecha_partido) / (60 * 60 * 24)) <= 7)
-            {
-                partidos_consecutivos++;
-            }
+            partidos_consecutivos++;
         }
 
         count++;
@@ -141,7 +173,7 @@ EstadoJugador evaluar_estado_jugador()
     // Evaluar derrotas consecutivas
     const char *sql_derrotas =
         "SELECT resultado FROM partido ORDER BY fecha_hora DESC LIMIT 5;";
-    if (sqlite3_prepare_v2(db, sql_derrotas, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt, sql_derrotas))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -176,61 +208,49 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Regla 1: Cansancio alto + partidos consecutivos
     if (estado.cansancio_promedio > 8 && estado.partidos_consecutivos >= 3)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Se recomienda descanso para reducir riesgo de lesión");
-        (*consejos)[*num_consejos].nivel = CONSEJO_ADVERTENCIA;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_FISICO;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Se recomienda descanso para reducir riesgo de lesión",
+                        CONSEJO_ADVERTENCIA, CATEGORIA_FISICO);
     }
 
     // Regla 2: Rendimiento bajo
     if (estado.rendimiento_promedio < 3)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Rendimiento bajo detectado. Considerar rotación de jugadores");
-        (*consejos)[*num_consejos].nivel = CONSEJO_ADVERTENCIA;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_DEPORTIVO;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Rendimiento bajo detectado. Considerar rotación de jugadores",
+                        CONSEJO_ADVERTENCIA, CATEGORIA_DEPORTIVO);
     }
 
     // Regla 3: Estado de ánimo bajo + racha negativa
     if (estado.estado_animo_promedio < 3 && estado.derrotas_consecutivas >= 2)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Confianza baja por racha negativa. Motivar al equipo");
-        (*consejos)[*num_consejos].nivel = CONSEJO_ADVERTENCIA;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_MENTAL;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Confianza baja por racha negativa. Motivar al equipo",
+                        CONSEJO_ADVERTENCIA, CATEGORIA_MENTAL);
     }
 
     // Regla 4: Riesgo de lesión crítico
     if (estado.riesgo_lesion > 3.0)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Riesgo de lesión muy elevado. Descanso obligatorio");
-        (*consejos)[*num_consejos].nivel = CONSEJO_CRITICO;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_SALUD;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Riesgo de lesión muy elevado. Descanso obligatorio",
+                        CONSEJO_CRITICO, CATEGORIA_SALUD);
     }
 
     // Regla 5: Demasiado descanso
     if (estado.dias_descanso > 14)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Demasiado tiempo sin jugar. Considerar partido amistoso");
-        (*consejos)[*num_consejos].nivel = CONSEJO_INFO;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_DEPORTIVO;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Demasiado tiempo sin jugar. Considerar partido amistoso",
+                        CONSEJO_INFO, CATEGORIA_DEPORTIVO);
     }
 
     // Si no hay consejos específicos, dar consejo general positivo
     if (*num_consejos == 0)
     {
-        *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
-        (*consejos)[*num_consejos].mensaje = strdup("Estado general bueno. Mantener rutina actual");
-        (*consejos)[*num_consejos].nivel = CONSEJO_INFO;
-        (*consejos)[*num_consejos].categoria = CATEGORIA_FISICO;
-        (*num_consejos)++;
+        agregar_consejo(consejos, num_consejos,
+                        "Estado general bueno. Mantener rutina actual",
+                        CONSEJO_INFO, CATEGORIA_FISICO);
     }
 }
 
@@ -293,7 +313,7 @@ void mostrar_historial_consejos()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT fecha, consejo, seguido FROM consejos_historial ORDER BY fecha DESC;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    if (!preparar_stmt(&stmt, sql))
     {
         printf("Error accediendo al historial.\n");
         pause_console();
@@ -342,7 +362,7 @@ void evaluar_decision_pasada()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha, consejo, seguido FROM consejos_historial ORDER BY fecha DESC LIMIT 10;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    if (!preparar_stmt(&stmt, sql))
     {
         printf("Error accediendo al historial.\n");
         pause_console();
@@ -416,7 +436,7 @@ void guardar_consejo_historial(const char *consejo, int seguido)
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO consejos_historial (fecha, consejo, seguido) VALUES (?, ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt, sql))
     {
         sqlite3_bind_int64(stmt, 1, time(NULL));
         sqlite3_bind_text(stmt, 2, consejo, -1, SQLITE_STATIC);
@@ -436,7 +456,7 @@ PerfilUsuarioIA obtener_perfil_usuario()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT consejos_aceptados, consejos_ignorados, indice_prudencia FROM perfil_usuario_ia LIMIT 1;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -462,7 +482,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
     int ignorados = 0;
 
     // Obtener valores actuales
-    if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt, sql_select))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -496,7 +516,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
     // Actualizar o insertar
     if (aceptados + ignorados > 1)   // Ya existe registro
     {
-        if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(&stmt, sql_update))
         {
             sqlite3_bind_int(stmt, 1, aceptados);
             sqlite3_bind_int(stmt, 2, ignorados);
@@ -507,7 +527,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
     }
     else     // Primer registro
     {
-        if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(&stmt, sql_insert))
         {
             sqlite3_bind_int(stmt, 1, aceptados);
             sqlite3_bind_int(stmt, 2, ignorados);
@@ -581,10 +601,10 @@ void menu_entrenador_ia()
     {
         {1, "Ver consejos actuales", mostrar_consejos_actuales},
         {2, "Ver historial de consejos", mostrar_historial_consejos},
-        {3, "Evaluar decisión pasada", evaluar_decision_pasada},
-        {4, "Configurar nivel de intervención", configurar_nivel_intervencion},
-        {0, "Volver al menú principal", NULL}
+        {3, "Evaluar decision pasada", evaluar_decision_pasada},
+        {4, "Configurar nivel de intervencion", configurar_nivel_intervencion},
+        {0, "Volver", NULL}
     };
 
-    ejecutar_menu("Entrenador Virtual IA", items, 5);
+    ejecutar_menu("ENTRENADOR IA", items, 5);
 }

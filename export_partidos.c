@@ -15,7 +15,7 @@
  * Returns 1 if records exist, 0 if no records found.
  * This avoids duplicating the count check in every export function.
  */
-static int has_partido_records()
+int has_partido_records()
 {
     return check_partido_records();
 }
@@ -24,7 +24,7 @@ static int has_partido_records()
  * Executes the standard partido query and returns the statement.
  * This centralizes the common SQL query used by most export functions.
  */
-static sqlite3_stmt* execute_partido_query(const char* order_by_clause)
+sqlite3_stmt* execute_partido_query(const char* order_by_clause)
 {
     return prepare_partido_query(order_by_clause);
 }
@@ -67,8 +67,7 @@ static void write_partido_txt(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
+        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
         fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
                 cancha_trimmed,
                 sqlite3_column_text(stmt, 1),
@@ -96,8 +95,7 @@ static void write_partido_json(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
+        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
 
         cJSON *item = cJSON_CreateObject();
         cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
@@ -135,8 +133,7 @@ static void write_partido_html(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-        trim_trailing_spaces(cancha_trimmed);
+        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
         fprintf(f,
                 "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
                 cancha_trimmed,

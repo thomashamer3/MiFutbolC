@@ -15,6 +15,53 @@
 #include <time.h>
 #include <process.h>
 
+#define MAX_CAMISETAS_SORTEO 150
+
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static int obtener_total(const char *sql)
+{
+    sqlite3_stmt *stmt;
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_step(stmt);
+    int total = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static void listar_camisetas_simple()
+{
+    sqlite3_stmt *stmt;
+
+    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM camiseta"))
+    {
+        printf("Error al consultar la base de datos.\n");
+        return;
+    }
+
+    int hay = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        printf("%d - %s\n",
+               sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1));
+        hay = 1;
+    }
+
+    if (!hay)
+        mostrar_no_hay_registros("camisetas cargadas");
+
+    sqlite3_finalize(stmt);
+}
+
 /**
  * @brief Verifica si hay camisetas registradas en la base de datos
  *
@@ -42,9 +89,12 @@ void crear_camiseta()
     long long id = obtener_siguiente_id("camiseta");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "INSERT INTO camiseta(id, nombre) VALUES(?, ?)",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)"))
+    {
+        printf("Error al crear la camiseta.\n");
+        pause_console();
+        return;
+    }
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_step(stmt);
@@ -63,25 +113,7 @@ void listar_camisetas()
     clear_screen();
     print_header("LISTADO DE CAMISETAS");
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT id, nombre FROM camiseta",
-                       -1, &stmt, NULL);
-
-    int hay = 0;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%d - %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1));
-        hay = 1;
-    }
-
-    if (!hay)
-        mostrar_no_hay_registros("camisetas cargadas");
-
-    sqlite3_finalize(stmt);
+    listar_camisetas_simple();
     pause_console();
 }
 
@@ -104,7 +136,7 @@ void editar_camiseta()
     }
 
     printf("Camisetas disponibles:\n\n");
-    listar_camisetas();
+    listar_camisetas_simple();
 
     int id = input_int("\nID a editar (0 para cancelar): ");
     if (id == 0)
@@ -121,9 +153,12 @@ void editar_camiseta()
     input_string("Nuevo nombre: ", nombre, sizeof(nombre));
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "UPDATE camiseta SET nombre=? WHERE id=?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "UPDATE camiseta SET nombre=? WHERE id=?"))
+    {
+        printf("Error al actualizar la camiseta.\n");
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
@@ -154,7 +189,7 @@ void eliminar_camiseta()
     }
 
     printf("Camisetas disponibles:\n\n");
-    listar_camisetas();
+    listar_camisetas_simple();
 
     int id = input_int("\nID a eliminar (0 para cancelar): ");
     if (id == 0)
@@ -171,9 +206,12 @@ void eliminar_camiseta()
         return;
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "DELETE FROM camiseta WHERE id=?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "DELETE FROM camiseta WHERE id=?"))
+    {
+        printf("Error al eliminar la camiseta.\n");
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
@@ -205,7 +243,10 @@ static void reiniciar_sorteo()
 static int obtener_ids_disponibles(int ids[], int max)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT id FROM camiseta WHERE sorteada = 0", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "SELECT id FROM camiseta WHERE sorteada = 0"))
+    {
+        return 0;
+    }
 
     int i = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW && i < max)
@@ -245,7 +286,10 @@ static int seleccionar_id_aleatorio(const int ids[], int count)
 static void marcar_camiseta_sorteada(int id)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE camiseta SET sorteada = 1 WHERE id = ?", -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "UPDATE camiseta SET sorteada = 1 WHERE id = ?"))
+    {
+        return;
+    }
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -281,19 +325,12 @@ void sortear_camiseta()
     clear_screen();
     print_header("SORTEO DE CAMISETAS");
 
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta WHERE sorteada = 0", -1, &stmt, NULL);
-    sqlite3_step(stmt);
-    int disponibles = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
+    int disponibles = obtener_total("SELECT COUNT(*) FROM camiseta WHERE sorteada = 0");
 
     if (disponibles == 0)
     {
         reiniciar_sorteo();
-        sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &stmt, NULL);
-        sqlite3_step(stmt);
-        disponibles = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
+        disponibles = obtener_total("SELECT COUNT(*) FROM camiseta");
     }
 
     if (disponibles == 0)
@@ -303,8 +340,8 @@ void sortear_camiseta()
         return;
     }
 
-    int ids[150];
-    int count = obtener_ids_disponibles(ids, 150);
+    int ids[MAX_CAMISETAS_SORTEO];
+    int count = obtener_ids_disponibles(ids, MAX_CAMISETAS_SORTEO);
     int seleccionado = seleccionar_id_aleatorio(ids, count);
 
     // Check if random selection failed

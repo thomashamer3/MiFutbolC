@@ -136,6 +136,6 @@ void mostrar_estado_animo_ideal();
  * @param anio Año (ej. 2023)
  * @return Nombre del día de la semana en español
  */
-const char* obtener_dia_semana(int dia, int mes, int anio);
+const char *obtener_dia_semana(int dia, int mes, int anio);
 
 #endif /* ESTADISTICAS_GENERALES_H */

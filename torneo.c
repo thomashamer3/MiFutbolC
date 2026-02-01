@@ -13,6 +13,16 @@
  * @brief Implementación de funciones para la gestión de torneos en MiFutbolC
  */
 
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
 // Forward declaration to fix implicit function declaration
 void generar_fixture(int torneo_id);
 void gestionar_tablas_goleadores_asistidores();
@@ -146,7 +156,7 @@ void asociar_equipos_torneo(int torneo_id)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
 
@@ -189,7 +199,7 @@ void asociar_equipos_torneo(int torneo_id)
 
     // Verificar si ya esta asociado
     const char *sql_check = "SELECT COUNT(*) FROM equipo_torneo WHERE torneo_id = ? AND equipo_id = ?;";
-    if (sqlite3_prepare_v2(db, sql_check, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_check, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
         sqlite3_bind_int(stmt, 2, equipo_id);
@@ -210,7 +220,7 @@ void asociar_equipos_torneo(int torneo_id)
 
     // Asociar equipo a torneo
     const char *sql_insert = "INSERT INTO equipo_torneo (torneo_id, equipo_id) VALUES (?, ?);";
-    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
         sqlite3_bind_int(stmt, 2, equipo_id);
@@ -245,7 +255,7 @@ void crear_equipo_fijo_torneo(int torneo_id)
     const char *sql = "SELECT last_insert_rowid();";
 
     int equipo_id = -1;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -264,7 +274,7 @@ void crear_equipo_fijo_torneo(int torneo_id)
     if (torneo_id != -1)
     {
         const char *sql_insert = "INSERT INTO equipo_torneo (torneo_id, equipo_id) VALUES (?, ?);";
-        if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql_insert, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
             sqlite3_bind_int(stmt, 2, equipo_id);
@@ -458,9 +468,8 @@ static int save_torneo_to_db(Torneo const *torneo)
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO torneo (nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo) VALUES (?, ?, ?, ?, ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    if (!preparar_stmt(sql, &stmt))
     {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
         return -1;
     }
 
@@ -484,7 +493,7 @@ static int save_torneo_to_db(Torneo const *torneo)
     if (torneo->tiene_equipo_fijo && torneo->equipo_fijo_id != -1)
     {
         const char *sql_asociar = "INSERT INTO equipo_torneo (torneo_id, equipo_id) VALUES (?, ?);";
-        if (sqlite3_prepare_v2(db, sql_asociar, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql_asociar, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
             sqlite3_bind_int(stmt, 2, torneo->equipo_fijo_id);
@@ -535,7 +544,7 @@ void listar_torneos()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo ORDER BY id;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         printf("\n=== LISTA DE TORNEOS ===\n\n");
 
@@ -580,7 +589,7 @@ void modificar_torneo()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre FROM torneo ORDER BY id;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         printf("\n=== TORNEOS DISPONIBLES ===\n\n");
 
@@ -624,7 +633,7 @@ void modificar_torneo()
     Torneo torneo = {0};
     const char *sql_torneo = "SELECT nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo WHERE id = ?;";
 
-    if (sqlite3_prepare_v2(db, sql_torneo, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_torneo, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
 
@@ -686,7 +695,7 @@ static void actualizar_nombre_torneo(int torneo_id)
 
     sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE torneo SET nombre = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_update, &stmt))
     {
         sqlite3_bind_text(stmt, 1, nuevo_nombre, -1, SQLITE_STATIC);
         sqlite3_bind_int(stmt, 2, torneo_id);
@@ -712,9 +721,8 @@ static int seleccionar_equipo_disponible(void)
     sqlite3_stmt *stmt_equipos;
     const char *sql_equipos = "SELECT id, nombre FROM equipo ORDER BY id;";
 
-    if (sqlite3_prepare_v2(db, sql_equipos, -1, &stmt_equipos, 0) != SQLITE_OK)
+    if (!preparar_stmt(sql_equipos, &stmt_equipos))
     {
-        printf("Error al obtener la lista de equipos: %s\n", sqlite3_errmsg(db));
         pause_console();
         return 0;
     }
@@ -765,7 +773,7 @@ static void actualizar_equipo_fijo(int torneo_id)
     {
         sqlite3_stmt *stmt;
         const char *sql_update = "UPDATE torneo SET tiene_equipo_fijo = 0, equipo_fijo_id = -1 WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql_update, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
 
@@ -787,7 +795,7 @@ static void actualizar_equipo_fijo(int torneo_id)
 
     sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE torneo SET tiene_equipo_fijo = ?, equipo_fijo_id = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql_update, &stmt))
     {
         sqlite3_bind_int(stmt, 1, 1);
         sqlite3_bind_int(stmt, 2, equipo_id);
@@ -970,9 +978,8 @@ static void listar_equipos_asociados(int torneo_id)
     sqlite3_stmt *stmt_equipos;
     const char *sql_equipos = "SELECT e.id, e.nombre FROM equipo e JOIN equipo_torneo et ON e.id = et.equipo_id WHERE et.torneo_id = ? ORDER BY e.id;";
 
-    if (sqlite3_prepare_v2(db, sql_equipos, -1, &stmt_equipos, 0) != SQLITE_OK)
+    if (!preparar_stmt(sql_equipos, &stmt_equipos))
     {
-        printf("Error al obtener equipos asociados: %s\n", sqlite3_errmsg(db));
         return;
     }
 
@@ -1007,7 +1014,7 @@ const char* get_equipo_nombre(int equipo_id)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT nombre FROM equipo WHERE id = ?;";
     
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
         

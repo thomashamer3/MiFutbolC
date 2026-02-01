@@ -18,6 +18,89 @@
 
 // ========== FUNCIONES DE GENERACIÓN DE JSON ==========
 
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
+typedef char *(*QrJsonFn)(int id);
+
+static void construir_nombre_archivo(const char *filename_fmt, int id, char *out, size_t out_size)
+{
+    if (strcmp(filename_fmt, "partido_%d") == 0)
+    {
+        snprintf(out, out_size, "partido_%d", id);
+    }
+    else if (strcmp(filename_fmt, "temporada_%d") == 0)
+    {
+        snprintf(out, out_size, "temporada_%d", id);
+    }
+    else if (strcmp(filename_fmt, "camiseta_%d") == 0)
+    {
+        snprintf(out, out_size, "camiseta_%d", id);
+    }
+    else
+    {
+        snprintf(out, out_size, "qr_%d", id);
+    }
+}
+
+static void imprimir_mensaje_exito(const char *success_fmt, int id)
+{
+    if (strcmp(success_fmt, "✅ Código QR generado para estadisticas del partido %d\n") == 0)
+    {
+        printf("✅ Código QR generado para estadisticas del partido %d\n", id);
+    }
+    else if (strcmp(success_fmt, "✅ Código QR generado para resumen de temporada %d\n") == 0)
+    {
+        printf("✅ Código QR generado para resumen de temporada %d\n", id);
+    }
+    else if (strcmp(success_fmt, "✅ Código QR generado para INFORMACION de camiseta %d\n") == 0)
+    {
+        printf("✅ Código QR generado para INFORMACION de camiseta %d\n", id);
+    }
+    else
+    {
+        printf("✅ Código QR generado (ID %d)\n", id);
+    }
+}
+
+static int generar_qr_desde_json(const char *tabla, int id, const char *filename_fmt,
+                                 const char *success_fmt, QrJsonFn generar_json)
+{
+    if (!existe_id(tabla, id))
+    {
+        printf("El %s con ID %d ", tabla, id);
+        mostrar_no_existe("no existe");
+        return 0;
+    }
+
+    char *json_data = generar_json(id);
+    if (!json_data)
+    {
+        printf("Error al obtener datos del %s.\n", tabla);
+        return 0;
+    }
+
+    char filename[100];
+    construir_nombre_archivo(filename_fmt, id, filename, sizeof(filename));
+
+    int result = generar_qr_png(json_data, filename);
+    free(json_data);
+
+    if (result)
+    {
+        imprimir_mensaje_exito(success_fmt, id);
+    }
+
+    return result;
+}
+
 char* obtener_estadisticas_partido_json(int partido_id)
 {
     sqlite3_stmt *stmt;
@@ -35,7 +118,7 @@ char* obtener_estadisticas_partido_json(int partido_id)
     cJSON *json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "tipo", "partido_estadisticas");
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, partido_id);
 
@@ -92,7 +175,7 @@ char* obtener_resumen_temporada_json(int temporada_id)
     cJSON *json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "tipo", "temporada_resumen");
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
 
@@ -125,7 +208,7 @@ char* obtener_info_camiseta_json(int camiseta_id)
     cJSON *json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "tipo", "camiseta_info");
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, camiseta_id);
 
@@ -154,13 +237,13 @@ int generar_qr_png(const char* texto, const char* filename)
     char filepath[500];
     snprintf(filepath, sizeof(filepath), "%s\\%s_qr_data.txt", export_dir, filename);
 
+    FILE *file;
     errno_t err = fopen_s(&file, filepath, "w");
     if (err != 0 || file == NULL)
-        if (!file)
-        {
-            printf("Error al crear archivo de datos QR.\n");
-            return 0;
-        }
+    {
+        printf("Error al crear archivo de datos QR.\n");
+        return 0;
+    }
 
     fprintf(file, "QR CODE DATA\n");
     fprintf(file, "============\n\n");
@@ -181,32 +264,9 @@ int generar_qr_png(const char* texto, const char* filename)
 
 int generar_qr_partido(int partido_id)
 {
-    if (!existe_id("partido", partido_id))
-    {
-        printf("El partido con ID %d no existe.\n", partido_id);
-        return 0;
-    }
-
-    char* json_data = obtener_estadisticas_partido_json(partido_id);
-    if (!json_data)
-    {
-        printf("Error al obtener datos del partido.\n");
-        return 0;
-    }
-
-    char filename[100];
-    snprintf(filename, sizeof(filename), "partido_%d", partido_id);
-
-    int result = generar_qr_png(json_data, filename);
-
-    free(json_data);
-
-    if (result)
-    {
-        printf("✅ Código QR generado para estadisticas del partido %d\n", partido_id);
-    }
-
-    return result;
+    return generar_qr_desde_json("partido", partido_id, "partido_%d",
+                                 "✅ Código QR generado para estadisticas del partido %d\n",
+                                 obtener_estadisticas_partido_json);
 }
 
 int generar_qr_jugador_partido(int partido_id, int jugador_id)
@@ -242,64 +302,16 @@ int generar_qr_jugador_partido(int partido_id, int jugador_id)
 
 int generar_qr_temporada(int temporada_id)
 {
-    if (!existe_id("temporada", temporada_id))
-    {
-        printf("La temporada con ID %d ", temporada_id);
-        mostrar_no_existe("no existe");
-        return 0;
-    }
-
-    char* json_data = obtener_resumen_temporada_json(temporada_id);
-    if (!json_data)
-    {
-        printf("Error al obtener datos de la temporada.\n");
-        return 0;
-    }
-
-    char filename[100];
-    snprintf(filename, sizeof(filename), "temporada_%d", temporada_id);
-
-    int result = generar_qr_png(json_data, filename);
-
-    free(json_data);
-
-    if (result)
-    {
-        printf("✅ Código QR generado para resumen de temporada %d\n", temporada_id);
-    }
-
-    return result;
+    return generar_qr_desde_json("temporada", temporada_id, "temporada_%d",
+                                 "✅ Código QR generado para resumen de temporada %d\n",
+                                 obtener_resumen_temporada_json);
 }
 
 int generar_qr_camiseta(int camiseta_id)
 {
-    if (!existe_id("camiseta", camiseta_id))
-    {
-        printf("La camiseta con ID %d ", camiseta_id);
-        mostrar_no_existe("no existe");
-        return 0;
-    }
-
-    char* json_data = obtener_info_camiseta_json(camiseta_id);
-    if (!json_data)
-    {
-        printf("Error al obtener datos de la camiseta.\n");
-        return 0;
-    }
-
-    char filename[100];
-    snprintf(filename, sizeof(filename), "camiseta_%d", camiseta_id);
-
-    int result = generar_qr_png(json_data, filename);
-
-    free(json_data);
-
-    if (result)
-    {
-        printf("✅ Código QR generado para INFORMACION de camiseta %d\n", camiseta_id);
-    }
-
-    return result;
+    return generar_qr_desde_json("camiseta", camiseta_id, "camiseta_%d",
+                                 "✅ Código QR generado para INFORMACION de camiseta %d\n",
+                                 obtener_info_camiseta_json);
 }
 
 // ========== MENÚ PRINCIPAL ==========
@@ -342,7 +354,6 @@ static void qr_camiseta()
 void menu_qr()
 {
     clear_screen();
-    print_header("CODIGOS QR - COMPARTIR INFORMACION");
 
     printf("\nGenera codigos QR para compartir INFORMACION de MiFutbolC\n");
     printf("Los codigos QR contienen datos JSON que pueden ser escaneados\n");
@@ -367,32 +378,22 @@ void procesar_opcion_qr(int opcion)
     {
     case 1:   // QR de partido
     {
-        printf("\nIngrese el ID del partido: ");
-        int partido_id = input_int("");
-        generar_qr_partido(partido_id);
+        qr_partido();
         break;
     }
     case 2:   // QR de jugador en partido
     {
-        printf("\nIngrese el ID del partido: ");
-        int partido_id = input_int("");
-        printf("Ingrese el ID del jugador: ");
-        int jugador_id = input_int("");
-        generar_qr_jugador_partido(partido_id, jugador_id);
+        qr_jugador_partido();
         break;
     }
     case 3:   // QR de temporada
     {
-        printf("\nIngrese el ID de la temporada: ");
-        int temporada_id = input_int("");
-        generar_qr_temporada(temporada_id);
+        qr_temporada();
         break;
     }
     case 4:   // QR de camiseta
     {
-        printf("\nIngrese el ID de la camiseta: ");
-        int camiseta_id = input_int("");
-        generar_qr_camiseta(camiseta_id);
+        qr_camiseta();
         break;
     }
     default:

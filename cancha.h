@@ -7,6 +7,9 @@
  * recursivas y validaciones de integridad referencial.
  */
 
+#ifndef CANCHA_H
+#define CANCHA_H
+
 /**
  * @brief Interfaz de menú para operaciones de gestión de canchas
  *
@@ -48,3 +51,5 @@ void eliminar_cancha();
  * permitiendo correcciones sin requerir eliminación/recreación del registro.
  */
 void modificar_cancha();
+
+#endif

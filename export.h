@@ -93,6 +93,5 @@ void exportar_analisis_html();
  * @return Cadena de caracteres con la ruta completa del archivo
  */
 char *get_export_path(const char *filename);
-
 /** @} */
 #endif

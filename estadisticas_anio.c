@@ -12,6 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
 /**
  * @brief Visualiza evolución anual del rendimiento deportivo
  *
@@ -23,13 +28,17 @@ void mostrar_estadisticas_por_anio()
     clear_screen();
     print_header("ESTADISTICAS POR ANIO");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
+    if (!preparar_stmt(&stmt,
                        "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
                        "FROM partido p "
                        "JOIN camiseta c ON p.camiseta_id = c.id "
                        "GROUP BY anio, c.id "
-                       "ORDER BY anio DESC, total_goles DESC",
-                       -1, &stmt, NULL);
+                       "ORDER BY anio DESC, total_goles DESC"))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     char current_anio[5] = "";
     int hay = 0;

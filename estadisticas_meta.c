@@ -14,6 +14,26 @@
 #include <math.h>
 #include <time.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static const char *resultado_a_texto(int resultado)
+{
+    switch (resultado)
+    {
+    case 1:
+        return "Victoria";
+    case 2:
+        return "Empate";
+    case 3:
+        return "Derrota";
+    default:
+        return "Desconocido";
+    }
+}
+
 // Static helper to execute SQL queries and display results in a formatted way,
 // ensuring consistent output format across different statistical analyses without code duplication.
 static void query(const char *titulo, const char *sql)
@@ -24,7 +44,11 @@ static void query(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -115,7 +139,12 @@ void mostrar_partidos_outliers()
                       "WHERE rendimiento_general > (SELECT AVG(rendimiento_general) + 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
                       "ORDER BY rendimiento_general DESC";
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -137,7 +166,12 @@ void mostrar_partidos_outliers()
                        "WHERE rendimiento_general < (SELECT AVG(rendimiento_general) - 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
                        "ORDER BY rendimiento_general ASC";
 
-    sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql2))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -368,26 +402,16 @@ void mostrar_partidos_exigentes_bien_rendidos()
                       "WHERE cansancio > 7 AND rendimiento_general > (SELECT AVG(rendimiento_general) FROM partido) "
                       "ORDER BY rendimiento_general DESC, cansancio DESC";
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *resultado_str;
-        switch (sqlite3_column_int(stmt, 6))
-        {
-        case 1:
-            resultado_str = "Victoria";
-            break;
-        case 2:
-            resultado_str = "Empate";
-            break;
-        case 3:
-            resultado_str = "Derrota";
-            break;
-        default:
-            resultado_str = "Desconocido";
-            break;
-        }
+        const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
 
         printf("ID: %d, Fecha: %s, Cansancio: %d, Rendimiento: %d, Goles: %d, Asistencias: %d, Resultado: %s\n",
                sqlite3_column_int(stmt, 0),
@@ -423,26 +447,16 @@ void mostrar_partidos_faciles_mal_rendidos()
                       "WHERE cansancio <= 3 AND rendimiento_general < (SELECT AVG(rendimiento_general) FROM partido) "
                       "ORDER BY rendimiento_general ASC, cansancio ASC";
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *resultado_str;
-        switch (sqlite3_column_int(stmt, 6))
-        {
-        case 1:
-            resultado_str = "Victoria";
-            break;
-        case 2:
-            resultado_str = "Empate";
-            break;
-        case 3:
-            resultado_str = "Derrota";
-            break;
-        default:
-            resultado_str = "Desconocido";
-            break;
-        }
+        const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
 
         printf("ID: %d, Fecha: %s, Cansancio: %d, Rendimiento: %d, Goles: %d, Asistencias: %d, Resultado: %s\n",
                sqlite3_column_int(stmt, 0),

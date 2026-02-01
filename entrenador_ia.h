@@ -1,6 +1,11 @@
 #ifndef ENTRENADOR_IA_H
 #define ENTRENADOR_IA_H
 
+/**
+ * @file entrenador_ia.h
+ * @brief API pública del entrenador IA
+ */
+
 #include <time.h>
 
 // Estado del jugador evaluado
@@ -69,8 +74,8 @@ PerfilUsuarioIA obtener_perfil_usuario();
 void actualizar_perfil_usuario(int consejo_seguido);
 
 // Funciones auxiliares
-const char* nivel_a_string(NivelConsejo nivel);
-const char* categoria_a_string(CategoriaConsejo categoria);
+const char *nivel_a_string(NivelConsejo nivel);
+const char *categoria_a_string(CategoriaConsejo categoria);
 
 // Triggers de activación
 void activar_ia_antes_partido();

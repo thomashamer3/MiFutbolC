@@ -138,7 +138,7 @@ void mostrar_equipo(const Equipo *equipo);
  * @param posicion La posición a convertir
  * @return Cadena con el nombre de la posición
  */
-const char* get_nombre_posicion(Posicion posicion);
+const char *get_nombre_posicion(Posicion posicion);
 
 /**
  * @brief Obtiene el nombre de un tipo de fútbol
@@ -148,6 +148,6 @@ const char* get_nombre_posicion(Posicion posicion);
  * @param tipo El tipo de fútbol a convertir
  * @return Cadena con el nombre del tipo de fútbol
  */
-const char* get_nombre_tipo_futbol(TipoFutbol tipo);
+const char *get_nombre_tipo_futbol(TipoFutbol tipo);
 
 #endif

@@ -1,244 +1,865 @@
-# MiFutbolC - Sistema de Gestión de Fútbol
+# ⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol
 
-## Descripción
+<div align="center">
 
-MiFutbolC es un sistema completo de gestión y análisis de datos para fútbol desarrollado en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol, incluyendo camisetas, canchas, partidos, equipos, torneos, estadísticas avanzadas, logros gamificados, análisis de rendimiento, gestión de lesiones, y funciones completas de importación/exportación de datos.
+![Version](https://img.shields.io/badge/version-3.5-blue.svg)
+![Language](https://img.shields.io/badge/language-C-orange.svg)
+![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
+![License](https://img.shields.io/badge/license-Open%20Source-brightgreen.svg)
 
-El sistema utiliza SQLite como base de datos para almacenar toda la información de manera persistente y eficiente, ofreciendo una solución robusta para el seguimiento y análisis de datos futbolísticos.
+**Sistema completo de gestión, análisis y simulación de datos futbolísticos desarrollado en C**
 
-## Características Principales
+[Características](#-características-principales) •
+[Instalación](#-instalación-y-compilación) •
+[Uso](#-uso) •
+[Documentación](#-documentación) •
+[Arquitectura](#-arquitectura-y-diseño)
 
-- **Gestión Completa de Equipamiento**: Crear, listar, editar y eliminar camisetas de fútbol con seguimiento de uso.
-- **Gestión de Infraestructura**: Administrar canchas de fútbol con información detallada de ubicación.
-- **Gestión de Equipos**: Crear, gestionar y administrar equipos de fútbol con jugadores, posiciones y formaciones (Arqueros, Defensores, Mediocampistas, Delanteros) para diferentes modalidades (Fútbol 5, 7, 8, 11).
-- **Gestión de Torneos**: Organizar y administrar torneos con diferentes formatos (Round Robin, Grupos con Final, Copa Simple, Eliminación Directa, etc.), tipos de estructura (Ida y Vuelta, Solo Ida, Eliminación Directa), fixtures, resultados, tablas de posiciones y estadísticas avanzadas.
-- **Registro de Partidos**: Registrar partidos completos con detalles como cancha, goles, asistencias, rendimiento, estado físico/mental y camiseta utilizada.
-- **Estadísticas Avanzadas**: Visualizar estadísticas agregadas del sistema con análisis profundos de estados físicos y mentales.
-- **Análisis Temporal**: Estadísticas históricas de rendimiento agrupadas por año y mes para seguimiento de progreso.
-- **Meta-Análisis**: Análisis profundo incluyendo consistencia de rendimiento, partidos atípicos, dependencia del contexto, impacto real del cansancio y estado de ánimo.
-- **Evaluación de Rendimiento**: Comparar el rendimiento de los últimos partidos con promedios generales y calcular rachas de victorias/derrotas.
-- **Análisis Físico y Mental**: Evaluación detallada de rendimiento por niveles de cansancio, comparación de goles con diferentes estados físicos, análisis de impacto del estado de ánimo.
-- **Sistema de Récords**: Récords históricos completos incluyendo mejores rachas, combinaciones óptimas, temporadas destacadas y partidos extremos.
-- **Gestión de Salud**: Registrar, listar, editar y eliminar lesiones de jugadores con seguimiento detallado.
-- **Sistema Gamificado**: Logros y badges basados en rendimiento para motivar el uso continuo.
-- **Personalización**: Sistema de nombres de usuario personalizados con persistencia entre sesiones.
-- **Configuración Avanzada**: Sistema de configuración con temas de interfaz (claro, oscuro, azul, verde, rojo, púrpura, clásico, alto contraste) e idiomas (español, inglés).
-- **Gestión Financiera**: Sistema completo de gestión financiera del equipo con ingresos y gastos categorizados (transporte, equipamiento, cuotas, torneos, arbitraje, canchas, medicina, otros).
-- **Arte ASCII Mejorado**: Arte ASCII animado para simulaciones de partidos, pantalla de bienvenida y diferentes secciones del sistema.
-- **Simulación de Partidos**: Simulación completa de partidos entre equipos momentáneos con cancha animada en ASCII, eventos aleatorios y estadísticas detalladas.
-- **Importación de Datos**: Importar datos desde archivos JSON a la base de datos para restauración de copias de seguridad.
-- **Exportación Multiformato**: Exportar datos por módulo en formatos CSV, TXT, JSON y HTML para diferentes usos.
-- **Exportación Avanzada**: Exportación mejorada con análisis integrado para camisetas y lesiones, incluyendo impacto en rendimiento.
-- **Exportación Selectiva**: Exportación de partidos con características específicas (más goles, más asistencias, etc.).
-- **Interfaz Intuitiva**: Navegación mediante menús interactivos con estructura jerárquica.
-- **Almacenamiento Robusto**: Base de datos SQLite para almacenamiento persistente y eficiente.
-- **Documentación Automática**: Generación de documentación técnica con Doxygen.
-- **Estadísticas por Clima y Día de la Semana**: Análisis detallado del rendimiento según condiciones climáticas y días de la semana.
-- **Estadísticas de Lesiones**: Análisis completo de lesiones incluyendo tipos, frecuencia por camiseta, distribución mensual y impacto en rendimiento.
+</div>
 
-## Requisitos del Sistema
+---
 
-- **Compilador C**: Compatible con GCC o MinGW (incluido en CodeBlocks).
-- **SQLite3**: Biblioteca incluida en el proyecto (sqlite3.c y sqlite3.h).
-- **cJSON**: Biblioteca incluida en el proyecto (cJSON.c y cJSON.h), bajo licencia MIT.
-- **Sistema Operativo**: Windows, Linux o macOS.
-- **Herramientas de Desarrollo**:
-  - CodeBlocks (recomendado para compilar el proyecto .cbp).
-  - Doxygen (opcional, para generar documentación).
+## 📋 Descripción
 
-## Instalación y Compilación
+**MiFutbolC** es un sistema robusto y completo de gestión de fútbol desarrollado íntegramente en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol amateur y profesional, incluyendo:
 
-### Opción 1: Instalador Automático (Recomendado para Usuarios Finales)
+- 🎽 **Gestión de equipamiento** (camisetas con seguimiento de uso)
+- 🏟️ **Infraestructura deportiva** (canchas y ubicaciones)
+- ⚽ **Registro de partidos** (con estadísticas detalladas)
+- 👥 **Administración de equipos** (jugadores, formaciones, posiciones)
+- 🏆 **Organización de torneos** (múltiples formatos y estructuras)
+- 📊 **Análisis avanzado** (rendimiento, tendencias, meta-análisis)
+- 🏥 **Gestión de salud** (lesiones y recuperación)
+- 💰 **Control financiero** (ingresos, gastos, balances)
+- 🎖️ **Sistema gamificado** (logros y badges)
+- 🤖 **Entrenador IA** (recomendaciones inteligentes)
+- 📤 **Exportación multiformato** (CSV, JSON, HTML, TXT)
+- 📥 **Importación de datos** (restauración desde JSON)
 
-1. Navega a la carpeta `installer/`.
-2. Ejecuta el archivo `MiFutbolC_Setup.exe`.
-3. Sigue las instrucciones del instalador.
-4. El programa se instalará automáticamente con todos los archivos necesarios.
+El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
 
-### Opción 2: Usando CodeBlocks (Para Desarrolladores)
+## ✨ Características Principales
 
-1. Instala CodeBlocks desde [codeblocks.org](https://www.codeblocks.org/).
-2. Abre el archivo `MiFutbolC.cbp` con CodeBlocks.
-3. Compila el proyecto seleccionando "Build" > "Build".
-4. El ejecutable se generará en `bin/Debug/MiFutbolC.exe`.
+### 🎽 Gestión de Equipamiento y Recursos
 
-### Opción 3: Compilación Manual con GCC
+- **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
+- **Gestión de Canchas**: Administrar infraestructura deportiva con información detallada de ubicación y características
+- **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
-1. Asegúrate de tener GCC instalado.
-2. Navega al directorio raíz del proyecto.
-3. Compila todos los archivos fuente:
+### 👥 Administración de Equipos y Jugadores
+
+- **Equipos Personalizables**: Crear equipos fijos o momentáneos con información completa
+- **Modalidades Múltiples**: Soporte para Fútbol 5, 7, 8 y 11
+- **Posiciones Definidas**: Arqueros, Defensores, Mediocampistas, Delanteros
+- **Formaciones Tácticas**: Configuración de formaciones y designación de capitanes
+- **Gestión de Plantillas**: Hasta 11 jugadores por equipo con datos completos
+
+### ⚽ Registro y Gestión de Partidos
+
+- **Partidos Detallados**: Registro completo con fecha, hora, cancha, equipos y resultados
+- **Métricas Avanzadas**: Goles, asistencias, rendimiento, estado físico y mental
+- **Simulación de Partidos**: Simulador con cancha ASCII animada y eventos aleatorios
+- **Historial Completo**: Consulta de partidos pasados con filtros avanzados
+
+### 🏆 Sistema de Torneos
+
+- **Múltiples Formatos**: Round Robin, Grupos con Final, Copa Simple, Eliminación Directa
+- **Estructuras Flexibles**: Ida y Vuelta, Solo Ida, Eliminación Directa, Grupos y Eliminación
+- **Gestión Completa**: Fixtures automáticos, ingreso de resultados, tablas de posiciones
+- **Dashboard en Tiempo Real**: Visualización de posición actual, próximos partidos y últimos resultados
+- **Estadísticas de Torneo**: Goleadores, asistidores, historial de equipos
+- **Reportes Exportables**: Generación de reportes completos en múltiples formatos
+
+### 📊 Análisis y Estadísticas Avanzadas
+
+#### Estadísticas Generales
+- Rendimiento agregado del sistema
+- Análisis de estados físicos y mentales
+- Estadísticas por camiseta, cancha y equipo
+
+#### Análisis Temporal
+- **Por Año**: Tendencias longitudinales y comparación interanual
+- **Por Mes**: Desglose mensual y análisis de estacionalidad
+- **Por Día de Semana**: Rendimiento según día de la semana
+- **Por Clima**: Análisis según condiciones climáticas
+
+#### Meta-Análisis Avanzado
+- **Consistencia de Rendimiento**: Evaluación de variabilidad y estabilidad
+- **Detección de Outliers**: Identificación de partidos atípicos
+- **Dependencia del Contexto**: Análisis de factores externos
+- **Impacto del Cansancio**: Evaluación real de la fatiga en el desempeño
+- **Impacto del Estado de Ánimo**: Influencia emocional en resultados
+- **Análisis de Eficiencia**: Relación entre esfuerzo y resultados
+
+#### Récords y Rankings
+- Récords históricos de partidos (máximo de goles, asistencias, rendimiento)
+- Mejores y peores rachas (victorias, derrotas, goles)
+- Combinaciones óptimas (cancha + camiseta)
+- Temporadas destacadas
+- Partidos especiales y extremos
+
+### 🏥 Gestión de Salud y Lesiones
+
+- **Registro de Lesiones**: Crear, editar, eliminar y listar lesiones de jugadores
+- **Seguimiento Detallado**: Tipo de lesión, fecha, duración y jugador afectado
+- **Estadísticas de Lesiones**: Análisis de frecuencia, tipos más comunes, distribución mensual
+- **Impacto en Rendimiento**: Evaluación del efecto de lesiones en el desempeño
+- **Análisis por Camiseta**: Identificación de patrones de lesiones por equipamiento
+
+### 💰 Gestión Financiera
+
+- **Control de Ingresos**: Registro de cuotas, sponsors y otras entradas
+- **Gestión de Gastos**: Categorización detallada (transporte, equipamiento, torneos, arbitraje, canchas, medicina, otros)
+- **Balances y Reportes**: Visualización de estado financiero actual
+- **Resúmenes por Categoría**: Análisis de gastos por tipo
+- **Exportación Financiera**: Reportes en múltiples formatos
+
+### 🎖️ Sistema Gamificado
+
+- **Logros por Categorías**: Goles, asistencias, partidos, victorias, rendimiento, etc.
+- **Niveles Progresivos**: Novato, Promedio, Experto, Maestro, Leyenda
+- **Seguimiento de Progreso**: Visualización de logros completados y en progreso
+- **Badges Especiales**: Hat-tricks, poker de asistencias, rendimiento perfecto
+- **Motivación Continua**: Sistema de recompensas para incentivar el uso
+
+### 🤖 Entrenador IA
+
+- **Recomendaciones Inteligentes**: Sugerencias basadas en análisis de datos históricos
+- **Optimización de Formaciones**: Consejos para mejorar el rendimiento del equipo
+- **Análisis Predictivo**: Predicciones basadas en tendencias y patrones
+
+### 📤 Exportación e Importación de Datos
+
+#### Exportación Multiformato
+- **Formatos Disponibles**: CSV, JSON, HTML, TXT
+- **Exportación por Módulo**: Camisetas, partidos, estadísticas, lesiones, torneos, finanzas
+- **Exportación Completa**: Backup total del sistema
+- **Exportación Mejorada**: Con análisis integrado y métricas adicionales
+- **Exportación Selectiva**: Partidos con características específicas
+
+#### Importación de Datos
+- **Restauración desde JSON**: Importación completa de datos desde archivos JSON
+- **Validación de Datos**: Verificación de estructura antes de importar
+- **Manejo de Errores**: Feedback detallado en caso de problemas
+
+### ⚙️ Configuración y Personalización
+
+- **Temas de Interfaz**: Claro, Oscuro, Azul, Verde, Rojo, Púrpura, Clásico, Alto Contraste
+- **Multiidioma**: Español e Inglés
+- **Nombres de Usuario**: Sistema de personalización con persistencia entre sesiones
+- **Configuración Persistente**: Preferencias guardadas en base de datos
+
+### 🎨 Interfaz y Experiencia de Usuario
+
+- **Menús Jerárquicos**: Navegación intuitiva con estructura organizada
+- **Arte ASCII**: Pantallas de bienvenida, simulaciones animadas, decoraciones
+- **Códigos QR**: Generación de códigos QR para compartir información
+- **Interfaz Textual**: No requiere GUI, compatible con cualquier terminal
+
+## 🛠️ Tecnologías Utilizadas
+
+### Lenguaje y Estándares
+- **Lenguaje C**: Desarrollo completo en C estándar
+- **Estándar**: Compatible con C99/C11
+- **Compiladores**: GCC, MinGW, Clang
+
+### Bibliotecas y Dependencias
+
+#### SQLite3 (Incluida)
+- **Versión**: 3.x
+- **Archivos**: `sqlite3.c`, `sqlite3.h`
+- **Propósito**: Base de datos embebida para almacenamiento persistente
+- **Características**: Transacciones ACID, consultas SQL completas, sin servidor
+
+#### cJSON (Incluida - Licencia MIT)
+- **Archivos**: `cJSON.c`, `cJSON.h`
+- **Propósito**: Parsing y generación de JSON para importación/exportación
+- **Características**: Ligera, rápida, sin dependencias externas
+
+### Herramientas de Desarrollo
+
+- **CodeBlocks**: IDE recomendado para desarrollo (incluye proyecto `.cbp`)
+- **Doxygen**: Generación de documentación técnica (opcional)
+- **Git**: Control de versiones
+- **Inno Setup**: Creación de instalador para Windows
+
+### Dependencias Incluidas
+
+✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
+✅ **cJSON**: Biblioteca completa incluida en el proyecto  
+✅ **No requiere instalación de dependencias externas**
+
+## 🚀 Instalación y Compilación
+
+### Método 1: Instalador Automático (Windows - Recomendado para Usuarios Finales)
+
+El método más sencillo para usuarios que solo desean usar el programa:
+
+1. Navega a la carpeta `installer/`
+2. Ejecuta el archivo `MiFutbolC_Setup.exe`
+3. Sigue las instrucciones del instalador
+4. El programa se instalará automáticamente con todos los archivos necesarios
+5. Busca "MiFutbolC" en el menú de inicio de Windows
+
+### Método 2: Usando CodeBlocks (Recomendado para Desarrolladores)
+
+Ideal para desarrollo, depuración y modificación del código:
+
+1. **Instalar CodeBlocks**:
+   - Descarga desde [codeblocks.org](https://www.codeblocks.org/)
+   - Asegúrate de instalar la versión con MinGW incluido
+
+2. **Abrir el Proyecto**:
+   - Abre CodeBlocks
+   - Ve a `File` → `Open` → Selecciona `MiFutbolC.cbp`
+
+3. **Compilar**:
+   - Selecciona `Build` → `Build` (o presiona `Ctrl+F9`)
+   - El ejecutable se generará en `bin/Debug/MiFutbolC.exe`
+
+4. **Ejecutar**:
+   - Presiona `F9` o selecciona `Build` → `Build and Run`
+
+### Método 3: Compilación Manual con GCC (Linux/macOS/Windows)
+
+Para usuarios avanzados que prefieren control total sobre la compilación:
+
+#### Linux / macOS
 
 ```bash
-gcc -o MiFutbolC main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c analisis.c cancha.c logros.c lesion.c export.c export_all.c import.c utils.c sqlite3.c cJSON.c cJSON_Utils.c -I.
-```
+# 1. Clonar o descargar el repositorio
+cd /ruta/al/proyecto/MiFutbolC
 
-4. Ejecuta el programa:
+# 2. Compilar todos los archivos fuente
+gcc -o MiFutbolC \
+    main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c \
+    estadisticas.c estadisticas_generales.c estadisticas_anio.c \
+    estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c \
+    analisis.c cancha.c logros.c lesion.c temporada.c \
+    financiamiento.c settings.c entrenador_ia.c qr.c \
+    records_rankings.c export.c export_all.c export_all_mejorado.c \
+    export_camisetas.c export_camisetas_mejorado.c \
+    export_lesiones.c export_lesiones_mejorado.c \
+    export_partidos.c export_estadisticas.c \
+    export_estadisticas_generales.c export_records_rankings.c \
+    import.c utils.c sqlite3.c cJSON.c \
+    -I. -lm -lpthread -ldl
 
-```bash
+# 3. Ejecutar el programa
 ./MiFutbolC
 ```
 
-### Opción 4: Usando el Script Bash (Linux)
-
-1. Asegúrate de tener GCC instalado.
-2. Navega al directorio raíz del proyecto.
-3. Haz el script ejecutable y ejecútalo:
+#### Windows (con MinGW)
 
 ```bash
+# 1. Abrir terminal (PowerShell o CMD)
+cd D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
+
+# 2. Compilar (comando en una sola línea)
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c qr.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
+
+# 3. Ejecutar
+.\MiFutbolC.exe
+```
+
+### Método 4: Script de Compilación Automática (Linux/macOS)
+
+El proyecto incluye un script bash que automatiza la compilación:
+
+```bash
+# 1. Dar permisos de ejecución al script
 chmod +x build.sh
+
+# 2. Ejecutar el script
 ./build.sh
 ```
 
-Este script compila automáticamente todos los archivos fuente con advertencias habilitadas y símbolos de depuración, y ejecuta el programa si la compilación es exitosa.
+El script `build.sh`:
+- Compila automáticamente todos los archivos fuente
+- Habilita advertencias del compilador (`-Wall`)
+- Incluye símbolos de depuración (`-g`)
+- Ejecuta el programa si la compilación es exitosa
 
-## Uso
+### Método 5: Script de Compilación para Windows
 
-Al ejecutar el programa, se presenta un menú principal con las siguientes opciones:
+```bash
+# Ejecutar el script batch
+.\build.bat
+```
 
-1. **Camisetas**: Gestionar camisetas (crear, listar, editar, eliminar).
-2. **Canchas**: Gestionar canchas de fútbol.
-3. **Partidos**: Gestionar partidos (crear, listar, modificar, eliminar).
-4. **Equipos**: Gestionar equipos de fútbol (crear, listar, editar, eliminar).
-5. **Estadísticas**: Mostrar estadísticas generales del sistema.
-6. **Logros**: Gestionar logros y badges.
-7. **Análisis**: Mostrar análisis de rendimiento.
-8. **Lesiones**: Gestionar lesiones de jugadores.
-9. **Financiamiento**: Gestionar finanzas del equipo (ingresos, gastos, balance).
-10. **Exportar**: Menú de exportación con opciones individuales por módulo.
-11. **Importar**: Importar todos los datos desde archivos JSON.
-12. **Torneos**: Gestionar torneos (crear, listar, editar, eliminar).
-13. **Configuración**: Cambiar temas de interfaz e idioma.
-0. **Salir**: Cerrar el programa.
+### 📝 Notas Importantes
 
-### Ejemplo de Uso
+- **Base de Datos**: Se crea automáticamente en la primera ejecución (ver sección [Base de Datos](#️-base-de-datos) para más detalles)
 
-- Selecciona "1" para acceder al menú de camisetas.
-- Elige "1" para crear una nueva camiseta.
-- Ingresa el nombre cuando se solicite.
-- La camiseta se guardará en la base de datos.
+- **Codificación**: El programa usa UTF-8 para soportar caracteres especiales
+  - En Windows, se configura automáticamente la consola
 
-## Estructura del Proyecto
+- **Permisos**: En Linux/macOS, asegúrate de tener permisos de escritura en el directorio
+
+### 🔧 Solución de Problemas Comunes
+
+#### Error: "sqlite3.h: No such file or directory"
+- **Solución**: SQLite3 está incluido en el proyecto. Asegúrate de compilar desde el directorio raíz.
+
+#### Error: "undefined reference to..."
+- **Solución**: Verifica que todos los archivos `.c` estén incluidos en el comando de compilación.
+
+#### Caracteres extraños en la consola (Windows)
+- **Solución**: El programa configura automáticamente UTF-8. Si persiste, ejecuta:
+  ```bash
+  chcp 65001
+  ```
+
+#### No se crea la base de datos
+- **Solución**: Verifica permisos de escritura en el directorio `data/` o `%LOCALAPPDATA%\MiFutbolC\data\`
+
+## 💻 Uso
+
+### Inicio del Programa
+
+Al ejecutar `MiFutbolC`, el sistema:
+
+1. **Inicializa la base de datos** (si es la primera vez)
+2. **Carga la configuración** del usuario (tema, idioma)
+3. **Solicita nombre de usuario** (solo la primera vez)
+4. **Muestra el menú principal**
+
+### Menú Principal
+
+```
+═══════════════════════════════════════
+        MIFUTBOLC - MENÚ PRINCIPAL
+═══════════════════════════════════════
+
+1. Camisetas
+2. Canchas
+3. Equipos
+4. Partidos
+5. Lesiones
+6. Estadísticas
+7. QR
+8. Logros
+9. Financiamiento
+10. Torneos
+11. Temporada
+12. Análisis
+13. Entrenador IA
+14. Exportar
+15. Importar
+16. Ajustes
+0. Salir
+>
+```
+
+### Flujo de Trabajo Típico
+
+#### 1️⃣ Configuración Inicial
+
+```
+Menú Principal → Ajustes (16)
+  ├── Cambiar tema de interfaz
+  ├── Cambiar idioma
+  └── Modificar nombre de usuario
+```
+
+#### 2️⃣ Crear Recursos Básicos
+
+```
+Menú Principal → Camisetas (1) → Crear camiseta
+Menú Principal → Canchas (2) → Crear cancha
+Menú Principal → Equipos (3) → Crear equipo
+```
+
+#### 3️⃣ Registrar un Partido
+
+```
+Menú Principal → Partidos (4) → Crear partido
+  ├── Seleccionar cancha
+  ├── Seleccionar camiseta
+  ├── Ingresar goles y asistencias
+  ├── Evaluar rendimiento (1-10)
+  ├── Indicar cansancio (1-10)
+  └── Indicar estado de ánimo (1-10)
+```
+
+#### 4️⃣ Organizar un Torneo
+
+```
+Menú Principal → Torneos (10)
+  ├── Crear torneo
+  ├── Agregar equipos
+  ├── Generar fixture
+  ├── Ingresar resultados
+  └── Ver tabla de posiciones
+```
+
+#### 5️⃣ Analizar Rendimiento
+
+```
+Menú Principal → Estadísticas (6)
+  ├── Ver estadísticas generales
+  ├── Estadísticas por año
+  ├── Estadísticas por mes
+  └── Meta-análisis
+
+Menú Principal → Análisis (12)
+  ├── Comparar últimos 5 partidos
+  ├── Calcular rachas
+  └── Ver récords históricos
+```
+
+#### 6️⃣ Gestionar Finanzas
+
+```
+Menú Principal → Financiamiento (9)
+  ├── Registrar ingreso
+  ├── Registrar gasto
+  ├── Ver balance
+  └── Exportar reporte financiero
+```
+
+#### 7️⃣ Exportar Datos
+
+```
+Menú Principal → Exportar (14)
+  ├── Seleccionar módulo (camisetas, partidos, etc.)
+  ├── Elegir formato (CSV, JSON, HTML, TXT)
+   └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
+```
+
+### Ejemplos de Uso Práctico
+
+#### Ejemplo 1: Registrar tu Primera Camiseta
+
+1. Ejecuta el programa
+2. Selecciona `1` (Camisetas)
+3. Selecciona `1` (Crear camiseta)
+4. Ingresa el nombre: `"Camiseta Roja"`
+5. La camiseta se guarda automáticamente con ID único
+
+#### Ejemplo 2: Crear un Torneo de Fútbol 5
+
+1. Crea al menos 4 equipos (Menú → Equipos → Crear)
+2. Ve a Torneos (opción 10)
+3. Selecciona "Crear torneo"
+4. Ingresa nombre: `"Copa Primavera 2026"`
+5. Selecciona formato: `Round Robin`
+6. Agrega los equipos participantes
+7. El sistema genera automáticamente el fixture
+
+#### Ejemplo 3: Analizar tu Rendimiento
+
+1. Ve a Análisis (opción 12)
+2. El sistema muestra:
+   - Comparación últimos 5 partidos vs promedio general
+   - Mejor racha de victorias
+   - Peor racha de derrotas
+   - Mensajes motivacionales personalizados
+
+### Navegación
+
+- **Números**: Selecciona opciones ingresando el número correspondiente
+- **0**: Volver al menú anterior o salir
+- **Enter**: Confirmar selección
+- **Ctrl+C**: Salir del programa (en cualquier momento)
+
+### Atajos de Teclado (en desarrollo)
+
+- `Ctrl+E`: Exportar datos rápidamente
+- `Ctrl+S`: Ver estadísticas rápidas
+- `Ctrl+H`: Ayuda contextual
+
+## 🏗️ Arquitectura y Diseño
+
+### Diagrama de Arquitectura
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         CAPA DE PRESENTACIÓN                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   menu.c     │  │  ascii_art.h │  │   utils.c    │          │
+│  │ (Interfaz)   │  │ (Visuales)   │  │ (Utilidades) │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE LÓGICA DE NEGOCIO                 │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │camiseta.c│ │ partido.c│ │ equipo.c │ │ torneo.c │           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ lesion.c │ │ logros.c │ │analisis.c│ │settings.c│           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │financia. │ │temporada │ │entrenador│ │records_  │           │
+│  │    c     │ │    .c    │ │  _ia.c   │ │rankings.c│           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    CAPA DE ESTADÍSTICAS Y ANÁLISIS               │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
+│  │estadisticas.c│ │estadisticas_ │ │estadisticas_ │            │
+│  │              │ │  generales.c │ │   anio.c     │            │
+│  └──────────────┘ └──────────────┘ └──────────────┘            │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
+│  │estadisticas_ │ │estadisticas_ │ │estadisticas_ │            │
+│  │   mes.c      │ │   meta.c     │ │  lesiones.c  │            │
+│  └──────────────┘ └──────────────┘ └──────────────┘            │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  CAPA DE IMPORTACIÓN/EXPORTACIÓN                 │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ export.c │ │export_all│ │export_   │ │ import.c │           │
+│  │          │ │    .c    │ │camisetas │ │          │           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                        │
+│  │export_   │ │export_   │ │export_   │                        │
+│  │partidos.c│ │lesiones.c│ │estadist. │                        │
+│  └──────────┘ └──────────┘ └──────────┘                        │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      CAPA DE ACCESO A DATOS                      │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │                    db.c / db.h                    │           │
+│  │         (Abstracción de Base de Datos)            │           │
+│  └──────────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       CAPA DE PERSISTENCIA                       │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │              SQLite3 (sqlite3.c/h)                │           │
+│  │           Base de Datos Embebida                  │           │
+│  │                                                    │           │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐          │           │
+│  │  │camisetas │ │ partidos │ │ equipos  │          │           │
+│  │  └──────────┘ └──────────┘ └──────────┘          │           │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐          │           │
+│  │  │ torneos  │ │ lesiones │ │  logros  │          │           │
+│  │  └──────────┘ └──────────┘ └──────────┘          │           │
+│  └──────────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      BIBLIOTECAS AUXILIARES                      │
+│  ┌──────────────────┐         ┌──────────────────┐              │
+│  │  cJSON.c / .h    │         │    qr.c / .h     │              │
+│  │  (Parsing JSON)  │         │ (Códigos QR)     │              │
+│  └──────────────────┘         └──────────────────┘              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Patrones de Diseño Implementados
+
+#### 1. **Patrón Modular**
+- **Descripción**: Cada módulo tiene responsabilidad única y bien definida
+- **Implementación**: Archivos `.h` (interfaces) y `.c` (implementaciones) separados
+- **Beneficios**: Bajo acoplamiento, alta cohesión, fácil mantenimiento
+
+#### 2. **Patrón de Comando (Simplificado)**
+- **Descripción**: Sistema de menús con estructura `MenuItem`
+- **Implementación**: 
+  ```c
+  typedef struct {
+      int opcion;
+      const char* texto;
+      void (*accion)(void);
+  } MenuItem;
+  ```
+- **Beneficios**: Fácil agregar nuevas opciones, navegación flexible
+
+#### 3. **Patrón Repository (Capa de Acceso a Datos)**
+- **Descripción**: `db.c/db.h` centraliza todas las operaciones de base de datos
+- **Implementación**: Funciones como `db_init()`, `db_close()`, consultas SQL encapsuladas
+- **Beneficios**: Abstracción de la persistencia, cambio de BD sin afectar lógica
+
+#### 4. **Patrón Strategy (Exportación)**
+- **Descripción**: Múltiples estrategias de exportación (CSV, JSON, HTML, TXT)
+- **Implementación**: Funciones especializadas por formato en módulos `export_*.c`
+- **Beneficios**: Fácil agregar nuevos formatos, código reutilizable
+
+#### 5. **Patrón Singleton (Conexión a BD)**
+- **Descripción**: Una única conexión a la base de datos durante toda la ejecución
+- **Implementación**: Variable global `sqlite3 *db` en `db.c`
+- **Beneficios**: Eficiencia, consistencia de datos
+
+### Principios de Diseño
+
+#### SOLID Principles (Adaptados a C)
+
+- **S - Single Responsibility**: Cada módulo tiene una responsabilidad única
+  - `camiseta.c` → Solo gestión de camisetas
+  - `partido.c` → Solo gestión de partidos
+  
+- **O - Open/Closed**: Abierto a extensión, cerrado a modificación
+  - Nuevos formatos de exportación sin modificar código existente
+  
+- **L - Liskov Substitution**: Funciones intercambiables con misma interfaz
+  - Todas las funciones de exportación tienen firma similar
+  
+- **I - Interface Segregation**: Interfaces específicas y pequeñas
+  - Headers `.h` con solo declaraciones necesarias
+  
+- **D - Dependency Inversion**: Dependencia de abstracciones
+  - Módulos dependen de `db.h`, no de SQLite directamente
+
+### Flujo de Datos
+
+```
+Usuario → Menu → Módulo de Negocio → db.c → SQLite → Archivo .db
+                                         ↓
+                                    Estadísticas
+                                         ↓
+                                    Exportación → Archivos (CSV/JSON/HTML/TXT)
+```
+
+## 📁 Estructura del Proyecto
 
 ```
 MiFutbolC/
-├── main.c                          # Punto de entrada del programa
-├── db.c / db.h                     # Gestión de la base de datos SQLite
-├── menu.c / menu.h                 # Sistema de menús interactivos
-├── menu_camisetas.h                # Declaraciones específicas para menús de camisetas
-├── models.h                        # Definiciones de estructuras comunes
-├── settings.c / settings.h         # Sistema de configuración avanzada
-├── financiamiento.c / financiamiento.h # Gestión financiera del equipo
-├── camiseta.c / camiseta.h         # Gestión de camisetas
-├── partido.c / partido.h           # Gestión de partidos
-├── equipo.c / equipo.h             # Gestión de equipos
-├── torneo.c / torneo.h             # Gestión de torneos
-├── cancha.c / cancha.h             # Gestión de canchas
-├── lesion.c / lesion.h             # Gestión de lesiones
-├── logros.c / logros.h             # Gestión de logros
-├── records_rankings.c / records_rankings.h # Récords y rankings históricos
-├── analisis.c / analisis.h         # Análisis de rendimiento
-├── estadisticas.c / estadisticas.h # Estadísticas generales
-├── estadisticas_anio.c / estadisticas_anio.h # Estadísticas por año
-├── estadisticas_mes.c / estadisticas_mes.h # Estadísticas por mes
-├── estadisticas_meta.c / estadisticas_meta.h # Meta-análisis avanzado
-├── estadisticas_generales.c / estadisticas_generales.h # Estadísticas generales detalladas
-├── estadisticas_lesiones.c / estadisticas_lesiones.h # Estadísticas de lesiones
-├── export.c / export.h             # Funciones de exportación individuales
-├── export_all.c / export_all.h     # Exportación completa de datos
-├── export_all_mejorado.c / export_all_mejorado.h # Exportación mejorada completa
-├── export_camisetas.c / export_camisetas.h # Exportación de camisetas
-├── export_camisetas_mejorado.c / export_camisetas_mejorado.h # Exportación mejorada de camisetas
-├── export_lesiones.c / export_lesiones.h # Exportación de lesiones
-├── export_lesiones_mejorado.c / export_lesiones_mejorado.h # Exportación mejorada de lesiones
-├── export_partidos.c / export_partidos.h # Exportación de partidos
-├── export_estadisticas.c / export_estadisticas.h # Exportación de estadísticas
-├── export_estadisticas_generales.c / export_estadisticas_generales.h # Exportación de estadísticas generales
-├── export_records_rankings.c / export_records_rankings.h # Exportación de récords y rankings
-├── import.c / import.h             # Funciones de importación desde JSON
-├── utils.c / utils.h               # Utilidades auxiliares
-├── ascii_art.h                     # Arte ASCII para la interfaz
-├── asciiGenerator.txt              # Generador de arte ASCII
-├── build.sh                        # Script de compilación para Linux
-├── sqlite3.c / sqlite3.h            # Biblioteca SQLite embebida
-├── cJSON.c / cJSON.h                # Biblioteca cJSON para manejo de JSON
-├── cJSON_Utils.c / cJSON_Utils.h    # Utilidades adicionales para cJSON
-├── curl.h                          # Biblioteca cURL (opcional)
-├── MiFutbolC.cbp                   # Proyecto CodeBlocks
-├── MiFutbolC.cscope_file_list      # Lista de archivos para cscope
-├── MiFutbolC.depend                # Dependencias del proyecto
-├── MiFutbolC.exe                   # Ejecutable compilado
-├── MiFutbolC.ico                   # Icono del programa
-├── MiFutbolC.iss                   # Script de instalador Inno Setup
-├── MiFutbolC.layout                # Layout del proyecto CodeBlocks
-├── recurso.rc                      # Recursos de Windows
-├── settings.o                      # Archivo objeto de configuración
-├── README.md                       # Este archivo
-├── README.pdf                      # Versión PDF del README
-├── LICENSE                         # Archivo de licencia
-├── Manual_Usuario_MiFutbolC.pdf    # Manual de usuario en PDF
-├── manual_usuario.md               # Manual de usuario en Markdown
-├── bin/                            # Binarios compilados
-│   └── Debug/
-│       ├── MiFutbolC.exe          # Ejecutable de depuración
-│       └── data/                   # Directorio de datos del ejecutable
-├── cjson/                          # Directorio adicional de cJSON
-│   └── cJSON.c                     # (Duplicado)
-├── data/                           # Directorio de datos
-│   ├── mifutbol.db                 # Base de datos SQLite
-│   ├── *.csv                       # Archivos exportados en CSV
-│   ├── *.txt                       # Archivos exportados en TXT
-│   ├── *.json                      # Archivos exportados en JSON
-│   └── *.html                      # Archivos exportados en HTML
-├── doxygen/                        # Documentación generada
-│   ├── doxyfile                    # Configuración de Doxygen
-│   ├── doxygen.log                 # Log de generación de documentación
-│   └── html/                       # Documentación HTML
-│       ├── *.html                  # Archivos HTML de documentación
-│       ├── *.css                   # Hojas de estilo
-│       ├── *.js                    # Scripts JavaScript
-│       ├── *.png                   # Imágenes
-│       └── search/                 # Índice de búsqueda
-├── images/                         # Imágenes del proyecto
-│   ├── *.png                       # Capturas de pantalla y diagramas
-├── installer/                      # Instalador
-│   └── MiFutbolC_Setup.exe         # Instalador ejecutable
-└── obj/                            # Archivos objeto de compilación
-    ├── *.o                         # Archivos objeto
-    └── Debug/                      # Objetos de depuración
+│
+├── 📄 main.c                                    # Punto de entrada del programa
+│
+├── 🗄️ CAPA DE DATOS
+│   ├── db.c / db.h                              # Gestión de base de datos SQLite
+│   ├── sqlite3.c / sqlite3.h                    # Biblioteca SQLite embebida
+│   └── models.h                                 # Definiciones de estructuras comunes
+│
+├── 🎨 CAPA DE PRESENTACIÓN
+│   ├── menu.c / menu.h                          # Sistema de menús interactivos
+│   ├── ascii_art.h                              # Arte ASCII para interfaz
+│   └── utils.c / utils.h                        # Utilidades auxiliares
+│
+├── ⚙️ CAPA DE LÓGICA DE NEGOCIO
+│   ├── 🎽 Gestión de Recursos
+│   │   ├── camiseta.c / camiseta.h              # Gestión de camisetas
+│   │   ├── cancha.c / cancha.h                  # Gestión de canchas
+│   │   └── equipo.c / equipo.h                  # Gestión de equipos
+│   │
+│   ├── ⚽ Gestión de Partidos y Torneos
+│   │   ├── partido.c / partido.h                # Gestión de partidos
+│   │   ├── torneo.c / torneo.h                  # Gestión de torneos
+│   │   └── temporada.c / temporada.h            # Gestión de temporadas
+│   │
+│   ├── 🏥 Gestión de Salud
+│   │   └── lesion.c / lesion.h                  # Gestión de lesiones
+│   │
+│   ├── 💰 Gestión Financiera
+│   │   └── financiamiento.c / financiamiento.h  # Control de ingresos/gastos
+│   │
+│   ├── 🎖️ Gamificación
+│   │   └── logros.c / logros.h                  # Sistema de logros y badges
+│   │
+│   ├── 🤖 Inteligencia Artificial
+│   │   └── entrenador_ia.c / entrenador_ia.h    # Entrenador IA
+│   │
+│   ├── ⚙️ Configuración
+│   │   └── settings.c / settings.h              # Sistema de configuración
+│   │
+│   └── 📊 QR
+│       └── qr.c / qr.h                          # Generación de códigos QR
+│
+├── 📊 CAPA DE ESTADÍSTICAS Y ANÁLISIS
+│   ├── estadisticas.c / estadisticas.h          # Estadísticas generales
+│   ├── estadisticas_generales.c / .h            # Estadísticas detalladas
+│   ├── estadisticas_anio.c / .h                 # Estadísticas por año
+│   ├── estadisticas_mes.c / .h                  # Estadísticas por mes
+│   ├── estadisticas_meta.c / .h                 # Meta-análisis avanzado
+│   ├── estadisticas_lesiones.c / .h             # Estadísticas de lesiones
+│   ├── analisis.c / analisis.h                  # Análisis de rendimiento
+│   └── records_rankings.c / .h                  # Récords y rankings
+│
+├── 📤 CAPA DE IMPORTACIÓN/EXPORTACIÓN
+│   ├── 📥 Importación
+│   │   └── import.c / import.h                  # Importación desde JSON
+│   │
+│   └── 📤 Exportación
+│       ├── export.c / export.h                  # Exportación individual
+│       ├── export_all.c / .h                    # Exportación completa
+│       ├── export_all_mejorado.c / .h           # Exportación mejorada completa
+│       ├── export_camisetas.c / .h              # Exportación de camisetas
+│       ├── export_camisetas_mejorado.c / .h     # Exportación mejorada camisetas
+│       ├── export_lesiones.c / .h               # Exportación de lesiones
+│       ├── export_lesiones_mejorado.c / .h      # Exportación mejorada lesiones
+│       ├── export_partidos.c / .h               # Exportación de partidos
+│       ├── export_partidos_helpers.h            # Helpers para exportación
+│       ├── export_estadisticas.c / .h           # Exportación de estadísticas
+│       ├── export_estadisticas_generales.c / .h # Exportación estadísticas generales
+│       └── export_records_rankings.c / .h       # Exportación récords/rankings
+│
+├── 📚 BIBLIOTECAS EXTERNAS
+│   └── cJSON.c / cJSON.h                        # Biblioteca cJSON (MIT License)
+│
+├── 🔧 ARCHIVOS DE CONFIGURACIÓN Y BUILD
+│   ├── MiFutbolC.cbp                            # Proyecto CodeBlocks
+│   ├── MiFutbolC.layout                         # Layout de CodeBlocks
+│   ├── MiFutbolC.depend                         # Dependencias del proyecto
+│   ├── MiFutbolC.cscope_file_list               # Lista de archivos cscope
+│   ├── MiFutbolC.iss                            # Script instalador Inno Setup
+│   ├── build.sh                                 # Script compilación Linux/macOS
+│   ├── build.bat                                # Script compilación Windows
+│   ├── recurso.rc                               # Recursos de Windows
+│   └── sonar-project.properties                 # Configuración SonarQube
+│
+├── 🎨 RECURSOS
+│   ├── MiFutbolC.ico                            # Icono del programa
+│   └── images/                                  # Imágenes y capturas
+│       └── *.png
+│
+├── 📖 DOCUMENTACIÓN
+│   ├── README.md                                # Este archivo
+│   ├── README.pdf                               # Versión PDF del README
+│   ├── LICENSE                                  # Licencia del proyecto
+│   ├── manual_usuario.md                        # Manual de usuario
+│   └── Manual_Usuario_MiFutbolC.pdf             # Manual de usuario PDF
+│
+├── 🏗️ DIRECTORIOS DE COMPILACIÓN
+│   ├── bin/                                     # Binarios compilados
+│   │   └── Debug/
+│   │       ├── MiFutbolC.exe                    # Ejecutable de depuración
+│   │       └── data/                            # Datos del ejecutable
+│   │
+│   ├── obj/                                     # Archivos objeto (.o)
+│   │   └── Debug/
+│   │
+│   └── bw-output/                               # Salida de análisis
+│
+├── 💾 DATOS Y EXPORTACIONES (runtime)
+│   └── data/                                    # Se crea en ejecución
+│       ├── mifutbol.db                          # Base de datos SQLite
+│       ├── *.csv                                # Archivos exportados CSV
+│       ├── *.txt                                # Archivos exportados TXT
+│       ├── *.json                               # Archivos exportados JSON
+│       └── *.html                               # Archivos exportados HTML
+│
+└── 📦 INSTALADOR
+  └── installer/
+    └── MiFutbolC_Setup.exe                  # Instalador para Windows
 ```
 
-## Base de Datos
+### Resumen de Archivos
 
-El proyecto utiliza SQLite para almacenar datos. La base de datos se crea automáticamente en `data/mifutbol.db` al ejecutar el programa por primera vez. En Windows, se guarda en `%APPDATA%\MiFutbolC\data\mifutbol.db`, y en Unix/Linux, en el directorio del ejecutable `data/mifutbol.db`.
+Conteo referencial (puede variar según cambios y scripts de build).
 
-### Tablas Principales
+| Categoría | Archivos `.c` | Archivos `.h` | Total |
+|-----------|---------------|---------------|-------|
+| Lógica de Negocio | 12 | 12 | 24 |
+| Estadísticas | 7 | 7 | 14 |
+| Exportación | 11 | 11 | 22 |
+| Importación | 1 | 1 | 2 |
+| Interfaz | 2 | 3 | 5 |
+| Base de Datos | 2 | 2 | 4 |
+| Bibliotecas | 2 | 2 | 4 |
+| **TOTAL** | **37** | **38** | **75** |
 
-- **camiseta**: Almacena información de camisetas (ID, nombre, sorteada).
-- **cancha**: Gestiona canchas de fútbol (ID, nombre, ubicacion).
-- **equipo**: Gestiona equipos de fútbol (ID, nombre, ciudad, estadio, entrenador).
-- **torneo**: Organiza torneos (ID, nombre, tipo, fecha_inicio, fecha_fin, estado).
-- **partido**: Registra partidos (ID, cancha_id, equipo_local_id, equipo_visitante_id, torneo_id, fecha/hora, goles_local, goles_visitante, rendimiento, cansancio, animo, camiseta_id).
-- **lesion**: Gestiona lesiones (ID, jugador, tipo, fecha, duracion).
-- **logros**: Almacena logros y badges (ID, nombre, descripcion, nivel, objetivo, categoria).
-- **estadisticas**: Contiene estadísticas calculadas (ID, tipo, valor, camiseta_id).
+### Módulos Principales
 
-### Inicialización
+| Módulo | Archivos | Descripción |
+|--------|----------|-------------|
+| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c` | Núcleo del sistema |
+| **Gestión** | `camiseta.c`, `cancha.c`, `equipo.c`, `partido.c`, `torneo.c`, `lesion.c` | Gestión de recursos |
+| **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c` | Análisis y estadísticas |
+| **I/O** | `export*.c`, `import.c` | Importación/Exportación |
+| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c`, `qr.c` | Funcionalidades adicionales |
+
+## 🗄️ Base de Datos
+
+### Información General
+
+- **Motor**: SQLite3 (embebido)
+- **Archivo**: `mifutbol.db`
+- **Ubicación**:
+  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.db`
+  - Linux/macOS: `./data/mifutbol.db`
+- **Características**: Transacciones ACID, sin servidor, archivo único
+
+**Directorios de importación/exportación**
+- **Exportaciones (Windows)**: `%USERPROFILE%\Documents\MiFutbolC\Exportaciones`
+- **Importaciones (Windows)**: `%USERPROFILE%\Documents\MiFutbolC\Importaciones`
+- **Exportaciones (Linux/macOS)**: `./exportaciones`
+- **Importaciones (Linux/macOS)**: `./importaciones`
+
+### Esquema (resumen)
+
+El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos. Tablas principales (resumen):
+
+- **Base**: `camiseta`, `cancha`, `partido`, `lesion`, `usuario`
+- **Equipos/Torneos**: `equipo`, `jugador`, `torneo`, `equipo_torneo`, `partido_torneo`, `equipo_torneo_estadisticas`, `jugador_estadisticas`, `equipo_historial`, `torneo_fases`, `equipo_fase`
+- **Temporadas**: `temporada`, `temporada_fase`, `torneo_temporada`, `equipo_temporada_fatiga`, `jugador_temporada_fatiga`, `equipo_temporada_evolucion`, `temporada_resumen`, `mensual_resumen`
+- **Configuración/Finanzas**: `settings`, `financiamiento`, `presupuesto_mensual`, `comparacion_historial`
+
+Campos clave (selección, no exhaustivo):
+
+- `camiseta`: `id`, `nombre`, `sorteada`
+- `cancha`: `id`, `nombre`
+- `partido`: `id`, `cancha_id`, `fecha_hora`, `goles`, `asistencias`, `camiseta_id`, `resultado`, `rendimiento_general`, `cansancio`, `estado_animo`, `comentario_personal`, `clima`, `dia`, `precio`
+- `lesion`: `id`, `jugador`, `tipo`, `descripcion`, `fecha`, `camiseta_id`, `estado`, `partido_id`
+- `equipo`: `id`, `nombre`, `tipo`, `tipo_futbol`, `num_jugadores`, `partido_id`
+- `torneo`: `id`, `nombre`, `tiene_equipo_fijo`, `equipo_fijo_id`, `cantidad_equipos`, `tipo_torneo`, `formato_torneo`, `fase_actual`
+
+Para el detalle completo, ver la creación del esquema en [db.c](db.c).
+
+### Inicialización de la Base de Datos
 
 La función `db_init()` en `db.c` se encarga de:
-- Abrir la conexión a la base de datos.
-- Crear las tablas si no existen.
-- Preparar el esquema de datos.
 
-## Funcionalidades de Exportación
+1. **Crear el directorio de datos** si no existe
+2. **Abrir/crear la base de datos** SQLite
+3. **Crear todas las tablas** con sus respectivos esquemas
+4. **Aplicar migraciones simples** (`ALTER TABLE`) si faltan columnas
+5. **Inicializar directorios de importación y exportación**
 
-El sistema permite exportar datos en múltiples formatos:
+```c
+// Ejemplo simplificado
+bool db_init() {
+  if (!setup_database_paths()) return false;
+  if (!create_database_connection()) return false;
+  if (!create_database_schema()) return false;
+  add_missing_columns();
+  get_import_dir();
+  get_export_dir();
+  return true;
+}
+```
 
-- **CSV**: Formato de valores separados por comas, ideal para hojas de cálculo.
-- **TXT**: Texto plano formateado para lectura humana.
-- **JSON**: Formato estructurado para integración con otras aplicaciones.
-- **HTML**: Páginas web con tablas para visualización en navegador.
+### Consultas Comunes
 
-Los archivos exportados se guardan en el Escritorio (Windows) o directorio home (Unix/Linux) con nombres descriptivos como `camisetas.csv`, `partidos.html`, etc. El usuario puede elegir el formato (CSV, TXT, JSON, HTML) para cada módulo.
+#### Estadísticas por Camiseta
+```sql
+SELECT 
+    c.nombre,
+    COUNT(p.id) as partidos,
+    SUM(p.goles) as goles_totales,
+    SUM(p.asistencias) as asistencias_totales,
+  AVG(p.rendimiento_general) as rendimiento_promedio
+FROM camiseta c
+LEFT JOIN partido p ON c.id = p.camiseta_id
+GROUP BY c.id
+ORDER BY goles_totales DESC;
+```
+
+#### Récords Históricos
+```sql
+SELECT 
+    MAX(goles) as max_goles,
+    MAX(asistencias) as max_asistencias,
+  MAX(rendimiento_general) as mejor_rendimiento
+FROM partido;
+```
+
+#### Análisis de Lesiones
+```sql
+SELECT 
+    tipo,
+  COUNT(*) as cantidad
+FROM lesion
+GROUP BY tipo
+ORDER BY cantidad DESC;
+```
 
 ## Módulo de Estadísticas
 
@@ -366,41 +987,17 @@ El proyecto incluye un módulo de utilidades (`utils.c / utils.h`) que proporcio
 - **Interfaz de Consola**: `clear_screen()`, `print_header()`, y `pause_console()` para mejorar la experiencia del usuario en terminal.
 - **Validación de Datos**: `existe_id()` para verificar si un ID existe en una tabla de la base de datos.
 - **Confirmaciones**: `confirmar()` para solicitar confirmación del usuario antes de operaciones destructivas.
-- **Gestión de Exportaciones**: `obtener_directorio_exports()` para determinar y crear el directorio de exportación (en Escritorio en Windows, home en Unix/Linux).
+- **Gestión de Exportaciones**: `get_export_dir()` para determinar y crear el directorio de exportación (Documents en Windows, `./exportaciones` en Unix/Linux).
 
 Estas utilidades promueven la reutilización de código y mantienen una interfaz consistente en todo el programa.
-
-## Arquitectura y Diseño
-
-### Patrón de Diseño Modular
-
-El proyecto sigue un enfoque modular con separación clara de responsabilidades:
-
-- **Separación de Interfaz y Lógica**: Cada módulo tiene archivos `.h` (interfaces/declaraciones) y `.c` (implementaciones).
-- **Bajo Acoplamiento**: Los módulos interactúan principalmente a través de funciones públicas, minimizando dependencias directas.
-- **Alto Cohesión**: Cada módulo se enfoca en una responsabilidad específica (ej. `camiseta.c` solo maneja camisetas).
-
-### Patrón de Diseño de Menús
-
-El sistema de menús implementa un patrón de Comando simplificado:
-
-- **Estructura MenuItem**: Define comandos con número de opción, texto descriptivo y función a ejecutar.
-- **Función ejecutar_menu()**: Actúa como invocador que muestra opciones y ejecuta comandos seleccionados.
-- **Jerarquía de Menús**: Menú principal con submenús especializados, permitiendo navegación intuitiva.
-
-### Patrón de Acceso a Datos
-
-- **Capa de Abstracción de BD**: `db.c/db.h` centraliza todas las operaciones de base de datos.
-- **SQL Embebido**: Consultas SQL directamente en el código C para máxima flexibilidad.
-- **Gestión de Conexión**: Conexión única mantenida durante toda la ejecución del programa.
 
 ## Sistema de Menús
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `main.c`, presenta las opciones principales del sistema (Camisetas, Canchas, Partidos, Estadísticas, Logros, Análisis, Lesiones, Financiamiento, Exportar Todo, Importar Todo, Torneos, Configuración, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, QR, Logros, Financiamiento, Torneos, Temporada, Análisis, Entrenador IA, Exportar, Importar, Ajustes, Salir).
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
-- **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `models.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
+- **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
 - **Navegación**: La función `ejecutar_menu()` maneja la lógica de mostrar opciones, leer selección del usuario y ejecutar la acción correspondiente.
 - **Consistencia**: Todos los menús siguen el mismo patrón, facilitando la adición de nuevas funcionalidades.
 
@@ -411,7 +1008,7 @@ Además de las exportaciones individuales, el módulo `export_all.c / export_all
 - Ejecuta automáticamente todas las funciones de exportación disponibles.
 - Genera archivos en formatos CSV, TXT, JSON y HTML para camisetas, partidos, estadísticas y lesiones.
 - Facilita la copia de seguridad completa de todos los datos del sistema.
-- Es accesible directamente desde el menú principal como opción "Exportar Todo".
+- Es accesible desde el submenú Exportar → Todo.
 
 ## Exportación Mejorada
 
@@ -423,106 +1020,189 @@ Los módulos de exportación mejorada (`export_all_mejorado.c`, `export_camiseta
 
 ## Importación Completa
 
-Además de las exportaciones, el módulo `import.c / import.h` proporciona la función `importar_todo()` que:
+El módulo `import.c / import.h` permite restaurar datos desde archivos JSON exportados previamente. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
 
-- Permite importar datos desde archivos JSON ubicados en el directorio `Documents/MiFutbolC/Importaciones` (o `%USERPROFILE%\Documents\MiFutbolC\Importaciones` en Windows, `./importaciones` en el directorio del ejecutable en Unix/Linux), generados por la función de exportación.
-- Valida la estructura de los datos JSON antes de insertarlos en la base de datos.
-- Maneja errores de importación y proporciona feedback al usuario.
-- Facilita la restauración de datos desde copias de seguridad.
-- Es accesible directamente desde el menú principal como opción "Importar Todo".
 
 ## Documentación
 
-### Documentación Técnica Completa
+### Documentación Disponible
 
-El proyecto cuenta con documentación técnica completa en **español estilo Doxygen** para todos los 41 archivos de cabecera (.h). Esta documentación incluye especificaciones detalladas, ejemplos de código, referencias cruzadas y está organizada en múltiples archivos para facilitar el acceso según el nivel de aprendizaje.
+El repositorio incluye documentación técnica y de usuario en formato Markdown y PDF:
 
-#### Archivos de Documentación Disponibles
+- [README.md](README.md): Documentación técnica general del proyecto.
+- [README.pdf](README.pdf): Versión PDF del README.
+- [manual_usuario.md](manual_usuario.md): Manual de usuario con flujos y pantallas.
+- [Manual_Usuario_MiFutbolC.pdf](Manual_Usuario_MiFutbolC.pdf): Manual de usuario en PDF.
 
-- **DOCUMENTACION_DOXYGEN.md**: Documentación técnica completa en formato Doxygen (25,000+ palabras, 150+ funciones documentadas)
-- **DOCUMENTACION_COMPLETA.md**: Especificación arquitectónica detallada (20,000+ palabras, incluye schema SQL y flujos de usuario)
-- **DOCUMENTACION_RESUMEN.md**: Resumen ejecutivo con estadísticas y quick start guides (5,000+ palabras)
-- **VALIDACION_DOCUMENTACION.md**: Validación de calidad y certificación (puntuación 96/100)
-- **INDICE_DOCUMENTACION.md**: Índice de navegación para acceso rápido
+Nota: Los PDF se generan a partir de los `.md` (por ejemplo con Pandoc) si necesitas regenerarlos.
 
-#### Estadísticas de Cobertura
-
-- ✅ **41/41 módulos documentados** (100% cobertura)
-- ✅ **150+ funciones documentadas**
-- ✅ **15+ estructuras explicadas**
-- ✅ **20+ enumeraciones documentadas**
-- ✅ **50,000+ palabras de contenido**
-- ✅ **200+ líneas de código ejemplo**
-- ✅ **Puntuación de calidad: 96/100**
-
-#### Cómo Acceder a la Documentación
-
-**Para principiantes (30 minutos):**
-- Leer `DOCUMENTACION_RESUMEN.md` para una visión general rápida
-
-**Para aprendizaje profundo (2-3 horas):**
-- Estudiar `DOCUMENTACION_COMPLETA.md` (secciones 1-5)
-- Revisar diagrama de arquitectura y patrones de diseño
-
-**Para referencia técnica:**
-- Consultar `DOCUMENTACION_DOXYGEN.md` para especificaciones de API
-- Usar `INDICE_DOCUMENTACION.md` para navegación rápida
-
-**Para documentación HTML interactiva:**
-1. Instala Doxygen
-2. Ejecuta `doxygen doxygen/doxyfile` desde el directorio raíz
-3. Abre `doxygen/html/index.html` en un navegador web
-4. Navega interactivamente con buscador integrado
-
-#### Niveles de Aprendizaje
-
-- **Principiante**: Usa `DOCUMENTACION_RESUMEN.md` (30 min)
-- **Intermedio**: Estudia `DOCUMENTACION_COMPLETA.md` (2 horas)
-- **Avanzado**: Revisa arquitectura + patrones (3 horas)
-- **Experto**: Implementa nuevos módulos con referencia completa
-
-La documentación está completamente en español, sigue el formato estándar Doxygen, incluye ejemplos prácticos y está validada para producción.
-
-## Desarrollo y Contribución
+## 🛠️ Desarrollo y Contribución
 
 ### Convenciones de Código
 
-- El código sigue estándares de C para legibilidad y mantenibilidad.
-- Comentarios en español para consistencia.
-- Uso de headers (.h) para declaraciones y archivos .c para implementaciones.
+#### Estilo de Código
+- **Estándar C**: C99/C11 compatible
+- **Indentación**: 4 espacios (no tabs)
+- **Nombres de Variables**: `snake_case` para variables y funciones
+- **Nombres de Constantes**: `UPPER_CASE` para macros y constantes
+- **Comentarios**: En español para consistencia con el proyecto
+
+#### Estructura de Archivos
+```c
+// Ejemplo de estructura de archivo .h
+#ifndef MODULO_H
+#define MODULO_H
+
+// Includes necesarios
+#include <stdio.h>
+#include "db.h"
+
+// Constantes
+#define MAX_NOMBRE 100
+
+// Estructuras
+typedef struct {
+    int id;
+    char nombre[MAX_NOMBRE];
+} MiEstructura;
+
+// Declaraciones de funciones
+void crear_elemento(void);
+void listar_elementos(void);
+void modificar_elemento(int id);
+void eliminar_elemento(int id);
+
+#endif // MODULO_H
+```
 
 ### Agregar Nuevas Funcionalidades
 
-1. Define la funcionalidad en el archivo .h correspondiente.
-2. Implementa en el archivo .c.
-3. Actualiza el menú principal si es necesario.
-4. Agrega opciones de exportación si aplica.
+#### Paso 1: Planificación
+1. Define claramente la funcionalidad
+2. Identifica las tablas de BD necesarias
+3. Diseña la interfaz de usuario
 
-### Pruebas
+#### Paso 2: Implementación
+1. **Crear archivos** `.h` y `.c` para el nuevo módulo
+2. **Definir estructuras** en el header
+3. **Implementar funciones** en el archivo `.c`
+4. **Actualizar `db.c`** si requiere nuevas tablas
+5. **Agregar al menú** en `menu.c`
 
-- Compila y ejecuta el programa después de cambios.
-- Verifica la integridad de la base de datos.
-- Prueba todas las opciones de menú.
+#### Paso 3: Integración
+1. Actualizar `MiFutbolC.cbp` (CodeBlocks)
+2. Actualizar scripts de compilación (`build.sh`, `build.bat`)
+3. Agregar funciones de exportación si aplica
 
-## Licencia
+#### Paso 4: Documentación
+1. Documentar funciones con comentarios Doxygen
+2. Actualizar README.md
+3. Agregar ejemplos de uso
 
-Este proyecto es de código abierto. Consulta el archivo LICENSE si está presente.
+### Testing
 
-## Autor
+#### Pruebas Manuales
+- ✅ Compilar sin warnings
+- ✅ Ejecutar todas las opciones del menú
+- ✅ Verificar integridad de la base de datos
+- ✅ Probar casos límite (valores nulos, IDs inválidos)
+- ✅ Verificar exportación/importación
 
-Proyecto desarrollado por Thomas Hamer como ejemplo educativo y de uso personal de programación en C con SQLite.
+#### Pruebas de Integración
+- ✅ Crear datos de prueba
+- ✅ Verificar relaciones entre tablas
+- ✅ Probar flujos completos (crear torneo → agregar equipos → jugar partidos)
 
-## Notas Adicionales
+### Herramientas de Desarrollo Recomendadas
 
-- Los datos se persisten entre ejecuciones gracias a SQLite.
-- El programa maneja errores básicos y solicita confirmaciones para operaciones destructivas.
-- Compatible con Windows (probado en Windows 11).
-- La interfaz es completamente textual, no requiere GUI.
+- **IDE**: CodeBlocks, VS Code, CLion
+- **Debugger**: GDB, LLDB
+- **Análisis Estático**: Cppcheck, SonarQube
+- **Profiling**: Valgrind (Linux), Dr. Memory (Windows)
+- **Documentación**: Doxygen
 
-## Manual de Usuario
+### Contribuir al Proyecto
 
-Para una guía detallada de uso del programa, incluyendo instrucciones paso a paso para cada funcionalidad, ejemplos de uso y solución de problemas comunes, consulta el [Manual de Usuario](manual_usuario.md).
+Si deseas contribuir:
 
-Este manual incluye capturas de pantalla de los menús y secciones del programa para facilitar la navegación.
+1. **Fork** el repositorio
+2. **Crea una rama** para tu funcionalidad (`git checkout -b feature/nueva-funcionalidad`)
+3. **Commit** tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
+4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
+5. **Crea un Pull Request**
 
-Para más información, consulta la documentación generada con Doxygen o revisa el código fuente comentado.Para más información, consulta la documentación generada con Doxygen o revisa el código fuente comentado.
+#### Lineamientos para Pull Requests
+- Describe claramente los cambios realizados
+- Incluye ejemplos de uso si aplica
+- Asegúrate de que el código compile sin errores
+- Sigue las convenciones de código del proyecto
+
+## 📄 Licencia
+
+Este proyecto es de **código abierto**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+### Bibliotecas de Terceros
+
+Ver sección [Tecnologías Utilizadas](#️-tecnologías-utilizadas) para detalles completos sobre SQLite3 y cJSON.
+
+## 👤 Autor
+
+**Thomas Hamer**
+
+Proyecto desarrollado como ejemplo educativo y de uso personal de programación en C con SQLite.
+
+- 📧 Email: [Contacto disponible en el perfil de GitHub]
+- 🌐 GitHub: [thomashamer3/MiFutbolC](https://github.com/thomashamer3/MiFutbolC)
+
+## 🙏 Agradecimientos
+
+- **SQLite Team**: Por la excelente base de datos embebida
+- **cJSON**: Por la biblioteca ligera de parsing JSON
+- **Comunidad de C**: Por los recursos y documentación disponibles
+- **CodeBlocks**: Por el excelente IDE multiplataforma
+
+## 📝 Notas Adicionales
+
+### Características Técnicas
+
+- ✅ **Persistencia de Datos**: Los datos se guardan automáticamente en SQLite entre ejecuciones
+- ✅ **Manejo de Errores**: El programa valida entradas y solicita confirmaciones para operaciones destructivas
+- ✅ **Compatibilidad**: Probado en Windows 11, Ubuntu 22.04, macOS 12+
+- ✅ **Interfaz Textual**: No requiere GUI, funciona en cualquier terminal con soporte UTF-8
+- ✅ **Sin Dependencias Externas**: Todas las bibliotecas necesarias están incluidas
+
+### Limitaciones Conocidas
+
+- La interfaz es solo de consola (no hay GUI gráfica)
+- Diseñado principalmente para uso individual (no multiusuario)
+- Base de datos local (no hay sincronización en la nube)
+
+## 🔗 Enlaces Útiles
+
+- 📖 [Manual de Usuario](manual_usuario.md)
+- 📘 [README (técnico)](README.md)
+- 🐛 [Reportar un Bug](https://github.com/thomashamer3/MiFutbolC/issues)
+- 💡 [Solicitar una Funcionalidad](https://github.com/thomashamer3/MiFutbolC/issues)
+- 📚 [SQLite Documentation](https://www.sqlite.org/docs.html)
+- 🔧 [CodeBlocks](https://www.codeblocks.org/)
+
+## 📊 Estadísticas del Proyecto
+
+Referencial y sujeto a cambios:
+
+- **Tamaño del código**: proyecto C modular (ver árbol del proyecto).
+- **Tablas de BD**: esquema definido en `db.c`.
+- **Formatos de exportación**: CSV, JSON, HTML, TXT.
+- **Estado**: proyecto educativo en evolución.
+
+---
+
+<div align="center">
+
+**⚽ MiFutbolC - Gestión Profesional de Fútbol en C ⚽**
+
+Desarrollado por Thomas Hamer.
+
+[⬆ Volver arriba](#-mifutbolc---sistema-integral-de-gestión-de-fútbol)
+
+</div>

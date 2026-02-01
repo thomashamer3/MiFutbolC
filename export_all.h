@@ -11,6 +11,9 @@
  *       una copia de seguridad integral de todos los datos disponibles.
  */
 
+#ifndef EXPORT_ALL_H
+#define EXPORT_ALL_H
+
 /**
  * @brief Interfaz de usuario para exportación completa de datos
  *
@@ -37,3 +40,5 @@
  * @see exportar_todo()
  */
 void menu_exportar();
+
+#endif

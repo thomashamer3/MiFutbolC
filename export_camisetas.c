@@ -15,6 +15,11 @@
 #include <direct.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
 /**
  * @brief Obtiene los datos de camisetas de la base de datos
  *
@@ -31,7 +36,10 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
     *count = 0;
 
     // Verificar si hay camisetas registradas
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &check_stmt, NULL);
+    if (!preparar_stmt(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
+    {
+        return NULL;
+    }
     if (sqlite3_step(check_stmt) == SQLITE_ROW)
     {
         *count = sqlite3_column_int(check_stmt, 0);
@@ -46,7 +54,7 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
 
     // Preparar la consulta principal
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
+    if (!preparar_stmt(&stmt,
                        "SELECT c.id, c.nombre, "
                        "COALESCE(SUM(p.goles), 0) as total_goles, "
                        "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
@@ -61,7 +69,10 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
                        "FROM camiseta c "
                        "LEFT JOIN partido p ON c.id = p.camiseta_id "
                        "GROUP BY c.id, c.nombre "
-                       "ORDER BY c.id", -1, &stmt, NULL);
+                       "ORDER BY c.id"))
+    {
+        return NULL;
+    }
 
     return stmt;
 }
@@ -308,57 +319,20 @@ void exportar_camisetas_csv()
 /**
  * @brief Exporta las camisetas a un archivo de texto plano
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
+ * Utiliza la función genérica de exportación para evitar duplicación de código.
  * El formato TXT es ideal para visualización humana y documentación impresa.
  */
 void exportar_camisetas_txt()
 {
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-
-    errno_t err = fopen_s(&f, get_export_path("camisetas.txt"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            sqlite3_finalize(stmt);
-            return;
-        }
-
-    // Escribir encabezado del archivo de texto
-    fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
-
-    // Procesar cada fila de resultados con formato legible
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+    ExportConfig config =
     {
-        fprintf(f, "ID: %d - Nombre: %s\n"
-                "  Goles Totales: %d\n"
-                "  Asistencias Totales: %d\n"
-                "  Partidos Totales: %d\n"
-                "  Victorias: %d\n"
-                "  Empates: %d\n"
-                "  Derrotas: %d\n"
-                "  Lesiones Totales: %d\n"
-                "  Rendimiento Promedio: %.2f\n"
-                "  Cansancio Promedio: %.2f\n"
-                "  Estado de Animo Promedio: %.2f\n\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_double(stmt, 9),
-                sqlite3_column_double(stmt, 10),
-                sqlite3_column_double(stmt, 11));
-    }
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path("camisetas.txt"));
-    fclose(f);
+        .filename = "camisetas.txt",
+        .context = NULL,
+        .write_header = write_txt_header,
+        .write_row = write_txt_row,
+        .write_footer = NULL
+    };
+    export_camisetas_generic(&config);
 }
 
 /**

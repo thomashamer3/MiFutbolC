@@ -14,6 +14,19 @@
 #include <string.h>
 
 /**
+ * @brief Preparar statement y reportar errores
+ */
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
+/**
  * @struct Logro
  * @brief Estructura que representa un logro/badge
  */
@@ -305,7 +318,7 @@ static int obtener_progreso_logro(int camiseta_id, const char *tipo)
         sqlite3_stmt *stmt;
         int progreso = 0;
 
-        if (sqlite3_prepare_v2(db, LOGRO_QUERIES[i].sql, -1, &stmt, NULL) != SQLITE_OK)
+        if (!preparar_stmt(LOGRO_QUERIES[i].sql, &stmt))
         {
             return 0;
         }
@@ -432,6 +445,8 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
             continue; // Solo completados
         if (filtro == 2 && estado != 1)
             continue; // Solo en progreso
+        if (filtro == 3 && estado == 2)
+            continue; // Solo no completados
 
         mostrados++;
         mostrar_logro_individual(&LOGROS[i], estado, progreso);
@@ -441,7 +456,6 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     {
         mostrar_no_hay_registros("logros que mostrar con el filtro seleccionado");
     }
-    pause_console();
 }
 
 /**
@@ -453,7 +467,11 @@ static void listar_camisetas_con_partidos()
 {
     printf("Camisetas disponibles:\n");
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", -1, &stmt, NULL);
+    if (!preparar_stmt("SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", &stmt))
+    {
+        pause_console();
+        return;
+    }
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -532,6 +550,14 @@ void mostrar_logros_en_progreso()
 }
 
 /**
+ * @brief Muestra los logros no completados
+ */
+void mostrar_logros_no_completados()
+{
+    mostrar_logros_con_filtro("LOGROS NO COMPLETADOS", 3);
+}
+
+/**
  * @brief Muestra el menú principal de logros y badges
  */
 void menu_logros()
@@ -541,8 +567,9 @@ void menu_logros()
         {1, "Ver Todos los Logros", mostrar_todos_logros},
         {2, "Logros Completados", mostrar_logros_completados},
         {3, "Logros en Progreso", mostrar_logros_en_progreso},
+        {4, "Logros No Completados", mostrar_logros_no_completados},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("LOGROS", items, 4);
+    ejecutar_menu("LOGROS", items, 5);
 }

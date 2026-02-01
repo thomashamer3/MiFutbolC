@@ -11,6 +11,9 @@
  *       análisis avanzado que no está disponible en las funciones de exportación estándar.
  */
 
+#ifndef EXPORT_ALL_MEJORADO_H
+#define EXPORT_ALL_MEJORADO_H
+
 /**
  * @brief Interfaz de usuario para exportación de datos mejorados
  *
@@ -86,3 +89,5 @@ void exportar_lesiones_todo_mejorado();
  * @see exportar_lesiones_todo_mejorado()
  */
 void exportar_todo_mejorado();
+
+#endif

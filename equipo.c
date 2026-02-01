@@ -16,6 +16,58 @@
 #include <Windows.h>
 #include "sqlite3.h"
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
+}
+
+static int ejecutar_update_text(const char *sql, const char *value, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, value, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, id);
+
+    int result = (sqlite3_step(stmt) == SQLITE_DONE);
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+static int ejecutar_update_int(const char *sql, int value, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, value);
+    sqlite3_bind_int(stmt, 2, id);
+
+    int result = (sqlite3_step(stmt) == SQLITE_DONE);
+    sqlite3_finalize(stmt);
+    return result;
+}
+
+static int ejecutar_update_id(const char *sql, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    int result = (sqlite3_step(stmt) == SQLITE_DONE);
+    sqlite3_finalize(stmt);
+    return result;
+}
+
 // Data structures to reduce parameter count in functions
 typedef struct
 {
@@ -67,17 +119,8 @@ Posicion select_posicion();
  */
 int update_player_name(int player_id, const char *new_name)
 {
-    sqlite3_stmt *stmt;
     const char *sql = "UPDATE jugador SET nombre = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
-        return 0;
-
-    sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 2, player_id);
-
-    int result = (sqlite3_step(stmt) == SQLITE_DONE);
-    sqlite3_finalize(stmt);
-    return result;
+    return ejecutar_update_text(sql, new_name, player_id);
 }
 
 /**
@@ -89,17 +132,8 @@ int update_player_name(int player_id, const char *new_name)
  */
 int update_player_number(int player_id, int new_number)
 {
-    sqlite3_stmt *stmt;
     const char *sql = "UPDATE jugador SET numero = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
-        return 0;
-
-    sqlite3_bind_int(stmt, 1, new_number);
-    sqlite3_bind_int(stmt, 2, player_id);
-
-    int result = (sqlite3_step(stmt) == SQLITE_DONE);
-    sqlite3_finalize(stmt);
-    return result;
+    return ejecutar_update_int(sql, new_number, player_id);
 }
 
 /**
@@ -111,17 +145,8 @@ int update_player_number(int player_id, int new_number)
  */
 int update_player_position(int player_id, Posicion new_position)
 {
-    sqlite3_stmt *stmt;
     const char *sql = "UPDATE jugador SET posicion = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
-        return 0;
-
-    sqlite3_bind_int(stmt, 1, new_position);
-    sqlite3_bind_int(stmt, 2, player_id);
-
-    int result = (sqlite3_step(stmt) == SQLITE_DONE);
-    sqlite3_finalize(stmt);
-    return result;
+    return ejecutar_update_int(sql, new_position, player_id);
 }
 
 /**
@@ -133,17 +158,8 @@ int update_player_position(int player_id, Posicion new_position)
  */
 int update_player_captain_status(int player_id, int is_captain)
 {
-    sqlite3_stmt *stmt;
     const char *sql = "UPDATE jugador SET es_capitan = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
-        return 0;
-
-    sqlite3_bind_int(stmt, 1, is_captain);
-    sqlite3_bind_int(stmt, 2, player_id);
-
-    int result = (sqlite3_step(stmt) == SQLITE_DONE);
-    sqlite3_finalize(stmt);
-    return result;
+    return ejecutar_update_int(sql, is_captain, player_id);
 }
 
 void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros);
@@ -187,30 +203,18 @@ void cambiar_capitan_equipo(int equipo_id, EquipoPlayerInfo *info)
     }
 
     // Primero, quitar el capitán actual
-    sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE jugador SET es_capitan = 0 WHERE equipo_id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
-    {
-        sqlite3_bind_int(stmt, 1, equipo_id);
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-    }
+    ejecutar_update_id(sql_update, equipo_id);
 
     // Luego, establecer el nuevo capitán
     sql_update = "UPDATE jugador SET es_capitan = 1 WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    if (ejecutar_update_id(sql_update, info->jugadores_ids[nuevo_capitan_idx]))
     {
-        sqlite3_bind_int(stmt, 1, info->jugadores_ids[nuevo_capitan_idx]);
-
-        if (sqlite3_step(stmt) == SQLITE_DONE)
-        {
-            printf("Capitán cambiado exitosamente.\n");
-        }
-        else
-        {
-            printf("Error al cambiar el capitán: %s\n", sqlite3_errmsg(db));
-        }
-        sqlite3_finalize(stmt);
+        printf("Capitán cambiado exitosamente.\n");
+    }
+    else
+    {
+        printf("Error al cambiar el capitán: %s\n", sqlite3_errmsg(db));
     }
 
     pause_console();
@@ -231,16 +235,8 @@ void assign_team_to_party(int equipo_id)
     if (partido_id <= 0 || !existe_id("partido", partido_id))
         return;
 
-    sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE equipo SET partido_id = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar consulta: %s\n", sqlite3_errmsg(db));
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_int(stmt, 2, equipo_id);
-    if (sqlite3_step(stmt) == SQLITE_DONE)
+    if (ejecutar_update_int(sql_update, partido_id, equipo_id))
     {
         printf("Equipo asignado al partido exitosamente.\n");
     }
@@ -248,7 +244,6 @@ void assign_team_to_party(int equipo_id)
     {
         printf("Error al asignar equipo a partido: %s\n", sqlite3_errmsg(db));
     }
-    sqlite3_finalize(stmt);
 }
 
 /**
@@ -261,15 +256,8 @@ void assign_team_to_party(int equipo_id)
  */
 void remove_team_from_party(int equipo_id)
 {
-    sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE equipo SET partido_id = -1 WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar consulta: %s\n", sqlite3_errmsg(db));
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, equipo_id);
-    if (sqlite3_step(stmt) == SQLITE_DONE)
+    if (ejecutar_update_id(sql_update, equipo_id))
     {
         printf("Asignacion de partido removida exitosamente.\n");
     }
@@ -277,7 +265,6 @@ void remove_team_from_party(int equipo_id)
     {
         printf("Error al remover asignacion de partido: %s\n", sqlite3_errmsg(db));
     }
-    sqlite3_finalize(stmt);
 }
 
 // Helper functions for reducing complexity in modificar_equipo
@@ -325,7 +312,7 @@ void show_available_teams_for_modification()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt, sql))
     {
         printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
 
@@ -362,18 +349,8 @@ void handle_modify_team_name(int equipo_id)
     char nuevo_nombre[50];
     input_string("Ingrese el nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
 
-    sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE equipo SET nombre = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        pause_console();
-        return;
-    }
-    sqlite3_bind_text(stmt, 1, nuevo_nombre, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 2, equipo_id);
-
-    if (sqlite3_step(stmt) == SQLITE_DONE)
+    if (ejecutar_update_text(sql_update, nuevo_nombre, equipo_id))
     {
         printf("Nombre actualizado exitosamente.\n");
     }
@@ -381,7 +358,6 @@ void handle_modify_team_name(int equipo_id)
     {
         printf("Error al actualizar el nombre: %s\n", sqlite3_errmsg(db));
     }
-    sqlite3_finalize(stmt);
 }
 
 /**
@@ -422,22 +398,14 @@ void handle_modify_team_type(int equipo_id)
         return;
     }
 
-    sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE equipo SET tipo_futbol = ? WHERE id = ?;";
-    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    if (ejecutar_update_int(sql_update, tipo_futbol, equipo_id))
     {
-        sqlite3_bind_int(stmt, 1, tipo_futbol);
-        sqlite3_bind_int(stmt, 2, equipo_id);
-
-        if (sqlite3_step(stmt) == SQLITE_DONE)
-        {
-            printf("Tipo de futbol actualizado exitosamente.\n");
-        }
-        else
-        {
-            printf("Error al actualizar el tipo de futbol: %s\n", sqlite3_errmsg(db));
-        }
-        sqlite3_finalize(stmt);
+        printf("Tipo de futbol actualizado exitosamente.\n");
+    }
+    else
+    {
+        printf("Error al actualizar el tipo de futbol: %s\n", sqlite3_errmsg(db));
     }
 }
 
@@ -477,7 +445,7 @@ void handle_modify_players(int equipo_id)
     sqlite3_stmt *stmt_jugadores;
     const char *sql_jugadores = "SELECT id, nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero;";
 
-    if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt_jugadores, 0) == SQLITE_OK)
+    if (preparar_stmt(&stmt_jugadores, sql_jugadores))
     {
         sqlite3_bind_int(stmt_jugadores, 1, equipo_id);
 

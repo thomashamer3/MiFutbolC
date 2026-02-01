@@ -18,7 +18,80 @@
 #endif
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE};
+
+// Flag para rastrear cambios en menú personalizado
+static int custom_menu_changed = 0;
+
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
+
+static void habilitar_menus_basicos_custom()
+{
+    set_custom_menu_enabled("camisetas", 1);
+    set_custom_menu_enabled("canchas", 1);
+    set_custom_menu_enabled("partidos", 1);
+    set_custom_menu_enabled("lesiones", 1);
+    set_custom_menu_enabled("equipos", 1);
+    set_custom_menu_enabled("estadisticas", 1);
+    custom_menu_changed = 0; // Reset flag after setting defaults
+}
+
+struct MenuOption
+{
+    int opcion;
+    const char* name;
+    const char* display_name;
+};
+
+static int confirmar_guardado_configuracion(int default_on_fail)
+{
+    printf("Guardar configuracion? (S/N): ");
+    char confirm;
+    if (scanf_s(" %c", &confirm, 1) != 1)
+    {
+        confirm = default_on_fail ? 'S' : 'N';
+    }
+
+    if (confirm == '\n' || confirm == 's' || confirm == 'S')
+    {
+        settings_save();
+        printf("%s\n", get_text("settings_saved"));
+        return 1;
+    }
+
+    printf("Configuracion no guardada.\n");
+    return 0;
+}
+
+static void confirmar_guardado_si_cambios()
+{
+    if (!custom_menu_changed)
+    {
+        return;
+    }
+
+    confirmar_guardado_configuracion(0);
+}
+
+static const struct MenuOption* buscar_opcion_menu(const struct MenuOption *options, int opcion)
+{
+    for (int j = 0; options[j].name != NULL; j++)
+    {
+        if (options[j].opcion == opcion)
+        {
+            return &options[j];
+        }
+    }
+    return NULL;
+}
 
 // Textos en diferentes idiomas
 typedef struct
@@ -54,6 +127,10 @@ static const TextEntry text_entries[] =
     {"menu_exit", "Salir", "Exit"},
     {"settings_theme", "Tema de Interfaz", "Interface Theme"},
     {"settings_language", "Idioma", "Language"},
+    {"settings_mode", "Modo", "Mode"},
+    {"mode_simple", "Sencillo", "Simple"},
+    {"mode_advanced", "Avanzado", "Advanced"},
+    {"mode_custom", "Personalizado", "Custom"},
     {"theme_light", "Claro", "Light"},
     {"theme_dark", "Oscuro", "Dark"},
     {"theme_blue", "Azul", "Blue"},
@@ -86,16 +163,62 @@ static const TextEntry text_entries[] =
 void settings_init()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT theme, language FROM settings WHERE id = 1;";
+    const char *sql = "SELECT theme, language, mode FROM settings WHERE id = 1;";
+    int has_settings = 0;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             current_settings.theme = sqlite3_column_int(stmt, 0);
             current_settings.language = sqlite3_column_int(stmt, 1);
+            current_settings.mode = sqlite3_column_int(stmt, 2);
+            has_settings = 1;
         }
         sqlite3_finalize(stmt);
+    }
+
+    // Si no hay configuracion guardada, pedir al usuario que elija el modo
+    if (!has_settings)
+    {
+        clear_screen();
+        print_header(get_text("settings_mode"));
+
+        printf("1. %s\n", get_text("mode_simple"));
+        printf("2. %s\n", get_text("mode_advanced"));
+        printf("3. %s\n", get_text("mode_custom"));
+        printf("0. %s\n", get_text("menu_exit"));
+
+        int opcion = input_int("> ");
+
+        switch (opcion)
+        {
+        case 1:
+            settings_set_mode(MODE_SIMPLE);
+            printf("%s\n", get_text("settings_saved"));
+            break;
+        case 2:
+            settings_set_mode(MODE_ADVANCED);
+            printf("%s\n", get_text("settings_saved"));
+            break;
+        case 3:
+            current_settings.mode = MODE_CUSTOM;
+            // Habilitar menús básicos por defecto en modo personalizado
+            habilitar_menus_basicos_custom();
+            // Mostrar menú para configurar menús
+            menu_custom_menus();
+            // Ask for confirmation only if changes were made
+            confirmar_guardado_si_cambios();
+            break;
+        case 0:
+            // Exit the program
+            db_close();
+            exit(0);
+        default:
+            current_settings.mode = MODE_SIMPLE;
+            settings_save();
+            break;
+        }
     }
 
     // Aplicar tema al iniciar
@@ -108,13 +231,18 @@ void settings_init()
 void settings_save()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language) VALUES (1, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode) VALUES (1, ?, ?, ?);";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, current_settings.theme);
         sqlite3_bind_int(stmt, 2, current_settings.language);
-        sqlite3_step(stmt);
+        sqlite3_bind_int(stmt, 3, current_settings.mode);
+        int result = sqlite3_step(stmt);
+        if (result != SQLITE_DONE)
+        {
+            printf("Error guardando configuracion: %s\n", sqlite3_errmsg(db));
+        }
         sqlite3_finalize(stmt);
     }
 }
@@ -144,6 +272,31 @@ void settings_set_language(LanguageType language)
 {
     current_settings.language = language;
     settings_save();
+}
+
+/**
+ * @brief Establece el modo de la aplicación
+ */
+void settings_set_mode(ModeType mode)
+{
+    current_settings.mode = mode;
+
+    // Si se cambia a modo personalizado, habilitar menús básicos por defecto
+    if (mode == MODE_CUSTOM)
+    {
+        // Habilitar menús básicos por defecto en modo personalizado
+        habilitar_menus_basicos_custom();
+    }
+
+    settings_save();
+}
+
+/**
+ * @brief Obtiene el modo actual de la aplicación
+ */
+ModeType settings_get_mode()
+{
+    return current_settings.mode;
 }
 
 /**
@@ -235,84 +388,250 @@ const char* get_text(const char* key)
 // Funciones wrapper para menu dinámico
 const char* get_menu_camisetas()
 {
-    return get_text("menu_camisetas");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
+    {
+        return get_text("menu_camisetas");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("camisetas"))
+    {
+        return get_text("menu_camisetas");
+    }
+    return NULL; // No mostrar en modo personalizado si no está habilitado
 }
+
 const char* get_menu_canchas()
 {
-    return get_text("menu_canchas");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
+    {
+        return get_text("menu_canchas");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("canchas"))
+    {
+        return get_text("menu_canchas");
+    }
+    return NULL; // No mostrar en modo personalizado si no está habilitado
 }
+
 const char* get_menu_partidos()
 {
-    return get_text("menu_partidos");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
+    {
+        return get_text("menu_partidos");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("partidos"))
+    {
+        return get_text("menu_partidos");
+    }
+    return NULL; // No mostrar en modo personalizado si no está habilitado
 }
+
 const char* get_menu_equipos()
 {
-    return get_text("menu_equipos");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_equipos");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("equipos"))
+    {
+        return get_text("menu_equipos");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_estadisticas()
 {
-    return get_text("menu_estadisticas");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_estadisticas");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("estadisticas"))
+    {
+        return get_text("menu_estadisticas");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_logros()
 {
-    return get_text("menu_logros");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_logros");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("logros"))
+    {
+        return get_text("menu_logros");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_analisis()
 {
-    return get_text("menu_analisis");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_analisis");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("analisis"))
+    {
+        return get_text("menu_analisis");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_lesiones()
 {
-    return get_text("menu_lesiones");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
+    {
+        return get_text("menu_lesiones");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("lesiones"))
+    {
+        return get_text("menu_lesiones");
+    }
+    return NULL; // No mostrar en modo personalizado si no está habilitado
 }
+
 const char* get_menu_financiamiento()
 {
-    return get_text("menu_financiamiento");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_financiamiento");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("financiamiento"))
+    {
+        return get_text("menu_financiamiento");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_exportar()
 {
-    return get_text("menu_exportar");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_exportar");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("exportar"))
+    {
+        return get_text("menu_exportar");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_importar()
 {
-    return get_text("menu_importar");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_importar");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("importar"))
+    {
+        return get_text("menu_importar");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
+
 const char* get_menu_torneos()
 {
-    return get_text("menu_torneos");
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_torneos");
+    }
+    return NULL; // No mostrar en modos simple y personalizado
 }
+
+const char* get_menu_qr()
+{
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_qr");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("qr"))
+    {
+        return get_text("menu_qr");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+}
+
+const char* get_menu_temporada()
+{
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_temporada");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("temporada"))
+    {
+        return get_text("menu_temporada");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+}
+
+const char* get_menu_entrenador_ia()
+{
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_entrenador_ia");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("entrenador_ia"))
+    {
+        return get_text("menu_entrenador_ia");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+}
+
 const char* get_menu_settings()
 {
     return get_text("menu_settings");
 }
+
 const char* get_menu_exit()
 {
     return get_text("menu_exit");
 }
+
 const char* get_menu_title()
 {
     return get_text("menu_title");
 }
+
 const char* get_settings_theme()
 {
     return get_text("settings_theme");
 }
+
 const char* get_settings_language()
 {
     return get_text("settings_language");
 }
+
 const char* get_menu_usuario()
 {
     return get_text("menu_usuario");
 }
+
 const char* get_show_current()
 {
     return get_text("show_current");
 }
+
 const char* get_reset_defaults()
 {
     return get_text("reset_defaults");
 }
+
 const char* get_menu_back()
 {
     return get_text("menu_back");
@@ -510,7 +829,7 @@ static void reset_settings_to_defaults()
         // Limpiar nombre de usuario también
         sqlite3_stmt *stmt;
         const char *sql = "DELETE FROM usuario;";
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+        if (preparar_stmt(sql, &stmt))
         {
             sqlite3_step(stmt);
             sqlite3_finalize(stmt);
@@ -527,12 +846,166 @@ static void reset_settings_to_defaults()
 }
 
 /**
+ * @brief Verifica si un menú está habilitado en modo Custom
+ */
+int is_custom_menu_enabled(const char* menu_name)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT enabled FROM custom_menus WHERE menu_name = ?;";
+    int enabled = 0;
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, menu_name, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            enabled = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return enabled;
+}
+
+/**
+ * @brief Establece el estado de un menú en modo Custom
+ */
+void set_custom_menu_enabled(const char* menu_name, int enabled)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "INSERT OR REPLACE INTO custom_menus (menu_name, enabled) VALUES (?, ?);";
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, menu_name, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, enabled);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        custom_menu_changed = 1; // Marcar que se hizo un cambio
+    }
+}
+
+/**
+ * @brief Submenú para configuracion de modo
+ */
+static void menu_mode_settings()
+{
+    int opcion;
+    do
+    {
+        clear_screen();
+        print_header(get_text("settings_mode"));
+
+        printf("1. %s\n", get_text("mode_simple"));
+        printf("2. %s\n", get_text("mode_advanced"));
+        printf("3. %s\n", get_text("mode_custom"));
+        printf("0. %s\n", get_text("menu_back"));
+
+        opcion = input_int("> ");
+
+        switch (opcion)
+        {
+        case 1:
+            settings_set_mode(MODE_SIMPLE);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 2:
+            settings_set_mode(MODE_ADVANCED);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 3:
+            current_settings.mode = MODE_CUSTOM;
+            // Habilitar menús básicos por defecto en modo personalizado
+            habilitar_menus_basicos_custom();
+            // Mostrar menú para configurar menús
+            menu_custom_menus();
+            // Ask for confirmation only if changes were made
+            confirmar_guardado_si_cambios();
+            pause_console();
+            break;
+        case 0:
+            break;
+        default:
+            printf("%s\n", get_text("invalid_option"));
+            pause_console();
+        }
+    }
+    while (opcion != 0);
+}
+
+/**
+ * @brief Menú para configurar menús personalizados en modo Custom
+ */
+void menu_custom_menus()
+{
+    custom_menu_changed = 0; // Reset flag at the beginning
+    clear_screen();
+    print_header(get_text("menu_settings"));
+
+    printf("Selecciona los menus que deseas habilitar/deshabilitar:\n\n");
+
+    // Lista de menús disponibles (excluyendo exit que siempre está)
+    struct MenuOption options[] =
+    {
+        {1, "camisetas", get_text("menu_camisetas")},
+        {2, "canchas", get_text("menu_canchas")},
+        {3, "partidos", get_text("menu_partidos")},
+        {4, "equipos", get_text("menu_equipos")},
+        {5, "estadisticas", get_text("menu_estadisticas")},
+        {6, "qr", get_text("menu_qr")},
+        {7, "logros", get_text("menu_logros")},
+        {8, "analisis", get_text("menu_analisis")},
+        {9, "lesiones", get_text("menu_lesiones")},
+        {10, "financiamiento", get_text("menu_financiamiento")},
+        {11, "exportar", get_text("menu_exportar")},
+        {12, "importar", get_text("menu_importar")},
+        {13, "torneos", get_text("menu_torneos")},
+        {14, "temporada", get_text("menu_temporada")},
+        {15, "entrenador_ia", get_text("menu_entrenador_ia")},
+        {16, "settings", get_text("menu_settings")},
+        {0, NULL, NULL}
+    };
+
+    for (int j = 0; options[j].name != NULL; j++)
+    {
+        int enabled = is_custom_menu_enabled(options[j].name);
+        printf("%d. [%s] %s\n", options[j].opcion, enabled ? "X" : " ", options[j].display_name);
+    }
+
+    printf("0. %s\n", get_text("menu_back"));
+    printf("\nIngresa el numero del menu para alternar su estado:\n");
+
+    int opcion = input_int("> ");
+
+    if (opcion == 0)
+    {
+        return;
+    }
+
+    const struct MenuOption *option = buscar_opcion_menu(options, opcion);
+    if (!option)
+    {
+        printf("%s\n", get_text("invalid_option"));
+        pause_console();
+        menu_custom_menus(); // Recargar menú
+        return;
+    }
+
+    int current_state = is_custom_menu_enabled(option->name);
+    set_custom_menu_enabled(option->name, !current_state);
+    printf("Menu %s %s.\n", option->display_name, !current_state ? "habilitado" : "deshabilitado");
+    confirmar_guardado_configuracion(1);
+    pause_console();
+    menu_custom_menus(); // Recargar menú
+}
+
+/**
  * @brief Menú principal de configuracion
  */
 void menu_settings()
 {
-    // Mostrar ASCII art de ajustes
-    printf("%s\n\n", ASCII_AJUSTES);
 
     MenuItem items[] =
     {
@@ -541,8 +1014,9 @@ void menu_settings()
         {3, get_text("menu_usuario"), menu_usuario},
         {4, get_text("show_current"), show_current_settings},
         {5, get_text("reset_defaults"), reset_settings_to_defaults},
+        {6, get_text("settings_mode"), menu_mode_settings},
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu(get_text("menu_settings"), items, 6);
+    ejecutar_menu("AJUSTES", items, 7);
 }

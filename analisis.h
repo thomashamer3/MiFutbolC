@@ -8,6 +8,9 @@
  * sobre base de datos SQLite3.
  */
 
+#ifndef ANALISIS_H
+#define ANALISIS_H
+
 /**
  * @brief Ejecuta análisis integral de rendimiento
  *
@@ -92,3 +95,5 @@ void meses_frios_vs_calidos();
  * de primeros vs últimos partidos para evaluar evolución longitudinal.
  */
 void progreso_total_jugador();
+
+#endif

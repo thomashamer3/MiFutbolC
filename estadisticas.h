@@ -11,6 +11,9 @@
  *       estas funciones sin actualizar la documentación correspondiente.
  */
 
+#ifndef ESTADISTICAS_H
+#define ESTADISTICAS_H
+
 /**
  * @brief Punto de entrada principal para el módulo de estadísticas
  *
@@ -136,3 +139,5 @@ void menu_estadisticas_asistencias();
  * @see mostrar_rendimiento_por_esfuerzo()
  */
 void menu_estadisticas_rendimiento();
+
+#endif

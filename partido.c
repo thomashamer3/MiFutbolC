@@ -6,19 +6,37 @@
 #include "equipo.h"
 #include "ascii_art.h"
 #include "entrenador_ia.h"
+#include "financiamiento.h"
 #include <stdio.h>
 #include <string.h>
-#include <Windows.h>
+#include <windows.h>
 #include <stdlib.h>
 #include <time.h>
 #include <process.h>
 #include <memory.h>
+#include <limits.h>
 
 // Prototipos de funciones estáticas usadas antes de su definición
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
 static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo);
 static void guardar_estadisticas_equipo(const Equipo *equipo, int const *estadisticas, int const *asistencias,
                                         int resultado, int cancha_id, char const *fecha_simulacion);
+
+// Declaración externa para función de financiamiento
+extern void obtener_fecha_actual(char *fecha);
+
+/**
+ * @brief Preparar statement y reportar errores
+ */
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
+}
 
 /**
  * @brief Estructura para agrupar los datos de un partido
@@ -39,6 +57,7 @@ typedef struct
     char comentario_personal[256];
     int clima;
     int dia;
+    int precio;
 } DatosPartido;
 
 /**
@@ -103,13 +122,19 @@ static int secure_rand(int max)
 static int verificar_prerrequisitos_partido()
 {
     sqlite3_stmt *stmt_count_canchas;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM cancha", -1, &stmt_count_canchas, NULL);
+    if (!preparar_stmt("SELECT COUNT(*) FROM cancha", &stmt_count_canchas))
+    {
+        return 0;
+    }
     sqlite3_step(stmt_count_canchas);
     int count_canchas = sqlite3_column_int(stmt_count_canchas, 0);
     sqlite3_finalize(stmt_count_canchas);
 
     sqlite3_stmt *stmt_count_camisetas;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM camiseta", -1, &stmt_count_camisetas, NULL);
+    if (!preparar_stmt("SELECT COUNT(*) FROM camiseta", &stmt_count_camisetas))
+    {
+        return 0;
+    }
     sqlite3_step(stmt_count_camisetas);
     int count_camisetas = sqlite3_column_int(stmt_count_camisetas, 0);
     sqlite3_finalize(stmt_count_camisetas);
@@ -132,7 +157,10 @@ static void listar_canchas_disponibles()
 {
     printf("Canchas disponibles:\n");
     sqlite3_stmt *stmt_canchas;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM cancha ORDER BY id", -1, &stmt_canchas, NULL);
+    if (!preparar_stmt("SELECT id, nombre FROM cancha ORDER BY id", &stmt_canchas))
+    {
+        return;
+    }
     while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
     {
         printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
@@ -161,6 +189,7 @@ static void recopilar_datos_partido(DatosPartido *datos)
     datos->estado_animo = 0;
     datos->clima = 0;
     datos->dia = 0;
+    datos->precio = 0;
     strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
 
     datos->cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
@@ -203,6 +232,7 @@ static void recopilar_datos_partido(DatosPartido *datos)
     {
         datos->dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
     }
+    datos->precio = input_int("Precio del partido: ");
 }
 
 /**
@@ -218,10 +248,13 @@ static void recopilar_datos_partido(DatosPartido *datos)
 static void insertar_partido(long long id, DatosPartido const *datos, char const *fecha)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia)"
-                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio)"
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                &stmt))
+    {
+        return;
+    }
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_int(stmt, 2, datos->cancha_id);
     sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
@@ -235,6 +268,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_bind_text(stmt, 11, datos->comentario_personal, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 12, datos->clima);
     sqlite3_bind_int(stmt, 13, datos->dia);
+    sqlite3_bind_int(stmt, 14, datos->precio);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -245,6 +279,113 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
         printf("Error al crear el partido: %s\n", sqlite3_errmsg(db));
     }
     sqlite3_finalize(stmt);
+}
+
+/**
+ * @brief Crea una transacción financiera para el partido si no tiene precio asignado
+ *
+ * @param partido_id ID del partido
+ * @param precio Precio del partido
+ * @param cancha_id ID de la cancha
+ */
+static void crear_transaccion_partido(long long partido_id, int precio)
+{
+    // Verificar si el partido ya tiene una transacción asociada
+    sqlite3_stmt *stmt_check;
+    const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 6 AND item_especifico LIKE ?";
+    char item_pattern[256];
+    snprintf(item_pattern, sizeof(item_pattern), "Partido ID: %lld%%", partido_id);
+
+    if (preparar_stmt(sql_check, &stmt_check))
+    {
+        sqlite3_bind_text(stmt_check, 1, item_pattern, -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt_check) == SQLITE_ROW)
+        {
+            int count = sqlite3_column_int(stmt_check, 0);
+            if (count > 0)
+            {
+                printf("El partido ya tiene una transacción financiera asociada.\n");
+                sqlite3_finalize(stmt_check);
+                return;
+            }
+        }
+        sqlite3_finalize(stmt_check);
+    }
+
+    // Crear la transacción financiera
+    TransaccionFinanciera transaccion;
+    transaccion.id = (int)obtener_siguiente_id("financiamiento");
+    obtener_fecha_actual(transaccion.fecha);
+    transaccion.tipo = GASTO;
+    transaccion.categoria = CANCHAS;
+    transaccion.monto = precio;
+    strcpy_s(transaccion.descripcion, sizeof(transaccion.descripcion), "Pago por alquiler de cancha");
+
+    // Obtener detalles del partido para el item_especifico
+    sqlite3_stmt *stmt_partido;
+    const char *sql_partido = "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
+                              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+                              "JOIN cancha can ON p.cancha_id = can.id WHERE p.id = ?";
+
+    if (preparar_stmt(sql_partido, &stmt_partido))
+    {
+        sqlite3_bind_int64(stmt_partido, 1, partido_id);
+
+        if (sqlite3_step(stmt_partido) == SQLITE_ROW)
+        {
+            // Formatear la fecha para visualización
+            char fecha_formateada[20];
+            format_date_for_display((const char *)sqlite3_column_text(stmt_partido, 2), fecha_formateada, sizeof(fecha_formateada));
+
+            // Crear el string con los detalles del partido
+            snprintf(transaccion.item_especifico, sizeof(transaccion.item_especifico), "(%lld |Cancha:%s |Fecha:%s | G:%d A:%d |Camiseta:%s | %s)",
+                     sqlite3_column_int64(stmt_partido, 0),
+                     sqlite3_column_text(stmt_partido, 1),
+                     fecha_formateada,
+                     sqlite3_column_int(stmt_partido, 3),
+                     sqlite3_column_int(stmt_partido, 4),
+                     sqlite3_column_text(stmt_partido, 5),
+                     resultado_to_text(sqlite3_column_int(stmt_partido, 6)));
+        }
+        else
+        {
+            snprintf(transaccion.item_especifico, sizeof(transaccion.item_especifico), "Partido ID: %lld (no encontrado)", partido_id);
+        }
+        sqlite3_finalize(stmt_partido);
+    }
+    else
+    {
+        snprintf(transaccion.item_especifico, sizeof(transaccion.item_especifico), "Partido ID: %lld", partido_id);
+    }
+
+    // Insertar la transacción en la base de datos
+    sqlite3_stmt *stmt;
+    const char *sql = "INSERT INTO financiamiento (id, fecha, tipo, categoria, descripcion, monto, item_especifico) VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_int(stmt, 1, transaccion.id);
+        sqlite3_bind_text(stmt, 2, transaccion.fecha, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 3, transaccion.tipo);
+        sqlite3_bind_int(stmt, 4, transaccion.categoria);
+        sqlite3_bind_text(stmt, 5, transaccion.descripcion, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 6, transaccion.monto);
+        sqlite3_bind_text(stmt, 7, transaccion.item_especifico, -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            printf("Transacción financiera creada para el partido con ID %lld\n", partido_id);
+        }
+        else
+        {
+            printf("Error al crear la transacción financiera: %s\n", sqlite3_errmsg(db));
+        }
+        sqlite3_finalize(stmt);
+    }
+    else
+    {
+        printf("Error al preparar la consulta de transacción: %s\n", sqlite3_errmsg(db));
+    }
 }
 
 /**
@@ -269,6 +410,12 @@ void crear_partido()
     get_datetime(fecha, sizeof(fecha));
     long long id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
+
+    // Crear transacción financiera si el precio es mayor a 0
+    if (datos.precio > 0)
+    {
+        crear_transaccion_partido(id, datos.precio);
+    }
 }
 
 /**
@@ -287,11 +434,15 @@ void listar_partidos()
     print_header("LISTADO DE PARTIDOS");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                       "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                       "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id DESC",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
+                "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     int hay = 0;
     char fecha_formateada[20];
@@ -301,16 +452,20 @@ void listar_partidos()
         // Formatear la fecha para visualización
         format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
 
-        printf("%d |Cancha:%s |Fecha:%s | G:%d A:%d |Camiseta:%s | %s |Clima:%s |Dia:%s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               fecha_formateada,
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
+        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
+        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
+        printf("Fecha: %s\n", fecha_formateada);
+        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
+        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
+        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
+        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
+        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
+        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
+        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
+        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
+        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
+        printf("----------------------------------------\n");
         hay = 1;
     }
 
@@ -358,9 +513,11 @@ void eliminar_partido()
         return;
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "DELETE FROM partido WHERE id = ?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt("DELETE FROM partido WHERE id = ?", &stmt))
+    {
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
@@ -410,7 +567,11 @@ static void modificar_campo_partido(const char *campo, const char *prompt, const
     snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
@@ -431,14 +592,23 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
 {
     char valor[buffer_size];
     printf("%s", prompt);
-    fgets(valor, sizeof(valor), stdin);
+    size_t valor_size = sizeof(valor);
+    if (valor_size > INT_MAX)
+    {
+        return;
+    }
+    fgets(valor, (int)valor_size, stdin);
     valor[strcspn(valor, "\n")] = 0;
 
     char sql[256];
     snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
@@ -475,14 +645,18 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
 
     char sql[512];
     snprintf(sql, sizeof(sql),
-             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
+             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
              "JOIN cancha can ON p.cancha_id = can.id "
              "WHERE p.%s = ?",
              campo);
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_int(stmt, 1, valor);
 
     int hay = 0;
@@ -493,16 +667,20 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
         // Formatear la fecha para visualización
         format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
 
-        printf("%d | %s | %s | G:%d A:%d | %s | %s | %s | %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               fecha_formateada,
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5),
-               resultado_to_text(sqlite3_column_int(stmt, 6)),
-               clima_to_text(sqlite3_column_int(stmt, 7)),
-               dia_to_text(sqlite3_column_int(stmt, 8)));
+        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
+        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
+        printf("Fecha: %s\n", fecha_formateada);
+        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
+        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
+        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
+        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
+        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
+        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
+        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
+        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
+        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
+        printf("----------------------------------------\n");
         hay = 1;
     }
 
@@ -518,7 +696,7 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
  */
 static void modificar_cancha_partido()
 {
-    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 0, 0, &listar_canchas_disponibles);
+    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 1, 500000, &listar_canchas_disponibles);
 }
 
 /**
@@ -540,7 +718,11 @@ static void modificar_fecha_hora_partido()
     hora[strcspn(hora, "\n")] = 0;
     snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET fecha_hora=? WHERE id=?", -1, &stmt, NULL);
+    if (!preparar_stmt("UPDATE partido SET fecha_hora=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_text(stmt, 1, fecha_hora, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
@@ -589,7 +771,11 @@ static void modificar_camiseta_partido()
         return;
     }
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, "UPDATE partido SET camiseta_id=? WHERE id=?", -1, &stmt, NULL);
+    if (!preparar_stmt("UPDATE partido SET camiseta_id=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_int(stmt, 1, camiseta);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
@@ -620,6 +806,14 @@ static void modificar_dia_partido()
 static void modificar_comentario_partido()
 {
     modificar_campo_texto_partido("comentario_personal", "Nuevo comentario personal: ", "Comentario modificado correctamente", 256);
+}
+
+/**
+ * @brief Modifica el precio de un partido existente
+ */
+static void modificar_precio_partido()
+{
+    modificar_campo_partido("precio", "Nuevo precio del partido: ", "Precio modificado correctamente", 0, 0, NULL);
 }
 
 /**
@@ -665,6 +859,7 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
     {
         datos->dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
     }
+    datos->precio = input_int("Nuevo precio del partido: ");
 }
 
 /**
@@ -679,12 +874,15 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
 static void actualizar_partido_completo(DatosPartido const *datos, char const *fecha_hora)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "UPDATE partido "
-                       "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, camiseta_id=?, resultado=?, clima=?, dia=? "
-                       "WHERE id=?",
-
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(
+                "UPDATE partido "
+                "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, camiseta_id=?, resultado=?, clima=?, dia=?, precio=? "
+                "WHERE id=?",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
     sqlite3_bind_int(stmt, 1, datos->cancha_id);
     sqlite3_bind_text(stmt, 2, fecha_hora, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, datos->goles);
@@ -693,7 +891,8 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_int(stmt, 6, datos->resultado);
     sqlite3_bind_int(stmt, 7, datos->clima);
     sqlite3_bind_int(stmt, 8, datos->dia);
-    sqlite3_bind_int(stmt, 9, current_partido_id);
+    sqlite3_bind_int(stmt, 9, datos->precio);
+    sqlite3_bind_int(stmt, 10, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     printf("Partido Modificado Correctamente\n");
@@ -753,11 +952,12 @@ void modificar_partido()
         {7, "Clima", modificar_clima_partido},
         {8, "Dia", modificar_dia_partido},
         {9, "Comentario", modificar_comentario_partido},
-        {10, "Modificar Todo", modificar_todo_partido},
+        {10, "Precio", modificar_precio_partido},
+        {11, "Modificar Todo", modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR PARTIDO", items, 11);
+    ejecutar_menu("MODIFICAR PARTIDO", items, 12);
 }
 /** @brief Busca partidos por camiseta utilizada */
 static void buscar_por_camiseta()
@@ -892,7 +1092,10 @@ static void manejar_gol_visitante(Equipo const *equipo_visitante, int minuto, in
 static int verificar_equipos_disponibles()
 {
     sqlite3_stmt *stmt_count;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM equipo", -1, &stmt_count, NULL);
+    if (!preparar_stmt("SELECT COUNT(*) FROM equipo", &stmt_count))
+    {
+        return 0;
+    }
     sqlite3_step(stmt_count);
     int total_equipos = sqlite3_column_int(stmt_count, 0);
     sqlite3_finalize(stmt_count);
@@ -914,7 +1117,10 @@ static void mostrar_equipos_disponibles()
 {
     printf("=== EQUIPOS DISPONIBLES ===\n\n");
     sqlite3_stmt *stmt_equipos;
-    sqlite3_prepare_v2(db, "SELECT id, nombre FROM equipo ORDER BY id", -1, &stmt_equipos, NULL);
+    if (!preparar_stmt("SELECT id, nombre FROM equipo ORDER BY id", &stmt_equipos))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
     {
@@ -1176,7 +1382,7 @@ static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo)
     sqlite3_stmt *stmt_equipo;
     const char *sql_equipo = "SELECT nombre, tipo, tipo_futbol, num_jugadores FROM equipo WHERE id = ?";
 
-    if (sqlite3_prepare_v2(db, sql_equipo, -1, &stmt_equipo, 0) != SQLITE_OK)
+    if (!preparar_stmt(sql_equipo, &stmt_equipo))
     {
         return 0;
     }
@@ -1214,7 +1420,7 @@ static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo)
     sqlite3_stmt *stmt_jugadores;
     const char *sql_jugadores = "SELECT nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero";
 
-    if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt_jugadores, 0) != SQLITE_OK)
+    if (!preparar_stmt(sql_jugadores, &stmt_jugadores))
     {
         return 0;
     }
@@ -1275,7 +1481,10 @@ static int obtener_cancha_defecto()
 {
     int cancha_id = 1;
     sqlite3_stmt *stmt_cancha;
-    sqlite3_prepare_v2(db, "SELECT id FROM cancha ORDER BY id LIMIT 1", -1, &stmt_cancha, NULL);
+    if (!preparar_stmt("SELECT id FROM cancha ORDER BY id LIMIT 1", &stmt_cancha))
+    {
+        return cancha_id;
+    }
     if (sqlite3_step(stmt_cancha) == SQLITE_ROW)
     {
         cancha_id = sqlite3_column_int(stmt_cancha, 0);

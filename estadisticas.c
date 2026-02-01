@@ -16,7 +16,6 @@
 #include "entrenador_ia.h"
 #include "qr.h"
 #include "utils.h"
-#include <stdlib.h>
 
 /**
  * @brief Menú principal de estadísticas

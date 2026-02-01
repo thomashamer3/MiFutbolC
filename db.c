@@ -6,7 +6,9 @@
  * la conexión a la base de datos SQLite utilizada por la aplicación MiFutbolC.
  */
 
+#include "export.h"
 #include "db.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +43,90 @@ static char EXPORT_DIR[1024];
 /** Directorio de importaciones */
 static char IMPORT_DIR[1024];
 
+typedef enum
+{
+    COPY_OK = 0,
+    COPY_SRC_ERROR,
+    COPY_DST_ERROR
+} CopyResult;
+
+static int asegurar_directorio(const char *path, const char *nombre)
+{
+    if (MKDIR(path) != 0 && errno != EEXIST)
+    {
+#ifdef _WIN32
+        strerror_s(error_buf, sizeof(error_buf), errno);
+        printf("Error creando directorio %s: %s\n", nombre, error_buf);
+#else
+        printf("Error creando directorio %s: %s\n", nombre, strerror(errno));
+#endif
+        return 0;
+    }
+    return 1;
+}
+
+#ifdef _WIN32
+static int configurar_directorio_documentos(const char *subdir, char *out_dir, size_t out_size,
+        const char *nombre_principal, const char *nombre_subdir)
+{
+    char documents_path[MAX_PATH];
+    if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
+    {
+        printf("Error obteniendo Documents path\n");
+        return 0;
+    }
+
+    char base_path[MAX_PATH];
+    strcpy_s(base_path, sizeof(base_path), documents_path);
+    strcat_s(base_path, sizeof(base_path), "\\MiFutbolC");
+    if (!asegurar_directorio(base_path, nombre_principal))
+    {
+        return 0;
+    }
+
+    memset(out_dir, 0, out_size);
+    strcpy_s(out_dir, out_size, documents_path);
+    strcat_s(out_dir, out_size, "\\MiFutbolC\\");
+    strcat_s(out_dir, out_size, subdir);
+
+    if (!asegurar_directorio(out_dir, nombre_subdir))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
+{
+    FILE *src = fopen(source_path, "rb");
+    if (!src)
+    {
+        return COPY_SRC_ERROR;
+    }
+
+    FILE *dst = fopen(dest_path, "wb");
+    if (!dst)
+    {
+        fclose(src);
+        return COPY_DST_ERROR;
+    }
+
+    char buffer[8192];
+    size_t bytes;
+
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
+    {
+        fwrite(buffer, 1, bytes, dst);
+    }
+
+    fclose(src);
+    fclose(dst);
+
+    return COPY_OK;
+}
+
 /**
  * @brief Configura rutas y directorios para almacenamiento de datos
  *
@@ -72,17 +158,13 @@ static int setup_database_paths()
     char temp_path[MAX_PATH];
     strcpy_s(temp_path, sizeof(temp_path), appdata_path);
     strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
-    if (MKDIR(temp_path) != 0 && errno != EEXIST)
+    if (!asegurar_directorio(temp_path, "MiFutbolC"))
     {
-        strerror_s(error_buf, sizeof(error_buf), errno);
-        printf("Error creando directorio MiFutbolC: %s\n", error_buf);
         return 0;
     }
 
-    if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
+    if (!asegurar_directorio(DB_DIR, "data"))
     {
-        strerror_s(errno, error_buf, sizeof(error_buf));
-        printf("Error creando directorio data: %s\n", error_buf);
         return 0;
     }
 #else
@@ -94,9 +176,8 @@ static int setup_database_paths()
     strcpy_s(DB_PATH, sizeof(DB_PATH), "./data/mifutbol.db");
 
     // Crear directorio si no existe
-    if (MKDIR(DB_DIR) != 0 && errno != EEXIST)
+    if (!asegurar_directorio(DB_DIR, "data"))
     {
-        printf("Error creando directorio: %s\n", strerror(errno));
         return 0;
     }
 #endif
@@ -148,6 +229,14 @@ static int create_database_schema()
         " goles INTEGER NOT NULL,"
         " asistencias INTEGER NOT NULL,"
         " camiseta_id INTEGER NOT NULL,"
+        " resultado INTEGER DEFAULT 0,"
+        " rendimiento_general INTEGER DEFAULT 0,"
+        " cansancio INTEGER DEFAULT 0,"
+        " estado_animo INTEGER DEFAULT 0,"
+        " comentario_personal TEXT DEFAULT '',"
+        " clima INTEGER DEFAULT 0,"
+        " dia INTEGER DEFAULT 0,"
+        " precio INTEGER DEFAULT 0,"
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
 
@@ -297,7 +386,7 @@ static int create_database_schema()
 
         "CREATE TABLE IF NOT EXISTS presupuesto_mensual ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " mes_anio TEXT NOT NULL UNIQUE,"  // formato YYYY-MM
+        " mes_anio TEXT NOT NULL UNIQUE," // formato YYYY-MM
         " presupuesto_total INTEGER NOT NULL,"
         " limite_gasto INTEGER NOT NULL,"
         " alertas_habilitadas INTEGER DEFAULT 1,"
@@ -433,12 +522,13 @@ static void add_missing_columns()
     {
         "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
-        "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;",
-        "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN estado_animo INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN comentario_personal TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN precio INTEGER DEFAULT 0;",
         "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
         NULL
     };
@@ -459,9 +549,12 @@ static void add_missing_columns()
  */
 int db_init()
 {
-    if (!setup_database_paths()) return 0;
-    if (!create_database_connection()) return 0;
-    if (!create_database_schema()) return 0;
+    if (!setup_database_paths())
+        return 0;
+    if (!create_database_connection())
+        return 0;
+    if (!create_database_schema())
+        return 0;
     add_missing_columns();
 
     // Crear directorios de importación y exportación al iniciar
@@ -491,7 +584,7 @@ void db_close()
  *
  * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
  */
-char* get_user_name()
+char *get_user_name()
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT nombre FROM usuario LIMIT 1;";
@@ -501,7 +594,7 @@ char* get_user_name()
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            const char *temp = (const char*)sqlite3_column_text(stmt, 0);
+            const char *temp = (const char *)sqlite3_column_text(stmt, 0);
             if (temp)
             {
                 nombre = STRDUP(temp);
@@ -522,7 +615,7 @@ char* get_user_name()
  * @param nombre El nombre del usuario a guardar
  * @return 1 si la operación fue exitosa, 0 en caso de error
  */
-int set_user_name(const char* nombre)
+int set_user_name(const char *nombre)
 {
     sqlite3_stmt *stmt;
     const char *sql = "INSERT OR REPLACE INTO usuario (id, nombre) VALUES (1, ?);";
@@ -549,7 +642,7 @@ int set_user_name(const char* nombre)
  *
  * @return Puntero a cadena con la ruta del directorio de datos
  */
-const char* get_data_dir()
+const char *get_data_dir()
 {
     return DB_DIR;
 }
@@ -562,50 +655,27 @@ const char* get_data_dir()
  *
  * @return Puntero a cadena con la ruta del directorio de exportaciones
  */
-const char* get_export_dir()
+const char *get_export_dir()
 {
+#ifdef _WIN32
+    // Usar Documents para exportaciones (visible para el usuario)
+    if (EXPORT_DIR[0] == '\0' &&
+            !configurar_directorio_documentos("Exportaciones", EXPORT_DIR, sizeof(EXPORT_DIR),
+                    "MiFutbolC en Documents", "Exportaciones"))
+    {
+        return NULL;
+    }
+#else
     if (EXPORT_DIR[0] == '\0')
     {
-#ifdef _WIN32
-        // Usar Documents para exportaciones (visible para el usuario)
-        char documents_path[MAX_PATH];
-        if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
-        {
-            printf("Error obteniendo Documents path\n");
-            return NULL;
-        }
-
-        memset(EXPORT_DIR, 0, sizeof(EXPORT_DIR));
-        strcpy_s(EXPORT_DIR, sizeof(EXPORT_DIR), documents_path);
-        strcat_s(EXPORT_DIR, sizeof(EXPORT_DIR), "\\MiFutbolC\\Exportaciones");
-
-        // Crear directorios si no existen
-        char temp_path[MAX_PATH];
-        strcpy_s(temp_path, sizeof(temp_path), documents_path);
-        strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
-        if (MKDIR(temp_path) != 0 && errno != EEXIST)
-        {
-            strerror_s(errno, error_buf, sizeof(error_buf));
-            printf("Error creando directorio MiFutbolC en Documents: %s\n", error_buf);
-            return NULL;
-        }
-
-        if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
-        {
-            strerror_s(errno, error_buf, sizeof(error_buf));
-            printf("Error creando directorio Exportaciones: %s\n", error_buf);
-            return NULL;
-        }
-#else
         // Para otros sistemas operativos
         strcpy_s(EXPORT_DIR, sizeof(EXPORT_DIR), "./exportaciones");
-        if (MKDIR(EXPORT_DIR) != 0 && errno != EEXIST)
+        if (!asegurar_directorio(EXPORT_DIR, "exportaciones"))
         {
-            printf("Error creando directorio exportaciones: %s\n", strerror(errno));
             return NULL;
         }
-#endif
     }
+#endif
     return EXPORT_DIR;
 }
 
@@ -617,49 +687,94 @@ const char* get_export_dir()
  *
  * @return Puntero a cadena con la ruta del directorio de importaciones
  */
-const char* get_import_dir()
+const char *get_import_dir()
 {
+#ifdef _WIN32
+    // Usar Documents para importaciones (visible para el usuario)
+    if (IMPORT_DIR[0] == '\0' &&
+            !configurar_directorio_documentos("Importaciones", IMPORT_DIR, sizeof(IMPORT_DIR),
+                    "MiFutbolC en Documents", "Importaciones"))
+    {
+        return NULL;
+    }
+#else
     if (IMPORT_DIR[0] == '\0')
     {
-#ifdef _WIN32
-        // Usar Documents para importaciones (visible para el usuario)
-        char documents_path[MAX_PATH];
-        if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
-        {
-            printf("Error obteniendo Documents path\n");
-            return NULL;
-        }
-
-        memset(IMPORT_DIR, 0, sizeof(IMPORT_DIR));
-        strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), documents_path);
-        strcat_s(IMPORT_DIR, sizeof(IMPORT_DIR), "\\MiFutbolC\\Importaciones");
-
-        // Crear directorios si no existen
-        char temp_path[MAX_PATH];
-        strcpy_s(temp_path, sizeof(temp_path), documents_path);
-        strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
-        if (MKDIR(temp_path) != 0 && errno != EEXIST)
-        {
-            strerror_s(errno, error_buf, sizeof(error_buf));
-            printf("Error creando directorio MiFutbolC en Documents: %s\n", error_buf);
-            return NULL;
-        }
-
-        if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
-        {
-            strerror_s(errno, error_buf, sizeof(error_buf));
-            printf("Error creando directorio Importaciones: %s\n", error_buf);
-            return NULL;
-        }
-#else
         // Para otros sistemas operativos
         strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), "./importaciones");
-        if (MKDIR(IMPORT_DIR) != 0 && errno != EEXIST)
+        if (!asegurar_directorio(IMPORT_DIR, "importaciones"))
         {
-            printf("Error creando directorio importaciones: %s\n", strerror(errno));
             return NULL;
         }
-#endif
     }
+#endif
     return IMPORT_DIR;
+}
+
+/**
+ * @brief Copia la base de datos SQLite a la carpeta de documentos
+ *
+ * Esta función realiza una copia exacta del archivo de base de datos
+ * desde la ubicación de datos internos (AppData) a la carpeta de exportación
+ * (Documentos del usuario) para respaldo y portabilidad.
+ */
+void exportar_base_datos()
+{
+    const char *source_path = DB_PATH;
+    const char *dest_path   = get_export_path("mifutbol.db");
+
+    CopyResult result = copiar_archivo(source_path, dest_path);
+    if (result == COPY_SRC_ERROR)
+    {
+        printf("Error: No se encontro la base de datos en:\n%s\n", source_path);
+        pause_console();
+        return;
+    }
+
+    if (result == COPY_DST_ERROR)
+    {
+        printf("Error creando archivo destino:\n%s\n", dest_path);
+        pause_console();
+        return;
+    }
+
+    printf("Base de datos exportada a:\n%s\n", dest_path);
+    pause_console();
+}
+
+void importar_base_datos()
+{
+    const char *import_dir = get_import_dir();
+    if (!import_dir)
+    {
+        printf("Error obteniendo directorio de importaciones\n");
+        return;
+    }
+
+    char source_path[1024];
+    strcpy_s(source_path, sizeof(source_path), import_dir);
+    strcat_s(source_path, sizeof(source_path), "\\mifutbol.db");
+
+    const char *dest_path = DB_PATH;
+
+    // Verificar que exista el archivo a importar
+    CopyResult result = copiar_archivo(source_path, dest_path);
+    if (result == COPY_SRC_ERROR)
+    {
+        printf("Error: No se encontró el archivo a importar en:\n%s\n", source_path);
+        return;
+    }
+
+    if (result == COPY_DST_ERROR)
+    {
+        printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
+        return;
+    }
+
+    printf("Base de datos importada correctamente.\n");
+    printf("Origen: %s\n", source_path);
+    printf("Destino: %s\n", dest_path);
+    printf("Reinicia la aplicación para usar la nueva base.\n");
+
+    pause_console();
 }

@@ -4,6 +4,11 @@
 #include "utils.h"
 #include <stdio.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
 
 
 /**
@@ -20,9 +25,12 @@ void crear_cancha()
     long long id = obtener_siguiente_id("cancha");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "INSERT INTO cancha(id, nombre) VALUES(?, ?)",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "INSERT INTO cancha(id, nombre) VALUES(?, ?)") )
+    {
+        printf("Error al crear la cancha.\n");
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_int(stmt, 1, (int)id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
@@ -76,9 +84,12 @@ void eliminar_cancha()
         return;
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "DELETE FROM cancha WHERE id = ?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "DELETE FROM cancha WHERE id = ?"))
+    {
+        printf("Error al eliminar la cancha.\n");
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
@@ -120,9 +131,12 @@ void modificar_cancha()
     input_string("Nuevo nombre de la cancha: ", nombre, sizeof(nombre));
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "UPDATE cancha SET nombre = ? WHERE id = ?",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, "UPDATE cancha SET nombre = ? WHERE id = ?"))
+    {
+        printf("Error al modificar la cancha.\n");
+        pause_console();
+        return;
+    }
 
     sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);

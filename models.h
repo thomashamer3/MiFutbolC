@@ -1,17 +1,13 @@
 /**
- * @file models.h
- * @brief Definiciones de modelos y estructuras de datos comunes del proyecto MiFutbolC
- *
- * Este archivo contiene las definiciones de tipos y estructuras utilizadas
- * en todo el proyecto para mantener consistencia en la gestión de menús y acciones.
- */
-
-/**
  * @brief Puntero a función que representa una acción de menú
  *
  * Define el tipo de función que puede ser ejecutada como acción en un elemento de menú.
  * No recibe parámetros y no retorna valor.
  */
+
+#ifndef MODELS_H
+#define MODELS_H
+
 typedef void (*MenuAction)(void);
 
 /**
@@ -27,4 +23,6 @@ typedef struct
     const char *texto;     /**< Texto descriptivo de la opción */
     MenuAction accion;     /**< Función a ejecutar cuando se selecciona la opción */
 } MenuItem;
+
+#endif
 

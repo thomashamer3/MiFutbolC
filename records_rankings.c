@@ -11,17 +11,17 @@
 #include <string.h>
 #include <time.h>
 
-/**
- * Función para mostrar récords de goles en un partido
- */
-void mostrar_record_goles_partido()
+static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    mostrar_record_simple("Record de Goles en un Partido",
-                          "SELECT p.goles, c.nombre, p.fecha_hora "
-                          "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-                          "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1");
-    pause_console();
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    return 1;
 }
+
+
 
 /**
  * Muestra resultados de combinaciones cancha-camiseta.
@@ -34,7 +34,7 @@ static void mostrar_combinacion(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -61,7 +61,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -93,11 +93,11 @@ void mostrar_record_goles_partido()
     clear_screen();
     print_header("RECORD DE GOLES EN UN PARTIDO");
 
-    mostrar_record("Record de Goles en un Partido",
-                   "SELECT p.goles, c.nombre, p.fecha_hora "
-                   "FROM partido p "
-                   "JOIN camiseta c ON p.camiseta_id = c.id "
-                   "ORDER BY p.goles DESC LIMIT 1");
+    mostrar_record_simple("Record de Goles en un Partido",
+                          "SELECT p.goles, c.nombre, p.fecha_hora "
+                          "FROM partido p "
+                          "JOIN camiseta c ON p.camiseta_id = c.id "
+                          "ORDER BY p.goles DESC LIMIT 1");
 
     pause_console();
 }
@@ -193,12 +193,12 @@ void mostrar_partido_mejor_rendimiento_general()
     printf("\nPartido con Mejor Rendimiento General\n");
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db,
-                           "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
-                           "FROM partido p "
-                           "JOIN camiseta c ON p.camiseta_id = c.id "
-                           "ORDER BY p.rendimiento_general DESC LIMIT 1",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(
+                "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
+                "FROM partido p "
+                "JOIN camiseta c ON p.camiseta_id = c.id "
+                "ORDER BY p.rendimiento_general DESC LIMIT 1",
+                &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -230,12 +230,12 @@ void mostrar_partido_peor_rendimiento_general()
     printf("\nPartido con Peor Rendimiento General\n");
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db,
-                           "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
-                           "FROM partido p "
-                           "JOIN camiseta c ON p.camiseta_id = c.id "
-                           "ORDER BY p.rendimiento_general ASC LIMIT 1",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(
+                "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
+                "FROM partido p "
+                "JOIN camiseta c ON p.camiseta_id = c.id "
+                "ORDER BY p.rendimiento_general ASC LIMIT 1",
+                &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -267,12 +267,12 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
     printf("\nPartido con Mejor Combinacion Goles+Asistencias\n");
     printf("----------------------------------------\n");
 
-    if (sqlite3_prepare_v2(db,
-                           "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias, (p.goles + p.asistencias) AS combinacion "
-                           "FROM partido p "
-                           "JOIN camiseta c ON p.camiseta_id = c.id "
-                           "ORDER BY combinacion DESC LIMIT 1",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(
+                "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias, (p.goles + p.asistencias) AS combinacion "
+                "FROM partido p "
+                "JOIN camiseta c ON p.camiseta_id = c.id "
+                "ORDER BY combinacion DESC LIMIT 1",
+                &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -316,7 +316,7 @@ static void mostrar_lista_partidos(const char *header, const char *titulo, const
              "ORDER BY p.fecha_hora DESC",
              condicion);
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(sql, &stmt))
     {
         int count = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -385,9 +385,7 @@ static RachaInfo calcular_mejor_racha(int tipo_racha)
     int racha_actual = 0;
     int temp_inicio = -1;
 
-    if (sqlite3_prepare_v2(db,
-                           "SELECT id, goles FROM partido ORDER BY fecha_hora ASC",
-                           -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt("SELECT id, goles FROM partido ORDER BY fecha_hora ASC", &stmt))
     {
         return resultado;
     }

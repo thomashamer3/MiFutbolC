@@ -29,11 +29,19 @@ typedef enum
     LANGUAGE_ENGLISH = 1
 } LanguageType;
 
+typedef enum
+{
+    MODE_SIMPLE = 0,
+    MODE_ADVANCED = 1,
+    MODE_CUSTOM = 2
+} ModeType;
+
 // Estructura para almacenar configuración
 typedef struct
 {
     ThemeType theme;
     LanguageType language;
+    ModeType mode;
 } AppSettings;
 
 /**
@@ -73,6 +81,16 @@ void settings_apply_theme();
  */
 const char* get_text(const char* key);
 
+/**
+ * @brief Establece el modo de la aplicación
+ */
+void settings_set_mode(ModeType mode);
+
+/**
+ * @brief Obtiene el modo actual de la aplicación
+ */
+ModeType settings_get_mode();
+
 // Funciones wrapper para internacionalización de menús
 const char* get_menu_camisetas();
 const char* get_menu_canchas();
@@ -86,6 +104,9 @@ const char* get_menu_financiamiento();
 const char* get_menu_exportar();
 const char* get_menu_importar();
 const char* get_menu_torneos();
+const char* get_menu_qr();
+const char* get_menu_temporada();
+const char* get_menu_entrenador_ia();
 const char* get_menu_settings();
 const char* get_menu_exit();
 const char* get_menu_title();
@@ -95,6 +116,21 @@ const char* get_menu_usuario();
 const char* get_show_current();
 const char* get_reset_defaults();
 const char* get_menu_back();
+
+/**
+ * @brief Menú para configurar menús personalizados en modo Custom
+ */
+void menu_custom_menus();
+
+/**
+ * @brief Verifica si un menú está habilitado en modo Custom
+ */
+int is_custom_menu_enabled(const char* menu_name);
+
+/**
+ * @brief Establece el estado de un menú en modo Custom
+ */
+void set_custom_menu_enabled(const char* menu_name, int enabled);
 
 /**
  * @brief Menú principal de configuración

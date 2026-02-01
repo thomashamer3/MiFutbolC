@@ -6,6 +6,9 @@
  * y funcionalidades de sorteo.
  */
 
+#ifndef CAMISETA_H
+#define CAMISETA_H
+
 /**
  * @brief Muestra el menú interactivo de gestión de camisetas
  */
@@ -35,3 +38,5 @@ void eliminar_camiseta();
  * @brief Realiza un sorteo aleatorio entre camisetas disponibles
  */
 void sortear_camiseta();
+
+#endif

@@ -14,6 +14,11 @@
 #include <string.h>
 #include <time.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
 /**
  * @brief Función auxiliar para generar el CASE WHEN para clima
  * @return Cadena SQL con el CASE WHEN para convertir clima numérico a texto
@@ -76,7 +81,12 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
              "ORDER BY promedio %s%s",
              columna, order_by, limit_clause);
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -111,7 +121,11 @@ static void query(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        return;
+    }
     num_cols = sqlite3_column_count(stmt);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -473,7 +487,12 @@ void mostrar_goles_cansancio_alto_vs_bajo()
                       "SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos "
                       "FROM partido GROUP BY CASE WHEN cansancio > 7 THEN 'Alto' ELSE 'Bajo' END";
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
     num_cols = sqlite3_column_count(stmt);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -531,7 +550,12 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT 'Recientes (ultimos 5)' AS periodo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM (SELECT rendimiento_general FROM partido WHERE cansancio > 7 ORDER BY fecha_hora DESC LIMIT 5) UNION ALL SELECT 'Antiguos (primeros 5)' AS periodo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM (SELECT rendimiento_general FROM partido WHERE cansancio > 7 ORDER BY fecha_hora ASC LIMIT 5)";
 
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -589,8 +613,11 @@ void mostrar_asistencias_por_estado_animo()
     clear_screen();
     print_header("ASISTENCIAS POR ESTADO DE ANIMO");
 
-    query("Asistencias por Estado de Animo",
-          "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, SUM(asistencias) AS total_asistencias, ROUND(AVG(asistencias), 2) AS promedio_asistencias, COUNT(*) AS partidos FROM partido GROUP BY CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END ORDER BY promedio_asistencias DESC");
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+             "SELECT %s AS nivel_animo, SUM(asistencias) AS total_asistencias, ROUND(AVG(asistencias), 2) AS promedio_asistencias, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_asistencias DESC",
+             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    query("Asistencias por Estado de Animo", sql);
 
     pause_console();
 }

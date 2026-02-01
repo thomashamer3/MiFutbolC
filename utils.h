@@ -9,6 +9,8 @@
 
 #ifndef UTILS_H
 #define UTILS_H
+#include "cJSON.h"
+#include "sqlite3.h"
 #include <stddef.h>
 
 /**
@@ -312,5 +314,40 @@ void mostrar_pantalla(const char *titulo);
  * @return La misma cadena sin espacios finales
  */
 char* trim_trailing_spaces(char *str);
+
+/**
+ * @brief Exporta un record simple a CSV
+ *
+ * @param titulo Título del record
+ * @param sql Consulta SQL para obtener los datos
+ * @param filename Nombre del archivo de salida
+ */
+void exportar_record_simple_csv(const char *titulo, const char *sql, const char *filename);
+
+/**
+ * @brief Muestra un record simple
+ *
+ * @param titulo Título del record
+ * @param sql Consulta SQL para obtener los datos
+ */
+void mostrar_record_simple(const char *titulo, const char *sql);
+
+/**
+ * @brief Función genérica para exportar un partido específico a CSV
+ * Centraliza la lógica común de exportación de partidos específicos
+ */
+void exportar_partido_especifico_csv(const char *order_by, const char *filename);
+
+/**
+ * @brief Función genérica para exportar un partido específico a TXT
+ * Centraliza la lógica común de exportación de partidos específicos
+ */
+void exportar_partido_especifico_txt(const char *order_by, const char *filename, const char *title);
+
+/**
+ * @brief Escribe objeto JSON con datos de partido
+ * Función común para exportar datos de partidos a JSON
+ */
+void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt);
 
 #endif

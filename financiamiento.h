@@ -47,7 +47,7 @@ typedef struct
     CategoriaFinanciera categoria;      /**< Categoría específica */
     char descripcion[200];              /**< Descripción detallada de la transacción */
     int monto;                       /**< Monto de la transacción */
-    char item_especifico[100];          /**< Item específico (ej: "Botines Nike", "Cuota enero") */
+    char item_especifico[256];          /**< Item específico (ej: "Botines Nike", "Cuota enero") */
 } TransaccionFinanciera;
 
 /**

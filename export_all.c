@@ -18,7 +18,85 @@
 #include "utils.h"
 #include "menu.h"
 #include "ascii_art.h"
+#include "db.h"
 #include <stdio.h>
+
+static void exportar_camisetas_all()
+{
+    exportar_camisetas_csv();
+    exportar_camisetas_txt();
+    exportar_camisetas_json();
+    exportar_camisetas_html();
+}
+
+static void exportar_partidos_all()
+{
+    exportar_partidos_csv();
+    exportar_partidos_txt();
+    exportar_partidos_json();
+    exportar_partidos_html();
+}
+
+static void exportar_lesiones_all()
+{
+    exportar_lesiones_csv();
+    exportar_lesiones_txt();
+    exportar_lesiones_json();
+    exportar_lesiones_html();
+}
+
+static void exportar_estadisticas_all()
+{
+    exportar_estadisticas_csv();
+    exportar_estadisticas_txt();
+    exportar_estadisticas_json();
+    exportar_estadisticas_html();
+}
+
+static void exportar_analisis_all()
+{
+    exportar_analisis_csv();
+    exportar_analisis_txt();
+    exportar_analisis_json();
+    exportar_analisis_html();
+}
+
+static void exportar_estadisticas_generales_all()
+{
+    exportar_estadisticas_generales_csv();
+    exportar_estadisticas_generales_txt();
+    exportar_estadisticas_generales_json();
+    exportar_estadisticas_generales_html();
+}
+
+static void exportar_estadisticas_por_mes_all()
+{
+    exportar_estadisticas_por_mes_csv();
+    exportar_estadisticas_por_mes_txt();
+    exportar_estadisticas_por_mes_json();
+    exportar_estadisticas_por_mes_html();
+}
+
+static void exportar_estadisticas_por_anio_all()
+{
+    exportar_estadisticas_por_anio_csv();
+    exportar_estadisticas_por_anio_txt();
+    exportar_estadisticas_por_anio_json();
+    exportar_estadisticas_por_anio_html();
+}
+
+static void exportar_records_rankings_all()
+{
+    exportar_record_goles_partido_csv();
+    exportar_record_asistencias_partido_csv();
+    exportar_mejor_combinacion_cancha_camiseta_csv();
+    exportar_peor_combinacion_cancha_camiseta_csv();
+    exportar_mejor_temporada_csv();
+    exportar_peor_temporada_csv();
+    exportar_records_rankings_txt();
+    exportar_records_rankings_json();
+    exportar_records_rankings_html();
+}
 
 /**
  * @brief Exportación integral de datos de camisetas
@@ -31,12 +109,8 @@
 static void exportar_camisetas_todo()
 {
     printf("Exportando camisetas...\n");
-    exportar_camisetas_csv();
-    exportar_camisetas_txt();
-    exportar_camisetas_json();
-    exportar_camisetas_html();
+    exportar_camisetas_all();
     printf("Exportacion de camisetas completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -50,12 +124,8 @@ static void exportar_camisetas_todo()
 static void exportar_partidos_todo()
 {
     printf("Exportando partidos...\n");
-    exportar_partidos_csv();
-    exportar_partidos_txt();
-    exportar_partidos_json();
-    exportar_partidos_html();
+    exportar_partidos_all();
     printf("Exportacion de partidos completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -69,12 +139,8 @@ static void exportar_partidos_todo()
 static void exportar_lesiones_todo()
 {
     printf("Exportando lesiones...\n");
-    exportar_lesiones_csv();
-    exportar_lesiones_txt();
-    exportar_lesiones_json();
-    exportar_lesiones_html();
+    exportar_lesiones_all();
     printf("Exportacion de lesiones completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -88,12 +154,8 @@ static void exportar_lesiones_todo()
 static void exportar_estadisticas_todo()
 {
     printf("Exportando estadisticas...\n");
-    exportar_estadisticas_csv();
-    exportar_estadisticas_txt();
-    exportar_estadisticas_json();
-    exportar_estadisticas_html();
+    exportar_estadisticas_all();
     printf("Exportacion de estadisticas completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -107,12 +169,8 @@ static void exportar_estadisticas_todo()
 static void exportar_analisis_todo()
 {
     printf("Exportando analisis...\n");
-    exportar_analisis_csv();
-    exportar_analisis_txt();
-    exportar_analisis_json();
-    exportar_analisis_html();
+    exportar_analisis_all();
     printf("Exportacion de analisis completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -126,12 +184,8 @@ static void exportar_analisis_todo()
 static void exportar_estadisticas_generales_todo()
 {
     printf("Exportando estadisticas generales...\n");
-    exportar_estadisticas_generales_csv();
-    exportar_estadisticas_generales_txt();
-    exportar_estadisticas_generales_json();
-    exportar_estadisticas_generales_html();
+    exportar_estadisticas_generales_all();
     printf("Exportacion de estadisticas generales completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -145,12 +199,8 @@ static void exportar_estadisticas_generales_todo()
 static void exportar_estadisticas_por_mes_todo()
 {
     printf("Exportando estadisticas por mes...\n");
-    exportar_estadisticas_por_mes_csv();
-    exportar_estadisticas_por_mes_txt();
-    exportar_estadisticas_por_mes_json();
-    exportar_estadisticas_por_mes_html();
+    exportar_estadisticas_por_mes_all();
     printf("Exportacion de estadisticas por mes completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -164,12 +214,8 @@ static void exportar_estadisticas_por_mes_todo()
 static void exportar_estadisticas_por_anio_todo()
 {
     printf("Exportando estadisticas por anio...\n");
-    exportar_estadisticas_por_anio_csv();
-    exportar_estadisticas_por_anio_txt();
-    exportar_estadisticas_por_anio_json();
-    exportar_estadisticas_por_anio_html();
+    exportar_estadisticas_por_anio_all();
     printf("Exportacion de estadisticas por anio completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -183,17 +229,8 @@ static void exportar_estadisticas_por_anio_todo()
 static void exportar_records_rankings_todo()
 {
     printf("Exportando records & rankings...\n");
-    exportar_record_goles_partido_csv();
-    exportar_record_asistencias_partido_csv();
-    exportar_mejor_combinacion_cancha_camiseta_csv();
-    exportar_peor_combinacion_cancha_camiseta_csv();
-    exportar_mejor_temporada_csv();
-    exportar_peor_temporada_csv();
-    exportar_records_rankings_txt();
-    exportar_records_rankings_json();
-    exportar_records_rankings_html();
+    exportar_records_rankings_all();
     printf("Exportacion de records & rankings completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -212,7 +249,6 @@ static void exportar_partido_mas_goles_todo()
     exportar_partido_mas_goles_json();
     exportar_partido_mas_goles_html();
     printf("Exportacion completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -227,7 +263,6 @@ static void exportar_partido_mas_asistencias_todo()
     exportar_partido_mas_asistencias_json();
     exportar_partido_mas_asistencias_html();
     printf("Exportacion completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -242,7 +277,6 @@ static void exportar_partido_menos_goles_reciente_todo()
     exportar_partido_menos_goles_reciente_json();
     exportar_partido_menos_goles_reciente_html();
     printf("Exportacion completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -262,7 +296,6 @@ static void exportar_partido_menos_asistencias_reciente_todo()
     exportar_partido_menos_asistencias_reciente_json();
     exportar_partido_menos_asistencias_reciente_html();
     printf("Exportacion completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -289,16 +322,10 @@ static void exportar_todo()
     printf("Exportando todo...\n");
 
     // Exportar camisetas en todos los formatos
-    exportar_camisetas_csv();
-    exportar_camisetas_txt();
-    exportar_camisetas_json();
-    exportar_camisetas_html();
+    exportar_camisetas_all();
 
     // Exportar partidos en todos los formatos
-    exportar_partidos_csv();
-    exportar_partidos_txt();
-    exportar_partidos_json();
-    exportar_partidos_html();
+    exportar_partidos_all();
 
     // Exportar partidos específicos
     exportar_partido_mas_goles_csv();
@@ -322,54 +349,27 @@ static void exportar_todo()
     exportar_partido_menos_asistencias_reciente_html();
 
     // Exportar lesiones en todos los formatos
-    exportar_lesiones_csv();
-    exportar_lesiones_txt();
-    exportar_lesiones_json();
-    exportar_lesiones_html();
+    exportar_lesiones_all();
 
     // Exportar estadísticas básicas
-    exportar_estadisticas_csv();
-    exportar_estadisticas_txt();
-    exportar_estadisticas_json();
-    exportar_estadisticas_html();
+    exportar_estadisticas_all();
 
     // Exportar análisis
-    exportar_analisis_csv();
-    exportar_analisis_txt();
-    exportar_analisis_json();
-    exportar_analisis_html();
+    exportar_analisis_all();
 
     // Exportar estadísticas generales
-    exportar_estadisticas_generales_csv();
-    exportar_estadisticas_generales_txt();
-    exportar_estadisticas_generales_json();
-    exportar_estadisticas_generales_html();
+    exportar_estadisticas_generales_all();
 
     // Exportar estadísticas por mes
-    exportar_estadisticas_por_mes_csv();
-    exportar_estadisticas_por_mes_txt();
-    exportar_estadisticas_por_mes_json();
-    exportar_estadisticas_por_mes_html();
+    exportar_estadisticas_por_mes_all();
 
     // Exportar estadísticas por año
-    exportar_estadisticas_por_anio_csv();
-    exportar_estadisticas_por_anio_txt();
-    exportar_estadisticas_por_anio_json();
-    exportar_estadisticas_por_anio_html();
+    exportar_estadisticas_por_anio_all();
 
     // Exportar récords y rankings
-    exportar_record_goles_partido_csv();
-    exportar_record_asistencias_partido_csv();
-    exportar_mejor_combinacion_cancha_camiseta_csv();
-    exportar_peor_combinacion_cancha_camiseta_csv();
-    exportar_mejor_temporada_csv();
-    exportar_peor_temporada_csv();
-    exportar_records_rankings_txt();
-    exportar_records_rankings_json();
-    exportar_records_rankings_html();
+    exportar_records_rankings_all();
 
     printf("Exportacion de todo completada.\n");
-    printf("%s\n", ASCII_EXPORT_EXITOSO);
     pause_console();
 }
 
@@ -417,8 +417,9 @@ void menu_exportar()
         {5, "Analisis", exportar_analisis_todo},
         {6, "Estadisticas Generales", menu_exportar_estadisticas_generales},
         {7, "Analisis Avanzado", menu_exportar_mejorado},
-        {8, "Todo", exportar_todo},
+        {8, "Base de Datos", exportar_base_datos},
+        {9, "Todo", exportar_todo},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 9);
+    ejecutar_menu("EXPORTAR DATOS", items, 10);
 }

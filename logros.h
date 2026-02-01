@@ -6,6 +6,9 @@
  * el sistema de logros y badges basado en estadísticas conseguidas.
  */
 
+#ifndef LOGROS_H
+#define LOGROS_H
+
 /**
  * @brief Muestra el menú principal de logros y badges
  *
@@ -36,3 +39,5 @@ void mostrar_logros_completados();
  * Lista los logros que están parcialmente completados pero aún no terminados.
  */
 void mostrar_logros_en_progreso();
+
+#endif

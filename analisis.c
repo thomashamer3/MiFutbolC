@@ -14,6 +14,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql)
+{
+    if (preparar_stmt(stmt, sql))
+    {
+        return 1;
+    }
+
+    printf("Error al consultar la base de datos.\n");
+    return 0;
+}
+
 /**
  * @brief Estructura para almacenar estadísticas de partidos
  */
@@ -27,6 +43,34 @@ typedef struct
     int total_partidos;
 } Estadisticas;
 
+static void reset_estadisticas(Estadisticas *stats)
+{
+    memset(stats, 0, sizeof(*stats));
+}
+
+static void calcular_estadisticas(Estadisticas *stats, const char *sql)
+{
+    sqlite3_stmt *stmt;
+    reset_estadisticas(stats);
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        stats->total_partidos = sqlite3_column_int(stmt, 0);
+        stats->avg_goles = sqlite3_column_double(stmt, 1);
+        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
+        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
+        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
+        stats->avg_animo = sqlite3_column_double(stmt, 5);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 /**
  * @brief Calcula estadísticas generales de todos los partidos
  *
@@ -36,22 +80,9 @@ typedef struct
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
-                       "FROM partido",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-    sqlite3_finalize(stmt);
+    calcular_estadisticas(stats,
+                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+                          "FROM partido");
 }
 
 /**
@@ -61,22 +92,9 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
  */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
-                       "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-    sqlite3_finalize(stmt);
+    calcular_estadisticas(stats,
+                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+                          "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
 /**
@@ -158,10 +176,12 @@ static void mostrar_ultimos5_partidos()
     printf("----------------------------------------\n");
 
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
+    if (!preparar_stmt(&stmt,
                        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
-                       "FROM partido ORDER BY id DESC LIMIT 5",
-                       -1, &stmt, NULL);
+                       "FROM partido ORDER BY id DESC LIMIT 5"))
+    {
+        return;
+    }
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -327,13 +347,14 @@ static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const
     sqlite3_stmt *stmt;
     char sql[512];
 
+    memset(metricas, 0, sizeof(*metricas));
+
     snprintf(sql, sizeof(sql),
              "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
              "FROM partido WHERE %s", condicion_sql);
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt(&stmt, sql))
     {
-        metricas->partidos = 0;
         return;
     }
 
@@ -388,13 +409,12 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
     printf("  Goles: %s\n", determinar_ganador(diff_goles, nombre1, nombre2));
     printf("  Asistencias: %s\n", determinar_ganador(diff_asist, nombre1, nombre2));
     printf("  Rendimiento: %s\n", determinar_ganador(diff_rend, nombre1, nombre2));
-    pause_console();
 }
 
 /**
  * @brief Función auxiliar para listar entidades y obtener dos IDs
  * Centraliza lógica repetida en comparadores para evitar duplicación
- * 
+ *
  * @param tabla Nombre de la tabla a consultar
  * @param titulo Título a mostrar
  * @param id1 Puntero para almacenar primer ID
@@ -404,11 +424,15 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
 static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
 {
     sqlite3_stmt *stmt;
-    
+
     // Nota: Reemplazar %s en la consulta manualmente
     char sql[256];
-    snprintf(sql, sizeof(sql), "SELECT id, nombre FROM %s ORDER BY nombre", tabla);
-    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    snprintf(sql, sizeof(sql), "SELECT id, nombre FROM %s ORDER BY id", tabla);
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
 
     printf("%s disponibles:\n", titulo);
     printf("----------------------------------------\n");
@@ -468,6 +492,7 @@ static void comparar_camisetas()
     obtener_nombre_entidad("camiseta", id2, nombre2, sizeof(nombre2));
 
     mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    pause_console();
 }
 
 /**
@@ -640,9 +665,7 @@ typedef struct
 {
     int mes;
     int anio;
-    double avg_goles;
-    double avg_asistencias;
-    double avg_rendimiento;
+    double avg_valor;
     int total_partidos;
 } EstadisticasMensuales;
 
@@ -706,7 +729,7 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
              "ORDER BY anio DESC, mes DESC",
              columna);
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -716,7 +739,7 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
     {
         stats[count].mes = atoi((const char *)sqlite3_column_text(stmt, 0));
         stats[count].anio = atoi((const char *)sqlite3_column_text(stmt, 1));
-        stats[count].avg_goles = sqlite3_column_double(stmt, 2);
+        stats[count].avg_valor = sqlite3_column_double(stmt, 2);
         stats[count].total_partidos = sqlite3_column_int(stmt, 3);
         count++;
     }
@@ -754,7 +777,7 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
     {
         printf("%s %d: %.2f (%d partidos)\n",
                mes_to_text(stats[i].mes), stats[i].anio,
-               stats[i].avg_goles, stats[i].total_partidos);
+               stats[i].avg_valor, stats[i].total_partidos);
     }
 
     pause_console();
@@ -783,9 +806,8 @@ static void encontrar_mes_historico(int mejor)
                       "GROUP BY strftime('%Y', fecha_hora), strftime('%m', fecha_hora) "
                       "ORDER BY AVG(rendimiento_general) ASC LIMIT 1";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
-        printf("Error al consultar la base de datos.\n");
         pause_console();
         return;
     }
@@ -829,9 +851,8 @@ static void comparar_inicio_fin_anio()
         "FROM partido "
         "GROUP BY CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN 'Inicio' ELSE 'Fin' END";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
-        printf("Error al consultar la base de datos.\n");
         pause_console();
         return;
     }
@@ -889,9 +910,8 @@ static void comparar_meses_frios_calidos()
         "  ELSE 'Otros' "
         "END";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
-        printf("Error al consultar la base de datos.\n");
         pause_console();
         return;
     }
@@ -983,9 +1003,8 @@ static void calcular_progreso_total()
         "MIN(fecha_hora), MAX(fecha_hora) "
         "FROM partido";
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
-        printf("Error al consultar la base de datos.\n");
         pause_console();
         return;
     }
@@ -1029,7 +1048,7 @@ static void calcular_progreso_total()
         "SELECT AVG(rendimiento_general) FROM "
         "(SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 5)";
 
-    if (sqlite3_prepare_v2(db, tend_sql, -1, &tend_stmt, NULL) != SQLITE_OK)
+    if (!preparar_stmt(&tend_stmt, tend_sql))
     {
         sqlite3_finalize(stmt);
         pause_console();

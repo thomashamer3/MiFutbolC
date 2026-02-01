@@ -28,6 +28,73 @@ typedef struct
     int total_partidos;
 } Estadisticas;
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static FILE *abrir_archivo_exportacion(const char *filename)
+{
+    FILE *f;
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
+    if (err != 0 || !f)
+    {
+        return NULL;
+    }
+    return f;
+}
+
+static void reset_estadisticas(Estadisticas *stats)
+{
+    memset(stats, 0, sizeof(*stats));
+}
+
+static void calcular_estadisticas(Estadisticas *stats, const char *sql)
+{
+    sqlite3_stmt *stmt;
+    reset_estadisticas(stats);
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        stats->total_partidos = sqlite3_column_int(stmt, 0);
+        stats->avg_goles = sqlite3_column_double(stmt, 1);
+        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
+        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
+        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
+        stats->avg_animo = sqlite3_column_double(stmt, 5);
+    }
+    sqlite3_finalize(stmt);
+}
+
+static void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
+                              int *racha_actual_d, int *max_racha_d)
+{
+    if (resultado == 1)
+    {
+        (*racha_actual_v)++;
+        if (*racha_actual_v > *max_racha_v)
+            *max_racha_v = *racha_actual_v;
+        *racha_actual_d = 0;
+        return;
+    }
+
+    if (resultado == 3)
+    {
+        (*racha_actual_d)++;
+        if (*racha_actual_d > *max_racha_d)
+            *max_racha_d = *racha_actual_d;
+        *racha_actual_v = 0;
+        return;
+    }
+
+    *racha_actual_v = 0;
+    *racha_actual_d = 0;
+}
+
 /**
  * @brief Construye la ruta completa para un archivo de exportación
  *
@@ -42,10 +109,16 @@ char *get_export_path(const char *filename)
     static char path[1024];
     const char *export_dir = get_export_dir();
     if (!export_dir)
-        return NULL;
-    strcpy_s(path, sizeof(path), export_dir);
-    strcat_s(path, sizeof(path), "\\");
-    strcat_s(path, sizeof(path), filename);
+    {
+        // Fallback to current directory if export dir is not available
+        strcpy_s(path, sizeof(path), filename);
+    }
+    else
+    {
+        strcpy_s(path, sizeof(path), export_dir);
+        strcat_s(path, sizeof(path), "\\");
+        strcat_s(path, sizeof(path), filename);
+    }
     return path;
 }
 
@@ -68,7 +141,10 @@ static int has_partido_records()
 {
     sqlite3_stmt *check_stmt;
     int count = 0;
-    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &check_stmt, NULL);
+    if (!preparar_stmt(&check_stmt, "SELECT COUNT(*) FROM partido"))
+    {
+        return 0;
+    }
     if (sqlite3_step(check_stmt) == SQLITE_ROW)
     {
         count = sqlite3_column_int(check_stmt, 0);
@@ -96,22 +172,9 @@ static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *u
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
-                       "FROM partido",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-    sqlite3_finalize(stmt);
+    calcular_estadisticas(stats,
+                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+                          "FROM partido");
 }
 
 /**
@@ -121,22 +184,9 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
  */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
-                       "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)",
-                       -1, &stmt, NULL);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-    sqlite3_finalize(stmt);
+    calcular_estadisticas(stats,
+                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+                          "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
 /**
@@ -148,9 +198,13 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT resultado FROM partido ORDER BY fecha_hora",
-                       -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt,
+                       "SELECT resultado FROM partido ORDER BY fecha_hora"))
+    {
+        *mejor_racha_victorias = 0;
+        *peor_racha_derrotas = 0;
+        return;
+    }
 
     int racha_actual_v = 0;
     int max_racha_v = 0;
@@ -160,28 +214,8 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int resultado = sqlite3_column_int(stmt, 0);
-        if (resultado == 1)
-        {
-            // VICTORIA
-            racha_actual_v++;
-            if (racha_actual_v > max_racha_v)
-                max_racha_v = racha_actual_v;
-            racha_actual_d = 0;
-        }
-        else if (resultado == 3)
-        {
-            // DERROTA
-            racha_actual_d++;
-            if (racha_actual_d > max_racha_d)
-                max_racha_d = racha_actual_d;
-            racha_actual_v = 0;
-        }
-        else
-        {
-            // EMPATE
-            racha_actual_v = 0;
-            racha_actual_d = 0;
-        }
+        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v,
+                          &racha_actual_d, &max_racha_d);
     }
 
     *mejor_racha_victorias = max_racha_v;
@@ -227,8 +261,8 @@ void exportar_analisis_csv()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("analisis.csv"), "w");
-    if (err != 0)
+    FILE *f = abrir_archivo_exportacion("analisis.csv");
+    if (!f)
         return;
 
     fprintf(f, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_Cansancio,Promedio_Animo,Total_Partidos\n");
@@ -269,8 +303,8 @@ void exportar_analisis_txt()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("analisis.txt"), "w");
-    if (err != 0)
+    FILE *f = abrir_archivo_exportacion("analisis.txt");
+    if (!f)
         return;
 
     fprintf(f, "ANALISIS DE RENDIMIENTO\n\n");
@@ -321,8 +355,8 @@ void exportar_analisis_json()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("analisis.json"), "w");
-    if (err != 0)
+    FILE *f = abrir_archivo_exportacion("analisis.json");
+    if (!f)
         return;
 
     cJSON *root = cJSON_CreateObject();
@@ -381,8 +415,8 @@ void exportar_analisis_html()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("analisis.html"), "w");
-    if (err != 0)
+    FILE *f = abrir_archivo_exportacion("analisis.html");
+    if (!f)
         return;
 
     fprintf(f, "<html><body><h1>Analisis de Rendimiento</h1>");

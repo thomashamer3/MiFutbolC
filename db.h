@@ -8,6 +8,9 @@
  * Soporta evolución de esquema mediante ALTER TABLE dinámicos.
  */
 
+#ifndef DB_H
+#define DB_H
+
 #include "sqlite3.h"
 
 /**
@@ -90,3 +93,23 @@ const char* get_export_dir();
  * @return Puntero constante a string con path del directorio de importaciones
  */
 const char* get_import_dir();
+
+/**
+ * @brief Copia la base de datos SQLite a la carpeta de documentos
+ *
+ * Esta función realiza una copia exacta del archivo de base de datos
+ * desde la ubicación de datos internos a la carpeta de exportación
+ * (normalmente Documentos del usuario).
+ */
+void exportar_base_datos();
+
+/**
+ * @brief Importa una base de datos SQLite desde un archivo externo
+ *
+ * Esta función permite al usuario importar una base de datos completa
+ * desde un archivo externo, reemplazando la base de datos actual.
+ * Se realiza una copia exacta del archivo de origen al directorio de datos.
+ */
+void importar_base_datos();
+
+#endif

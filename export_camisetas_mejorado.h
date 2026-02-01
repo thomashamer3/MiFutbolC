@@ -11,6 +11,9 @@
  *       análisis avanzado que no está disponible en las funciones de exportación estándar.
  */
 
+#ifndef EXPORT_CAMISETAS_MEJORADO_H
+#define EXPORT_CAMISETAS_MEJORADO_H
+
 /**
  * @brief Exportación de datos de camisetas en formato CSV con análisis avanzado
  *
@@ -82,3 +85,5 @@ void exportar_camisetas_json_mejorado();
  * @see exportar_camisetas_json_mejorado()
  */
 void exportar_camisetas_html_mejorado();
+
+#endif

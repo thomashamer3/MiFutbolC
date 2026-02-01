@@ -7,6 +7,24 @@
 #include <direct.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
+{
+    FILE *file;
+    const char *path = get_export_path(filename);
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+    {
+        printf("%s\n", error_msg);
+        return NULL;
+    }
+    return file;
+}
+
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -26,7 +44,7 @@ static int has_lesiones(void)
     int count = 0;
     int result = 0;
 
-    if (sqlite3_prepare_v2(db, SQL_COUNT_LESIONES, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(&stmt, SQL_COUNT_LESIONES))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -43,7 +61,10 @@ static int has_lesiones(void)
 static void write_lesiones_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_LESIONES, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -62,7 +83,10 @@ static void write_lesiones_csv(FILE *file)
 static void write_lesiones_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_LESIONES, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -81,7 +105,10 @@ static void write_lesiones_txt(FILE *file)
 static void write_lesiones_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_LESIONES, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -102,7 +129,11 @@ static void write_lesiones_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_LESIONES, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    {
+        cJSON_Delete(root);
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -141,10 +172,9 @@ void exportar_lesiones_csv()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("lesiones.csv"), "w");
-    if (err != 0 || f == NULL)
+    FILE *f = abrir_archivo_exportacion("lesiones.csv", "Error al crear el archivo CSV");
+    if (!f)
     {
-        printf("Error al crear el archivo CSV\n");
         return;
     }
 
@@ -169,10 +199,9 @@ void exportar_lesiones_txt()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("lesiones.txt"), "w");
-    if (err != 0 || f == NULL)
+    FILE *f = abrir_archivo_exportacion("lesiones.txt", "Error al crear el archivo TXT");
+    if (!f)
     {
-        printf("Error al crear el archivo TXT\n");
         return;
     }
 
@@ -197,10 +226,9 @@ void exportar_lesiones_json()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("lesiones.json"), "w");
-    if (err != 0 || f == NULL)
+    FILE *f = abrir_archivo_exportacion("lesiones.json", "Error al crear el archivo JSON");
+    if (!f)
     {
-        printf("Error al crear el archivo JSON\n");
         return;
     }
 
@@ -224,10 +252,9 @@ void exportar_lesiones_html()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("lesiones.html"), "w");
-    if (err != 0 || f == NULL)
+    FILE *f = abrir_archivo_exportacion("lesiones.html", "Error al crear el archivo HTML");
+    if (!f)
     {
-        printf("Error al crear el archivo HTML\n");
         return;
     }
 

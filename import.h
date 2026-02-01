@@ -7,6 +7,9 @@
  * Las funciones están organizadas por tipo de dato y formato de archivo.
  */
 
+#ifndef IMPORT_H
+#define IMPORT_H
+
 /** @name Funciones de importación de camisetas */
 /** @{ */
 
@@ -142,8 +145,6 @@ void importar_lesiones_html();
  */
 void importar_estadisticas_html();
 
-/** @} */
-
 /**
  * @brief Muestra el menú principal de importación
  *
@@ -152,3 +153,5 @@ void importar_estadisticas_html();
  * Proporciona acceso a todas las funciones de importación disponibles.
  */
 void menu_importar();
+
+#endif

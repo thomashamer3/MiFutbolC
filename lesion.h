@@ -7,6 +7,9 @@
  * y eliminación de registros de lesiones.
  */
 
+#ifndef LESION_H
+#define LESION_H
+
 /**
  * @brief Crea una nueva lesión en la base de datos
  *
@@ -68,3 +71,5 @@ void actualizar_estados_lesiones();
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
 void menu_lesiones();
+
+#endif

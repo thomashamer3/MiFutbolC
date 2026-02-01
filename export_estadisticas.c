@@ -7,6 +7,24 @@
 #include <direct.h>
 #include <string.h>
 
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
+{
+    FILE *file;
+    const char *path = get_export_path(filename);
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+    {
+        printf("%s\n", error_msg);
+        return NULL;
+    }
+    return file;
+}
+
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -39,7 +57,7 @@ static int has_partidos(void)
     int count = 0;
     int result = 0;
 
-    if (sqlite3_prepare_v2(db, SQL_COUNT_PARTIDOS, -1, &stmt, NULL) == SQLITE_OK)
+    if (preparar_stmt(&stmt, SQL_COUNT_PARTIDOS))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -56,7 +74,10 @@ static int has_partidos(void)
 static void write_stats_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_CAMISETA, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -77,7 +98,10 @@ static void write_stats_csv(FILE *file)
 static void write_stats_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_CAMISETA, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -98,7 +122,10 @@ static void write_stats_txt(FILE *file)
 static void write_stats_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_CAMISETA, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -121,7 +148,11 @@ static void write_stats_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_CAMISETA, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    {
+        cJSON_Delete(root);
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -148,7 +179,10 @@ static void write_stats_json(FILE *file)
 static void write_stats_anio_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_ANIO, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    {
+        return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -169,7 +203,10 @@ static void write_stats_anio_csv(FILE *file)
 static void write_stats_anio_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_ANIO, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    {
+        return;
+    }
 
     char current_anio[5] = "";
     int hay = 0;
@@ -202,7 +239,10 @@ static void write_stats_anio_txt(FILE *file)
 static void write_stats_anio_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_ANIO, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    {
+        return;
+    }
 
     char current_anio[5] = "";
     int hay = 0;
@@ -239,7 +279,11 @@ static void write_stats_anio_json(FILE *file)
 {
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db, SQL_STATS_BY_ANIO, -1, &stmt, NULL);
+    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    {
+        cJSON_Delete(root);
+        return;
+    }
 
     char current_anio[5] = "";
     cJSON *current_anio_array = NULL;
@@ -305,13 +349,11 @@ void exportar_estadisticas_csv()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas.csv"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo CSV\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas.csv", "Error al crear el archivo CSV");
+    if (!f)
+    {
+        return;
+    }
 
     fprintf(f, "Camiseta,Goles,Asistencias,Partidos,Victorias,Empates,Derrotas\n");
     write_stats_csv(f);
@@ -334,13 +376,11 @@ void exportar_estadisticas_txt()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas.txt"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo TXT\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas.txt", "Error al crear el archivo TXT");
+    if (!f)
+    {
+        return;
+    }
 
     write_stats_txt(f);
 
@@ -362,13 +402,11 @@ void exportar_estadisticas_json()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas.json"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo JSON\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas.json", "Error al crear el archivo JSON");
+    if (!f)
+    {
+        return;
+    }
 
     write_stats_json(f);
 
@@ -390,13 +428,11 @@ void exportar_estadisticas_html()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas.html"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo HTML\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas.html", "Error al crear el archivo HTML");
+    if (!f)
+    {
+        return;
+    }
 
     fprintf(f,
             "<html><body><h1>Estadisticas</h1><table border='1'>"
@@ -425,13 +461,11 @@ void exportar_estadisticas_por_anio_csv()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.csv"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo CSV\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas_por_anio.csv", "Error al crear el archivo CSV");
+    if (!f)
+    {
+        return;
+    }
 
     fprintf(f, "Anio,Camiseta,Partidos,Goles,Asistencias,Promedio Goles,Promedio Asistencias\n");
     write_stats_anio_csv(f);
@@ -451,13 +485,11 @@ void exportar_estadisticas_por_anio_txt()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.txt"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo TXT\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas_por_anio.txt", "Error al crear el archivo TXT");
+    if (!f)
+    {
+        return;
+    }
 
     write_stats_anio_txt(f);
 
@@ -476,13 +508,11 @@ void exportar_estadisticas_por_anio_json()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.json"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo JSON\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas_por_anio.json", "Error al crear el archivo JSON");
+    if (!f)
+    {
+        return;
+    }
 
     write_stats_anio_json(f);
 
@@ -501,13 +531,11 @@ void exportar_estadisticas_por_anio_html()
         return;
     }
 
-    errno_t err = fopen_s(&f, get_export_path("estadisticas_por_anio.html"), "w");
-    if (err != 0 || f == NULL)
-        if (!f)
-        {
-            printf("Error al crear el archivo HTML\n");
-            return;
-        }
+    FILE *f = abrir_archivo_exportacion("estadisticas_por_anio.html", "Error al crear el archivo HTML");
+    if (!f)
+    {
+        return;
+    }
 
     fprintf(f, "<html><body><h1>Estadisticas por Anio</h1>");
 

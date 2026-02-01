@@ -7,6 +7,9 @@
  * y eliminación de registros de partidos.
  */
 
+#ifndef PARTIDO_H
+#define PARTIDO_H
+
 /**
  * @brief Muestra el menú principal de gestión de partidos
  *
@@ -67,3 +70,5 @@ void modificar_partido();
  * - Cancha donde se jugó
  */
 void buscar_partidos();
+
+#endif
