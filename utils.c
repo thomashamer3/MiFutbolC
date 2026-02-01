@@ -45,15 +45,36 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
  */
 int input_int(const char *msg)
 {
-    int v;
-    printf("%s", msg);
-    if (scanf_s("%d", &v) != 1)
+    char buffer[64];
+    int v = 0;
+    int attempts = 0;
+
+    while (attempts < 5)
     {
-        v = 0;
-        while (getchar() != '\n'); // Clear input buffer
+        printf("%s", msg);
+
+        if (!fgets(buffer, sizeof(buffer), stdin))
+        {
+            attempts++;
+            continue;
+        }
+
+        size_t len = strlen_s(buffer, sizeof(buffer));
+        while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
+        {
+            buffer[--len] = '\0';
+        }
+
+        char extra = '\0';
+        if (sscanf_s(buffer, "%d %c", &v, &extra, (unsigned int)sizeof(extra)) == 1)
+            return v;
+
+        printf("Entrada inválida. Intente nuevamente.\n");
+        attempts++;
     }
-    getchar();
-    return v;
+
+    printf("Se alcanzó el máximo de intentos.\n");
+    return 0;
 }
 
 /* Implementación portable de safe_strnlen */
@@ -69,6 +90,13 @@ size_t safe_strnlen(const char *s, size_t maxlen)
     }
     return i;
 }
+
+#if !defined(__STDC_LIB_EXT1__)
+size_t strlen_s(const char *s, size_t maxlen)
+{
+    return safe_strnlen(s, maxlen);
+}
+#endif
 
 /**
  * Determina si un punto en la posición dada es un separador de miles o decimal.
@@ -733,6 +761,11 @@ long long obtener_siguiente_id(const char *tabla)
 
     if (!tabla) return 1;
 
+    /*
+     * Esta consulta utiliza una CTE (Common Table Expression) recursiva para generar 
+     * una secuencia de números y encontrar el primer "hueco" (ID faltante) en la tabla.
+     * Esto permite reutilizar IDs de registros eliminados manteniendo la secuencia compacta.
+     */
     snprintf(sql, sizeof(sql),
              "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM %s)) "
              "SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM %s)",

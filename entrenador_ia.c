@@ -595,7 +595,9 @@ void activar_ia_estadisticas()
 // Menú principal de la IA
 void menu_entrenador_ia()
 {
+#ifndef UNIT_TEST
     init_ia_tables();
+#endif
 
     MenuItem items[] =
     {

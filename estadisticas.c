@@ -28,7 +28,9 @@
 void menu_estadisticas()
 {
     // Activar IA al abrir estadísticas
+#ifndef UNIT_TEST
     activar_ia_estadisticas();
+#endif
 
     MenuItem items[] =
     {

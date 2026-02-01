@@ -637,6 +637,18 @@ const char* get_menu_back()
     return get_text("menu_back");
 }
 
+static const MenuItem* buscar_item_settings(const MenuItem *items, int cantidad, int opcion)
+{
+    for (int i = 0; i < cantidad; i++)
+    {
+        if (items[i].opcion == opcion)
+        {
+            return &items[i];
+        }
+    }
+    return NULL;
+}
+
 /**
  * @brief Submenú para configuracion de temas
  */
@@ -940,6 +952,9 @@ static void menu_mode_settings()
  */
 void menu_custom_menus()
 {
+#ifdef UNIT_TEST
+    return;
+#endif
     custom_menu_changed = 0; // Reset flag at the beginning
     clear_screen();
     print_header(get_text("menu_settings"));
@@ -1018,5 +1033,31 @@ void menu_settings()
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu("AJUSTES", items, 7);
+    while (1)
+    {
+        clear_screen();
+        print_header("AJUSTES");
+
+        for (int i = 0; i < 7; i++)
+        {
+            printf("%d.%s\n", items[i].opcion, items[i].texto);
+        }
+
+        int opcion = input_int("> ");
+        const MenuItem *selected = buscar_item_settings(items, 7, opcion);
+
+        if (!selected)
+        {
+            printf("%s\n", get_text("invalid_option"));
+            pause_console();
+            continue;
+        }
+
+        if (!selected->accion)
+        {
+            return;
+        }
+
+        selected->accion();
+    }
 }

@@ -30,6 +30,35 @@ static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql)
     return 0;
 }
 
+static int existe_id_entidad(const char *tabla, int id)
+{
+    sqlite3_stmt *stmt;
+    char sql[128];
+    snprintf(sql, sizeof(sql), "SELECT 1 FROM %s WHERE id = ? LIMIT 1", tabla);
+
+    if (!preparar_stmt(&stmt, sql))
+        return 0;
+
+    sqlite3_bind_int(stmt, 1, id);
+    int existe = (sqlite3_step(stmt) == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    return existe;
+}
+
+static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        if (safe_strnlen(buffer, (size_t)size) == 10 &&
+            buffer[4] == '-' && buffer[7] == '-')
+        {
+            return;
+        }
+        printf("Fecha inválida. Use formato YYYY-MM-DD.\n");
+    }
+}
+
 /**
  * @brief Estructura para almacenar estadísticas de partidos
  */
@@ -454,12 +483,32 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
         return 0;
     }
 
-    printf("\nIngrese ID de primera %s: ", tabla);
-    scanf_s("%d", id1);
-    printf("Ingrese ID de segunda %s: ", tabla);
-    scanf_s("%d", id2);
+    while (1)
+    {
+        *id1 = input_int("\nIngrese ID de la primera entidad (0 para cancelar): ");
+        if (*id1 == 0)
+            return 0;
+        if (!existe_id_entidad(tabla, *id1))
+        {
+            printf("ID inválido.\n");
+            continue;
+        }
 
-    return 1;
+        *id2 = input_int("Ingrese ID de la segunda entidad (0 para cancelar): ");
+        if (*id2 == 0)
+            return 0;
+        if (!existe_id_entidad(tabla, *id2))
+        {
+            printf("ID inválido.\n");
+            continue;
+        }
+        if (*id1 == *id2)
+        {
+            printf("Los IDs deben ser diferentes.\n");
+            continue;
+        }
+        return 1;
+    }
 }
 
 /**
@@ -545,16 +594,22 @@ static void comparar_periodos()
     char fecha2_fin[20];
 
     printf("PRIMER PERIODO:\n");
-    printf("Fecha inicio: ");
-    scanf_s("%19s", fecha1_inicio, sizeof(fecha1_inicio));
-    printf("Fecha fin: ");
-    scanf_s("%19s", fecha1_fin, sizeof(fecha1_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio: ", fecha1_inicio, sizeof(fecha1_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha1_fin, sizeof(fecha1_fin));
+    while (strcmp(fecha1_fin, fecha1_inicio) < 0)
+    {
+        printf("La fecha de fin no puede ser anterior a la de inicio.\n");
+        solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha1_fin, sizeof(fecha1_fin));
+    }
 
     printf("\nSEGUNDO PERIODO:\n");
-    printf("Fecha inicio: ");
-    scanf_s("%19s", fecha2_inicio, sizeof(fecha2_inicio));
-    printf("Fecha fin: ");
-    scanf_s("%19s", fecha2_fin, sizeof(fecha2_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio: ", fecha2_inicio, sizeof(fecha2_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha2_fin, sizeof(fecha2_fin));
+    while (strcmp(fecha2_fin, fecha2_inicio) < 0)
+    {
+        printf("La fecha de fin no puede ser anterior a la de inicio.\n");
+        solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha2_fin, sizeof(fecha2_fin));
+    }
 
     char sql1[256];
     char sql2[256];
@@ -587,19 +642,39 @@ static void comparar_condiciones()
     printf("1. Clima (0=Soleado, 1=Lluvia, 2=Nublado)\n");
     printf("2. Dia de la semana (0=Lunes, 1=Martes, ..., 6=Domingo)\n");
 
-    int tipo_condicion;
-    printf("\nSeleccione tipo de condicion (1-2): ");
-    scanf_s("%d", &tipo_condicion);
+    int tipo_condicion = 0;
+    while (tipo_condicion < 1 || tipo_condicion > 2)
+    {
+        tipo_condicion = input_int("\nSeleccione tipo de condicion (1-2): ");
+        if (tipo_condicion < 1 || tipo_condicion > 2)
+            printf("Opción inválida.\n");
+    }
 
     int valor1;
     int valor2;
     const char *campo = (tipo_condicion == 1) ? "clima" : "dia";
     const char *tipo_texto = (tipo_condicion == 1) ? "Clima" : "Dia";
 
-    printf("\nIngrese primer valor: ");
-    scanf_s("%d", &valor1);
-    printf("Ingrese segundo valor: ");
-    scanf_s("%d", &valor2);
+    int min_val = (tipo_condicion == 1) ? 0 : 0;
+    int max_val = (tipo_condicion == 1) ? 2 : 6;
+
+    while (1)
+    {
+        valor1 = input_int("\nIngrese primer valor: ");
+        valor2 = input_int("Ingrese segundo valor: ");
+
+        if (valor1 < min_val || valor1 > max_val || valor2 < min_val || valor2 > max_val)
+        {
+            printf("Valores inválidos. Rango permitido: %d a %d.\n", min_val, max_val);
+            continue;
+        }
+        if (valor1 == valor2)
+        {
+            printf("Los valores deben ser diferentes.\n");
+            continue;
+        }
+        break;
+    }
 
     char sql1[128];
     char sql2[128];
@@ -721,6 +796,11 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
     sqlite3_stmt *stmt;
     char sql[512];
 
+    /* 
+     * Se utiliza strftime('%m', fecha_hora) y strftime('%Y', fecha_hora) para agrupar los datos 
+     * a nivel mensual, permitiendo calcular promedios (AVG) por cada período mes-año.
+     * El orden persistente es descendente para mostrar primero los datos más recientes.
+     */
     snprintf(sql, sizeof(sql),
              "SELECT strftime('%%m', fecha_hora) as mes, strftime('%%Y', fecha_hora) as anio, "
              "AVG(%s), COUNT(*) "
@@ -844,6 +924,11 @@ static void comparar_inicio_fin_anio()
     print_header("INICIO VS FIN DE ANIO");
 
     sqlite3_stmt *stmt;
+    /*
+     * Clasifica los partidos en dos grandes semestres usando CAST y strftime.
+     * Esto permite un análisis comparativo de la evolución del rendimiento entre 
+     * la primera y la segunda mitad del año calendario.
+     */
     const char *sql =
         "SELECT "
         "CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN 'Inicio' ELSE 'Fin' END as periodo, "
@@ -1040,6 +1125,11 @@ static void calcular_progreso_total()
         return;
     }
 
+    /*
+     * Algoritmo de Tendencia: Se comparan los promedios de los primeros 5 partidos vs los últimos 5.
+     * Se usa UNION ALL para obtener ambos promedios en una sola ejecución de statement,
+     * optimizando el acceso a la base de datos para el cálculo del delta de rendimiento.
+     */
     sqlite3_stmt *tend_stmt;
     const char *tend_sql =
         "SELECT AVG(rendimiento_general) FROM "

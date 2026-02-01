@@ -1,6 +1,9 @@
 /**
  * @file ascii_art.h
- * @brief Definiciones de arte ASCII para el proyecto MiFutbolC
+ * @brief Colección de artes ASCII y funciones de visualización gráfica para MiFutbolC
+ *
+ * Proporciona un conjunto de constantes y funciones para mejorar la interfaz visual
+ * de la aplicación mediante el uso de arte ASCII y animaciones sencillas en consola.
  */
 
 #ifndef ASCII_ART_H
@@ -9,7 +12,7 @@
 #include <stdio.h>
 
 /**
- * @brief Arte ASCII para la pantalla de bienvenida
+ * @brief Arte ASCII para la pantalla de bienvenida con el título del sistema
  */
 #define ASCII_BIENVENIDA \
      ".___  ___.  __   _______  __    __  .___________..______     ______    __        ______ \n" \
@@ -22,7 +25,7 @@
     "                          MiFutbolC v3.5\n\n"
 
 /**
- * @brief Arte ASCII para camisetas
+ * @brief Título artístico para el módulo de Camisetas
  */
 #define ASCII_CAMISETA \
     "   ____                _          _            \n" \
@@ -33,7 +36,7 @@
     "                                                \n"
 
 /**
- * @brief Arte ASCII para estadisticas
+ * @brief Título artístico para el módulo de Estadísticas
  */
 #define ASCII_ESTADISTICAS \
     "  _____     _            _ _     _   _               \n" \
@@ -43,7 +46,7 @@
     " |_____|___/\\__\\__,_|\\__,_|_|___/\\__|_|\\___\\__,_|___/\n"
 
 /**
- * @brief Arte ASCII para futbol
+ * @brief Título artístico general de Fútbol
  */
 #define ASCII_FUTBOL \
     "  ____            _   _     _           \n" \
@@ -54,7 +57,7 @@
     "                                        \n"
 
 /**
- * @brief Arte ASCII para canchas
+ * @brief Título artístico para el módulo de Canchas
  */
 #define ASCII_CANCHA \
     "   ____                 _               \n" \
@@ -65,7 +68,7 @@
     "                                        \n"
 
 /**
- * @brief Arte ASCII para equipos
+ * @brief Título artístico para el módulo de Equipos
  */
 #define ASCII_EQUIPO \
     "  _____            _                 \n" \
@@ -76,7 +79,7 @@
     "         |_|       |_|              \n"
 
 /**
- * @brief Arte ASCII para logros
+ * @brief Título artístico para el módulo de Logros y Badges
  */
 #define ASCII_LOGROS \
     "  _                              \n" \
@@ -87,7 +90,7 @@
     "             |___/               \n"
 
 /**
- * @brief Arte ASCII para analisis
+ * @brief Título artístico para el módulo de Análisis Técnico
  */
 #define ASCII_ANALISIS \
     "     _                _ _     _     \n" \
@@ -98,7 +101,7 @@
     "                                    \n"
 
 /**
- * @brief Arte ASCII para lesiones
+ * @brief Título artístico para el módulo de Lesiones
  */
 #define ASCII_LESIONES \
     "  _              _                       \n" \
@@ -108,7 +111,7 @@
     " |_____\\___||___/_|\\___/|_| |_|\\___||___/\n"
 
 /**
- * @brief Arte ASCII para financiamiento
+ * @brief Título artístico para el módulo de Financiamiento
  */
 #define ASCII_FINANCIAMIENTO \
     "  _____ _                        _                 _            _        \n" \
@@ -118,7 +121,7 @@
     " |_|   |_|_| |_|\\__,_|_| |_|\\___|_|\\__,_|_| |_| |_|_|\\___|_| |_|\\__|\\___/ \n"
 
 /**
- * @brief Arte ASCII para exportar
+ * @brief Título artístico para el módulo de Exportación de Datos
  */
 #define ASCII_EXPORTAR \
     "  _____                       _             \n" \
@@ -129,7 +132,7 @@
     "            |_|                              \n"
 
 /**
- * @brief Arte ASCII para importar
+ * @brief Título artístico para el módulo de Importación de Datos
  */
 #define ASCII_IMPORTAR \
     "  ___                            _             \n" \
@@ -137,10 +140,10 @@
     "  | || '_ ` _ \\| '_ \\ / _ \\| '__| __/ _` | '__|\n" \
     "  | || | | | | | |_) | (_) | |  | || (_| | |   \n" \
     " |___|_| |_| |_| .__/ \\___/|_|   \\__\\__,_|_|   \n" \
-    "               |_|                              \n"
+               "               |_|                              \n"
 
 /**
- * @brief Arte ASCII para torneos
+ * @brief Título artístico para el módulo de Torneos
  */
 #define ASCII_TORNEOS \
     "  _____                               \n" \
@@ -150,7 +153,7 @@
     "   |_|\\___/|_|  |_| |_|\\___|\\___/|___/\n"
 
 /**
- * @brief Arte ASCII para ajustes
+ * @brief Título artístico para el panel de Ajustes y Configuración
  */
 #define ASCII_AJUSTES \
     "     _     _           _            \n" \
@@ -161,7 +164,7 @@
     "        |__/                        \n"
 
 /**
- * @brief Arte ASCII para QR
+ * @brief Icono artístico para generación de Códigos QR
  */
 #define ASCII_QR \
     "   ___  ____  \n" \
@@ -171,7 +174,7 @@
     "  \\___\\_|_| \\_\\\n"
 
 /**
- * @brief Arte ASCII para temporada
+ * @brief Título artístico para la gestión de Temporadas
  */
 #define ASCII_TEMPORADA \
     "  _____                                        _       \n" \
@@ -182,7 +185,7 @@
     "                    |_|                                \n"
 
 /**
- * @brief Arte ASCII para entrenador IA
+ * @brief Título artístico para el Entrenador IA
  */
 #define ASCII_ENTRENADOR_IA \
     "  _____       _                            _              ___    _    \n" \
@@ -192,14 +195,18 @@
     " |_____|_| |_|\\__|_|  \\___|_| |_|\\__,_|\\__,_|\\___/|_|    |___/_/   \\_\\\n"
 
 /**
- * @brief Genera cancha de fútbol animada con balón en movimiento
- * @param minuto Minuto actual del partido
- * @param evento_tipo Tipo de evento (0=normal, 1=gol, 2=oportunidad, 3=falta)
+ * @brief Genera una representación visual de una cancha de fútbol animada en consola
+ *
+ * Muestra el progreso de un partido simulado mediante un campo visual dinámico
+ * donde un balón se desplaza según el minuto y los eventos que ocurren.
+ *
+ * @param minuto Minuto actual del partido (0-90+)
+ * @param evento_tipo Código de evento (0=normal, 1=gol, 2=oportunidad, 3=falta)
  */
 void mostrar_cancha_animada(int minuto, int evento_tipo);
 
 /**
- * @brief Arte ASCII para título de simulación de partido
+ * @brief Logotipo artístico de Simulación de Partido en tiempo real
  */
 #define ASCII_SIMULACION \
     ".___  ___.  __   _______  __    __  .___________..______     ______    __        ______ \n" \
@@ -210,3 +217,4 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
     "|__|  |__| |__| |__|      \\______/      |__|     |______/   \\______/  |_______| \\______|\n"
 
 #endif /* ASCII_ART_H */
+

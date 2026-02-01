@@ -181,6 +181,17 @@ char* remover_tildes(const char *str);
  */
 size_t safe_strnlen(const char *s, size_t maxlen);
 
+#if !defined(__STDC_LIB_EXT1__)
+/**
+ * @brief Implementación compatible de strlen_s cuando Annex K no está disponible.
+ *
+ * @param s Cadena a medir
+ * @param maxlen Máximo número de caracteres a examinar
+ * @return Longitud de la cadena (máximo `maxlen`)
+ */
+size_t strlen_s(const char *s, size_t maxlen);
+#endif
+
 /**
  * @brief Convierte un valor de resultado a texto
  *

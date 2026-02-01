@@ -168,6 +168,27 @@ static void ejecutar_update_texto(const char *sql, const char *valor, int id_tra
     }
 }
 
+static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        if (safe_strnlen(buffer, (size_t)size) > 0)
+            return;
+        printf("El campo no puede estar vacío.\n");
+    }
+}
+
+static int solicitar_monto_no_negativo(const char *prompt)
+{
+    int monto = input_int(prompt);
+    while (monto < 0)
+    {
+        monto = input_int("Monto inválido. Ingrese 0 o más: ");
+    }
+    return monto;
+}
+
 /**
  * @brief Muestra un monto entero con formato de miles (puntos como separadores)
  */
@@ -433,7 +454,16 @@ static int completar_item_especifico(TransaccionFinanciera *transaccion)
         listar_partidos();
         printf("\n");
 
-        int id_partido = input_int("Ingrese el ID del partido: ");
+        int id_partido = 0;
+        while (1)
+        {
+            id_partido = input_int("Ingrese el ID del partido (0 para cancelar): ");
+            if (id_partido == 0)
+                return 0;
+            if (existe_id("partido", id_partido))
+                break;
+            printf("ID de partido inválido. Intente nuevamente.\n");
+        }
 
         if (!verificar_partido_precio_asignado(id_partido))
         {
@@ -541,10 +571,10 @@ void agregar_transaccion()
     }
 
     // Descripción
-    input_string("Descripcion: ", transaccion.descripcion, sizeof(transaccion.descripcion));
+    solicitar_texto_no_vacio("Descripcion: ", transaccion.descripcion, sizeof(transaccion.descripcion));
 
     // Monto
-    transaccion.monto = input_int("Monto: ");
+    transaccion.monto = solicitar_monto_no_negativo("Monto: ");
 
     if (!completar_item_especifico(&transaccion))
     {
@@ -576,6 +606,18 @@ void agregar_transaccion()
  */
 void menu_presupuestos_mensuales()
 {
+#ifdef UNIT_TEST
+    MenuItem items[] =
+    {
+        {1, "Configurar Presupuesto Mensual", configurar_presupuesto_mensual},
+        {2, "Ver Estado del Presupuesto", ver_estado_presupuesto},
+        {3, "Verificar Alertas de Gasto", verificar_alertas_presupuesto},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("PRESUPUESTOS MENSUALES", items, 4);
+    return;
+#endif
     clear_screen();
     print_header("PRESUPUESTOS MENSUALES");
 
@@ -1757,13 +1799,16 @@ static void modificar_fecha_transaccion(int id_transaccion)
 {
     printf("Nueva fecha (YYYY-MM-DD): ");
     char nueva_fecha[20] = "";
-    input_date("", nueva_fecha, sizeof(nueva_fecha));
-    if (safe_strnlen(nueva_fecha, sizeof(nueva_fecha)) > 0)
+    while (1)
     {
-        const char *sql = "UPDATE financiamiento SET fecha = ? WHERE id = ?;";
-        ejecutar_update_texto(sql, nueva_fecha, id_transaccion);
-        printf("Fecha actualizada exitosamente.\n");
+        input_date("", nueva_fecha, sizeof(nueva_fecha));
+        if (safe_strnlen(nueva_fecha, sizeof(nueva_fecha)) > 0)
+            break;
+        printf("La fecha no puede estar vacía.\n");
     }
+    const char *sql = "UPDATE financiamiento SET fecha = ? WHERE id = ?;";
+    ejecutar_update_texto(sql, nueva_fecha, id_transaccion);
+    printf("Fecha actualizada exitosamente.\n");
 }
 
 /**
@@ -1773,12 +1818,14 @@ static void modificar_tipo_transaccion(int id_transaccion)
 {
     printf("Nuevo tipo:\n1. Ingreso\n2. Gasto\n");
     int nuevo_tipo = input_int(">") - 1;
-    if (nuevo_tipo >= 0 && nuevo_tipo <= 1)
+    if (nuevo_tipo < 0 || nuevo_tipo > 1)
     {
-        const char *sql = "UPDATE financiamiento SET tipo = ? WHERE id = ?;";
-        ejecutar_update_int(sql, nuevo_tipo, id_transaccion);
-        printf("Tipo actualizado exitosamente.\n");
+        printf("Opción inválida.\n");
+        return;
     }
+    const char *sql = "UPDATE financiamiento SET tipo = ? WHERE id = ?;";
+    ejecutar_update_int(sql, nuevo_tipo, id_transaccion);
+    printf("Tipo actualizado exitosamente.\n");
 }
 
 /**
@@ -1790,12 +1837,14 @@ static void modificar_categoria_transaccion(int id_transaccion)
     printf("1. Transporte\n2. Equipamiento\n3. Cuotas\n4. Torneos\n");
     printf("5. Arbitraje\n6. Canchas\n7. Medicina\n8. Otros\n");
     int nueva_categoria = input_int(">") - 1;
-    if (nueva_categoria >= 0 && nueva_categoria <= 7)
+    if (nueva_categoria < 0 || nueva_categoria > 7)
     {
-        const char *sql = "UPDATE financiamiento SET categoria = ? WHERE id = ?;";
-        ejecutar_update_int(sql, nueva_categoria, id_transaccion);
-        printf("Categoria actualizada exitosamente.\n");
+        printf("Opción inválida.\n");
+        return;
     }
+    const char *sql = "UPDATE financiamiento SET categoria = ? WHERE id = ?;";
+    ejecutar_update_int(sql, nueva_categoria, id_transaccion);
+    printf("Categoria actualizada exitosamente.\n");
 }
 
 /**
@@ -1805,7 +1854,7 @@ static void modificar_descripcion_transaccion(int id_transaccion)
 {
     printf("Nueva descripcion: ");
     char nueva_descripcion[200] = "";
-    input_string("", nueva_descripcion, sizeof(nueva_descripcion));
+    solicitar_texto_no_vacio("", nueva_descripcion, sizeof(nueva_descripcion));
     const char *sql = "UPDATE financiamiento SET descripcion = ? WHERE id = ?;";
     ejecutar_update_texto(sql, nueva_descripcion, id_transaccion);
     printf("Descripcion actualizada exitosamente.\n");
@@ -1816,7 +1865,7 @@ static void modificar_descripcion_transaccion(int id_transaccion)
  */
 static void modificar_monto_transaccion(int id_transaccion)
 {
-    int nuevo_monto = input_int("Nuevo monto: ");
+    int nuevo_monto = solicitar_monto_no_negativo("Nuevo monto: ");
     const char *sql = "UPDATE financiamiento SET monto = ? WHERE id = ?;";
     ejecutar_update_int(sql, nuevo_monto, id_transaccion);
     printf("Monto actualizado exitosamente.\n");

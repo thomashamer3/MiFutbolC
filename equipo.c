@@ -15,6 +15,8 @@
 #include <time.h>
 #include <Windows.h>
 #include "sqlite3.h"
+#include <ctype.h>
+#include <limits.h>
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -66,6 +68,44 @@ static int ejecutar_update_id(const char *sql, int id)
     int result = (sqlite3_step(stmt) == SQLITE_DONE);
     sqlite3_finalize(stmt);
     return result;
+}
+
+static void trim_whitespace(char *str)
+{
+    if (!str)
+        return;
+
+    size_t total = strlen_s(str, SIZE_MAX);
+    if (total == 0)
+        return;
+
+    const char *start = str;
+    while (*start && isspace((unsigned char)*start))
+        start++;
+
+    const char *end = start + strlen_s(start, SIZE_MAX);
+    while (end > start && isspace((unsigned char)*(end - 1)))
+        end--;
+
+    size_t len = (size_t)(end - start);
+    if (start != str)
+        memmove(str, start, len + 1);
+    else
+        str[len] = '\0';
+}
+
+static void solicitar_nombre_equipo(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        trim_whitespace(buffer);
+
+        if (buffer[0] != '\0')
+            return;
+
+        printf("El nombre no puede estar vacío.\n");
+    }
 }
 
 // Data structures to reduce parameter count in functions
@@ -347,7 +387,7 @@ void show_available_teams_for_modification()
 void handle_modify_team_name(int equipo_id)
 {
     char nuevo_nombre[50];
-    input_string("Ingrese el nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
+    solicitar_nombre_equipo("Ingrese el nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
 
     const char *sql_update = "UPDATE equipo SET nombre = ? WHERE id = ?;";
     if (ejecutar_update_text(sql_update, nuevo_nombre, equipo_id))
@@ -838,6 +878,11 @@ void mostrar_cancha_animada(int minuto, int evento_tipo)
     printf("=======================================\n");
 
     // Mostrar la posición del balón basada en el minuto y tipo de evento
+    /*
+     * El índice de posición se calcula de forma cíclica (módulo 12) utilizando el minuto
+     * actual y el tipo de evento para variar la visualización dinámicamente cada vez 
+     * que la función es llamada durante la simulación.
+     */
     int posicion_index = (minuto + evento_tipo) % 12;
     printf("%s\n", posiciones[posicion_index]);
 
@@ -1037,7 +1082,7 @@ void input_equipo_basico(Equipo *equipo, TipoFutbol tipo_futbol, int num_jugador
     equipo->num_jugadores = num_jugadores;
 
     // Solicitar nombre del equipo
-    input_string("Ingrese el nombre del equipo: ", equipo->nombre, sizeof(equipo->nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo: ", equipo->nombre, sizeof(equipo->nombre));
 }
 
 /**
@@ -1929,7 +1974,7 @@ void crear_dos_equipos_momentaneos()
     equipo_visitante.num_jugadores = num_jugadores;
 
     // Solicitar nombre del equipo local
-    input_string("Ingrese el nombre del equipo LOCAL: ", equipo_local.nombre, sizeof(equipo_local.nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo LOCAL: ", equipo_local.nombre, sizeof(equipo_local.nombre));
 
     // Solicitar información de jugadores para equipo local
     crear_jugadores_equipo(&equipo_local, 1, "EQUIPO LOCAL - ");
@@ -1952,7 +1997,7 @@ void crear_dos_equipos_momentaneos()
     }
 
     // Solicitar nombre del equipo visitante
-    input_string("Ingrese el nombre del equipo VISITANTE: ", equipo_visitante.nombre, sizeof(equipo_visitante.nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo VISITANTE: ", equipo_visitante.nombre, sizeof(equipo_visitante.nombre));
 
     // Solicitar información de jugadores para equipo visitante
     crear_jugadores_equipo(&equipo_visitante, 1, "EQUIPO VISITANTE - ");

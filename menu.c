@@ -5,7 +5,7 @@
 #include <string.h>
 #include <locale.h>
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #endif
 #include "db.h"
 #include "camiseta.h"
@@ -37,22 +37,22 @@ struct MenuItemDefinition
 
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
-    {1, "Camisetas", menu_camisetas},
-    {2, "Canchas", menu_canchas},
-    {3, "Equipos", menu_equipos},
-    {4, "Partidos", menu_partidos},
-    {5, "Lesiones", menu_lesiones},
-    {6, "Estadisticas", menu_estadisticas},
-    {7, "QR", menu_qr},
-    {8, "Logros", menu_logros},
-    {9, "Financiamiento", menu_financiamiento},
-    {10, "Torneos", menu_torneos},
-    {11, "Temporada", menu_temporadas},
-    {12, "Analisis", mostrar_analisis},
-    {13, "Entrenador IA", menu_entrenador_ia},
-    {14, "Exportar", menu_exportar},
-    {15, "Importar", menu_importar},
-    {16, "Ajustes", menu_settings},
+    {1, "Camisetas", &menu_camisetas},
+    {2, "Canchas", &menu_canchas},
+    {3, "Equipos", &menu_equipos},
+    {4, "Partidos", &menu_partidos},
+    {5, "Lesiones", &menu_lesiones},
+    {6, "Estadisticas", &menu_estadisticas},
+    {7, "QR", &menu_qr},
+    {8, "Logros", &menu_logros},
+    {9, "Financiamiento", &menu_financiamiento},
+    {10, "Torneos", &menu_torneos},
+    {11, "Temporada", &menu_temporadas},
+    {12, "Analisis", &mostrar_analisis},
+    {13, "Entrenador IA", &menu_entrenador_ia},
+    {14, "Exportar", &menu_exportar},
+    {15, "Importar", &menu_importar},
+    {16, "Ajustes", &menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -71,6 +71,30 @@ static const MenuItem *buscar_item(const MenuItem *items, int cantidad, int opci
     }
     return NULL;
 }
+
+#ifdef UNIT_TEST
+static MenuTestCapture *g_menu_test_capture = NULL;
+
+int menu_get_item_count(void)
+{
+    return (int)MENU_ITEM_COUNT;
+}
+
+const MenuItem *menu_get_items(void)
+{
+    return (const MenuItem *)MENU_ITEMS;
+}
+
+const MenuItem *menu_buscar_item(const MenuItem *items, int cantidad, int opcion)
+{
+    return buscar_item(items, cantidad, opcion);
+}
+
+void menu_test_set_capture(MenuTestCapture *capture)
+{
+    g_menu_test_capture = capture;
+}
+#endif
 
 /**
  * @brief Inicializa la aplicación: consola, locale, base de datos y configuración
@@ -161,6 +185,24 @@ void run_menu(MenuItem* filtered_items, int count)
  */
 void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
+#ifdef UNIT_TEST
+    if (g_menu_test_capture)
+    {
+        g_menu_test_capture->titulo = titulo;
+        g_menu_test_capture->cantidad = cantidad;
+        if (items && cantidad > 0)
+        {
+            g_menu_test_capture->last_item = items[cantidad - 1];
+        }
+        else
+        {
+            g_menu_test_capture->last_item.opcion = 0;
+            g_menu_test_capture->last_item.texto = NULL;
+            g_menu_test_capture->last_item.accion = NULL;
+        }
+        return;
+    }
+#endif
     int opcion;
 
     while (1)

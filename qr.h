@@ -1,3 +1,12 @@
+/**
+ * @file qr.h
+ * @brief Sistema de generación de códigos QR para datos deportivos
+ *
+ * Proporciona funcionalidades para generar códigos QR que contienen información
+ * de partidos, jugadores, temporadas y camisetas en formato JSON. Los códigos
+ * generados se guardan como imágenes PNG para fácil compartición y escaneo.
+ */
+
 #ifndef QR_H
 #define QR_H
 

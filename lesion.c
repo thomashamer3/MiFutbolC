@@ -77,6 +77,29 @@ static void ejecutar_update_int(const char *sql, int valor, int id)
     sqlite3_finalize(stmt);
 }
 
+static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        if (safe_strnlen(buffer, (size_t)size) > 0)
+            return;
+        printf("El campo no puede estar vacío.\n");
+    }
+}
+
+static const char *solicitar_estado_lesion(const char *prompt)
+{
+    while (1)
+    {
+        int opcion_estado = input_int(prompt);
+        const char *estado_sel = estado_por_opcion(opcion_estado);
+        if (estado_sel)
+            return estado_sel;
+        printf("Opción inválida. Intente nuevamente.\n");
+    }
+}
+
 /**
  * @brief Crea una nueva lesión en la base de datos
  *
@@ -93,9 +116,15 @@ void crear_lesion()
     char estado[50];
     int camiseta_id;
 
-    input_string("Tipo de lesion: ", tipo, sizeof(tipo));
-    input_string("Descripcion: ", descripcion, sizeof(descripcion));
-    camiseta_id = input_int("ID de la Camiseta Asociada: ");
+    solicitar_texto_no_vacio("Tipo de lesion: ", tipo, sizeof(tipo));
+    solicitar_texto_no_vacio("Descripcion: ", descripcion, sizeof(descripcion));
+    while (1)
+    {
+        camiseta_id = input_int("ID de la Camiseta Asociada: ");
+        if (existe_id("camiseta", camiseta_id))
+            break;
+        printf("La camiseta no existe. Intente nuevamente.\n");
+    }
 
     // Mostrar opciones de estado
     printf("\nEstados disponibles:\n");
@@ -105,12 +134,7 @@ void crear_lesion()
     printf("4. RECUPERADO - Alta médica\n");
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
-    int opcion_estado = input_int("Seleccione estado inicial (1-5): ");
-    const char *estado_sel = estado_por_opcion(opcion_estado);
-    if (!estado_sel)
-    {
-        estado_sel = "ACTIVA";
-    }
+    const char *estado_sel = solicitar_estado_lesion("Seleccione estado inicial (1-5): ");
     strcpy_s(estado, sizeof(estado), estado_sel);
 
     get_datetime(fecha, sizeof(fecha));
@@ -206,7 +230,7 @@ void listar_lesiones()
 static void modificar_tipo_lesion()
 {
     char tipo[100];
-    input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
+    solicitar_texto_no_vacio("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
     ejecutar_update_texto("UPDATE lesion SET tipo=? WHERE id=?", tipo, current_lesion_id);
     printf("Tipo modificado correctamente\n");
     pause_console();
@@ -218,7 +242,7 @@ static void modificar_tipo_lesion()
 static void modificar_descripcion_lesion()
 {
     char descripcion[200];
-    input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
+    solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
     ejecutar_update_texto("UPDATE lesion SET descripcion=? WHERE id=?", descripcion, current_lesion_id);
     printf("Descripcion modificada correctamente\n");
     pause_console();
@@ -250,7 +274,16 @@ static void modificar_fecha_lesion()
 static void modificar_camiseta_lesion()
 {
     listar_camisetas();
-    int camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
+    int camiseta_id = 0;
+    while (1)
+    {
+        camiseta_id = input_int("Nuevo ID de la Camiseta Asociada (0 para cancelar): ");
+        if (camiseta_id == 0)
+            return;
+        if (existe_id("camiseta", camiseta_id))
+            break;
+        printf("La camiseta no existe. Intente nuevamente.\n");
+    }
     ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id, current_lesion_id);
     printf("Camiseta modificada correctamente\n");
     pause_console();
@@ -268,14 +301,7 @@ static void modificar_estado_lesion()
     printf("4. RECUPERADO - Alta médica\n");
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
-    int opcion_estado = input_int("Seleccione nuevo estado (1-5): ");
-    const char *estado = estado_por_opcion(opcion_estado);
-    if (!estado)
-    {
-        printf("Opción inválida\n");
-        pause_console();
-        return;
-    }
+    const char *estado = solicitar_estado_lesion("Seleccione nuevo estado (1-5): ");
 
     ejecutar_update_texto("UPDATE lesion SET estado=? WHERE id=?", estado, current_lesion_id);
     printf("Estado modificado correctamente a: %s\n", estado);
@@ -293,10 +319,16 @@ static void modificar_todo_lesion()
     char estado[50];
     int camiseta_id;
 
-    input_string("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
-    input_string("Nueva descripcion: ", descripcion, sizeof(descripcion));
+    solicitar_texto_no_vacio("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
+    solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
     input_date("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
-    camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
+    while (1)
+    {
+        camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
+        if (existe_id("camiseta", camiseta_id))
+            break;
+        printf("La camiseta no existe. Intente nuevamente.\n");
+    }
 
     // Mostrar opciones de estado
     printf("\nEstados disponibles:\n");
@@ -306,12 +338,7 @@ static void modificar_todo_lesion()
     printf("4. RECUPERADO - Alta médica\n");
     printf("5. RECAÍDA - Vuelve la lesión\n");
 
-    int opcion_estado = input_int("Seleccione estado (1-5): ");
-    const char *estado_sel = estado_por_opcion(opcion_estado);
-    if (!estado_sel)
-    {
-        estado_sel = "ACTIVA";
-    }
+    const char *estado_sel = solicitar_estado_lesion("Seleccione estado (1-5): ");
     strcpy_s(estado, sizeof(estado), estado_sel);
 
     sqlite3_stmt *stmt;
@@ -356,9 +383,13 @@ void modificar_lesion()
 
     int id = input_int("\nID Lesion a Modificar (0 para cancelar): ");
 
+    if (id == 0)
+        return;
+
     if (!existe_id("lesion", id))
     {
         mostrar_no_existe("lesion");
+        pause_console();
         return;
     }
 
@@ -415,6 +446,8 @@ void eliminar_lesion()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM lesion WHERE id=?", &stmt))
+        if (id == 0)
+            return;
     {
         pause_console();
         return;
@@ -560,11 +593,18 @@ void actualizar_estados_lesiones()
     {
         int id_lesion = input_int("Ingrese el ID de la lesión a actualizar (0 para cancelar): ");
 
-        if (id_lesion != 0 && existe_id("lesion", id_lesion))
+        if (id_lesion == 0)
+            return;
+
+        if (!existe_id("lesion", id_lesion))
         {
-            current_lesion_id = id_lesion;
-            modificar_estado_lesion();
+            mostrar_no_existe("lesion");
+            pause_console();
+            return;
         }
+
+        current_lesion_id = id_lesion;
+        modificar_estado_lesion();
     }
 
     pause_console();

@@ -9,7 +9,7 @@
 #include "financiamiento.h"
 #include <stdio.h>
 #include <string.h>
-#include <windows.h>
+#include <Windows.h>
 #include <stdlib.h>
 #include <time.h>
 #include <process.h>
@@ -175,8 +175,9 @@ static void listar_canchas_disponibles()
  * Utiliza bucles para reintentar entradas inválidas, mejorando la experiencia del usuario.
  *
  * @param datos Puntero a la estructura DatosPartido que contendrá los datos recopilados
+ * @return 1 si los datos son válidos, 0 si se cancela o hay error
  */
-static void recopilar_datos_partido(DatosPartido *datos)
+static int recopilar_datos_partido(DatosPartido *datos)
 {
     // Initialize all fields to safe default values
     datos->cancha_id = 0;
@@ -192,20 +193,40 @@ static void recopilar_datos_partido(DatosPartido *datos)
     datos->precio = 0;
     strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
 
-    datos->cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
-    if (!existe_id("cancha", datos->cancha_id))
-        return;
+    while (1)
+    {
+        datos->cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
+        if (datos->cancha_id == 0)
+            return 0;
+        if (existe_id("cancha", datos->cancha_id))
+            break;
+        printf("La cancha no existe. Intente nuevamente.\n");
+    }
+
     datos->goles = input_int("Goles: ");
+    while (datos->goles < 0)
+    {
+        datos->goles = input_int("Goles inválidos. Ingrese 0 o más: ");
+    }
+
     datos->asistencias = input_int("Asistencias: ");
+    while (datos->asistencias < 0)
+    {
+        datos->asistencias = input_int("Asistencias inválidas. Ingrese 0 o más: ");
+    }
     datos->resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
     while (datos->resultado < 1 || datos->resultado > 3)
     {
         datos->resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
     }
     listar_camisetas();
-    datos->camiseta = input_int("ID Camiseta: ");
-    if (!existe_id("camiseta", datos->camiseta))
-        return;
+    while (1)
+    {
+        datos->camiseta = input_int("ID Camiseta: ");
+        if (existe_id("camiseta", datos->camiseta))
+            break;
+        printf("La camiseta no existe. Intente nuevamente.\n");
+    }
     datos->rendimiento_general = input_int("Rendimiento general (1-10): ");
     while (datos->rendimiento_general < 1 || datos->rendimiento_general > 10)
     {
@@ -233,6 +254,12 @@ static void recopilar_datos_partido(DatosPartido *datos)
         datos->dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
     }
     datos->precio = input_int("Precio del partido: ");
+    while (datos->precio < 0)
+    {
+        datos->precio = input_int("Precio inválido. Ingrese 0 o más: ");
+    }
+
+    return 1;
 }
 
 /**
@@ -404,7 +431,8 @@ void crear_partido()
 
     DatosPartido datos;
     listar_canchas_disponibles();
-    recopilar_datos_partido(&datos);
+    if (!recopilar_datos_partido(&datos))
+        return;
 
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
@@ -696,7 +724,30 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
  */
 static void modificar_cancha_partido()
 {
-    modificar_campo_partido("cancha_id", "Nuevo ID Cancha: ", "Cancha modificada correctamente", 1, 500000, &listar_canchas_disponibles);
+    listar_canchas_disponibles();
+    int cancha = 0;
+    while (1)
+    {
+        cancha = input_int("Nuevo ID Cancha (0 para cancelar): ");
+        if (cancha == 0)
+            return;
+        if (existe_id("cancha", cancha))
+            break;
+        printf("La cancha no existe. Intente nuevamente.\n");
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET cancha_id=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, cancha);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    printf("Cancha modificada correctamente\n");
+    pause_console();
 }
 
 /**
@@ -933,9 +984,13 @@ void modificar_partido()
 
     int id = input_int("ID Partido a Modificar (0 para cancelar): ");
 
+    if (id == 0)
+        return;
+
     if (!existe_id("partido", id))
     {
         printf("El Partido no Existe\n");
+        pause_console();
         return;
     }
 

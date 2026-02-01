@@ -3,10 +3,51 @@
 #include "db.h"
 #include "utils.h"
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static void trim_whitespace(char *str)
+{
+    if (!str)
+        return;
+
+    size_t total = strlen_s(str, SIZE_MAX);
+    if (total == 0)
+        return;
+
+    char const *start = str;
+    while (*start && isspace((unsigned char)*start))
+        start++;
+
+    char const *end = start + strlen_s(start, SIZE_MAX);
+    while (end > start && isspace((unsigned char)*(end - 1)))
+        end--;
+
+    size_t len = (size_t)(end - start);
+    if (start != str)
+        memmove(str, start, len + 1);
+    else
+        str[len] = '\0';
+}
+
+static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        trim_whitespace(buffer);
+
+        if (buffer[0] != '\0')
+            return;
+
+        printf("El nombre no puede estar vacío.\n");
+    }
 }
 
 
@@ -20,7 +61,7 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 void crear_cancha()
 {
     char nombre[100];
-    input_string("Nombre de la cancha: ", nombre, 100);
+    solicitar_nombre_cancha("Nombre de la cancha: ", nombre, sizeof(nombre));
 
     long long id = obtener_siguiente_id("cancha");
 
@@ -120,6 +161,8 @@ void modificar_cancha()
     printf("\n");
 
     int id = input_int("ID Cancha a Modificar (0 para cancelar): ");
+    if (id == 0)
+        return;
 
     if (!existe_id("cancha", id))
     {
@@ -128,7 +171,7 @@ void modificar_cancha()
     }
 
     char nombre[100];
-    input_string("Nuevo nombre de la cancha: ", nombre, sizeof(nombre));
+    solicitar_nombre_cancha("Nuevo nombre de la cancha: ", nombre, sizeof(nombre));
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "UPDATE cancha SET nombre = ? WHERE id = ?"))

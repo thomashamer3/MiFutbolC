@@ -1,10 +1,3 @@
-/**
- * @file camiseta.c
- * @brief Funciones para gestionar camisetas (jerseys)
- * @author Usuario
- * @date 2025
- */
-
 #include "camiseta.h"
 #include "menu.h"
 #include "db.h"
@@ -14,6 +7,8 @@
 #include <string.h>
 #include <time.h>
 #include <process.h>
+#include <ctype.h>
+#include <limits.h>
 
 #define MAX_CAMISETAS_SORTEO 150
 
@@ -35,6 +30,44 @@ static int obtener_total(const char *sql)
     int total = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
     return total;
+}
+
+static void trim_whitespace(char *str)
+{
+    if (!str)
+        return;
+
+    size_t total = strlen_s(str, SIZE_MAX);
+    if (total == 0)
+        return;
+
+    char const *start = str;
+    while (*start && isspace((unsigned char)*start))
+        start++;
+
+    char const *end = start + strlen_s(start, SIZE_MAX);
+    while (end > start && isspace((unsigned char)*(end - 1)))
+        end--;
+
+    size_t len = (size_t)(end - start);
+    if (start != str)
+        memmove(str, start, len + 1);
+    else
+        str[len] = '\0';
+}
+
+static void solicitar_nombre_camiseta(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        trim_whitespace(buffer);
+
+        if (buffer[0] != '\0')
+            return;
+
+        printf("El nombre no puede estar vacío.\n");
+    }
 }
 
 static void listar_camisetas_simple()
@@ -63,18 +96,6 @@ static void listar_camisetas_simple()
 }
 
 /**
- * @brief Verifica si hay camisetas registradas en la base de datos
- *
- * Previene operaciones en datasets vacíos y permite mostrar mensajes
- * informativos apropiados al usuario.
- *
- * @return 1 si hay al menos una camiseta, 0 si no hay ninguna
- */
-// FUNCIÓN ELIMINADA: obtener_siguiente_id_camiseta() - ahora usa obtener_siguiente_id("camiseta") de utils.c
-
-// FUNCIÓN ELIMINADA: hay_camisetas() - ahora usa hay_registros("camiseta") de utils.c
-
-/**
  * @brief Crea una nueva camiseta en la base de datos
  *
  * Permite a los usuarios agregar camisetas para gestión y sorteos,
@@ -84,7 +105,7 @@ void crear_camiseta()
 {
     clear_screen();
     char nombre[50];
-    input_string("Nombre y Numero: ", nombre, 50);
+    solicitar_nombre_camiseta("Nombre y Numero: ", nombre, sizeof(nombre));
 
     long long id = obtener_siguiente_id("camiseta");
 
@@ -150,7 +171,7 @@ void editar_camiseta()
     }
 
     char nombre[100];
-    input_string("Nuevo nombre: ", nombre, sizeof(nombre));
+    solicitar_nombre_camiseta("Nuevo nombre: ", nombre, sizeof(nombre));
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "UPDATE camiseta SET nombre=? WHERE id=?"))
@@ -375,7 +396,7 @@ void menu_camisetas()
     {
         {1, "Crear", crear_camiseta},
         {2, "Listar", listar_camisetas},
-        {3, "Editar", editar_camiseta},
+        {3, "Modificar", editar_camiseta},
         {4, "Eliminar", eliminar_camiseta},
         {5, "Sortear", sortear_camiseta},
         {0, "Volver", NULL}

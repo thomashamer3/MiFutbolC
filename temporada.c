@@ -26,6 +26,31 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
+static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        if (safe_strnlen(buffer, (size_t)size) > 0)
+            return;
+        printf("El campo no puede estar vacío.\n");
+    }
+}
+
+static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string(prompt, buffer, size);
+        if (safe_strnlen(buffer, (size_t)size) == 10 &&
+            buffer[4] == '-' && buffer[7] == '-')
+        {
+            return;
+        }
+        printf("Fecha inválida. Use formato YYYY-MM-DD.\n");
+    }
+}
+
 const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
 {
     switch (tipo)
@@ -125,14 +150,21 @@ void crear_temporada()
     temporada.estado[0] = '\0'; // Inicializar como vacío
 
     // Solicitar datos básicos
-    input_string("Nombre de la temporada: ", temporada.nombre, sizeof(temporada.nombre));
+    solicitar_texto_no_vacio("Nombre de la temporada: ", temporada.nombre, sizeof(temporada.nombre));
     temporada.anio = input_int("Año de la temporada: ");
+    while (temporada.anio <= 0)
+    {
+        temporada.anio = input_int("Año inválido. Ingrese un año válido: ");
+    }
 
-    printf("Fecha de inicio (YYYY-MM-DD): ");
-    input_string("", temporada.fecha_inicio, sizeof(temporada.fecha_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha de inicio (YYYY-MM-DD): ", temporada.fecha_inicio, sizeof(temporada.fecha_inicio));
 
-    printf("Fecha de fin (YYYY-MM-DD): ");
-    input_string("", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha de fin (YYYY-MM-DD): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+    while (strcmp(temporada.fecha_fin, temporada.fecha_inicio) < 0)
+    {
+        printf("La fecha de fin no puede ser anterior a la de inicio.\n");
+        solicitar_fecha_yyyy_mm_dd("Fecha de fin (YYYY-MM-DD): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+    }
 
     input_string("Descripción (opcional): ", temporada.descripcion, sizeof(temporada.descripcion));
 
@@ -367,7 +399,7 @@ void modificar_temporada()
     case 1:
     {
         char nuevo_nombre[100];
-        input_string("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
+        solicitar_texto_no_vacio("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
 
         const char *sql = "UPDATE temporada SET nombre = ? WHERE id = ?;";
         if (preparar_stmt(sql, &stmt))
@@ -384,10 +416,13 @@ void modificar_temporada()
     {
         char nueva_fecha_inicio[20];
         char nueva_fecha_fin[20];
-        printf("Nueva fecha de inicio (YYYY-MM-DD): ");
-        input_string("", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
-        printf("Nueva fecha de fin (YYYY-MM-DD): ");
-        input_string("", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (YYYY-MM-DD): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (YYYY-MM-DD): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+        while (strcmp(nueva_fecha_fin, nueva_fecha_inicio) < 0)
+        {
+            printf("La fecha de fin no puede ser anterior a la de inicio.\n");
+            solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (YYYY-MM-DD): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+        }
 
         const char *sql = "UPDATE temporada SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?;";
         if (preparar_stmt(sql, &stmt))
@@ -439,8 +474,9 @@ void modificar_temporada()
             nuevo_estado = "Finalizada";
             break;
         default:
-            nuevo_estado = "Planificada";
-            break;
+            printf("Opción inválida.\n");
+            pause_console();
+            return;
         }
 
         const char *sql = "UPDATE temporada SET estado = ? WHERE id = ?;";

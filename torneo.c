@@ -685,6 +685,90 @@ void modificar_torneo()
     pause_console();
 }
 
+void eliminar_torneo()
+{
+    clear_screen();
+    print_header("ELIMINAR TORNEO");
+
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT id, nombre FROM torneo ORDER BY id;";
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        printf("\n=== TORNEOS DISPONIBLES ===\n\n");
+
+        int found = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            found = 1;
+            int id = sqlite3_column_int(stmt, 0);
+            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+            printf("%d. %s\n", id, nombre);
+        }
+
+        if (!found)
+        {
+            mostrar_no_hay_registros("torneos registrados para eliminar");
+            sqlite3_finalize(stmt);
+            pause_console();
+            return;
+        }
+    }
+    else
+    {
+        printf("Error al obtener la lista de torneos: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+    sqlite3_finalize(stmt);
+
+    int torneo_id = input_int("\nIngrese el ID del torneo a eliminar (0 para cancelar): ");
+
+    if (torneo_id == 0) return;
+
+    if (!existe_id("torneo", torneo_id))
+    {
+        printf("ID de torneo invalido.\n");
+        pause_console();
+        return;
+    }
+
+    if (!confirmar("¿Está seguro de eliminar este torneo? Se eliminarán datos asociados."))
+    {
+        printf("Eliminación cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    const char *sqls[] =
+    {
+        "DELETE FROM equipo_fase WHERE torneo_id = ?;",
+        "DELETE FROM torneo_fases WHERE torneo_id = ?;",
+        "DELETE FROM jugador_estadisticas WHERE torneo_id = ?;",
+        "DELETE FROM equipo_torneo_estadisticas WHERE torneo_id = ?;",
+        "DELETE FROM partido_torneo WHERE torneo_id = ?;",
+        "DELETE FROM equipo_torneo WHERE torneo_id = ?;",
+        "DELETE FROM equipo_historial WHERE torneo_id = ?;",
+        "DELETE FROM torneo_temporada WHERE torneo_id = ?;",
+        "DELETE FROM torneo WHERE id = ?;",
+        NULL
+    };
+
+    for (int i = 0; sqls[i] != NULL; i++)
+    {
+        if (preparar_stmt(sqls[i], &stmt))
+        {
+            sqlite3_bind_int(stmt, 1, torneo_id);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    printf("Torneo eliminado exitosamente.\n");
+    pause_console();
+}
+
 /**
  * @brief Actualiza el nombre del torneo en la base de datos
  */
@@ -1049,8 +1133,14 @@ const char* get_equipo_nombre(int equipo_id)
  */
 void menu_torneos()
 {
-    clear_screen();
-    print_header("TORNEOS");
-    printf("Función de gestión de torneos en desarrollo.\n");
-    pause_console();
+    MenuItem items[] =
+    {
+        {1, "Crear Torneo", crear_torneo},
+        {2, "Listar Torneos", listar_torneos},
+        {3, "Modificar Torneo", modificar_torneo},
+        {4, "Eliminar Torneo", eliminar_torneo},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("TORNEOS", items, 5);
 }

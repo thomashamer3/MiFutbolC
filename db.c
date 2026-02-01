@@ -5,7 +5,6 @@
  * Este archivo contiene las funciones necesarias para inicializar, configurar y cerrar
  * la conexión a la base de datos SQLite utilizada por la aplicación MiFutbolC.
  */
-
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -70,6 +69,11 @@ static int configurar_directorio_documentos(const char *subdir, char *out_dir, s
         const char *nombre_principal, const char *nombre_subdir)
 {
     char documents_path[MAX_PATH];
+    /*
+     * Se utiliza SHGetFolderPathA con CSIDL_PERSONAL para obtener la ruta a "Mis Documentos".
+     * Esta ubicación se reserva para archivos que el usuario debe manipular manualmente,
+     * como las exportaciones e importaciones de datos.
+     */
     if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
     {
         printf("Error obteniendo Documents path\n");
@@ -100,18 +104,33 @@ static int configurar_directorio_documentos(const char *subdir, char *out_dir, s
 
 static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
 {
-    FILE *src = fopen(source_path, "rb");
+    FILE *src = NULL;
+    FILE *dst = NULL;
+#ifdef _WIN32
+    if (fopen_s(&src, source_path, "rb") != 0 || !src)
+    {
+        return COPY_SRC_ERROR;
+    }
+
+    if (fopen_s(&dst, dest_path, "wb") != 0 || !dst)
+    {
+        fclose(src);
+        return COPY_DST_ERROR;
+    }
+#else
+    src = fopen(source_path, "rb");
     if (!src)
     {
         return COPY_SRC_ERROR;
     }
 
-    FILE *dst = fopen(dest_path, "wb");
+    dst = fopen(dest_path, "wb");
     if (!dst)
     {
         fclose(src);
         return COPY_DST_ERROR;
     }
+#endif
 
     char buffer[8192];
     size_t bytes;
@@ -140,6 +159,11 @@ static int setup_database_paths()
 #ifdef _WIN32
     // Usar AppData\Local para la base de datos (oculta, interna)
     char appdata_path[MAX_PATH];
+    /*
+     * La base de datos se almacena en CSIDL_LOCAL_APPDATA para garantizar que 
+     * no sea borrada accidentalmente por el usuario y que el sistema tenga 
+     * permisos de escritura consistentes sin requerir privilegios de administrador.
+     */
     if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appdata_path) != S_OK)
     {
         printf("Error obteniendo AppData path\n");
