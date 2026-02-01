@@ -14,11 +14,6 @@
 #include <math.h>
 #include <time.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 static const char *resultado_a_texto(int resultado)
 {
     switch (resultado)
@@ -44,7 +39,7 @@ static void query(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -139,7 +134,7 @@ void mostrar_partidos_outliers()
                       "WHERE rendimiento_general > (SELECT AVG(rendimiento_general) + 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
                       "ORDER BY rendimiento_general DESC";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -166,7 +161,7 @@ void mostrar_partidos_outliers()
                        "WHERE rendimiento_general < (SELECT AVG(rendimiento_general) - 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
                        "ORDER BY rendimiento_general ASC";
 
-    if (!preparar_stmt(&stmt, sql2))
+    if (!preparar_stmt_export(&stmt, sql2))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -402,7 +397,7 @@ void mostrar_partidos_exigentes_bien_rendidos()
                       "WHERE cansancio > 7 AND rendimiento_general > (SELECT AVG(rendimiento_general) FROM partido) "
                       "ORDER BY rendimiento_general DESC, cansancio DESC";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -447,7 +442,7 @@ void mostrar_partidos_faciles_mal_rendidos()
                       "WHERE cansancio <= 3 AND rendimiento_general < (SELECT AVG(rendimiento_general) FROM partido) "
                       "ORDER BY rendimiento_general ASC, cansancio ASC";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();

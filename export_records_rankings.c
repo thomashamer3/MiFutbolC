@@ -16,18 +16,6 @@ static int get_record_data(sqlite3_stmt *stmt, int *valor, const char **camiseta
 static int get_combinacion_data(sqlite3_stmt *stmt, const char **cancha, const char **camiseta, double *rendimiento, int *partidos);
 static int get_temporada_data(sqlite3_stmt *stmt, const char **anio, double *rendimiento, int *partidos);
 
-static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
-{
-    FILE *file;
-    errno_t err = fopen_s(&file, get_export_path(filename), "w");
-    if (err != 0 || !file)
-    {
-        printf("%s\n", error_msg);
-        return NULL;
-    }
-    return file;
-}
-
 static void write_record_json(FILE *file, const char *key, const char *sql)
 {
     sqlite3_stmt *stmt = execute_records_query(sql);

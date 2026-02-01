@@ -12,11 +12,6 @@ static const char *NOMBRES_MESES[] =
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 };
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 static const char *mes_a_nombre(const char *mes_str)
 {
     int mes = mes_str ? atoi(mes_str) : 0;
@@ -32,7 +27,7 @@ static double calcular_julianday(const char *fecha)
     sqlite3_stmt *stmt_jd;
     double jd = 0;
 
-    if (!preparar_stmt(&stmt_jd, "SELECT julianday(?)"))
+    if (!preparar_stmt_export(&stmt_jd, "SELECT julianday(?)"))
     {
         return 0;
     }
@@ -51,7 +46,7 @@ static double calcular_promedio_rendimiento(const char *sql)
     sqlite3_stmt *stmt;
     double avg = 0;
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         return 0;
     }
@@ -73,7 +68,7 @@ static double calcular_promedio_rendimiento(const char *sql)
 static void mostrar_total_lesiones()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM lesion"))
+    if (!preparar_stmt_export(&stmt, "SELECT COUNT(*) FROM lesion"))
     {
         return;
     }
@@ -94,7 +89,7 @@ static void mostrar_total_lesiones()
 static void mostrar_lesiones_por_tipo()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT tipo, COUNT(*) FROM lesion GROUP BY tipo ORDER BY COUNT(*) DESC"))
+    if (!preparar_stmt_export(&stmt, "SELECT tipo, COUNT(*) FROM lesion GROUP BY tipo ORDER BY COUNT(*) DESC"))
     {
         return;
     }
@@ -115,7 +110,7 @@ static void mostrar_lesiones_por_tipo()
 static void mostrar_lesiones_por_camiseta()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!preparar_stmt_export(&stmt,
                        "SELECT c.numero, c.nombre, COUNT(l.id) FROM camiseta c LEFT JOIN lesion l ON c.id = l.camiseta_id GROUP BY c.id ORDER BY COUNT(l.id) DESC"))
     {
         return;
@@ -137,7 +132,7 @@ static void mostrar_lesiones_por_camiseta()
 static void mostrar_lesiones_por_mes()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC"))
+    if (!preparar_stmt_export(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC"))
     {
         return;
     }
@@ -159,7 +154,7 @@ static void mostrar_lesiones_por_mes()
 static void mostrar_mes_con_mas_lesiones()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC LIMIT 1"))
+    if (!preparar_stmt_export(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC LIMIT 1"))
     {
         return;
     }
@@ -186,7 +181,7 @@ static void mostrar_tiempo_promedio_entre_lesiones()
 {
     // Obtener todas las fechas de lesiones ordenadas por camiseta y fecha
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT camiseta_id, fecha FROM lesion ORDER BY camiseta_id, fecha"))
+    if (!preparar_stmt_export(&stmt, "SELECT camiseta_id, fecha FROM lesion ORDER BY camiseta_id, fecha"))
     {
         return;
     }

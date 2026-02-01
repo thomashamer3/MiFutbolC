@@ -177,32 +177,31 @@ static void assert_menu_exec(MenuFunc func)
 
 static void test_menu_functions_smoke(void)
 {
-    assert_menu_exec(menu_camisetas);
-    assert_menu_exec(menu_canchas);
-    assert_menu_exec(menu_partidos);
-    assert_menu_exec(menu_equipos);
-    assert_menu_exec(menu_lesiones);
+    assert_menu_exec(&menu_camisetas);
+    assert_menu_exec(&menu_canchas);
+    assert_menu_exec(&menu_partidos);
+    assert_menu_exec(&menu_equipos);
+    assert_menu_exec(&menu_lesiones);
+    assert_menu_exec(&menu_estadisticas);
+    assert_menu_exec(&menu_estadisticas_generales);
+    assert_menu_exec(&menu_estadisticas_partidos);
+    assert_menu_exec(&menu_estadisticas_goles);
+    assert_menu_exec(&menu_estadisticas_asistencias);
+    assert_menu_exec(&menu_estadisticas_rendimiento);
 
-    assert_menu_exec(menu_estadisticas);
-    assert_menu_exec(menu_estadisticas_generales);
-    assert_menu_exec(menu_estadisticas_partidos);
-    assert_menu_exec(menu_estadisticas_goles);
-    assert_menu_exec(menu_estadisticas_asistencias);
-    assert_menu_exec(menu_estadisticas_rendimiento);
-
-    assert_menu_exec(menu_records_rankings);
-    assert_menu_exec(menu_qr);
-    assert_menu_exec(menu_logros);
-    assert_menu_exec(menu_financiamiento);
-    assert_menu_exec(menu_presupuestos_mensuales);
-    assert_menu_exec(menu_exportar);
-    assert_menu_exec(menu_exportar_mejorado);
-    assert_menu_exec(menu_importar);
-    assert_menu_exec(menu_torneos);
-    assert_menu_exec(menu_temporadas);
-    assert_menu_exec(menu_entrenador_ia);
-    assert_menu_exec(menu_settings);
-    assert_menu_exec(menu_usuario);
+    assert_menu_exec(&menu_records_rankings);
+    assert_menu_exec(&menu_qr);
+    assert_menu_exec(&menu_logros);
+    assert_menu_exec(&menu_financiamiento);
+    assert_menu_exec(&menu_presupuestos_mensuales);
+    assert_menu_exec(&menu_exportar);
+    assert_menu_exec(&menu_exportar_mejorado);
+    assert_menu_exec(&menu_importar);
+    assert_menu_exec(&menu_torneos);
+    assert_menu_exec(&menu_temporadas);
+    assert_menu_exec(&menu_entrenador_ia);
+    assert_menu_exec(&menu_settings);
+    assert_menu_exec(&menu_usuario);
 }
 
 static void test_menu_custom_menus_smoke(void)

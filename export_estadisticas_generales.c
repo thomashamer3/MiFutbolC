@@ -11,24 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
-static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
-{
-    FILE *file;
-    const char *path = get_export_path(filename);
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-    {
-        printf("%s\n", error_msg);
-        return NULL;
-    }
-    return file;
-}
-
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -46,26 +28,6 @@ static const char *SQL_STATS_MONTH =
  * HELPER ESTÁTICOS
  * ============================================================================ */
 
-/** @brief Verifica si hay partidos para exportar */
-static int has_partidos(void)
-{
-    sqlite3_stmt *stmt;
-    int count = 0;
-    int result = 0;
-
-    if (preparar_stmt(&stmt, SQL_COUNT_PARTIDOS))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-        result = count > 0;
-    }
-
-    return result;
-}
-
 /** @brief Obtiene top 1 por métrica (reutilizable) */
 static int get_top_camiseta(const char *metric, const char *orderDir,
                             char *nombre, size_t nombre_size, int *valor)
@@ -78,7 +40,7 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
              "JOIN camiseta c ON p.camiseta_id = c.id "
              "GROUP BY c.id ORDER BY 2 %s LIMIT 1", metric, orderDir);
 
-    if (preparar_stmt(&stmt, query))
+    if (preparar_stmt_export(&stmt, query))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -180,7 +142,7 @@ static cJSON *json_build_estadisticas(void)
 
 void exportar_estadisticas_generales_csv(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -211,7 +173,7 @@ void exportar_estadisticas_generales_csv(void)
 
 void exportar_estadisticas_generales_txt(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -242,7 +204,7 @@ void exportar_estadisticas_generales_txt(void)
 
 void exportar_estadisticas_generales_json(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -269,7 +231,7 @@ void exportar_estadisticas_generales_json(void)
 
 void exportar_estadisticas_generales_html(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -307,7 +269,7 @@ void exportar_estadisticas_generales_html(void)
 
 void exportar_estadisticas_por_mes_csv(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -322,7 +284,7 @@ void exportar_estadisticas_por_mes_csv(void)
     fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
         fclose(file);
         return;
@@ -344,7 +306,7 @@ void exportar_estadisticas_por_mes_csv(void)
 
 void exportar_estadisticas_por_mes_txt(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -359,7 +321,7 @@ void exportar_estadisticas_por_mes_txt(void)
     fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
         fclose(file);
         return;
@@ -394,7 +356,7 @@ void exportar_estadisticas_por_mes_txt(void)
  */
 void exportar_estadisticas_por_mes_json(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -408,7 +370,7 @@ void exportar_estadisticas_por_mes_json(void)
 
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
         cJSON_Delete(root);
         fclose(file);
@@ -467,7 +429,7 @@ void exportar_estadisticas_por_mes_json(void)
  */
 void exportar_estadisticas_por_mes_html(void)
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         printf("No hay registros.\n");
         return;
@@ -483,7 +445,7 @@ void exportar_estadisticas_por_mes_html(void)
     fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_MONTH))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
         fclose(file);
         return;

@@ -15,11 +15,6 @@
 #include <direct.h>
 #include <string.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 /**
  * @brief Obtiene los datos de camisetas de la base de datos
  *
@@ -36,7 +31,7 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
     *count = 0;
 
     // Verificar si hay camisetas registradas
-    if (!preparar_stmt(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
+    if (!preparar_stmt_export(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
     {
         return NULL;
     }
@@ -54,7 +49,7 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
 
     // Preparar la consulta principal
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!preparar_stmt_export(&stmt,
                        "SELECT c.id, c.nombre, "
                        "COALESCE(SUM(p.goles), 0) as total_goles, "
                        "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "

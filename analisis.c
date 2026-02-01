@@ -60,47 +60,6 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
 }
 
 /**
- * @brief Estructura para almacenar estadísticas de partidos
- */
-typedef struct
-{
-    double avg_goles;
-    double avg_asistencias;
-    double avg_rendimiento;
-    double avg_cansancio;
-    double avg_animo;
-    int total_partidos;
-} Estadisticas;
-
-static void reset_estadisticas(Estadisticas *stats)
-{
-    memset(stats, 0, sizeof(*stats));
-}
-
-static void calcular_estadisticas(Estadisticas *stats, const char *sql)
-{
-    sqlite3_stmt *stmt;
-    reset_estadisticas(stats);
-
-    if (!preparar_stmt(&stmt, sql))
-    {
-        return;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-
-    sqlite3_finalize(stmt);
-}
-
-/**
  * @brief Calcula estadísticas generales de todos los partidos
  *
  * Establece línea base de rendimiento histórico para comparaciones.
@@ -124,43 +83,6 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
     calcular_estadisticas(stats,
                           "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
                           "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
-}
-
-/**
- * @brief Actualiza rachas basado en el resultado del partido
- *
- * @param resultado Resultado del partido (1=Victoria, 2=Empate, 3=Derrota)
- * @param racha_actual_v Puntero a racha actual de victorias
- * @param max_racha_v Puntero a máxima racha de victorias
- * @param racha_actual_d Puntero a racha actual de derrotas
- * @param max_racha_d Puntero a máxima racha de derrotas
- */
-static void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
-                              int *racha_actual_d, int *max_racha_d)
-{
-    if (resultado == 1)
-    {
-        // VICTORIA
-        (*racha_actual_v)++;
-        if (*racha_actual_v > *max_racha_v)
-            *max_racha_v = *racha_actual_v;
-        *racha_actual_d = 0;
-        return;
-    }
-
-    if (resultado == 3)
-    {
-        // DERROTA
-        (*racha_actual_d)++;
-        if (*racha_actual_d > *max_racha_d)
-            *max_racha_d = *racha_actual_d;
-        *racha_actual_v = 0;
-        return;
-    }
-
-    // EMPATE
-    *racha_actual_v = 0;
-    *racha_actual_d = 0;
 }
 
 /**
@@ -655,7 +577,7 @@ static void comparar_condiciones()
     const char *campo = (tipo_condicion == 1) ? "clima" : "dia";
     const char *tipo_texto = (tipo_condicion == 1) ? "Clima" : "Dia";
 
-    int min_val = (tipo_condicion == 1) ? 0 : 0;
+    int min_val = 0;
     int max_val = (tipo_condicion == 1) ? 2 : 6;
 
     while (1)

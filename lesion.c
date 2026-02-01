@@ -446,8 +446,6 @@ void eliminar_lesion()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM lesion WHERE id=?", &stmt))
-        if (id == 0)
-            return;
     {
         pause_console();
         return;

@@ -12,18 +12,13 @@
 #include <stdio.h>
 #include <string.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 /**
  * Prepara la consulta SQL para obtener estadísticas agrupadas por mes.
  * Esta función encapsula la preparación de la consulta para mantener la lógica de base de datos separada.
  */
 static void preparar_consulta(sqlite3_stmt **stmt)
 {
-    preparar_stmt(stmt,
+    preparar_stmt_export(stmt,
                   "SELECT substr(fecha_hora, 4, 7) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
                   "FROM partido p "
                   "JOIN camiseta c ON p.camiseta_id = c.id "

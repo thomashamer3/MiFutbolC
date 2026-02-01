@@ -16,86 +16,6 @@
 #include <string.h>
 
 /**
- * @brief Estructura para almacenar estadísticas de partidos
- */
-typedef struct
-{
-    double avg_goles;
-    double avg_asistencias;
-    double avg_rendimiento;
-    double avg_cansancio;
-    double avg_animo;
-    int total_partidos;
-} Estadisticas;
-
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
-static FILE *abrir_archivo_exportacion(const char *filename)
-{
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || !f)
-    {
-        return NULL;
-    }
-    return f;
-}
-
-static void reset_estadisticas(Estadisticas *stats)
-{
-    memset(stats, 0, sizeof(*stats));
-}
-
-static void calcular_estadisticas(Estadisticas *stats, const char *sql)
-{
-    sqlite3_stmt *stmt;
-    reset_estadisticas(stats);
-    if (!preparar_stmt(&stmt, sql))
-    {
-        return;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        stats->total_partidos = sqlite3_column_int(stmt, 0);
-        stats->avg_goles = sqlite3_column_double(stmt, 1);
-        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
-        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
-        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
-        stats->avg_animo = sqlite3_column_double(stmt, 5);
-    }
-    sqlite3_finalize(stmt);
-}
-
-static void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
-                              int *racha_actual_d, int *max_racha_d)
-{
-    if (resultado == 1)
-    {
-        (*racha_actual_v)++;
-        if (*racha_actual_v > *max_racha_v)
-            *max_racha_v = *racha_actual_v;
-        *racha_actual_d = 0;
-        return;
-    }
-
-    if (resultado == 3)
-    {
-        (*racha_actual_d)++;
-        if (*racha_actual_d > *max_racha_d)
-            *max_racha_d = *racha_actual_d;
-        *racha_actual_v = 0;
-        return;
-    }
-
-    *racha_actual_v = 0;
-    *racha_actual_d = 0;
-}
-
-/**
  * @brief Construye la ruta completa para un archivo de exportación
  *
  * Combina el directorio de datos con el nombre del archivo proporcionado
@@ -141,7 +61,7 @@ static int has_partido_records()
 {
     sqlite3_stmt *check_stmt;
     int count = 0;
-    if (!preparar_stmt(&check_stmt, "SELECT COUNT(*) FROM partido"))
+    if (!preparar_stmt_export(&check_stmt, "SELECT COUNT(*) FROM partido"))
     {
         return 0;
     }
@@ -198,7 +118,7 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!preparar_stmt_export(&stmt,
                        "SELECT resultado FROM partido ORDER BY fecha_hora"))
     {
         *mejor_racha_victorias = 0;
@@ -261,7 +181,7 @@ void exportar_analisis_csv()
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.csv");
+    FILE *f = abrir_archivo_exportacion("analisis.csv", "Error al crear archivo de analisis CSV");
     if (!f)
         return;
 
@@ -303,7 +223,7 @@ void exportar_analisis_txt()
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.txt");
+    FILE *f = abrir_archivo_exportacion("analisis.txt", "Error al crear archivo de analisis TXT");
     if (!f)
         return;
 
@@ -355,7 +275,7 @@ void exportar_analisis_json()
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.json");
+    FILE *f = abrir_archivo_exportacion("analisis.json", "Error al crear archivo de analisis JSON");
     if (!f)
         return;
 
@@ -415,7 +335,7 @@ void exportar_analisis_html()
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.html");
+    FILE *f = abrir_archivo_exportacion("analisis.html", "Error al crear archivo de analisis HTML");
     if (!f)
         return;
 

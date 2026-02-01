@@ -937,28 +937,6 @@ char* trim_trailing_spaces(char *str)
     }
     return str;
 }
-/**
- * @brief Verifica si hay registros en una tabla específica
- * Función común para evitar duplicación de código en funciones de exportación
- */
-int has_records(const char *table)
-{
-    sqlite3_stmt *check_stmt;
-    char sql[128];
-    int count = 0;
-
-    snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", table);
-    if (!preparar_stmt(sql, &check_stmt))
-    {
-        return 0;
-    }
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-    return count > 0;
-}
 
 /**
  * @brief Ejecuta una consulta SQL y devuelve el statement preparado
@@ -1412,4 +1390,97 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
     fprintf(f, "</table></body></html>");
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
+}
+
+/* ===================== FUNCIONES DE ESTADÍSTICAS COMPARTIDAS ===================== */
+
+void reset_estadisticas(Estadisticas *stats)
+{
+    memset(stats, 0, sizeof(*stats));
+}
+
+void calcular_estadisticas(Estadisticas *stats, const char *sql)
+{
+    sqlite3_stmt *stmt;
+    reset_estadisticas(stats);
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        stats->total_partidos = sqlite3_column_int(stmt, 0);
+        stats->avg_goles = sqlite3_column_double(stmt, 1);
+        stats->avg_asistencias = sqlite3_column_double(stmt, 2);
+        stats->avg_rendimiento = sqlite3_column_double(stmt, 3);
+        stats->avg_cansancio = sqlite3_column_double(stmt, 4);
+        stats->avg_animo = sqlite3_column_double(stmt, 5);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
+                      int *racha_actual_d, int *max_racha_d)
+{
+    if (resultado == 1)
+    {
+        (*racha_actual_v)++;
+        if (*racha_actual_v > *max_racha_v)
+            *max_racha_v = *racha_actual_v;
+        *racha_actual_d = 0;
+        return;
+    }
+
+    if (resultado == 3)
+    {
+        (*racha_actual_d)++;
+        if (*racha_actual_d > *max_racha_d)
+            *max_racha_d = *racha_actual_d;
+        *racha_actual_v = 0;
+        return;
+    }
+
+    *racha_actual_v = 0;
+    *racha_actual_d = 0;
+}
+
+int preparar_stmt_export(sqlite3_stmt **stmt, const char *sql)
+{
+    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
+{
+    FILE *file;
+    const char *path = get_export_path(filename);
+    errno_t err = fopen_s(&file, path, "w");
+    if (err != 0 || file == NULL)
+    {
+        printf("%s\n", error_msg);
+        return NULL;
+    }
+    return file;
+}
+
+int has_records(const char *table_name)
+{
+    sqlite3_stmt *stmt;
+    char sql[256];
+    int count = 0;
+    int result = 0;
+    
+    snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", table_name);
+    
+    if (preparar_stmt_export(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            count = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+        result = count > 0;
+    }
+    
+    return result;
 }

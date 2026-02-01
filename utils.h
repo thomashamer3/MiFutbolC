@@ -12,6 +12,7 @@
 #include "cJSON.h"
 #include "sqlite3.h"
 #include <stddef.h>
+#include <stdio.h>
 
 /**
  * @brief Solicita al usuario un número entero.
@@ -360,5 +361,65 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
  * Función común para exportar datos de partidos a JSON
  */
 void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt);
+
+/**
+ * @brief Estructura para almacenar estadísticas de partidos
+ */
+typedef struct
+{
+    double avg_goles;
+    double avg_asistencias;
+    double avg_rendimiento;
+    double avg_cansancio;
+    double avg_animo;
+    int total_partidos;
+} Estadisticas;
+
+/**
+ * @brief Reinicia una estructura de estadísticas a cero
+ * @param stats Puntero a la estructura de estadísticas
+ */
+void reset_estadisticas(Estadisticas *stats);
+
+/**
+ * @brief Calcula estadísticas usando una consulta SQL
+ * @param stats Puntero a la estructura donde almacenar las estadísticas
+ * @param sql Consulta SQL para obtener las estadísticas
+ */
+void calcular_estadisticas(Estadisticas *stats, const char *sql);
+
+/**
+ * @brief Actualiza rachas basado en el resultado del partido
+ * @param resultado Resultado del partido (1=Victoria, 2=Empate, 3=Derrota)
+ * @param racha_actual_v Puntero a racha actual de victorias
+ * @param max_racha_v Puntero a máxima racha de victorias
+ * @param racha_actual_d Puntero a racha actual de derrotas
+ * @param max_racha_d Puntero a máxima racha de derrotas
+ */
+void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
+                      int *racha_actual_d, int *max_racha_d);
+
+/**
+ * @brief Prepara una sentencia SQL
+ * @param stmt Doble puntero a la sentencia SQLite
+ * @param sql Consulta SQL a preparar
+ * @return 1 si la preparación fue exitosa, 0 en caso contrario
+ */
+int preparar_stmt_export(sqlite3_stmt **stmt, const char *sql);
+
+/**
+ * @brief Abre un archivo para exportación
+ * @param filename Nombre del archivo a crear
+ * @param error_msg Mensaje de error a mostrar si falla
+ * @return Puntero al archivo abierto o NULL si falla
+ */
+FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg);
+
+/**
+ * @brief Verifica si una tabla tiene registros
+ * @param table_name Nombre de la tabla a verificar
+ * @return 1 si tiene registros, 0 si no
+ */
+int has_records(const char *table_name);
 
 #endif

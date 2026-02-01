@@ -43,17 +43,6 @@ typedef struct
     double porcentaje_lesiones_por_partido;
 } CamisetaDataMejorado;
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
-static int abrir_archivo_exportacion(FILE **f, const char *nombre)
-{
-    errno_t err = fopen_s(f, get_export_path(nombre), "w");
-    return (err == 0 && *f != NULL);
-}
-
 static CamisetaDataMejorado leer_camiseta_mejorada(sqlite3_stmt *stmt)
 {
     CamisetaDataMejorado data;
@@ -93,7 +82,7 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
     *count = 0;
 
     // Verificar si hay camisetas registradas
-    if (!preparar_stmt(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
+    if (!preparar_stmt_export(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
     {
         return NULL;
     }
@@ -111,7 +100,7 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
 
     // Preparar la consulta principal con análisis avanzado
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!preparar_stmt_export(&stmt,
                        "SELECT c.id, c.nombre, "
                        "COALESCE(SUM(p.goles), 0) as total_goles, "
                        "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
@@ -152,8 +141,8 @@ void exportar_camisetas_csv_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f;
-    if (!abrir_archivo_exportacion(&f, "camisetas_mejorado.csv"))
+    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.csv", "Error al crear archivo de camisetas mejorado CSV");
+    if (!f)
     {
         sqlite3_finalize(stmt);
         return;
@@ -204,8 +193,8 @@ void exportar_camisetas_txt_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f;
-    if (!abrir_archivo_exportacion(&f, "camisetas_mejorado.txt"))
+    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.txt", "Error al crear archivo de camisetas mejorado TXT");
+    if (!f)
     {
         sqlite3_finalize(stmt);
         return;
@@ -268,8 +257,8 @@ void exportar_camisetas_json_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f;
-    if (!abrir_archivo_exportacion(&f, "camisetas_mejorado.json"))
+    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.json", "Error al crear archivo de camisetas mejorado JSON");
+    if (!f)
     {
         sqlite3_finalize(stmt);
         return;
@@ -327,8 +316,8 @@ void exportar_camisetas_html_mejorado()
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
     if (!stmt) return;
 
-    FILE *f;
-    if (!abrir_archivo_exportacion(&f, "camisetas_mejorado.html"))
+    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.html", "Error al crear archivo de camisetas mejorado HTML");
+    if (!f)
     {
         sqlite3_finalize(stmt);
         return;

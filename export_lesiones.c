@@ -7,24 +7,6 @@
 #include <direct.h>
 #include <string.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
-static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
-{
-    FILE *file;
-    const char *path = get_export_path(filename);
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-    {
-        printf("%s\n", error_msg);
-        return NULL;
-    }
-    return file;
-}
-
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -37,31 +19,11 @@ static const char *SQL_LESIONES = "SELECT id, jugador, tipo, descripcion, fecha 
  * HELPER ESTÁTICOS
  * ============================================================================ */
 
-/** @brief Verifica si hay lesiones para exportar */
-static int has_lesiones(void)
-{
-    sqlite3_stmt *stmt;
-    int count = 0;
-    int result = 0;
-
-    if (preparar_stmt(&stmt, SQL_COUNT_LESIONES))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-        result = count > 0;
-    }
-
-    return result;
-}
-
 /** @brief Escribe lesiones en formato CSV */
 static void write_lesiones_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    if (!preparar_stmt_export(&stmt, SQL_LESIONES))
     {
         return;
     }
@@ -83,7 +45,7 @@ static void write_lesiones_csv(FILE *file)
 static void write_lesiones_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    if (!preparar_stmt_export(&stmt, SQL_LESIONES))
     {
         return;
     }
@@ -105,7 +67,7 @@ static void write_lesiones_txt(FILE *file)
 static void write_lesiones_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    if (!preparar_stmt_export(&stmt, SQL_LESIONES))
     {
         return;
     }
@@ -129,7 +91,7 @@ static void write_lesiones_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_LESIONES))
+    if (!preparar_stmt_export(&stmt, SQL_LESIONES))
     {
         cJSON_Delete(root);
         return;
@@ -166,7 +128,7 @@ static void write_lesiones_json(FILE *file)
  */
 void exportar_lesiones_csv()
 {
-    if (!has_lesiones())
+    if (!has_records("lesion"))
     {
         mostrar_no_hay_registros("lesiones para exportar");
         return;
@@ -193,7 +155,7 @@ void exportar_lesiones_csv()
  */
 void exportar_lesiones_txt()
 {
-    if (!has_lesiones())
+    if (!has_records("lesion"))
     {
         mostrar_no_hay_registros("lesiones para exportar");
         return;
@@ -220,7 +182,7 @@ void exportar_lesiones_txt()
  */
 void exportar_lesiones_json()
 {
-    if (!has_lesiones())
+    if (!has_records("lesion"))
     {
         mostrar_no_hay_registros("lesiones para exportar");
         return;
@@ -246,7 +208,7 @@ void exportar_lesiones_json()
  */
 void exportar_lesiones_html()
 {
-    if (!has_lesiones())
+    if (!has_records("lesion"))
     {
         printf("No hay registros de lesiones para exportar.\n");
         return;

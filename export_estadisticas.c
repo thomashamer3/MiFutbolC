@@ -7,24 +7,6 @@
 #include <direct.h>
 #include <string.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
-static FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
-{
-    FILE *file;
-    const char *path = get_export_path(filename);
-    errno_t err = fopen_s(&file, path, "w");
-    if (err != 0 || file == NULL)
-    {
-        printf("%s\n", error_msg);
-        return NULL;
-    }
-    return file;
-}
-
 /* ============================================================================
  * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
@@ -50,31 +32,11 @@ static const char *SQL_STATS_BY_ANIO =
  * HELPER ESTÁTICOS
  * ============================================================================ */
 
-/** @brief Verifica si hay partidos para exportar */
-static int has_partidos(void)
-{
-    sqlite3_stmt *stmt;
-    int count = 0;
-    int result = 0;
-
-    if (preparar_stmt(&stmt, SQL_COUNT_PARTIDOS))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-        result = count > 0;
-    }
-
-    return result;
-}
-
 /** @brief Escribe estadísticas en formato CSV */
 static void write_stats_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
     {
         return;
     }
@@ -98,7 +60,7 @@ static void write_stats_csv(FILE *file)
 static void write_stats_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
     {
         return;
     }
@@ -122,7 +84,7 @@ static void write_stats_txt(FILE *file)
 static void write_stats_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
     {
         return;
     }
@@ -148,7 +110,7 @@ static void write_stats_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_CAMISETA))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
     {
         cJSON_Delete(root);
         return;
@@ -179,7 +141,7 @@ static void write_stats_json(FILE *file)
 static void write_stats_anio_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
     {
         return;
     }
@@ -203,7 +165,7 @@ static void write_stats_anio_csv(FILE *file)
 static void write_stats_anio_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
     {
         return;
     }
@@ -239,7 +201,7 @@ static void write_stats_anio_txt(FILE *file)
 static void write_stats_anio_html(FILE *file)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
     {
         return;
     }
@@ -279,7 +241,7 @@ static void write_stats_anio_json(FILE *file)
 {
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, SQL_STATS_BY_ANIO))
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
     {
         cJSON_Delete(root);
         return;
@@ -343,9 +305,9 @@ static void write_stats_anio_json(FILE *file)
  */
 void exportar_estadisticas_csv()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
-        mostrar_no_hay_registros("estadísticas para exportar");
+        mostrar_no_hay_registros("­ticas para exportar");
         return;
     }
 
@@ -370,7 +332,7 @@ void exportar_estadisticas_csv()
  */
 void exportar_estadisticas_txt()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas para exportar");
         return;
@@ -396,7 +358,7 @@ void exportar_estadisticas_txt()
  */
 void exportar_estadisticas_json()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas para exportar");
         return;
@@ -422,7 +384,7 @@ void exportar_estadisticas_json()
  */
 void exportar_estadisticas_html()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas para exportar");
         return;
@@ -455,7 +417,7 @@ void exportar_estadisticas_html()
  */
 void exportar_estadisticas_por_anio_csv()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
@@ -479,7 +441,7 @@ void exportar_estadisticas_por_anio_csv()
  */
 void exportar_estadisticas_por_anio_txt()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
@@ -502,7 +464,7 @@ void exportar_estadisticas_por_anio_txt()
  */
 void exportar_estadisticas_por_anio_json()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas por año para exportar");
         return;
@@ -525,7 +487,7 @@ void exportar_estadisticas_por_anio_json()
  */
 void exportar_estadisticas_por_anio_html()
 {
-    if (!has_partidos())
+    if (!has_records("partido"))
     {
         mostrar_no_hay_registros("estadísticas por año para exportar");
         return;

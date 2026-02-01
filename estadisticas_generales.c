@@ -14,11 +14,6 @@
 #include <string.h>
 #include <time.h>
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 /**
  * @brief Función auxiliar para generar el CASE WHEN para clima
  * @return Cadena SQL con el CASE WHEN para convertir clima numérico a texto
@@ -81,7 +76,7 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
              "ORDER BY promedio %s%s",
              columna, order_by, limit_clause);
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -121,7 +116,7 @@ static void query(const char *titulo, const char *sql)
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -487,7 +482,7 @@ void mostrar_goles_cansancio_alto_vs_bajo()
                       "SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos "
                       "FROM partido GROUP BY CASE WHEN cansancio > 7 THEN 'Alto' ELSE 'Bajo' END";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -550,7 +545,7 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
     sqlite3_stmt *stmt;
     const char *sql = "SELECT 'Recientes (ultimos 5)' AS periodo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM (SELECT rendimiento_general FROM partido WHERE cansancio > 7 ORDER BY fecha_hora DESC LIMIT 5) UNION ALL SELECT 'Antiguos (primeros 5)' AS periodo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM (SELECT rendimiento_general FROM partido WHERE cansancio > 7 ORDER BY fecha_hora ASC LIMIT 5)";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
