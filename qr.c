@@ -19,17 +19,17 @@
  *
  * Este módulo permite generar códigos QR con información de partidos,
  * estadísticas, temporadas y camisetas para compartir fácilmente.
- * 
+ *
  * Utiliza la librería libqrencode para generar códigos QR de alta calidad
  * que se guardan como imágenes BMP. Los datos se codifican en formato JSON
  * para facilitar su interpretación por otras aplicaciones.
- * 
+ *
  * Características:
  * - Generación de códigos QR con nivel de corrección H (30% de error)
  * - Imágenes en formato BMP de 24 bits
  * - Escala configurable (10x10 píxeles por módulo)
  * - Margen de seguridad de 4 módulos
- * 
+ *
  * @note Requiere libqrencode instalada en el sistema
  */
 
@@ -302,7 +302,7 @@ static void procesar_pixel_qr(unsigned char *row_buffer, int x, int y, const QrP
     // Obtener el módulo del QR (invertir Y porque BMP va de abajo arriba)
     int qr_y_inverted = params->size - 1 - qr_y;
     unsigned char module = params->qrcode->data[qr_y_inverted * params->size + qr_x];
-    
+
     // Determinar si es píxel negro (bit activo)
     int es_negro = (module & 0x01) != 0;
     establecer_color_pixel(row_buffer, x, es_negro);
@@ -321,7 +321,7 @@ int generar_qr_png(const char* texto, const char* filename)
 
     // Generar el codigo QR usando libqrencode
     QRcode *qrcode = QRcode_encodeString(texto, 0, QR_ECLEVEL_H, QR_MODE_8, 1);
-    
+
     if (!qrcode)
     {
         printf("Error al generar el codigo QR.\n");
@@ -356,23 +356,54 @@ int generar_qr_png(const char* texto, const char* filename)
     int file_size = 54 + pixel_data_size; // 54 = tamaño del encabezado BMP
 
     // File header (14 bytes)
-    fputc('B', file); fputc('M', file); // Signature
+    fputc('B', file);
+    fputc('M', file); // Signature
     fwrite(&file_size, 4, 1, file);     // File size
-    fwrite((int[]){0}, 4, 1, file);     // Reserved
-    fwrite((int[]){54}, 4, 1, file);    // Pixel data offset
+    fwrite((int[])
+    {
+        0
+    }, 4, 1, file);     // Reserved
+    fwrite((int[])
+    {
+        54
+    }, 4, 1, file);    // Pixel data offset
 
     // Info header (40 bytes)
-    fwrite((int[]){40}, 4, 1, file);        // Info header size
+    fwrite((int[])
+    {
+        40
+    }, 4, 1, file);        // Info header size
     fwrite(&img_size, 4, 1, file);          // Width
     fwrite(&img_size, 4, 1, file);          // Height
-    fwrite((short[]){1}, 2, 1, file);       // Planes
-    fwrite((short[]){24}, 2, 1, file);      // Bits per pixel
-    fwrite((int[]){0}, 4, 1, file);         // Compression
+    fwrite((short[])
+    {
+        1
+    }, 2, 1, file);       // Planes
+    fwrite((short[])
+    {
+        24
+    }, 2, 1, file);      // Bits per pixel
+    fwrite((int[])
+    {
+        0
+    }, 4, 1, file);         // Compression
     fwrite(&pixel_data_size, 4, 1, file);   // Image size
-    fwrite((int[]){2835}, 4, 1, file);      // X pixels per meter
-    fwrite((int[]){2835}, 4, 1, file);      // Y pixels per meter
-    fwrite((int[]){0}, 4, 1, file);         // Colors used
-    fwrite((int[]){0}, 4, 1, file);         // Important colors
+    fwrite((int[])
+    {
+        2835
+    }, 4, 1, file);      // X pixels per meter
+    fwrite((int[])
+    {
+        2835
+    }, 4, 1, file);      // Y pixels per meter
+    fwrite((int[])
+    {
+        0
+    }, 4, 1, file);         // Colors used
+    fwrite((int[])
+    {
+        0
+    }, 4, 1, file);         // Important colors
 
     // Escribir píxeles (BMP se escribe de abajo hacia arriba)
     unsigned char *row_buffer = (unsigned char*)calloc(row_size, 1);

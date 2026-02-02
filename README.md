@@ -198,7 +198,6 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
 ✅ **cJSON**: Biblioteca completa incluida en el proyecto  
-❗ **libqrencode**: Debe instalarse externamente (ver [INSTALACION_LIBQRENCODE.md](INSTALACION_LIBQRENCODE.md))
 
 **Nota**: El proyecto compilará sin errores incluso sin libqrencode, pero la funcionalidad de códigos QR no estará disponible.
 

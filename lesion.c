@@ -109,23 +109,23 @@ static const char *solicitar_estado_lesion(const char *prompt)
 static int solicitar_partido_id(int permitir_omitir)
 {
     listar_partidos();
-    
-    const char *mensaje = permitir_omitir ? 
-        "\nID del Partido (0 para omitir): " : 
-        "\nNuevo ID del Partido (0 para quitar asociación): ";
-    
+
+    const char *mensaje = permitir_omitir ?
+                          "\nID del Partido (0 para omitir): " :
+                          "\nNuevo ID del Partido (0 para quitar asociación): ";
+
     int partido_id;
     int partido_valido = 0;
-    
+
     while (!partido_valido)
     {
         partido_id = input_int(mensaje);
-        
+
         if (partido_id == 0)
         {
             return 0;
         }
-        
+
         if (existe_id("partido", partido_id))
         {
             partido_valido = 1;
@@ -135,7 +135,7 @@ static int solicitar_partido_id(int permitir_omitir)
             printf("El partido no existe. Intente nuevamente.\n");
         }
     }
-    
+
     return partido_id;
 }
 
@@ -378,21 +378,21 @@ static void modificar_partido_lesion()
     printf("\n¿Desea asociar esta lesion a un partido? (S/N): ");
     char respuesta[10];
     input_string("", respuesta, sizeof(respuesta));
-    
+
     int partido_id = 0;
-    
+
     if (respuesta[0] == 'S' || respuesta[0] == 's')
     {
         partido_id = solicitar_partido_id(0);
     }
-    
+
     sqlite3_stmt *stmt;
     if (!preparar_stmt("UPDATE lesion SET partido_id=? WHERE id=?", &stmt))
     {
         pause_console();
         return;
     }
-    
+
     if (partido_id > 0)
     {
         sqlite3_bind_int(stmt, 1, partido_id);
@@ -404,7 +404,7 @@ static void modificar_partido_lesion()
     sqlite3_bind_int(stmt, 2, current_lesion_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    
+
     if (partido_id > 0)
     {
         printf("Partido modificado correctamente al ID: %d\n", partido_id);

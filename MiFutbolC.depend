@@ -2040,7 +2040,7 @@
 1769973710 d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.h
 	<time.h>
 
-1769926398 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
+1769995837 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
 	"qr.h"
 	"db.h"
 	"utils.h"
@@ -2050,6 +2050,8 @@
 	<stdlib.h>
 	<string.h>
 	<time.h>
+	<qrencode.h>
+	<windows.h>
 
 1769995284 d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.h
 	<stdio.h>
