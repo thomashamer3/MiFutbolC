@@ -111,7 +111,7 @@ static void mostrar_lesiones_por_camiseta()
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt,
-                       "SELECT c.numero, c.nombre, COUNT(l.id) FROM camiseta c LEFT JOIN lesion l ON c.id = l.camiseta_id GROUP BY c.id ORDER BY COUNT(l.id) DESC"))
+                              "SELECT c.numero, c.nombre, COUNT(l.id) FROM camiseta c LEFT JOIN lesion l ON c.id = l.camiseta_id GROUP BY c.id ORDER BY COUNT(l.id) DESC"))
     {
         return;
     }

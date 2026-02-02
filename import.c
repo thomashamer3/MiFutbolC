@@ -14,6 +14,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Forward declaration - Estructura para agrupar datos de un partido
+typedef struct
+{
+    int partido_id;
+    sqlite3_int64 cancha_id;
+    const char *fecha;
+    int goles;
+    int asistencias;
+    int camiseta_id;
+    int resultado;
+    int clima;
+    int dia;
+    int rendimiento_general;
+    int cansancio;
+    int estado_animo;
+    const char *comentario_personal;
+} PartidoData;
+
+// Estructura para entrada de datos de partido (para reducir parámetros)
+typedef struct
+{
+    const char *cancha;
+    const char *fecha;
+    int goles;
+    int asistencias;
+    const char *camiseta;
+    int resultado;
+    int clima;
+    int dia;
+    int rendimiento_general;
+    int cansancio;
+    int estado_animo;
+    const char *comentario;
+} PartidoInput;
+
+// Macro para obtener camiseta ID (debe definirse antes de las declaraciones forward)
+#define obtener_camiseta_id(nombre) obtener_id_por_nombre("camiseta", nombre)
+
 // Forward declaration
 static char *read_file_content(const char *filename);
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt);
@@ -29,6 +67,11 @@ static bool estadistica_existe(int camiseta_id);
 static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
                                  int partidos, int victorias, int empates,
                                  int derrotas);
+static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre);
+static int partido_existe(sqlite3_int64 cancha_id, const char *fecha, int camiseta_id);
+static int obtener_siguiente_partido_id(void);
+static void insertar_partido(PartidoData data);
+static int procesar_e_insertar_partido(const PartidoInput *input);
 
 // trim_trailing_spaces() fue movido a utils.c como funci\u00f3n gen\u00e9rica
 // Se puede usar directamente desde utils.h
@@ -175,7 +218,7 @@ static cJSON *cargar_json_array(const char *json_filename, const char *entity_na
 
     int count = cJSON_GetArraySize(json);
     printf("Importando %d %s...\n", count, entity_name);
-    
+
     if (out_count)
         *out_count = count;
 
@@ -215,6 +258,58 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
     }
 
     return file;
+}
+
+/**
+ * @brief Procesa e inserta un partido validando cancha, camiseta y duplicados
+ *
+ * Esta función centraliza la lógica común de validación e inserción de partidos
+ * que se usa en todas las funciones de importación (TXT, CSV, HTML).
+ *
+ * @param input Puntero a estructura con los datos del partido a procesar
+ * @return 1 si el partido fue insertado, 0 si hubo error o ya existe
+ */
+static int procesar_e_insertar_partido(const PartidoInput *input)
+{
+    // Obtener ID de cancha
+    sqlite3_int64 cancha_id = obtener_o_crear_cancha_id(input->cancha);
+    if (cancha_id == -1)
+    {
+        printf("Error al obtener ID de cancha para '%s', omitiendo partido...\n",
+               input->cancha);
+        return 0;
+    }
+
+    // Obtener ID de camiseta
+    int camiseta_id = obtener_camiseta_id(input->camiseta);
+
+    if (camiseta_id == -1)
+    {
+        printf("Camiseta '%s' no encontrada, omitiendo partido...\n", input->camiseta);
+        return 0;
+    }
+
+    // Verificar si ya existe un partido con los mismos datos
+    if (partido_existe(cancha_id, input->fecha, camiseta_id))
+    {
+        printf("Partido ya existe, omitiendo...\n");
+        return 0;
+    }
+
+    // Obtener siguiente ID para partido
+    int partido_id = obtener_siguiente_partido_id();
+
+    // Insertar partido
+    PartidoData partido_data =
+    {
+        partido_id, cancha_id, input->fecha, input->goles, input->asistencias,
+        camiseta_id, input->resultado, input->clima, input->dia, input->rendimiento_general,
+        input->cansancio, input->estado_animo, input->comentario
+    };
+    insertar_partido(partido_data);
+
+    printf("Partido en '%s' importado correctamente\n", input->cancha);
+    return 1;
 }
 
 /**
@@ -427,12 +522,6 @@ static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre)
 }
 
 /**
- * @brief Obtiene el ID de una camiseta por nombre (usa función genérica de
- * utils)
- */
-#define obtener_camiseta_id(nombre) obtener_id_por_nombre("camiseta", nombre)
-
-/**
  * @brief Verifica si ya existe un partido con los mismos datos.
  *
  * @param cancha_id ID de la cancha.
@@ -482,25 +571,7 @@ static int obtener_siguiente_partido_id()
     return partido_id;
 }
 
-/**
- * @brief Estructura para agrupar datos de un partido.
- */
-typedef struct
-{
-    int partido_id;
-    sqlite3_int64 cancha_id;
-    const char *fecha;
-    int goles;
-    int asistencias;
-    int camiseta_id;
-    int resultado;
-    int clima;
-    int dia;
-    int rendimiento_general;
-    int cansancio;
-    int estado_animo;
-    const char *comentario_personal;
-} PartidoData;
+// Estructura PartidoData ya definida en forward declarations
 
 /**
  * @brief Inserta un partido en la base de datos.
@@ -1121,45 +1192,15 @@ static int procesar_partido_txt_line(const char *line)
     int clima = convertir_clima(clima_str);
     int dia = convertir_dia(dia_str);
 
-    // Obtener ID de cancha
-    sqlite3_int64 cancha_id = obtener_o_crear_cancha_id(cancha);
-    if (cancha_id == -1)
+    // Crear estructura de entrada
+    PartidoInput input =
     {
-        printf("Error al obtener ID de cancha para '%s', omitiendo partido...\n",
-               cancha);
-        return 0;
-    }
-
-    // Obtener ID de camiseta
-    int camiseta_id = obtener_camiseta_id(camiseta);
-
-    if (camiseta_id == -1)
-    {
-        printf("Camiseta '%s' no encontrada, omitiendo partido...\n", camiseta);
-        return 0;
-    }
-
-    // Verificar si ya existe un partido con los mismos datos
-    if (partido_existe(cancha_id, fecha, camiseta_id))
-    {
-        printf("Partido ya existe, omitiendo...\n");
-        return 0;
-    }
-
-    // Obtener siguiente ID para partido
-    int partido_id = obtener_siguiente_partido_id();
-
-    // Insertar partido
-    PartidoData partido_data =
-    {
-        partido_id, cancha_id, fecha, goles, asistencias,
-        camiseta_id, resultado, clima, dia, rendimiento_general,
+        cancha, fecha, goles, asistencias, camiseta,
+        resultado, clima, dia, rendimiento_general,
         cansancio, estado_animo, comentario
     };
-    insertar_partido(partido_data);
 
-    printf("Partido en '%s' importado correctamente\n", cancha);
-    return 1;
+    return procesar_e_insertar_partido(&input);
 }
 
 /**
@@ -1398,45 +1439,15 @@ static int procesar_partido_csv_line(const char *line)
     int clima = convertir_clima(clima_str);
     int dia = convertir_dia(dia_str);
 
-    // Obtener ID de cancha
-    sqlite3_int64 cancha_id = obtener_o_crear_cancha_id(cancha);
-    if (cancha_id == -1)
+    // Crear estructura de entrada
+    PartidoInput input =
     {
-        printf("Error al obtener ID de cancha para '%s', omitiendo partido...\n",
-               cancha);
-        return 0;
-    }
-
-    // Obtener ID de camiseta
-    int camiseta_id = obtener_camiseta_id(camiseta);
-
-    if (camiseta_id == -1)
-    {
-        printf("Camiseta '%s' no encontrada, omitiendo partido...\n", camiseta);
-        return 0;
-    }
-
-    // Verificar si ya existe un partido con los mismos datos
-    if (partido_existe(cancha_id, fecha, camiseta_id))
-    {
-        printf("Partido ya existe, omitiendo...\n");
-        return 0;
-    }
-
-    // Obtener siguiente ID para partido
-    int partido_id = obtener_siguiente_partido_id();
-
-    // Insertar partido
-    PartidoData partido_data =
-    {
-        partido_id, cancha_id, fecha, goles, asistencias,
-        camiseta_id, resultado, clima, dia, rendimiento_general,
+        cancha, fecha, goles, asistencias, camiseta,
+        resultado, clima, dia, rendimiento_general,
         cansancio, estado_animo, comentario
     };
-    insertar_partido(partido_data);
 
-    printf("Partido en '%s' importado correctamente\n", cancha);
-    return 1;
+    return procesar_e_insertar_partido(&input);
 }
 
 /**
@@ -1736,45 +1747,15 @@ static int procesar_partido_html_row(char **ptr)
     int clima = convertir_clima(clima_str);
     int dia = convertir_dia(dia_str);
 
-    // Obtener ID de cancha
-    sqlite3_int64 cancha_id = obtener_o_crear_cancha_id(cancha);
-    if (cancha_id == -1)
+    // Crear estructura de entrada
+    PartidoInput input =
     {
-        printf("Error al obtener ID de cancha para '%s', omitiendo partido...\n",
-               cancha);
-        return 0;
-    }
-
-    // Obtener ID de camiseta
-    int camiseta_id = obtener_camiseta_id(camiseta);
-
-    if (camiseta_id == -1)
-    {
-        printf("Camiseta '%s' no encontrada, omitiendo partido...\n", camiseta);
-        return 0;
-    }
-
-    // Verificar si ya existe un partido con los mismos datos
-    if (partido_existe(cancha_id, fecha, camiseta_id))
-    {
-        printf("Partido ya existe, omitiendo...\n");
-        return 0;
-    }
-
-    // Obtener siguiente ID para partido
-    int partido_id = obtener_siguiente_partido_id();
-
-    // Insertar partido
-    PartidoData partido_data =
-    {
-        partido_id, cancha_id, fecha, goles, asistencias,
-        camiseta_id, resultado, clima, dia, rendimiento_general,
+        cancha, fecha, goles, asistencias, camiseta,
+        resultado, clima, dia, rendimiento_general,
         cansancio, estado_animo, comentario
     };
-    insertar_partido(partido_data);
 
-    printf("Partido en '%s' importado correctamente\n", cancha);
-    return 1;
+    return procesar_e_insertar_partido(&input);
 }
 
 /**

@@ -187,7 +187,7 @@ static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *
             *tipo = ELIMINACION_DIRECTA;
             break;
         default:
-        break;
+            break;
         }
     }
     else if (cantidad >= 13 && cantidad <= 20)
@@ -805,7 +805,7 @@ static int seleccionar_equipo_disponible(void)
     }
 
     int equipo_id = input_int("\nIngrese el ID del equipo fijo (0 para cancelar): ");
-    
+
     if (equipo_id == 0)
         return 0;
 
@@ -961,14 +961,14 @@ const char* get_equipo_nombre(int equipo_id)
 {
     static char nombre[50];
     nombre[0] = '\0';
-    
+
     sqlite3_stmt *stmt;
     const char *sql = "SELECT nombre FROM equipo WHERE id = ?;";
-    
+
     if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
-        
+
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             const unsigned char *text = sqlite3_column_text(stmt, 0);
@@ -991,7 +991,7 @@ const char* get_equipo_nombre(int equipo_id)
     {
         strcpy_s(nombre, sizeof(nombre), "Desconocido");
     }
-    
+
     return nombre;
 }
 

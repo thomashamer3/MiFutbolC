@@ -51,7 +51,7 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
     {
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) == 10 &&
-            buffer[4] == '-' && buffer[7] == '-')
+                buffer[4] == '-' && buffer[7] == '-')
         {
             return;
         }
@@ -718,8 +718,8 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
     sqlite3_stmt *stmt;
     char sql[512];
 
-    /* 
-     * Se utiliza strftime('%m', fecha_hora) y strftime('%Y', fecha_hora) para agrupar los datos 
+    /*
+     * Se utiliza strftime('%m', fecha_hora) y strftime('%Y', fecha_hora) para agrupar los datos
      * a nivel mensual, permitiendo calcular promedios (AVG) por cada período mes-año.
      * El orden persistente es descendente para mostrar primero los datos más recientes.
      */
@@ -848,7 +848,7 @@ static void comparar_inicio_fin_anio()
     sqlite3_stmt *stmt;
     /*
      * Clasifica los partidos en dos grandes semestres usando CAST y strftime.
-     * Esto permite un análisis comparativo de la evolución del rendimiento entre 
+     * Esto permite un análisis comparativo de la evolución del rendimiento entre
      * la primera y la segunda mitad del año calendario.
      */
     const char *sql =

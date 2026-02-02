@@ -4,7 +4,11 @@
  *
  * Proporciona funcionalidades para generar códigos QR que contienen información
  * de partidos, jugadores, temporadas y camisetas en formato JSON. Los códigos
- * generados se guardan como imágenes PNG para fácil compartición y escaneo.
+ * generados se guardan como imágenes BMP para fácil compartición y escaneo.
+ * 
+ * Este módulo utiliza la librería libqrencode para generar códigos QR de alta calidad.
+ * 
+ * @note Requiere libqrencode instalada en el sistema
  */
 
 #ifndef QR_H
@@ -93,11 +97,17 @@ char* obtener_resumen_temporada_json(int temporada_id);
 char* obtener_info_camiseta_json(int camiseta_id);
 
 /**
- * @brief Genera un código QR a partir de texto y lo guarda como PNG
+ * @brief Genera un código QR a partir de texto y lo guarda como imagen BMP
+ * 
+ * Utiliza libqrencode para generar el código QR y lo guarda en formato BMP.
+ * El archivo se crea en el directorio de exportación configurado.
  *
- * @param texto El texto a codificar en el QR
- * @param filename Nombre del archivo PNG de salida (sin extensión)
+ * @param texto El texto a codificar en el QR (generalmente JSON)
+ * @param filename Nombre del archivo de salida (sin extensión, se agregará .png)
  * @return 1 si se generó exitosamente, 0 en caso de error
+ * 
+ * @note El QR se genera con nivel de corrección de errores H (alto)
+ * @note Cada módulo del QR se escala a 10x10 píxeles con margen de 40 píxeles
  */
 int generar_qr_png(const char* texto, const char* filename);
 

@@ -357,6 +357,24 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
 void exportar_partido_especifico_txt(const char *order_by, const char *filename, const char *title);
 
 /**
+ * @brief Escribe fila CSV con datos de partido
+ * Función común para exportar datos de partidos a CSV
+ */
+void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt);
+
+/**
+ * @brief Escribe fila TXT con datos de partido
+ * Función común para exportar datos de partidos a TXT
+ */
+void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt);
+
+/**
+ * @brief Escribe fila HTML con datos de partido
+ * Función común para exportar datos de partidos a HTML
+ */
+void write_partido_html_row(FILE *f, sqlite3_stmt *stmt);
+
+/**
  * @brief Escribe objeto JSON con datos de partido
  * Función común para exportar datos de partidos a JSON
  */
@@ -397,7 +415,7 @@ void calcular_estadisticas(Estadisticas *stats, const char *sql);
  * @param max_racha_d Puntero a máxima racha de derrotas
  */
 void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
-                      int *racha_actual_d, int *max_racha_d);
+                       int *racha_actual_d, int *max_racha_d);
 
 /**
  * @brief Prepara una sentencia SQL
@@ -406,6 +424,18 @@ void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
  * @return 1 si la preparación fue exitosa, 0 en caso contrario
  */
 int preparar_stmt_export(sqlite3_stmt **stmt, const char *sql);
+
+/**
+ * @brief Prepara una consulta verificando primero si hay registros
+ * @param stmt Doble puntero a la sentencia SQLite
+ * @param tabla Nombre de la tabla para verificar
+ * @param mensaje Mensaje a mostrar si no hay registros
+ * @param sql Consulta SQL principal a preparar
+ * @param count Puntero para almacenar el número de registros encontrados
+ * @return 1 si hay registros y la preparación fue exitosa, 0 en caso contrario
+ */
+int preparar_consulta_con_verificacion(sqlite3_stmt **stmt, const char *tabla,
+                                       const char *mensaje, const char *sql, int *count);
 
 /**
  * @brief Abre un archivo para exportación
@@ -427,5 +457,28 @@ int has_records(const char *table_name);
  * @param str Cadena a limpiar (se modifica in-place)
  */
 void trim_whitespace(char *str);
+
+/**
+ * @brief Estructura para almacenar datos de estadísticas por año
+ */
+typedef struct
+{
+    const char *anio;
+    const char *camiseta;
+    int partidos;
+    int total_goles;
+    int total_asistencias;
+    double avg_goles;
+    double avg_asistencias;
+} EstadisticaAnio;
+
+/**
+ * @brief Extrae datos de estadísticas por año desde un statement SQLite
+ * @param stmt Statement preparado con la consulta de estadísticas por año
+ * @param stats Puntero a estructura donde almacenar los datos extraídos
+ * @note Asume que el statement tiene las columnas en el orden:
+ *       anio, camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias
+ */
+void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
 
 #endif

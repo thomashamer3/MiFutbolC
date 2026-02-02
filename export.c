@@ -119,7 +119,7 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt,
-                       "SELECT resultado FROM partido ORDER BY fecha_hora"))
+                              "SELECT resultado FROM partido ORDER BY fecha_hora"))
     {
         *mejor_racha_victorias = 0;
         *peor_racha_derrotas = 0;

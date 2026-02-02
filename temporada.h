@@ -256,6 +256,11 @@ void listar_resumenes_mensuales(int temporada_id);
  */
 void exportar_resumen_mensual(int temporada_id, const char* mes_anio);
 
+/**
+ * @brief Permite seleccionar y comparar dos temporadas
+ */
+void seleccionar_comparar_temporadas();
+
 // ========== FUNCIONES AUXILIARES ==========
 
 /**

@@ -78,49 +78,30 @@ static CamisetaDataMejorado leer_camiseta_mejorada(sqlite3_stmt *stmt)
  */
 static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
 {
-    sqlite3_stmt *check_stmt;
-    *count = 0;
-
-    // Verificar si hay camisetas registradas
-    if (!preparar_stmt_export(&check_stmt, "SELECT COUNT(*) FROM camiseta"))
-    {
-        return NULL;
-    }
-    if (sqlite3_step(check_stmt) == SQLITE_ROW)
-    {
-        *count = sqlite3_column_int(check_stmt, 0);
-    }
-    sqlite3_finalize(check_stmt);
-
-    if (*count == 0)
-    {
-        mostrar_no_hay_registros("camisetas para exportar");
-        return NULL;
-    }
-
-    // Preparar la consulta principal con análisis avanzado
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt,
-                       "SELECT c.id, c.nombre, "
-                       "COALESCE(SUM(p.goles), 0) as total_goles, "
-                       "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
-                       "COUNT(p.id) as total_partidos, "
-                       "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
-                       "COUNT(CASE WHEN p.resultado = 2 THEN 1 END) as empates, "
-                       "COUNT(CASE WHEN p.resultado = 3 THEN 1 END) as derrotas, "
-                       "COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) as total_lesiones, "
-                       "COALESCE(AVG(p.rendimiento_general), 0) as rendimiento_promedio, "
-                       "COALESCE(AVG(p.cansancio), 0) as cansancio_promedio, "
-                       "COALESCE(AVG(p.estado_animo), 0) as estado_animo_promedio, "
-                       "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_goles_por_partido, "
-                       "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.asistencias), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_asistencias_por_partido, "
-                       "CASE WHEN COALESCE(SUM(p.asistencias), 0) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COALESCE(SUM(p.asistencias), 0) ELSE 0 END as relacion_goles_asistencias, "
-                       "CASE WHEN COUNT(p.id) > 0 THEN COUNT(CASE WHEN p.resultado = 1 THEN 1 END) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_victorias, "
-                       "CASE WHEN COUNT(p.id) > 0 THEN COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_lesiones_por_partido "
-                       "FROM camiseta c "
-                       "LEFT JOIN partido p ON c.id = p.camiseta_id "
-                       "GROUP BY c.id, c.nombre "
-                       "ORDER BY c.id"))
+
+    if (!preparar_consulta_con_verificacion(&stmt, "camiseta", "camisetas para exportar",
+                                            "SELECT c.id, c.nombre, "
+                                            "COALESCE(SUM(p.goles), 0) as total_goles, "
+                                            "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
+                                            "COUNT(p.id) as total_partidos, "
+                                            "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
+                                            "COUNT(CASE WHEN p.resultado = 2 THEN 1 END) as empates, "
+                                            "COUNT(CASE WHEN p.resultado = 3 THEN 1 END) as derrotas, "
+                                            "COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) as total_lesiones, "
+                                            "COALESCE(AVG(p.rendimiento_general), 0) as rendimiento_promedio, "
+                                            "COALESCE(AVG(p.cansancio), 0) as cansancio_promedio, "
+                                            "COALESCE(AVG(p.estado_animo), 0) as estado_animo_promedio, "
+                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_goles_por_partido, "
+                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.asistencias), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_asistencias_por_partido, "
+                                            "CASE WHEN COALESCE(SUM(p.asistencias), 0) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COALESCE(SUM(p.asistencias), 0) ELSE 0 END as relacion_goles_asistencias, "
+                                            "CASE WHEN COUNT(p.id) > 0 THEN COUNT(CASE WHEN p.resultado = 1 THEN 1 END) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_victorias, "
+                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_lesiones_por_partido "
+                                            "FROM camiseta c "
+                                            "LEFT JOIN partido p ON c.id = p.camiseta_id "
+                                            "GROUP BY c.id, c.nombre "
+                                            "ORDER BY c.id",
+                                            count))
     {
         return NULL;
     }

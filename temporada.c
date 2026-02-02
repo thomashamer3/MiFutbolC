@@ -43,7 +43,7 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
     {
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) == 10 &&
-            buffer[4] == '-' && buffer[7] == '-')
+                buffer[4] == '-' && buffer[7] == '-')
         {
             return;
         }
@@ -1720,6 +1720,49 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
     printf("Resumen mensual exportado exitosamente a: %s\n", filepath);
 }
 
+// ========== FUNCIÓN DE COMPARACIÓN DE TEMPORADAS ==========
+
+void seleccionar_comparar_temporadas()
+{
+    clear_screen();
+    print_header("COMPARAR TEMPORADAS");
+
+    // Mostrar lista de temporadas disponibles
+    listar_temporadas();
+
+    // Solicitar primera temporada
+    int temporada1_id = input_int("\nIngrese el ID de la primera temporada a comparar (0 para cancelar): ");
+    if (temporada1_id == 0) return;
+
+    if (!existe_id("temporada", temporada1_id))
+    {
+        printf("ID de temporada inválido.\n");
+        pause_console();
+        return;
+    }
+
+    // Solicitar segunda temporada
+    int temporada2_id = input_int("\nIngrese el ID de la segunda temporada a comparar (0 para cancelar): ");
+    if (temporada2_id == 0) return;
+
+    if (!existe_id("temporada", temporada2_id))
+    {
+        printf("ID de temporada inválido.\n");
+        pause_console();
+        return;
+    }
+
+    if (temporada1_id == temporada2_id)
+    {
+        printf("Debe seleccionar dos temporadas diferentes.\n");
+        pause_console();
+        return;
+    }
+
+    // Llamar a la función de comparación
+    comparar_temporadas(temporada1_id, temporada2_id);
+}
+
 void menu_temporadas()
 {
     MenuItem items[] =
@@ -1729,7 +1772,7 @@ void menu_temporadas()
         {3, "Modificar Temporada", modificar_temporada},
         {4, "Eliminar Temporada", eliminar_temporada},
         {5, "Administrar Temporada", administrar_temporada},
-        {6, "Comparar Temporadas", NULL}, // Implementar selección de temporadas
+        {6, "Comparar Temporadas", seleccionar_comparar_temporadas},
         {0, "Volver", NULL}
     };
 

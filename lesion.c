@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "estadisticas_lesiones.h"
 #include "camiseta.h"
+#include "partido.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -101,6 +102,44 @@ static const char *solicitar_estado_lesion(const char *prompt)
 }
 
 /**
+ * @brief Solicita al usuario el ID de un partido
+ * @param permitir_omitir Si es true, permite ingresar 0 para omitir
+ * @return ID del partido seleccionado (0 si se omite o cancela)
+ */
+static int solicitar_partido_id(int permitir_omitir)
+{
+    listar_partidos();
+    
+    const char *mensaje = permitir_omitir ? 
+        "\nID del Partido (0 para omitir): " : 
+        "\nNuevo ID del Partido (0 para quitar asociación): ";
+    
+    int partido_id;
+    int partido_valido = 0;
+    
+    while (!partido_valido)
+    {
+        partido_id = input_int(mensaje);
+        
+        if (partido_id == 0)
+        {
+            return 0;
+        }
+        
+        if (existe_id("partido", partido_id))
+        {
+            partido_valido = 1;
+        }
+        else
+        {
+            printf("El partido no existe. Intente nuevamente.\n");
+        }
+    }
+    
+    return partido_id;
+}
+
+/**
  * @brief Crea una nueva lesión en la base de datos
  *
  * Solicita al usuario el tipo, descripción de la lesión, el ID de la camiseta asociada
@@ -115,24 +154,35 @@ void crear_lesion()
     char fecha[20];
     char estado[50];
     int camiseta_id;
+    int partido_id = 0;
 
     solicitar_texto_no_vacio("Tipo de lesion: ", tipo, sizeof(tipo));
     solicitar_texto_no_vacio("Descripcion: ", descripcion, sizeof(descripcion));
     while (1)
     {
+        listar_camisetas();
         camiseta_id = input_int("ID de la Camiseta Asociada: ");
         if (existe_id("camiseta", camiseta_id))
             break;
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
 
+    // Asociar a un partido (opcional)
+    printf("\n¿Desea asociar esta lesion a un partido? (S/N): ");
+    char respuesta[10];
+    input_string("", respuesta, sizeof(respuesta));
+    if (respuesta[0] == 'S' || respuesta[0] == 's')
+    {
+        partido_id = solicitar_partido_id(1);
+    }
+
     // Mostrar opciones de estado
     printf("\nEstados disponibles:\n");
-    printf("1. ACTIVA - Lesión reciente, jugador NO apto\n");
-    printf("2. EN_TRATAMIENTO - Está en rehabilitación\n");
-    printf("3. MEJORANDO - Evolución positiva\n");
-    printf("4. RECUPERADO - Alta médica\n");
-    printf("5. RECAÍDA - Vuelve la lesión\n");
+    printf("1. ACTIVA - Lesion reciente, jugador NO apto\n");
+    printf("2. EN TRATAMIENTO - Esta en rehabilitacion\n");
+    printf("3. MEJORANDO - Evolucion positiva\n");
+    printf("4. RECUPERADO - Alta medica\n");
+    printf("5. RECAIDA - Vuelve la lesion\n");
 
     const char *estado_sel = solicitar_estado_lesion("Seleccione estado inicial (1-5): ");
     strcpy_s(estado, sizeof(estado), estado_sel);
@@ -149,7 +199,7 @@ void crear_lesion()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado) VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado, partido_id) VALUES(?,?,?,?,?,?,?,?)",
                 &stmt))
     {
         if (strcmp(jugador, "Usuario Desconocido") != 0)
@@ -165,6 +215,14 @@ void crear_lesion()
     sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 6, camiseta_id);
     sqlite3_bind_text(stmt, 7, estado, -1, SQLITE_TRANSIENT);
+    if (partido_id > 0)
+    {
+        sqlite3_bind_int(stmt, 8, partido_id);
+    }
+    else
+    {
+        sqlite3_bind_null(stmt, 8);
+    }
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
@@ -174,6 +232,10 @@ void crear_lesion()
     }
 
     printf("\nLesion creada correctamente con estado: %s\n", estado);
+    if (partido_id > 0)
+    {
+        printf("Asociada al partido ID: %d\n", partido_id);
+    }
     pause_console();
 }
 
@@ -309,6 +371,52 @@ static void modificar_estado_lesion()
 }
 
 /**
+ * @brief Modifica el partido asociado a una lesión existente
+ */
+static void modificar_partido_lesion()
+{
+    printf("\n¿Desea asociar esta lesion a un partido? (S/N): ");
+    char respuesta[10];
+    input_string("", respuesta, sizeof(respuesta));
+    
+    int partido_id = 0;
+    
+    if (respuesta[0] == 'S' || respuesta[0] == 's')
+    {
+        partido_id = solicitar_partido_id(0);
+    }
+    
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE lesion SET partido_id=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+    
+    if (partido_id > 0)
+    {
+        sqlite3_bind_int(stmt, 1, partido_id);
+    }
+    else
+    {
+        sqlite3_bind_null(stmt, 1);
+    }
+    sqlite3_bind_int(stmt, 2, current_lesion_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (partido_id > 0)
+    {
+        printf("Partido modificado correctamente al ID: %d\n", partido_id);
+    }
+    else
+    {
+        printf("Asociación con partido eliminada.\n");
+    }
+    pause_console();
+}
+
+/**
  * @brief Modifica todos los campos de una lesión existente
  */
 static void modificar_todo_lesion()
@@ -402,11 +510,12 @@ void modificar_lesion()
         {3, "Fecha", modificar_fecha_lesion},
         {4, "Camiseta", modificar_camiseta_lesion},
         {5, "Estado", modificar_estado_lesion},
-        {6, "Modificar Todo", modificar_todo_lesion},
+        {6, "Partido", modificar_partido_lesion},
+        {7, "Modificar Todo", modificar_todo_lesion},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR LESION", items, 7);
+    ejecutar_menu("MODIFICAR LESION", items, 8);
 }
 
 /**

@@ -762,7 +762,7 @@ long long obtener_siguiente_id(const char *tabla)
     if (!tabla) return 1;
 
     /*
-     * Esta consulta utiliza una CTE (Common Table Expression) recursiva para generar 
+     * Esta consulta utiliza una CTE (Common Table Expression) recursiva para generar
      * una secuencia de números y encontrar el primer "hueco" (ID faltante) en la tabla.
      * Esto permite reutilizar IDs de registros eliminados manteniendo la secuencia compacta.
      */
@@ -1421,7 +1421,7 @@ void calcular_estadisticas(Estadisticas *stats, const char *sql)
 }
 
 void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
-                      int *racha_actual_d, int *max_racha_d)
+                       int *racha_actual_d, int *max_racha_d)
 {
     if (resultado == 1)
     {
@@ -1450,6 +1450,43 @@ int preparar_stmt_export(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
+int preparar_consulta_con_verificacion(sqlite3_stmt **stmt, const char *tabla,
+                                       const char *mensaje, const char *sql, int *count)
+{
+    sqlite3_stmt *check_stmt;
+    *count = 0;
+
+    // Construir consulta de conteo
+    char count_sql[256];
+    snprintf(count_sql, sizeof(count_sql), "SELECT COUNT(*) FROM %s", tabla);
+
+    // Verificar si hay registros
+    if (!preparar_stmt_export(&check_stmt, count_sql))
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(check_stmt) == SQLITE_ROW)
+    {
+        *count = sqlite3_column_int(check_stmt, 0);
+    }
+    sqlite3_finalize(check_stmt);
+
+    if (*count == 0)
+    {
+        mostrar_no_hay_registros(mensaje);
+        return 0;
+    }
+
+    // Preparar la consulta principal
+    if (!preparar_stmt_export(stmt, sql))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
 FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
 {
     FILE *file;
@@ -1469,9 +1506,9 @@ int has_records(const char *table_name)
     char sql[256];
     int count = 0;
     int result = 0;
-    
+
     snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", table_name);
-    
+
     if (preparar_stmt_export(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1481,7 +1518,7 @@ int has_records(const char *table_name)
         sqlite3_finalize(stmt);
         result = count > 0;
     }
-    
+
     return result;
 }
 
@@ -1507,4 +1544,15 @@ void trim_whitespace(char *str)
         memmove(str, start, len + 1);
     else
         str[len] = '\0';
+}
+
+void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats)
+{
+    stats->anio = (const char *)sqlite3_column_text(stmt, 0);
+    stats->camiseta = (const char *)sqlite3_column_text(stmt, 1);
+    stats->partidos = sqlite3_column_int(stmt, 2);
+    stats->total_goles = sqlite3_column_int(stmt, 3);
+    stats->total_asistencias = sqlite3_column_int(stmt, 4);
+    stats->avg_goles = sqlite3_column_double(stmt, 5);
+    stats->avg_asistencias = sqlite3_column_double(stmt, 6);
 }

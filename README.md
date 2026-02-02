@@ -154,7 +154,11 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 - **Menús Jerárquicos**: Navegación intuitiva con estructura organizada
 - **Arte ASCII**: Pantallas de bienvenida, simulaciones animadas, decoraciones
-- **Códigos QR**: Generación de códigos QR para compartir información
+- **Códigos QR**: Generación de imágenes QR en formato BMP con información de partidos, temporadas y camisetas
+  - Utiliza libqrencode para generar códigos de alta calidad
+  - Nivel de corrección de errores H (30%)
+  - Escala configurable y márgenes de seguridad
+  - Exportación a directorio personalizable
 - **Interfaz Textual**: No requiere GUI, compatible con cualquier terminal
 
 ## 🛠️ Tecnologías Utilizadas
@@ -177,6 +181,12 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Propósito**: Parsing y generación de JSON para importación/exportación
 - **Características**: Ligera, rápida, sin dependencias externas
 
+#### libqrencode (Requerida externamente)
+- **Versión**: 4.x
+- **Propósito**: Generación de códigos QR con información del sistema
+- **Instalación**: Ver [INSTALACION_LIBQRENCODE.md](INSTALACION_LIBQRENCODE.md)
+- **Características**: Códigos QR estándar ISO/IEC 18004, múltiples niveles de corrección
+
 ### Herramientas de Desarrollo
 
 - **CodeBlocks**: IDE recomendado para desarrollo (incluye proyecto `.cbp`)
@@ -188,7 +198,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
 ✅ **cJSON**: Biblioteca completa incluida en el proyecto  
-✅ **No requiere instalación de dependencias externas**
+❗ **libqrencode**: Debe instalarse externamente (ver [INSTALACION_LIBQRENCODE.md](INSTALACION_LIBQRENCODE.md))
+
+**Nota**: El proyecto compilará sin errores incluso sin libqrencode, pero la funcionalidad de códigos QR no estará disponible.
 
 ## 🚀 Instalación y Compilación
 

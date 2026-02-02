@@ -4,10 +4,10 @@
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
+#include "sqlite3.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sqlite3.h>
 
 /* ===================== DATABASE HELPERS ===================== */
 
@@ -77,16 +77,7 @@ static void close_export_file(FILE* file)
 
 /* ===================== DATA PROCESSING HELPERS ===================== */
 
-/**
- * Trims trailing spaces from cancha text.
- * Returns a newly allocated string that must be freed.
- */
-static char* trim_cancha_text(const char* text)
-{
-    char *trimmed = strdup(text);
-    trim_trailing_spaces(trimmed);
-    return trimmed;
-}
+// trim_cancha_text removida - usar trim_trailing_spaces de utils.h directamente
 
 /* ===================== FORMAT-SPECIFIC HELPERS ===================== */
 

@@ -39,21 +39,7 @@ static void write_partido_csv(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
-        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
+        write_partido_csv_row(f, stmt);
     }
 }
 
@@ -67,21 +53,7 @@ static void write_partido_txt(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
-        fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
+        write_partido_txt_row(f, stmt);
     }
 }
 
@@ -95,24 +67,9 @@ static void write_partido_json(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
-
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
-        cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
-        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
-        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
-        cJSON_AddStringToObject(item, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
-        cJSON_AddStringToObject(item, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
-        cJSON_AddStringToObject(item, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
-        cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
-        cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
-        cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
-        cJSON_AddStringToObject(item, "comentario_personal", (const char *)sqlite3_column_text(stmt, 11));
+        write_partido_json_object(item, stmt);
         cJSON_AddItemToArray(root, item);
-
-        free(cancha_trimmed);
     }
 
     char *json_string = cJSON_Print(root);
@@ -133,22 +90,7 @@ static void write_partido_html(FILE *f, sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        char *cancha_trimmed = trim_cancha_text((const char *)sqlite3_column_text(stmt, 0));
-        fprintf(f,
-                "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
-                cancha_trimmed,
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)),
-                sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9),
-                sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11));
-        free(cancha_trimmed);
+        write_partido_html_row(f, stmt);
     }
 
     fprintf(f, "</table></body></html>");

@@ -173,24 +173,19 @@ static void write_stats_anio_txt(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int total_goles = sqlite3_column_int(stmt, 3);
-        int total_asistencias = sqlite3_column_int(stmt, 4);
-        double avg_goles = sqlite3_column_double(stmt, 5);
-        double avg_asistencias = sqlite3_column_double(stmt, 6);
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
 
-        if (strcmp(current_anio, anio) != 0)
+        if (strcmp(current_anio, stats.anio) != 0)
         {
             if (hay) fprintf(file, "\n");
-            fprintf(file, "Anio: %s\n", anio);
+            fprintf(file, "Anio: %s\n", stats.anio);
             fprintf(file, "----------------------------------------\n");
-            strcpy_s(current_anio, sizeof(current_anio), anio);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
         }
 
         fprintf(file, "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-                camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias);
+                stats.camiseta, stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
         hay = 1;
     }
 }
@@ -209,25 +204,20 @@ static void write_stats_anio_html(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int total_goles = sqlite3_column_int(stmt, 3);
-        int total_asistencias = sqlite3_column_int(stmt, 4);
-        double avg_goles = sqlite3_column_double(stmt, 5);
-        double avg_asistencias = sqlite3_column_double(stmt, 6);
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
 
-        if (strcmp(current_anio, anio) != 0)
+        if (strcmp(current_anio, stats.anio) != 0)
         {
             if (hay) fprintf(file, "</table><br>");
-            fprintf(file, "<h2>Anio: %s</h2><table border='1'>", anio);
+            fprintf(file, "<h2>Anio: %s</h2><table border='1'>", stats.anio);
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/P</th><th>A/P</th></tr>");
-            strcpy_s(current_anio, sizeof(current_anio), anio);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
         }
 
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias);
+                stats.camiseta, stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
         hay = 1;
     }
 
@@ -250,31 +240,26 @@ static void write_stats_anio_json(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int total_goles = sqlite3_column_int(stmt, 3);
-        int total_asistencias = sqlite3_column_int(stmt, 4);
-        double avg_goles = sqlite3_column_double(stmt, 5);
-        double avg_asistencias = sqlite3_column_double(stmt, 6);
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
 
-        if (strcmp(current_anio, anio) != 0)
+        if (strcmp(current_anio, stats.anio) != 0)
         {
             if (current_anio_array)
             {
                 cJSON_AddItemToObject(root, current_anio, current_anio_array);
             }
-            strcpy_s(current_anio, sizeof(current_anio), anio);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
             current_anio_array = cJSON_CreateArray();
         }
 
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "camiseta", camiseta);
-        cJSON_AddNumberToObject(item, "partidos", partidos);
-        cJSON_AddNumberToObject(item, "total_goles", total_goles);
-        cJSON_AddNumberToObject(item, "total_asistencias", total_asistencias);
-        cJSON_AddNumberToObject(item, "avg_goles", avg_goles);
-        cJSON_AddNumberToObject(item, "avg_asistencias", avg_asistencias);
+        cJSON_AddStringToObject(item, "camiseta", stats.camiseta);
+        cJSON_AddNumberToObject(item, "partidos", stats.partidos);
+        cJSON_AddNumberToObject(item, "total_goles", stats.total_goles);
+        cJSON_AddNumberToObject(item, "total_asistencias", stats.total_asistencias);
+        cJSON_AddNumberToObject(item, "avg_goles", stats.avg_goles);
+        cJSON_AddNumberToObject(item, "avg_asistencias", stats.avg_asistencias);
         cJSON_AddItemToArray(current_anio_array, item);
     }
 
