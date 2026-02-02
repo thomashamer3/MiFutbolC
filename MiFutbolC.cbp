@@ -43,6 +43,7 @@
 			<Add library="qrencode" />
 			<Add library="curl" />
 			<Add directory="C:/msys64/mingw64/lib" />
+			<Add option="-static" />
 		</Linker>
 		<Unit filename="analisis.c">
 			<Option compilerVar="CC" />

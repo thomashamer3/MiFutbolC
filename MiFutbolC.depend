@@ -242,7 +242,7 @@
 
 1769911202 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
 
-1769993387 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
+1769996279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
 	"lesion.h"
 	"menu.h"
 	"db.h"
@@ -2026,7 +2026,7 @@
 	<string.h>
 	<Windows.h>
 
-1769995087 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
+1769996279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
 	"entrenador_ia.h"
 	"db.h"
 	"utils.h"
@@ -2040,7 +2040,7 @@
 1769973710 d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.h
 	<time.h>
 
-1769995837 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
+1769996279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
 	"qr.h"
 	"db.h"
 	"utils.h"
