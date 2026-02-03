@@ -67,10 +67,11 @@
 	<sys/uio.h>
 	<math.h>
 
-1769974291 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1770142631 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
+	"settings.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -80,7 +81,7 @@
 	<ShlObj.h>
 	<sys/stat.h>
 
-1769907750 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
+1770142190 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
 	"sqlite3.h"
 
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
@@ -222,7 +223,7 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1770093108 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1770142190 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
 	"export_all_mejorado.h"
 	"export.h"
@@ -237,6 +238,7 @@
 	"menu.h"
 	"ascii_art.h"
 	"db.h"
+	"settings.h"
 	<stdio.h>
 
 1769908482 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.h
@@ -318,11 +320,12 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1769992460 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1770142190 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
 	"menu.h"
+	"settings.h"
 	"sqlite3.h"
 	"utils.h"
 	<stdbool.h>
@@ -542,7 +545,7 @@
 	<string.h>
 	"sqlite3.h"
 
-1769973843 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1770101980 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 	<stdio.h>
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
@@ -1997,7 +2000,7 @@
 
 1762402188 c:\msys64\mingw64\include\curl\typecheck-gcc.h
 
-1769801118 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
+1770142190 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
 1769840391 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
@@ -2017,7 +2020,7 @@
 	<string.h>
 	<time.h>
 
-1769973256 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1770143094 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"

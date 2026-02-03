@@ -20,6 +20,7 @@
 #include "menu.h"
 #include "ascii_art.h"
 #include "db.h"
+#include "settings.h"
 #include <stdio.h>
 
 static void exportar_camisetas_all()
@@ -97,6 +98,57 @@ static void exportar_records_rankings_all()
     exportar_records_rankings_txt();
     exportar_records_rankings_json();
     exportar_records_rankings_html();
+}
+
+static void exportar_todo_json()
+{
+    printf("Exportando todo (JSON)...\n");
+
+    exportar_camisetas_json();
+    exportar_partidos_json();
+    exportar_lesiones_json();
+    exportar_estadisticas_json();
+    exportar_analisis_json();
+    exportar_estadisticas_generales_json();
+    exportar_estadisticas_por_mes_json();
+    exportar_estadisticas_por_anio_json();
+    exportar_records_rankings_json();
+
+    exportar_partido_mas_goles_json();
+    exportar_partido_mas_asistencias_json();
+    exportar_partido_menos_goles_reciente_json();
+    exportar_partido_menos_asistencias_reciente_json();
+
+    printf("Exportacion JSON completada.\n");
+    pause_console();
+}
+
+static void exportar_todo_csv()
+{
+    printf("Exportando todo (CSV)...\n");
+
+    exportar_camisetas_csv();
+    exportar_partidos_csv();
+    exportar_lesiones_csv();
+    exportar_estadisticas_csv();
+    exportar_analisis_csv();
+    exportar_estadisticas_generales_csv();
+    exportar_estadisticas_por_mes_csv();
+    exportar_estadisticas_por_anio_csv();
+    exportar_record_goles_partido_csv();
+    exportar_record_asistencias_partido_csv();
+    exportar_mejor_combinacion_cancha_camiseta_csv();
+    exportar_peor_combinacion_cancha_camiseta_csv();
+    exportar_mejor_temporada_csv();
+    exportar_peor_temporada_csv();
+
+    exportar_partido_mas_goles_csv();
+    exportar_partido_mas_asistencias_csv();
+    exportar_partido_menos_goles_reciente_csv();
+    exportar_partido_menos_asistencias_reciente_csv();
+
+    printf("Exportacion CSV completada.\n");
+    pause_console();
 }
 
 /**
@@ -391,14 +443,14 @@ static void menu_exportar_partidos()
 {
     MenuItem items[] =
     {
-        {1, "Todos los Partidos", exportar_partidos_todo},
-        {2, "Partido con Mas Goles", exportar_partido_mas_goles_todo},
-        {3, "Partido con Mas Asistencias", exportar_partido_mas_asistencias_todo},
-        {4, "Partido Menos Goles Reciente", exportar_partido_menos_goles_reciente_todo},
-        {5, "Partido Menos Asistencias Reciente", exportar_partido_menos_asistencias_reciente_todo},
-        {0, "Volver", NULL}
+        {1, get_text("export_todos_partidos"), exportar_partidos_todo},
+        {2, get_text("export_partido_mas_goles"), exportar_partido_mas_goles_todo},
+        {3, get_text("export_partido_mas_asistencias"), exportar_partido_mas_asistencias_todo},
+        {4, get_text("export_partido_menos_goles_reciente"), exportar_partido_menos_goles_reciente_todo},
+        {5, get_text("export_partido_menos_asistencias_reciente"), exportar_partido_menos_asistencias_reciente_todo},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("EXPORTAR PARTIDOS", items, 6);
+    ejecutar_menu(get_text("export_partidos_menu_title"), items, 6);
 }
 
 /**
@@ -408,30 +460,32 @@ static void menu_exportar_estadisticas_generales()
 {
     MenuItem items[] =
     {
-        {1, "Estadisticas Generales", exportar_estadisticas_generales_todo},
-        {2, "Estadisticas Por Mes", exportar_estadisticas_por_mes_todo},
-        {3, "Estadisticas Por Anio", exportar_estadisticas_por_anio_todo},
-        {4, "Records & Rankings", exportar_records_rankings_todo},
-        {0, "Volver", NULL}
+        {1, get_text("export_estadisticas_generales_item"), exportar_estadisticas_generales_todo},
+        {2, get_text("export_estadisticas_por_mes"), exportar_estadisticas_por_mes_todo},
+        {3, get_text("export_estadisticas_por_anio"), exportar_estadisticas_por_anio_todo},
+        {4, get_text("export_records_rankings"), exportar_records_rankings_todo},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("EXPORTAR ESTADISTICAS GENERALES", items, 5);
+    ejecutar_menu(get_text("export_estadisticas_generales_menu_title"), items, 5);
 }
 
 void menu_exportar()
 {
     MenuItem items[] =
     {
-        {1, "Camisetas", exportar_camisetas_todo},
-        {2, "Partidos", menu_exportar_partidos},
-        {3, "Lesiones", exportar_lesiones_todo},
-        {4, "Estadisticas", exportar_estadisticas_todo},
-        {5, "Analisis", exportar_analisis_todo},
-        {6, "Estadisticas Generales", menu_exportar_estadisticas_generales},
-        {7, "Analisis Avanzado", menu_exportar_mejorado},
-        {8, "Base de Datos", exportar_base_datos},
-        {9, "Todo", exportar_todo},
-        {10, "Informe Total en PDF", exportar_informe_total_pdf},
-        {0, "Volver", NULL}
+        {1, get_text("export_camisetas"), exportar_camisetas_todo},
+        {2, get_text("export_partidos"), menu_exportar_partidos},
+        {3, get_text("export_lesiones"), exportar_lesiones_todo},
+        {4, get_text("export_estadisticas"), exportar_estadisticas_todo},
+        {5, get_text("export_analisis"), exportar_analisis_todo},
+        {6, get_text("export_estadisticas_generales"), menu_exportar_estadisticas_generales},
+        {7, get_text("export_analisis_avanzado"), menu_exportar_mejorado},
+        {8, get_text("export_base_datos"), exportar_base_datos},
+        {9, get_text("export_todo"), exportar_todo},
+        {10, get_text("export_todo_json"), exportar_todo_json},
+        {11, get_text("export_todo_csv"), exportar_todo_csv},
+        {12, get_text("export_informe_total_pdf"), exportar_informe_total_pdf},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 11);
+    ejecutar_menu(get_text("export_menu_title"), items, 13);
 }

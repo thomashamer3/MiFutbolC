@@ -18,7 +18,7 @@
 #endif
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
 
 // Flag para rastrear cambios en menú personalizado
 static int custom_menu_changed = 0;
@@ -32,6 +32,8 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     }
     return 1;
 }
+
+static void settings_apply_text_size();
 
 static void habilitar_menus_basicos_custom()
 {
@@ -128,6 +130,13 @@ static const TextEntry text_entries[] =
     {"settings_theme", "Tema de Interfaz", "Interface Theme"},
     {"settings_language", "Idioma", "Language"},
     {"settings_mode", "Modo", "Mode"},
+    {"settings_accessibility", "Accesibilidad", "Accessibility"},
+    {"settings_text_size", "Tamanio de texto", "Text size"},
+    {"text_size_small", "Pequenio", "Small"},
+    {"text_size_medium", "Mediano", "Medium"},
+    {"text_size_large", "Grande", "Large"},
+    {"settings_high_contrast", "Alto Contraste", "High Contrast"},
+    {"settings_accessibility_normal", "Configuracion normal", "Normal settings"},
     {"mode_simple", "Sencillo", "Simple"},
     {"mode_advanced", "Avanzado", "Advanced"},
     {"mode_custom", "Personalizado", "Custom"},
@@ -139,13 +148,56 @@ static const TextEntry text_entries[] =
     {"theme_purple", "Morado", "Purple"},
     {"theme_classic", "Clasico", "Classic"},
     {"theme_high_contrast", "Alto Contraste", "High Contrast"},
-    {"lang_spanish", "Español", "Spanish"},
+    {"lang_spanish", "Espaniol", "Spanish"},
     {"lang_english", "Ingles", "English"},
     {"settings_saved", "Configuracion guardada exitosamente.", "Settings saved successfully."},
     {"invalid_option", "Opcion invalida.", "Invalid option."},
     {"press_enter", "Presione Enter para continuar...", "Press Enter to continue..."},
     {"welcome_back", "Bienvenido De Vuelta", "Welcome Back"},
     {"menu_back", "Volver", "Back"},
+    {"export_menu_title", "EXPORTAR DATOS", "EXPORT DATA"},
+    {"export_partidos_menu_title", "EXPORTAR PARTIDOS", "EXPORT MATCHES"},
+    {"export_estadisticas_generales_menu_title", "EXPORTAR ESTADISTICAS GENERALES", "EXPORT GENERAL STATISTICS"},
+    {"export_camisetas", "Camisetas", "Shirts"},
+    {"export_partidos", "Partidos", "Matches"},
+    {"export_lesiones", "Lesiones", "Injuries"},
+    {"export_estadisticas", "Estadisticas", "Statistics"},
+    {"export_analisis", "Analisis", "Analysis"},
+    {"export_estadisticas_generales", "Estadisticas Generales", "General Statistics"},
+    {"export_analisis_avanzado", "Analisis Avanzado", "Advanced Analysis"},
+    {"export_base_datos", "Base de Datos", "Database"},
+    {"export_todo", "Todo", "All"},
+    {"export_informe_total_pdf", "Informe Total en PDF", "Full Report (PDF)"},
+    {"export_todo_json", "Todo (JSON)", "All (JSON)"},
+    {"export_todo_csv", "Todo (CSV)", "All (CSV)"},
+    {"export_todos_partidos", "Todos los Partidos", "All Matches"},
+    {"export_partido_mas_goles", "Partido con Mas Goles", "Match with Most Goals"},
+    {"export_partido_mas_asistencias", "Partido con Mas Asistencias", "Match with Most Assists"},
+    {"export_partido_menos_goles_reciente", "Partido Menos Goles Reciente", "Most Recent Match with Fewest Goals"},
+    {"export_partido_menos_asistencias_reciente", "Partido Menos Asistencias Reciente", "Most Recent Match with Fewest Assists"},
+    {"export_estadisticas_generales_item", "Estadisticas Generales", "General Statistics"},
+    {"export_estadisticas_por_mes", "Estadisticas Por Mes", "Monthly Statistics"},
+    {"export_estadisticas_por_anio", "Estadisticas Por Anio", "Yearly Statistics"},
+    {"export_records_rankings", "Records & Rankings", "Records & Rankings"},
+    {"import_menu_title", "IMPORTAR DATOS", "IMPORT DATA"},
+    {"import_menu_json_title", "IMPORTAR DATOS DESDE JSON", "IMPORT DATA FROM JSON"},
+    {"import_menu_txt_title", "IMPORTAR DATOS DESDE TXT", "IMPORT DATA FROM TXT"},
+    {"import_menu_csv_title", "IMPORTAR DATOS DESDE CSV", "IMPORT DATA FROM CSV"},
+    {"import_menu_html_title", "IMPORTAR DATOS DESDE HTML", "IMPORT DATA FROM HTML"},
+    {"import_from_json", "Importar desde JSON", "Import from JSON"},
+    {"import_from_txt", "Importar desde TXT", "Import from TXT"},
+    {"import_from_csv", "Importar desde CSV", "Import from CSV"},
+    {"import_from_html", "Importar desde HTML", "Import from HTML"},
+    {"import_from_db", "Importar desde Base de Datos", "Import from Database"},
+    {"import_camisetas", "Camisetas", "Shirts"},
+    {"import_partidos", "Partidos", "Matches"},
+    {"import_lesiones", "Lesiones", "Injuries"},
+    {"import_estadisticas", "Estadisticas", "Statistics"},
+    {"import_todo", "Todo", "All"},
+    {"import_todo_json_rapido", "Importar TODO desde JSON", "Import ALL from JSON"},
+    {"import_todo_csv_rapido", "Importar TODO desde CSV", "Import ALL from CSV"},
+    {"backup_created", "Backup automatico creado:", "Automatic backup created:"},
+    {"backup_failed", "Error creando backup automatico.", "Failed to create automatic backup."},
     {"current_settings", "Configuracion Actual", "Current Settings"},
     {"reset_settings", "Restablecer Configuracion", "Reset Settings"},
     {"reset_confirm", "Esta seguro de que desea restablecer toda la configuracion a valores por defecto?", "Are you sure you want to reset all settings to default values?"},
@@ -157,14 +209,33 @@ static const TextEntry text_entries[] =
     {NULL, NULL, NULL} // Terminador
 };
 
+static void ensure_settings_schema()
+{
+    char *err = NULL;
+    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN mode INTEGER DEFAULT 0;", NULL, NULL, &err);
+    if (err)
+    {
+        sqlite3_free(err);
+        err = NULL;
+    }
+
+    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN text_size INTEGER DEFAULT 1;", NULL, NULL, &err);
+    if (err)
+    {
+        sqlite3_free(err);
+    }
+}
+
 /**
  * @brief Inicializa el sistema de configuracion cargando desde BD
  */
 void settings_init()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT theme, language, mode FROM settings WHERE id = 1;";
+    const char *sql = "SELECT theme, language, mode, text_size FROM settings WHERE id = 1;";
     int has_settings = 0;
+
+    ensure_settings_schema();
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -173,6 +244,7 @@ void settings_init()
             current_settings.theme = sqlite3_column_int(stmt, 0);
             current_settings.language = sqlite3_column_int(stmt, 1);
             current_settings.mode = sqlite3_column_int(stmt, 2);
+            current_settings.text_size = sqlite3_column_int(stmt, 3);
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -223,6 +295,7 @@ void settings_init()
 
     // Aplicar tema al iniciar
     settings_apply_theme();
+    settings_apply_text_size();
 }
 
 /**
@@ -231,13 +304,14 @@ void settings_init()
 void settings_save()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode) VALUES (1, ?, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size) VALUES (1, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, current_settings.theme);
         sqlite3_bind_int(stmt, 2, current_settings.language);
         sqlite3_bind_int(stmt, 3, current_settings.mode);
+        sqlite3_bind_int(stmt, 4, current_settings.text_size);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -271,6 +345,16 @@ void settings_set_theme(ThemeType theme)
 void settings_set_language(LanguageType language)
 {
     current_settings.language = language;
+    settings_save();
+}
+
+/**
+ * @brief Establece el tamaño de texto de la aplicación
+ */
+void settings_set_text_size(TextSizeType text_size)
+{
+    current_settings.text_size = text_size;
+    settings_apply_text_size();
     settings_save();
 }
 
@@ -366,6 +450,38 @@ void settings_apply_theme()
     }
 
     SetConsoleTextAttribute(hConsole, color);
+#endif
+}
+
+static void settings_apply_text_size()
+{
+#ifdef _WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_FONT_INFOEX cfi;
+    memset(&cfi, 0, sizeof(cfi));
+    cfi.cbSize = sizeof(cfi);
+
+    if (!GetCurrentConsoleFontEx(hConsole, FALSE, &cfi))
+    {
+        return;
+    }
+
+    switch (current_settings.text_size)
+    {
+    case TEXT_SIZE_SMALL:
+        cfi.dwFontSize.Y = 16;
+        break;
+    case TEXT_SIZE_LARGE:
+        cfi.dwFontSize.Y = 24;
+        break;
+    case TEXT_SIZE_MEDIUM:
+    default:
+        cfi.dwFontSize.Y = 20;
+        break;
+    }
+
+    cfi.dwFontSize.X = 0;
+    SetCurrentConsoleFontEx(hConsole, FALSE, &cfi);
 #endif
 }
 
@@ -791,6 +907,20 @@ static const char* get_current_theme_name()
     }
 }
 
+static const char* get_current_text_size_name()
+{
+    switch (current_settings.text_size)
+    {
+    case TEXT_SIZE_SMALL:
+        return get_text("text_size_small");
+    case TEXT_SIZE_LARGE:
+        return get_text("text_size_large");
+    case TEXT_SIZE_MEDIUM:
+    default:
+        return get_text("text_size_medium");
+    }
+}
+
 /**
  * @brief Muestra la configuracion actual
  */
@@ -801,6 +931,7 @@ static void show_current_settings()
 
     printf("Tema: %s\n", get_current_theme_name());
     printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
+    printf("Tamanio de texto: %s\n", get_current_text_size_name());
 
     char *usuario = get_user_name();
     if (usuario)
@@ -815,6 +946,95 @@ static void show_current_settings()
 
     printf("\n");
     pause_console();
+}
+
+/**
+ * @brief Submenú para tamaño de texto
+ */
+static void menu_text_size_settings()
+{
+    int opcion;
+    do
+    {
+        clear_screen();
+        print_header(get_text("settings_text_size"));
+
+        printf("1. %s\n", get_text("text_size_small"));
+        printf("2. %s\n", get_text("text_size_medium"));
+        printf("3. %s\n", get_text("text_size_large"));
+        printf("0. %s\n", get_text("menu_back"));
+
+        opcion = input_int("> ");
+
+        switch (opcion)
+        {
+        case 1:
+            settings_set_text_size(TEXT_SIZE_SMALL);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 2:
+            settings_set_text_size(TEXT_SIZE_MEDIUM);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 3:
+            settings_set_text_size(TEXT_SIZE_LARGE);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 0:
+            break;
+        default:
+            printf("%s\n", get_text("invalid_option"));
+            pause_console();
+        }
+    }
+    while (opcion != 0);
+}
+
+/**
+ * @brief Submenú de accesibilidad
+ */
+static void menu_accessibility_settings()
+{
+    int opcion;
+    do
+    {
+        clear_screen();
+        print_header(get_text("settings_accessibility"));
+
+        printf("1. %s: %s\n", get_text("settings_text_size"), get_current_text_size_name());
+        printf("2. %s\n", get_text("settings_high_contrast"));
+        printf("3. %s\n", get_text("settings_accessibility_normal"));
+        printf("0. %s\n", get_text("menu_back"));
+
+        opcion = input_int("> ");
+
+        switch (opcion)
+        {
+        case 1:
+            menu_text_size_settings();
+            break;
+        case 2:
+            settings_set_theme(THEME_HIGH_CONTRAST);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 3:
+            settings_set_theme(THEME_LIGHT);
+            settings_set_text_size(TEXT_SIZE_MEDIUM);
+            printf("%s\n", get_text("settings_saved"));
+            pause_console();
+            break;
+        case 0:
+            break;
+        default:
+            printf("%s\n", get_text("invalid_option"));
+            pause_console();
+        }
+    }
+    while (opcion != 0);
 }
 
 /**
@@ -1021,30 +1241,32 @@ void menu_custom_menus()
  */
 void menu_settings()
 {
-
     MenuItem items[] =
     {
         {1, get_text("settings_theme"), menu_theme_settings},
         {2, get_text("settings_language"), menu_language_settings},
-        {3, get_text("menu_usuario"), menu_usuario},
-        {4, get_text("show_current"), show_current_settings},
-        {5, get_text("reset_defaults"), reset_settings_to_defaults},
-        {6, get_text("settings_mode"), menu_mode_settings},
+        {3, get_text("settings_accessibility"), menu_accessibility_settings},
+        {4, get_text("menu_usuario"), menu_usuario},
+        {5, get_text("show_current"), show_current_settings},
+        {6, get_text("reset_defaults"), reset_settings_to_defaults},
+        {7, get_text("settings_mode"), menu_mode_settings},
         {0, get_text("menu_back"), NULL}
     };
+
+    const int item_count = (int)(sizeof(items) / sizeof(items[0]));
 
     while (1)
     {
         clear_screen();
-        print_header("AJUSTES");
+        print_header(get_text("menu_settings"));
 
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < item_count; i++)
         {
             printf("%d.%s\n", items[i].opcion, items[i].texto);
         }
 
         int opcion = input_int("> ");
-        const MenuItem *selected = buscar_item_settings(items, 7, opcion);
+        const MenuItem *selected = buscar_item_settings(items, item_count, opcion);
 
         if (!selected)
         {

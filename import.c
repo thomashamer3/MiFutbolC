@@ -7,6 +7,7 @@
 #include "cJSON.h"
 #include "db.h"
 #include "menu.h"
+#include "settings.h"
 #include "sqlite3.h"
 #include "utils.h"
 #include <stdbool.h>
@@ -2143,14 +2144,14 @@ static void importar_todo_con_pausa()
  */
 static void submenu_importar_json()
 {
-    MenuItem items[] = {{1, "Camisetas", importar_camisetas_json_con_pausa},
-        {2, "Partidos", importar_partidos_json_con_pausa},
-        {3, "Lesiones", importar_lesiones_json_con_pausa},
-        {4, "Estadisticas", importar_estadisticas_json_con_pausa},
-        {5, "Todo", importar_todo_con_pausa},
-        {0, "Volver", NULL}
+    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_json_con_pausa},
+        {2, get_text("import_partidos"), importar_partidos_json_con_pausa},
+        {3, get_text("import_lesiones"), importar_lesiones_json_con_pausa},
+        {4, get_text("import_estadisticas"), importar_estadisticas_json_con_pausa},
+        {5, get_text("import_todo"), importar_todo_con_pausa},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("IMPORTAR DATOS DESDE JSON", items, 6);
+    ejecutar_menu(get_text("import_menu_json_title"), items, 6);
 }
 
 /**
@@ -2158,14 +2159,14 @@ static void submenu_importar_json()
  */
 static void submenu_importar_txt()
 {
-    MenuItem items[] = {{1, "Camisetas", importar_camisetas_txt_con_pausa},
-        {2, "Partidos", importar_partidos_txt_con_pausa},
-        {3, "Lesiones", importar_lesiones_txt_con_pausa},
-        {4, "Estadisticas", importar_estadisticas_txt_con_pausa},
-        {5, "Todo", importar_todo_txt_con_pausa},
-        {0, "Volver", NULL}
+    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_txt_con_pausa},
+        {2, get_text("import_partidos"), importar_partidos_txt_con_pausa},
+        {3, get_text("import_lesiones"), importar_lesiones_txt_con_pausa},
+        {4, get_text("import_estadisticas"), importar_estadisticas_txt_con_pausa},
+        {5, get_text("import_todo"), importar_todo_txt_con_pausa},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("IMPORTAR DATOS DESDE TXT", items, 6);
+    ejecutar_menu(get_text("import_menu_txt_title"), items, 6);
 }
 
 /**
@@ -2173,14 +2174,14 @@ static void submenu_importar_txt()
  */
 static void submenu_importar_csv()
 {
-    MenuItem items[] = {{1, "Camisetas", importar_camisetas_csv_con_pausa},
-        {2, "Partidos", importar_partidos_csv_con_pausa},
-        {3, "Lesiones", importar_lesiones_csv_con_pausa},
-        {4, "Estadisticas", importar_estadisticas_csv_con_pausa},
-        {5, "Todo", importar_todo_csv_con_pausa},
-        {0, "Volver", NULL}
+    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_csv_con_pausa},
+        {2, get_text("import_partidos"), importar_partidos_csv_con_pausa},
+        {3, get_text("import_lesiones"), importar_lesiones_csv_con_pausa},
+        {4, get_text("import_estadisticas"), importar_estadisticas_csv_con_pausa},
+        {5, get_text("import_todo"), importar_todo_csv_con_pausa},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("IMPORTAR DATOS DESDE CSV", items, 6);
+    ejecutar_menu(get_text("import_menu_csv_title"), items, 6);
 }
 
 /**
@@ -2188,14 +2189,56 @@ static void submenu_importar_csv()
  */
 static void submenu_importar_html()
 {
-    MenuItem items[] = {{1, "Camisetas", importar_camisetas_html_con_pausa},
-        {2, "Partidos", importar_partidos_html_con_pausa},
-        {3, "Lesiones", importar_lesiones_html_con_pausa},
-        {4, "Estadisticas", importar_estadisticas_html_con_pausa},
-        {5, "Todo", importar_todo_html_con_pausa},
-        {0, "Volver", NULL}
+    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_html_con_pausa},
+        {2, get_text("import_partidos"), importar_partidos_html_con_pausa},
+        {3, get_text("import_lesiones"), importar_lesiones_html_con_pausa},
+        {4, get_text("import_estadisticas"), importar_estadisticas_html_con_pausa},
+        {5, get_text("import_todo"), importar_todo_html_con_pausa},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("IMPORTAR DATOS DESDE HTML", items, 6);
+    ejecutar_menu(get_text("import_menu_html_title"), items, 6);
+}
+
+static void menu_importar_json_con_backup()
+{
+    backup_base_datos_automatico("import_json");
+    submenu_importar_json();
+}
+
+static void menu_importar_txt_con_backup()
+{
+    backup_base_datos_automatico("import_txt");
+    submenu_importar_txt();
+}
+
+static void menu_importar_csv_con_backup()
+{
+    backup_base_datos_automatico("import_csv");
+    submenu_importar_csv();
+}
+
+static void menu_importar_html_con_backup()
+{
+    backup_base_datos_automatico("import_html");
+    submenu_importar_html();
+}
+
+static void importar_todo_json_rapido()
+{
+    backup_base_datos_automatico("import_json");
+    importar_todo_con_pausa();
+}
+
+static void importar_todo_csv_rapido()
+{
+    backup_base_datos_automatico("import_csv");
+    importar_todo_csv_con_pausa();
+}
+
+static void importar_base_datos_con_backup()
+{
+    backup_base_datos_automatico("import_db");
+    importar_base_datos();
 }
 
 /**
@@ -2208,12 +2251,14 @@ static void submenu_importar_html()
  */
 void menu_importar()
 {
-    MenuItem items[] = {{1, "Importar desde JSON", submenu_importar_json},
-        {2, "Importar desde TXT", submenu_importar_txt},
-        {3, "Importar desde CSV", submenu_importar_csv},
-        {4, "Importar desde HTML", submenu_importar_html},
-        {5, "Importar desde Base de Datos", importar_base_datos},
-        {0, "Volver", NULL}
+    MenuItem items[] = {{1, get_text("import_from_json"), menu_importar_json_con_backup},
+        {2, get_text("import_from_txt"), menu_importar_txt_con_backup},
+        {3, get_text("import_from_csv"), menu_importar_csv_con_backup},
+        {4, get_text("import_from_html"), menu_importar_html_con_backup},
+        {5, get_text("import_todo_json_rapido"), importar_todo_json_rapido},
+        {6, get_text("import_todo_csv_rapido"), importar_todo_csv_rapido},
+        {7, get_text("import_from_db"), importar_base_datos_con_backup},
+        {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu("IMPORTAR DATOS", items, 6);
+    ejecutar_menu(get_text("import_menu_title"), items, 8);
 }

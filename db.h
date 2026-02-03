@@ -8,10 +8,10 @@
  * Soporta evolución de esquema mediante ALTER TABLE dinámicos.
  */
 
+#include "sqlite3.h"
+
 #ifndef DB_H
 #define DB_H
-
-#include "sqlite3.h"
 
 /**
  * @brief Instancia global de conexión SQLite3
@@ -21,6 +21,17 @@
  * de consulta y modificación de datos.
  */
 extern sqlite3 *db;
+
+/**
+ * @brief Crea un backup automático de la base de datos
+ *
+ * Esta función genera una copia con timestamp en la carpeta de exportaciones
+ * para prevenir pérdida de datos antes de importaciones.
+ *
+ * @param motivo Texto opcional para identificar el contexto del backup.
+ * @return 1 si se creó el backup, 0 si falló.
+ */
+int backup_base_datos_automatico(const char *motivo);
 
 /**
  * @brief Inicializa infraestructura completa de persistencia

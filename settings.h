@@ -25,6 +25,13 @@ typedef enum
 
 typedef enum
 {
+    TEXT_SIZE_SMALL = 0,
+    TEXT_SIZE_MEDIUM = 1,
+    TEXT_SIZE_LARGE = 2
+} TextSizeType;
+
+typedef enum
+{
     LANGUAGE_SPANISH = 0,
     LANGUAGE_ENGLISH = 1
 } LanguageType;
@@ -42,6 +49,7 @@ typedef struct
     ThemeType theme;
     LanguageType language;
     ModeType mode;
+    TextSizeType text_size;
 } AppSettings;
 
 /**
@@ -70,6 +78,11 @@ void settings_set_theme(ThemeType theme);
  * @brief Establece el idioma de la aplicación
  */
 void settings_set_language(LanguageType language);
+
+/**
+ * @brief Establece el tamaño de texto de la aplicación
+ */
+void settings_set_text_size(TextSizeType text_size);
 
 /**
  * @brief Aplica el tema actual a la consola

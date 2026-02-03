@@ -8,6 +8,7 @@
 #include "export.h"
 #include "db.h"
 #include "utils.h"
+#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,6 +145,20 @@ static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
     fclose(dst);
 
     return COPY_OK;
+}
+
+static int append_str(char *dest, size_t *used, size_t cap, const char *str)
+{
+    size_t len = strlen(str);
+    if (*used + len >= cap)
+    {
+        return 0;
+    }
+
+    memcpy(dest + *used, str, len);
+    *used += len;
+    dest[*used] = '\0';
+    return 1;
 }
 
 /**
@@ -397,7 +412,9 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS settings ("
         " id INTEGER PRIMARY KEY,"
         " theme INTEGER DEFAULT 0,"
-        " language INTEGER DEFAULT 0);"
+        " language INTEGER DEFAULT 0,"
+        " mode INTEGER DEFAULT 0,"
+        " text_size INTEGER DEFAULT 1);"
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -764,6 +781,78 @@ void exportar_base_datos()
 
     printf("Base de datos exportada a:\n%s\n", dest_path);
     pause_console();
+}
+
+int backup_base_datos_automatico(const char *motivo)
+{
+    const char *source_path = DB_PATH;
+    const char *export_dir = get_export_dir();
+    if (!export_dir)
+    {
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
+    }
+
+    char backup_dir[1024];
+    strcpy_s(backup_dir, sizeof(backup_dir), export_dir);
+    strcat_s(backup_dir, sizeof(backup_dir), "\\Backups");
+
+    if (!asegurar_directorio(backup_dir, "Backups"))
+    {
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
+    }
+
+    char timestamp[32];
+    get_timestamp(timestamp, sizeof(timestamp));
+
+    char dest_path[1024];
+    const char *prefix = "mifutbol_backup_";
+    const char *ext = ".db";
+    char motivo_safe[64] = {0};
+
+    if (motivo && motivo[0] != '\0')
+    {
+        strncpy(motivo_safe, motivo, sizeof(motivo_safe) - 1);
+    }
+
+    size_t used = 0;
+    dest_path[0] = '\0';
+
+    if (!append_str(dest_path, &used, sizeof(dest_path), backup_dir) ||
+        !append_str(dest_path, &used, sizeof(dest_path), "\\") ||
+        !append_str(dest_path, &used, sizeof(dest_path), prefix))
+    {
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
+    }
+
+    if (motivo_safe[0] != '\0')
+    {
+        if (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
+            !append_str(dest_path, &used, sizeof(dest_path), "_"))
+        {
+            printf("%s\n", get_text("backup_failed"));
+            return 0;
+        }
+    }
+
+    if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
+        !append_str(dest_path, &used, sizeof(dest_path), ext))
+    {
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
+    }
+
+    CopyResult result = copiar_archivo(source_path, dest_path);
+    if (result != COPY_OK)
+    {
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
+    }
+
+    printf("%s\n%s\n", get_text("backup_created"), dest_path);
+    return 1;
 }
 
 void importar_base_datos()
