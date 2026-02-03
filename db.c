@@ -28,6 +28,27 @@ static char error_buf[256];
 #define STRDUP strdup
 #endif
 
+#ifndef _WIN32
+static size_t strlen_s(const char *str, size_t max_len)
+{
+    return strnlen(str, max_len);
+}
+
+static int strncpy_s(char *dest, size_t destsz, const char *src, size_t count)
+{
+    if (!dest || !src || destsz == 0)
+    {
+        return 1;
+    }
+
+    size_t max_copy = (count < (destsz - 1)) ? count : (destsz - 1);
+    size_t len = strnlen(src, max_copy);
+    memcpy(dest, src, len);
+    dest[len] = '\0';
+    return 0;
+}
+#endif
+
 /** Puntero global a la base de datos SQLite */
 sqlite3 *db = NULL;
 
@@ -149,7 +170,7 @@ static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
 
 static int append_str(char *dest, size_t *used, size_t cap, const char *str)
 {
-    size_t len = strlen(str);
+    size_t len = strlen_s(str, cap - *used);
     if (*used + len >= cap)
     {
         return 0;
@@ -813,7 +834,7 @@ int backup_base_datos_automatico(const char *motivo)
 
     if (motivo && motivo[0] != '\0')
     {
-        strncpy(motivo_safe, motivo, sizeof(motivo_safe) - 1);
+        strncpy_s(motivo_safe, sizeof(motivo_safe), motivo, sizeof(motivo_safe) - 1);
     }
 
     size_t used = 0;
@@ -827,14 +848,12 @@ int backup_base_datos_automatico(const char *motivo)
         return 0;
     }
 
-    if (motivo_safe[0] != '\0')
+    if (motivo_safe[0] != '\0' &&
+        (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
+         !append_str(dest_path, &used, sizeof(dest_path), "_")))
     {
-        if (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
-            !append_str(dest_path, &used, sizeof(dest_path), "_"))
-        {
-            printf("%s\n", get_text("backup_failed"));
-            return 0;
-        }
+        printf("%s\n", get_text("backup_failed"));
+        return 0;
     }
 
     if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
