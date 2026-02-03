@@ -81,6 +81,36 @@ void exportar_analisis_json();
  */
 void exportar_analisis_html();
 
+/**
+ * @brief Exporta un resumen financiero por mes y año a TXT
+ */
+void exportar_finanzas_resumen_txt();
+
+/**
+ * @brief Exporta ranking de canchas por rendimiento y lesiones a TXT
+ */
+void exportar_ranking_canchas_txt();
+
+/**
+ * @brief Exporta partidos agrupados por clima a TXT
+ */
+void exportar_partidos_por_clima_txt();
+
+/**
+ * @brief Exporta distribución de lesiones por tipo y estado a TXT
+ */
+void exportar_lesiones_por_tipo_estado_txt();
+
+/**
+ * @brief Exporta historial de rachas a TXT
+ */
+void exportar_rachas_historial_txt();
+
+/**
+ * @brief Exporta distribución de estado de ánimo y cansancio a TXT
+ */
+void exportar_estado_animo_cansancio_txt();
+
 /** @} */
 
 /**

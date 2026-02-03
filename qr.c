@@ -47,6 +47,11 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 typedef char *(*QrJsonFn)(int id);
 
+// Forward declarations para funciones que necesitan parámetros
+int generar_qr_estadisticas_mes(int mes, int anio);
+int generar_qr_temporada(int temporada_id);
+int generar_qr_camiseta(int camiseta_id);
+
 static void construir_nombre_archivo(const char *filename_fmt, int id, char *out, size_t out_size)
 {
     if (strcmp(filename_fmt, "partido_%d") == 0)
@@ -177,6 +182,327 @@ char* obtener_estadisticas_jugador_json(int partido_id, int jugador_id)
     return json_string;
 }
 
+char* obtener_estadisticas_generales_json(void)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT COUNT(*) as total_partidos, "
+                      "SUM(goles) as total_goles, "
+                      "SUM(asistencias) as total_asistencias, "
+                      "AVG(rendimiento_general) as promedio_rendimiento, "
+                      "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) as victorias, "
+                      "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) as empates, "
+                      "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) as derrotas "
+                      "FROM partido;";
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "estadisticas_generales");
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON_AddNumberToObject(json, "total_partidos", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(json, "total_goles", sqlite3_column_int(stmt, 1));
+            cJSON_AddNumberToObject(json, "total_asistencias", sqlite3_column_int(stmt, 2));
+            cJSON_AddNumberToObject(json, "promedio_rendimiento", sqlite3_column_double(stmt, 3));
+            cJSON_AddNumberToObject(json, "victorias", sqlite3_column_int(stmt, 4));
+            cJSON_AddNumberToObject(json, "empates", sqlite3_column_int(stmt, 5));
+            cJSON_AddNumberToObject(json, "derrotas", sqlite3_column_int(stmt, 6));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_estadisticas_mes_json(int mes, int anio)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT COUNT(*) as total_partidos, "
+                      "SUM(goles) as total_goles, "
+                      "SUM(asistencias) as total_asistencias, "
+                      "AVG(rendimiento_general) as promedio_rendimiento "
+                      "FROM partido "
+                      "WHERE strftime('%m', fecha_hora) = ? AND strftime('%Y', fecha_hora) = ?;";
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "estadisticas_mes");
+    cJSON_AddNumberToObject(json, "mes", mes);
+    cJSON_AddNumberToObject(json, "anio", anio);
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        char mes_str[3];
+        char anio_str[5];
+        snprintf(mes_str, sizeof(mes_str), "%02d", mes);
+        snprintf(anio_str, sizeof(anio_str), "%d", anio);
+
+        sqlite3_bind_text(stmt, 1, mes_str, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, anio_str, -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON_AddNumberToObject(json, "total_partidos", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(json, "total_goles", sqlite3_column_int(stmt, 1));
+            cJSON_AddNumberToObject(json, "total_asistencias", sqlite3_column_int(stmt, 2));
+            cJSON_AddNumberToObject(json, "promedio_rendimiento", sqlite3_column_double(stmt, 3));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_analisis_condiciones_json(void)
+{
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "analisis_condiciones");
+
+    sqlite3_stmt *stmt;
+
+    // Análisis por clima
+    const char *sql_clima = "SELECT clima, COUNT(*) as partidos, AVG(rendimiento_general) as promedio "
+                            "FROM partido GROUP BY clima;";
+    cJSON *climas = cJSON_CreateArray();
+
+    if (preparar_stmt(sql_clima, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *clima_obj = cJSON_CreateObject();
+            cJSON_AddNumberToObject(clima_obj, "clima", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(clima_obj, "partidos", sqlite3_column_int(stmt, 1));
+            cJSON_AddNumberToObject(clima_obj, "promedio_rendimiento", sqlite3_column_double(stmt, 2));
+            cJSON_AddItemToArray(climas, clima_obj);
+        }
+        sqlite3_finalize(stmt);
+    }
+    cJSON_AddItemToObject(json, "analisis_clima", climas);
+
+    // Análisis por día de semana
+    const char *sql_dia = "SELECT dia, COUNT(*) as partidos, AVG(rendimiento_general) as promedio "
+                          "FROM partido GROUP BY dia;";
+    cJSON *dias = cJSON_CreateArray();
+
+    if (preparar_stmt(sql_dia, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *dia_obj = cJSON_CreateObject();
+            cJSON_AddNumberToObject(dia_obj, "dia", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(dia_obj, "partidos", sqlite3_column_int(stmt, 1));
+            cJSON_AddNumberToObject(dia_obj, "promedio_rendimiento", sqlite3_column_double(stmt, 2));
+            cJSON_AddItemToArray(dias, dia_obj);
+        }
+        sqlite3_finalize(stmt);
+    }
+    cJSON_AddItemToObject(json, "analisis_dia", dias);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_historial_lesiones_json(void)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT id, fecha_lesion, tipo_lesion, duracion_estimada, descripcion "
+                      "FROM lesion ORDER BY fecha_lesion DESC;";
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "historial_lesiones");
+
+    cJSON *lesiones = cJSON_CreateArray();
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *lesion = cJSON_CreateObject();
+            cJSON_AddNumberToObject(lesion, "id", sqlite3_column_int(stmt, 0));
+            cJSON_AddStringToObject(lesion, "fecha", (const char*)sqlite3_column_text(stmt, 1));
+            cJSON_AddStringToObject(lesion, "tipo", (const char*)sqlite3_column_text(stmt, 2));
+            cJSON_AddNumberToObject(lesion, "duracion_dias", sqlite3_column_int(stmt, 3));
+            cJSON_AddStringToObject(lesion, "descripcion", (const char*)sqlite3_column_text(stmt, 4));
+            cJSON_AddItemToArray(lesiones, lesion);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    cJSON_AddItemToObject(json, "lesiones", lesiones);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_logros_hitos_json(void)
+{
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "logros_hitos");
+
+    cJSON *logros = cJSON_CreateArray();
+
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT id, nombre, descripcion, fecha_logro, valor "
+                      "FROM logros ORDER BY fecha_logro DESC;";
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *logro = cJSON_CreateObject();
+            cJSON_AddNumberToObject(logro, "id", sqlite3_column_int(stmt, 0));
+            cJSON_AddStringToObject(logro, "nombre", (const char*)sqlite3_column_text(stmt, 1));
+            cJSON_AddStringToObject(logro, "descripcion", (const char*)sqlite3_column_text(stmt, 2));
+            cJSON_AddStringToObject(logro, "fecha", (const char*)sqlite3_column_text(stmt, 3));
+            cJSON_AddNumberToObject(logro, "valor", sqlite3_column_int(stmt, 4));
+            cJSON_AddItemToArray(logros, logro);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    cJSON_AddItemToObject(json, "logros", logros);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_rendimiento_vs_estado_json(void)
+{
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "rendimiento_vs_estado");
+
+    sqlite3_stmt *stmt;
+
+    // Correlación entre estado_animo y rendimiento
+    const char *sql_animo = "SELECT estado_animo, AVG(rendimiento_general) as promedio, COUNT(*) as partidos "
+                            "FROM partido GROUP BY estado_animo;";
+    cJSON *animos = cJSON_CreateArray();
+
+    if (preparar_stmt(sql_animo, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *animo_obj = cJSON_CreateObject();
+            cJSON_AddNumberToObject(animo_obj, "estado_animo", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(animo_obj, "promedio_rendimiento", sqlite3_column_double(stmt, 1));
+            cJSON_AddNumberToObject(animo_obj, "partidos", sqlite3_column_int(stmt, 2));
+            cJSON_AddItemToArray(animos, animo_obj);
+        }
+        sqlite3_finalize(stmt);
+    }
+    cJSON_AddItemToObject(json, "rendimiento_por_animo", animos);
+
+    // Correlación entre cansancio y goles
+    const char *sql_cansancio = "SELECT cansancio, AVG(goles) as promedio_goles, AVG(rendimiento_general) as promedio_rendimiento, COUNT(*) as partidos "
+                                "FROM partido GROUP BY cansancio;";
+    cJSON *cansancios = cJSON_CreateArray();
+
+    if (preparar_stmt(sql_cansancio, &stmt))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cJSON *cansancio_obj = cJSON_CreateObject();
+            cJSON_AddNumberToObject(cansancio_obj, "cansancio", sqlite3_column_int(stmt, 0));
+            cJSON_AddNumberToObject(cansancio_obj, "promedio_goles", sqlite3_column_double(stmt, 1));
+            cJSON_AddNumberToObject(cansancio_obj, "promedio_rendimiento", sqlite3_column_double(stmt, 2));
+            cJSON_AddNumberToObject(cansancio_obj, "partidos", sqlite3_column_int(stmt, 3));
+            cJSON_AddItemToArray(cansancios, cansancio_obj);
+        }
+        sqlite3_finalize(stmt);
+    }
+    cJSON_AddItemToObject(json, "rendimiento_por_cansancio", cansancios);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_comparativas_json(void)
+{
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "comparativas");
+
+    sqlite3_stmt *stmt;
+
+    // Mejor y peor camiseta
+    const char *sql_camisetas = "SELECT cam.id, cam.nombre, COUNT(*) as partidos, "
+                                "AVG(rendimiento_general) as promedio, SUM(goles) as goles "
+                                "FROM partido p "
+                                "JOIN camiseta cam ON p.camiseta_id = cam.id "
+                                "GROUP BY cam.id ORDER BY promedio DESC;";
+    cJSON *camisetas = cJSON_CreateArray();
+
+    if (preparar_stmt(sql_camisetas, &stmt))
+    {
+        int contador = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW && contador < 2)
+        {
+            cJSON *cam_obj = cJSON_CreateObject();
+            cJSON_AddNumberToObject(cam_obj, "id", sqlite3_column_int(stmt, 0));
+            cJSON_AddStringToObject(cam_obj, "nombre", (const char*)sqlite3_column_text(stmt, 1));
+            cJSON_AddNumberToObject(cam_obj, "partidos", sqlite3_column_int(stmt, 2));
+            cJSON_AddNumberToObject(cam_obj, "promedio_rendimiento", sqlite3_column_double(stmt, 3));
+            cJSON_AddNumberToObject(cam_obj, "total_goles", sqlite3_column_int(stmt, 4));
+            cJSON_AddStringToObject(cam_obj, "tipo", contador == 0 ? "mejor" : "peor");
+            cJSON_AddItemToArray(camisetas, cam_obj);
+            contador++;
+        }
+        sqlite3_finalize(stmt);
+    }
+    cJSON_AddItemToObject(json, "comparativa_camisetas", camisetas);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
+char* obtener_reporte_financiero_json(void)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT SUM(monto) as total_gastos FROM financiamiento WHERE tipo = 'gasto';";
+
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddStringToObject(json, "tipo", "reporte_financiero");
+
+    double gastos_totales = 0;
+    double ingresos_totales = 0;
+
+    if (preparar_stmt(sql, &stmt))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            gastos_totales = sqlite3_column_double(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *sql_ingresos = "SELECT SUM(monto) as total_ingresos FROM financiamiento WHERE tipo = 'ingreso';";
+
+    if (preparar_stmt(sql_ingresos, &stmt))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            ingresos_totales = sqlite3_column_double(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    cJSON_AddNumberToObject(json, "gastos_totales", gastos_totales);
+    cJSON_AddNumberToObject(json, "ingresos_totales", ingresos_totales);
+    cJSON_AddNumberToObject(json, "balance", ingresos_totales - gastos_totales);
+
+    char *json_string = cJSON_Print(json);
+    cJSON_Delete(json);
+    return json_string;
+}
+
 char* obtener_resumen_temporada_json(int temporada_id)
 {
     sqlite3_stmt *stmt;
@@ -234,6 +560,42 @@ char* obtener_info_camiseta_json(int camiseta_id)
             cJSON_AddNumberToObject(json, "camiseta_id", sqlite3_column_int(stmt, 0));
             cJSON_AddStringToObject(json, "nombre", (const char*)sqlite3_column_text(stmt, 1));
             cJSON_AddNumberToObject(json, "sorteada", sqlite3_column_int(stmt, 2));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Agregar estadísticas de partidos con esta camiseta
+    const char *sql_stats = "SELECT COUNT(*) as total_partidos, "
+                            "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) as victorias, "
+                            "SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) as empates, "
+                            "SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) as derrotas, "
+                            "SUM(goles) as total_goles, "
+                            "SUM(asistencias) as total_asistencias, "
+                            "AVG(rendimiento_general) as promedio_rendimiento "
+                            "FROM partido WHERE camiseta_id = ?;";
+
+    if (preparar_stmt(sql_stats, &stmt))
+    {
+        sqlite3_bind_int(stmt, 1, camiseta_id);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int total = sqlite3_column_int(stmt, 0);
+            if (total > 0)
+            {
+                cJSON_AddNumberToObject(json, "total_partidos", total);
+                cJSON_AddNumberToObject(json, "victorias", sqlite3_column_int(stmt, 1));
+                cJSON_AddNumberToObject(json, "empates", sqlite3_column_int(stmt, 2));
+                cJSON_AddNumberToObject(json, "derrotas", sqlite3_column_int(stmt, 3));
+                cJSON_AddNumberToObject(json, "total_goles", sqlite3_column_int(stmt, 4));
+                cJSON_AddNumberToObject(json, "total_asistencias", sqlite3_column_int(stmt, 5));
+                cJSON_AddNumberToObject(json, "promedio_rendimiento", sqlite3_column_double(stmt, 6));
+            }
+            else
+            {
+                cJSON_AddNumberToObject(json, "total_partidos", 0);
+                cJSON_AddStringToObject(json, "mensaje", "Esta camiseta no ha sido utilizada en partidos aun");
+            }
         }
         sqlite3_finalize(stmt);
     }
@@ -447,35 +809,98 @@ int generar_qr_partido(int partido_id)
                                  obtener_estadisticas_partido_json);
 }
 
-int generar_qr_jugador_partido(int partido_id, int jugador_id)
+/**
+ * @brief Función genérica para generar QR desde JSON sin parámetros
+ */
+static int generar_qr_generico(char* (*obtener_json)(void), const char* filename, const char* mensaje_exito)
 {
-    if (!existe_id("partido", partido_id))
-    {
-        printf("El partido con ID %d ", partido_id);
-        mostrar_no_existe("no existe");
-        return 0;
-    }
-
-    char* json_data = obtener_estadisticas_jugador_json(partido_id, jugador_id);
+    char* json_data = obtener_json();
     if (!json_data)
     {
-        printf("Error al obtener datos del jugador en el partido.\n");
+        printf("Error al obtener datos.\n");
         return 0;
     }
 
-    char filename[100];
-    snprintf(filename, sizeof(filename), "jugador_%d_partido_%d", jugador_id, partido_id);
-
     int result = generar_qr_png(json_data, filename);
-
     free(json_data);
 
     if (result)
     {
-        printf("Codigo QR generado para estadisticas del jugador %d en partido %d\n", jugador_id, partido_id);
+        printf("%s\n", mensaje_exito);
     }
 
     return result;
+}
+
+int generar_qr_estadisticas_generales(void)
+{
+    return generar_qr_generico(obtener_estadisticas_generales_json,
+                               "estadisticas_generales",
+                               "Código QR generado para estadísticas generales");
+}
+
+int generar_qr_estadisticas_mes(int mes, int anio)
+{
+    char* json_data = obtener_estadisticas_mes_json(mes, anio);
+    if (!json_data)
+    {
+        printf("Error al obtener estadísticas del mes.\n");
+        return 0;
+    }
+
+    char filename[100];
+    snprintf(filename, sizeof(filename), "estadisticas_mes_%02d_%d", mes, anio);
+    int result = generar_qr_png(json_data, filename);
+    free(json_data);
+
+    if (result)
+    {
+        printf("Código QR generado para estadísticas de %02d/%d\n", mes, anio);
+    }
+
+    return result;
+}
+
+int generar_qr_analisis_condiciones(void)
+{
+    return generar_qr_generico(obtener_analisis_condiciones_json,
+                               "analisis_condiciones",
+                               "Código QR generado para análisis de condiciones");
+}
+
+int generar_qr_historial_lesiones(void)
+{
+    return generar_qr_generico(obtener_historial_lesiones_json,
+                               "historial_lesiones",
+                               "Código QR generado para historial de lesiones");
+}
+
+int generar_qr_logros_hitos(void)
+{
+    return generar_qr_generico(obtener_logros_hitos_json,
+                               "logros_hitos",
+                               "Código QR generado para logros y hitos");
+}
+
+int generar_qr_rendimiento_vs_estado(void)
+{
+    return generar_qr_generico(obtener_rendimiento_vs_estado_json,
+                               "rendimiento_vs_estado",
+                               "Código QR generado para análisis rendimiento vs estado");
+}
+
+int generar_qr_comparativas(void)
+{
+    return generar_qr_generico(obtener_comparativas_json,
+                               "comparativas",
+                               "Código QR generado para comparativas");
+}
+
+int generar_qr_reporte_financiero(void)
+{
+    return generar_qr_generico(obtener_reporte_financiero_json,
+                               "reporte_financiero",
+                               "Código QR generado para reporte financiero");
 }
 
 int generar_qr_temporada(int temporada_id)
@@ -488,34 +913,77 @@ int generar_qr_temporada(int temporada_id)
 int generar_qr_camiseta(int camiseta_id)
 {
     return generar_qr_desde_json("camiseta", camiseta_id, "camiseta_%d",
-                                 "Codigo QR generado para INFORMACION de camiseta %d\n",
+                                 "Codigo QR generado para informacion de camiseta %d\n",
                                  obtener_info_camiseta_json);
+}
+
+// ========== FUNCIONES AUXILIARES PARA LISTAR ENTIDADES ==========
+
+/**
+ * @brief Función genérica para listar entidades
+ */
+static void listar_entidad_para_qr(const char *tabla, const char *titulo)
+{
+    listar_entidades(tabla, titulo, "No hay registros disponibles");
+}
+
+// Wrappers específicos que mantienen la interfaz clara
+static void listar_partidos_para_qr(void)
+{
+    listar_entidad_para_qr("partido", "PARTIDOS DISPONIBLES");
+}
+
+static void listar_temporadas_para_qr(void)
+{
+    listar_entidad_para_qr("temporada", "TEMPORADAS DISPONIBLES");
+}
+
+static void listar_camisetas_para_qr(void)
+{
+    listar_entidad_para_qr("camiseta", "CAMISETAS DISPONIBLES");
 }
 
 // ========== MENÚ PRINCIPAL ==========
 
-// Funciones auxiliares para el menú
+// Funciones auxiliares para el menú - Con patrón genérico
+#define DEFINIR_QR_SIMPLE(nombre, generador) \
+    static void qr_##nombre() \
+    { \
+        generador(); \
+        pause_console(); \
+    }
+
+DEFINIR_QR_SIMPLE(estadisticas_generales, generar_qr_estadisticas_generales)
+DEFINIR_QR_SIMPLE(analisis_condiciones, generar_qr_analisis_condiciones)
+DEFINIR_QR_SIMPLE(historial_lesiones, generar_qr_historial_lesiones)
+DEFINIR_QR_SIMPLE(logros_hitos, generar_qr_logros_hitos)
+DEFINIR_QR_SIMPLE(rendimiento_vs_estado, generar_qr_rendimiento_vs_estado)
+DEFINIR_QR_SIMPLE(comparativas, generar_qr_comparativas)
+DEFINIR_QR_SIMPLE(reporte_financiero, generar_qr_reporte_financiero)
+
 static void qr_partido()
 {
-    printf("\nIngrese el ID del partido: ");
+    listar_partidos_para_qr();
+    printf("\nIngrese el ID del partido para generar QR: ");
     int partido_id = input_int("");
     generar_qr_partido(partido_id);
     pause_console();
 }
 
-static void qr_jugador_partido()
+static void qr_estadisticas_mes()
 {
-    printf("\nIngrese el ID del partido: ");
-    int partido_id = input_int("");
-    printf("Ingrese el ID del jugador: ");
-    int jugador_id = input_int("");
-    generar_qr_jugador_partido(partido_id, jugador_id);
+    printf("\nIngrese el mes (1-12): ");
+    int mes = input_int("");
+    printf("Ingrese el año: ");
+    int anio = input_int("");
+    generar_qr_estadisticas_mes(mes, anio);
     pause_console();
 }
 
 static void qr_temporada()
 {
-    printf("\nIngrese el ID de la temporada: ");
+    listar_temporadas_para_qr();
+    printf("\nIngrese el ID de la temporada para generar QR: ");
     int temporada_id = input_int("");
     generar_qr_temporada(temporada_id);
     pause_console();
@@ -523,7 +991,8 @@ static void qr_temporada()
 
 static void qr_camiseta()
 {
-    printf("\nIngrese el ID de la camiseta: ");
+    listar_camisetas_para_qr();
+    printf("\nIngrese el ID de la camiseta para generar QR: ");
     int camiseta_id = input_int("");
     generar_qr_camiseta(camiseta_id);
     pause_console();
@@ -532,21 +1001,23 @@ static void qr_camiseta()
 void menu_qr()
 {
     clear_screen();
-
-    printf("\nGenera codigos QR para compartir INFORMACION de MiFutbolC\n");
-    printf("Los codigos QR contienen datos JSON que pueden ser escaneados\n");
-    printf("por otras aplicaciones para importar estadisticas.\n\n");
-
     MenuItem items[] =
     {
         {1, "QR de Estadisticas de Partido", qr_partido},
-        {2, "QR de Jugador en Partido", qr_jugador_partido},
-        {3, "QR de Resumen de Temporada", qr_temporada},
-        {4, "QR de INFORMACION de Camiseta", qr_camiseta},
+        {2, "QR de Estadisticas Generales", qr_estadisticas_generales},
+        {3, "QR de Estadisticas por Mes", qr_estadisticas_mes},
+        {4, "QR de Analisis por Condiciones", qr_analisis_condiciones},
+        {5, "QR de Historial de Lesiones", qr_historial_lesiones},
+        {6, "QR de Logros y Hitos", qr_logros_hitos},
+        {7, "QR de Rendimiento vs Estado", qr_rendimiento_vs_estado},
+        {8, "QR de Comparativas", qr_comparativas},
+        {9, "QR de Reporte Financiero", qr_reporte_financiero},
+        {10, "QR de Resumen de Temporada", qr_temporada},
+        {11, "QR de Informacion de Camiseta", qr_camiseta},
         {0, "Volver al menu principal", NULL}
     };
 
-    ejecutar_menu("CODIGOS QR", items, 5);
+    ejecutar_menu("CODIGOS QR", items, 12);
 }
 
 // Función auxiliar para ejecutar la opción seleccionada del menú QR
@@ -554,22 +1025,57 @@ void procesar_opcion_qr(int opcion)
 {
     switch (opcion)
     {
-    case 1:   // QR de partido
+    case 1:
     {
         qr_partido();
         break;
     }
-    case 2:   // QR de jugador en partido
+    case 2:
     {
-        qr_jugador_partido();
+        qr_estadisticas_generales();
         break;
     }
-    case 3:   // QR de temporada
+    case 3:
+    {
+        qr_estadisticas_mes();
+        break;
+    }
+    case 4:
+    {
+        qr_analisis_condiciones();
+        break;
+    }
+    case 5:
+    {
+        qr_historial_lesiones();
+        break;
+    }
+    case 6:
+    {
+        qr_logros_hitos();
+        break;
+    }
+    case 7:
+    {
+        qr_rendimiento_vs_estado();
+        break;
+    }
+    case 8:
+    {
+        qr_comparativas();
+        break;
+    }
+    case 9:
+    {
+        qr_reporte_financiero();
+        break;
+    }
+    case 10:
     {
         qr_temporada();
         break;
     }
-    case 4:   // QR de camiseta
+    case 11:
     {
         qr_camiseta();
         break;
@@ -581,7 +1087,7 @@ void procesar_opcion_qr(int opcion)
     }
     }
 
-    if (opcion >= 1 && opcion <= 4)
+    if (opcion >= 1 && opcion <= 11)
     {
         printf("\nDesea generar otro codigo QR? (s/n): ");
         int respuesta = getchar();

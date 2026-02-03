@@ -15,6 +15,7 @@
 #include "export_estadisticas.h"
 #include "export_estadisticas_generales.h"
 #include "export_records_rankings.h"
+#include "export_pdf.h"
 #include "utils.h"
 #include "menu.h"
 #include "ascii_art.h"
@@ -374,6 +375,16 @@ static void exportar_todo()
 }
 
 /**
+ * @brief Genera un informe total en PDF
+ */
+static void exportar_informe_total_pdf()
+{
+    printf("Generando informe total en PDF...\n");
+    generar_informe_total_pdf();
+    pause_console();
+}
+
+/**
  * @brief Sub-menú para exportar partidos.
  */
 static void menu_exportar_partidos()
@@ -419,7 +430,8 @@ void menu_exportar()
         {7, "Analisis Avanzado", menu_exportar_mejorado},
         {8, "Base de Datos", exportar_base_datos},
         {9, "Todo", exportar_todo},
+        {10, "Informe Total en PDF", exportar_informe_total_pdf},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 10);
+    ejecutar_menu("EXPORTAR DATOS", items, 11);
 }

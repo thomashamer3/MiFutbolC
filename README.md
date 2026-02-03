@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-3.5-blue.svg)
+![Version](https://img.shields.io/badge/version-3.6-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -35,6 +35,7 @@
 - 🎖️ **Sistema gamificado** (logros y badges)
 - 🤖 **Entrenador IA** (recomendaciones inteligentes)
 - 📤 **Exportación multiformato** (CSV, JSON, HTML, TXT)
+- 📄 **Informe PDF mejorado** (portada, secciones y más datos)
 - 📥 **Importación de datos** (restauración desde JSON)
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
@@ -137,6 +138,8 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Exportación Completa**: Backup total del sistema
 - **Exportación Mejorada**: Con análisis integrado y métricas adicionales
 - **Exportación Selectiva**: Partidos con características específicas
+ - **TXT adicionales**: finanzas por mes/año, ranking de canchas, partidos por clima,
+   lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
 
 #### Importación de Datos
 - **Restauración desde JSON**: Importación completa de datos desde archivos JSON
@@ -159,6 +162,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
   - Nivel de corrección de errores H (30%)
   - Escala configurable y márgenes de seguridad
   - Exportación a directorio personalizable
+  - Archivos BMP guardados en el directorio de exportaciones
 - **Interfaz Textual**: No requiere GUI, compatible con cualquier terminal
 
 ## 🛠️ Tecnologías Utilizadas
@@ -186,6 +190,10 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Propósito**: Generación de códigos QR con información del sistema
 - **Instalación**: Ver [INSTALACION_LIBQRENCODE.md](INSTALACION_LIBQRENCODE.md)
 - **Características**: Códigos QR estándar ISO/IEC 18004, múltiples niveles de corrección
+
+#### libharu (Requerida externamente)
+- **Propósito**: Generación de informes PDF mejorados
+- **Dependencias**: libpng16-16, zlib1
 
 ### Herramientas de Desarrollo
 
@@ -438,6 +446,9 @@ Menú Principal → Exportar (14)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
    └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
 ```
+
+El informe PDF total incluye secciones adicionales con resúmenes financieros, ranking de canchas,
+partidos por clima, lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio.
 
 ### Ejemplos de Uso Práctico
 

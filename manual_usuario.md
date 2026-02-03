@@ -27,6 +27,7 @@ MiFutbolC es una herramienta integral diseñada para:
 **Control Financiero**: Registro de ingresos y gastos por categorías  
 **Gestión de Temporadas**: Seguimiento de ciclos deportivos completos  
 **Exportación Flexible**: Múltiples formatos (CSV, JSON, HTML, TXT)  
+**Informe PDF Mejorado**: Portada, secciones y más datos  
 **Sistema Gamificado**: Logros y badges para motivar el uso continuo  
 **Entrenador IA**: Recomendaciones inteligentes basadas en datos  
 **Personalización**: Configuración de temas, idioma y preferencias  
@@ -432,6 +433,7 @@ Análisis completo de lesiones:
 ## Códigos QR
 
 Selecciona "7" en el menú principal para acceder al generador de códigos QR. Esta funcionalidad permite crear códigos QR con información deportiva.
+Los códigos QR se guardan en formato BMP dentro del directorio de exportaciones.
 
 ### Generar QR de Partido
 
@@ -439,7 +441,7 @@ Selecciona "7" en el menú principal para acceder al generador de códigos QR. E
 2. Elige "1" para generar QR de partido
 3. Ingresa el ID del partido
 4. Se generará un código QR con las estadísticas completas en formato JSON
-5. El archivo PNG se guardará en el directorio de exportaciones
+5. El archivo BMP se guardará en el directorio de exportaciones
 
 ### Generar QR de Jugador en Partido
 
@@ -846,6 +848,9 @@ Para cada módulo puedes elegir el formato:
 - **JSON**: Formato estructurado (ideal para integración)
 - **HTML**: Página web con tablas
 
+El informe PDF total incluye secciones adicionales con resúmenes financieros, ranking de canchas,
+partidos por clima, lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio.
+
 ### Submenú de Exportar Partidos
 
 - **Todos los Partidos**: Exportar todos los partidos registrados
@@ -1199,8 +1204,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 3.5  
-**Última actualización**: 01/02/2026  
+**Versión**: 3.6  
+**Última actualización**: 03/02/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

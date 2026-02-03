@@ -160,7 +160,7 @@
 
 1769908272 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1769992460 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1770100781 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -170,7 +170,7 @@
 	<direct.h>
 	<string.h>
 
-1769835957 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
+1770100528 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
 
 1766433484 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.c
 	"logger.h"
@@ -179,7 +179,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1769971932 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1770097900 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"utils.h"
 	<stdio.h>
@@ -222,7 +222,7 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1769908480 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1770093108 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
 	"export_all_mejorado.h"
 	"export.h"
@@ -232,6 +232,7 @@
 	"export_estadisticas.h"
 	"export_estadisticas_generales.h"
 	"export_records_rankings.h"
+	"export_pdf.h"
 	"utils.h"
 	"menu.h"
 	"ascii_art.h"
@@ -242,7 +243,7 @@
 
 1769911202 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
 
-1769996279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
+1770100936 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
 	"lesion.h"
 	"menu.h"
 	"db.h"
@@ -2040,7 +2041,7 @@
 1769973710 d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.h
 	<time.h>
 
-1769996279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
+1770092933 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\qr.c
 	"qr.h"
 	"db.h"
 	"utils.h"
@@ -2103,4 +2104,102 @@
 	<stdarg.h>
 
 1748771847 c:\msys64\mingw64\include\qrencode.h
+
+1770093108 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.h
+
+1770100674 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
+	"export_pdf.h"
+	"export_camisetas.h"
+	"export_camisetas_mejorado.h"
+	"export_partidos.h"
+	"export_lesiones.h"
+	"export_lesiones_mejorado.h"
+	"export_estadisticas.h"
+	"export_estadisticas_generales.h"
+	"export_records_rankings.h"
+	"export.h"
+	"utils.h"
+	"db.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<setjmp.h>
+	<stdint.h>
+	<ctype.h>
+	<hpdf.h>
+
+1742192003 c:\msys64\mingw64\include\hpdf.h
+	"hpdf_config.h"
+	"hpdf_version.h"
+	"hpdf_consts.h"
+	"hpdf_types.h"
+	"hpdf_consts.h"
+	"hpdf_doc.h"
+	"hpdf_error.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_config.h
+
+1742192003 c:\msys64\mingw64\include\hpdf_version.h
+
+1742192003 c:\msys64\mingw64\include\hpdf_consts.h
+
+1742192003 c:\msys64\mingw64\include\hpdf_types.h
+	<stdlib.h>
+
+1742192003 c:\msys64\mingw64\include\hpdf_doc.h
+	"hpdf_catalog.h"
+	"hpdf_image.h"
+	"hpdf_pages.h"
+	"hpdf_outline.h"
+	"hpdf_ext_gstate.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_catalog.h
+	"hpdf_objects.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_objects.h
+	"hpdf_encoder.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_encoder.h
+	"hpdf_consts.h"
+	"hpdf_streams.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_streams.h
+	"hpdf_list.h"
+	"hpdf_encrypt.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_list.h
+	"hpdf_error.h"
+	"hpdf_mmgr.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_error.h
+	"hpdf_types.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_mmgr.h
+	"hpdf_types.h"
+	"hpdf_error.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_encrypt.h
+	"hpdf_mmgr.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_image.h
+	"hpdf_objects.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_pages.h
+	"hpdf_gstate.h"
+	"hpdf_ext_gstate.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_gstate.h
+	"hpdf_font.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_font.h
+	"hpdf_fontdef.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_fontdef.h
+	"hpdf_objects.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_ext_gstate.h
+	"hpdf_objects.h"
+
+1742192003 c:\msys64\mingw64\include\hpdf_outline.h
+	"hpdf_objects.h"
 

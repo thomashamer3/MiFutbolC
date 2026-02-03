@@ -112,7 +112,7 @@ static int solicitar_partido_id(int permitir_omitir)
 
     const char *mensaje = permitir_omitir ?
                           "\nID del Partido (0 para omitir): " :
-                          "\nNuevo ID del Partido (0 para quitar asociación): ";
+                          "\nNuevo ID del Partido (0 para quitar asociacion): ";
 
     int partido_id;
     int partido_valido = 0;
@@ -168,7 +168,7 @@ void crear_lesion()
     }
 
     // Asociar a un partido (opcional)
-    printf("\n¿Desea asociar esta lesion a un partido? (S/N): ");
+    printf("\nDesea asociar esta lesion a un partido? (S/N): ");
     char respuesta[10];
     input_string("", respuesta, sizeof(respuesta));
     if (respuesta[0] == 'S' || respuesta[0] == 's')
@@ -252,7 +252,13 @@ void listar_lesiones()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "SELECT id, jugador, tipo, descripcion, fecha, camiseta_id, estado, partido_id FROM lesion ORDER BY fecha DESC",
+                "SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, l.camiseta_id, l.estado, l.partido_id, "
+                "c.nombre, p.fecha_hora, can.nombre "
+                "FROM lesion l "
+                "LEFT JOIN camiseta c ON l.camiseta_id = c.id "
+                "LEFT JOIN partido p ON l.partido_id = p.id "
+                "LEFT JOIN cancha can ON p.cancha_id = can.id "
+                "ORDER BY l.id ASC",
                 &stmt))
     {
         pause_console();
@@ -264,18 +270,21 @@ void listar_lesiones()
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *estado = (const char *)sqlite3_column_text(stmt, 6);
-        const char *estado_display = estado ? estado : "ACTIVA"; // Default si es NULL
-        int partido_id = sqlite3_column_int(stmt, 7);
+        const char *estado_display = estado ? estado : "ACTIVA";
+        const char *camiseta_nombre = (const char *)sqlite3_column_text(stmt, 8);
+        const char *cancha_nombre = (const char *)sqlite3_column_text(stmt, 10);
+        const char *camiseta_display = camiseta_nombre ? camiseta_nombre : "Sin camiseta";
+        const char *cancha_display = cancha_nombre ? cancha_nombre : "Sin cancha";
 
-        printf("ID: %d | Jugador: %s | Tipo: %s | Descripcion: %s | Fecha: %s | Camiseta ID: %d | Estado: %s | Partido ID: %d\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2),
-               sqlite3_column_text(stmt, 3),
-               sqlite3_column_text(stmt, 4),
-               sqlite3_column_int(stmt, 5),
-               estado_display,
-               partido_id);
+        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
+        printf("Jugador: %s\n", sqlite3_column_text(stmt, 1));
+        printf("Tipo: %s\n", sqlite3_column_text(stmt, 2));
+        printf("Descripcion: %s\n", sqlite3_column_text(stmt, 3));
+        printf("Fecha: %s\n", sqlite3_column_text(stmt, 4));
+        printf("Camiseta: %s\n", camiseta_display);
+        printf("Estado: %s\n", estado_display);
+        printf("Cancha: %s\n", cancha_display);
+        printf("----------------------------------------\n");
         hay = 1;
     }
 

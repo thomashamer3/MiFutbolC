@@ -4,7 +4,7 @@
 ; ================================
 
 #define MyAppName "MiFutbolC"
-#define MyAppVersion "3.5"
+#define MyAppVersion "3.6"
 #define MyAppPublisher "Thomas Hamer"
 #define MyAppURL "https://github.com/thomashamer3/MiFutbolC"
 #define MyAppExeName "MiFutbolC.exe"
@@ -47,7 +47,9 @@ Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "libqrencode.dll"; DestDir: "{app}"; Flags: ignoreversion
-
+Source: "libhpdf.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "libpng16-16.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; ================================
 ; DIRECTORIOS DE DATOS (CLAVE)
 ; ================================

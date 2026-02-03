@@ -143,6 +143,301 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     sqlite3_finalize(stmt);
 }
 
+/* ===================== EXPORTACIONES TXT ADICIONALES ===================== */
+
+void exportar_finanzas_resumen_txt()
+{
+    FILE *f = abrir_archivo_exportacion("finanzas_resumen.txt", "Error al crear archivo de finanzas resumen TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "RESUMEN FINANCIERO\n\n");
+
+    if (!has_records("financiamiento"))
+    {
+        fprintf(f, "No hay transacciones financieras registradas.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+
+    fprintf(f, "RESUMEN POR MES\n");
+    fprintf(f, "----------------\n");
+    if (preparar_stmt_export(&stmt,
+                             "SELECT strftime('%Y-%m', fecha) as periodo, "
+                             "SUM(CASE WHEN tipo = 0 THEN monto ELSE 0 END) ingresos, "
+                             "SUM(CASE WHEN tipo = 1 THEN monto ELSE 0 END) gastos "
+                             "FROM financiamiento GROUP BY periodo ORDER BY periodo"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *periodo = (const char *)sqlite3_column_text(stmt, 0);
+            double ingresos = sqlite3_column_double(stmt, 1);
+            double gastos = sqlite3_column_double(stmt, 2);
+            fprintf(f, "Mes: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
+                    periodo ? periodo : "-", ingresos, gastos, ingresos - gastos);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fprintf(f, "\nRESUMEN POR ANIO\n");
+    fprintf(f, "----------------\n");
+    if (preparar_stmt_export(&stmt,
+                             "SELECT strftime('%Y', fecha) as anio, "
+                             "SUM(CASE WHEN tipo = 0 THEN monto ELSE 0 END) ingresos, "
+                             "SUM(CASE WHEN tipo = 1 THEN monto ELSE 0 END) gastos "
+                             "FROM financiamiento GROUP BY anio ORDER BY anio"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *anio = (const char *)sqlite3_column_text(stmt, 0);
+            double ingresos = sqlite3_column_double(stmt, 1);
+            double gastos = sqlite3_column_double(stmt, 2);
+            fprintf(f, "Anio: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
+                    anio ? anio : "-", ingresos, gastos, ingresos - gastos);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fclose(f);
+}
+
+void exportar_ranking_canchas_txt()
+{
+    FILE *f = abrir_archivo_exportacion("ranking_canchas.txt", "Error al crear archivo de ranking de canchas TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "RANKING DE CANCHAS (RENDIMIENTO Y LESIONES)\n\n");
+
+    if (!has_records("cancha"))
+    {
+        fprintf(f, "No hay canchas registradas.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (preparar_stmt_export(&stmt,
+                             "SELECT can.nombre, "
+                             "COUNT(DISTINCT p.id) as partidos, "
+                             "COALESCE(AVG(p.rendimiento_general), 0), "
+                             "COUNT(l.id) as lesiones "
+                             "FROM cancha can "
+                             "LEFT JOIN partido p ON p.cancha_id = can.id "
+                             "LEFT JOIN lesion l ON l.partido_id = p.id "
+                             "GROUP BY can.id "
+                             "ORDER BY COALESCE(AVG(p.rendimiento_general), 0) DESC, COUNT(l.id) ASC"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+            int partidos = sqlite3_column_int(stmt, 1);
+            double rendimiento = sqlite3_column_double(stmt, 2);
+            int lesiones = sqlite3_column_int(stmt, 3);
+            fprintf(f, "Cancha: %s | Partidos: %d | Rendimiento Promedio: %.2f | Lesiones: %d\n",
+                    nombre ? nombre : "-", partidos, rendimiento, lesiones);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fclose(f);
+}
+
+void exportar_partidos_por_clima_txt()
+{
+    FILE *f = abrir_archivo_exportacion("partidos_por_clima.txt", "Error al crear archivo de partidos por clima TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "PARTIDOS POR CLIMA\n\n");
+
+    if (!has_records("partido"))
+    {
+        fprintf(f, "No hay partidos registrados.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (preparar_stmt_export(&stmt,
+                             "SELECT clima, COUNT(*), AVG(goles), AVG(asistencias) "
+                             "FROM partido GROUP BY clima ORDER BY clima"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int clima = sqlite3_column_int(stmt, 0);
+            int count = sqlite3_column_int(stmt, 1);
+            double avg_goles = sqlite3_column_double(stmt, 2);
+            double avg_asist = sqlite3_column_double(stmt, 3);
+            fprintf(f, "Clima: %s | Partidos: %d | Prom. Goles: %.2f | Prom. Asistencias: %.2f\n",
+                    clima_to_text(clima), count, avg_goles, avg_asist);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fclose(f);
+}
+
+void exportar_lesiones_por_tipo_estado_txt()
+{
+    FILE *f = abrir_archivo_exportacion("lesiones_por_tipo_estado.txt", "Error al crear archivo de lesiones por tipo y estado TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "DISTRIBUCION DE LESIONES POR TIPO Y ESTADO\n\n");
+
+    if (!has_records("lesion"))
+    {
+        fprintf(f, "No hay lesiones registradas.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (preparar_stmt_export(&stmt,
+                             "SELECT tipo, estado, COUNT(*) FROM lesion GROUP BY tipo, estado ORDER BY tipo, estado"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *tipo = (const char *)sqlite3_column_text(stmt, 0);
+            const char *estado = (const char *)sqlite3_column_text(stmt, 1);
+            int count = sqlite3_column_int(stmt, 2);
+            fprintf(f, "Tipo: %s | Estado: %s | Cantidad: %d\n",
+                    tipo ? tipo : "-", estado ? estado : "-", count);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fclose(f);
+}
+
+void exportar_rachas_historial_txt()
+{
+    FILE *f = abrir_archivo_exportacion("rachas_historial.txt", "Error al crear archivo de rachas TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "HISTORIAL DE RACHAS\n\n");
+
+    if (!has_records("partido"))
+    {
+        fprintf(f, "No hay partidos registrados.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt,
+                              "SELECT resultado, fecha_hora FROM partido ORDER BY fecha_hora"))
+    {
+        fclose(f);
+        return;
+    }
+
+    int racha_resultado = -1;
+    int racha_count = 0;
+    char fecha_inicio[32] = "";
+    char fecha_fin[32] = "";
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int resultado = sqlite3_column_int(stmt, 0);
+        const char *fecha_raw = (const char *)sqlite3_column_text(stmt, 1);
+        char fecha_formateada[32];
+        if (fecha_raw)
+        {
+            format_date_for_display(fecha_raw, fecha_formateada, sizeof(fecha_formateada));
+        }
+        else
+        {
+            strcpy_s(fecha_formateada, sizeof(fecha_formateada), "-");
+        }
+
+        if (racha_resultado == -1)
+        {
+            racha_resultado = resultado;
+            racha_count = 1;
+            strcpy_s(fecha_inicio, sizeof(fecha_inicio), fecha_formateada);
+            strcpy_s(fecha_fin, sizeof(fecha_fin), fecha_formateada);
+            continue;
+        }
+
+        if (resultado == racha_resultado)
+        {
+            racha_count++;
+            strcpy_s(fecha_fin, sizeof(fecha_fin), fecha_formateada);
+        }
+        else
+        {
+            fprintf(f, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
+                    resultado_to_text(racha_resultado), racha_count, fecha_inicio, fecha_fin);
+            racha_resultado = resultado;
+            racha_count = 1;
+            strcpy_s(fecha_inicio, sizeof(fecha_inicio), fecha_formateada);
+            strcpy_s(fecha_fin, sizeof(fecha_fin), fecha_formateada);
+        }
+    }
+
+    if (racha_resultado != -1)
+    {
+        fprintf(f, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
+                resultado_to_text(racha_resultado), racha_count, fecha_inicio, fecha_fin);
+    }
+
+    sqlite3_finalize(stmt);
+    fclose(f);
+}
+
+void exportar_estado_animo_cansancio_txt()
+{
+    FILE *f = abrir_archivo_exportacion("estado_animo_cansancio.txt", "Error al crear archivo de estado de animo y cansancio TXT");
+    if (!f)
+        return;
+
+    fprintf(f, "DISTRIBUCION DE ESTADO DE ANIMO Y CANSANCIO\n\n");
+
+    if (!has_records("partido"))
+    {
+        fprintf(f, "No hay partidos registrados.\n");
+        fclose(f);
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+
+    fprintf(f, "ESTADO DE ANIMO\n");
+    fprintf(f, "---------------\n");
+    if (preparar_stmt_export(&stmt,
+                             "SELECT estado_animo, COUNT(*) FROM partido GROUP BY estado_animo ORDER BY estado_animo"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int valor = sqlite3_column_int(stmt, 0);
+            int count = sqlite3_column_int(stmt, 1);
+            fprintf(f, "Estado de animo %d: %d partido(s)\n", valor, count);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fprintf(f, "\nCANSANCIO\n");
+    fprintf(f, "---------\n");
+    if (preparar_stmt_export(&stmt,
+                             "SELECT cansancio, COUNT(*) FROM partido GROUP BY cansancio ORDER BY cansancio"))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int valor = sqlite3_column_int(stmt, 0);
+            int count = sqlite3_column_int(stmt, 1);
+            fprintf(f, "Cansancio %d: %d partido(s)\n", valor, count);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    fclose(f);
+}
+
 /**
  * @brief Genera un mensaje motivacional basado en el rendimiento
  *
