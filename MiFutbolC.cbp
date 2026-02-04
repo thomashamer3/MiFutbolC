@@ -52,6 +52,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="analisis.h" />
+		<Unit filename="bienestar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="bienestar.h" />
 		<Unit filename="cJSON.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -20,6 +20,32 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
+static int preparar_actualizacion(sqlite3_stmt **stmt, const char *sql)
+{
+    if (!preparar_stmt(stmt, sql))
+    {
+        printf("Error preparando actualizacion.\n");
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
+static void finalizar_actualizacion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
+{
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        printf("%s\n", err_msg);
+    }
+    else
+    {
+        printf("%s\n", ok_msg);
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 static int validar_fecha(const char *fecha)
 {
     if (!fecha || safe_strnlen(fecha, 11) != 10)
@@ -279,27 +305,15 @@ static void cambiar_estado_objetivo(void)
 
     const char *sql = "UPDATE bienestar_objetivo SET estado = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_text(stmt, 1, estado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando estado.\n");
-    }
-    else
-    {
-        printf("Estado actualizado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Estado actualizado.", "Error actualizando estado.");
 }
 
 static void listar_planes_entrenamiento(void)
@@ -400,11 +414,11 @@ static void mostrar_planificacion_personal(void)
 {
     MenuItem items[] =
     {
-        {1, "Crear objetivo", crear_objetivo},
-        {2, "Listar objetivos", listar_objetivos},
-        {3, "Cambiar estado de objetivo", cambiar_estado_objetivo},
-        {4, "Crear plan de entrenamiento", crear_plan_entrenamiento},
-        {5, "Listar planes", listar_planes_entrenamiento},
+        {1, "Crear objetivo",&crear_objetivo},
+        {2, "Listar objetivos",&listar_objetivos},
+        {3, "Cambiar estado de objetivo",&cambiar_estado_objetivo},
+        {4, "Crear plan de entrenamiento",&crear_plan_entrenamiento},
+        {5, "Listar planes", &listar_planes_entrenamiento},
         {0, "Volver", NULL}
     };
 
@@ -569,10 +583,8 @@ static void actualizar_habito_todo(int id)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
 
@@ -588,17 +600,7 @@ static void actualizar_habito_todo(int id)
     sqlite3_bind_text(stmt, 10, tipo_diario, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 11, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando habito.\n");
-    }
-    else
-    {
-        printf("Habito actualizado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_fecha(int id)
@@ -608,25 +610,14 @@ static void actualizar_habito_fecha(int id)
 
     const char *sql = "UPDATE bienestar_habito SET fecha = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando habito.\n");
-    }
-    else
-    {
-        printf("Habito actualizado.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_entero(int id, const char *campo, const char *prompt, int min, int max)
@@ -636,25 +627,14 @@ static void actualizar_habito_entero(int id, const char *campo, const char *prom
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando habito.\n");
-    }
-    else
-    {
-        printf("Habito actualizado.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_bool(int id, const char *campo, const char *prompt)
@@ -664,25 +644,14 @@ static void actualizar_habito_bool(int id, const char *campo, const char *prompt
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando habito.\n");
-    }
-    else
-    {
-        printf("Habito actualizado.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_texto(int id, const char *campo, const char *prompt, size_t max_len)
@@ -699,25 +668,14 @@ static void actualizar_habito_texto(int id, const char *campo, const char *promp
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando habito.\n");
-    }
-    else
-    {
-        printf("Habito actualizado.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_aspecto(int id)
@@ -867,10 +825,10 @@ static void mostrar_mentalidad_habitos(void)
 {
     MenuItem items[] =
     {
-        {1, "Registrar habitos diarios", registrar_habitos},
-        {2, "Ver ultimos registros", listar_habitos},
-        {3, "Modificar registro", modificar_habito},
-        {4, "Eliminar registro", eliminar_habito},
+        {1, "Registrar habitos diarios",&registrar_habitos},
+        {2, "Ver ultimos registros",&listar_habitos},
+        {3, "Modificar registro",&modificar_habito},
+        {4, "Eliminar registro",&eliminar_habito},
         {0, "Volver", NULL}
     };
 
@@ -1191,10 +1149,8 @@ static void actualizar_sesion_mental_todo(int id)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
 
@@ -1219,17 +1175,7 @@ static void actualizar_sesion_mental_todo(int id)
     sqlite3_bind_text(stmt, 12, texto_libre, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 13, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_fecha(int id)
@@ -1239,25 +1185,14 @@ static void actualizar_sesion_mental_fecha(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET fecha = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_tipo(int id)
@@ -1267,25 +1202,14 @@ static void actualizar_sesion_mental_tipo(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET tipo = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, tipo_sesion_texto(tipo), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_momento(int id)
@@ -1305,10 +1229,8 @@ static void actualizar_sesion_mental_momento(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET momento = ?, partido_id = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, momento_sesion_texto(momento), -1, SQLITE_TRANSIENT);
@@ -1322,16 +1244,7 @@ static void actualizar_sesion_mental_momento(int id)
     }
     sqlite3_bind_int(stmt, 3, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_partido(int id)
@@ -1345,10 +1258,8 @@ static void actualizar_sesion_mental_partido(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET partido_id = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     if (partido_id > 0)
@@ -1361,16 +1272,7 @@ static void actualizar_sesion_mental_partido(int id)
     }
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_entero(int id, const char *campo, const char *prompt, int min, int max)
@@ -1380,25 +1282,14 @@ static void actualizar_sesion_mental_entero(int id, const char *campo, const cha
     snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_texto(int id, const char *campo, const char *prompt, size_t max_len)
@@ -1415,25 +1306,14 @@ static void actualizar_sesion_mental_texto(int id, const char *campo, const char
     snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental actualizada.\n");
-    }
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_aspecto(int id)
@@ -1692,13 +1572,13 @@ static void mostrar_mental_deportivo(void)
 {
     MenuItem items[] =
     {
-        {1, "Registrar sesion mental", registrar_sesion_mental},
-        {2, "Listar sesiones", listar_sesiones_mentales},
-        {3, "Ver detalle", ver_detalle_sesion_mental},
-        {4, "Modificar sesion", modificar_sesion_mental},
-        {5, "Eliminar sesion", eliminar_sesion_mental},
-        {6, "Antes / despues de partidos", sesiones_antes_despues_partido},
-        {7, "Tendencias", tendencias_mentales},
+        {1, "Registrar sesion mental",&registrar_sesion_mental},
+        {2, "Listar sesiones",&listar_sesiones_mentales},
+        {3, "Ver detalle", &ver_detalle_sesion_mental},
+        {4, "Modificar sesion", &modificar_sesion_mental},
+        {5, "Eliminar sesion", &eliminar_sesion_mental},
+        {6, "Antes / despues de partidos", &sesiones_antes_despues_partido},
+        {7, "Tendencias", &tendencias_mentales},
         {0, "Volver", NULL}
     };
 
@@ -2158,13 +2038,13 @@ static void mostrar_entrenamiento_expandido(void)
 {
     MenuItem items[] =
     {
-        {1, "Registrar entrenamiento", registrar_entrenamiento},
-        {2, "Listar entrenamientos", listar_entrenamientos},
-        {3, "Marcar entrenamiento omitido", marcar_entrenamiento_omitido},
-        {4, "Registrar ejercicio", registrar_ejercicio},
-        {5, "Asociar ejercicio a entrenamiento", asociar_ejercicio},
-        {6, "Comparar entrenamiento vs rendimiento", comparar_entrenamiento_vs_rendimiento},
-        {7, "Alertas de intensidad", alertas_entrenamiento},
+        {1, "Registrar entrenamiento",&registrar_entrenamiento},
+        {2, "Listar entrenamientos",&listar_entrenamientos},
+        {3, "Marcar entrenamiento omitido",&marcar_entrenamiento_omitido},
+        {4, "Registrar ejercicio",&registrar_ejercicio},
+        {5, "Asociar ejercicio a entrenamiento",&asociar_ejercicio},
+        {6, "Comparar entrenamiento vs rendimiento",&comparar_entrenamiento_vs_rendimiento},
+        {7, "Alertas de intensidad", &alertas_entrenamiento},
         {0, "Volver", NULL}
     };
 
@@ -2550,13 +2430,13 @@ static void mostrar_alimentacion_expandido(void)
 {
     MenuItem items[] =
     {
-        {1, "Registrar comida", registrar_comida},
-        {2, "Listar comidas", listar_comidas},
-        {3, "Registrar dia nutricional", registrar_dia_nutricional},
-        {4, "Listar dias nutricionales", listar_dias_nutricionales},
-        {5, "Alimentacion vs rendimiento", comparacion_alimentacion_vs_rendimiento},
-        {6, "Flags: comiste mal antes del partido", flags_alimentacion},
-        {7, "Estadisticas de alimentacion", estadisticas_alimentacion},
+        {1, "Registrar comida",&registrar_comida},
+        {2, "Listar comidas",&listar_comidas},
+        {3, "Registrar dia nutricional",&registrar_dia_nutricional},
+        {4, "Listar dias nutricionales",&listar_dias_nutricionales},
+        {5, "Alimentacion vs rendimiento",&comparacion_alimentacion_vs_rendimiento},
+        {6, "Flags: comiste mal antes del partido",&flags_alimentacion},
+        {7, "Estadisticas de alimentacion", &estadisticas_alimentacion},
         {0, "Volver", NULL}
     };
 
@@ -2869,12 +2749,12 @@ static void menu_salud(void)
 {
     MenuItem items[] =
     {
-        {1, "Ver perfil de salud", mostrar_salud_perfil},
-        {2, "Actualizar perfil", actualizar_salud_perfil},
-        {3, "Registrar control medico", registrar_control_medico},
-        {4, "Ver controles medicos", listar_controles_medicos},
-        {5, "Editar control medico", editar_control_medico},
-        {6, "Eliminar control medico", eliminar_control_medico},
+        {1, "Ver perfil de salud", &mostrar_salud_perfil},
+        {2, "Actualizar perfil", &actualizar_salud_perfil},
+        {3, "Registrar control medico", &registrar_control_medico},
+        {4, "Ver controles medicos", &listar_controles_medicos},
+        {5, "Editar control medico", &editar_control_medico},
+        {6, "Eliminar control medico", &eliminar_control_medico},
         {0, "Volver", NULL}
     };
 
@@ -2887,13 +2767,13 @@ void menu_bienestar(void)
 {
     MenuItem items[] =
     {
-        {1, "Planificacion Personal", mostrar_planificacion_personal},
-        {2, "Mentalidad y Habitos", mostrar_mentalidad_habitos},
-        {3, "Entrenamiento", mostrar_entrenamiento_expandido},
-        {4, "Alimentacion", mostrar_alimentacion_expandido},
-        {5, "Mental", mostrar_mental_deportivo},
-        {6, "Informe Personal Mensual (PDF)", informe_personal_mensual_pdf},
-        {7, "Salud", menu_salud},
+        {1, "Planificacion Personal",&mostrar_planificacion_personal},
+        {2, "Mentalidad y Habitos",&mostrar_mentalidad_habitos},
+        {3, "Entrenamiento", &mostrar_entrenamiento_expandido},
+        {4, "Alimentacion", &mostrar_alimentacion_expandido},
+        {5, "Mental", &mostrar_mental_deportivo},
+        {6, "Informe Personal Mensual (PDF)", &informe_personal_mensual_pdf},
+        {7, "Salud", &menu_salud},
         {0, "Volver", NULL}
     };
 

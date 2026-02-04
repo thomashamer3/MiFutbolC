@@ -67,7 +67,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1770167764 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1770168787 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2212,7 +2212,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1770168440 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1770168787 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"menu.h"
 	"utils.h"
