@@ -31,12 +31,13 @@
 - 🏆 **Organización de torneos** (múltiples formatos y estructuras)
 - 📊 **Análisis avanzado** (rendimiento, tendencias, meta-análisis)
 - 🏥 **Gestión de salud** (lesiones y recuperación)
+- 🧘 **Bienestar integral** (hábitos, planificación, salud y reportes personales)
 - 💰 **Control financiero** (ingresos, gastos, balances)
 - 🎖️ **Sistema gamificado** (logros y badges)
 - 🤖 **Entrenador IA** (recomendaciones inteligentes)
 - 📤 **Exportación multiformato** (CSV, JSON, HTML, TXT)
 - 📄 **Informe PDF mejorado** (portada, secciones y más datos)
-- 📥 **Importación de datos** (restauración desde JSON)
+- 📥 **Importación de datos** (restauración desde JSON/TXT/CSV/HTML)
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
 
@@ -124,11 +125,19 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Badges Especiales**: Hat-tricks, poker de asistencias, rendimiento perfecto
 - **Motivación Continua**: Sistema de recompensas para incentivar el uso
 
+### 🧘 Bienestar Integral
+
+- **Planificación Personal**: Objetivos, rutinas y seguimiento de hábitos
+- **Entrenamiento y Alimentación**: Registro y control de prácticas saludables
+- **Mental y Salud**: Evaluación de bienestar mental, controles médicos y reportes
+- **Informe Personal Mensual (PDF)**: Resumen automático con métricas clave
+
 ### 🤖 Entrenador IA
 
 - **Recomendaciones Inteligentes**: Sugerencias basadas en análisis de datos históricos
 - **Optimización de Formaciones**: Consejos para mejorar el rendimiento del equipo
 - **Análisis Predictivo**: Predicciones basadas en tendencias y patrones
+> Accesible desde **Análisis → Entrenador IA**.
 
 ### 📤 Exportación e Importación de Datos
 
@@ -142,7 +151,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
    lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
 
 #### Importación de Datos
-- **Restauración desde JSON**: Importación completa de datos desde archivos JSON
+- **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
 - **Validación de Datos**: Verificación de estructura antes de importar
 - **Manejo de Errores**: Feedback detallado en caso de problemas
 
@@ -363,10 +372,8 @@ Al ejecutar `MiFutbolC`, el sistema:
 10. Torneos
 11. Temporada
 12. Análisis
-13. Entrenador IA
-14. Exportar
-15. Importar
-16. Ajustes
+13. Bienestar
+14. Ajustes
 0. Salir
 >
 ```
@@ -376,7 +383,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (16)
+Menú Principal → Ajustes (14)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Modificar nombre de usuario
@@ -423,9 +430,16 @@ Menú Principal → Estadísticas (6)
   └── Meta-análisis
 
 Menú Principal → Análisis (12)
-  ├── Comparar últimos 5 partidos
-  ├── Calcular rachas
-  └── Ver récords históricos
+  ├── Análisis Básico
+  ├── Comparador Avanzado
+  └── Entrenador IA
+
+Menú Principal → Bienestar (13)
+  ├── Planificación Personal
+  ├── Mentalidad y Hábitos
+  ├── Entrenamiento
+  ├── Alimentación
+  └── Salud
 ```
 
 #### 6️⃣ Gestionar Finanzas
@@ -441,7 +455,7 @@ Menú Principal → Financiamiento (9)
 #### 7️⃣ Exportar Datos
 
 ```
-Menú Principal → Exportar (14)
+Menú Principal → Ajustes (14) → Exportar
   ├── Seleccionar módulo (camisetas, partidos, etc.)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
    └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
@@ -697,7 +711,7 @@ MiFutbolC/
 │
 ├── 📤 CAPA DE IMPORTACIÓN/EXPORTACIÓN
 │   ├── 📥 Importación
-│   │   └── import.c / import.h                  # Importación desde JSON
+│   │   └── import.c / import.h                  # Importación multiformato
 │   │
 │   └── 📤 Exportación
 │       ├── export.c / export.h                  # Exportación individual
@@ -1017,7 +1031,8 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, QR, Logros, Financiamiento, Torneos, Temporada, Análisis, Entrenador IA, Exportar, Importar, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, QR, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
+- **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
 - **Navegación**: La función `ejecutar_menu()` maneja la lógica de mostrar opciones, leer selección del usuario y ejecutar la acción correspondiente.
@@ -1042,7 +1057,7 @@ Los módulos de exportación mejorada (`export_all_mejorado.c`, `export_camiseta
 
 ## Importación Completa
 
-El módulo `import.c / import.h` permite restaurar datos desde archivos JSON exportados previamente. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
+El módulo `import.c / import.h` permite restaurar datos desde archivos JSON, TXT, CSV o HTML exportados previamente. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
 
 
 ## Documentación

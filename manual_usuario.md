@@ -16,6 +16,7 @@ MiFutbolC es una herramienta integral diseñada para:
 - Organizar torneos y temporadas completas
 - Exportar e importar datos en múltiples formatos
 - Ofrecer un sistema gamificado de logros y recompensas
+- Registrar bienestar integral (hábitos, salud y planificación)
 - Recibir recomendaciones inteligentes del Entrenador IA
 - Generar códigos QR con información deportiva
 
@@ -29,6 +30,7 @@ MiFutbolC es una herramienta integral diseñada para:
 **Exportación Flexible**: Múltiples formatos (CSV, JSON, HTML, TXT)  
 **Informe PDF Mejorado**: Portada, secciones y más datos  
 **Sistema Gamificado**: Logros y badges para motivar el uso continuo  
+**Bienestar Integral**: Hábitos, salud y reportes personales  
 **Entrenador IA**: Recomendaciones inteligentes basadas en datos  
 **Personalización**: Configuración de temas, idioma y preferencias  
 
@@ -135,10 +137,8 @@ El menú principal ofrece las siguientes opciones:
 10. **Torneos** - Gestionar torneos de fútbol
 11. **Temporada** - Gestionar temporadas y ciclos deportivos
 12. **Análisis** - Ver análisis de rendimiento
-13. **Entrenador IA** - Recibir recomendaciones inteligentes
-14. **Exportar** - Exportar datos en múltiples formatos
-15. **Importar** - Importar datos desde archivos JSON
-16. **Ajustes** - Configurar temas, idioma y usuario
+13. **Bienestar** - Planificación, hábitos, salud y reportes personales
+14. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -751,10 +751,12 @@ Análisis mensual automático:
 ## Análisis de Rendimiento
 
 Selecciona "12" en el menú principal para ver el análisis de rendimiento.
+Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado** y **Entrenador IA**.
 
 ### Funcionalidades del Análisis
 
 - **Comparación Últimos 5 Partidos**: Compara el rendimiento reciente con promedios generales
+- **Comparador Avanzado**: Comparaciones entre camisetas, torneos, periodos y condiciones
 - **Cálculo de Rachas**: Determina la mejor racha de victorias y peor racha de derrotas
 - **Análisis Motivacional**: Mensajes personalizados basados en el rendimiento
 - **Visualización de Últimos Partidos**: Resumen de los 5 partidos más recientes con detalles clave
@@ -768,17 +770,32 @@ Selecciona "12" en el menú principal para ver el análisis de rendimiento.
 - Estado de ánimo
 - Diferencias con respecto al promedio histórico
 
+## Bienestar
+
+Selecciona "13" en el menú principal para acceder a las herramientas de bienestar.
+
+### Funcionalidades de Bienestar
+
+- **Planificación Personal**: Objetivos, rutinas y seguimiento
+- **Mentalidad y Hábitos**: Registro de hábitos diarios
+- **Entrenamiento**: Planes y controles de práctica
+- **Alimentación**: Seguimiento y recomendaciones
+- **Mental**: Sesiones y seguimiento mental
+- **Informe Personal Mensual (PDF)**: Resumen automático
+- **Salud**: Perfil de salud y controles médicos
+
 ## Entrenador IA
 
-Selecciona "13" en el menú principal para acceder al sistema de Entrenador IA.
+Selecciona "12" en el menú principal, luego **Entrenador IA** (opción 3) dentro de Análisis.
 
 ### Funcionalidades del Entrenador IA
 
 #### Consejos Actuales
 
-1. Selecciona "13" en el menú principal
-2. Elige "1" para ver consejos actuales
-3. El sistema evaluará tu estado actual:
+1. Selecciona "12" en el menú principal
+2. Elige "3" para entrar a Entrenador IA
+3. Elige "1" para ver consejos actuales
+4. El sistema evaluará tu estado actual:
    - Rendimiento promedio
    - Cansancio promedio
    - Estado de ánimo promedio
@@ -786,7 +803,7 @@ Selecciona "13" en el menú principal para acceder al sistema de Entrenador IA.
    - Riesgo de lesión
    - Derrotas consecutivas
    - Días de descanso
-4. Recibirás consejos personalizados por categoría:
+5. Recibirás consejos personalizados por categoría:
    - **Físico**: Recomendaciones sobre cansancio y recuperación
    - **Mental**: Consejos sobre estado de ánimo
    - **Deportivo**: Sugerencias tácticas y de rendimiento
@@ -801,22 +818,25 @@ Selecciona "13" en el menú principal para acceder al sistema de Entrenador IA.
 
 #### Historial de Consejos
 
-1. Selecciona "13" en el menú principal
-2. Elige "2" para ver historial de consejos
-3. Se mostrarán todos los consejos anteriores
-4. Podrás ver si seguiste o no cada consejo
+1. Selecciona "12" en el menú principal
+2. Elige "3" para entrar a Entrenador IA
+3. Elige "2" para ver historial de consejos
+4. Se mostrarán todos los consejos anteriores
+5. Podrás ver si seguiste o no cada consejo
 
 #### Evaluar Decisión Pasada
 
-1. Selecciona "13" en el menú principal
-2. Elige "3" para evaluar decisiones pasadas
-3. El sistema analizará el impacto de seguir o ignorar consejos
+1. Selecciona "12" en el menú principal
+2. Elige "3" para entrar a Entrenador IA
+3. Elige "3" para evaluar decisiones pasadas
+4. El sistema analizará el impacto de seguir o ignorar consejos
 
 #### Configurar Nivel de Intervención
 
-1. Selecciona "13" en el menú principal
-2. Elige "4" para configurar el nivel de intervención
-3. Ajusta qué tan frecuentes y detallados quieres los consejos
+1. Selecciona "12" en el menú principal
+2. Elige "3" para entrar a Entrenador IA
+3. Elige "4" para configurar el nivel de intervención
+4. Ajusta qué tan frecuentes y detallados quieres los consejos
 
 #### Activación Automática
 
@@ -828,7 +848,7 @@ El Entrenador IA se activa automáticamente:
 
 ## Exportar Datos
 
-Selecciona "14" en el menú principal para acceder al menú de exportación.
+Selecciona "14" en el menú principal y luego **Exportar** para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
@@ -903,11 +923,11 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "15" en el menú principal para importar datos desde archivos JSON.
+Selecciona "14" en el menú principal y luego **Importar** para acceder a la importación de datos.
 
 ### Preparación para Importar
 
-1. Los archivos deben estar en formato JSON
+1. Los archivos pueden estar en formato JSON, TXT, CSV o HTML
 2. Deben ubicarse en el directorio de importaciones:
    - **Windows**: `%USERPROFILE%\Documents\MiFutbolC\Importaciones`
    - **Linux/macOS**: `./importaciones`
@@ -915,24 +935,25 @@ Selecciona "15" en el menú principal para importar datos desde archivos JSON.
 
 ### Proceso de Importación
 
-1. Selecciona "15" en el menú principal
-2. Elige el tipo de datos a importar:
+1. Selecciona "14" en el menú principal y luego **Importar**
+2. Elige el formato a importar (JSON, TXT, CSV o HTML)
+3. Elige el tipo de datos a importar:
    - Camisetas
    - Partidos
    - Lesiones
    - Estadísticas
    - Todo
-3. El sistema validará la estructura del archivo JSON
-4. Se verificará que los datos sean correctos
-5. Los datos se insertarán en la base de datos
-6. Recibirás un resumen de la importación:
+4. El sistema validará la estructura del archivo
+5. Se verificará que los datos sean correctos
+6. Los datos se insertarán en la base de datos
+7. Recibirás un resumen de la importación:
    - Registros importados exitosamente
    - Errores encontrados (si los hay)
    - Advertencias sobre datos duplicados
 
 ### Validaciones Realizadas
 
-- Estructura JSON correcta
+- Estructura de archivo correcta
 - Campos requeridos presentes
 - Tipos de datos válidos
 - Referencias a IDs existentes
@@ -950,11 +971,11 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "16" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "14" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "16" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -970,7 +991,7 @@ Selecciona "16" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "16" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -978,18 +999,24 @@ Selecciona "16" en el menú principal para acceder al menú de configuración de
 4. El idioma se aplicará inmediatamente
 5. Todos los menús y mensajes cambiarán al nuevo idioma
 
+### Accesibilidad
+
+1. Selecciona "14" en el menú principal
+2. Elige "3" para abrir accesibilidad
+3. Ajusta el tamaño del texto o activa alto contraste
+
 ### Cambiar Nombre de Usuario
 
-1. Selecciona "16" en el menú principal
-2. Elige "3" para cambiar el nombre de usuario
-3. Ingresa el nuevo nombre
+1. Selecciona "14" en el menú principal
+2. Elige "4" para abrir **Usuario**
+3. Cambia el nombre de usuario
 4. El nombre se guardará en la base de datos
 5. Se mostrará en el mensaje de bienvenida
 
 ### Ver Configuración Actual
 
-1. Selecciona "16" en el menú principal
-2. Elige "4" para ver la configuración actual
+1. Selecciona "14" en el menú principal
+2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
    - Idioma actual
@@ -999,13 +1026,24 @@ Selecciona "16" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "16" en el menú principal
-2. Elige "5" para restablecer configuración por defecto
+1. Selecciona "14" en el menú principal
+2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
    - Tema: Claro
    - Idioma: Español
    - Otras configuraciones a valores iniciales
+
+### Modo de Menú
+
+1. Selecciona "14" en el menú principal
+2. Elige "7" para configurar el modo
+3. Selecciona modo Simple, Avanzado o Personalizado
+
+### Exportar / Importar desde Ajustes
+
+1. Selecciona "14" en el menú principal
+2. Elige "8" para **Exportar** o "9" para **Importar**
 
 ![Menú de ajustes](images/menuajustes.png)
 
@@ -1089,9 +1127,9 @@ Selecciona "16" en el menú principal para acceder al menú de configuración de
 **Problema**: La importación falla o muestra errores de validación
 
 **Soluciones**:
-- Verifica que el archivo JSON está bien formado (usa un validador JSON online)
+- Verifica que el archivo esté bien formado (JSON/TXT/CSV/HTML)
 - Asegúrate de que el archivo está en el directorio correcto de importaciones
-- Comprueba que los datos en el JSON son válidos (IDs existentes, tipos correctos)
+- Comprueba que los datos son válidos (IDs existentes, tipos correctos)
 - Revisa el mensaje de error específico para identificar el problema
 - Intenta exportar primero para ver el formato correcto esperado
 
@@ -1119,7 +1157,7 @@ Selecciona "16" en el menú principal para acceder al menú de configuración de
 
 ### ¿Puedo usar MiFutbolC en múltiples computadoras?
 
-Sí, puedes exportar todos los datos desde una computadora e importarlos en otra. Usa la opción "Exportar Todo" en formato JSON para crear un backup completo.
+Sí, puedes exportar todos los datos desde una computadora e importarlos en otra. Usa la opción **Ajustes → Exportar → Todo** en formato JSON para crear un backup completo.
 
 ### ¿Los datos se guardan automáticamente?
 
@@ -1131,11 +1169,12 @@ Aunque es posible usar herramientas como DB Browser for SQLite, se recomienda us
 
 ### ¿Cómo hago un backup completo?
 
-1. Ve a Exportar (opción 14)
-2. Selecciona "Todo" (opción 6)
-3. Elige formato JSON
-4. Guarda el archivo en un lugar seguro
-5. Para restaurar, usa la opción Importar
+1. Ve a Ajustes (opción 14)
+2. Entra en **Exportar**
+3. Selecciona "Todo" (opción 6)
+4. Elige formato JSON
+5. Guarda el archivo en un lugar seguro
+6. Para restaurar, usa **Ajustes → Importar**
 
 ### ¿Puedo usar MiFutbolC para múltiples equipos?
 
