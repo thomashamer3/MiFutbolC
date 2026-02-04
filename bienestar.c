@@ -20,17 +20,6 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
-static int preparar_actualizacion(sqlite3_stmt **stmt, const char *sql)
-{
-    if (!preparar_stmt(stmt, sql))
-    {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
-        return 0;
-    }
-    return 1;
-}
-
 static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql, const char *mensaje)
 {
     if (!preparar_stmt(stmt, sql))
@@ -42,22 +31,21 @@ static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql, const
     return 1;
 }
 
-static void finalizar_ejecucion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
+static int preparar_consulta(sqlite3_stmt **stmt, const char *sql, const char *mensaje, int con_pause)
 {
-    if (sqlite3_step(stmt) != SQLITE_DONE)
+    if (!preparar_stmt(stmt, sql))
     {
-        printf("%s\n", err_msg);
+        printf("%s\n", mensaje);
+        if (con_pause)
+        {
+            pause_console();
+        }
+        return 0;
     }
-    else
-    {
-        printf("%s\n", ok_msg);
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    return 1;
 }
 
-static void finalizar_actualizacion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
+static void finalizar_ejecucion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
 {
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -194,13 +182,8 @@ static void listar_objetivos_simple(int con_pause)
         "FROM bienestar_objetivo ORDER BY id DESC";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando objetivos.", con_pause))
     {
-        printf("Error consultando objetivos.\n");
-        if (con_pause)
-        {
-            pause_console();
-        }
         return;
     }
 
@@ -319,7 +302,7 @@ static void cambiar_estado_objetivo(void)
 
     const char *sql = "UPDATE bienestar_objetivo SET estado = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -327,7 +310,7 @@ static void cambiar_estado_objetivo(void)
     sqlite3_bind_text(stmt, 1, estado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Estado actualizado.", "Error actualizando estado.");
+    finalizar_ejecucion(stmt, "Estado actualizado.", "Error actualizando estado.");
 }
 
 static void listar_planes_entrenamiento(void)
@@ -342,10 +325,8 @@ static void listar_planes_entrenamiento(void)
         "ORDER BY p.id DESC";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando planes.", 1))
     {
-        printf("Error consultando planes.\n");
-        pause_console();
         return;
     }
 
@@ -493,13 +474,8 @@ static void listar_habitos_simple(int con_pause, int con_clear)
         "FROM bienestar_habito ORDER BY fecha DESC LIMIT 14";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando habitos.", con_pause))
     {
-        printf("Error consultando habitos.\n");
-        if (con_pause)
-        {
-            pause_console();
-        }
         return;
     }
 
@@ -573,7 +549,7 @@ static void actualizar_habito_todo(int id)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -590,7 +566,7 @@ static void actualizar_habito_todo(int id)
     sqlite3_bind_text(stmt, 10, tipo_diario, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 11, id);
 
-    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_fecha(int id)
@@ -600,14 +576,14 @@ static void actualizar_habito_fecha(int id)
 
     const char *sql = "UPDATE bienestar_habito SET fecha = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_entero(int id, const char *campo, const char *prompt, int min, int max)
@@ -617,14 +593,14 @@ static void actualizar_habito_entero(int id, const char *campo, const char *prom
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_bool(int id, const char *campo, const char *prompt)
@@ -634,14 +610,14 @@ static void actualizar_habito_bool(int id, const char *campo, const char *prompt
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_texto(int id, const char *campo, const char *prompt, size_t max_len)
@@ -658,14 +634,14 @@ static void actualizar_habito_texto(int id, const char *campo, const char *promp
     snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_aspecto(int id)
@@ -926,10 +902,8 @@ static void listar_sesiones_mentales(void)
         "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando sesiones.", 1))
     {
-        printf("Error consultando sesiones.\n");
-        pause_console();
         return;
     }
 
@@ -973,9 +947,8 @@ static void listar_sesiones_mentales_simple(void)
         "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando sesiones.", 0))
     {
-        printf("Error consultando sesiones.\n");
         return;
     }
 
@@ -1021,10 +994,8 @@ static void ver_detalle_sesion_mental(void)
         "FROM bienestar_sesion_mental WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando detalle.", 1))
     {
-        printf("Error consultando detalle.\n");
-        pause_console();
         return;
     }
 
@@ -1115,7 +1086,7 @@ static void actualizar_sesion_mental_todo(int id)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -1141,7 +1112,7 @@ static void actualizar_sesion_mental_todo(int id)
     sqlite3_bind_text(stmt, 12, texto_libre, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 13, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_fecha(int id)
@@ -1151,14 +1122,14 @@ static void actualizar_sesion_mental_fecha(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET fecha = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_tipo(int id)
@@ -1168,14 +1139,14 @@ static void actualizar_sesion_mental_tipo(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET tipo = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_text(stmt, 1, tipo_sesion_texto(tipo), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_momento(int id)
@@ -1195,7 +1166,7 @@ static void actualizar_sesion_mental_momento(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET momento = ?, partido_id = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -1210,7 +1181,7 @@ static void actualizar_sesion_mental_momento(int id)
     }
     sqlite3_bind_int(stmt, 3, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_partido(int id)
@@ -1224,7 +1195,7 @@ static void actualizar_sesion_mental_partido(int id)
 
     const char *sql = "UPDATE bienestar_sesion_mental SET partido_id = ? WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -1238,7 +1209,7 @@ static void actualizar_sesion_mental_partido(int id)
     }
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_entero(int id, const char *campo, const char *prompt, int min, int max)
@@ -1248,14 +1219,14 @@ static void actualizar_sesion_mental_entero(int id, const char *campo, const cha
     snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_texto(int id, const char *campo, const char *prompt, size_t max_len)
@@ -1272,14 +1243,14 @@ static void actualizar_sesion_mental_texto(int id, const char *campo, const char
     snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
     sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
-    finalizar_actualizacion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_aspecto(int id)
@@ -1427,10 +1398,8 @@ static void sesiones_antes_despues_partido(void)
         "ORDER BY s.fecha DESC, s.id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando sesiones.", 1))
     {
-        printf("Error consultando sesiones.\n");
-        pause_console();
         return;
     }
 
@@ -1485,10 +1454,8 @@ static void tendencias_mentales(void)
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4)) AS avg_baja";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando tendencias.", 1))
     {
-        printf("Error consultando tendencias.\n");
-        pause_console();
         return;
     }
 
@@ -1681,13 +1648,8 @@ static void listar_entrenamientos_simple(int con_pause, int con_clear)
         "FROM bienestar_entrenamiento ORDER BY fecha DESC, id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando entrenamientos.", con_pause))
     {
-        printf("Error consultando entrenamientos.\n");
-        if (con_pause)
-        {
-            pause_console();
-        }
         return;
     }
 
@@ -1743,14 +1705,14 @@ static void marcar_entrenamiento_omitido(void)
 
     const char *sql = "UPDATE bienestar_entrenamiento SET omitido = 1 WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
 
     sqlite3_bind_int(stmt, 1, id);
 
-    finalizar_actualizacion(stmt, "Entrenamiento marcado como omitido.", "Error actualizando entrenamiento.");
+    finalizar_ejecucion(stmt, "Entrenamiento marcado como omitido.", "Error actualizando entrenamiento.");
 }
 
 static void registrar_ejercicio(void)
@@ -1783,9 +1745,8 @@ static void listar_ejercicios(void)
 {
     const char *sql = "SELECT id, nombre, grupo_muscular FROM bienestar_ejercicio ORDER BY id DESC";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando ejercicios.", 0))
     {
-        printf("Error consultando ejercicios.\n");
         return;
     }
 
@@ -1875,10 +1836,8 @@ static void comparar_entrenamiento_vs_rendimiento(void)
         " (SELECT fecha FROM bienestar_entrenamiento WHERE omitido = 0)) AS avg_sin_entrenamiento";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando comparacion.", 1))
     {
-        printf("Error consultando comparacion.\n");
-        pause_console();
         return;
     }
 
@@ -1913,10 +1872,8 @@ static void alertas_entrenamiento(void)
         "WHERE omitido = 0 AND intensidad >= 8 AND fecha >= date('now', '-6 day')";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando alertas.", 1))
     {
-        printf("Error consultando alertas.\n");
-        pause_console();
         return;
     }
 
@@ -2051,10 +2008,8 @@ static void listar_comidas(void)
         "FROM bienestar_comida ORDER BY fecha DESC, id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando comidas.", 1))
     {
-        printf("Error consultando comidas.\n");
-        pause_console();
         return;
     }
 
@@ -2146,10 +2101,8 @@ static void listar_dias_nutricionales(void)
         "FROM bienestar_dia_nutricional ORDER BY fecha DESC LIMIT 14";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando dias nutricionales.", 1))
     {
-        printf("Error consultando dias nutricionales.\n");
-        pause_console();
         return;
     }
 
@@ -2199,10 +2152,8 @@ static void estadisticas_alimentacion(void)
         "FROM bienestar_comida";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando estadisticas.", 1))
     {
-        printf("Error consultando estadisticas.\n");
-        pause_console();
         return;
     }
 
@@ -2240,10 +2191,8 @@ static void comparacion_alimentacion_vs_rendimiento(void)
         " (SELECT DISTINCT fecha FROM bienestar_comida WHERE calidad = 'Mala')) AS avg_mala";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando comparacion.", 1))
     {
-        printf("Error consultando comparacion.\n");
-        pause_console();
         return;
     }
 
@@ -2277,10 +2226,8 @@ static void flags_alimentacion(void)
         "ORDER BY p.fecha_hora DESC LIMIT 10";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando flags.", 1))
     {
-        printf("Error consultando flags.\n");
-        pause_console();
         return;
     }
 
@@ -2337,10 +2284,8 @@ static void mostrar_salud_perfil(void)
         "FROM bienestar_salud WHERE id = 1";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando salud.", 1))
     {
-        printf("Error consultando salud.\n");
-        pause_console();
         return;
     }
 
@@ -2463,10 +2408,8 @@ static void listar_controles_medicos(void)
         "FROM bienestar_control_medico ORDER BY fecha DESC, id DESC LIMIT 20";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_consulta(&stmt, sql, "Error consultando controles.", 1))
     {
-        printf("Error consultando controles.\n");
-        pause_console();
         return;
     }
 
@@ -2532,7 +2475,7 @@ static void editar_control_medico(void)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_actualizacion(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
     {
         return;
     }
@@ -2544,7 +2487,7 @@ static void editar_control_medico(void)
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 6, id);
 
-    finalizar_actualizacion(stmt, "Control medico actualizado.", "Error actualizando control medico.");
+    finalizar_ejecucion(stmt, "Control medico actualizado.", "Error actualizando control medico.");
 }
 
 static void eliminar_control_medico(void)
