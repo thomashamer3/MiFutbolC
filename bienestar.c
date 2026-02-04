@@ -31,6 +31,32 @@ static int preparar_actualizacion(sqlite3_stmt **stmt, const char *sql)
     return 1;
 }
 
+static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql, const char *mensaje)
+{
+    if (!preparar_stmt(stmt, sql))
+    {
+        printf("%s\n", mensaje);
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
+static void finalizar_ejecucion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
+{
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        printf("%s\n", err_msg);
+    }
+    else
+    {
+        printf("%s\n", ok_msg);
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 static void finalizar_actualizacion(sqlite3_stmt *stmt, const char *ok_msg, const char *err_msg)
 {
     if (sqlite3_step(stmt) != SQLITE_DONE)
@@ -252,10 +278,8 @@ static void crear_objetivo(void)
         "VALUES (?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -265,17 +289,7 @@ static void crear_objetivo(void)
     sqlite3_bind_text(stmt, 4, estado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando objetivo.\n");
-    }
-    else
-    {
-        printf("Objetivo guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Objetivo guardado.", "Error guardando objetivo.");
 }
 
 static void cambiar_estado_objetivo(void)
@@ -385,10 +399,8 @@ static void crear_plan_entrenamiento(void)
         "VALUES (?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -397,17 +409,7 @@ static void crear_plan_entrenamiento(void)
     sqlite3_bind_text(stmt, 3, rutina, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando plan.\n");
-    }
-    else
-    {
-        printf("Plan guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Plan guardado.", "Error guardando plan.");
 }
 
 static void mostrar_planificacion_personal(void)
@@ -458,10 +460,8 @@ static void registrar_habitos(void)
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -476,17 +476,7 @@ static void registrar_habitos(void)
     sqlite3_bind_text(stmt, 9, notas, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 10, tipo_diario, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando registro.\n");
-    }
-    else
-    {
-        printf("Registro guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Registro guardado.", "Error guardando registro.");
 }
 
 static void listar_habitos_simple(int con_pause, int con_clear)
@@ -799,26 +789,14 @@ static void eliminar_habito(void)
 
     const char *sql = "DELETE FROM bienestar_habito WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando eliminacion."))
     {
-        printf("Error preparando eliminacion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_int(stmt, 1, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error eliminando registro.\n");
-    }
-    else
-    {
-        printf("Registro eliminado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Registro eliminado.", "Error eliminando registro.");
 }
 
 static void mostrar_mentalidad_habitos(void)
@@ -910,10 +888,8 @@ static void registrar_sesion_mental(void)
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -937,17 +913,7 @@ static void registrar_sesion_mental(void)
     sqlite3_bind_text(stmt, 11, pensamientos, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 12, texto_libre, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental guardada.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Sesion mental guardada.", "Error guardando sesion mental.");
 }
 
 static void listar_sesiones_mentales(void)
@@ -1439,26 +1405,14 @@ static void eliminar_sesion_mental(void)
 
     const char *sql = "DELETE FROM bienestar_sesion_mental WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando eliminacion."))
     {
-        printf("Error preparando eliminacion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_int(stmt, 1, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error eliminando sesion mental.\n");
-    }
-    else
-    {
-        printf("Sesion mental eliminada.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Sesion mental eliminada.", "Error eliminando sesion mental.");
 }
 
 static void sesiones_antes_despues_partido(void)
@@ -1700,10 +1654,8 @@ static void registrar_entrenamiento(void)
         "VALUES (?, ?, ?, ?, 0, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -1713,17 +1665,7 @@ static void registrar_entrenamiento(void)
     sqlite3_bind_int(stmt, 4, intensidad);
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando entrenamiento.\n");
-    }
-    else
-    {
-        printf("Entrenamiento guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Entrenamiento guardado.", "Error guardando entrenamiento.");
 }
 
 static void listar_entrenamientos_simple(int con_pause, int con_clear)
@@ -1801,26 +1743,14 @@ static void marcar_entrenamiento_omitido(void)
 
     const char *sql = "UPDATE bienestar_entrenamiento SET omitido = 1 WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_int(stmt, 1, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando entrenamiento.\n");
-    }
-    else
-    {
-        printf("Entrenamiento marcado como omitido.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Entrenamiento marcado como omitido.", "Error actualizando entrenamiento.");
 }
 
 static void registrar_ejercicio(void)
@@ -1838,27 +1768,15 @@ static void registrar_ejercicio(void)
         "INSERT INTO bienestar_ejercicio (nombre, grupo_muscular) VALUES (?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 2, grupo, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando ejercicio.\n");
-    }
-    else
-    {
-        printf("Ejercicio guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Ejercicio guardado.", "Error guardando ejercicio.");
 }
 
 static void listar_ejercicios(void)
@@ -1926,10 +1844,8 @@ static void asociar_ejercicio(void)
         "VALUES (?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -1939,17 +1855,7 @@ static void asociar_ejercicio(void)
     sqlite3_bind_int(stmt, 4, repeticiones);
     sqlite3_bind_int(stmt, 5, tiempo);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando asociacion.\n");
-    }
-    else
-    {
-        printf("Asociacion guardada.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Asociacion guardada.", "Error guardando asociacion.");
 }
 
 static void comparar_entrenamiento_vs_rendimiento(void)
@@ -2122,10 +2028,8 @@ static void registrar_comida(void)
         "VALUES (?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -2134,17 +2038,7 @@ static void registrar_comida(void)
     sqlite3_bind_text(stmt, 3, calidad_comida_texto(calidad), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando comida.\n");
-    }
-    else
-    {
-        printf("Comida guardada.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Comida guardada.", "Error guardando comida.");
 }
 
 static void listar_comidas(void)
@@ -2221,10 +2115,8 @@ static void registrar_dia_nutricional(void)
         "alcohol=excluded.alcohol, peso_corporal=excluded.peso_corporal, notas=excluded.notas";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -2241,17 +2133,7 @@ static void registrar_dia_nutricional(void)
     }
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando dia nutricional.\n");
-    }
-    else
-    {
-        printf("Dia nutricional guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Dia nutricional guardado.", "Error guardando dia nutricional.");
 }
 
 static void listar_dias_nutricionales(void)
@@ -2520,10 +2402,8 @@ static void actualizar_salud_perfil(void)
         "medidas=excluded.medidas, notas=excluded.notas";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -2534,17 +2414,7 @@ static void actualizar_salud_perfil(void)
     sqlite3_bind_text(stmt, 5, medidas, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 6, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando datos de salud.\n");
-    }
-    else
-    {
-        printf("Datos de salud actualizados.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Datos de salud actualizados.", "Error guardando datos de salud.");
 }
 
 static void registrar_control_medico(void)
@@ -2569,10 +2439,8 @@ static void registrar_control_medico(void)
         "VALUES (?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
     {
-        printf("Error preparando insercion.\n");
-        pause_console();
         return;
     }
 
@@ -2582,17 +2450,7 @@ static void registrar_control_medico(void)
     sqlite3_bind_text(stmt, 4, resultado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error guardando control medico.\n");
-    }
-    else
-    {
-        printf("Control medico guardado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Control medico guardado.", "Error guardando control medico.");
 }
 
 static void listar_controles_medicos(void)
@@ -2674,10 +2532,8 @@ static void editar_control_medico(void)
         "WHERE id = ?";
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_actualizacion(&stmt, sql))
     {
-        printf("Error preparando actualizacion.\n");
-        pause_console();
         return;
     }
 
@@ -2688,17 +2544,7 @@ static void editar_control_medico(void)
     sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 6, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error actualizando control medico.\n");
-    }
-    else
-    {
-        printf("Control medico actualizado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_actualizacion(stmt, "Control medico actualizado.", "Error actualizando control medico.");
 }
 
 static void eliminar_control_medico(void)
@@ -2723,26 +2569,14 @@ static void eliminar_control_medico(void)
 
     const char *sql = "DELETE FROM bienestar_control_medico WHERE id = ?";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando eliminacion."))
     {
-        printf("Error preparando eliminacion.\n");
-        pause_console();
         return;
     }
 
     sqlite3_bind_int(stmt, 1, id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("Error eliminando control medico.\n");
-    }
-    else
-    {
-        printf("Control medico eliminado.\n");
-    }
-
-    sqlite3_finalize(stmt);
-    pause_console();
+    finalizar_ejecucion(stmt, "Control medico eliminado.", "Error eliminando control medico.");
 }
 
 static void menu_salud(void)
