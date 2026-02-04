@@ -260,9 +260,121 @@ void input_string(const char *msg, char *buffer, int size)
     }
 }
 
+void convert_display_date_to_storage(const char *display_date,
+                                     char *storage_buffer, int buffer_size);
+
+static void get_current_date(char *buffer, int size)
+{
+    time_t t = time(NULL);
+    struct tm tm_struct;
+#ifdef _WIN32
+    localtime_s(&tm_struct, &t);
+#else
+    localtime_r(&t, &tm_struct);
+#endif
+    strftime(buffer, size, "%d/%m/%Y", &tm_struct);
+}
+
+static void get_current_time(char *buffer, int size)
+{
+    time_t t = time(NULL);
+    struct tm tm_struct;
+#ifdef _WIN32
+    localtime_s(&tm_struct, &t);
+#else
+    localtime_r(&t, &tm_struct);
+#endif
+    strftime(buffer, size, "%H:%M", &tm_struct);
+}
+
+static void get_current_datetime(char *buffer, int size)
+{
+    time_t t = time(NULL);
+    struct tm tm_struct;
+#ifdef _WIN32
+    localtime_s(&tm_struct, &t);
+#else
+    localtime_r(&t, &tm_struct);
+#endif
+    strftime(buffer, size, "%d/%m/%Y %H:%M", &tm_struct);
+}
+
+static int es_hora_sola(const char *buffer)
+{
+    return strchr(buffer, ':') != NULL && strchr(buffer, '/') == NULL && strchr(buffer, '-') == NULL;
+}
+
+static int msg_pide_datetime(const char *msg)
+{
+    if (!msg)
+        return 0;
+    return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) &&
+           (strstr(msg, "DD") || strstr(msg, "dd") || strstr(msg, "YYYY") || strstr(msg, "AAAA") || strstr(msg, "/"));
+}
+
+static int msg_pide_hora(const char *msg)
+{
+    if (!msg)
+        return 0;
+    return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) && !msg_pide_datetime(msg);
+}
+
+static void completar_fecha_por_defecto(const char *msg, char *buffer, int size)
+{
+    if (msg_pide_datetime(msg))
+    {
+        get_current_datetime(buffer, size);
+        return;
+    }
+
+    if (msg_pide_hora(msg))
+    {
+        get_current_time(buffer, size);
+        return;
+    }
+
+    get_current_date(buffer, size);
+}
+
+static int validar_fecha_chars(const char *buffer)
+{
+    for (int i = 0; buffer[i] != '\0'; i++)
+    {
+        if (!isdigit(buffer[i]) && buffer[i] != '/' && buffer[i] != ':' && buffer[i] != ' ' && buffer[i] != '-')
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int procesar_input_date(const char *msg, char *buffer, int size)
+{
+    if (safe_strnlen(buffer, (size_t)size) == 0)
+    {
+        completar_fecha_por_defecto(msg, buffer, size);
+    }
+
+    if (!validar_fecha_chars(buffer))
+    {
+        printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/), "
+               "guiones (-) y dos puntos (:).\n");
+        return 0;
+    }
+
+    if (!es_hora_sola(buffer) && strchr(buffer, '/') != NULL)
+    {
+        char storage[64];
+        convert_display_date_to_storage(buffer, storage, sizeof(storage));
+        strncpy_s(buffer, (size_t)size, storage, (size_t)size - 1);
+    }
+
+    return 1;
+}
+
 /**
  * Valida la entrada de fecha para asegurar el formato correcto,
- * aceptando solo dígitos, barras diagonales (/) y dos puntos (:).
+ * aceptando solo dígitos, barras diagonales (/), guiones (-) y dos puntos (:).
  */
 void input_date(const char *msg, char *buffer, int size)
 {
@@ -274,20 +386,10 @@ void input_date(const char *msg, char *buffer, int size)
             continue;
         buffer[strcspn(buffer, "\n")] = 0;
 
-        int valid = 1;
-        for (int i = 0; buffer[i] != '\0'; i++)
+        if (procesar_input_date(msg, buffer, size))
         {
-            if (!isdigit(buffer[i]) && buffer[i] != '/' && buffer[i] != ':')
-            {
-                valid = 0;
-                break;
-            }
-        }
-
-        if (valid)
             return;
-        printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/) "
-               "y dos puntos (:).\n");
+        }
     }
 }
 
@@ -585,8 +687,35 @@ void menu_usuario()
 void format_date_for_display(const char *input_date, char *output_buffer,
                              int buffer_size)
 {
-    // Actualmente el formato de almacenamiento y visualización son iguales
-    // Copiar directamente la fecha de entrada a la salida
+    if (!input_date || buffer_size <= 0)
+        return;
+
+    if (safe_strnlen(input_date, (size_t)buffer_size) >= 10 && input_date[4] == '-' && input_date[7] == '-')
+    {
+        char fecha[16];
+        fecha[0] = input_date[8];
+        fecha[1] = input_date[9];
+        fecha[2] = '/';
+        fecha[3] = input_date[5];
+        fecha[4] = input_date[6];
+        fecha[5] = '/';
+        fecha[6] = input_date[0];
+        fecha[7] = input_date[1];
+        fecha[8] = input_date[2];
+        fecha[9] = input_date[3];
+        fecha[10] = '\0';
+
+        if (input_date[10] == ' ')
+        {
+            snprintf(output_buffer, (size_t)buffer_size, "%s%s", fecha, input_date + 10);
+        }
+        else
+        {
+            strncpy_s(output_buffer, buffer_size, fecha, buffer_size - 1);
+        }
+        return;
+    }
+
     strncpy_s(output_buffer, buffer_size, input_date, buffer_size - 1);
 }
 
@@ -597,8 +726,26 @@ void format_date_for_display(const char *input_date, char *output_buffer,
 void convert_display_date_to_storage(const char *display_date,
                                      char *storage_buffer, int buffer_size)
 {
-    // Actualmente el formato de almacenamiento y visualización son iguales
-    // Copiar directamente la fecha de visualización al almacenamiento
+    if (!display_date || buffer_size <= 0)
+        return;
+
+    if (strchr(display_date, '/') != NULL && safe_strnlen(display_date, (size_t)buffer_size) >= 10)
+    {
+        char yyyy[5] = {display_date[6], display_date[7], display_date[8], display_date[9], '\0'};
+        char mm[3] = {display_date[3], display_date[4], '\0'};
+        char dd[3] = {display_date[0], display_date[1], '\0'};
+
+        if (display_date[10] == ' ')
+        {
+            snprintf(storage_buffer, (size_t)buffer_size, "%s-%s-%s%s", yyyy, mm, dd, display_date + 10);
+        }
+        else
+        {
+            snprintf(storage_buffer, (size_t)buffer_size, "%s-%s-%s", yyyy, mm, dd);
+        }
+        return;
+    }
+
     strncpy_s(storage_buffer, buffer_size, display_date, buffer_size - 1);
 }
 

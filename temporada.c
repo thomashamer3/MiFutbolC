@@ -39,16 +39,7 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
 
 static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int size)
 {
-    while (1)
-    {
-        input_string(prompt, buffer, size);
-        if (safe_strnlen(buffer, (size_t)size) == 10 &&
-                buffer[4] == '-' && buffer[7] == '-')
-        {
-            return;
-        }
-        printf("Fecha inválida. Use formato YYYY-MM-DD.\n");
-    }
+    input_date(prompt, buffer, size);
 }
 
 const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
@@ -157,13 +148,13 @@ void crear_temporada()
         temporada.anio = input_int("Año inválido. Ingrese un año válido: ");
     }
 
-    solicitar_fecha_yyyy_mm_dd("Fecha de inicio (YYYY-MM-DD): ", temporada.fecha_inicio, sizeof(temporada.fecha_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha de inicio (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_inicio, sizeof(temporada.fecha_inicio));
 
-    solicitar_fecha_yyyy_mm_dd("Fecha de fin (YYYY-MM-DD): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
     while (strcmp(temporada.fecha_fin, temporada.fecha_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha de fin (YYYY-MM-DD): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
     }
 
     input_string("Descripción (opcional): ", temporada.descripcion, sizeof(temporada.descripcion));
@@ -416,12 +407,12 @@ void modificar_temporada()
     {
         char nueva_fecha_inicio[20];
         char nueva_fecha_fin[20];
-        solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (YYYY-MM-DD): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
-        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (YYYY-MM-DD): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
         while (strcmp(nueva_fecha_fin, nueva_fecha_inicio) < 0)
         {
             printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-            solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (YYYY-MM-DD): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+            solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
         }
 
         const char *sql = "UPDATE temporada SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?;";

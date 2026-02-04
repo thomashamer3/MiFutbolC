@@ -9,13 +9,15 @@
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
+#include "export.h"
+#include "export_all.h"
+#include "import.h"
 #include "ascii_art.h"
+#include <Windows.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
+void menu_exportar();
 
 // Configuracion global
 static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
@@ -113,6 +115,7 @@ static const TextEntry text_entries[] =
     {"menu_estadisticas", "Estadisticas", "Statistics"},
     {"menu_logros", "Logros", "Achievements"},
     {"menu_analisis", "Analisis", "Analysis"},
+    {"menu_bienestar", "Bienestar", "Wellness"},
     {"menu_lesiones", "Lesiones", "Injuries"},
     {"menu_financiamiento", "Financiamiento", "Financing"},
     {"menu_exportar", "Exportar", "Export"},
@@ -596,6 +599,20 @@ const char* get_menu_analisis()
     else if (mode == MODE_CUSTOM && is_custom_menu_enabled("analisis"))
     {
         return get_text("menu_analisis");
+    }
+    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+}
+
+const char* get_menu_bienestar()
+{
+    ModeType mode = settings_get_mode();
+    if (mode == MODE_ADVANCED)
+    {
+        return get_text("menu_bienestar");
+    }
+    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("bienestar"))
+    {
+        return get_text("menu_bienestar");
     }
     return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
@@ -1192,14 +1209,12 @@ void menu_custom_menus()
         {6, "qr", get_text("menu_qr")},
         {7, "logros", get_text("menu_logros")},
         {8, "analisis", get_text("menu_analisis")},
-        {9, "lesiones", get_text("menu_lesiones")},
-        {10, "financiamiento", get_text("menu_financiamiento")},
-        {11, "exportar", get_text("menu_exportar")},
-        {12, "importar", get_text("menu_importar")},
-        {13, "torneos", get_text("menu_torneos")},
-        {14, "temporada", get_text("menu_temporada")},
-        {15, "entrenador_ia", get_text("menu_entrenador_ia")},
-        {16, "settings", get_text("menu_settings")},
+        {9, "bienestar", get_text("menu_bienestar")},
+        {10, "lesiones", get_text("menu_lesiones")},
+        {11, "financiamiento", get_text("menu_financiamiento")},
+        {12, "torneos", get_text("menu_torneos")},
+        {13, "temporada", get_text("menu_temporada")},
+        {14, "settings", get_text("menu_settings")},
         {0, NULL, NULL}
     };
 
@@ -1250,6 +1265,8 @@ void menu_settings()
         {5, get_text("show_current"), show_current_settings},
         {6, get_text("reset_defaults"), reset_settings_to_defaults},
         {7, get_text("settings_mode"), menu_mode_settings},
+        {8, get_text("menu_exportar"), menu_exportar},
+        {9, get_text("menu_importar"), menu_importar},
         {0, get_text("menu_back"), NULL}
     };
 

@@ -25,6 +25,7 @@
 #include "settings.h"
 #include "financiamiento.h"
 #include "entrenador_ia.h"
+#include "bienestar.h"
 #include "qr.h"
 
 // Definir items del menú principal directamente con inicialización static
@@ -49,10 +50,8 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {10, "Torneos", &menu_torneos},
     {11, "Temporada", &menu_temporadas},
     {12, "Analisis", &mostrar_analisis},
-    {13, "Entrenador IA", &menu_entrenador_ia},
-    {14, "Exportar", &menu_exportar},
-    {15, "Importar", &menu_importar},
-    {16, "Ajustes", &menu_settings},
+    {13, "Bienestar", &menu_bienestar},
+    {14, "Ajustes", &menu_settings},
     {0, "Salir", NULL}
 };
 

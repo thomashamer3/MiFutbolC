@@ -878,8 +878,8 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
         return;
     char fecha[20];
     char hora[10];
-    input_date("Nueva fecha (dd/mm/yyyy): ", fecha, 20);
-    input_date("Nueva hora (hh:mm): ", hora, 10);
+    input_date("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, 20);
+    input_date("Nueva hora (HH:MM, Enter=ahora): ", hora, 10);
     snprintf(datos->comentario_personal, sizeof(datos->comentario_personal), "%s %s", fecha, hora);
     datos->goles = input_int("Nuevos goles: ");
     datos->asistencias = input_int("Nuevas asistencias: ");

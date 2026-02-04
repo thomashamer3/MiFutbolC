@@ -101,6 +101,214 @@ static void write_blank_line(PdfCtx *ctx, float leading)
     ctx->y -= leading;
 }
 
+static int preparar_stmt_pdf(sqlite3_stmt **stmt, const char *sql)
+{
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+    return 1;
+}
+
+static void format_mes_display(const char *mes_yyyy_mm, char *buffer, int size)
+{
+    if (!mes_yyyy_mm || safe_strnlen(mes_yyyy_mm, (size_t)size) < 7)
+    {
+        strncpy_s(buffer, (size_t)size, "N/A", (size_t)size - 1);
+        return;
+    }
+
+    char yyyy[5] = {mes_yyyy_mm[0], mes_yyyy_mm[1], mes_yyyy_mm[2], mes_yyyy_mm[3], '\0'};
+    char mm[3] = {mes_yyyy_mm[5], mes_yyyy_mm[6], '\0'};
+    snprintf(buffer, (size_t)size, "%s/%s", mm, yyyy);
+}
+
+static void escribir_resumen_partidos(PdfCtx *ctx, const char *mes_yyyy_mm)
+{
+    write_text_line(ctx, "Resumen de Partidos", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_partidos =
+        "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+        "FROM partido WHERE strftime('%Y-%m', fecha_hora) = ?";
+
+    if (!preparar_stmt_pdf(&stmt, sql_partidos))
+        return;
+
+    sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int total = sqlite3_column_int(stmt, 0);
+        double avg_goles = sqlite3_column_double(stmt, 1);
+        double avg_asist = sqlite3_column_double(stmt, 2);
+        double avg_rend = sqlite3_column_double(stmt, 3);
+        double avg_cans = sqlite3_column_double(stmt, 4);
+        double avg_animo = sqlite3_column_double(stmt, 5);
+
+        char line[256];
+        snprintf(line, sizeof(line), "Partidos: %d", total);
+        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        snprintf(line, sizeof(line), "Promedio goles: %.2f | asistencias: %.2f", avg_goles, avg_asist);
+        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        snprintf(line, sizeof(line), "Rendimiento: %.2f | cansancio: %.2f | animo: %.2f", avg_rend, avg_cans, avg_animo);
+        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void escribir_resumen_entrenamiento(PdfCtx *ctx, const char *mes_yyyy_mm)
+{
+    write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
+    write_text_line(ctx, "Resumen de Entrenamiento", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_entrenamiento =
+        "SELECT COUNT(*), SUM(duracion_min), AVG(intensidad), SUM(omitido) "
+        "FROM bienestar_entrenamiento WHERE substr(fecha, 1, 7) = ?";
+
+    if (!preparar_stmt_pdf(&stmt, sql_entrenamiento))
+        return;
+
+    sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int total = sqlite3_column_int(stmt, 0);
+        int total_min = sqlite3_column_int(stmt, 1);
+        double avg_int = sqlite3_column_double(stmt, 2);
+        int omitidos = sqlite3_column_int(stmt, 3);
+
+        char line[256];
+        snprintf(line, sizeof(line), "Sesiones: %d | minutos: %d | intensidad promedio: %.2f", total, total_min, avg_int);
+        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        snprintf(line, sizeof(line), "Entrenamientos omitidos: %d", omitidos);
+        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void escribir_resumen_alimentacion(PdfCtx *ctx, const char *mes_yyyy_mm)
+{
+    write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
+    write_text_line(ctx, "Resumen de Alimentacion", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_alimentacion =
+        "SELECT COUNT(*), "
+        "SUM(CASE WHEN calidad = 'Buena' THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN calidad = 'Regular' THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN calidad = 'Mala' THEN 1 ELSE 0 END) "
+        "FROM bienestar_comida WHERE substr(fecha, 1, 7) = ?";
+
+    if (preparar_stmt_pdf(&stmt, sql_alimentacion))
+    {
+        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int total = sqlite3_column_int(stmt, 0);
+            int buenas = sqlite3_column_int(stmt, 1);
+            int regulares = sqlite3_column_int(stmt, 2);
+            int malas = sqlite3_column_int(stmt, 3);
+            double pct_buena = (total > 0) ? ((double)buenas / (double)total) * 100.0 : 0.0;
+
+            char line[256];
+            snprintf(line, sizeof(line), "Comidas: %d | Buenas: %d | Regulares: %d | Malas: %d", total, buenas, regulares, malas);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+            snprintf(line, sizeof(line), "%% de comidas buenas: %.1f%%", pct_buena);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *sql_hidratacion =
+        "SELECT "
+        "SUM(CASE WHEN hidratacion = 'Baja' THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN hidratacion = 'Media' THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN hidratacion = 'Alta' THEN 1 ELSE 0 END) "
+        "FROM bienestar_dia_nutricional WHERE substr(fecha, 1, 7) = ?";
+
+    if (preparar_stmt_pdf(&stmt, sql_hidratacion))
+    {
+        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int baja = sqlite3_column_int(stmt, 0);
+            int media = sqlite3_column_int(stmt, 1);
+            int alta = sqlite3_column_int(stmt, 2);
+
+            char line[256];
+            snprintf(line, sizeof(line), "Hidratacion: baja %d | media %d | alta %d", baja, media, alta);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void escribir_resumen_mental(PdfCtx *ctx, const char *mes_yyyy_mm)
+{
+    write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
+    write_text_line(ctx, "Resumen de Mentalidad", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_mental =
+        "SELECT COUNT(*), AVG(confianza), AVG(estres), AVG(motivacion), AVG(presion), AVG(concentracion) "
+        "FROM bienestar_sesion_mental WHERE substr(fecha, 1, 7) = ?";
+
+    if (preparar_stmt_pdf(&stmt, sql_mental))
+    {
+        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int total = sqlite3_column_int(stmt, 0);
+            double conf = sqlite3_column_double(stmt, 1);
+            double estres = sqlite3_column_double(stmt, 2);
+            double mot = sqlite3_column_double(stmt, 3);
+            double pres = sqlite3_column_double(stmt, 4);
+            double conc = sqlite3_column_double(stmt, 5);
+
+            char line[256];
+            snprintf(line, sizeof(line), "Sesiones: %d | confianza %.2f | estres %.2f", total, conf, estres);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+            snprintf(line, sizeof(line), "Motivacion %.2f | presion %.2f | concentracion %.2f", mot, pres, conc);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *sql_tendencia =
+        "SELECT "
+        "(SELECT AVG(p.rendimiento_general) FROM partido p "
+        " WHERE strftime('%Y-%m', p.fecha_hora) = ? AND strftime('%Y-%m-%d', p.fecha_hora) IN "
+        " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza >= 8 AND substr(fecha, 1, 7) = ?)) AS avg_alta, "
+        "(SELECT AVG(p.rendimiento_general) FROM partido p "
+        " WHERE strftime('%Y-%m', p.fecha_hora) = ? AND strftime('%Y-%m-%d', p.fecha_hora) IN "
+        " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4 AND substr(fecha, 1, 7) = ?)) AS avg_baja";
+
+    if (preparar_stmt_pdf(&stmt, sql_tendencia))
+    {
+        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, mes_yyyy_mm, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, mes_yyyy_mm, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 4, mes_yyyy_mm, -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            double avg_alta = sqlite3_column_double(stmt, 0);
+            double avg_baja = sqlite3_column_double(stmt, 1);
+            char line[256];
+            snprintf(line, sizeof(line), "Rendimiento con confianza alta: %.2f | baja: %.2f", avg_alta, avg_baja);
+            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+
+            if (avg_alta > avg_baja)
+            {
+                write_text_line(ctx, "Tendencia: Jugas mejor cuando la confianza esta alta.", ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
 static const char *skip_spaces(const char *p)
 {
     while (p && (*p == ' ' || *p == '\t'))
@@ -579,4 +787,95 @@ int generar_informe_total_pdf(void)
 
     printf("Informe PDF generado exitosamente: %s\n", pdf_path);
     return 1;
+}
+
+int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
+{
+    if (!mes_yyyy_mm || safe_strnlen(mes_yyyy_mm, 8) < 7)
+    {
+        printf("Mes inválido para informe mensual.\n");
+        return 0;
+    }
+
+    const char *export_dir = get_export_dir();
+    if (!export_dir)
+    {
+        printf("No se pudo obtener el directorio de exportación.\n");
+        return 0;
+    }
+
+    char mes_display[16];
+    format_mes_display(mes_yyyy_mm, mes_display, sizeof(mes_display));
+
+    char pdf_filename[128];
+    snprintf(pdf_filename, sizeof(pdf_filename), "Informe Personal %s.pdf", mes_display);
+
+    char pdf_path[512];
+    snprintf(pdf_path, sizeof(pdf_path), "%s\\%s", export_dir, pdf_filename);
+
+    char fecha_hora[32];
+    get_datetime(fecha_hora, sizeof(fecha_hora));
+
+    char *usuario = get_user_name();
+    const char *usuario_final = usuario ? usuario : "Usuario Desconocido";
+
+    PdfCtx ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.margin = PDF_MARGIN;
+
+    ctx.pdf = HPDF_New(pdf_error_handler, NULL);
+    if (!ctx.pdf)
+    {
+        printf("No se pudo crear el documento PDF.\n");
+        if (usuario)
+            free(usuario);
+        return 0;
+    }
+
+    if (setjmp(g_env))
+    {
+        HPDF_Free(ctx.pdf);
+        if (usuario)
+            free(usuario);
+        printf("Error al generar el PDF.\n");
+        return 0;
+    }
+
+    HPDF_SetCompressionMode(ctx.pdf, HPDF_COMP_ALL);
+    ctx.font_regular = HPDF_GetFont(ctx.pdf, "Helvetica", "WinAnsiEncoding");
+    ctx.font_bold = HPDF_GetFont(ctx.pdf, "Helvetica-Bold", "WinAnsiEncoding");
+    ctx.font_italic = HPDF_GetFont(ctx.pdf, "Helvetica-Oblique", "WinAnsiEncoding");
+
+    draw_cover(&ctx, "MiFutbolC", "Informe personal mensual", usuario_final, fecha_hora,
+               export_dir, 1);
+
+    new_page(&ctx);
+
+    char titulo[128];
+    snprintf(titulo, sizeof(titulo), "INFORME PERSONAL MENSUAL - %s", mes_display);
+    write_text_line(&ctx, titulo, ctx.font_bold, PDF_TITLE_SIZE, PDF_TITLE_SIZE + 6.0f);
+    write_blank_line(&ctx, PDF_BODY_SIZE + 4.0f);
+
+    escribir_resumen_partidos(&ctx, mes_yyyy_mm);
+    escribir_resumen_entrenamiento(&ctx, mes_yyyy_mm);
+    escribir_resumen_alimentacion(&ctx, mes_yyyy_mm);
+    escribir_resumen_mental(&ctx, mes_yyyy_mm);
+
+    write_blank_line(&ctx, PDF_BODY_SIZE + 6.0f);
+    write_text_line(&ctx, "Este informe es 100% local.", ctx.font_italic, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+
+    int ok = escribir_pdf(pdf_path, &ctx);
+    HPDF_Free(ctx.pdf);
+
+    if (usuario)
+        free(usuario);
+
+    if (ok)
+    {
+        printf("Informe mensual generado en: %s\n", pdf_path);
+        return 1;
+    }
+
+    printf("No se pudo guardar el informe mensual.\n");
+    return 0;
 }

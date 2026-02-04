@@ -1797,7 +1797,7 @@ void menu_financiamiento()
  */
 static void modificar_fecha_transaccion(int id_transaccion)
 {
-    printf("Nueva fecha (YYYY-MM-DD): ");
+    printf("Nueva fecha (DD/MM/AAAA, Enter=hoy): ");
     char nueva_fecha[20] = "";
     while (1)
     {

@@ -196,8 +196,8 @@ static int setup_database_paths()
     // Usar AppData\Local para la base de datos (oculta, interna)
     char appdata_path[MAX_PATH];
     /*
-     * La base de datos se almacena en CSIDL_LOCAL_APPDATA para garantizar que 
-     * no sea borrada accidentalmente por el usuario y que el sistema tenga 
+     * La base de datos se almacena en CSIDL_LOCAL_APPDATA para garantizar que
+     * no sea borrada accidentalmente por el usuario y que el sistema tenga
      * permisos de escritura consistentes sin requerir privilegios de administrador.
      */
     if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appdata_path) != S_OK)
@@ -562,7 +562,108 @@ static int create_database_schema()
         " fecha_generacion TEXT NOT NULL,"
         " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
         " FOREIGN KEY(mejor_equipo_mes) REFERENCES equipo(id),"
-        " FOREIGN KEY(peor_equipo_mes) REFERENCES equipo(id));";
+        " FOREIGN KEY(peor_equipo_mes) REFERENCES equipo(id));"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_objetivo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " fecha_inicio TEXT NOT NULL,"
+        " fecha_fin TEXT NOT NULL,"
+        " estado TEXT NOT NULL DEFAULT 'Activo',"
+        " notas TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_plan_entrenamiento ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " objetivo_id INTEGER NOT NULL,"
+        " frecuencia_semanal INTEGER NOT NULL,"
+        " rutina_semanal TEXT NOT NULL,"
+        " notas TEXT DEFAULT '',"
+        " FOREIGN KEY(objetivo_id) REFERENCES bienestar_objetivo(id));"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_entrenamiento ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " tipo TEXT NOT NULL,"
+        " duracion_min INTEGER NOT NULL,"
+        " intensidad INTEGER NOT NULL,"
+        " omitido INTEGER DEFAULT 0,"
+        " notas TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_ejercicio ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " grupo_muscular TEXT NOT NULL);"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_entrenamiento_ejercicio ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " entrenamiento_id INTEGER NOT NULL,"
+        " ejercicio_id INTEGER NOT NULL,"
+        " series INTEGER DEFAULT 0,"
+        " repeticiones INTEGER DEFAULT 0,"
+        " tiempo_min INTEGER DEFAULT 0,"
+        " FOREIGN KEY(entrenamiento_id) REFERENCES bienestar_entrenamiento(id),"
+        " FOREIGN KEY(ejercicio_id) REFERENCES bienestar_ejercicio(id));"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_habito ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " dormi_bien INTEGER DEFAULT 0,"
+        " hidratacion INTEGER DEFAULT 0,"
+        " alcohol INTEGER DEFAULT 0,"
+        " estado_animico TEXT DEFAULT '',"
+        " nervios INTEGER DEFAULT 0,"
+        " confianza INTEGER DEFAULT 0,"
+        " motivacion INTEGER DEFAULT 0,"
+        " notas TEXT DEFAULT '',"
+        " tipo_diario TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_comida ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " tipo TEXT NOT NULL,"
+        " calidad TEXT NOT NULL,"
+        " descripcion TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_dia_nutricional ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL UNIQUE,"
+        " hidratacion TEXT NOT NULL,"
+        " alcohol INTEGER DEFAULT 0,"
+        " peso_corporal REAL DEFAULT NULL,"
+        " notas TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_sesion_mental ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " tipo TEXT NOT NULL,"
+        " momento TEXT NOT NULL DEFAULT 'N/A',"
+        " partido_id INTEGER DEFAULT NULL,"
+        " confianza INTEGER DEFAULT 0,"
+        " estres INTEGER DEFAULT 0,"
+        " motivacion INTEGER DEFAULT 0,"
+        " miedos TEXT DEFAULT '',"
+        " presion INTEGER DEFAULT 0,"
+        " concentracion INTEGER DEFAULT 0,"
+        " pensamientos_clave TEXT DEFAULT '',"
+        " texto_libre TEXT DEFAULT '',"
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_salud ("
+        " id INTEGER PRIMARY KEY CHECK (id = 1),"
+        " altura_cm REAL DEFAULT NULL,"
+        " peso_kg REAL DEFAULT NULL,"
+        " tipo_sangre TEXT DEFAULT '',"
+        " ultima_revision TEXT DEFAULT '',"
+        " medidas TEXT DEFAULT '',"
+        " notas TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_control_medico ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " tipo TEXT NOT NULL,"
+        " profesional TEXT DEFAULT '',"
+        " resultado TEXT DEFAULT '',"
+        " notas TEXT DEFAULT '');";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
@@ -841,23 +942,23 @@ int backup_base_datos_automatico(const char *motivo)
     dest_path[0] = '\0';
 
     if (!append_str(dest_path, &used, sizeof(dest_path), backup_dir) ||
-        !append_str(dest_path, &used, sizeof(dest_path), "\\") ||
-        !append_str(dest_path, &used, sizeof(dest_path), prefix))
+            !append_str(dest_path, &used, sizeof(dest_path), "\\") ||
+            !append_str(dest_path, &used, sizeof(dest_path), prefix))
     {
         printf("%s\n", get_text("backup_failed"));
         return 0;
     }
 
     if (motivo_safe[0] != '\0' &&
-        (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
-         !append_str(dest_path, &used, sizeof(dest_path), "_")))
+            (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
+             !append_str(dest_path, &used, sizeof(dest_path), "_")))
     {
         printf("%s\n", get_text("backup_failed"));
         return 0;
     }
 
     if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
-        !append_str(dest_path, &used, sizeof(dest_path), ext))
+            !append_str(dest_path, &used, sizeof(dest_path), ext))
     {
         printf("%s\n", get_text("backup_failed"));
         return 0;

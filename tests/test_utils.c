@@ -87,7 +87,7 @@ static void test_trim_trailing_spaces(void)
 static void test_format_date_for_display(void)
 {
     char output[32];
-    format_date_for_display("01/02/2026 10:30", output, sizeof(output));
+    format_date_for_display("2026-02-01 10:30", output, sizeof(output));
     TEST_ASSERT_EQUAL_STRING("01/02/2026 10:30", output);
 }
 
@@ -95,7 +95,7 @@ static void test_convert_display_date_to_storage(void)
 {
     char output[32];
     convert_display_date_to_storage("31/12/2025 23:59", output, sizeof(output));
-    TEST_ASSERT_EQUAL_STRING("31/12/2025 23:59", output);
+    TEST_ASSERT_EQUAL_STRING("2025-12-31 23:59", output);
 }
 
 static void test_remover_tildes(void)

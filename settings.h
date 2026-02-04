@@ -112,6 +112,7 @@ const char* get_menu_equipos();
 const char* get_menu_estadisticas();
 const char* get_menu_logros();
 const char* get_menu_analisis();
+const char* get_menu_bienestar();
 const char* get_menu_lesiones();
 const char* get_menu_financiamiento();
 const char* get_menu_exportar();

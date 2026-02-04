@@ -438,7 +438,7 @@ static void modificar_todo_lesion()
 
     solicitar_texto_no_vacio("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
     solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
-    input_date("Nueva fecha (DD/MM/YYYY HH:MM): ", fecha, sizeof(fecha));
+    input_date("Nueva fecha (DD/MM/AAAA HH:MM, Enter=ahora): ", fecha, sizeof(fecha));
     while (1)
     {
         camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");

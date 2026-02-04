@@ -10,6 +10,8 @@
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
+#include "settings.h"
+#include "entrenador_ia.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,16 +49,7 @@ static int existe_id_entidad(const char *tabla, int id)
 
 static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int size)
 {
-    while (1)
-    {
-        input_string(prompt, buffer, size);
-        if (safe_strnlen(buffer, (size_t)size) == 10 &&
-                buffer[4] == '-' && buffer[7] == '-')
-        {
-            return;
-        }
-        printf("Fecha inválida. Use formato YYYY-MM-DD.\n");
-    }
+    input_date(prompt, buffer, size);
 }
 
 /**
@@ -507,7 +500,7 @@ static void comparar_periodos()
     clear_screen();
     print_header("COMPARADOR: PERIODOS");
 
-    printf("Formatos de fecha: YYYY-MM-DD\n");
+    printf("Formatos de fecha: DD/MM/AAAA\n");
     printf("Ejemplo: 2024-01-01 al 2024-06-30\n\n");
 
     char fecha1_inicio[20];
@@ -516,21 +509,21 @@ static void comparar_periodos()
     char fecha2_fin[20];
 
     printf("PRIMER PERIODO:\n");
-    solicitar_fecha_yyyy_mm_dd("Fecha inicio: ", fecha1_inicio, sizeof(fecha1_inicio));
-    solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha1_fin, sizeof(fecha1_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha1_inicio, sizeof(fecha1_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin, sizeof(fecha1_fin));
     while (strcmp(fecha1_fin, fecha1_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha1_fin, sizeof(fecha1_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin, sizeof(fecha1_fin));
     }
 
     printf("\nSEGUNDO PERIODO:\n");
-    solicitar_fecha_yyyy_mm_dd("Fecha inicio: ", fecha2_inicio, sizeof(fecha2_inicio));
-    solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha2_fin, sizeof(fecha2_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha2_inicio, sizeof(fecha2_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin, sizeof(fecha2_fin));
     while (strcmp(fecha2_fin, fecha2_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha fin: ", fecha2_fin, sizeof(fecha2_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin, sizeof(fecha2_fin));
     }
 
     char sql1[256];
@@ -649,10 +642,11 @@ void mostrar_analisis()
     {
         {1, "Analisis Basico", mostrar_analisis_basico},
         {2, "Comparador Avanzado", mostrar_comparador_avanzado},
+        {3, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ANALISIS Y COMPARADOR", items, 3);
+    ejecutar_menu("ANALISIS Y COMPARADOR", items, 4);
 }
 
 /**
@@ -835,6 +829,7 @@ static void encontrar_mes_historico(int mejor)
 
     sqlite3_finalize(stmt);
     pause_console();
+
 }
 
 /**
