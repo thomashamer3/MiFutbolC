@@ -60,6 +60,99 @@ static void finalizar_ejecucion(sqlite3_stmt *stmt, const char *ok_msg, const ch
     pause_console();
 }
 
+static void pedir_fecha(const char *prompt, char *buffer, int size);
+static int input_bool(const char *prompt);
+static int input_rango(const char *prompt, int min, int max);
+
+static void actualizar_campo_fecha(const char *tabla, int id, const char *prompt,
+                                  const char *ok_msg, const char *err_msg)
+{
+    char fecha[16];
+    pedir_fecha(prompt, fecha, sizeof(fecha));
+
+    char sql[128];
+    snprintf(sql, sizeof(sql), "UPDATE %s SET fecha = ? WHERE id = ?", tabla);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
+    {
+        return;
+    }
+    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+
+    finalizar_ejecucion(stmt, ok_msg, err_msg);
+}
+
+typedef struct
+{
+    const char *ok_msg;
+    const char *err_msg;
+} UpdateMensajes;
+
+static void actualizar_campo_entero(const char *tabla, int id, const char *campo,
+                                    const char *prompt, int min, int max,
+                                    const UpdateMensajes *mensajes)
+{
+    int valor = input_rango(prompt, min, max);
+    char sql[128];
+    snprintf(sql, sizeof(sql), "UPDATE %s SET %s = ? WHERE id = ?", tabla, campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_bind_int(stmt, 2, id);
+
+    finalizar_ejecucion(stmt, mensajes->ok_msg, mensajes->err_msg);
+}
+
+static void actualizar_campo_bool(const char *tabla, int id, const char *campo,
+                                  const char *prompt, const char *ok_msg, const char *err_msg)
+{
+    int valor = input_bool(prompt);
+    char sql[128];
+    snprintf(sql, sizeof(sql), "UPDATE %s SET %s = ? WHERE id = ?", tabla, campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_bind_int(stmt, 2, id);
+
+    finalizar_ejecucion(stmt, ok_msg, err_msg);
+}
+
+static void actualizar_campo_texto(const char *tabla, int id, const char *campo,
+                                   const char *prompt, size_t max_len,
+                                   const char *ok_msg, const char *err_msg)
+{
+    char texto[512];
+    if (max_len > sizeof(texto))
+    {
+        max_len = sizeof(texto);
+    }
+    int size_int = (max_len > (size_t)INT_MAX) ? INT_MAX : (int)max_len;
+    input_string(prompt, texto, size_int);
+
+    char sql[128];
+    snprintf(sql, sizeof(sql), "UPDATE %s SET %s = ? WHERE id = ?", tabla, campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
+    {
+        return;
+    }
+    sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+
+    finalizar_ejecucion(stmt, ok_msg, err_msg);
+}
+
 static int validar_fecha(const char *fecha)
 {
     if (!fecha || safe_strnlen(fecha, 11) != 10)
@@ -168,6 +261,64 @@ static int input_rango(const char *prompt, int min, int max)
         }
     }
     return valor;
+}
+
+typedef struct
+{
+    char fecha[16];
+    int dormi_bien;
+    int hidratacion;
+    int alcohol;
+    char estado_animico[64];
+    int nervios;
+    int confianza;
+    int motivacion;
+    char notas[256];
+    char tipo_diario[64];
+} HabitoInput;
+
+static void pedir_habito_input(HabitoInput *habito)
+{
+    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", habito->fecha, sizeof(habito->fecha));
+
+    habito->dormi_bien = input_bool("Dormi bien? (1=Si, 0=No): ");
+    habito->hidratacion = input_rango("Hidratacion (0-10): ", 0, 10);
+    habito->alcohol = input_bool("Alcohol? (1=Si, 0=No): ");
+
+    input_string("Estado animico: ", habito->estado_animico, sizeof(habito->estado_animico));
+
+    habito->nervios = input_rango("Nervios (0-10): ", 0, 10);
+    habito->confianza = input_rango("Confianza (0-10): ", 0, 10);
+    habito->motivacion = input_rango("Motivacion (0-10): ", 0, 10);
+
+    input_string("Notas libres: ", habito->notas, sizeof(habito->notas));
+    input_string("Tipo diario deportivo: ", habito->tipo_diario, sizeof(habito->tipo_diario));
+}
+
+static int bind_habito(sqlite3_stmt *stmt, const HabitoInput *habito, int index)
+{
+    sqlite3_bind_text(stmt, index, habito->fecha, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->dormi_bien);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->hidratacion);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->alcohol);
+    index++;
+    sqlite3_bind_text(stmt, index, habito->estado_animico, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->nervios);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->confianza);
+    index++;
+    sqlite3_bind_int(stmt, index, habito->motivacion);
+    index++;
+    sqlite3_bind_text(stmt, index, habito->notas, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, habito->tipo_diario, -1, SQLITE_TRANSIENT);
+    index++;
+
+    return index;
 }
 
 static void format_fecha_mostrar(const char *fecha_iso, char *salida, int size)
@@ -414,26 +565,8 @@ static void registrar_habitos(void)
 {
     clear_screen();
     print_header("REGISTRO DIARIO");
-
-    char fecha[16];
-    char estado_animico[64];
-    char notas[256];
-    char tipo_diario[64];
-
-    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    int dormi_bien = input_bool("Dormi bien? (1=Si, 0=No): ");
-    int hidratacion = input_rango("Hidratacion (0-10): ", 0, 10);
-    int alcohol = input_bool("Alcohol? (1=Si, 0=No): ");
-
-    input_string("Estado animico: ", estado_animico, sizeof(estado_animico));
-
-    int nervios = input_rango("Nervios (0-10): ", 0, 10);
-    int confianza = input_rango("Confianza (0-10): ", 0, 10);
-    int motivacion = input_rango("Motivacion (0-10): ", 0, 10);
-
-    input_string("Notas libres: ", notas, sizeof(notas));
-    input_string("Tipo diario deportivo: ", tipo_diario, sizeof(tipo_diario));
+    HabitoInput habito;
+    pedir_habito_input(&habito);
 
     const char *sql =
         "INSERT INTO bienestar_habito (fecha, dormi_bien, hidratacion, alcohol, estado_animico, "
@@ -446,16 +579,7 @@ static void registrar_habitos(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, dormi_bien);
-    sqlite3_bind_int(stmt, 3, hidratacion);
-    sqlite3_bind_int(stmt, 4, alcohol);
-    sqlite3_bind_text(stmt, 5, estado_animico, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 6, nervios);
-    sqlite3_bind_int(stmt, 7, confianza);
-    sqlite3_bind_int(stmt, 8, motivacion);
-    sqlite3_bind_text(stmt, 9, notas, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 10, tipo_diario, -1, SQLITE_TRANSIENT);
+    bind_habito(stmt, &habito, 1);
 
     finalizar_ejecucion(stmt, "Registro guardado.", "Error guardando registro.");
 }
@@ -522,25 +646,8 @@ static void listar_habitos(void)
 
 static void actualizar_habito_todo(int id)
 {
-    char fecha[16];
-    char estado_animico[64];
-    char notas[256];
-    char tipo_diario[64];
-
-    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    int dormi_bien = input_bool("Dormi bien? (1=Si, 0=No): ");
-    int hidratacion = input_rango("Hidratacion (0-10): ", 0, 10);
-    int alcohol = input_bool("Alcohol? (1=Si, 0=No): ");
-
-    input_string("Estado animico: ", estado_animico, sizeof(estado_animico));
-
-    int nervios = input_rango("Nervios (0-10): ", 0, 10);
-    int confianza = input_rango("Confianza (0-10): ", 0, 10);
-    int motivacion = input_rango("Motivacion (0-10): ", 0, 10);
-
-    input_string("Notas libres: ", notas, sizeof(notas));
-    input_string("Tipo diario deportivo: ", tipo_diario, sizeof(tipo_diario));
+    HabitoInput habito;
+    pedir_habito_input(&habito);
 
     const char *sql =
         "UPDATE bienestar_habito "
@@ -554,94 +661,35 @@ static void actualizar_habito_todo(int id)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, dormi_bien);
-    sqlite3_bind_int(stmt, 3, hidratacion);
-    sqlite3_bind_int(stmt, 4, alcohol);
-    sqlite3_bind_text(stmt, 5, estado_animico, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 6, nervios);
-    sqlite3_bind_int(stmt, 7, confianza);
-    sqlite3_bind_int(stmt, 8, motivacion);
-    sqlite3_bind_text(stmt, 9, notas, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 10, tipo_diario, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 11, id);
+    int index = bind_habito(stmt, &habito, 1);
+    sqlite3_bind_int(stmt, index, id);
 
     finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_fecha(int id)
 {
-    char fecha[16];
-    pedir_fecha("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    const char *sql = "UPDATE bienestar_habito SET fecha = ? WHERE id = ?";
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    actualizar_campo_fecha("bienestar_habito", id,
+                           "Nueva fecha (DD/MM/AAAA, Enter=hoy): ",
+                           "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_entero(int id, const char *campo, const char *prompt, int min, int max)
 {
-    int valor = input_rango(prompt, min, max);
-    char sql[128];
-    snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, valor);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    UpdateMensajes mensajes = {"Habito actualizado.", "Error actualizando habito."};
+    actualizar_campo_entero("bienestar_habito", id, campo, prompt, min, max, &mensajes);
 }
 
 static void actualizar_habito_bool(int id, const char *campo, const char *prompt)
 {
-    int valor = input_bool(prompt);
-    char sql[128];
-    snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, valor);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    actualizar_campo_bool("bienestar_habito", id, campo, prompt,
+                          "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_texto(int id, const char *campo, const char *prompt, size_t max_len)
 {
-    char texto[256];
-    if (max_len > sizeof(texto))
-    {
-        max_len = sizeof(texto);
-    }
-    int size_int = (max_len > (size_t)INT_MAX) ? INT_MAX : (int)max_len;
-    input_string(prompt, texto, size_int);
-
-    char sql[128];
-    snprintf(sql, sizeof(sql), "UPDATE bienestar_habito SET %s = ? WHERE id = ?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Habito actualizado.", "Error actualizando habito.");
+    actualizar_campo_texto("bienestar_habito", id, campo, prompt, max_len,
+                           "Habito actualizado.", "Error actualizando habito.");
 }
 
 static void actualizar_habito_aspecto(int id)
@@ -819,44 +867,103 @@ static const char *momento_sesion_texto(int momento)
     }
 }
 
+static int pedir_partido_id_validado(const char *prompt)
+{
+    int partido_id = input_int(prompt);
+    if (partido_id > 0 && !existe_id("partido", partido_id))
+    {
+        printf("El partido no existe. Se guardara sin ID.\n");
+        return 0;
+    }
+    return partido_id;
+}
+
+typedef struct
+{
+    char fecha[16];
+    int tipo;
+    int momento;
+    int partido_id;
+    int confianza;
+    int estres;
+    int motivacion;
+    int presion;
+    int concentracion;
+    char miedos[256];
+    char pensamientos[256];
+    char texto_libre[512];
+} SesionMentalInput;
+
+static void pedir_sesion_mental_input(SesionMentalInput *sesion)
+{
+    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", sesion->fecha, sizeof(sesion->fecha));
+
+    printf("Tipo: 1=Charla, 2=Visualizacion, 3=Reflexion\n");
+    sesion->tipo = input_rango("> ", 1, 3);
+
+    printf("Momento: 1=Antes de partido, 2=Despues de partido, 3=N/A\n");
+    sesion->momento = input_rango("> ", 1, 3);
+
+    sesion->partido_id = 0;
+    if (sesion->momento == 1 || sesion->momento == 2)
+    {
+        sesion->partido_id = pedir_partido_id_validado("ID de partido (0 si no aplica): ");
+    }
+
+    sesion->confianza = input_rango("Confianza (0-10): ", 0, 10);
+    sesion->estres = input_rango("Estres (0-10): ", 0, 10);
+    sesion->motivacion = input_rango("Motivacion (0-10): ", 0, 10);
+    sesion->presion = input_rango("Presion (0-10): ", 0, 10);
+    sesion->concentracion = input_rango("Concentracion (0-10): ", 0, 10);
+
+    input_string("Miedos (opcional): ", sesion->miedos, sizeof(sesion->miedos));
+    input_string("Pensamientos clave (opcional): ", sesion->pensamientos, sizeof(sesion->pensamientos));
+    input_string("Texto libre (opcional): ", sesion->texto_libre, sizeof(sesion->texto_libre));
+}
+
+static int bind_sesion_mental(sqlite3_stmt *stmt, const SesionMentalInput *sesion, int index)
+{
+    sqlite3_bind_text(stmt, index, sesion->fecha, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, tipo_sesion_texto(sesion->tipo), -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, momento_sesion_texto(sesion->momento), -1, SQLITE_TRANSIENT);
+    index++;
+    if (sesion->partido_id > 0)
+    {
+        sqlite3_bind_int(stmt, index, sesion->partido_id);
+    }
+    else
+    {
+        sqlite3_bind_null(stmt, index);
+    }
+    index++;
+    sqlite3_bind_int(stmt, index, sesion->confianza);
+    index++;
+    sqlite3_bind_int(stmt, index, sesion->estres);
+    index++;
+    sqlite3_bind_int(stmt, index, sesion->motivacion);
+    index++;
+    sqlite3_bind_text(stmt, index, sesion->miedos, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_int(stmt, index, sesion->presion);
+    index++;
+    sqlite3_bind_int(stmt, index, sesion->concentracion);
+    index++;
+    sqlite3_bind_text(stmt, index, sesion->pensamientos, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, sesion->texto_libre, -1, SQLITE_TRANSIENT);
+    index++;
+
+    return index;
+}
+
 static void registrar_sesion_mental(void)
 {
     clear_screen();
     print_header("REGISTRO MENTAL");
-
-    char fecha[16];
-    char pensamientos[256];
-    char texto_libre[512];
-    char miedos[256];
-
-    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    printf("Tipo: 1=Charla, 2=Visualizacion, 3=Reflexion\n");
-    int tipo = input_rango("> ", 1, 3);
-
-    printf("Momento: 1=Antes de partido, 2=Despues de partido, 3=N/A\n");
-    int momento = input_rango("> ", 1, 3);
-
-    int partido_id = 0;
-    if (momento == 1 || momento == 2)
-    {
-        partido_id = input_int("ID de partido (0 si no aplica): ");
-        if (partido_id > 0 && !existe_id("partido", partido_id))
-        {
-            printf("El partido no existe. Se guardara sin ID.\n");
-            partido_id = 0;
-        }
-    }
-
-    int confianza = input_rango("Confianza (0-10): ", 0, 10);
-    int estres = input_rango("Estres (0-10): ", 0, 10);
-    int motivacion = input_rango("Motivacion (0-10): ", 0, 10);
-    int presion = input_rango("Presion (0-10): ", 0, 10);
-    int concentracion = input_rango("Concentracion (0-10): ", 0, 10);
-
-    input_string("Miedos (opcional): ", miedos, sizeof(miedos));
-    input_string("Pensamientos clave (opcional): ", pensamientos, sizeof(pensamientos));
-    input_string("Texto libre (opcional): ", texto_libre, sizeof(texto_libre));
+    SesionMentalInput sesion;
+    pedir_sesion_mental_input(&sesion);
 
     const char *sql =
         "INSERT INTO bienestar_sesion_mental "
@@ -869,25 +976,7 @@ static void registrar_sesion_mental(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo_sesion_texto(tipo), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, momento_sesion_texto(momento), -1, SQLITE_TRANSIENT);
-    if (partido_id > 0)
-    {
-        sqlite3_bind_int(stmt, 4, partido_id);
-    }
-    else
-    {
-        sqlite3_bind_null(stmt, 4);
-    }
-    sqlite3_bind_int(stmt, 5, confianza);
-    sqlite3_bind_int(stmt, 6, estres);
-    sqlite3_bind_int(stmt, 7, motivacion);
-    sqlite3_bind_text(stmt, 8, miedos, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 9, presion);
-    sqlite3_bind_int(stmt, 10, concentracion);
-    sqlite3_bind_text(stmt, 11, pensamientos, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 12, texto_libre, -1, SQLITE_TRANSIENT);
+    bind_sesion_mental(stmt, &sesion, 1);
 
     finalizar_ejecucion(stmt, "Sesion mental guardada.", "Error guardando sesion mental.");
 }
@@ -1045,39 +1134,8 @@ static void ver_detalle_sesion_mental(void)
 
 static void actualizar_sesion_mental_todo(int id)
 {
-    char fecha[16];
-    char pensamientos[256];
-    char texto_libre[512];
-    char miedos[256];
-
-    pedir_fecha("Fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    printf("Tipo: 1=Charla, 2=Visualizacion, 3=Reflexion\n");
-    int tipo = input_rango("> ", 1, 3);
-
-    printf("Momento: 1=Antes de partido, 2=Despues de partido, 3=N/A\n");
-    int momento = input_rango("> ", 1, 3);
-
-    int partido_id = 0;
-    if (momento == 1 || momento == 2)
-    {
-        partido_id = input_int("ID de partido (0 si no aplica): ");
-        if (partido_id > 0 && !existe_id("partido", partido_id))
-        {
-            printf("El partido no existe. Se guardara sin ID.\n");
-            partido_id = 0;
-        }
-    }
-
-    int confianza = input_rango("Confianza (0-10): ", 0, 10);
-    int estres = input_rango("Estres (0-10): ", 0, 10);
-    int motivacion = input_rango("Motivacion (0-10): ", 0, 10);
-    int presion = input_rango("Presion (0-10): ", 0, 10);
-    int concentracion = input_rango("Concentracion (0-10): ", 0, 10);
-
-    input_string("Miedos (opcional): ", miedos, sizeof(miedos));
-    input_string("Pensamientos clave (opcional): ", pensamientos, sizeof(pensamientos));
-    input_string("Texto libre (opcional): ", texto_libre, sizeof(texto_libre));
+    SesionMentalInput sesion;
+    pedir_sesion_mental_input(&sesion);
 
     const char *sql =
         "UPDATE bienestar_sesion_mental "
@@ -1091,45 +1149,18 @@ static void actualizar_sesion_mental_todo(int id)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo_sesion_texto(tipo), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, momento_sesion_texto(momento), -1, SQLITE_TRANSIENT);
-    if (partido_id > 0)
-    {
-        sqlite3_bind_int(stmt, 4, partido_id);
-    }
-    else
-    {
-        sqlite3_bind_null(stmt, 4);
-    }
-    sqlite3_bind_int(stmt, 5, confianza);
-    sqlite3_bind_int(stmt, 6, estres);
-    sqlite3_bind_int(stmt, 7, motivacion);
-    sqlite3_bind_text(stmt, 8, miedos, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 9, presion);
-    sqlite3_bind_int(stmt, 10, concentracion);
-    sqlite3_bind_text(stmt, 11, pensamientos, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 12, texto_libre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 13, id);
+    int index = bind_sesion_mental(stmt, &sesion, 1);
+    sqlite3_bind_int(stmt, index, id);
 
     finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_fecha(int id)
 {
-    char fecha[16];
-    pedir_fecha("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-
-    const char *sql = "UPDATE bienestar_sesion_mental SET fecha = ? WHERE id = ?";
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    actualizar_campo_fecha("bienestar_sesion_mental", id,
+                           "Nueva fecha (DD/MM/AAAA, Enter=hoy): ",
+                           "Sesion mental actualizada.",
+                           "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_tipo(int id)
@@ -1156,12 +1187,7 @@ static void actualizar_sesion_mental_momento(int id)
     int partido_id = 0;
     if (momento == 1 || momento == 2)
     {
-        partido_id = input_int("ID de partido (0 si no aplica): ");
-        if (partido_id > 0 && !existe_id("partido", partido_id))
-        {
-            printf("El partido no existe. Se guardara sin ID.\n");
-            partido_id = 0;
-        }
+        partido_id = pedir_partido_id_validado("ID de partido (0 si no aplica): ");
     }
 
     const char *sql = "UPDATE bienestar_sesion_mental SET momento = ?, partido_id = ? WHERE id = ?";
@@ -1186,12 +1212,7 @@ static void actualizar_sesion_mental_momento(int id)
 
 static void actualizar_sesion_mental_partido(int id)
 {
-    int partido_id = input_int("ID de partido (0 para quitar): ");
-    if (partido_id > 0 && !existe_id("partido", partido_id))
-    {
-        printf("El partido no existe. Se guardara sin ID.\n");
-        partido_id = 0;
-    }
+    int partido_id = pedir_partido_id_validado("ID de partido (0 para quitar): ");
 
     const char *sql = "UPDATE bienestar_sesion_mental SET partido_id = ? WHERE id = ?";
     sqlite3_stmt *stmt;
@@ -1214,43 +1235,15 @@ static void actualizar_sesion_mental_partido(int id)
 
 static void actualizar_sesion_mental_entero(int id, const char *campo, const char *prompt, int min, int max)
 {
-    int valor = input_rango(prompt, min, max);
-    char sql[128];
-    snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, valor);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    UpdateMensajes mensajes = {"Sesion mental actualizada.", "Error actualizando sesion mental."};
+    actualizar_campo_entero("bienestar_sesion_mental", id, campo, prompt, min, max, &mensajes);
 }
 
 static void actualizar_sesion_mental_texto(int id, const char *campo, const char *prompt, size_t max_len)
 {
-    char texto[512];
-    if (max_len > sizeof(texto))
-    {
-        max_len = sizeof(texto);
-    }
-    int size_int = (max_len > (size_t)INT_MAX) ? INT_MAX : (int)max_len;
-    input_string(prompt, texto, size_int);
-
-    char sql[128];
-    snprintf(sql, sizeof(sql), "UPDATE bienestar_sesion_mental SET %s = ? WHERE id = ?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando actualizacion."))
-    {
-        return;
-    }
-    sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-
-    finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
+    actualizar_campo_texto("bienestar_sesion_mental", id, campo, prompt, max_len,
+                           "Sesion mental actualizada.",
+                           "Error actualizando sesion mental.");
 }
 
 static void actualizar_sesion_mental_aspecto(int id)
@@ -2362,22 +2355,53 @@ static void actualizar_salud_perfil(void)
     finalizar_ejecucion(stmt, "Datos de salud actualizados.", "Error guardando datos de salud.");
 }
 
-static void registrar_control_medico(void)
+typedef struct
 {
-    clear_screen();
-    print_header("REGISTRAR CONTROL MEDICO");
-
     char fecha[16];
     char tipo[64];
     char profesional[64];
     char resultado[128];
     char notas[256];
+} ControlMedicoInput;
 
-    pedir_fecha("Fecha del control (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-    input_string("Tipo de control (ej: medico general, cardiologia): ", tipo, sizeof(tipo));
-    input_string("Profesional (opcional): ", profesional, sizeof(profesional));
-    input_string("Resultado (opcional): ", resultado, sizeof(resultado));
-    input_string("Notas (opcional): ", notas, sizeof(notas));
+static void pedir_control_medico_input(ControlMedicoInput *control, const char *prompt_fecha,
+                                       const char *prompt_tipo, const char *prompt_profesional,
+                                       const char *prompt_resultado, const char *prompt_notas)
+{
+    pedir_fecha(prompt_fecha, control->fecha, sizeof(control->fecha));
+    input_string(prompt_tipo, control->tipo, sizeof(control->tipo));
+    input_string(prompt_profesional, control->profesional, sizeof(control->profesional));
+    input_string(prompt_resultado, control->resultado, sizeof(control->resultado));
+    input_string(prompt_notas, control->notas, sizeof(control->notas));
+}
+
+static int bind_control_medico(sqlite3_stmt *stmt, const ControlMedicoInput *control, int index)
+{
+    sqlite3_bind_text(stmt, index, control->fecha, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, control->tipo, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, control->profesional, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, control->resultado, -1, SQLITE_TRANSIENT);
+    index++;
+    sqlite3_bind_text(stmt, index, control->notas, -1, SQLITE_TRANSIENT);
+    index++;
+
+    return index;
+}
+
+static void registrar_control_medico(void)
+{
+    clear_screen();
+    print_header("REGISTRAR CONTROL MEDICO");
+    ControlMedicoInput control;
+    pedir_control_medico_input(&control,
+                               "Fecha del control (DD/MM/AAAA, Enter=hoy): ",
+                               "Tipo de control (ej: medico general, cardiologia): ",
+                               "Profesional (opcional): ",
+                               "Resultado (opcional): ",
+                               "Notas (opcional): ");
 
     const char *sql =
         "INSERT INTO bienestar_control_medico (fecha, tipo, profesional, resultado, notas) "
@@ -2389,11 +2413,7 @@ static void registrar_control_medico(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, profesional, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, resultado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
+    bind_control_medico(stmt, &control, 1);
 
     finalizar_ejecucion(stmt, "Control medico guardado.", "Error guardando control medico.");
 }
@@ -2456,18 +2476,13 @@ static void editar_control_medico(void)
     {
         return;
     }
-
-    char fecha[16];
-    char tipo[64];
-    char profesional[64];
-    char resultado[128];
-    char notas[256];
-
-    pedir_fecha("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, sizeof(fecha));
-    input_string("Tipo de control: ", tipo, sizeof(tipo));
-    input_string("Profesional: ", profesional, sizeof(profesional));
-    input_string("Resultado: ", resultado, sizeof(resultado));
-    input_string("Notas: ", notas, sizeof(notas));
+    ControlMedicoInput control;
+    pedir_control_medico_input(&control,
+                               "Nueva fecha (DD/MM/AAAA, Enter=hoy): ",
+                               "Tipo de control: ",
+                               "Profesional: ",
+                               "Resultado: ",
+                               "Notas: ");
 
     const char *sql =
         "UPDATE bienestar_control_medico "
@@ -2480,12 +2495,8 @@ static void editar_control_medico(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, profesional, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, resultado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 6, id);
+    int index = bind_control_medico(stmt, &control, 1);
+    sqlite3_bind_int(stmt, index, id);
 
     finalizar_ejecucion(stmt, "Control medico actualizado.", "Error actualizando control medico.");
 }
