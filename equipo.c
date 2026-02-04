@@ -2258,49 +2258,11 @@ void eliminar_equipo()
 {
     clear_screen();
     print_header("ELIMINAR EQUIPO");
-
-    // Mostrar lista de equipos primero
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    int equipo_id = select_team_id("\nIngrese el ID del equipo a eliminar (0 para cancelar): ",
+                                   "equipos registrados para eliminar", 1);
+    if (equipo_id == 0)
     {
-        printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
-
-        int found = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            found = 1;
-            int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
-        }
-
-        if (!found)
-        {
-            mostrar_no_hay_registros("equipos registrados para eliminar");
-            sqlite3_finalize(stmt);
-            pause_console();
-            return;
-        }
-    }
-    else
-    {
-        printf("Error al obtener la lista de equipos: %s\n", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        pause_console();
-        return;
-    }
-    sqlite3_finalize(stmt);
-
-    int equipo_id = input_int("\nIngrese el ID del equipo a eliminar (0 para cancelar): ");
-
-    if (equipo_id == 0) return;
-
-    if (!existe_id("equipo", equipo_id))
-    {
-        printf("ID de equipo invalido.\n");
-        pause_console();
         return;
     }
 

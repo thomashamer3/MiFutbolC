@@ -87,7 +87,7 @@
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1770166908 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1770179374 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -105,7 +105,7 @@
 	<direct.h>
 	<sys/stat.h>
 
-1769992460 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1770179361 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	"cJSON.h"
 	"sqlite3.h"
 	<stddef.h>
@@ -323,7 +323,7 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1770142190 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1770180377 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -361,7 +361,7 @@
 	<stdio.h>
 	<string.h>
 
-1769977062 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
+1770179203 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
 	"estadisticas_generales.h"
 	"db.h"
 	"utils.h"
@@ -460,7 +460,7 @@
 	<string.h>
 	<stdlib.h>
 
-1769914941 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\records_rankings.c
+1770180269 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\records_rankings.c
 	"records_rankings.h"
 	"db.h"
 	"utils.h"
@@ -519,7 +519,7 @@
 
 1769907971 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1769978985 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1770179395 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -537,7 +537,7 @@
 
 1767667294 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
 
-1769992460 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
+1770179383 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
 	"torneo.h"
 	"db.h"
 	"utils.h"
@@ -2212,7 +2212,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1770170682 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1770180377 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"menu.h"
 	"utils.h"

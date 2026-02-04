@@ -65,7 +65,7 @@ static int input_bool(const char *prompt);
 static int input_rango(const char *prompt, int min, int max);
 
 static void actualizar_campo_fecha(const char *tabla, int id, const char *prompt,
-                                  const char *ok_msg, const char *err_msg)
+                                   const char *ok_msg, const char *err_msg)
 {
     char fecha[16];
     pedir_fecha(prompt, fecha, sizeof(fecha));

@@ -252,49 +252,11 @@ void asociar_equipos_torneo(int torneo_id)
 {
     clear_screen();
     print_header("ASOCIAR EQUIPOS A TORNEO");
-
-    // Mostrar equipos disponibles
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
-
-    if (preparar_stmt(sql, &stmt))
+    int equipo_id = select_team_id("\nIngrese el ID del equipo a asociar (0 para cancelar): ",
+                                   "equipos registrados para asociar", 1);
+    if (equipo_id == 0)
     {
-        printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
-
-        int found = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            found = 1;
-            int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
-        }
-
-        if (!found)
-        {
-            mostrar_no_hay_registros("equipos registrados para asociar");
-            sqlite3_finalize(stmt);
-            pause_console();
-            return;
-        }
-    }
-    else
-    {
-        printf("Error al obtener la lista de equipos: %s\n", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        pause_console();
-        return;
-    }
-    sqlite3_finalize(stmt);
-
-    int equipo_id = input_int("\nIngrese el ID del equipo a asociar (0 para cancelar): ");
-
-    if (equipo_id == 0) return;
-
-    if (!existe_id("equipo", equipo_id))
-    {
-        printf("ID de equipo invalido.\n");
-        pause_console();
         return;
     }
 
@@ -775,48 +737,8 @@ static void actualizar_nombre_torneo(int torneo_id)
  */
 static int seleccionar_equipo_disponible(void)
 {
-    sqlite3_stmt *stmt_equipos;
-    const char *sql_equipos = "SELECT id, nombre FROM equipo ORDER BY id;";
-
-    if (!preparar_stmt(sql_equipos, &stmt_equipos))
-    {
-        pause_console();
-        return 0;
-    }
-
-    printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
-
-    int found = 0;
-    while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
-    {
-        found = 1;
-        int id = sqlite3_column_int(stmt_equipos, 0);
-        const char *nombre = (const char*)sqlite3_column_text(stmt_equipos, 1);
-        printf("%d. %s\n", id, nombre);
-    }
-
-    sqlite3_finalize(stmt_equipos);
-
-    if (!found)
-    {
-        mostrar_no_hay_registros("equipos registrados");
-        pause_console();
-        return 0;
-    }
-
-    int equipo_id = input_int("\nIngrese el ID del equipo fijo (0 para cancelar): ");
-
-    if (equipo_id == 0)
-        return 0;
-
-    if (!existe_id("equipo", equipo_id))
-    {
-        printf("ID de equipo invalido.\n");
-        pause_console();
-        return 0;
-    }
-
-    return equipo_id;
+    return select_team_id("\nIngrese el ID del equipo fijo (0 para cancelar): ",
+                          "equipos registrados", 1);
 }
 
 /**

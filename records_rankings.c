@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 
+static void mostrar_partido_rendimiento(const char *titulo, const char *order_clause);
+
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
@@ -20,8 +22,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     }
     return 1;
 }
-
-
 
 /**
  * Muestra resultados de combinaciones cancha-camiseta.
@@ -188,33 +188,8 @@ void mostrar_partido_mejor_rendimiento_general()
     clear_screen();
     print_header("PARTIDO CON MEJOR RENDIMIENTO GENERAL");
 
-    sqlite3_stmt *stmt;
-
-    printf("\nPartido con Mejor Rendimiento General\n");
-    printf("----------------------------------------\n");
-
-    if (preparar_stmt(
-                "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
-                "FROM partido p "
-                "JOIN camiseta c ON p.camiseta_id = c.id "
-                "ORDER BY p.rendimiento_general DESC LIMIT 1",
-                &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            printf("ID: %d\n", sqlite3_column_int(stmt, 0));
-            printf("Fecha: %s\n", sqlite3_column_text(stmt, 1));
-            printf("Camiseta: %s\n", sqlite3_column_text(stmt, 2));
-            printf("Rendimiento General: %.2f\n", sqlite3_column_double(stmt, 3));
-        }
-        else
-        {
-            mostrar_no_hay_registros("datos disponibles");
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    pause_console();
+    mostrar_partido_rendimiento("Partido con Mejor Rendimiento General",
+                                "ORDER BY p.rendimiento_general DESC LIMIT 1");
 }
 
 /**
@@ -225,17 +200,26 @@ void mostrar_partido_peor_rendimiento_general()
     clear_screen();
     print_header("PARTIDO CON PEOR RENDIMIENTO GENERAL");
 
+    mostrar_partido_rendimiento("Partido con Peor Rendimiento General",
+                                "ORDER BY p.rendimiento_general ASC LIMIT 1");
+}
+
+static void mostrar_partido_rendimiento(const char *titulo, const char *order_clause)
+{
     sqlite3_stmt *stmt;
 
-    printf("\nPartido con Peor Rendimiento General\n");
+    printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
 
-    if (preparar_stmt(
-                "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
-                "FROM partido p "
-                "JOIN camiseta c ON p.camiseta_id = c.id "
-                "ORDER BY p.rendimiento_general ASC LIMIT 1",
-                &stmt))
+    char sql[256];
+    snprintf(sql, sizeof(sql),
+             "SELECT p.id, p.fecha_hora, c.nombre, p.rendimiento_general "
+             "FROM partido p "
+             "JOIN camiseta c ON p.camiseta_id = c.id "
+             "%s",
+             order_clause);
+
+    if (preparar_stmt(sql, &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {

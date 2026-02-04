@@ -171,6 +171,14 @@ static void query(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
+static void mostrar_query_simple(const char *header, const char *titulo, const char *sql)
+{
+    clear_screen();
+    print_header(header);
+    query(titulo, sql);
+    pause_console();
+}
+
 /**
  * @brief Muestra las estadísticas principales de las camisetas.
  *
@@ -182,83 +190,110 @@ void mostrar_estadisticas_generales()
 {
     clear_screen();
     print_header("ESTADISTICAS");
-    query("Camiseta con mas Goles",
-          "SELECT c.nombre, IFNULL(SUM(p.goles),0) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
+    typedef struct
+    {
+        const char *titulo;
+        const char *sql;
+    } StatQuery;
 
-    query("Camiseta con mas Asistencias",
-          "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
+    StatQuery queries[] =
+    {
+        {
+            "Camiseta con mas Goles",
+            "SELECT c.nombre, IFNULL(SUM(p.goles),0) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Asistencias",
+            "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Partidos",
+            "SELECT c.nombre, COUNT(*) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Goles + Asistencias",
+            "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mejor Rendimiento General promedio",
+            "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mejor Estado de Animo promedio",
+            "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con menos Cansancio promedio",
+            "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "GROUP BY c.id "
+            "ORDER BY 2 ASC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Victorias",
+            "SELECT c.nombre, COUNT(*) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "WHERE p.resultado = 1 "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Empates",
+            "SELECT c.nombre, COUNT(*) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "WHERE p.resultado = 2 "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta con mas Derrotas",
+            "SELECT c.nombre, COUNT(*) "
+            "FROM partido p "
+            "JOIN camiseta c ON p.camiseta_id=c.id "
+            "WHERE p.resultado = 3 "
+            "GROUP BY c.id "
+            "ORDER BY 2 DESC LIMIT 1"
+        },
+        {
+            "Camiseta mas Sorteada",
+            "SELECT c.nombre, c.sorteada "
+            "FROM camiseta c "
+            "ORDER BY c.sorteada DESC LIMIT 1"
+        }
+    };
 
-    query("Camiseta con mas Partidos",
-          "SELECT c.nombre, COUNT(*) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con mas Goles + Asistencias",
-          "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con mejor Rendimiento General promedio",
-          "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con mejor Estado de Animo promedio",
-          "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con menos Cansancio promedio",
-          "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "GROUP BY c.id "
-          "ORDER BY 2 ASC LIMIT 1");
-
-    query("Camiseta con mas Victorias",
-          "SELECT c.nombre, COUNT(*) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "WHERE p.resultado = 1 "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con mas Empates",
-          "SELECT c.nombre, COUNT(*) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "WHERE p.resultado = 2 "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta con mas Derrotas",
-          "SELECT c.nombre, COUNT(*) "
-          "FROM partido p "
-          "JOIN camiseta c ON p.camiseta_id=c.id "
-          "WHERE p.resultado = 3 "
-          "GROUP BY c.id "
-          "ORDER BY 2 DESC LIMIT 1");
-
-    query("Camiseta mas Sorteada",
-          "SELECT c.nombre, c.sorteada "
-          "FROM camiseta c "
-          "ORDER BY c.sorteada DESC LIMIT 1");
+    size_t total = sizeof(queries) / sizeof(queries[0]);
+    for (size_t i = 0; i < total; i++)
+    {
+        query(queries[i].titulo, queries[i].sql);
+    }
 
     pause_console();
 }
@@ -268,13 +303,9 @@ void mostrar_estadisticas_generales()
  */
 void mostrar_total_partidos_jugados()
 {
-    clear_screen();
-    print_header("TOTAL DE PARTIDOS JUGADOS");
-
-    query("Total de Partidos Jugados",
-          "SELECT COUNT(*) FROM partido");
-
-    pause_console();
+    mostrar_query_simple("TOTAL DE PARTIDOS JUGADOS",
+                         "Total de Partidos Jugados",
+                         "SELECT COUNT(*) FROM partido");
 }
 
 /**
@@ -282,13 +313,9 @@ void mostrar_total_partidos_jugados()
  */
 void mostrar_promedio_goles_por_partido()
 {
-    clear_screen();
-    print_header("PROMEDIO DE GOLES POR PARTIDO");
-
-    query("Promedio de Goles por Partido",
-          "SELECT ROUND(AVG(goles), 2) FROM partido");
-
-    pause_console();
+    mostrar_query_simple("PROMEDIO DE GOLES POR PARTIDO",
+                         "Promedio de Goles por Partido",
+                         "SELECT ROUND(AVG(goles), 2) FROM partido");
 }
 
 /**
@@ -296,13 +323,9 @@ void mostrar_promedio_goles_por_partido()
  */
 void mostrar_promedio_asistencias_por_partido()
 {
-    clear_screen();
-    print_header("PROMEDIO DE ASISTENCIAS POR PARTIDO");
-
-    query("Promedio de Asistencias por Partido",
-          "SELECT ROUND(AVG(asistencias), 2) FROM partido");
-
-    pause_console();
+    mostrar_query_simple("PROMEDIO DE ASISTENCIAS POR PARTIDO",
+                         "Promedio de Asistencias por Partido",
+                         "SELECT ROUND(AVG(asistencias), 2) FROM partido");
 }
 
 /**
@@ -310,13 +333,9 @@ void mostrar_promedio_asistencias_por_partido()
  */
 void mostrar_promedio_rendimiento_general()
 {
-    clear_screen();
-    print_header("PROMEDIO DE RENDIMIENTO_GENERAL");
-
-    query("Promedio de Rendimiento General",
-          "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
-
-    pause_console();
+    mostrar_query_simple("PROMEDIO DE RENDIMIENTO_GENERAL",
+                         "Promedio de Rendimiento General",
+                         "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
 }
 
 /**
@@ -324,16 +343,13 @@ void mostrar_promedio_rendimiento_general()
  */
 void mostrar_rendimiento_promedio_por_clima()
 {
-    clear_screen();
-    print_header("RENDIMIENTO PROMEDIO POR CLIMA");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY clima",
              get_clima_case_sql());
-    query("Rendimiento Promedio por Clima", sql);
-
-    pause_console();
+    mostrar_query_simple("RENDIMIENTO PROMEDIO POR CLIMA",
+                         "Rendimiento Promedio por Clima",
+                         sql);
 }
 
 /**
@@ -341,16 +357,13 @@ void mostrar_rendimiento_promedio_por_clima()
  */
 void mostrar_goles_por_clima()
 {
-    clear_screen();
-    print_header("GOLES POR CLIMA");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS clima_texto, SUM(goles) FROM partido GROUP BY clima ORDER BY clima",
              get_clima_case_sql());
-    query("Goles por Clima", sql);
-
-    pause_console();
+    mostrar_query_simple("GOLES POR CLIMA",
+                         "Goles por Clima",
+                         sql);
 }
 
 /**
@@ -358,16 +371,13 @@ void mostrar_goles_por_clima()
  */
 void mostrar_asistencias_por_clima()
 {
-    clear_screen();
-    print_header("ASISTENCIAS POR CLIMA");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS clima_texto, SUM(asistencias) FROM partido GROUP BY clima ORDER BY clima",
              get_clima_case_sql());
-    query("Asistencias por Clima", sql);
-
-    pause_console();
+    mostrar_query_simple("ASISTENCIAS POR CLIMA",
+                         "Asistencias por Clima",
+                         sql);
 }
 
 /**
@@ -375,16 +385,13 @@ void mostrar_asistencias_por_clima()
  */
 void mostrar_clima_mejor_rendimiento()
 {
-    clear_screen();
-    print_header("CLIMA DONDE SE RINDE MEJOR");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC LIMIT 1",
              get_clima_case_sql());
-    query("Clima con Mejor Rendimiento Promedio", sql);
-
-    pause_console();
+    mostrar_query_simple("CLIMA DONDE SE RINDE MEJOR",
+                         "Clima con Mejor Rendimiento Promedio",
+                         sql);
 }
 
 /**
@@ -392,16 +399,13 @@ void mostrar_clima_mejor_rendimiento()
  */
 void mostrar_clima_peor_rendimiento()
 {
-    clear_screen();
-    print_header("CLIMA DONDE SE RINDE PEOR");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) ASC LIMIT 1",
              get_clima_case_sql());
-    query("Clima con Peor Rendimiento Promedio", sql);
-
-    pause_console();
+    mostrar_query_simple("CLIMA DONDE SE RINDE PEOR",
+                         "Clima con Peor Rendimiento Promedio",
+                         sql);
 }
 
 /**
@@ -449,16 +453,13 @@ void mostrar_rendimiento_promedio_por_dia()
  */
 void mostrar_rendimiento_por_nivel_cansancio()
 {
-    clear_screen();
-    print_header("RENDIMIENTO POR NIVEL DE CANSANCIO");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS nivel_cansancio, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
              get_nivel_case_sql("cansancio"), get_nivel_case_sql("cansancio"));
-    query("Rendimiento por Nivel de Cansancio", sql);
-
-    pause_console();
+    mostrar_query_simple("RENDIMIENTO POR NIVEL DE CANSANCIO",
+                         "Rendimiento por Nivel de Cansancio",
+                         sql);
 }
 
 /**
@@ -520,13 +521,9 @@ void mostrar_goles_cansancio_alto_vs_bajo()
  */
 void mostrar_partidos_cansancio_alto()
 {
-    clear_screen();
-    print_header("PARTIDOS JUGADOS CON CANSANCIO ALTO");
-
-    query("Partidos con Cansancio Alto (>7)",
-          "SELECT COUNT(*) AS partidos_cansancio_alto FROM partido WHERE cansancio > 7");
-
-    pause_console();
+    mostrar_query_simple("PARTIDOS JUGADOS CON CANSANCIO ALTO",
+                         "Partidos con Cansancio Alto (>7)",
+                         "SELECT COUNT(*) AS partidos_cansancio_alto FROM partido WHERE cansancio > 7");
 }
 
 /**
@@ -571,16 +568,13 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
  */
 void mostrar_rendimiento_por_estado_animo()
 {
-    clear_screen();
-    print_header("RENDIMIENTO POR ESTADO DE ANIMO");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
              get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
-    query("Rendimiento por Estado de Animo", sql);
-
-    pause_console();
+    mostrar_query_simple("RENDIMIENTO POR ESTADO DE ANIMO",
+                         "Rendimiento por Estado de Animo",
+                         sql);
 }
 
 /**
@@ -588,16 +582,13 @@ void mostrar_rendimiento_por_estado_animo()
  */
 void mostrar_goles_por_estado_animo()
 {
-    clear_screen();
-    print_header("GOLES POR ESTADO DE ANIMO");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS nivel_animo, SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_goles DESC",
              get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
-    query("Goles por Estado de Animo", sql);
-
-    pause_console();
+    mostrar_query_simple("GOLES POR ESTADO DE ANIMO",
+                         "Goles por Estado de Animo",
+                         sql);
 }
 
 /**
@@ -605,16 +596,13 @@ void mostrar_goles_por_estado_animo()
  */
 void mostrar_asistencias_por_estado_animo()
 {
-    clear_screen();
-    print_header("ASISTENCIAS POR ESTADO DE ANIMO");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS nivel_animo, SUM(asistencias) AS total_asistencias, ROUND(AVG(asistencias), 2) AS promedio_asistencias, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_asistencias DESC",
              get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
-    query("Asistencias por Estado de Animo", sql);
-
-    pause_console();
+    mostrar_query_simple("ASISTENCIAS POR ESTADO DE ANIMO",
+                         "Asistencias por Estado de Animo",
+                         sql);
 }
 
 /**
@@ -622,16 +610,13 @@ void mostrar_asistencias_por_estado_animo()
  */
 void mostrar_estado_animo_ideal()
 {
-    clear_screen();
-    print_header("ESTADO DE ANIMO IDEAL PARA JUGAR");
-
     char sql[512];
     snprintf(sql, sizeof(sql),
              "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC LIMIT 1",
              get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
-    query("Estado de Animo Ideal", sql);
-
-    pause_console();
+    mostrar_query_simple("ESTADO DE ANIMO IDEAL PARA JUGAR",
+                         "Estado de Animo Ideal",
+                         sql);
 }
 /**
  * @brief Obtiene el día de la semana para una fecha dada

@@ -232,6 +232,25 @@ const char *dia_to_text(int dia);
 int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size);
 
 /**
+ * @brief Lista equipos disponibles para selección
+ *
+ * @param no_records_msg Mensaje a mostrar si no hay equipos
+ * @param pause_on_empty Pausar la consola si no hay equipos
+ * @return 1 si hay equipos disponibles, 0 si no
+ */
+int list_available_teams(const char *no_records_msg, int pause_on_empty);
+
+/**
+ * @brief Obtiene el ID de un equipo seleccionado por el usuario
+ *
+ * @param prompt Mensaje para solicitar el ID
+ * @param no_records_msg Mensaje si no hay equipos disponibles
+ * @param pause_on_error Pausar la consola ante error de selección
+ * @return ID del equipo seleccionado o 0 si se cancela o es inválido
+ */
+int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_error);
+
+/**
  * @brief Obtiene el siguiente ID disponible para una tabla (reutiliza espacios)
  *
  * Función genérica que calcula el siguiente ID disponible reutilizando IDs

@@ -33,6 +33,8 @@ typedef struct
     const char *comentario_personal;
 } PartidoData;
 
+typedef int (*PartidoLineParser)(const char *line);
+
 // Estructura para entrada de datos de partido (para reducir parámetros)
 typedef struct
 {
@@ -50,6 +52,29 @@ typedef struct
     const char *comentario;
 } PartidoInput;
 
+typedef struct
+{
+    const char *cancha;
+    const char *fecha;
+    int goles;
+    int asistencias;
+    const char *camiseta;
+    const char *resultado_str;
+    const char *clima_str;
+    const char *dia_str;
+    int rendimiento_general;
+    int cansancio;
+    int estado_animo;
+    const char *comentario;
+} PartidoRawInput;
+
+typedef struct CamisetaData CamisetaData;
+typedef int (*CamisetaLineParser)(const char *line, CamisetaData *out);
+typedef struct LesionData LesionData;
+typedef int (*LesionLineParser)(const char *line, LesionData *out);
+typedef struct EstadisticaData EstadisticaData;
+typedef int (*EstadisticaLineParser)(const char *line, EstadisticaData *out);
+
 // Macro para obtener camiseta ID (debe definirse antes de las declaraciones forward)
 #define obtener_camiseta_id(nombre) obtener_id_por_nombre("camiseta", nombre)
 
@@ -62,6 +87,11 @@ static void insertar_lesion(int id, const char *jugador, const char *tipo,
                             const char *descripcion, const char *fecha);
 static void importar_con_pausa(const char *inicio, const char *fin,
                                void (*func)());
+static int procesar_camiseta_importada(const CamisetaData *camiseta);
+static int parse_camiseta_txt_line(const char *line, CamisetaData *out);
+static int parse_camiseta_csv_line(const char *line, CamisetaData *out);
+static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
+        CamisetaLineParser parser);
 static bool crear_tabla_estadisticas();
 static int obtener_camiseta_id_estadistica(const char *camiseta_nombre);
 static bool estadistica_existe(int camiseta_id);
@@ -73,6 +103,18 @@ static int partido_existe(sqlite3_int64 cancha_id, const char *fecha, int camise
 static int obtener_siguiente_partido_id(void);
 static void insertar_partido(PartidoData data);
 static int procesar_e_insertar_partido(const PartidoInput *input);
+static void importar_partidos_desde_archivo(const char *filename, const char *formato,
+        PartidoLineParser parser);
+static int procesar_lesion_importada(const LesionData *lesion);
+static int parse_lesion_txt_line(const char *line, LesionData *out);
+static int parse_lesion_csv_line(const char *line, LesionData *out);
+static void importar_lesiones_desde_archivo(const char *filename, const char *formato,
+        LesionLineParser parser);
+static int procesar_estadistica_importada(const EstadisticaData *estadistica);
+static int parse_estadistica_txt_line(const char *line, EstadisticaData *out);
+static int parse_estadistica_csv_line(const char *line, EstadisticaData *out);
+static void importar_estadisticas_desde_archivo(const char *filename, const char *formato,
+        EstadisticaLineParser parser, int log_parse_error);
 
 // trim_trailing_spaces() fue movido a utils.c como funci\u00f3n gen\u00e9rica
 // Se puede usar directamente desde utils.h
@@ -80,28 +122,28 @@ static int procesar_e_insertar_partido(const PartidoInput *input);
 /**
  * @brief Estructura para almacenar datos de una camiseta.
  */
-typedef struct
+struct CamisetaData
 {
     int id;
     char nombre[256];
-} CamisetaData;
+};
 
 /**
  * @brief Estructura para almacenar datos de una lesión.
  */
-typedef struct
+struct LesionData
 {
     int id;
     char jugador[256];
     char tipo[256];
     char descripcion[512];
     char fecha[256];
-} LesionData;
+};
 
 /**
  * @brief Estructura para almacenar datos de estadísticas.
  */
-typedef struct
+struct EstadisticaData
 {
     char camiseta[256];
     int goles;
@@ -110,7 +152,7 @@ typedef struct
     int victorias;
     int empates;
     int derrotas;
-} EstadisticaData;
+};
 
 /**
  * @brief Construye el nombre del archivo completo.
@@ -389,6 +431,354 @@ static void importar_con_pausa(const char *inicio, const char *fin,
     pause_console();
 }
 
+static void importar_con_pausa_formato(const char *entidad, const char *formato,
+                                       void (*func)())
+{
+    char inicio[128];
+    char fin[128];
+
+    snprintf(inicio, sizeof(inicio), "Importando %s desde %s...", entidad, formato);
+    snprintf(fin, sizeof(fin), "Importacion de %s completada.", entidad);
+
+    importar_con_pausa(inicio, fin, func);
+}
+
+#define DEFINE_IMPORT_CON_PAUSA(func_name, entidad, formato, func) \
+    static void func_name(void)                                   \
+    {                                                            \
+        importar_con_pausa_formato(entidad, formato, func);       \
+    }
+
+typedef struct
+{
+    const char *inicio;
+    const char *fin;
+    void (*importar_camisetas)();
+    void (*importar_partidos)();
+    void (*importar_lesiones)();
+    void (*importar_estadisticas)();
+} ImportTodoConfig;
+
+static void importar_todo_con_config(const ImportTodoConfig *config)
+{
+    printf("%s\n", config->inicio);
+    config->importar_camisetas();
+    config->importar_partidos();
+    config->importar_lesiones();
+    config->importar_estadisticas();
+    printf("%s\n", config->fin);
+    pause_console();
+}
+
+static void importar_partidos_desde_archivo(const char *filename, const char *formato,
+        PartidoLineParser parser)
+{
+    FILE *file = abrir_archivo_texto_importacion(filename, true);
+    if (!file)
+        return;
+
+    printf("Importando partidos desde %s...\n", formato);
+    char line[2048];
+    int count = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        if (parser(line))
+            count++;
+    }
+
+    fclose(file);
+    printf("Importacion de partidos desde %s completada. %d partidos importados\n",
+           formato, count);
+}
+
+static int procesar_camiseta_importada(const CamisetaData *camiseta)
+{
+    if (id_existe_en_tabla("camiseta", camiseta->id))
+    {
+        printf("Camiseta ID %d ya existe, omitiendo...\n", camiseta->id);
+        return 0;
+    }
+
+    insertar_camiseta(camiseta->id, camiseta->nombre);
+    printf("Camiseta '%s' importada correctamente\n", camiseta->nombre);
+    return 1;
+}
+
+static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    int id;
+    char nombre[256];
+
+    if (sscanf_s(line, "%d - %s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+        return 0;
+
+    trim_trailing_spaces(nombre);
+    out->id = id;
+    strcpy_s(out->nombre, sizeof(out->nombre), nombre);
+    return 1;
+}
+
+static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    int id;
+    char nombre[256];
+
+    if (sscanf_s(line, "%d,%s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+        return 0;
+
+    trim_trailing_spaces(nombre);
+    out->id = id;
+    strcpy_s(out->nombre, sizeof(out->nombre), nombre);
+    return 1;
+}
+
+static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
+        CamisetaLineParser parser)
+{
+    FILE *file = abrir_archivo_texto_importacion(filename, true);
+    if (!file)
+        return;
+
+    printf("Importando camisetas desde %s...\n", formato);
+    char line[1024];
+    int count = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        CamisetaData data;
+        if (parser(line, &data))
+            count += procesar_camiseta_importada(&data);
+    }
+
+    fclose(file);
+    printf("Importacion de camisetas desde %s completada. %d camisetas importadas\n",
+           formato, count);
+}
+
+static int procesar_lesion_importada(const LesionData *lesion)
+{
+    if (id_existe_en_tabla("lesion", lesion->id))
+    {
+        printf("Lesion ID %d ya existe, omitiendo...\n", lesion->id);
+        return 0;
+    }
+
+    insertar_lesion(lesion->id, lesion->jugador, lesion->tipo, lesion->descripcion,
+                    lesion->fecha);
+    printf("Lesion de '%s' importada correctamente\n", lesion->jugador);
+    return 1;
+}
+
+static int parse_lesion_txt_line(const char *line, LesionData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    int id;
+    char jugador[256];
+    char tipo[256];
+    char descripcion[512];
+    char fecha[256];
+
+    if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador,
+                 (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
+                 descripcion, (unsigned)_countof(descripcion), fecha,
+                 (unsigned)_countof(fecha)) != 5)
+    {
+        return 0;
+    }
+
+    out->id = id;
+    strcpy_s(out->jugador, sizeof(out->jugador), jugador);
+    strcpy_s(out->tipo, sizeof(out->tipo), tipo);
+    strcpy_s(out->descripcion, sizeof(out->descripcion), descripcion);
+    strcpy_s(out->fecha, sizeof(out->fecha), fecha);
+    return 1;
+}
+
+static int parse_lesion_csv_line(const char *line, LesionData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    int id;
+    char jugador[256];
+    char tipo[256];
+    char descripcion[512];
+    char fecha[256];
+
+    if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%s", &id, jugador,
+                 (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
+                 descripcion, (unsigned)_countof(descripcion), fecha,
+                 (unsigned)_countof(fecha)) != 5)
+    {
+        return 0;
+    }
+
+    out->id = id;
+    strcpy_s(out->jugador, sizeof(out->jugador), jugador);
+    strcpy_s(out->tipo, sizeof(out->tipo), tipo);
+    strcpy_s(out->descripcion, sizeof(out->descripcion), descripcion);
+    strcpy_s(out->fecha, sizeof(out->fecha), fecha);
+    return 1;
+}
+
+static void importar_lesiones_desde_archivo(const char *filename, const char *formato,
+        LesionLineParser parser)
+{
+    FILE *file = abrir_archivo_texto_importacion(filename, true);
+    if (!file)
+        return;
+
+    printf("Importando lesiones desde %s...\n", formato);
+    char line[1024];
+    int count = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        LesionData data;
+        if (parser(line, &data))
+        {
+            if (procesar_lesion_importada(&data))
+            {
+                count++;
+            }
+        }
+    }
+
+    fclose(file);
+    printf("Importacion de lesiones desde %s completada. %d lesiones importadas\n",
+           formato, count);
+}
+
+static int procesar_estadistica_importada(const EstadisticaData *estadistica)
+{
+    int camiseta_id = obtener_camiseta_id_estadistica(estadistica->camiseta);
+
+    if (camiseta_id == -1)
+    {
+        printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
+               estadistica->camiseta);
+        return 0;
+    }
+
+    if (estadistica_existe(camiseta_id))
+    {
+        printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n",
+               estadistica->camiseta);
+        return 0;
+    }
+
+    insertar_estadistica(camiseta_id, estadistica->goles, estadistica->asistencias,
+                         estadistica->partidos, estadistica->victorias,
+                         estadistica->empates, estadistica->derrotas);
+
+    printf("Estadistica de '%s' importada correctamente\n", estadistica->camiseta);
+    return 1;
+}
+
+static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    char camiseta[256];
+    int goles;
+    int asistencias;
+    int partidos;
+    int victorias;
+    int empates;
+    int derrotas;
+
+    if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta,
+                 (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
+                 &victorias, &empates, &derrotas) != 7)
+    {
+        return 0;
+    }
+
+    strcpy_s(out->camiseta, sizeof(out->camiseta), camiseta);
+    out->goles = goles;
+    out->asistencias = asistencias;
+    out->partidos = partidos;
+    out->victorias = victorias;
+    out->empates = empates;
+    out->derrotas = derrotas;
+    return 1;
+}
+
+static int parse_estadistica_csv_line(const char *line, EstadisticaData *out)
+{
+    if (!line || !out)
+        return 0;
+
+    char camiseta[256];
+    int goles;
+    int asistencias;
+    int partidos;
+    int victorias;
+    int empates;
+    int derrotas;
+
+    if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta,
+                 (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
+                 &victorias, &empates, &derrotas) != 7)
+    {
+        return 0;
+    }
+
+    strcpy_s(out->camiseta, sizeof(out->camiseta), camiseta);
+    out->goles = goles;
+    out->asistencias = asistencias;
+    out->partidos = partidos;
+    out->victorias = victorias;
+    out->empates = empates;
+    out->derrotas = derrotas;
+    return 1;
+}
+
+static void importar_estadisticas_desde_archivo(const char *filename, const char *formato,
+        EstadisticaLineParser parser, int log_parse_error)
+{
+    if (!crear_tabla_estadisticas())
+        return;
+
+    FILE *file = abrir_archivo_texto_importacion(filename, true);
+    if (!file)
+        return;
+
+    printf("Importando estadisticas desde %s...\n", formato);
+    char line[1024];
+    int count = 0;
+
+    while (fgets(line, sizeof(line), file))
+    {
+        EstadisticaData data;
+        if (parser(line, &data))
+        {
+            if (procesar_estadistica_importada(&data))
+            {
+                count++;
+            }
+        }
+        else if (log_parse_error)
+        {
+            printf("Error parsing line: %s", line);
+        }
+    }
+
+    fclose(file);
+    printf("Importacion de estadisticas desde %s completada. %d estadisticas importadas\n",
+           formato, count);
+}
+
 /**
  * @brief Parsea e inserta una camiseta desde JSON.
  *
@@ -655,50 +1045,14 @@ static int procesar_partido_json_item(cJSON const *item)
     const char *comentario_personal =
         comentario_personal_json ? comentario_personal_json->valuestring : "";
 
-    // Obtener IDs necesarios
-    sqlite3_int64 cancha_id = obtener_o_crear_cancha_id(cancha_nombre);
-    if (cancha_id == -1)
+    PartidoInput input =
     {
-        printf("Error al obtener ID de cancha para '%s', omitiendo partido...\n",
-               cancha_nombre);
-        return 0;
-    }
+        cancha_nombre, fecha, goles, asistencias, camiseta_nombre,
+        resultado, clima, dia, rendimiento_general, cansancio, estado_animo,
+        comentario_personal
+    };
 
-    int camiseta_id = obtener_camiseta_id(camiseta_nombre);
-    if (camiseta_id == -1)
-    {
-        printf("Camiseta '%s' no encontrada, omitiendo partido...\n",
-               camiseta_nombre);
-        return 0;
-    }
-
-    // Verificar duplicados
-    if (partido_existe(cancha_id, fecha, camiseta_id))
-    {
-        printf("Partido ya existe, omitiendo...\n");
-        return 0;
-    }
-
-    // Insertar partido
-    int partido_id = obtener_siguiente_partido_id();
-    PartidoData partido_data = {partido_id,
-                                cancha_id,
-                                fecha,
-                                goles,
-                                asistencias,
-                                camiseta_id,
-                                resultado,
-                                clima,
-                                dia,
-                                rendimiento_general,
-                                cansancio,
-                                estado_animo,
-                                comentario_personal
-                               };
-    insertar_partido(partido_data);
-
-    printf("Partido en '%s' importado correctamente\n", cancha_nombre);
-    return 1;
+    return procesar_e_insertar_partido(&input);
 }
 
 /**
@@ -850,189 +1204,115 @@ void importar_estadisticas_json()
 /**
  * @brief Importa camisetas desde archivo JSON con pausa.
  */
-static void importar_camisetas_json_con_pausa()
-{
-    importar_con_pausa("Importando camisetas desde JSON...",
-                       "Importacion de camisetas completada.",
-                       importar_camisetas_json);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_camisetas_json_con_pausa, "camisetas", "JSON", importar_camisetas_json)
 
 /**
  * @brief Importa partidos desde archivo JSON con pausa.
  */
-static void importar_partidos_json_con_pausa()
-{
-    importar_con_pausa("Importando partidos desde JSON...",
-                       "Importacion de partidos completada.",
-                       importar_partidos_json);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_partidos_json_con_pausa, "partidos", "JSON", importar_partidos_json)
 
 /**
  * @brief Importa lesiones desde archivo JSON con pausa.
  */
-static void importar_lesiones_json_con_pausa()
-{
-    importar_con_pausa("Importando lesiones desde JSON...",
-                       "Importacion de lesiones completada.",
-                       importar_lesiones_json);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_lesiones_json_con_pausa, "lesiones", "JSON", importar_lesiones_json)
 
 /**
  * @brief Importa estadisticas desde archivo JSON con pausa.
  */
-static void importar_estadisticas_json_con_pausa()
-{
-    importar_con_pausa("Importando estadisticas desde JSON...",
-                       "Importacion de estadisticas completada.",
-                       importar_estadisticas_json);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_json_con_pausa, "estadisticas", "JSON", importar_estadisticas_json)
 
 /**
  * @brief Importa camisetas desde archivo TXT con pausa.
  */
-static void importar_camisetas_txt_con_pausa()
-{
-    importar_con_pausa("Importando camisetas desde TXT...",
-                       "Importacion de camisetas completada.",
-                       importar_camisetas_txt);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_camisetas_txt_con_pausa, "camisetas", "TXT", importar_camisetas_txt)
 
 /**
  * @brief Importa partidos desde archivo TXT con pausa.
  */
-static void importar_partidos_txt_con_pausa()
-{
-    importar_con_pausa("Importando partidos desde TXT...",
-                       "Importacion de partidos completada.",
-                       importar_partidos_txt);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_partidos_txt_con_pausa, "partidos", "TXT", importar_partidos_txt)
 
 /**
  * @brief Importa lesiones desde archivo TXT con pausa.
  */
-static void importar_lesiones_txt_con_pausa()
-{
-    importar_con_pausa("Importando lesiones desde TXT...",
-                       "Importacion de lesiones completada.",
-                       importar_lesiones_txt);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_lesiones_txt_con_pausa, "lesiones", "TXT", importar_lesiones_txt)
 
 /**
  * @brief Importa estadisticas desde archivo TXT con pausa.
  */
-static void importar_estadisticas_txt_con_pausa()
-{
-    importar_con_pausa("Importando estadisticas desde TXT...",
-                       "Importacion de estadisticas completada.",
-                       importar_estadisticas_txt);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_txt_con_pausa, "estadisticas", "TXT", importar_estadisticas_txt)
 
 /**
  * @brief Importa camisetas desde archivo CSV con pausa.
  */
-static void importar_camisetas_csv_con_pausa()
-{
-    importar_con_pausa("Importando camisetas desde CSV...",
-                       "Importacion de camisetas completada.",
-                       importar_camisetas_csv);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_camisetas_csv_con_pausa, "camisetas", "CSV", importar_camisetas_csv)
 
 /**
  * @brief Importa partidos desde archivo CSV con pausa.
  */
-static void importar_partidos_csv_con_pausa()
-{
-    importar_con_pausa("Importando partidos desde CSV...",
-                       "Importacion de partidos completada.",
-                       importar_partidos_csv);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_partidos_csv_con_pausa, "partidos", "CSV", importar_partidos_csv)
 
 /**
  * @brief Importa lesiones desde archivo CSV con pausa.
  */
-static void importar_lesiones_csv_con_pausa()
-{
-    importar_con_pausa("Importando lesiones desde CSV...",
-                       "Importacion de lesiones completada.",
-                       importar_lesiones_csv);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_lesiones_csv_con_pausa, "lesiones", "CSV", importar_lesiones_csv)
 
 /**
  * @brief Importa estadisticas desde archivo CSV con pausa.
  */
-static void importar_estadisticas_csv_con_pausa()
-{
-    importar_con_pausa("Importando estadisticas desde CSV...",
-                       "Importacion de estadisticas completada.",
-                       importar_estadisticas_csv);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_csv_con_pausa, "estadisticas", "CSV", importar_estadisticas_csv)
 
 /**
  * @brief Importa todos los datos desde archivos CSV con pausa.
  */
 static void importar_todo_csv_con_pausa()
 {
-    printf("Importando todo desde CSV...\n");
-    importar_camisetas_csv();
-    importar_partidos_csv();
-    importar_lesiones_csv();
-    importar_estadisticas_csv();
-    printf("Importacion de todo desde CSV completada.\n");
-    pause_console();
+    ImportTodoConfig config =
+    {
+        "Importando todo desde CSV...",
+        "Importacion de todo desde CSV completada.",
+        importar_camisetas_csv,
+        importar_partidos_csv,
+        importar_lesiones_csv,
+        importar_estadisticas_csv
+    };
+    importar_todo_con_config(&config);
 }
 
 /**
  * @brief Importa camisetas desde archivo HTML con pausa.
  */
-static void importar_camisetas_html_con_pausa()
-{
-    importar_con_pausa("Importando camisetas desde HTML...",
-                       "Importacion de camisetas completada.",
-                       importar_camisetas_html);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_camisetas_html_con_pausa, "camisetas", "HTML", importar_camisetas_html)
 
 /**
  * @brief Importa partidos desde archivo HTML con pausa.
  */
-static void importar_partidos_html_con_pausa()
-{
-    importar_con_pausa("Importando partidos desde HTML...",
-                       "Importacion de partidos completada.",
-                       importar_partidos_html);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_partidos_html_con_pausa, "partidos", "HTML", importar_partidos_html)
 
 /**
  * @brief Importa lesiones desde archivo HTML con pausa.
  */
-static void importar_lesiones_html_con_pausa()
-{
-    importar_con_pausa("Importando lesiones desde HTML...",
-                       "Importacion de lesiones completada.",
-                       importar_lesiones_html);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_lesiones_html_con_pausa, "lesiones", "HTML", importar_lesiones_html)
 
 /**
  * @brief Importa estadisticas desde archivo HTML con pausa.
  */
-static void importar_estadisticas_html_con_pausa()
-{
-    importar_con_pausa("Importando estadisticas desde HTML...",
-                       "Importacion de estadisticas completada.",
-                       importar_estadisticas_html);
-}
+DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_html_con_pausa, "estadisticas", "HTML", importar_estadisticas_html)
 
 /**
  * @brief Importa todos los datos desde archivos HTML con pausa.
  */
 static void importar_todo_html_con_pausa()
 {
-    printf("Importando todo desde HTML...\n");
-    importar_camisetas_html();
-    importar_partidos_html();
-    importar_lesiones_html();
-    importar_estadisticas_html();
-    printf("Importacion de todo desde HTML completada.\n");
-    pause_console();
+    ImportTodoConfig config =
+    {
+        "Importando todo desde HTML...",
+        "Importacion de todo desde HTML completada.",
+        importar_camisetas_html,
+        importar_partidos_html,
+        importar_lesiones_html,
+        importar_estadisticas_html
+    };
+    importar_todo_con_config(&config);
 }
 
 /**
@@ -1040,13 +1320,16 @@ static void importar_todo_html_con_pausa()
  */
 static void importar_todo_txt_con_pausa()
 {
-    printf("Importando todo desde TXT...\n");
-    importar_camisetas_txt();
-    importar_partidos_txt();
-    importar_lesiones_txt();
-    importar_estadisticas_txt();
-    printf("Importacion de todo desde TXT completada.\n");
-    pause_console();
+    ImportTodoConfig config =
+    {
+        "Importando todo desde TXT...",
+        "Importacion de todo desde TXT completada.",
+        importar_camisetas_txt,
+        importar_partidos_txt,
+        importar_lesiones_txt,
+        importar_estadisticas_txt
+    };
+    importar_todo_con_config(&config);
 }
 
 /* ===================== IMPORTACIÓN DESDE TXT ===================== */
@@ -1059,43 +1342,7 @@ static void importar_todo_txt_con_pausa()
  */
 void importar_camisetas_txt()
 {
-    FILE *file = abrir_archivo_texto_importacion("camisetas.txt", true);
-    if (!file)
-        return;
-
-    printf("Importando camisetas desde TXT...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea: "ID - NOMBRE"
-        int id;
-        char nombre[256];
-
-        if (sscanf_s(line, "%d - %s", &id, nombre, (unsigned)_countof(nombre)) ==
-                2)
-        {
-            trim_trailing_spaces(nombre);
-            // Verificar si ya existe
-            if (id_existe_en_tabla("camiseta", id))
-            {
-                printf("Camiseta ID %d ya existe, omitiendo...\n", id);
-                continue;
-            }
-
-            // Insertar
-            insertar_camiseta(id, nombre);
-
-            printf("Camiseta '%s' importada correctamente\n", nombre);
-            count++;
-        }
-    }
-
-    fclose(file);
-    printf("Importacion de camisetas desde TXT completada. %d camisetas "
-           "importadas\n",
-           count);
+    importar_camisetas_desde_archivo("camisetas.txt", "TXT", parse_camiseta_txt_line);
 }
 
 /**
@@ -1155,6 +1402,22 @@ static int convertir_dia(const char *dia_str)
     return 0;
 }
 
+static int procesar_partido_desde_raw(const PartidoRawInput *raw)
+{
+    int resultado = convertir_resultado(raw->resultado_str);
+    int clima = convertir_clima(raw->clima_str);
+    int dia = convertir_dia(raw->dia_str);
+
+    PartidoInput input =
+    {
+        raw->cancha, raw->fecha, raw->goles, raw->asistencias, raw->camiseta,
+        resultado, clima, dia, raw->rendimiento_general,
+        raw->cansancio, raw->estado_animo, raw->comentario
+    };
+
+    return procesar_e_insertar_partido(&input);
+}
+
 /**
  * @brief Procesa una línea de partido desde TXT y la inserta en la base de
  * datos.
@@ -1189,19 +1452,14 @@ static int procesar_partido_txt_line(const char *line)
                  comentario, sizeof(comentario)) != 12)
         return 0;
 
-    int resultado = convertir_resultado(resultado_str);
-    int clima = convertir_clima(clima_str);
-    int dia = convertir_dia(dia_str);
-
-    // Crear estructura de entrada
-    PartidoInput input =
+    PartidoRawInput raw =
     {
         cancha, fecha, goles, asistencias, camiseta,
-        resultado, clima, dia, rendimiento_general,
-        cansancio, estado_animo, comentario
+        resultado_str, clima_str, dia_str,
+        rendimiento_general, cansancio, estado_animo, comentario
     };
 
-    return procesar_e_insertar_partido(&input);
+    return procesar_partido_desde_raw(&raw);
 }
 
 /**
@@ -1212,24 +1470,7 @@ static int procesar_partido_txt_line(const char *line)
  */
 void importar_partidos_txt()
 {
-    FILE *file = abrir_archivo_texto_importacion("partidos.txt", true);
-    if (!file)
-        return;
-
-    printf("Importando partidos desde TXT...\n");
-    char line[2048];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        if (procesar_partido_txt_line(line))
-            count++;
-    }
-
-    fclose(file);
-    printf(
-        "Importacion de partidos desde TXT completada. %d partidos importados\n",
-        count);
+    importar_partidos_desde_archivo("partidos.txt", "TXT", procesar_partido_txt_line);
 }
 
 /**
@@ -1240,47 +1481,7 @@ void importar_partidos_txt()
  */
 void importar_lesiones_txt()
 {
-    FILE *file = abrir_archivo_texto_importacion("lesiones.txt", true);
-    if (!file)
-        return;
-
-    printf("Importando lesiones desde TXT...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea: "ID - JUGADOR | TIPO | DESCRIPCION | FECHA"
-        int id;
-        char jugador[256];
-        char tipo[256];
-        char descripcion[512];
-        char fecha[256];
-
-        if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador,
-                     (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
-                     descripcion, (unsigned)_countof(descripcion), fecha,
-                     (unsigned)_countof(fecha)) == 5)
-        {
-            // Verificar si ya existe
-            if (id_existe_en_tabla("lesion", id))
-            {
-                printf("Lesion ID %d ya existe, omitiendo...\n", id);
-                continue;
-            }
-
-            // Insertar lesión
-            insertar_lesion(id, jugador, tipo, descripcion, fecha);
-
-            printf("Lesion de '%s' importada correctamente\n", jugador);
-            count++;
-        }
-    }
-
-    fclose(file);
-    printf(
-        "Importacion de lesiones desde TXT completada. %d lesiones importadas\n",
-        count);
+    importar_lesiones_desde_archivo("lesiones.txt", "TXT", parse_lesion_txt_line);
 }
 
 /**
@@ -1292,68 +1493,7 @@ void importar_lesiones_txt()
  */
 void importar_estadisticas_txt()
 {
-    if (!crear_tabla_estadisticas())
-        return;
-
-    FILE *file = abrir_archivo_texto_importacion("estadisticas.txt", true);
-    if (!file)
-        return;
-
-    printf("Importando estadisticas desde TXT...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea: "CAMISETA | G:Goles A:Asistencias P:Partidos V:Victorias
-        // E:Empates D:Derrotas"
-        char camiseta[256];
-        int goles;
-        int asistencias;
-        int partidos;
-        int victorias;
-        int empates;
-        int derrotas;
-
-        if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta,
-                     (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
-                     &victorias, &empates, &derrotas) == 7)
-        {
-            // Obtener ID de camiseta
-            int camiseta_id = obtener_camiseta_id_estadistica(camiseta);
-
-            if (camiseta_id == -1)
-            {
-                printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
-                       camiseta);
-                continue;
-            }
-
-            // Verificar si ya existe estadística para esta camiseta
-            if (estadistica_existe(camiseta_id))
-            {
-                printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n",
-                       camiseta);
-                continue;
-            }
-
-            // Insertar estadística
-            insertar_estadistica(camiseta_id, goles, asistencias, partidos, victorias,
-                                 empates, derrotas);
-
-            printf("Estadistica de '%s' importada correctamente\n", camiseta);
-            count++;
-        }
-        else
-        {
-            printf("Error parsing line: %s", line);
-        }
-    }
-
-    fclose(file);
-    printf("Importacion de estadisticas desde TXT completada. %d estadisticas "
-           "importadas\n",
-           count);
+    importar_estadisticas_desde_archivo("estadisticas.txt", "TXT", parse_estadistica_txt_line, 1);
 }
 
 /* ===================== IMPORTACIÓN DESDE CSV ===================== */
@@ -1366,41 +1506,7 @@ void importar_estadisticas_txt()
  */
 void importar_camisetas_csv()
 {
-    FILE *file = abrir_archivo_texto_importacion("camisetas.csv", true);
-    if (!file)
-        return;
-
-    printf("Importando camisetas desde CSV...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea: "id,nombre"
-        int id;
-        char nombre[256];
-
-        if (sscanf_s(line, "%d,%s", &id, nombre, (unsigned)_countof(nombre)) == 2)
-        {
-            // Verificar si ya existe
-            if (id_existe_en_tabla("camiseta", id))
-            {
-                printf("Camiseta ID %d ya existe, omitiendo...\n", id);
-                continue;
-            }
-
-            // Insertar
-            insertar_camiseta(id, nombre);
-
-            printf("Camiseta '%s' importada correctamente\n", nombre);
-            count++;
-        }
-    }
-
-    fclose(file);
-    printf("Importacion de camisetas desde CSV completada. %d camisetas "
-           "importadas\n",
-           count);
+    importar_camisetas_desde_archivo("camisetas.csv", "CSV", parse_camiseta_csv_line);
 }
 
 /**
@@ -1436,19 +1542,14 @@ static int procesar_partido_csv_line(const char *line)
                  comentario, sizeof(comentario)) != 12)
         return 0;
 
-    int resultado = convertir_resultado(resultado_str);
-    int clima = convertir_clima(clima_str);
-    int dia = convertir_dia(dia_str);
-
-    // Crear estructura de entrada
-    PartidoInput input =
+    PartidoRawInput raw =
     {
         cancha, fecha, goles, asistencias, camiseta,
-        resultado, clima, dia, rendimiento_general,
-        cansancio, estado_animo, comentario
+        resultado_str, clima_str, dia_str,
+        rendimiento_general, cansancio, estado_animo, comentario
     };
 
-    return procesar_e_insertar_partido(&input);
+    return procesar_partido_desde_raw(&raw);
 }
 
 /**
@@ -1459,24 +1560,7 @@ static int procesar_partido_csv_line(const char *line)
  */
 void importar_partidos_csv()
 {
-    FILE *file = abrir_archivo_texto_importacion("partidos.csv", true);
-    if (!file)
-        return;
-
-    printf("Importando partidos desde CSV...\n");
-    char line[2048];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        if (procesar_partido_csv_line(line))
-            count++;
-    }
-
-    fclose(file);
-    printf(
-        "Importacion de partidos desde CSV completada. %d partidos importados\n",
-        count);
+    importar_partidos_desde_archivo("partidos.csv", "CSV", procesar_partido_csv_line);
 }
 
 /**
@@ -1487,47 +1571,7 @@ void importar_partidos_csv()
  */
 void importar_lesiones_csv()
 {
-    FILE *file = abrir_archivo_texto_importacion("lesiones.csv", true);
-    if (!file)
-        return;
-
-    printf("Importando lesiones desde CSV...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea: "id,jugador,tipo,descripcion,fecha"
-        int id;
-        char jugador[256];
-        char tipo[256];
-        char descripcion[512];
-        char fecha[256];
-
-        if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%s", &id, jugador,
-                     (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
-                     descripcion, (unsigned)_countof(descripcion), fecha,
-                     (unsigned)_countof(fecha)) == 5)
-        {
-            // Verificar si ya existe
-            if (id_existe_en_tabla("lesion", id))
-            {
-                printf("Lesion ID %d ya existe, omitiendo...\n", id);
-                continue;
-            }
-
-            // Insertar lesión
-            insertar_lesion(id, jugador, tipo, descripcion, fecha);
-
-            printf("Lesion de '%s' importada correctamente\n", jugador);
-            count++;
-        }
-    }
-
-    fclose(file);
-    printf(
-        "Importacion de lesiones desde CSV completada. %d lesiones importadas\n",
-        count);
+    importar_lesiones_desde_archivo("lesiones.csv", "CSV", parse_lesion_csv_line);
 }
 
 /**
@@ -1539,64 +1583,7 @@ void importar_lesiones_csv()
  */
 void importar_estadisticas_csv()
 {
-    if (!crear_tabla_estadisticas())
-        return;
-
-    FILE *file = abrir_archivo_texto_importacion("estadisticas.csv", true);
-    if (!file)
-        return;
-
-    printf("Importando estadisticas desde CSV...\n");
-    char line[1024];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // Parsear línea:
-        // "camiseta,goles,asistencias,partidos,victorias,empates,derrotas"
-        char camiseta[256];
-        int goles;
-        int asistencias;
-        int partidos;
-        int victorias;
-        int empates;
-        int derrotas;
-
-        if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta,
-                     (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
-                     &victorias, &empates, &derrotas) == 7)
-        {
-            // Obtener ID de camiseta
-            int camiseta_id = obtener_camiseta_id_estadistica(camiseta);
-
-            if (camiseta_id == -1)
-            {
-                printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
-                       camiseta);
-                continue;
-            }
-
-            // Verificar si ya existe estadística para esta camiseta
-            if (estadistica_existe(camiseta_id))
-            {
-                printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n",
-                       camiseta);
-                continue;
-            }
-
-            // Insertar estadística
-            insertar_estadistica(camiseta_id, goles, asistencias, partidos, victorias,
-                                 empates, derrotas);
-
-            printf("Estadistica de '%s' importada correctamente\n", camiseta);
-            count++;
-        }
-    }
-
-    fclose(file);
-    printf("Importacion de estadisticas desde CSV completada. %d estadisticas "
-           "importadas\n",
-           count);
+    importar_estadisticas_desde_archivo("estadisticas.csv", "CSV", parse_estadistica_csv_line, 0);
 }
 
 /* ===================== IMPORTACIÓN DESDE HTML ===================== */
@@ -1744,19 +1731,14 @@ static int procesar_partido_html_row(char **ptr)
         *ptr = end + 5;
     }
 
-    int resultado = convertir_resultado(resultado_str);
-    int clima = convertir_clima(clima_str);
-    int dia = convertir_dia(dia_str);
-
-    // Crear estructura de entrada
-    PartidoInput input =
+    PartidoRawInput raw =
     {
         cancha, fecha, goles, asistencias, camiseta,
-        resultado, clima, dia, rendimiento_general,
-        cansancio, estado_animo, comentario
+        resultado_str, clima_str, dia_str,
+        rendimiento_general, cansancio, estado_animo, comentario
     };
 
-    return procesar_e_insertar_partido(&input);
+    return procesar_partido_desde_raw(&raw);
 }
 
 /**
@@ -2130,13 +2112,16 @@ void importar_estadisticas_html()
  */
 static void importar_todo_con_pausa()
 {
-    printf("Importando todo...\n");
-    importar_camisetas_json();
-    importar_partidos_json();
-    importar_lesiones_json();
-    importar_estadisticas_json();
-    printf("Importacion de todo completada.\n");
-    pause_console();
+    ImportTodoConfig config =
+    {
+        "Importando todo...",
+        "Importacion de todo completada.",
+        importar_camisetas_json,
+        importar_partidos_json,
+        importar_lesiones_json,
+        importar_estadisticas_json
+    };
+    importar_todo_con_config(&config);
 }
 
 /**

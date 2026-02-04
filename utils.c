@@ -1103,7 +1103,7 @@ sqlite3_stmt* execute_query(const char *sql)
  * @brief Lista equipos disponibles para selección
  * Función común usada en múltiples módulos para mostrar equipos
  */
-void list_available_teams()
+int list_available_teams(const char *no_records_msg, int pause_on_empty)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
@@ -1123,23 +1123,47 @@ void list_available_teams()
 
         if (!found)
         {
-            mostrar_no_hay_registros("equipos registrados");
+            mostrar_no_hay_registros(no_records_msg);
+            sqlite3_finalize(stmt);
+            if (pause_on_empty)
+            {
+                pause_console();
+            }
+            return 0;
         }
         sqlite3_finalize(stmt);
+        return 1;
     }
+
+    if (pause_on_empty)
+    {
+        pause_console();
+    }
+    return 0;
 }
 
 /**
  * @brief Obtiene el ID de un equipo seleccionado por el usuario
  * Función común para selección de equipos con validación
  */
-int select_team_id(const char *prompt)
+int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_error)
 {
-    list_available_teams();
-    int equipo_id = input_int(prompt);
-    if (equipo_id == 0 || !existe_id("equipo", equipo_id))
+    if (!list_available_teams(no_records_msg, pause_on_error))
     {
-        printf("ID de equipo inválido.\n");
+        return 0;
+    }
+    int equipo_id = input_int(prompt);
+    if (equipo_id == 0)
+    {
+        return 0;
+    }
+    if (!existe_id("equipo", equipo_id))
+    {
+        printf("ID de equipo invalido.\n");
+        if (pause_on_error)
+        {
+            pause_console();
+        }
         return 0;
     }
     return equipo_id;
