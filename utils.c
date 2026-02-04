@@ -583,6 +583,22 @@ int confirmar(const char *msg)
     return (c == 's' || c == 'S');
 }
 
+static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
+                                 char *nombre, int size)
+{
+    printf("%s", prompt);
+
+    fgets(nombre, size, stdin);
+    nombre[strcspn(nombre, "\n")] = 0;
+
+    while (safe_strnlen(nombre, (size_t)size) == 0)
+    {
+        printf("%s", prompt_vacio);
+        fgets(nombre, size, stdin);
+        nombre[strcspn(nombre, "\n")] = 0;
+    }
+}
+
 /**
  * Recopila la identidad del usuario en el inicio para personalizar la
  * aplicación y mantener un registro de uso.
@@ -592,18 +608,9 @@ void pedir_nombre_usuario()
     char nombre[100];
     clear_screen();
     printf("%s\n", ASCII_BIENVENIDA);
-    printf("Por favor, ingresa tu Nombre: ");
-
-    fgets(nombre, sizeof(nombre), stdin);
-    nombre[strcspn(nombre, "\n")] = 0;
-
-    // Validar que no esté vacío
-    while (safe_strnlen(nombre, sizeof(nombre)) == 0)
-    {
-        printf("El nombre no puede estar vacio. Ingresa tu nombre: ");
-        fgets(nombre, sizeof(nombre), stdin);
-        nombre[strcspn(nombre, "\n")] = 0;
-    }
+    leer_nombre_no_vacio("Por favor, ingresa tu Nombre: ",
+                         "El nombre no puede estar vacio. Ingresa tu nombre: ",
+                         nombre, (int)sizeof(nombre));
 
     if (set_user_name(nombre))
     {
@@ -642,18 +649,9 @@ void mostrar_nombre_usuario()
 void editar_nombre_usuario()
 {
     char nombre[100];
-    printf("Ingresa tu nuevo nombre: ");
-
-    fgets(nombre, sizeof(nombre), stdin);
-    nombre[strcspn(nombre, "\n")] = 0; // Remover newline
-
-    // Validar que no esté vacío
-    while (safe_strnlen(nombre, sizeof(nombre)) == 0)
-    {
-        printf("El nombre no puede estar vacio. Ingresa tu nuevo nombre: ");
-        fgets(nombre, sizeof(nombre), stdin);
-        nombre[strcspn(nombre, "\n")] = 0;
-    }
+    leer_nombre_no_vacio("Ingresa tu nuevo nombre: ",
+                         "El nombre no puede estar vacio. Ingresa tu nuevo nombre: ",
+                         nombre, (int)sizeof(nombre));
 
     if (set_user_name(nombre))
     {
@@ -1178,14 +1176,20 @@ void write_csv_header(FILE *f, const char *header)
     fprintf(f, "%s\n", header);
 }
 
+static char *get_trimmed_cancha_from_stmt(sqlite3_stmt *stmt)
+{
+    char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
+    trim_trailing_spaces(cancha_trimmed);
+    return cancha_trimmed;
+}
+
 /**
  * @brief Escribe fila CSV con datos de partido
  * Función común para exportar datos de partidos a CSV
  */
 void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 {
-    char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-    trim_trailing_spaces(cancha_trimmed);
+    char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
     fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n",
             cancha_trimmed,
             sqlite3_column_text(stmt, 1),
@@ -1208,8 +1212,7 @@ void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
  */
 void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
 {
-    char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-    trim_trailing_spaces(cancha_trimmed);
+    char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
     fprintf(f, "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d | %s\n",
             cancha_trimmed,
             sqlite3_column_text(stmt, 1),
@@ -1232,8 +1235,7 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
  */
 void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
 {
-    char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-    trim_trailing_spaces(cancha_trimmed);
+    char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
 
     cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
     cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
@@ -1257,8 +1259,7 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
  */
 void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 {
-    char *cancha_trimmed = strdup((const char *)sqlite3_column_text(stmt, 0));
-    trim_trailing_spaces(cancha_trimmed);
+    char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
     fprintf(f,
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>",
             cancha_trimmed,

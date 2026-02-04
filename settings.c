@@ -37,6 +37,41 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 static void settings_apply_text_size();
 
+static void set_theme_int(int value)
+{
+    settings_set_theme((ThemeType)value);
+}
+
+static void set_language_int(int value)
+{
+    settings_set_language((LanguageType)value);
+}
+
+static void set_mode_int(int value)
+{
+    settings_set_mode((ModeType)value);
+}
+
+static void set_text_size_int(int value)
+{
+    settings_set_text_size((TextSizeType)value);
+}
+
+static void aplicar_config_y_pausar(void (*setter)(int), int value)
+{
+    setter(value);
+    printf("%s\n", get_text("settings_saved"));
+    pause_console();
+}
+
+static void aplicar_tema_texto_y_pausar(ThemeType theme, TextSizeType text_size)
+{
+    settings_set_theme(theme);
+    settings_set_text_size(text_size);
+    printf("%s\n", get_text("settings_saved"));
+    pause_console();
+}
+
 static void habilitar_menus_basicos_custom()
 {
     set_custom_menu_enabled("camisetas", 1);
@@ -808,44 +843,28 @@ static void menu_theme_settings()
         switch (opcion)
         {
         case 1:
-            settings_set_theme(THEME_LIGHT);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_LIGHT);
             break;
         case 2:
-            settings_set_theme(THEME_DARK);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_DARK);
             break;
         case 3:
-            settings_set_theme(THEME_BLUE);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_BLUE);
             break;
         case 4:
-            settings_set_theme(THEME_GREEN);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_GREEN);
             break;
         case 5:
-            settings_set_theme(THEME_RED);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_RED);
             break;
         case 6:
-            settings_set_theme(THEME_PURPLE);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_PURPLE);
             break;
         case 7:
-            settings_set_theme(THEME_CLASSIC);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC);
             break;
         case 8:
-            settings_set_theme(THEME_HIGH_CONTRAST);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
             break;
         case 0:
             break;
@@ -877,14 +896,10 @@ static void menu_language_settings()
         switch (opcion)
         {
         case 1:
-            settings_set_language(LANGUAGE_SPANISH);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH);
             break;
         case 2:
-            settings_set_language(LANGUAGE_ENGLISH);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH);
             break;
         case 0:
             break;
@@ -986,19 +1001,13 @@ static void menu_text_size_settings()
         switch (opcion)
         {
         case 1:
-            settings_set_text_size(TEXT_SIZE_SMALL);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL);
             break;
         case 2:
-            settings_set_text_size(TEXT_SIZE_MEDIUM);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM);
             break;
         case 3:
-            settings_set_text_size(TEXT_SIZE_LARGE);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE);
             break;
         case 0:
             break;
@@ -1034,15 +1043,10 @@ static void menu_accessibility_settings()
             menu_text_size_settings();
             break;
         case 2:
-            settings_set_theme(THEME_HIGH_CONTRAST);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
             break;
         case 3:
-            settings_set_theme(THEME_LIGHT);
-            settings_set_text_size(TEXT_SIZE_MEDIUM);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM);
             break;
         case 0:
             break;
@@ -1155,14 +1159,10 @@ static void menu_mode_settings()
         switch (opcion)
         {
         case 1:
-            settings_set_mode(MODE_SIMPLE);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE);
             break;
         case 2:
-            settings_set_mode(MODE_ADVANCED);
-            printf("%s\n", get_text("settings_saved"));
-            pause_console();
+            aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED);
             break;
         case 3:
             current_settings.mode = MODE_CUSTOM;

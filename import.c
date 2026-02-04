@@ -505,7 +505,8 @@ static int procesar_camiseta_importada(const CamisetaData *camiseta)
     return 1;
 }
 
-static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
+static int parse_camiseta_line_format(const char *line, CamisetaData *out,
+                                      const char *format)
 {
     if (!line || !out)
         return 0;
@@ -513,7 +514,7 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
     int id;
     char nombre[256];
 
-    if (sscanf_s(line, "%d - %s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+    if (sscanf_s(line, format, &id, nombre, (unsigned)_countof(nombre)) != 2)
         return 0;
 
     trim_trailing_spaces(nombre);
@@ -522,21 +523,14 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
     return 1;
 }
 
+static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
+{
+    return parse_camiseta_line_format(line, out, "%d - %s");
+}
+
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
 {
-    if (!line || !out)
-        return 0;
-
-    int id;
-    char nombre[256];
-
-    if (sscanf_s(line, "%d,%s", &id, nombre, (unsigned)_countof(nombre)) != 2)
-        return 0;
-
-    trim_trailing_spaces(nombre);
-    out->id = id;
-    strcpy_s(out->nombre, sizeof(out->nombre), nombre);
-    return 1;
+    return parse_camiseta_line_format(line, out, "%d,%s");
 }
 
 static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
@@ -576,7 +570,8 @@ static int procesar_lesion_importada(const LesionData *lesion)
     return 1;
 }
 
-static int parse_lesion_txt_line(const char *line, LesionData *out)
+static int parse_lesion_line_format(const char *line, LesionData *out,
+                                    const char *format)
 {
     if (!line || !out)
         return 0;
@@ -587,9 +582,9 @@ static int parse_lesion_txt_line(const char *line, LesionData *out)
     char descripcion[512];
     char fecha[256];
 
-    if (sscanf_s(line, "%d - %[^|] | %[^|] | %[^|] | %[^\n]", &id, jugador,
-                 (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
-                 descripcion, (unsigned)_countof(descripcion), fecha,
+    if (sscanf_s(line, format, &id, jugador, (unsigned)_countof(jugador), tipo,
+                 (unsigned)_countof(tipo), descripcion,
+                 (unsigned)_countof(descripcion), fecha,
                  (unsigned)_countof(fecha)) != 5)
     {
         return 0;
@@ -603,31 +598,15 @@ static int parse_lesion_txt_line(const char *line, LesionData *out)
     return 1;
 }
 
+static int parse_lesion_txt_line(const char *line, LesionData *out)
+{
+    return parse_lesion_line_format(line, out,
+                                    "%d - %[^|] | %[^|] | %[^|] | %[^\n]");
+}
+
 static int parse_lesion_csv_line(const char *line, LesionData *out)
 {
-    if (!line || !out)
-        return 0;
-
-    int id;
-    char jugador[256];
-    char tipo[256];
-    char descripcion[512];
-    char fecha[256];
-
-    if (sscanf_s(line, "%d,%[^,],%[^,],%[^,],%s", &id, jugador,
-                 (unsigned)_countof(jugador), tipo, (unsigned)_countof(tipo),
-                 descripcion, (unsigned)_countof(descripcion), fecha,
-                 (unsigned)_countof(fecha)) != 5)
-    {
-        return 0;
-    }
-
-    out->id = id;
-    strcpy_s(out->jugador, sizeof(out->jugador), jugador);
-    strcpy_s(out->tipo, sizeof(out->tipo), tipo);
-    strcpy_s(out->descripcion, sizeof(out->descripcion), descripcion);
-    strcpy_s(out->fecha, sizeof(out->fecha), fecha);
-    return 1;
+    return parse_lesion_line_format(line, out, "%d,%[^,],%[^,],%[^,],%s");
 }
 
 static void importar_lesiones_desde_archivo(const char *filename, const char *formato,
@@ -644,13 +623,8 @@ static void importar_lesiones_desde_archivo(const char *filename, const char *fo
     while (fgets(line, sizeof(line), file))
     {
         LesionData data;
-        if (parser(line, &data))
-        {
-            if (procesar_lesion_importada(&data))
-            {
-                count++;
-            }
-        }
+        if (parser(line, &data) && procesar_lesion_importada(&data))
+            count++;
     }
 
     fclose(file);
@@ -684,7 +658,8 @@ static int procesar_estadistica_importada(const EstadisticaData *estadistica)
     return 1;
 }
 
-static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
+static int parse_estadistica_line_format(const char *line, EstadisticaData *out,
+                                         const char *format)
 {
     if (!line || !out)
         return 0;
@@ -697,9 +672,9 @@ static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
     int empates;
     int derrotas;
 
-    if (sscanf_s(line, "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", camiseta,
-                 (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
-                 &victorias, &empates, &derrotas) != 7)
+    if (sscanf_s(line, format, camiseta, (unsigned)_countof(camiseta), &goles,
+                 &asistencias, &partidos, &victorias, &empates,
+                 &derrotas) != 7)
     {
         return 0;
     }
@@ -714,34 +689,15 @@ static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
     return 1;
 }
 
+static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
+{
+    return parse_estadistica_line_format(line, out,
+                                         "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d");
+}
+
 static int parse_estadistica_csv_line(const char *line, EstadisticaData *out)
 {
-    if (!line || !out)
-        return 0;
-
-    char camiseta[256];
-    int goles;
-    int asistencias;
-    int partidos;
-    int victorias;
-    int empates;
-    int derrotas;
-
-    if (sscanf_s(line, "%[^,],%d,%d,%d,%d,%d,%d", camiseta,
-                 (unsigned)_countof(camiseta), &goles, &asistencias, &partidos,
-                 &victorias, &empates, &derrotas) != 7)
-    {
-        return 0;
-    }
-
-    strcpy_s(out->camiseta, sizeof(out->camiseta), camiseta);
-    out->goles = goles;
-    out->asistencias = asistencias;
-    out->partidos = partidos;
-    out->victorias = victorias;
-    out->empates = empates;
-    out->derrotas = derrotas;
-    return 1;
+    return parse_estadistica_line_format(line, out, "%[^,],%d,%d,%d,%d,%d,%d");
 }
 
 static void importar_estadisticas_desde_archivo(const char *filename, const char *formato,
@@ -761,13 +717,8 @@ static void importar_estadisticas_desde_archivo(const char *filename, const char
     while (fgets(line, sizeof(line), file))
     {
         EstadisticaData data;
-        if (parser(line, &data))
-        {
-            if (procesar_estadistica_importada(&data))
-            {
-                count++;
-            }
-        }
+        if (parser(line, &data) && procesar_estadistica_importada(&data))
+            count++;
         else if (log_parse_error)
         {
             printf("Error parsing line: %s", line);
@@ -2129,11 +2080,11 @@ static void importar_todo_con_pausa()
  */
 static void submenu_importar_json()
 {
-    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_json_con_pausa},
-        {2, get_text("import_partidos"), importar_partidos_json_con_pausa},
-        {3, get_text("import_lesiones"), importar_lesiones_json_con_pausa},
-        {4, get_text("import_estadisticas"), importar_estadisticas_json_con_pausa},
-        {5, get_text("import_todo"), importar_todo_con_pausa},
+    MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_json_con_pausa},
+        {2, get_text("import_partidos"), &importar_partidos_json_con_pausa},
+        {3, get_text("import_lesiones"), &importar_lesiones_json_con_pausa},
+        {4, get_text("import_estadisticas"), &importar_estadisticas_json_con_pausa},
+        {5, get_text("import_todo"), &importar_todo_con_pausa},
         {0, get_text("menu_back"), NULL}
     };
     ejecutar_menu(get_text("import_menu_json_title"), items, 6);
@@ -2144,11 +2095,11 @@ static void submenu_importar_json()
  */
 static void submenu_importar_txt()
 {
-    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_txt_con_pausa},
-        {2, get_text("import_partidos"), importar_partidos_txt_con_pausa},
-        {3, get_text("import_lesiones"), importar_lesiones_txt_con_pausa},
-        {4, get_text("import_estadisticas"), importar_estadisticas_txt_con_pausa},
-        {5, get_text("import_todo"), importar_todo_txt_con_pausa},
+    MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_txt_con_pausa},
+        {2, get_text("import_partidos"), &importar_partidos_txt_con_pausa},
+        {3, get_text("import_lesiones"), &importar_lesiones_txt_con_pausa},
+        {4, get_text("import_estadisticas"), &importar_estadisticas_txt_con_pausa},
+        {5, get_text("import_todo"), &importar_todo_txt_con_pausa},
         {0, get_text("menu_back"), NULL}
     };
     ejecutar_menu(get_text("import_menu_txt_title"), items, 6);
@@ -2159,11 +2110,11 @@ static void submenu_importar_txt()
  */
 static void submenu_importar_csv()
 {
-    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_csv_con_pausa},
-        {2, get_text("import_partidos"), importar_partidos_csv_con_pausa},
-        {3, get_text("import_lesiones"), importar_lesiones_csv_con_pausa},
-        {4, get_text("import_estadisticas"), importar_estadisticas_csv_con_pausa},
-        {5, get_text("import_todo"), importar_todo_csv_con_pausa},
+    MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_csv_con_pausa},
+        {2, get_text("import_partidos"), &importar_partidos_csv_con_pausa},
+        {3, get_text("import_lesiones"), &importar_lesiones_csv_con_pausa},
+        {4, get_text("import_estadisticas"), &importar_estadisticas_csv_con_pausa},
+        {5, get_text("import_todo"), &importar_todo_csv_con_pausa},
         {0, get_text("menu_back"), NULL}
     };
     ejecutar_menu(get_text("import_menu_csv_title"), items, 6);
@@ -2174,11 +2125,11 @@ static void submenu_importar_csv()
  */
 static void submenu_importar_html()
 {
-    MenuItem items[] = {{1, get_text("import_camisetas"), importar_camisetas_html_con_pausa},
-        {2, get_text("import_partidos"), importar_partidos_html_con_pausa},
-        {3, get_text("import_lesiones"), importar_lesiones_html_con_pausa},
-        {4, get_text("import_estadisticas"), importar_estadisticas_html_con_pausa},
-        {5, get_text("import_todo"), importar_todo_html_con_pausa},
+    MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_html_con_pausa},
+        {2, get_text("import_partidos"), &importar_partidos_html_con_pausa},
+        {3, get_text("import_lesiones"), &importar_lesiones_html_con_pausa},
+        {4, get_text("import_estadisticas"), &importar_estadisticas_html_con_pausa},
+        {5, get_text("import_todo"), &importar_todo_html_con_pausa},
         {0, get_text("menu_back"), NULL}
     };
     ejecutar_menu(get_text("import_menu_html_title"), items, 6);
@@ -2236,13 +2187,13 @@ static void importar_base_datos_con_backup()
  */
 void menu_importar()
 {
-    MenuItem items[] = {{1, get_text("import_from_json"), menu_importar_json_con_backup},
-        {2, get_text("import_from_txt"), menu_importar_txt_con_backup},
-        {3, get_text("import_from_csv"), menu_importar_csv_con_backup},
-        {4, get_text("import_from_html"), menu_importar_html_con_backup},
-        {5, get_text("import_todo_json_rapido"), importar_todo_json_rapido},
-        {6, get_text("import_todo_csv_rapido"), importar_todo_csv_rapido},
-        {7, get_text("import_from_db"), importar_base_datos_con_backup},
+    MenuItem items[] = {{1, get_text("import_from_json"),&menu_importar_json_con_backup},
+        {2, get_text("import_from_txt"), &menu_importar_txt_con_backup},
+        {3, get_text("import_from_csv"), &menu_importar_csv_con_backup},
+        {4, get_text("import_from_html"), &menu_importar_html_con_backup},
+        {5, get_text("import_todo_json_rapido"), &importar_todo_json_rapido},
+        {6, get_text("import_todo_csv_rapido"), &importar_todo_csv_rapido},
+        {7, get_text("import_from_db"), &importar_base_datos_con_backup},
         {0, get_text("menu_back"), NULL}
     };
     ejecutar_menu(get_text("import_menu_title"), items, 8);
