@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <limits.h>
 
+
 #define MAX_CAMISETAS_SORTEO 150
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
@@ -59,9 +60,9 @@ static void listar_camisetas_simple()
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("%d - %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1));
+        ui_printf_centered_line("%d - %s",
+                                sqlite3_column_int(stmt, 0),
+                                sqlite3_column_text(stmt, 1));
         hay = 1;
     }
 
@@ -132,7 +133,8 @@ void editar_camiseta()
         return;
     }
 
-    printf("Camisetas disponibles:\n\n");
+    ui_printf_centered_line("Camisetas disponibles:");
+    ui_printf("\n");
     listar_camisetas_simple();
 
     int id = input_int("\nID a editar (0 para cancelar): ");
@@ -185,7 +187,8 @@ void eliminar_camiseta()
         return;
     }
 
-    printf("Camisetas disponibles:\n\n");
+    ui_printf_centered_line("Camisetas disponibles:");
+    ui_printf("\n");
     listar_camisetas_simple();
 
     int id = input_int("\nID a eliminar (0 para cancelar): ");

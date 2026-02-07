@@ -659,7 +659,7 @@ static int procesar_estadistica_importada(const EstadisticaData *estadistica)
 }
 
 static int parse_estadistica_line_format(const char *line, EstadisticaData *out,
-                                         const char *format)
+        const char *format)
 {
     if (!line || !out)
         return 0;

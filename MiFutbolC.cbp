@@ -39,6 +39,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DUSE_NCURSES" />
 			<Add directory="C:/msys64/mingw64/include" />
 		</Compiler>
 		<Linker>
@@ -46,6 +47,8 @@
 			<Add library="hpdf" />
 			<Add library="png" />
 			<Add library="z" />
+			<Add library="ncursesw" />
+			<Add library="pdcurses" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>
 		<Unit filename="analisis.c">

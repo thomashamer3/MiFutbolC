@@ -7,6 +7,7 @@
 #include "ascii_art.h"
 #include "entrenador_ia.h"
 #include "financiamiento.h"
+#include "settings.h"
 #include <stdio.h>
 #include <string.h>
 #include <Windows.h>
@@ -15,6 +16,10 @@
 #include <process.h>
 #include <memory.h>
 #include <limits.h>
+#ifdef USE_NCURSES
+#include <ncursesw/ncurses.h>
+#endif
+
 
 // Prototipos de funciones estáticas usadas antes de su definición
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
@@ -59,25 +64,229 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
         // Formatear la fecha para visualización
         format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
 
-        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Cancha: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Fecha: %s\n", fecha_formateada);
-        printf("Goles: %d, Asistencias: %d\n", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
-        printf("Camiseta: %s\n", sqlite3_column_text(stmt, 5));
-        printf("Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 6)));
-        printf("Rendimiento General: %d/10\n", sqlite3_column_int(stmt, 7));
-        printf("Cansancio: %d/10\n", sqlite3_column_int(stmt, 8));
-        printf("Estado de Animo: %d/10\n", sqlite3_column_int(stmt, 9));
-        printf("Comentario Personal: %s\n", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
-        printf("Clima: %s\n", clima_to_text(sqlite3_column_int(stmt, 11)));
-        printf("Dia: %s\n", dia_to_text(sqlite3_column_int(stmt, 12)));
-        printf("Precio: %d\n", sqlite3_column_int(stmt, 13));
-        printf("----------------------------------------\n");
+        ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
+        ui_printf_centered_line("Cancha: %s", sqlite3_column_text(stmt, 1));
+        ui_printf_centered_line("Fecha: %s", fecha_formateada);
+        ui_printf_centered_line("Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+        ui_printf_centered_line("Camiseta: %s", sqlite3_column_text(stmt, 5));
+        ui_printf_centered_line("Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
+        ui_printf_centered_line("Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
+        ui_printf_centered_line("Cansancio: %d/10", sqlite3_column_int(stmt, 8));
+        ui_printf_centered_line("Estado de Animo: %d/10", sqlite3_column_int(stmt, 9));
+        ui_printf_centered_line("Comentario Personal: %s", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
+        ui_printf_centered_line("Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
+        ui_printf_centered_line("Dia: %s", dia_to_text(sqlite3_column_int(stmt, 12)));
+        ui_printf_centered_line("Precio: %d", sqlite3_column_int(stmt, 13));
+        ui_printf_centered_line("----------------------------------------");
         hay = 1;
     }
 
     return hay;
 }
+
+#ifdef USE_NCURSES
+typedef struct
+{
+    char **lines;
+    int count;
+    int capacity;
+} LineBuffer;
+
+static void line_buffer_free(LineBuffer *buffer)
+{
+    if (!buffer)
+    {
+        return;
+    }
+    for (int i = 0; i < buffer->count; ++i)
+    {
+        free(buffer->lines[i]);
+    }
+    free(buffer->lines);
+    buffer->lines = NULL;
+    buffer->count = 0;
+    buffer->capacity = 0;
+}
+
+static int line_buffer_push(LineBuffer *buffer, const char *text)
+{
+    if (!buffer || !text)
+    {
+        return 0;
+    }
+
+    if (buffer->count == buffer->capacity)
+    {
+        int new_capacity = buffer->capacity == 0 ? 64 : buffer->capacity * 2;
+        char **new_lines = (char **)realloc(buffer->lines, (size_t)new_capacity * sizeof(char *));
+        if (!new_lines)
+        {
+            return 0;
+        }
+        buffer->lines = new_lines;
+        buffer->capacity = new_capacity;
+    }
+
+    size_t len = strlen(text);
+    char *copy = (char *)malloc(len + 1);
+    if (!copy)
+    {
+        return 0;
+    }
+    memcpy(copy, text, len + 1);
+    buffer->lines[buffer->count++] = copy;
+    return 1;
+}
+
+static int mostrar_partidos_desde_stmt_paginado(sqlite3_stmt *stmt)
+{
+    LineBuffer buffer = {0};
+    int hay = 0;
+    char fecha_formateada[20];
+    char line[512];
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
+
+        snprintf(line, sizeof(line), "ID: %d", sqlite3_column_int(stmt, 0));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Cancha: %s", sqlite3_column_text(stmt, 1));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Fecha: %s", fecha_formateada);
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Camiseta: %s", sqlite3_column_text(stmt, 5));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Cansancio: %d/10", sqlite3_column_int(stmt, 8));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Estado de Animo: %d/10", sqlite3_column_int(stmt, 9));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Comentario Personal: %s", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Dia: %s", dia_to_text(sqlite3_column_int(stmt, 12)));
+        line_buffer_push(&buffer, line);
+        snprintf(line, sizeof(line), "Precio: %d", sqlite3_column_int(stmt, 13));
+        line_buffer_push(&buffer, line);
+        line_buffer_push(&buffer, "----------------------------------------");
+        hay = 1;
+    }
+
+    if (!hay)
+    {
+        line_buffer_push(&buffer, "No hay partidos cargados.");
+    }
+
+    WINDOW *win = ui_get_output_window();
+    if (!win)
+    {
+        line_buffer_free(&buffer);
+        return hay;
+    }
+
+    keypad(win, TRUE);
+    int height;
+    int width;
+    getmaxyx(win, height, width);
+    int top = 0;
+    int usable_height = height > 1 ? height - 1 : height;
+
+    for (;;)
+    {
+        werase(win);
+        for (int row = 0; row < usable_height; ++row)
+        {
+            int idx = top + row;
+            if (idx >= buffer.count)
+            {
+                break;
+            }
+            const char *text = buffer.lines[idx];
+            int len = (int)strlen(text);
+            int start_x = (width - len) / 2;
+            if (start_x < 0)
+            {
+                start_x = 0;
+            }
+            if (width > 1 && len > width - 1)
+            {
+                mvwprintw(win, row, start_x, "%.*s", width - 1, text);
+            }
+            else
+            {
+                mvwprintw(win, row, start_x, "%s", text);
+            }
+        }
+
+        if (height > 0)
+        {
+            mvwprintw(win, height - 1, 0, "Arriba/Abajo para desplazarse, Enter para salir");
+        }
+        wrefresh(win);
+
+        int ch = wgetch(win);
+        if (ch == 10 || ch == KEY_ENTER || ch == 'q' || ch == 'Q')
+        {
+            break;
+        }
+        if (ch == KEY_UP)
+        {
+            if (top > 0)
+            {
+                top--;
+            }
+        }
+        else if (ch == KEY_DOWN)
+        {
+            if (top + usable_height < buffer.count)
+            {
+                top++;
+            }
+        }
+        else if (ch == KEY_PPAGE)
+        {
+            top -= usable_height;
+            if (top < 0)
+            {
+                top = 0;
+            }
+        }
+        else if (ch == KEY_NPAGE)
+        {
+            top += usable_height;
+            if (top + usable_height > buffer.count)
+            {
+                top = buffer.count - usable_height;
+                if (top < 0)
+                {
+                    top = 0;
+                }
+            }
+        }
+        else if (ch == KEY_HOME)
+        {
+            top = 0;
+        }
+        else if (ch == KEY_END)
+        {
+            if (buffer.count > usable_height)
+            {
+                top = buffer.count - usable_height;
+            }
+        }
+    }
+
+    line_buffer_free(&buffer);
+    return hay;
+}
+#endif
 
 /**
  * @brief Estructura para agrupar los datos de un partido
@@ -196,7 +405,7 @@ static int verificar_prerrequisitos_partido()
  */
 static void listar_canchas_disponibles()
 {
-    printf("Canchas disponibles:\n");
+    ui_printf_centered_line("Canchas disponibles:");
     sqlite3_stmt *stmt_canchas;
     if (!preparar_stmt("SELECT id, nombre FROM cancha ORDER BY id", &stmt_canchas))
     {
@@ -204,7 +413,7 @@ static void listar_canchas_disponibles()
     }
     while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
     {
-        printf("%d | %s\n", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
+        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt_canchas, 0), sqlite3_column_text(stmt_canchas, 1));
     }
     sqlite3_finalize(stmt_canchas);
 }
@@ -506,17 +715,26 @@ void listar_partidos()
     if (!preparar_stmt(
                 "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
+                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id DESC",
                 &stmt))
     {
         pause_console();
         return;
     }
 
+#ifdef USE_NCURSES
+    if (ui_get_output_window() != NULL)
+    {
+        mostrar_partidos_desde_stmt_paginado(stmt);
+        sqlite3_finalize(stmt);
+        return;
+    }
+#endif
+
     int hay = mostrar_partidos_desde_stmt(stmt);
 
     if (!hay)
-        printf("No hay partidos cargados.\n");
+        ui_printf_centered_line("No hay partidos cargados.");
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -1694,6 +1912,329 @@ void simular_partido_guardados()
     getchar();
 }
 
+#define TACTIC_W 40
+#define TACTIC_H 20
+
+static void tactica_init_grid(char grid[TACTIC_H][TACTIC_W + 1])
+{
+    for (int y = 0; y < TACTIC_H; y++)
+    {
+        for (int x = 0; x < TACTIC_W; x++)
+        {
+            grid[y][x] = '.';
+        }
+        grid[y][TACTIC_W] = '\0';
+    }
+}
+
+static void tactica_build_grid_string(char grid[TACTIC_H][TACTIC_W + 1], char *out, size_t size)
+{
+    size_t used = 0;
+    if (!out || size == 0)
+    {
+        return;
+    }
+
+    for (int y = 0; y < TACTIC_H; y++)
+    {
+        for (int x = 0; x < TACTIC_W; x++)
+        {
+            if (used + 1 >= size)
+            {
+                out[used] = '\0';
+                return;
+            }
+            out[used++] = grid[y][x];
+        }
+        if (used + 1 >= size)
+        {
+            out[used] = '\0';
+            return;
+        }
+        out[used++] = '\n';
+    }
+    out[used] = '\0';
+}
+
+static void tactica_guardar_diagrama(int partido_id, const char *nombre, const char *grid_text)
+{
+    const char *sql =
+        "INSERT INTO tactica_diagrama (partido_id, nombre, fecha, grid) "
+        "VALUES (?, ?, date('now'), ?)";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("Error preparando insercion.\n");
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, partido_id);
+    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, grid_text, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        printf("Error guardando diagrama: %s\n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static int tactica_listar_diagramas_simple(int con_pause)
+{
+    const char *sql =
+        "SELECT id, partido_id, nombre, fecha FROM tactica_diagrama ORDER BY id DESC LIMIT 20";
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("Error consultando diagramas.\n");
+        if (con_pause)
+        {
+            pause_console();
+        }
+        return 0;
+    }
+
+    ui_printf_centered_line("ID | Partido | Fecha | Nombre");
+    ui_printf_centered_line("-----------------------------------------------");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        int partido_id = sqlite3_column_int(stmt, 1);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 2);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 3);
+
+        ui_printf_centered_line("%d | %d | %s | %s", id, partido_id, fecha ? fecha : "", nombre ? nombre : "");
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay diagramas registrados.");
+    }
+
+    if (con_pause)
+    {
+        pause_console();
+    }
+
+    return count;
+}
+
+static void tactica_ver_diagrama()
+{
+    clear_screen();
+    print_header("DIAGRAMAS TACTICOS");
+
+    int count = tactica_listar_diagramas_simple(0);
+    if (count == 0)
+    {
+        pause_console();
+        return;
+    }
+
+    int id = input_int("ID del diagrama (0 para cancelar): ");
+    if (id == 0)
+    {
+        return;
+    }
+
+    const char *sql = "SELECT nombre, grid FROM tactica_diagrama WHERE id = ?";
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("Error consultando diagrama.\n");
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+        const char *grid = (const char *)sqlite3_column_text(stmt, 1);
+
+        clear_screen();
+        print_header(nombre ? nombre : "DIAGRAMA");
+        if (grid && grid[0])
+        {
+            ui_puts(grid);
+        }
+        else
+        {
+            ui_puts("(Sin contenido)");
+        }
+    }
+    else
+    {
+        printf("Diagrama no encontrado.\n");
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+#ifdef USE_NCURSES
+static int tactica_draw_editor(char grid[TACTIC_H][TACTIC_W + 1], const char *nombre, int partido_id)
+{
+    int height, width;
+    int cursor_x = 0;
+    int cursor_y = 0;
+    char status[128] = "";
+
+    keypad(stdscr, TRUE);
+    getmaxyx(stdscr, height, width);
+
+    int min_h = TACTIC_H + 6;
+    int min_w = TACTIC_W + 4;
+    if (height < min_h || width < min_w)
+    {
+        clear();
+        mvprintw(0, 0, "Terminal pequena. Minimo %dx%d.", min_w, min_h);
+        refresh();
+        getch();
+        return 0;
+    }
+
+    for (;;)
+    {
+        clear();
+        mvprintw(0, 2, "Tactica: %s | Partido: %d", nombre, partido_id);
+        mvprintw(1, 2, "Flechas mover | 1 Jugador | 2 Balon | 3 Movimiento | 0 Borrar | S Guardar | ESC Salir");
+
+        int start_y = 3;
+        int start_x = 2;
+        for (int y = 0; y < TACTIC_H; y++)
+        {
+            mvprintw(start_y + y, start_x, "%s", grid[y]);
+        }
+
+        int draw_y = start_y + cursor_y;
+        int draw_x = start_x + cursor_x;
+        chtype ch = grid[cursor_y][cursor_x];
+        attron(A_REVERSE);
+        mvaddch(draw_y, draw_x, ch);
+        attroff(A_REVERSE);
+
+        mvprintw(start_y + TACTIC_H + 1, 2, "%s", status);
+        refresh();
+
+        int key = getch();
+        status[0] = '\0';
+
+        if (key == 27)
+        {
+            return 0;
+        }
+        if (key == KEY_UP && cursor_y > 0)
+        {
+            cursor_y--;
+        }
+        else if (key == KEY_DOWN && cursor_y < TACTIC_H - 1)
+        {
+            cursor_y++;
+        }
+        else if (key == KEY_LEFT && cursor_x > 0)
+        {
+            cursor_x--;
+        }
+        else if (key == KEY_RIGHT && cursor_x < TACTIC_W - 1)
+        {
+            cursor_x++;
+        }
+        else if (key == '1')
+        {
+            grid[cursor_y][cursor_x] = 'O';
+        }
+        else if (key == '2')
+        {
+            grid[cursor_y][cursor_x] = 'o';
+        }
+        else if (key == '3')
+        {
+            grid[cursor_y][cursor_x] = '*';
+        }
+        else if (key == '0' || key == 'e' || key == 'E')
+        {
+            grid[cursor_y][cursor_x] = '.';
+        }
+        else if (key == 's' || key == 'S')
+        {
+            return 1;
+        }
+    }
+}
+#endif
+
+static void tactica_crear_diagrama()
+{
+#ifndef USE_NCURSES
+    printf("Ncurses no disponible en esta version.\n");
+    pause_console();
+    return;
+#else
+    if (!settings_get_use_ncurses())
+    {
+        printf("Activa Ncurses en Ajustes para usar el editor tactico.\n");
+        pause_console();
+        return;
+    }
+
+    listar_partidos();
+    int partido_id = input_int("ID del partido (0 para cancelar): ");
+    if (partido_id == 0)
+    {
+        return;
+    }
+    if (!existe_id("partido", partido_id))
+    {
+        printf("Partido no encontrado.\n");
+        pause_console();
+        return;
+    }
+
+    char nombre[64];
+    input_string("Nombre del diagrama: ", nombre, sizeof(nombre));
+    if (safe_strnlen(nombre, sizeof(nombre)) == 0)
+    {
+        snprintf(nombre, sizeof(nombre), "Diagrama %d", partido_id);
+    }
+
+    char grid[TACTIC_H][TACTIC_W + 1];
+    tactica_init_grid(grid);
+
+    int saved = tactica_draw_editor(grid, nombre, partido_id);
+    if (saved)
+    {
+        char grid_text[(TACTIC_W + 1) * TACTIC_H + 1];
+        tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+        tactica_guardar_diagrama(partido_id, nombre, grid_text);
+    }
+
+    clear();
+    refresh();
+    return;
+#endif
+}
+
+void menu_tacticas_partido()
+{
+    MenuItem items[] =
+    {
+        {1, "Crear diagrama", tactica_crear_diagrama},
+        {2, "Ver diagramas", tactica_ver_diagrama},
+        {0, "Volver", NULL}
+    };
+
+    clear_screen();
+    print_header("ANALISIS TACTICO");
+    ejecutar_menu("ANALISIS TACTICO", items, 3);
+}
+
 /**
  * @brief Muestra el menú principal de gestión de partidos
  *
@@ -1711,8 +2252,9 @@ void menu_partidos()
         {3, "Modificar", modificar_partido},
         {4, "Eliminar", eliminar_partido},
         {5, "Simular con Equipos Guardados", simular_partido_guardados},
+        {6, "Analisis Tactico", menu_tacticas_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("PARTIDOS", items, 6);
+    ejecutar_menu("PARTIDOS", items, 7);
 }

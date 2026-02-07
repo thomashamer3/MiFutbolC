@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 
+
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
@@ -2145,7 +2146,8 @@ void listar_equipos()
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
     {
-        printf("\n=== LISTA DE EQUIPOS ===\n\n");
+        ui_printf_centered_line("=== LISTA DE EQUIPOS ===");
+        ui_printf("\n");
 
         int found = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2158,18 +2160,17 @@ void listar_equipos()
             int num_jugadores = sqlite3_column_int(stmt, 4);
             int partido_id = sqlite3_column_int(stmt, 5);
 
-            printf("ID: %d\n", id);
-            printf("Nombre: %s\n", nombre);
-            printf("Tipo: %s\n", tipo == FIJO ? "Fijo" : "Momentaneo");
-            printf("Tipo de Futbol: %s\n", get_nombre_tipo_futbol(tipo_futbol));
-            printf("Numero de Jugadores: %d\n", num_jugadores);
-            printf("Asignado a Partido: %s\n", partido_id == -1 ? "No" : "Si");
+            ui_printf_centered_line("ID: %d", id);
+            ui_printf_centered_line("Nombre: %s", nombre);
+            ui_printf_centered_line("Tipo: %s", tipo == FIJO ? "Fijo" : "Momentaneo");
+            ui_printf_centered_line("Tipo de Futbol: %s", get_nombre_tipo_futbol(tipo_futbol));
+            ui_printf_centered_line("Numero de Jugadores: %d", num_jugadores);
+            ui_printf_centered_line("Asignado a Partido: %s", partido_id == -1 ? "No" : "Si");
 
             // Mostrar jugadores del equipo
-            printf("\n=== JUGADORES ===\n");
+            ui_printf_centered_line("=== JUGADORES ===");
             mostrar_jugadores_equipo(id);
-
-            printf("----------------------------------------\n");
+            ui_printf_centered_line("----------------------------------------");
         }
 
         if (!found)

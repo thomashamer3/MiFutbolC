@@ -13,6 +13,7 @@
 #include <windows.h>
 #endif
 
+
 /**
  * @file qr.c
  * @brief Implementación del sistema de códigos QR para MiFutbolC

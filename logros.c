@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 /**
  * @brief Preparar statement y reportar errores
  */
@@ -410,9 +411,10 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
         break;
     }
     // ARREGLAR COLOR CONSOLA
-    printf("%s%s %s\x1b[0m\n", color, logro->nombre, estado_texto);
-    printf("   %s\n", logro->descripcion);
-    printf("   Progreso: %d/%d\n\n", progreso, logro->objetivo);
+    ui_printf_centered_line("%s%s %s\x1b[0m", color, logro->nombre, estado_texto);
+    ui_printf_centered_line("%s", logro->descripcion);
+    ui_printf_centered_line("Progreso: %d/%d", progreso, logro->objetivo);
+    ui_printf("\n");
 }
 
 /**
@@ -430,8 +432,9 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 
     if (safe_strnlen(nombre_camiseta, sizeof(nombre_camiseta)) == 0) return; // Error already printed
 
-    printf("\nLOGROS DE: %s\n", nombre_camiseta);
-    printf("========================================\n\n");
+    ui_printf_centered_line("LOGROS DE: %s", nombre_camiseta);
+    ui_printf_centered_line("========================================");
+    ui_printf("\n");
 
     int mostrados = 0;
 
@@ -465,7 +468,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
  */
 static void listar_camisetas_con_partidos()
 {
-    printf("Camisetas disponibles:\n");
+    ui_printf_centered_line("Camisetas disponibles:");
     sqlite3_stmt *stmt;
     if (!preparar_stmt("SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", &stmt))
     {
@@ -475,7 +478,7 @@ static void listar_camisetas_con_partidos()
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("%d | %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
+        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
         count++;
     }
     sqlite3_finalize(stmt);

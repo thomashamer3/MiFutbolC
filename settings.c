@@ -13,14 +13,24 @@
 #include "export_all.h"
 #include "import.h"
 #include "ascii_art.h"
+#include "cJSON.h"
 #include <Windows.h>
+#ifdef _WIN32
+#include <shellapi.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
+
 void menu_exportar();
+void menu_update();
+
+// Repositorio usado para buscar la release. Formato: owner/repo
+// Si deseas cambiar, modifica esta constante.
+#define UPDATE_REPO "thomashamer3/MiFutbolC"
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM, 1};
 
 // Flag para rastrear cambios en menú personalizado
 static int custom_menu_changed = 0;
@@ -57,6 +67,11 @@ static void set_text_size_int(int value)
     settings_set_text_size((TextSizeType)value);
 }
 
+static void set_use_ncurses_int(int value)
+{
+    settings_set_use_ncurses(value);
+}
+
 static void aplicar_config_y_pausar(void (*setter)(int), int value)
 {
     setter(value);
@@ -69,6 +84,48 @@ static void aplicar_tema_texto_y_pausar(ThemeType theme, TextSizeType text_size)
     settings_set_theme(theme);
     settings_set_text_size(text_size);
     printf("%s\n", get_text("settings_saved"));
+    pause_console();
+}
+
+/* Wrappers para usar como acciones en MenuItem (sin argumentos) */
+static void theme_set_light()   { aplicar_config_y_pausar(set_theme_int, THEME_LIGHT); }
+static void theme_set_dark()    { aplicar_config_y_pausar(set_theme_int, THEME_DARK); }
+static void theme_set_blue()    { aplicar_config_y_pausar(set_theme_int, THEME_BLUE); }
+static void theme_set_green()   { aplicar_config_y_pausar(set_theme_int, THEME_GREEN); }
+static void theme_set_red()     { aplicar_config_y_pausar(set_theme_int, THEME_RED); }
+static void theme_set_purple()  { aplicar_config_y_pausar(set_theme_int, THEME_PURPLE); }
+static void theme_set_classic() { aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC); }
+static void theme_set_high_contrast() { aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST); }
+
+static void lang_set_spanish() { aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH); }
+static void lang_set_english() { aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH); }
+
+static void text_size_small()  { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL); }
+static void text_size_medium() { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM); }
+static void text_size_large()  { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE); }
+
+static void accessibility_high_contrast() { aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST); }
+static void accessibility_normal_theme_text() { aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM); }
+
+static void visual_use_ncurses()
+{
+#ifdef USE_NCURSES
+    aplicar_config_y_pausar(set_use_ncurses_int, 1);
+#else
+    printf("%s\n", get_text("visual_mode_unavailable"));
+    pause_console();
+#endif
+}
+static void visual_use_classic() { aplicar_config_y_pausar(set_use_ncurses_int, 0); }
+
+static void mode_set_simple()   { aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE); }
+static void mode_set_advanced() { aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED); }
+static void mode_set_custom()
+{
+    current_settings.mode = MODE_CUSTOM;
+    habilitar_menus_basicos_custom();
+    menu_custom_menus();
+    confirmar_guardado_si_cambios();
     pause_console();
 }
 
@@ -169,6 +226,11 @@ static const TextEntry text_entries[] =
     {"settings_language", "Idioma", "Language"},
     {"settings_mode", "Modo", "Mode"},
     {"settings_accessibility", "Accesibilidad", "Accessibility"},
+    {"settings_visual_mode", "Modo Visual", "Visual Mode"},
+    {"visual_mode_ncurses", "Usar Ncurses", "Use Ncurses"},
+    {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
+    {"visual_mode_current", "Actual", "Current"},
+    {"visual_mode_unavailable", "Ncurses no disponible en esta version", "Ncurses is not available in this build"},
     {"settings_text_size", "Tamanio de texto", "Text size"},
     {"text_size_small", "Pequenio", "Small"},
     {"text_size_medium", "Mediano", "Medium"},
@@ -244,6 +306,7 @@ static const TextEntry text_entries[] =
     {"show_current", "Ver Configuracion Actual", "Show Current Settings"},
     {"reset_defaults", "Restablecer a Valores por Defecto", "Reset to Default Values"},
     {"welcome_message", "Bienvenido De Vuelta", "Welcome Back"},
+    {"menu_update", "Actualizar", "Update"},
     {NULL, NULL, NULL} // Terminador
 };
 
@@ -262,6 +325,13 @@ static void ensure_settings_schema()
     {
         sqlite3_free(err);
     }
+
+    err = NULL;
+    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN use_ncurses INTEGER DEFAULT 1;", NULL, NULL, &err);
+    if (err)
+    {
+        sqlite3_free(err);
+    }
 }
 
 /**
@@ -270,7 +340,7 @@ static void ensure_settings_schema()
 void settings_init()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT theme, language, mode, text_size FROM settings WHERE id = 1;";
+    const char *sql = "SELECT theme, language, mode, text_size, use_ncurses FROM settings WHERE id = 1;";
     int has_settings = 0;
 
     ensure_settings_schema();
@@ -283,6 +353,7 @@ void settings_init()
             current_settings.language = sqlite3_column_int(stmt, 1);
             current_settings.mode = sqlite3_column_int(stmt, 2);
             current_settings.text_size = sqlite3_column_int(stmt, 3);
+            current_settings.use_ncurses = sqlite3_column_int(stmt, 4);
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -342,7 +413,7 @@ void settings_init()
 void settings_save()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size) VALUES (1, ?, ?, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size, use_ncurses) VALUES (1, ?, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -350,6 +421,7 @@ void settings_save()
         sqlite3_bind_int(stmt, 2, current_settings.language);
         sqlite3_bind_int(stmt, 3, current_settings.mode);
         sqlite3_bind_int(stmt, 4, current_settings.text_size);
+        sqlite3_bind_int(stmt, 5, current_settings.use_ncurses);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -411,6 +483,23 @@ void settings_set_mode(ModeType mode)
     }
 
     settings_save();
+}
+
+/**
+ * @brief Establece el modo visual (ncurses o clasico)
+ */
+void settings_set_use_ncurses(int enabled)
+{
+    current_settings.use_ncurses = enabled ? 1 : 0;
+    settings_save();
+}
+
+/**
+ * @brief Indica si se debe usar ncurses en la interfaz
+ */
+int settings_get_use_ncurses()
+{
+    return current_settings.use_ncurses;
 }
 
 /**
@@ -822,58 +911,20 @@ static const MenuItem* buscar_item_settings(const MenuItem *items, int cantidad,
  */
 static void menu_theme_settings()
 {
-    int opcion;
-    do
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header(get_text("settings_theme"));
+        {1, get_text("theme_light"), theme_set_light},
+        {2, get_text("theme_dark"), theme_set_dark},
+        {3, get_text("theme_blue"), theme_set_blue},
+        {4, get_text("theme_green"), theme_set_green},
+        {5, get_text("theme_red"), theme_set_red},
+        {6, get_text("theme_purple"), theme_set_purple},
+        {7, get_text("theme_classic"), theme_set_classic},
+        {8, get_text("theme_high_contrast"), theme_set_high_contrast},
+        {0, get_text("menu_back"), NULL}
+    };
 
-        printf("1. %s\n", get_text("theme_light"));
-        printf("2. %s\n", get_text("theme_dark"));
-        printf("3. %s\n", get_text("theme_blue"));
-        printf("4. %s\n", get_text("theme_green"));
-        printf("5. %s\n", get_text("theme_red"));
-        printf("6. %s\n", get_text("theme_purple"));
-        printf("7. %s\n", get_text("theme_classic"));
-        printf("8. %s\n", get_text("theme_high_contrast"));
-        printf("0. %s\n", get_text("menu_back"));
-
-        opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            aplicar_config_y_pausar(set_theme_int, THEME_LIGHT);
-            break;
-        case 2:
-            aplicar_config_y_pausar(set_theme_int, THEME_DARK);
-            break;
-        case 3:
-            aplicar_config_y_pausar(set_theme_int, THEME_BLUE);
-            break;
-        case 4:
-            aplicar_config_y_pausar(set_theme_int, THEME_GREEN);
-            break;
-        case 5:
-            aplicar_config_y_pausar(set_theme_int, THEME_RED);
-            break;
-        case 6:
-            aplicar_config_y_pausar(set_theme_int, THEME_PURPLE);
-            break;
-        case 7:
-            aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC);
-            break;
-        case 8:
-            aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
-            break;
-        case 0:
-            break;
-        default:
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-        }
-    }
-    while (opcion != 0);
+    ejecutar_menu(get_text("settings_theme"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
 /**
@@ -881,34 +932,14 @@ static void menu_theme_settings()
  */
 static void menu_language_settings()
 {
-    int opcion;
-    do
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header(get_text("settings_language"));
+        {1, get_text("lang_spanish"), lang_set_spanish},
+        {2, get_text("lang_english"), lang_set_english},
+        {0, get_text("menu_back"), NULL}
+    };
 
-        printf("1. %s\n", get_text("lang_spanish"));
-        printf("2. %s\n", get_text("lang_english"));
-        printf("0. %s\n", get_text("menu_back"));
-
-        opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH);
-            break;
-        case 2:
-            aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH);
-            break;
-        case 0:
-            break;
-        default:
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-        }
-    }
-    while (opcion != 0);
+    ejecutar_menu(get_text("settings_language"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
 /**
@@ -964,6 +995,7 @@ static void show_current_settings()
     printf("Tema: %s\n", get_current_theme_name());
     printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
     printf("Tamanio de texto: %s\n", get_current_text_size_name());
+    printf("Modo Visual: %s\n", current_settings.use_ncurses ? get_text("visual_mode_ncurses") : get_text("visual_mode_classic"));
 
     char *usuario = get_user_name();
     if (usuario)
@@ -985,38 +1017,15 @@ static void show_current_settings()
  */
 static void menu_text_size_settings()
 {
-    int opcion;
-    do
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header(get_text("settings_text_size"));
+        {1, get_text("text_size_small"), text_size_small},
+        {2, get_text("text_size_medium"), text_size_medium},
+        {3, get_text("text_size_large"), text_size_large},
+        {0, get_text("menu_back"), NULL}
+    };
 
-        printf("1. %s\n", get_text("text_size_small"));
-        printf("2. %s\n", get_text("text_size_medium"));
-        printf("3. %s\n", get_text("text_size_large"));
-        printf("0. %s\n", get_text("menu_back"));
-
-        opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL);
-            break;
-        case 2:
-            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM);
-            break;
-        case 3:
-            aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE);
-            break;
-        case 0:
-            break;
-        default:
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-        }
-    }
-    while (opcion != 0);
+    ejecutar_menu(get_text("settings_text_size"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
 /**
@@ -1024,38 +1033,35 @@ static void menu_text_size_settings()
  */
 static void menu_accessibility_settings()
 {
-    int opcion;
-    do
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header(get_text("settings_accessibility"));
+        {1, get_text("settings_text_size"), menu_text_size_settings},
+        {2, get_text("settings_high_contrast"), accessibility_high_contrast},
+        {3, get_text("settings_accessibility_normal"), accessibility_normal_theme_text},
+        {0, get_text("menu_back"), NULL}
+    };
 
-        printf("1. %s: %s\n", get_text("settings_text_size"), get_current_text_size_name());
-        printf("2. %s\n", get_text("settings_high_contrast"));
-        printf("3. %s\n", get_text("settings_accessibility_normal"));
-        printf("0. %s\n", get_text("menu_back"));
+    ejecutar_menu(get_text("settings_accessibility"), items, (int)(sizeof(items)/sizeof(items[0])));
+}
 
-        opcion = input_int("> ");
+/**
+ * @brief Submenú para modo visual (ncurses o clasico)
+ */
+static void menu_visual_mode_settings()
+{
+    char current[128];
+    snprintf(current, sizeof(current), "%s: %s", get_text("visual_mode_current"),
+             current_settings.use_ncurses ? get_text("visual_mode_ncurses") : get_text("visual_mode_classic"));
 
-        switch (opcion)
-        {
-        case 1:
-            menu_text_size_settings();
-            break;
-        case 2:
-            aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
-            break;
-        case 3:
-            aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM);
-            break;
-        case 0:
-            break;
-        default:
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-        }
-    }
-    while (opcion != 0);
+    MenuItem items[] =
+    {
+        {1, get_text("visual_mode_ncurses"), visual_use_ncurses},
+        {2, get_text("visual_mode_classic"), visual_use_classic},
+        {0, get_text("menu_back"), NULL}
+    };
+
+    /* Mostrar título con el estado actual en el header */
+    ejecutar_menu(get_text("settings_visual_mode"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
 /**
@@ -1076,6 +1082,7 @@ static void reset_settings_to_defaults()
     {
         current_settings.theme = THEME_LIGHT;
         current_settings.language = LANGUAGE_SPANISH;
+        current_settings.use_ncurses = 1;
         settings_apply_theme();
         settings_save();
 
@@ -1143,45 +1150,15 @@ void set_custom_menu_enabled(const char* menu_name, int enabled)
  */
 static void menu_mode_settings()
 {
-    int opcion;
-    do
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header(get_text("settings_mode"));
+        {1, get_text("mode_simple"), mode_set_simple},
+        {2, get_text("mode_advanced"), mode_set_advanced},
+        {3, get_text("mode_custom"), mode_set_custom},
+        {0, get_text("menu_back"), NULL}
+    };
 
-        printf("1. %s\n", get_text("mode_simple"));
-        printf("2. %s\n", get_text("mode_advanced"));
-        printf("3. %s\n", get_text("mode_custom"));
-        printf("0. %s\n", get_text("menu_back"));
-
-        opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE);
-            break;
-        case 2:
-            aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED);
-            break;
-        case 3:
-            current_settings.mode = MODE_CUSTOM;
-            // Habilitar menús básicos por defecto en modo personalizado
-            habilitar_menus_basicos_custom();
-            // Mostrar menú para configurar menús
-            menu_custom_menus();
-            // Ask for confirmation only if changes were made
-            confirmar_guardado_si_cambios();
-            pause_console();
-            break;
-        case 0:
-            break;
-        default:
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-        }
-    }
-    while (opcion != 0);
+    ejecutar_menu(get_text("settings_mode"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
 /**
@@ -1252,6 +1229,266 @@ void menu_custom_menus()
 }
 
 /**
+ * @brief Descarga la última release .exe desde GitHub Releases y la ejecuta (Windows)
+ */
+void menu_update()
+{
+#ifdef UNIT_TEST
+    return;
+#endif
+#ifdef _WIN32
+    clear_screen();
+    print_header(get_text("menu_update"));
+    const char *owner_repo = UPDATE_REPO; // formato owner/repo
+    char repo_name[128] = {0};
+    const char *slash = strrchr(owner_repo, '/');
+    if (slash && *(slash + 1) != '\0')
+    {
+        snprintf(repo_name, sizeof(repo_name), "%s", slash + 1);
+    }
+    else
+    {
+        snprintf(repo_name, sizeof(repo_name), "%s", owner_repo);
+    }
+
+    // Opciones al usuario
+    printf("1. %s\n", "Ultima version (latest)");
+    printf("2. %s\n", "Elegir una version de la lista");
+    printf("0. %s\n", get_text("menu_back"));
+
+    int modo = input_int("> ");
+    if (modo == 0)
+    {
+        return;
+    }
+
+    char temp_path[MAX_PATH];
+    if (GetTempPathA(MAX_PATH, temp_path) == 0)
+    {
+        printf("Error obteniendo carpeta temporal.\n");
+        pause_console();
+        return;
+    }
+
+    // Función de descarga dinámica
+    typedef HRESULT (WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR, DWORD, LPVOID);
+    URLDownloadToFileAFunc pUrlDownload = NULL;
+    HMODULE hUrlmon = LoadLibraryA("urlmon.dll");
+    if (hUrlmon)
+    {
+        pUrlDownload = (URLDownloadToFileAFunc)GetProcAddress(hUrlmon, "URLDownloadToFileA");
+    }
+
+    if (modo == 1)
+    {
+        // Descargar la ultima versión directamente por convención del asset <repo>.exe
+        char download_url[1024];
+        snprintf(download_url, sizeof(download_url), "https://github.com/%s/releases/latest/download/%s.exe", owner_repo, repo_name);
+
+        char dest[1024];
+        snprintf(dest, sizeof(dest), "%s%s_latest.exe", temp_path, repo_name);
+
+        printf("Descargando %s -> %s\n", download_url, dest);
+
+        HRESULT hr = E_FAIL;
+        if (pUrlDownload)
+        {
+            hr = pUrlDownload(NULL, download_url, dest, 0, NULL);
+        }
+
+        if (hr != S_OK)
+        {
+            printf("Error descargando la release. HRESULT=0x%08llX\n", (long long)hr);
+            if (hUrlmon) FreeLibrary(hUrlmon);
+            pause_console();
+            return;
+        }
+
+        printf("Descarga completada: %s\n", dest);
+        HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
+        if ((INT_PTR)h <= 32)
+        {
+            printf("Error al ejecutar el instalador. Codigo: %lld\n", (long long)(INT_PTR)h);
+        }
+
+        if (hUrlmon) FreeLibrary(hUrlmon);
+        pause_console();
+        return;
+    }
+
+    // Modo: listar releases a través de la API y permitir seleccionar
+    char api_url[1024];
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases", owner_repo);
+    char json_path[1024];
+    snprintf(json_path, sizeof(json_path), "%s%s_releases.json", temp_path, repo_name);
+
+    printf("Obteniendo lista de releases...\n");
+    HRESULT hr = E_FAIL;
+    if (pUrlDownload)
+    {
+        hr = pUrlDownload(NULL, api_url, json_path, 0, NULL);
+    }
+
+    if (hr != S_OK)
+    {
+        printf("Error descargando lista de releases. HRESULT=0x%08llX\n", (long long)hr);
+        if (hUrlmon) FreeLibrary(hUrlmon);
+        pause_console();
+        return;
+    }
+
+    // Leer archivo JSON
+    FILE *f = fopen(json_path, "rb");
+    if (!f)
+    {
+        printf("Error abriendo archivo de releases descargado.\n");
+        if (hUrlmon) FreeLibrary(hUrlmon);
+        pause_console();
+        return;
+    }
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *data = (char*)malloc(fsize + 1);
+    if (!data)
+    {
+        fclose(f);
+        if (hUrlmon) FreeLibrary(hUrlmon);
+        printf("Memoria insuficiente.\n");
+        pause_console();
+        return;
+    }
+    fread(data, 1, fsize, f);
+    data[fsize] = '\0';
+    fclose(f);
+
+    cJSON *root = cJSON_Parse(data);
+    free(data);
+    if (!root || !cJSON_IsArray(root))
+    {
+        printf("Respuesta invalida de GitHub API.\n");
+        if (root) cJSON_Delete(root);
+        if (hUrlmon) FreeLibrary(hUrlmon);
+        pause_console();
+        return;
+    }
+
+    const int MAX_RELEASES = 64;
+    char *asset_urls[MAX_RELEASES];
+    char *release_names[MAX_RELEASES];
+    int count = 0;
+
+    cJSON *rel = NULL;
+    cJSON_ArrayForEach(rel, root)
+    {
+        if (count >= MAX_RELEASES) break;
+        cJSON *tag = cJSON_GetObjectItem(rel, "tag_name");
+        cJSON *name = cJSON_GetObjectItem(rel, "name");
+        const char *release_label = (tag && cJSON_IsString(tag) && tag->valuestring) ? tag->valuestring : (name && cJSON_IsString(name) ? name->valuestring : "(sin nombre)");
+
+        cJSON *assets = cJSON_GetObjectItem(rel, "assets");
+        if (assets && cJSON_IsArray(assets))
+        {
+            cJSON *asset = NULL;
+            cJSON_ArrayForEach(asset, assets)
+            {
+                cJSON const *an = cJSON_GetObjectItem(asset, "name");
+                cJSON *url = cJSON_GetObjectItem(asset, "browser_download_url");
+                if (an && url && cJSON_IsString(an) && cJSON_IsString(url))
+                {
+                    const char *asset_name = an->valuestring;
+                    const char *asset_url = url->valuestring;
+                    // Preferir ejecutables .exe
+                    if (strstr(asset_name, ".exe") != NULL)
+                    {
+                        release_names[count] = _strdup(release_label);
+                        asset_urls[count] = _strdup(asset_url);
+                        count++;
+                        break; // tomar primer .exe del release
+                    }
+                }
+            }
+        }
+    }
+
+    cJSON_Delete(root);
+    if (hUrlmon) FreeLibrary(hUrlmon);
+
+    if (count == 0)
+    {
+        printf("No se encontraron assets .exe en las releases.");
+        pause_console();
+        return;
+    }
+
+    printf("Selecciona la version a descargar:\n");
+    for (int i = 0; i < count; i++)
+    {
+        printf("%d. %s\n", i + 1, release_names[i]);
+    }
+    printf("0. %s\n", get_text("menu_back"));
+
+    int choice = input_int("> ");
+    if (choice <= 0 || choice > count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            free(release_names[i]);
+            free(asset_urls[i]);
+        }
+        return;
+    }
+
+    const char *chosen_url = asset_urls[choice - 1];
+    char dest[1024];
+    snprintf(dest, sizeof(dest), "%s%s_selected.exe", temp_path, repo_name);
+
+    printf("Descargando %s -> %s\n", chosen_url, dest);
+
+    // Descargar asset seleccionado
+    hUrlmon = LoadLibraryA("urlmon.dll");
+    pUrlDownload = NULL;
+    if (hUrlmon)
+    {
+        pUrlDownload = (URLDownloadToFileAFunc)GetProcAddress(hUrlmon, "URLDownloadToFileA");
+    }
+
+    hr = E_FAIL;
+    if (pUrlDownload)
+    {
+        hr = pUrlDownload(NULL, chosen_url, dest, 0, NULL);
+    }
+
+    if (hUrlmon) FreeLibrary(hUrlmon);
+
+    for (int i = 0; i < count; i++)
+    {
+        free(release_names[i]);
+        free(asset_urls[i]);
+    }
+
+    if (hr != S_OK)
+    {
+        printf("Error descargando el asset. HRESULT=0x%08llX\n", (long long)hr);
+        pause_console();
+        return;
+    }
+
+    printf("Descarga completada: %s\n", dest);
+    HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
+    if ((INT_PTR)h <= 32)
+    {
+        printf("Error al ejecutar el instalador. Codigo: %lld\n", (long long)(INT_PTR)h);
+    }
+
+    pause_console();
+#else
+    printf("Actualizar solo esta soportado en Windows.\n");
+    pause_console();
+#endif
+}
+
+/**
  * @brief Menú principal de configuracion
  */
 void menu_settings()
@@ -1261,42 +1498,18 @@ void menu_settings()
         {1, get_text("settings_theme"), menu_theme_settings},
         {2, get_text("settings_language"), menu_language_settings},
         {3, get_text("settings_accessibility"), menu_accessibility_settings},
-        {4, get_text("menu_usuario"), menu_usuario},
-        {5, get_text("show_current"), show_current_settings},
-        {6, get_text("reset_defaults"), reset_settings_to_defaults},
-        {7, get_text("settings_mode"), menu_mode_settings},
-        {8, get_text("menu_exportar"), menu_exportar},
-        {9, get_text("menu_importar"), menu_importar},
+        {4, get_text("settings_visual_mode"), menu_visual_mode_settings},
+        {5, get_text("menu_usuario"), menu_usuario},
+        {6, get_text("show_current"), show_current_settings},
+        {7, get_text("reset_defaults"), reset_settings_to_defaults},
+        {8, get_text("settings_mode"), menu_mode_settings},
+        {9, get_text("menu_exportar"), menu_exportar},
+        {10, get_text("menu_importar"), menu_importar},
+        {11, get_text("menu_update"), menu_update},
         {0, get_text("menu_back"), NULL}
     };
 
     const int item_count = (int)(sizeof(items) / sizeof(items[0]));
 
-    while (1)
-    {
-        clear_screen();
-        print_header(get_text("menu_settings"));
-
-        for (int i = 0; i < item_count; i++)
-        {
-            printf("%d.%s\n", items[i].opcion, items[i].texto);
-        }
-
-        int opcion = input_int("> ");
-        const MenuItem *selected = buscar_item_settings(items, item_count, opcion);
-
-        if (!selected)
-        {
-            printf("%s\n", get_text("invalid_option"));
-            pause_console();
-            continue;
-        }
-
-        if (!selected->accion)
-        {
-            return;
-        }
-
-        selected->accion();
-    }
+    ejecutar_menu(get_text("menu_settings"), items, item_count);
 }

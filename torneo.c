@@ -8,6 +8,7 @@
 #include <string.h>
 #include "sqlite3.h"
 
+
 /**
  * @file torneo.c
  * @brief Implementación de funciones para la gestión de torneos en MiFutbolC
@@ -127,7 +128,8 @@ static int listar_torneos_generico(const char *no_records_msg)
         return 0;
     }
 
-    printf("\n=== TORNEOS DISPONIBLES ===\n\n");
+    ui_printf_centered_line("=== TORNEOS DISPONIBLES ===");
+    ui_printf("\n");
 
     int found = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -135,7 +137,7 @@ static int listar_torneos_generico(const char *no_records_msg)
         found = 1;
         int id = sqlite3_column_int(stmt, 0);
         const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-        printf("%d. %s\n", id, nombre);
+        ui_printf_centered_line("%d. %s", id, nombre);
     }
 
     sqlite3_finalize(stmt);
@@ -226,17 +228,17 @@ static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *
  */
 void mostrar_torneo(Torneo *torneo)
 {
-    printf("\n=== INFORMACION DEL TORNEO ===\n");
-    printf("Nombre: %s\n", torneo->nombre);
-    printf("Tiene equipo fijo: %s\n", torneo->tiene_equipo_fijo ? "Si" : "No");
+    ui_printf_centered_line("=== INFORMACION DEL TORNEO ===");
+    ui_printf_centered_line("Nombre: %s", torneo->nombre);
+    ui_printf_centered_line("Tiene equipo fijo: %s", torneo->tiene_equipo_fijo ? "Si" : "No");
     if (torneo->tiene_equipo_fijo)
     {
-        printf("Equipo fijo ID: %d\n", torneo->equipo_fijo_id);
+        ui_printf_centered_line("Equipo fijo ID: %d", torneo->equipo_fijo_id);
     }
-    printf("Cantidad de equipos: %d\n", torneo->cantidad_equipos);
-    printf("Tipo de torneo: %s\n", get_nombre_tipo_torneo(torneo->tipo_torneo));
-    printf("Formato de torneo: %s\n", get_nombre_formato_torneo(torneo->formato_torneo));
-    printf("\n");
+    ui_printf_centered_line("Cantidad de equipos: %d", torneo->cantidad_equipos);
+    ui_printf_centered_line("Tipo de torneo: %s", get_nombre_tipo_torneo(torneo->tipo_torneo));
+    ui_printf_centered_line("Formato de torneo: %s", get_nombre_formato_torneo(torneo->formato_torneo));
+    ui_printf("\n");
 }
 
 /**

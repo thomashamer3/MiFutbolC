@@ -435,7 +435,8 @@ static int create_database_schema()
         " theme INTEGER DEFAULT 0,"
         " language INTEGER DEFAULT 0,"
         " mode INTEGER DEFAULT 0,"
-        " text_size INTEGER DEFAULT 1);"
+        " text_size INTEGER DEFAULT 1,"
+        " use_ncurses INTEGER DEFAULT 1);"
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -663,7 +664,23 @@ static int create_database_schema()
         " tipo TEXT NOT NULL,"
         " profesional TEXT DEFAULT '',"
         " resultado TEXT DEFAULT '',"
-        " notas TEXT DEFAULT '');";
+        " notas TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_recomendacion ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " score_preparacion INTEGER DEFAULT 0,"
+        " riesgo_lesion INTEGER DEFAULT 0,"
+        " resumen TEXT DEFAULT '',"
+        " rutina TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS tactica_diagrama ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " partido_id INTEGER NOT NULL,"
+        " nombre TEXT NOT NULL,"
+        " fecha TEXT NOT NULL,"
+        " grid TEXT NOT NULL,"
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));";
 
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {

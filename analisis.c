@@ -12,9 +12,11 @@
 #include "menu.h"
 #include "settings.h"
 #include "entrenador_ia.h"
+#include "partido.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -642,11 +644,12 @@ void mostrar_analisis()
     {
         {1, "Analisis Basico", mostrar_analisis_basico},
         {2, "Comparador Avanzado", mostrar_comparador_avanzado},
-        {3, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
+        {3, "Analisis Tactico (Diagramas)", &menu_tacticas_partido},
+        {4, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ANALISIS Y COMPARADOR", items, 4);
+    ejecutar_menu("ANALISIS Y COMPARADOR", items, 5);
 }
 
 /**

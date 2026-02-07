@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 
+
 /**
  * @file temporada.c
  * @brief Implementación del Sistema de Temporadas y Ciclos Deportivos
@@ -323,7 +324,8 @@ void listar_temporadas()
 
     if (preparar_stmt(sql, &stmt))
     {
-        printf("\n=== TEMPORADAS ===\n\n");
+        ui_printf_centered_line("=== TEMPORADAS ===");
+        ui_printf("\n");
 
         int found = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -336,12 +338,12 @@ void listar_temporadas()
             const char *fecha_fin = (const char*)sqlite3_column_text(stmt, 4);
             const char *estado = (const char*)sqlite3_column_text(stmt, 5);
 
-            printf("ID: %d\n", id);
-            printf("Nombre: %s\n", nombre);
-            printf("Año: %d\n", anio);
-            printf("Período: %s al %s\n", fecha_inicio, fecha_fin);
-            printf("Estado: %s\n", estado);
-            printf("----------------------------------------\n");
+            ui_printf_centered_line("ID: %d", id);
+            ui_printf_centered_line("Nombre: %s", nombre);
+            ui_printf_centered_line("Año: %d", anio);
+            ui_printf_centered_line("Periodo: %s al %s", fecha_inicio, fecha_fin);
+            ui_printf_centered_line("Estado: %s", estado);
+            ui_printf_centered_line("----------------------------------------");
         }
 
         if (!found)

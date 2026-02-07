@@ -17,6 +17,7 @@
 #include "qr.h"
 #include "utils.h"
 
+
 /**
  * @brief Menú principal de estadísticas
  *

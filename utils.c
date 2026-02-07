@@ -22,12 +22,32 @@
 #include <time.h>
 #include <stddef.h>
 #include <errno.h>
+#include <stdarg.h>
+#ifdef USE_NCURSES
+#include <ncursesw/ncurses.h>
+#endif
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
+#include <Windows.h>
 #else
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
+#endif
+
+#ifdef _WIN32
+/* Función deshabilitada: evitar maximizar la consola automáticamente
+ * Se deja como no-op para que el usuario pueda cerrar/reducir la ventana.
+ */
+void ensure_console_maximized_windows(void)
+{
+    /* Intencionalmente vacío */
+}
+#else
+void ensure_console_maximized_windows(void)
+{
+    /* No-op en otros sistemas */
+}
 #endif
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -37,6 +57,169 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
         return 0;
     }
     return 1;
+}
+
+static int ui_is_ncurses_active(void)
+{
+#ifdef USE_NCURSES
+    return !isendwin();
+#else
+    return 0;
+#endif
+}
+
+static void uppercase_ascii(const char *src, char *dst, size_t size)
+{
+    size_t i = 0;
+    if (!dst || size == 0)
+    {
+        return;
+    }
+    if (!src)
+    {
+        dst[0] = '\0';
+        return;
+    }
+    while (src[i] != '\0' && i + 1 < size)
+    {
+        unsigned char ch = (unsigned char)src[i];
+        dst[i] = (char)toupper(ch);
+        i++;
+    }
+    dst[i] = '\0';
+}
+
+#ifdef USE_NCURSES
+static WINDOW *g_ui_output_win = NULL;
+
+void ui_set_output_window(WINDOW *win)
+{
+    g_ui_output_win = win;
+}
+
+WINDOW *ui_get_output_window(void)
+{
+    return g_ui_output_win;
+}
+#endif
+
+int ui_printf(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
+        int rc = vw_printw(target, fmt, args);
+        wrefresh(target);
+        va_end(args);
+        return rc;
+    }
+#endif
+    int rc = vprintf(fmt, args);
+    va_end(args);
+    return rc;
+}
+
+int ui_puts(const char *s)
+{
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
+        int rc = wprintw(target, "%s\n", s ? s : "");
+        wrefresh(target);
+        return rc;
+    }
+#endif
+    return puts(s ? s : "");
+}
+
+int ui_putchar(int c)
+{
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
+        int rc = waddch(target, c);
+        wrefresh(target);
+        return rc;
+    }
+#endif
+    return putchar(c);
+}
+
+int ui_printf_centered_line(const char *fmt, ...)
+{
+    char buffer[512];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
+        int height;
+        int width;
+        int y;
+        int x;
+        getmaxyx(target, height, width);
+        getyx(target, y, x);
+        (void)height;
+        (void)x;
+
+        if (y >= height - 1)
+        {
+            if (wscrl(target, 1) == OK)
+            {
+                y = height - 1;
+            }
+        }
+
+        int len = (int)strlen(buffer);
+        int start_x = (width - len) / 2;
+        if (start_x < 0)
+        {
+            start_x = 0;
+        }
+
+        mvwprintw(target, y, start_x, "%s", buffer);
+        wmove(target, y + 1, 0);
+        wrefresh(target);
+        return len;
+    }
+#endif
+
+    return printf("%s\n", buffer);
+}
+
+static int ui_readline(char *buffer, int size)
+{
+    if (!buffer || size <= 0)
+    {
+        return 0;
+    }
+
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
+        echo();
+        int rc = wgetnstr(target, buffer, size - 1);
+        noecho();
+        if (rc == ERR)
+        {
+            buffer[0] = '\0';
+            return 0;
+        }
+        return 1;
+    }
+#endif
+
+    return fgets(buffer, size, stdin) != NULL;
 }
 
 /**
@@ -51,9 +234,9 @@ int input_int(const char *msg)
 
     while (attempts < 5)
     {
-        printf("%s", msg);
+        ui_printf("%s", msg);
 
-        if (!fgets(buffer, sizeof(buffer), stdin))
+        if (!ui_readline(buffer, sizeof(buffer)))
         {
             attempts++;
             continue;
@@ -69,11 +252,11 @@ int input_int(const char *msg)
         if (sscanf_s(buffer, "%d %c", &v, &extra, (unsigned int)sizeof(extra)) == 1)
             return v;
 
-        printf("Entrada inválida. Intente nuevamente.\n");
+        ui_printf("Entrada inválida. Intente nuevamente.\n");
         attempts++;
     }
 
-    printf("Se alcanzó el máximo de intentos.\n");
+    ui_printf("Se alcanzó el máximo de intentos.\n");
     return 0;
 }
 
@@ -214,9 +397,9 @@ double input_double(const char *msg)
 
     while (1)
     {
-        printf("%s", msg);
+        ui_printf("%s", msg);
 
-        if (!fgets(buffer, sizeof(buffer), stdin))
+        if (!ui_readline(buffer, sizeof(buffer)))
             continue;
         buffer[strcspn(buffer, "\n")] = 0;
 
@@ -224,8 +407,8 @@ double input_double(const char *msg)
 
         if (sscanf_s(processed, "%lf", &v) == 1)
             return v;
-        printf("Entrada inválida. Ingrese un número válido (ej: 250, 1.500, "
-               "12.500, 250.000): ");
+        ui_printf("Entrada inválida. Ingrese un número válido (ej: 250, 1.500, "
+                  "12.500, 250.000): ");
     }
 }
 
@@ -238,9 +421,9 @@ void input_string(const char *msg, char *buffer, int size)
 {
     while (1)
     {
-        printf("%s", msg);
+        ui_printf("%s", msg);
 
-        if (!fgets(buffer, size, stdin))
+        if (!ui_readline(buffer, size))
             continue;
         buffer[strcspn(buffer, "\n")] = 0;
 
@@ -256,7 +439,7 @@ void input_string(const char *msg, char *buffer, int size)
 
         if (valid)
             return;
-        printf("Entrada inválida. Solo se permiten letras, espacios y números.\n");
+        ui_printf("Entrada inválida. Solo se permiten letras, espacios y números.\n");
     }
 }
 
@@ -357,8 +540,8 @@ static int procesar_input_date(const char *msg, char *buffer, int size)
 
     if (!validar_fecha_chars(buffer))
     {
-        printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/), "
-               "guiones (-) y dos puntos (:).\n");
+        ui_printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/), "
+                  "guiones (-) y dos puntos (:).\n");
         return 0;
     }
 
@@ -380,9 +563,9 @@ void input_date(const char *msg, char *buffer, int size)
 {
     while (1)
     {
-        printf("%s", msg);
+        ui_printf("%s", msg);
 
-        if (!fgets(buffer, size, stdin))
+        if (!ui_readline(buffer, size))
             continue;
         buffer[strcspn(buffer, "\n")] = 0;
 
@@ -454,6 +637,23 @@ int existe_id(const char *tabla, int id)
  */
 void clear_screen()
 {
+#ifdef USE_NCURSES
+    if (!isendwin())
+    {
+        if (g_ui_output_win)
+        {
+            werase(g_ui_output_win);
+            wmove(g_ui_output_win, 0, 0);
+            wrefresh(g_ui_output_win);
+        }
+        else
+        {
+            clear();
+            refresh();
+        }
+        return;
+    }
+#endif
 #ifdef _WIN32
     system("cls");
 #else
@@ -466,10 +666,93 @@ void clear_screen()
  * experiencia y registrar el momento de las operaciones, incluyendo arte ASCII
  * contextual.
  */
+static const char *obtener_ascii_por_titulo(const char *titulo)
+{
+    if (strstr(titulo, "MI FUTBOL C"))
+        return ASCII_BIENVENIDA;
+    if (strstr(titulo, "CAMISETA") || strstr(titulo, "CAMISETAS"))
+        return ASCII_CAMISETA;
+    if (strstr(titulo, "CANCHAS"))
+        return ASCII_CANCHA;
+    if (strstr(titulo, "PARTIDO") || strstr(titulo, "PARTIDOS"))
+        return ASCII_FUTBOL;
+    if (strstr(titulo, "EQUIPOS"))
+        return ASCII_EQUIPO;
+    if (strstr(titulo, "ESTADISTICA") || strstr(titulo, "ESTADISTICAS"))
+        return ASCII_ESTADISTICAS;
+    if (strstr(titulo, "LOGROS"))
+        return ASCII_LOGROS;
+    if (strstr(titulo, "ANALISIS") || strstr(titulo, "EVOLUCION TEMPORAL"))
+        return ASCII_ANALISIS;
+    if (strstr(titulo, "LESIONES"))
+        return ASCII_LESIONES;
+    if (strstr(titulo, "FINANCIAMIENTO"))
+        return ASCII_FINANCIAMIENTO;
+    if (strstr(titulo, "EXPORTAR"))
+        return ASCII_EXPORTAR;
+    if (strstr(titulo, "IMPORTAR"))
+        return ASCII_IMPORTAR;
+    if (strstr(titulo, "TORNEOS"))
+        return ASCII_TORNEOS;
+    if (strstr(titulo, "AJUSTES") || strstr(titulo, "SETTINGS"))
+        return ASCII_AJUSTES;
+    if (strstr(titulo, "QR"))
+        return ASCII_QR;
+    if (strstr(titulo, "TEMPORADA") || strstr(titulo, "SEASON"))
+        return ASCII_TEMPORADA;
+    if (strstr(titulo, "ENTRENADOR IA"))
+        return ASCII_ENTRENADOR_IA;
+    return NULL;
+}
+
+#ifdef USE_NCURSES
+static int ncurses_count_lines_util(const char *text)
+{
+    int lines = 1;
+    for (const char *p = text; *p; ++p)
+    {
+        if (*p == '\n')
+        {
+            lines++;
+        }
+    }
+    return lines;
+}
+
+static void ncurses_print_centered_lines_util(int start_y, const char *text)
+{
+    int height, width;
+    getmaxyx(stdscr, height, width);
+
+    const char *line_start = text;
+    int row = start_y;
+    while (*line_start && row < height)
+    {
+        const char *line_end = strchr(line_start, '\n');
+        int len = line_end ? (int)(line_end - line_start) : (int)strlen(line_start);
+        int x = (width - len) / 2;
+        if (x < 0)
+        {
+            x = 0;
+        }
+        mvprintw(row, x, "%.*s", len, line_start);
+
+        row++;
+        if (!line_end)
+        {
+            break;
+        }
+        line_start = line_end + 1;
+    }
+}
+#endif
+
 void print_header(const char *titulo)
 {
     char fecha[20];
     get_datetime(fecha, sizeof(fecha));
+    char titulo_buf[128];
+    const char *titulo_display;
 
     char *nombre_usuario = get_user_name();
     if (!nombre_usuario)
@@ -477,80 +760,132 @@ void print_header(const char *titulo)
         nombre_usuario = "Usuario Desconocido";
     }
 
-    // Mostrar arte ASCII contextual según el título del menú
-    if (strstr(titulo, "MI FUTBOL C"))
+    uppercase_ascii(titulo, titulo_buf, sizeof(titulo_buf));
+    titulo_display = titulo ? titulo_buf : "";
+    const char *ascii = obtener_ascii_por_titulo(titulo);
+    int mostrar_datos = 1;
+    if (titulo && strstr(titulo, "LISTADO") != NULL)
     {
-        printf("%s\n", ASCII_BIENVENIDA);
-    }
-    else if (strstr(titulo, "CAMISETA") || strstr(titulo, "CAMISETAS"))
-    {
-        printf("%s\n", ASCII_CAMISETA);
-    }
-    else if (strstr(titulo, "CANCHAS"))
-    {
-        printf("%s\n", ASCII_CANCHA);
-    }
-    else if (strstr(titulo, "PARTIDO") || strstr(titulo, "PARTIDOS"))
-    {
-        printf("%s\n", ASCII_FUTBOL);
-    }
-    else if (strstr(titulo, "EQUIPOS"))
-    {
-        printf("%s\n", ASCII_EQUIPO);
-    }
-    else if (strstr(titulo, "ESTADISTICA") || strstr(titulo, "ESTADISTICAS"))
-    {
-        printf("%s\n", ASCII_ESTADISTICAS);
-    }
-    else if (strstr(titulo, "LOGROS"))
-    {
-        printf("%s\n", ASCII_LOGROS);
-    }
-    else if (strstr(titulo, "ANALISIS") ||
-             strstr(titulo, "EVOLUCION TEMPORAL"))
-    {
-        printf("%s\n", ASCII_ANALISIS);
-    }
-    else if (strstr(titulo, "LESIONES"))
-    {
-        printf("%s\n", ASCII_LESIONES);
-    }
-    else if (strstr(titulo, "FINANCIAMIENTO"))
-    {
-        printf("%s\n", ASCII_FINANCIAMIENTO);
-    }
-    else if (strstr(titulo, "EXPORTAR"))
-    {
-        printf("%s\n", ASCII_EXPORTAR);
-    }
-    else if (strstr(titulo, "IMPORTAR"))
-    {
-        printf("%s\n", ASCII_IMPORTAR);
-    }
-    else if (strstr(titulo, "TORNEOS"))
-    {
-        printf("%s\n", ASCII_TORNEOS);
-    }
-    else if (strstr(titulo, "AJUSTES") || strstr(titulo, "SETTINGS"))
-    {
-        printf("%s\n", ASCII_AJUSTES);
-    }
-    else if (strstr(titulo, "QR"))
-    {
-        printf("%s\n", ASCII_QR);
-    }
-    else if (strstr(titulo, "TEMPORADA") || strstr(titulo, "SEASON"))
-    {
-        printf("%s\n", ASCII_TEMPORADA);
-    }
-    else if (strstr(titulo, "ENTRENADOR IA"))
-    {
-        printf("%s\n", ASCII_ENTRENADOR_IA);
+        mostrar_datos = 0;
     }
 
-    printf("========================================\n");
-    printf(" Usuario: %s\n", nombre_usuario);
-    printf(" Fecha  : %s\n", fecha);
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active() && g_ui_output_win)
+    {
+        WINDOW *target = g_ui_output_win;
+        int width = getmaxx(target);
+        int height = getmaxy(target);
+        int row = 0;
+
+        werase(target);
+        if (titulo_display && row < height)
+        {
+            int x = (width - (int)strlen(titulo_display)) / 2;
+            if (x < 0)
+            {
+                x = 0;
+            }
+            mvwprintw(target, row, x, "%s", titulo_display);
+        }
+        if (mostrar_datos)
+        {
+            row++;
+            if (row < height)
+            {
+                mvwprintw(target, row, 0, " Usuario: %s", nombre_usuario);
+            }
+            row++;
+            if (row < height)
+            {
+                mvwprintw(target, row, 0, " Fecha  : %s", fecha);
+            }
+        }
+        row++;
+        if (row < height)
+        {
+            mvwhline(target, row, 0, '=', width > 0 ? width : 0);
+        }
+        row++;
+        if (row < height)
+        {
+            wmove(target, row, 0);
+        }
+
+        wrefresh(target);
+        if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
+        {
+            free(nombre_usuario);
+        }
+        return;
+    }
+
+    int temp_initscr = 0;
+    if (isendwin())
+    {
+        initscr();
+        cbreak();
+        noecho();
+        keypad(stdscr, TRUE);
+        curs_set(0);
+        temp_initscr = 1;
+
+        if (has_colors())
+        {
+            start_color();
+            use_default_colors();
+            init_pair(1, COLOR_WHITE, -1);
+            init_pair(3, COLOR_YELLOW, COLOR_BLUE);
+        }
+    }
+
+    if (!isendwin())
+    {
+        clear();
+        if (ascii)
+        {
+            int art_lines = ncurses_count_lines_util(ascii);
+            ncurses_print_centered_lines_util(0, ascii);
+            move(art_lines + 1, 0);
+        }
+
+        printw("%s\n", titulo_display);
+        if (mostrar_datos)
+        {
+            printw(" Usuario: %s\n", nombre_usuario);
+            printw(" Fecha  : %s\n", fecha);
+        }
+        if (has_colors())
+            attron(COLOR_PAIR(3));
+        printw("========================================\n\n");
+        if (has_colors())
+            attroff(COLOR_PAIR(3));
+
+        refresh();
+
+        if (temp_initscr)
+        {
+            endwin();
+        }
+
+        if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
+        {
+            free(nombre_usuario);
+        }
+        return;
+    }
+#endif
+
+    if (ascii)
+    {
+        printf("%s\n", ascii);
+    }
+
+    printf("%s\n", titulo_display);
+    if (mostrar_datos)
+    {
+        printf(" Usuario: %s\n", nombre_usuario);
+        printf(" Fecha  : %s\n", fecha);
+    }
     printf("========================================\n\n");
 
     if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
@@ -565,7 +900,15 @@ void print_header(const char *titulo)
  */
 void pause_console()
 {
-    printf("\nPresione ENTER para continuar...");
+    ui_printf("\nPresione ENTER para continuar...");
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        int ch;
+        while ((ch = getch()) != '\n' && ch != KEY_ENTER) {}
+        return;
+    }
+#endif
     getchar();
 }
 
@@ -576,7 +919,14 @@ void pause_console()
 int confirmar(const char *msg)
 {
     int c;
-    printf("%s (S/N): ", msg);
+    ui_printf("%s (S/N): ", msg);
+#ifdef USE_NCURSES
+    if (ui_is_ncurses_active())
+    {
+        c = getch();
+        return (c == 's' || c == 'S');
+    }
+#endif
     c = getchar();
     getchar();
 
@@ -586,15 +936,15 @@ int confirmar(const char *msg)
 static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
                                  char *nombre, int size)
 {
-    printf("%s", prompt);
+    ui_printf("%s", prompt);
 
-    fgets(nombre, size, stdin);
+    ui_readline(nombre, size);
     nombre[strcspn(nombre, "\n")] = 0;
 
     while (safe_strnlen(nombre, (size_t)size) == 0)
     {
-        printf("%s", prompt_vacio);
-        fgets(nombre, size, stdin);
+        ui_printf("%s", prompt_vacio);
+        ui_readline(nombre, size);
         nombre[strcspn(nombre, "\n")] = 0;
     }
 }
@@ -607,18 +957,18 @@ void pedir_nombre_usuario()
 {
     char nombre[100];
     clear_screen();
-    printf("%s\n", ASCII_BIENVENIDA);
+    ui_printf("%s\n", ASCII_BIENVENIDA);
     leer_nombre_no_vacio("Por favor, ingresa tu Nombre: ",
                          "El nombre no puede estar vacio. Ingresa tu nombre: ",
                          nombre, (int)sizeof(nombre));
 
     if (set_user_name(nombre))
     {
-        printf("!Bienvenido, %s!\n", nombre);
+        ui_printf("!Bienvenido, %s!\n", nombre);
     }
     else
     {
-        printf("Error al guardar el nombre. Intenta nuevamente.\n");
+        ui_printf("Error al guardar el nombre. Intenta nuevamente.\n");
     }
     pause_console();
 }
@@ -632,12 +982,12 @@ void mostrar_nombre_usuario()
     char *nombre = get_user_name();
     if (nombre)
     {
-        printf("Tu nombre actual es: %s\n", nombre);
+        ui_printf("Tu nombre actual es: %s\n", nombre);
         free(nombre);
     }
     else
     {
-        printf("No se pudo obtener el nombre del usuario.\n");
+        ui_printf("No se pudo obtener el nombre del usuario.\n");
     }
     pause_console();
 }
@@ -655,11 +1005,11 @@ void editar_nombre_usuario()
 
     if (set_user_name(nombre))
     {
-        printf("Nombre actualizado exitosamente a: %s\n", nombre);
+        ui_printf("Nombre actualizado exitosamente a: %s\n", nombre);
     }
     else
     {
-        printf("Error al actualizar el nombre.\n");
+        ui_printf("Error al actualizar el nombre.\n");
     }
     pause_console();
 }
@@ -1001,14 +1351,14 @@ void listar_entidades(const char *tabla, const char *titulo, const char *mensaje
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("%d - %s\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1));
+        ui_printf_centered_line("%d - %s",
+                                sqlite3_column_int(stmt, 0),
+                                sqlite3_column_text(stmt, 1));
         hay = 1;
     }
 
     if (!hay)
-        printf("%s\n", mensaje_vacio);
+        ui_printf_centered_line("%s", mensaje_vacio);
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -1108,7 +1458,8 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
 
     if (preparar_stmt(sql, &stmt))
     {
-        printf("\n=== EQUIPOS DISPONIBLES ===\n\n");
+        ui_printf_centered_line("=== EQUIPOS DISPONIBLES ===");
+        ui_printf("\n");
 
         int found = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1116,7 +1467,7 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
             const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
+            ui_printf_centered_line("%d. %s", id, nombre);
         }
 
         if (!found)

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <time.h>
 
+
 /**
  * @brief Convierte un tipo de transacción enumerado a su nombre textual
  */
@@ -205,27 +206,26 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion)
     // Verificar que el puntero no sea nulo
     if (transaccion == NULL)
     {
-        printf("Error: Puntero de transaccion nulo.\n");
+        ui_printf_centered_line("Error: Puntero de transaccion nulo.");
         return;
     }
 
-    printf("ID: %d\n", transaccion->id);
+    ui_printf_centered_line("ID: %d", transaccion->id);
 
     // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para mostrar
     char fecha_display[11] = {0};
     mostrar_fecha_display(transaccion->fecha, fecha_display, sizeof(fecha_display));
-    printf("Fecha: %s\n", fecha_display);
+    ui_printf_centered_line("Fecha: %s", fecha_display);
 
-    printf("Tipo: %s\n", get_nombre_tipo_transaccion(transaccion->tipo));
-    printf("Categoria: %s\n", get_nombre_categoria(transaccion->categoria));
-    printf("Descripcion: %s\n", transaccion->descripcion);
-    printf("Monto: $");
-    mostrar_monto(transaccion->monto);
+    ui_printf_centered_line("Tipo: %s", get_nombre_tipo_transaccion(transaccion->tipo));
+    ui_printf_centered_line("Categoria: %s", get_nombre_categoria(transaccion->categoria));
+    ui_printf_centered_line("Descripcion: %s", transaccion->descripcion);
+    ui_printf_centered_line("Monto: $%s", formato_monto(transaccion->monto));
     if (transaccion->item_especifico[0] != '\0')
     {
-        printf("Item Especifico: %s\n", transaccion->item_especifico);
+        ui_printf_centered_line("Item Especifico: %s", transaccion->item_especifico);
     }
-    printf("\n");
+    ui_printf("\n");
 }
 
 /**
@@ -2143,7 +2143,8 @@ void listar_transacciones()
     sqlite3_stmt *stmt;
     if (preparar_stmt(sql, &stmt))
     {
-        printf("\n=== TODAS LAS TRANSACCIONES FINANCIERAS ===\n\n");
+        ui_printf_centered_line("=== TODAS LAS TRANSACCIONES FINANCIERAS ===");
+        ui_printf("\n");
 
         int total_ingresos = 0;
         int total_gastos = 0;
@@ -2183,7 +2184,7 @@ void listar_transacciones()
             }
 
             // Mostrar transacción
-            printf("----------------------------------------\n");
+            ui_printf_centered_line("----------------------------------------");
             mostrar_transaccion(&transaccion);
         }
 
@@ -2191,19 +2192,16 @@ void listar_transacciones()
 
         if (count == 0)
         {
-            printf("No hay transacciones registradas.\n");
+            ui_printf_centered_line("No hay transacciones registradas.");
         }
         else
         {
-            printf("========================================\n");
-            printf("RESUMEN GENERAL:\n");
-            printf("Total Ingresos: $");
-            mostrar_monto(total_ingresos);
-            printf("Total Gastos: $");
-            mostrar_monto(total_gastos);
-            printf("Balance: $");
-            mostrar_monto(total_ingresos - total_gastos);
-            printf("Total de transacciones: %d\n", count);
+            ui_printf_centered_line("========================================");
+            ui_printf_centered_line("RESUMEN GENERAL:");
+            ui_printf_centered_line("Total Ingresos: $%s", formato_monto(total_ingresos));
+            ui_printf_centered_line("Total Gastos: $%s", formato_monto(total_gastos));
+            ui_printf_centered_line("Balance: $%s", formato_monto(total_ingresos - total_gastos));
+            ui_printf_centered_line("Total de transacciones: %d", count);
         }
     }
     else

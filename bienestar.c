@@ -14,10 +14,108 @@
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
+#include <stdarg.h>
+
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static double clamp_double(double value, double min_val, double max_val)
+{
+    if (value < min_val)
+    {
+        return min_val;
+    }
+    if (value > max_val)
+    {
+        return max_val;
+    }
+    return value;
+}
+
+static int clamp_int(int value, int min_val, int max_val)
+{
+    if (value < min_val)
+    {
+        return min_val;
+    }
+    if (value > max_val)
+    {
+        return max_val;
+    }
+    return value;
+}
+
+static int obtener_double(const char *sql, double *out_value)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, sql))
+    {
+        *out_value = 0.0;
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_type(stmt, 0) != SQLITE_NULL)
+    {
+        *out_value = sqlite3_column_double(stmt, 0);
+    }
+    else
+    {
+        *out_value = 0.0;
+    }
+
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static int obtener_int(const char *sql, int *out_value)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, sql))
+    {
+        *out_value = 0;
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_type(stmt, 0) != SQLITE_NULL)
+    {
+        *out_value = sqlite3_column_int(stmt, 0);
+    }
+    else
+    {
+        *out_value = 0;
+    }
+
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static void append_line(char *buffer, size_t size, size_t *used, const char *fmt, ...)
+{
+    if (!buffer || !used || *used >= size)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    int written = vsnprintf(buffer + *used, size - *used, fmt, args);
+    va_end(args);
+
+    if (written > 0)
+    {
+        size_t add = (size_t)written;
+        if (*used + add >= size)
+        {
+            *used = size - 1;
+        }
+        else
+        {
+            *used += add;
+        }
+    }
 }
 
 static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql, const char *mensaje)
@@ -338,8 +436,8 @@ static void listar_objetivos_simple(int con_pause)
         return;
     }
 
-    printf("ID | Objetivo | Inicio | Fin | Estado\n");
-    printf("-----------------------------------------------\n");
+    ui_printf_centered_line("ID | Objetivo | Inicio | Fin | Estado");
+    ui_printf_centered_line("-----------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -355,13 +453,13 @@ static void listar_objetivos_simple(int con_pause)
         format_fecha_mostrar(inicio, inicio_disp, sizeof(inicio_disp));
         format_fecha_mostrar(fin, fin_disp, sizeof(fin_disp));
 
-        printf("%d | %s | %s | %s | %s\n", id, nombre, inicio_disp, fin_disp, estado);
+        ui_printf_centered_line("%d | %s | %s | %s | %s", id, nombre, inicio_disp, fin_disp, estado);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay objetivos registrados.\n");
+        ui_printf_centered_line("No hay objetivos registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -481,8 +579,8 @@ static void listar_planes_entrenamiento(void)
         return;
     }
 
-    printf("ID | Objetivo | Frecuencia | Rutina\n");
-    printf("-----------------------------------------------\n");
+    ui_printf_centered_line("ID | Objetivo | Frecuencia | Rutina");
+    ui_printf_centered_line("-----------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -492,13 +590,13 @@ static void listar_planes_entrenamiento(void)
         int frecuencia = sqlite3_column_int(stmt, 2);
         const char *rutina = (const char *)sqlite3_column_text(stmt, 3);
 
-        printf("%d | %s | %d/sem | %s\n", id, objetivo, frecuencia, rutina);
+        ui_printf_centered_line("%d | %s | %d/sem | %s", id, objetivo, frecuencia, rutina);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay planes registrados.\n");
+        ui_printf_centered_line("No hay planes registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -603,8 +701,8 @@ static void listar_habitos_simple(int con_pause, int con_clear)
         return;
     }
 
-    printf("ID | Fecha | Dormi | Hid | Alc | Animo | Ner | Conf | Mot | Tipo\n");
-    printf("------------------------------------------------------------------\n");
+    ui_printf_centered_line("ID | Fecha | Dormi | Hid | Alc | Animo | Ner | Conf | Mot | Tipo");
+    ui_printf_centered_line("------------------------------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -622,14 +720,14 @@ static void listar_habitos_simple(int con_pause, int con_clear)
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-        printf("%d | %s | %d | %d | %d | %s | %d | %d | %d | %s\n",
-               id, fecha_disp, dormi, hid, alc, animo, nerv, conf, mot, tipo);
+        ui_printf_centered_line("%d | %s | %d | %d | %d | %s | %d | %d | %d | %s",
+                                id, fecha_disp, dormi, hid, alc, animo, nerv, conf, mot, tipo);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay registros.\n");
+        ui_printf_centered_line("No hay registros.");
     }
 
     sqlite3_finalize(stmt);
@@ -996,8 +1094,8 @@ static void listar_sesiones_mentales(void)
         return;
     }
 
-    printf("ID | Fecha | Tipo | Momento | Conf | Estres | Mot | Pres | Conc\n");
-    printf("--------------------------------------------------------------------\n");
+    ui_printf_centered_line("ID | Fecha | Tipo | Momento | Conf | Estres | Mot | Pres | Conc");
+    ui_printf_centered_line("--------------------------------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1015,14 +1113,14 @@ static void listar_sesiones_mentales(void)
         char fecha_disp[32];
         format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
 
-        printf("%d | %s | %s | %s | %d | %d | %d | %d | %d\n",
-               id, fecha_disp, tipo, momento, confianza, estres, motivacion, presion, concentracion);
+        ui_printf_centered_line("%d | %s | %s | %s | %d | %d | %d | %d | %d",
+                                id, fecha_disp, tipo, momento, confianza, estres, motivacion, presion, concentracion);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay sesiones registradas.\n");
+        ui_printf_centered_line("No hay sesiones registradas.");
     }
 
     sqlite3_finalize(stmt);
@@ -1041,8 +1139,8 @@ static void listar_sesiones_mentales_simple(void)
         return;
     }
 
-    printf("ID | Fecha | Tipo | Momento\n");
-    printf("-----------------------------------------\n");
+    ui_printf_centered_line("ID | Fecha | Tipo | Momento");
+    ui_printf_centered_line("-----------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1055,13 +1153,13 @@ static void listar_sesiones_mentales_simple(void)
         char fecha_disp[32];
         format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
 
-        printf("%d | %s | %s | %s\n", id, fecha_disp, tipo, momento);
+        ui_printf_centered_line("%d | %s | %s | %s", id, fecha_disp, tipo, momento);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay sesiones registradas.\n");
+        ui_printf_centered_line("No hay sesiones registradas.");
     }
 
     sqlite3_finalize(stmt);
@@ -1107,25 +1205,25 @@ static void ver_detalle_sesion_mental(void)
         char fecha_disp[32];
         format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
 
-        printf("Fecha: %s\n", fecha_disp);
-        printf("Tipo: %s | Momento: %s\n", tipo, momento);
+        ui_printf_centered_line("Fecha: %s", fecha_disp);
+        ui_printf_centered_line("Tipo: %s | Momento: %s", tipo, momento);
         if (sqlite3_column_type(stmt, 3) == SQLITE_NULL)
         {
-            printf("Partido: N/A\n");
+            ui_printf_centered_line("Partido: N/A");
         }
         else
         {
-            printf("Partido ID: %d\n", partido_id);
+            ui_printf_centered_line("Partido ID: %d", partido_id);
         }
-        printf("Confianza: %d | Estres: %d | Motivacion: %d\n", confianza, estres, motivacion);
-        printf("Presion: %d | Concentracion: %d\n", presion, concentracion);
-        printf("Miedos: %s\n", miedos ? miedos : "");
-        printf("Pensamientos clave: %s\n", pensamientos ? pensamientos : "");
-        printf("Texto libre: %s\n", texto ? texto : "");
+        ui_printf_centered_line("Confianza: %d | Estres: %d | Motivacion: %d", confianza, estres, motivacion);
+        ui_printf_centered_line("Presion: %d | Concentracion: %d", presion, concentracion);
+        ui_printf_centered_line("Miedos: %s", miedos ? miedos : "");
+        ui_printf_centered_line("Pensamientos clave: %s", pensamientos ? pensamientos : "");
+        ui_printf_centered_line("Texto libre: %s", texto ? texto : "");
     }
     else
     {
-        printf("Sesion no encontrada.\n");
+        ui_printf_centered_line("Sesion no encontrada.");
     }
 
     sqlite3_finalize(stmt);
@@ -1646,8 +1744,8 @@ static void listar_entrenamientos_simple(int con_pause, int con_clear)
         return;
     }
 
-    printf("ID | Fecha | Tipo | Dur (min) | Int | Omitido\n");
-    printf("----------------------------------------------------\n");
+    ui_printf_centered_line("ID | Fecha | Tipo | Dur (min) | Int | Omitido");
+    ui_printf_centered_line("----------------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1661,14 +1759,14 @@ static void listar_entrenamientos_simple(int con_pause, int con_clear)
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-        printf("%d | %s | %s | %d | %d | %s\n", id, fecha_disp, tipo, dur, intensidad,
-               omitido ? "Si" : "No");
+        ui_printf_centered_line("%d | %s | %s | %d | %d | %s", id, fecha_disp, tipo, dur, intensidad,
+                                omitido ? "Si" : "No");
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay entrenamientos registrados.\n");
+        ui_printf_centered_line("No hay entrenamientos registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -1743,8 +1841,8 @@ static void listar_ejercicios(void)
         return;
     }
 
-    printf("ID | Ejercicio | Grupo\n");
-    printf("------------------------------\n");
+    ui_printf_centered_line("ID | Ejercicio | Grupo");
+    ui_printf_centered_line("------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1753,13 +1851,13 @@ static void listar_ejercicios(void)
         const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
         const char *grupo = (const char *)sqlite3_column_text(stmt, 2);
 
-        printf("%d | %s | %s\n", id, nombre, grupo);
+        ui_printf_centered_line("%d | %s | %s", id, nombre, grupo);
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay ejercicios registrados.\n");
+        ui_printf_centered_line("No hay ejercicios registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -2006,8 +2104,8 @@ static void listar_comidas(void)
         return;
     }
 
-    printf("Fecha | Tipo | Calidad | Descripcion\n");
-    printf("----------------------------------------------\n");
+    ui_printf_centered_line("Fecha | Tipo | Calidad | Descripcion");
+    ui_printf_centered_line("----------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2019,13 +2117,13 @@ static void listar_comidas(void)
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-        printf("%s | %s | %s | %s\n", fecha_disp, tipo, calidad, desc ? desc : "");
+        ui_printf_centered_line("%s | %s | %s | %s", fecha_disp, tipo, calidad, desc ? desc : "");
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay comidas registradas.\n");
+        ui_printf_centered_line("No hay comidas registradas.");
     }
 
     sqlite3_finalize(stmt);
@@ -2099,8 +2197,8 @@ static void listar_dias_nutricionales(void)
         return;
     }
 
-    printf("Fecha | Hidratacion | Alcohol | Peso\n");
-    printf("-----------------------------------------\n");
+    ui_printf_centered_line("Fecha | Hidratacion | Alcohol | Peso");
+    ui_printf_centered_line("-----------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2112,21 +2210,21 @@ static void listar_dias_nutricionales(void)
         {
             char fecha_disp[32];
             format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-            printf("%s | %s | %s | N/A\n", fecha_disp, hid, alcohol ? "Si" : "No");
+            ui_printf_centered_line("%s | %s | %s | N/A", fecha_disp, hid, alcohol ? "Si" : "No");
         }
         else
         {
             double peso = sqlite3_column_double(stmt, 3);
             char fecha_disp[32];
             format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-            printf("%s | %s | %s | %.1f\n", fecha_disp, hid, alcohol ? "Si" : "No", peso);
+            ui_printf_centered_line("%s | %s | %s | %.1f", fecha_disp, hid, alcohol ? "Si" : "No", peso);
         }
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay dias registrados.\n");
+        ui_printf_centered_line("No hay dias registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -2433,8 +2531,8 @@ static void listar_controles_medicos(void)
         return;
     }
 
-    printf("Fecha | Tipo | Profesional | Resultado\n");
-    printf("-----------------------------------------------------\n");
+    ui_printf_centered_line("Fecha | Tipo | Profesional | Resultado");
+    ui_printf_centered_line("-----------------------------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2447,17 +2545,17 @@ static void listar_controles_medicos(void)
         char fecha_disp[32];
         format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
 
-        printf("%s | %s | %s | %s\n",
-               fecha_disp,
-               tipo ? tipo : "",
-               prof ? prof : "",
-               res ? res : "");
+        ui_printf_centered_line("%s | %s | %s | %s",
+                                fecha_disp,
+                                tipo ? tipo : "",
+                                prof ? prof : "",
+                                res ? res : "");
         count++;
     }
 
     if (count == 0)
     {
-        printf("No hay controles registrados.\n");
+        ui_printf_centered_line("No hay controles registrados.");
     }
 
     sqlite3_finalize(stmt);
@@ -2551,6 +2649,374 @@ static void menu_salud(void)
     ejecutar_menu("SALUD", items, 7);
 }
 
+static void guardar_recomendacion(const char *fecha, int score, int riesgo, const char *resumen, const char *rutina)
+{
+    const char *sql =
+        "INSERT INTO bienestar_recomendacion "
+        "(fecha, score_preparacion, riesgo_lesion, resumen, rutina) "
+        "VALUES (?, ?, ?, ?, ?)";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
+    {
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, score);
+    sqlite3_bind_int(stmt, 3, riesgo);
+    sqlite3_bind_text(stmt, 4, resumen, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, rutina, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        printf("Error guardando recomendacion.\n");
+    }
+    sqlite3_finalize(stmt);
+}
+
+static void listar_recomendaciones_entrenamiento(void)
+{
+    clear_screen();
+    print_header("HISTORIAL RECOMENDACIONES");
+
+    const char *sql =
+        "SELECT fecha, score_preparacion, riesgo_lesion, resumen "
+        "FROM bienestar_recomendacion "
+        "ORDER BY id DESC LIMIT 10";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_consulta(&stmt, sql, "Error consultando recomendaciones.", 1))
+    {
+        return;
+    }
+
+    ui_printf_centered_line("Fecha | Prep | Riesgo | Resumen");
+    ui_printf_centered_line("--------------------------------------------------------------");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
+        int score = sqlite3_column_int(stmt, 1);
+        int riesgo = sqlite3_column_int(stmt, 2);
+        const char *resumen = (const char *)sqlite3_column_text(stmt, 3);
+
+        char fecha_disp[32];
+        format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
+        ui_printf_centered_line("%s | %d | %d | %s", fecha_disp, score, riesgo, resumen ? resumen : "");
+        count++;
+    }
+
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay recomendaciones guardadas.");
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void construir_rutina_texto(char *rutina, size_t size, int nivel, int lesiones_activas, const char *objetivo)
+{
+    size_t used = 0;
+    const char *objetivo_texto = (objetivo && objetivo[0]) ? objetivo : "Sin objetivo activo";
+
+    append_line(rutina, size, &used, "Objetivo: %s\n", objetivo_texto);
+
+    if (lesiones_activas > 0)
+    {
+        append_line(rutina, size, &used, "Enfoque: recuperacion y movilidad.\n");
+        append_line(rutina, size, &used, "Lunes: movilidad + estiramientos (30-40 min)\n");
+        append_line(rutina, size, &used, "Martes: tecnica suave (30 min)\n");
+        append_line(rutina, size, &used, "Miercoles: descanso\n");
+        append_line(rutina, size, &used, "Jueves: fuerza ligera + estabilidad (30-40 min)\n");
+        append_line(rutina, size, &used, "Viernes: movilidad (30 min)\n");
+        append_line(rutina, size, &used, "Sabado: descanso activo (caminar)\n");
+        append_line(rutina, size, &used, "Domingo: descanso\n");
+        return;
+    }
+
+    if (nivel >= 2)
+    {
+        append_line(rutina, size, &used, "Semana de carga alta.\n");
+        append_line(rutina, size, &used, "Lunes: fuerza + tecnica (70-90 min)\n");
+        append_line(rutina, size, &used, "Martes: resistencia (60 min)\n");
+        append_line(rutina, size, &used, "Miercoles: tecnica + velocidad (60 min)\n");
+        append_line(rutina, size, &used, "Jueves: fuerza + estabilidad (60 min)\n");
+        append_line(rutina, size, &used, "Viernes: partido/simulacion (70 min)\n");
+        append_line(rutina, size, &used, "Sabado: movilidad (30 min)\n");
+        append_line(rutina, size, &used, "Domingo: descanso\n");
+    }
+    else if (nivel == 1)
+    {
+        append_line(rutina, size, &used, "Semana de carga moderada.\n");
+        append_line(rutina, size, &used, "Lunes: fuerza (60 min)\n");
+        append_line(rutina, size, &used, "Martes: tecnica (50 min)\n");
+        append_line(rutina, size, &used, "Miercoles: descanso activo\n");
+        append_line(rutina, size, &used, "Jueves: resistencia (50 min)\n");
+        append_line(rutina, size, &used, "Viernes: movilidad (30 min)\n");
+        append_line(rutina, size, &used, "Sabado: partido/amisto suave\n");
+        append_line(rutina, size, &used, "Domingo: descanso\n");
+    }
+    else
+    {
+        append_line(rutina, size, &used, "Semana de carga baja.\n");
+        append_line(rutina, size, &used, "Lunes: movilidad (30 min)\n");
+        append_line(rutina, size, &used, "Martes: tecnica ligera (40 min)\n");
+        append_line(rutina, size, &used, "Miercoles: descanso\n");
+        append_line(rutina, size, &used, "Jueves: resistencia suave (40 min)\n");
+        append_line(rutina, size, &used, "Viernes: estiramientos (25 min)\n");
+        append_line(rutina, size, &used, "Sabado: descanso\n");
+        append_line(rutina, size, &used, "Domingo: descanso\n");
+    }
+}
+
+static void generar_asistente_entrenamiento(void)
+{
+    clear_screen();
+    print_header("ASISTENTE ENTRENAMIENTOS");
+
+    double avg_rend = 0.0;
+    obtener_double("SELECT AVG(rendimiento_general) FROM (SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 10);", &avg_rend);
+
+    int lesiones_activas = 0;
+    obtener_int("SELECT COUNT(*) FROM lesion WHERE estado = 'Activa';", &lesiones_activas);
+
+    double hab_dormi = 0.0;
+    double hab_hid = 0.0;
+    double hab_alc = 0.0;
+    double hab_nerv = 0.0;
+    double hab_conf = 0.0;
+    double hab_mot = 0.0;
+    {
+        const char *sql =
+            "SELECT AVG(dormi_bien), AVG(hidratacion), AVG(alcohol), AVG(nervios), AVG(confianza), AVG(motivacion) "
+            "FROM (SELECT dormi_bien, hidratacion, alcohol, nervios, confianza, motivacion "
+            "FROM bienestar_habito ORDER BY fecha DESC LIMIT 14);";
+        sqlite3_stmt *stmt;
+        if (preparar_stmt(&stmt, sql))
+        {
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                hab_dormi = sqlite3_column_double(stmt, 0);
+                hab_hid = sqlite3_column_double(stmt, 1);
+                hab_alc = sqlite3_column_double(stmt, 2);
+                hab_nerv = sqlite3_column_double(stmt, 3);
+                hab_conf = sqlite3_column_double(stmt, 4);
+                hab_mot = sqlite3_column_double(stmt, 5);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    double comida_avg = 0.0;
+    obtener_double(
+        "SELECT AVG(CASE calidad WHEN 'Buena' THEN 3 WHEN 'Regular' THEN 2 ELSE 1 END) "
+        "FROM (SELECT calidad FROM bienestar_comida ORDER BY fecha DESC, id DESC LIMIT 14);",
+        &comida_avg);
+
+    double dia_hid_avg = 0.0;
+    double dia_alc_avg = 0.0;
+    {
+        const char *sql =
+            "SELECT AVG(CASE hidratacion WHEN 'Alta' THEN 3 WHEN 'Media' THEN 2 ELSE 1 END), AVG(alcohol) "
+            "FROM (SELECT hidratacion, alcohol FROM bienestar_dia_nutricional ORDER BY fecha DESC LIMIT 14);";
+        sqlite3_stmt *stmt;
+        if (preparar_stmt(&stmt, sql))
+        {
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                dia_hid_avg = sqlite3_column_double(stmt, 0);
+                dia_alc_avg = sqlite3_column_double(stmt, 1);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    int entreno_count = 0;
+    double entreno_int_avg = 0.0;
+    double entreno_dur_avg = 0.0;
+    {
+        const char *sql =
+            "SELECT COUNT(*), AVG(intensidad), AVG(duracion_min) "
+            "FROM (SELECT intensidad, duracion_min FROM bienestar_entrenamiento WHERE omitido = 0 "
+            "ORDER BY fecha DESC LIMIT 14);";
+        sqlite3_stmt *stmt;
+        if (preparar_stmt(&stmt, sql))
+        {
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                entreno_count = sqlite3_column_int(stmt, 0);
+                entreno_int_avg = sqlite3_column_double(stmt, 1);
+                entreno_dur_avg = sqlite3_column_double(stmt, 2);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    int entreno_intenso_count = 0;
+    obtener_int("SELECT COUNT(*) FROM bienestar_entrenamiento WHERE omitido = 0 AND intensidad >= 8 AND fecha >= date('now', '-6 day');",
+                &entreno_intenso_count);
+
+    double mental_conf = 0.0;
+    double mental_estres = 0.0;
+    double mental_mot = 0.0;
+    double mental_pres = 0.0;
+    double mental_conc = 0.0;
+    {
+        const char *sql =
+            "SELECT AVG(confianza), AVG(estres), AVG(motivacion), AVG(presion), AVG(concentracion) "
+            "FROM (SELECT confianza, estres, motivacion, presion, concentracion "
+            "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 10);";
+        sqlite3_stmt *stmt;
+        if (preparar_stmt(&stmt, sql))
+        {
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                mental_conf = sqlite3_column_double(stmt, 0);
+                mental_estres = sqlite3_column_double(stmt, 1);
+                mental_mot = sqlite3_column_double(stmt, 2);
+                mental_pres = sqlite3_column_double(stmt, 3);
+                mental_conc = sqlite3_column_double(stmt, 4);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    char objetivo[128] = {0};
+    {
+        const char *sql =
+            "SELECT nombre FROM bienestar_objetivo WHERE estado = 'Activo' "
+            "ORDER BY fecha_fin DESC LIMIT 1";
+        sqlite3_stmt *stmt;
+        if (preparar_stmt(&stmt, sql))
+        {
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+                if (nombre && nombre[0])
+                {
+                    snprintf(objetivo, sizeof(objetivo), "%s", nombre);
+                }
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    double score_rend = clamp_double(avg_rend * 10.0, 0.0, 100.0);
+    double dormi_score = hab_dormi * 100.0;
+    double hid_score = (hab_hid / 10.0) * 100.0;
+    double nerv_score = ((10.0 - hab_nerv) / 10.0) * 100.0;
+    double conf_score = (hab_conf / 10.0) * 100.0;
+    double mot_score = (hab_mot / 10.0) * 100.0;
+    double score_hab = (dormi_score + hid_score + nerv_score + conf_score + mot_score) / 5.0;
+    score_hab = clamp_double(score_hab - (hab_alc * 15.0), 0.0, 100.0);
+
+    double comida_score = ((comida_avg - 1.0) / 2.0) * 100.0;
+    double dia_hid_score = ((dia_hid_avg - 1.0) / 2.0) * 100.0;
+    comida_score = clamp_double(comida_score, 0.0, 100.0);
+    dia_hid_score = clamp_double(dia_hid_score, 0.0, 100.0);
+    double score_nut = (comida_score + dia_hid_score) / 2.0;
+    score_nut = clamp_double(score_nut - (dia_alc_avg * 15.0), 0.0, 100.0);
+
+    double score_ent = 40.0;
+    if (entreno_count > 0)
+    {
+        if (entreno_int_avg >= 8.0)
+        {
+            score_ent = 55.0;
+        }
+        else if (entreno_int_avg >= 6.0)
+        {
+            score_ent = 75.0;
+        }
+        else if (entreno_int_avg >= 4.0)
+        {
+            score_ent = 70.0;
+        }
+        else
+        {
+            score_ent = 60.0;
+        }
+
+        if (entreno_dur_avg > 90.0)
+        {
+            score_ent -= 5.0;
+        }
+        if (entreno_dur_avg < 30.0)
+        {
+            score_ent -= 5.0;
+        }
+    }
+    score_ent = clamp_double(score_ent, 0.0, 100.0);
+
+    double mental_pos = (mental_conf + mental_mot + mental_conc) / 3.0;
+    double mental_neg = (mental_estres + mental_pres) / 2.0;
+    double score_mental = (mental_pos / 10.0) * 100.0 - (mental_neg / 10.0) * 30.0;
+    score_mental = clamp_double(score_mental, 0.0, 100.0);
+
+    double prep_score =
+        (score_rend * 0.30) + (score_hab * 0.20) + (score_nut * 0.20) + (score_mental * 0.20) + (score_ent * 0.10);
+    prep_score = clamp_double(prep_score, 0.0, 100.0);
+
+    int riesgo = 0;
+    if (lesiones_activas > 0)
+    {
+        riesgo = clamp_int(70 + (lesiones_activas * 5), 70, 100);
+    }
+    else
+    {
+        double base = (100.0 - prep_score) * 0.6 + (mental_estres * 3.0) + (entreno_intenso_count * 5.0);
+        riesgo = clamp_int((int)(base + 0.5), 0, 100);
+    }
+
+    int nivel = 0;
+    if (lesiones_activas == 0 && prep_score >= 75.0)
+    {
+        nivel = 2;
+    }
+    else if (lesiones_activas == 0 && prep_score >= 50.0)
+    {
+        nivel = 1;
+    }
+
+    char rutina[2048];
+    rutina[0] = '\0';
+    construir_rutina_texto(rutina, sizeof(rutina), nivel, lesiones_activas, objetivo);
+    if (riesgo >= 70)
+    {
+        size_t used = safe_strnlen(rutina, sizeof(rutina));
+        append_line(rutina, sizeof(rutina), &used, "\nAlerta: riesgo de lesion elevado. Prioriza recuperacion.\n");
+    }
+
+    char resumen[256];
+    snprintf(resumen, sizeof(resumen), "Prep %d/100 | Riesgo %d/100 | Lesiones %d | Rend %.1f",
+             (int)(prep_score + 0.5), riesgo, lesiones_activas, avg_rend);
+
+    char fecha_iso[16];
+    fecha_hoy(fecha_iso, sizeof(fecha_iso));
+    guardar_recomendacion(fecha_iso, (int)(prep_score + 0.5), riesgo, resumen, rutina);
+
+    printf("Resumen: %s\n", resumen);
+    printf("\nRutina sugerida:\n%s\n", rutina);
+    pause_console();
+}
+
+static void menu_asistente_entrenamiento(void)
+{
+    MenuItem items[] =
+    {
+        {1, "Generar rutina personalizada", &generar_asistente_entrenamiento},
+        {2, "Ver historial de recomendaciones", &listar_recomendaciones_entrenamiento},
+        {0, "Volver", NULL}
+    };
+
+    clear_screen();
+    print_header("ASISTENTE ENTRENAMIENTOS");
+    ejecutar_menu("ASISTENTE ENTRENAMIENTOS", items, 3);
+}
+
 void menu_bienestar(void)
 {
     MenuItem items[] =
@@ -2559,13 +3025,14 @@ void menu_bienestar(void)
         {2, "Mentalidad y Habitos",&mostrar_mentalidad_habitos},
         {3, "Entrenamiento", &mostrar_entrenamiento_expandido},
         {4, "Alimentacion", &mostrar_alimentacion_expandido},
-        {5, "Mental", &mostrar_mental_deportivo},
-        {6, "Informe Personal Mensual (PDF)", &informe_personal_mensual_pdf},
-        {7, "Salud", &menu_salud},
+        {5, "Asistente Entrenamientos Personalizados", &menu_asistente_entrenamiento},
+        {6, "Mental", &mostrar_mental_deportivo},
+        {7, "Informe Personal Mensual (PDF)", &informe_personal_mensual_pdf},
+        {8, "Salud", &menu_salud},
         {0, "Volver", NULL}
     };
 
     clear_screen();
     print_header("BIENESTAR");
-    ejecutar_menu("BIENESTAR", items, 8);
+    ejecutar_menu("BIENESTAR", items, 9);
 }

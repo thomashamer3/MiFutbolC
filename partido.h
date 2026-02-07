@@ -71,4 +71,11 @@ void modificar_partido();
  */
 void buscar_partidos();
 
+/**
+ * @brief Menú de análisis táctico con diagramas
+ *
+ * Permite crear, ver y guardar diagramas tácticos asociados a partidos.
+ */
+void menu_tacticas_partido();
+
 #endif

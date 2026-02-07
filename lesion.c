@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 static int current_lesion_id;
 
 /**
@@ -276,15 +277,15 @@ void listar_lesiones()
         const char *camiseta_display = camiseta_nombre ? camiseta_nombre : "Sin camiseta";
         const char *cancha_display = cancha_nombre ? cancha_nombre : "Sin cancha";
 
-        printf("ID: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Jugador: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Tipo: %s\n", sqlite3_column_text(stmt, 2));
-        printf("Descripcion: %s\n", sqlite3_column_text(stmt, 3));
-        printf("Fecha: %s\n", sqlite3_column_text(stmt, 4));
-        printf("Camiseta: %s\n", camiseta_display);
-        printf("Estado: %s\n", estado_display);
-        printf("Cancha: %s\n", cancha_display);
-        printf("----------------------------------------\n");
+        ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
+        ui_printf_centered_line("Jugador: %s", sqlite3_column_text(stmt, 1));
+        ui_printf_centered_line("Tipo: %s", sqlite3_column_text(stmt, 2));
+        ui_printf_centered_line("Descripcion: %s", sqlite3_column_text(stmt, 3));
+        ui_printf_centered_line("Fecha: %s", sqlite3_column_text(stmt, 4));
+        ui_printf_centered_line("Camiseta: %s", camiseta_display);
+        ui_printf_centered_line("Estado: %s", estado_display);
+        ui_printf_centered_line("Cancha: %s", cancha_display);
+        ui_printf_centered_line("----------------------------------------");
         hay = 1;
     }
 

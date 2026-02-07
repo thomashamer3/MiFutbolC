@@ -59,6 +59,45 @@ void input_string(const char *msg, char *buffer, int size);
 void input_date(const char *msg, char *buffer, int size);
 
 /**
+ * @brief Imprime texto en la UI (ncurses si está activo, stdout si no).
+ */
+int ui_printf(const char *fmt, ...);
+
+/**
+ * @brief Imprime una línea en la UI (ncurses si está activo, stdout si no).
+ */
+int ui_puts(const char *s);
+
+/**
+ * @brief Imprime un carácter en la UI (ncurses si está activo, stdout si no).
+ */
+int ui_putchar(int c);
+
+/**
+ * @brief Imprime una línea centrada (ncurses si está activo, stdout si no).
+ */
+int ui_printf_centered_line(const char *fmt, ...);
+
+#ifdef USE_NCURSES
+struct _win_st;
+typedef struct _win_st WINDOW;
+void ui_set_output_window(WINDOW *win);
+WINDOW *ui_get_output_window(void);
+#endif
+
+#ifdef USE_NCURSES
+#ifndef printf
+#define printf ui_printf
+#endif
+#ifndef puts
+#define puts ui_puts
+#endif
+#ifndef putchar
+#define putchar ui_putchar
+#endif
+#endif
+
+/**
  * @brief Obtiene la fecha y hora actual en formato legible.
  *
  * Formatea la fecha y hora actual en el formato "dd/mm/yyyy hh:mm".
@@ -94,6 +133,9 @@ void print_header(const char *titulo);
  * @brief Pausa la ejecución del programa hasta que el usuario presione una tecla.
  */
 void pause_console();
+
+/* Fuerza maximizar la consola en Windows y ajusta el buffer de pantalla */
+void ensure_console_maximized_windows(void);
 
 /**
  * @brief Verifica si existe un ID en una tabla de la base de datos.
