@@ -88,7 +88,7 @@
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1770430872 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1771985411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -106,7 +106,7 @@
 	<stdarg.h>
 	<ncursesw/ncurses.h>
 	<direct.h>
-	<Windows.h>
+	<windows.h>
 	<sys/stat.h>
 
 1770352902 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
@@ -2224,7 +2224,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1770406867 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1771983571 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"menu.h"
 	"utils.h"
@@ -2236,7 +2236,6 @@
 	<ctype.h>
 	<limits.h>
 	<time.h>
-	<stdarg.h>
 
 1770159151 d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.h
 

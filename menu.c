@@ -557,12 +557,6 @@ static int ncurses_is_main_menu(const char *titulo)
     return 1;
 }
 
-static int ncurses_menu_persist(const char *titulo)
-{
-    (void)titulo;
-    return 1;
-}
-
 static void ncurses_sync_screen_size(void)
 {
     resize_term(0, 0);

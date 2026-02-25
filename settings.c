@@ -49,6 +49,8 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 static void settings_apply_text_size();
+static void habilitar_menus_basicos_custom(void);
+static void confirmar_guardado_si_cambios(void);
 
 static void set_theme_int(int value)
 {
@@ -897,18 +899,6 @@ const char* get_menu_back()
     return get_text("menu_back");
 }
 
-static const MenuItem* buscar_item_settings(const MenuItem *items, int cantidad, int opcion)
-{
-    for (int i = 0; i < cantidad; i++)
-    {
-        if (items[i].opcion == opcion)
-        {
-            return &items[i];
-        }
-    }
-    return NULL;
-}
-
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)
 {
@@ -1174,10 +1164,11 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, con
         return 0;
     }
 
-    const int MAX_RELEASES = 64;
-    char *asset_urls[MAX_RELEASES] = {0};
-    char *release_names[MAX_RELEASES] = {0};
-    int count = cargar_releases_ejecutables(root, release_names, asset_urls, MAX_RELEASES);
+    enum { SETTINGS_MAX_RELEASES = 64 };
+    char *asset_urls[SETTINGS_MAX_RELEASES] = {0};
+    char *release_names[SETTINGS_MAX_RELEASES] = {0};
+    int count = cargar_releases_ejecutables(root, release_names, asset_urls,
+                                            SETTINGS_MAX_RELEASES);
     cJSON_Delete(root);
 
     if (count == 0)
