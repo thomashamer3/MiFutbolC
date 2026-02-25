@@ -186,12 +186,9 @@ int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
         (void)height;
         (void)x;
 
-        if (y >= height - 1)
+        if (y >= height - 1 && wscrl(target, 1) == OK)
         {
-            if (wscrl(target, 1) == OK)
-            {
-                y = height - 1;
-            }
+            y = height - 1;
         }
 
         int len = (int)strlen(buffer);
@@ -736,7 +733,8 @@ static int ncurses_count_lines_util(const char *text)
 
 static void ncurses_print_centered_lines_util(int start_y, const char *text)
 {
-    int height, width;
+    int height;
+    int width;
     getmaxyx(stdscr, height, width);
 
     const char *line_start = text;
@@ -760,7 +758,135 @@ static void ncurses_print_centered_lines_util(int start_y, const char *text)
         line_start = line_end + 1;
     }
 }
+
+static void free_nombre_usuario_if_needed(char *nombre_usuario)
+{
+    if (nombre_usuario && strcmp(nombre_usuario, "Usuario Desconocido") != 0)
+    {
+        free(nombre_usuario);
+    }
+}
+
+static void ncurses_print_header_window(WINDOW *target, const char *titulo_display,
+                                        const char *nombre_usuario,
+                                        const char *fecha, int mostrar_datos)
+{
+    int width = getmaxx(target);
+    int height = getmaxy(target);
+    int row = 0;
+
+    werase(target);
+    if (titulo_display && row < height)
+    {
+        int x = (width - (int)strlen(titulo_display)) / 2;
+        if (x < 0)
+        {
+            x = 0;
+        }
+        mvwprintw(target, row, x, "%s", titulo_display);
+    }
+
+    if (mostrar_datos)
+    {
+        row++;
+        if (row < height)
+        {
+            mvwprintw(target, row, 0, " Usuario: %s", nombre_usuario);
+        }
+        row++;
+        if (row < height)
+        {
+            mvwprintw(target, row, 0, " Fecha  : %s", fecha);
+        }
+    }
+
+    row++;
+    if (row < height)
+    {
+        mvwhline(target, row, 0, '=', width > 0 ? width : 0);
+    }
+    row++;
+    if (row < height)
+    {
+        wmove(target, row, 0);
+    }
+
+    wrefresh(target);
+}
+
+static int ncurses_setup_temp_screen(void)
+{
+    if (!isendwin())
+    {
+        return 0;
+    }
+
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    curs_set(0);
+
+    if (has_colors())
+    {
+        start_color();
+        use_default_colors();
+        init_pair(1, COLOR_WHITE, -1);
+        init_pair(3, COLOR_YELLOW, COLOR_BLUE);
+    }
+
+    return 1;
+}
+
+static void ncurses_print_header_stdscr(const char *ascii, const char *titulo_display,
+                                        const char *nombre_usuario,
+                                        const char *fecha, int mostrar_datos)
+{
+    clear();
+    if (ascii)
+    {
+        int art_lines = ncurses_count_lines_util(ascii);
+        ncurses_print_centered_lines_util(0, ascii);
+        move(art_lines + 1, 0);
+    }
+
+    printw("%s\n", titulo_display);
+    if (mostrar_datos)
+    {
+        printw(" Usuario: %s\n", nombre_usuario);
+        printw(" Fecha  : %s\n", fecha);
+    }
+    if (has_colors())
+    {
+        attron(COLOR_PAIR(3));
+    }
+    printw("========================================\n\n");
+    if (has_colors())
+    {
+        attroff(COLOR_PAIR(3));
+    }
+
+    refresh();
+}
 #endif
+
+static void print_header_stdout(const char *ascii, const char *titulo_display,
+                                const char *nombre_usuario, const char *fecha,
+                                int mostrar_datos)
+{
+    if (ascii)
+    {
+        printf("%s\n", ascii);
+    }
+
+    printf("%s\n", titulo_display);
+    if (mostrar_datos)
+    {
+        printf(" Usuario: %s\n", nombre_usuario);
+        printf(" Fecha  : %s\n", fecha);
+    }
+    printf("========================================\n\n");
+}
 
 void print_header(const char *titulo)
 {
@@ -787,126 +913,32 @@ void print_header(const char *titulo)
 #ifdef USE_NCURSES
     if (ui_is_ncurses_active() && g_ui_output_win)
     {
-        WINDOW *target = g_ui_output_win;
-        int width = getmaxx(target);
-        int height = getmaxy(target);
-        int row = 0;
-
-        werase(target);
-        if (titulo_display && row < height)
-        {
-            int x = (width - (int)strlen(titulo_display)) / 2;
-            if (x < 0)
-            {
-                x = 0;
-            }
-            mvwprintw(target, row, x, "%s", titulo_display);
-        }
-        if (mostrar_datos)
-        {
-            row++;
-            if (row < height)
-            {
-                mvwprintw(target, row, 0, " Usuario: %s", nombre_usuario);
-            }
-            row++;
-            if (row < height)
-            {
-                mvwprintw(target, row, 0, " Fecha  : %s", fecha);
-            }
-        }
-        row++;
-        if (row < height)
-        {
-            mvwhline(target, row, 0, '=', width > 0 ? width : 0);
-        }
-        row++;
-        if (row < height)
-        {
-            wmove(target, row, 0);
-        }
-
-        wrefresh(target);
-        if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
-        {
-            free(nombre_usuario);
-        }
+        ncurses_print_header_window(g_ui_output_win, titulo_display, nombre_usuario,
+                                    fecha, mostrar_datos);
+        free_nombre_usuario_if_needed(nombre_usuario);
         return;
     }
 
-    int temp_initscr = 0;
-    if (isendwin())
-    {
-        initscr();
-        cbreak();
-        noecho();
-        keypad(stdscr, TRUE);
-        curs_set(0);
-        temp_initscr = 1;
-
-        if (has_colors())
-        {
-            start_color();
-            use_default_colors();
-            init_pair(1, COLOR_WHITE, -1);
-            init_pair(3, COLOR_YELLOW, COLOR_BLUE);
-        }
-    }
+    int temp_initscr = ncurses_setup_temp_screen();
 
     if (!isendwin())
     {
-        clear();
-        if (ascii)
-        {
-            int art_lines = ncurses_count_lines_util(ascii);
-            ncurses_print_centered_lines_util(0, ascii);
-            move(art_lines + 1, 0);
-        }
-
-        printw("%s\n", titulo_display);
-        if (mostrar_datos)
-        {
-            printw(" Usuario: %s\n", nombre_usuario);
-            printw(" Fecha  : %s\n", fecha);
-        }
-        if (has_colors())
-            attron(COLOR_PAIR(3));
-        printw("========================================\n\n");
-        if (has_colors())
-            attroff(COLOR_PAIR(3));
-
-        refresh();
+        ncurses_print_header_stdscr(ascii, titulo_display, nombre_usuario, fecha,
+                                    mostrar_datos);
 
         if (temp_initscr)
         {
             endwin();
         }
 
-        if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
-        {
-            free(nombre_usuario);
-        }
+        free_nombre_usuario_if_needed(nombre_usuario);
         return;
     }
 #endif
 
-    if (ascii)
-    {
-        printf("%s\n", ascii);
-    }
-
-    printf("%s\n", titulo_display);
-    if (mostrar_datos)
-    {
-        printf(" Usuario: %s\n", nombre_usuario);
-        printf(" Fecha  : %s\n", fecha);
-    }
-    printf("========================================\n\n");
-
-    if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
-    {
-        free(nombre_usuario);
-    }
+    print_header_stdout(ascii, titulo_display, nombre_usuario, fecha,
+                        mostrar_datos);
+    free_nombre_usuario_if_needed(nombre_usuario);
 }
 
 /**
@@ -920,7 +952,11 @@ void pause_console()
     if (ui_is_ncurses_active())
     {
         int ch;
-        while ((ch = getch()) != '\n' && ch != KEY_ENTER) {}
+        do
+        {
+            ch = getch();
+        }
+        while (ch != '\n' && ch != KEY_ENTER);
         return;
     }
 #endif

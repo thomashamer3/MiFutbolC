@@ -292,41 +292,46 @@ static int ncurses_get_chunk_size(const char *text, int offset, int prefix_len, 
     return chunk;
 }
 
-static int ncurses_draw_wrapped_option_line(WINDOW *win,
+typedef struct
+{
+    WINDOW *win;
+    int start_x;
+    int available;
+    int content_bottom;
+    int selected;
+} NcursesWrapLineContext;
+
+static int ncurses_draw_wrapped_option_line(const NcursesWrapLineContext *ctx,
         const char *text,
         int prefix_len,
-        int start_x,
-        int available,
-        int current_row,
-        int content_bottom,
-        int selected)
+        int current_row)
 {
     int offset = 0;
 
-    while (offset < prefix_len && current_row <= content_bottom)
+    while (offset < prefix_len && current_row <= ctx->content_bottom)
     {
-        int chunk = ncurses_get_chunk_size(text, offset, prefix_len, available);
+        int chunk = ncurses_get_chunk_size(text, offset, prefix_len, ctx->available);
 
-        if (selected)
+        if (ctx->selected)
         {
-            wattron(win, COLOR_PAIR(2) | A_BOLD);
+            wattron(ctx->win, COLOR_PAIR(2) | A_BOLD);
         }
         else
         {
-            wattron(win, COLOR_PAIR(1));
+            wattron(ctx->win, COLOR_PAIR(1));
         }
 
-        mvwprintw(win, current_row, start_x, "%.*s", chunk, text + offset);
-        wmove(win, current_row, start_x + chunk);
-        wclrtoeol(win);
+        mvwprintw(ctx->win, current_row, ctx->start_x, "%.*s", chunk, text + offset);
+        wmove(ctx->win, current_row, ctx->start_x + chunk);
+        wclrtoeol(ctx->win);
 
-        if (selected)
+        if (ctx->selected)
         {
-            wattroff(win, COLOR_PAIR(2) | A_BOLD);
+            wattroff(ctx->win, COLOR_PAIR(2) | A_BOLD);
         }
         else
         {
-            wattroff(win, COLOR_PAIR(1));
+            wattroff(ctx->win, COLOR_PAIR(1));
         }
 
         current_row++;
@@ -394,14 +399,16 @@ static void ncurses_draw_menu(WINDOW *win, const MenuItem *items, int cantidad, 
     {
         char full[512];
         int prefix_len = snprintf(full, sizeof(full), "%s %d. %s", (i == selected) ? ">" : " ", items[i].opcion, items[i].texto);
-        current_row = ncurses_draw_wrapped_option_line(win,
-                      full,
-                      prefix_len,
-                      start_x,
-                      available,
-                      current_row,
-                      content_bottom,
-                      i == selected);
+        NcursesWrapLineContext ctx =
+        {
+            win,
+            start_x,
+            available,
+            content_bottom,
+            i == selected
+        };
+
+        current_row = ncurses_draw_wrapped_option_line(&ctx, full, prefix_len, current_row);
     }
     wrefresh(win);
 }
@@ -563,98 +570,103 @@ static void ncurses_sync_screen_size(void)
     refresh();
 }
 
-static void ncurses_relayout(const char *titulo,
-                             const MenuItem *items,
-                             int cantidad,
-                             int selected,
-                             int header_h,
-                             int status_h,
-                             int is_main,
-                             WINDOW *header,
-                             WINDOW *status,
-                             WINDOW *menu,
-                             WINDOW **content,
-                             WINDOW **content_body,
-                             int *height,
-                             int *width,
-                             int *body_h,
-                             int *menu_w,
-                             int *content_w,
-                             int *too_small)
+typedef struct
+{
+    const char *titulo;
+    const MenuItem *items;
+    int cantidad;
+    int selected;
+    int header_h;
+    int status_h;
+    int is_main;
+    WINDOW *header;
+    WINDOW *status;
+    WINDOW *menu;
+    WINDOW *content;
+    WINDOW *content_body;
+    int height;
+    int width;
+    int body_h;
+    int menu_w;
+    int content_w;
+    int too_small;
+} NcursesMenuLayout;
+
+static void ncurses_relayout(NcursesMenuLayout *layout)
 {
     ncurses_sync_screen_size();
-    getmaxyx(stdscr, *height, *width);
-    *too_small = ncurses_is_too_small(*height, *width);
-    if (*too_small)
+    getmaxyx(stdscr, layout->height, layout->width);
+    layout->too_small = ncurses_is_too_small(layout->height, layout->width);
+    if (layout->too_small)
     {
-        ncurses_draw_size_warning(*height, *width);
+        ncurses_draw_size_warning(layout->height, layout->width);
         return;
     }
-    *body_h = *height - header_h - status_h;
-    *menu_w = is_main ? MENU_W : *width;
-    *content_w = is_main ? (*width - *menu_w - 2) : 0;
-    if (*content_w <= 10)
+    layout->body_h = layout->height - layout->header_h - layout->status_h;
+    layout->menu_w = layout->is_main ? MENU_W : layout->width;
+    layout->content_w = layout->is_main ? (layout->width - layout->menu_w - 2) : 0;
+    if (layout->content_w <= 10)
     {
-        *menu_w = *width;
-        *content_w = 0;
+        layout->menu_w = layout->width;
+        layout->content_w = 0;
     }
 
-    wresize(header, header_h, *width);
-    wresize(status, status_h, *width);
-    mvwin(status, *height - 1, 0);
+    wresize(layout->header, layout->header_h, layout->width);
+    wresize(layout->status, layout->status_h, layout->width);
+    mvwin(layout->status, layout->height - 1, 0);
 
-    wresize(menu, *body_h, is_main ? *menu_w : *width);
-    mvwin(menu, header_h, 0);
+    wresize(layout->menu, layout->body_h, layout->is_main ? layout->menu_w : layout->width);
+    mvwin(layout->menu, layout->header_h, 0);
 
-    if (*content)
+    if (layout->content)
     {
-        if (*content_w > 10)
+        if (layout->content_w > 10)
         {
-            wresize(*content, *body_h, *content_w);
-            mvwin(*content, header_h, *menu_w + 1);
-            if (*content_body)
+            wresize(layout->content, layout->body_h, layout->content_w);
+            mvwin(layout->content, layout->header_h, layout->menu_w + 1);
+            if (layout->content_body)
             {
-                delwin(*content_body);
-                *content_body = NULL;
+                delwin(layout->content_body);
+                layout->content_body = NULL;
             }
-            if (*body_h > 2 && *content_w > 2)
+            if (layout->body_h > 2 && layout->content_w > 2)
             {
-                *content_body = derwin(*content, *body_h - 2, *content_w - 2, 1, 1);
+                layout->content_body = derwin(layout->content, layout->body_h - 2, layout->content_w - 2, 1, 1);
             }
         }
         else
         {
-            if (*content_body)
+            if (layout->content_body)
             {
-                delwin(*content_body);
-                *content_body = NULL;
+                delwin(layout->content_body);
+                layout->content_body = NULL;
             }
-            werase(*content);
-            wrefresh(*content);
-            delwin(*content);
-            *content = NULL;
+            werase(layout->content);
+            wrefresh(layout->content);
+            delwin(layout->content);
+            layout->content = NULL;
         }
     }
-    else if (is_main && *content_w > 10)
+    else if (layout->is_main && layout->content_w > 10)
     {
-        *content = newwin(*body_h, *content_w, header_h, *menu_w + 1);
-        if (*content && *body_h > 2 && *content_w > 2)
+        layout->content = newwin(layout->body_h, layout->content_w, layout->header_h, layout->menu_w + 1);
+        if (layout->content && layout->body_h > 2 && layout->content_w > 2)
         {
-            *content_body = derwin(*content, *body_h - 2, *content_w - 2, 1, 1);
+            layout->content_body = derwin(layout->content, layout->body_h - 2, layout->content_w - 2, 1, 1);
         }
     }
 
     {
         char status_buf[128];
-        const char *status_msg = ncurses_get_size_notice(*height, *width, status_buf, sizeof(status_buf));
+        const char *status_msg = ncurses_get_size_notice(layout->height, layout->width, status_buf, sizeof(status_buf));
         clear();
-        ncurses_draw_header(header, titulo);
-        ncurses_draw_status(status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
+        ncurses_draw_header(layout->header, layout->titulo);
+        ncurses_draw_status(layout->status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
     }
-    ncurses_draw_menu(menu, items, cantidad, selected);
-    if (*content)
+    ncurses_draw_menu(layout->menu, layout->items, layout->cantidad, layout->selected);
+    if (layout->content)
     {
-        ncurses_draw_content(*content, *content_body, "Contenido", items[selected].texto);
+        ncurses_draw_content(layout->content, layout->content_body, "Contenido", layout->items[layout->selected].texto);
     }
     refresh();
 }
@@ -683,118 +695,82 @@ static void ncurses_finalize_action_output(WINDOW *content_body)
     }
 }
 
-static void ncurses_execute_selected_item(const MenuItem *selected_item,
-        WINDOW *content_body,
-        const char *titulo,
-        const MenuItem *items,
-        int cantidad,
-        int selected,
-        int header_h,
-        int status_h,
-        int is_main,
-        WINDOW *header,
-        WINDOW *status,
-        WINDOW *menu,
-        WINDOW **content,
-        WINDOW **content_body_ref,
-        int *height,
-        int *width,
-        int *body_h,
-        int *menu_w,
-        int *content_w,
-        int *too_small)
+static void ncurses_execute_selected_item(NcursesMenuLayout *layout, const MenuItem *selected_item)
 {
-    ncurses_prepare_action_output(content_body);
+    ncurses_prepare_action_output(layout->content_body);
     selected_item->accion();
-    ncurses_finalize_action_output(content_body);
-
-    ncurses_relayout(titulo,
-                     items,
-                     cantidad,
-                     selected,
-                     header_h,
-                     status_h,
-                     is_main,
-                     header,
-                     status,
-                     menu,
-                     content,
-                     content_body_ref,
-                     height,
-                     width,
-                     body_h,
-                     menu_w,
-                     content_w,
-                     too_small);
+    ncurses_finalize_action_output(layout->content_body);
+    ncurses_relayout(layout);
 }
 
 static int ncurses_run_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
-    int selected = 0;
+    NcursesMenuLayout layout;
+    memset(&layout, 0, sizeof(layout));
+    layout.titulo = titulo;
+    layout.items = items;
+    layout.cantidad = cantidad;
+    layout.selected = 0;
+
     int ch;
     char input_buf[8] = {0};
     int input_len = 0;
     int pending_resize = 0;
     int pending_height = 0;
     int pending_width = 0;
-    int too_small = 0;
     clock_t resize_start = 0;
     const int resize_debounce_ms = 250;
-    int is_main = ncurses_is_main_menu(titulo);
-    (void)ncurses_menu_persist;
+    layout.is_main = ncurses_is_main_menu(titulo);
 
     if (!ncurses_init())
     {
         return 0;
     }
 
-    int height;
-    int width;
-    getmaxyx(stdscr, height, width);
+    getmaxyx(stdscr, layout.height, layout.width);
 
     timeout(-1);
 
-    int header_h = HEADER_H;
-    int status_h = STATUS_H;
-    int body_h = height - header_h - status_h;
-    int menu_w = is_main ? MENU_W : width;
-    int content_w = is_main ? (width - menu_w - 2) : 0;
-    if (content_w <= 10)
+    layout.header_h = HEADER_H;
+    layout.status_h = STATUS_H;
+    layout.body_h = layout.height - layout.header_h - layout.status_h;
+    layout.menu_w = layout.is_main ? MENU_W : layout.width;
+    layout.content_w = layout.is_main ? (layout.width - layout.menu_w - 2) : 0;
+    if (layout.content_w <= 10)
     {
-        menu_w = width;
-        content_w = 0;
+        layout.menu_w = layout.width;
+        layout.content_w = 0;
     }
 
-    WINDOW *header = newwin(header_h, width, 0, 0);
-    WINDOW *status = newwin(status_h, width, height - 1, 0);
-    WINDOW *menu = newwin(body_h, is_main ? menu_w : width, header_h, 0);
-    WINDOW *content = NULL;
-    WINDOW *content_body = NULL;
-    if (is_main && content_w > 10)
+    layout.header = newwin(layout.header_h, layout.width, 0, 0);
+    layout.status = newwin(layout.status_h, layout.width, layout.height - 1, 0);
+    layout.menu = newwin(layout.body_h, layout.is_main ? layout.menu_w : layout.width, layout.header_h, 0);
+
+    if (layout.is_main && layout.content_w > 10)
     {
-        content = newwin(body_h, content_w, header_h, menu_w + 1);
-        if (content && body_h > 2 && content_w > 2)
+        layout.content = newwin(layout.body_h, layout.content_w, layout.header_h, layout.menu_w + 1);
+        if (layout.content && layout.body_h > 2 && layout.content_w > 2)
         {
-            content_body = derwin(content, body_h - 2, content_w - 2, 1, 1);
+            layout.content_body = derwin(layout.content, layout.body_h - 2, layout.content_w - 2, 1, 1);
         }
     }
 
-    too_small = ncurses_is_too_small(height, width);
-    if (too_small)
+    layout.too_small = ncurses_is_too_small(layout.height, layout.width);
+    if (layout.too_small)
     {
-        ncurses_draw_size_warning(height, width);
+        ncurses_draw_size_warning(layout.height, layout.width);
     }
     else
     {
         char status_buf[128];
-        const char *status_msg = ncurses_get_size_notice(height, width, status_buf, sizeof(status_buf));
-        ncurses_draw_header(header, titulo);
-        ncurses_draw_menu(menu, items, cantidad, selected);
-        if (content)
+        const char *status_msg = ncurses_get_size_notice(layout.height, layout.width, status_buf, sizeof(status_buf));
+        ncurses_draw_header(layout.header, titulo);
+        ncurses_draw_menu(layout.menu, items, cantidad, layout.selected);
+        if (layout.content)
         {
-            ncurses_draw_content(content, content_body, "Contenido", "Seleccione una Opcion");
+            ncurses_draw_content(layout.content, layout.content_body, "Contenido", "Seleccione una Opcion");
         }
-        ncurses_draw_status(status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
+        ncurses_draw_status(layout.status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
         refresh();
     }
 
@@ -805,10 +781,10 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
         if (ch == KEY_RESIZE)
         {
             ncurses_sync_screen_size();
-            getmaxyx(stdscr, height, width);
+            getmaxyx(stdscr, layout.height, layout.width);
             pending_resize = 1;
-            pending_height = height;
-            pending_width = width;
+            pending_height = layout.height;
+            pending_width = layout.width;
             resize_start = clock();
         }
 #endif
@@ -831,27 +807,25 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
             if (elapsed_ms >= resize_debounce_ms && current_h == pending_height && current_w == pending_width)
             {
                 pending_resize = 0;
-                ncurses_relayout(titulo, items, cantidad, selected, header_h, status_h, is_main,
-                                 header, status, menu, &content, &content_body,
-                                 &height, &width, &body_h, &menu_w, &content_w, &too_small);
+                ncurses_relayout(&layout);
                 continue;
             }
         }
         if (ch == KEY_UP)
         {
-            selected = (selected - 1 + cantidad) % cantidad;
+            layout.selected = (layout.selected - 1 + cantidad) % cantidad;
             input_len = 0;
             input_buf[0] = '\0';
         }
         else if (ch == KEY_DOWN)
         {
-            selected = (selected + 1) % cantidad;
+            layout.selected = (layout.selected + 1) % cantidad;
             input_len = 0;
             input_buf[0] = '\0';
         }
         else if (ch == 10 || ch == KEY_ENTER)
         {
-            int target_index = selected;
+            int target_index = layout.selected;
             if (input_len > 0)
             {
                 int numero = atoi(input_buf);
@@ -870,26 +844,7 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
                 break;
             }
 
-            ncurses_execute_selected_item(selected_item,
-                                          content_body,
-                                          titulo,
-                                          items,
-                                          cantidad,
-                                          selected,
-                                          header_h,
-                                          status_h,
-                                          is_main,
-                                          header,
-                                          status,
-                                          menu,
-                                          &content,
-                                          &content_body,
-                                          &height,
-                                          &width,
-                                          &body_h,
-                                          &menu_w,
-                                          &content_w,
-                                          &too_small);
+            ncurses_execute_selected_item(&layout, selected_item);
         }
         else if (ch >= '0' && ch <= '9')
         {
@@ -912,31 +867,31 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
         {
             char status_msg[128];
             snprintf(status_msg, sizeof(status_msg), "Numero: %s (Enter para ir)", input_buf);
-            ncurses_draw_status(status, status_msg);
+            ncurses_draw_status(layout.status, status_msg);
         }
 
-        if (too_small)
+        if (layout.too_small)
         {
-            ncurses_draw_size_warning(height, width);
+            ncurses_draw_size_warning(layout.height, layout.width);
             continue;
         }
-        ncurses_draw_menu(menu, items, cantidad, selected);
-        if (content)
+        ncurses_draw_menu(layout.menu, items, cantidad, layout.selected);
+        if (layout.content)
         {
-            ncurses_draw_content(content, content_body, "Contenido", items[selected].texto);
+            ncurses_draw_content(layout.content, layout.content_body, "Contenido", items[layout.selected].texto);
         }
     }
 
-    delwin(menu);
-    delwin(status);
-    delwin(header);
-    if (content_body)
+    delwin(layout.menu);
+    delwin(layout.status);
+    delwin(layout.header);
+    if (layout.content_body)
     {
-        delwin(content_body);
+        delwin(layout.content_body);
     }
-    if (content)
+    if (layout.content)
     {
-        delwin(content);
+        delwin(layout.content);
     }
     endwin();
     ensure_console_maximized_windows();

@@ -975,8 +975,9 @@ static int ejecutar_instalador(const char *dest)
 
 static int leer_archivo_completo(const char *path, char **out_data)
 {
-    FILE *f = fopen(path, "rb");
-    if (!f)
+    FILE *f = NULL;
+    errno_t open_err = fopen_s(&f, path, "rb");
+    if (open_err != 0 || !f)
     {
         return 0;
     }
