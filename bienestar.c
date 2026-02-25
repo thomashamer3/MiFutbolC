@@ -14,7 +14,6 @@
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
-#include <stdarg.h>
 
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
@@ -92,17 +91,19 @@ static int obtener_int(const char *sql, int *out_value)
     return 1;
 }
 
-static void append_line(char *buffer, size_t size, size_t *used, const char *fmt, ...)
+static void append_text(char *buffer, size_t size, size_t *used, const char *text)
 {
     if (!buffer || !used || *used >= size)
     {
         return;
     }
 
-    va_list args;
-    va_start(args, fmt);
-    int written = vsnprintf(buffer + *used, size - *used, fmt, args);
-    va_end(args);
+    if (!text)
+    {
+        return;
+    }
+
+    int written = snprintf(buffer + *used, size - *used, "%s", text);
 
     if (written > 0)
     {
@@ -2721,54 +2722,287 @@ static void construir_rutina_texto(char *rutina, size_t size, int nivel, int les
 {
     size_t used = 0;
     const char *objetivo_texto = (objetivo && objetivo[0]) ? objetivo : "Sin objetivo activo";
+    char linea_objetivo[256];
 
-    append_line(rutina, size, &used, "Objetivo: %s\n", objetivo_texto);
+    snprintf(linea_objetivo, sizeof(linea_objetivo), "Objetivo: %s\n", objetivo_texto);
+    append_text(rutina, size, &used, linea_objetivo);
 
     if (lesiones_activas > 0)
     {
-        append_line(rutina, size, &used, "Enfoque: recuperacion y movilidad.\n");
-        append_line(rutina, size, &used, "Lunes: movilidad + estiramientos (30-40 min)\n");
-        append_line(rutina, size, &used, "Martes: tecnica suave (30 min)\n");
-        append_line(rutina, size, &used, "Miercoles: descanso\n");
-        append_line(rutina, size, &used, "Jueves: fuerza ligera + estabilidad (30-40 min)\n");
-        append_line(rutina, size, &used, "Viernes: movilidad (30 min)\n");
-        append_line(rutina, size, &used, "Sabado: descanso activo (caminar)\n");
-        append_line(rutina, size, &used, "Domingo: descanso\n");
+        append_text(rutina, size, &used, "Enfoque: recuperacion y movilidad.\n");
+        append_text(rutina, size, &used, "Lunes: movilidad + estiramientos (30-40 min)\n");
+        append_text(rutina, size, &used, "Martes: tecnica suave (30 min)\n");
+        append_text(rutina, size, &used, "Miercoles: descanso\n");
+        append_text(rutina, size, &used, "Jueves: fuerza ligera + estabilidad (30-40 min)\n");
+        append_text(rutina, size, &used, "Viernes: movilidad (30 min)\n");
+        append_text(rutina, size, &used, "Sabado: descanso activo (caminar)\n");
+        append_text(rutina, size, &used, "Domingo: descanso\n");
         return;
     }
 
     if (nivel >= 2)
     {
-        append_line(rutina, size, &used, "Semana de carga alta.\n");
-        append_line(rutina, size, &used, "Lunes: fuerza + tecnica (70-90 min)\n");
-        append_line(rutina, size, &used, "Martes: resistencia (60 min)\n");
-        append_line(rutina, size, &used, "Miercoles: tecnica + velocidad (60 min)\n");
-        append_line(rutina, size, &used, "Jueves: fuerza + estabilidad (60 min)\n");
-        append_line(rutina, size, &used, "Viernes: partido/simulacion (70 min)\n");
-        append_line(rutina, size, &used, "Sabado: movilidad (30 min)\n");
-        append_line(rutina, size, &used, "Domingo: descanso\n");
+        append_text(rutina, size, &used, "Semana de carga alta.\n");
+        append_text(rutina, size, &used, "Lunes: fuerza + tecnica (70-90 min)\n");
+        append_text(rutina, size, &used, "Martes: resistencia (60 min)\n");
+        append_text(rutina, size, &used, "Miercoles: tecnica + velocidad (60 min)\n");
+        append_text(rutina, size, &used, "Jueves: fuerza + estabilidad (60 min)\n");
+        append_text(rutina, size, &used, "Viernes: partido/simulacion (70 min)\n");
+        append_text(rutina, size, &used, "Sabado: movilidad (30 min)\n");
+        append_text(rutina, size, &used, "Domingo: descanso\n");
     }
     else if (nivel == 1)
     {
-        append_line(rutina, size, &used, "Semana de carga moderada.\n");
-        append_line(rutina, size, &used, "Lunes: fuerza (60 min)\n");
-        append_line(rutina, size, &used, "Martes: tecnica (50 min)\n");
-        append_line(rutina, size, &used, "Miercoles: descanso activo\n");
-        append_line(rutina, size, &used, "Jueves: resistencia (50 min)\n");
-        append_line(rutina, size, &used, "Viernes: movilidad (30 min)\n");
-        append_line(rutina, size, &used, "Sabado: partido/amisto suave\n");
-        append_line(rutina, size, &used, "Domingo: descanso\n");
+        append_text(rutina, size, &used, "Semana de carga moderada.\n");
+        append_text(rutina, size, &used, "Lunes: fuerza (60 min)\n");
+        append_text(rutina, size, &used, "Martes: tecnica (50 min)\n");
+        append_text(rutina, size, &used, "Miercoles: descanso activo\n");
+        append_text(rutina, size, &used, "Jueves: resistencia (50 min)\n");
+        append_text(rutina, size, &used, "Viernes: movilidad (30 min)\n");
+        append_text(rutina, size, &used, "Sabado: partido/amisto suave\n");
+        append_text(rutina, size, &used, "Domingo: descanso\n");
     }
     else
     {
-        append_line(rutina, size, &used, "Semana de carga baja.\n");
-        append_line(rutina, size, &used, "Lunes: movilidad (30 min)\n");
-        append_line(rutina, size, &used, "Martes: tecnica ligera (40 min)\n");
-        append_line(rutina, size, &used, "Miercoles: descanso\n");
-        append_line(rutina, size, &used, "Jueves: resistencia suave (40 min)\n");
-        append_line(rutina, size, &used, "Viernes: estiramientos (25 min)\n");
-        append_line(rutina, size, &used, "Sabado: descanso\n");
-        append_line(rutina, size, &used, "Domingo: descanso\n");
+        append_text(rutina, size, &used, "Semana de carga baja.\n");
+        append_text(rutina, size, &used, "Lunes: movilidad (30 min)\n");
+        append_text(rutina, size, &used, "Martes: tecnica ligera (40 min)\n");
+        append_text(rutina, size, &used, "Miercoles: descanso\n");
+        append_text(rutina, size, &used, "Jueves: resistencia suave (40 min)\n");
+        append_text(rutina, size, &used, "Viernes: estiramientos (25 min)\n");
+        append_text(rutina, size, &used, "Sabado: descanso\n");
+        append_text(rutina, size, &used, "Domingo: descanso\n");
+    }
+}
+
+typedef struct
+{
+    double avg_rend;
+    int lesiones_activas;
+    double hab_dormi;
+    double hab_hid;
+    double hab_alc;
+    double hab_nerv;
+    double hab_conf;
+    double hab_mot;
+    double comida_avg;
+    double dia_hid_avg;
+    double dia_alc_avg;
+    int entreno_count;
+    double entreno_int_avg;
+    double entreno_dur_avg;
+    int entreno_intenso_count;
+    double mental_conf;
+    double mental_estres;
+    double mental_mot;
+    double mental_pres;
+    double mental_conc;
+} AsistenteMetricas;
+
+static void cargar_metricas_habitos(AsistenteMetricas *metricas)
+{
+    const char *sql =
+        "SELECT AVG(dormi_bien), AVG(hidratacion), AVG(alcohol), AVG(nervios), AVG(confianza), AVG(motivacion) "
+        "FROM (SELECT dormi_bien, hidratacion, alcohol, nervios, confianza, motivacion "
+        "FROM bienestar_habito ORDER BY fecha DESC LIMIT 14);";
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            metricas->hab_dormi = sqlite3_column_double(stmt, 0);
+            metricas->hab_hid = sqlite3_column_double(stmt, 1);
+            metricas->hab_alc = sqlite3_column_double(stmt, 2);
+            metricas->hab_nerv = sqlite3_column_double(stmt, 3);
+            metricas->hab_conf = sqlite3_column_double(stmt, 4);
+            metricas->hab_mot = sqlite3_column_double(stmt, 5);
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void cargar_metricas_nutricion(AsistenteMetricas *metricas)
+{
+    obtener_double(
+        "SELECT AVG(CASE calidad WHEN 'Buena' THEN 3 WHEN 'Regular' THEN 2 ELSE 1 END) "
+        "FROM (SELECT calidad FROM bienestar_comida ORDER BY fecha DESC, id DESC LIMIT 14);",
+        &metricas->comida_avg);
+
+    const char *sql =
+        "SELECT AVG(CASE hidratacion WHEN 'Alta' THEN 3 WHEN 'Media' THEN 2 ELSE 1 END), AVG(alcohol) "
+        "FROM (SELECT hidratacion, alcohol FROM bienestar_dia_nutricional ORDER BY fecha DESC LIMIT 14);";
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            metricas->dia_hid_avg = sqlite3_column_double(stmt, 0);
+            metricas->dia_alc_avg = sqlite3_column_double(stmt, 1);
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void cargar_metricas_entrenamiento(AsistenteMetricas *metricas)
+{
+    const char *sql =
+        "SELECT COUNT(*), AVG(intensidad), AVG(duracion_min) "
+        "FROM (SELECT intensidad, duracion_min FROM bienestar_entrenamiento WHERE omitido = 0 "
+        "ORDER BY fecha DESC LIMIT 14);";
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            metricas->entreno_count = sqlite3_column_int(stmt, 0);
+            metricas->entreno_int_avg = sqlite3_column_double(stmt, 1);
+            metricas->entreno_dur_avg = sqlite3_column_double(stmt, 2);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    obtener_int("SELECT COUNT(*) FROM bienestar_entrenamiento WHERE omitido = 0 AND intensidad >= 8 AND fecha >= date('now', '-6 day');",
+               &metricas->entreno_intenso_count);
+}
+
+static void cargar_metricas_mentales(AsistenteMetricas *metricas)
+{
+    const char *sql =
+        "SELECT AVG(confianza), AVG(estres), AVG(motivacion), AVG(presion), AVG(concentracion) "
+        "FROM (SELECT confianza, estres, motivacion, presion, concentracion "
+        "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 10);";
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            metricas->mental_conf = sqlite3_column_double(stmt, 0);
+            metricas->mental_estres = sqlite3_column_double(stmt, 1);
+            metricas->mental_mot = sqlite3_column_double(stmt, 2);
+            metricas->mental_pres = sqlite3_column_double(stmt, 3);
+            metricas->mental_conc = sqlite3_column_double(stmt, 4);
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void cargar_objetivo_activo(char *objetivo, size_t size)
+{
+    const char *sql =
+        "SELECT nombre FROM bienestar_objetivo WHERE estado = 'Activo' "
+        "ORDER BY fecha_fin DESC LIMIT 1";
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+            if (nombre && nombre[0])
+            {
+                snprintf(objetivo, size, "%s", nombre);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void cargar_metricas_asistente(AsistenteMetricas *metricas)
+{
+    memset(metricas, 0, sizeof(*metricas));
+    obtener_double("SELECT AVG(rendimiento_general) FROM (SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 10);", &metricas->avg_rend);
+    obtener_int("SELECT COUNT(*) FROM lesion WHERE estado = 'Activa';", &metricas->lesiones_activas);
+    cargar_metricas_habitos(metricas);
+    cargar_metricas_nutricion(metricas);
+    cargar_metricas_entrenamiento(metricas);
+    cargar_metricas_mentales(metricas);
+}
+
+static double calcular_score_entrenamiento(int entreno_count, double entreno_int_avg, double entreno_dur_avg)
+{
+    double score_ent = 40.0;
+
+    if (entreno_count <= 0)
+    {
+        return score_ent;
+    }
+
+    if (entreno_int_avg >= 8.0)
+    {
+        score_ent = 55.0;
+    }
+    else if (entreno_int_avg >= 6.0)
+    {
+        score_ent = 75.0;
+    }
+    else if (entreno_int_avg >= 4.0)
+    {
+        score_ent = 70.0;
+    }
+    else
+    {
+        score_ent = 60.0;
+    }
+
+    if (entreno_dur_avg > 90.0)
+    {
+        score_ent -= 5.0;
+    }
+    if (entreno_dur_avg < 30.0)
+    {
+        score_ent -= 5.0;
+    }
+
+    return score_ent;
+}
+
+static void calcular_asistente_scores(const AsistenteMetricas *metricas, double *prep_score, int *riesgo, int *nivel)
+{
+    double score_rend = clamp_double(metricas->avg_rend * 10.0, 0.0, 100.0);
+    double dormi_score = metricas->hab_dormi * 100.0;
+    double hid_score = (metricas->hab_hid / 10.0) * 100.0;
+    double nerv_score = ((10.0 - metricas->hab_nerv) / 10.0) * 100.0;
+    double conf_score = (metricas->hab_conf / 10.0) * 100.0;
+    double mot_score = (metricas->hab_mot / 10.0) * 100.0;
+    double score_hab = (dormi_score + hid_score + nerv_score + conf_score + mot_score) / 5.0;
+    score_hab = clamp_double(score_hab - (metricas->hab_alc * 15.0), 0.0, 100.0);
+
+    double comida_score = ((metricas->comida_avg - 1.0) / 2.0) * 100.0;
+    double dia_hid_score = ((metricas->dia_hid_avg - 1.0) / 2.0) * 100.0;
+    comida_score = clamp_double(comida_score, 0.0, 100.0);
+    dia_hid_score = clamp_double(dia_hid_score, 0.0, 100.0);
+    double score_nut = (comida_score + dia_hid_score) / 2.0;
+    score_nut = clamp_double(score_nut - (metricas->dia_alc_avg * 15.0), 0.0, 100.0);
+
+    double score_ent = calcular_score_entrenamiento(metricas->entreno_count, metricas->entreno_int_avg, metricas->entreno_dur_avg);
+    score_ent = clamp_double(score_ent, 0.0, 100.0);
+
+    double mental_pos = (metricas->mental_conf + metricas->mental_mot + metricas->mental_conc) / 3.0;
+    double mental_neg = (metricas->mental_estres + metricas->mental_pres) / 2.0;
+    double score_mental = (mental_pos / 10.0) * 100.0 - (mental_neg / 10.0) * 30.0;
+    score_mental = clamp_double(score_mental, 0.0, 100.0);
+
+    *prep_score =
+        (score_rend * 0.30) + (score_hab * 0.20) + (score_nut * 0.20) + (score_mental * 0.20) + (score_ent * 0.10);
+    *prep_score = clamp_double(*prep_score, 0.0, 100.0);
+
+    if (metricas->lesiones_activas > 0)
+    {
+        *riesgo = clamp_int(70 + (metricas->lesiones_activas * 5), 70, 100);
+    }
+    else
+    {
+        double base = (100.0 - *prep_score) * 0.6 + (metricas->mental_estres * 3.0) + (metricas->entreno_intenso_count * 5.0);
+        *riesgo = clamp_int((int)(base + 0.5), 0, 100);
+    }
+
+    *nivel = 0;
+    if (metricas->lesiones_activas == 0 && *prep_score >= 75.0)
+    {
+        *nivel = 2;
+    }
+    else if (metricas->lesiones_activas == 0 && *prep_score >= 50.0)
+    {
+        *nivel = 1;
     }
 }
 
@@ -2777,222 +3011,29 @@ static void generar_asistente_entrenamiento(void)
     clear_screen();
     print_header("ASISTENTE ENTRENAMIENTOS");
 
-    double avg_rend = 0.0;
-    obtener_double("SELECT AVG(rendimiento_general) FROM (SELECT rendimiento_general FROM partido ORDER BY fecha_hora DESC LIMIT 10);", &avg_rend);
+    AsistenteMetricas metricas;
+    cargar_metricas_asistente(&metricas);
 
-    int lesiones_activas = 0;
-    obtener_int("SELECT COUNT(*) FROM lesion WHERE estado = 'Activa';", &lesiones_activas);
-
-    double hab_dormi = 0.0;
-    double hab_hid = 0.0;
-    double hab_alc = 0.0;
-    double hab_nerv = 0.0;
-    double hab_conf = 0.0;
-    double hab_mot = 0.0;
-    {
-        const char *sql =
-            "SELECT AVG(dormi_bien), AVG(hidratacion), AVG(alcohol), AVG(nervios), AVG(confianza), AVG(motivacion) "
-            "FROM (SELECT dormi_bien, hidratacion, alcohol, nervios, confianza, motivacion "
-            "FROM bienestar_habito ORDER BY fecha DESC LIMIT 14);";
-        sqlite3_stmt *stmt;
-        if (preparar_stmt(&stmt, sql))
-        {
-            if (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                hab_dormi = sqlite3_column_double(stmt, 0);
-                hab_hid = sqlite3_column_double(stmt, 1);
-                hab_alc = sqlite3_column_double(stmt, 2);
-                hab_nerv = sqlite3_column_double(stmt, 3);
-                hab_conf = sqlite3_column_double(stmt, 4);
-                hab_mot = sqlite3_column_double(stmt, 5);
-            }
-            sqlite3_finalize(stmt);
-        }
-    }
-
-    double comida_avg = 0.0;
-    obtener_double(
-        "SELECT AVG(CASE calidad WHEN 'Buena' THEN 3 WHEN 'Regular' THEN 2 ELSE 1 END) "
-        "FROM (SELECT calidad FROM bienestar_comida ORDER BY fecha DESC, id DESC LIMIT 14);",
-        &comida_avg);
-
-    double dia_hid_avg = 0.0;
-    double dia_alc_avg = 0.0;
-    {
-        const char *sql =
-            "SELECT AVG(CASE hidratacion WHEN 'Alta' THEN 3 WHEN 'Media' THEN 2 ELSE 1 END), AVG(alcohol) "
-            "FROM (SELECT hidratacion, alcohol FROM bienestar_dia_nutricional ORDER BY fecha DESC LIMIT 14);";
-        sqlite3_stmt *stmt;
-        if (preparar_stmt(&stmt, sql))
-        {
-            if (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                dia_hid_avg = sqlite3_column_double(stmt, 0);
-                dia_alc_avg = sqlite3_column_double(stmt, 1);
-            }
-            sqlite3_finalize(stmt);
-        }
-    }
-
-    int entreno_count = 0;
-    double entreno_int_avg = 0.0;
-    double entreno_dur_avg = 0.0;
-    {
-        const char *sql =
-            "SELECT COUNT(*), AVG(intensidad), AVG(duracion_min) "
-            "FROM (SELECT intensidad, duracion_min FROM bienestar_entrenamiento WHERE omitido = 0 "
-            "ORDER BY fecha DESC LIMIT 14);";
-        sqlite3_stmt *stmt;
-        if (preparar_stmt(&stmt, sql))
-        {
-            if (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                entreno_count = sqlite3_column_int(stmt, 0);
-                entreno_int_avg = sqlite3_column_double(stmt, 1);
-                entreno_dur_avg = sqlite3_column_double(stmt, 2);
-            }
-            sqlite3_finalize(stmt);
-        }
-    }
-
-    int entreno_intenso_count = 0;
-    obtener_int("SELECT COUNT(*) FROM bienestar_entrenamiento WHERE omitido = 0 AND intensidad >= 8 AND fecha >= date('now', '-6 day');",
-                &entreno_intenso_count);
-
-    double mental_conf = 0.0;
-    double mental_estres = 0.0;
-    double mental_mot = 0.0;
-    double mental_pres = 0.0;
-    double mental_conc = 0.0;
-    {
-        const char *sql =
-            "SELECT AVG(confianza), AVG(estres), AVG(motivacion), AVG(presion), AVG(concentracion) "
-            "FROM (SELECT confianza, estres, motivacion, presion, concentracion "
-            "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 10);";
-        sqlite3_stmt *stmt;
-        if (preparar_stmt(&stmt, sql))
-        {
-            if (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                mental_conf = sqlite3_column_double(stmt, 0);
-                mental_estres = sqlite3_column_double(stmt, 1);
-                mental_mot = sqlite3_column_double(stmt, 2);
-                mental_pres = sqlite3_column_double(stmt, 3);
-                mental_conc = sqlite3_column_double(stmt, 4);
-            }
-            sqlite3_finalize(stmt);
-        }
-    }
+    double prep_score = 0.0;
+    int riesgo = 0;
+    int nivel = 0;
+    calcular_asistente_scores(&metricas, &prep_score, &riesgo, &nivel);
 
     char objetivo[128] = {0};
-    {
-        const char *sql =
-            "SELECT nombre FROM bienestar_objetivo WHERE estado = 'Activo' "
-            "ORDER BY fecha_fin DESC LIMIT 1";
-        sqlite3_stmt *stmt;
-        if (preparar_stmt(&stmt, sql))
-        {
-            if (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
-                if (nombre && nombre[0])
-                {
-                    snprintf(objetivo, sizeof(objetivo), "%s", nombre);
-                }
-            }
-            sqlite3_finalize(stmt);
-        }
-    }
-
-    double score_rend = clamp_double(avg_rend * 10.0, 0.0, 100.0);
-    double dormi_score = hab_dormi * 100.0;
-    double hid_score = (hab_hid / 10.0) * 100.0;
-    double nerv_score = ((10.0 - hab_nerv) / 10.0) * 100.0;
-    double conf_score = (hab_conf / 10.0) * 100.0;
-    double mot_score = (hab_mot / 10.0) * 100.0;
-    double score_hab = (dormi_score + hid_score + nerv_score + conf_score + mot_score) / 5.0;
-    score_hab = clamp_double(score_hab - (hab_alc * 15.0), 0.0, 100.0);
-
-    double comida_score = ((comida_avg - 1.0) / 2.0) * 100.0;
-    double dia_hid_score = ((dia_hid_avg - 1.0) / 2.0) * 100.0;
-    comida_score = clamp_double(comida_score, 0.0, 100.0);
-    dia_hid_score = clamp_double(dia_hid_score, 0.0, 100.0);
-    double score_nut = (comida_score + dia_hid_score) / 2.0;
-    score_nut = clamp_double(score_nut - (dia_alc_avg * 15.0), 0.0, 100.0);
-
-    double score_ent = 40.0;
-    if (entreno_count > 0)
-    {
-        if (entreno_int_avg >= 8.0)
-        {
-            score_ent = 55.0;
-        }
-        else if (entreno_int_avg >= 6.0)
-        {
-            score_ent = 75.0;
-        }
-        else if (entreno_int_avg >= 4.0)
-        {
-            score_ent = 70.0;
-        }
-        else
-        {
-            score_ent = 60.0;
-        }
-
-        if (entreno_dur_avg > 90.0)
-        {
-            score_ent -= 5.0;
-        }
-        if (entreno_dur_avg < 30.0)
-        {
-            score_ent -= 5.0;
-        }
-    }
-    score_ent = clamp_double(score_ent, 0.0, 100.0);
-
-    double mental_pos = (mental_conf + mental_mot + mental_conc) / 3.0;
-    double mental_neg = (mental_estres + mental_pres) / 2.0;
-    double score_mental = (mental_pos / 10.0) * 100.0 - (mental_neg / 10.0) * 30.0;
-    score_mental = clamp_double(score_mental, 0.0, 100.0);
-
-    double prep_score =
-        (score_rend * 0.30) + (score_hab * 0.20) + (score_nut * 0.20) + (score_mental * 0.20) + (score_ent * 0.10);
-    prep_score = clamp_double(prep_score, 0.0, 100.0);
-
-    int riesgo = 0;
-    if (lesiones_activas > 0)
-    {
-        riesgo = clamp_int(70 + (lesiones_activas * 5), 70, 100);
-    }
-    else
-    {
-        double base = (100.0 - prep_score) * 0.6 + (mental_estres * 3.0) + (entreno_intenso_count * 5.0);
-        riesgo = clamp_int((int)(base + 0.5), 0, 100);
-    }
-
-    int nivel = 0;
-    if (lesiones_activas == 0 && prep_score >= 75.0)
-    {
-        nivel = 2;
-    }
-    else if (lesiones_activas == 0 && prep_score >= 50.0)
-    {
-        nivel = 1;
-    }
+    cargar_objetivo_activo(objetivo, sizeof(objetivo));
 
     char rutina[2048];
     rutina[0] = '\0';
-    construir_rutina_texto(rutina, sizeof(rutina), nivel, lesiones_activas, objetivo);
+    construir_rutina_texto(rutina, sizeof(rutina), nivel, metricas.lesiones_activas, objetivo);
     if (riesgo >= 70)
     {
         size_t used = safe_strnlen(rutina, sizeof(rutina));
-        append_line(rutina, sizeof(rutina), &used, "\nAlerta: riesgo de lesion elevado. Prioriza recuperacion.\n");
+        append_text(rutina, sizeof(rutina), &used, "\nAlerta: riesgo de lesion elevado. Prioriza recuperacion.\n");
     }
 
     char resumen[256];
     snprintf(resumen, sizeof(resumen), "Prep %d/100 | Riesgo %d/100 | Lesiones %d | Rend %.1f",
-             (int)(prep_score + 0.5), riesgo, lesiones_activas, avg_rend);
+             (int)(prep_score + 0.5), riesgo, metricas.lesiones_activas, metricas.avg_rend);
 
     char fecha_iso[16];
     fecha_hoy(fecha_iso, sizeof(fecha_iso));

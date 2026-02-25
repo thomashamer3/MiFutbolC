@@ -29,7 +29,7 @@
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
@@ -103,22 +103,29 @@ WINDOW *ui_get_output_window(void)
 }
 #endif
 
-int ui_printf(const char *fmt, ...)
+int ui_printf(const char *fmt, ...) // NOSONAR
 {
     va_list args;
     va_start(args, fmt);
+    char *formatted = sqlite3_vmprintf(fmt, args);
+    va_end(args);
+
+    if (!formatted)
+    {
+        return -1;
+    }
 #ifdef USE_NCURSES
     if (ui_is_ncurses_active())
     {
         WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int rc = vw_printw(target, fmt, args);
+        int rc = wprintw(target, "%s", formatted);
         wrefresh(target);
-        va_end(args);
+        sqlite3_free(formatted);
         return rc;
     }
 #endif
-    int rc = vprintf(fmt, args);
-    va_end(args);
+    int rc = printf("%s", formatted);
+    sqlite3_free(formatted);
     return rc;
 }
 
@@ -150,13 +157,21 @@ int ui_putchar(int c)
     return putchar(c);
 }
 
-int ui_printf_centered_line(const char *fmt, ...)
+int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
 {
     char buffer[512];
     va_list args;
     va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    char *formatted = sqlite3_vmprintf(fmt, args);
     va_end(args);
+
+    if (!formatted)
+    {
+        return -1;
+    }
+
+    snprintf(buffer, sizeof(buffer), "%s", formatted);
+    sqlite3_free(formatted);
 
 #ifdef USE_NCURSES
     if (ui_is_ncurses_active())

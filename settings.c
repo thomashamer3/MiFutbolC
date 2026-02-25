@@ -14,13 +14,16 @@
 #include "import.h"
 #include "ascii_art.h"
 #include "cJSON.h"
-#include <Windows.h>
+#include <windows.h>
 #ifdef _WIN32
 #include <shellapi.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+typedef HRESULT (WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR, DWORD, LPVOID);
+#endif
 
 void menu_exportar();
 void menu_update();
@@ -906,6 +909,321 @@ static const MenuItem* buscar_item_settings(const MenuItem *items, int cantidad,
     return NULL;
 }
 
+#ifdef _WIN32
+static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)
+{
+    const char *slash = strrchr(owner_repo, '/');
+    if (slash && *(slash + 1) != '\0')
+    {
+        snprintf(repo_name, repo_name_size, "%s", slash + 1);
+        return;
+    }
+
+    snprintf(repo_name, repo_name_size, "%s", owner_repo);
+}
+
+static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *out_module)
+{
+    *out_downloader = NULL;
+    *out_module = LoadLibraryA("urlmon.dll");
+    if (*out_module)
+    {
+        *out_downloader = (URLDownloadToFileAFunc)GetProcAddress(*out_module, "URLDownloadToFileA");
+    }
+
+    return *out_downloader != NULL;
+}
+
+static void liberar_descargador(HMODULE module)
+{
+    if (module)
+    {
+        FreeLibrary(module);
+    }
+}
+
+static void liberar_releases(char *release_names[], char *asset_urls[], int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        free(release_names[i]);
+        free(asset_urls[i]);
+    }
+}
+
+static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url, const char *dest)
+{
+    HRESULT hr = E_FAIL;
+    if (downloader)
+    {
+        hr = downloader(NULL, url, dest, 0, NULL);
+    }
+
+    return hr == S_OK;
+}
+
+static int ejecutar_instalador(const char *dest)
+{
+    HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
+    if ((INT_PTR)h <= 32)
+    {
+        printf("Error al ejecutar el instalador. Codigo: %p\n", (void *)h);
+        return 0;
+    }
+    return 1;
+}
+
+static int leer_archivo_completo(const char *path, char **out_data)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f)
+    {
+        return 0;
+    }
+
+    if (fseek(f, 0, SEEK_END) != 0)
+    {
+        fclose(f);
+        return 0;
+    }
+
+    long fsize = ftell(f);
+    if (fsize <= 0)
+    {
+        fclose(f);
+        return 0;
+    }
+
+    if (fseek(f, 0, SEEK_SET) != 0)
+    {
+        fclose(f);
+        return 0;
+    }
+
+    size_t bytes = (size_t)fsize;
+    char *data = (char *)malloc(bytes + 1);
+    if (!data)
+    {
+        fclose(f);
+        return 0;
+    }
+
+    size_t read_bytes = fread(data, 1, bytes, f);
+    fclose(f);
+
+    if (read_bytes != bytes)
+    {
+        free(data);
+        return 0;
+    }
+
+    data[bytes] = '\0';
+    *out_data = data;
+    return 1;
+}
+
+static const char *obtener_release_label(const cJSON *tag, const cJSON *name)
+{
+    if (tag && cJSON_IsString(tag) && tag->valuestring)
+    {
+        return tag->valuestring;
+    }
+    if (name && cJSON_IsString(name) && name->valuestring)
+    {
+        return name->valuestring;
+    }
+    return "(sin nombre)";
+}
+
+static int extraer_asset_exe(const cJSON *assets, const char **asset_url)
+{
+    if (!assets || !cJSON_IsArray(assets))
+    {
+        return 0;
+    }
+
+    const cJSON *asset = NULL;
+    cJSON_ArrayForEach(asset, assets)
+    {
+        const cJSON *asset_name_item = cJSON_GetObjectItem(asset, "name");
+        const cJSON *url_item = cJSON_GetObjectItem(asset, "browser_download_url");
+        if (!asset_name_item || !url_item || !cJSON_IsString(asset_name_item) || !cJSON_IsString(url_item))
+        {
+            continue;
+        }
+
+        if (strstr(asset_name_item->valuestring, ".exe") != NULL)
+        {
+            *asset_url = url_item->valuestring;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int cargar_releases_ejecutables(cJSON *root, char *release_names[], char *asset_urls[], int max_releases)
+{
+    int count = 0;
+    cJSON *rel = NULL;
+
+    cJSON_ArrayForEach(rel, root)
+    {
+        if (count >= max_releases)
+        {
+            break;
+        }
+
+        const cJSON *tag = cJSON_GetObjectItem(rel, "tag_name");
+        const cJSON *name = cJSON_GetObjectItem(rel, "name");
+        const char *release_label = obtener_release_label(tag, name);
+        const cJSON *assets = cJSON_GetObjectItem(rel, "assets");
+        const char *asset_url = NULL;
+
+        if (!extraer_asset_exe(assets, &asset_url))
+        {
+            continue;
+        }
+
+        release_names[count] = _strdup(release_label);
+        asset_urls[count] = _strdup(asset_url);
+        if (!release_names[count] || !asset_urls[count])
+        {
+            free(release_names[count]);
+            free(asset_urls[count]);
+            break;
+        }
+        count++;
+    }
+
+    return count;
+}
+
+static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_name, const char *temp_path)
+{
+    URLDownloadToFileAFunc downloader;
+    HMODULE module;
+    if (!cargar_descargador(&downloader, &module))
+    {
+        printf("Error cargando modulo de descarga (urlmon.dll).\n");
+        return 0;
+    }
+
+    char download_url[1024];
+    char dest[1024];
+    snprintf(download_url, sizeof(download_url), "https://github.com/%s/releases/latest/download/%s.exe", owner_repo, repo_name);
+    snprintf(dest, sizeof(dest), "%s%s_latest.exe", temp_path, repo_name);
+
+    printf("Descargando %s -> %s\n", download_url, dest);
+    int ok = descargar_archivo(downloader, download_url, dest);
+    liberar_descargador(module);
+
+    if (!ok)
+    {
+        printf("Error descargando la release.\n");
+        return 0;
+    }
+
+    printf("Descarga completada: %s\n", dest);
+    ejecutar_instalador(dest);
+    return 1;
+}
+
+static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, const char *repo_name, const char *temp_path)
+{
+    URLDownloadToFileAFunc downloader;
+    HMODULE module;
+    if (!cargar_descargador(&downloader, &module))
+    {
+        printf("Error cargando modulo de descarga (urlmon.dll).\n");
+        return 0;
+    }
+
+    char api_url[1024];
+    char json_path[1024];
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases", owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_releases.json", temp_path, repo_name);
+
+    printf("Obteniendo lista de releases...\n");
+    if (!descargar_archivo(downloader, api_url, json_path))
+    {
+        printf("Error descargando lista de releases.\n");
+        liberar_descargador(module);
+        return 0;
+    }
+
+    char *json_data = NULL;
+    if (!leer_archivo_completo(json_path, &json_data))
+    {
+        printf("Error abriendo o leyendo archivo de releases descargado.\n");
+        liberar_descargador(module);
+        return 0;
+    }
+
+    cJSON *root = cJSON_Parse(json_data);
+    free(json_data);
+    if (!root || !cJSON_IsArray(root))
+    {
+        printf("Respuesta invalida de GitHub API.\n");
+        if (root)
+        {
+            cJSON_Delete(root);
+        }
+        liberar_descargador(module);
+        return 0;
+    }
+
+    const int MAX_RELEASES = 64;
+    char *asset_urls[MAX_RELEASES] = {0};
+    char *release_names[MAX_RELEASES] = {0};
+    int count = cargar_releases_ejecutables(root, release_names, asset_urls, MAX_RELEASES);
+    cJSON_Delete(root);
+
+    if (count == 0)
+    {
+        printf("No se encontraron assets .exe en las releases.\n");
+        liberar_descargador(module);
+        return 0;
+    }
+
+    printf("Selecciona la version a descargar:\n");
+    for (int i = 0; i < count; i++)
+    {
+        printf("%d. %s\n", i + 1, release_names[i]);
+    }
+    printf("0. %s\n", get_text("menu_back"));
+
+    int choice = input_int("> ");
+    if (choice <= 0 || choice > count)
+    {
+        liberar_releases(release_names, asset_urls, count);
+        liberar_descargador(module);
+        return 0;
+    }
+
+    int selected_index = choice - 1;
+    const char *chosen_url = asset_urls[selected_index];
+    char dest[1024];
+    snprintf(dest, sizeof(dest), "%s%s_selected.exe", temp_path, repo_name);
+
+    printf("Descargando %s -> %s\n", chosen_url, dest);
+    int ok = descargar_archivo(downloader, chosen_url, dest);
+
+    liberar_releases(release_names, asset_urls, count);
+    liberar_descargador(module);
+
+    if (!ok)
+    {
+        printf("Error descargando el asset.\n");
+        return 0;
+    }
+
+    printf("Descarga completada: %s\n", dest);
+    ejecutar_instalador(dest);
+    return 1;
+}
+#endif
+
 /**
  * @brief Submenú para configuracion de temas
  */
@@ -1241,15 +1559,7 @@ void menu_update()
     print_header(get_text("menu_update"));
     const char *owner_repo = UPDATE_REPO; // formato owner/repo
     char repo_name[128] = {0};
-    const char *slash = strrchr(owner_repo, '/');
-    if (slash && *(slash + 1) != '\0')
-    {
-        snprintf(repo_name, sizeof(repo_name), "%s", slash + 1);
-    }
-    else
-    {
-        snprintf(repo_name, sizeof(repo_name), "%s", owner_repo);
-    }
+    obtener_nombre_repo(owner_repo, repo_name, sizeof(repo_name));
 
     // Opciones al usuario
     printf("1. %s\n", "Ultima version (latest)");
@@ -1270,217 +1580,14 @@ void menu_update()
         return;
     }
 
-    // Función de descarga dinámica
-    typedef HRESULT (WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR, DWORD, LPVOID);
-    URLDownloadToFileAFunc pUrlDownload = NULL;
-    HMODULE hUrlmon = LoadLibraryA("urlmon.dll");
-    if (hUrlmon)
-    {
-        pUrlDownload = (URLDownloadToFileAFunc)GetProcAddress(hUrlmon, "URLDownloadToFileA");
-    }
-
     if (modo == 1)
     {
-        // Descargar la ultima versión directamente por convención del asset <repo>.exe
-        char download_url[1024];
-        snprintf(download_url, sizeof(download_url), "https://github.com/%s/releases/latest/download/%s.exe", owner_repo, repo_name);
-
-        char dest[1024];
-        snprintf(dest, sizeof(dest), "%s%s_latest.exe", temp_path, repo_name);
-
-        printf("Descargando %s -> %s\n", download_url, dest);
-
-        HRESULT hr = E_FAIL;
-        if (pUrlDownload)
-        {
-            hr = pUrlDownload(NULL, download_url, dest, 0, NULL);
-        }
-
-        if (hr != S_OK)
-        {
-            printf("Error descargando la release. HRESULT=0x%08llX\n", (long long)hr);
-            if (hUrlmon) FreeLibrary(hUrlmon);
-            pause_console();
-            return;
-        }
-
-        printf("Descarga completada: %s\n", dest);
-        HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
-        if ((INT_PTR)h <= 32)
-        {
-            printf("Error al ejecutar el instalador. Codigo: %lld\n", (long long)(INT_PTR)h);
-        }
-
-        if (hUrlmon) FreeLibrary(hUrlmon);
+        descargar_y_ejecutar_latest(owner_repo, repo_name, temp_path);
         pause_console();
         return;
     }
 
-    // Modo: listar releases a través de la API y permitir seleccionar
-    char api_url[1024];
-    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases", owner_repo);
-    char json_path[1024];
-    snprintf(json_path, sizeof(json_path), "%s%s_releases.json", temp_path, repo_name);
-
-    printf("Obteniendo lista de releases...\n");
-    HRESULT hr = E_FAIL;
-    if (pUrlDownload)
-    {
-        hr = pUrlDownload(NULL, api_url, json_path, 0, NULL);
-    }
-
-    if (hr != S_OK)
-    {
-        printf("Error descargando lista de releases. HRESULT=0x%08llX\n", (long long)hr);
-        if (hUrlmon) FreeLibrary(hUrlmon);
-        pause_console();
-        return;
-    }
-
-    // Leer archivo JSON
-    FILE *f = fopen(json_path, "rb");
-    if (!f)
-    {
-        printf("Error abriendo archivo de releases descargado.\n");
-        if (hUrlmon) FreeLibrary(hUrlmon);
-        pause_console();
-        return;
-    }
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char *data = (char*)malloc(fsize + 1);
-    if (!data)
-    {
-        fclose(f);
-        if (hUrlmon) FreeLibrary(hUrlmon);
-        printf("Memoria insuficiente.\n");
-        pause_console();
-        return;
-    }
-    fread(data, 1, fsize, f);
-    data[fsize] = '\0';
-    fclose(f);
-
-    cJSON *root = cJSON_Parse(data);
-    free(data);
-    if (!root || !cJSON_IsArray(root))
-    {
-        printf("Respuesta invalida de GitHub API.\n");
-        if (root) cJSON_Delete(root);
-        if (hUrlmon) FreeLibrary(hUrlmon);
-        pause_console();
-        return;
-    }
-
-    const int MAX_RELEASES = 64;
-    char *asset_urls[MAX_RELEASES];
-    char *release_names[MAX_RELEASES];
-    int count = 0;
-
-    cJSON *rel = NULL;
-    cJSON_ArrayForEach(rel, root)
-    {
-        if (count >= MAX_RELEASES) break;
-        cJSON *tag = cJSON_GetObjectItem(rel, "tag_name");
-        cJSON *name = cJSON_GetObjectItem(rel, "name");
-        const char *release_label = (tag && cJSON_IsString(tag) && tag->valuestring) ? tag->valuestring : (name && cJSON_IsString(name) ? name->valuestring : "(sin nombre)");
-
-        cJSON *assets = cJSON_GetObjectItem(rel, "assets");
-        if (assets && cJSON_IsArray(assets))
-        {
-            cJSON *asset = NULL;
-            cJSON_ArrayForEach(asset, assets)
-            {
-                cJSON const *an = cJSON_GetObjectItem(asset, "name");
-                cJSON *url = cJSON_GetObjectItem(asset, "browser_download_url");
-                if (an && url && cJSON_IsString(an) && cJSON_IsString(url))
-                {
-                    const char *asset_name = an->valuestring;
-                    const char *asset_url = url->valuestring;
-                    // Preferir ejecutables .exe
-                    if (strstr(asset_name, ".exe") != NULL)
-                    {
-                        release_names[count] = _strdup(release_label);
-                        asset_urls[count] = _strdup(asset_url);
-                        count++;
-                        break; // tomar primer .exe del release
-                    }
-                }
-            }
-        }
-    }
-
-    cJSON_Delete(root);
-    if (hUrlmon) FreeLibrary(hUrlmon);
-
-    if (count == 0)
-    {
-        printf("No se encontraron assets .exe en las releases.");
-        pause_console();
-        return;
-    }
-
-    printf("Selecciona la version a descargar:\n");
-    for (int i = 0; i < count; i++)
-    {
-        printf("%d. %s\n", i + 1, release_names[i]);
-    }
-    printf("0. %s\n", get_text("menu_back"));
-
-    int choice = input_int("> ");
-    if (choice <= 0 || choice > count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            free(release_names[i]);
-            free(asset_urls[i]);
-        }
-        return;
-    }
-
-    const char *chosen_url = asset_urls[choice - 1];
-    char dest[1024];
-    snprintf(dest, sizeof(dest), "%s%s_selected.exe", temp_path, repo_name);
-
-    printf("Descargando %s -> %s\n", chosen_url, dest);
-
-    // Descargar asset seleccionado
-    hUrlmon = LoadLibraryA("urlmon.dll");
-    pUrlDownload = NULL;
-    if (hUrlmon)
-    {
-        pUrlDownload = (URLDownloadToFileAFunc)GetProcAddress(hUrlmon, "URLDownloadToFileA");
-    }
-
-    hr = E_FAIL;
-    if (pUrlDownload)
-    {
-        hr = pUrlDownload(NULL, chosen_url, dest, 0, NULL);
-    }
-
-    if (hUrlmon) FreeLibrary(hUrlmon);
-
-    for (int i = 0; i < count; i++)
-    {
-        free(release_names[i]);
-        free(asset_urls[i]);
-    }
-
-    if (hr != S_OK)
-    {
-        printf("Error descargando el asset. HRESULT=0x%08llX\n", (long long)hr);
-        pause_console();
-        return;
-    }
-
-    printf("Descarga completada: %s\n", dest);
-    HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
-    if ((INT_PTR)h <= 32)
-    {
-        printf("Error al ejecutar el instalador. Codigo: %lld\n", (long long)(INT_PTR)h);
-    }
-
+    descargar_y_ejecutar_release_seleccionada(owner_repo, repo_name, temp_path);
     pause_console();
 #else
     printf("Actualizar solo esta soportado en Windows.\n");

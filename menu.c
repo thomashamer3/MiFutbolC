@@ -169,7 +169,8 @@ static void ncurses_print_centered_lines(int start_y, const char *text)
 
 static void ncurses_show_welcome(const char *ascii_art, const char *line1, const char *line2)
 {
-    int height, width;
+    int height;
+    int width;
     getmaxyx(stdscr, height, width);
 
     int art_lines = ncurses_count_lines(ascii_art);
@@ -198,7 +199,11 @@ static void ncurses_show_welcome(const char *ascii_art, const char *line1, const
 
     refresh();
     int ch;
-    while ((ch = getch()) != '\n' && ch != KEY_ENTER) {}
+    do
+    {
+        ch = getch();
+    }
+    while (ch != '\n' && ch != KEY_ENTER);
 }
 
 static void ncurses_draw_header(WINDOW *win, const char *titulo)
@@ -208,8 +213,9 @@ static void ncurses_draw_header(WINDOW *win, const char *titulo)
     char titulo_buf[128];
     const char *titulo_src = titulo ? titulo : "";
     size_t titulo_len = strlen(titulo_src);
-    const char *nombre_usuario = get_user_name();
-    if (!nombre_usuario)
+    char *nombre_usuario_dyn = get_user_name();
+    const char *nombre_usuario = nombre_usuario_dyn;
+    if (!nombre_usuario_dyn)
     {
         nombre_usuario = "Usuario Desconocido";
     }
@@ -259,10 +265,79 @@ static void ncurses_draw_header(WINDOW *win, const char *titulo)
     }
     wrefresh(win);
 
-    if (strcmp(nombre_usuario, "Usuario Desconocido") != 0)
+    if (nombre_usuario_dyn)
     {
-        free((void *)nombre_usuario);
+        free(nombre_usuario_dyn);
     }
+}
+
+static int ncurses_get_chunk_size(const char *text, int offset, int prefix_len, int available)
+{
+    int remaining = prefix_len - offset;
+    int chunk = remaining > available ? available : remaining;
+
+    if (chunk == available && chunk > 1)
+    {
+        int k;
+        for (k = chunk - 1; k > 0; --k)
+        {
+            if (text[offset + k] == ' ')
+            {
+                chunk = k;
+                break;
+            }
+        }
+    }
+
+    return chunk;
+}
+
+static int ncurses_draw_wrapped_option_line(WINDOW *win,
+        const char *text,
+        int prefix_len,
+        int start_x,
+        int available,
+        int current_row,
+        int content_bottom,
+        int selected)
+{
+    int offset = 0;
+
+    while (offset < prefix_len && current_row <= content_bottom)
+    {
+        int chunk = ncurses_get_chunk_size(text, offset, prefix_len, available);
+
+        if (selected)
+        {
+            wattron(win, COLOR_PAIR(2) | A_BOLD);
+        }
+        else
+        {
+            wattron(win, COLOR_PAIR(1));
+        }
+
+        mvwprintw(win, current_row, start_x, "%.*s", chunk, text + offset);
+        wmove(win, current_row, start_x + chunk);
+        wclrtoeol(win);
+
+        if (selected)
+        {
+            wattroff(win, COLOR_PAIR(2) | A_BOLD);
+        }
+        else
+        {
+            wattroff(win, COLOR_PAIR(1));
+        }
+
+        current_row++;
+        offset += chunk;
+        while (offset < prefix_len && text[offset] == ' ')
+        {
+            offset++;
+        }
+    }
+
+    return current_row;
 }
 
 static void ncurses_draw_menu(WINDOW *win, const MenuItem *items, int cantidad, int selected)
@@ -318,48 +393,15 @@ static void ncurses_draw_menu(WINDOW *win, const MenuItem *items, int cantidad, 
     for (int i = 0; i < cantidad && current_row <= content_bottom; ++i)
     {
         char full[512];
-        int prefix_len;
-        prefix_len = snprintf(full, sizeof(full), "%s %d. %s", (i == selected) ? ">" : " ", items[i].opcion, items[i].texto);
-        int offset = 0;
-        while (offset < prefix_len && current_row <= content_bottom)
-        {
-            int remaining = prefix_len - offset;
-            int chunk = remaining > available ? available : remaining;
-
-            /* Preferir romper en espacio si es posible */
-            if (chunk == available && chunk > 1)
-            {
-                int k;
-                for (k = chunk - 1; k > 0; --k)
-                {
-                    if (full[offset + k] == ' ')
-                    {
-                        chunk = k;
-                        break;
-                    }
-                }
-            }
-
-            /* Construir la línea a dibujar */
-            if (i == selected)
-                wattron(win, COLOR_PAIR(2) | A_BOLD);
-            else
-                wattron(win, COLOR_PAIR(1));
-
-            mvwprintw(win, current_row, start_x, "%.*s", chunk, full + offset);
-            wmove(win, current_row, start_x + chunk);
-            wclrtoeol(win);
-
-            if (i == selected)
-                wattroff(win, COLOR_PAIR(2) | A_BOLD);
-            else
-                wattroff(win, COLOR_PAIR(1));
-
-            current_row++;
-            offset += chunk;
-            while (offset < prefix_len && full[offset] == ' ')
-                offset++;
-        }
+        int prefix_len = snprintf(full, sizeof(full), "%s %d. %s", (i == selected) ? ">" : " ", items[i].opcion, items[i].texto);
+        current_row = ncurses_draw_wrapped_option_line(win,
+                      full,
+                      prefix_len,
+                      start_x,
+                      available,
+                      current_row,
+                      content_bottom,
+                      i == selected);
     }
     wrefresh(win);
 }
@@ -617,6 +659,75 @@ static void ncurses_relayout(const char *titulo,
     refresh();
 }
 
+static void ncurses_prepare_action_output(WINDOW *content_body)
+{
+    if (content_body)
+    {
+        werase(content_body);
+        wmove(content_body, 0, 0);
+        wrefresh(content_body);
+        scrollok(content_body, TRUE);
+        ui_set_output_window(content_body);
+        return;
+    }
+
+    ui_set_output_window(NULL);
+}
+
+static void ncurses_finalize_action_output(WINDOW *content_body)
+{
+    ui_set_output_window(NULL);
+    if (content_body)
+    {
+        scrollok(content_body, FALSE);
+    }
+}
+
+static void ncurses_execute_selected_item(const MenuItem *selected_item,
+        WINDOW *content_body,
+        const char *titulo,
+        const MenuItem *items,
+        int cantidad,
+        int selected,
+        int header_h,
+        int status_h,
+        int is_main,
+        WINDOW *header,
+        WINDOW *status,
+        WINDOW *menu,
+        WINDOW **content,
+        WINDOW **content_body_ref,
+        int *height,
+        int *width,
+        int *body_h,
+        int *menu_w,
+        int *content_w,
+        int *too_small)
+{
+    ncurses_prepare_action_output(content_body);
+    selected_item->accion();
+    ncurses_finalize_action_output(content_body);
+
+    ncurses_relayout(titulo,
+                     items,
+                     cantidad,
+                     selected,
+                     header_h,
+                     status_h,
+                     is_main,
+                     header,
+                     status,
+                     menu,
+                     content,
+                     content_body_ref,
+                     height,
+                     width,
+                     body_h,
+                     menu_w,
+                     content_w,
+                     too_small);
+}
+
 static int ncurses_run_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
     int selected = 0;
@@ -629,15 +740,16 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
     int too_small = 0;
     clock_t resize_start = 0;
     const int resize_debounce_ms = 250;
-    int persistent = ncurses_menu_persist(titulo);
     int is_main = ncurses_is_main_menu(titulo);
+    (void)ncurses_menu_persist;
 
     if (!ncurses_init())
     {
         return 0;
     }
 
-    int height, width;
+    int height;
+    int width;
     getmaxyx(stdscr, height, width);
 
     timeout(-1);
@@ -703,7 +815,8 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
 
         if (pending_resize)
         {
-            int current_h, current_w;
+            int current_h;
+            int current_w;
             int elapsed_ms;
             ncurses_sync_screen_size();
             getmaxyx(stdscr, current_h, current_w);
@@ -757,180 +870,26 @@ static int ncurses_run_menu(const char *titulo, const MenuItem *items, int canti
                 break;
             }
 
-            if (persistent)
-            {
-                if (content_body)
-                {
-                    werase(content_body);
-                    wmove(content_body, 0, 0);
-                    wrefresh(content_body);
-                    scrollok(content_body, TRUE);
-                    ui_set_output_window(content_body);
-                }
-                else
-                {
-                    ui_set_output_window(NULL);
-                }
-
-                selected_item->accion();
-
-                ui_set_output_window(NULL);
-                if (content_body)
-                {
-                    scrollok(content_body, FALSE);
-                }
-
-                getmaxyx(stdscr, height, width);
-                body_h = height - header_h - status_h;
-                menu_w = is_main ? MENU_W : width;
-                content_w = is_main ? (width - menu_w - 2) : 0;
-                if (content_w <= 10)
-                {
-                    menu_w = width;
-                    content_w = 0;
-                }
-
-                wresize(header, header_h, width);
-                wresize(status, status_h, width);
-                mvwin(status, height - 1, 0);
-
-                wresize(menu, body_h, is_main ? menu_w : width);
-                mvwin(menu, header_h, 0);
-
-                if (content)
-                {
-                    if (content_w > 10)
-                    {
-                        wresize(content, body_h, content_w);
-                        mvwin(content, header_h, menu_w + 1);
-                        if (content_body)
-                        {
-                            delwin(content_body);
-                            content_body = NULL;
-                        }
-                        if (body_h > 2 && content_w > 2)
-                        {
-                            content_body = derwin(content, body_h - 2, content_w - 2, 1, 1);
-                        }
-                    }
-                    else
-                    {
-                        if (content_body)
-                        {
-                            delwin(content_body);
-                            content_body = NULL;
-                        }
-                        delwin(content);
-                        content = NULL;
-                    }
-                }
-                else if (is_main && content_w > 10)
-                {
-                    content = newwin(body_h, content_w, header_h, menu_w + 1);
-                    if (content && body_h > 2 && content_w > 2)
-                    {
-                        content_body = derwin(content, body_h - 2, content_w - 2, 1, 1);
-                    }
-                }
-                {
-                    char status_buf[128];
-                    const char *status_msg = ncurses_get_size_notice(height, width, status_buf, sizeof(status_buf));
-                    ncurses_draw_header(header, titulo);
-                    ncurses_draw_status(status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
-                }
-                if (content)
-                {
-                    ncurses_draw_content(content, content_body, "Contenido", items[selected].texto);
-                }
-                refresh();
-            }
-            else
-            {
-                if (content_body)
-                {
-                    werase(content_body);
-                    wmove(content_body, 0, 0);
-                    wrefresh(content_body);
-                    scrollok(content_body, TRUE);
-                    ui_set_output_window(content_body);
-                }
-                else
-                {
-                    ui_set_output_window(NULL);
-                }
-
-                selected_item->accion();
-
-                ui_set_output_window(NULL);
-                if (content_body)
-                {
-                    scrollok(content_body, FALSE);
-                }
-
-                getmaxyx(stdscr, height, width);
-                body_h = height - header_h - status_h;
-                menu_w = is_main ? MENU_W : width;
-                content_w = is_main ? (width - menu_w - 2) : 0;
-                if (content_w <= 10)
-                {
-                    menu_w = width;
-                    content_w = 0;
-                }
-
-                wresize(header, header_h, width);
-                wresize(status, status_h, width);
-                mvwin(status, height - 1, 0);
-
-                wresize(menu, body_h, is_main ? menu_w : width);
-                mvwin(menu, header_h, 0);
-
-                if (content)
-                {
-                    if (content_w > 10)
-                    {
-                        wresize(content, body_h, content_w);
-                        mvwin(content, header_h, menu_w + 1);
-                        if (content_body)
-                        {
-                            delwin(content_body);
-                            content_body = NULL;
-                        }
-                        if (body_h > 2 && content_w > 2)
-                        {
-                            content_body = derwin(content, body_h - 2, content_w - 2, 1, 1);
-                        }
-                    }
-                    else
-                    {
-                        if (content_body)
-                        {
-                            delwin(content_body);
-                            content_body = NULL;
-                        }
-                        delwin(content);
-                        content = NULL;
-                    }
-                }
-                else if (is_main && content_w > 10)
-                {
-                    content = newwin(body_h, content_w, header_h, menu_w + 1);
-                    if (content && body_h > 2 && content_w > 2)
-                    {
-                        content_body = derwin(content, body_h - 2, content_w - 2, 1, 1);
-                    }
-                }
-                {
-                    char status_buf[128];
-                    const char *status_msg = ncurses_get_size_notice(height, width, status_buf, sizeof(status_buf));
-                    ncurses_draw_header(header, titulo);
-                    ncurses_draw_status(status, status_msg ? status_msg : "Flechas Navegar | Enter seleccionar");
-                }
-                if (content)
-                {
-                    ncurses_draw_content(content, content_body, "Contenido", items[selected].texto);
-                }
-                refresh();
-            }
+            ncurses_execute_selected_item(selected_item,
+                                          content_body,
+                                          titulo,
+                                          items,
+                                          cantidad,
+                                          selected,
+                                          header_h,
+                                          status_h,
+                                          is_main,
+                                          header,
+                                          status,
+                                          menu,
+                                          &content,
+                                          &content_body,
+                                          &height,
+                                          &width,
+                                          &body_h,
+                                          &menu_w,
+                                          &content_w,
+                                          &too_small);
         }
         else if (ch >= '0' && ch <= '9')
         {
