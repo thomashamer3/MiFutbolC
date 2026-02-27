@@ -1243,8 +1243,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 3.6  
-**Última actualización**: 03/02/2026  
+**Versión**: 3.8  
+**Última actualización**: 26/02/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*
