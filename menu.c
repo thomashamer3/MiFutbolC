@@ -10,7 +10,7 @@
 #include <ncursesw/ncurses.h>
 #endif
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 #include "db.h"
 #include "camiseta.h"

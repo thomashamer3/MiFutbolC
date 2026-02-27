@@ -93,38 +93,95 @@ static void aplicar_tema_texto_y_pausar(ThemeType theme, TextSizeType text_size)
 }
 
 /* Wrappers para usar como acciones en MenuItem (sin argumentos) */
-static void theme_set_light()   { aplicar_config_y_pausar(set_theme_int, THEME_LIGHT); }
-static void theme_set_dark()    { aplicar_config_y_pausar(set_theme_int, THEME_DARK); }
-static void theme_set_blue()    { aplicar_config_y_pausar(set_theme_int, THEME_BLUE); }
-static void theme_set_green()   { aplicar_config_y_pausar(set_theme_int, THEME_GREEN); }
-static void theme_set_red()     { aplicar_config_y_pausar(set_theme_int, THEME_RED); }
-static void theme_set_purple()  { aplicar_config_y_pausar(set_theme_int, THEME_PURPLE); }
-static void theme_set_classic() { aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC); }
-static void theme_set_high_contrast() { aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST); }
+static void theme_set_light()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_LIGHT);
+}
+static void theme_set_dark()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_DARK);
+}
+static void theme_set_blue()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_BLUE);
+}
+static void theme_set_green()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_GREEN);
+}
+static void theme_set_red()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_RED);
+}
+static void theme_set_purple()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_PURPLE);
+}
+static void theme_set_classic()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC);
+}
+static void theme_set_high_contrast()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
+}
 
-static void lang_set_spanish() { aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH); }
-static void lang_set_english() { aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH); }
+static void lang_set_spanish()
+{
+    aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH);
+}
+static void lang_set_english()
+{
+    aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH);
+}
 
-static void text_size_small()  { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL); }
-static void text_size_medium() { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM); }
-static void text_size_large()  { aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE); }
+static void text_size_small()
+{
+    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL);
+}
+static void text_size_medium()
+{
+    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM);
+}
+static void text_size_large()
+{
+    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE);
+}
 
-static void accessibility_high_contrast() { aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST); }
-static void accessibility_normal_theme_text() { aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM); }
+static void accessibility_high_contrast()
+{
+    aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
+}
+static void accessibility_normal_theme_text()
+{
+    aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM);
+}
 
 static void visual_use_ncurses()
 {
 #ifdef USE_NCURSES
-    aplicar_config_y_pausar(set_use_ncurses_int, 1);
+    settings_set_use_ncurses(1);
+    printf("%s\n", get_text("settings_saved"));
+    printf("%s\n", get_text("visual_mode_apply_next_start"));
+    pause_console();
 #else
     printf("%s\n", get_text("visual_mode_unavailable"));
     pause_console();
 #endif
 }
-static void visual_use_classic() { aplicar_config_y_pausar(set_use_ncurses_int, 0); }
+static void visual_use_classic()
+{
+    aplicar_config_y_pausar(set_use_ncurses_int, 0);
+}
 
-static void mode_set_simple()   { aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE); }
-static void mode_set_advanced() { aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED); }
+static void mode_set_simple()
+{
+    aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE);
+}
+static void mode_set_advanced()
+{
+    aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED);
+}
 static void mode_set_custom()
 {
     current_settings.mode = MODE_CUSTOM;
@@ -236,6 +293,7 @@ static const TextEntry text_entries[] =
     {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
     {"visual_mode_current", "Actual", "Current"},
     {"visual_mode_unavailable", "Ncurses no disponible en esta version", "Ncurses is not available in this build"},
+    {"visual_mode_apply_next_start", "Ncurses se aplicara al reiniciar la aplicacion.", "Ncurses will be applied when restarting the application."},
     {"settings_text_size", "Tamanio de texto", "Text size"},
     {"text_size_small", "Pequenio", "Small"},
     {"text_size_medium", "Mediano", "Medium"},

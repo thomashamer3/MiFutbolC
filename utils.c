@@ -13,6 +13,7 @@
 #include "ascii_art.h"
 #include "db.h"
 #include "menu.h"
+#include "settings.h"
 #include "cJSON.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -62,6 +63,10 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 static int ui_is_ncurses_active(void)
 {
 #ifdef USE_NCURSES
+    if (stdscr == NULL)
+    {
+        return 0;
+    }
     return !isendwin();
 #else
     return 0;
@@ -124,23 +129,36 @@ int ui_printf(const char *fmt, ...) // NOSONAR
         return rc;
     }
 #endif
-    int rc = printf("%s", formatted);
+    int rc = fprintf(stdout, "%s", formatted);
     sqlite3_free(formatted);
     return rc;
 }
 
 int ui_puts(const char *s)
 {
+    const char *text = s;
+    if (!text)
+    {
+        text = "";
+    }
 #ifdef USE_NCURSES
     if (ui_is_ncurses_active())
     {
         WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int rc = wprintw(target, "%s\n", s ? s : "");
+        int rc = wprintw(target, "%s\n", text);
         wrefresh(target);
         return rc;
     }
 #endif
-    return puts(s ? s : "");
+    if (fputs(text, stdout) < 0)
+    {
+        return EOF;
+    }
+    if (fputc('\n', stdout) == EOF)
+    {
+        return EOF;
+    }
+    return 0;
 }
 
 int ui_putchar(int c)
@@ -154,7 +172,7 @@ int ui_putchar(int c)
         return rc;
     }
 #endif
-    return putchar(c);
+    return fputc(c, stdout);
 }
 
 int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
@@ -205,7 +223,7 @@ int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
     }
 #endif
 
-    return printf("%s\n", buffer);
+    return fprintf(stdout, "%s\n", buffer);
 }
 
 static int ui_readline(char *buffer, int size)
@@ -260,6 +278,12 @@ int input_int(const char *msg)
             buffer[--len] = '\0';
         }
 
+        if (len == 0)
+        {
+            ui_printf("Entrada vacia. Intente nuevamente.\n");
+            continue;
+        }
+
         char extra = '\0';
         if (sscanf_s(buffer, "%d %c", &v, &extra, (unsigned int)sizeof(extra)) == 1)
             return v;
@@ -269,7 +293,7 @@ int input_int(const char *msg)
     }
 
     ui_printf("Se alcanzó el máximo de intentos.\n");
-    return 0;
+    return -1;
 }
 
 /* Implementación portable de safe_strnlen */
@@ -650,7 +674,7 @@ int existe_id(const char *tabla, int id)
 void clear_screen()
 {
 #ifdef USE_NCURSES
-    if (!isendwin())
+    if (ui_is_ncurses_active())
     {
         if (g_ui_output_win)
         {
@@ -814,30 +838,6 @@ static void ncurses_print_header_window(WINDOW *target, const char *titulo_displ
     wrefresh(target);
 }
 
-static int ncurses_setup_temp_screen(void)
-{
-    if (!isendwin())
-    {
-        return 0;
-    }
-
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-    curs_set(0);
-
-    if (has_colors())
-    {
-        start_color();
-        use_default_colors();
-        init_pair(1, COLOR_WHITE, -1);
-        init_pair(3, COLOR_YELLOW, COLOR_BLUE);
-    }
-
-    return 1;
-}
-
 static void ncurses_print_header_stdscr(const char *ascii, const char *titulo_display,
                                         const char *nombre_usuario,
                                         const char *fecha, int mostrar_datos)
@@ -919,18 +919,10 @@ void print_header(const char *titulo)
         return;
     }
 
-    int temp_initscr = ncurses_setup_temp_screen();
-
-    if (!isendwin())
+    if (ui_is_ncurses_active())
     {
         ncurses_print_header_stdscr(ascii, titulo_display, nombre_usuario, fecha,
                                     mostrar_datos);
-
-        if (temp_initscr)
-        {
-            endwin();
-        }
-
         free_nombre_usuario_if_needed(nombre_usuario);
         return;
     }

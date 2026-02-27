@@ -2862,7 +2862,7 @@ static void cargar_metricas_entrenamiento(AsistenteMetricas *metricas)
     }
 
     obtener_int("SELECT COUNT(*) FROM bienestar_entrenamiento WHERE omitido = 0 AND intensidad >= 8 AND fecha >= date('now', '-6 day');",
-               &metricas->entreno_intenso_count);
+                &metricas->entreno_intenso_count);
 }
 
 static void cargar_metricas_mentales(AsistenteMetricas *metricas)
