@@ -51,6 +51,8 @@ Source: "libhpdf.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "libpng16-16.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "libncursesw6.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "libintl-8.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; ================================
 ; DIRECTORIOS DE DATOS (CLAVE)
 ; ================================
