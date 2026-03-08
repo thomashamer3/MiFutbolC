@@ -435,8 +435,7 @@ static int create_database_schema()
         " theme INTEGER DEFAULT 0,"
         " language INTEGER DEFAULT 0,"
         " mode INTEGER DEFAULT 0,"
-        " text_size INTEGER DEFAULT 1,"
-        " use_ncurses INTEGER DEFAULT 1);"
+        " text_size INTEGER DEFAULT 1);"
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"

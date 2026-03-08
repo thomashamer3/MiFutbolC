@@ -4,8 +4,7 @@
             "name": "MSYS2-MinGW64",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/msys64/mingw64/include",
-                "C:/msys64/mingw64/include/ncurses"
+                "C:/msys64/mingw64/include"
             ],
             "compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
             "cStandard": "gnu23",

@@ -33,7 +33,7 @@ void menu_update();
 #define UPDATE_REPO "thomashamer3/MiFutbolC"
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM, 1};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
 
 // Flag para rastrear cambios en menú personalizado
 static int custom_menu_changed = 0;
@@ -70,11 +70,6 @@ static void set_mode_int(int value)
 static void set_text_size_int(int value)
 {
     settings_set_text_size((TextSizeType)value);
-}
-
-static void set_use_ncurses_int(int value)
-{
-    settings_set_use_ncurses(value);
 }
 
 static void aplicar_config_y_pausar(void (*setter)(int), int value)
@@ -155,23 +150,6 @@ static void accessibility_high_contrast()
 static void accessibility_normal_theme_text()
 {
     aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM);
-}
-
-static void visual_use_ncurses()
-{
-#ifdef USE_NCURSES
-    settings_set_use_ncurses(1);
-    printf("%s\n", get_text("settings_saved"));
-    printf("%s\n", get_text("visual_mode_apply_next_start"));
-    pause_console();
-#else
-    printf("%s\n", get_text("visual_mode_unavailable"));
-    pause_console();
-#endif
-}
-static void visual_use_classic()
-{
-    aplicar_config_y_pausar(set_use_ncurses_int, 0);
 }
 
 static void mode_set_simple()
@@ -289,11 +267,8 @@ static const TextEntry text_entries[] =
     {"settings_mode", "Modo", "Mode"},
     {"settings_accessibility", "Accesibilidad", "Accessibility"},
     {"settings_visual_mode", "Modo Visual", "Visual Mode"},
-    {"visual_mode_ncurses", "Usar Ncurses", "Use Ncurses"},
     {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
     {"visual_mode_current", "Actual", "Current"},
-    {"visual_mode_unavailable", "Ncurses no disponible en esta version", "Ncurses is not available in this build"},
-    {"visual_mode_apply_next_start", "Ncurses se aplicara al reiniciar la aplicacion.", "Ncurses will be applied when restarting the application."},
     {"settings_text_size", "Tamanio de texto", "Text size"},
     {"text_size_small", "Pequenio", "Small"},
     {"text_size_medium", "Mediano", "Medium"},
@@ -390,11 +365,6 @@ static void ensure_settings_schema()
     }
 
     err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN use_ncurses INTEGER DEFAULT 1;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
 }
 
 /**
@@ -403,7 +373,7 @@ static void ensure_settings_schema()
 void settings_init()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT theme, language, mode, text_size, use_ncurses FROM settings WHERE id = 1;";
+    const char *sql = "SELECT theme, language, mode, text_size FROM settings WHERE id = 1;";
     int has_settings = 0;
 
     ensure_settings_schema();
@@ -416,7 +386,6 @@ void settings_init()
             current_settings.language = sqlite3_column_int(stmt, 1);
             current_settings.mode = sqlite3_column_int(stmt, 2);
             current_settings.text_size = sqlite3_column_int(stmt, 3);
-            current_settings.use_ncurses = sqlite3_column_int(stmt, 4);
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -476,7 +445,7 @@ void settings_init()
 void settings_save()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size, use_ncurses) VALUES (1, ?, ?, ?, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size) VALUES (1, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -484,7 +453,6 @@ void settings_save()
         sqlite3_bind_int(stmt, 2, current_settings.language);
         sqlite3_bind_int(stmt, 3, current_settings.mode);
         sqlite3_bind_int(stmt, 4, current_settings.text_size);
-        sqlite3_bind_int(stmt, 5, current_settings.use_ncurses);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -546,23 +514,6 @@ void settings_set_mode(ModeType mode)
     }
 
     settings_save();
-}
-
-/**
- * @brief Establece el modo visual (ncurses o clasico)
- */
-void settings_set_use_ncurses(int enabled)
-{
-    current_settings.use_ncurses = enabled ? 1 : 0;
-    settings_save();
-}
-
-/**
- * @brief Indica si se debe usar ncurses en la interfaz
- */
-int settings_get_use_ncurses()
-{
-    return current_settings.use_ncurses;
 }
 
 /**
@@ -868,20 +819,6 @@ const char* get_menu_torneos()
         return get_text("menu_torneos");
     }
     return NULL; // No mostrar en modos simple y personalizado
-}
-
-const char* get_menu_qr()
-{
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_qr");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("qr"))
-    {
-        return get_text("menu_qr");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
 }
 
 const char* get_menu_temporada()
@@ -1363,7 +1300,6 @@ static void show_current_settings()
     printf("Tema: %s\n", get_current_theme_name());
     printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
     printf("Tamanio de texto: %s\n", get_current_text_size_name());
-    printf("Modo Visual: %s\n", current_settings.use_ncurses ? get_text("visual_mode_ncurses") : get_text("visual_mode_classic"));
 
     char *usuario = get_user_name();
     if (usuario)
@@ -1413,26 +1349,6 @@ static void menu_accessibility_settings()
 }
 
 /**
- * @brief Submenú para modo visual (ncurses o clasico)
- */
-static void menu_visual_mode_settings()
-{
-    char current[128];
-    snprintf(current, sizeof(current), "%s: %s", get_text("visual_mode_current"),
-             current_settings.use_ncurses ? get_text("visual_mode_ncurses") : get_text("visual_mode_classic"));
-
-    MenuItem items[] =
-    {
-        {1, get_text("visual_mode_ncurses"), visual_use_ncurses},
-        {2, get_text("visual_mode_classic"), visual_use_classic},
-        {0, get_text("menu_back"), NULL}
-    };
-
-    /* Mostrar título con el estado actual en el header */
-    ejecutar_menu(get_text("settings_visual_mode"), items, (int)(sizeof(items)/sizeof(items[0])));
-}
-
-/**
  * @brief Restablece la configuracion a valores por defecto
  */
 static void reset_settings_to_defaults()
@@ -1450,7 +1366,6 @@ static void reset_settings_to_defaults()
     {
         current_settings.theme = THEME_LIGHT;
         current_settings.language = LANGUAGE_SPANISH;
-        current_settings.use_ncurses = 1;
         settings_apply_theme();
         settings_save();
 
@@ -1551,8 +1466,7 @@ void menu_custom_menus()
         {3, "partidos", get_text("menu_partidos")},
         {4, "equipos", get_text("menu_equipos")},
         {5, "estadisticas", get_text("menu_estadisticas")},
-        {6, "qr", get_text("menu_qr")},
-        {7, "logros", get_text("menu_logros")},
+        {6, "logros", get_text("menu_logros")},
         {8, "analisis", get_text("menu_analisis")},
         {9, "bienestar", get_text("menu_bienestar")},
         {10, "lesiones", get_text("menu_lesiones")},
@@ -1655,14 +1569,13 @@ void menu_settings()
         {1, get_text("settings_theme"), menu_theme_settings},
         {2, get_text("settings_language"), menu_language_settings},
         {3, get_text("settings_accessibility"), menu_accessibility_settings},
-        {4, get_text("settings_visual_mode"), menu_visual_mode_settings},
-        {5, get_text("menu_usuario"), menu_usuario},
-        {6, get_text("show_current"), show_current_settings},
-        {7, get_text("reset_defaults"), reset_settings_to_defaults},
-        {8, get_text("settings_mode"), menu_mode_settings},
-        {9, get_text("menu_exportar"), menu_exportar},
-        {10, get_text("menu_importar"), menu_importar},
-        {11, get_text("menu_update"), menu_update},
+        {4, get_text("menu_usuario"), menu_usuario},
+        {5, get_text("show_current"), show_current_settings},
+        {6, get_text("reset_defaults"), reset_settings_to_defaults},
+        {7, get_text("settings_mode"), menu_mode_settings},
+        {8, get_text("menu_exportar"), menu_exportar},
+        {9, get_text("menu_importar"), menu_importar},
+        {10, get_text("menu_update"), menu_update},
         {0, get_text("menu_back"), NULL}
     };
 

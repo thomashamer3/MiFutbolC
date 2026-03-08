@@ -50,7 +50,6 @@ typedef struct
     LanguageType language;
     ModeType mode;
     TextSizeType text_size;
-    int use_ncurses;
 } AppSettings;
 
 /**
@@ -105,15 +104,6 @@ void settings_set_mode(ModeType mode);
  */
 ModeType settings_get_mode();
 
-/**
- * @brief Establece el modo visual (ncurses o clasico)
- */
-void settings_set_use_ncurses(int enabled);
-
-/**
- * @brief Indica si se debe usar ncurses en la interfaz
- */
-int settings_get_use_ncurses();
 
 // Funciones wrapper para internacionalización de menús
 const char* get_menu_camisetas();
@@ -129,7 +119,6 @@ const char* get_menu_financiamiento();
 const char* get_menu_exportar();
 const char* get_menu_importar();
 const char* get_menu_torneos();
-const char* get_menu_qr();
 const char* get_menu_temporada();
 const char* get_menu_entrenador_ia();
 const char* get_menu_settings();

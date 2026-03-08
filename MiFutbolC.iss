@@ -46,13 +46,21 @@ Source: "MiFutbolC.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libqrencode.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libhpdf.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libpng16-16.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libncursesw6.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "libintl-8.dll"; DestDir: "{app}"; Flags: ignoreversion
+
+; --- Runtime DLLs required by MiFutbolC.exe (verified via objdump) ---
+Source: "bin\Debug\libhpdf.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\Debug\libpng16-16.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\Debug\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\Debug\libqrencode.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\Debug\libncursesw6.dll"; DestDir: "{app}"; Flags: ignoreversion
+
+; The following DLLs are *not* directly required by MiFutbolC.exe and are removed
+; from the installer to reduce package size:
+; - libwinpthread-1.dll
+; - libintl-8.dll
+; - libgcc_s_seh-1.dll
+; - libstdc++-6.dll
+; - comctl32.dll
 ; ================================
 ; DIRECTORIOS DE DATOS (CLAVE)
 ; ================================

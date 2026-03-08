@@ -166,12 +166,6 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 - **Menús Jerárquicos**: Navegación intuitiva con estructura organizada
 - **Arte ASCII**: Pantallas de bienvenida, simulaciones animadas, decoraciones
-- **Códigos QR**: Generación de imágenes QR en formato BMP con información de partidos, temporadas y camisetas
-  - Utiliza libqrencode para generar códigos de alta calidad
-  - Nivel de corrección de errores H (30%)
-  - Escala configurable y márgenes de seguridad
-  - Exportación a directorio personalizable
-  - Archivos BMP guardados en el directorio de exportaciones
 - **Interfaz Textual**: No requiere GUI, compatible con cualquier terminal
 
 ## 🛠️ Tecnologías Utilizadas
@@ -194,12 +188,6 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Propósito**: Parsing y generación de JSON para importación/exportación
 - **Características**: Ligera, rápida, sin dependencias externas
 
-#### libqrencode (Requerida externamente)
-- **Versión**: 4.x
-- **Propósito**: Generación de códigos QR con información del sistema
-- **Instalación**: Ver [INSTALACION_LIBQRENCODE.md](INSTALACION_LIBQRENCODE.md)
-- **Características**: Códigos QR estándar ISO/IEC 18004, múltiples niveles de corrección
-
 #### libharu (Requerida externamente)
 - **Propósito**: Generación de informes PDF mejorados
 - **Dependencias**: libpng16-16, zlib1
@@ -216,7 +204,6 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
 ✅ **cJSON**: Biblioteca completa incluida en el proyecto  
 
-**Nota**: El proyecto compilará sin errores incluso sin libqrencode, pero la funcionalidad de códigos QR no estará disponible.
 
 ## 🚀 Instalación y Compilación
 
@@ -265,7 +252,7 @@ gcc -o MiFutbolC \
     estadisticas.c estadisticas_generales.c estadisticas_anio.c \
     estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c \
     analisis.c cancha.c logros.c lesion.c temporada.c \
-    financiamiento.c settings.c entrenador_ia.c qr.c \
+    financiamiento.c settings.c entrenador_ia.c \
     records_rankings.c export.c export_all.c export_all_mejorado.c \
     export_camisetas.c export_camisetas_mejorado.c \
     export_lesiones.c export_lesiones_mejorado.c \
@@ -285,7 +272,7 @@ gcc -o MiFutbolC \
 cd D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
 
 # 2. Compilar (comando en una sola línea)
-gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c qr.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
 
 # 3. Ejecutar
 .\MiFutbolC.exe
@@ -366,14 +353,13 @@ Al ejecutar `MiFutbolC`, el sistema:
 4. Partidos
 5. Lesiones
 6. Estadísticas
-7. QR
-8. Logros
-9. Financiamiento
-10. Torneos
-11. Temporada
-12. Análisis
-13. Bienestar
-14. Ajustes
+7. Logros
+8. Financiamiento
+9. Torneos
+10. Temporada
+11. Análisis
+12. Bienestar
+13. Ajustes
 0. Salir
 >
 ```
@@ -383,7 +369,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (14)
+Menú Principal → Ajustes (13)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Modificar nombre de usuario
@@ -583,8 +569,8 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 ┌─────────────────────────────────────────────────────────────────┐
 │                      BIBLIOTECAS AUXILIARES                      │
 │  ┌──────────────────┐         ┌──────────────────┐              │
-│  │  cJSON.c / .h    │         │    qr.c / .h     │              │
-│  │  (Parsing JSON)  │         │ (Códigos QR)     │              │
+│  │  cJSON.c / .h    │                                         │
+│  │  (Parsing JSON)  │                                         │
 │  └──────────────────┘         └──────────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -696,8 +682,6 @@ MiFutbolC/
 │   ├── ⚙️ Configuración
 │   │   └── settings.c / settings.h              # Sistema de configuración
 │   │
-│   └── 📊 QR
-│       └── qr.c / qr.h                          # Generación de códigos QR
 │
 ├── 📊 CAPA DE ESTADÍSTICAS Y ANÁLISIS
 │   ├── estadisticas.c / estadisticas.h          # Estadísticas generales
@@ -800,7 +784,7 @@ Conteo referencial (puede variar según cambios y scripts de build).
 | **Gestión** | `camiseta.c`, `cancha.c`, `equipo.c`, `partido.c`, `torneo.c`, `lesion.c` | Gestión de recursos |
 | **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c` | Análisis y estadísticas |
 | **I/O** | `export*.c`, `import.c` | Importación/Exportación |
-| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c`, `qr.c` | Funcionalidades adicionales |
+| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c` | Funcionalidades adicionales |
 
 ## 🗄️ Base de Datos
 
@@ -1031,7 +1015,7 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, QR, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.

@@ -1,0 +1,70 @@
+# Makefile for MiFutbolC
+# ---------------------
+# Supports both debug and release builds (Linux/macOS/Windows via MinGW)
+
+CC ?= gcc
+BUILD_TYPE ?= Release
+
+ifeq ($(BUILD_TYPE),Debug)
+  CFLAGS ?= -Wall -g -O0 -std=c11
+else
+  CFLAGS ?= -Wall -O2 -std=c11 -march=native
+endif
+
+LDFLAGS ?= -lhpdf -lz -lm
+
+SRC = \
+  analisis.c \
+  bienestar.c \
+  cJSON.c \
+  camiseta.c \
+  cancha.c \
+  db.c \
+  estadisticas.c \
+  estadisticas_meta.c \
+  estadisticas_anio.c \
+  estadisticas_generales.c \
+  estadisticas_lesiones.c \
+  estadisticas_mes.c \
+  export.c \
+  export_all.c \
+  export_all_mejorado.c \
+  export_camisetas.c \
+  export_camisetas_mejorado.c \
+  export_estadisticas.c \
+  export_estadisticas_generales.c \
+  export_lesiones.c \
+  export_lesiones_mejorado.c \
+  export_partidos.c \
+  export_records_rankings.c \
+  export_pdf.c \
+  import.c \
+  lesion.c \
+  logros.c \
+  main.c \
+  menu.c \
+  partido.c \
+  records_rankings.c \
+  sqlite3.c \
+  utils.c \
+  equipo.c \
+  torneo.c \
+  temporada.c \
+  financiamiento.c \
+  settings.c \
+  entrenador_ia.c
+
+OUT = MiFutbolC
+
+.PHONY: all clean run
+
+all: $(OUT)
+
+$(OUT): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) -o $(OUT)
+
+run: $(OUT)
+	./$(OUT)
+
+clean:
+	rm -f $(OUT)

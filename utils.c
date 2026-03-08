@@ -24,9 +24,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <stdarg.h>
-#ifdef USE_NCURSES
-#include <ncursesw/ncurses.h>
-#endif
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
@@ -60,19 +57,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-static int ui_is_ncurses_active(void)
-{
-#ifdef USE_NCURSES
-    if (stdscr == NULL)
-    {
-        return 0;
-    }
-    return !isendwin();
-#else
-    return 0;
-#endif
-}
-
 static void uppercase_ascii(const char *src, char *dst, size_t size)
 {
     size_t i = 0;
@@ -94,20 +78,6 @@ static void uppercase_ascii(const char *src, char *dst, size_t size)
     dst[i] = '\0';
 }
 
-#ifdef USE_NCURSES
-static WINDOW *g_ui_output_win = NULL;
-
-void ui_set_output_window(WINDOW *win)
-{
-    g_ui_output_win = win;
-}
-
-WINDOW *ui_get_output_window(void)
-{
-    return g_ui_output_win;
-}
-#endif
-
 int ui_printf(const char *fmt, ...) // NOSONAR
 {
     va_list args;
@@ -119,16 +89,6 @@ int ui_printf(const char *fmt, ...) // NOSONAR
     {
         return -1;
     }
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int rc = wprintw(target, "%s", formatted);
-        wrefresh(target);
-        sqlite3_free(formatted);
-        return rc;
-    }
-#endif
     int rc = fprintf(stdout, "%s", formatted);
     sqlite3_free(formatted);
     return rc;
@@ -141,15 +101,6 @@ int ui_puts(const char *s)
     {
         text = "";
     }
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int rc = wprintw(target, "%s\n", text);
-        wrefresh(target);
-        return rc;
-    }
-#endif
     if (fputs(text, stdout) < 0)
     {
         return EOF;
@@ -163,15 +114,6 @@ int ui_puts(const char *s)
 
 int ui_putchar(int c)
 {
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int rc = waddch(target, c);
-        wrefresh(target);
-        return rc;
-    }
-#endif
     return fputc(c, stdout);
 }
 
@@ -191,37 +133,6 @@ int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
     snprintf(buffer, sizeof(buffer), "%s", formatted);
     sqlite3_free(formatted);
 
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        int height;
-        int width;
-        int y;
-        int x;
-        getmaxyx(target, height, width);
-        getyx(target, y, x);
-        (void)height;
-        (void)x;
-
-        if (y >= height - 1 && wscrl(target, 1) == OK)
-        {
-            y = height - 1;
-        }
-
-        int len = (int)strlen(buffer);
-        int start_x = (width - len) / 2;
-        if (start_x < 0)
-        {
-            start_x = 0;
-        }
-
-        mvwprintw(target, y, start_x, "%s", buffer);
-        wmove(target, y + 1, 0);
-        wrefresh(target);
-        return len;
-    }
-#endif
 
     return fprintf(stdout, "%s\n", buffer);
 }
@@ -233,21 +144,6 @@ static int ui_readline(char *buffer, int size)
         return 0;
     }
 
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        WINDOW *target = g_ui_output_win ? g_ui_output_win : stdscr;
-        echo();
-        int rc = wgetnstr(target, buffer, size - 1);
-        noecho();
-        if (rc == ERR)
-        {
-            buffer[0] = '\0';
-            return 0;
-        }
-        return 1;
-    }
-#endif
 
     return fgets(buffer, size, stdin) != NULL;
 }
@@ -673,23 +569,6 @@ int existe_id(const char *tabla, int id)
  */
 void clear_screen()
 {
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        if (g_ui_output_win)
-        {
-            werase(g_ui_output_win);
-            wmove(g_ui_output_win, 0, 0);
-            wrefresh(g_ui_output_win);
-        }
-        else
-        {
-            clear();
-            refresh();
-        }
-        return;
-    }
-#endif
 #ifdef _WIN32
     system("cls");
 #else
@@ -732,55 +611,11 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         return ASCII_TORNEOS;
     if (strstr(titulo, "AJUSTES") || strstr(titulo, "SETTINGS"))
         return ASCII_AJUSTES;
-    if (strstr(titulo, "QR"))
-        return ASCII_QR;
     if (strstr(titulo, "TEMPORADA") || strstr(titulo, "SEASON"))
         return ASCII_TEMPORADA;
     if (strstr(titulo, "ENTRENADOR IA"))
         return ASCII_ENTRENADOR_IA;
     return NULL;
-}
-
-#ifdef USE_NCURSES
-static int ncurses_count_lines_util(const char *text)
-{
-    int lines = 1;
-    for (const char *p = text; *p; ++p)
-    {
-        if (*p == '\n')
-        {
-            lines++;
-        }
-    }
-    return lines;
-}
-
-static void ncurses_print_centered_lines_util(int start_y, const char *text)
-{
-    int height;
-    int width;
-    getmaxyx(stdscr, height, width);
-
-    const char *line_start = text;
-    int row = start_y;
-    while (*line_start && row < height)
-    {
-        const char *line_end = strchr(line_start, '\n');
-        int len = line_end ? (int)(line_end - line_start) : (int)strlen(line_start);
-        int x = (width - len) / 2;
-        if (x < 0)
-        {
-            x = 0;
-        }
-        mvprintw(row, x, "%.*s", len, line_start);
-
-        row++;
-        if (!line_end)
-        {
-            break;
-        }
-        line_start = line_end + 1;
-    }
 }
 
 static void free_nombre_usuario_if_needed(char *nombre_usuario)
@@ -790,85 +625,6 @@ static void free_nombre_usuario_if_needed(char *nombre_usuario)
         free(nombre_usuario);
     }
 }
-
-static void ncurses_print_header_window(WINDOW *target, const char *titulo_display,
-                                        const char *nombre_usuario,
-                                        const char *fecha, int mostrar_datos)
-{
-    int width = getmaxx(target);
-    int height = getmaxy(target);
-    int row = 0;
-
-    werase(target);
-    if (titulo_display && row < height)
-    {
-        int x = (width - (int)strlen(titulo_display)) / 2;
-        if (x < 0)
-        {
-            x = 0;
-        }
-        mvwprintw(target, row, x, "%s", titulo_display);
-    }
-
-    if (mostrar_datos)
-    {
-        row++;
-        if (row < height)
-        {
-            mvwprintw(target, row, 0, " Usuario: %s", nombre_usuario);
-        }
-        row++;
-        if (row < height)
-        {
-            mvwprintw(target, row, 0, " Fecha  : %s", fecha);
-        }
-    }
-
-    row++;
-    if (row < height)
-    {
-        mvwhline(target, row, 0, '=', width > 0 ? width : 0);
-    }
-    row++;
-    if (row < height)
-    {
-        wmove(target, row, 0);
-    }
-
-    wrefresh(target);
-}
-
-static void ncurses_print_header_stdscr(const char *ascii, const char *titulo_display,
-                                        const char *nombre_usuario,
-                                        const char *fecha, int mostrar_datos)
-{
-    clear();
-    if (ascii)
-    {
-        int art_lines = ncurses_count_lines_util(ascii);
-        ncurses_print_centered_lines_util(0, ascii);
-        move(art_lines + 1, 0);
-    }
-
-    printw("%s\n", titulo_display);
-    if (mostrar_datos)
-    {
-        printw(" Usuario: %s\n", nombre_usuario);
-        printw(" Fecha  : %s\n", fecha);
-    }
-    if (has_colors())
-    {
-        attron(COLOR_PAIR(3));
-    }
-    printw("========================================\n\n");
-    if (has_colors())
-    {
-        attroff(COLOR_PAIR(3));
-    }
-
-    refresh();
-}
-#endif
 
 static void print_header_stdout(const char *ascii, const char *titulo_display,
                                 const char *nombre_usuario, const char *fecha,
@@ -910,23 +666,6 @@ void print_header(const char *titulo)
         mostrar_datos = 0;
     }
 
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active() && g_ui_output_win)
-    {
-        ncurses_print_header_window(g_ui_output_win, titulo_display, nombre_usuario,
-                                    fecha, mostrar_datos);
-        free_nombre_usuario_if_needed(nombre_usuario);
-        return;
-    }
-
-    if (ui_is_ncurses_active())
-    {
-        ncurses_print_header_stdscr(ascii, titulo_display, nombre_usuario, fecha,
-                                    mostrar_datos);
-        free_nombre_usuario_if_needed(nombre_usuario);
-        return;
-    }
-#endif
 
     print_header_stdout(ascii, titulo_display, nombre_usuario, fecha,
                         mostrar_datos);
@@ -940,18 +679,6 @@ void print_header(const char *titulo)
 void pause_console()
 {
     ui_printf("\nPresione ENTER para continuar...");
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        int ch;
-        do
-        {
-            ch = getch();
-        }
-        while (ch != '\n' && ch != KEY_ENTER);
-        return;
-    }
-#endif
     getchar();
 }
 
@@ -963,13 +690,6 @@ int confirmar(const char *msg)
 {
     int c;
     ui_printf("%s (S/N): ", msg);
-#ifdef USE_NCURSES
-    if (ui_is_ncurses_active())
-    {
-        c = getch();
-        return (c == 's' || c == 'S');
-    }
-#endif
     c = getchar();
     getchar();
 

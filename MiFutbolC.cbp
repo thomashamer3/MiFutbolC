@@ -17,7 +17,6 @@
 					<Add directory="C:/msys64/mingw64/include" />
 				</Compiler>
 				<Linker>
-					<Add library="qrencode" />
 					<Add directory="C:/msys64/mingw64/lib" />
 				</Linker>
 			</Target>
@@ -32,7 +31,6 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="qrencode" />
 					<Add directory="C:/msys64/mingw64/lib" />
 				</Linker>
 			</Target>
@@ -43,12 +41,14 @@
 			<Add directory="C:/msys64/mingw64/include" />
 		</Compiler>
 		<Linker>
-			<Add library="qrencode" />
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
 			<Add library="hpdf" />
 			<Add library="png" />
 			<Add library="z" />
-			<Add library="ncursesw" />
 			<Add library="pdcurses" />
+			<Add library="pthread" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>
 		<Unit filename="analisis.c">

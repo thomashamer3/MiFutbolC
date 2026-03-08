@@ -18,7 +18,6 @@ MiFutbolC es una herramienta integral diseñada para:
 - Ofrecer un sistema gamificado de logros y recompensas
 - Registrar bienestar integral (hábitos, salud y planificación)
 - Recibir recomendaciones inteligentes del Entrenador IA
-- Generar códigos QR con información deportiva
 
 ### Beneficios Clave
 
@@ -71,7 +70,7 @@ gcc -o MiFutbolC \
     estadisticas.c estadisticas_generales.c estadisticas_anio.c \
     estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c \
     analisis.c cancha.c logros.c lesion.c temporada.c \
-    financiamiento.c settings.c entrenador_ia.c qr.c \
+    financiamiento.c settings.c entrenador_ia.c \
     records_rankings.c export.c export_all.c export_all_mejorado.c \
     export_camisetas.c export_camisetas_mejorado.c \
     export_lesiones.c export_lesiones_mejorado.c \
@@ -87,7 +86,7 @@ gcc -o MiFutbolC \
 #### Windows (con MinGW)
 
 ```bash
-gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c qr.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
 ```
 
 ### Opción 4: Usando el Script de Compilación
@@ -131,14 +130,13 @@ El menú principal ofrece las siguientes opciones:
 4. **Partidos** - Gestionar partidos
 5. **Lesiones** - Gestionar lesiones de jugadores
 6. **Estadísticas** - Ver estadísticas generales, avanzadas y meta-análisis
-7. **QR** - Generar códigos QR con información deportiva
-8. **Logros** - Gestionar logros y badges
-9. **Financiamiento** - Gestionar finanzas del equipo
-10. **Torneos** - Gestionar torneos de fútbol
-11. **Temporada** - Gestionar temporadas y ciclos deportivos
-12. **Análisis** - Ver análisis de rendimiento
-13. **Bienestar** - Planificación, hábitos, salud y reportes personales
-14. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
+7. **Logros** - Gestionar logros y badges
+8. **Financiamiento** - Gestionar finanzas del equipo
+9. **Torneos** - Gestionar torneos de fútbol
+10. **Temporada** - Gestionar temporadas y ciclos deportivos
+11. **Análisis** - Ver análisis de rendimiento
+12. **Bienestar** - Planificación, hábitos, salud y reportes personales
+13. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -430,41 +428,6 @@ Análisis completo de lesiones:
 
 ![Estadísticas](images/menuestadisticas.png)
 
-## Códigos QR
-
-Selecciona "7" en el menú principal para acceder al generador de códigos QR. Esta funcionalidad permite crear códigos QR con información deportiva.
-Los códigos QR se guardan en formato BMP dentro del directorio de exportaciones.
-
-### Generar QR de Partido
-
-1. Selecciona "7" en el menú principal
-2. Elige "1" para generar QR de partido
-3. Ingresa el ID del partido
-4. Se generará un código QR con las estadísticas completas en formato JSON
-5. El archivo BMP se guardará en el directorio de exportaciones
-
-### Generar QR de Jugador en Partido
-
-1. Selecciona "7" en el menú principal
-2. Elige "2" para generar QR de jugador
-3. Ingresa el ID del partido
-4. Ingresa el ID del jugador
-5. Se generará un código QR con las estadísticas del jugador en ese partido
-
-### Generar QR de Temporada
-
-1. Selecciona "7" en el menú principal
-2. Elige "3" para generar QR de temporada
-3. Ingresa el ID de la temporada
-4. Se generará un código QR con el resumen completo de la temporada
-
-### Generar QR de Camiseta
-
-1. Selecciona "7" en el menú principal
-2. Elige "4" para generar QR de camiseta
-3. Ingresa el ID de la camiseta
-4. Se generará un código QR con la información y estadísticas de la camiseta
-
 ## Logros
 
 Selecciona "8" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
@@ -487,13 +450,13 @@ Selecciona "8" en el menú principal para acceder al sistema de logros y badges.
 
 ### Ver Logros Completados
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "2" para ver logros completados
 3. Se mostrarán solo los logros que has alcanzado
 
 ### Ver Logros en Progreso
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "3" para ver logros en progreso
 3. Se mostrarán los logros que estás cerca de completar
 
@@ -501,11 +464,11 @@ Selecciona "8" en el menú principal para acceder al sistema de logros y badges.
 
 ## Gestión Financiera
 
-Selecciona "9" en el menú principal para acceder al módulo de gestión financiera del equipo.
+Selecciona "8" en el menú principal para acceder al módulo de gestión financiera del equipo.
 
 ### Agregar Transacción Financiera
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "1" para agregar una nueva transacción
 3. Selecciona el tipo:
    - **Ingreso**: Cuotas, sponsors, premios, etc.
@@ -525,27 +488,27 @@ Selecciona "9" en el menú principal para acceder al módulo de gestión financi
 
 ### Listar Transacciones
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "2" para ver todas las transacciones financieras
 3. Se mostrarán ordenadas por fecha
 
 ### Modificar Transacción
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "3" para modificar una transacción existente
 3. Ingresa el ID de la transacción a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar Transacción
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "4" para eliminar una transacción
 3. Ingresa el ID de la transacción
 4. Confirma la eliminación
 
 ### Ver Resumen Financiero
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "5" para ver un resumen completo
 3. Se mostrará:
    - Total de ingresos
@@ -555,13 +518,13 @@ Selecciona "9" en el menú principal para acceder al módulo de gestión financi
 
 ### Ver Balance de Gastos
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "6" para analizar el balance por categorías
 3. Se mostrará el desglose de gastos por tipo
 
 ### Exportar Datos Financieros
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "8" en el menú principal
 2. Elige "7" para exportar las transacciones financieras
 3. Selecciona el formato deseado (CSV, JSON, HTML, TXT)
 
@@ -569,11 +532,11 @@ Selecciona "9" en el menú principal para acceder al módulo de gestión financi
 
 ## Gestión de Torneos
 
-Selecciona "10" en el menú principal para acceder al menú de gestión de torneos.
+Selecciona "9" en el menú principal para acceder al menú de gestión de torneos.
 
 ### Crear un Torneo
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "1" para crear un nuevo torneo
 3. Ingresa el nombre del torneo
 4. Selecciona si tiene equipo fijo
@@ -591,7 +554,7 @@ Selecciona "10" en el menú principal para acceder al menú de gestión de torne
 
 ### Listar Torneos
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "2" para listar todos los torneos
 3. Se mostrarán con su estado actual
 
@@ -658,11 +621,11 @@ Selecciona "10" en el menú principal para acceder al menú de gestión de torne
 
 ## Gestión de Temporadas
 
-Selecciona "11" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
+Selecciona "10" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
 
 ### Crear una Temporada
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "1" para crear una nueva temporada
 3. Ingresa el nombre de la temporada (ej: "Temporada 2026")
 4. Especifica el año
@@ -680,27 +643,27 @@ Selecciona "11" en el menú principal para acceder al sistema de gestión de tem
 
 ### Listar Temporadas
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "2" para listar todas las temporadas
 3. Se mostrarán con sus fechas y estado
 
 ### Modificar una Temporada
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "3" para modificar una temporada
 3. Ingresa el ID de la temporada a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar una Temporada
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "4" para eliminar una temporada
 3. Ingresa el ID de la temporada
 4. Confirma la eliminación
 
 ### Administrar una Temporada
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "5" para administrar una temporada
 3. Selecciona la temporada a administrar
 4. Accede a funciones avanzadas:
@@ -750,7 +713,7 @@ Análisis mensual automático:
 
 ## Análisis de Rendimiento
 
-Selecciona "12" en el menú principal para ver el análisis de rendimiento.
+Selecciona "11" en el menú principal para ver el análisis de rendimiento.
 Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado** y **Entrenador IA**.
 
 ### Funcionalidades del Análisis
@@ -772,7 +735,7 @@ Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**
 
 ## Bienestar
 
-Selecciona "13" en el menú principal para acceder a las herramientas de bienestar.
+Selecciona "12" en el menú principal para acceder a las herramientas de bienestar.
 
 ### Funcionalidades de Bienestar
 
@@ -848,7 +811,7 @@ El Entrenador IA se activa automáticamente:
 
 ## Exportar Datos
 
-Selecciona "14" en el menú principal y luego **Exportar** para acceder al menú de exportación.
+Selecciona "13" en el menú principal y luego **Exportar** para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
@@ -923,7 +886,7 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "14" en el menú principal y luego **Importar** para acceder a la importación de datos.
+Selecciona "13" en el menú principal y luego **Importar** para acceder a la importación de datos.
 
 ### Preparación para Importar
 
@@ -935,7 +898,7 @@ Selecciona "14" en el menú principal y luego **Importar** para acceder a la imp
 
 ### Proceso de Importación
 
-1. Selecciona "14" en el menú principal y luego **Importar**
+1. Selecciona "13" en el menú principal y luego **Importar**
 2. Elige el formato a importar (JSON, TXT, CSV o HTML)
 3. Elige el tipo de datos a importar:
    - Camisetas
@@ -971,11 +934,11 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "14" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "13" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -991,7 +954,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -1001,13 +964,13 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Accesibilidad
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
 ### Cambiar Nombre de Usuario
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Cambia el nombre de usuario
 4. El nombre se guardará en la base de datos
@@ -1015,7 +978,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Ver Configuración Actual
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
@@ -1026,7 +989,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
@@ -1036,13 +999,13 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Modo de Menú
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "7" para configurar el modo
 3. Selecciona modo Simple, Avanzado o Personalizado
 
 ### Exportar / Importar desde Ajustes
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "8" para **Exportar** o "9" para **Importar**
 
 ![Menú de ajustes](images/menuajustes.png)
@@ -1065,7 +1028,6 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 - **Base de Datos**: La base de datos SQLite es eficiente, pero considera hacer backups antes de importaciones grandes
 - **Exportaciones**: Usa formatos CSV para análisis en hojas de cálculo, JSON para backups completos
 - **Filtros**: Usa las opciones de filtrado en estadísticas para análisis más específicos
-- **Códigos QR**: Genera códigos QR para compartir información rápidamente con otros
 
 ## Solución de Problemas
 
@@ -1180,10 +1142,6 @@ Aunque es posible usar herramientas como DB Browser for SQLite, se recomienda us
 
 Sí, el sistema soporta múltiples equipos, torneos y temporadas. Puedes gestionar toda una liga o múltiples equipos simultáneamente.
 
-### ¿Los códigos QR funcionan con cualquier lector?
-
-Sí, los códigos QR generados son estándar y pueden leerse con cualquier aplicación de lectura de códigos QR. Contienen datos en formato JSON.
-
 ### ¿Puedo personalizar los logros?
 
 Actualmente los logros están predefinidos, pero puedes sugerir nuevos logros para futuras versiones del programa.
@@ -1211,7 +1169,6 @@ Sí, el Entrenador IA mantiene un historial de consejos y evalúa si los seguist
 - **Outlier**: Dato atípico que se desvía significativamente del promedio
 - **Fixture**: Calendario de partidos de un torneo
 - **Dashboard**: Panel de control con información resumida
-- **QR**: Código de respuesta rápida con información codificada
 - **Entrenador IA**: Sistema de inteligencia artificial que proporciona consejos
 
 ## Conclusión
@@ -1227,7 +1184,6 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ✅ **Flexibilidad**: Múltiples formatos de exportación e importación  
 ✅ **Personalización**: Temas, idiomas y configuraciones adaptables  
 ✅ **Organización**: Torneos y temporadas completas  
-✅ **Innovación**: Códigos QR para compartir información  
 
 ### Próximos Pasos
 

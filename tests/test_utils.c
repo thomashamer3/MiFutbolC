@@ -12,7 +12,6 @@
 #include "lesion.h"
 #include "estadisticas.h"
 #include "records_rankings.h"
-#include "qr.h"
 #include "logros.h"
 #include "financiamiento.h"
 #include "export_all.h"
@@ -190,7 +189,6 @@ static void test_menu_functions_smoke(void)
     assert_menu_exec(&menu_estadisticas_rendimiento);
 
     assert_menu_exec(&menu_records_rankings);
-    assert_menu_exec(&menu_qr);
     assert_menu_exec(&menu_logros);
     assert_menu_exec(&menu_financiamiento);
     assert_menu_exec(&menu_presupuestos_mensuales);

@@ -16,10 +16,14 @@
 #include <process.h>
 #include <memory.h>
 #include <limits.h>
-#ifdef USE_NCURSES
-#include <ncursesw/ncurses.h>
-#endif
 
+#ifndef UNUSED
+#  if defined(__GNUC__) || defined(__clang__)
+#    define UNUSED __attribute__((unused))
+#  else
+#    define UNUSED
+#  endif
+#endif
 
 // Prototipos de funciones estáticas usadas antes de su definición
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
@@ -84,209 +88,6 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
     return hay;
 }
 
-#ifdef USE_NCURSES
-typedef struct
-{
-    char **lines;
-    int count;
-    int capacity;
-} LineBuffer;
-
-static void line_buffer_free(LineBuffer *buffer)
-{
-    if (!buffer)
-    {
-        return;
-    }
-    for (int i = 0; i < buffer->count; ++i)
-    {
-        free(buffer->lines[i]);
-    }
-    free(buffer->lines);
-    buffer->lines = NULL;
-    buffer->count = 0;
-    buffer->capacity = 0;
-}
-
-static int line_buffer_push(LineBuffer *buffer, const char *text)
-{
-    if (!buffer || !text)
-    {
-        return 0;
-    }
-
-    if (buffer->count == buffer->capacity)
-    {
-        int new_capacity = buffer->capacity == 0 ? 64 : buffer->capacity * 2;
-        char **new_lines = (char **)realloc(buffer->lines, (size_t)new_capacity * sizeof(char *));
-        if (!new_lines)
-        {
-            return 0;
-        }
-        buffer->lines = new_lines;
-        buffer->capacity = new_capacity;
-    }
-
-    size_t len = strlen(text);
-    char *copy = (char *)malloc(len + 1);
-    if (!copy)
-    {
-        return 0;
-    }
-    memcpy(copy, text, len + 1);
-    buffer->lines[buffer->count++] = copy;
-    return 1;
-}
-
-static int mostrar_partidos_desde_stmt_paginado(sqlite3_stmt *stmt)
-{
-    LineBuffer buffer = {0};
-    int hay = 0;
-    char fecha_formateada[20];
-    char line[512];
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
-
-        snprintf(line, sizeof(line), "ID: %d", sqlite3_column_int(stmt, 0));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Cancha: %s", sqlite3_column_text(stmt, 1));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Fecha: %s", fecha_formateada);
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Camiseta: %s", sqlite3_column_text(stmt, 5));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Cansancio: %d/10", sqlite3_column_int(stmt, 8));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Estado de Animo: %d/10", sqlite3_column_int(stmt, 9));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Comentario Personal: %s", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Dia: %s", dia_to_text(sqlite3_column_int(stmt, 12)));
-        line_buffer_push(&buffer, line);
-        snprintf(line, sizeof(line), "Precio: %d", sqlite3_column_int(stmt, 13));
-        line_buffer_push(&buffer, line);
-        line_buffer_push(&buffer, "----------------------------------------");
-        hay = 1;
-    }
-
-    if (!hay)
-    {
-        line_buffer_push(&buffer, "No hay partidos cargados.");
-    }
-
-    WINDOW *win = ui_get_output_window();
-    if (!win)
-    {
-        line_buffer_free(&buffer);
-        return hay;
-    }
-
-    keypad(win, TRUE);
-    int height;
-    int width;
-    getmaxyx(win, height, width);
-    int top = 0;
-    int usable_height = height > 1 ? height - 1 : height;
-
-    for (;;)
-    {
-        werase(win);
-        for (int row = 0; row < usable_height; ++row)
-        {
-            int idx = top + row;
-            if (idx >= buffer.count)
-            {
-                break;
-            }
-            const char *text = buffer.lines[idx];
-            int len = (int)strlen(text);
-            int start_x = (width - len) / 2;
-            if (start_x < 0)
-            {
-                start_x = 0;
-            }
-            if (width > 1 && len > width - 1)
-            {
-                mvwprintw(win, row, start_x, "%.*s", width - 1, text);
-            }
-            else
-            {
-                mvwprintw(win, row, start_x, "%s", text);
-            }
-        }
-
-        if (height > 0)
-        {
-            mvwprintw(win, height - 1, 0, "Arriba/Abajo para desplazarse, Enter para salir");
-        }
-        wrefresh(win);
-
-        int ch = wgetch(win);
-        if (ch == 10 || ch == KEY_ENTER || ch == 'q' || ch == 'Q')
-        {
-            break;
-        }
-        if (ch == KEY_UP)
-        {
-            if (top > 0)
-            {
-                top--;
-            }
-        }
-        else if (ch == KEY_DOWN)
-        {
-            if (top + usable_height < buffer.count)
-            {
-                top++;
-            }
-        }
-        else if (ch == KEY_PPAGE)
-        {
-            top -= usable_height;
-            if (top < 0)
-            {
-                top = 0;
-            }
-        }
-        else if (ch == KEY_NPAGE)
-        {
-            top += usable_height;
-            if (top + usable_height > buffer.count)
-            {
-                top = buffer.count - usable_height;
-                if (top < 0)
-                {
-                    top = 0;
-                }
-            }
-        }
-        else if (ch == KEY_HOME)
-        {
-            top = 0;
-        }
-        else if (ch == KEY_END)
-        {
-            if (buffer.count > usable_height)
-            {
-                top = buffer.count - usable_height;
-            }
-        }
-    }
-
-    line_buffer_free(&buffer);
-    return hay;
-}
-#endif
 
 /**
  * @brief Estructura para agrupar los datos de un partido
@@ -722,14 +523,6 @@ void listar_partidos()
         return;
     }
 
-#ifdef USE_NCURSES
-    if (ui_get_output_window() != NULL)
-    {
-        mostrar_partidos_desde_stmt_paginado(stmt);
-        sqlite3_finalize(stmt);
-        return;
-    }
-#endif
 
     int hay = mostrar_partidos_desde_stmt(stmt);
 
@@ -1915,7 +1708,7 @@ void simular_partido_guardados()
 #define TACTIC_W 40
 #define TACTIC_H 20
 
-static void tactica_init_grid(char grid[TACTIC_H][TACTIC_W + 1])
+static UNUSED void tactica_init_grid(char grid[TACTIC_H][TACTIC_W + 1])
 {
     for (int y = 0; y < TACTIC_H; y++)
     {
@@ -1927,7 +1720,7 @@ static void tactica_init_grid(char grid[TACTIC_H][TACTIC_W + 1])
     }
 }
 
-static void tactica_build_grid_string(char grid[TACTIC_H][TACTIC_W + 1], char *out, size_t size)
+static UNUSED void tactica_build_grid_string(char grid[TACTIC_H][TACTIC_W + 1], char *out, size_t size)
 {
     size_t used = 0;
     if (!out || size == 0)
@@ -1956,7 +1749,7 @@ static void tactica_build_grid_string(char grid[TACTIC_H][TACTIC_W + 1], char *o
     out[used] = '\0';
 }
 
-static void tactica_guardar_diagrama(int partido_id, const char *nombre, const char *grid_text)
+static UNUSED void tactica_guardar_diagrama(int partido_id, const char *nombre, const char *grid_text)
 {
     const char *sql =
         "INSERT INTO tactica_diagrama (partido_id, nombre, fecha, grid) "
@@ -2078,118 +1871,16 @@ static void tactica_ver_diagrama()
     pause_console();
 }
 
-#ifdef USE_NCURSES
-static int tactica_draw_editor(char grid[TACTIC_H][TACTIC_W + 1], const char *nombre, int partido_id)
-{
-    int height, width;
-    int cursor_x = 0;
-    int cursor_y = 0;
-    char status[128] = "";
-
-    keypad(stdscr, TRUE);
-    getmaxyx(stdscr, height, width);
-
-    int min_h = TACTIC_H + 6;
-    int min_w = TACTIC_W + 4;
-    if (height < min_h || width < min_w)
-    {
-        clear();
-        mvprintw(0, 0, "Terminal pequena. Minimo %dx%d.", min_w, min_h);
-        refresh();
-        getch();
-        return 0;
-    }
-
-    for (;;)
-    {
-        clear();
-        mvprintw(0, 2, "Tactica: %s | Partido: %d", nombre, partido_id);
-        mvprintw(1, 2, "Flechas mover | 1 Jugador | 2 Balon | 3 Movimiento | 0 Borrar | S Guardar | ESC Salir");
-
-        int start_y = 3;
-        int start_x = 2;
-        for (int y = 0; y < TACTIC_H; y++)
-        {
-            mvprintw(start_y + y, start_x, "%s", grid[y]);
-        }
-
-        int draw_y = start_y + cursor_y;
-        int draw_x = start_x + cursor_x;
-        chtype ch = grid[cursor_y][cursor_x];
-        attron(A_REVERSE);
-        mvaddch(draw_y, draw_x, ch);
-        attroff(A_REVERSE);
-
-        mvprintw(start_y + TACTIC_H + 1, 2, "%s", status);
-        refresh();
-
-        int key = getch();
-        status[0] = '\0';
-
-        if (key == 27)
-        {
-            return 0;
-        }
-        if (key == KEY_UP && cursor_y > 0)
-        {
-            cursor_y--;
-        }
-        else if (key == KEY_DOWN && cursor_y < TACTIC_H - 1)
-        {
-            cursor_y++;
-        }
-        else if (key == KEY_LEFT && cursor_x > 0)
-        {
-            cursor_x--;
-        }
-        else if (key == KEY_RIGHT && cursor_x < TACTIC_W - 1)
-        {
-            cursor_x++;
-        }
-        else if (key == '1')
-        {
-            grid[cursor_y][cursor_x] = 'O';
-        }
-        else if (key == '2')
-        {
-            grid[cursor_y][cursor_x] = 'o';
-        }
-        else if (key == '3')
-        {
-            grid[cursor_y][cursor_x] = '*';
-        }
-        else if (key == '0' || key == 'e' || key == 'E')
-        {
-            grid[cursor_y][cursor_x] = '.';
-        }
-        else if (key == 's' || key == 'S')
-        {
-            return 1;
-        }
-    }
-}
-#endif
 
 static void tactica_crear_diagrama()
 {
-#ifndef USE_NCURSES
-    printf("Ncurses no disponible en esta version.\n");
-    pause_console();
-    return;
-#else
-    if (!settings_get_use_ncurses())
-    {
-        printf("Activa Ncurses en Ajustes para usar el editor tactico.\n");
-        pause_console();
-        return;
-    }
+    clear_screen();
+    print_header("CREAR DIAGRAMA TACTICO");
 
-    listar_partidos();
-    int partido_id = input_int("ID del partido (0 para cancelar): ");
-    if (partido_id == 0)
-    {
+    int partido_id = input_int("ID de partido (0 para cancelar): ");
+    if (partido_id <= 0)
         return;
-    }
+
     if (!existe_id("partido", partido_id))
     {
         printf("Partido no encontrado.\n");
@@ -2197,28 +1888,100 @@ static void tactica_crear_diagrama()
         return;
     }
 
-    char nombre[64];
-    input_string("Nombre del diagrama: ", nombre, sizeof(nombre));
-    if (safe_strnlen(nombre, sizeof(nombre)) == 0)
+    char nombre[128] = {0};
+    ui_printf("Nombre del diagrama: ");
+    if (!fgets(nombre, sizeof(nombre), stdin))
     {
-        snprintf(nombre, sizeof(nombre), "Diagrama %d", partido_id);
+        nombre[0] = '\0';
+    }
+
+    size_t nombre_len = strlen_s(nombre, sizeof(nombre));
+    while (nombre_len > 0 && (nombre[nombre_len - 1] == '\n' || nombre[nombre_len - 1] == '\r'))
+    {
+        nombre[--nombre_len] = '\0';
+    }
+    if (nombre_len == 0)
+    {
+        strncpy(nombre, "Diagrama", sizeof(nombre));
+        nombre[sizeof(nombre) - 1] = '\0';
     }
 
     char grid[TACTIC_H][TACTIC_W + 1];
     tactica_init_grid(grid);
 
-    int saved = tactica_draw_editor(grid, nombre, partido_id);
-    if (saved)
-    {
-        char grid_text[(TACTIC_W + 1) * TACTIC_H + 1];
-        tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-        tactica_guardar_diagrama(partido_id, nombre, grid_text);
-    }
+    char grid_text[(TACTIC_H * (TACTIC_W + 1)) + 1];
+    tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
 
-    clear();
-    refresh();
-    return;
-#endif
+    for (;;)
+    {
+        clear_screen();
+        print_header("EDITAR DIAGRAMA");
+        ui_puts(grid_text);
+        ui_printf("\nComandos:\n");
+        ui_printf("  p X Y C  -> colocar el caracter C en coordenadas X,Y\n");
+        ui_printf("  r        -> reiniciar el diagrama\n");
+        ui_printf("  s        -> guardar diagrama\n");
+        ui_printf("  q        -> cancelar\n");
+        ui_printf("\nIngrese comando: ");
+
+        char line[64] = {0};
+        if (!fgets(line, sizeof(line), stdin))
+            break;
+
+        size_t len = strlen_s(line, sizeof(line));
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
+        {
+            line[--len] = '\0';
+        }
+
+        if (len == 0)
+            continue;
+
+        char cmd = line[0];
+        if (cmd == 'q' || cmd == 'Q')
+            break;
+        if (cmd == 'r' || cmd == 'R')
+        {
+            tactica_init_grid(grid);
+            tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+            continue;
+        }
+        if (cmd == 's' || cmd == 'S')
+        {
+            tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+            tactica_guardar_diagrama(partido_id, nombre, grid_text);
+            ui_printf("Diagrama guardado.\n");
+            pause_console();
+            break;
+        }
+        if (cmd == 'p' || cmd == 'P')
+        {
+            int x = -1, y = -1;
+            char c = '\0';
+            if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
+            {
+                if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+                {
+                    grid[y][x] = c;
+                    tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+                }
+                else
+                {
+                    ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+                    pause_console();
+                }
+            }
+            else
+            {
+                ui_printf("Formato inválido. Use: p X Y C\n");
+                pause_console();
+            }
+            continue;
+        }
+
+        ui_printf("Comando no reconocido.\n");
+        pause_console();
+    }
 }
 
 void menu_tacticas_partido()

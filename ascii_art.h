@@ -164,16 +164,6 @@
     "        |__/                        \n"
 
 /**
- * @brief Icono artístico para generación de Códigos QR
- */
-#define ASCII_QR \
-    "   ___  ____  \n" \
-    "  / _ \\|  _ \\ \n" \
-    " | | | | |_) |\n" \
-    " | |_| |  _ < \n" \
-    "  \\___\\_|_| \\_\\\n"
-
-/**
  * @brief Título artístico para la gestión de Temporadas
  */
 #define ASCII_TEMPORADA \

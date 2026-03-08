@@ -1,5 +1,4 @@
 #include "menu.h"
-#include <ncursesw/ncurses.h>
 
 int main()
 {
