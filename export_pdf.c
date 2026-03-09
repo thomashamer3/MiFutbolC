@@ -119,6 +119,29 @@ static int preparar_stmt_pdf(sqlite3_stmt **stmt, const char *sql)
     return 1;
 }
 
+typedef void (*PdfRowHandler)(PdfCtx *ctx, sqlite3_stmt *stmt);
+
+/**
+ * @brief Ejecuta una consulta que devuelve una sola fila.
+ *
+ * Esta función prepara el statement, enlaza "mes_yyyy_mm" en todos los parámetros
+ * (para consultas que usan el mismo valor repetido) y ejecuta el handler si hay fila.
+ */
+static void ejecutar_consulta_una_fila(PdfCtx *ctx, const char *sql, const char *mes_yyyy_mm, int bind_count, PdfRowHandler row_handler)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt_pdf(&stmt, sql))
+        return;
+
+    for (int i = 1; i <= bind_count; ++i)
+        sqlite3_bind_text(stmt, i, mes_yyyy_mm, -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW && row_handler)
+        row_handler(ctx, stmt);
+
+    sqlite3_finalize(stmt);
+}
+
 static void format_mes_display(const char *mes_yyyy_mm, char *buffer, int size)
 {
     if (!mes_yyyy_mm || safe_strnlen(mes_yyyy_mm, (size_t)size) < 7)
@@ -132,38 +155,47 @@ static void format_mes_display(const char *mes_yyyy_mm, char *buffer, int size)
     snprintf(buffer, (size_t)size, "%s/%s", mm, yyyy);
 }
 
+static void manejar_fila_resumen_partidos(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    int total = sqlite3_column_int(stmt, 0);
+    double avg_goles = sqlite3_column_double(stmt, 1);
+    double avg_asist = sqlite3_column_double(stmt, 2);
+    double avg_rend = sqlite3_column_double(stmt, 3);
+    double avg_cans = sqlite3_column_double(stmt, 4);
+    double avg_animo = sqlite3_column_double(stmt, 5);
+
+    char line[256];
+    snprintf(line, sizeof(line), "Partidos: %d", total);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    snprintf(line, sizeof(line), "Promedio goles: %.2f | asistencias: %.2f", avg_goles, avg_asist);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    snprintf(line, sizeof(line), "Rendimiento: %.2f | cansancio: %.2f | animo: %.2f", avg_rend, avg_cans, avg_animo);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+}
+
 static void escribir_resumen_partidos(PdfCtx *ctx, const char *mes_yyyy_mm)
 {
     write_text_line(ctx, "Resumen de Partidos", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
 
-    sqlite3_stmt *stmt = NULL;
     const char *sql_partidos =
         "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
         "FROM partido WHERE strftime('%Y-%m', fecha_hora) = ?";
 
-    if (!preparar_stmt_pdf(&stmt, sql_partidos))
-        return;
+    ejecutar_consulta_una_fila(ctx, sql_partidos, mes_yyyy_mm, 1, manejar_fila_resumen_partidos);
+}
 
-    sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int total = sqlite3_column_int(stmt, 0);
-        double avg_goles = sqlite3_column_double(stmt, 1);
-        double avg_asist = sqlite3_column_double(stmt, 2);
-        double avg_rend = sqlite3_column_double(stmt, 3);
-        double avg_cans = sqlite3_column_double(stmt, 4);
-        double avg_animo = sqlite3_column_double(stmt, 5);
+static void manejar_fila_resumen_entrenamiento(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    int total = sqlite3_column_int(stmt, 0);
+    int total_min = sqlite3_column_int(stmt, 1);
+    double avg_int = sqlite3_column_double(stmt, 2);
+    int omitidos = sqlite3_column_int(stmt, 3);
 
-        char line[256];
-        snprintf(line, sizeof(line), "Partidos: %d", total);
-        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        snprintf(line, sizeof(line), "Promedio goles: %.2f | asistencias: %.2f", avg_goles, avg_asist);
-        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        snprintf(line, sizeof(line), "Rendimiento: %.2f | cansancio: %.2f | animo: %.2f", avg_rend, avg_cans, avg_animo);
-        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-    }
-
-    sqlite3_finalize(stmt);
+    char line[256];
+    snprintf(line, sizeof(line), "Sesiones: %d | minutos: %d | intensidad promedio: %.2f", total, total_min, avg_int);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    snprintf(line, sizeof(line), "Entrenamientos omitidos: %d", omitidos);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
 }
 
 static void escribir_resumen_entrenamiento(PdfCtx *ctx, const char *mes_yyyy_mm)
@@ -171,30 +203,37 @@ static void escribir_resumen_entrenamiento(PdfCtx *ctx, const char *mes_yyyy_mm)
     write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
     write_text_line(ctx, "Resumen de Entrenamiento", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
 
-    sqlite3_stmt *stmt = NULL;
     const char *sql_entrenamiento =
         "SELECT COUNT(*), SUM(duracion_min), AVG(intensidad), SUM(omitido) "
         "FROM bienestar_entrenamiento WHERE substr(fecha, 1, 7) = ?";
 
-    if (!preparar_stmt_pdf(&stmt, sql_entrenamiento))
-        return;
+    ejecutar_consulta_una_fila(ctx, sql_entrenamiento, mes_yyyy_mm, 1, manejar_fila_resumen_entrenamiento);
+}
 
-    sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int total = sqlite3_column_int(stmt, 0);
-        int total_min = sqlite3_column_int(stmt, 1);
-        double avg_int = sqlite3_column_double(stmt, 2);
-        int omitidos = sqlite3_column_int(stmt, 3);
+static void manejar_fila_resumen_alimentacion(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    int total = sqlite3_column_int(stmt, 0);
+    int buenas = sqlite3_column_int(stmt, 1);
+    int regulares = sqlite3_column_int(stmt, 2);
+    int malas = sqlite3_column_int(stmt, 3);
+    double pct_buena = (total > 0) ? ((double)buenas / (double)total) * 100.0 : 0.0;
 
-        char line[256];
-        snprintf(line, sizeof(line), "Sesiones: %d | minutos: %d | intensidad promedio: %.2f", total, total_min, avg_int);
-        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        snprintf(line, sizeof(line), "Entrenamientos omitidos: %d", omitidos);
-        write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-    }
+    char line[256];
+    snprintf(line, sizeof(line), "Comidas: %d | Buenas: %d | Regulares: %d | Malas: %d", total, buenas, regulares, malas);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    snprintf(line, sizeof(line), "%% de comidas buenas: %.1f%%", pct_buena);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+}
 
-    sqlite3_finalize(stmt);
+static void manejar_fila_resumen_hidratacion(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    int baja = sqlite3_column_int(stmt, 0);
+    int media = sqlite3_column_int(stmt, 1);
+    int alta = sqlite3_column_int(stmt, 2);
+
+    char line[256];
+    snprintf(line, sizeof(line), "Hidratacion: baja %d | media %d | alta %d", baja, media, alta);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
 }
 
 static void escribir_resumen_alimentacion(PdfCtx *ctx, const char *mes_yyyy_mm)
@@ -202,7 +241,6 @@ static void escribir_resumen_alimentacion(PdfCtx *ctx, const char *mes_yyyy_mm)
     write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
     write_text_line(ctx, "Resumen de Alimentacion", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
 
-    sqlite3_stmt *stmt = NULL;
     const char *sql_alimentacion =
         "SELECT COUNT(*), "
         "SUM(CASE WHEN calidad = 'Buena' THEN 1 ELSE 0 END), "
@@ -210,25 +248,7 @@ static void escribir_resumen_alimentacion(PdfCtx *ctx, const char *mes_yyyy_mm)
         "SUM(CASE WHEN calidad = 'Mala' THEN 1 ELSE 0 END) "
         "FROM bienestar_comida WHERE substr(fecha, 1, 7) = ?";
 
-    if (preparar_stmt_pdf(&stmt, sql_alimentacion))
-    {
-        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            int total = sqlite3_column_int(stmt, 0);
-            int buenas = sqlite3_column_int(stmt, 1);
-            int regulares = sqlite3_column_int(stmt, 2);
-            int malas = sqlite3_column_int(stmt, 3);
-            double pct_buena = (total > 0) ? ((double)buenas / (double)total) * 100.0 : 0.0;
-
-            char line[256];
-            snprintf(line, sizeof(line), "Comidas: %d | Buenas: %d | Regulares: %d | Malas: %d", total, buenas, regulares, malas);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-            snprintf(line, sizeof(line), "%% de comidas buenas: %.1f%%", pct_buena);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        }
-        sqlite3_finalize(stmt);
-    }
+    ejecutar_consulta_una_fila(ctx, sql_alimentacion, mes_yyyy_mm, 1, manejar_fila_resumen_alimentacion);
 
     const char *sql_hidratacion =
         "SELECT "
@@ -237,20 +257,37 @@ static void escribir_resumen_alimentacion(PdfCtx *ctx, const char *mes_yyyy_mm)
         "SUM(CASE WHEN hidratacion = 'Alta' THEN 1 ELSE 0 END) "
         "FROM bienestar_dia_nutricional WHERE substr(fecha, 1, 7) = ?";
 
-    if (preparar_stmt_pdf(&stmt, sql_hidratacion))
-    {
-        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            int baja = sqlite3_column_int(stmt, 0);
-            int media = sqlite3_column_int(stmt, 1);
-            int alta = sqlite3_column_int(stmt, 2);
+    ejecutar_consulta_una_fila(ctx, sql_hidratacion, mes_yyyy_mm, 1, manejar_fila_resumen_hidratacion);
+}
 
-            char line[256];
-            snprintf(line, sizeof(line), "Hidratacion: baja %d | media %d | alta %d", baja, media, alta);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        }
-        sqlite3_finalize(stmt);
+static void manejar_fila_resumen_mental(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    int total = sqlite3_column_int(stmt, 0);
+    double conf = sqlite3_column_double(stmt, 1);
+    double estres = sqlite3_column_double(stmt, 2);
+    double mot = sqlite3_column_double(stmt, 3);
+    double pres = sqlite3_column_double(stmt, 4);
+    double conc = sqlite3_column_double(stmt, 5);
+
+    char line[256];
+    snprintf(line, sizeof(line), "Sesiones: %d | confianza %.2f | estres %.2f", total, conf, estres);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+    snprintf(line, sizeof(line), "Motivacion %.2f | presion %.2f | concentracion %.2f", mot, pres, conc);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+}
+
+static void manejar_fila_resumen_tendencia(PdfCtx *ctx, sqlite3_stmt *stmt)
+{
+    double avg_alta = sqlite3_column_double(stmt, 0);
+    double avg_baja = sqlite3_column_double(stmt, 1);
+
+    char line[256];
+    snprintf(line, sizeof(line), "Rendimiento con confianza alta: %.2f | baja: %.2f", avg_alta, avg_baja);
+    write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
+
+    if (avg_alta > avg_baja)
+    {
+        write_text_line(ctx, "Tendencia: Jugas mejor cuando la confianza esta alta.", ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
     }
 }
 
@@ -259,31 +296,11 @@ static void escribir_resumen_mental(PdfCtx *ctx, const char *mes_yyyy_mm)
     write_blank_line(ctx, PDF_BODY_SIZE + 4.0f);
     write_text_line(ctx, "Resumen de Mentalidad", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 4.0f);
 
-    sqlite3_stmt *stmt = NULL;
     const char *sql_mental =
         "SELECT COUNT(*), AVG(confianza), AVG(estres), AVG(motivacion), AVG(presion), AVG(concentracion) "
         "FROM bienestar_sesion_mental WHERE substr(fecha, 1, 7) = ?";
 
-    if (preparar_stmt_pdf(&stmt, sql_mental))
-    {
-        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            int total = sqlite3_column_int(stmt, 0);
-            double conf = sqlite3_column_double(stmt, 1);
-            double estres = sqlite3_column_double(stmt, 2);
-            double mot = sqlite3_column_double(stmt, 3);
-            double pres = sqlite3_column_double(stmt, 4);
-            double conc = sqlite3_column_double(stmt, 5);
-
-            char line[256];
-            snprintf(line, sizeof(line), "Sesiones: %d | confianza %.2f | estres %.2f", total, conf, estres);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-            snprintf(line, sizeof(line), "Motivacion %.2f | presion %.2f | concentracion %.2f", mot, pres, conc);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-        }
-        sqlite3_finalize(stmt);
-    }
+    ejecutar_consulta_una_fila(ctx, sql_mental, mes_yyyy_mm, 1, manejar_fila_resumen_mental);
 
     const char *sql_tendencia =
         "SELECT "
@@ -294,28 +311,7 @@ static void escribir_resumen_mental(PdfCtx *ctx, const char *mes_yyyy_mm)
         " WHERE strftime('%Y-%m', p.fecha_hora) = ? AND strftime('%Y-%m-%d', p.fecha_hora) IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4 AND substr(fecha, 1, 7) = ?)) AS avg_baja";
 
-    if (preparar_stmt_pdf(&stmt, sql_tendencia))
-    {
-        sqlite3_bind_text(stmt, 1, mes_yyyy_mm, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 2, mes_yyyy_mm, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 3, mes_yyyy_mm, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 4, mes_yyyy_mm, -1, SQLITE_STATIC);
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            double avg_alta = sqlite3_column_double(stmt, 0);
-            double avg_baja = sqlite3_column_double(stmt, 1);
-            char line[256];
-            snprintf(line, sizeof(line), "Rendimiento con confianza alta: %.2f | baja: %.2f", avg_alta, avg_baja);
-            write_text_line(ctx, line, ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-
-            if (avg_alta > avg_baja)
-            {
-                write_text_line(ctx, "Tendencia: Jugas mejor cuando la confianza esta alta.", ctx->font_regular, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
-            }
-        }
-        sqlite3_finalize(stmt);
-    }
+    ejecutar_consulta_una_fila(ctx, sql_tendencia, mes_yyyy_mm, 4, manejar_fila_resumen_tendencia);
 }
 
 static const char *skip_spaces(const char *p)
