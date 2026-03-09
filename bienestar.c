@@ -1641,7 +1641,15 @@ static void pedir_mes_anio(char *salida, int size)
             if (!localtime_r(&ahora, &tm_info))
                 continue;
 #endif
-            snprintf(salida, (size_t)size, "%04d-%02d", tm_info.tm_year + 1900, tm_info.tm_mon + 1);
+            {
+                char tmp[16];
+                int written = snprintf(tmp, sizeof(tmp), "%04d-%02d", tm_info.tm_year + 1900, tm_info.tm_mon + 1);
+                if (written < 0 || (size_t)written >= sizeof(tmp))
+                    continue;
+                strncpy(salida, tmp, (size_t)size);
+                if (size > 0)
+                    salida[size - 1] = '\0';
+            }
             return;
         }
 

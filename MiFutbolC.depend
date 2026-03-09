@@ -129,7 +129,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773010547 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773083723 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
@@ -328,7 +328,7 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1770231437 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1773083283 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -524,7 +524,7 @@
 
 1769907971 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1770272931 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1773083723 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -2028,7 +2028,7 @@
 	<string.h>
 	<time.h>
 
-1772828521 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1773086116 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2123,7 +2123,7 @@
 
 1770167266 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.h
 
-1773010091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
+1773082670 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
 	"export_pdf.h"
 	"export_camisetas.h"
 	"export_camisetas_mejorado.h"
@@ -2218,7 +2218,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1772156377 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1773083123 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"menu.h"
 	"utils.h"
@@ -2281,7 +2281,7 @@
 	<wchar.h>
 	<ncursesw/unctrl.h>
 
-1773009242 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
+1773082670 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
 	<BaseTsd.h>
 	<sys/types.h>
 	<ctype.h>
@@ -2305,7 +2305,7 @@
 	<sys/param.h>
 	<sys/isadefs.h>
 
-1773009230 d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.h
+1773082670 d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.h
 	<stdint.h>
 	<stdio.h>
 	"pdfgen.h"

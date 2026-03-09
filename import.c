@@ -1637,11 +1637,11 @@ static int procesar_partido_html_row(char **ptr)
     char clima_str[32];
     char dia_str[32];
     char comentario[512];
-    int goles;
-    int asistencias;
-    int rendimiento_general;
-    int cansancio;
-    int estado_animo;
+    int goles = 0;
+    int asistencias = 0;
+    int rendimiento_general = 0;
+    int cansancio = 0;
+    int estado_animo = 0;
 
     // Extraer celdas
     for (int i = 0; i < 12; i++)

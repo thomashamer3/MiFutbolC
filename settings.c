@@ -913,7 +913,15 @@ static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *o
     *out_module = LoadLibraryA("urlmon.dll");
     if (*out_module)
     {
-        *out_downloader = (URLDownloadToFileAFunc)GetProcAddress(*out_module, "URLDownloadToFileA");
+        /* Evitar warning de cast entre tipos de función distintos */
+        union
+        {
+            FARPROC fp;
+            URLDownloadToFileAFunc fn;
+        } downloader_union;
+
+        downloader_union.fp = GetProcAddress(*out_module, "URLDownloadToFileA");
+        *out_downloader = downloader_union.fn;
     }
 
     return *out_downloader != NULL;

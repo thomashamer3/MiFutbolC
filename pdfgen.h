@@ -58,11 +58,12 @@ struct pdf_object;
  * pdf_info describes the metadata to be inserted into the
  * header of the output PDF
  */
-struct pdf_info {
+struct pdf_info
+{
     char creator[64];  //!< Software used to create the PDF
     char producer[64]; //!< Software used to create the PDF
     char title[64];    //!< The title of the PDF (typically displayed in the
-                       //!< window bar when viewing)
+    //!< window bar when viewing)
     char author[64];   //!< Who created the PDF
     char subject[64];  //!< What is the PDF about
     char date[64];     //!< The date the PDF was created
@@ -73,7 +74,8 @@ struct pdf_info {
  * Each value has a corresponding header struct used within
  * the format_specific_img_info union.
  */
-enum {
+enum
+{
     IMAGE_PNG,
     IMAGE_JPG,
     IMAGE_PPM,
@@ -92,7 +94,8 @@ enum {
  * Information about color type of PNG format
  * As defined by https://www.w3.org/TR/2003/REC-PNG-20031110/#6Colour-values
  */
-enum /* png colortype */ {
+enum /* png colortype */
+{
     // Greyscale
     PNG_COLOR_GREYSCALE = 0,
     // Truecolour
@@ -110,7 +113,8 @@ enum /* png colortype */ {
 /**
  * png_header describes the header information extracted from .PNG files
  */
-struct png_header {
+struct png_header
+{
     uint32_t width;    //!< Width in pixels
     uint32_t height;   //!< Height in pixels
     uint8_t bitDepth;  //!< Bit Depth
@@ -123,7 +127,8 @@ struct png_header {
 /**
  * bmp_header describes the header information extracted from .BMP files
  */
-struct bmp_header {
+struct bmp_header
+{
     uint32_t bfSize;        //!< size of BMP in bytes
     uint16_t bfReserved1;   //!< ignore!
     uint16_t bfReserved2;   //!< ignore!
@@ -140,23 +145,26 @@ struct bmp_header {
 /**
  * jpeg_header describes the header information extracted from .JPG files
  */
-struct jpeg_header {
+struct jpeg_header
+{
     int ncolours; //!< Number of colours
 };
 
 /**
  * PPM color spaces
  */
-enum {
+enum
+{
     PPM_BINARY_COLOR_RGB,  //!< binary ppm with RGB colors (magic number P5)
     PPM_BINARY_COLOR_GRAY, //!< binary ppm with grayscale colors (magic number
-                           //!< P6)
+    //!< P6)
 };
 
 /**
  * ppm_header describes the header information extracted from .PPM files
  */
-struct ppm_header {
+struct ppm_header
+{
     size_t size;           //!< Indicate the size of the image data
     size_t data_begin_pos; //!< position in the data where the image starts
     int color_space;       //!< PPM color space
@@ -165,7 +173,8 @@ struct ppm_header {
 /**
  * pdf_img_info describes the metadata for an arbitrary image
  */
-struct pdf_img_info {
+struct pdf_img_info
+{
     int image_format; //!< Indicates the image format (IMAGE_PNG, ...)
     uint32_t width;   //!< Width in pixels
     uint32_t height;  //!< Height in pixels
@@ -173,7 +182,8 @@ struct pdf_img_info {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // Doxygen doesn't like anonymous unions
     //!< Image specific details
-    union {
+    union
+    {
         struct bmp_header bmp;   //!< BMP header info
         struct jpeg_header jpeg; //!< JPEG header info
         struct png_header png;   //!< PNG header info
@@ -187,7 +197,8 @@ struct pdf_img_info {
  * drawing operation.
  * See PDF reference for detailed usage.
  */
-struct pdf_path_operation {
+struct pdf_path_operation
+{
     char op;  /*!< Operation command. Possible operators are: m = move to, l =
                  line to, c = cubic bezier curve with two control points, v =
                  cubic bezier curve with one control point fixed at first
@@ -273,16 +284,17 @@ struct pdf_path_operation {
 /**
  * Different alignment options for rendering text
  */
-enum {
+enum
+{
     PDF_ALIGN_LEFT,    //!< Align text to the left
     PDF_ALIGN_RIGHT,   //!< Align text to the right
     PDF_ALIGN_CENTER,  //!< Align text in the center
     PDF_ALIGN_JUSTIFY, //!< Align text in the center, with padding to fill the
-                       //!< available space
+    //!< available space
     PDF_ALIGN_JUSTIFY_ALL, //!< Like PDF_ALIGN_JUSTIFY, except even short
-                           //!< lines will be fully justified
+    //!< lines will be fully justified
     PDF_ALIGN_NO_WRITE, //!< Fake alignment for only checking wrap height with
-                        //!< no writes
+    //!< no writes
 };
 
 /**
@@ -675,7 +687,8 @@ int pdf_add_link(struct pdf_doc *pdf, struct pdf_object *page, float x,
 /**
  * List of different barcode encodings that are supported
  */
-enum {
+enum
+{
     PDF_BARCODE_128A,  //!< Produce code-128A style barcodes
     PDF_BARCODE_39,    //!< Produce code-39 style barcodes
     PDF_BARCODE_EAN13, //!< Produce EAN-13 style barcodes

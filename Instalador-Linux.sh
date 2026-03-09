@@ -19,7 +19,7 @@ RUN_AFTER_BUILD=0
 STRIP_BINARY=0
 
 # Simple argument parser
-while [ "$#" -gt 0 ]; do
+while [[ "$#" -gt 0 ]]; do
   case "$1" in
     -d|--debug)
       BUILD_TYPE=Debug
@@ -54,7 +54,7 @@ EOF
   esac
 done
 
-if [ "${BUILD_TYPE}" = "Debug" ]; then
+if [[ "${BUILD_TYPE}" = "Debug" ]]; then
   CFLAGS="${CFLAGS:--Wall -g -O0 -std=c11}"
 else
   CFLAGS="${CFLAGS:--Wall -O2 -std=c11 -march=native}"
@@ -73,7 +73,7 @@ check_deps() {
   pkg-config --exists zlib 2>/dev/null || missing+=(zlib1g-dev)
   pkg-config --exists libpng 2>/dev/null || missing+=(libpng-dev)
 
-  if [ "${#missing[@]}" -eq 0 ]; then
+  if [[ "${#missing[@]}" -eq 0 ]]; then
     return 0
   fi
 
@@ -127,6 +127,8 @@ warn_sqlite_windows_macros() {
     echo "\nWARNING: sqlite3.c contains _WIN32 conditionals (Windows-only code)."
     echo "This is usually fine, but ensure you're compiling in a non-Windows environment."
   fi
+
+  return 0
 }
 
 warn_sqlite_windows_macros
@@ -185,7 +187,7 @@ echo "Building (BUILD_TYPE=${BUILD_TYPE}) with $CC..."
 "$CC" $CFLAGS "${SRC[@]}" $LDFLAGS -o "$OUT"
 
 echo "Compilation successful: $OUT"
-if [ "$STRIP_BINARY" -eq 1 ]; then
+if [[ "$STRIP_BINARY" -eq 1 ]]; then
   if command -v strip >/dev/null 2>&1; then
     echo "Stripping symbols from $OUT..."
     strip "$OUT" || echo "Warning: strip failed"
@@ -205,7 +207,7 @@ if command -v ldd >/dev/null 2>&1; then
 fi
 
 ls -lh "$OUT"
-if [ "$RUN_AFTER_BUILD" -eq 1 ]; then
+if [[ "$RUN_AFTER_BUILD" -eq 1 ]]; then
   echo "Running $OUT..."
   ./"$OUT"
 fi

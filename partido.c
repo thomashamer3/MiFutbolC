@@ -49,10 +49,10 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 /**
  * @brief Muestra la información de un partido desde un statement preparado
- * 
+ *
  * Esta función genérica imprime todos los detalles de un partido obtenido
  * de una consulta SQL. Asume que el statement tiene las columnas en el orden:
- * id, cancha, fecha_hora, goles, asistencias, camiseta, resultado, 
+ * id, cancha, fecha_hora, goles, asistencias, camiseta, resultado,
  * rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio
  *
  * @param stmt Statement preparado con los datos del partido
@@ -1798,7 +1798,14 @@ static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t 
     else
         to_copy = count;
 
-    memcpy(dest, src, to_copy);
+    /* Guardar un límite explícito para ayudar al analizador estático */
+    if (to_copy > destsz - 1)
+        to_copy = destsz - 1;
+
+    for (size_t i = 0; i < to_copy; ++i)
+    {
+        dest[i] = src[i];
+    }
     dest[to_copy] = '\0';
     return 0;
 #endif
@@ -1850,7 +1857,7 @@ static void tactica_leer_nombre_diagrama(char *nombre, size_t size)
 
 
 static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC_W + 1], char *grid_text,
-                                   size_t grid_text_size, int partido_id, const char *nombre)
+                                    size_t grid_text_size, int partido_id, const char *nombre)
 {
     if (!line || !grid || !grid_text)
         return 0;
@@ -1858,55 +1865,55 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
     char cmd = line[0];
     switch (cmd)
     {
-        case 'q':
-        case 'Q':
-            return 1;
+    case 'q':
+    case 'Q':
+        return 1;
 
-        case 'r':
-        case 'R':
-            tactica_init_grid(grid);
-            tactica_build_grid_string(grid, grid_text, grid_text_size);
-            return 0;
+    case 'r':
+    case 'R':
+        tactica_init_grid(grid);
+        tactica_build_grid_string(grid, grid_text, grid_text_size);
+        return 0;
 
-        case 's':
-        case 'S':
-            tactica_build_grid_string(grid, grid_text, grid_text_size);
-            tactica_guardar_diagrama(partido_id, nombre, grid_text);
-            ui_printf("Diagrama guardado.\n");
-            pause_console();
-            return 1;
+    case 's':
+    case 'S':
+        tactica_build_grid_string(grid, grid_text, grid_text_size);
+        tactica_guardar_diagrama(partido_id, nombre, grid_text);
+        ui_printf("Diagrama guardado.\n");
+        pause_console();
+        return 1;
 
-        case 'p':
-        case 'P':
+    case 'p':
+    case 'P':
+    {
+        int x = -1;
+        int y = -1;
+        char c = '\0';
+        if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
         {
-            int x = -1;
-            int y = -1;
-            char c = '\0';
-            if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
+            if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
             {
-                if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
-                {
-                    grid[y][x] = c;
-                    tactica_build_grid_string(grid, grid_text, grid_text_size);
-                }
-                else
-                {
-                    ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
-                    pause_console();
-                }
+                grid[y][x] = c;
+                tactica_build_grid_string(grid, grid_text, grid_text_size);
             }
             else
             {
-                ui_printf("Formato inválido. Use: p X Y C\n");
+                ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
                 pause_console();
             }
-            return 0;
         }
-
-        default:
-            ui_printf("Comando no reconocido.\n");
+        else
+        {
+            ui_printf("Formato inválido. Use: p X Y C\n");
             pause_console();
-            return 0;
+        }
+        return 0;
+    }
+
+    default:
+        ui_printf("Comando no reconocido.\n");
+        pause_console();
+        return 0;
     }
 }
 

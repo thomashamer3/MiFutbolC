@@ -1588,7 +1588,7 @@ void crear_equipo_fijo()
 
     // Determinar tipo de fútbol y número de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == -1) return; // Usuario canceló
+    if (tipo_futbol == (TipoFutbol)-1) return; // Usuario canceló
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);
@@ -1654,7 +1654,7 @@ void crear_un_equipo_momentaneo()
 
     // Determinar tipo de fútbol y número de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == -1) return; // Usuario canceló
+    if (tipo_futbol == (TipoFutbol)-1) return; // Usuario canceló
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);

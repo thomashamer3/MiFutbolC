@@ -637,6 +637,67 @@ static int escribir_pdf(const char *filepath, PdfCtx *ctx)
     return pdf_save(ctx->pdf, filepath) >= 0;
 }
 
+typedef struct
+{
+    const char *title;
+    const char *subject;
+    const char *cover_subtitle;
+    const char *usuario;
+    const char *fecha_hora;
+    const char *export_dir;
+    int total_sections;
+} PdfExportOptions;
+
+static int init_pdf_export(PdfCtx *ctx, const PdfExportOptions *opts)
+{
+    if (!ctx || !opts || !opts->export_dir || !opts->fecha_hora)
+        return 0;
+
+    const char *usuario_final = opts->usuario ? opts->usuario : "Usuario Desconocido";
+
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->margin = PDF_MARGIN;
+
+    struct pdf_info pdf_info = {0};
+    export_pdf_strncpy_s(pdf_info.creator, sizeof(pdf_info.creator), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.producer, sizeof(pdf_info.producer), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.title, sizeof(pdf_info.title), opts->title);
+    export_pdf_strncpy_s(pdf_info.author, sizeof(pdf_info.author), usuario_final);
+    export_pdf_strncpy_s(pdf_info.subject, sizeof(pdf_info.subject), opts->subject);
+    export_pdf_strncpy_s(pdf_info.date, sizeof(pdf_info.date), opts->fecha_hora);
+
+    ctx->pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
+    if (!ctx->pdf)
+    {
+        printf("No se pudo crear el documento PDF.\n");
+        return 0;
+    }
+
+    ctx->font_regular = "Helvetica";
+    ctx->font_bold = "Helvetica-Bold";
+    ctx->font_italic = "Helvetica-Oblique";
+
+    draw_cover(ctx, "MiFutbolC", opts->cover_subtitle, usuario_final, opts->fecha_hora,
+               opts->export_dir, opts->total_sections);
+
+    new_page(ctx);
+    return 1;
+}
+
+static void cleanup_pdf_ctx(PdfCtx *ctx)
+{
+    if (!ctx)
+        return;
+
+    if (ctx->pdf)
+        pdf_destroy(ctx->pdf);
+
+    if (ctx->pages)
+        free(ctx->pages);
+
+    memset(ctx, 0, sizeof(*ctx));
+}
+
 int generar_informe_total_pdf(void)
 {
     exportar_camisetas_txt_mejorado();
@@ -725,35 +786,25 @@ int generar_informe_total_pdf(void)
     };
 
     char *usuario = get_user_name();
-    const char *usuario_final = usuario ? usuario : "Usuario Desconocido";
 
     PdfCtx ctx;
-    memset(&ctx, 0, sizeof(ctx));
-    ctx.margin = PDF_MARGIN;
-
-    struct pdf_info pdf_info = {0};
-    export_pdf_strncpy_s(pdf_info.creator, sizeof(pdf_info.creator), "MiFutbolC");
-    export_pdf_strncpy_s(pdf_info.producer, sizeof(pdf_info.producer), "MiFutbolC");
-    export_pdf_strncpy_s(pdf_info.title, sizeof(pdf_info.title), "Informe Total");
-    export_pdf_strncpy_s(pdf_info.author, sizeof(pdf_info.author), usuario_final);
-    export_pdf_strncpy_s(pdf_info.subject, sizeof(pdf_info.subject), "Informe de exportacion");
-    export_pdf_strncpy_s(pdf_info.date, sizeof(pdf_info.date), fecha_hora);
-
-    ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
-    if (!ctx.pdf)
+    PdfExportOptions opts =
     {
-        printf("No se pudo crear el documento PDF.\n");
+        .title = "Informe Total",
+        .subject = "Informe de exportacion",
+        .cover_subtitle = "Informe total de exportacion",
+        .usuario = usuario,
+        .fecha_hora = fecha_hora,
+        .export_dir = export_dir,
+        .total_sections = (int)(sizeof(files) / sizeof(files[0])),
+    };
+
+    if (!init_pdf_export(&ctx, &opts))
+    {
+        if (usuario)
+            free(usuario);
         return 0;
     }
-
-    ctx.font_regular = "Helvetica";
-    ctx.font_bold = "Helvetica-Bold";
-    ctx.font_italic = "Helvetica-Oblique";
-
-    draw_cover(&ctx, "MiFutbolC", "Informe total de exportacion", usuario_final, fecha_hora,
-               export_dir, (int)(sizeof(files) / sizeof(files[0])));
-
-    new_page(&ctx);
 
     char intro[256];
     snprintf(intro, sizeof(intro), "INFORME TOTAL MiFutbolC - %s", timestamp);
@@ -770,10 +821,7 @@ int generar_informe_total_pdf(void)
     add_page_footers(&ctx);
 
     int ok = escribir_pdf(pdf_path, &ctx);
-    pdf_destroy(ctx.pdf);
-
-    if (ctx.pages)
-        free(ctx.pages);
+    cleanup_pdf_ctx(&ctx);
 
     if (usuario)
         free(usuario);
@@ -816,37 +864,25 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     get_datetime(fecha_hora, sizeof(fecha_hora));
 
     char *usuario = get_user_name();
-    const char *usuario_final = usuario ? usuario : "Usuario Desconocido";
 
     PdfCtx ctx;
-    memset(&ctx, 0, sizeof(ctx));
-    ctx.margin = PDF_MARGIN;
-
-    struct pdf_info pdf_info = {0};
-    export_pdf_strncpy_s(pdf_info.creator, sizeof(pdf_info.creator), "MiFutbolC");
-    export_pdf_strncpy_s(pdf_info.producer, sizeof(pdf_info.producer), "MiFutbolC");
-    export_pdf_strncpy_s(pdf_info.title, sizeof(pdf_info.title), "Informe Personal Mensual");
-    export_pdf_strncpy_s(pdf_info.author, sizeof(pdf_info.author), usuario_final);
-    export_pdf_strncpy_s(pdf_info.subject, sizeof(pdf_info.subject), "Informe personal mensual");
-    export_pdf_strncpy_s(pdf_info.date, sizeof(pdf_info.date), fecha_hora);
-
-    ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
-    if (!ctx.pdf)
+    PdfExportOptions opts =
     {
-        printf("No se pudo crear el documento PDF.\n");
+        .title = "Informe Personal Mensual",
+        .subject = "Informe personal mensual",
+        .cover_subtitle = "Informe personal mensual",
+        .usuario = usuario,
+        .fecha_hora = fecha_hora,
+        .export_dir = export_dir,
+        .total_sections = 1,
+    };
+
+    if (!init_pdf_export(&ctx, &opts))
+    {
         if (usuario)
             free(usuario);
         return 0;
     }
-
-    ctx.font_regular = "Helvetica";
-    ctx.font_bold = "Helvetica-Bold";
-    ctx.font_italic = "Helvetica-Oblique";
-
-    draw_cover(&ctx, "MiFutbolC", "Informe personal mensual", usuario_final, fecha_hora,
-               export_dir, 1);
-
-    new_page(&ctx);
 
     char titulo[128];
     snprintf(titulo, sizeof(titulo), "INFORME PERSONAL MENSUAL - %s", mes_display);
@@ -862,10 +898,7 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     write_text_line(&ctx, "Este informe es 100% local.", ctx.font_italic, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
 
     int ok = escribir_pdf(pdf_path, &ctx);
-    pdf_destroy(ctx.pdf);
-
-    if (ctx.pages)
-        free(ctx.pages);
+    cleanup_pdf_ctx(&ctx);
 
     if (usuario)
         free(usuario);

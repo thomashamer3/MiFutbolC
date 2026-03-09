@@ -12,11 +12,27 @@
 				<Option type="1" />
 				<Option compiler="gcc-msys2-mingw64" />
 				<Compiler>
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-flto" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
 					<Add option="-std=c23" />
-					<Add option="-g" />
+					<Add option="-s" />
+					<Add option="-fstack-protector" />
+					<Add option="-ffunction-sections" />
+					<Add option="-fdata-sections" />
+					<Add option="-isystem" />
+					<Add option="-mtune=native" />
 					<Add directory="C:/msys64/mingw64/include" />
 				</Compiler>
 				<Linker>
+					<Add option="-O2" />
+					<Add option="-flto" />
+					<Add option="-s" />
+					<Add option="-static-libstdc++" />
+					<Add option="-static-libgcc" />
+					<Add option="-static" />
+					<Add option="-Wl,--gc-sections" />
 					<Add directory="C:/msys64/mingw64/lib" />
 				</Linker>
 			</Target>
@@ -36,13 +52,27 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-fexpensive-optimizations" />
+			<Add option="-flto" />
+			<Add option="-Wextra" />
 			<Add option="-Wall" />
+			<Add option="-std=gnu23" />
+			<Add option="-s" />
+			<Add option="-fstack-protector" />
+			<Add option="-ffunction-sections" />
+			<Add option="-fdata-sections" />
+			<Add option="-isystem" />
+			<Add option="-mtune=native" />
 			<Add directory="C:/msys64/mingw64/include" />
 		</Compiler>
 		<Linker>
+			<Add option="-O2" />
+			<Add option="-flto" />
+			<Add option="-s" />
 			<Add option="-static-libstdc++" />
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
+			<Add option="-Wl,--gc-sections" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>
 		<Unit filename="analisis.c">
