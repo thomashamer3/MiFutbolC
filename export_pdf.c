@@ -18,10 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <setjmp.h>
 #include <stdint.h>
 #include <ctype.h>
-#include <hpdf.h>
+#include "pdfgen.h"
 
 #define PDF_MARGIN 40.0f
 #define PDF_BODY_SIZE 10.0f
@@ -32,38 +31,28 @@
 
 typedef struct
 {
-    HPDF_Doc pdf;
-    HPDF_Page page;
-    HPDF_Font font_regular;
-    HPDF_Font font_bold;
-    HPDF_Font font_italic;
+    struct pdf_doc *pdf;
+    struct pdf_object *page;
+    const char *font_regular;
+    const char *font_bold;
+    const char *font_italic;
     float margin;
     float y;
-    HPDF_Page *pages;
+    struct pdf_object **pages;
     int page_count;
     int page_cap;
 } PdfCtx;
 
-static jmp_buf g_env;
-
-static void pdf_error_handler(HPDF_STATUS error_no, HPDF_STATUS detail_no, void *user_data)
-{
-    (void)error_no;
-    (void)detail_no;
-    (void)user_data;
-    longjmp(g_env, 1);
-}
-
 static void new_page(PdfCtx *ctx)
 {
-    ctx->page = HPDF_AddPage(ctx->pdf);
-    HPDF_Page_SetSize(ctx->page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
-    ctx->y = HPDF_Page_GetHeight(ctx->page) - ctx->margin;
+    ctx->page = pdf_append_page(ctx->pdf);
+    pdf_page_set_size(ctx->pdf, ctx->page, PDF_A4_WIDTH, PDF_A4_HEIGHT);
+    ctx->y = pdf_page_height(ctx->page) - ctx->margin;
 
     if (ctx->page_cap <= ctx->page_count)
     {
         int new_cap = ctx->page_cap == 0 ? 8 : ctx->page_cap * 2;
-        HPDF_Page *new_pages = (HPDF_Page *)realloc(ctx->pages, sizeof(HPDF_Page) * new_cap);
+        struct pdf_object **new_pages = (struct pdf_object **)realloc(ctx->pages, sizeof(struct pdf_object *) * new_cap);
         if (new_pages)
         {
             ctx->pages = new_pages;
@@ -83,15 +72,13 @@ static void ensure_space(PdfCtx *ctx, float needed)
         new_page(ctx);
 }
 
-static void write_text_line(PdfCtx *ctx, const char *text, HPDF_Font font, float size, float leading)
+static void write_text_line(PdfCtx *ctx, const char *text, const char *font, float size, float leading)
 {
     if (!text)
         return;
     ensure_space(ctx, leading);
-    HPDF_Page_BeginText(ctx->page);
-    HPDF_Page_SetFontAndSize(ctx->page, font, size);
-    HPDF_Page_TextOut(ctx->page, ctx->margin, ctx->y, text);
-    HPDF_Page_EndText(ctx->page);
+    pdf_set_font(ctx->pdf, font);
+    pdf_add_text(ctx->pdf, ctx->page, text, size, ctx->margin, ctx->y, PDF_BLACK);
     ctx->y -= leading;
 }
 
@@ -330,7 +317,7 @@ static const char *read_word(const char *p, char *word, size_t max_len)
     return p;
 }
 
-static void flush_line(PdfCtx *ctx, char *line, HPDF_Font font, float size, float leading)
+static void flush_line(PdfCtx *ctx, char *line, const char *font, float size, float leading)
 {
     if (line && line[0] != '\0')
     {
@@ -339,7 +326,7 @@ static void flush_line(PdfCtx *ctx, char *line, HPDF_Font font, float size, floa
     }
 }
 
-static void write_long_word(PdfCtx *ctx, const char *word, HPDF_Font font, float size, float leading, float max_width)
+static void write_long_word(PdfCtx *ctx, const char *word, const char *font, float size, float leading, float max_width)
 {
     char chunk[256];
     size_t clen = 0;
@@ -356,7 +343,8 @@ static void write_long_word(PdfCtx *ctx, const char *word, HPDF_Font font, float
         chunk[clen++] = word[i];
         chunk[clen] = '\0';
 
-        if (HPDF_Page_TextWidth(ctx->page, chunk) > max_width && clen > 1)
+        float chunk_width = 0.0f;
+        if (pdf_get_font_text_width(ctx->pdf, font, chunk, size, &chunk_width) == 0 && chunk_width > max_width && clen > 1)
         {
             chunk[clen - 1] = '\0';
             write_text_line(ctx, chunk, font, size, leading);
@@ -373,22 +361,26 @@ static void write_long_word(PdfCtx *ctx, const char *word, HPDF_Font font, float
     }
 }
 
-static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char *word, float max_width)
+static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char *word, const char *font, float size, float max_width)
 {
     if (!ctx || !line || !word || line_size == 0)
         return 0;
 
     size_t line_len = strlen_s(line, SIZE_MAX);
     size_t word_len = strlen_s(word, SIZE_MAX);
-    int fits_in_buffer = 0;
 
+    // Guard against overflowing the temporary candidate buffer
+    if (line_len + 1 + word_len >= sizeof(char[512]))
+        return 0;
+
+    int fits_in_buffer = 0;
     if (line_len == 0)
     {
-        fits_in_buffer = (word_len < line_size);
+        fits_in_buffer = (word_len + 1 <= line_size);
     }
     else
     {
-        fits_in_buffer = (line_len + 1 + word_len < line_size);
+        fits_in_buffer = (line_len + 1 + word_len + 1 <= line_size);
     }
 
     if (!fits_in_buffer)
@@ -406,7 +398,11 @@ static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char
         memcpy(candidate + line_len + 1, word, word_len + 1);
     }
 
-    if (HPDF_Page_TextWidth(ctx->page, candidate) > max_width)
+    float candidate_width = 0.0f;
+    if (pdf_get_font_text_width(ctx->pdf, font, candidate, size, &candidate_width) != 0)
+        return 0;
+
+    if (candidate_width > max_width)
         return 0;
 
     size_t cand_len = strlen_s(candidate, SIZE_MAX);
@@ -414,7 +410,7 @@ static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char
     return 1;
 }
 
-static void write_wrapped_text(PdfCtx *ctx, const char *text, HPDF_Font font, float size, float leading)
+static void write_wrapped_text(PdfCtx *ctx, const char *text, const char *font, float size, float leading)
 {
     if (!text)
         return;
@@ -425,8 +421,8 @@ static void write_wrapped_text(PdfCtx *ctx, const char *text, HPDF_Font font, fl
         return;
     }
 
-    HPDF_Page_SetFontAndSize(ctx->page, font, size);
-    float max_width = HPDF_Page_GetWidth(ctx->page) - (2.0f * ctx->margin);
+    pdf_set_font(ctx->pdf, font);
+    float max_width = pdf_page_width(ctx->page) - (2.0f * ctx->margin);
 
     char line[512];
     line[0] = '\0';
@@ -443,16 +439,20 @@ static void write_wrapped_text(PdfCtx *ctx, const char *text, HPDF_Font font, fl
         if (word[0] == '\0')
             continue;
 
-        if (try_append_word(ctx, line, sizeof(line), word, max_width))
+        if (try_append_word(ctx, line, sizeof(line), word, font, size, max_width))
             continue;
 
         flush_line(ctx, line, font, size, leading);
 
-        if (HPDF_Page_TextWidth(ctx->page, word) <= max_width)
+        float word_width = 0.0f;
+        if (pdf_get_font_text_width(ctx->pdf, font, word, size, &word_width) != 0)
+            word_width = max_width + 1;
+
+        if (word_width <= max_width)
         {
             size_t word_len = strlen_s(word, SIZE_MAX);
-            size_t copy_len = word_len < sizeof(line) ? word_len : sizeof(line) - 1;
-            memcpy(line, word, copy_len);
+            size_t copy_len = word_len < (sizeof(line) - 1) ? word_len : (sizeof(line) - 1);
+            strncpy_s(line, sizeof(line), word, copy_len);
             line[copy_len] = '\0';
             continue;
         }
@@ -471,19 +471,14 @@ static void write_section_header(PdfCtx *ctx, const char *title)
     float leading = PDF_SECTION_SIZE + 6.0f;
     ensure_space(ctx, leading + 10.0f);
 
-    float page_width = HPDF_Page_GetWidth(ctx->page);
+    float page_width = pdf_page_width(ctx->page);
     float band_height = PDF_SECTION_SIZE + 6.0f;
     float band_y = ctx->y - PDF_SECTION_SIZE - 2.0f;
 
-    HPDF_Page_SetRGBFill(ctx->page, 0.92f, 0.94f, 0.98f);
-    HPDF_Page_Rectangle(ctx->page, ctx->margin, band_y, page_width - (2.0f * ctx->margin), band_height);
-    HPDF_Page_Fill(ctx->page);
-    HPDF_Page_SetRGBFill(ctx->page, 0.0f, 0.0f, 0.0f);
+    pdf_add_filled_rectangle(ctx->pdf, ctx->page, ctx->margin, band_y, page_width - (2.0f * ctx->margin), band_height, 0.0f, PDF_RGB(235, 240, 250), PDF_RGB(235, 240, 250));
 
-    HPDF_Page_BeginText(ctx->page);
-    HPDF_Page_SetFontAndSize(ctx->page, ctx->font_bold, PDF_SECTION_SIZE);
-    HPDF_Page_TextOut(ctx->page, ctx->margin + 6.0f, ctx->y, title);
-    HPDF_Page_EndText(ctx->page);
+    pdf_set_font(ctx->pdf, ctx->font_bold);
+    pdf_add_text(ctx->pdf, ctx->page, title, PDF_SECTION_SIZE, ctx->margin + 6.0f, ctx->y, PDF_BLACK);
 
     ctx->y = band_y - 8.0f;
     write_blank_line(ctx, PDF_BODY_SIZE + 2.0f);
@@ -497,27 +492,22 @@ static void add_page_footers(const PdfCtx *ctx)
     int pages = ctx->page_count;
     for (int i = 0; i < pages; i++)
     {
-        HPDF_Page page = ctx->pages[i];
+        struct pdf_object *page = ctx->pages[i];
         if (!page)
             continue;
 
         char footer[64];
         snprintf(footer, sizeof(footer), "MiFutbolC - Pagina %d de %d", i + 1, pages);
 
-        float page_width = HPDF_Page_GetWidth(page);
+        float page_width = pdf_page_width(page);
         float y = ctx->margin * 0.5f;
-        float text_width = HPDF_Page_TextWidth(page, footer);
 
-        HPDF_Page_SetRGBStroke(page, 0.8f, 0.8f, 0.8f);
-        HPDF_Page_SetLineWidth(page, 0.3f);
-        HPDF_Page_MoveTo(page, ctx->margin, y + 6.0f);
-        HPDF_Page_LineTo(page, page_width - ctx->margin, y + 6.0f);
-        HPDF_Page_Stroke(page);
+        pdf_add_line(ctx->pdf, page, ctx->margin, y + 6.0f, page_width - ctx->margin, y + 6.0f, 0.3f, PDF_RGB(204, 204, 204));
 
-        HPDF_Page_BeginText(page);
-        HPDF_Page_SetFontAndSize(page, ctx->font_regular, PDF_FOOTER_SIZE);
-        HPDF_Page_TextOut(page, (page_width - text_width) / 2.0f, y, footer);
-        HPDF_Page_EndText(page);
+        pdf_set_font(ctx->pdf, ctx->font_regular);
+        float text_width = 0.0f;
+        pdf_get_font_text_width(ctx->pdf, ctx->font_regular, footer, PDF_FOOTER_SIZE, &text_width);
+        pdf_add_text(ctx->pdf, page, footer, PDF_FOOTER_SIZE, (page_width - text_width) / 2.0f, y, PDF_BLACK);
     }
 }
 
@@ -529,27 +519,21 @@ static void draw_cover(PdfCtx *ctx, const char *title, const char *subtitle, con
 
     new_page(ctx);
 
-    float page_width = HPDF_Page_GetWidth(ctx->page);
-    float page_height = HPDF_Page_GetHeight(ctx->page);
+    float page_width = pdf_page_width(ctx->page);
+    float page_height = pdf_page_height(ctx->page);
 
-    HPDF_Page_SetRGBFill(ctx->page, 0.10f, 0.35f, 0.65f);
-    HPDF_Page_Rectangle(ctx->page, 0, page_height - 140.0f, page_width, 140.0f);
-    HPDF_Page_Fill(ctx->page);
+    pdf_add_filled_rectangle(ctx->pdf, ctx->page, 0, page_height - 140.0f, page_width, 140.0f, 0.0f, PDF_RGB(26, 89, 166), PDF_RGB(26, 89, 166));
 
-    HPDF_Page_SetRGBFill(ctx->page, 1.0f, 1.0f, 1.0f);
-    HPDF_Page_BeginText(ctx->page);
-    HPDF_Page_SetFontAndSize(ctx->page, ctx->font_bold, 24.0f);
-    float title_width = HPDF_Page_TextWidth(ctx->page, title);
-    HPDF_Page_TextOut(ctx->page, (page_width - title_width) / 2.0f, page_height - 85.0f, title);
-    HPDF_Page_EndText(ctx->page);
+    pdf_set_font(ctx->pdf, ctx->font_bold);
+    float title_width = 0.0f;
+    pdf_get_font_text_width(ctx->pdf, ctx->font_bold, title, 24.0f, &title_width);
+    pdf_add_text(ctx->pdf, ctx->page, title, 24.0f, (page_width - title_width) / 2.0f, page_height - 85.0f, PDF_WHITE);
 
-    HPDF_Page_BeginText(ctx->page);
-    HPDF_Page_SetFontAndSize(ctx->page, ctx->font_regular, PDF_SUBTITLE_SIZE);
-    float sub_width = HPDF_Page_TextWidth(ctx->page, subtitle);
-    HPDF_Page_TextOut(ctx->page, (page_width - sub_width) / 2.0f, page_height - 110.0f, subtitle);
-    HPDF_Page_EndText(ctx->page);
+    pdf_set_font(ctx->pdf, ctx->font_regular);
+    float sub_width = 0.0f;
+    pdf_get_font_text_width(ctx->pdf, ctx->font_regular, subtitle, PDF_SUBTITLE_SIZE, &sub_width);
+    pdf_add_text(ctx->pdf, ctx->page, subtitle, PDF_SUBTITLE_SIZE, (page_width - sub_width) / 2.0f, page_height - 110.0f, PDF_WHITE);
 
-    HPDF_Page_SetRGBFill(ctx->page, 0.0f, 0.0f, 0.0f);
     ctx->y = page_height - 190.0f;
 
     write_text_line(ctx, "Resumen del informe", ctx->font_bold, PDF_SECTION_SIZE, PDF_SECTION_SIZE + 6.0f);
@@ -634,8 +618,7 @@ static int escribir_pdf(const char *filepath, PdfCtx *ctx)
     if (!filepath || !ctx || !ctx->pdf)
         return 0;
 
-    HPDF_SaveToFile(ctx->pdf, filepath);
-    return 1;
+    return pdf_save(ctx->pdf, filepath) >= 0;
 }
 
 int generar_informe_total_pdf(void)
@@ -732,24 +715,24 @@ int generar_informe_total_pdf(void)
     memset(&ctx, 0, sizeof(ctx));
     ctx.margin = PDF_MARGIN;
 
-    ctx.pdf = HPDF_New(pdf_error_handler, NULL);
+    struct pdf_info pdf_info = {0};
+    strncpy(pdf_info.creator, "MiFutbolC", sizeof(pdf_info.creator) - 1);
+    strncpy(pdf_info.producer, "MiFutbolC", sizeof(pdf_info.producer) - 1);
+    strncpy(pdf_info.title, "Informe Total", sizeof(pdf_info.title) - 1);
+    strncpy(pdf_info.author, usuario_final, sizeof(pdf_info.author) - 1);
+    strncpy(pdf_info.subject, "Informe de exportacion", sizeof(pdf_info.subject) - 1);
+    strncpy(pdf_info.date, fecha_hora, sizeof(pdf_info.date) - 1);
+
+    ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
     if (!ctx.pdf)
     {
         printf("No se pudo crear el documento PDF.\n");
         return 0;
     }
 
-    if (setjmp(g_env))
-    {
-        HPDF_Free(ctx.pdf);
-        printf("Error al generar el PDF.\n");
-        return 0;
-    }
-
-    HPDF_SetCompressionMode(ctx.pdf, HPDF_COMP_ALL);
-    ctx.font_regular = HPDF_GetFont(ctx.pdf, "Helvetica", "WinAnsiEncoding");
-    ctx.font_bold = HPDF_GetFont(ctx.pdf, "Helvetica-Bold", "WinAnsiEncoding");
-    ctx.font_italic = HPDF_GetFont(ctx.pdf, "Helvetica-Oblique", "WinAnsiEncoding");
+    ctx.font_regular = "Helvetica";
+    ctx.font_bold = "Helvetica-Bold";
+    ctx.font_italic = "Helvetica-Oblique";
 
     draw_cover(&ctx, "MiFutbolC", "Informe total de exportacion", usuario_final, fecha_hora,
                export_dir, (int)(sizeof(files) / sizeof(files[0])));
@@ -771,7 +754,7 @@ int generar_informe_total_pdf(void)
     add_page_footers(&ctx);
 
     int ok = escribir_pdf(pdf_path, &ctx);
-    HPDF_Free(ctx.pdf);
+    pdf_destroy(ctx.pdf);
 
     if (ctx.pages)
         free(ctx.pages);
@@ -823,7 +806,15 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     memset(&ctx, 0, sizeof(ctx));
     ctx.margin = PDF_MARGIN;
 
-    ctx.pdf = HPDF_New(pdf_error_handler, NULL);
+    struct pdf_info pdf_info = {0};
+    strncpy(pdf_info.creator, "MiFutbolC", sizeof(pdf_info.creator) - 1);
+    strncpy(pdf_info.producer, "MiFutbolC", sizeof(pdf_info.producer) - 1);
+    strncpy(pdf_info.title, "Informe Personal Mensual", sizeof(pdf_info.title) - 1);
+    strncpy(pdf_info.author, usuario_final, sizeof(pdf_info.author) - 1);
+    strncpy(pdf_info.subject, "Informe personal mensual", sizeof(pdf_info.subject) - 1);
+    strncpy(pdf_info.date, fecha_hora, sizeof(pdf_info.date) - 1);
+
+    ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
     if (!ctx.pdf)
     {
         printf("No se pudo crear el documento PDF.\n");
@@ -832,19 +823,9 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
         return 0;
     }
 
-    if (setjmp(g_env))
-    {
-        HPDF_Free(ctx.pdf);
-        if (usuario)
-            free(usuario);
-        printf("Error al generar el PDF.\n");
-        return 0;
-    }
-
-    HPDF_SetCompressionMode(ctx.pdf, HPDF_COMP_ALL);
-    ctx.font_regular = HPDF_GetFont(ctx.pdf, "Helvetica", "WinAnsiEncoding");
-    ctx.font_bold = HPDF_GetFont(ctx.pdf, "Helvetica-Bold", "WinAnsiEncoding");
-    ctx.font_italic = HPDF_GetFont(ctx.pdf, "Helvetica-Oblique", "WinAnsiEncoding");
+    ctx.font_regular = "Helvetica";
+    ctx.font_bold = "Helvetica-Bold";
+    ctx.font_italic = "Helvetica-Oblique";
 
     draw_cover(&ctx, "MiFutbolC", "Informe personal mensual", usuario_final, fecha_hora,
                export_dir, 1);
@@ -865,7 +846,10 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     write_text_line(&ctx, "Este informe es 100% local.", ctx.font_italic, PDF_BODY_SIZE, PDF_BODY_SIZE + 2.0f);
 
     int ok = escribir_pdf(pdf_path, &ctx);
-    HPDF_Free(ctx.pdf);
+    pdf_destroy(ctx.pdf);
+
+    if (ctx.pages)
+        free(ctx.pages);
 
     if (usuario)
         free(usuario);

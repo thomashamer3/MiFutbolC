@@ -1926,7 +1926,7 @@ static void tactica_crear_diagrama()
 
         char line[64] = {0};
         if (!fgets(line, sizeof(line), stdin))
-            break;
+            return;
 
         size_t len = strlen_s(line, sizeof(line));
         while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
@@ -1938,49 +1938,58 @@ static void tactica_crear_diagrama()
             continue;
 
         char cmd = line[0];
-        if (cmd == 'q' || cmd == 'Q')
-            break;
-        if (cmd == 'r' || cmd == 'R')
+        switch (cmd)
         {
-            tactica_init_grid(grid);
-            tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-            continue;
-        }
-        if (cmd == 's' || cmd == 'S')
-        {
-            tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-            tactica_guardar_diagrama(partido_id, nombre, grid_text);
-            ui_printf("Diagrama guardado.\n");
-            pause_console();
-            break;
-        }
-        if (cmd == 'p' || cmd == 'P')
-        {
-            int x = -1, y = -1;
-            char c = '\0';
-            if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
+            case 'q':
+            case 'Q':
+                return;
+
+            case 'r':
+            case 'R':
+                tactica_init_grid(grid);
+                tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+                break;
+
+            case 's':
+            case 'S':
+                tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+                tactica_guardar_diagrama(partido_id, nombre, grid_text);
+                ui_printf("Diagrama guardado.\n");
+                pause_console();
+                return;
+
+            case 'p':
+            case 'P':
             {
-                if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+                int x = -1;
+                int y = -1;
+                char c = '\0';
+                if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
                 {
-                    grid[y][x] = c;
-                    tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+                    if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+                    {
+                        grid[y][x] = c;
+                        tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
+                    }
+                    else
+                    {
+                        ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+                        pause_console();
+                    }
                 }
                 else
                 {
-                    ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+                    ui_printf("Formato inválido. Use: p X Y C\n");
                     pause_console();
                 }
+                break;
             }
-            else
-            {
-                ui_printf("Formato inválido. Use: p X Y C\n");
-                pause_console();
-            }
-            continue;
-        }
 
-        ui_printf("Comando no reconocido.\n");
-        pause_console();
+            default:
+                ui_printf("Comando no reconocido.\n");
+                pause_console();
+                break;
+        }
     }
 }
 

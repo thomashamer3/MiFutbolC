@@ -37,18 +37,12 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-DUSE_NCURSES" />
 			<Add directory="C:/msys64/mingw64/include" />
 		</Compiler>
 		<Linker>
 			<Add option="-static-libstdc++" />
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
-			<Add library="hpdf" />
-			<Add library="png" />
-			<Add library="z" />
-			<Add library="pdcurses" />
-			<Add library="pthread" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>
 		<Unit filename="analisis.c">
@@ -183,10 +177,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="partido.h" />
-		<Unit filename="qr.c">
+		<Unit filename="pdfgen.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="qr.h" />
+		<Unit filename="pdfgen.h" />
 		<Unit filename="records_rankings.c">
 			<Option compilerVar="CC" />
 		</Unit>

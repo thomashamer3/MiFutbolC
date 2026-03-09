@@ -129,7 +129,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1772827915 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773010547 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
@@ -2123,7 +2123,7 @@
 
 1770167266 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.h
 
-1770167647 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
+1773010091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
 	"export_pdf.h"
 	"export_camisetas.h"
 	"export_camisetas_mejorado.h"
@@ -2139,10 +2139,9 @@
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
-	<setjmp.h>
 	<stdint.h>
 	<ctype.h>
-	<hpdf.h>
+	"pdfgen.h"
 
 1742192003 c:\msys64\mingw64\include\hpdf.h
 	"hpdf_config.h"
@@ -2281,4 +2280,36 @@
 	<libutf8.h>
 	<wchar.h>
 	<ncursesw/unctrl.h>
+
+1773009242 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
+	<BaseTsd.h>
+	<sys/types.h>
+	<ctype.h>
+	<errno.h>
+	<inttypes.h>
+	<limits.h>
+	<locale.h>
+	<math.h>
+	<stdarg.h>
+	<stdbool.h>
+	<stddef.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<sys/stat.h>
+	<time.h>
+	"pdfgen.h"
+	<strings.h>
+	<endian.h>
+	<machine/endian.h>
+	<sys/param.h>
+	<sys/isadefs.h>
+
+1773009230 d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.h
+	<stdint.h>
+	<stdio.h>
+	"pdfgen.h"
+
+1765442468 c:\msys64\mingw64\include\strings.h
+	<string.h>
 
