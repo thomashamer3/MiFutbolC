@@ -29,6 +29,28 @@
 #define PDF_SECTION_SIZE 12.0f
 #define PDF_FOOTER_SIZE 8.0f
 
+static int export_pdf_strncpy_s(char *dest, size_t destsz, const char *src)
+{
+    if (!dest || !src || destsz == 0)
+        return 1;
+
+#if defined(__STDC_LIB_EXT1__)
+    return strncpy_s(dest, destsz, src, _TRUNCATE);
+#elif defined(_MSC_VER)
+    return strncpy_s(dest, destsz, src, _TRUNCATE);
+#else
+    /* Use strlen_s (Annex K compatible) to avoid reading beyond `destsz` bytes if `src` is not NUL-terminated. */
+    size_t len = strlen_s(src, destsz);
+    size_t copy = (len >= destsz) ? destsz - 1 : len;
+    for (size_t i = 0; i < copy; ++i)
+    {
+        dest[i] = src[i];
+    }
+    dest[copy] = '\0';
+    return 0;
+#endif
+}
+
 typedef struct
 {
     struct pdf_doc *pdf;
@@ -412,12 +434,10 @@ static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char
 
 static void write_wrapped_text(PdfCtx *ctx, const char *text, const char *font, float size, float leading)
 {
-    if (!text)
-        return;
-
-    if (text[0] == '\0')
+    if (!text || text[0] == '\0')
     {
-        write_blank_line(ctx, leading);
+        if (text)
+            write_blank_line(ctx, leading);
         return;
     }
 
@@ -716,12 +736,12 @@ int generar_informe_total_pdf(void)
     ctx.margin = PDF_MARGIN;
 
     struct pdf_info pdf_info = {0};
-    strncpy(pdf_info.creator, "MiFutbolC", sizeof(pdf_info.creator) - 1);
-    strncpy(pdf_info.producer, "MiFutbolC", sizeof(pdf_info.producer) - 1);
-    strncpy(pdf_info.title, "Informe Total", sizeof(pdf_info.title) - 1);
-    strncpy(pdf_info.author, usuario_final, sizeof(pdf_info.author) - 1);
-    strncpy(pdf_info.subject, "Informe de exportacion", sizeof(pdf_info.subject) - 1);
-    strncpy(pdf_info.date, fecha_hora, sizeof(pdf_info.date) - 1);
+    export_pdf_strncpy_s(pdf_info.creator, sizeof(pdf_info.creator), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.producer, sizeof(pdf_info.producer), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.title, sizeof(pdf_info.title), "Informe Total");
+    export_pdf_strncpy_s(pdf_info.author, sizeof(pdf_info.author), usuario_final);
+    export_pdf_strncpy_s(pdf_info.subject, sizeof(pdf_info.subject), "Informe de exportacion");
+    export_pdf_strncpy_s(pdf_info.date, sizeof(pdf_info.date), fecha_hora);
 
     ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
     if (!ctx.pdf)
@@ -807,12 +827,12 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     ctx.margin = PDF_MARGIN;
 
     struct pdf_info pdf_info = {0};
-    strncpy(pdf_info.creator, "MiFutbolC", sizeof(pdf_info.creator) - 1);
-    strncpy(pdf_info.producer, "MiFutbolC", sizeof(pdf_info.producer) - 1);
-    strncpy(pdf_info.title, "Informe Personal Mensual", sizeof(pdf_info.title) - 1);
-    strncpy(pdf_info.author, usuario_final, sizeof(pdf_info.author) - 1);
-    strncpy(pdf_info.subject, "Informe personal mensual", sizeof(pdf_info.subject) - 1);
-    strncpy(pdf_info.date, fecha_hora, sizeof(pdf_info.date) - 1);
+    export_pdf_strncpy_s(pdf_info.creator, sizeof(pdf_info.creator), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.producer, sizeof(pdf_info.producer), "MiFutbolC");
+    export_pdf_strncpy_s(pdf_info.title, sizeof(pdf_info.title), "Informe Personal Mensual");
+    export_pdf_strncpy_s(pdf_info.author, sizeof(pdf_info.author), usuario_final);
+    export_pdf_strncpy_s(pdf_info.subject, sizeof(pdf_info.subject), "Informe personal mensual");
+    export_pdf_strncpy_s(pdf_info.date, sizeof(pdf_info.date), fecha_hora);
 
     ctx.pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &pdf_info);
     if (!ctx.pdf)

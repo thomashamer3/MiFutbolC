@@ -1774,6 +1774,142 @@ static UNUSED void tactica_guardar_diagrama(int partido_id, const char *nombre, 
     sqlite3_finalize(stmt);
 }
 
+#ifndef RSIZE_MAX_STR
+#define RSIZE_MAX_STR (SIZE_MAX >> 1)
+#endif
+
+#ifndef TACTICA_TRUNCATE
+#define TACTICA_TRUNCATE ((size_t)-1)
+#endif
+
+static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t count)
+{
+    if (!dest || !src || destsz == 0 || destsz > RSIZE_MAX_STR)
+        return 1;
+
+#if defined(__STDC_LIB_EXT1__)
+    return strncpy_s(dest, destsz, src, count == TACTICA_TRUNCATE ? _TRUNCATE : count);
+#elif defined(_MSC_VER)
+    return strncpy_s(dest, destsz, src, count == TACTICA_TRUNCATE ? _TRUNCATE : count);
+#else
+    size_t to_copy;
+    if (count == TACTICA_TRUNCATE || count >= destsz)
+        to_copy = destsz - 1;
+    else
+        to_copy = count;
+
+    memcpy(dest, src, to_copy);
+    dest[to_copy] = '\0';
+    return 0;
+#endif
+}
+
+static size_t tactica_strlen_secure(const char *s, size_t max)
+{
+    if (!s)
+        return 0;
+
+#if defined(__STDC_LIB_EXT1__)
+    return strlen_s(s, max);
+#elif defined(_MSC_VER)
+    return strnlen_s(s, max);
+#else
+    return strnlen(s, max);
+#endif
+}
+
+static void tactica_trim_newline(char *s)
+{
+    if (!s)
+        return;
+
+    size_t len = tactica_strlen_secure(s, RSIZE_MAX_STR);
+    while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r'))
+    {
+        s[--len] = '\0';
+    }
+}
+
+static void tactica_leer_nombre_diagrama(char *nombre, size_t size)
+{
+    ui_printf("Nombre del diagrama: ");
+    if (!fgets(nombre, (int)size, stdin))
+    {
+        if (size > 0)
+            nombre[0] = '\0';
+        return;
+    }
+
+    tactica_trim_newline(nombre);
+
+    if (nombre[0] == '\0' && tactica_strncpy_s(nombre, size, "Diagrama", TACTICA_TRUNCATE) != 0 && size > 0)
+    {
+        nombre[0] = '\0';
+    }
+}
+
+
+static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC_W + 1], char *grid_text,
+                                   size_t grid_text_size, int partido_id, const char *nombre)
+{
+    if (!line || !grid || !grid_text)
+        return 0;
+
+    char cmd = line[0];
+    switch (cmd)
+    {
+        case 'q':
+        case 'Q':
+            return 1;
+
+        case 'r':
+        case 'R':
+            tactica_init_grid(grid);
+            tactica_build_grid_string(grid, grid_text, grid_text_size);
+            return 0;
+
+        case 's':
+        case 'S':
+            tactica_build_grid_string(grid, grid_text, grid_text_size);
+            tactica_guardar_diagrama(partido_id, nombre, grid_text);
+            ui_printf("Diagrama guardado.\n");
+            pause_console();
+            return 1;
+
+        case 'p':
+        case 'P':
+        {
+            int x = -1;
+            int y = -1;
+            char c = '\0';
+            if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
+            {
+                if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+                {
+                    grid[y][x] = c;
+                    tactica_build_grid_string(grid, grid_text, grid_text_size);
+                }
+                else
+                {
+                    ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+                    pause_console();
+                }
+            }
+            else
+            {
+                ui_printf("Formato inválido. Use: p X Y C\n");
+                pause_console();
+            }
+            return 0;
+        }
+
+        default:
+            ui_printf("Comando no reconocido.\n");
+            pause_console();
+            return 0;
+    }
+}
+
 static int tactica_listar_diagramas_simple(int con_pause)
 {
     const char *sql =
@@ -1889,22 +2025,7 @@ static void tactica_crear_diagrama()
     }
 
     char nombre[128] = {0};
-    ui_printf("Nombre del diagrama: ");
-    if (!fgets(nombre, sizeof(nombre), stdin))
-    {
-        nombre[0] = '\0';
-    }
-
-    size_t nombre_len = strlen_s(nombre, sizeof(nombre));
-    while (nombre_len > 0 && (nombre[nombre_len - 1] == '\n' || nombre[nombre_len - 1] == '\r'))
-    {
-        nombre[--nombre_len] = '\0';
-    }
-    if (nombre_len == 0)
-    {
-        strncpy(nombre, "Diagrama", sizeof(nombre));
-        nombre[sizeof(nombre) - 1] = '\0';
-    }
+    tactica_leer_nombre_diagrama(nombre, sizeof(nombre));
 
     char grid[TACTIC_H][TACTIC_W + 1];
     tactica_init_grid(grid);
@@ -1928,68 +2049,13 @@ static void tactica_crear_diagrama()
         if (!fgets(line, sizeof(line), stdin))
             return;
 
-        size_t len = strlen_s(line, sizeof(line));
-        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
-        {
-            line[--len] = '\0';
-        }
+        tactica_trim_newline(line);
 
-        if (len == 0)
+        if (line[0] == '\0')
             continue;
 
-        char cmd = line[0];
-        switch (cmd)
-        {
-            case 'q':
-            case 'Q':
-                return;
-
-            case 'r':
-            case 'R':
-                tactica_init_grid(grid);
-                tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-                break;
-
-            case 's':
-            case 'S':
-                tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-                tactica_guardar_diagrama(partido_id, nombre, grid_text);
-                ui_printf("Diagrama guardado.\n");
-                pause_console();
-                return;
-
-            case 'p':
-            case 'P':
-            {
-                int x = -1;
-                int y = -1;
-                char c = '\0';
-                if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
-                {
-                    if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
-                    {
-                        grid[y][x] = c;
-                        tactica_build_grid_string(grid, grid_text, sizeof(grid_text));
-                    }
-                    else
-                    {
-                        ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
-                        pause_console();
-                    }
-                }
-                else
-                {
-                    ui_printf("Formato inválido. Use: p X Y C\n");
-                    pause_console();
-                }
-                break;
-            }
-
-            default:
-                ui_printf("Comando no reconocido.\n");
-                pause_console();
-                break;
-        }
+        if (tactica_procesar_comando(line, grid, grid_text, sizeof(grid_text), partido_id, nombre))
+            return;
     }
 }
 
