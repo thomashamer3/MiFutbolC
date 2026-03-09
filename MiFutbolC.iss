@@ -37,8 +37,7 @@ SolidCompression=yes
 InternalCompressLevel=max
 
 WizardStyle=modern
-
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64os
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
@@ -47,13 +46,12 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "Accesos directos"
 
 ; ================================
-; ARCHIVOS DE LA APLICACIÓN
+; ARCHIVOS
 ; ================================
 
 [Files]
 Source: "MiFutbolC.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "MiFutbolC.ico"; DestDir: "{app}"; Flags: ignoreversion
-
 Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
@@ -71,20 +69,13 @@ Name: "{localappdata}\MiFutbolC\data"
 
 [Icons]
 
-Name: "{autoprograms}{#MyAppName}"; 
-Filename: "{app}{#MyAppExeName}"; 
-IconFilename: "{app}\MiFutbolC.ico"
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\MiFutbolC.ico"
 
-Name: "{autoprograms}\Manual de Usuario"; 
-Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"
+Name: "{autoprograms}\Manual de Usuario"; Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"
 
-Name: "{autoprograms}\README"; 
-Filename: "{app}\README.pdf"
+Name: "{autoprograms}\README"; Filename: "{app}\README.pdf"
 
-Name: "{autodesktop}{#MyAppName}"; 
-Filename: "{app}{#MyAppExeName}"; 
-Tasks: desktopicon; 
-IconFilename: "{app}\MiFutbolC.ico"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\MiFutbolC.ico"
 
 ; ================================
 ; POST INSTALACIÓN
@@ -92,13 +83,9 @@ IconFilename: "{app}\MiFutbolC.ico"
 
 [Run]
 
-Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"; 
-Description: "Abrir manual de usuario"; 
-Flags: postinstall shellexec skipifsilent
+Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"; Description: "Abrir manual de usuario"; Flags: postinstall shellexec skipifsilent
 
-Filename: "{app}{#MyAppExeName}"; 
-Description: "Ejecutar MiFutbolC"; 
-Flags: nowait postinstall skipifsilent
+Filename: "{app}{#MyAppExeName}"; Description: "Ejecutar MiFutbolC"; Flags: nowait postinstall skipifsilent
 
 ; ================================
 ; LIMPIEZA AL DESINSTALAR
