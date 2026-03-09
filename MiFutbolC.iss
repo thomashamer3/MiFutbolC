@@ -4,7 +4,7 @@
 ; ================================
 
 #define MyAppName "MiFutbolC"
-#define MyAppVersion "3.8"
+#define MyAppVersion "3.9"
 #define MyAppPublisher "Thomas Hamer"
 #define MyAppURL "https://github.com/thomashamer3/MiFutbolC"
 #define MyAppExeName "MiFutbolC.exe"
@@ -13,23 +13,32 @@
 AppId={{B8F7E2E3-AD8C-5D9F-C8DA-234567890BCD}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-LicenseFile=LICENSE
-UninstallDisplayIcon={app}\MiFutbolC.ico
 
-DefaultDirName={localappdata}\Programs\{#MyAppName}
-DisableProgramGroupPage=yes
+DefaultDirName={localappdata}\Programs{#MyAppName}
+DefaultGroupName={#MyAppName}
+
+UninstallDisplayIcon={app}\MiFutbolC.ico
+LicenseFile=LICENSE
+
 PrivilegesRequired=lowest
+DisableProgramGroupPage=yes
 
 OutputDir=installer
 OutputBaseFilename=MiFutbolC_Setup
 SetupIconFile=MiFutbolC.ico
-Compression=lzma
+
+Compression=lzma2
 SolidCompression=yes
+InternalCompressLevel=max
+
 WizardStyle=modern
+
+ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
@@ -40,12 +49,18 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "A
 ; ================================
 ; ARCHIVOS DE LA APLICACIÓN
 ; ================================
+
 [Files]
 Source: "MiFutbolC.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "MiFutbolC.ico"; DestDir: "{app}"; Flags: ignoreversion
+
 Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+
+; ================================
+; DIRECTORIOS
+; ================================
 
 [Dirs]
 Name: "{localappdata}\MiFutbolC\data"
@@ -53,15 +68,42 @@ Name: "{localappdata}\MiFutbolC\data"
 ; ================================
 ; ACCESOS DIRECTOS
 ; ================================
+
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\MiFutbolC.ico"
-Name: "{autoprograms}\Manual de Usuario"; Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"
-Name: "{autoprograms}\README"; Filename: "{app}\README.pdf"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\MiFutbolC.ico"
+
+Name: "{autoprograms}{#MyAppName}"; 
+Filename: "{app}{#MyAppExeName}"; 
+IconFilename: "{app}\MiFutbolC.ico"
+
+Name: "{autoprograms}\Manual de Usuario"; 
+Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"
+
+Name: "{autoprograms}\README"; 
+Filename: "{app}\README.pdf"
+
+Name: "{autodesktop}{#MyAppName}"; 
+Filename: "{app}{#MyAppExeName}"; 
+Tasks: desktopicon; 
+IconFilename: "{app}\MiFutbolC.ico"
 
 ; ================================
 ; POST INSTALACIÓN
 ; ================================
+
 [Run]
-Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"; Description: "Abrir manual de usuario"; Flags: postinstall shellexec
-Filename: "{app}\{#MyAppExeName}"; Description: "Ejecutar MiFutbolC"; Flags: nowait postinstall skipifsilent
+
+Filename: "{app}\Manual_Usuario_MiFutbolC.pdf"; 
+Description: "Abrir manual de usuario"; 
+Flags: postinstall shellexec skipifsilent
+
+Filename: "{app}{#MyAppExeName}"; 
+Description: "Ejecutar MiFutbolC"; 
+Flags: nowait postinstall skipifsilent
+
+; ================================
+; LIMPIEZA AL DESINSTALAR
+; ================================
+
+[UninstallDelete]
+
+Type: filesandordirs; Name: "{localappdata}\MiFutbolC"

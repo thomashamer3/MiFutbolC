@@ -35,13 +35,13 @@ static const char *estado_por_opcion(int opcion)
     case 1:
         return "ACTIVA";
     case 2:
-        return "EN_TRATAMIENTO";
+        return "EN TRATAMIENTO";
     case 3:
         return "MEJORANDO";
     case 4:
         return "RECUPERADO";
     case 5:
-        return "RECAÍDA";
+        return "RECAIDA";
     default:
         return NULL;
     }
@@ -141,9 +141,9 @@ static int solicitar_partido_id(int permitir_omitir)
 }
 
 /**
- * @brief Crea una nueva lesión en la base de datos
+ * @brief Crea una nueva lesion en la base de datos
  *
- * Solicita al usuario el tipo, descripción de la lesión, el ID de la camiseta asociada
+ * Solicita al usuario el tipo, descripción de la lesion, el ID de la camiseta asociada
  * y el estado inicial, y la inserta en la tabla 'lesion'. El nombre del jugador se obtiene del usuario actual.
  * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
  */
@@ -297,7 +297,7 @@ void listar_lesiones()
 }
 
 /**
- * @brief Modifica el tipo de una lesión existente
+ * @brief Modifica el tipo de una lesion existente
  */
 static void modificar_tipo_lesion()
 {
@@ -309,7 +309,7 @@ static void modificar_tipo_lesion()
 }
 
 /**
- * @brief Modifica la descripción de una lesión existente
+ * @brief Modifica la descripción de una lesion existente
  */
 static void modificar_descripcion_lesion()
 {
@@ -321,7 +321,7 @@ static void modificar_descripcion_lesion()
 }
 
 /**
- * @brief Modifica la fecha de una lesión existente
+ * @brief Modifica la fecha de una lesion existente
  */
 static void modificar_fecha_lesion()
 {
@@ -341,7 +341,7 @@ static void modificar_fecha_lesion()
 }
 
 /**
- * @brief Modifica la camiseta de una lesión existente
+ * @brief Modifica la camiseta de una lesion existente
  */
 static void modificar_camiseta_lesion()
 {
@@ -362,26 +362,25 @@ static void modificar_camiseta_lesion()
 }
 
 /**
- * @brief Modifica el estado de una lesión existente
+ * @brief Modifica el estado de una lesion existente
  */
 static void modificar_estado_lesion()
 {
     printf("\nEstados disponibles:\n");
-    printf("1. ACTIVA - Lesión reciente, jugador NO apto\n");
-    printf("2. EN_TRATAMIENTO - Está en rehabilitación\n");
-    printf("3. MEJORANDO - Evolución positiva\n");
-    printf("4. RECUPERADO - Alta médica\n");
-    printf("5. RECAÍDA - Vuelve la lesión\n");
+    printf("1. ACTIVA - Lesion reciente, jugador NO apto\n");
+    printf("2. EN TRATAMIENTO - Esta en Rehabilitacion\n");
+    printf("3. MEJORANDO - Evolucion Positiva\n");
+    printf("4. RECUPERADO - Alta Medica\n");
+    printf("5. RECAIDA - Vuelve la Lesion\n");
 
     const char *estado = solicitar_estado_lesion("Seleccione nuevo estado (1-5): ");
 
     ejecutar_update_texto("UPDATE lesion SET estado=? WHERE id=?", estado, current_lesion_id);
     printf("Estado modificado correctamente a: %s\n", estado);
-    pause_console();
 }
 
 /**
- * @brief Modifica el partido asociado a una lesión existente
+ * @brief Modifica el partido asociado a una lesion existente
  */
 static void modificar_partido_lesion()
 {
@@ -427,7 +426,7 @@ static void modificar_partido_lesion()
 }
 
 /**
- * @brief Modifica todos los campos de una lesión existente
+ * @brief Modifica todos los campos de una lesion existente
  */
 static void modificar_todo_lesion()
 {
@@ -450,11 +449,11 @@ static void modificar_todo_lesion()
 
     // Mostrar opciones de estado
     printf("\nEstados disponibles:\n");
-    printf("1. ACTIVA - Lesión reciente, jugador NO apto\n");
+    printf("1. ACTIVA - Lesion reciente, jugador NO apto\n");
     printf("2. EN_TRATAMIENTO - Está en rehabilitación\n");
     printf("3. MEJORANDO - Evolución positiva\n");
     printf("4. RECUPERADO - Alta médica\n");
-    printf("5. RECAÍDA - Vuelve la lesión\n");
+    printf("5. RECAÍDA - Vuelve la lesion\n");
 
     const char *estado_sel = solicitar_estado_lesion("Seleccione estado (1-5): ");
     strcpy_s(estado, sizeof(estado), estado_sel);
@@ -480,7 +479,7 @@ static void modificar_todo_lesion()
 }
 
 /**
- * @brief Permite modificar una lesión existente
+ * @brief Permite modificar una lesion existente
  *
  * Muestra la lista de lesiones disponibles, solicita el ID a modificar,
  * verifica que exista y muestra un menú con opciones para modificar campos individuales o todos.
@@ -529,7 +528,7 @@ void modificar_lesion()
 }
 
 /**
- * @brief Elimina una lesión de la base de datos
+ * @brief Elimina una lesion de la base de datos
  *
  * Muestra la lista de lesiones disponibles, solicita el ID a eliminar,
  * verifica que exista y solicita confirmación antes de eliminar.
@@ -647,7 +646,7 @@ void mostrar_diferencias_lesiones()
         }
         else
         {
-            printf("Lesion ID %d (%s) - Primera lesión\n", id, tipo);
+            printf("Lesion ID %d (%s) - Primera lesion\n", id, tipo);
             primera_lesion = 0;
         }
 
@@ -682,7 +681,7 @@ void actualizar_estados_lesiones()
 
     int lesiones_activas = 0;
 
-    printf("Lesiones que pueden requerir actualización de estado:\n\n");
+    printf("Lesiones que pueden requerir Actualizacion de estado:\n\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -693,7 +692,7 @@ void actualizar_estados_lesiones()
         const char *estado = (const char *)sqlite3_column_text(stmt, 4);
 
         printf("ID: %d | Tipo: %s | Estado actual: %s | Fecha: %s\n", id, tipo, estado, fecha);
-        printf("  Descripción: %s\n\n", descripcion);
+        printf("  Descripcion: %s\n\n", descripcion);
         lesiones_activas++;
     }
 
@@ -706,9 +705,10 @@ void actualizar_estados_lesiones()
         return;
     }
 
-    if (confirmar("¿Desea actualizar el estado de alguna lesión?"))
+    if (confirmar("Desea actualizar el estado de alguna Lesion?"))
     {
-        int id_lesion = input_int("Ingrese el ID de la lesión a actualizar (0 para cancelar): ");
+        listar_lesiones();
+        int id_lesion = input_int("Ingrese el ID de la lesion a actualizar (0 para cancelar): ");
 
         if (id_lesion == 0)
             return;

@@ -516,7 +516,7 @@ void listar_partidos()
     if (!preparar_stmt(
                 "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id DESC",
+                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
                 &stmt))
     {
         pause_console();

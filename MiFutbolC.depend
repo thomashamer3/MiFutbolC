@@ -129,7 +129,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773083723 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773086779 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
@@ -250,7 +250,7 @@
 
 1769911202 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
 
-1770272931 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
+1773087357 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
 	"lesion.h"
 	"menu.h"
 	"db.h"
@@ -553,7 +553,7 @@
 	<string.h>
 	"sqlite3.h"
 
-1772828318 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1773087427 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 	<stdio.h>
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
