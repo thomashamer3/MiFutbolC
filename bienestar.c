@@ -1646,9 +1646,13 @@ static void pedir_mes_anio(char *salida, int size)
                 int written = snprintf(tmp, sizeof(tmp), "%04d-%02d", tm_info.tm_year + 1900, tm_info.tm_mon + 1);
                 if (written < 0 || (size_t)written >= sizeof(tmp))
                     continue;
+#ifdef _WIN32
+                strncpy_s(salida, (rsize_t)size, tmp, _TRUNCATE);
+#else
                 strncpy(salida, tmp, (size_t)size);
                 if (size > 0)
                     salida[size - 1] = '\0';
+#endif
             }
             return;
         }
