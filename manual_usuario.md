@@ -114,6 +114,10 @@ Al ejecutar el programa por primera vez:
    - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.db`
    - **Linux/macOS**: `./data/mifutbol.db`
 
+   También se crea automáticamente el archivo de log de actividad:
+   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.log`
+   - **Linux/macOS**: `./data/mifutbol.log`
+
 2. Se te pedirá que ingreses tu nombre de usuario
 3. Este nombre se guardará para futuras sesiones
 4. Se mostrarán los directorios de exportación e importación
@@ -126,17 +130,18 @@ El menú principal ofrece las siguientes opciones:
 
 1. **Camisetas** - Gestionar camisetas de fútbol
 2. **Canchas** - Gestionar canchas de fútbol
-3. **Equipos** - Gestionar equipos (fijos y momentáneos, simulación)
+3. **Equipos** - Gestionar equipos (fijos y momentáneos)
 4. **Partidos** - Gestionar partidos
 5. **Lesiones** - Gestionar lesiones de jugadores
-6. **Estadísticas** - Ver estadísticas generales, avanzadas y meta-análisis
+6. **Estadísticas** - Ver estadísticas por categorías y rendimiento
 7. **Logros** - Gestionar logros y badges
-8. **Financiamiento** - Gestionar finanzas del equipo
-9. **Torneos** - Gestionar torneos de fútbol
-10. **Temporada** - Gestionar temporadas y ciclos deportivos
-11. **Análisis** - Ver análisis de rendimiento
-12. **Bienestar** - Planificación, hábitos, salud y reportes personales
-13. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
+8. **(Reservado)** - Actualmente sin módulo asignado
+9. **Financiamiento** - Gestionar finanzas del equipo
+10. **Torneos** - Gestionar torneos de fútbol
+11. **Temporada** - Gestionar temporadas y ciclos deportivos
+12. **Análisis** - Ver análisis de rendimiento, comparador y Entrenador IA
+13. **Bienestar** - Planificación, hábitos, salud y reportes personales
+14. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -170,6 +175,13 @@ El menú principal ofrece las siguientes opciones:
 3. Ingresa el ID de la camiseta a eliminar
 4. Confirma la eliminación
 
+### Sortear Camiseta
+
+1. Selecciona "1" en el menú principal
+2. Elige "5" para sortear una camiseta
+3. El sistema seleccionará una camiseta disponible al azar
+4. Si todas ya fueron sorteadas, reinicia automáticamente el ciclo
+
 ![Gestión de camisetas](images/menucamisetas.png)
 
 ## Gestión de Canchas
@@ -179,7 +191,6 @@ El menú principal ofrece las siguientes opciones:
 1. Selecciona "2" en el menú principal
 2. Elige "1" para crear una nueva cancha
 3. Ingresa el nombre de la cancha
-4. Ingresa la ubicación de la cancha
 
 ### Listar Canchas
 
@@ -192,7 +203,7 @@ El menú principal ofrece las siguientes opciones:
 1. Selecciona "2" en el menú principal
 2. Elige "3" para editar una cancha
 3. Ingresa el ID de la cancha a editar
-4. Modifica el nombre y ubicación según sea necesario
+4. Modifica el nombre según sea necesario
 
 ### Eliminar una Cancha
 
@@ -247,19 +258,6 @@ Selecciona "3" en el menú principal para acceder al menú de gestión de equipo
 3. Ingresa el ID del equipo a eliminar
 4. Confirma la eliminación
 
-### Simular Partido
-
-1. Selecciona "3" en el menú principal
-2. Elige "5" para simular un partido
-3. Crea dos equipos momentáneos (Local y Visitante) o usa equipos existentes
-4. La simulación mostrará:
-   - Cancha animada en ASCII con balón en movimiento
-   - Eventos en tiempo real (goles, asistencias, oportunidades, faltas)
-   - Duración: 60 minutos simulados (1 segundo = 1 minuto)
-   - Estadísticas detalladas por jugador
-   - Marcador final y resumen completo
-5. Los datos no se guardan (equipos momentáneos)
-
 ![Gestión de equipos](images/menuequipos.png)
 
 ## Gestión de Partidos
@@ -302,6 +300,18 @@ Selecciona "3" en el menú principal para acceder al menú de gestión de equipo
 3. Ingresa el ID del partido a eliminar
 4. Confirma la eliminación
 
+### Simular con Equipos Guardados
+
+1. Selecciona "4" en el menú principal
+2. Elige "5" para simular un partido con equipos guardados
+3. Sigue el flujo para elegir los equipos y ejecutar la simulación
+
+### Análisis Táctico
+
+1. Selecciona "4" en el menú principal
+2. Elige "6" para abrir análisis táctico
+3. Podrás crear y visualizar diagramas tácticos
+
 ![Gestión de partidos](images/menupartidos.png)
 
 ## Gestión de Lesiones
@@ -337,6 +347,14 @@ Selecciona "3" en el menú principal para acceder al menú de gestión de equipo
 2. Elige "4" para eliminar una lesión
 3. Ingresa el ID de la lesión a eliminar
 4. Confirma la eliminación
+
+### Estadísticas y Herramientas de Lesiones
+
+1. Selecciona "5" en el menú principal
+2. Usa opciones adicionales del menú de lesiones:
+   - "5" Estadísticas
+   - "6" Diferencias entre lesiones
+   - "7" Actualizar estados
 
 ![Gestión de lesiones](images/menulesiones.png)
 
@@ -430,7 +448,7 @@ Análisis completo de lesiones:
 
 ## Logros
 
-Selecciona "8" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
+Selecciona "7" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
 
 ### Categorías de Logros
 
@@ -444,7 +462,7 @@ Selecciona "8" en el menú principal para acceder al sistema de logros y badges.
 
 ### Ver Todos los Logros
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "1" para ver todos los logros
 3. Se mostrarán todos los logros con su progreso actual
 
@@ -464,11 +482,11 @@ Selecciona "8" en el menú principal para acceder al sistema de logros y badges.
 
 ## Gestión Financiera
 
-Selecciona "8" en el menú principal para acceder al módulo de gestión financiera del equipo.
+Selecciona "9" en el menú principal para acceder al módulo de gestión financiera del equipo.
 
 ### Agregar Transacción Financiera
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "1" para agregar una nueva transacción
 3. Selecciona el tipo:
    - **Ingreso**: Cuotas, sponsors, premios, etc.
@@ -488,27 +506,27 @@ Selecciona "8" en el menú principal para acceder al módulo de gestión financi
 
 ### Listar Transacciones
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "2" para ver todas las transacciones financieras
 3. Se mostrarán ordenadas por fecha
 
 ### Modificar Transacción
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "3" para modificar una transacción existente
 3. Ingresa el ID de la transacción a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar Transacción
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "4" para eliminar una transacción
 3. Ingresa el ID de la transacción
 4. Confirma la eliminación
 
 ### Ver Resumen Financiero
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "5" para ver un resumen completo
 3. Se mostrará:
    - Total de ingresos
@@ -518,25 +536,31 @@ Selecciona "8" en el menú principal para acceder al módulo de gestión financi
 
 ### Ver Balance de Gastos
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "6" para analizar el balance por categorías
 3. Se mostrará el desglose de gastos por tipo
 
 ### Exportar Datos Financieros
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "7" para exportar las transacciones financieras
 3. Selecciona el formato deseado (CSV, JSON, HTML, TXT)
+
+### Presupuestos Mensuales
+
+1. Selecciona "9" en el menú principal
+2. Elige "8" para abrir el menú de presupuestos mensuales
+3. Configura límites y seguimiento por mes
 
 ![Gestión financiera](images/menufinanciamiento.png)
 
 ## Gestión de Torneos
 
-Selecciona "9" en el menú principal para acceder al menú de gestión de torneos.
+Selecciona "10" en el menú principal para acceder al menú de gestión de torneos.
 
 ### Crear un Torneo
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "1" para crear un nuevo torneo
 3. Ingresa el nombre del torneo
 4. Selecciona si tiene equipo fijo
@@ -554,7 +578,7 @@ Selecciona "9" en el menú principal para acceder al menú de gestión de torneo
 
 ### Listar Torneos
 
-1. Selecciona "9" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "2" para listar todos los torneos
 3. Se mostrarán con su estado actual
 
@@ -572,60 +596,15 @@ Selecciona "9" en el menú principal para acceder al menú de gestión de torneo
 3. Ingresa el ID del torneo a eliminar
 4. Confirma la eliminación
 
-### Administrar un Torneo
-
-1. Selecciona "10" en el menú principal
-2. Elige "5" para administrar un torneo
-3. Selecciona el torneo a administrar
-4. Accede a funciones avanzadas:
-   - **Ver Fixture**: Calendario completo de partidos
-   - **Ingresar Resultados**: Registrar resultados de partidos
-   - **Ver Tabla de Posiciones**: Clasificación actual
-   - **Ver Estado de Equipos**: Información detallada de participantes
-   - **Mostrar Dashboard**: Vista general del torneo
-   - **Gestionar Estadísticas de Jugadores**: Goleadores, asistidores, etc.
-   - **Asociar Equipos**: Agregar equipos al torneo
-   - **Finalizar Torneo**: Cerrar y guardar historial
-
-### Asociar Equipos a un Torneo
-
-1. Desde el menú de administración de torneo
-2. Selecciona la opción para asociar equipos
-3. Elige equipos existentes para incluir en el torneo
-4. Confirma la asociación
-
-### Ver Fixture y Resultados
-
-1. Desde el menú de administración
-2. Selecciona "Ver Fixture" para ver los partidos programados
-3. Selecciona "Ingresar Resultado" para registrar resultados de partidos
-
-### Tabla de Posiciones
-
-1. Desde el menú de administración
-2. Selecciona "Ver Tabla de Posiciones"
-3. Visualiza la clasificación actual del torneo con:
-   - Puntos
-   - Partidos jugados
-   - Victorias, empates, derrotas
-   - Goles a favor y en contra
-   - Diferencia de goles
-
-### Estadísticas de Torneo
-
-1. Desde el menú de administración
-2. Selecciona "Mostrar Estadísticas de Jugador"
-3. Ve los mejores goleadores, asistidores y otras estadísticas
-
 ![Gestión de torneos](images/menutorneos.png)
 
 ## Gestión de Temporadas
 
-Selecciona "10" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
+Selecciona "11" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
 
 ### Crear una Temporada
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "1" para crear una nueva temporada
 3. Ingresa el nombre de la temporada (ej: "Temporada 2026")
 4. Especifica el año
@@ -643,27 +622,27 @@ Selecciona "10" en el menú principal para acceder al sistema de gestión de tem
 
 ### Listar Temporadas
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "2" para listar todas las temporadas
 3. Se mostrarán con sus fechas y estado
 
 ### Modificar una Temporada
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "3" para modificar una temporada
 3. Ingresa el ID de la temporada a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar una Temporada
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "4" para eliminar una temporada
 3. Ingresa el ID de la temporada
 4. Confirma la eliminación
 
 ### Administrar una Temporada
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "5" para administrar una temporada
 3. Selecciona la temporada a administrar
 4. Accede a funciones avanzadas:
@@ -675,6 +654,12 @@ Selecciona "10" en el menú principal para acceder al sistema de gestión de tem
    - **Comparar Temporadas**: Comparación entre diferentes temporadas
    - **Ver Resúmenes Mensuales**: Análisis mes a mes
    - **Exportar Resumen**: Guardar resumen en archivo
+
+### Comparar Temporadas
+
+1. Selecciona "11" en el menú principal
+2. Elige "6" para comparar dos temporadas
+3. Selecciona los IDs a comparar para ver diferencias
 
 ### Funcionalidades Avanzadas de Temporada
 
@@ -713,8 +698,8 @@ Análisis mensual automático:
 
 ## Análisis de Rendimiento
 
-Selecciona "11" en el menú principal para ver el análisis de rendimiento.
-Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado** y **Entrenador IA**.
+Selecciona "12" en el menú principal para ver el análisis de rendimiento.
+Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**, **Análisis Táctico (Diagramas)** y **Entrenador IA**.
 
 ### Funcionalidades del Análisis
 
@@ -735,7 +720,7 @@ Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**
 
 ## Bienestar
 
-Selecciona "12" en el menú principal para acceder a las herramientas de bienestar.
+Selecciona "13" en el menú principal para acceder a las herramientas de bienestar.
 
 ### Funcionalidades de Bienestar
 
@@ -749,14 +734,14 @@ Selecciona "12" en el menú principal para acceder a las herramientas de bienest
 
 ## Entrenador IA
 
-Selecciona "12" en el menú principal, luego **Entrenador IA** (opción 3) dentro de Análisis.
+Selecciona "12" en el menú principal, luego **Entrenador IA** (opción 4) dentro de Análisis.
 
 ### Funcionalidades del Entrenador IA
 
 #### Consejos Actuales
 
 1. Selecciona "12" en el menú principal
-2. Elige "3" para entrar a Entrenador IA
+2. Elige "4" para entrar a Entrenador IA
 3. Elige "1" para ver consejos actuales
 4. El sistema evaluará tu estado actual:
    - Rendimiento promedio
@@ -782,7 +767,7 @@ Selecciona "12" en el menú principal, luego **Entrenador IA** (opción 3) dentr
 #### Historial de Consejos
 
 1. Selecciona "12" en el menú principal
-2. Elige "3" para entrar a Entrenador IA
+2. Elige "4" para entrar a Entrenador IA
 3. Elige "2" para ver historial de consejos
 4. Se mostrarán todos los consejos anteriores
 5. Podrás ver si seguiste o no cada consejo
@@ -790,14 +775,14 @@ Selecciona "12" en el menú principal, luego **Entrenador IA** (opción 3) dentr
 #### Evaluar Decisión Pasada
 
 1. Selecciona "12" en el menú principal
-2. Elige "3" para entrar a Entrenador IA
+2. Elige "4" para entrar a Entrenador IA
 3. Elige "3" para evaluar decisiones pasadas
 4. El sistema analizará el impacto de seguir o ignorar consejos
 
 #### Configurar Nivel de Intervención
 
 1. Selecciona "12" en el menú principal
-2. Elige "3" para entrar a Entrenador IA
+2. Elige "4" para entrar a Entrenador IA
 3. Elige "4" para configurar el nivel de intervención
 4. Ajusta qué tan frecuentes y detallados quieres los consejos
 
@@ -811,17 +796,22 @@ El Entrenador IA se activa automáticamente:
 
 ## Exportar Datos
 
-Selecciona "13" en el menú principal y luego **Exportar** para acceder al menú de exportación.
+Selecciona "14" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
 1. **Camisetas** - Exportar datos de camisetas
 2. **Partidos** - Exportar datos de partidos (con submenú)
 3. **Lesiones** - Exportar datos de lesiones
-4. **Estadísticas** - Exportar estadísticas generales (con submenú)
+4. **Estadísticas** - Exportar estadísticas del módulo
 5. **Análisis** - Exportar análisis de rendimiento
-6. **Todo** - Exportar todos los datos
+6. **Estadísticas Generales** - Submenú de estadísticas globales
 7. **Análisis Avanzado** - Exportación mejorada con análisis integrado
+8. **Base de Datos** - Exportar copia de la base de datos
+9. **Todo** - Exportar todos los datos
+10. **Todo JSON** - Exportación completa en JSON
+11. **Todo CSV** - Exportación completa en CSV
+12. **Informe Total PDF** - Reporte integral en PDF
 
 ### Formatos Disponibles
 
@@ -886,7 +876,7 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "13" en el menú principal y luego **Importar** para acceder a la importación de datos.
+Selecciona "14" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
 
 ### Preparación para Importar
 
@@ -898,14 +888,15 @@ Selecciona "13" en el menú principal y luego **Importar** para acceder a la imp
 
 ### Proceso de Importación
 
-1. Selecciona "13" en el menú principal y luego **Importar**
-2. Elige el formato a importar (JSON, TXT, CSV o HTML)
-3. Elige el tipo de datos a importar:
-   - Camisetas
-   - Partidos
-   - Lesiones
-   - Estadísticas
-   - Todo
+1. Selecciona "14" en el menú principal y luego **Importar**
+2. Elige una opción del menú de importación:
+   - "1" Importar desde JSON
+   - "2" Importar desde TXT
+   - "3" Importar desde CSV
+   - "4" Importar desde HTML
+   - "5" Todo JSON rápido
+   - "6" Todo CSV rápido
+   - "7" Importar base de datos
 4. El sistema validará la estructura del archivo
 5. Se verificará que los datos sean correctos
 6. Los datos se insertarán en la base de datos
@@ -934,11 +925,11 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "13" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "14" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -954,7 +945,7 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -964,13 +955,13 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ### Accesibilidad
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
 ### Cambiar Nombre de Usuario
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Cambia el nombre de usuario
 4. El nombre se guardará en la base de datos
@@ -978,7 +969,7 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ### Ver Configuración Actual
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
@@ -989,7 +980,7 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
@@ -999,14 +990,20 @@ Selecciona "13" en el menú principal para acceder al menú de configuración de
 
 ### Modo de Menú
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "7" para configurar el modo
 3. Selecciona modo Simple, Avanzado o Personalizado
 
 ### Exportar / Importar desde Ajustes
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "14" en el menú principal
 2. Elige "8" para **Exportar** o "9" para **Importar**
+
+### Actualizar aplicación
+
+1. Selecciona "14" en el menú principal
+2. Elige "10" para abrir el flujo de actualización
+3. En Windows, podrás buscar y ejecutar la actualización
 
 ![Menú de ajustes](images/menuajustes.png)
 
@@ -1199,8 +1196,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 3.8  
-**Última actualización**: 26/02/2026  
+**Versión**: 3.9  
+**Última actualización**: 10/03/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

@@ -52,10 +52,24 @@ void crear_cancha()
 
     sqlite3_bind_int(stmt, 1, (int)id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    printf("Cancha creada correctamente\n");
+    if (rc == SQLITE_DONE)
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Creada cancha id=%lld nombre=%.180s", id, nombre);
+        app_log_event("CANCHA", log_msg);
+        printf("Cancha creada correctamente\n");
+    }
+    else
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Error al crear cancha nombre=%.180s", nombre);
+        app_log_event("CANCHA", log_msg);
+        printf("Error al crear la cancha.\n");
+    }
+
     pause_console();
 }
 
@@ -67,6 +81,7 @@ void crear_cancha()
  */
 void listar_canchas()
 {
+    app_log_event("CANCHA", "Listado de canchas consultado");
     listar_entidades("cancha", "LISTADO DE CANCHAS", "No hay canchas cargadas.");
 }
 

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-3.6-blue.svg)
+![Version](https://img.shields.io/badge/version-3.9.1-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -25,7 +25,7 @@
 **MiFutbolC** es un sistema robusto y completo de gestión de fútbol desarrollado íntegramente en lenguaje C. Este proyecto permite administrar todos los aspectos relacionados con el fútbol amateur y profesional, incluyendo:
 
 - 🎽 **Gestión de equipamiento** (camisetas con seguimiento de uso)
-- 🏟️ **Infraestructura deportiva** (canchas y ubicaciones)
+- 🏟️ **Infraestructura deportiva** (canchas)
 - ⚽ **Registro de partidos** (con estadísticas detalladas)
 - 👥 **Administración de equipos** (jugadores, formaciones, posiciones)
 - 🏆 **Organización de torneos** (múltiples formatos y estructuras)
@@ -46,7 +46,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### 🎽 Gestión de Equipamiento y Recursos
 
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
-- **Gestión de Canchas**: Administrar infraestructura deportiva con información detallada de ubicación y características
+- **Gestión de Canchas**: Administrar infraestructura deportiva (crear, listar, modificar y eliminar)
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
 ### 👥 Administración de Equipos y Jugadores
@@ -66,12 +66,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ### 🏆 Sistema de Torneos
 
-- **Múltiples Formatos**: Round Robin, Grupos con Final, Copa Simple, Eliminación Directa
-- **Estructuras Flexibles**: Ida y Vuelta, Solo Ida, Eliminación Directa, Grupos y Eliminación
-- **Gestión Completa**: Fixtures automáticos, ingreso de resultados, tablas de posiciones
-- **Dashboard en Tiempo Real**: Visualización de posición actual, próximos partidos y últimos resultados
-- **Estadísticas de Torneo**: Goleadores, asistidores, historial de equipos
-- **Reportes Exportables**: Generación de reportes completos en múltiples formatos
+- **Gestión Base de Torneos**: Crear, listar, modificar y eliminar torneos
+- **Estructura de Datos**: Modelo preparado para fases, historial y estadísticas de torneos
+- **Integración con Temporadas**: Relación con módulos de temporada y reportes
 
 ### 📊 Análisis y Estadísticas Avanzadas
 
@@ -143,7 +140,8 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 #### Exportación Multiformato
 - **Formatos Disponibles**: CSV, JSON, HTML, TXT
-- **Exportación por Módulo**: Camisetas, partidos, estadísticas, lesiones, torneos, finanzas
+- **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Exportar
+- **Exportación por Módulo**: Camisetas, partidos, lesiones, estadísticas, análisis y base de datos
 - **Exportación Completa**: Backup total del sistema
 - **Exportación Mejorada**: Con análisis integrado y métricas adicionales
 - **Exportación Selectiva**: Partidos con características específicas
@@ -152,6 +150,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 #### Importación de Datos
 - **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
+- **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Importar
+- **Importación rápida**: Opciones Todo JSON rápido y Todo CSV rápido
+- **Importación de base de datos**: Restauración directa de archivo SQLite
 - **Validación de Datos**: Verificación de estructura antes de importar
 - **Manejo de Errores**: Feedback detallado en caso de problemas
 
@@ -188,9 +189,10 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Propósito**: Parsing y generación de JSON para importación/exportación
 - **Características**: Ligera, rápida, sin dependencias externas
 
-#### libharu (Requerida externamente)
-- **Propósito**: Generación de informes PDF mejorados
-- **Dependencias**: libpng16-16, zlib1
+#### Motor PDF Interno (pdfgen)
+- **Archivos**: `pdfgen.c`, `pdfgen.h`
+- **Propósito**: Generación de informes PDF del sistema
+- **Dependencias externas**: No requiere dependencias adicionales para PDF
 
 ### Herramientas de Desarrollo
 
@@ -203,6 +205,8 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
 ✅ **cJSON**: Biblioteca completa incluida en el proyecto  
+✅ **pdfgen**: Motor PDF incluido en el proyecto  
+✅ **Runtime sin DLLs**: El proyecto no requiere DLLs adicionales para ejecutarse  
 
 
 ## 🚀 Instalación y Compilación
@@ -354,12 +358,13 @@ Al ejecutar `MiFutbolC`, el sistema:
 5. Lesiones
 6. Estadísticas
 7. Logros
-8. Financiamiento
-9. Torneos
-10. Temporada
-11. Análisis
-12. Bienestar
-13. Ajustes
+8. (Reservado)
+9. Financiamiento
+10. Torneos
+11. Temporada
+12. Análisis
+13. Bienestar
+14. Ajustes
 0. Salir
 >
 ```
@@ -369,7 +374,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (13)
+Menú Principal → Ajustes (14)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Modificar nombre de usuario
@@ -400,10 +405,9 @@ Menú Principal → Partidos (4) → Crear partido
 ```
 Menú Principal → Torneos (10)
   ├── Crear torneo
-  ├── Agregar equipos
-  ├── Generar fixture
-  ├── Ingresar resultados
-  └── Ver tabla de posiciones
+  ├── Listar torneos
+  ├── Modificar torneo
+  └── Eliminar torneo
 ```
 
 #### 5️⃣ Analizar Rendimiento
@@ -418,6 +422,7 @@ Menú Principal → Estadísticas (6)
 Menú Principal → Análisis (12)
   ├── Análisis Básico
   ├── Comparador Avanzado
+  ├── Análisis Táctico (Diagramas)
   └── Entrenador IA
 
 Menú Principal → Bienestar (13)
@@ -435,7 +440,7 @@ Menú Principal → Financiamiento (9)
   ├── Registrar ingreso
   ├── Registrar gasto
   ├── Ver balance
-  └── Exportar reporte financiero
+  └── Presupuestos mensuales
 ```
 
 #### 7️⃣ Exportar Datos
@@ -711,8 +716,10 @@ MiFutbolC/
 │       ├── export_estadisticas_generales.c / .h # Exportación estadísticas generales
 │       └── export_records_rankings.c / .h       # Exportación récords/rankings
 │
-├── 📚 BIBLIOTECAS EXTERNAS
-│   └── cJSON.c / cJSON.h                        # Biblioteca cJSON (MIT License)
+├── 📚 BIBLIOTECAS INCLUIDAS
+│   ├── sqlite3.c / sqlite3.h                    # SQLite embebido
+│   ├── cJSON.c / cJSON.h                        # Biblioteca cJSON (MIT License)
+│   └── pdfgen.c / pdfgen.h                      # Motor PDF interno
 │
 ├── 🔧 ARCHIVOS DE CONFIGURACIÓN Y BUILD
 │   ├── MiFutbolC.cbp                            # Proyecto CodeBlocks
@@ -795,6 +802,9 @@ Conteo referencial (puede variar según cambios y scripts de build).
 - **Ubicación**:
   - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.db`
   - Linux/macOS: `./data/mifutbol.db`
+- **Archivo de log**:
+  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.log`
+  - Linux/macOS: `./data/mifutbol.log`
 - **Características**: Transacciones ACID, sin servidor, archivo único
 
 **Directorios de importación/exportación**
@@ -927,16 +937,14 @@ El módulo de gestión de equipos (`equipo.c / equipo.h`) permite crear, gestion
 
 ## Módulo de Gestión de Torneos
 
-El módulo de gestión de torneos (`torneo.c / torneo.h`) proporciona un sistema completo para organizar y administrar competiciones futbolísticas:
+El módulo de gestión de torneos (`torneo.c / torneo.h`) ofrece en el menú actual operaciones base de administración:
 
-- **Tipos de Torneo**: Soporte para diferentes estructuras de partidos (Ida y Vuelta, Solo Ida, Eliminación Directa, Grupos y Eliminación).
-- **Formatos Disponibles**: Múltiples formatos incluyendo Round Robin, Grupos con Final, Copa Simple, Eliminación Directa por Fases, etc.
-- **Gestión de Equipos**: Asociación de equipos existentes a torneos con equipos fijos opcionales.
-- **Administración Avanzada**: Funciones para mostrar fixtures, ingresar resultados, ver tablas de posiciones y gestionar fases de eliminación.
-- **Estadísticas de Torneos**: Seguimiento de estadísticas de jugadores por torneo, mejores goleadores, asistidores, historial de equipos.
-- **Dashboard en Tiempo Real**: Visualización de información actualizada incluyendo posición actual, próximos partidos y últimos resultados.
-- **Reportes y Exportación**: Generación de reportes completos y exportación de tablas de posiciones y estadísticas.
-- **Finalización de Torneos**: Sistema para cerrar torneos y guardar historial completo de todos los equipos participantes.
+- **Crear torneo**.
+- **Listar torneos**.
+- **Modificar torneo**.
+- **Eliminar torneo**.
+
+Además, el esquema de base de datos incluye tablas de soporte para fases, equipos y estadísticas de torneo.
 
 ## Módulo de Gestión Financiera
 
@@ -1015,7 +1023,7 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, opción 8 reservada, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
@@ -1029,7 +1037,7 @@ Además de las exportaciones individuales, el módulo `export_all.c / export_all
 - Ejecuta automáticamente todas las funciones de exportación disponibles.
 - Genera archivos en formatos CSV, TXT, JSON y HTML para camisetas, partidos, estadísticas y lesiones.
 - Facilita la copia de seguridad completa de todos los datos del sistema.
-- Es accesible desde el submenú Exportar → Todo.
+- Es accesible desde Ajustes -> Exportar -> Todo.
 
 ## Exportación Mejorada
 
@@ -1041,7 +1049,7 @@ Los módulos de exportación mejorada (`export_all_mejorado.c`, `export_camiseta
 
 ## Importación Completa
 
-El módulo `import.c / import.h` permite restaurar datos desde archivos JSON, TXT, CSV o HTML exportados previamente. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
+El módulo `import.c / import.h` permite restaurar datos desde archivos JSON, TXT, CSV o HTML exportados previamente. También incluye opciones rápidas (Todo JSON/Todo CSV) e importación de base de datos. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
 
 
 ## Documentación
@@ -1190,7 +1198,8 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 - ✅ **Manejo de Errores**: El programa valida entradas y solicita confirmaciones para operaciones destructivas
 - ✅ **Compatibilidad**: Probado en Windows 11, Ubuntu 22.04, macOS 12+
 - ✅ **Interfaz Textual**: No requiere GUI, funciona en cualquier terminal con soporte UTF-8
-- ✅ **Sin Dependencias Externas**: Todas las bibliotecas necesarias están incluidas
+- ✅ **Dependencias incluidas**: SQLite3, cJSON y pdfgen están incluidos en el repositorio
+- ✅ **Sin DLLs**: No utiliza DLLs externas para ejecución
 
 ### Limitaciones Conocidas
 

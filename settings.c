@@ -32,6 +32,9 @@ void menu_update();
 // Si deseas cambiar, modifica esta constante.
 #define UPDATE_REPO "thomashamer3/MiFutbolC"
 
+// Versión actual de la aplicación. Debe mantenerse en sincronía con el instalador (MiFutbolC.iss)
+#define APP_VERSION "3.9"
+
 // Configuracion global
 static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
 
@@ -927,6 +930,9 @@ static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *o
     return *out_downloader != NULL;
 }
 
+static int leer_archivo_completo(const char *path, char **out_data);
+static const char *obtener_release_label(const cJSON *tag, const cJSON *name);
+
 static void liberar_descargador(HMODULE module)
 {
     if (module)
@@ -960,10 +966,99 @@ static int ejecutar_instalador(const char *dest)
     HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
     if ((INT_PTR)h <= 32)
     {
-        printf("Error al ejecutar el instalador. Codigo: %p\n", (void *)h);
+        // Intentar elevar privilegios si la ejecución falló la primera vez.
+        HINSTANCE h2 = ShellExecuteA(NULL, "runas", dest, NULL, NULL, SW_SHOWNORMAL);
+        if ((INT_PTR)h2 > 32)
+        {
+            return 1;
+        }
+
+        // Si falla, es probable que el ejecutable esté bloqueado (porque MiFutbolC está en ejecución).
+        printf("Error al ejecutar el instalador. Asegúrate de cerrar MiFutbolC y vuelve a intentarlo.\n");
         return 0;
     }
     return 1;
+}
+
+// Compara versiones semánticas simples (mayor.minor.patch).
+// Retorna -1 si a < b, 0 si son iguales, 1 si a > b.
+static int comparar_versiones(const char *a, const char *b)
+{
+    int am = 0;
+    int an = 0;
+    int ap = 0;
+    int bm = 0;
+    int bn = 0;
+    int bp = 0;
+
+    // Permitir cadenas que comiencen con "v" o "V".
+    if (a && (*a == 'v' || *a == 'V'))
+    {
+        a++;
+    }
+    if (b && (*b == 'v' || *b == 'V'))
+    {
+        b++;
+    }
+
+    sscanf(a ? a : "", "%d.%d.%d", &am, &an, &ap);
+    sscanf(b ? b : "", "%d.%d.%d", &bm, &bn, &bp);
+
+    if (am != bm) return am < bm ? -1 : 1;
+    if (an != bn) return an < bn ? -1 : 1;
+    if (ap != bp) return ap < bp ? -1 : 1;
+    return 0;
+}
+
+// Descarga la información de la última release desde GitHub y devuelve su tag (tag_name o name).
+// El valor devuelto debe liberarse con free() por el llamador.
+static char *obtener_latest_release_tag(const char *owner_repo, const char *repo_name, const char *temp_path)
+{
+    URLDownloadToFileAFunc downloader;
+    HMODULE module;
+    if (!cargar_descargador(&downloader, &module))
+    {
+        return NULL;
+    }
+
+    char api_url[1024];
+    char json_path[1024];
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases/latest", owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path, repo_name);
+
+    if (!descargar_archivo(downloader, api_url, json_path))
+    {
+        liberar_descargador(module);
+        return NULL;
+    }
+
+    char *json_data = NULL;
+    if (!leer_archivo_completo(json_path, &json_data))
+    {
+        liberar_descargador(module);
+        return NULL;
+    }
+
+    cJSON *root = cJSON_Parse(json_data);
+    free(json_data);
+    if (!root || !cJSON_IsObject(root))
+    {
+        if (root)
+        {
+            cJSON_Delete(root);
+        }
+        liberar_descargador(module);
+        return NULL;
+    }
+
+    const cJSON *tag = cJSON_GetObjectItem(root, "tag_name");
+    const cJSON *name = cJSON_GetObjectItem(root, "name");
+    const char *label = obtener_release_label(tag, name);
+
+    char *result = _strdup(label);
+    cJSON_Delete(root);
+    liberar_descargador(module);
+    return result;
 }
 
 static int leer_archivo_completo(const char *path, char **out_data)
@@ -1533,6 +1628,31 @@ void menu_update()
     char repo_name[128] = {0};
     obtener_nombre_repo(owner_repo, repo_name, sizeof(repo_name));
 
+    // Verificar versión actual contra la última versión en GitHub.
+    char temp_path[MAX_PATH];
+    if (GetTempPathA(MAX_PATH, temp_path) == 0)
+    {
+        printf("Error obteniendo carpeta temporal.\n");
+        pause_console();
+        return;
+    }
+
+    char *latest_tag = obtener_latest_release_tag(owner_repo, repo_name, temp_path);
+    if (latest_tag)
+    {
+        int cmp = comparar_versiones(APP_VERSION, latest_tag);
+        if (cmp >= 0)
+        {
+            printf("Ya tienes la última versión (%s).\n", APP_VERSION);
+            free(latest_tag);
+            pause_console();
+            return;
+        }
+
+        printf("Nueva versión disponible: %s (actual: %s).\n", latest_tag, APP_VERSION);
+        free(latest_tag);
+    }
+
     // Opciones al usuario
     printf("1. %s\n", "Ultima version (latest)");
     printf("2. %s\n", "Elegir una version de la lista");
@@ -1541,14 +1661,6 @@ void menu_update()
     int modo = input_int("> ");
     if (modo == 0)
     {
-        return;
-    }
-
-    char temp_path[MAX_PATH];
-    if (GetTempPathA(MAX_PATH, temp_path) == 0)
-    {
-        printf("Error obteniendo carpeta temporal.\n");
-        pause_console();
         return;
     }
 

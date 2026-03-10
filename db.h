@@ -106,6 +106,17 @@ const char* get_export_dir();
 const char* get_import_dir();
 
 /**
+ * @brief Registra un evento informativo en el archivo de log de la aplicación
+ *
+ * Permite registrar acciones de usuario y eventos de flujo funcional
+ * desde cualquier módulo de la aplicación.
+ *
+ * @param component Componente o módulo emisor (ej: "MENU", "CAMISETA")
+ * @param message Mensaje del evento
+ */
+void app_log_event(const char *component, const char *message);
+
+/**
  * @brief Copia la base de datos SQLite a la carpeta de documentos
  *
  * Esta función realiza una copia exacta del archivo de base de datos

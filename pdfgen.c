@@ -525,7 +525,7 @@ static ssize_t dstr_ensure(struct dstr *str, size_t len)
 // This breaks the PDF output, so we force a 'safe' locale.
 static void force_locale(char *buf, int len)
 {
-    char *saved_locale = setlocale(LC_ALL, NULL);
+    char *saved_locale = setlocale(LC_NUMERIC, NULL);
 
     if (!saved_locale)
     {
@@ -537,12 +537,19 @@ static void force_locale(char *buf, int len)
         buf[len - 1] = '\0';
     }
 
-    setlocale(LC_NUMERIC, "POSIX");
+    // En Windows "POSIX" puede no estar disponible; "C" garantiza punto decimal.
+    if (!setlocale(LC_NUMERIC, "C"))
+    {
+        setlocale(LC_NUMERIC, "POSIX");
+    }
 }
 
 static void restore_locale(char *buf)
 {
-    setlocale(LC_ALL, buf);
+    if (buf && buf[0] != '\0')
+    {
+        setlocale(LC_NUMERIC, buf);
+    }
 }
 
 #ifndef SKIP_ATTRIBUTE
@@ -1378,7 +1385,7 @@ static int pdf_add_stream(struct pdf_doc *pdf, struct pdf_object *page,
     if (!obj)
         return pdf->errval;
 
-    dstr_printf(&obj->stream.stream, "<< /Length %zu >>stream\r\n", len);
+    dstr_printf(&obj->stream.stream, "<< /Length %zu >>\r\nstream\r\n", len);
     dstr_append_data(&obj->stream.stream, buffer, len);
     dstr_append(&obj->stream.stream, "\r\nendstream\r\n");
 
@@ -3445,7 +3452,7 @@ static pdf_object *pdf_add_raw_grayscale8(struct pdf_doc *pdf,
 {
     struct pdf_object *obj;
     size_t len;
-    const char *endstream = ">\r\nendstream\r\n";
+    const char *endstream = "\r\nendstream\r\n";
     struct dstr str = INIT_DSTR;
     size_t data_len = (size_t)width * (size_t)height;
 
@@ -3459,7 +3466,8 @@ static pdf_object *pdf_add_raw_grayscale8(struct pdf_doc *pdf,
                 "  /Width %d\r\n"
                 "  /BitsPerComponent 8\r\n"
                 "  /Length %zu\r\n"
-                ">>stream\r\n",
+                ">>\r\n"
+                "stream\r\n",
                 flexarray_size(&pdf->objects), height, width, data_len + 1);
 
     len = dstr_len(&str) + data_len + strlen(endstream) + 1;
@@ -3490,7 +3498,7 @@ static struct pdf_object *pdf_add_raw_rgb24(struct pdf_doc *pdf,
 {
     struct pdf_object *obj;
     size_t len;
-    const char *endstream = ">\r\nendstream\r\n";
+    const char *endstream = "\r\nendstream\r\n";
     struct dstr str = INIT_DSTR;
     size_t data_len = (size_t)width * (size_t)height * 3;
 
@@ -3504,7 +3512,8 @@ static struct pdf_object *pdf_add_raw_rgb24(struct pdf_doc *pdf,
                 "  /Width %d\r\n"
                 "  /BitsPerComponent 8\r\n"
                 "  /Length %zu\r\n"
-                ">>stream\r\n",
+                ">>\r\n"
+                "stream\r\n",
                 flexarray_size(&pdf->objects), height, width, data_len + 1);
 
     len = dstr_len(&str) + data_len + strlen(endstream) + 1;
@@ -3596,7 +3605,8 @@ pdf_add_raw_jpeg_data(struct pdf_doc *pdf, const struct pdf_img_info *info,
                 "  /BitsPerComponent 8\r\n"
                 "  /Filter /DCTDecode\r\n"
                 "  /Length %zu\r\n"
-                ">>stream\r\n",
+                ">>\r\n"
+                "stream\r\n",
                 flexarray_size(&pdf->objects),
                 (info->jpeg.ncolours == 1) ? "/DeviceGray" : "/DeviceRGB",
                 info->width, info->height, len);
@@ -4231,7 +4241,8 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
                 "  /DecodeParms << /Predictor 15 /Colors %d "
                 "/BitsPerComponent %u /Columns %u >>\r\n"
                 "  /Length %zu\r\n"
-                ">>stream\r\n",
+                ">>\r\n"
+                "stream\r\n",
                 flexarray_size(&pdf->objects), dstr_data(&colour_space),
                 header->width, header->height, header->bitDepth, ncolours,
                 header->bitDepth, header->width, png_data_total_length);

@@ -63,7 +63,76 @@ typedef struct
     struct pdf_object **pages;
     int page_count;
     int page_cap;
+    int warned_pdf_error;
 } PdfCtx;
+
+static void sanitize_to_ascii(const char *src, char *dst, size_t dst_size)
+{
+    if (!dst || dst_size == 0)
+        return;
+
+    dst[0] = '\0';
+    if (!src)
+        return;
+
+    size_t out = 0;
+    for (size_t i = 0; src[i] != '\0' && out + 1 < dst_size; ++i)
+    {
+        unsigned char c = (unsigned char)src[i];
+        if (c >= 32 && c <= 126)
+        {
+            dst[out++] = (char)c;
+            continue;
+        }
+
+        if (c == '\n' || c == '\r' || c == '\t')
+        {
+            dst[out++] = ' ';
+            continue;
+        }
+
+        dst[out++] = '?';
+    }
+
+    dst[out] = '\0';
+}
+
+static int pdf_add_text_safe(PdfCtx *ctx, struct pdf_object *page, const char *text,
+                             float size, float x, float y, uint32_t colour)
+{
+    int rc = pdf_add_text(ctx->pdf, page, text, size, x, y, colour);
+    if (rc >= 0)
+        return rc;
+
+    char ascii_text[1024];
+    sanitize_to_ascii(text, ascii_text, sizeof(ascii_text));
+    rc = pdf_add_text(ctx->pdf, page, ascii_text, size, x, y, colour);
+    if (rc >= 0)
+        return rc;
+
+    if (!ctx->warned_pdf_error)
+    {
+        int errval = 0;
+        const char *err = pdf_get_err(ctx->pdf, &errval);
+        printf("Advertencia PDF: no se pudo escribir texto (%d): %s\n", errval,
+               err ? err : "error desconocido");
+        ctx->warned_pdf_error = 1;
+    }
+
+    return rc;
+}
+
+static int pdf_get_text_width_safe(PdfCtx *ctx, const char *font, const char *text,
+                                   float size, float *width)
+{
+    int rc = pdf_get_font_text_width(ctx->pdf, font, text, size, width);
+    if (rc == 0)
+        return 0;
+
+    char ascii_text[1024];
+    sanitize_to_ascii(text, ascii_text, sizeof(ascii_text));
+    return pdf_get_font_text_width(ctx->pdf, font, ascii_text, size, width);
+}
 
 static void new_page(PdfCtx *ctx)
 {
@@ -100,7 +169,7 @@ static void write_text_line(PdfCtx *ctx, const char *text, const char *font, flo
         return;
     ensure_space(ctx, leading);
     pdf_set_font(ctx->pdf, font);
-    pdf_add_text(ctx->pdf, ctx->page, text, size, ctx->margin, ctx->y, PDF_BLACK);
+    pdf_add_text_safe(ctx, ctx->page, text, size, ctx->margin, ctx->y, PDF_BLACK);
     ctx->y -= leading;
 }
 
@@ -362,7 +431,7 @@ static void write_long_word(PdfCtx *ctx, const char *word, const char *font, flo
         chunk[clen] = '\0';
 
         float chunk_width = 0.0f;
-        if (pdf_get_font_text_width(ctx->pdf, font, chunk, size, &chunk_width) == 0 && chunk_width > max_width && clen > 1)
+        if (pdf_get_text_width_safe(ctx, font, chunk, size, &chunk_width) == 0 && chunk_width > max_width && clen > 1)
         {
             chunk[clen - 1] = '\0';
             write_text_line(ctx, chunk, font, size, leading);
@@ -417,7 +486,7 @@ static int try_append_word(PdfCtx *ctx, char *line, size_t line_size, const char
     }
 
     float candidate_width = 0.0f;
-    if (pdf_get_font_text_width(ctx->pdf, font, candidate, size, &candidate_width) != 0)
+    if (pdf_get_text_width_safe(ctx, font, candidate, size, &candidate_width) != 0)
         return 0;
 
     if (candidate_width > max_width)
@@ -461,7 +530,7 @@ static void write_wrapped_text(PdfCtx *ctx, const char *text, const char *font, 
         flush_line(ctx, line, font, size, leading);
 
         float word_width = 0.0f;
-        if (pdf_get_font_text_width(ctx->pdf, font, word, size, &word_width) != 0)
+        if (pdf_get_text_width_safe(ctx, font, word, size, &word_width) != 0)
             word_width = max_width + 1;
 
         if (word_width <= max_width)
@@ -494,13 +563,13 @@ static void write_section_header(PdfCtx *ctx, const char *title)
     pdf_add_filled_rectangle(ctx->pdf, ctx->page, ctx->margin, band_y, page_width - (2.0f * ctx->margin), band_height, 0.0f, PDF_RGB(235, 240, 250), PDF_RGB(235, 240, 250));
 
     pdf_set_font(ctx->pdf, ctx->font_bold);
-    pdf_add_text(ctx->pdf, ctx->page, title, PDF_SECTION_SIZE, ctx->margin + 6.0f, ctx->y, PDF_BLACK);
+    pdf_add_text_safe(ctx, ctx->page, title, PDF_SECTION_SIZE, ctx->margin + 6.0f, ctx->y, PDF_BLACK);
 
     ctx->y = band_y - 8.0f;
     write_blank_line(ctx, PDF_BODY_SIZE + 2.0f);
 }
 
-static void add_page_footers(const PdfCtx *ctx)
+static void add_page_footers(PdfCtx *ctx)
 {
     if (!ctx || !ctx->pdf || !ctx->font_regular || !ctx->pages)
         return;
@@ -522,8 +591,8 @@ static void add_page_footers(const PdfCtx *ctx)
 
         pdf_set_font(ctx->pdf, ctx->font_regular);
         float text_width = 0.0f;
-        pdf_get_font_text_width(ctx->pdf, ctx->font_regular, footer, PDF_FOOTER_SIZE, &text_width);
-        pdf_add_text(ctx->pdf, page, footer, PDF_FOOTER_SIZE, (page_width - text_width) / 2.0f, y, PDF_BLACK);
+        pdf_get_text_width_safe(ctx, ctx->font_regular, footer, PDF_FOOTER_SIZE, &text_width);
+        pdf_add_text_safe(ctx, page, footer, PDF_FOOTER_SIZE, (page_width - text_width) / 2.0f, y, PDF_BLACK);
     }
 }
 
@@ -542,13 +611,13 @@ static void draw_cover(PdfCtx *ctx, const char *title, const char *subtitle, con
 
     pdf_set_font(ctx->pdf, ctx->font_bold);
     float title_width = 0.0f;
-    pdf_get_font_text_width(ctx->pdf, ctx->font_bold, title, 24.0f, &title_width);
-    pdf_add_text(ctx->pdf, ctx->page, title, 24.0f, (page_width - title_width) / 2.0f, page_height - 85.0f, PDF_WHITE);
+    pdf_get_text_width_safe(ctx, ctx->font_bold, title, 24.0f, &title_width);
+    pdf_add_text_safe(ctx, ctx->page, title, 24.0f, (page_width - title_width) / 2.0f, page_height - 85.0f, PDF_WHITE);
 
     pdf_set_font(ctx->pdf, ctx->font_regular);
     float sub_width = 0.0f;
-    pdf_get_font_text_width(ctx->pdf, ctx->font_regular, subtitle, PDF_SUBTITLE_SIZE, &sub_width);
-    pdf_add_text(ctx->pdf, ctx->page, subtitle, PDF_SUBTITLE_SIZE, (page_width - sub_width) / 2.0f, page_height - 110.0f, PDF_WHITE);
+    pdf_get_text_width_safe(ctx, ctx->font_regular, subtitle, PDF_SUBTITLE_SIZE, &sub_width);
+    pdf_add_text_safe(ctx, ctx->page, subtitle, PDF_SUBTITLE_SIZE, (page_width - sub_width) / 2.0f, page_height - 110.0f, PDF_WHITE);
 
     ctx->y = page_height - 190.0f;
 

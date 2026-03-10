@@ -95,8 +95,22 @@ void crear_camiseta()
     }
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
+
+    if (rc == SQLITE_DONE)
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s", id, nombre);
+        app_log_event("CAMISETA", log_msg);
+    }
+    else
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s", nombre);
+        app_log_event("CAMISETA", log_msg);
+    }
+
     pause_console();
 }
 
@@ -110,6 +124,8 @@ void listar_camisetas()
 {
     clear_screen();
     print_header("LISTADO DE CAMISETAS");
+
+    app_log_event("CAMISETA", "Listado de camisetas consultado");
 
     listar_camisetas_simple();
     pause_console();

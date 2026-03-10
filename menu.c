@@ -37,21 +37,87 @@ struct MenuItemDefinition
     void (*accion)(void);
 };
 
+static void abrir_menu_equipos(void)
+{
+    app_log_event("EQUIPOS", "Ingreso al modulo Equipos");
+    menu_equipos();
+}
+
+static void abrir_menu_partidos(void)
+{
+    app_log_event("PARTIDOS", "Ingreso al modulo Partidos");
+    menu_partidos();
+}
+
+static void abrir_menu_lesiones(void)
+{
+    app_log_event("LESIONES", "Ingreso al modulo Lesiones");
+    menu_lesiones();
+}
+
+static void abrir_menu_estadisticas(void)
+{
+    app_log_event("ESTADISTICAS", "Ingreso al modulo Estadisticas");
+    menu_estadisticas();
+}
+
+static void abrir_menu_logros(void)
+{
+    app_log_event("LOGROS", "Ingreso al modulo Logros");
+    menu_logros();
+}
+
+static void abrir_menu_financiamiento(void)
+{
+    app_log_event("FINANCIAMIENTO", "Ingreso al modulo Financiamiento");
+    menu_financiamiento();
+}
+
+static void abrir_menu_torneos(void)
+{
+    app_log_event("TORNEOS", "Ingreso al modulo Torneos");
+    menu_torneos();
+}
+
+static void abrir_menu_temporadas(void)
+{
+    app_log_event("TEMPORADA", "Ingreso al modulo Temporada");
+    menu_temporadas();
+}
+
+static void abrir_menu_analisis(void)
+{
+    app_log_event("ANALISIS", "Ingreso al modulo Analisis");
+    mostrar_analisis();
+}
+
+static void abrir_menu_bienestar(void)
+{
+    app_log_event("BIENESTAR", "Ingreso al modulo Bienestar");
+    menu_bienestar();
+}
+
+static void abrir_menu_settings(void)
+{
+    app_log_event("SETTINGS", "Ingreso al modulo Ajustes");
+    menu_settings();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Camisetas", &menu_camisetas},
     {2, "Canchas", &menu_canchas},
-    {3, "Equipos", &menu_equipos},
-    {4, "Partidos", &menu_partidos},
-    {5, "Lesiones", &menu_lesiones},
-    {6, "Estadisticas", &menu_estadisticas},
-    {7, "Logros", &menu_logros},
-    {9, "Financiamiento", &menu_financiamiento},
-    {10, "Torneos", &menu_torneos},
-    {11, "Temporada", &menu_temporadas},
-    {12, "Analisis", &mostrar_analisis},
-    {13, "Bienestar", &menu_bienestar},
-    {14, "Ajustes", &menu_settings},
+    {3, "Equipos", &abrir_menu_equipos},
+    {4, "Partidos", &abrir_menu_partidos},
+    {5, "Lesiones", &abrir_menu_lesiones},
+    {6, "Estadisticas", &abrir_menu_estadisticas},
+    {7, "Logros", &abrir_menu_logros},
+    {9, "Financiamiento", &abrir_menu_financiamiento},
+    {10, "Torneos", &abrir_menu_torneos},
+    {11, "Temporada", &abrir_menu_temporadas},
+    {12, "Analisis", &abrir_menu_analisis},
+    {13, "Bienestar", &abrir_menu_bienestar},
+    {14, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -114,6 +180,7 @@ void initialize_application()
     }
 
     settings_init();
+    app_log_event("APP", "Aplicacion iniciada");
 
 }
 
@@ -135,6 +202,9 @@ void handle_user_name()
 
     if (nombre_usuario)
     {
+        snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"), nombre_usuario);
+        snprintf(buffer, sizeof(buffer), "Sesion iniciada por usuario: %.180s", nombre_usuario);
+        app_log_event("APP", buffer);
         snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"), nombre_usuario);
         fputs(buffer, stdout);
         pause_console();
@@ -205,6 +275,9 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
     }
 #endif
     int opcion;
+    char log_msg[512];
+    snprintf(log_msg, sizeof(log_msg), "Ingreso al menu: %.180s", titulo ? titulo : "(sin titulo)");
+    app_log_event("MENU", log_msg);
 
     while (1)
     {
@@ -222,12 +295,26 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 
         if (selected)
         {
+            snprintf(log_msg, sizeof(log_msg), "Menu %.120s -> opcion %d (%.120s)",
+                     titulo ? titulo : "(sin titulo)",
+                     selected->opcion,
+                     selected->texto ? selected->texto : "(sin texto)");
+            app_log_event("MENU", log_msg);
+
             if (!selected->accion)
             {
+                snprintf(log_msg, sizeof(log_msg), "Salida del menu: %.180s", titulo ? titulo : "(sin titulo)");
+                app_log_event("MENU", log_msg);
                 return;
             }
 
             selected->accion();
+        }
+        else
+        {
+            snprintf(log_msg, sizeof(log_msg), "Menu %.120s -> opcion invalida: %d",
+                     titulo ? titulo : "(sin titulo)", opcion);
+            app_log_event("MENU", log_msg);
         }
     }
 }

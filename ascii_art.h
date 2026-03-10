@@ -175,6 +175,18 @@
     "                    |_|                                \n"
 
 /**
+ * @brief Título artístico para el módulo de Bienestar
+ */
+#define ASCII_BIENESTAR \
+    "  ____  _                      _              \n" \
+    " |  _ \\(_)                    | |             \n" \
+    " | |_) |_  ___ _ __   ___  ___| |_ __ _ _ __  \n" \
+    " |  _ <| |/ _ \\ '_ \\ / _ \\/ __| __/ _` | '__| \n" \
+    " | |_) | |  __/ | | |  __/\\__ \\ || (_| | |    \n" \
+    " |____/|_|\\___|_| |_|\\___||___/\\__\\__,_|_|    \n" \
+    "                                              \n"
+
+/**
  * @brief Título artístico para el Entrenador IA
  */
 #define ASCII_ENTRENADOR_IA \

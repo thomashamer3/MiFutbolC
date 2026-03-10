@@ -599,6 +599,8 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         return ASCII_LOGROS;
     if (strstr(titulo, "ANALISIS") || strstr(titulo, "EVOLUCION TEMPORAL"))
         return ASCII_ANALISIS;
+    if (strstr(titulo, "BIENESTAR") || strstr(titulo, "WELLNESS"))
+        return ASCII_BIENESTAR;
     if (strstr(titulo, "LESIONES"))
         return ASCII_LESIONES;
     if (strstr(titulo, "FINANCIAMIENTO"))
@@ -659,7 +661,7 @@ void print_header(const char *titulo)
 
     uppercase_ascii(titulo, titulo_buf, sizeof(titulo_buf));
     titulo_display = titulo ? titulo_buf : "";
-    const char *ascii = obtener_ascii_por_titulo(titulo);
+    const char *ascii = obtener_ascii_por_titulo(titulo_display);
     int mostrar_datos = 1;
     if (titulo && strstr(titulo, "LISTADO") != NULL)
     {
