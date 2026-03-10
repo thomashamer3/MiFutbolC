@@ -17,6 +17,7 @@ CC="${CC:-gcc}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 RUN_AFTER_BUILD=0
 STRIP_BINARY=0
+OS_NAME="$(uname -s)"
 
 # Simple argument parser
 while [[ "$#" -gt 0 ]]; do
@@ -57,10 +58,17 @@ done
 if [[ "${BUILD_TYPE}" = "Debug" ]]; then
   CFLAGS="${CFLAGS:--Wall -g -O0 -std=c11}"
 else
-  CFLAGS="${CFLAGS:--Wall -O2 -std=c11 -march=native}"
+  CFLAGS="${CFLAGS:--Wall -O2 -std=c11}"
 fi
 
-LDFLAGS="${LDFLAGS:--lhpdf -lz -lm}"
+LDFLAGS="${LDFLAGS:-}"
+
+# Optional native tuning for release builds (disabled by default for portability)
+if [[ "${BUILD_TYPE}" = "Release" ]]; then
+  if [[ "${ENABLE_NATIVE}" = "1" ]]; then
+    CFLAGS+=" -march=native"
+  fi
+fi
 
 # Dependency installation (Debian/Ubuntu)
 # This script attempts to ensure the minimal build dependencies are available.
@@ -77,9 +85,16 @@ check_deps() {
     return 0
   fi
 
-  echo "\nMissing build dependencies: ${missing[*]}"
+  printf "\nMissing build dependencies: %s\n" "${missing[*]}"
 
   # Try installing dependencies with the current distro's package manager
+  if [[ "${OS_NAME}" = "Darwin" ]] && command -v brew >/dev/null 2>&1; then
+    echo "Attempting to install dependencies via Homebrew..."
+    brew update
+    brew install libharu zlib libpng pkg-config
+    return
+  fi
+
   if command -v apt-get >/dev/null 2>&1; then
     echo "Attempting to install dependencies via apt-get..."
     sudo apt-get update
@@ -106,11 +121,12 @@ check_deps() {
     return
   fi
 
-  echo "\nPlease install the missing packages manually and re-run this script."
+  printf "\nPlease install the missing packages manually and re-run this script.\n"
   echo "Debian/Ubuntu: sudo apt-get install build-essential libhpdf-dev zlib1g-dev libpng-dev"
   echo "Fedora: sudo dnf install gcc gcc-c++ make pkgconfig libharu-devel zlib-devel libpng-devel"
   echo "openSUSE: sudo zypper install -y gcc gcc-c++ make pkg-config libharu-devel zlib-devel libpng-devel"
   echo "Arch: sudo pacman -Sy --noconfirm base-devel pkgconf libharu zlib libpng"
+  echo "macOS (Homebrew): brew install libharu zlib libpng pkg-config"
   exit 1
 }
 
@@ -119,12 +135,12 @@ check_deps
 # Warn if sqlite3.c contains Windows-specific configuration options
 warn_sqlite_windows_macros() {
   if grep -q "SQLITE_WIN32_MALLOC" sqlite3.c; then
-    echo "\nWARNING: sqlite3.c contains Windows-specific malloc configuration (SQLITE_WIN32_MALLOC)."
+    printf "\nWARNING: sqlite3.c contains Windows-specific malloc configuration (SQLITE_WIN32_MALLOC).\n"
     echo "This may require adjusting compile-time defines when building on Linux."
   fi
 
   if grep -q "#ifdef _WIN32" sqlite3.c; then
-    echo "\nWARNING: sqlite3.c contains _WIN32 conditionals (Windows-only code)."
+    printf "\nWARNING: sqlite3.c contains _WIN32 conditionals (Windows-only code).\n"
     echo "This is usually fine, but ensure you're compiling in a non-Windows environment."
   fi
 
@@ -166,6 +182,7 @@ SRC=(
   menu.c
   partido.c
   records_rankings.c
+  pdfgen.c
   sqlite3.c
   utils.c
   equipo.c
@@ -177,6 +194,23 @@ SRC=(
 )
 
 OUT="MiFutbolC"
+
+# Resolve compiler/linker flags from pkg-config when available
+if command -v pkg-config >/dev/null 2>&1; then
+  PKG_CFLAGS="$(pkg-config --cflags libharu zlib libpng 2>/dev/null || true)"
+  PKG_LIBS="$(pkg-config --libs libharu zlib libpng 2>/dev/null || true)"
+  if [[ -n "${PKG_CFLAGS}" ]]; then
+    CFLAGS+=" ${PKG_CFLAGS}"
+  fi
+  if [[ -n "${PKG_LIBS}" ]]; then
+    LDFLAGS+=" ${PKG_LIBS}"
+  fi
+fi
+
+# Fallback linker flags in case pkg-config did not return all required libs
+if [[ -z "${LDFLAGS// }" ]]; then
+  LDFLAGS="-lhpdf -lz -lpng -lm"
+fi
 
 # Build
 # -----
@@ -202,8 +236,11 @@ if command -v file >/dev/null 2>&1; then
 fi
 
 if command -v ldd >/dev/null 2>&1; then
-  echo "\nShared library dependencies (ldd):"
+  printf "\nShared library dependencies (ldd):\n"
   ldd "$OUT"
+elif [[ "${OS_NAME}" = "Darwin" ]] && command -v otool >/dev/null 2>&1; then
+  printf "\nShared library dependencies (otool -L):\n"
+  otool -L "$OUT"
 fi
 
 ls -lh "$OUT"

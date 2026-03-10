@@ -76,9 +76,13 @@ static void sanitize_to_ascii(const char *src, char *dst, size_t dst_size)
         return;
 
     size_t out = 0;
-    for (size_t i = 0; src[i] != '\0' && out + 1 < dst_size; ++i)
+    const unsigned char *p = (const unsigned char *)src;
+    while (*p != '\0')
     {
-        unsigned char c = (unsigned char)src[i];
+        if (out + 1 >= dst_size)
+            break;
+
+        unsigned char c = *p++;
         if (c >= 32 && c <= 126)
         {
             dst[out++] = (char)c;

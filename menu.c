@@ -247,6 +247,59 @@ void run_menu(MenuItem* filtered_items, int count)
     db_close();
 }
 
+static const char *menu_safe_title(const char *titulo)
+{
+    return titulo ? titulo : "(sin titulo)";
+}
+
+#ifdef UNIT_TEST
+static int manejar_captura_test_menu(const char *titulo, const MenuItem *items, int cantidad)
+{
+    if (!g_menu_test_capture)
+        return 0;
+
+    g_menu_test_capture->titulo = titulo;
+    g_menu_test_capture->cantidad = cantidad;
+    if (items && cantidad > 0)
+    {
+        g_menu_test_capture->last_item = items[cantidad - 1];
+    }
+    else
+    {
+        g_menu_test_capture->last_item.opcion = 0;
+        g_menu_test_capture->last_item.texto = NULL;
+        g_menu_test_capture->last_item.accion = NULL;
+    }
+
+    return 1;
+}
+#endif
+
+static void log_menu_opcion_invalida(const char *titulo, int opcion, char *log_msg, size_t log_size)
+{
+    snprintf(log_msg, log_size, "Menu %.120s -> opcion invalida: %d", menu_safe_title(titulo), opcion);
+    app_log_event("MENU", log_msg);
+}
+
+static int ejecutar_accion_menu(const char *titulo, const MenuItem *selected, char *log_msg, size_t log_size)
+{
+    snprintf(log_msg, log_size, "Menu %.120s -> opcion %d (%.120s)",
+             menu_safe_title(titulo),
+             selected->opcion,
+             selected->texto ? selected->texto : "(sin texto)");
+    app_log_event("MENU", log_msg);
+
+    if (!selected->accion)
+    {
+        snprintf(log_msg, log_size, "Salida del menu: %.180s", menu_safe_title(titulo));
+        app_log_event("MENU", log_msg);
+        return 0;
+    }
+
+    selected->accion();
+    return 1;
+}
+
 /**
  * @brief Ejecuta un menú interactivo en la consola
  *
@@ -257,26 +310,12 @@ void run_menu(MenuItem* filtered_items, int count)
 void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
 #ifdef UNIT_TEST
-    if (g_menu_test_capture)
-    {
-        g_menu_test_capture->titulo = titulo;
-        g_menu_test_capture->cantidad = cantidad;
-        if (items && cantidad > 0)
-        {
-            g_menu_test_capture->last_item = items[cantidad - 1];
-        }
-        else
-        {
-            g_menu_test_capture->last_item.opcion = 0;
-            g_menu_test_capture->last_item.texto = NULL;
-            g_menu_test_capture->last_item.accion = NULL;
-        }
+    if (manejar_captura_test_menu(titulo, items, cantidad))
         return;
-    }
 #endif
     int opcion;
     char log_msg[512];
-    snprintf(log_msg, sizeof(log_msg), "Ingreso al menu: %.180s", titulo ? titulo : "(sin titulo)");
+    snprintf(log_msg, sizeof(log_msg), "Ingreso al menu: %.180s", menu_safe_title(titulo));
     app_log_event("MENU", log_msg);
 
     while (1)
@@ -292,29 +331,13 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
         opcion = input_int(">");
 
         const MenuItem *selected = buscar_item(items, cantidad, opcion);
-
-        if (selected)
+        if (!selected)
         {
-            snprintf(log_msg, sizeof(log_msg), "Menu %.120s -> opcion %d (%.120s)",
-                     titulo ? titulo : "(sin titulo)",
-                     selected->opcion,
-                     selected->texto ? selected->texto : "(sin texto)");
-            app_log_event("MENU", log_msg);
-
-            if (!selected->accion)
-            {
-                snprintf(log_msg, sizeof(log_msg), "Salida del menu: %.180s", titulo ? titulo : "(sin titulo)");
-                app_log_event("MENU", log_msg);
-                return;
-            }
-
-            selected->accion();
+            log_menu_opcion_invalida(titulo, opcion, log_msg, sizeof(log_msg));
+            continue;
         }
-        else
-        {
-            snprintf(log_msg, sizeof(log_msg), "Menu %.120s -> opcion invalida: %d",
-                     titulo ? titulo : "(sin titulo)", opcion);
-            app_log_event("MENU", log_msg);
-        }
+
+        if (!ejecutar_accion_menu(titulo, selected, log_msg, sizeof(log_msg)))
+            return;
     }
 }

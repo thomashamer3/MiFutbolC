@@ -184,7 +184,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1773122344 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1773125352 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"utils.h"
 	<stdio.h>
@@ -2029,7 +2029,7 @@
 	<string.h>
 	<time.h>
 
-1773106110 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1773125425 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2124,7 +2124,7 @@
 
 1770167266 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.h
 
-1773105497 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
+1773125229 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
 	"export_pdf.h"
 	"export_camisetas.h"
 	"export_camisetas_mejorado.h"

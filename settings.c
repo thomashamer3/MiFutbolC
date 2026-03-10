@@ -1001,8 +1001,8 @@ static int comparar_versiones(const char *a, const char *b)
         b++;
     }
 
-    sscanf(a ? a : "", "%d.%d.%d", &am, &an, &ap);
-    sscanf(b ? b : "", "%d.%d.%d", &bm, &bn, &bp);
+    sscanf_s(a ? a : "", "%d.%d.%d", &am, &an, &ap);
+    sscanf_s(b ? b : "", "%d.%d.%d", &bm, &bn, &bp);
 
     if (am != bm) return am < bm ? -1 : 1;
     if (an != bn) return an < bn ? -1 : 1;
