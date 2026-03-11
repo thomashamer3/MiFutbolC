@@ -1897,7 +1897,7 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
         int x = -1;
         int y = -1;
         char c = '\0';
-        if (sscanf_s(line + 1, "%d %d %c", &x, &y, &c, (unsigned int)sizeof(c)) == 3)
+        if (sscanf(line + 1, "%d %d %c", &x, &y, &c) == 3)
         {
             if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
             {

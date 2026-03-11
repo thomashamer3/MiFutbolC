@@ -189,7 +189,7 @@ int input_int(const char *msg)
         }
 
         char extra = '\0';
-        if (sscanf_s(buffer, "%d %c", &v, &extra, (unsigned int)sizeof(extra)) == 1)
+        if (sscanf(buffer, "%d %c", &v, &extra) == 1)
             return v;
 
         ui_printf("Entrada inválida. Intente nuevamente.\n");

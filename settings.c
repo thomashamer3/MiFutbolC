@@ -198,7 +198,8 @@ static int confirmar_guardado_configuracion(int default_on_fail)
 {
     printf("Guardar configuracion? (S/N): ");
     char confirm;
-    if (scanf_s(" %c", &confirm, 1) != 1)
+    char input[16];
+    if (!fgets(input, sizeof(input), stdin) || sscanf(input, " %c", &confirm) != 1)
     {
         confirm = default_on_fail ? 'S' : 'N';
     }

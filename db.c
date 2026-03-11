@@ -24,8 +24,6 @@
 #include "ShlObj.h"
 #endif
 
-static char error_buf[256];
-
 #ifdef _WIN32
 #define MKDIR(path) _mkdir(path)
 #define STRDUP _strdup
@@ -35,25 +33,8 @@ static char error_buf[256];
 #define STRDUP strdup
 #endif
 
-#ifndef _WIN32
-static size_t strlen_s(const char *str, size_t max_len)
-{
-    return strnlen(str, max_len);
-}
-
-static int strncpy_s(char *dest, size_t destsz, const char *src, size_t count)
-{
-    if (!dest || !src || destsz == 0)
-    {
-        return 1;
-    }
-
-    size_t max_copy = (count < (destsz - 1)) ? count : (destsz - 1);
-    size_t len = strnlen(src, max_copy);
-    memcpy(dest, src, len);
-    dest[len] = '\0';
-    return 0;
-}
+#ifdef _WIN32
+static char error_buf[256];
 #endif
 
 /** Puntero global a la base de datos SQLite */

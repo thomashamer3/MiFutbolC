@@ -2,7 +2,7 @@
 1772827350 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"menu.h"
 
-1766727268 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1773203112 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -92,7 +92,7 @@
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1773202355 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -137,7 +137,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773202355 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
@@ -340,7 +340,7 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1773083283 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2047,7 +2047,7 @@
 	<string.h>
 	<time.h>
 
-1773202355 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2127,7 +2127,7 @@
 1765442468 c:\msys64\mingw64\include\memory.h
 	<crtdefs.h>
 
-1769985051 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos_helpers.h
+1773203078 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos_helpers.h
 	"db.h"
 	"utils.h"
 	"cJSON.h"

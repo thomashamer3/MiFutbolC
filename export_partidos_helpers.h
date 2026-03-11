@@ -59,7 +59,7 @@ static sqlite3_stmt* prepare_partido_query(const char* order_by_clause)
  */
 static FILE* open_export_file(const char* filename)
 {
-    FILE *f;
+    FILE *f = NULL;
     fopen_s(&f, get_export_path(filename), "w");
     return f;
 }
