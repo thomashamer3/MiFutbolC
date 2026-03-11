@@ -15,6 +15,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 // Forward declaration - Estructura para agrupar datos de un partido
 typedef struct
 {
@@ -165,7 +171,7 @@ static void build_filename(const char *extension, char *filename, size_t size)
 {
     strcpy_s(filename, size, get_import_dir());
     size_t filename_len = safe_strnlen(filename, size);
-    strncat_s(filename, size, "\\", size - filename_len - 1);
+    strncat_s(filename, size, PATH_SEP, size - filename_len - 1);
     strncat_s(filename, size, extension, size - filename_len - 1);
 }
 

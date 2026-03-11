@@ -19,6 +19,12 @@
 #endif
 #include <string.h>
 
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 /**
  * @brief Construye la ruta completa para un archivo de exportación
  *
@@ -40,7 +46,7 @@ char *get_export_path(const char *filename)
     else
     {
         strcpy_s(path, sizeof(path), export_dir);
-        strcat_s(path, sizeof(path), "\\");
+        strcat_s(path, sizeof(path), PATH_SEP);
         strcat_s(path, sizeof(path), filename);
     }
     return path;

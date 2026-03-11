@@ -16,6 +16,12 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 
 /**
  * @brief Convierte un tipo de transacción enumerado a su nombre textual
@@ -1401,7 +1407,7 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
 {
 
     // CSV
-    snprintf(params->csv_filename, 300, "%s\\financiamiento_%s.csv", params->export_dir, params->timestamp);
+    snprintf(params->csv_filename, 300, "%s%sfinanciamiento_%s.csv", params->export_dir, PATH_SEP, params->timestamp);
     abrir_archivo(params->csv_file, params->csv_filename, "w", "CSV");
     if (*params->csv_file)
     {
@@ -1409,7 +1415,7 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // TXT
-    snprintf(params->txt_filename, 300, "%s\\financiamiento_%s.txt", params->export_dir, params->timestamp);
+    snprintf(params->txt_filename, 300, "%s%sfinanciamiento_%s.txt", params->export_dir, PATH_SEP, params->timestamp);
     if (*params->csv_file)
     {
         abrir_archivo(params->txt_file, params->txt_filename, "w", "TXT");
@@ -1427,7 +1433,7 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // HTML
-    snprintf(params->html_filename, 300, "%s\\financiamiento_%s.html", params->export_dir, params->timestamp);
+    snprintf(params->html_filename, 300, "%s%sfinanciamiento_%s.html", params->export_dir, PATH_SEP, params->timestamp);
     if (*params->csv_file && *params->txt_file)
     {
         abrir_archivo(params->html_file, params->html_filename, "w", "HTML");
@@ -1446,7 +1452,7 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // JSON
-    snprintf(params->json_filename, 300, "%s\\financiamiento_%s.json", params->export_dir, params->timestamp);
+    snprintf(params->json_filename, 300, "%s%sfinanciamiento_%s.json", params->export_dir, PATH_SEP, params->timestamp);
     if (*params->csv_file && *params->txt_file && *params->html_file)
     {
         abrir_archivo(params->json_file, params->json_filename, "w", "JSON");

@@ -9,6 +9,12 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 
 /**
  * @file temporada.c
@@ -1095,7 +1101,7 @@ void exportar_resumen_temporada(int temporada_id)
 
     const char *export_dir = get_export_dir();
     char filepath[300];
-    snprintf(filepath, sizeof(filepath), "%s\\%s", export_dir, filename);
+    snprintf(filepath, sizeof(filepath), "%s%s%s", export_dir, PATH_SEP, filename);
 
     FILE *file;
     errno_t err = fopen_s(&file, filepath, "w");
@@ -1640,7 +1646,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
 
     const char *export_dir = get_export_dir();
     char filepath[300];
-    snprintf(filepath, sizeof(filepath), "%s\\%s", export_dir, filename);
+    snprintf(filepath, sizeof(filepath), "%s%s%s", export_dir, PATH_SEP, filename);
 
     FILE *file;
     errno_t err = fopen_s(&file, filepath, "w");

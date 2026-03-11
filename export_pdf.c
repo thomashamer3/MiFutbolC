@@ -22,6 +22,12 @@
 #include <ctype.h>
 #include "pdfgen.h"
 
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
 #define PDF_MARGIN 40.0f
 #define PDF_BODY_SIZE 10.0f
 #define PDF_SUBTITLE_SIZE 12.0f
@@ -808,7 +814,7 @@ int generar_informe_total_pdf(void)
     snprintf(pdf_filename, sizeof(pdf_filename), "Informe Total %s.pdf", fecha_archivo);
 
     char pdf_path[512];
-    snprintf(pdf_path, sizeof(pdf_path), "%s\\%s", export_dir, pdf_filename);
+    snprintf(pdf_path, sizeof(pdf_path), "%s%s%s", export_dir, PATH_SEP, pdf_filename);
 
     const char *files[] =
     {
@@ -887,7 +893,7 @@ int generar_informe_total_pdf(void)
     for (int i = 0; i < (int)(sizeof(files) / sizeof(files[0])); i++)
     {
         char path[512];
-        snprintf(path, sizeof(path), "%s\\%s", export_dir, files[i]);
+        snprintf(path, sizeof(path), "%s%s%s", export_dir, PATH_SEP, files[i]);
         procesar_archivo_txt(path, titles[i], &ctx);
     }
 
@@ -934,7 +940,7 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     snprintf(pdf_filename, sizeof(pdf_filename), "Informe Personal %s.pdf", mes_filename);
 
     char pdf_path[512];
-    snprintf(pdf_path, sizeof(pdf_path), "%s\\%s", export_dir, pdf_filename);
+    snprintf(pdf_path, sizeof(pdf_path), "%s%s%s", export_dir, PATH_SEP, pdf_filename);
 
     char fecha_hora[32];
     get_datetime(fecha_hora, sizeof(fecha_hora));

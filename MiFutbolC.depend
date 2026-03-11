@@ -67,7 +67,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1773202355 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1773203180 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -137,7 +137,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773203592 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"menu.h"
 	"db.h"
@@ -174,7 +174,7 @@
 
 1769908272 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1773174040 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1773204615 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -340,7 +340,7 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1773204615 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2033,7 +2033,7 @@
 1769840391 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
 	<time.h>
 
-1770272931 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.c
+1773206966 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.c
 	"financiamiento.h"
 	"db.h"
 	"utils.h"
@@ -2047,7 +2047,7 @@
 	<string.h>
 	<time.h>
 
-1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1773203592 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2095,7 +2095,7 @@
 	<stdlib.h>
 	<string.h>
 
-1770272931 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
+1773206966 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
 	"temporada.h"
 	"db.h"
 	"utils.h"
@@ -2143,7 +2143,7 @@
 
 1770167266 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.h
 
-1773166449 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
+1773206966 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_pdf.c
 	"export_pdf.h"
 	"export_camisetas.h"
 	"export_camisetas_mejorado.h"
