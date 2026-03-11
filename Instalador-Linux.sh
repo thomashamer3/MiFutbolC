@@ -15,6 +15,7 @@ set -euo pipefail
 # Build configuration
 CC="${CC:-gcc}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
+ENABLE_NATIVE="${ENABLE_NATIVE:-0}"
 RUN_AFTER_BUILD=0
 STRIP_BINARY=0
 OS_NAME="$(uname -s)"
@@ -60,6 +61,9 @@ if [[ "${BUILD_TYPE}" = "Debug" ]]; then
 else
   CFLAGS="${CFLAGS:--Wall -O2 -std=c11}"
 fi
+
+# Ensure local compatibility headers are found and injected first on non-Windows builds.
+CFLAGS+=" -I. -include compat_port.h"
 
 LDFLAGS="${LDFLAGS:-}"
 

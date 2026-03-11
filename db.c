@@ -14,9 +14,15 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#ifdef _WIN32
 #include <direct.h>
-#include <Windows.h>
+#include <windows.h>
 #include <ShlObj.h>
+#else
+#include "direct.h"
+#include "compat_windows.h"
+#include "ShlObj.h"
+#endif
 
 static char error_buf[256];
 

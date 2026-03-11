@@ -5,7 +5,11 @@
 #include "export_partidos_helpers.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
 #include <direct.h>
+#else
+#include "direct.h"
+#endif
 #include <string.h>
 
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */

@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
 #include <process.h>
+#else
+#include "process.h"
+#endif
 #include <ctype.h>
 #include <limits.h>
 

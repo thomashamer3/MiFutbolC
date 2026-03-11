@@ -13,7 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include "compat_windows.h"
+#endif
 #include "sqlite3.h"
 #include <ctype.h>
 #include <limits.h>

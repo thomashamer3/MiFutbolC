@@ -8,10 +8,11 @@
  * Soporta evolución de esquema mediante ALTER TABLE dinámicos.
  */
 
-#include "sqlite3.h"
-
 #ifndef DB_H
 #define DB_H
+
+#include "compat_port.h"
+#include "sqlite3.h"
 
 /**
  * @brief Instancia global de conexión SQLite3

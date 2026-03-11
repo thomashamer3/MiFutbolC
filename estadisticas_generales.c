@@ -343,10 +343,16 @@ void mostrar_promedio_rendimiento_general()
  */
 void mostrar_rendimiento_promedio_por_clima()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY clima",
-             get_clima_case_sql());
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY clima",
+                           get_clima_case_sql());
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("RENDIMIENTO PROMEDIO POR CLIMA",
                          "Rendimiento Promedio por Clima",
                          sql);
@@ -357,10 +363,16 @@ void mostrar_rendimiento_promedio_por_clima()
  */
 void mostrar_goles_por_clima()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS clima_texto, SUM(goles) FROM partido GROUP BY clima ORDER BY clima",
-             get_clima_case_sql());
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS clima_texto, SUM(goles) FROM partido GROUP BY clima ORDER BY clima",
+                           get_clima_case_sql());
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("GOLES POR CLIMA",
                          "Goles por Clima",
                          sql);
@@ -371,10 +383,16 @@ void mostrar_goles_por_clima()
  */
 void mostrar_asistencias_por_clima()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS clima_texto, SUM(asistencias) FROM partido GROUP BY clima ORDER BY clima",
-             get_clima_case_sql());
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS clima_texto, SUM(asistencias) FROM partido GROUP BY clima ORDER BY clima",
+                           get_clima_case_sql());
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("ASISTENCIAS POR CLIMA",
                          "Asistencias por Clima",
                          sql);
@@ -385,10 +403,16 @@ void mostrar_asistencias_por_clima()
  */
 void mostrar_clima_mejor_rendimiento()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC LIMIT 1",
-             get_clima_case_sql());
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC LIMIT 1",
+                           get_clima_case_sql());
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("CLIMA DONDE SE RINDE MEJOR",
                          "Clima con Mejor Rendimiento Promedio",
                          sql);
@@ -399,10 +423,16 @@ void mostrar_clima_mejor_rendimiento()
  */
 void mostrar_clima_peor_rendimiento()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) ASC LIMIT 1",
-             get_clima_case_sql());
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS clima_texto, ROUND(AVG(rendimiento_general), 2) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) ASC LIMIT 1",
+                           get_clima_case_sql());
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("CLIMA DONDE SE RINDE PEOR",
                          "Clima con Peor Rendimiento Promedio",
                          sql);
@@ -453,10 +483,16 @@ void mostrar_rendimiento_promedio_por_dia()
  */
 void mostrar_rendimiento_por_nivel_cansancio()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS nivel_cansancio, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
-             get_nivel_case_sql("cansancio"), get_nivel_case_sql("cansancio"));
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS nivel_cansancio, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
+                           get_nivel_case_sql("cansancio"), get_nivel_case_sql("cansancio"));
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("RENDIMIENTO POR NIVEL DE CANSANCIO",
                          "Rendimiento por Nivel de Cansancio",
                          sql);
@@ -568,10 +604,16 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
  */
 void mostrar_rendimiento_por_estado_animo()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
-             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC",
+                           get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("RENDIMIENTO POR ESTADO DE ANIMO",
                          "Rendimiento por Estado de Animo",
                          sql);
@@ -582,10 +624,16 @@ void mostrar_rendimiento_por_estado_animo()
  */
 void mostrar_goles_por_estado_animo()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS nivel_animo, SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_goles DESC",
-             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS nivel_animo, SUM(goles) AS total_goles, ROUND(AVG(goles), 2) AS promedio_goles, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_goles DESC",
+                           get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("GOLES POR ESTADO DE ANIMO",
                          "Goles por Estado de Animo",
                          sql);
@@ -596,10 +644,16 @@ void mostrar_goles_por_estado_animo()
  */
 void mostrar_asistencias_por_estado_animo()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS nivel_animo, SUM(asistencias) AS total_asistencias, ROUND(AVG(asistencias), 2) AS promedio_asistencias, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_asistencias DESC",
-             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS nivel_animo, SUM(asistencias) AS total_asistencias, ROUND(AVG(asistencias), 2) AS promedio_asistencias, COUNT(*) AS partidos FROM partido GROUP BY %s ORDER BY promedio_asistencias DESC",
+                           get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("ASISTENCIAS POR ESTADO DE ANIMO",
                          "Asistencias por Estado de Animo",
                          sql);
@@ -610,10 +664,16 @@ void mostrar_asistencias_por_estado_animo()
  */
 void mostrar_estado_animo_ideal()
 {
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC LIMIT 1",
-             get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    char sql[1024];
+    int written = snprintf(sql, sizeof(sql),
+                           "SELECT %s AS nivel_animo, ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio FROM partido GROUP BY %s ORDER BY rendimiento_promedio DESC LIMIT 1",
+                           get_nivel_case_sql("estado_animo"), get_nivel_case_sql("estado_animo"));
+    if (written < 0 || (size_t)written >= sizeof(sql))
+    {
+        printf("Error: no se pudo construir la consulta SQL completa.\n");
+        pause_console();
+        return;
+    }
     mostrar_query_simple("ESTADO DE ANIMO IDEAL PARA JUGAR",
                          "Estado de Animo Ideal",
                          sql);

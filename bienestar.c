@@ -316,7 +316,13 @@ static void pedir_fecha(const char *prompt, char *buffer, int size)
     while (1)
     {
         char entrada[32];
-        input_string(prompt, entrada, sizeof(entrada));
+        ui_printf("%s", prompt);
+        if (!fgets(entrada, sizeof(entrada), stdin))
+        {
+            continue;
+        }
+        entrada[strcspn(entrada, "\r\n")] = '\0';
+
         if (safe_strnlen(entrada, sizeof(entrada)) == 0)
         {
             fecha_hoy(buffer, size);
@@ -702,7 +708,7 @@ static void listar_habitos_simple(int con_pause, int con_clear)
         return;
     }
 
-    ui_printf_centered_line("ID | Fecha | Dormi | Hid | Alc | Animo | Ner | Conf | Mot | Tipo");
+    ui_printf_centered_line("ID | Fecha | Dormir | Hidratacion | Alcohol | Animo | Nervios | Confianza | Motivacion | Tipo");
     ui_printf_centered_line("------------------------------------------------------------------");
 
     int count = 0;
@@ -1095,7 +1101,7 @@ static void listar_sesiones_mentales(void)
         return;
     }
 
-    ui_printf_centered_line("ID | Fecha | Tipo | Momento | Conf | Estres | Mot | Pres | Conc");
+    ui_printf_centered_line("ID | Fecha | Tipo | Momento | Confianza | Estres | Motivacion | Presion | Concentracion");
     ui_printf_centered_line("--------------------------------------------------------------------");
 
     int count = 0;
@@ -1495,7 +1501,7 @@ static void sesiones_antes_despues_partido(void)
         return;
     }
 
-    printf("Fecha | Momento | Conf | Estres | Mot | Rendimiento\n");
+    printf("Fecha | Momento | Confianza | Estres | Motivacion | Rendimiento\n");
     printf("--------------------------------------------------------\n");
 
     int count = 0;
@@ -1602,8 +1608,13 @@ static void mostrar_mental_deportivo(void)
 
 static int parse_mes_anio(const char *entrada, char *salida, int size)
 {
-    if (!entrada || safe_strnlen(entrada, (size_t)size) < 7)
+    if (!entrada)
         return 0;
+
+    if (safe_strnlen(entrada, 16) != 7)
+    {
+        return 0;
+    }
 
     if (!isdigit((unsigned char)entrada[0]) || !isdigit((unsigned char)entrada[1]) || entrada[2] != '/' ||
             !isdigit((unsigned char)entrada[3]) || !isdigit((unsigned char)entrada[4]) ||
@@ -1628,7 +1639,12 @@ static void pedir_mes_anio(char *salida, int size)
     while (1)
     {
         char entrada[16];
-        input_string("Mes y año (MM/AAAA, Enter=actual): ", entrada, sizeof(entrada));
+        ui_printf("Mes y anio (MM/AAAA, ej: 03/2026, Enter=actual): ");
+        if (!fgets(entrada, sizeof(entrada), stdin))
+        {
+            continue;
+        }
+        entrada[strcspn(entrada, "\r\n")] = '\0';
 
         if (safe_strnlen(entrada, sizeof(entrada)) == 0)
         {
@@ -1662,7 +1678,7 @@ static void pedir_mes_anio(char *salida, int size)
             return;
         }
 
-        printf("Mes inválido. Use formato MM/AAAA.\n");
+        printf("Mes invalido. Use formato MM/AAAA (ejemplo: 03/2026).\n");
     }
 }
 
@@ -1757,7 +1773,7 @@ static void listar_entrenamientos_simple(int con_pause, int con_clear)
         return;
     }
 
-    ui_printf_centered_line("ID | Fecha | Tipo | Dur (min) | Int | Omitido");
+    ui_printf_centered_line("ID | Fecha | Tipo | Duracion (min) | Intensidad | Omitido");
     ui_printf_centered_line("----------------------------------------------------");
 
     int count = 0;
@@ -2704,7 +2720,7 @@ static void listar_recomendaciones_entrenamiento(void)
         return;
     }
 
-    ui_printf_centered_line("Fecha | Prep | Riesgo | Resumen");
+    ui_printf_centered_line("Fecha | Preparacion | Riesgo | Resumen");
     ui_printf_centered_line("--------------------------------------------------------------");
 
     int count = 0;

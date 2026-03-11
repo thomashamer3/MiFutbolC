@@ -927,8 +927,11 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
     char mes_display[16];
     format_mes_display(mes_yyyy_mm, mes_display, sizeof(mes_display));
 
+    char mes_filename[16];
+    format_datetime_filename(mes_display, mes_filename, sizeof(mes_filename));
+
     char pdf_filename[128];
-    snprintf(pdf_filename, sizeof(pdf_filename), "Informe Personal %s.pdf", mes_display);
+    snprintf(pdf_filename, sizeof(pdf_filename), "Informe Personal %s.pdf", mes_filename);
 
     char pdf_path[512];
     snprintf(pdf_path, sizeof(pdf_path), "%s\\%s", export_dir, pdf_filename);

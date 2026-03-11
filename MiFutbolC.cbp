@@ -75,6 +75,7 @@
 			<Add option="-Wl,--gc-sections" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>
+		<Unit filename="ShlObj.h" />
 		<Unit filename="analisis.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -95,10 +96,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="cancha.h" />
+		<Unit filename="compat_port.h" />
 		<Unit filename="db.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="db.h" />
+		<Unit filename="direct.h" />
 		<Unit filename="entrenador_ia.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -211,6 +214,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="pdfgen.h" />
+		<Unit filename="process.h" />
 		<Unit filename="records_rankings.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -238,6 +242,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="utils.h" />
+		<Unit filename="compat_windows.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

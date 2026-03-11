@@ -25,9 +25,17 @@
 #include <errno.h>
 #include <stdarg.h>
 #ifdef _WIN32
+#ifdef _WIN32
 #include <direct.h>
+#else
+#include "direct.h"
+#endif
 #define MKDIR(path) _mkdir(path)
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "compat_windows.h"
+#endif
 #else
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)

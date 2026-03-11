@@ -14,7 +14,11 @@
 #include "import.h"
 #include "ascii_art.h"
 #include "cJSON.h"
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "compat_windows.h"
+#endif
 #ifdef _WIN32
 #include <shellapi.h>
 #endif

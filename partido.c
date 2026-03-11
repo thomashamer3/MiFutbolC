@@ -10,10 +10,18 @@
 #include "settings.h"
 #include <stdio.h>
 #include <string.h>
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include "compat_windows.h"
+#endif
 #include <stdlib.h>
 #include <time.h>
+#ifdef _WIN32
 #include <process.h>
+#else
+#include "process.h"
+#endif
 #include <memory.h>
 #include <limits.h>
 

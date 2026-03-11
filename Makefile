@@ -4,14 +4,20 @@
 
 CC ?= gcc
 BUILD_TYPE ?= Release
+ENABLE_NATIVE ?= 0
 
 ifeq ($(BUILD_TYPE),Debug)
   CFLAGS ?= -Wall -g -O0 -std=c11
 else
-  CFLAGS ?= -Wall -O2 -std=c11 -march=native
+  CFLAGS ?= -Wall -O2 -std=c11
+  ifeq ($(ENABLE_NATIVE),1)
+    CFLAGS += -march=native
+  endif
 endif
 
-LDFLAGS ?= -lhpdf -lz -lm
+CFLAGS += -I. -include compat_port.h
+
+LDFLAGS ?= -lhpdf -lz -lpng -lm
 
 SRC = \
   analisis.c \
@@ -45,6 +51,7 @@ SRC = \
   menu.c \
   partido.c \
   records_rankings.c \
+  pdfgen.c \
   sqlite3.c \
   utils.c \
   equipo.c \

@@ -7,7 +7,11 @@
 #include <time.h>
 #include <ctype.h>
 #ifdef _WIN32
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "compat_windows.h"
+#endif
 #endif
 #include "db.h"
 #include "camiseta.h"
