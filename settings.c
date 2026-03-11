@@ -1468,7 +1468,11 @@ static void reset_settings_to_defaults()
     printf("(S/N): ");
 
     char confirm;
-    scanf_s(" %c", &confirm, 1);
+    char input[16];
+    if (!fgets(input, sizeof(input), stdin) || sscanf(input, " %c", &confirm) != 1)
+    {
+        confirm = 'N';
+    }
 
     if (confirm == 's' || confirm == 'S')
     {

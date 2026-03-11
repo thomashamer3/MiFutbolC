@@ -20,6 +20,32 @@ RUN_AFTER_BUILD=0
 STRIP_BINARY=0
 OS_NAME="$(uname -s)"
 
+# Progress bar (stage-based) for installation/build flow
+TOTAL_STEPS=5
+CURRENT_STEP=0
+
+render_progress_bar() {
+  local current="$1"
+  local total="$2"
+  local width=34
+  local filled=$(( current * width / total ))
+  local empty=$(( width - filled ))
+  local percent=$(( current * 100 / total ))
+
+  printf "["
+  for ((i=0; i<filled; i++)); do printf "#"; done
+  for ((i=0; i<empty; i++)); do printf "."; done
+  printf "] %3d%%" "$percent"
+}
+
+step_progress() {
+  local message="$1"
+  CURRENT_STEP=$((CURRENT_STEP + 1))
+  printf "\n[%d/%d] %s\n" "$CURRENT_STEP" "$TOTAL_STEPS" "$message"
+  render_progress_bar "$CURRENT_STEP" "$TOTAL_STEPS"
+  printf "\n"
+}
+
 # Simple argument parser
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -134,6 +160,7 @@ check_deps() {
   exit 1
 }
 
+step_progress "Verificando dependencias"
 check_deps
 
 # Warn if sqlite3.c contains Windows-specific configuration options
@@ -151,6 +178,7 @@ warn_sqlite_windows_macros() {
   return 0
 }
 
+step_progress "Revisando compatibilidad de sqlite3"
 warn_sqlite_windows_macros
 
 # Source files
@@ -200,6 +228,7 @@ SRC=(
 OUT="MiFutbolC"
 
 # Resolve compiler/linker flags from pkg-config when available
+step_progress "Resolviendo flags de compilacion"
 if command -v pkg-config >/dev/null 2>&1; then
   PKG_CFLAGS="$(pkg-config --cflags libharu zlib libpng 2>/dev/null || true)"
   PKG_LIBS="$(pkg-config --libs libharu zlib libpng 2>/dev/null || true)"
@@ -221,6 +250,7 @@ fi
 # This script is intended for Unix-like environments (Linux/macOS).
 # It compiles the project with gcc/clang and links against libharu, zlib and libm.
 
+step_progress "Compilando proyecto"
 echo "Building (BUILD_TYPE=${BUILD_TYPE}) with $CC..."
 "$CC" $CFLAGS "${SRC[@]}" $LDFLAGS -o "$OUT"
 
@@ -248,6 +278,10 @@ elif [[ "${OS_NAME}" = "Darwin" ]] && command -v otool >/dev/null 2>&1; then
 fi
 
 ls -lh "$OUT"
+
+step_progress "Instalacion finalizada"
+echo "MiFutbolC esta listo para usar."
+
 if [[ "$RUN_AFTER_BUILD" -eq 1 ]]; then
   echo "Running $OUT..."
   ./"$OUT"

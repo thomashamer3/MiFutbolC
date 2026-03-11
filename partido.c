@@ -1800,20 +1800,15 @@ static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t 
 #elif defined(_MSC_VER)
     return strncpy_s(dest, destsz, src, count == TACTICA_TRUNCATE ? _TRUNCATE : count);
 #else
-    size_t to_copy;
-    if (count == TACTICA_TRUNCATE || count >= destsz)
-        to_copy = destsz - 1;
-    else
-        to_copy = count;
-
-    /* Guardar un límite explícito para ayudar al analizador estático */
+    size_t max_src = (count == TACTICA_TRUNCATE) ? (destsz - 1) : count;
+    size_t src_len = strnlen(src, max_src);
+    size_t to_copy = src_len;
     if (to_copy > destsz - 1)
         to_copy = destsz - 1;
 
-    for (size_t i = 0; i < to_copy; ++i)
-    {
-        dest[i] = src[i];
-    }
+    if (to_copy > 0)
+        memcpy(dest, src, to_copy);
+
     dest[to_copy] = '\0';
     return 0;
 #endif
