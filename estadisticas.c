@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file estadisticas.c
- * @brief Módulo principal para el menú de estadísticas en partidos de fútbol.
+ * @brief Modulo principal para el menu de estadisticas en partidos de futbol.
  *
- * Este archivo contiene la función principal del menú de estadísticas
- * que permite acceder a las diferentes opciones de visualización de estadísticas.
+ * Este archivo contiene la funcion principal del menu de estadisticas
+ * que permite acceder a las diferentes opciones de visualizacion de estadisticas.
  */
 
 #include "estadisticas.h"
@@ -18,16 +18,16 @@
 
 
 /**
- * @brief Menú principal de estadísticas
+ * @brief Menu principal de estadisticas
  *
- * Este menú centraliza el acceso a todas las categorías de estadísticas,
- * permitiendo a los usuarios navegar fácilmente entre diferentes tipos de análisis.
- * La organización en categorías ayuda a los usuarios a encontrar rápidamente
- * la información que necesitan sin abrumarlos con demasiadas opciones a la vez.
+ * Este menu centraliza el acceso a todas las categorias de estadisticas,
+ * permitiendo a los usuarios navegar facilmente entre diferentes tipos de analisis.
+ * La organizacion en categorias ayuda a los usuarios a encontrar rapidamente
+ * la informacion que necesitan sin abrumarlos con demasiadas opciones a la vez.
  */
 void menu_estadisticas()
 {
-    // Activar IA al abrir estadísticas
+    // Activar IA al abrir estadisticas
 #ifndef UNIT_TEST
     activar_ia_estadisticas();
 #endif
@@ -46,9 +46,9 @@ void menu_estadisticas()
 }
 
 /**
- * @brief Sub-menú de estadísticas generales
+ * @brief Sub-menu de estadisticas generales
  *
- * Proporciona acceso a estadísticas agregadas en diferentes periodos de tiempo.
+ * Proporciona acceso a estadisticas agregadas en diferentes periodos de tiempo.
  * Esto permite a los usuarios analizar tendencias a lo largo del tiempo y comparar
  * el rendimiento en diferentes escalas temporales, lo que es esencial para identificar
  * patrones y tomar decisiones informadas sobre el entrenamiento y estrategia.
@@ -68,12 +68,12 @@ void menu_estadisticas_generales()
 }
 
 /**
- * @brief Sub-menú de estadísticas de partidos
+ * @brief Sub-menu de estadisticas de partidos
  *
- * Ofrece análisis detallado de los partidos jugados, incluyendo métricas
+ * Ofrece analisis detallado de los partidos jugados, incluyendo metricas
  * que ayudan a identificar patrones de rendimiento bajo diferentes condiciones.
- * Esto es crucial para entender cómo factores como el cansancio y la dificultad
- * afectan el desempeño, permitiendo ajustar estrategias para futuros encuentros.
+ * Esto es crucial para entender como factores como el cansancio y la dificultad
+ * afectan el desempeno, permitiendo ajustar estrategias para futuros encuentros.
  */
 void menu_estadisticas_partidos()
 {
@@ -91,12 +91,12 @@ void menu_estadisticas_partidos()
 }
 
 /**
- * @brief Sub-menú de estadísticas de goles
+ * @brief Sub-menu de estadisticas de goles
  *
- * Proporciona análisis de la productividad ofensiva, correlacionando goles
+ * Proporciona analisis de la productividad ofensiva, correlacionando goles
  * con diversos factores contextuales. Esto ayuda a identificar las condiciones
- * óptimas para el rendimiento ofensivo y entender cómo diferentes variables
- * afectan la capacidad de anotación, información valiosa para la estrategia de juego.
+ * optimas para el rendimiento ofensivo y entender como diferentes variables
+ * afectan la capacidad de anotacion, informacion valiosa para la estrategia de juego.
  */
 void menu_estadisticas_goles()
 {
@@ -115,12 +115,12 @@ void menu_estadisticas_goles()
 }
 
 /**
- * @brief Sub-menú de estadísticas de asistencias
+ * @brief Sub-menu de estadisticas de asistencias
  *
- * Analiza el juego en equipo y la creación de oportunidades de gol.
+ * Analiza el juego en equipo y la creacion de oportunidades de gol.
  * Las asistencias son un indicador clave del trabajo colectivo y la efectividad
- * del juego ofensivo. Este análisis ayuda a evaluar la calidad del juego en equipo
- * y cómo diferentes condiciones afectan la capacidad de crear oportunidades para los compañeros.
+ * del juego ofensivo. Este analisis ayuda a evaluar la calidad del juego en equipo
+ * y como diferentes condiciones afectan la capacidad de crear oportunidades para los companeros.
  */
 void menu_estadisticas_asistencias()
 {
@@ -138,13 +138,13 @@ void menu_estadisticas_asistencias()
 }
 
 /**
- * @brief Sub-menú de estadísticas de rendimiento
+ * @brief Sub-menu de estadisticas de rendimiento
  *
- * Ofrece un análisis exhaustivo del rendimiento bajo diversas condiciones.
- * Este es el menú más completo ya que el rendimiento es la métrica más importante
- * para evaluar el desempeño global. Proporciona información detallada sobre cómo
+ * Ofrece un analisis exhaustivo del rendimiento bajo diversas condiciones.
+ * Este es el menu mas completo ya que el rendimiento es la metrica mas importante
+ * para evaluar el desempeno global. Proporciona informacion detallada sobre como
  * factores externos e internos afectan el rendimiento, permitiendo optimizar
- * el entrenamiento y la preparación para maximizar el desempeño en diferentes contextos.
+ * el entrenamiento y la preparacion para maximizar el desempeno en diferentes contextos.
  */
 void menu_estadisticas_rendimiento()
 {

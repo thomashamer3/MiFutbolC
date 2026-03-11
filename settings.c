@@ -1,8 +1,8 @@
-/**
+﻿/**
  * @file settings.c
- * @brief Implementación del sistema de configuracion avanzada
+ * @brief Implementacion del sistema de configuracion avanzada
  *
- * Incluye temas de interfaz, internacionalización y persistencia en base de datos.
+ * Incluye temas de interfaz, internacionalizacion y persistencia en base de datos.
  */
 
 #include "settings.h"
@@ -36,13 +36,13 @@ void menu_update();
 // Si deseas cambiar, modifica esta constante.
 #define UPDATE_REPO "thomashamer3/MiFutbolC"
 
-// Versión actual de la aplicación. Debe mantenerse en sincronía con el instalador (MiFutbolC.iss)
+// Version actual de la aplicacion. Debe mantenerse en sincronia con el instalador (MiFutbolC.iss)
 #define APP_VERSION "3.9"
 
 // Configuracion global
 static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
 
-// Flag para rastrear cambios en menú personalizado
+// Flag para rastrear cambios en menu personalizado
 static int custom_menu_changed = 0;
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -424,9 +424,9 @@ void settings_init()
             break;
         case 3:
             current_settings.mode = MODE_CUSTOM;
-            // Habilitar menús básicos por defecto en modo personalizado
+            // Habilitar menus basicos por defecto en modo personalizado
             habilitar_menus_basicos_custom();
-            // Mostrar menú para configurar menús
+            // Mostrar menu para configurar menus
             menu_custom_menus();
             // Ask for confirmation only if changes were made
             confirmar_guardado_si_cambios();
@@ -489,7 +489,7 @@ void settings_set_theme(ThemeType theme)
 }
 
 /**
- * @brief Establece el idioma de la aplicación
+ * @brief Establece el idioma de la aplicacion
  */
 void settings_set_language(LanguageType language)
 {
@@ -498,7 +498,7 @@ void settings_set_language(LanguageType language)
 }
 
 /**
- * @brief Establece el tamaño de texto de la aplicación
+ * @brief Establece el tamano de texto de la aplicacion
  */
 void settings_set_text_size(TextSizeType text_size)
 {
@@ -508,16 +508,16 @@ void settings_set_text_size(TextSizeType text_size)
 }
 
 /**
- * @brief Establece el modo de la aplicación
+ * @brief Establece el modo de la aplicacion
  */
 void settings_set_mode(ModeType mode)
 {
     current_settings.mode = mode;
 
-    // Si se cambia a modo personalizado, habilitar menús básicos por defecto
+    // Si se cambia a modo personalizado, habilitar menus basicos por defecto
     if (mode == MODE_CUSTOM)
     {
-        // Habilitar menús básicos por defecto en modo personalizado
+        // Habilitar menus basicos por defecto en modo personalizado
         habilitar_menus_basicos_custom();
     }
 
@@ -525,7 +525,7 @@ void settings_set_mode(ModeType mode)
 }
 
 /**
- * @brief Obtiene el modo actual de la aplicación
+ * @brief Obtiene el modo actual de la aplicacion
  */
 ModeType settings_get_mode()
 {
@@ -582,7 +582,7 @@ void settings_apply_theme()
         break;
 
     case THEME_CLASSIC:
-        // Tema clásico: colores por defecto de Windows
+        // Tema clasico: colores por defecto de Windows
         color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Gris por defecto
         break;
 
@@ -650,7 +650,7 @@ const char* get_text(const char* key)
     return key; // Retornar la clave si no se encuentra
 }
 
-// Funciones wrapper para menu dinámico
+// Funciones wrapper para menu dinamico
 const char* get_menu_camisetas()
 {
     ModeType mode = settings_get_mode();
@@ -662,7 +662,7 @@ const char* get_menu_camisetas()
     {
         return get_text("menu_camisetas");
     }
-    return NULL; // No mostrar en modo personalizado si no está habilitado
+    return NULL; // No mostrar en modo personalizado si no esta habilitado
 }
 
 const char* get_menu_canchas()
@@ -676,7 +676,7 @@ const char* get_menu_canchas()
     {
         return get_text("menu_canchas");
     }
-    return NULL; // No mostrar en modo personalizado si no está habilitado
+    return NULL; // No mostrar en modo personalizado si no esta habilitado
 }
 
 const char* get_menu_partidos()
@@ -690,7 +690,7 @@ const char* get_menu_partidos()
     {
         return get_text("menu_partidos");
     }
-    return NULL; // No mostrar en modo personalizado si no está habilitado
+    return NULL; // No mostrar en modo personalizado si no esta habilitado
 }
 
 const char* get_menu_equipos()
@@ -704,7 +704,7 @@ const char* get_menu_equipos()
     {
         return get_text("menu_equipos");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_estadisticas()
@@ -718,7 +718,7 @@ const char* get_menu_estadisticas()
     {
         return get_text("menu_estadisticas");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_logros()
@@ -732,7 +732,7 @@ const char* get_menu_logros()
     {
         return get_text("menu_logros");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_analisis()
@@ -746,7 +746,7 @@ const char* get_menu_analisis()
     {
         return get_text("menu_analisis");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_bienestar()
@@ -760,7 +760,7 @@ const char* get_menu_bienestar()
     {
         return get_text("menu_bienestar");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_lesiones()
@@ -774,7 +774,7 @@ const char* get_menu_lesiones()
     {
         return get_text("menu_lesiones");
     }
-    return NULL; // No mostrar en modo personalizado si no está habilitado
+    return NULL; // No mostrar en modo personalizado si no esta habilitado
 }
 
 const char* get_menu_financiamiento()
@@ -788,7 +788,7 @@ const char* get_menu_financiamiento()
     {
         return get_text("menu_financiamiento");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_exportar()
@@ -802,7 +802,7 @@ const char* get_menu_exportar()
     {
         return get_text("menu_exportar");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_importar()
@@ -816,7 +816,7 @@ const char* get_menu_importar()
     {
         return get_text("menu_importar");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_torneos()
@@ -840,7 +840,7 @@ const char* get_menu_temporada()
     {
         return get_text("menu_temporada");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_entrenador_ia()
@@ -854,7 +854,7 @@ const char* get_menu_entrenador_ia()
     {
         return get_text("menu_entrenador_ia");
     }
-    return NULL; // No mostrar en modo simple o personalizado si no está habilitado
+    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
 }
 
 const char* get_menu_settings()
@@ -921,7 +921,7 @@ static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *o
     *out_module = LoadLibraryA("urlmon.dll");
     if (*out_module)
     {
-        /* Evitar warning de cast entre tipos de función distintos */
+        /* Evitar warning de cast entre tipos de funcion distintos */
         union
         {
             FARPROC fp;
@@ -971,21 +971,21 @@ static int ejecutar_instalador(const char *dest)
     HINSTANCE h = ShellExecuteA(NULL, "open", dest, NULL, NULL, SW_SHOWNORMAL);
     if ((INT_PTR)h <= 32)
     {
-        // Intentar elevar privilegios si la ejecución falló la primera vez.
+        // Intentar elevar privilegios si la ejecucion fallo la primera vez.
         HINSTANCE h2 = ShellExecuteA(NULL, "runas", dest, NULL, NULL, SW_SHOWNORMAL);
         if ((INT_PTR)h2 > 32)
         {
             return 1;
         }
 
-        // Si falla, es probable que el ejecutable esté bloqueado (porque MiFutbolC está en ejecución).
-        printf("Error al ejecutar el instalador. Asegúrate de cerrar MiFutbolC y vuelve a intentarlo.\n");
+        // Si falla, es probable que el ejecutable este bloqueado (porque MiFutbolC esta en ejecucion).
+        printf("Error al ejecutar el instalador. Asegurate de cerrar MiFutbolC y vuelve a intentarlo.\n");
         return 0;
     }
     return 1;
 }
 
-// Compara versiones semánticas simples (mayor.minor.patch).
+// Compara versiones semanticas simples (mayor.minor.patch).
 // Retorna -1 si a < b, 0 si son iguales, 1 si a > b.
 static int comparar_versiones(const char *a, const char *b)
 {
@@ -1015,7 +1015,7 @@ static int comparar_versiones(const char *a, const char *b)
     return 0;
 }
 
-// Descarga la información de la última release desde GitHub y devuelve su tag (tag_name o name).
+// Descarga la informacion de la ultima release desde GitHub y devuelve su tag (tag_name o name).
 // El valor devuelto debe liberarse con free() por el llamador.
 static char *obtener_latest_release_tag(const char *owner_repo, const char *repo_name, const char *temp_path)
 {
@@ -1320,7 +1320,7 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, con
 #endif
 
 /**
- * @brief Submenú para configuracion de temas
+ * @brief Submenu para configuracion de temas
  */
 static void menu_theme_settings()
 {
@@ -1341,7 +1341,7 @@ static void menu_theme_settings()
 }
 
 /**
- * @brief Submenú para configuracion de idioma
+ * @brief Submenu para configuracion de idioma
  */
 static void menu_language_settings()
 {
@@ -1425,7 +1425,7 @@ static void show_current_settings()
 }
 
 /**
- * @brief Submenú para tamaño de texto
+ * @brief Submenu para tamano de texto
  */
 static void menu_text_size_settings()
 {
@@ -1441,7 +1441,7 @@ static void menu_text_size_settings()
 }
 
 /**
- * @brief Submenú de accesibilidad
+ * @brief Submenu de accesibilidad
  */
 static void menu_accessibility_settings()
 {
@@ -1481,7 +1481,7 @@ static void reset_settings_to_defaults()
         settings_apply_theme();
         settings_save();
 
-        // Limpiar nombre de usuario también
+        // Limpiar nombre de usuario tambien
         sqlite3_stmt *stmt;
         const char *sql = "DELETE FROM usuario;";
         if (preparar_stmt(sql, &stmt))
@@ -1501,7 +1501,7 @@ static void reset_settings_to_defaults()
 }
 
 /**
- * @brief Verifica si un menú está habilitado en modo Custom
+ * @brief Verifica si un menu esta habilitado en modo Custom
  */
 int is_custom_menu_enabled(const char* menu_name)
 {
@@ -1523,7 +1523,7 @@ int is_custom_menu_enabled(const char* menu_name)
 }
 
 /**
- * @brief Establece el estado de un menú en modo Custom
+ * @brief Establece el estado de un menu en modo Custom
  */
 void set_custom_menu_enabled(const char* menu_name, int enabled)
 {
@@ -1541,7 +1541,7 @@ void set_custom_menu_enabled(const char* menu_name, int enabled)
 }
 
 /**
- * @brief Submenú para configuracion de modo
+ * @brief Submenu para configuracion de modo
  */
 static void menu_mode_settings()
 {
@@ -1557,7 +1557,7 @@ static void menu_mode_settings()
 }
 
 /**
- * @brief Menú para configurar menús personalizados en modo Custom
+ * @brief Menu para configurar menus personalizados en modo Custom
  */
 void menu_custom_menus()
 {
@@ -1570,7 +1570,7 @@ void menu_custom_menus()
 
     printf("Selecciona los menus que deseas habilitar/deshabilitar:\n\n");
 
-    // Lista de menús disponibles (excluyendo exit que siempre está)
+    // Lista de menus disponibles (excluyendo exit que siempre esta)
     struct MenuOption options[] =
     {
         {1, "camisetas", get_text("menu_camisetas")},
@@ -1610,7 +1610,7 @@ void menu_custom_menus()
     {
         printf("%s\n", get_text("invalid_option"));
         pause_console();
-        menu_custom_menus(); // Recargar menú
+        menu_custom_menus(); // Recargar menu
         return;
     }
 
@@ -1619,11 +1619,11 @@ void menu_custom_menus()
     printf("Menu %s %s.\n", option->display_name, !current_state ? "habilitado" : "deshabilitado");
     confirmar_guardado_configuracion(1);
     pause_console();
-    menu_custom_menus(); // Recargar menú
+    menu_custom_menus(); // Recargar menu
 }
 
 /**
- * @brief Descarga la última release .exe desde GitHub Releases y la ejecuta (Windows)
+ * @brief Descarga la ultima release .exe desde GitHub Releases y la ejecuta (Windows)
  */
 void menu_update()
 {
@@ -1637,7 +1637,7 @@ void menu_update()
     char repo_name[128] = {0};
     obtener_nombre_repo(owner_repo, repo_name, sizeof(repo_name));
 
-    // Verificar versión actual contra la última versión en GitHub.
+    // Verificar version actual contra la ultima version en GitHub.
     char temp_path[MAX_PATH];
     if (GetTempPathA(MAX_PATH, temp_path) == 0)
     {
@@ -1652,13 +1652,13 @@ void menu_update()
         int cmp = comparar_versiones(APP_VERSION, latest_tag);
         if (cmp >= 0)
         {
-            printf("Ya tienes la última versión (%s).\n", APP_VERSION);
+            printf("Ya tienes la ultima version (%s).\n", APP_VERSION);
             free(latest_tag);
             pause_console();
             return;
         }
 
-        printf("Nueva versión disponible: %s (actual: %s).\n", latest_tag, APP_VERSION);
+        printf("Nueva version disponible: %s (actual: %s).\n", latest_tag, APP_VERSION);
         free(latest_tag);
     }
 
@@ -1689,7 +1689,7 @@ void menu_update()
 }
 
 /**
- * @brief Menú principal de configuracion
+ * @brief Menu principal de configuracion
  */
 void menu_settings()
 {

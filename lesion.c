@@ -1,4 +1,4 @@
-#include "lesion.h"
+﻿#include "lesion.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -26,7 +26,7 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 /**
- * @brief Obtener estado por opción
+ * @brief Obtener estado por opcion
  */
 static const char *estado_por_opcion(int opcion)
 {
@@ -86,7 +86,7 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) > 0)
             return;
-        printf("El campo no puede estar vacío.\n");
+        printf("El campo no puede estar vacio.\n");
     }
 }
 
@@ -98,7 +98,7 @@ static const char *solicitar_estado_lesion(const char *prompt)
         const char *estado_sel = estado_por_opcion(opcion_estado);
         if (estado_sel)
             return estado_sel;
-        printf("Opción inválida. Intente nuevamente.\n");
+        printf("Opcion invalida. Intente nuevamente.\n");
     }
 }
 
@@ -143,9 +143,9 @@ static int solicitar_partido_id(int permitir_omitir)
 /**
  * @brief Crea una nueva lesion en la base de datos
  *
- * Solicita al usuario el tipo, descripción de la lesion, el ID de la camiseta asociada
+ * Solicita al usuario el tipo, descripcion de la lesion, el ID de la camiseta asociada
  * y el estado inicial, y la inserta en la tabla 'lesion'. El nombre del jugador se obtiene del usuario actual.
- * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
+ * Utiliza el ID mas pequeno disponible para reutilizar IDs eliminados.
  */
 void crear_lesion()
 {
@@ -244,7 +244,7 @@ void crear_lesion()
  * @brief Muestra un listado de todas las lesiones registradas
  *
  * Consulta la base de datos y muestra en pantalla todas las lesiones
- * con sus respectivos datos: ID, tipo, descripción, fecha y estado.
+ * con sus respectivos datos: ID, tipo, descripcion, fecha y estado.
  * Si no hay lesiones registradas, muestra un mensaje informativo.
  */
 void listar_lesiones()
@@ -309,7 +309,7 @@ static void modificar_tipo_lesion()
 }
 
 /**
- * @brief Modifica la descripción de una lesion existente
+ * @brief Modifica la descripcion de una lesion existente
  */
 static void modificar_descripcion_lesion()
 {
@@ -384,7 +384,7 @@ static void modificar_estado_lesion()
  */
 static void modificar_partido_lesion()
 {
-    printf("\n¿Desea asociar esta lesion a un partido? (S/N): ");
+    printf("\nDesea asociar esta lesion a un partido? (S/N): ");
     char respuesta[10];
     input_string("", respuesta, sizeof(respuesta));
 
@@ -420,7 +420,7 @@ static void modificar_partido_lesion()
     }
     else
     {
-        printf("Asociación con partido eliminada.\n");
+        printf("Asociacion con partido eliminada.\n");
     }
     pause_console();
 }
@@ -450,10 +450,10 @@ static void modificar_todo_lesion()
     // Mostrar opciones de estado
     printf("\nEstados disponibles:\n");
     printf("1. ACTIVA - Lesion reciente, jugador NO apto\n");
-    printf("2. EN_TRATAMIENTO - Está en rehabilitación\n");
-    printf("3. MEJORANDO - Evolución positiva\n");
-    printf("4. RECUPERADO - Alta médica\n");
-    printf("5. RECAÍDA - Vuelve la lesion\n");
+    printf("2. EN_TRATAMIENTO - Esta en rehabilitacion\n");
+    printf("3. MEJORANDO - Evolucion positiva\n");
+    printf("4. RECUPERADO - Alta medica\n");
+    printf("5. RECAiDA - Vuelve la lesion\n");
 
     const char *estado_sel = solicitar_estado_lesion("Seleccione estado (1-5): ");
     strcpy_s(estado, sizeof(estado), estado_sel);
@@ -482,7 +482,7 @@ static void modificar_todo_lesion()
  * @brief Permite modificar una lesion existente
  *
  * Muestra la lista de lesiones disponibles, solicita el ID a modificar,
- * verifica que exista y muestra un menú con opciones para modificar campos individuales o todos.
+ * verifica que exista y muestra un menu con opciones para modificar campos individuales o todos.
  */
 void modificar_lesion()
 {
@@ -531,8 +531,8 @@ void modificar_lesion()
  * @brief Elimina una lesion de la base de datos
  *
  * Muestra la lista de lesiones disponibles, solicita el ID a eliminar,
- * verifica que exista y solicita confirmación antes de eliminar.
- * Una vez eliminada, el ID queda disponible para reutilización.
+ * verifica que exista y solicita confirmacion antes de eliminar.
+ * Una vez eliminada, el ID queda disponible para reutilizacion.
  */
 void eliminar_lesion()
 {
@@ -559,7 +559,7 @@ void eliminar_lesion()
         return;
     }
 
-    if (!confirmar("¿Seguro que desea eliminar esta lesion?"))
+    if (!confirmar("Seguro que desea eliminar esta lesion?"))
         return;
 
     sqlite3_stmt *stmt;
@@ -578,16 +578,16 @@ void eliminar_lesion()
 }
 
 /**
- * @brief Calcula la diferencia en días entre dos fechas de lesiones
+ * @brief Calcula la diferencia en dias entre dos fechas de lesiones
  *
  * @param fecha1 Primera fecha en formato string
  * @param fecha2 Segunda fecha en formato string
- * @return Diferencia en días (positivo si fecha2 es posterior a fecha1)
+ * @return Diferencia en dias (positivo si fecha2 es posterior a fecha1)
  */
 static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
 {
-    // Para simplificar, usaremos una conversión básica
-    // En un sistema real, se debería usar una librería de fechas más robusta
+    // Para simplificar, usaremos una conversion basica
+    // En un sistema real, se deberia usar una libreria de fechas mas robusta
 
     int dia1;
     int mes1;
@@ -606,7 +606,7 @@ static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
     // Parsear fecha2
     sscanf_s(fecha2, "%d/%d/%d %d:%d", &dia2, &mes2, &ano2, &hora2, &min2);
 
-    // Convertir a días desde una fecha base (simplificación)
+    // Convertir a dias desde una fecha base (simplificacion)
     int dias1 = ano1 * 365 + mes1 * 30 + dia1;
     int dias2 = ano2 * 365 + mes2 * 30 + dia2;
 
@@ -614,7 +614,7 @@ static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
 }
 
 /**
- * @brief Muestra diferencias de días entre lesiones consecutivas
+ * @brief Muestra diferencias de dias entre lesiones consecutivas
  */
 void mostrar_diferencias_lesiones()
 {
@@ -631,7 +631,7 @@ void mostrar_diferencias_lesiones()
     char fecha_anterior[50] = "";
     int primera_lesion = 1;
 
-    printf("Diferencias de días entre lesiones consecutivas:\n\n");
+    printf("Diferencias de dias entre lesiones consecutivas:\n\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -642,7 +642,7 @@ void mostrar_diferencias_lesiones()
         if (!primera_lesion)
         {
             int dias_diferencia = calcular_diferencia_dias(fecha_anterior, fecha_actual);
-            printf("Lesion ID %d (%s) - %d días después\n", id, tipo, dias_diferencia);
+            printf("Lesion ID %d (%s) - %d dias despues\n", id, tipo, dias_diferencia);
         }
         else
         {
@@ -728,11 +728,11 @@ void actualizar_estados_lesiones()
 }
 
 /**
- * @brief Muestra el menú principal de gestión de lesiones
+ * @brief Muestra el menu principal de gestion de lesiones
  *
- * Presenta un menú interactivo con opciones para crear, listar, editar
- * y eliminar lesiones. Utiliza la función ejecutar_menu para manejar
- * la navegación del menú y delega las operaciones a las funciones correspondientes.
+ * Presenta un menu interactivo con opciones para crear, listar, editar
+ * y eliminar lesiones. Utiliza la funcion ejecutar_menu para manejar
+ * la navegacion del menu y delega las operaciones a las funciones correspondientes.
  */
 void menu_lesiones()
 {

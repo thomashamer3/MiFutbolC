@@ -1,4 +1,4 @@
-#include "cancha.h"
+﻿#include "cancha.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -23,7 +23,7 @@ static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
         if (buffer[0] != '\0')
             return;
 
-        printf("El nombre no puede estar vacío.\n");
+        printf("El nombre no puede estar vacio.\n");
     }
 }
 
@@ -32,7 +32,7 @@ static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
 /**
  * @brief Crea una nueva cancha en la base de datos
  *
- * Permite a los usuarios agregar canchas para asignación en partidos,
+ * Permite a los usuarios agregar canchas para asignacion en partidos,
  * reutilizando IDs eliminados para mantener la secuencia.
  */
 void crear_cancha()
@@ -76,8 +76,8 @@ void crear_cancha()
 /**
  * @brief Muestra un listado de todas las canchas registradas
  *
- * Proporciona visibilidad de canchas disponibles para selección
- * en partidos y operaciones de gestión.
+ * Proporciona visibilidad de canchas disponibles para seleccion
+ * en partidos y operaciones de gestion.
  */
 void listar_canchas()
 {
@@ -113,7 +113,7 @@ void eliminar_cancha()
         return;
     }
 
-    if (!confirmar("¿Seguro que desea eliminar esta cancha?"))
+    if (!confirmar("Seguro que desea eliminar esta cancha?"))
         return;
 
     sqlite3_stmt *stmt;
@@ -184,10 +184,10 @@ void modificar_cancha()
 }
 
 /**
- * @brief Muestra el menú principal de gestión de canchas
+ * @brief Muestra el menu principal de gestion de canchas
  *
  * Proporciona interfaz centralizada para operaciones CRUD de canchas,
- * facilitando la navegación y delegación de tareas específicas.
+ * facilitando la navegacion y delegacion de tareas especificas.
  */
 void menu_canchas()
 {

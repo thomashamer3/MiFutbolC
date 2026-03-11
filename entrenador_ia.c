@@ -1,4 +1,4 @@
-#include "entrenador_ia.h"
+﻿#include "entrenador_ia.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -21,7 +21,11 @@ static int parsear_fecha_ddmmaa(const char *fecha_str, struct tm *tm_fecha)
     }
 
     memset(tm_fecha, 0, sizeof(*tm_fecha));
+#ifdef _WIN32
     if (sscanf_s(fecha_str, "%d/%d/%d", &tm_fecha->tm_mday, &tm_fecha->tm_mon, &tm_fecha->tm_year) != 3)
+#else
+    if (sscanf(fecha_str, "%d/%d/%d", &tm_fecha->tm_mday, &tm_fecha->tm_mon, &tm_fecha->tm_year) != 3)
+#endif
     {
         return 0;
     }
@@ -111,7 +115,7 @@ const char* categoria_a_string(CategoriaConsejo categoria)
     }
 }
 
-// Evaluar estado del jugador basado en datos históricos
+// Evaluar estado del jugador basado en datos historicos
 EstadoJugador evaluar_estado_jugador()
 {
     EstadoJugador estado = {0};
@@ -119,7 +123,7 @@ EstadoJugador evaluar_estado_jugador()
     const char *sql =
         "SELECT rendimiento_general, cansancio, estado_animo, fecha_hora "
         "FROM partido "
-        "ORDER BY fecha_hora DESC LIMIT 10;"; // Últimos 10 partidos
+        "ORDER BY fecha_hora DESC LIMIT 10;"; // ultimos 10 partidos
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -143,13 +147,13 @@ EstadoJugador evaluar_estado_jugador()
         estado.cansancio_promedio += (float)cansancio;
         estado.estado_animo_promedio += (float)animo;
 
-        // Calcular días desde último partido
+        // Calcular dias desde ultimo partido
         if (count == 0 && fecha_str)
         {
             dias_sin_jugar = dias_desde_fecha(fecha_str, now);
         }
 
-        // Contar partidos consecutivos (últimos 7 días)
+        // Contar partidos consecutivos (ultimos 7 dias)
         if (fecha_str && count < 7 && dias_desde_fecha(fecha_str, now) <= 7)
         {
             partidos_consecutivos++;
@@ -191,7 +195,7 @@ EstadoJugador evaluar_estado_jugador()
     }
     estado.derrotas_consecutivas = derrotas_consecutivas;
 
-    // Evaluar riesgo de lesión basado en cansancio y partidos consecutivos
+    // Evaluar riesgo de lesion basado en cansancio y partidos consecutivos
     estado.riesgo_lesion = (estado.cansancio_promedio / 10.0f) +
                            ((float)estado.partidos_consecutivos / 3.0f) +
                            ((float)estado.derrotas_consecutivas / 2.0f);
@@ -209,7 +213,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     if (estado.cansancio_promedio > 8 && estado.partidos_consecutivos >= 3)
     {
         agregar_consejo(consejos, num_consejos,
-                        "Se recomienda descanso para reducir riesgo de lesión",
+                        "Se recomienda descanso para reducir riesgo de lesion",
                         CONSEJO_ADVERTENCIA, CATEGORIA_FISICO);
     }
 
@@ -217,11 +221,11 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     if (estado.rendimiento_promedio < 3)
     {
         agregar_consejo(consejos, num_consejos,
-                        "Rendimiento bajo detectado. Considerar rotación de jugadores",
+                        "Rendimiento bajo detectado. Considerar rotacion de jugadores",
                         CONSEJO_ADVERTENCIA, CATEGORIA_DEPORTIVO);
     }
 
-    // Regla 3: Estado de ánimo bajo + racha negativa
+    // Regla 3: Estado de animo bajo + racha negativa
     if (estado.estado_animo_promedio < 3 && estado.derrotas_consecutivas >= 2)
     {
         agregar_consejo(consejos, num_consejos,
@@ -229,11 +233,11 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
                         CONSEJO_ADVERTENCIA, CATEGORIA_MENTAL);
     }
 
-    // Regla 4: Riesgo de lesión crítico
+    // Regla 4: Riesgo de lesion critico
     if (estado.riesgo_lesion > 3.0)
     {
         agregar_consejo(consejos, num_consejos,
-                        "Riesgo de lesión muy elevado. Descanso obligatorio",
+                        "Riesgo de lesion muy elevado. Descanso obligatorio",
                         CONSEJO_CRITICO, CATEGORIA_SALUD);
     }
 
@@ -245,7 +249,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
                         CONSEJO_INFO, CATEGORIA_DEPORTIVO);
     }
 
-    // Si no hay consejos específicos, dar consejo general positivo
+    // Si no hay consejos especificos, dar consejo general positivo
     if (*num_consejos == 0)
     {
         agregar_consejo(consejos, num_consejos,
@@ -285,7 +289,7 @@ void mostrar_consejos_actuales()
                nivel_a_string(consejos[i].nivel),
                consejos[i].mensaje);
 
-        // Preguntar si siguió el consejo
+        // Preguntar si siguio el consejo
         printf("Seguiste este consejo? (s/n): ");
         int respuesta = getchar();
         while (getchar() != '\n'); // Limpiar buffer
@@ -332,7 +336,11 @@ void mostrar_historial_consejos()
 
         struct tm tm_fecha;
         char fecha_str[20];
+#ifdef _WIN32
         localtime_s(&tm_fecha, &fecha);
+#else
+        localtime_r(&fecha, &tm_fecha);
+#endif
         strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
 
         printf("%s - %s [%s]\n",
@@ -353,7 +361,7 @@ void mostrar_historial_consejos()
     pause_console();
 }
 
-// Función auxiliar para obtener estadísticas de partidos en un rango de fechas
+// Funcion auxiliar para obtener estadisticas de partidos en un rango de fechas
 static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
         float *rendimiento, float *cansancio,
         int *victorias, int *derrotas, int *lesiones)
@@ -362,7 +370,7 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
     const char *sql =
         "SELECT rendimiento_general, cansancio, resultado "
         "FROM partido "
-        "WHERE fecha_hora BETWEEN ? AND ? "
+        "WHERE (substr(fecha_hora,7,4)||'-'||substr(fecha_hora,4,2)||'-'||substr(fecha_hora,1,2)) BETWEEN ? AND ? "
         "ORDER BY fecha_hora DESC;";
 
     *rendimiento = 0.0f;
@@ -373,17 +381,21 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
 
     if (preparar_stmt(&stmt, sql))
     {
-        // Convertir timestamps a formato de fecha DD/MM/YYYY
         struct tm tm_inicio;
         struct tm tm_fin;
         char fecha_inicio_str[20];
         char fecha_fin_str[20];
 
+#ifdef _WIN32
         localtime_s(&tm_inicio, &fecha_inicio);
         localtime_s(&tm_fin, &fecha_fin);
+#else
+        localtime_r(&fecha_inicio, &tm_inicio);
+        localtime_r(&fecha_fin, &tm_fin);
+#endif
 
-        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%d/%m/%Y", &tm_inicio);
-        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%d/%m/%Y", &tm_fin);
+        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%Y-%m-%d", &tm_inicio);
+        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%Y-%m-%d", &tm_fin);
 
         sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
@@ -408,9 +420,10 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
         *cansancio /= (float)count;
     }
 
-    // Contar lesiones en el período
+    // Contar lesiones en el periodo
     const char *sql_lesiones =
-        "SELECT COUNT(*) FROM lesion WHERE fecha BETWEEN ? AND ?;";
+        "SELECT COUNT(*) FROM lesion "
+        "WHERE (substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) BETWEEN ? AND ?;";
 
     if (preparar_stmt(&stmt, sql_lesiones))
     {
@@ -419,11 +432,16 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
         char fecha_inicio_str[20];
         char fecha_fin_str[20];
 
+#ifdef _WIN32
         localtime_s(&tm_inicio, &fecha_inicio);
         localtime_s(&tm_fin, &fecha_fin);
+#else
+        localtime_r(&fecha_inicio, &tm_inicio);
+        localtime_r(&fecha_fin, &tm_fin);
+#endif
 
-        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%d/%m/%Y", &tm_inicio);
-        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%d/%m/%Y", &tm_fin);
+        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%Y-%m-%d", &tm_inicio);
+        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%Y-%m-%d", &tm_fin);
 
         sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
@@ -436,7 +454,7 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
     }
 }
 
-// Estructura para estadísticas de un período
+// Estructura para estadisticas de un periodo
 typedef struct
 {
     float rendimiento;
@@ -455,7 +473,7 @@ typedef struct
     int seguido;
 } ConsejoHistorial;
 
-// Función auxiliar para seleccionar un consejo del historial
+// Funcion auxiliar para seleccionar un consejo del historial
 static ConsejoHistorial* seleccionar_consejo_historial(ConsejoHistorial consejos[], int count)
 {
     printf("\nSelecciona el ID del consejo (0 para cancelar): ");
@@ -471,19 +489,19 @@ static ConsejoHistorial* seleccionar_consejo_historial(ConsejoHistorial consejos
         }
     }
 
-    printf("\nID no válido.\n");
+    printf("\nID no valido.\n");
     return NULL;
 }
 
-// Función auxiliar para mostrar tabla de comparación
+// Funcion auxiliar para mostrar tabla de comparacion
 static void mostrar_tabla_comparacion(const EstadisticasPeriodo *antes,
                                       const EstadisticasPeriodo *despues)
 {
     printf("═══════════════════════════════════════════════════════════════\n");
-    printf("COMPARACIÓN DE ESTADÍSTICAS (14 días antes vs 14 días después)\n");
+    printf("COMPARACIoN DE ESTADiSTICAS (14 dias antes vs 14 dias despues)\n");
     printf("═══════════════════════════════════════════════════════════════\n\n");
 
-    printf("Métrica                  | Antes    | Después  | Cambio\n");
+    printf("Metrica                  | Antes    | Despues  | Cambio\n");
     printf("-------------------------|----------|----------|------------\n");
     printf("Rendimiento promedio     | %-8.1f | %-8.1f | %+.1f\n",
            antes->rendimiento, despues->rendimiento, despues->rendimiento - antes->rendimiento);
@@ -497,7 +515,7 @@ static void mostrar_tabla_comparacion(const EstadisticasPeriodo *antes,
            antes->lesiones, despues->lesiones, despues->lesiones - antes->lesiones);
 }
 
-// Función auxiliar para evaluar métricas y contar mejoras/empeoramientos
+// Funcion auxiliar para evaluar metricas y contar mejoras/empeoramientos
 static void evaluar_metricas(const EstadisticasPeriodo *antes,
                              const EstadisticasPeriodo *despues,
                              int *mejoras, int *empeoramientos)
@@ -521,101 +539,101 @@ static void evaluar_metricas(const EstadisticasPeriodo *antes,
     else if (despues->lesiones > antes->lesiones) (*empeoramientos)++;
 }
 
-// Función auxiliar para mostrar evaluación cuando se siguió el consejo
+// Funcion auxiliar para mostrar evaluacion cuando se siguio el consejo
 static void mostrar_evaluacion_seguido(int decision_acertada,
                                        const EstadisticasPeriodo *antes,
                                        const EstadisticasPeriodo *despues)
 {
-    printf("Decisión tomada: SEGUIR el consejo\n\n");
+    printf("Decision tomada: SEGUIR el consejo\n\n");
 
     if (decision_acertada)
     {
-        printf("✓ DECISIÓN ACERTADA\n\n");
-        printf("Seguir el consejo resultó en mejoras observables:\n");
+        printf("✓ DECISIoN ACERTADA\n\n");
+        printf("Seguir el consejo resulto en mejoras observables:\n");
         if (despues->rendimiento > antes->rendimiento)
-            printf("  • Rendimiento mejoró en %.1f puntos\n", despues->rendimiento - antes->rendimiento);
+            printf("  • Rendimiento mejoro en %.1f puntos\n", despues->rendimiento - antes->rendimiento);
         if (despues->cansancio < antes->cansancio)
             printf("  • Cansancio se redujo en %.1f puntos\n", antes->cansancio - despues->cansancio);
         if (despues->victorias > antes->victorias)
-            printf("  • Más victorias (%d)\n", despues->victorias - antes->victorias);
+            printf("  • Mas victorias (%d)\n", despues->victorias - antes->victorias);
         if (despues->lesiones < antes->lesiones)
             printf("  • Menos lesiones (%d)\n", antes->lesiones - despues->lesiones);
     }
     else
     {
-        printf("✗ DECISIÓN CUESTIONABLE\n\n");
-        printf("Seguir el consejo no generó los resultados esperados:\n");
+        printf("✗ DECISIoN CUESTIONABLE\n\n");
+        printf("Seguir el consejo no genero los resultados esperados:\n");
         if (despues->rendimiento < antes->rendimiento)
-            printf("  • Rendimiento empeoró en %.1f puntos\n", antes->rendimiento - despues->rendimiento);
+            printf("  • Rendimiento empeoro en %.1f puntos\n", antes->rendimiento - despues->rendimiento);
         if (despues->cansancio > antes->cansancio)
-            printf("  • Cansancio aumentó en %.1f puntos\n", despues->cansancio - antes->cansancio);
+            printf("  • Cansancio aumento en %.1f puntos\n", despues->cansancio - antes->cansancio);
         if (despues->derrotas > antes->derrotas)
-            printf("  • Más derrotas (%d)\n", despues->derrotas - antes->derrotas);
+            printf("  • Mas derrotas (%d)\n", despues->derrotas - antes->derrotas);
         if (despues->lesiones > antes->lesiones)
-            printf("  • Más lesiones (%d)\n", despues->lesiones - antes->lesiones);
+            printf("  • Mas lesiones (%d)\n", despues->lesiones - antes->lesiones);
     }
 }
 
-// Función auxiliar para mostrar evaluación cuando se ignoró el consejo
+// Funcion auxiliar para mostrar evaluacion cuando se ignoro el consejo
 static void mostrar_evaluacion_ignorado(int decision_acertada, int mejoras,
                                         const EstadisticasPeriodo *antes,
                                         const EstadisticasPeriodo *despues)
 {
-    printf("Decisión tomada: IGNORAR el consejo\n\n");
+    printf("Decision tomada: IGNORAR el consejo\n\n");
 
     if (decision_acertada)
     {
-        printf("✓ DECISIÓN RAZONABLE\n\n");
+        printf("✓ DECISIoN RAZONABLE\n\n");
         printf("Ignorar el consejo no tuvo consecuencias negativas graves.\n");
         if (mejoras > 0)
         {
-            printf("De hecho, algunas métricas mejoraron:\n");
+            printf("De hecho, algunas metricas mejoraron:\n");
             if (despues->rendimiento > antes->rendimiento)
-                printf("  • Rendimiento mejoró en %.1f puntos\n", despues->rendimiento - antes->rendimiento);
+                printf("  • Rendimiento mejoro en %.1f puntos\n", despues->rendimiento - antes->rendimiento);
             if (despues->victorias > antes->victorias)
-                printf("  • Más victorias (%d)\n", despues->victorias - antes->victorias);
+                printf("  • Mas victorias (%d)\n", despues->victorias - antes->victorias);
         }
     }
     else
     {
-        printf("✗ DECISIÓN ERRÓNEA\n\n");
-        printf("Ignorar el consejo resultó en deterioro del rendimiento:\n");
+        printf("✗ DECISIoN ERRoNEA\n\n");
+        printf("Ignorar el consejo resulto en deterioro del rendimiento:\n");
         if (despues->rendimiento < antes->rendimiento)
-            printf("  • Rendimiento cayó %.1f puntos\n", antes->rendimiento - despues->rendimiento);
+            printf("  • Rendimiento cayo %.1f puntos\n", antes->rendimiento - despues->rendimiento);
         if (despues->cansancio > antes->cansancio)
-            printf("  • Cansancio aumentó %.1f puntos\n", despues->cansancio - antes->cansancio);
+            printf("  • Cansancio aumento %.1f puntos\n", despues->cansancio - antes->cansancio);
         if (despues->derrotas > antes->derrotas)
-            printf("  • Más derrotas (%d)\n", despues->derrotas - antes->derrotas);
+            printf("  • Mas derrotas (%d)\n", despues->derrotas - antes->derrotas);
         if (despues->lesiones > antes->lesiones)
-            printf("  • Más lesiones (%d) - CRÍTICO\n", despues->lesiones - antes->lesiones);
-        printf("\n  Recomendación: En el futuro, considera seguir este tipo de consejos.\n");
+            printf("  • Mas lesiones (%d) - CRiTICO\n", despues->lesiones - antes->lesiones);
+        printf("\n  Recomendacion: En el futuro, considera seguir este tipo de consejos.\n");
     }
 }
 
-// Función auxiliar para mostrar conclusión
+// Funcion auxiliar para mostrar conclusion
 static void mostrar_conclusion(int mejoras)
 {
     printf("\n═══════════════════════════════════════════════════════════════\n");
-    printf("CONCLUSIÓN\n");
+    printf("CONCLUSIoN\n");
     printf("═══════════════════════════════════════════════════════════════\n\n");
 
     float efectividad = (float)mejoras / 5.0f * 100.0f;
-    printf("Efectividad de la decisión: %.0f%% (%d de 5 métricas mejoraron)\n\n",
+    printf("Efectividad de la decision: %.0f%% (%d de 5 metricas mejoraron)\n\n",
            efectividad, mejoras);
 
     if (efectividad >= 60)
-        printf("Tu decisión fue acertada. Continúa tomando decisiones similares.\n");
+        printf("Tu decision fue acertada. Continua tomando decisiones similares.\n");
     else if (efectividad >= 40)
         printf("Resultados mixtos. Analiza mejor el contexto antes de decidir.\n");
     else
-        printf("La decisión no fue óptima. Aprende de esta experiencia.\n");
+        printf("La decision no fue optima. Aprende de esta experiencia.\n");
 }
 
-// Evaluar decisión pasada
+// Evaluar decision pasada
 void evaluar_decision_pasada()
 {
     clear_screen();
-    print_header("Evaluar Decisión Pasada");
+    print_header("Evaluar Decision Pasada");
 
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha, consejo, seguido FROM consejos_historial ORDER BY fecha DESC LIMIT 20;";
@@ -637,13 +655,22 @@ void evaluar_decision_pasada()
         consejos_lista[count].id = sqlite3_column_int(stmt, 0);
         consejos_lista[count].fecha = sqlite3_column_int64(stmt, 1);
         const char *consejo = (const char*)sqlite3_column_text(stmt, 2);
+#ifdef _WIN32
         strncpy_s(consejos_lista[count].consejo, sizeof(consejos_lista[count].consejo),
                   consejo, _TRUNCATE);
+#else
+        strncpy(consejos_lista[count].consejo, consejo, sizeof(consejos_lista[count].consejo) - 1);
+        consejos_lista[count].consejo[sizeof(consejos_lista[count].consejo) - 1] = '\0';
+#endif
         consejos_lista[count].seguido = sqlite3_column_int(stmt, 3);
 
         struct tm tm_fecha;
         char fecha_str[20];
+#ifdef _WIN32
         localtime_s(&tm_fecha, &consejos_lista[count].fecha);
+#else
+        localtime_r(&consejos_lista[count].fecha, &tm_fecha);
+#endif
         strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
 
         printf("%d. %s - %s [%s]\n",
@@ -667,27 +694,31 @@ void evaluar_decision_pasada()
         return;
     }
 
-    // Análisis de impacto
+    // Analisis de impacto
     clear_screen();
-    print_header("Análisis de Impacto de Decisión");
+    print_header("Analisis de Impacto de Decision");
 
     struct tm tm_fecha;
     char fecha_str[20];
+#ifdef _WIN32
     localtime_s(&tm_fecha, &consejo_seleccionado->fecha);
+#else
+    localtime_r(&consejo_seleccionado->fecha, &tm_fecha);
+#endif
     strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
 
     printf("\nConsejo: %s\n", consejo_seleccionado->consejo);
     printf("Fecha: %s\n", fecha_str);
-    printf("Decisión: %s\n\n", consejo_seleccionado->seguido ? "SEGUIDO" : "IGNORADO");
+    printf("Decision: %s\n\n", consejo_seleccionado->seguido ? "SEGUIDO" : "IGNORADO");
 
-    // Definir períodos
+    // Definir periodos
     time_t fecha_consejo = consejo_seleccionado->fecha;
     time_t fecha_antes_inicio = fecha_consejo - (14 * 24 * 60 * 60);
     time_t fecha_antes_fin = fecha_consejo - (1 * 24 * 60 * 60);
     time_t fecha_despues_inicio = fecha_consejo + (1 * 24 * 60 * 60);
     time_t fecha_despues_fin = fecha_consejo + (14 * 24 * 60 * 60);
 
-    // Obtener estadísticas
+    // Obtener estadisticas
     EstadisticasPeriodo stats_antes = {0};
     EstadisticasPeriodo stats_despues = {0};
 
@@ -700,9 +731,9 @@ void evaluar_decision_pasada()
 
     mostrar_tabla_comparacion(&stats_antes, &stats_despues);
 
-    // Evaluación del impacto
+    // Evaluacion del impacto
     printf("═══════════════════════════════════════════════════════════════\n");
-    printf("EVALUACIÓN DEL IMPACTO\n");
+    printf("EVALUACIoN DEL IMPACTO\n");
     printf("═══════════════════════════════════════════════════════════════\n\n");
 
     int mejoras;
@@ -725,11 +756,11 @@ void evaluar_decision_pasada()
     pause_console();
 }
 
-// Configurar nivel de intervención
+// Configurar nivel de intervencion
 void configurar_nivel_intervencion()
 {
     clear_screen();
-    print_header("Configurar Nivel de Intervención IA");
+    print_header("Configurar Nivel de Intervencion IA");
 
     printf("\nNiveles de intervencion disponibles:\n");
     printf("1. Conservador - Solo consejos criticos\n");
@@ -739,9 +770,9 @@ void configurar_nivel_intervencion()
     printf("Selecciona nivel (1-3): ");
     int nivel = input_int("");
 
-    // Por ahora solo mostrar selección, se implementará en futuras versiones
+    // Por ahora solo mostrar seleccion, se implementara en futuras versiones
     printf("\nNivel configurado: %d\n", nivel);
-    printf("Esta funcionalidad se implementará completamente en futuras versiones.\n");
+    printf("Esta funcionalidad se implementara completamente en futuras versiones.\n");
 
     pause_console();
 }
@@ -818,7 +849,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
         ignorados++;
     }
 
-    // Calcular índice de prudencia
+    // Calcular indice de prudencia
     float indice_prudencia;
     if (aceptados + ignorados == 0)
     {
@@ -854,15 +885,15 @@ void actualizar_perfil_usuario(int consejo_seguido)
     }
 }
 
-// Funciones de activación
+// Funciones de activacion
 void activar_ia_antes_partido()
 {
-    // Esta función se llamaría antes de crear un partido
+    // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
 
     if (estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8)
     {
-        printf("\nIA: Alto riesgo detectado. ¿Deseas ver consejos antes de continuar? (s/n): ");
+        printf("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): ");
         int respuesta = getchar();
         while (getchar() != '\n');
 
@@ -888,7 +919,7 @@ void activar_ia_antes_torneo()
 
 void activar_ia_estadisticas()
 {
-    // Se activa al abrir estadísticas
+    // Se activa al abrir estadisticas
     PerfilUsuarioIA perfil = obtener_perfil_usuario();
     const char* tipo_usuario;
     if (perfil.indice_prudencia > 0.6)
@@ -908,7 +939,7 @@ void activar_ia_estadisticas()
            perfil.indice_prudencia * 100);
 }
 
-// Menú principal de la IA
+// Menu principal de la IA
 void menu_entrenador_ia()
 {
 #ifndef UNIT_TEST

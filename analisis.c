@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file analisis.c
- * @brief Módulo para el análisis de rendimiento en partidos de fútbol.
+ * @brief Modulo para el analisis de rendimiento en partidos de futbol.
  *
  * Este archivo contiene funciones para analizar el rendimiento comparando
- * los últimos 5 partidos con promedios generales, y calculando rachas.
+ * los ultimos 5 partidos con promedios generales, y calculando rachas.
  */
 
 #include "analisis.h"
@@ -55,11 +55,11 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
 }
 
 /**
- * @brief Calcula estadísticas generales de todos los partidos
+ * @brief Calcula estadisticas generales de todos los partidos
  *
- * Establece línea base de rendimiento histórico para comparaciones.
+ * Establece linea base de rendimiento historico para comparaciones.
  *
- * @param stats Puntero a la estructura donde almacenar las estadísticas
+ * @param stats Puntero a la estructura donde almacenar las estadisticas
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
@@ -69,9 +69,9 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
 }
 
 /**
- * @brief Calcula estadísticas de los últimos 5 partidos
+ * @brief Calcula estadisticas de los ultimos 5 partidos
  *
- * @param stats Puntero a la estructura donde almacenar las estadísticas
+ * @param stats Puntero a la estructura donde almacenar las estadisticas
  */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
@@ -81,7 +81,7 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 }
 
 /**
- * @brief Calcula la racha más larga de victorias y derrotas
+ * @brief Calcula la racha mas larga de victorias y derrotas
  *
  * @param mejor_racha_victorias Puntero donde almacenar la mejor racha de victorias
  * @param peor_racha_derrotas Puntero donde almacenar la peor racha de derrotas
@@ -111,10 +111,10 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
 }
 
 /**
- * @brief Muestra los últimos 5 partidos
+ * @brief Muestra los ultimos 5 partidos
  *
- * Facilita la visualización rápida del rendimiento reciente para contextualizar
- * las estadísticas comparativas.
+ * Facilita la visualizacion rapida del rendimiento reciente para contextualizar
+ * las estadisticas comparativas.
  */
 static void mostrar_ultimos5_partidos()
 {
@@ -153,13 +153,13 @@ static void mostrar_ultimos5_partidos()
 }
 
 /**
- * @brief Muestra comparación de estadísticas últimos 5 vs general
+ * @brief Muestra comparacion de estadisticas ultimos 5 vs general
  *
- * Permite identificar tendencias recientes respecto al rendimiento histórico
+ * Permite identificar tendencias recientes respecto al rendimiento historico
  * para tomar decisiones de mejora.
  *
- * @param ultimos Estadísticas de últimos 5 partidos
- * @param generales Estadísticas generales
+ * @param ultimos Estadisticas de ultimos 5 partidos
+ * @param generales Estadisticas generales
  */
 static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos, const Estadisticas *generales)
 {
@@ -191,11 +191,11 @@ static void mostrar_rachas(int mejor_racha_v, int peor_racha_d)
 /**
  * @brief Genera un mensaje motivacional basado en el rendimiento
  *
- * Proporciona retroalimentación psicológica para mantener la motivación
+ * Proporciona retroalimentacion psicologica para mantener la motivacion
  * y enfoque en el desarrollo deportivo.
  *
- * @param ultimos Puntero a estadísticas de últimos 5 partidos
- * @param generales Puntero a estadísticas generales
+ * @param ultimos Puntero a estadisticas de ultimos 5 partidos
+ * @param generales Puntero a estadisticas generales
  */
 static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas *generales)
 {
@@ -207,15 +207,15 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
 
     if (diff_goles > 0.5 && diff_rendimiento > 0.5)
     {
-        printf("Excelente Estas en racha ascendente. Sigue asi, tu esfuerzo está dando frutos.\n");
+        printf("Excelente Estas en racha ascendente. Sigue asi, tu esfuerzo esta dando frutos.\n");
         printf("Manten la consistencia y continua trabajando duro en los entrenamientos.\n");
     }
     else if (diff_goles < -0.5 || diff_rendimiento < -0.5)
     {
         printf("No te desanimes. Todos tenemos dias dificiles. Analiza que puedes mejorar:\n");
-        printf("- Revisa tu preparación física y tecnica.\n");
+        printf("- Revisa tu preparacion fisica y tecnica.\n");
         printf("- Habla con tu entrenador sobre estrategias.\n");
-        printf("- Recuerda: el fútbol es un deporte de perseverancia.\n");
+        printf("- Recuerda: el futbol es un deporte de perseverancia.\n");
     }
     else
     {
@@ -225,7 +225,7 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
 }
 
 /**
- * @brief Muestra el análisis básico de rendimiento
+ * @brief Muestra el analisis basico de rendimiento
  */
 static void mostrar_analisis_basico()
 {
@@ -258,7 +258,7 @@ static void mostrar_analisis_basico()
 }
 
 /**
- * @brief Estructura para métricas de comparación
+ * @brief Estructura para metricas de comparacion
  */
 typedef struct
 {
@@ -271,7 +271,7 @@ typedef struct
 /**
  * @brief Determina el ganador basado en la diferencia
  *
- * @param diff Diferencia entre métricas
+ * @param diff Diferencia entre metricas
  * @param nombre1 Nombre del primer elemento
  * @param nombre2 Nombre del segundo elemento
  * @return Nombre del ganador o "Empate"
@@ -286,7 +286,7 @@ static const char *determinar_ganador(double diff, const char *nombre1, const ch
 }
 
 /**
- * @brief Calcula métricas para una condición específica
+ * @brief Calcula metricas para una condicion especifica
  */
 static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const char *condicion_sql)
 {
@@ -316,7 +316,7 @@ static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const
 }
 
 /**
- * @brief Muestra comparación entre dos métricas
+ * @brief Muestra comparacion entre dos metricas
  */
 static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, const MetricasComparacion *m2,
         const char *nombre1, const char *nombre2)
@@ -350,7 +350,7 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
 
     printf("----------------------------------------\n");
 
-    // Determinar ganadores por métrica
+    // Determinar ganadores por metrica
     printf("GANADORES POR METRICA:\n");
     printf("  Goles: %s\n", determinar_ganador(diff_goles, nombre1, nombre2));
     printf("  Asistencias: %s\n", determinar_ganador(diff_asist, nombre1, nombre2));
@@ -358,14 +358,14 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
 }
 
 /**
- * @brief Función auxiliar para listar entidades y obtener dos IDs
- * Centraliza lógica repetida en comparadores para evitar duplicación
+ * @brief Funcion auxiliar para listar entidades y obtener dos IDs
+ * Centraliza logica repetida en comparadores para evitar duplicacion
  *
  * @param tabla Nombre de la tabla a consultar
- * @param titulo Título a mostrar
+ * @param titulo Titulo a mostrar
  * @param id1 Puntero para almacenar primer ID
  * @param id2 Puntero para almacenar segundo ID
- * @return 1 si se obtuvieron dos IDs válidos, 0 si hay menos de 2 entidades
+ * @return 1 si se obtuvieron dos IDs validos, 0 si hay menos de 2 entidades
  */
 static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
 {
@@ -407,7 +407,7 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
             return 0;
         if (!existe_id_entidad(tabla, *id1))
         {
-            printf("ID inválido.\n");
+            printf("ID invalido.\n");
             continue;
         }
 
@@ -416,7 +416,7 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
             return 0;
         if (!existe_id_entidad(tabla, *id2))
         {
-            printf("ID inválido.\n");
+            printf("ID invalido.\n");
             continue;
         }
         if (*id1 == *id2)
@@ -495,7 +495,7 @@ static void comparar_torneos()
 }
 
 /**
- * @brief Compara dos períodos
+ * @brief Compara dos periodos
  */
 static void comparar_periodos()
 {
@@ -564,7 +564,7 @@ static void comparar_condiciones()
     {
         tipo_condicion = input_int("\nSeleccione tipo de condicion (1-2): ");
         if (tipo_condicion < 1 || tipo_condicion > 2)
-            printf("Opción inválida.\n");
+            printf("Opcion invalida.\n");
     }
 
     int valor1;
@@ -582,7 +582,7 @@ static void comparar_condiciones()
 
         if (valor1 < min_val || valor1 > max_val || valor2 < min_val || valor2 > max_val)
         {
-            printf("Valores inválidos. Rango permitido: %d a %d.\n", min_val, max_val);
+            printf("Valores invalidos. Rango permitido: %d a %d.\n", min_val, max_val);
             continue;
         }
         if (valor1 == valor2)
@@ -613,7 +613,7 @@ static void comparar_condiciones()
 }
 
 /**
- * @brief Muestra el menú del comparador avanzado
+ * @brief Muestra el menu del comparador avanzado
  */
 static void mostrar_comparador_avanzado()
 {
@@ -633,7 +633,7 @@ static void mostrar_comparador_avanzado()
 }
 
 /**
- * @brief Muestra el análisis completo de rendimiento
+ * @brief Muestra el analisis completo de rendimiento
  */
 void mostrar_analisis()
 {
@@ -653,7 +653,7 @@ void mostrar_analisis()
 }
 
 /**
- * @brief Estructura para almacenar estadísticas mensuales
+ * @brief Estructura para almacenar estadisticas mensuales
  */
 typedef struct
 {
@@ -664,10 +664,10 @@ typedef struct
 } EstadisticasMensuales;
 
 /**
- * @brief Convierte número de mes a nombre
+ * @brief Convierte numero de mes a nombre
  *
- * @param mes Número del mes (1-12)
- * @return Nombre del mes en español
+ * @param mes Numero del mes (1-12)
+ * @return Nombre del mes en espanol
  */
 static const char *mes_to_text(int mes)
 {
@@ -703,12 +703,12 @@ static const char *mes_to_text(int mes)
 }
 
 /**
- * @brief Calcula estadísticas mensuales para una métrica específica
+ * @brief Calcula estadisticas mensuales para una metrica especifica
  *
- * @param stats Array donde almacenar las estadísticas mensuales
- * @param max_stats Tamaño máximo del array
+ * @param stats Array donde almacenar las estadisticas mensuales
+ * @param max_stats Tamano maximo del array
  * @param columna Nombre de la columna a promediar (goles, asistencias, rendimiento_general)
- * @return Número de meses con datos
+ * @return Numero de meses con datos
  */
 static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max_stats, const char *columna)
 {
@@ -717,8 +717,8 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
 
     /*
      * Se utiliza strftime('%m', fecha_hora) y strftime('%Y', fecha_hora) para agrupar los datos
-     * a nivel mensual, permitiendo calcular promedios (AVG) por cada período mes-año.
-     * El orden persistente es descendente para mostrar primero los datos más recientes.
+     * a nivel mensual, permitiendo calcular promedios (AVG) por cada periodo mes-ano.
+     * El orden persistente es descendente para mostrar primero los datos mas recientes.
      */
     snprintf(sql, sizeof(sql),
              "SELECT strftime('%%m', fecha_hora) as mes, strftime('%%Y', fecha_hora) as anio, "
@@ -748,9 +748,9 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
 }
 
 /**
- * @brief Muestra la evolución mensual de una métrica
+ * @brief Muestra la evolucion mensual de una metrica
  *
- * @param titulo Título a mostrar
+ * @param titulo Titulo a mostrar
  * @param columna Nombre de la columna de la base de datos
  */
 static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
@@ -758,13 +758,13 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
     clear_screen();
     print_header(titulo);
 
-    EstadisticasMensuales stats[120]; // Máximo 10 años de datos
+    EstadisticasMensuales stats[120]; // Maximo 10 anos de datos
     int num_meses = calcular_estadisticas_mensuales(stats, 120, columna);
 
     if (num_meses == 0)
     {
-        printf("No hay suficientes datos para mostrar la evolución mensual.\n");
-        printf("Registra al menos algunos partidos para ver estadísticas.\n");
+        printf("No hay suficientes datos para mostrar la evolucion mensual.\n");
+        printf("Registra al menos algunos partidos para ver estadisticas.\n");
         pause_console();
         return;
     }
@@ -783,7 +783,7 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
 }
 
 /**
- * @brief Encuentra el mejor o peor mes histórico
+ * @brief Encuentra el mejor o peor mes historico
  *
  * @param mejor 1 para mejor mes, 0 para peor mes
  */
@@ -826,7 +826,7 @@ static void encontrar_mes_historico(int mejor)
     }
     else
     {
-        printf("No hay suficientes datos para determinar el %s mes histórico.\n",
+        printf("No hay suficientes datos para determinar el %s mes historico.\n",
                mejor ? "mejor" : "peor");
     }
 
@@ -836,7 +836,7 @@ static void encontrar_mes_historico(int mejor)
 }
 
 /**
- * @brief Compara rendimiento al inicio vs fin de año
+ * @brief Compara rendimiento al inicio vs fin de ano
  */
 static void comparar_inicio_fin_anio()
 {
@@ -846,8 +846,8 @@ static void comparar_inicio_fin_anio()
     sqlite3_stmt *stmt;
     /*
      * Clasifica los partidos en dos grandes semestres usando CAST y strftime.
-     * Esto permite un análisis comparativo de la evolución del rendimiento entre
-     * la primera y la segunda mitad del año calendario.
+     * Esto permite un analisis comparativo de la evolucion del rendimiento entre
+     * la primera y la segunda mitad del ano calendario.
      */
     const char *sql =
         "SELECT "
@@ -874,7 +874,7 @@ static void comparar_inicio_fin_anio()
         double avg_rendimiento = sqlite3_column_double(stmt, 3);
         int partidos = sqlite3_column_int(stmt, 4);
 
-        printf("%s de año (Ene-Jun):\n", strcmp(periodo, "Inicio") == 0 ? "Inicio" : "Fin");
+        printf("%s de ano (Ene-Jun):\n", strcmp(periodo, "Inicio") == 0 ? "Inicio" : "Fin");
         printf("  Goles: %.2f\n", avg_goles);
         printf("  Asistencias: %.2f\n", avg_asistencias);
         printf("  Rendimiento: %.2f\n", avg_rendimiento);
@@ -884,7 +884,7 @@ static void comparar_inicio_fin_anio()
 
     if (count == 0)
     {
-        printf("No hay suficientes datos para comparar inicio vs fin de año.\n");
+        printf("No hay suficientes datos para comparar inicio vs fin de ano.\n");
     }
 
     sqlite3_finalize(stmt);
@@ -892,7 +892,7 @@ static void comparar_inicio_fin_anio()
 }
 
 /**
- * @brief Compara rendimiento en meses fríos vs cálidos
+ * @brief Compara rendimiento en meses frios vs calidos
  */
 static void comparar_meses_frios_calidos()
 {
@@ -972,7 +972,7 @@ static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
     double tendencia = avg_ultimos - avg_primeros;
     printf("\nTENDENCIA:\n");
     printf("Primeros 5 partidos: %.2f\n", avg_primeros);
-    printf("Últimos 5 partidos: %.2f\n", avg_ultimos);
+    printf("ultimos 5 partidos: %.2f\n", avg_ultimos);
 
     const char *tendencia_texto;
     if (tendencia > 0.5)
@@ -1037,7 +1037,7 @@ static void calcular_progreso_total()
     printf("Promedio de asistencias: %.2f\n", avg_asistencias);
     printf("Promedio de rendimiento: %.2f\n", avg_rendimiento);
 
-    // Calcular tendencia (comparar primeros vs últimos partidos)
+    // Calcular tendencia (comparar primeros vs ultimos partidos)
     if (total_partidos < 10)
     {
         sqlite3_finalize(stmt);
@@ -1046,9 +1046,9 @@ static void calcular_progreso_total()
     }
 
     /*
-     * Algoritmo de Tendencia: Se comparan los promedios de los primeros 5 partidos vs los últimos 5.
-     * Se usa UNION ALL para obtener ambos promedios en una sola ejecución de statement,
-     * optimizando el acceso a la base de datos para el cálculo del delta de rendimiento.
+     * Algoritmo de Tendencia: Se comparan los promedios de los primeros 5 partidos vs los ultimos 5.
+     * Se usa UNION ALL para obtener ambos promedios en una sola ejecucion de statement,
+     * optimizando el acceso a la base de datos para el calculo del delta de rendimiento.
      */
     sqlite3_stmt *tend_stmt;
     const char *tend_sql =
@@ -1071,7 +1071,7 @@ static void calcular_progreso_total()
 }
 
 /**
- * @brief Muestra el menú de evolución temporal
+ * @brief Muestra el menu de evolucion temporal
  */
 void mostrar_evolucion_temporal()
 {
@@ -1095,7 +1095,7 @@ void mostrar_evolucion_temporal()
 }
 
 /**
- * @brief Muestra la evolución mensual de goles
+ * @brief Muestra la evolucion mensual de goles
  */
 void evolucion_mensual_goles()
 {
@@ -1103,7 +1103,7 @@ void evolucion_mensual_goles()
 }
 
 /**
- * @brief Muestra la evolución mensual de asistencias
+ * @brief Muestra la evolucion mensual de asistencias
  */
 void evolucion_mensual_asistencias()
 {
@@ -1111,7 +1111,7 @@ void evolucion_mensual_asistencias()
 }
 
 /**
- * @brief Muestra la evolución mensual de rendimiento
+ * @brief Muestra la evolucion mensual de rendimiento
  */
 void evolucion_mensual_rendimiento()
 {
@@ -1119,7 +1119,7 @@ void evolucion_mensual_rendimiento()
 }
 
 /**
- * @brief Muestra el mejor mes histórico
+ * @brief Muestra el mejor mes historico
  */
 void mejor_mes_historico()
 {
@@ -1127,7 +1127,7 @@ void mejor_mes_historico()
 }
 
 /**
- * @brief Muestra el peor mes histórico
+ * @brief Muestra el peor mes historico
  */
 void peor_mes_historico()
 {
@@ -1135,7 +1135,7 @@ void peor_mes_historico()
 }
 
 /**
- * @brief Compara el rendimiento al inicio vs fin de año
+ * @brief Compara el rendimiento al inicio vs fin de ano
  */
 void inicio_vs_fin_anio()
 {
@@ -1143,7 +1143,7 @@ void inicio_vs_fin_anio()
 }
 
 /**
- * @brief Compara el rendimiento en meses fríos vs cálidos
+ * @brief Compara el rendimiento en meses frios vs calidos
  */
 void meses_frios_vs_calidos()
 {

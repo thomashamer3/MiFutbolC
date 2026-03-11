@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file estadisticas_meta.c
- * @brief Módulo para estadísticas avanzadas y meta-análisis en partidos de fútbol.
+ * @brief Modulo para estadisticas avanzadas y meta-analisis en partidos de futbol.
  *
- * Este archivo contiene funciones para analizar consistencia, partidos atípicos,
- * dependencia del contexto, impacto del cansancio y estado de ánimo.
+ * Este archivo contiene funciones para analizar consistencia, partidos atipicos,
+ * dependencia del contexto, impacto del cansancio y estado de animo.
  */
 
 #include "estadisticas_meta.h"
@@ -45,37 +45,47 @@ static void query(const char *titulo, const char *sql)
         return;
     }
 
+    int num_cols = sqlite3_column_count(stmt);
+
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char* text = (const char*)sqlite3_column_text(stmt, 0);
-        if (text)
+        if (num_cols == 1)
         {
-            snprintf(nombre, sizeof(nombre), "%s", text);
+            if (sqlite3_column_type(stmt, 0) == SQLITE_FLOAT)
+            {
+                printf("%-30s : %.4f\n", titulo, sqlite3_column_double(stmt, 0));
+            }
+            else if (sqlite3_column_type(stmt, 0) == SQLITE_INTEGER)
+            {
+                printf("%-30s : %d\n", titulo, sqlite3_column_int(stmt, 0));
+            }
+            else if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)
+            {
+                printf("%-30s : N/A\n", titulo);
+            }
+            else
+            {
+                printf("%-30s : %s\n", titulo,
+                       (const char *)sqlite3_column_text(stmt, 0));
+            }
         }
         else
         {
-            snprintf(nombre, sizeof(nombre), "%s", "Desconocido");
-        }
+            const char* text = (const char*)sqlite3_column_text(stmt, 0);
+            snprintf(nombre, sizeof(nombre), "%s", text ? text : "Desconocido");
 
-        // Check if the second column is integer or real
-        if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
-        {
-            printf("%-30s : %d\n",
-                   nombre,
-                   sqlite3_column_int(stmt, 1));
-        }
-        else if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
-        {
-            printf("%-30s : %.2f\n",
-                   nombre,
-                   sqlite3_column_double(stmt, 1));
-        }
-        else
-        {
-            // Fallback to int
-            printf("%-30s : %d\n",
-                   nombre,
-                   sqlite3_column_int(stmt, 1));
+            if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
+            {
+                printf("%-30s : %.2f\n", nombre, sqlite3_column_double(stmt, 1));
+            }
+            else if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
+            {
+                printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
+            }
+            else
+            {
+                printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
+            }
         }
     }
 
@@ -85,7 +95,7 @@ static void query(const char *titulo, const char *sql)
 /**
  * @brief Muestra la consistencia del rendimiento (variabilidad)
  *
- * Analiza la desviación estándar y coeficiente de variación del rendimiento general
+ * Analiza la desviacion estandar y coeficiente de variacion del rendimiento general
  * para evaluar la consistencia del jugador/equipo.
  */
 void mostrar_consistencia_rendimiento()
@@ -93,15 +103,15 @@ void mostrar_consistencia_rendimiento()
     clear_screen();
     print_header("CONSISTENCIA DEL RENDIMIENTO");
 
-    // Calcular estadísticas básicas
+    // Calcular estadisticas basicas
     query("Promedio de Rendimiento General",
           "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
 
-    // Calcular desviación estándar
+    // Calcular desviacion estandar
     query("Desviacion Estandar del Rendimiento",
           "SELECT ROUND(SQRT(AVG(rendimiento_general * rendimiento_general) - AVG(rendimiento_general) * AVG(rendimiento_general)), 2) FROM partido");
 
-    // Calcular coeficiente de variación
+    // Calcular coeficiente de variacion
     query("Coeficiente de Variacion (%)",
           "SELECT ROUND((SQRT(AVG(rendimiento_general * rendimiento_general) - AVG(rendimiento_general) * AVG(rendimiento_general)) / AVG(rendimiento_general) * 100), 2) FROM partido");
 
@@ -115,7 +125,7 @@ void mostrar_consistencia_rendimiento()
 }
 
 /**
- * @brief Función genérica para mostrar partidos con ciertos criterios SQL
+ * @brief Funcion generica para mostrar partidos con ciertos criterios SQL
  */
 static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion, const char *sql)
 {
@@ -133,6 +143,7 @@ static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion
         return;
     }
 
+    int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *resultado_str = resultado_a_texto(sqlite3_column_int(stmt, 6));
@@ -145,14 +156,16 @@ static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion
                sqlite3_column_int(stmt, 4),
                sqlite3_column_int(stmt, 5),
                resultado_str);
+        hay = 1;
     }
+    if (!hay) printf("No se encontraron partidos que cumplan el criterio.\n");
 
     sqlite3_finalize(stmt);
     pause_console();
 }
 
 /**
- * @brief Muestra los partidos atípicos (muy buenos/muy malos)
+ * @brief Muestra los partidos atipicos (muy buenos/muy malos)
  *
  * Identifica partidos con rendimiento significativamente diferente al promedio.
  */
@@ -161,16 +174,23 @@ void mostrar_partidos_outliers()
     clear_screen();
     print_header("PARTIDOS ATIPICOS");
 
-    // Calcular límites para outliers (1.5 * IQR)
     printf("\nPartidos con rendimiento excepcionalmente alto:\n");
     printf("----------------------------------------\n");
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha_hora, rendimiento_general, goles, asistencias "
-                      "FROM partido "
-                      "WHERE rendimiento_general > (SELECT AVG(rendimiento_general) + 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
-                      "ORDER BY rendimiento_general DESC";
+    const char *sql =
+        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias "
+        "FROM partido "
+        "WHERE rendimiento_general > ("
+        "  SELECT AVG(rendimiento_general) + 1.5 * ("
+        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC "
+        "     LIMIT 1 OFFSET (SELECT COUNT(*)*3/4 FROM partido)) - "
+        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC "
+        "     LIMIT 1 OFFSET (SELECT COUNT(*)/4 FROM partido))"
+        "  ) FROM partido"
+        ") ORDER BY rendimiento_general DESC";
 
+    int hay = 0;
     if (!preparar_stmt_export(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
@@ -186,18 +206,27 @@ void mostrar_partidos_outliers()
                sqlite3_column_int(stmt, 2),
                sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4));
+        hay = 1;
     }
-
+    if (!hay) printf("No se encontraron partidos atipicos altos.\n");
     sqlite3_finalize(stmt);
 
     printf("\nPartidos con rendimiento excepcionalmente bajo:\n");
     printf("----------------------------------------\n");
 
-    const char *sql2 = "SELECT id, fecha_hora, rendimiento_general, goles, asistencias "
-                       "FROM partido "
-                       "WHERE rendimiento_general < (SELECT AVG(rendimiento_general) - 1.5 * (SELECT (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY rendimiento_general) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY rendimiento_general)) FROM partido) FROM partido) "
-                       "ORDER BY rendimiento_general ASC";
+    const char *sql2 =
+        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias "
+        "FROM partido "
+        "WHERE rendimiento_general < ("
+        "  SELECT AVG(rendimiento_general) - 1.5 * ("
+        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC "
+        "     LIMIT 1 OFFSET (SELECT COUNT(*)*3/4 FROM partido)) - "
+        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC "
+        "     LIMIT 1 OFFSET (SELECT COUNT(*)/4 FROM partido))"
+        "  ) FROM partido"
+        ") ORDER BY rendimiento_general ASC";
 
+    hay = 0;
     if (!preparar_stmt_export(&stmt, sql2))
     {
         printf("Error al consultar la base de datos.\n");
@@ -213,8 +242,9 @@ void mostrar_partidos_outliers()
                sqlite3_column_int(stmt, 2),
                sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4));
+        hay = 1;
     }
-
+    if (!hay) printf("No se encontraron partidos atipicos bajos.\n");
     sqlite3_finalize(stmt);
 
     pause_console();
@@ -223,7 +253,7 @@ void mostrar_partidos_outliers()
 /**
  * @brief Muestra la dependencia del contexto
  *
- * Analiza cómo el rendimiento varía según diferentes contextos (clima, día, etc.)
+ * Analiza como el rendimiento varia segun diferentes contextos (clima, dia, etc.)
  */
 void mostrar_dependencia_contexto()
 {
@@ -237,9 +267,9 @@ void mostrar_dependencia_contexto()
     query("Rendimiento por Clima",
           "SELECT clima, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY clima ORDER BY AVG(rendimiento_general) DESC");
 
-    // Rendimiento por día de semana
+    // Rendimiento por dia de semana
     query("Rendimiento por Dia de Semana",
-          "SELECT CASE strftime('%w', fecha_hora) WHEN '0' THEN 'Domingo' WHEN '1' THEN 'Lunes' WHEN '2' THEN 'Martes' WHEN '3' THEN 'Miércoles' WHEN '4' THEN 'Jueves' WHEN '5' THEN 'Viernes' WHEN '6' THEN 'Sábado' ELSE 'Desconocido' END AS dia, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY dia ORDER BY AVG(rendimiento_general) DESC");
+          "SELECT CASE strftime('%w', fecha_hora) WHEN '0' THEN 'Domingo' WHEN '1' THEN 'Lunes' WHEN '2' THEN 'Martes' WHEN '3' THEN 'Miercoles' WHEN '4' THEN 'Jueves' WHEN '5' THEN 'Viernes' WHEN '6' THEN 'Sabado' ELSE 'Desconocido' END AS dia, ROUND(AVG(rendimiento_general), 2), COUNT(*) FROM partido GROUP BY dia ORDER BY AVG(rendimiento_general) DESC");
 
     // Rendimiento por resultado
     query("Rendimiento por Resultado",
@@ -251,7 +281,7 @@ void mostrar_dependencia_contexto()
 /**
  * @brief Muestra el impacto real del cansancio
  *
- * Analiza la correlación entre cansancio y rendimiento
+ * Analiza la correlacion entre cansancio y rendimiento
  */
 void mostrar_impacto_real_cansancio()
 {
@@ -288,23 +318,23 @@ void mostrar_impacto_real_cansancio()
 }
 
 /**
- * @brief Muestra el impacto real del estado de ánimo
+ * @brief Muestra el impacto real del estado de animo
  *
- * Analiza la correlación entre estado de ánimo y rendimiento
+ * Analiza la correlacion entre estado de animo y rendimiento
  */
 void mostrar_impacto_real_estado_animo()
 {
     clear_screen();
-    print_header("IMPACTO REAL DEL ESTADO DE ÁNIMO");
+    print_header("IMPACTO REAL DEL ESTADO DE aNIMO");
 
-    // Correlacion entre estado de ánimo y rendimiento
+    // Correlacion entre estado de animo y rendimiento
     query("Correlacion Estado de Animo-Rendimiento",
           "SELECT ROUND((COUNT(*) * SUM(estado_animo * rendimiento_general) - SUM(estado_animo) * SUM(rendimiento_general)) / "
           "(SQRT((COUNT(*) * SUM(estado_animo * estado_animo) - SUM(estado_animo) * SUM(estado_animo)) * "
           "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
           "FROM partido");
 
-    // Rendimiento por nivel de estado de ánimo
+    // Rendimiento por nivel de estado de animo
     query("Rendimiento por Nivel de Estado de Animo",
           "SELECT CASE WHEN estado_animo <= 3 THEN 'Bajo (1-3)' WHEN estado_animo <= 7 THEN 'Medio (4-7)' ELSE 'Alto (8-10)' END AS nivel_animo, "
           "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, "
@@ -329,7 +359,7 @@ void mostrar_impacto_real_estado_animo()
 /**
  * @brief Muestra la eficiencia: goles por partido vs rendimiento
  *
- * Analiza la relación entre producción de goles y rendimiento general
+ * Analiza la relacion entre produccion de goles y rendimiento general
  */
 void mostrar_eficiencia_goles_vs_rendimiento()
 {
@@ -362,7 +392,7 @@ void mostrar_eficiencia_goles_vs_rendimiento()
 /**
  * @brief Muestra la eficiencia: asistencias por partido vs cansancio
  *
- * Analiza cómo el cansancio afecta la capacidad de asistir
+ * Analiza como el cansancio afecta la capacidad de asistir
  */
 void mostrar_eficiencia_asistencias_vs_cansancio()
 {
@@ -391,7 +421,7 @@ void mostrar_eficiencia_asistencias_vs_cansancio()
 /**
  * @brief Muestra el rendimiento obtenido por esfuerzo
  *
- * Analiza la relación entre esfuerzo (cansancio) y resultados
+ * Analiza la relacion entre esfuerzo (cansancio) y resultados
  */
 void mostrar_rendimiento_por_esfuerzo()
 {
@@ -418,7 +448,7 @@ void mostrar_rendimiento_por_esfuerzo()
 /**
  * @brief Muestra partidos exigentes bien rendidos
  *
- * Identifica partidos difíciles con buen rendimiento
+ * Identifica partidos dificiles con buen rendimiento
  */
 void mostrar_partidos_exigentes_bien_rendidos()
 {
@@ -433,9 +463,9 @@ void mostrar_partidos_exigentes_bien_rendidos()
 }
 
 /**
- * @brief Muestra partidos fáciles mal rendidos
+ * @brief Muestra partidos faciles mal rendidos
  *
- * Identifica partidos fáciles con bajo rendimiento
+ * Identifica partidos faciles con bajo rendimiento
  */
 void mostrar_partidos_faciles_mal_rendidos()
 {

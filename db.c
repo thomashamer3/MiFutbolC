@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file db.c
- * @brief Módulo para la gestión de la base de datos SQLite
+ * @brief Modulo para la gestion de la base de datos SQLite
  *
  * Este archivo contiene las funciones necesarias para inicializar, configurar y cerrar
- * la conexión a la base de datos SQLite utilizada por la aplicación MiFutbolC.
+ * la conexion a la base de datos SQLite utilizada por la aplicacion MiFutbolC.
  */
 #include "export.h"
 #include "db.h"
@@ -201,7 +201,7 @@ static int configurar_directorio_documentos(const char *subdir, char *out_dir, s
     char documents_path[MAX_PATH];
     /*
      * Se utiliza SHGetFolderPathA con CSIDL_PERSONAL para obtener la ruta a "Mis Documentos".
-     * Esta ubicación se reserva para archivos que el usuario debe manipular manualmente,
+     * Esta ubicacion se reserva para archivos que el usuario debe manipular manualmente,
      * como las exportaciones e importaciones de datos.
      */
     if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
@@ -346,10 +346,10 @@ static int append_str(char *dest, size_t *used, size_t cap, const char *str)
 /**
  * @brief Configura rutas y directorios para almacenamiento de datos
  *
- * Establece ubicaciones específicas del sistema operativo para
+ * Establece ubicaciones especificas del sistema operativo para
  * base de datos interna y directorios de usuario accesibles.
  *
- * @return 1 si configuración exitosa, 0 en caso de error
+ * @return 1 si configuracion exitosa, 0 en caso de error
  */
 static int setup_database_paths()
 {
@@ -433,12 +433,12 @@ static int setup_database_paths()
 }
 
 /**
- * @brief Establece conexión activa con base de datos SQLite
+ * @brief Establece conexion activa con base de datos SQLite
  *
  * Abre archivo de base de datos y configura puntero global para
- * operaciones subsiguientes de consulta y modificación.
+ * operaciones subsiguientes de consulta y modificacion.
  *
- * @return 1 si conexión exitosa, 0 en caso de error
+ * @return 1 si conexion exitosa, 0 en caso de error
  */
 static int create_database_connection()
 {
@@ -464,7 +464,7 @@ static int create_database_connection()
  * Define estructura relacional completa incluyendo todas las entidades,
  * restricciones de integridad referencial y valores por defecto.
  *
- * @return 1 si creación exitosa, 0 en caso de error
+ * @return 1 si creacion exitosa, 0 en caso de error
  */
 static int create_database_schema()
 {
@@ -543,6 +543,12 @@ static int create_database_schema()
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
         " PRIMARY KEY(torneo_id, equipo_id));"
+
+        "CREATE TABLE IF NOT EXISTS equipo_torneo_nombre ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " torneo_id INTEGER NOT NULL,"
+        " nombre TEXT NOT NULL,"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
 
         "CREATE TABLE IF NOT EXISTS partido_torneo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -890,9 +896,9 @@ static int create_database_schema()
 }
 
 /**
- * @brief Agrega columnas faltantes por evolución del esquema
+ * @brief Agrega columnas faltantes por evolucion del esquema
  *
- * Ejecuta sentencias ALTER TABLE para añadir campos nuevos sin
+ * Ejecuta sentencias ALTER TABLE para anadir campos nuevos sin
  * afectar datos existentes, ignorando errores de columnas duplicadas.
  */
 static void add_missing_columns()
@@ -921,10 +927,10 @@ static void add_missing_columns()
 /**
  * @brief Inicializa el entorno completo de persistencia de datos
  *
- * Orquesta configuración de rutas, conexión a base de datos,
- * creación de esquema y preparación de directorios auxiliares.
+ * Orquesta configuracion de rutas, conexion a base de datos,
+ * creacion de esquema y preparacion de directorios auxiliares.
  *
- * @return 1 si inicialización completa exitosa, 0 en caso de error
+ * @return 1 si inicializacion completa exitosa, 0 en caso de error
  */
 int db_init()
 {
@@ -951,7 +957,7 @@ int db_init()
     add_missing_columns();
     app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
 
-    // Crear directorios de importación y exportación al iniciar
+    // Crear directorios de importacion y exportacion al iniciar
     get_import_dir();
     get_export_dir();
 
@@ -961,10 +967,10 @@ int db_init()
 }
 
 /**
- * @brief Libera recursos de conexión a base de datos
+ * @brief Libera recursos de conexion a base de datos
  *
  * Evita fugas de memoria cerrando conexiones SQLite activas
- * de manera ordenada durante el cierre de la aplicación.
+ * de manera ordenada durante el cierre de la aplicacion.
  */
 void db_close()
 {
@@ -977,10 +983,10 @@ void db_close()
 }
 
 /**
- * @brief Recupera identidad del usuario para personalización
+ * @brief Recupera identidad del usuario para personalizacion
  *
- * Permite adaptar la interfaz y mensajes según el usuario identificado,
- * mejorando la experiencia personalizada de la aplicación.
+ * Permite adaptar la interfaz y mensajes segun el usuario identificado,
+ * mejorando la experiencia personalizada de la aplicacion.
  *
  * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
  */
@@ -1013,7 +1019,7 @@ char *get_user_name()
  * consistencia en configuraciones personales entre ejecuciones.
  *
  * @param nombre El nombre del usuario a guardar
- * @return 1 si la operación fue exitosa, 0 en caso de error
+ * @return 1 si la operacion fue exitosa, 0 en caso de error
  */
 int set_user_name(const char *nombre)
 {
@@ -1037,8 +1043,8 @@ int set_user_name(const char *nombre)
 /**
  * @brief Proporciona acceso al directorio de almacenamiento interno
  *
- * Facilita operaciones de archivo que requieren ubicación de datos
- * persistentes, manteniendo separación entre datos de aplicación y usuario.
+ * Facilita operaciones de archivo que requieren ubicacion de datos
+ * persistentes, manteniendo separacion entre datos de aplicacion y usuario.
  *
  * @return Puntero a cadena con la ruta del directorio de datos
  */
@@ -1048,10 +1054,10 @@ const char *get_data_dir()
 }
 
 /**
- * @brief Establece ubicación accesible para archivos exportados
+ * @brief Establece ubicacion accesible para archivos exportados
  *
  * Configura directorio visible al usuario para almacenamiento de
- * datos exportados, permitiendo fácil acceso y backup de información.
+ * datos exportados, permitiendo facil acceso y backup de informacion.
  *
  * @return Puntero a cadena con la ruta del directorio de exportaciones
  */
@@ -1071,10 +1077,10 @@ const char *get_export_dir()
 }
 
 /**
- * @brief Establece ubicación accesible para archivos a importar
+ * @brief Establece ubicacion accesible para archivos a importar
  *
- * Configura directorio visible al usuario para colocación de
- * archivos de importación, facilitando carga masiva de datos.
+ * Configura directorio visible al usuario para colocacion de
+ * archivos de importacion, facilitando carga masiva de datos.
  *
  * @return Puntero a cadena con la ruta del directorio de importaciones
  */
@@ -1096,8 +1102,8 @@ const char *get_import_dir()
 /**
  * @brief Copia la base de datos SQLite a la carpeta de documentos
  *
- * Esta función realiza una copia exacta del archivo de base de datos
- * desde la ubicación de datos internos (AppData) a la carpeta de exportación
+ * Esta funcion realiza una copia exacta del archivo de base de datos
+ * desde la ubicacion de datos internos (AppData) a la carpeta de exportacion
  * (Documentos del usuario) para respaldo y portabilidad.
  */
 void exportar_base_datos()
@@ -1115,7 +1121,7 @@ void exportar_base_datos()
 
     if (!db)
     {
-        // Fallback cuando no hay conexión abierta.
+        // Fallback cuando no hay conexion abierta.
         const char *source_path = DB_PATH;
         CopyResult result = copiar_archivo(source_path, dest_path);
         if (result == COPY_SRC_ERROR)
@@ -1148,7 +1154,7 @@ void exportar_base_datos()
         return;
     }
 
-    // Exportación segura con SQLite backup API (evita errores por archivo en uso).
+    // Exportacion segura con SQLite backup API (evita errores por archivo en uso).
     sqlite3 *dest_db = NULL;
     if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
     {
@@ -1319,7 +1325,7 @@ void importar_base_datos()
     CopyResult result = copiar_archivo(source_path, dest_path);
     if (result == COPY_SRC_ERROR)
     {
-        printf("Error: No se encontró el archivo a importar en:\n%s\n", source_path);
+        printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
         char log_msg[1024] = {0};
         snprintf(log_msg, sizeof(log_msg), "No se encontro archivo de importacion: %.983s", source_path);
         app_log_write("ERROR", "IMPORT", log_msg);
@@ -1338,7 +1344,7 @@ void importar_base_datos()
     printf("Base de datos importada correctamente.\n");
     printf("Origen: %s\n", source_path);
     printf("Destino: %s\n", dest_path);
-    printf("Reinicia la aplicación para usar la nueva base.\n");
+    printf("Reinicia la aplicacion para usar la nueva base.\n");
 
     {
         char log_msg[1024] = {0};

@@ -1,4 +1,4 @@
-#include "partido.h"
+﻿#include "partido.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -17,6 +17,7 @@
 #endif
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 #ifdef _WIN32
 #include <process.h>
 #else
@@ -33,13 +34,13 @@
 #  endif
 #endif
 
-// Prototipos de funciones estáticas usadas antes de su definición
+// Prototipos de funciones estaticas usadas antes de su definicion
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
 static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo);
-static void guardar_estadisticas_equipo(const Equipo *equipo, int const *estadisticas, int const *asistencias,
-                                        int resultado, int cancha_id, char const *fecha_simulacion);
+static UNUSED void guardar_estadisticas_equipo(const Equipo *equipo, int const *estadisticas, int const *asistencias,
+        int resultado, int cancha_id, char const *fecha_simulacion);
 
-// Declaración externa para función de financiamiento
+// Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
 
 /**
@@ -56,15 +57,15 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 /**
- * @brief Muestra la información de un partido desde un statement preparado
+ * @brief Muestra la informacion de un partido desde un statement preparado
  *
- * Esta función genérica imprime todos los detalles de un partido obtenido
+ * Esta funcion generica imprime todos los detalles de un partido obtenido
  * de una consulta SQL. Asume que el statement tiene las columnas en el orden:
  * id, cancha, fecha_hora, goles, asistencias, camiseta, resultado,
  * rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio
  *
  * @param stmt Statement preparado con los datos del partido
- * @return 1 si se mostró al menos un partido, 0 si no hay resultados
+ * @return 1 si se mostro al menos un partido, 0 si no hay resultados
  */
 static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 {
@@ -73,7 +74,7 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        // Formatear la fecha para visualización
+        // Formatear la fecha para visualizacion
         format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
 
         ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
@@ -100,8 +101,8 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 /**
  * @brief Estructura para agrupar los datos de un partido
  *
- * Esta estructura se utiliza para reducir el número de parámetros en funciones
- * y mejorar la organización del código.
+ * Esta estructura se utiliza para reducir el numero de parametros en funciones
+ * y mejorar la organizacion del codigo.
  */
 typedef struct
 {
@@ -120,10 +121,10 @@ typedef struct
 } DatosPartido;
 
 /**
- * @brief Estructura para agrupar estadísticas de un partido
+ * @brief Estructura para agrupar estadisticas de un partido
  *
- * Esta estructura se utiliza para reducir el número de parámetros en funciones
- * de simulación y resultados, agrupando las estadísticas de ambos equipos.
+ * Esta estructura se utiliza para reducir el numero de parametros en funciones
+ * de simulacion y resultados, agrupando las estadisticas de ambos equipos.
  */
 typedef struct
 {
@@ -136,11 +137,11 @@ typedef struct
 } EstadisticasPartido;
 
 /**
- * @brief Estructura para agrupar datos de simulación de partido
+ * @brief Estructura para agrupar datos de simulacion de partido
  *
- * Esta estructura agrupa todos los datos necesarios para la simulación
+ * Esta estructura agrupa todos los datos necesarios para la simulacion
  * y guardado de resultados de un partido, reduciendo la cantidad de
- * parámetros en las funciones relacionadas.
+ * parametros en las funciones relacionadas.
  */
 typedef struct
 {
@@ -174,7 +175,7 @@ static int secure_rand(int max)
  * @brief Verifica que existan canchas y camisetas antes de crear un partido
  *
  * Para mantener la integridad de los datos, se asegura de que haya entidades relacionadas
- * disponibles antes de permitir la creación de un nuevo partido.
+ * disponibles antes de permitir la creacion de un nuevo partido.
  *
  * @return 1 si hay entidades disponibles, 0 si no
  */
@@ -208,9 +209,9 @@ static int verificar_prerrequisitos_partido()
 }
 
 /**
- * @brief Muestra la lista de canchas disponibles para selección
+ * @brief Muestra la lista de canchas disponibles para seleccion
  *
- * Facilita la selección de cancha al usuario mostrando las opciones disponibles.
+ * Facilita la seleccion de cancha al usuario mostrando las opciones disponibles.
  */
 static void listar_canchas_disponibles()
 {
@@ -231,10 +232,10 @@ static void listar_canchas_disponibles()
  * @brief Recopila todos los datos necesarios para un partido desde el usuario
  *
  * Valida cada entrada para asegurar que los datos sean correctos antes de proceder.
- * Utiliza bucles para reintentar entradas inválidas, mejorando la experiencia del usuario.
+ * Utiliza bucles para reintentar entradas invalidas, mejorando la experiencia del usuario.
  *
- * @param datos Puntero a la estructura DatosPartido que contendrá los datos recopilados
- * @return 1 si los datos son válidos, 0 si se cancela o hay error
+ * @param datos Puntero a la estructura DatosPartido que contendra los datos recopilados
+ * @return 1 si los datos son validos, 0 si se cancela o hay error
  */
 static int recopilar_datos_partido(DatosPartido *datos)
 {
@@ -265,13 +266,13 @@ static int recopilar_datos_partido(DatosPartido *datos)
     datos->goles = input_int("Goles: ");
     while (datos->goles < 0)
     {
-        datos->goles = input_int("Goles inválidos. Ingrese 0 o más: ");
+        datos->goles = input_int("Goles invalidos. Ingrese 0 o mas: ");
     }
 
     datos->asistencias = input_int("Asistencias: ");
     while (datos->asistencias < 0)
     {
-        datos->asistencias = input_int("Asistencias inválidas. Ingrese 0 o más: ");
+        datos->asistencias = input_int("Asistencias invalidas. Ingrese 0 o mas: ");
     }
     datos->resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
     while (datos->resultado < 1 || datos->resultado > 3)
@@ -315,7 +316,7 @@ static int recopilar_datos_partido(DatosPartido *datos)
     datos->precio = input_int("Precio del partido: ");
     while (datos->precio < 0)
     {
-        datos->precio = input_int("Precio inválido. Ingrese 0 o más: ");
+        datos->precio = input_int("Precio invalido. Ingrese 0 o mas: ");
     }
 
     return 1;
@@ -324,8 +325,8 @@ static int recopilar_datos_partido(DatosPartido *datos)
 /**
  * @brief Inserta un nuevo partido en la base de datos
  *
- * Utiliza prepared statements para evitar inyección SQL y asegurar integridad de datos.
- * Maneja errores de SQLite para informar al usuario si la inserción falla.
+ * Utiliza prepared statements para evitar inyeccion SQL y asegurar integridad de datos.
+ * Maneja errores de SQLite para informar al usuario si la insercion falla.
  *
  * @param id ID del partido
  * @param datos Puntero a la estructura DatosPartido que contiene los datos del partido
@@ -368,7 +369,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
 }
 
 /**
- * @brief Crea una transacción financiera para el partido si no tiene precio asignado
+ * @brief Crea una transaccion financiera para el partido si no tiene precio asignado
  *
  * @param partido_id ID del partido
  * @param precio Precio del partido
@@ -376,7 +377,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
  */
 static void crear_transaccion_partido(long long partido_id, int precio)
 {
-    // Verificar si el partido ya tiene una transacción asociada
+    // Verificar si el partido ya tiene una transaccion asociada
     sqlite3_stmt *stmt_check;
     const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 6 AND item_especifico LIKE ?";
     char item_pattern[256];
@@ -390,7 +391,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
             int count = sqlite3_column_int(stmt_check, 0);
             if (count > 0)
             {
-                printf("El partido ya tiene una transacción financiera asociada.\n");
+                printf("El partido ya tiene una transaccion financiera asociada.\n");
                 sqlite3_finalize(stmt_check);
                 return;
             }
@@ -398,7 +399,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
         sqlite3_finalize(stmt_check);
     }
 
-    // Crear la transacción financiera
+    // Crear la transaccion financiera
     TransaccionFinanciera transaccion;
     transaccion.id = (int)obtener_siguiente_id("financiamiento");
     obtener_fecha_actual(transaccion.fecha);
@@ -419,7 +420,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
 
         if (sqlite3_step(stmt_partido) == SQLITE_ROW)
         {
-            // Formatear la fecha para visualización
+            // Formatear la fecha para visualizacion
             char fecha_formateada[20];
             format_date_for_display((const char *)sqlite3_column_text(stmt_partido, 2), fecha_formateada, sizeof(fecha_formateada));
 
@@ -444,7 +445,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
         snprintf(transaccion.item_especifico, sizeof(transaccion.item_especifico), "Partido ID: %lld", partido_id);
     }
 
-    // Insertar la transacción en la base de datos
+    // Insertar la transaccion en la base de datos
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO financiamiento (id, fecha, tipo, categoria, descripcion, monto, item_especifico) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
@@ -460,25 +461,25 @@ static void crear_transaccion_partido(long long partido_id, int precio)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Transacción financiera creada para el partido con ID %lld\n", partido_id);
+            printf("Transaccion financiera creada para el partido con ID %lld\n", partido_id);
         }
         else
         {
-            printf("Error al crear la transacción financiera: %s\n", sqlite3_errmsg(db));
+            printf("Error al crear la transaccion financiera: %s\n", sqlite3_errmsg(db));
         }
         sqlite3_finalize(stmt);
     }
     else
     {
-        printf("Error al preparar la consulta de transacción: %s\n", sqlite3_errmsg(db));
+        printf("Error al preparar la consulta de transaccion: %s\n", sqlite3_errmsg(db));
     }
 }
 
 /**
  * @brief Crea un nuevo partido en la base de datos
  *
- * Coordina la verificación de prerrequisitos, recopilación de datos y inserción
- * para asegurar un proceso robusto y modular de creación de partidos.
+ * Coordina la verificacion de prerrequisitos, recopilacion de datos y insercion
+ * para asegurar un proceso robusto y modular de creacion de partidos.
  */
 void crear_partido()
 {
@@ -498,7 +499,7 @@ void crear_partido()
     long long id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
 
-    // Crear transacción financiera si el precio es mayor a 0
+    // Crear transaccion financiera si el precio es mayor a 0
     if (datos.precio > 0)
     {
         crear_transaccion_partido(id, datos.precio);
@@ -544,13 +545,13 @@ void listar_partidos()
 /**
  * @brief Elimina un partido de la base de datos.
  *
- * Esta función permite al usuario eliminar un partido existente. Primero muestra
+ * Esta funcion permite al usuario eliminar un partido existente. Primero muestra
  * la lista de partidos disponibles, solicita el ID del partido a eliminar,
- * verifica que el partido exista, solicita confirmación al usuario y finalmente
+ * verifica que el partido exista, solicita confirmacion al usuario y finalmente
  * elimina el registro de la base de datos si se confirma.
  *
- * @note Si el partido no existe, muestra un mensaje de error y no realiza la eliminación.
- * @note Si el usuario no confirma la eliminación, la operación se cancela.
+ * @note Si el partido no existe, muestra un mensaje de error y no realiza la eliminacion.
+ * @note Si el usuario no confirma la eliminacion, la operacion se cancela.
  */
 void eliminar_partido()
 {
@@ -595,20 +596,20 @@ void eliminar_partido()
 /**
  * @brief Variable global para almacenar el ID del partido actualmente siendo modificado
  *
- * Esta variable se utiliza en las funciones de modificación para identificar
- * qué partido se está editando en el menú de modificación.
+ * Esta variable se utiliza en las funciones de modificacion para identificar
+ * que partido se esta editando en el menu de modificacion.
  */
 static int current_partido_id;
 
 /**
- * @brief Función genérica para modificar un campo entero de un partido
+ * @brief Funcion generica para modificar un campo entero de un partido
  *
  * @param campo Nombre del campo en la base de datos
  * @param prompt Texto para solicitar el nuevo valor
- * @param mensaje_exito Mensaje de éxito
- * @param min_val Valor mínimo válido (0 si no aplica)
- * @param max_val Valor máximo válido (0 si no aplica)
- * @param mostrar_lista Función para mostrar lista de opciones (NULL si no aplica)
+ * @param mensaje_exito Mensaje de exito
+ * @param min_val Valor minimo valido (0 si no aplica)
+ * @param max_val Valor maximo valido (0 si no aplica)
+ * @param mostrar_lista Funcion para mostrar lista de opciones (NULL si no aplica)
  */
 static void modificar_campo_partido(const char *campo, const char *prompt, const char *mensaje_exito,
                                     int min_val, int max_val, void (*mostrar_lista)(void))
@@ -646,12 +647,12 @@ static void modificar_campo_partido(const char *campo, const char *prompt, const
 }
 
 /**
- * @brief Función genérica para modificar un campo de texto de un partido
+ * @brief Funcion generica para modificar un campo de texto de un partido
  *
  * @param campo Nombre del campo en la base de datos
  * @param prompt Texto para solicitar el nuevo valor
- * @param mensaje_exito Mensaje de éxito
- * @param buffer_size Tamaño del buffer para input
+ * @param mensaje_exito Mensaje de exito
+ * @param buffer_size Tamano del buffer para input
  */
 static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, int buffer_size)
 {
@@ -683,12 +684,12 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
 }
 
 /**
- * @brief Función genérica para buscar partidos por un criterio
+ * @brief Funcion generica para buscar partidos por un criterio
  *
- * @param header Título del header
+ * @param header Titulo del header
  * @param campo Campo por el que buscar
- * @param prompt Texto para solicitar el valor de búsqueda
- * @param mostrar_lista Función para mostrar lista de opciones (NULL si no aplica)
+ * @param prompt Texto para solicitar el valor de busqueda
+ * @param mostrar_lista Funcion para mostrar lista de opciones (NULL si no aplica)
  * @param validar_id Si debe validar que el ID existe
  */
 static void buscar_partidos_generico(const char *header, const char *campo, const char *prompt,
@@ -797,7 +798,7 @@ static void modificar_fecha_hora_partido()
 }
 
 /**
- * @brief Modifica el número de goles de un partido existente
+ * @brief Modifica el numero de goles de un partido existente
  */
 static void modificar_goles_partido()
 {
@@ -805,7 +806,7 @@ static void modificar_goles_partido()
 }
 
 /**
- * @brief Modifica el número de asistencias de un partido existente
+ * @brief Modifica el numero de asistencias de un partido existente
  */
 static void modificar_asistencias_partido()
 {
@@ -858,7 +859,7 @@ static void modificar_clima_partido()
 }
 
 /**
- * @brief Modifica el día de un partido existente
+ * @brief Modifica el dia de un partido existente
  */
 static void modificar_dia_partido()
 {
@@ -930,8 +931,8 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
 /**
  * @brief Actualiza todos los campos de un partido en la base de datos
  *
- * Realiza una actualización completa de un partido utilizando prepared statements
- * para prevenir inyección SQL y asegurar atomicidad de la operación.
+ * Realiza una actualizacion completa de un partido utilizando prepared statements
+ * para prevenir inyeccion SQL y asegurar atomicidad de la operacion.
  *
  * @param datos Puntero a la estructura DatosPartido con los datos a actualizar
  * @param fecha_hora Fecha y hora combinadas
@@ -967,8 +968,8 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
 /**
  * @brief Modifica todos los campos de un partido existente
  *
- * Coordina la recopilación de datos y actualización para simplificar
- * la modificación completa de un partido en una sola operación.
+ * Coordina la recopilacion de datos y actualizacion para simplificar
+ * la modificacion completa de un partido en una sola operacion.
  */
 static void modificar_todo_partido()
 {
@@ -980,7 +981,7 @@ static void modificar_todo_partido()
  * @brief Permite modificar los datos de un partido existente
  *
  * Muestra la lista de partidos disponibles, solicita el ID a modificar,
- * verifica que exista y muestra un menú con opciones para modificar campos individuales o todos.
+ * verifica que exista y muestra un menu con opciones para modificar campos individuales o todos.
  */
 void modificar_partido()
 {
@@ -1034,16 +1035,16 @@ static void buscar_por_camiseta()
     buscar_partidos_generico("BUSCAR PARTIDOS POR CAMISETA", "camiseta_id", "ID de la camiseta: ", &listar_camisetas, 1);
 }
 
-/** @brief Busca partidos por número de goles */
+/** @brief Busca partidos por numero de goles */
 static void buscar_por_goles()
 {
-    buscar_partidos_generico("BUSCAR PARTIDOS POR GOLES", "goles", "Número de goles: ", NULL, 0);
+    buscar_partidos_generico("BUSCAR PARTIDOS POR GOLES", "goles", "Numero de goles: ", NULL, 0);
 }
 
-/** @brief Busca partidos por número de asistencias */
+/** @brief Busca partidos por numero de asistencias */
 static void buscar_por_asistencias()
 {
-    buscar_partidos_generico("BUSCAR PARTIDOS POR ASISTENCIAS", "asistencias", "Número de asistencias: ", NULL, 0);
+    buscar_partidos_generico("BUSCAR PARTIDOS POR ASISTENCIAS", "asistencias", "Numero de asistencias: ", NULL, 0);
 }
 
 /** @brief Busca partidos por cancha */
@@ -1053,13 +1054,13 @@ static void buscar_por_cancha()
 }
 
 /**
- * @brief Permite buscar partidos según diferentes criterios
+ * @brief Permite buscar partidos segun diferentes criterios
  *
- * Presenta un submenú con opciones para buscar partidos por:
+ * Presenta un submenu con opciones para buscar partidos por:
  * - Camiseta utilizada
- * - Número de goles
- * - Número de asistencias
- * - Cancha donde se jugó
+ * - Numero de goles
+ * - Numero de asistencias
+ * - Cancha donde se jugo
  */
 void buscar_partidos()
 {
@@ -1076,13 +1077,13 @@ void buscar_partidos()
 }
 
 /**
- * @brief Maneja un gol marcado por el equipo local durante la simulación
+ * @brief Maneja un gol marcado por el equipo local durante la simulacion
  *
  * @param equipo_local Puntero al equipo local
  * @param minuto Minuto del partido
- * @param jugador_idx Índice del jugador que marcó
- * @param asistente_idx Índice del asistente
- * @param estadisticas_local Array de estadísticas locales
+ * @param jugador_idx indice del jugador que marco
+ * @param asistente_idx indice del asistente
+ * @param estadisticas_local Array de estadisticas locales
  * @param asistencias_local Array de asistencias locales
  * @param goles_local Puntero al contador de goles locales
  */
@@ -1115,13 +1116,13 @@ static void manejar_gol_local(Equipo const *equipo_local, int minuto, int jugado
 }
 
 /**
- * @brief Maneja un gol marcado por el equipo visitante durante la simulación
+ * @brief Maneja un gol marcado por el equipo visitante durante la simulacion
  *
  * @param equipo_visitante Puntero al equipo visitante
  * @param minuto Minuto del partido
- * @param jugador_idx Índice del jugador que marcó
- * @param asistente_idx Índice del asistente
- * @param estadisticas_visitante Array de estadísticas visitantes
+ * @param jugador_idx indice del jugador que marco
+ * @param asistente_idx indice del asistente
+ * @param estadisticas_visitante Array de estadisticas visitantes
  * @param asistencias_visitante Array de asistencias visitantes
  * @param goles_visitante Puntero al contador de goles visitantes
  */
@@ -1265,7 +1266,7 @@ static int cargar_equipos(int equipo_local_id, int equipo_visitante_id, Equipo *
 }
 
 /**
- * @brief Muestra la información inicial del partido
+ * @brief Muestra la informacion inicial del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
@@ -1278,7 +1279,7 @@ static void mostrar_inicio_partido(Equipo const *equipo_local, Equipo const *equ
 }
 
 /**
- * @brief Muestra la alineación de los equipos
+ * @brief Muestra la alineacion de los equipos
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
@@ -1319,11 +1320,11 @@ static void mostrar_alineacion(Equipo const *equipo_local, Equipo const *equipo_
 }
 
 /**
- * @brief Ejecuta la lógica de simulación del partido
+ * @brief Ejecuta la logica de simulacion del partido
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
- * @param estadisticas Puntero a la estructura con todas las estadísticas del partido
+ * @param estadisticas Puntero a la estructura con todas las estadisticas del partido
  */
 static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                    EstadisticasPartido *estadisticas)
@@ -1340,7 +1341,7 @@ static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equ
         // Generar eventos aleatorios
         int evento = secure_rand(100);
 
-        if (evento < 2) // Gol local
+        if (evento < 25) // Gol local
         {
             int jugador_idx = secure_rand(equipo_local->num_jugadores);
             int asistente_idx = secure_rand(equipo_local->num_jugadores);
@@ -1352,7 +1353,7 @@ static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equ
             manejar_gol_local(equipo_local, minuto, jugador_idx, asistente_idx,
                               estadisticas->estadisticas_local, estadisticas->asistencias_local, &estadisticas->goles_local);
         }
-        else if (evento < 4) // Gol visitante
+        else if (evento < 50) // Gol visitante
         {
             int jugador_idx = secure_rand(equipo_visitante->num_jugadores);
             int asistente_idx = secure_rand(equipo_visitante->num_jugadores);
@@ -1364,13 +1365,13 @@ static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equ
             manejar_gol_visitante(equipo_visitante, minuto, jugador_idx, asistente_idx,
                                   estadisticas->estadisticas_visitante, estadisticas->asistencias_visitante, &estadisticas->goles_visitante);
         }
-        else if (evento < 10)
+        else if (evento < 70)
         {
             printf("*** Oportunidad de gol ***\n");
         }
         else
         {
-            printf("*** El partido continúa... ***\n");
+            printf("*** El partido continua... ***\n");
         }
 
         mostrar_cancha_animada(minuto, (evento < 4) ? 1 : 0);
@@ -1383,7 +1384,7 @@ static void simular_partido_logica(Equipo const *equipo_local, Equipo const *equ
  *
  * @param equipo_local Puntero al equipo local
  * @param equipo_visitante Puntero al equipo visitante
- * @param estadisticas Puntero a la estructura con todas las estadísticas del partido
+ * @param estadisticas Puntero a la estructura con todas las estadisticas del partido
  */
 static void mostrar_resultados(Equipo const *equipo_local, Equipo const *equipo_visitante,
                                EstadisticasPartido const *estadisticas)
@@ -1411,7 +1412,7 @@ static void mostrar_resultados(Equipo const *equipo_local, Equipo const *equipo_
         printf("*** ¡EMPATE! ***\n\n");
     }
 
-    // Mostrar estadísticas
+    // Mostrar estadisticas
     printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
 
     printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
@@ -1444,7 +1445,7 @@ static void mostrar_resultados(Equipo const *equipo_local, Equipo const *equipo_
  *
  * @param equipo_id ID del equipo a cargar
  * @param equipo Puntero al equipo donde cargar los datos
- * @return 1 si se cargó exitosamente, 0 si hubo error
+ * @return 1 si se cargo exitosamente, 0 si hubo error
  */
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo)
 {
@@ -1480,7 +1481,7 @@ static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo)
 /**
  * @brief Carga los jugadores de un equipo desde la base de datos
  *
- * @param equipo_id ID del equipo cuyos jugadores se cargarán
+ * @param equipo_id ID del equipo cuyos jugadores se cargaran
  * @param equipo Puntero al equipo donde cargar los jugadores
  * @return 1 si se cargaron exitosamente, 0 si hubo error
  */
@@ -1546,7 +1547,7 @@ static void determinar_resultado_partido(int goles_local, int goles_visitante,
  *
  * @return ID de la cancha por defecto
  */
-static int obtener_cancha_defecto()
+static UNUSED int obtener_cancha_defecto()
 {
     int cancha_id = 1;
     sqlite3_stmt *stmt_cancha;
@@ -1563,11 +1564,11 @@ static int obtener_cancha_defecto()
 }
 
 /**
- * @brief Guarda los resultados de una simulación de partido en la base de datos
+ * @brief Guarda los resultados de una simulacion de partido en la base de datos
  *
- * @param datos_simulacion Puntero a la estructura con todos los datos de la simulación
+ * @param datos_simulacion Puntero a la estructura con todos los datos de la simulacion
  */
-static void guardar_resultados_simulacion(DatosSimulacion const *datos_simulacion)
+static UNUSED void guardar_resultados_simulacion(DatosSimulacion const *datos_simulacion)
 {
     char fecha_simulacion[20] = "2023-01-01 00:00";
     get_datetime(fecha_simulacion, sizeof(fecha_simulacion));
@@ -1581,11 +1582,11 @@ static void guardar_resultados_simulacion(DatosSimulacion const *datos_simulacio
     // Obtener cancha por defecto
     int cancha_id = obtener_cancha_defecto();
 
-    // Guardar estadísticas para cada jugador del equipo local
+    // Guardar estadisticas para cada jugador del equipo local
     guardar_estadisticas_equipo(&datos_simulacion->equipo_local, datos_simulacion->estadisticas_local,
                                 datos_simulacion->asistencias_local, resultado_local, cancha_id, fecha_simulacion);
 
-    // Guardar estadísticas para cada jugador del equipo visitante
+    // Guardar estadisticas para cada jugador del equipo visitante
     guardar_estadisticas_equipo(&datos_simulacion->equipo_visitante, datos_simulacion->estadisticas_visitante,
                                 datos_simulacion->asistencias_visitante, resultado_visitante, cancha_id, fecha_simulacion);
 
@@ -1593,17 +1594,17 @@ static void guardar_resultados_simulacion(DatosSimulacion const *datos_simulacio
 }
 
 /**
- * @brief Guarda las estadísticas de un equipo en la base de datos
+ * @brief Guarda las estadisticas de un equipo en la base de datos
  *
  * @param equipo Puntero al equipo
- * @param estadisticas Array con estadísticas de goles por jugador
- * @param asistencias Array con estadísticas de asistencias por jugador
+ * @param estadisticas Array con estadisticas de goles por jugador
+ * @param asistencias Array con estadisticas de asistencias por jugador
  * @param resultado Resultado del equipo
  * @param cancha_id ID de la cancha
- * @param fecha_simulacion Fecha de la simulación
+ * @param fecha_simulacion Fecha de la simulacion
  */
-static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadisticas, int const *asistencias,
-                                        int resultado, int cancha_id, char const *fecha_simulacion)
+static UNUSED void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadisticas, int const *asistencias,
+        int resultado, int cancha_id, char const *fecha_simulacion)
 {
     for (int i = 0; i < equipo->num_jugadores; i++)
     {
@@ -1632,14 +1633,14 @@ static void guardar_estadisticas_equipo(Equipo const *equipo, int const *estadis
 }
 
 /**
- * @brief Crea la estructura de datos de simulación a partir de las estadísticas
+ * @brief Crea la estructura de datos de simulacion a partir de las estadisticas
  *
  * @param equipo_local Equipo local
  * @param equipo_visitante Equipo visitante
- * @param estadisticas Estadísticas del partido
- * @return Estructura de datos de simulación completa
+ * @param estadisticas Estadisticas del partido
+ * @return Estructura de datos de simulacion completa
  */
-static DatosSimulacion crear_datos_simulacion(Equipo equipo_local, Equipo equipo_visitante,
+static UNUSED DatosSimulacion crear_datos_simulacion(Equipo equipo_local, Equipo equipo_visitante,
         EstadisticasPartido const *estadisticas)
 {
     DatosSimulacion datos_simulacion = {0};
@@ -1658,8 +1659,7 @@ static DatosSimulacion crear_datos_simulacion(Equipo equipo_local, Equipo equipo
  * @brief Simula un partido entre dos equipos guardados en la base de datos
  *
  * Permite al usuario seleccionar dos equipos existentes de la base de datos
- * y simular un partido entre ellos. Los resultados se guardan automáticamente
- * en la base de datos incluyendo estadísticas de goles y asistencias.
+ * y simular un partido entre ellos sin guardar resultados en Partidos.
  */
 void simular_partido_guardados()
 {
@@ -1688,26 +1688,22 @@ void simular_partido_guardados()
         return;
     }
 
-    // Mostrar información inicial
+    // Mostrar informacion inicial
     mostrar_inicio_partido(&equipo_local, &equipo_visitante);
 
-    // Mostrar alineación y comenzar partido
+    // Mostrar alineacion y comenzar partido
     mostrar_alineacion(&equipo_local, &equipo_visitante);
 
-    // Preparar arrays para estadísticas
+    // Preparar arrays para estadisticas
     EstadisticasPartido estadisticas = {0};
 
-    // Ejecutar simulación del partido
+    // Ejecutar simulacion del partido
     simular_partido_logica(&equipo_local, &equipo_visitante, &estadisticas);
 
     // Mostrar resultados finales
     mostrar_resultados(&equipo_local, &equipo_visitante, &estadisticas);
 
-    // Crear estructura de datos de simulación
-    DatosSimulacion datos_simulacion = crear_datos_simulacion(equipo_local, equipo_visitante, &estadisticas);
-
-    // Guardar resultados en la base de datos
-    guardar_resultados_simulacion(&datos_simulacion);
+    printf("Simulacion finalizada. Este partido no se guarda en Partidos.\n");
 
     printf("\nPresione Enter para volver al menu...");
     getchar();
@@ -1859,6 +1855,73 @@ static void tactica_leer_nombre_diagrama(char *nombre, size_t size)
 }
 
 
+static void tactica_mostrar_partidos_disponibles(void)
+{
+    const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
+                      "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC";
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt)) return;
+
+    ui_printf_centered_line("--- Partidos disponibles ---");
+    ui_printf_centered_line("ID | Cancha | Fecha");
+    ui_printf_centered_line("---------------------------");
+
+    int count = 0;
+    char fecha_fmt[20];
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 2),
+                                fecha_fmt, sizeof(fecha_fmt));
+        ui_printf_centered_line("%d | %s | %s",
+                                sqlite3_column_int(stmt, 0),
+                                (const char *)sqlite3_column_text(stmt, 1),
+                                fecha_fmt);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+        ui_printf_centered_line("No hay partidos registrados.");
+    ui_printf("\n");
+}
+
+static void tactica_mostrar_grid_con_ejes(char grid[TACTIC_H][TACTIC_W + 1])
+{
+    ui_printf("     ");
+    for (int x = 0; x < TACTIC_W; x += 5)
+        ui_printf("%-5d", x);
+    ui_printf("\n");
+
+    for (int y = 0; y < TACTIC_H; y++)
+        ui_printf("%2d   %s\n", y, grid[y]);
+}
+
+static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
+                           char *grid_text, size_t grid_text_size)
+{
+    int x = -1, y = -1;
+    char c = '\0';
+    if (sscanf(args, "%d %d %c", &x, &y, &c) == 3)
+    {
+        if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+        {
+            grid[y][x] = c;
+            tactica_build_grid_string(grid, grid_text, grid_text_size);
+        }
+        else
+        {
+            ui_printf("Fuera de rango (Col: 0..%d, Fila: 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+            pause_console();
+        }
+    }
+    else
+    {
+        ui_printf("Formato: Col Fila Caracter (ej: 10 5 X)\n");
+        pause_console();
+    }
+    return 0;
+}
+
 static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC_W + 1], char *grid_text,
                                     size_t grid_text_size, int partido_id, const char *nombre)
 {
@@ -1888,32 +1951,36 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
 
     case 'p':
     case 'P':
+        return tactica_colocar(line + 1, grid, grid_text, grid_text_size);
+
+    case 'd':
+    case 'D':
     {
-        int x = -1;
-        int y = -1;
-        char c = '\0';
-        if (sscanf(line + 1, "%d %d %c", &x, &y, &c) == 3)
+        int x = -1, y = -1;
+        if (sscanf(line + 1, "%d %d", &x, &y) == 2)
         {
             if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
             {
-                grid[y][x] = c;
+                grid[y][x] = '.';
                 tactica_build_grid_string(grid, grid_text, grid_text_size);
             }
             else
             {
-                ui_printf("Coordenadas fuera de rango (0..%d, 0..%d).\n", TACTIC_W - 1, TACTIC_H - 1);
+                ui_printf("Fuera de rango.\n");
                 pause_console();
             }
         }
         else
         {
-            ui_printf("Formato inválido. Use: p X Y C\n");
+            ui_printf("Formato: d Col Fila (ej: d 10 5)\n");
             pause_console();
         }
         return 0;
     }
 
     default:
+        if (isdigit((unsigned char)cmd))
+            return tactica_colocar(line, grid, grid_text, grid_text_size);
         ui_printf("Comando no reconocido.\n");
         pause_console();
         return 0;
@@ -2023,6 +2090,8 @@ static void tactica_crear_diagrama()
     clear_screen();
     print_header("CREAR DIAGRAMA TACTICO");
 
+    tactica_mostrar_partidos_disponibles();
+
     int partido_id = input_int("ID de partido (0 para cancelar): ");
     if (partido_id <= 0)
         return;
@@ -2047,12 +2116,13 @@ static void tactica_crear_diagrama()
     {
         clear_screen();
         print_header("EDITAR DIAGRAMA");
-        ui_puts(grid_text);
+        tactica_mostrar_grid_con_ejes(grid);
         ui_printf("\nComandos:\n");
-        ui_printf("  p X Y C  -> colocar el caracter C en coordenadas X,Y\n");
-        ui_printf("  r        -> reiniciar el diagrama\n");
-        ui_printf("  s        -> guardar diagrama\n");
-        ui_printf("  q        -> cancelar\n");
+        ui_printf("  Col Fila C -> colocar caracter C (ej: 10 5 X)\n");
+        ui_printf("  d Col Fila -> borrar posicion\n");
+        ui_printf("  r          -> reiniciar diagrama\n");
+        ui_printf("  s          -> guardar diagrama\n");
+        ui_printf("  q          -> cancelar\n");
         ui_printf("\nIngrese comando: ");
 
         char line[64] = {0};
@@ -2084,11 +2154,11 @@ void menu_tacticas_partido()
 }
 
 /**
- * @brief Muestra el menú principal de gestión de partidos
+ * @brief Muestra el menu principal de gestion de partidos
  *
- * Presenta un menú interactivo con opciones para crear, listar, modificar,
+ * Presenta un menu interactivo con opciones para crear, listar, modificar,
  * eliminar partidos y simular partidos con equipos guardados.
- * Utiliza la función ejecutar_menu para manejar la navegación del menú
+ * Utiliza la funcion ejecutar_menu para manejar la navegacion del menu
  * y delega las operaciones a las funciones correspondientes.
  */
 void menu_partidos()

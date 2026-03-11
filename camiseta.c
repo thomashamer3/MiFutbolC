@@ -1,4 +1,4 @@
-#include "camiseta.h"
+﻿#include "camiseta.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -47,7 +47,7 @@ static void solicitar_nombre_camiseta(const char *prompt, char *buffer, int size
         if (buffer[0] != '\0')
             return;
 
-        printf("El nombre no puede estar vacío.\n");
+        printf("El nombre no puede estar vacio.\n");
     }
 }
 
@@ -79,7 +79,7 @@ static void listar_camisetas_simple()
 /**
  * @brief Crea una nueva camiseta en la base de datos
  *
- * Permite a los usuarios agregar camisetas para gestión y sorteos,
+ * Permite a los usuarios agregar camisetas para gestion y sorteos,
  * reutilizando IDs eliminados para mantener la secuencia.
  */
 void crear_camiseta()
@@ -138,7 +138,7 @@ void listar_camisetas()
 /**
  * @brief Permite editar el nombre de una camiseta existente
  *
- * Permite correcciones en la información de camisetas sin necesidad
+ * Permite correcciones en la informacion de camisetas sin necesidad
  * de eliminar y recrear registros, mejorando la usabilidad.
  */
 void editar_camiseta()
@@ -257,8 +257,8 @@ static void reiniciar_sorteo()
  * @brief Obtiene la lista de IDs de camisetas disponibles para sorteo
  *
  * @param ids Array donde almacenar los IDs
- * @param max Tamaño máximo del array
- * @return Número de IDs obtenidos
+ * @param max Tamano maximo del array
+ * @return Numero de IDs obtenidos
  */
 static int obtener_ids_disponibles(int ids[], int max)
 {
@@ -281,7 +281,7 @@ static int obtener_ids_disponibles(int ids[], int max)
  * @brief Selecciona aleatoriamente un ID de la lista proporcionada
  *
  * @param ids Array de IDs disponibles
- * @param count Número de IDs en el array
+ * @param count Numero de IDs en el array
  * @return ID seleccionado aleatoriamente
  */
 static int seleccionar_id_aleatorio(const int ids[], int count)
@@ -338,7 +338,7 @@ static char* obtener_nombre_camiseta(int id)
  *
  * Permite sorteos continuos reutilizando camisetas ya sorteadas cuando
  * se agotan las disponibles, manteniendo la funcionalidad del sistema
- * sin necesidad de intervención manual del usuario.
+ * sin necesidad de intervencion manual del usuario.
  */
 void sortear_camiseta()
 {
@@ -384,10 +384,10 @@ void sortear_camiseta()
 }
 
 /**
- * @brief Muestra el menú principal de gestión de camisetas
+ * @brief Muestra el menu principal de gestion de camisetas
  *
  * Proporciona una interfaz estructurada para las operaciones de
- * gestión de camisetas, centralizando el acceso a todas las funcionalidades.
+ * gestion de camisetas, centralizando el acceso a todas las funcionalidades.
  */
 void menu_camisetas()
 {

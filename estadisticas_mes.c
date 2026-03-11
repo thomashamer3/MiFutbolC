@@ -1,8 +1,8 @@
-/**
+﻿/**
  * @file estadisticas_mes.c
- * @brief Módulo para mostrar estadísticas históricas agrupadas por mes.
+ * @brief Modulo para mostrar estadisticas historicas agrupadas por mes.
  *
- * Este archivo contiene funciones para consultar y mostrar estadísticas
+ * Este archivo contiene funciones para consultar y mostrar estadisticas
  * individuales por camiseta agrupadas por mes.
  */
 
@@ -13,8 +13,8 @@
 #include <string.h>
 
 /**
- * Prepara la consulta SQL para obtener estadísticas agrupadas por mes.
- * Esta función encapsula la preparación de la consulta para mantener la lógica de base de datos separada.
+ * Prepara la consulta SQL para obtener estadisticas agrupadas por mes.
+ * Esta funcion encapsula la preparacion de la consulta para mantener la logica de base de datos separada.
  */
 static void preparar_consulta(sqlite3_stmt **stmt)
 {
@@ -28,7 +28,7 @@ static void preparar_consulta(sqlite3_stmt **stmt)
 
 /**
  * Muestra el encabezado de un mes cuando cambia.
- * Facilita la organización visual de los datos por períodos mensuales.
+ * Facilita la organizacion visual de los datos por periodos mensuales.
  */
 static void mostrar_mes(const char *mes_anio, int const *hay, char *current_mes)
 {
@@ -42,7 +42,7 @@ static void mostrar_mes(const char *mes_anio, int const *hay, char *current_mes)
 }
 
 /**
- * Muestra una línea de estadísticas para una camiseta.
+ * Muestra una linea de estadisticas para una camiseta.
  * Presenta los datos de manera consistente y legible.
  */
 static void mostrar_estadistica(const char *camiseta, int partidos, int total_goles, int total_asistencias, double avg_goles, double avg_asistencias)
@@ -53,7 +53,7 @@ static void mostrar_estadistica(const char *camiseta, int partidos, int total_go
 
 /**
  * Procesa y muestra los resultados de la consulta SQL.
- * Coordina la extracción y presentación de datos para mantener la separación de responsabilidades.
+ * Coordina la extraccion y presentacion de datos para mantener la separacion de responsabilidades.
  */
 static void procesar_resultados(sqlite3_stmt *stmt)
 {
@@ -76,12 +76,12 @@ static void procesar_resultados(sqlite3_stmt *stmt)
     }
 
     if (!hay)
-        mostrar_no_hay_registros("estadísticas");
+        mostrar_no_hay_registros("estadisticas");
 }
 
 /**
- * Muestra estadísticas históricas agrupadas por mes.
- * Permite analizar tendencias temporales en el rendimiento deportivo, facilitando la identificación de patrones y mejoras.
+ * Muestra estadisticas historicas agrupadas por mes.
+ * Permite analizar tendencias temporales en el rendimiento deportivo, facilitando la identificacion de patrones y mejoras.
  */
 void mostrar_estadisticas_por_mes()
 {

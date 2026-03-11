@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file export.c
  * @brief Funciones para exportar datos de la base de datos a diferentes formatos
  *
  * Este archivo contiene funciones para exportar datos de lesiones, partidos,
- * estadísticas y análisis a formatos CSV, TXT, JSON y HTML.
+ * estadisticas y analisis a formatos CSV, TXT, JSON y HTML.
  */
 
 #include "export.h"
@@ -26,7 +26,7 @@
 #endif
 
 /**
- * @brief Construye la ruta completa para un archivo de exportación
+ * @brief Construye la ruta completa para un archivo de exportacion
  *
  * Combina el directorio de datos con el nombre del archivo proporcionado
  * para crear una ruta completa.
@@ -64,7 +64,7 @@ static int has_partido_records();
 
 /**
  * Verifica si hay registros de partidos en la base de datos.
- * Centraliza la lógica de verificación para evitar duplicación de código.
+ * Centraliza la logica de verificacion para evitar duplicacion de codigo.
  * Retorna 1 si hay registros, 0 si no hay.
  */
 static int has_partido_records()
@@ -84,8 +84,8 @@ static int has_partido_records()
 }
 
 /**
- * Calcula todas las estadísticas necesarias para el análisis.
- * Centraliza la lógica de cálculo para evitar duplicación de código.
+ * Calcula todas las estadisticas necesarias para el analisis.
+ * Centraliza la logica de calculo para evitar duplicacion de codigo.
  */
 static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *ultimos5, int *mejor_racha_v, int *peor_racha_d)
 {
@@ -97,8 +97,8 @@ static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *u
 /* ===================== ANALISIS ===================== */
 
 /**
- * Calcula estadísticas generales de todos los partidos.
- * Esta función es utilizada por el análisis de rendimiento para obtener métricas globales.
+ * Calcula estadisticas generales de todos los partidos.
+ * Esta funcion es utilizada por el analisis de rendimiento para obtener metricas globales.
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
@@ -108,9 +108,9 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
 }
 
 /**
- * @brief Calcula estadísticas de los últimos 5 partidos
+ * @brief Calcula estadisticas de los ultimos 5 partidos
  *
- * @param stats Puntero a la estructura donde almacenar las estadísticas
+ * @param stats Puntero a la estructura donde almacenar las estadisticas
  */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
@@ -120,7 +120,7 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 }
 
 /**
- * @brief Calcula la racha más larga de victorias y derrotas
+ * @brief Calcula la racha mas larga de victorias y derrotas
  *
  * @param mejor_racha_victorias Puntero donde almacenar la mejor racha de victorias
  * @param peor_racha_derrotas Puntero donde almacenar la peor racha de derrotas
@@ -451,8 +451,8 @@ void exportar_estado_animo_cansancio_txt()
 /**
  * @brief Genera un mensaje motivacional basado en el rendimiento
  *
- * @param ultimos Puntero a estadísticas de últimos 5 partidos
- * @param generales Puntero a estadísticas generales
+ * @param ultimos Puntero a estadisticas de ultimos 5 partidos
+ * @param generales Puntero a estadisticas generales
  * @return Cadena de texto con el mensaje motivacional
  */
 static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas *generales)
@@ -475,8 +475,8 @@ static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estad
 }
 
 /**
- * Exporta el análisis de rendimiento a un archivo CSV.
- * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
+ * Exporta el analisis de rendimiento a un archivo CSV.
+ * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
 void exportar_analisis_csv()
 {
@@ -517,8 +517,8 @@ void exportar_analisis_csv()
 }
 
 /**
- * Exporta el análisis de rendimiento a un archivo de texto plano.
- * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
+ * Exporta el analisis de rendimiento a un archivo de texto plano.
+ * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
 void exportar_analisis_txt()
 {
@@ -569,8 +569,8 @@ void exportar_analisis_txt()
 }
 
 /**
- * Exporta el análisis de rendimiento a un archivo JSON.
- * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
+ * Exporta el analisis de rendimiento a un archivo JSON.
+ * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
 void exportar_analisis_json()
 {
@@ -629,8 +629,8 @@ void exportar_analisis_json()
 }
 
 /**
- * Exporta el análisis de rendimiento a un archivo HTML.
- * Usa funciones auxiliares para mantener el código conciso y dentro del límite de líneas.
+ * Exporta el analisis de rendimiento a un archivo HTML.
+ * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
 void exportar_analisis_html()
 {

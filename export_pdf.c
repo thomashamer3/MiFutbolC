@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file export_pdf.c
- * @brief Generación de informes en PDF con libharu.
+ * @brief Generacion de informes en PDF con libharu.
  */
 
 #include "export_pdf.h"
@@ -203,7 +203,7 @@ typedef void (*PdfRowHandler)(PdfCtx *ctx, sqlite3_stmt *stmt);
 /**
  * @brief Ejecuta una consulta que devuelve una sola fila.
  *
- * Esta función prepara el statement, enlaza "mes_yyyy_mm" en todos los parámetros
+ * Esta funcion prepara el statement, enlaza "mes_yyyy_mm" en todos los parametros
  * (para consultas que usan el mismo valor repetido) y ejecuta el handler si hay fila.
  */
 static void ejecutar_consulta_una_fila(PdfCtx *ctx, const char *sql, const char *mes_yyyy_mm, int bind_count, PdfRowHandler row_handler)
@@ -919,14 +919,14 @@ int generar_informe_personal_mensual_pdf(const char *mes_yyyy_mm)
 {
     if (!mes_yyyy_mm || safe_strnlen(mes_yyyy_mm, 8) < 7)
     {
-        printf("Mes inválido para informe mensual.\n");
+        printf("Mes invalido para informe mensual.\n");
         return 0;
     }
 
     const char *export_dir = get_export_dir();
     if (!export_dir)
     {
-        printf("No se pudo obtener el directorio de exportación.\n");
+        printf("No se pudo obtener el directorio de exportacion.\n");
         return 0;
     }
 

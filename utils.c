@@ -1,11 +1,11 @@
-/**
+﻿/**
  * @file utils.c
  * @brief Funciones utilitarias para entrada/salida, manejo de fechas y
  * operaciones de base de datos.
  *
  * Este archivo contiene funciones auxiliares para interactuar con el usuario,
  * manejar fechas y horas, limpiar la pantalla, verificar existencia de IDs en
- * la base de datos, y gestionar directorios de exportación.
+ * la base de datos, y gestionar directorios de exportacion.
  */
 
 #include "utils.h"
@@ -42,12 +42,12 @@
 #endif
 
 #ifdef _WIN32
-/* Función deshabilitada: evitar maximizar la consola automáticamente
+/* Funcion deshabilitada: evitar maximizar la consola automaticamente
  * Se deja como no-op para que el usuario pueda cerrar/reducir la ventana.
  */
 void ensure_console_maximized_windows(void)
 {
-    /* Intencionalmente vacío */
+    /* Intencionalmente vacio */
 }
 #else
 void ensure_console_maximized_windows(void)
@@ -157,8 +157,8 @@ static int ui_readline(char *buffer, int size)
 }
 
 /**
- * Permite la entrada de valores numéricos por parte del usuario,
- * facilitando la configuración de parámetros enteros en el sistema.
+ * Permite la entrada de valores numericos por parte del usuario,
+ * facilitando la configuracion de parametros enteros en el sistema.
  */
 int input_int(const char *msg)
 {
@@ -199,15 +199,15 @@ int input_int(const char *msg)
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
             return v;
 
-        ui_printf("Entrada inválida. Intente nuevamente.\n");
+        ui_printf("Entrada invalida. Intente nuevamente.\n");
         attempts++;
     }
 
-    ui_printf("Se alcanzó el máximo de intentos.\n");
+    ui_printf("Se alcanzo el maximo de intentos.\n");
     return -1;
 }
 
-/* Implementación portable de safe_strnlen */
+/* Implementacion portable de safe_strnlen */
 size_t safe_strnlen(const char *s, size_t maxlen)
 {
     if (s == NULL)
@@ -229,15 +229,15 @@ size_t strlen_s(const char *s, size_t maxlen)
 #endif
 
 /**
- * Determina si un punto en la posición dada es un separador de miles o decimal.
- * Un punto se considera separador de miles si hay al menos 3 dígitos después de
- * él.
+ * Determina si un punto en la posicion dada es un separador de miles o decimal.
+ * Un punto se considera separador de miles si hay al menos 3 digitos despues de
+ * el.
  */
 static int is_thousands_separator(const char *buffer, int position)
 {
     int remaining_digits = 0;
 
-    // Contar dígitos después del punto actual
+    // Contar digitos despues del punto actual
     for (int k = position + 1; buffer[k] != '\0'; k++)
     {
         if (isdigit(buffer[k]))
@@ -250,14 +250,14 @@ static int is_thousands_separator(const char *buffer, int position)
         }
     }
 
-    // Si hay al menos 3 dígitos después, es separador de miles
+    // Si hay al menos 3 digitos despues, es separador de miles
     return remaining_digits >= 3;
 }
 
 /**
- * Procesa un carácter individual y lo agrega al buffer de salida si es válido.
- * Devuelve 1 si se agregó un carácter, 0 si se omitió, -1 si se alcanzó el
- * límite.
+ * Procesa un caracter individual y lo agrega al buffer de salida si es valido.
+ * Devuelve 1 si se agrego un caracter, 0 si se omitio, -1 si se alcanzo el
+ * limite.
  */
 static int process_character(char c, char *output, size_t *j,
                              size_t output_size, int *has_decimal,
@@ -285,7 +285,7 @@ static int process_character(char c, char *output, size_t *j,
         return 1;
     }
 
-    // Procesar dígitos
+    // Procesar digitos
     if (isdigit(c))
     {
         if (*j >= output_size - 1)
@@ -300,7 +300,7 @@ static int process_character(char c, char *output, size_t *j,
 
 /**
  * Procesa un buffer de entrada para convertir separadores de miles y decimales
- * a formato estándar. Convierte comas a puntos decimales y elimina separadores
+ * a formato estandar. Convierte comas a puntos decimales y elimina separadores
  * de miles.
  */
 static void process_numeric_input(const char *input, char *output,
@@ -332,7 +332,7 @@ static void process_numeric_input(const char *input, char *output,
 
 /**
  * Permite la entrada de valores de punto flotante por parte del usuario,
- * facilitando la configuración de parámetros decimales en el sistema.
+ * facilitando la configuracion de parametros decimales en el sistema.
  * Acepta tanto punto como coma como separador decimal, y maneja separadores de
  * miles.
  */
@@ -354,7 +354,7 @@ double input_double(const char *msg)
 
         if (sscanf_s(processed, "%lf", &v) == 1)
             return v;
-        ui_printf("Entrada inválida. Ingrese un número válido (ej: 250, 1.500, "
+        ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
                   "12.500, 250.000): ");
     }
 }
@@ -362,7 +362,7 @@ double input_double(const char *msg)
 /**
  * Valida la entrada de texto para asegurar la integridad de los datos y
  * prevenir errores en el procesamiento posterior, aceptando solo caracteres
- * alfanuméricos y espacios.
+ * alfanumericos y espacios.
  */
 void input_string(const char *msg, char *buffer, int size)
 {
@@ -386,7 +386,35 @@ void input_string(const char *msg, char *buffer, int size)
 
         if (valid)
             return;
-        ui_printf("Entrada inválida. Solo se permiten letras, espacios y números.\n");
+        ui_printf("Entrada invalida. Solo se permiten letras, espacios y numeros.\n");
+    }
+}
+
+void input_string_extended(const char *msg, char *buffer, int size)
+{
+    while (1)
+    {
+        ui_printf("%s", msg);
+
+        if (!ui_readline(buffer, size))
+            continue;
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        int valid = 1;
+        for (int i = 0; buffer[i] != '\0'; i++)
+        {
+            unsigned char c = (unsigned char)buffer[i];
+            if (!isalnum(c) && !isspace(c) && c != '+' && c != '-' && c != '.'
+                    && c != ',' && c != '(' && c != ')' && c != ':')
+            {
+                valid = 0;
+                break;
+            }
+        }
+
+        if (valid)
+            return;
+        ui_printf("Entrada invalida. Caracteres no permitidos.\n");
     }
 }
 
@@ -487,7 +515,7 @@ static int procesar_input_date(const char *msg, char *buffer, int size)
 
     if (!validar_fecha_chars(buffer))
     {
-        ui_printf("Entrada inválida. Solo se permiten dígitos, barras diagonales (/), "
+        ui_printf("Entrada invalida. Solo se permiten digitos, barras diagonales (/), "
                   "guiones (-) y dos puntos (:).\n");
         return 0;
     }
@@ -504,7 +532,7 @@ static int procesar_input_date(const char *msg, char *buffer, int size)
 
 /**
  * Valida la entrada de fecha para asegurar el formato correcto,
- * aceptando solo dígitos, barras diagonales (/), guiones (-) y dos puntos (:).
+ * aceptando solo digitos, barras diagonales (/), guiones (-) y dos puntos (:).
  */
 void input_date(const char *msg, char *buffer, int size)
 {
@@ -524,7 +552,7 @@ void input_date(const char *msg, char *buffer, int size)
 }
 
 /**
- * Proporciona una representación legible de la fecha y hora actual para mostrar
+ * Proporciona una representacion legible de la fecha y hora actual para mostrar
  * en interfaces de usuario, mejorando la experiencia al contextualizar acciones
  * con el tiempo.
  */
@@ -542,7 +570,7 @@ void get_datetime(char *buffer, int size)
 
 /**
  * Genera un identificador temporal compacto para usar en nombres de archivos,
- * asegurando unicidad y orden cronológico en exportaciones y backups.
+ * asegurando unicidad y orden cronologico en exportaciones y backups.
  */
 void get_timestamp(char *buffer, int size)
 {
@@ -558,7 +586,7 @@ void get_timestamp(char *buffer, int size)
 
 /**
  * Verifica la existencia de registros en la base de datos para mantener la
- * integridad referencial y evitar operaciones inválidas que puedan corromper
+ * integridad referencial y evitar operaciones invalidas que puedan corromper
  * los datos.
  */
 int existe_id(const char *tabla, int id)
@@ -580,7 +608,7 @@ int existe_id(const char *tabla, int id)
 
 /**
  * Limpia la pantalla de la consola para proporcionar una interfaz limpia y
- * organizada, mejorando la legibilidad de la información mostrada.
+ * organizada, mejorando la legibilidad de la informacion mostrada.
  */
 void clear_screen()
 {
@@ -592,7 +620,7 @@ void clear_screen()
 }
 
 /**
- * Muestra información contextual del usuario y fecha para personalizar la
+ * Muestra informacion contextual del usuario y fecha para personalizar la
  * experiencia y registrar el momento de las operaciones, incluyendo arte ASCII
  * contextual.
  */
@@ -690,8 +718,8 @@ void print_header(const char *titulo)
 }
 
 /**
- * Pausa la ejecución para permitir al usuario revisar información antes de
- * continuar, mejorando la interacción controlada.
+ * Pausa la ejecucion para permitir al usuario revisar informacion antes de
+ * continuar, mejorando la interaccion controlada.
  */
 void pause_console()
 {
@@ -700,7 +728,7 @@ void pause_console()
 }
 
 /**
- * Solicita confirmación binaria del usuario para operaciones críticas,
+ * Solicita confirmacion binaria del usuario para operaciones criticas,
  * previniendo acciones accidentales que puedan afectar datos.
  */
 int confirmar(const char *msg)
@@ -731,7 +759,7 @@ static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
 
 /**
  * Recopila la identidad del usuario en el inicio para personalizar la
- * aplicación y mantener un registro de uso.
+ * aplicacion y mantener un registro de uso.
  */
 void pedir_nombre_usuario()
 {
@@ -755,7 +783,7 @@ void pedir_nombre_usuario()
 
 /**
  * Permite al usuario verificar su identidad actual almacenada,
- * facilitando la gestión de su perfil.
+ * facilitando la gestion de su perfil.
  */
 void mostrar_nombre_usuario()
 {
@@ -773,8 +801,8 @@ void mostrar_nombre_usuario()
 }
 
 /**
- * Habilita la actualización de la identidad del usuario para mantener la
- * información actualizada y personalizada.
+ * Habilita la actualizacion de la identidad del usuario para mantener la
+ * informacion actualizada y personalizada.
  */
 void editar_nombre_usuario()
 {
@@ -810,7 +838,7 @@ void menu_usuario()
 
 /**
  * Adapta fechas del almacenamiento interno a un formato amigable para la
- * visualización, permitiendo flexibilidad en formatos futuros.
+ * visualizacion, permitiendo flexibilidad en formatos futuros.
  */
 void format_date_for_display(const char *input_date, char *output_buffer,
                              int buffer_size)
@@ -880,7 +908,7 @@ void convert_display_date_to_storage(const char *display_date,
 /**
  * Normaliza cadenas de texto removiendo caracteres acentuados para asegurar
  * compatibilidad con sistemas que no los soportan y mejorar la consistencia en
- * búsquedas.
+ * busquedas.
  */
 char *remover_tildes(const char *str)
 {
@@ -892,19 +920,19 @@ char *remover_tildes(const char *str)
     {
         unsigned char c = (unsigned char)*p++;
         if (c == 0xE1 || c == 0xC1)
-            buffer[j++] = 'a'; // á, Á
+            buffer[j++] = 'a'; // a, a
         else if (c == 0xE9 || c == 0xC9)
-            buffer[j++] = 'e'; // é, É
+            buffer[j++] = 'e'; // e, e
         else if (c == 0xED || c == 0xCD)
-            buffer[j++] = 'i'; // í, Í
+            buffer[j++] = 'i'; // i, i
         else if (c == 0xF3 || c == 0xD3)
-            buffer[j++] = 'o'; // ó, Ó
+            buffer[j++] = 'o'; // o, o
         else if (c == 0xFA || c == 0xDA)
-            buffer[j++] = 'u'; // ú, Ú
+            buffer[j++] = 'u'; // u, u
         else if (c == 0xF1 || c == 0xD1)
-            buffer[j++] = 'n'; // ñ, Ñ
+            buffer[j++] = 'n'; // n, n
         else if (c == 0xFC || c == 0xDC)
-            buffer[j++] = 'u'; // ü, Ü
+            buffer[j++] = 'u'; // u, u
         else
             buffer[j++] = (char)c;
     }
@@ -915,8 +943,8 @@ char *remover_tildes(const char *str)
 /**
  * Convierte un valor de resultado a texto
  *
- * @param resultado El valor numérico del resultado
- * @return La representación textual del resultado
+ * @param resultado El valor numerico del resultado
+ * @return La representacion textual del resultado
  */
 const char *resultado_to_text(int resultado)
 {
@@ -936,8 +964,8 @@ const char *resultado_to_text(int resultado)
 /**
  * Convierte un valor de clima a texto
  *
- * @param clima El valor numérico del clima
- * @return La representación textual del clima
+ * @param clima El valor numerico del clima
+ * @return La representacion textual del clima
  */
 const char *clima_to_text(int clima)
 {
@@ -961,10 +989,10 @@ const char *clima_to_text(int clima)
 }
 
 /**
- * Convierte un valor de día a texto
+ * Convierte un valor de dia a texto
  *
- * @param dia El valor numérico del día
- * @return La representación textual del día
+ * @param dia El valor numerico del dia
+ * @return La representacion textual del dia
  */
 const char *dia_to_text(int dia)
 {
@@ -983,13 +1011,13 @@ const char *dia_to_text(int dia)
 
 /**
  * Obtiene el nombre de una entidad por su ID desde la base de datos.
- * Función genérica para evitar duplicación de código en consultas SQL comunes.
+ * Funcion generica para evitar duplicacion de codigo en consultas SQL comunes.
  *
  * @param tabla Nombre de la tabla (ej: "camiseta", "torneo", "cancha")
  * @param id ID de la entidad a buscar
- * @param buffer Buffer donde se almacenará el nombre encontrado
- * @param size Tamaño máximo del buffer
- * @return 1 si se encontró la entidad, 0 si no se encontró
+ * @param buffer Buffer donde se almacenara el nombre encontrado
+ * @param size Tamano maximo del buffer
+ * @return 1 si se encontro la entidad, 0 si no se encontro
  */
 int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
 {
@@ -1027,7 +1055,7 @@ int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
 
 /**
  * @brief Obtiene el siguiente ID disponible para una tabla
- * Implementa el patrón usado en camiseta, cancha, lesion, etc.
+ * Implementa el patron usado en camiseta, cancha, lesion, etc.
  */
 long long obtener_siguiente_id(const char *tabla)
 {
@@ -1038,7 +1066,7 @@ long long obtener_siguiente_id(const char *tabla)
 
     /*
      * Esta consulta utiliza una CTE (Common Table Expression) recursiva para generar
-     * una secuencia de números y encontrar el primer "hueco" (ID faltante) en la tabla.
+     * una secuencia de numeros y encontrar el primer "hueco" (ID faltante) en la tabla.
      * Esto permite reutilizar IDs de registros eliminados manteniendo la secuencia compacta.
      */
     snprintf(sql, sizeof(sql),
@@ -1181,7 +1209,7 @@ void mostrar_no_existe(const char *entidad)
 }
 
 /**
- * @brief Muestra error de operación
+ * @brief Muestra error de operacion
  */
 void mostrar_error_operacion(const char *entidad, const char *operacion)
 {
@@ -1215,7 +1243,7 @@ char* trim_trailing_spaces(char *str)
 
 /**
  * @brief Ejecuta una consulta SQL y devuelve el statement preparado
- * Función común para centralizar la ejecución de consultas
+ * Funcion comun para centralizar la ejecucion de consultas
  */
 sqlite3_stmt* execute_query(const char *sql)
 {
@@ -1228,8 +1256,8 @@ sqlite3_stmt* execute_query(const char *sql)
 }
 
 /**
- * @brief Lista equipos disponibles para selección
- * Función común usada en múltiples módulos para mostrar equipos
+ * @brief Lista equipos disponibles para seleccion
+ * Funcion comun usada en multiples modulos para mostrar equipos
  */
 int list_available_teams(const char *no_records_msg, int pause_on_empty)
 {
@@ -1273,7 +1301,7 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
 
 /**
  * @brief Obtiene el ID de un equipo seleccionado por el usuario
- * Función común para selección de equipos con validación
+ * Funcion comun para seleccion de equipos con validacion
  */
 int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_error)
 {
@@ -1300,7 +1328,7 @@ int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_
 
 /**
  * @brief Escribe encabezado CSV para exportaciones
- * Función común para formato consistente en exportaciones CSV
+ * Funcion comun para formato consistente en exportaciones CSV
  */
 void write_csv_header(FILE *f, const char *header)
 {
@@ -1316,7 +1344,7 @@ static char *get_trimmed_cancha_from_stmt(sqlite3_stmt *stmt)
 
 /**
  * @brief Escribe fila CSV con datos de partido
- * Función común para exportar datos de partidos a CSV
+ * Funcion comun para exportar datos de partidos a CSV
  */
 void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 {
@@ -1339,7 +1367,7 @@ void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 
 /**
  * @brief Escribe fila TXT con datos de partido
- * Función común para exportar datos de partidos a TXT
+ * Funcion comun para exportar datos de partidos a TXT
  */
 void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
 {
@@ -1362,7 +1390,7 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
 
 /**
  * @brief Escribe objeto JSON con datos de partido
- * Función común para exportar datos de partidos a JSON
+ * Funcion comun para exportar datos de partidos a JSON
  */
 void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
 {
@@ -1386,7 +1414,7 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
 
 /**
  * @brief Escribe fila HTML con datos de partido
- * Función común para exportar datos de partidos a HTML
+ * Funcion comun para exportar datos de partidos a HTML
  */
 void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 {
@@ -1409,8 +1437,8 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 }
 
 /**
- * @brief Función común para mostrar récords simples
- * Centraliza la lógica de mostrar récords con formato consistente
+ * @brief Funcion comun para mostrar records simples
+ * Centraliza la logica de mostrar records con formato consistente
  */
 void mostrar_record_simple(const char *titulo, const char *sql)
 {
@@ -1440,8 +1468,8 @@ void mostrar_record_simple(const char *titulo, const char *sql)
 }
 
 /**
- * @brief Función común para mostrar combinaciones cancha-camiseta
- * Centraliza la lógica de mostrar combinaciones con formato consistente
+ * @brief Funcion comun para mostrar combinaciones cancha-camiseta
+ * Centraliza la logica de mostrar combinaciones con formato consistente
  */
 void mostrar_combinacion_simple(const char *titulo, const char *sql)
 {
@@ -1466,8 +1494,8 @@ void mostrar_combinacion_simple(const char *titulo, const char *sql)
 }
 
 /**
- * @brief Función común para mostrar temporadas
- * Centraliza la lógica de mostrar temporadas con formato consistente
+ * @brief Funcion comun para mostrar temporadas
+ * Centraliza la logica de mostrar temporadas con formato consistente
  */
 void mostrar_temporada_simple(const char *titulo, const char *sql)
 {
@@ -1482,11 +1510,11 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
         const char* year = (const char*)sqlite3_column_text(stmt, 0);
         if (year)
         {
-            printf("Año: %s\n", year);
+            printf("Ano: %s\n", year);
         }
         else
         {
-            printf("Año: Desconocido\n");
+            printf("Ano: Desconocido\n");
         }
         printf("Rendimiento Promedio: %.2f\n", sqlite3_column_double(stmt, 1));
         printf("Partidos Jugados: %d\n", sqlite3_column_int(stmt, 2));
@@ -1501,8 +1529,8 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
 
 
 /**
- * @brief Función genérica para exportar récords a CSV
- * Centraliza la lógica de exportación CSV para récords individuales
+ * @brief Funcion generica para exportar records a CSV
+ * Centraliza la logica de exportacion CSV para records individuales
  */
 void exportar_record_simple_csv(const char *titulo, const char *sql, const char *filename)
 {
@@ -1532,8 +1560,8 @@ void exportar_record_simple_csv(const char *titulo, const char *sql, const char 
 }
 
 /**
- * @brief Función genérica para exportar un partido específico a CSV
- * Centraliza la lógica común de exportación de partidos específicos
+ * @brief Funcion generica para exportar un partido especifico a CSV
+ * Centraliza la logica comun de exportacion de partidos especificos
  */
 void exportar_partido_especifico_csv(const char *order_by, const char *filename)
 {
@@ -1571,8 +1599,8 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
 }
 
 /**
- * @brief Función genérica para exportar un partido específico a TXT
- * Centraliza la lógica común de exportación de partidos específicos
+ * @brief Funcion generica para exportar un partido especifico a TXT
+ * Centraliza la logica comun de exportacion de partidos especificos
  */
 void exportar_partido_especifico_txt(const char *order_by, const char *filename, const char *title)
 {
@@ -1610,8 +1638,8 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
 }
 
 /**
- * @brief Función genérica para exportar un partido específico a JSON
- * Centraliza la lógica común de exportación de partidos específicos
+ * @brief Funcion generica para exportar un partido especifico a JSON
+ * Centraliza la logica comun de exportacion de partidos especificos
  */
 void exportar_partido_especifico_json(const char *order_by, const char *filename)
 {
@@ -1654,8 +1682,8 @@ void exportar_partido_especifico_json(const char *order_by, const char *filename
 }
 
 /**
- * @brief Función genérica para exportar un partido específico a HTML
- * Centraliza la lógica común de exportación de partidos específicos
+ * @brief Funcion generica para exportar un partido especifico a HTML
+ * Centraliza la logica comun de exportacion de partidos especificos
  */
 void exportar_partido_especifico_html(const char *order_by, const char *filename, const char *title)
 {
@@ -1695,7 +1723,7 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
     fclose(f);
 }
 
-/* ===================== FUNCIONES DE ESTADÍSTICAS COMPARTIDAS ===================== */
+/* ===================== FUNCIONES DE ESTADiSTICAS COMPARTIDAS ===================== */
 
 void reset_estadisticas(Estadisticas *stats)
 {

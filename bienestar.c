@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file bienestar.c
- * @brief Menú y herramientas de bienestar
+ * @brief Menu y herramientas de bienestar
  */
 
 #include "bienestar.h"
@@ -397,7 +397,7 @@ static void pedir_habito_input(HabitoInput *habito)
     habito->motivacion = input_rango("Motivacion (0-10): ", 0, 10);
 
     input_string("Notas libres: ", habito->notas, sizeof(habito->notas));
-    input_string("Tipo diario deportivo: ", habito->tipo_diario, sizeof(habito->tipo_diario));
+    habito->tipo_diario[0] = '\0';
 }
 
 static int bind_habito(sqlite3_stmt *stmt, const HabitoInput *habito, int index)
@@ -628,8 +628,8 @@ static void crear_plan_entrenamiento(void)
     char rutina[256];
     char notas[256];
 
-    input_string("Rutina semanal (ej: Lunes fuerza, Miercoles futbol): ", rutina, sizeof(rutina));
-    input_string("Notas (opcional): ", notas, sizeof(notas));
+    input_string_extended("Rutina semanal (ej: Lunes fuerza, Miercoles futbol): ", rutina, sizeof(rutina));
+    input_string_extended("Notas (opcional): ", notas, sizeof(notas));
 
     const char *sql =
         "INSERT INTO bienestar_plan_entrenamiento (objetivo_id, frecuencia_semanal, rutina_semanal, notas) "
@@ -699,7 +699,7 @@ static void listar_habitos_simple(int con_pause, int con_clear)
 
     const char *sql =
         "SELECT id, fecha, dormi_bien, hidratacion, alcohol, estado_animico, "
-        "nervios, confianza, motivacion, tipo_diario "
+        "nervios, confianza, motivacion "
         "FROM bienestar_habito ORDER BY fecha DESC LIMIT 14";
 
     sqlite3_stmt *stmt;
@@ -708,8 +708,9 @@ static void listar_habitos_simple(int con_pause, int con_clear)
         return;
     }
 
-    ui_printf_centered_line("ID | Fecha | Dormir | Hidratacion | Alcohol | Animo | Nervios | Confianza | Motivacion | Tipo");
-    ui_printf_centered_line("------------------------------------------------------------------");
+    ui_printf_centered_line("%-4s %-12s %-8s %-6s %-5s %-12s %-4s %-5s %-4s",
+                            "ID", "Fecha", "Dormir", "Hidra", "Alc", "Animo", "Ner", "Conf", "Mot");
+    ui_printf_centered_line("---- ------------ -------- ------ ----- ------------ ---- ----- ----");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -723,12 +724,12 @@ static void listar_habitos_simple(int con_pause, int con_clear)
         int nerv = sqlite3_column_int(stmt, 6);
         int conf = sqlite3_column_int(stmt, 7);
         int mot = sqlite3_column_int(stmt, 8);
-        const char *tipo = (const char *)sqlite3_column_text(stmt, 9);
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-        ui_printf_centered_line("%d | %s | %d | %d | %d | %s | %d | %d | %d | %s",
-                                id, fecha_disp, dormi, hid, alc, animo, nerv, conf, mot, tipo);
+        ui_printf_centered_line("%-4d %-12s %-8s %-6d %-5s %-12s %-4d %-5d %-4d",
+                                id, fecha_disp, dormi ? "Si" : "No", hid,
+                                alc ? "Si" : "No", animo ? animo : "", nerv, conf, mot);
         count++;
     }
 
@@ -809,9 +810,8 @@ static void actualizar_habito_aspecto(int id)
     printf("7) Confianza\n");
     printf("8) Motivacion\n");
     printf("9) Notas\n");
-    printf("10) Tipo diario\n");
 
-    int opcion = input_rango("> ", 1, 10);
+    int opcion = input_rango("> ", 1, 9);
 
     switch (opcion)
     {
@@ -839,11 +839,8 @@ static void actualizar_habito_aspecto(int id)
     case 8:
         actualizar_habito_entero(id, "motivacion", "Motivacion (0-10): ", 0, 10);
         break;
-    case 9:
-        actualizar_habito_texto(id, "notas", "Notas libres: ", 256);
-        break;
     default:
-        actualizar_habito_texto(id, "tipo_diario", "Tipo diario deportivo: ", 64);
+        actualizar_habito_texto(id, "notas", "Notas libres: ", 256);
         break;
     }
 }
@@ -1545,10 +1542,10 @@ static void tendencias_mentales(void)
     const char *sql =
         "SELECT "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE strftime('%%Y-%%m-%%d', p.fecha_hora) IN "
+        " WHERE (substr(p.fecha_hora,7,4)||'-'||substr(p.fecha_hora,4,2)||'-'||substr(p.fecha_hora,1,2)) IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza >= 8)) AS avg_alta, "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE strftime('%%Y-%%m-%%d', p.fecha_hora) IN "
+        " WHERE (substr(p.fecha_hora,7,4)||'-'||substr(p.fecha_hora,4,2)||'-'||substr(p.fecha_hora,1,2)) IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4)) AS avg_baja";
 
     sqlite3_stmt *stmt;
@@ -1949,10 +1946,10 @@ static void comparar_entrenamiento_vs_rendimiento(void)
         "(SELECT COUNT(DISTINCT fecha) FROM bienestar_entrenamiento WHERE omitido = 0) AS dias_entrenamiento, "
         "(SELECT COUNT(*) FROM partido) AS total_partidos, "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE strftime('%%Y-%%m-%%d', fecha_hora) IN "
+        " WHERE (substr(fecha_hora,7,4)||'-'||substr(fecha_hora,4,2)||'-'||substr(fecha_hora,1,2)) IN "
         " (SELECT fecha FROM bienestar_entrenamiento WHERE omitido = 0)) AS avg_con_entrenamiento, "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE strftime('%%Y-%%m-%%d', fecha_hora) NOT IN "
+        " WHERE (substr(fecha_hora,7,4)||'-'||substr(fecha_hora,4,2)||'-'||substr(fecha_hora,1,2)) NOT IN "
         " (SELECT fecha FROM bienestar_entrenamiento WHERE omitido = 0)) AS avg_sin_entrenamiento";
 
     sqlite3_stmt *stmt;
@@ -2175,13 +2172,13 @@ static void registrar_dia_nutricional(void)
     int hidratacion = input_rango("> ", 1, 3);
     int alcohol = input_bool("Alcohol? (1=Si, 0=No): ");
 
-    input_string("Peso corporal (opcional, Enter para omitir): ", peso_str, sizeof(peso_str));
+    input_string_extended("Peso corporal (opcional, Enter para omitir): ", peso_str, sizeof(peso_str));
     if (safe_strnlen(peso_str, sizeof(peso_str)) > 0)
     {
         peso = atof(peso_str);
     }
 
-    input_string("Notas (opcional): ", notas, sizeof(notas));
+    input_string_extended("Notas (opcional): ", notas, sizeof(notas));
 
     const char *sql =
         "INSERT INTO bienestar_dia_nutricional (fecha, hidratacion, alcohol, peso_corporal, notas) "
@@ -2449,12 +2446,12 @@ static void actualizar_salud_perfil(void)
     char medidas[128];
     char notas[256];
 
-    input_string("Altura en cm (ej: 175.5): ", altura_str, sizeof(altura_str));
-    input_string("Peso en kg (ej: 70.2): ", peso_str, sizeof(peso_str));
-    input_string("Tipo de sangre (ej: O+): ", tipo_sangre, sizeof(tipo_sangre));
+    input_string_extended("Altura en cm (ej: 175.5): ", altura_str, sizeof(altura_str));
+    input_string_extended("Peso en kg (ej: 70.2): ", peso_str, sizeof(peso_str));
+    input_string_extended("Tipo de sangre (ej: O+): ", tipo_sangre, sizeof(tipo_sangre));
     pedir_fecha("Ultimo control (DD/MM/AAAA, Enter=hoy): ", ultima_revision, sizeof(ultima_revision));
-    input_string("Mediciones (ej: cintura 80, cadera 95): ", medidas, sizeof(medidas));
-    input_string("Notas (opcional): ", notas, sizeof(notas));
+    input_string_extended("Mediciones (ej: cintura 80, cadera 95): ", medidas, sizeof(medidas));
+    input_string_extended("Notas (opcional): ", notas, sizeof(notas));
 
     double altura = atof(altura_str);
     double peso = atof(peso_str);
@@ -2496,10 +2493,10 @@ static void pedir_control_medico_input(ControlMedicoInput *control, const char *
                                        const char *prompt_resultado, const char *prompt_notas)
 {
     pedir_fecha(prompt_fecha, control->fecha, sizeof(control->fecha));
-    input_string(prompt_tipo, control->tipo, sizeof(control->tipo));
+    input_string_extended(prompt_tipo, control->tipo, sizeof(control->tipo));
     input_string(prompt_profesional, control->profesional, sizeof(control->profesional));
-    input_string(prompt_resultado, control->resultado, sizeof(control->resultado));
-    input_string(prompt_notas, control->notas, sizeof(control->notas));
+    input_string_extended(prompt_resultado, control->resultado, sizeof(control->resultado));
+    input_string_extended(prompt_notas, control->notas, sizeof(control->notas));
 }
 
 static int bind_control_medico(sqlite3_stmt *stmt, const ControlMedicoInput *control, int index)
@@ -2710,7 +2707,7 @@ static void listar_recomendaciones_entrenamiento(void)
     print_header("HISTORIAL RECOMENDACIONES");
 
     const char *sql =
-        "SELECT fecha, score_preparacion, riesgo_lesion, resumen "
+        "SELECT id, fecha, score_preparacion, riesgo_lesion, resumen "
         "FROM bienestar_recomendacion "
         "ORDER BY id DESC LIMIT 10";
 
@@ -2720,26 +2717,72 @@ static void listar_recomendaciones_entrenamiento(void)
         return;
     }
 
-    ui_printf_centered_line("Fecha | Preparacion | Riesgo | Resumen");
-    ui_printf_centered_line("--------------------------------------------------------------");
+    ui_printf_centered_line("%-4s %-12s %-6s %-7s %s",
+                            "ID", "Fecha", "Prep", "Riesgo", "Resumen");
+    ui_printf_centered_line("---- ------------ ------ ------- --------------------------------");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+        int score = sqlite3_column_int(stmt, 2);
+        int riesgo = sqlite3_column_int(stmt, 3);
+        const char *resumen = (const char *)sqlite3_column_text(stmt, 4);
+
+        char fecha_disp[32];
+        format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
+        ui_printf_centered_line("%-4d %-12s %-6d %-7d %s", id, fecha_disp, score, riesgo, resumen ? resumen : "");
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay recomendaciones guardadas.");
+        pause_console();
+        return;
+    }
+
+    printf("\nID para ver rutina completa (0 para volver): ");
+    int sel = input_int("");
+    if (sel <= 0)
+    {
+        return;
+    }
+
+    const char *sql_detalle =
+        "SELECT fecha, score_preparacion, riesgo_lesion, resumen, rutina "
+        "FROM bienestar_recomendacion WHERE id = ?";
+
+    if (!preparar_consulta(&stmt, sql_detalle, "Error consultando detalle.", 1))
+    {
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, sel);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
         int score = sqlite3_column_int(stmt, 1);
         int riesgo = sqlite3_column_int(stmt, 2);
         const char *resumen = (const char *)sqlite3_column_text(stmt, 3);
+        const char *rutina = (const char *)sqlite3_column_text(stmt, 4);
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
-        ui_printf_centered_line("%s | %d | %d | %s", fecha_disp, score, riesgo, resumen ? resumen : "");
-        count++;
-    }
 
-    if (count == 0)
+        clear_screen();
+        print_header("RUTINA RECOMENDADA");
+        printf("Fecha: %s\n", fecha_disp);
+        printf("Preparacion: %d/100 | Riesgo: %d/100\n", score, riesgo);
+        printf("Resumen: %s\n\n", resumen ? resumen : "");
+        printf("%s\n", rutina ? rutina : "(Sin rutina)");
+    }
+    else
     {
-        ui_printf_centered_line("No hay recomendaciones guardadas.");
+        printf("Recomendacion no encontrada.\n");
     }
 
     sqlite3_finalize(stmt);

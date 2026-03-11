@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file export_estadisticas_generales.c
- * @brief Funciones de exportación de estadísticas
+ * @brief Funciones de exportacion de estadisticas
  */
 
 #include "export.h"
@@ -12,7 +12,7 @@
 #include <string.h>
 
 /* ============================================================================
- * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
+ * CONSULTAS SQL ESTaTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
 static const char *SQL_STATS_MONTH =
@@ -23,10 +23,10 @@ static const char *SQL_STATS_MONTH =
     "ORDER BY substr(fecha_hora, 4, 7) DESC, SUM(goles) DESC";
 
 /* ============================================================================
- * HELPER ESTÁTICOS
+ * HELPER ESTaTICOS
  * ============================================================================ */
 
-/** @brief Obtiene top 1 por métrica (reutilizable) */
+/** @brief Obtiene top 1 por metrica (reutilizable) */
 static int get_top_camiseta(const char *metric, const char *orderDir,
                             char *nombre, size_t nombre_size, int *valor)
 {
@@ -52,7 +52,7 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
     return result;
 }
 
-/** @brief Escribe estadística en JSON */
+/** @brief Escribe estadistica en JSON */
 static void json_write_stat(cJSON *json, const char *cat,
                             const char *nombre, int valor)
 {
@@ -62,7 +62,7 @@ static void json_write_stat(cJSON *json, const char *cat,
     cJSON_AddItemToObject(json, cat, stat);
 }
 
-/** @brief Escribe estadísticas en formato CSV */
+/** @brief Escribe estadisticas en formato CSV */
 static void write_stats_csv(FILE *file, const char *,
                             const char *metric, const char *order,
                             const char *label)
@@ -75,7 +75,7 @@ static void write_stats_csv(FILE *file, const char *,
     }
 }
 
-/** @brief Escribe estadísticas en formato TXT */
+/** @brief Escribe estadisticas en formato TXT */
 static void write_stats_txt(FILE *file, const char *,
                             const char *metric, const char *order,
                             const char *label)
@@ -88,7 +88,7 @@ static void write_stats_txt(FILE *file, const char *,
     }
 }
 
-/** @brief Escribe estadísticas en formato HTML */
+/** @brief Escribe estadisticas en formato HTML */
 static void write_stats_html(FILE *file, const char *,
                              const char *metric, const char *order,
                              const char *label)
@@ -101,7 +101,7 @@ static void write_stats_html(FILE *file, const char *,
     }
 }
 
-/** @brief Construye objeto JSON con estadísticas generales */
+/** @brief Construye objeto JSON con estadisticas generales */
 static cJSON *json_build_estadisticas(void)
 {
     cJSON *root = cJSON_CreateObject();
@@ -135,7 +135,7 @@ static cJSON *json_build_estadisticas(void)
 }
 
 /* ============================================================================
- * EXPORTACIÓN ESTADÍSTICAS GENERALES (4 formatos)
+ * EXPORTACIoN ESTADiSTICAS GENERALES (4 formatos)
  * ============================================================================ */
 
 void exportar_estadisticas_generales_csv(void)
@@ -262,7 +262,7 @@ void exportar_estadisticas_generales_html(void)
 }
 
 /* ============================================================================
- * EXPORTACIÓN POR MES
+ * EXPORTACIoN POR MES
  * ============================================================================ */
 
 void exportar_estadisticas_por_mes_csv(void)
@@ -350,7 +350,7 @@ void exportar_estadisticas_por_mes_txt(void)
 }
 
 /**
- * @brief Exporta estadísticas por mes en formato JSON
+ * @brief Exporta estadisticas por mes en formato JSON
  */
 void exportar_estadisticas_por_mes_json(void)
 {
@@ -423,7 +423,7 @@ void exportar_estadisticas_por_mes_json(void)
 }
 
 /**
- * @brief Exporta estadísticas por mes en formato HTML
+ * @brief Exporta estadisticas por mes en formato HTML
  */
 void exportar_estadisticas_por_mes_html(void)
 {

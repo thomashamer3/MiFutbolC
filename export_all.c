@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file export_all.c
- * @brief Módulo para exportar todos los datos del sistema en múltiples formatos.
+ * @brief Modulo para exportar todos los datos del sistema en multiples formatos.
  *
- * Este archivo contiene la función principal para exportar camisetas, partidos,
- * lesiones y estadísticas en formatos CSV, TXT, JSON y HTML.
+ * Este archivo contiene la funcion principal para exportar camisetas, partidos,
+ * lesiones y estadisticas en formatos CSV, TXT, JSON y HTML.
  */
 
 #include "export_all.h"
@@ -152,12 +152,12 @@ static void exportar_todo_csv()
 }
 
 /**
- * @brief Exportación integral de datos de camisetas
+ * @brief Exportacion integral de datos de camisetas
  *
- * Centraliza la exportación de datos de camisetas en todos los formatos disponibles,
- * proporcionando una solución completa para el análisis de rendimiento de jugadores.
- * Esto es esencial para equipos que necesitan evaluar múltiples aspectos del desempeño
- * en diferentes formatos para diferentes usos (hojas de cálculo, informes, APIs, visualización web).
+ * Centraliza la exportacion de datos de camisetas en todos los formatos disponibles,
+ * proporcionando una solucion completa para el analisis de rendimiento de jugadores.
+ * Esto es esencial para equipos que necesitan evaluar multiples aspectos del desempeno
+ * en diferentes formatos para diferentes usos (hojas de calculo, informes, APIs, visualizacion web).
  */
 static void exportar_camisetas_todo()
 {
@@ -168,10 +168,10 @@ static void exportar_camisetas_todo()
 }
 
 /**
- * @brief Exportación integral de datos de partidos
+ * @brief Exportacion integral de datos de partidos
  *
- * Proporciona una exportación completa de todos los partidos registrados en el sistema,
- * permitiendo un análisis exhaustivo del historial de encuentros. Esto es crucial para
+ * Proporciona una exportacion completa de todos los partidos registrados en el sistema,
+ * permitiendo un analisis exhaustivo del historial de encuentros. Esto es crucial para
  * evaluar el rendimiento del equipo a lo largo del tiempo y bajo diferentes condiciones.
  */
 static void exportar_partidos_todo()
@@ -183,11 +183,11 @@ static void exportar_partidos_todo()
 }
 
 /**
- * @brief Exportación integral de datos de lesiones
+ * @brief Exportacion integral de datos de lesiones
  *
- * Centraliza la exportación de datos de lesiones en todos los formatos, proporcionando
- * información crucial para el análisis médico y de rendimiento. Esto permite a los equipos
- * médicos y entrenadores evaluar el impacto de las lesiones en el desempeño de los jugadores.
+ * Centraliza la exportacion de datos de lesiones en todos los formatos, proporcionando
+ * informacion crucial para el analisis medico y de rendimiento. Esto permite a los equipos
+ * medicos y entrenadores evaluar el impacto de las lesiones en el desempeno de los jugadores.
  */
 static void exportar_lesiones_todo()
 {
@@ -198,11 +198,11 @@ static void exportar_lesiones_todo()
 }
 
 /**
- * @brief Exportación integral de estadísticas básicas
+ * @brief Exportacion integral de estadisticas basicas
  *
- * Proporciona una exportación completa de estadísticas básicas en todos los formatos,
- * ofreciendo una visión general del rendimiento del equipo. Esto es útil para informes
- * rápidos y análisis preliminares del desempeño general.
+ * Proporciona una exportacion completa de estadisticas basicas en todos los formatos,
+ * ofreciendo una vision general del rendimiento del equipo. Esto es util para informes
+ * rapidos y analisis preliminares del desempeno general.
  */
 static void exportar_estadisticas_todo()
 {
@@ -213,11 +213,11 @@ static void exportar_estadisticas_todo()
 }
 
 /**
- * @brief Exportación integral de análisis avanzados
+ * @brief Exportacion integral de analisis avanzados
  *
- * Centraliza la exportación de análisis avanzados en todos los formatos, proporcionando
- * información detallada para la toma de decisiones estratégicas. Esto es esencial para
- * equipos que necesitan un análisis profundo del rendimiento y patrones de juego.
+ * Centraliza la exportacion de analisis avanzados en todos los formatos, proporcionando
+ * informacion detallada para la toma de decisiones estrategicas. Esto es esencial para
+ * equipos que necesitan un analisis profundo del rendimiento y patrones de juego.
  */
 static void exportar_analisis_todo()
 {
@@ -228,11 +228,11 @@ static void exportar_analisis_todo()
 }
 
 /**
- * @brief Exportación integral de estadísticas generales
+ * @brief Exportacion integral de estadisticas generales
  *
- * Proporciona una exportación completa de estadísticas generales en todos los formatos,
- * ofreciendo una visión agregada del rendimiento del equipo. Esto es útil para informes
- * ejecutivos y análisis de alto nivel del desempeño general del equipo.
+ * Proporciona una exportacion completa de estadisticas generales en todos los formatos,
+ * ofreciendo una vision agregada del rendimiento del equipo. Esto es util para informes
+ * ejecutivos y analisis de alto nivel del desempeno general del equipo.
  */
 static void exportar_estadisticas_generales_todo()
 {
@@ -243,10 +243,10 @@ static void exportar_estadisticas_generales_todo()
 }
 
 /**
- * @brief Exportación integral de estadísticas mensuales
+ * @brief Exportacion integral de estadisticas mensuales
  *
- * Centraliza la exportación de estadísticas por mes en todos los formatos, permitiendo
- * un análisis temporal detallado del rendimiento. Esto es esencial para identificar
+ * Centraliza la exportacion de estadisticas por mes en todos los formatos, permitiendo
+ * un analisis temporal detallado del rendimiento. Esto es esencial para identificar
  * patrones estacionales y evaluar el progreso mensual del equipo.
  */
 static void exportar_estadisticas_por_mes_todo()
@@ -258,10 +258,10 @@ static void exportar_estadisticas_por_mes_todo()
 }
 
 /**
- * @brief Exportación integral de estadísticas anuales
+ * @brief Exportacion integral de estadisticas anuales
  *
- * Proporciona una exportación completa de estadísticas por año en todos los formatos,
- * permitiendo un análisis de largo plazo del rendimiento del equipo. Esto es crucial
+ * Proporciona una exportacion completa de estadisticas por ano en todos los formatos,
+ * permitiendo un analisis de largo plazo del rendimiento del equipo. Esto es crucial
  * para evaluar el progreso anual y planificar estrategias a largo plazo.
  */
 static void exportar_estadisticas_por_anio_todo()
@@ -273,11 +273,11 @@ static void exportar_estadisticas_por_anio_todo()
 }
 
 /**
- * @brief Exportación integral de récords y rankings
+ * @brief Exportacion integral de records y rankings
  *
- * Centraliza la exportación de récords y rankings en todos los formatos, proporcionando
- * información sobre los mejores y peores desempeños. Esto es esencial para identificar
- * patrones de éxito y áreas de mejora, así como para celebrar logros y establecer metas.
+ * Centraliza la exportacion de records y rankings en todos los formatos, proporcionando
+ * informacion sobre los mejores y peores desempenos. Esto es esencial para identificar
+ * patrones de exito y areas de mejora, asi como para celebrar logros y establecer metas.
  */
 static void exportar_records_rankings_todo()
 {
@@ -288,11 +288,11 @@ static void exportar_records_rankings_todo()
 }
 
 /**
- * @brief Exportación integral del partido con más goles
+ * @brief Exportacion integral del partido con mas goles
  *
- * Proporciona una exportación completa del partido con mayor anotación en todos los formatos,
- * permitiendo analizar las condiciones y factores que llevaron al mejor desempeño ofensivo.
- * Esto es útil para replicar estrategias exitosas en futuros encuentros.
+ * Proporciona una exportacion completa del partido con mayor anotacion en todos los formatos,
+ * permitiendo analizar las condiciones y factores que llevaron al mejor desempeno ofensivo.
+ * Esto es util para replicar estrategias exitosas en futuros encuentros.
  */
 static void exportar_partido_mas_goles_todo()
 {
@@ -306,7 +306,7 @@ static void exportar_partido_mas_goles_todo()
 }
 
 /**
- * @brief Exporta partido con más asistencias en todos los formatos.
+ * @brief Exporta partido con mas asistencias en todos los formatos.
  */
 static void exportar_partido_mas_asistencias_todo()
 {
@@ -320,7 +320,7 @@ static void exportar_partido_mas_asistencias_todo()
 }
 
 /**
- * @brief Exporta partido más reciente con menos goles en todos los formatos.
+ * @brief Exporta partido mas reciente con menos goles en todos los formatos.
  */
 static void exportar_partido_menos_goles_reciente_todo()
 {
@@ -334,11 +334,11 @@ static void exportar_partido_menos_goles_reciente_todo()
 }
 
 /**
- * @brief Exportación integral del partido más reciente con menos asistencias
+ * @brief Exportacion integral del partido mas reciente con menos asistencias
  *
- * Proporciona una exportación completa del partido más reciente con menor número de asistencias
- * en todos los formatos, permitiendo analizar las condiciones que llevaron a un bajo desempeño
- * en la creación de oportunidades de gol. Esto es útil para identificar áreas de mejora
+ * Proporciona una exportacion completa del partido mas reciente con menor numero de asistencias
+ * en todos los formatos, permitiendo analizar las condiciones que llevaron a un bajo desempeno
+ * en la creacion de oportunidades de gol. Esto es util para identificar areas de mejora
  * en el juego en equipo y la estrategia ofensiva.
  */
 static void exportar_partido_menos_asistencias_reciente_todo()
@@ -353,20 +353,20 @@ static void exportar_partido_menos_asistencias_reciente_todo()
 }
 
 /**
- * @brief Exportación completa de todos los datos del sistema
+ * @brief Exportacion completa de todos los datos del sistema
  *
- * Función maestra que realiza una exportación exhaustiva de todos los datos disponibles
- * en el sistema, incluyendo camisetas, partidos, lesiones, estadísticas y análisis.
- * Esta es la función más completa y genera una copia de seguridad integral de todos
- * los datos en múltiples formatos para diferentes usos y aplicaciones.
+ * Funcion maestra que realiza una exportacion exhaustiva de todos los datos disponibles
+ * en el sistema, incluyendo camisetas, partidos, lesiones, estadisticas y analisis.
+ * Esta es la funcion mas completa y genera una copia de seguridad integral de todos
+ * los datos en multiples formatos para diferentes usos y aplicaciones.
  *
- * @details La exportación completa incluye:
- * - Todos los tipos de datos: camisetas, partidos, lesiones, estadísticas
+ * @details La exportacion completa incluye:
+ * - Todos los tipos de datos: camisetas, partidos, lesiones, estadisticas
  * - Todos los formatos: CSV, TXT, JSON, HTML
- * - Datos específicos: partidos destacados, récords, rankings
- * - Análisis temporales: por mes, por año
+ * - Datos especificos: partidos destacados, records, rankings
+ * - Analisis temporales: por mes, por ano
  *
- * @note Esta función es la más completa pero también la más lenta y consume más recursos,
+ * @note Esta funcion es la mas completa pero tambien la mas lenta y consume mas recursos,
  *       ya que exporta todos los datos disponibles en el sistema. Se recomienda usarla
  *       para copias de seguridad completas o cuando se necesiten todos los datos.
  */
@@ -380,7 +380,7 @@ static void exportar_todo()
     // Exportar partidos en todos los formatos
     exportar_partidos_all();
 
-    // Exportar partidos específicos
+    // Exportar partidos especificos
     exportar_partido_mas_goles_csv();
     exportar_partido_mas_goles_txt();
     exportar_partido_mas_goles_json();
@@ -404,22 +404,22 @@ static void exportar_todo()
     // Exportar lesiones en todos los formatos
     exportar_lesiones_all();
 
-    // Exportar estadísticas básicas
+    // Exportar estadisticas basicas
     exportar_estadisticas_all();
 
-    // Exportar análisis
+    // Exportar analisis
     exportar_analisis_all();
 
-    // Exportar estadísticas generales
+    // Exportar estadisticas generales
     exportar_estadisticas_generales_all();
 
-    // Exportar estadísticas por mes
+    // Exportar estadisticas por mes
     exportar_estadisticas_por_mes_all();
 
-    // Exportar estadísticas por año
+    // Exportar estadisticas por ano
     exportar_estadisticas_por_anio_all();
 
-    // Exportar récords y rankings
+    // Exportar records y rankings
     exportar_records_rankings_all();
 
     printf("Exportacion de todo completada.\n");
@@ -437,7 +437,7 @@ static void exportar_informe_total_pdf()
 }
 
 /**
- * @brief Sub-menú para exportar partidos.
+ * @brief Sub-menu para exportar partidos.
  */
 static void menu_exportar_partidos()
 {
@@ -454,7 +454,7 @@ static void menu_exportar_partidos()
 }
 
 /**
- * @brief Sub-menú para exportar estadísticas generales.
+ * @brief Sub-menu para exportar estadisticas generales.
  */
 static void menu_exportar_estadisticas_generales()
 {

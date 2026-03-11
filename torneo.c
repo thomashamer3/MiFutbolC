@@ -1,4 +1,4 @@
-#include "torneo.h"
+﻿#include "torneo.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -11,7 +11,7 @@
 
 /**
  * @file torneo.c
- * @brief Implementación de funciones para la gestión de torneos en MiFutbolC
+ * @brief Implementacion de funciones para la gestion de torneos en MiFutbolC
  */
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -32,7 +32,7 @@ void agregar_registro_goleador_asistidor(int torneo_id);
 void eliminar_registro_goleador_asistidor(int torneo_id);
 void modificar_registro_goleador_asistidor(int torneo_id);
 
-// Prototipos estáticos para funciones usadas antes de su definición
+// Prototipos estaticos para funciones usadas antes de su definicion
 static void listar_equipos_asociados(int torneo_id);
 static void actualizar_nombre_torneo(int torneo_id);
 static void actualizar_equipo_fijo(int torneo_id);
@@ -50,12 +50,12 @@ static void aplicar_actualizacion_formato(int torneo_id, int tipo, int formato)
     (void)torneo_id;
     (void)tipo;
     (void)formato;
-    printf("Aplicar actualización de formato no completamente implementado.\n");
+    printf("Aplicar actualizacion de formato no completamente implementado.\n");
 }
 
 /**
  * Traduce valores enumerados de tipos de torneo a nombres legibles para la interfaz de usuario,
- * facilitando la comprensión de las opciones disponibles.
+ * facilitando la comprension de las opciones disponibles.
  */
 const char* get_nombre_tipo_torneo(TipoTorneos tipo)
 {
@@ -77,11 +77,11 @@ const char* get_nombre_tipo_torneo(TipoTorneos tipo)
 /**
  * @brief Convierte un formato de torneo enumerado a su nombre textual
  *
- * Esta función toma un valor del enum FormatoTorneos y devuelve la cadena
- * correspondiente en español para mostrar al usuario.
+ * Esta funcion toma un valor del enum FormatoTorneos y devuelve la cadena
+ * correspondiente en espanol para mostrar al usuario.
  *
  * @param formato El valor enumerado del formato de torneo
- * @return Cadena constante con el nombre del formato de torneo, o "Desconocido" si no es válido
+ * @return Cadena constante con el nombre del formato de torneo, o "Desconocido" si no es valido
  */
 const char* get_nombre_formato_torneo(FormatoTorneos formato)
 {
@@ -115,7 +115,7 @@ const char* get_nombre_formato_torneo(FormatoTorneos formato)
 }
 
 /**
- * @brief Función genérica para listar torneos
+ * @brief Funcion generica para listar torneos
  */
 static int listar_torneos_generico(const char *no_records_msg)
 {
@@ -152,7 +152,7 @@ static int listar_torneos_generico(const char *no_records_msg)
 }
 
 /**
- * @brief Función genérica para obtener formato según cantidad de equipos y opción
+ * @brief Funcion generica para obtener formato segun cantidad de equipos y opcion
  */
 static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *tipo, FormatoTorneos *formato)
 {
@@ -223,7 +223,7 @@ static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *
 }
 
 /**
- * Muestra información completa de torneo para confirmación del usuario.
+ * Muestra informacion completa de torneo para confirmacion del usuario.
  * Necesario porque la estructura interna no es legible para humanos.
  */
 void mostrar_torneo(Torneo *torneo)
@@ -242,13 +242,89 @@ void mostrar_torneo(Torneo *torneo)
 }
 
 /**
+ * @brief Agrega un equipo al torneo solo por nombre (sin crear equipo completo)
+ */
+static void agregar_equipo_nombre_torneo(int torneo_id)
+{
+    char nombre[50] = {0};
+    input_string("Nombre del equipo: ", nombre, sizeof(nombre));
+    if (nombre[0] == '\0')
+    {
+        printf("El nombre no puede estar vacio.\n");
+        pause_console();
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    const char *sql_check = "SELECT COUNT(*) FROM equipo_torneo_nombre WHERE torneo_id = ? AND nombre = ?;";
+    if (preparar_stmt(sql_check, &stmt))
+    {
+        sqlite3_bind_int(stmt, 1, torneo_id);
+        sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_int(stmt, 0) > 0)
+        {
+            printf("Ya existe un equipo con ese nombre en el torneo.\n");
+            sqlite3_finalize(stmt);
+            pause_console();
+            return;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *sql_insert = "INSERT INTO equipo_torneo_nombre (torneo_id, nombre) VALUES (?, ?);";
+    if (preparar_stmt(sql_insert, &stmt))
+    {
+        sqlite3_bind_int(stmt, 1, torneo_id);
+        sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+            printf("Equipo '%s' agregado al torneo.\n", nombre);
+        else
+            printf("Error al agregar equipo: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+    pause_console();
+}
+
+/**
+ * @brief Agrega varios equipos por nombre de una vez
+ */
+static void agregar_equipos_nombres_torneo(int torneo_id)
+{
+    clear_screen();
+    print_header("AGREGAR EQUIPOS POR NOMBRE");
+    printf("Escriba los nombres de los equipos (uno por linea, linea vacia para terminar):\n\n");
+
+    int count = 0;
+    for (;;)
+    {
+        char nombre[50] = {0};
+        printf("Equipo %d (Enter para terminar): ", count + 1);
+        if (!fgets(nombre, sizeof(nombre), stdin)) break;
+        // trim newline
+        size_t len = strlen(nombre);
+        while (len > 0 && (nombre[len-1] == '\n' || nombre[len-1] == '\r'))
+            nombre[--len] = '\0';
+        if (nombre[0] == '\0') break;
+
+        sqlite3_stmt *stmt;
+        const char *sql = "INSERT INTO equipo_torneo_nombre (torneo_id, nombre) VALUES (?, ?);";
+        if (preparar_stmt(sql, &stmt))
+        {
+            sqlite3_bind_int(stmt, 1, torneo_id);
+            sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_STATIC);
+            if (sqlite3_step(stmt) == SQLITE_DONE)
+                count++;
+            else
+                printf("Error al agregar '%s': %s\n", nombre, sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);
+        }
+    }
+    printf("\n%d equipo(s) agregado(s) al torneo.\n", count);
+    pause_console();
+}
+
+/**
  * @brief Asocia equipos a un torneo
- *
- * Esta función permite asociar equipos existentes a un torneo específico.
- * Muestra una lista de equipos disponibles, permite seleccionar uno y lo asocia
- * al torneo en la base de datos.
- *
- * @param torneo_id ID del torneo al que se asociarán los equipos
  */
 void asociar_equipos_torneo(int torneo_id)
 {
@@ -307,10 +383,10 @@ void asociar_equipos_torneo(int torneo_id)
 /**
  * @brief Crea un equipo fijo para un torneo
  *
- * Esta función crea un nuevo equipo y lo asocia como equipo fijo a un torneo.
+ * Esta funcion crea un nuevo equipo y lo asocia como equipo fijo a un torneo.
  * Si torneo_id es -1, solo crea el equipo sin asociarlo.
  *
- * @param torneo_id ID del torneo al que se asociará el equipo fijo, o -1 para solo crear el equipo
+ * @param torneo_id ID del torneo al que se asociara el equipo fijo, o -1 para solo crear el equipo
  */
 void crear_equipo_fijo_torneo(int torneo_id)
 {
@@ -364,9 +440,9 @@ void crear_equipo_fijo_torneo(int torneo_id)
 }
 
 /**
- * Solicita al usuario los datos básicos del torneo (nombre, equipo fijo).
- * Maneja la creación de equipo fijo si es necesario.
- * Retorna 0 si se debe cancelar la creación, 1 si continúa.
+ * Solicita al usuario los datos basicos del torneo (nombre, equipo fijo).
+ * Maneja la creacion de equipo fijo si es necesario.
+ * Retorna 0 si se debe cancelar la creacion, 1 si continua.
  */
 static int input_torneo_data(Torneo *torneo)
 {
@@ -402,7 +478,7 @@ static int input_torneo_data(Torneo *torneo)
 
 /**
  * Determina el formato y tipo de torneo basado en la cantidad de equipos.
- * Utiliza lógica de rangos para simplificar la selección automática.
+ * Utiliza logica de rangos para simplificar la seleccion automatica.
  */
 static void determine_formato_torneo(Torneo *torneo)
 {
@@ -442,7 +518,7 @@ static void determine_formato_torneo(Torneo *torneo)
     }
     else
     {
-        printf("Cantidad de equipos no válida. Se seleccionará formato por defecto.\n");
+        printf("Cantidad de equipos no valida. Se seleccionara formato por defecto.\n");
         torneo->formato_torneo = ROUND_ROBIN;
         torneo->tipo_torneo = IDA_Y_VUELTA;
         return;
@@ -520,10 +596,15 @@ void crear_torneo()
 
     printf("Torneo guardado exitosamente con ID: %d\n", torneo_id);
 
-    if (confirmar("Desea asociar mas equipos a este torneo?"))
-    {
+    printf("\nAgregar equipos al torneo:\n");
+    printf("1. Agregar equipos por nombre (solo nombres para llaves)\n");
+    printf("2. Asociar equipos guardados\n");
+    printf("0. Continuar sin agregar\n");
+    int opc_eq = input_int(">");
+    if (opc_eq == 1)
+        agregar_equipos_nombres_torneo(torneo_id);
+    else if (opc_eq == 2)
         asociar_equipos_torneo(torneo_id);
-    }
 
     pause_console();
 }
@@ -612,13 +693,14 @@ void modificar_torneo()
         sqlite3_finalize(stmt);
     }
 
-    printf("\nSeleccione qué desea modificar:\n");
+    printf("\nSeleccione que desea modificar:\n");
     printf("1. Nombre del torneo\n");
     printf("2. Equipo fijo\n");
     printf("3. Cantidad de equipos\n");
     printf("4. Tipo y formato de torneo\n");
-    printf("5. Asociar equipos\n");
-    printf("6. Volver\n");
+    printf("5. Asociar equipos guardados\n");
+    printf("6. Agregar equipos por nombre\n");
+    printf("7. Volver\n");
 
     int opcion = input_int(">");
 
@@ -640,6 +722,9 @@ void modificar_torneo()
         asociar_equipos_torneo(torneo_id);
         break;
     case 6:
+        agregar_equipos_nombres_torneo(torneo_id);
+        break;
+    case 7:
         break;
     default:
         printf("Opcion invalida.\n");
@@ -670,9 +755,9 @@ void eliminar_torneo()
         return;
     }
 
-    if (!confirmar("¿Está seguro de eliminar este torneo? Se eliminarán datos asociados."))
+    if (!confirmar("Esta seguro de eliminar este torneo? Se eliminaran datos asociados."))
     {
-        printf("Eliminación cancelada.\n");
+        printf("Eliminacion cancelada.\n");
         pause_console();
         return;
     }
@@ -686,6 +771,7 @@ void eliminar_torneo()
         "DELETE FROM equipo_torneo_estadisticas WHERE torneo_id = ?;",
         "DELETE FROM partido_torneo WHERE torneo_id = ?;",
         "DELETE FROM equipo_torneo WHERE torneo_id = ?;",
+        "DELETE FROM equipo_torneo_nombre WHERE torneo_id = ?;",
         "DELETE FROM equipo_historial WHERE torneo_id = ?;",
         "DELETE FROM torneo_temporada WHERE torneo_id = ?;",
         "DELETE FROM torneo WHERE id = ?;",
@@ -795,7 +881,7 @@ static void actualizar_equipo_fijo(int torneo_id)
 }
 
 /**
- * @brief Maneja la actualización de tipo y formato de torneo
+ * @brief Maneja la actualizacion de tipo y formato de torneo
  */
 static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
 {
@@ -834,7 +920,7 @@ static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
     }
     else
     {
-        printf("Cantidad de equipos no válida. No se actualizara el formato.\n");
+        printf("Cantidad de equipos no valida. No se actualizara el formato.\n");
         return;
     }
 
@@ -850,31 +936,43 @@ static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
 static void listar_equipos_asociados(int torneo_id)
 {
     printf("=== EQUIPOS ASOCIADOS ===\n");
-    sqlite3_stmt *stmt_equipos;
-    const char *sql_equipos = "SELECT e.id, e.nombre FROM equipo e JOIN equipo_torneo et ON e.id = et.equipo_id WHERE et.torneo_id = ? ORDER BY e.id;";
-
-    if (!preparar_stmt(sql_equipos, &stmt_equipos))
-    {
-        return;
-    }
-
-    sqlite3_bind_int(stmt_equipos, 1, torneo_id);
-
     int has_equipos = 0;
     int count = 1;
-    while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
+
+    // Equipos guardados (de tabla equipo)
+    sqlite3_stmt *stmt_equipos;
+    const char *sql_equipos = "SELECT e.id, e.nombre FROM equipo e JOIN equipo_torneo et ON e.id = et.equipo_id WHERE et.torneo_id = ? ORDER BY e.id;";
+    if (preparar_stmt(sql_equipos, &stmt_equipos))
     {
-        has_equipos = 1;
-        const char *equipo_nombre = (const char*)sqlite3_column_text(stmt_equipos, 1);
-        printf("%d. %s\n", count++, equipo_nombre);
+        sqlite3_bind_int(stmt_equipos, 1, torneo_id);
+        while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
+        {
+            has_equipos = 1;
+            const char *equipo_nombre = (const char*)sqlite3_column_text(stmt_equipos, 1);
+            printf("%d. %s\n", count++, equipo_nombre);
+        }
+        sqlite3_finalize(stmt_equipos);
+    }
+
+    // Equipos por nombre (solo nombre, sin equipo completo)
+    sqlite3_stmt *stmt_nombres;
+    const char *sql_nombres = "SELECT nombre FROM equipo_torneo_nombre WHERE torneo_id = ? ORDER BY id;";
+    if (preparar_stmt(sql_nombres, &stmt_nombres))
+    {
+        sqlite3_bind_int(stmt_nombres, 1, torneo_id);
+        while (sqlite3_step(stmt_nombres) == SQLITE_ROW)
+        {
+            has_equipos = 1;
+            const char *nombre = (const char*)sqlite3_column_text(stmt_nombres, 0);
+            printf("%d. %s\n", count++, nombre);
+        }
+        sqlite3_finalize(stmt_nombres);
     }
 
     if (!has_equipos)
     {
         mostrar_no_hay_registros("equipos asociados a este torneo");
     }
-
-    sqlite3_finalize(stmt_equipos);
 }
 /**
  * @brief Obtiene el nombre de un equipo por su ID
@@ -920,7 +1018,7 @@ const char* get_equipo_nombre(int equipo_id)
 }
 
 /**
- * @brief Menú principal de gestión de torneos
+ * @brief Menu principal de gestion de torneos
  */
 void menu_torneos()
 {

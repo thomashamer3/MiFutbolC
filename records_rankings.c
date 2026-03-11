@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file records_rankings.c
- * @brief Implementación de récords y rankings en MiFutbolC
+ * @brief Implementacion de records y rankings en MiFutbolC
  */
 
 #include "records_rankings.h"
@@ -52,7 +52,7 @@ static void mostrar_combinacion(const char *titulo, const char *sql)
 }
 
 /**
- * @brief Función auxiliar para mostrar temporadas
+ * @brief Funcion auxiliar para mostrar temporadas
  */
 static void mostrar_temporada(const char *titulo, const char *sql)
 {
@@ -86,7 +86,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
 }
 
 /**
- * @brief Muestra el récord de goles en un partido
+ * @brief Muestra el record de goles en un partido
  */
 void mostrar_record_goles_partido()
 {
@@ -103,7 +103,7 @@ void mostrar_record_goles_partido()
 }
 
 /**
- * @brief Muestra el récord de asistencias en un partido
+ * @brief Muestra el record de asistencias en un partido
  */
 void mostrar_record_asistencias_partido()
 {
@@ -115,7 +115,7 @@ void mostrar_record_asistencias_partido()
 }
 
 /**
- * @brief Muestra la mejor combinación cancha + camiseta
+ * @brief Muestra la mejor combinacion cancha + camiseta
  */
 void mostrar_mejor_combinacion_cancha_camiseta()
 {
@@ -134,7 +134,7 @@ void mostrar_mejor_combinacion_cancha_camiseta()
 }
 
 /**
- * @brief Muestra la peor combinación cancha + camiseta
+ * @brief Muestra la peor combinacion cancha + camiseta
  */
 void mostrar_peor_combinacion_cancha_camiseta()
 {
@@ -239,7 +239,7 @@ static void mostrar_partido_rendimiento(const char *titulo, const char *order_cl
 }
 
 /**
- * @brief Muestra el partido con mejor combinación (goles + asistencias)
+ * @brief Muestra el partido con mejor combinacion (goles + asistencias)
  */
 void mostrar_partido_mejor_combinacion_goles_asistencias()
 {
@@ -278,7 +278,7 @@ void mostrar_partido_mejor_combinacion_goles_asistencias()
 }
 
 /**
- * Muestra lista de partidos que cumplen una condición específica.
+ * Muestra lista de partidos que cumplen una condicion especifica.
  * Reutilizable para diferentes criterios de filtrado de partidos.
  */
 static void mostrar_lista_partidos(const char *header, const char *titulo, const char *condicion, const char *mensaje_vacio)
@@ -348,8 +348,8 @@ void mostrar_partidos_sin_asistencias()
 }
 
 /**
- * Estructura para almacenar información de racha.
- * Necesaria para devolver múltiples valores de la función de cálculo de rachas.
+ * Estructura para almacenar informacion de racha.
+ * Necesaria para devolver multiples valores de la funcion de calculo de rachas.
  */
 typedef struct
 {
@@ -359,8 +359,8 @@ typedef struct
 } RachaInfo;
 
 /**
- * Calcula la mejor racha consecutiva basada en condición específica.
- * Separado del display para permitir reutilización y testing independiente.
+ * Calcula la mejor racha consecutiva basada en condicion especifica.
+ * Separado del display para permitir reutilizacion y testing independiente.
  */
 static RachaInfo calcular_mejor_racha(int tipo_racha)
 {
@@ -405,8 +405,8 @@ static RachaInfo calcular_mejor_racha(int tipo_racha)
 }
 
 /**
- * Muestra información de racha en pantalla.
- * Separado del cálculo para claridad de responsabilidades.
+ * Muestra informacion de racha en pantalla.
+ * Separado del calculo para claridad de responsabilidades.
  */
 static void mostrar_racha_info(const char *titulo, RachaInfo racha)
 {
@@ -425,8 +425,8 @@ static void mostrar_racha_info(const char *titulo, RachaInfo racha)
 }
 
 /**
- * Función principal para mostrar rachas.
- * Coordina cálculo y display de rachas consecutivas.
+ * Funcion principal para mostrar rachas.
+ * Coordina calculo y display de rachas consecutivas.
  */
 static void mostrar_racha(const char *titulo, int tipo_racha)
 {
@@ -474,8 +474,8 @@ void mostrar_partidos_consecutivos_anotando()
 }
 
 /**
- * Construye array de opciones del menú de récords y rankings.
- * Centralizado aquí para mantener consistencia y facilitar mantenimiento.
+ * Construye array de opciones del menu de records y rankings.
+ * Centralizado aqui para mantener consistencia y facilitar mantenimiento.
  */
 static MenuItem* construir_menu_records()
 {
@@ -501,7 +501,7 @@ static MenuItem* construir_menu_records()
 }
 
 /**
- * @brief Muestra el menú de récords y rankings
+ * @brief Muestra el menu de records y rankings
  */
 void menu_records_rankings()
 {

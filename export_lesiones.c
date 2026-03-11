@@ -1,4 +1,4 @@
-#include "export.h"
+﻿#include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
@@ -12,13 +12,13 @@
 #include <string.h>
 
 /* ============================================================================
- * CONSULTAS SQL ESTÁTICAS - Centralizadas para mantenimiento
+ * CONSULTAS SQL ESTaTICAS - Centralizadas para mantenimiento
  * ============================================================================ */
 
 static const char *SQL_LESIONES = "SELECT id, jugador, tipo, descripcion, fecha FROM lesion";
 
 /* ============================================================================
- * HELPER ESTÁTICOS
+ * HELPER ESTaTICOS
  * ============================================================================ */
 
 /** @brief Escribe lesiones en formato CSV */
@@ -119,14 +119,14 @@ static void write_lesiones_json(FILE *file)
 }
 
 /* ============================================================================
- * EXPORTACIÓN LESIONES (4 formatos)
+ * EXPORTACIoN LESIONES (4 formatos)
  * ============================================================================ */
 
 /**
  * @brief Exporta las lesiones a un archivo CSV
  *
  * Crea un archivo CSV con todas las lesiones registradas en la base de datos,
- * incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * incluyendo ID, jugador, tipo, descripcion y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_lesiones_csv()
 {
@@ -153,7 +153,7 @@ void exportar_lesiones_csv()
  * @brief Exporta las lesiones a un archivo de texto plano
  *
  * Crea un archivo de texto con un listado formateado de todas las lesiones
- * registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * registradas, incluyendo ID, jugador, tipo, descripcion y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_lesiones_txt()
 {
@@ -180,7 +180,7 @@ void exportar_lesiones_txt()
  * @brief Exporta las lesiones a un archivo JSON
  *
  * Crea un archivo JSON con un array de objetos representando todas las lesiones
- * registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * registradas, incluyendo ID, jugador, tipo, descripcion y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_lesiones_json()
 {
@@ -206,7 +206,7 @@ void exportar_lesiones_json()
  * @brief Exporta las lesiones a un archivo HTML
  *
  * Crea un archivo HTML con una tabla que muestra todas las lesiones
- * registradas, incluyendo ID, jugador, tipo, descripción y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
+ * registradas, incluyendo ID, jugador, tipo, descripcion y fecha. El archivo se guarda en la ruta definida por EXPORT_PATH.
  */
 void exportar_lesiones_html()
 {
@@ -224,7 +224,7 @@ void exportar_lesiones_html()
 
     fprintf(f,
             "<html><body><h1>Lesiones</h1><table border='1'>"
-            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripción</th><th>Fecha</th></tr>");
+            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
 
     write_lesiones_html(f);
 

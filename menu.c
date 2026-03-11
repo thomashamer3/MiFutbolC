@@ -1,4 +1,4 @@
-#include "menu.h"
+﻿#include "menu.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +33,7 @@
 #include "entrenador_ia.h"
 #include "bienestar.h"
 
-// Definir items del menú principal directamente con inicialización static
+// Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
 {
     int opcion;
@@ -125,7 +125,7 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {0, "Salir", NULL}
 };
 
-// Número de items en el menú principal
+// Numero de items en el menu principal
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 static const size_t MENU_ITEM_COUNT = ARRAY_SIZE(MENU_ITEMS);
 
@@ -167,7 +167,7 @@ void menu_test_set_capture(MenuTestCapture *capture)
 #endif
 
 /**
- * @brief Inicializa la aplicación: consola, locale, base de datos y configuración
+ * @brief Inicializa la aplicacion: consola, locale, base de datos y configuracion
  */
 void initialize_application()
 {
@@ -189,7 +189,7 @@ void initialize_application()
 }
 
 /**
- * @brief Maneja la verificación y creación del nombre de usuario
+ * @brief Maneja la verificacion y creacion del nombre de usuario
  */
 void handle_user_name()
 {
@@ -217,7 +217,7 @@ void handle_user_name()
 }
 
 /**
- * @brief Crea el menú filtrado dinámicamente
+ * @brief Crea el menu filtrado dinamicamente
  */
 MenuItem* create_filtered_menu(int* count)
 {
@@ -242,7 +242,7 @@ MenuItem* create_filtered_menu(int* count)
 }
 
 /**
- * @brief Ejecuta el menú principal y libera recursos
+ * @brief Ejecuta el menu principal y libera recursos
  */
 void run_menu(MenuItem* filtered_items, int count)
 {
@@ -305,11 +305,11 @@ static int ejecutar_accion_menu(const char *titulo, const MenuItem *selected, ch
 }
 
 /**
- * @brief Ejecuta un menú interactivo en la consola
+ * @brief Ejecuta un menu interactivo en la consola
  *
- * Esta función muestra un menú con el título proporcionado y una lista de opciones.
- * Permite al usuario seleccionar una opción y ejecuta la acción correspondiente.
- * Si la acción es NULL, sale del menú.
+ * Esta funcion muestra un menu con el titulo proporcionado y una lista de opciones.
+ * Permite al usuario seleccionar una opcion y ejecuta la accion correspondiente.
+ * Si la accion es NULL, sale del menu.
  */
 void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 {

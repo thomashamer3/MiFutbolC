@@ -47,6 +47,11 @@ double input_double(const char *msg);
 void input_string(const char *msg, char *buffer, int size);
 
 /**
+ * @brief Solicita una cadena que acepta letras, numeros, espacios y caracteres +-.,:() 
+ */
+void input_string_extended(const char *msg, char *buffer, int size);
+
+/**
  * @brief Solicita al usuario una fecha con formato específico.
  *
  * Muestra el mensaje proporcionado y lee una cadena desde la entrada estándar,

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file financiamiento.c
- * @brief Implementación de funciones para la gestión financiera en MiFutbolC
+ * @brief Implementacion de funciones para la gestion financiera en MiFutbolC
  */
 
 #include "financiamiento.h"
@@ -24,7 +24,7 @@
 
 
 /**
- * @brief Convierte un tipo de transacción enumerado a su nombre textual
+ * @brief Convierte un tipo de transaccion enumerado a su nombre textual
  */
 const char *get_nombre_tipo_transaccion(TipoTransaccion tipo)
 {
@@ -40,7 +40,7 @@ const char *get_nombre_tipo_transaccion(TipoTransaccion tipo)
 }
 
 /**
- * @brief Convierte una categoría financiera enumerada a su nombre textual
+ * @brief Convierte una categoria financiera enumerada a su nombre textual
  */
 const char *get_nombre_categoria(CategoriaFinanciera categoria)
 {
@@ -135,7 +135,7 @@ static void mostrar_fecha_display(const char *fecha_db, char *fecha_display, siz
 }
 
 /**
- * @brief Obtener mes y año actual en formato YYYY-MM
+ * @brief Obtener mes y ano actual en formato YYYY-MM
  */
 static void obtener_mes_anio_actual(char *mes_anio)
 {
@@ -182,7 +182,7 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) > 0)
             return;
-        printf("El campo no puede estar vacío.\n");
+        printf("El campo no puede estar vacio.\n");
     }
 }
 
@@ -191,7 +191,7 @@ static int solicitar_monto_no_negativo(const char *prompt)
     int monto = input_int(prompt);
     while (monto < 0)
     {
-        monto = input_int("Monto inválido. Ingrese 0 o más: ");
+        monto = input_int("Monto invalido. Ingrese 0 o mas: ");
     }
     return monto;
 }
@@ -205,7 +205,7 @@ void mostrar_monto(int monto)
 }
 
 /**
- * @brief Muestra por pantalla toda la información detallada de una transacción financiera
+ * @brief Muestra por pantalla toda la informacion detallada de una transaccion financiera
  */
 void mostrar_transaccion(TransaccionFinanciera *transaccion)
 {
@@ -248,8 +248,8 @@ void obtener_fecha_actual(char *fecha)
 /**
  * @brief Convierte una fecha de formato DD/MM/YYYY a YYYY-MM-DD
  * @param fecha_ddmmyyyy Fecha en formato DD/MM/YYYY
- * @param fecha_yyyymmdd Buffer donde se almacenará la fecha convertida (YYYY-MM-DD)
- * @return 1 si la conversión fue exitosa, 0 si hubo error
+ * @param fecha_yyyymmdd Buffer donde se almacenara la fecha convertida (YYYY-MM-DD)
+ * @return 1 si la conversion fue exitosa, 0 si hubo error
  */
 int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_yyyymmdd)
 {
@@ -263,26 +263,26 @@ int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_
         return 0; // Error en el formato
     }
 
-    // Validar rangos básicos
+    // Validar rangos basicos
     if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || anio < 1900 || anio > 2100)
     {
-        return 0; // Fecha inválida
+        return 0; // Fecha invalida
     }
 
     // Formatear a YYYY-MM-DD
     snprintf(fecha_yyyymmdd, 11, "%04d-%02d-%02d", anio, mes, dia);
-    return 1; // Éxito
+    return 1; // exito
 }
 
 /**
- * @brief Obtiene el siguiente ID disponible para una nueva transacción financiera
+ * @brief Obtiene el siguiente ID disponible para una nueva transaccion financiera
  *
- * Busca el ID más pequeño disponible reutilizando espacios de IDs eliminados.
+ * Busca el ID mas pequeno disponible reutilizando espacios de IDs eliminados.
  * Utiliza una consulta SQL que encuentra el primer hueco en la secuencia de IDs.
  *
- * @return El ID disponible más pequeño (comenzando desde 1 si la tabla está vacía)
+ * @return El ID disponible mas pequeno (comenzando desde 1 si la tabla esta vacia)
  */
-// FUNCIÓN ELIMINADA: ahora usa obtener_siguiente_id("financiamiento") de utils.c
+// FUNCIoN ELIMINADA: ahora usa obtener_siguiente_id("financiamiento") de utils.c
 
 
 static int seleccionar_tipo_transaccion(TransaccionFinanciera *transaccion)
@@ -375,7 +375,7 @@ static int verificar_partido_precio_asignado(int id_partido)
         if (precio > 0)
         {
             printf("El partido ya tiene un precio asignado ($%s).\n", formato_monto(precio));
-            printf("No se puede agregar otra transacción para este partido.\n");
+            printf("No se puede agregar otra transaccion para este partido.\n");
             sqlite3_finalize(stmt_check_precio);
             pause_console();
             return 0;
@@ -403,8 +403,8 @@ static int verificar_partido_transaccion_asociada(int id_partido)
         int count = sqlite3_column_int(stmt_check, 0);
         if (count > 0)
         {
-            printf("El partido ya tiene una transacción financiera asociada (precio ya asignado).\n");
-            printf("No se puede agregar otra transacción para este partido.\n");
+            printf("El partido ya tiene una transaccion financiera asociada (precio ya asignado).\n");
+            printf("No se puede agregar otra transaccion para este partido.\n");
             sqlite3_finalize(stmt_check);
             pause_console();
             return 0;
@@ -468,7 +468,7 @@ static int completar_item_especifico(TransaccionFinanciera *transaccion)
                 return 0;
             if (existe_id("partido", id_partido))
                 break;
-            printf("ID de partido inválido. Intente nuevamente.\n");
+            printf("ID de partido invalido. Intente nuevamente.\n");
         }
 
         if (!verificar_partido_precio_asignado(id_partido))
@@ -551,7 +551,7 @@ static void truncar_resultado_partido(char const *item_especifico)
 
 
 /**
- * @brief Agregar una nueva transacción financiera
+ * @brief Agregar una nueva transaccion financiera
  */
 void agregar_transaccion()
 {
@@ -560,7 +560,7 @@ void agregar_transaccion()
 
     TransaccionFinanciera transaccion;
 
-    // Fecha - usar fecha actual automáticamente (formato YYYY-MM-DD para BD)
+    // Fecha - usar fecha actual automaticamente (formato YYYY-MM-DD para BD)
     time_t t = time(NULL);
     struct tm tm;
     localtime_s(&tm, &t);
@@ -576,7 +576,7 @@ void agregar_transaccion()
         return;
     }
 
-    // Descripción
+    // Descripcion
     solicitar_texto_no_vacio("Descripcion: ", transaccion.descripcion, sizeof(transaccion.descripcion));
 
     // Monto
@@ -587,7 +587,7 @@ void agregar_transaccion()
         return;
     }
 
-    // Obtener el ID y asignarlo a la transacción
+    // Obtener el ID y asignarlo a la transaccion
     transaccion.id = (int)obtener_siguiente_id("financiamiento");
 
     // Mostrar resumen y confirmar
@@ -608,7 +608,7 @@ void agregar_transaccion()
 }
 
 /**
- * @brief Gestión de presupuestos mensuales - menú principal
+ * @brief Gestion de presupuestos mensuales - menu principal
  */
 void menu_presupuestos_mensuales()
 {
@@ -627,7 +627,7 @@ void menu_presupuestos_mensuales()
     clear_screen();
     print_header("PRESUPUESTOS MENSUALES");
 
-    // Verificar alertas automáticamente al entrar al menú
+    // Verificar alertas automaticamente al entrar al menu
     verificar_alertas_presupuesto();
 
     MenuItem items[] =
@@ -857,7 +857,7 @@ void ver_estado_presupuesto()
 }
 
 /**
- * @brief Verificar límites de gasto y mostrar alertas
+ * @brief Verificar limites de gasto y mostrar alertas
  */
 void verificar_alertas_presupuesto()
 {
@@ -939,7 +939,7 @@ int obtener_gastos_mes_actual()
 }
 
 /**
- * @brief Obtener presupuesto y límite del mes actual
+ * @brief Obtener presupuesto y limite del mes actual
  */
 int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
 {
@@ -964,7 +964,7 @@ int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
             strcpy_s(presupuesto->fecha_modificacion, sizeof(presupuesto->fecha_modificacion), (const char *)sqlite3_column_text(stmt, 5));
 
             sqlite3_finalize(stmt);
-            return 1; // Éxito
+            return 1; // exito
         }
         sqlite3_finalize(stmt);
     }
@@ -973,7 +973,7 @@ int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
 }
 
 /**
- * @brief Mostrar alertas cuando se exceden límites
+ * @brief Mostrar alertas cuando se exceden limites
  */
 void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite)
 {
@@ -997,7 +997,7 @@ void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite)
 }
 
 /**
- * @brief Obtener estadísticas generales de financiamiento
+ * @brief Obtener estadisticas generales de financiamiento
  */
 static void obtener_estadisticas_generales(int *total_ingresos, int *total_gastos, int *num_transacciones)
 {
@@ -1042,7 +1042,7 @@ static void imprimir_resumen_general(int num_transacciones, int total_ingresos, 
 }
 
 /**
- * @brief Imprimir desglose por categorías de ingresos
+ * @brief Imprimir desglose por categorias de ingresos
  */
 static void imprimir_ingresos_por_categoria()
 {
@@ -1074,7 +1074,7 @@ static void imprimir_ingresos_por_categoria()
 }
 
 /**
- * @brief Imprimir desglose por categorías de gastos
+ * @brief Imprimir desglose por categorias de gastos
  */
 static void imprimir_gastos_por_categoria()
 {
@@ -1106,7 +1106,7 @@ static void imprimir_gastos_por_categoria()
 }
 
 /**
- * @brief Imprimir estadísticas de equipamiento
+ * @brief Imprimir estadisticas de equipamiento
  */
 static void imprimir_estadisticas_equipamiento()
 {
@@ -1247,7 +1247,7 @@ void ver_balance_gastos()
         return;
     }
 
-    // Desglose por categorías de gastos
+    // Desglose por categorias de gastos
     printf("=== DESGLOSE POR CATEGORIAS ===\n");
     const char *sql_gastos_categoria = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 GROUP BY categoria ORDER BY SUM(monto) DESC;";
 
@@ -1269,7 +1269,7 @@ void ver_balance_gastos()
         sqlite3_finalize(stmt);
     }
 
-    // Top 5 gastos más altos
+    // Top 5 gastos mas altos
     printf("\n=== TOP 5 GASTOS MAS ALTOS ===\n");
     const char *sql_top_gastos = "SELECT descripcion, monto, fecha, categoria FROM financiamiento WHERE tipo = 1 ORDER BY monto DESC LIMIT 5;";
 
@@ -1296,7 +1296,7 @@ void ver_balance_gastos()
         }
     }
 
-    // Balance mensual de gastos (últimos 6 meses)
+    // Balance mensual de gastos (ultimos 6 meses)
     printf("\n=== BALANCE MENSUAL DE GASTOS (ULTIMOS 6 MESES) ===\n");
     const char *sql_mensual_gastos = "SELECT strftime('%Y-%m', fecha) as mes, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 AND fecha >= date('now', '-6 months') GROUP BY mes ORDER BY mes DESC;";
 
@@ -1328,7 +1328,7 @@ void ver_balance_gastos()
 }
 
 /**
- * @brief Estructura para parámetros de preparación de exportación
+ * @brief Estructura para parametros de preparacion de exportacion
  */
 typedef struct
 {
@@ -1346,7 +1346,7 @@ typedef struct
 } ExportPrepParams;
 
 /**
- * @brief Limpiar archivos de exportación abiertos
+ * @brief Limpiar archivos de exportacion abiertos
  */
 static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *html_file, FILE *json_file, cJSON *json_array)
 {
@@ -1401,7 +1401,7 @@ static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *htm
 }
 
 /**
- * @brief Preparar archivos de exportación
+ * @brief Preparar archivos de exportacion
  */
 static void preparar_archivos_exportacion(ExportPrepParams *params)
 {
@@ -1472,7 +1472,7 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
 }
 
 /**
- * @brief Estructura para parámetros de exportación de transacciones
+ * @brief Estructura para parametros de exportacion de transacciones
  */
 typedef struct
 {
@@ -1486,7 +1486,7 @@ typedef struct
 } ExportParams;
 
 /**
- * @brief Procesar transacción para exportación
+ * @brief Procesar transaccion para exportacion
  */
 static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *params)
 {
@@ -1571,7 +1571,7 @@ static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *p
 }
 
 /**
- * @brief Estructura para parámetros de finalización de exportación
+ * @brief Estructura para parametros de finalizacion de exportacion
  */
 typedef struct
 {
@@ -1590,7 +1590,7 @@ typedef struct
 } ExportFinalizeParams;
 
 /**
- * @brief Finalizar archivos de exportación
+ * @brief Finalizar archivos de exportacion
  */
 static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
 {
@@ -1661,14 +1661,14 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
 }
 
 /**
- * @brief Exportar transacciones financieras a múltiples formatos
+ * @brief Exportar transacciones financieras a multiples formatos
  */
 void exportar_financiamiento()
 {
     clear_screen();
     print_header("EXPORTAR FINANCIAMIENTO");
 
-    // Obtener directorio de exportación
+    // Obtener directorio de exportacion
     const char *export_dir = get_export_dir();
     if (!export_dir)
     {
@@ -1696,7 +1696,7 @@ void exportar_financiamiento()
     FILE *csv_file = NULL;
     FILE *txt_file = NULL;
     FILE *html_file = NULL;
-    FILE *json_file = NULL; // Inicializar explícitamente a NULL
+    FILE *json_file = NULL; // Inicializar explicitamente a NULL
     cJSON *json_array = NULL;
 
     ExportPrepParams prep_params =
@@ -1778,7 +1778,7 @@ void exportar_financiamiento()
 }
 
 /**
- * @brief Menú principal de gestión financiera
+ * @brief Menu principal de gestion financiera
  */
 void menu_financiamiento()
 {
@@ -1799,7 +1799,7 @@ void menu_financiamiento()
 }
 
 /**
- * @brief Modificar la fecha de una transacción financiera
+ * @brief Modificar la fecha de una transaccion financiera
  */
 static void modificar_fecha_transaccion(int id_transaccion)
 {
@@ -1810,7 +1810,7 @@ static void modificar_fecha_transaccion(int id_transaccion)
         input_date("", nueva_fecha, sizeof(nueva_fecha));
         if (safe_strnlen(nueva_fecha, sizeof(nueva_fecha)) > 0)
             break;
-        printf("La fecha no puede estar vacía.\n");
+        printf("La fecha no puede estar vacia.\n");
     }
     const char *sql = "UPDATE financiamiento SET fecha = ? WHERE id = ?;";
     ejecutar_update_texto(sql, nueva_fecha, id_transaccion);
@@ -1818,7 +1818,7 @@ static void modificar_fecha_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar el tipo de una transacción financiera
+ * @brief Modificar el tipo de una transaccion financiera
  */
 static void modificar_tipo_transaccion(int id_transaccion)
 {
@@ -1826,7 +1826,7 @@ static void modificar_tipo_transaccion(int id_transaccion)
     int nuevo_tipo = input_int(">") - 1;
     if (nuevo_tipo < 0 || nuevo_tipo > 1)
     {
-        printf("Opción inválida.\n");
+        printf("Opcion invalida.\n");
         return;
     }
     const char *sql = "UPDATE financiamiento SET tipo = ? WHERE id = ?;";
@@ -1835,7 +1835,7 @@ static void modificar_tipo_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar la categoría de una transacción financiera
+ * @brief Modificar la categoria de una transaccion financiera
  */
 static void modificar_categoria_transaccion(int id_transaccion)
 {
@@ -1845,7 +1845,7 @@ static void modificar_categoria_transaccion(int id_transaccion)
     int nueva_categoria = input_int(">") - 1;
     if (nueva_categoria < 0 || nueva_categoria > 7)
     {
-        printf("Opción inválida.\n");
+        printf("Opcion invalida.\n");
         return;
     }
     const char *sql = "UPDATE financiamiento SET categoria = ? WHERE id = ?;";
@@ -1854,7 +1854,7 @@ static void modificar_categoria_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar la descripción de una transacción financiera
+ * @brief Modificar la descripcion de una transaccion financiera
  */
 static void modificar_descripcion_transaccion(int id_transaccion)
 {
@@ -1867,7 +1867,7 @@ static void modificar_descripcion_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar el monto de una transacción financiera
+ * @brief Modificar el monto de una transaccion financiera
  */
 static void modificar_monto_transaccion(int id_transaccion)
 {
@@ -1878,7 +1878,7 @@ static void modificar_monto_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar el item específico de una transacción financiera
+ * @brief Modificar el item especifico de una transaccion financiera
  */
 static void modificar_item_especifico_transaccion(int id_transaccion)
 {
@@ -1891,7 +1891,7 @@ static void modificar_item_especifico_transaccion(int id_transaccion)
 }
 
 /**
- * @brief Modificar una transacción financiera existente
+ * @brief Modificar una transaccion financiera existente
  */
 void modificar_transaccion()
 {
@@ -1977,7 +1977,7 @@ void modificar_transaccion()
         sqlite3_finalize(stmt);
     }
 
-    // Mostrar datos actuales y opciones de modificación
+    // Mostrar datos actuales y opciones de modificacion
     clear_screen();
     print_header("MODIFICAR TRANSACCION");
     printf("Datos actuales:\n");
@@ -2024,7 +2024,7 @@ void modificar_transaccion()
 }
 
 /**
- * @brief Eliminar una transacción financiera
+ * @brief Eliminar una transaccion financiera
  */
 void eliminar_transaccion()
 {
@@ -2077,7 +2077,7 @@ void eliminar_transaccion()
         return;
     }
 
-    // Mostrar la transacción antes de eliminar
+    // Mostrar la transaccion antes de eliminar
     const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
 
     if (preparar_stmt(sql_obtener, &stmt))
@@ -2189,7 +2189,7 @@ void listar_transacciones()
                 total_gastos += transaccion.monto;
             }
 
-            // Mostrar transacción
+            // Mostrar transaccion
             ui_printf_centered_line("----------------------------------------");
             mostrar_transaccion(&transaccion);
         }

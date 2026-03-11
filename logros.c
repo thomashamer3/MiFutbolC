@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file logros.c
  * @brief Sistema de logros y badges para MiFutbolC
  *
- * Este archivo implementa el sistema de logros basado en estadísticas
- * conseguidas por las camisetas en partidos de fútbol.
+ * Este archivo implementa el sistema de logros basado en estadisticas
+ * conseguidas por las camisetas en partidos de futbol.
  */
 
 #include "logros.h"
@@ -266,7 +266,7 @@ static const Logro LOGROS[] =
     {"Racha de Empates", "Empatar 3 partidos consecutivos", 3, "empates_consecutivos_max"},
     // Last Match Achievements
     {"Ultimo Gol", "Anotar en el ultimo partido", 1, "goles_en_ultimo_partido"},
-    {"Última Asistencia", "Asistir en el ultimo partido", 1, "asistencias_en_ultimo_partido"},
+    {"ultima Asistencia", "Asistir en el ultimo partido", 1, "asistencias_en_ultimo_partido"},
     {"Ultimo Rendimiento Perfecto", "Rendimiento perfecto en el ultimo partido", 10, "rendimiento_en_ultimo_partido"},
     {"Ultimo Animo Perfecto", "Animo perfecto en el ultimo partido", 10, "animo_en_ultimo_partido"},
     // More Tiered Achievements
@@ -300,11 +300,11 @@ static const Logro LOGROS[] =
 
 
 /**
- * @brief Obtiene el progreso actual de una camiseta para un logro específico (versión optimizada)
+ * @brief Obtiene el progreso actual de una camiseta para un logro especifico (version optimizada)
  *
  * @param camiseta_id ID de la camiseta
- * @param tipo Tipo de estadística
- * @return Valor actual de la estadística
+ * @param tipo Tipo de estadistica
+ * @return Valor actual de la estadistica
  */
 static int obtener_progreso_logro(int camiseta_id, const char *tipo)
 {
@@ -339,11 +339,11 @@ static int obtener_progreso_logro(int camiseta_id, const char *tipo)
 }
 
 /**
- * @brief Determina el estado de un logro para una camiseta específica
+ * @brief Determina el estado de un logro para una camiseta especifica
  *
  * @param camiseta_id ID de la camiseta
  * @param logro Puntero al logro
- * @param progreso Puntero donde se almacenará el progreso actual
+ * @param progreso Puntero donde se almacenara el progreso actual
  * @return 0: No iniciado, 1: En progreso, 2: Completado
  */
 static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progreso)
@@ -367,7 +367,7 @@ static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progre
 /**
  * @brief Obtiene el nombre de una camiseta desde la base de datos
  *
- * Para mostrar información contextual al usuario, recupera el nombre asociado al ID.
+ * Para mostrar informacion contextual al usuario, recupera el nombre asociado al ID.
  *
  * @param camiseta_id ID de la camiseta
  * @param nombre Buffer para almacenar el nombre
@@ -380,7 +380,7 @@ static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
 /**
  * @brief Muestra un logro individual con su estado y progreso
  *
- * Para mantener consistencia visual, centraliza la lógica de impresión de cada logro.
+ * Para mantener consistencia visual, centraliza la logica de impresion de cada logro.
  *
  * @param logro Puntero al logro
  * @param estado Estado del logro (0,1,2)
@@ -418,9 +418,9 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
 }
 
 /**
- * @brief Muestra los logros de una camiseta específica
+ * @brief Muestra los logros de una camiseta especifica
  *
- * Para proporcionar feedback al usuario, lista logros filtrados según el criterio seleccionado.
+ * Para proporcionar feedback al usuario, lista logros filtrados segun el criterio seleccionado.
  *
  * @param camiseta_id ID de la camiseta
  * @param filtro 0: Todos, 1: Solo completados, 2: Solo en progreso
@@ -491,11 +491,11 @@ static void listar_camisetas_con_partidos()
 }
 
 /**
- * @brief Permite al usuario seleccionar una camiseta válida
+ * @brief Permite al usuario seleccionar una camiseta valida
  *
- * Valida la selección para asegurar que la camiseta existe antes de proceder.
+ * Valida la seleccion para asegurar que la camiseta existe antes de proceder.
  *
- * @return ID de la camiseta o -1 si inválida
+ * @return ID de la camiseta o -1 si invalida
  */
 static int seleccionar_camiseta()
 {
@@ -509,12 +509,12 @@ static int seleccionar_camiseta()
 }
 
 /**
- * @brief Muestra logros con un filtro específico
+ * @brief Muestra logros con un filtro especifico
  *
- * Centraliza la lógica común de mostrar logros para diferentes vistas,
- * reduciendo duplicación de código y mejorando mantenibilidad.
+ * Centraliza la logica comun de mostrar logros para diferentes vistas,
+ * reduciendo duplicacion de codigo y mejorando mantenibilidad.
  *
- * @param titulo Título de la vista
+ * @param titulo Titulo de la vista
  * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
  */
 static void mostrar_logros_con_filtro(const char *titulo, int filtro)
@@ -561,7 +561,7 @@ void mostrar_logros_no_completados()
 }
 
 /**
- * @brief Muestra el menú principal de logros y badges
+ * @brief Muestra el menu principal de logros y badges
  */
 void menu_logros()
 {

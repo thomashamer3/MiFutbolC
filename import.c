@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file import.c
- * @brief Módulo para importar datos desde archivos JSON a la base de datos.
+ * @brief Modulo para importar datos desde archivos JSON a la base de datos.
  */
 
 #include "import.h"
@@ -41,7 +41,7 @@ typedef struct
 
 typedef int (*PartidoLineParser)(const char *line);
 
-// Estructura para entrada de datos de partido (para reducir parámetros)
+// Estructura para entrada de datos de partido (para reducir parametros)
 typedef struct
 {
     const char *cancha;
@@ -135,7 +135,7 @@ struct CamisetaData
 };
 
 /**
- * @brief Estructura para almacenar datos de una lesión.
+ * @brief Estructura para almacenar datos de una lesion.
  */
 struct LesionData
 {
@@ -147,7 +147,7 @@ struct LesionData
 };
 
 /**
- * @brief Estructura para almacenar datos de estadísticas.
+ * @brief Estructura para almacenar datos de estadisticas.
  */
 struct EstadisticaData
 {
@@ -163,9 +163,9 @@ struct EstadisticaData
 /**
  * @brief Construye el nombre del archivo completo.
  *
- * @param extension Extensión del archivo (e.g., "json").
+ * @param extension Extension del archivo (e.g., "json").
  * @param filename Buffer para almacenar el nombre completo.
- * @param size Tamaño del buffer.
+ * @param size Tamano del buffer.
  */
 static void build_filename(const char *extension, char *filename, size_t size)
 {
@@ -178,7 +178,7 @@ static void build_filename(const char *extension, char *filename, size_t size)
 /**
  * @brief Lee el contenido completo de un archivo de texto.
  *
- * Para permitir el análisis eficiente del contenido sin múltiples lecturas de
+ * Para permitir el analisis eficiente del contenido sin multiples lecturas de
  * disco.
  *
  * @param filename Ruta del archivo a leer.
@@ -233,10 +233,10 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 }
 
 /**
- * @brief Función genérica para cargar y validar un archivo JSON
+ * @brief Funcion generica para cargar y validar un archivo JSON
  * @param json_filename Nombre del archivo JSON (ej: "partidos.json")
  * @param entity_name Nombre de la entidad para mensajes (ej: "partidos")
- * @return puntero a cJSON si es válido y es un array, NULL en caso contrario
+ * @return puntero a cJSON si es valido y es un array, NULL en caso contrario
  */
 static cJSON *cargar_json_array(const char *json_filename, const char *entity_name, int *out_count)
 {
@@ -275,9 +275,9 @@ static cJSON *cargar_json_array(const char *json_filename, const char *entity_na
 }
 
 /**
- * @brief Función genérica para abrir archivos de texto (CSV/TXT) para importación
+ * @brief Funcion generica para abrir archivos de texto (CSV/TXT) para importacion
  * @param txt_filename Nombre del archivo (ej: "lesiones.csv")
- * @param skip_header Si es true, salta la primera línea
+ * @param skip_header Si es true, salta la primera linea
  * @return FILE* abierto o NULL si hay error
  */
 static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip_header)
@@ -300,7 +300,7 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
         char line[1024];
         if (fgets(line, sizeof(line), file) == NULL)
         {
-            printf("Error: Archivo vacío o formato incorrecto\n");
+            printf("Error: Archivo vacio o formato incorrecto\n");
             fclose(file);
             return NULL;
         }
@@ -312,8 +312,8 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
 /**
  * @brief Procesa e inserta un partido validando cancha, camiseta y duplicados
  *
- * Esta función centraliza la lógica común de validación e inserción de partidos
- * que se usa en todas las funciones de importación (TXT, CSV, HTML).
+ * Esta funcion centraliza la logica comun de validacion e insercion de partidos
+ * que se usa en todas las funciones de importacion (TXT, CSV, HTML).
  *
  * @param input Puntero a estructura con los datos del partido a procesar
  * @return 1 si el partido fue insertado, 0 si hubo error o ya existe
@@ -402,7 +402,7 @@ static void insertar_camiseta(int id, const char *nombre)
 }
 
 /**
- * @brief Inserta una lesión en la base de datos.
+ * @brief Inserta una lesion en la base de datos.
  */
 static void insertar_lesion(int id, const char *jugador, const char *tipo,
                             const char *descripcion, const char *fecha)
@@ -426,7 +426,7 @@ static void insertar_lesion(int id, const char *jugador, const char *tipo,
 }
 
 /**
- * @brief Ejecuta importación con mensajes y pausa.
+ * @brief Ejecuta importacion con mensajes y pausa.
  */
 static void importar_con_pausa(const char *inicio, const char *fin,
                                void (*func)())
@@ -644,7 +644,7 @@ static int procesar_estadistica_importada(const EstadisticaData *estadistica)
 
     if (camiseta_id == -1)
     {
-        printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
+        printf("Camiseta '%s' no encontrada, omitiendo estadistica...\n",
                estadistica->camiseta);
         return 0;
     }
@@ -740,7 +740,7 @@ static void importar_estadisticas_desde_archivo(const char *filename, const char
  * @brief Parsea e inserta una camiseta desde JSON.
  *
  * @param item Objeto JSON de la camiseta.
- * @return 1 si se insertó correctamente, 0 si no.
+ * @return 1 si se inserto correctamente, 0 si no.
  */
 static int parse_camiseta_json(cJSON const *item)
 {
@@ -771,10 +771,10 @@ static int parse_camiseta_json(cJSON const *item)
 }
 
 /**
- * @brief Función genérica para importar desde JSON.
+ * @brief Funcion generica para importar desde JSON.
  *
- * @param extension Extensión del archivo.
- * @param parser Función para parsear un item JSON.
+ * @param extension Extension del archivo.
+ * @param parser Funcion para parsear un item JSON.
  */
 static void import_json_generic(const char *extension,
                                 int (*parser)(cJSON const *))
@@ -960,7 +960,7 @@ static void insertar_partido(PartidoData data)
  * datos.
  *
  * @param item El objeto JSON del partido.
- * @return 1 si se importó correctamente, 0 si no.
+ * @return 1 si se importo correctamente, 0 si no.
  */
 static int procesar_partido_json_item(cJSON const *item)
 {
@@ -1078,7 +1078,7 @@ void importar_lesiones_json()
             continue;
         }
 
-        // Insertar lesión
+        // Insertar lesion
         insertar_lesion(id, jugador, tipo, descripcion, fecha);
 
         printf("Lesion de '%s' importada correctamente\n", jugador);
@@ -1134,12 +1134,12 @@ void importar_estadisticas_json()
 
         if (camiseta_id == -1)
         {
-            printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
+            printf("Camiseta '%s' no encontrada, omitiendo estadistica...\n",
                    camiseta);
             continue;
         }
 
-        // Verificar si ya existe estadística para esta camiseta
+        // Verificar si ya existe estadistica para esta camiseta
         if (estadistica_existe(camiseta_id))
         {
             printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n",
@@ -1147,7 +1147,7 @@ void importar_estadisticas_json()
             continue;
         }
 
-        // Insertar estadística
+        // Insertar estadistica
         insertar_estadistica(camiseta_id, goles, asistencias, partidos, victorias,
                              empates, derrotas);
 
@@ -1289,7 +1289,7 @@ static void importar_todo_txt_con_pausa()
     importar_todo_con_config(&config);
 }
 
-/* ===================== IMPORTACIÓN DESDE TXT ===================== */
+/* ===================== IMPORTACIoN DESDE TXT ===================== */
 
 /**
  * @brief Importa camisetas desde archivo TXT.
@@ -1303,10 +1303,10 @@ void importar_camisetas_txt()
 }
 
 /**
- * @brief Convierte una cadena de resultado a número.
+ * @brief Convierte una cadena de resultado a numero.
  *
  * @param resultado_str Cadena del resultado.
- * @return Número correspondiente al resultado.
+ * @return Numero correspondiente al resultado.
  */
 static int convertir_resultado(const char *resultado_str)
 {
@@ -1320,10 +1320,10 @@ static int convertir_resultado(const char *resultado_str)
 }
 
 /**
- * @brief Convierte una cadena de clima a número.
+ * @brief Convierte una cadena de clima a numero.
  *
  * @param clima_str Cadena del clima.
- * @return Número correspondiente al clima.
+ * @return Numero correspondiente al clima.
  */
 static int convertir_clima(const char *clima_str)
 {
@@ -1343,10 +1343,10 @@ static int convertir_clima(const char *clima_str)
 }
 
 /**
- * @brief Convierte una cadena de día a número.
+ * @brief Convierte una cadena de dia a numero.
  *
- * @param dia_str Cadena del día.
- * @return Número correspondiente al día.
+ * @param dia_str Cadena del dia.
+ * @return Numero correspondiente al dia.
  */
 static int convertir_dia(const char *dia_str)
 {
@@ -1376,11 +1376,11 @@ static int procesar_partido_desde_raw(const PartidoRawInput *raw)
 }
 
 /**
- * @brief Procesa una línea de partido desde TXT y la inserta en la base de
+ * @brief Procesa una linea de partido desde TXT y la inserta en la base de
  * datos.
  *
- * @param line Línea a procesar.
- * @return 1 si se procesó correctamente, 0 si no.
+ * @param line Linea a procesar.
+ * @return 1 si se proceso correctamente, 0 si no.
  */
 static int procesar_partido_txt_line(const char *line)
 {
@@ -1421,7 +1421,7 @@ static int procesar_partido_txt_line(const char *line)
  * @brief Importa partidos desde archivo TXT.
  *
  * Lee el archivo TXT de partidos y los inserta en la base de datos.
- * El formato esperado es complejo con múltiples campos separados por |
+ * El formato esperado es complejo con multiples campos separados por |
  */
 void importar_partidos_txt()
 {
@@ -1451,7 +1451,7 @@ void importar_estadisticas_txt()
     importar_estadisticas_desde_archivo("estadisticas.txt", "TXT", parse_estadistica_txt_line, 1);
 }
 
-/* ===================== IMPORTACIÓN DESDE CSV ===================== */
+/* ===================== IMPORTACIoN DESDE CSV ===================== */
 
 /**
  * @brief Importa camisetas desde archivo CSV.
@@ -1465,11 +1465,11 @@ void importar_camisetas_csv()
 }
 
 /**
- * @brief Procesa una línea de partido desde CSV y la inserta en la base de
+ * @brief Procesa una linea de partido desde CSV y la inserta en la base de
  * datos.
  *
- * @param line Línea a procesar.
- * @return 1 si se procesó correctamente, 0 si no.
+ * @param line Linea a procesar.
+ * @return 1 si se proceso correctamente, 0 si no.
  */
 static int procesar_partido_csv_line(const char *line)
 {
@@ -1509,7 +1509,7 @@ static int procesar_partido_csv_line(const char *line)
  * @brief Importa partidos desde archivo CSV.
  *
  * Lee el archivo CSV de partidos y los inserta en la base de datos.
- * El formato esperado es complejo con múltiples campos separados por coma.
+ * El formato esperado es complejo con multiples campos separados por coma.
  */
 void importar_partidos_csv()
 {
@@ -1539,7 +1539,7 @@ void importar_estadisticas_csv()
     importar_estadisticas_desde_archivo("estadisticas.csv", "CSV", parse_estadistica_csv_line, 0);
 }
 
-/* ===================== IMPORTACIÓN DESDE HTML ===================== */
+/* ===================== IMPORTACIoN DESDE HTML ===================== */
 
 /**
  * @brief Importa camisetas desde archivo HTML.
@@ -1628,7 +1628,7 @@ void importar_camisetas_html()
  * datos.
  *
  * @param ptr Puntero a la fila <tr> en el contenido HTML.
- * @return 1 si se procesó correctamente, 0 si no.
+ * @return 1 si se proceso correctamente, 0 si no.
  */
 static int procesar_partido_html_row(char **ptr)
 {
@@ -1823,7 +1823,7 @@ void importar_lesiones_html()
             continue;
         }
 
-        // Insertar lesión
+        // Insertar lesion
         insertar_lesion(id, jugador, tipo, descripcion, fecha);
 
         printf("Lesion de '%s' importada correctamente\n", jugador);
@@ -1839,7 +1839,7 @@ void importar_lesiones_html()
 /**
  * @brief Crea la tabla de estadisticas si no existe.
  *
- * @return true si la tabla se creó o ya existe, false si hubo error.
+ * @return true si la tabla se creo o ya existe, false si hubo error.
  */
 static bool crear_tabla_estadisticas()
 {
@@ -1884,7 +1884,7 @@ typedef struct
  * @param ptr Puntero al contenido HTML.
  * @param data Puntero a la estructura EstadisticasData para almacenar los
  * datos.
- * @return true si la extracción fue exitosa, false si no.
+ * @return true si la extraccion fue exitosa, false si no.
  */
 static bool extraer_datos_estadisticas_html(char **ptr,
         EstadisticasData *data)
@@ -2035,7 +2035,7 @@ void importar_estadisticas_html()
         int camiseta_id = obtener_camiseta_id_estadistica(data.camiseta);
         if (camiseta_id == -1)
         {
-            printf("Camiseta '%s' no encontrada, omitiendo estadística...\n",
+            printf("Camiseta '%s' no encontrada, omitiendo estadistica...\n",
                    data.camiseta);
             continue;
         }
@@ -2078,7 +2078,7 @@ static void importar_todo_con_pausa()
 }
 
 /**
- * @brief Submenú para importar datos desde archivos JSON.
+ * @brief Submenu para importar datos desde archivos JSON.
  */
 static void submenu_importar_json()
 {
@@ -2093,7 +2093,7 @@ static void submenu_importar_json()
 }
 
 /**
- * @brief Submenú para importar datos desde archivos TXT.
+ * @brief Submenu para importar datos desde archivos TXT.
  */
 static void submenu_importar_txt()
 {
@@ -2108,7 +2108,7 @@ static void submenu_importar_txt()
 }
 
 /**
- * @brief Submenú para importar datos desde archivos CSV.
+ * @brief Submenu para importar datos desde archivos CSV.
  */
 static void submenu_importar_csv()
 {
@@ -2123,7 +2123,7 @@ static void submenu_importar_csv()
 }
 
 /**
- * @brief Submenú para importar datos desde archivos HTML.
+ * @brief Submenu para importar datos desde archivos HTML.
  */
 static void submenu_importar_html()
 {
@@ -2180,12 +2180,12 @@ static void importar_base_datos_con_backup()
 }
 
 /**
- * @brief Menu principal para importar datos desde archivos según selección del
+ * @brief Menu principal para importar datos desde archivos segun seleccion del
  * usuario.
  *
- * Esta función muestra un menú principal para que el usuario seleccione el
- * formato de archivo desde el cual importar: JSON, TXT, CSV o HTML. Cada opción
- * lleva a un submenú específico para ese formato.
+ * Esta funcion muestra un menu principal para que el usuario seleccione el
+ * formato de archivo desde el cual importar: JSON, TXT, CSV o HTML. Cada opcion
+ * lleva a un submenu especifico para ese formato.
  */
 void menu_importar()
 {

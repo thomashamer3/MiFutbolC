@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file export_all_mejorado.c
- * @brief Funciones mejoradas para exportar todos los datos con análisis avanzado
+ * @brief Funciones mejoradas para exportar todos los datos con analisis avanzado
  *
  * Este archivo contiene funciones mejoradas para exportar todos los datos
- * con estadísticas avanzadas y análisis integrado.
+ * con estadisticas avanzadas y analisis integrado.
  */
 
 #include "export_all_mejorado.h"
@@ -49,18 +49,18 @@ static void exportar_lesiones_basicas()
 }
 
 /**
- * @brief Exportación completa de datos de camisetas con análisis avanzado
+ * @brief Exportacion completa de datos de camisetas con analisis avanzado
  *
- * Centraliza la exportación de datos de camisetas en todos los formatos mejorados,
- * proporcionando una solución integral para el análisis de rendimiento. Esto es esencial
- * para equipos y analistas que necesitan evaluar múltiples aspectos del desempeño de los jugadores
- * en diferentes formatos para diferentes usos (hojas de cálculo, informes, APIs, visualización web).
+ * Centraliza la exportacion de datos de camisetas en todos los formatos mejorados,
+ * proporcionando una solucion integral para el analisis de rendimiento. Esto es esencial
+ * para equipos y analistas que necesitan evaluar multiples aspectos del desempeno de los jugadores
+ * en diferentes formatos para diferentes usos (hojas de calculo, informes, APIs, visualizacion web).
  *
- * @details La exportación en múltiples formatos permite:
- * - CSV: Análisis cuantitativo en herramientas como Excel
- * - TXT: Documentación legible para informes
- * - JSON: Integración con aplicaciones y APIs
- * - HTML: Visualización interactiva en navegadores
+ * @details La exportacion en multiples formatos permite:
+ * - CSV: Analisis cuantitativo en herramientas como Excel
+ * - TXT: Documentacion legible para informes
+ * - JSON: Integracion con aplicaciones y APIs
+ * - HTML: Visualizacion interactiva en navegadores
  *
  * @see exportar_camisetas_csv_mejorado()
  * @see exportar_camisetas_txt_mejorado()
@@ -76,18 +76,18 @@ void exportar_camisetas_todo_mejorado()
 }
 
 /**
- * @brief Exportación completa de datos de lesiones con análisis de impacto
+ * @brief Exportacion completa de datos de lesiones con analisis de impacto
  *
- * Proporciona una exportación integral de datos de lesiones en todos los formatos mejorados,
- * incluyendo análisis de impacto en el rendimiento. Esto es crucial para equipos médicos y
- * entrenadores que necesitan evaluar cómo las lesiones afectan el desempeño de los jugadores
- * y planificar estrategias de recuperación y prevención.
+ * Proporciona una exportacion integral de datos de lesiones en todos los formatos mejorados,
+ * incluyendo analisis de impacto en el rendimiento. Esto es crucial para equipos medicos y
+ * entrenadores que necesitan evaluar como las lesiones afectan el desempeno de los jugadores
+ * y planificar estrategias de recuperacion y prevencion.
  *
- * @details El análisis de impacto de lesiones ayuda a:
+ * @details El analisis de impacto de lesiones ayuda a:
  * - Evaluar la gravedad y consecuencias de las lesiones
- * - Planificar programas de rehabilitación efectivos
- * - Prevenir lesiones futuras mediante la identificación de patrones
- * - Optimizar la gestión del equipo considerando la disponibilidad de jugadores
+ * - Planificar programas de rehabilitacion efectivos
+ * - Prevenir lesiones futuras mediante la identificacion de patrones
+ * - Optimizar la gestion del equipo considerando la disponibilidad de jugadores
  *
  * @see exportar_lesiones_csv_mejorado()
  * @see exportar_lesiones_txt_mejorado()

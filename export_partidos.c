@@ -1,4 +1,4 @@
-#include "export.h"
+﻿#include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
@@ -141,7 +141,7 @@ void exportar_partidos_html()
 /* ===================== PARTIDOS ESPECIFICOS ===================== */
 
 /**
- * @brief Exporta el partido con más goles a un archivo CSV
+ * @brief Exporta el partido con mas goles a un archivo CSV
  */
 void exportar_partido_mas_goles_csv()
 {
@@ -149,7 +149,7 @@ void exportar_partido_mas_goles_csv()
 }
 
 /**
- * @brief Exporta el partido con más goles a un archivo de texto plano
+ * @brief Exporta el partido con mas goles a un archivo de texto plano
  */
 void exportar_partido_mas_goles_txt()
 {
@@ -157,7 +157,7 @@ void exportar_partido_mas_goles_txt()
 }
 
 /**
- * @brief Exporta el partido con más goles a un archivo JSON
+ * @brief Exporta el partido con mas goles a un archivo JSON
  */
 void exportar_partido_mas_goles_json()
 {
@@ -165,7 +165,7 @@ void exportar_partido_mas_goles_json()
 }
 
 /**
- * @brief Exporta el partido con más goles a un archivo HTML
+ * @brief Exporta el partido con mas goles a un archivo HTML
  */
 void exportar_partido_mas_goles_html()
 {
@@ -173,7 +173,7 @@ void exportar_partido_mas_goles_html()
 }
 
 /**
- * @brief Exporta el partido con más asistencias a un archivo CSV
+ * @brief Exporta el partido con mas asistencias a un archivo CSV
  */
 void exportar_partido_mas_asistencias_csv()
 {
@@ -181,7 +181,7 @@ void exportar_partido_mas_asistencias_csv()
 }
 
 /**
- * @brief Exporta el partido con más asistencias a un archivo de texto plano
+ * @brief Exporta el partido con mas asistencias a un archivo de texto plano
  */
 void exportar_partido_mas_asistencias_txt()
 {
@@ -189,7 +189,7 @@ void exportar_partido_mas_asistencias_txt()
 }
 
 /**
- * @brief Exporta el partido con más asistencias a un archivo JSON
+ * @brief Exporta el partido con mas asistencias a un archivo JSON
  */
 void exportar_partido_mas_asistencias_json()
 {
@@ -197,7 +197,7 @@ void exportar_partido_mas_asistencias_json()
 }
 
 /**
- * @brief Exporta el partido con más asistencias a un archivo HTML
+ * @brief Exporta el partido con mas asistencias a un archivo HTML
  */
 void exportar_partido_mas_asistencias_html()
 {
@@ -205,7 +205,7 @@ void exportar_partido_mas_asistencias_html()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos goles a un archivo CSV
+ * @brief Exporta el partido mas reciente con menos goles a un archivo CSV
  */
 void exportar_partido_menos_goles_reciente_csv()
 {
@@ -213,7 +213,7 @@ void exportar_partido_menos_goles_reciente_csv()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos goles a un archivo de texto plano
+ * @brief Exporta el partido mas reciente con menos goles a un archivo de texto plano
  */
 void exportar_partido_menos_goles_reciente_txt()
 {
@@ -221,7 +221,7 @@ void exportar_partido_menos_goles_reciente_txt()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos goles a un archivo JSON
+ * @brief Exporta el partido mas reciente con menos goles a un archivo JSON
  */
 void exportar_partido_menos_goles_reciente_json()
 {
@@ -229,7 +229,7 @@ void exportar_partido_menos_goles_reciente_json()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos goles a un archivo HTML
+ * @brief Exporta el partido mas reciente con menos goles a un archivo HTML
  */
 void exportar_partido_menos_goles_reciente_html()
 {
@@ -237,7 +237,7 @@ void exportar_partido_menos_goles_reciente_html()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos asistencias a un archivo CSV
+ * @brief Exporta el partido mas reciente con menos asistencias a un archivo CSV
  */
 void exportar_partido_menos_asistencias_reciente_csv()
 {
@@ -245,7 +245,7 @@ void exportar_partido_menos_asistencias_reciente_csv()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos asistencias a un archivo de texto plano
+ * @brief Exporta el partido mas reciente con menos asistencias a un archivo de texto plano
  */
 void exportar_partido_menos_asistencias_reciente_txt()
 {
@@ -253,7 +253,7 @@ void exportar_partido_menos_asistencias_reciente_txt()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos asistencias a un archivo JSON
+ * @brief Exporta el partido mas reciente con menos asistencias a un archivo JSON
  */
 void exportar_partido_menos_asistencias_reciente_json()
 {
@@ -261,7 +261,7 @@ void exportar_partido_menos_asistencias_reciente_json()
 }
 
 /**
- * @brief Exporta el partido más reciente con menos asistencias a un archivo HTML
+ * @brief Exporta el partido mas reciente con menos asistencias a un archivo HTML
  */
 void exportar_partido_menos_asistencias_reciente_html()
 {

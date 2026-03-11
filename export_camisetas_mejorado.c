@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file export_camisetas_mejorado.c
- * @brief Funciones mejoradas para exportar datos de camisetas con análisis avanzado
+ * @brief Funciones mejoradas para exportar datos de camisetas con analisis avanzado
  *
  * Este archivo contiene funciones mejoradas para exportar datos de camisetas
- * con estadísticas avanzadas, eficiencia y análisis de rendimiento.
+ * con estadisticas avanzadas, eficiencia y analisis de rendimiento.
  */
 
 #include "export.h"
@@ -20,10 +20,10 @@
 #include <string.h>
 
 /**
- * @brief Estructura para almacenar datos de camiseta con análisis avanzado
+ * @brief Estructura para almacenar datos de camiseta con analisis avanzado
  *
- * Esta estructura centraliza los datos de camiseta con análisis avanzado que se utilizan
- * en todas las funciones de exportación, evitando la duplicación de código y facilitando
+ * Esta estructura centraliza los datos de camiseta con analisis avanzado que se utilizan
+ * en todas las funciones de exportacion, evitando la duplicacion de codigo y facilitando
  * el mantenimiento.
  */
 typedef struct
@@ -71,13 +71,13 @@ static CamisetaDataMejorado leer_camiseta_mejorada(sqlite3_stmt *stmt)
 }
 
 /**
- * @brief Obtiene los datos de camisetas con análisis avanzado de la base de datos
+ * @brief Obtiene los datos de camisetas con analisis avanzado de la base de datos
  *
- * Función estática que encapsula la consulta SQL común utilizada por todas
- * las funciones de exportación mejorada. Esto evita la duplicación de código y centraliza
- * la lógica de acceso a datos con análisis avanzado.
+ * Funcion estatica que encapsula la consulta SQL comun utilizada por todas
+ * las funciones de exportacion mejorada. Esto evita la duplicacion de codigo y centraliza
+ * la logica de acceso a datos con analisis avanzado.
  *
- * @param[out] count Puntero a entero para almacenar el número de camisetas encontradas
+ * @param[out] count Puntero a entero para almacenar el numero de camisetas encontradas
  * @return sqlite3_stmt* Statement preparado para iterar sobre los resultados
  */
 static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
@@ -114,11 +114,11 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
 }
 
 /**
- * @brief Exporta las camisetas con análisis avanzado a un archivo CSV mejorado
+ * @brief Exporta las camisetas con analisis avanzado a un archivo CSV mejorado
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
- * El formato CSV mejorado es ideal para análisis avanzado en herramientas como Excel,
- * proporcionando métricas de eficiencia y rendimiento que no están disponibles en la exportación estándar.
+ * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
+ * El formato CSV mejorado es ideal para analisis avanzado en herramientas como Excel,
+ * proporcionando metricas de eficiencia y rendimiento que no estan disponibles en la exportacion estandar.
  */
 void exportar_camisetas_csv_mejorado()
 {
@@ -133,10 +133,10 @@ void exportar_camisetas_csv_mejorado()
         return;
     }
 
-    // Escribir encabezado CSV con métricas avanzadas
+    // Escribir encabezado CSV con metricas avanzadas
     fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio,eficiencia_goles_por_partido,eficiencia_asistencias_por_partido,relacion_goles_asistencias,porcentaje_victorias,porcentaje_lesiones_por_partido\n");
 
-    // Procesar cada fila de resultados con análisis avanzado
+    // Procesar cada fila de resultados con analisis avanzado
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);
@@ -166,11 +166,11 @@ void exportar_camisetas_csv_mejorado()
 }
 
 /**
- * @brief Exporta las camisetas con análisis avanzado a un archivo TXT mejorado
+ * @brief Exporta las camisetas con analisis avanzado a un archivo TXT mejorado
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
- * El formato TXT mejorado es ideal para documentación legible con análisis avanzado,
- * proporcionando información detallada sobre eficiencia y rendimiento para informes técnicos.
+ * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
+ * El formato TXT mejorado es ideal para documentacion legible con analisis avanzado,
+ * proporcionando informacion detallada sobre eficiencia y rendimiento para informes tecnicos.
  */
 void exportar_camisetas_txt_mejorado()
 {
@@ -185,10 +185,10 @@ void exportar_camisetas_txt_mejorado()
         return;
     }
 
-    // Escribir encabezado del archivo de texto con análisis avanzado
+    // Escribir encabezado del archivo de texto con analisis avanzado
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS AVANZADAS\n\n");
 
-    // Procesar cada fila de resultados con formato legible y métricas avanzadas
+    // Procesar cada fila de resultados con formato legible y metricas avanzadas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);
@@ -230,11 +230,11 @@ void exportar_camisetas_txt_mejorado()
 }
 
 /**
- * @brief Exporta las camisetas con análisis avanzado a un archivo JSON mejorado
+ * @brief Exporta las camisetas con analisis avanzado a un archivo JSON mejorado
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
- * El formato JSON mejorado es ideal para integración con aplicaciones y APIs,
- * proporcionando datos estructurados con análisis avanzado para procesamiento automatizado.
+ * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
+ * El formato JSON mejorado es ideal para integracion con aplicaciones y APIs,
+ * proporcionando datos estructurados con analisis avanzado para procesamiento automatizado.
  */
 void exportar_camisetas_json_mejorado()
 {
@@ -249,7 +249,7 @@ void exportar_camisetas_json_mejorado()
         return;
     }
 
-    // Crear estructura JSON y procesar resultados con métricas avanzadas
+    // Crear estructura JSON y procesar resultados con metricas avanzadas
     cJSON *root = cJSON_CreateArray();
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -288,11 +288,11 @@ void exportar_camisetas_json_mejorado()
 }
 
 /**
- * @brief Exporta las camisetas con análisis avanzado a un archivo HTML mejorado
+ * @brief Exporta las camisetas con analisis avanzado a un archivo HTML mejorado
  *
- * Utiliza la función común de obtención de datos para evitar duplicación de código.
- * El formato HTML mejorado es ideal para visualización interactiva en navegadores web,
- * proporcionando una interfaz de usuario amigable con análisis avanzado para presentación
+ * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
+ * El formato HTML mejorado es ideal para visualizacion interactiva en navegadores web,
+ * proporcionando una interfaz de usuario amigable con analisis avanzado para presentacion
  * de datos y reportes visuales.
  */
 void exportar_camisetas_html_mejorado()
@@ -308,12 +308,12 @@ void exportar_camisetas_html_mejorado()
         return;
     }
 
-    // Escribir encabezado HTML y estructura de tabla con métricas avanzadas
+    // Escribir encabezado HTML y estructura de tabla con metricas avanzadas
     fprintf(f,
             "<html><body><h1>Camisetas con Estadisticas Avanzadas</h1><table border='1'>"
             "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>%% Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>%% Lesiones</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th><th>Eficiencia Goles/P</th><th>Eficiencia Asist/P</th><th>Relacion G/A</th></tr>");
 
-    // Procesar cada fila de resultados y generar filas HTML con métricas avanzadas
+    // Procesar cada fila de resultados y generar filas HTML con metricas avanzadas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);

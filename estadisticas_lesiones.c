@@ -1,4 +1,4 @@
-#include "estadisticas_lesiones.h"
+﻿#include "estadisticas_lesiones.h"
 #include "db.h"
 #include "utils.h"
 #include "sqlite3.h"
@@ -60,10 +60,10 @@ static double calcular_promedio_rendimiento(const char *sql)
 }
 
 /**
- * @brief Cuenta total de incidentes médicos registrados
+ * @brief Cuenta total de incidentes medicos registrados
  *
- * Proporciona métrica base para evaluación de frecuencia de lesiones
- * y contextualización de otros indicadores estadísticos.
+ * Proporciona metrica base para evaluacion de frecuencia de lesiones
+ * y contextualizacion de otros indicadores estadisticos.
  */
 static void mostrar_total_lesiones()
 {
@@ -81,10 +81,10 @@ static void mostrar_total_lesiones()
 }
 
 /**
- * @brief Clasifica incidentes médicos por categorías diagnósticas
+ * @brief Clasifica incidentes medicos por categorias diagnosticas
  *
- * Facilita identificación de patrones de tipos de lesiones más frecuentes
- * para diseño de programas preventivos específicos.
+ * Facilita identificacion de patrones de tipos de lesiones mas frecuentes
+ * para diseno de programas preventivos especificos.
  */
 static void mostrar_lesiones_por_tipo()
 {
@@ -102,7 +102,7 @@ static void mostrar_lesiones_por_tipo()
 }
 
 /**
- * @brief Distribuye incidentes médicos por jugadores/camisetas
+ * @brief Distribuye incidentes medicos por jugadores/camisetas
  *
  * Identifica jugadores con mayor susceptibilidad a lesiones para
  * intervenciones preventivas individualizadas.
@@ -124,10 +124,10 @@ static void mostrar_lesiones_por_camiseta()
 }
 
 /**
- * @brief Analiza distribución temporal mensual de incidentes
+ * @brief Analiza distribucion temporal mensual de incidentes
  *
- * Detecta períodos de mayor riesgo estacional para optimizar
- * preparación física y estrategias preventivas.
+ * Detecta periodos de mayor riesgo estacional para optimizar
+ * preparacion fisica y estrategias preventivas.
  */
 static void mostrar_lesiones_por_mes()
 {
@@ -146,7 +146,7 @@ static void mostrar_lesiones_por_mes()
 }
 
 /**
- * @brief Identifica período de mayor riesgo lesional
+ * @brief Identifica periodo de mayor riesgo lesional
  *
  * Determina mes con mayor incidencia para focalizar medidas
  * preventivas y ajuste de cargas de entrenamiento.
@@ -172,10 +172,10 @@ static void mostrar_mes_con_mas_lesiones()
 }
 
 /**
- * @brief Evalúa frecuencia temporal de recidivas lesionales
+ * @brief Evalua frecuencia temporal de recidivas lesionales
  *
  * Calcula intervalos promedio entre lesiones consecutivas para
- * identificar patrones de recuperación y riesgo de reinjury.
+ * identificar patrones de recuperacion y riesgo de reinjury.
  */
 static void mostrar_tiempo_promedio_entre_lesiones()
 {
@@ -218,10 +218,10 @@ static void mostrar_tiempo_promedio_entre_lesiones()
 }
 
 /**
- * @brief Evalúa impacto lesional en rendimiento atlético
+ * @brief Evalua impacto lesional en rendimiento atletico
  *
- * Compara métricas de producción (goles + asistencias) antes y después
- * de incidentes médicos para cuantificar efectos en desempeño deportivo.
+ * Compara metricas de produccion (goles + asistencias) antes y despues
+ * de incidentes medicos para cuantificar efectos en desempeno deportivo.
  */
 static double calcular_rendimiento_promedio_antes()
 {
@@ -230,10 +230,10 @@ static double calcular_rendimiento_promedio_antes()
 }
 
 /**
- * @brief Evalúa impacto lesional en rendimiento atlético
+ * @brief Evalua impacto lesional en rendimiento atletico
  *
- * Compara métricas de producción (goles + asistencias) antes y después
- * de incidentes médicos para cuantificar efectos en desempeño deportivo.
+ * Compara metricas de produccion (goles + asistencias) antes y despues
+ * de incidentes medicos para cuantificar efectos en desempeno deportivo.
  */
 static double calcular_rendimiento_promedio_despues()
 {
@@ -242,10 +242,10 @@ static double calcular_rendimiento_promedio_despues()
 }
 
 /**
- * @brief Muestra rendimiento promedio antes y después de lesiones
+ * @brief Muestra rendimiento promedio antes y despues de lesiones
  *
  * Proporciona evidencia cuantitativa sobre impacto de lesiones
- * en capacidad productiva del jugador para planificación de rehabilitación.
+ * en capacidad productiva del jugador para planificacion de rehabilitacion.
  */
 static void mostrar_rendimiento_promedio()
 {
@@ -253,13 +253,13 @@ static void mostrar_rendimiento_promedio()
     double despues = calcular_rendimiento_promedio_despues();
     printf("Rendimiento promedio antes de una lesion: %.2f\n", antes);
     printf("Rendimiento promedio despues de una lesion: %.2f\n", despues);
-    printf("Baja el rendimiento previo a una lesion? %s\n", (antes < despues) ? "Sí" : "No");
+    printf("Baja el rendimiento previo a una lesion? %s\n", (antes < despues) ? "Si" : "No");
 }
 
 /**
- * @brief Ejecuta análisis integral de estadísticas lesionales
+ * @brief Ejecuta analisis integral de estadisticas lesionales
  *
- * Coordina múltiples consultas estadísticas para proporcionar
+ * Coordina multiples consultas estadisticas para proporcionar
  * panorama completo de patrones de lesiones y sus correlaciones
  * con rendimiento deportivo.
  */

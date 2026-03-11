@@ -1,9 +1,9 @@
-/**
+﻿/**
  * @file estadisticas_generales.c
- * @brief Módulo de análisis estadístico global de rendimiento deportivo
+ * @brief Modulo de analisis estadistico global de rendimiento deportivo
  *
- * Implementa consultas SQL para métricas agregadas de partidos,
- * incluyendo análisis por clima, día de semana, cansancio y estado anímico,
+ * Implementa consultas SQL para metricas agregadas de partidos,
+ * incluyendo analisis por clima, dia de semana, cansancio y estado animico,
  * utilizando funciones de agrupamiento y JOINs para insights comprehensivos.
  */
 
@@ -15,8 +15,8 @@
 #include <time.h>
 
 /**
- * @brief Función auxiliar para generar el CASE WHEN para clima
- * @return Cadena SQL con el CASE WHEN para convertir clima numérico a texto
+ * @brief Funcion auxiliar para generar el CASE WHEN para clima
+ * @return Cadena SQL con el CASE WHEN para convertir clima numerico a texto
  */
 static const char* get_clima_case_sql()
 {
@@ -24,9 +24,9 @@ static const char* get_clima_case_sql()
 }
 
 /**
- * @brief Función auxiliar para generar el CASE WHEN para niveles (estado_animo/cansancio)
+ * @brief Funcion auxiliar para generar el CASE WHEN para niveles (estado_animo/cansancio)
  * @param columna Nombre de la columna ('estado_animo' o 'cansancio')
- * @return Cadena SQL con el CASE WHEN para convertir rangos numéricos a texto
+ * @return Cadena SQL con el CASE WHEN para convertir rangos numericos a texto
  */
 static const char* get_nivel_case_sql(const char* columna)
 {
@@ -38,11 +38,11 @@ static const char* get_nivel_case_sql(const char* columna)
 }
 
 /**
- * @brief Función genérica para mostrar estadísticas por día de la semana
- * @param titulo Título a mostrar
+ * @brief Funcion generica para mostrar estadisticas por dia de la semana
+ * @param titulo Titulo a mostrar
  * @param columna Columna a promediar ('rendimiento_general', 'goles', 'asistencias')
  * @param order_by Orden ('DESC' o 'ASC')
- * @param limit Límite de resultados (0 para sin límite)
+ * @param limit Limite de resultados (0 para sin limite)
  */
 static void mostrar_por_dia_semana(const char* titulo, const char* columna, const char* order_by, int limit)
 {
@@ -56,6 +56,8 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
     sqlite3_stmt *stmt;
     char sql[1024];
     const char* limit_clause = (limit > 0) ? " LIMIT 1" : "";
+
+    int order_by_columna = (strcmp(order_by, "DESC") != 0 && strcmp(order_by, "ASC") != 0);
 
     snprintf(sql, sizeof(sql),
              "WITH dias_semana AS ("
@@ -73,8 +75,11 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
              "LEFT JOIN partido p ON CAST(strftime('%%w', substr(p.fecha_hora, 7, 4) || '-' || substr(p.fecha_hora, 4, 2) || '-' || substr(p.fecha_hora, 1, 2)) AS INTEGER) = ds.dia_num "
              "AND p.fecha_hora IS NOT NULL AND p.fecha_hora != '' "
              "GROUP BY ds.dia_num, ds.dia_nombre "
-             "ORDER BY promedio %s%s",
-             columna, order_by, limit_clause);
+             "ORDER BY %s%s%s",
+             columna,
+             order_by_columna ? "" : "promedio ",
+             order_by,
+             limit_clause);
 
     if (!preparar_stmt_export(&stmt, sql))
     {
@@ -95,16 +100,16 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
     pause_console();
 }
 
-// Array de días de la semana en español
+// Array de dias de la semana en espanol
 const char* dias[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"};
 
 /**
- * @brief Función auxiliar para ejecutar consultas SQL y mostrar resultados.
+ * @brief Funcion auxiliar para ejecutar consultas SQL y mostrar resultados.
  *
- * Esta función ejecuta una consulta SQL preparada y muestra los resultados
- * en formato de tabla con el título proporcionado.
+ * Esta funcion ejecuta una consulta SQL preparada y muestra los resultados
+ * en formato de tabla con el titulo proporcionado.
  *
- * @param titulo El título a mostrar antes de los resultados.
+ * @param titulo El titulo a mostrar antes de los resultados.
  * @param sql La consulta SQL a ejecutar.
  */
 static void query(const char *titulo, const char *sql)
@@ -180,11 +185,11 @@ static void mostrar_query_simple(const char *header, const char *titulo, const c
 }
 
 /**
- * @brief Muestra las estadísticas principales de las camisetas.
+ * @brief Muestra las estadisticas principales de las camisetas.
  *
- * Esta función imprime un encabezado y ejecuta varias consultas para mostrar
- * estadísticas como la camiseta con más goles, asistencias, partidos jugados
- * y la suma de goles más asistencias. Al final, pausa la consola.
+ * Esta funcion imprime un encabezado y ejecuta varias consultas para mostrar
+ * estadisticas como la camiseta con mas goles, asistencias, partidos jugados
+ * y la suma de goles mas asistencias. Al final, pausa la consola.
  */
 void mostrar_estadisticas_generales()
 {
@@ -439,7 +444,7 @@ void mostrar_clima_peor_rendimiento()
 }
 
 /**
- * @brief Muestra el mejor día de la semana
+ * @brief Muestra el mejor dia de la semana
  */
 void mostrar_mejor_dia_semana()
 {
@@ -447,7 +452,7 @@ void mostrar_mejor_dia_semana()
 }
 
 /**
- * @brief Muestra el peor día de la semana
+ * @brief Muestra el peor dia de la semana
  */
 void mostrar_peor_dia_semana()
 {
@@ -455,7 +460,7 @@ void mostrar_peor_dia_semana()
 }
 
 /**
- * @brief Muestra los goles promedio por día
+ * @brief Muestra los goles promedio por dia
  */
 void mostrar_goles_promedio_por_dia()
 {
@@ -463,7 +468,7 @@ void mostrar_goles_promedio_por_dia()
 }
 
 /**
- * @brief Muestra las asistencias promedio por día
+ * @brief Muestra las asistencias promedio por dia
  */
 void mostrar_asistencias_promedio_por_dia()
 {
@@ -471,7 +476,7 @@ void mostrar_asistencias_promedio_por_dia()
 }
 
 /**
- * @brief Muestra el rendimiento promedio por día
+ * @brief Muestra el rendimiento promedio por dia
  */
 void mostrar_rendimiento_promedio_por_dia()
 {
@@ -479,7 +484,7 @@ void mostrar_rendimiento_promedio_por_dia()
 }
 
 /**
- * @brief Muestra el rendimiento según nivel de cansancio
+ * @brief Muestra el rendimiento segun nivel de cansancio
  */
 void mostrar_rendimiento_por_nivel_cansancio()
 {
@@ -563,7 +568,7 @@ void mostrar_partidos_cansancio_alto()
 }
 
 /**
- * @brief Muestra la caída de rendimiento por cansancio acumulado
+ * @brief Muestra la caida de rendimiento por cansancio acumulado
  */
 void mostrar_caida_rendimiento_cansancio_acumulado()
 {
@@ -600,7 +605,7 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
 }
 
 /**
- * @brief Muestra el rendimiento según estado de ánimo
+ * @brief Muestra el rendimiento segun estado de animo
  */
 void mostrar_rendimiento_por_estado_animo()
 {
@@ -620,7 +625,7 @@ void mostrar_rendimiento_por_estado_animo()
 }
 
 /**
- * @brief Muestra los goles según estado de ánimo
+ * @brief Muestra los goles segun estado de animo
  */
 void mostrar_goles_por_estado_animo()
 {
@@ -640,7 +645,7 @@ void mostrar_goles_por_estado_animo()
 }
 
 /**
- * @brief Muestra las asistencias según estado de ánimo
+ * @brief Muestra las asistencias segun estado de animo
  */
 void mostrar_asistencias_por_estado_animo()
 {
@@ -660,7 +665,7 @@ void mostrar_asistencias_por_estado_animo()
 }
 
 /**
- * @brief Muestra el estado de ánimo ideal para jugar
+ * @brief Muestra el estado de animo ideal para jugar
  */
 void mostrar_estado_animo_ideal()
 {
@@ -679,20 +684,20 @@ void mostrar_estado_animo_ideal()
                          sql);
 }
 /**
- * @brief Obtiene el día de la semana para una fecha dada
- * @param dia Día del mes (1-31)
- * @param mes Mes del año (1-12)
- * @param anio Año (ej. 2023)
- * @return Nombre del día de la semana en español
+ * @brief Obtiene el dia de la semana para una fecha dada
+ * @param dia Dia del mes (1-31)
+ * @param mes Mes del ano (1-12)
+ * @param anio Ano (ej. 2023)
+ * @return Nombre del dia de la semana en espanol
  */
 const char* obtener_dia_semana(int dia, int mes, int anio)
 {
     struct tm fecha = {0};
     fecha.tm_mday = dia;
     fecha.tm_mon  = mes - 1;      // Meses: 0-11
-    fecha.tm_year = anio - 2023;  // Años desde 1900
+    fecha.tm_year = anio - 2023;  // Anos desde 1900
 
-    mktime(&fecha); // Calcula el día de la semana
+    mktime(&fecha); // Calcula el dia de la semana
 
     return dias[fecha.tm_wday];
 }
