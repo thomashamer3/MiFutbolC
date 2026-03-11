@@ -145,7 +145,7 @@
 
 1769973804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773258967 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773259731 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -543,7 +543,7 @@
 
 1769907971 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1773259182 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1773259853 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -562,7 +562,7 @@
 
 1767667294 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
 
-1773257524 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
+1773260192 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -2094,7 +2094,7 @@
 	<stdlib.h>
 	<string.h>
 
-1773257524 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
+1773259955 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
 	"db.h"
 	"utils.h"
 	"menu.h"

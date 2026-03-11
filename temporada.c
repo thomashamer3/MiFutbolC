@@ -139,6 +139,74 @@ static void obtener_nombre_temporada(int temporada_id, char *nombre_buf, size_t 
 
 // ========== FUNCIONES DE CREACIoN Y GESTIoN ==========
 
+static void determinar_estado_temporada(const char *fecha_inicio, const char *fecha_fin, char *estado, size_t estado_size)
+{
+    time_t now = time(NULL);
+    struct tm current_time;
+    localtime_s(&current_time, &now);
+    char current_date[32];
+    snprintf(current_date, sizeof(current_date), "%04d-%02d-%02d",
+             current_time.tm_year + 1900,
+             current_time.tm_mon + 1,
+             current_time.tm_mday);
+
+    if (strcmp(current_date, fecha_inicio) >= 0 && strcmp(current_date, fecha_fin) <= 0)
+    {
+        strcpy_s(estado, estado_size, "Activa");
+    }
+    else if (strcmp(current_date, fecha_inicio) < 0)
+    {
+        strcpy_s(estado, estado_size, "Planificada");
+    }
+    else
+    {
+        strcpy_s(estado, estado_size, "Finalizada");
+    }
+}
+
+static int calcular_nuevo_id_temporada(void)
+{
+    int nuevo_id = 1;
+    sqlite3_stmt *stmt_id = NULL;
+
+    // Verificar si ID 1 esta libre
+    const char *sql_check1 = "SELECT COUNT(*) FROM temporada WHERE id = 1;";
+    if (preparar_stmt(sql_check1, &stmt_id))
+    {
+        if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_int(stmt_id, 0) == 0)
+        {
+            sqlite3_finalize(stmt_id);
+            return 1;
+        }
+        sqlite3_finalize(stmt_id);
+    }
+
+    // Verificar si hay registros
+    const char *sql_check = "SELECT COUNT(*) FROM temporada;";
+    if (preparar_stmt(sql_check, &stmt_id))
+    {
+        int count = 0;
+        if (sqlite3_step(stmt_id) == SQLITE_ROW)
+            count = sqlite3_column_int(stmt_id, 0);
+        sqlite3_finalize(stmt_id);
+
+        if (count == 0)
+            return 1;
+    }
+
+    // Calcular el menor ID libre
+    const char *sql_id = "SELECT MIN(t1.id + 1) FROM temporada t1 "
+                         "WHERE NOT EXISTS (SELECT 1 FROM temporada t2 WHERE t2.id = t1.id + 1);";
+    if (preparar_stmt(sql_id, &stmt_id))
+    {
+        if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_type(stmt_id, 0) != SQLITE_NULL)
+            nuevo_id = sqlite3_column_int(stmt_id, 0);
+        sqlite3_finalize(stmt_id);
+    }
+
+    return nuevo_id;
+}
+
 void crear_temporada()
 {
     clear_screen();
@@ -167,62 +235,12 @@ void crear_temporada()
     input_string("Descripcion (opcional): ", temporada.descripcion, sizeof(temporada.descripcion));
 
     // Determinar estado automaticamente
-    time_t now = time(NULL);
-    struct tm current_time;
-    localtime_s(&current_time, &now);
-    char current_date[32];
-    snprintf(current_date, sizeof(current_date), "%04d-%02d-%02d",
-             current_time.tm_year + 1900,
-             current_time.tm_mon + 1,
-             current_time.tm_mday);
-
-    if (strcmp(current_date, temporada.fecha_inicio) >= 0 && strcmp(current_date, temporada.fecha_fin) <= 0)
-    {
-        strcpy_s(temporada.estado, sizeof(temporada.estado), "Activa");
-    }
-    else if (strcmp(current_date, temporada.fecha_inicio) < 0)
-    {
-        strcpy_s(temporada.estado, sizeof(temporada.estado), "Planificada");
-    }
-    else
-    {
-        strcpy_s(temporada.estado, sizeof(temporada.estado), "Finalizada");
-    }
+    determinar_estado_temporada(temporada.fecha_inicio, temporada.fecha_fin,
+                               temporada.estado, sizeof(temporada.estado));
 
     // Guardar en base de datos - reutilizar ID libre
     sqlite3_stmt *stmt = NULL;
-
-    // Calcular el menor ID libre
-    int nuevo_id = 1;
-    const char *sql_id = "SELECT MIN(t1.id + 1) FROM temporada t1 "
-                         "WHERE NOT EXISTS (SELECT 1 FROM temporada t2 WHERE t2.id = t1.id + 1);";
-    const char *sql_check = "SELECT COUNT(*) FROM temporada;";
-    sqlite3_stmt *stmt_id = NULL;
-
-    if (preparar_stmt(sql_check, &stmt_id))
-    {
-        if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_int(stmt_id, 0) == 0)
-            nuevo_id = 1;
-        else
-        {
-            sqlite3_finalize(stmt_id);
-            if (preparar_stmt(sql_id, &stmt_id))
-            {
-                if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_type(stmt_id, 0) != SQLITE_NULL)
-                    nuevo_id = sqlite3_column_int(stmt_id, 0);
-            }
-        }
-        sqlite3_finalize(stmt_id);
-    }
-
-    // Verificar si ID 1 esta libre
-    const char *sql_check1 = "SELECT COUNT(*) FROM temporada WHERE id = 1;";
-    if (preparar_stmt(sql_check1, &stmt_id))
-    {
-        if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_int(stmt_id, 0) == 0)
-            nuevo_id = 1;
-        sqlite3_finalize(stmt_id);
-    }
+    int nuevo_id = calcular_nuevo_id_temporada();
 
     const char *sql = "INSERT INTO temporada (id, nombre, anio, fecha_inicio, fecha_fin, estado, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?);";
 

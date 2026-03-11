@@ -1899,7 +1899,8 @@ static void tactica_mostrar_grid_con_ejes(char grid[TACTIC_H][TACTIC_W + 1])
 static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
                            char *grid_text, size_t grid_text_size)
 {
-    int x = -1, y = -1;
+    int x = -1;
+    int y = -1;
     char c = '\0';
     if (sscanf(args, "%d %d %c", &x, &y, &c) == 3)
     {
@@ -1956,7 +1957,8 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
     case 'd':
     case 'D':
     {
-        int x = -1, y = -1;
+        int x = -1;
+        int y = -1;
         if (sscanf(line + 1, "%d %d", &x, &y) == 2)
         {
             if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)

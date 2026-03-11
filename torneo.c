@@ -299,11 +299,13 @@ static void agregar_equipos_nombres_torneo(int torneo_id)
     {
         char nombre[50] = {0};
         printf("Equipo %d (Enter para terminar): ", count + 1);
-        if (!fgets(nombre, sizeof(nombre), stdin)) break;
-        // trim newline
-        size_t len = strlen(nombre);
-        while (len > 0 && (nombre[len-1] == '\n' || nombre[len-1] == '\r'))
-            nombre[--len] = '\0';
+        if (fgets(nombre, sizeof(nombre), stdin))
+        {
+            // trim newline
+            size_t len = strlen_s(nombre, sizeof(nombre));
+            while (len > 0 && (nombre[len-1] == '\n' || nombre[len-1] == '\r'))
+                nombre[--len] = '\0';
+        }
         if (nombre[0] == '\0') break;
 
         sqlite3_stmt *stmt;
@@ -700,7 +702,8 @@ void modificar_torneo()
     printf("4. Tipo y formato de torneo\n");
     printf("5. Asociar equipos guardados\n");
     printf("6. Agregar equipos por nombre\n");
-    printf("7. Volver\n");
+    printf("7. Agregar un equipo por nombre\n");
+    printf("8. Volver\n");
 
     int opcion = input_int(">");
 
@@ -725,6 +728,9 @@ void modificar_torneo()
         agregar_equipos_nombres_torneo(torneo_id);
         break;
     case 7:
+        agregar_equipo_nombre_torneo(torneo_id);
+        break;
+    case 8:
         break;
     default:
         printf("Opcion invalida.\n");

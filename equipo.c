@@ -1930,14 +1930,11 @@ void modificar_jugador_momentaneo(Equipo *equipo)
         switch (opcion_posicion)
         {
         case 1:
-            for (int i = 0; i < equipo->num_jugadores; i++)
+            if (ya_hay_arquero_en_equipo(equipo, equipo->num_jugadores, jugador_idx))
             {
-                if (i != jugador_idx && equipo->jugadores[i].posicion == ARQUERO)
-                {
-                    printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
-                    pause_console();
-                    return;
-                }
+                printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
+                pause_console();
+                return;
             }
             jugador->posicion = ARQUERO;
             break;
