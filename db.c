@@ -14,6 +14,7 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <ctype.h>
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
@@ -27,10 +28,23 @@
 #ifdef _WIN32
 #define MKDIR(path) _mkdir(path)
 #define STRDUP _strdup
+#define DB_PATH_SEP "\\"
+
+static int directorio_existe(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
+    DWORD attrs = GetFileAttributesA(path);
+    return (attrs != INVALID_FILE_ATTRIBUTES) && (attrs & FILE_ATTRIBUTE_DIRECTORY);
+}
 #else
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
 #define STRDUP strdup
+#define DB_PATH_SEP "/"
 
 static int directorio_existe(const char *path)
 {
@@ -38,6 +52,23 @@ static int directorio_existe(const char *path)
     return path && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 #endif
+
+static void sanitize_filename_token(char *token)
+{
+    if (!token)
+    {
+        return;
+    }
+
+    for (size_t i = 0; token[i] != '\0'; i++)
+    {
+        unsigned char ch = (unsigned char)token[i];
+        if (!(isalnum(ch) || ch == '_' || ch == '-'))
+        {
+            token[i] = '_';
+        }
+    }
+}
 
 #ifdef _WIN32
 static char error_buf[256];
@@ -201,6 +232,58 @@ static int configurar_directorio_documentos(const char *subdir, char *out_dir, s
     return 1;
 }
 #endif
+
+static int configurar_directorio_usuario(const char *dir_preferido_local,
+        const char *dir_legado_local,
+        const char *subdir_documentos,
+        char *out_dir,
+        size_t out_size,
+        const char *nombre_subdir)
+{
+    if (!out_dir || out_size == 0)
+    {
+        return 0;
+    }
+
+    if (out_dir[0] != '\0')
+    {
+        return 1;
+    }
+
+    if (dir_preferido_local && dir_preferido_local[0] != '\0')
+    {
+        strcpy_s(out_dir, out_size, dir_preferido_local);
+        if (asegurar_directorio(out_dir, nombre_subdir))
+        {
+            return 1;
+        }
+        out_dir[0] = '\0';
+    }
+
+    if (dir_legado_local && dir_legado_local[0] != '\0' && directorio_existe(dir_legado_local))
+    {
+        strcpy_s(out_dir, out_size, dir_legado_local);
+        if (asegurar_directorio(out_dir, nombre_subdir))
+        {
+            return 1;
+        }
+        out_dir[0] = '\0';
+    }
+
+#ifdef _WIN32
+    if (subdir_documentos && subdir_documentos[0] != '\0')
+    {
+        return configurar_directorio_documentos(subdir_documentos,
+                                                out_dir,
+                                                out_size,
+                                                "MiFutbolC en Documents",
+                                                nombre_subdir);
+    }
+    return 0;
+#else
+    return 0;
+#endif
+}
 
 static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
 {
@@ -974,25 +1057,16 @@ const char *get_data_dir()
  */
 const char *get_export_dir()
 {
-#ifdef _WIN32
-    // Usar Documents para exportaciones (visible para el usuario)
-    if (EXPORT_DIR[0] == '\0' &&
-            !configurar_directorio_documentos("Exportaciones", EXPORT_DIR, sizeof(EXPORT_DIR),
-                    "MiFutbolC en Documents", "Exportaciones"))
+    if (!configurar_directorio_usuario("./Exportaciones",
+                                       NULL,
+                                       "Exportaciones",
+                                       EXPORT_DIR,
+                                       sizeof(EXPORT_DIR),
+                                       "Exportaciones"))
     {
         return NULL;
     }
-#else
-    if (EXPORT_DIR[0] == '\0')
-    {
-        // Para otros sistemas operativos
-        strcpy_s(EXPORT_DIR, sizeof(EXPORT_DIR), "./exportaciones");
-        if (!asegurar_directorio(EXPORT_DIR, "exportaciones"))
-        {
-            return NULL;
-        }
-    }
-#endif
+
     return EXPORT_DIR;
 }
 
@@ -1006,41 +1080,16 @@ const char *get_export_dir()
  */
 const char *get_import_dir()
 {
-#ifdef _WIN32
-    // Usar Documents para importaciones (visible para el usuario)
-    if (IMPORT_DIR[0] == '\0' &&
-            !configurar_directorio_documentos("Importaciones", IMPORT_DIR, sizeof(IMPORT_DIR),
-                    "MiFutbolC en Documents", "Importaciones"))
+    if (!configurar_directorio_usuario("./Importaciones",
+                                       "./importaciones",
+                                       "Importaciones",
+                                       IMPORT_DIR,
+                                       sizeof(IMPORT_DIR),
+                                       "Importaciones"))
     {
         return NULL;
     }
-#else
-    if (IMPORT_DIR[0] == '\0')
-    {
-        // En Linux/macOS priorizar "Importaciones" y mantener compatibilidad
-        // con instalaciones anteriores que usaban "importaciones".
-        const char *import_dir_preferido = "./Importaciones";
-        const char *import_dir_legado = "./importaciones";
 
-        if (directorio_existe(import_dir_preferido))
-        {
-            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_preferido);
-        }
-        else if (directorio_existe(import_dir_legado))
-        {
-            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_legado);
-        }
-        else
-        {
-            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_preferido);
-        }
-
-        if (!asegurar_directorio(IMPORT_DIR, "Importaciones"))
-        {
-            return NULL;
-        }
-    }
-#endif
     return IMPORT_DIR;
 }
 
@@ -1171,7 +1220,7 @@ int backup_base_datos_automatico(const char *motivo)
 
     char backup_dir[1024];
     strcpy_s(backup_dir, sizeof(backup_dir), export_dir);
-    strcat_s(backup_dir, sizeof(backup_dir), "\\Backups");
+    strcat_s(backup_dir, sizeof(backup_dir), DB_PATH_SEP "Backups");
 
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
@@ -1195,13 +1244,14 @@ int backup_base_datos_automatico(const char *motivo)
     if (motivo && motivo[0] != '\0')
     {
         strncpy_s(motivo_safe, sizeof(motivo_safe), motivo, sizeof(motivo_safe) - 1);
+        sanitize_filename_token(motivo_safe);
     }
 
     size_t used = 0;
     dest_path[0] = '\0';
 
     if (!append_str(dest_path, &used, sizeof(dest_path), backup_dir) ||
-            !append_str(dest_path, &used, sizeof(dest_path), "\\") ||
+            !append_str(dest_path, &used, sizeof(dest_path), DB_PATH_SEP) ||
             !append_str(dest_path, &used, sizeof(dest_path), prefix))
     {
         printf("%s\n", get_text("backup_failed"));
@@ -1261,7 +1311,7 @@ void importar_base_datos()
 
     char source_path[1024];
     strcpy_s(source_path, sizeof(source_path), import_dir);
-    strcat_s(source_path, sizeof(source_path), "\\mifutbol.db");
+    strcat_s(source_path, sizeof(source_path), DB_PATH_SEP "mifutbol.db");
 
     const char *dest_path = DB_PATH;
 
