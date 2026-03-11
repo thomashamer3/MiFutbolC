@@ -31,6 +31,12 @@
 #include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
 #define STRDUP strdup
+
+static int directorio_existe(const char *path)
+{
+    struct stat st;
+    return path && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
 #endif
 
 #ifdef _WIN32
@@ -1011,9 +1017,25 @@ const char *get_import_dir()
 #else
     if (IMPORT_DIR[0] == '\0')
     {
-        // Para otros sistemas operativos
-        strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), "./importaciones");
-        if (!asegurar_directorio(IMPORT_DIR, "importaciones"))
+        // En Linux/macOS priorizar "Importaciones" y mantener compatibilidad
+        // con instalaciones anteriores que usaban "importaciones".
+        const char *import_dir_preferido = "./Importaciones";
+        const char *import_dir_legado = "./importaciones";
+
+        if (directorio_existe(import_dir_preferido))
+        {
+            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_preferido);
+        }
+        else if (directorio_existe(import_dir_legado))
+        {
+            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_legado);
+        }
+        else
+        {
+            strcpy_s(IMPORT_DIR, sizeof(IMPORT_DIR), import_dir_preferido);
+        }
+
+        if (!asegurar_directorio(IMPORT_DIR, "Importaciones"))
         {
             return NULL;
         }

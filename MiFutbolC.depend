@@ -1,6 +1,14 @@
 # depslib dependency file v1.0
-1772827350 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1773208982 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"menu.h"
+	<errno.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<sys/file.h>
+	<sys/stat.h>
+	<fcntl.h>
+	<unistd.h>
 
 1773203112 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
@@ -67,7 +75,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1773203180 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1773208385 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -92,7 +100,7 @@
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1773203078 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1773208612 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -194,7 +202,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1773202355 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1773208612 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"utils.h"
 	<stdio.h>

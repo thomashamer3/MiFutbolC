@@ -165,6 +165,7 @@ int input_int(const char *msg)
     char buffer[64];
     int v = 0;
     int attempts = 0;
+    int eof_count = 0;
 
     while (attempts < 5)
     {
@@ -172,6 +173,12 @@ int input_int(const char *msg)
 
         if (!ui_readline(buffer, sizeof(buffer)))
         {
+            eof_count++;
+            if (eof_count >= 2)
+            {
+                ui_printf("Entrada cerrada (EOF).\n");
+                return -1;
+            }
             attempts++;
             continue;
         }

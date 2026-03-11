@@ -334,6 +334,15 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 
         opcion = input_int(">");
 
+        if (opcion == -1)
+        {
+            snprintf(log_msg, sizeof(log_msg),
+                     "Menu %.120s -> entrada no valida repetida/EOF, salida preventiva",
+                     menu_safe_title(titulo));
+            app_log_event("MENU", log_msg);
+            return;
+        }
+
         const MenuItem *selected = buscar_item(items, cantidad, opcion);
         if (!selected)
         {

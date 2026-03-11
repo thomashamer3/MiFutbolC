@@ -18,10 +18,11 @@ BUILD_TYPE="${BUILD_TYPE:-Release}"
 ENABLE_NATIVE="${ENABLE_NATIVE:-0}"
 RUN_AFTER_BUILD=0
 STRIP_BINARY=0
+INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
 OS_NAME="$(uname -s)"
 
 # Progress bar (stage-based) for installation/build flow
-TOTAL_STEPS=5
+TOTAL_STEPS=6
 CURRENT_STEP=0
 
 render_progress_bar() {
@@ -61,6 +62,18 @@ while [[ "$#" -gt 0 ]]; do
       STRIP_BINARY=1
       shift
       ;;
+    --path-user)
+      INSTALL_PATH_MODE="user"
+      shift
+      ;;
+    --path-system)
+      INSTALL_PATH_MODE="system"
+      shift
+      ;;
+    --no-path)
+      INSTALL_PATH_MODE="none"
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: ./Instalador-Linux.sh [options]
@@ -69,6 +82,9 @@ Options:
   -d, --debug     Build in debug mode (no optimizations, includes debug symbols)
   run             Run the built binary after a successful build
   --strip         Strip symbols from the binary after building
+  --path-user     Add MiFutbolC to PATH for current user (~/.local/bin) [default]
+  --path-system   Add MiFutbolC to PATH globally (/usr/local/bin, requires sudo)
+  --no-path       Do not modify PATH
   -h, --help      Show this help message
 
 You can also set BUILD_TYPE=Debug to enable debug build.
@@ -158,6 +174,70 @@ check_deps() {
   echo "Arch: sudo pacman -Sy --noconfirm base-devel pkgconf libharu zlib libpng"
   echo "macOS (Homebrew): brew install libharu zlib libpng pkg-config"
   exit 1
+}
+
+ensure_dir_in_shell_path() {
+  local dir_path="$1"
+  local rc_file=""
+  local export_line="export PATH=\"${dir_path}:\$PATH\""
+
+  if [[ -n "${SHELL:-}" ]] && [[ "${SHELL}" == *"zsh"* ]]; then
+    rc_file="${HOME}/.zshrc"
+  else
+    rc_file="${HOME}/.bashrc"
+  fi
+
+  if [[ -f "${rc_file}" ]] && grep -Fqs "${export_line}" "${rc_file}"; then
+    return 0
+  fi
+
+  printf "\n# MiFutbolC launcher path\n%s\n" "${export_line}" >> "${rc_file}"
+  echo "Se agrego ${dir_path} a PATH en ${rc_file}"
+}
+
+install_user_launcher() {
+  local target_dir="${HOME}/.local/bin"
+  local source_bin
+  source_bin="$(pwd)/${OUT}"
+
+  mkdir -p "${target_dir}"
+  ln -sfn "${source_bin}" "${target_dir}/${OUT}"
+
+  ensure_dir_in_shell_path "${target_dir}"
+
+  if [[ ":${PATH}:" != *":${target_dir}:"* ]]; then
+    export PATH="${target_dir}:${PATH}"
+  fi
+
+  echo "Instalado launcher de usuario: ${target_dir}/${OUT}"
+}
+
+install_system_launcher() {
+  local target_dir="/usr/local/bin"
+  local source_bin
+  source_bin="$(pwd)/${OUT}"
+
+  sudo mkdir -p "${target_dir}"
+  sudo ln -sfn "${source_bin}" "${target_dir}/${OUT}"
+  echo "Instalado launcher global: ${target_dir}/${OUT}"
+}
+
+install_launcher_in_path() {
+  case "${INSTALL_PATH_MODE}" in
+    none)
+      echo "PATH no sera modificado (--no-path)."
+      ;;
+    user)
+      install_user_launcher
+      ;;
+    system)
+      install_system_launcher
+      ;;
+    *)
+      echo "Valor INSTALL_PATH_MODE no valido: ${INSTALL_PATH_MODE}. Use user/system/none."
+      exit 1
+      ;;
+  esac
 }
 
 step_progress "Verificando dependencias"
@@ -279,8 +359,12 @@ fi
 
 ls -lh "$OUT"
 
+step_progress "Configurando acceso global (PATH)"
+install_launcher_in_path
+
 step_progress "Instalacion finalizada"
 echo "MiFutbolC esta listo para usar."
+echo "Puedes ejecutarlo como: ${OUT}"
 
 if [[ "$RUN_AFTER_BUILD" -eq 1 ]]; then
   echo "Running $OUT..."

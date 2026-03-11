@@ -1,7 +1,86 @@
 #include "menu.h"
 
+#ifndef _WIN32
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+static int g_lock_fd = -1;
+static char g_lock_path[1024];
+
+static void release_single_instance_lock(void)
+{
+    if (g_lock_fd >= 0)
+    {
+        flock(g_lock_fd, LOCK_UN);
+        close(g_lock_fd);
+        g_lock_fd = -1;
+    }
+
+    if (g_lock_path[0] != '\0')
+    {
+        unlink(g_lock_path);
+        g_lock_path[0] = '\0';
+    }
+}
+
+static int acquire_single_instance_lock(void)
+{
+    const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
+    if (!runtime_dir || runtime_dir[0] == '\0')
+    {
+        runtime_dir = "/tmp";
+    }
+
+    snprintf(g_lock_path, sizeof(g_lock_path), "%s/%s", runtime_dir,
+             "mifutbolc.lock");
+
+    g_lock_fd = open(g_lock_path, O_CREAT | O_RDWR, 0644);
+    if (g_lock_fd < 0)
+    {
+        fprintf(stderr, "No se pudo crear lockfile (%s): %s\n", g_lock_path,
+                strerror(errno));
+        return 0;
+    }
+
+    if (flock(g_lock_fd, LOCK_EX | LOCK_NB) != 0)
+    {
+        if (errno == EWOULDBLOCK)
+        {
+            fprintf(stderr,
+                    "MiFutbolC ya esta en ejecucion. Cierra la otra instancia e intenta nuevamente.\n");
+        }
+        else
+        {
+            fprintf(stderr, "No se pudo bloquear lockfile (%s): %s\n",
+                    g_lock_path, strerror(errno));
+        }
+
+        close(g_lock_fd);
+        g_lock_fd = -1;
+        g_lock_path[0] = '\0';
+        return 0;
+    }
+
+    atexit(release_single_instance_lock);
+    return 1;
+}
+#endif
+
 int main()
 {
+#ifndef _WIN32
+    if (!acquire_single_instance_lock())
+    {
+        return 1;
+    }
+#endif
+
     initialize_application();
     handle_user_name();
 
