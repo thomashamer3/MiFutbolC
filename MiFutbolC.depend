@@ -75,7 +75,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1773208385 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1773210645 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -85,6 +85,7 @@
 	<string.h>
 	<time.h>
 	<errno.h>
+	<ctype.h>
 	<direct.h>
 	<windows.h>
 	<ShlObj.h>
