@@ -107,6 +107,17 @@ const char* get_export_dir();
 const char* get_import_dir();
 
 /**
+ * @brief Determina ubicacion canónica para archivos de imagen
+ *
+ * Configura directorio accesible al usuario para almacenar imagenes
+ * procesadas por la aplicacion, al mismo nivel que Exportaciones e
+ * Importaciones.
+ *
+ * @return Puntero constante a string con path del directorio de imagenes
+ */
+const char* get_images_dir();
+
+/**
  * @brief Registra un evento informativo en el archivo de log de la aplicación
  *
  * Permite registrar acciones de usuario y eventos de flujo funcional

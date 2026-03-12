@@ -58,5 +58,21 @@ void eliminar_camiseta();
  */
 void sortear_camiseta();
 
+/**
+ * @brief Carga una imagen asociada a una camiseta
+ *
+ * Permite seleccionar una imagen del sistema, copiarla a la carpeta
+ * Imagenes de la app y guardar su ruta relativa en la base de datos.
+ */
+void cargar_imagen_camiseta();
+
+/**
+ * @brief Abre la imagen asociada a una camiseta
+ *
+ * Recupera la ruta de imagen registrada en DB y la abre con el visor
+ * predeterminado del sistema operativo.
+ */
+void ver_imagen_camiseta();
+
 #endif
 

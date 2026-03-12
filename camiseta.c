@@ -8,14 +8,623 @@
 #include <time.h>
 #ifdef _WIN32
 #include <process.h>
+#include <io.h>
 #else
 #include "process.h"
+#include <strings.h>
 #endif
 #include <ctype.h>
 #include <limits.h>
 
 
 #define MAX_CAMISETAS_SORTEO 150
+
+static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
+static int obtener_ruta_imagen_camiseta_db(int id, char *ruta, size_t size);
+static int obtener_nombre_archivo(const char *path, char *nombre, size_t size);
+static void listar_camisetas_simple(void);
+static int cargar_imagen_para_camiseta_id(int id);
+
+static int comando_existe(const char *cmd)
+{
+    if (!cmd || cmd[0] == '\0')
+    {
+        return 0;
+    }
+
+    char check_cmd[256];
+#ifdef _WIN32
+    snprintf(check_cmd, sizeof(check_cmd), "where %s >nul 2>nul", cmd);
+#else
+    snprintf(check_cmd, sizeof(check_cmd), "command -v %s >/dev/null 2>&1", cmd);
+#endif
+    return system(check_cmd) == 0;
+}
+
+static void asegurar_fila_settings()
+{
+    sqlite3_exec(db,
+                 "INSERT OR IGNORE INTO settings(id, theme, language, mode, text_size, image_viewer) "
+                 "VALUES(1, 0, 0, 0, 1, '');",
+                 NULL,
+                 NULL,
+                 NULL);
+}
+
+static int obtener_visor_preferido(char *buffer, size_t size)
+{
+    if (!buffer || size == 0)
+    {
+        return 0;
+    }
+
+    asegurar_fila_settings();
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT image_viewer FROM settings WHERE id = 1"))
+    {
+        return 0;
+    }
+
+    int ok = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *v = sqlite3_column_text(stmt, 0);
+        if (v && strncpy_s(buffer, size, (const char *)v, _TRUNCATE) == 0)
+        {
+            trim_whitespace(buffer);
+            ok = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int guardar_visor_preferido(const char *viewer)
+{
+    asegurar_fila_settings();
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "UPDATE settings SET image_viewer = ? WHERE id = 1"))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, viewer ? viewer : "", -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE;
+}
+
+static int instalar_paquete_linux(const char *package_name)
+{
+#ifdef _WIN32
+    (void)package_name;
+    return 0;
+#else
+    if (!package_name || package_name[0] == '\0')
+    {
+        return 0;
+    }
+
+    char install_cmd[512] = {0};
+    if (comando_existe("apt-get"))
+    {
+        snprintf(install_cmd, sizeof(install_cmd), "sudo apt-get update && sudo apt-get install -y %s", package_name);
+    }
+    else if (comando_existe("dnf"))
+    {
+        snprintf(install_cmd, sizeof(install_cmd), "sudo dnf install -y %s", package_name);
+    }
+    else if (comando_existe("pacman"))
+    {
+        snprintf(install_cmd, sizeof(install_cmd), "sudo pacman -Sy --noconfirm %s", package_name);
+    }
+    else if (comando_existe("zypper"))
+    {
+        snprintf(install_cmd, sizeof(install_cmd), "sudo zypper --non-interactive install %s", package_name);
+    }
+    else
+    {
+        return 0;
+    }
+
+    return system(install_cmd) == 0;
+#endif
+}
+
+static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, size_t size)
+{
+    if (!ruta_absoluta || size == 0)
+    {
+        return 0;
+    }
+
+    char ruta_db[300] = {0};
+    if (!obtener_ruta_imagen_camiseta_db(id, ruta_db, sizeof(ruta_db)))
+    {
+        return 0;
+    }
+
+    char nombre_archivo[260] = {0};
+    if (!obtener_nombre_archivo(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
+    {
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    snprintf(ruta_absoluta, size, "%s\\%s", images_dir, nombre_archivo);
+#else
+    snprintf(ruta_absoluta, size, "%s/%s", images_dir, nombre_archivo);
+#endif
+
+    FILE *f = NULL;
+    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
+    {
+        return 0;
+    }
+    fclose(f);
+
+    return 1;
+}
+
+static int copiar_archivo_binario(const char *source_path, const char *dest_path)
+{
+    FILE *src = NULL;
+    FILE *dst = NULL;
+
+    if (fopen_s(&src, source_path, "rb") != 0 || !src)
+    {
+        return 0;
+    }
+
+    if (fopen_s(&dst, dest_path, "wb") != 0 || !dst)
+    {
+        fclose(src);
+        return 0;
+    }
+
+    char buffer[8192];
+    size_t bytes = 0;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
+    {
+        if (fwrite(buffer, 1, bytes, dst) != bytes)
+        {
+            fclose(src);
+            fclose(dst);
+            return 0;
+        }
+    }
+
+    fclose(src);
+    fclose(dst);
+    return 1;
+}
+
+static const char *obtener_extension(const char *path)
+{
+    if (!path)
+    {
+        return NULL;
+    }
+
+    const char *dot = strrchr(path, '.');
+    if (!dot || dot == path)
+    {
+        return NULL;
+    }
+    return dot;
+}
+
+static int extension_imagen_soportada(const char *ext)
+{
+    if (!ext)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    return _stricmp(ext, ".jpg") == 0 ||
+           _stricmp(ext, ".jpeg") == 0 ||
+           _stricmp(ext, ".png") == 0 ||
+           _stricmp(ext, ".bmp") == 0 ||
+           _stricmp(ext, ".webp") == 0;
+#else
+    return strcasecmp(ext, ".jpg") == 0 ||
+           strcasecmp(ext, ".jpeg") == 0 ||
+           strcasecmp(ext, ".png") == 0 ||
+           strcasecmp(ext, ".bmp") == 0 ||
+           strcasecmp(ext, ".webp") == 0;
+#endif
+}
+
+static int seleccionar_imagen_usuario(char *ruta_origen, size_t size)
+{
+    if (!ruta_origen || size == 0)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    const char *archivo_temp = "mifutbol_imagen_sel.txt";
+    remove(archivo_temp);
+
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; "
+             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
+             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
+             "$dlg.Filter = 'Imagenes|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
+             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
+             archivo_temp);
+
+    int rc = system(cmd);
+    (void)rc;
+
+    FILE *f = NULL;
+    if (fopen_s(&f, archivo_temp, "r") != 0 || !f)
+    {
+        return 0;
+    }
+
+    if (!fgets(ruta_origen, (int)size, f))
+    {
+        fclose(f);
+        remove(archivo_temp);
+        return 0;
+    }
+
+    fclose(f);
+    remove(archivo_temp);
+    trim_whitespace(ruta_origen);
+    return ruta_origen[0] != '\0';
+#else
+    input_string("Ruta de imagen: ", ruta_origen, (int)size);
+    trim_whitespace(ruta_origen);
+    return ruta_origen[0] != '\0';
+#endif
+}
+
+static int obtener_nombre_archivo(const char *path, char *nombre, size_t size)
+{
+    if (!path || !nombre || size == 0)
+    {
+        return 0;
+    }
+
+    const char *last_slash = strrchr(path, '/');
+    const char *last_backslash = strrchr(path, '\\');
+    const char *base = path;
+
+    if (last_slash && last_backslash)
+    {
+        base = (last_slash > last_backslash) ? last_slash + 1 : last_backslash + 1;
+    }
+    else if (last_slash)
+    {
+        base = last_slash + 1;
+    }
+    else if (last_backslash)
+    {
+        base = last_backslash + 1;
+    }
+
+    return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
+}
+
+static int abrir_imagen_en_sistema(const char *ruta)
+{
+    if (!ruta || ruta[0] == '\0')
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    char viewer[64] = {0};
+    obtener_visor_preferido(viewer, sizeof(viewer));
+
+    char cmd[1200];
+    if (viewer[0] != '\0' && _stricmp(viewer, "auto") != 0)
+    {
+        if (_stricmp(viewer, "mspaint") == 0)
+        {
+            snprintf(cmd, sizeof(cmd), "mspaint \"%s\"", ruta);
+            if (system(cmd) == 0)
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            printf("Visor preferido no soportado en Windows: %s\n", viewer);
+        }
+    }
+
+    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
+    if (system(cmd) == 0)
+    {
+        return 1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "mspaint \"%s\"", ruta);
+    return system(cmd) == 0;
+#else
+    char viewer[64] = {0};
+    obtener_visor_preferido(viewer, sizeof(viewer));
+
+    char cmd_check[256];
+    char cmd_open[1400];
+
+    const char *visores[] = {"xdg-open", "gio", "feh", "eog", "gwenview", NULL};
+    const char *visor = NULL;
+
+    if (viewer[0] != '\0' && strcmp(viewer, "auto") != 0)
+    {
+        if (comando_existe(viewer))
+        {
+            visor = viewer;
+        }
+        else
+        {
+            printf("El visor preferido '%s' no esta instalado.\n", viewer);
+        }
+    }
+
+    for (int i = 0; visores[i] != NULL; i++)
+    {
+        if (visor)
+        {
+            break;
+        }
+
+        snprintf(cmd_check, sizeof(cmd_check), "command -v %s >/dev/null 2>&1", visores[i]);
+        if (system(cmd_check) == 0)
+        {
+            visor = visores[i];
+            break;
+        }
+    }
+
+    if (!visor)
+    {
+        if (!confirmar("No se detecto visor de imagen. Desea instalar 'feh' automaticamente?"))
+        {
+            return 0;
+        }
+
+        printf("Instalando visor liviano 'feh'...\n");
+        if (!instalar_paquete_linux("feh"))
+        {
+            printf("No se pudo instalar 'feh'.\n");
+            return 0;
+        }
+
+        visor = "feh";
+        if (viewer[0] == '\0' || strcmp(viewer, "auto") == 0)
+        {
+            guardar_visor_preferido("feh");
+        }
+    }
+
+    if (strcmp(visor, "gio") == 0)
+    {
+        snprintf(cmd_open, sizeof(cmd_open), "gio open \"%s\" >/dev/null 2>&1", ruta);
+    }
+    else
+    {
+        snprintf(cmd_open, sizeof(cmd_open), "%s \"%s\" >/dev/null 2>&1", visor, ruta);
+    }
+
+    return system(cmd_open) == 0;
+#endif
+}
+
+static void configurar_visor_preferido_imagen()
+{
+    clear_screen();
+    print_header("CONFIGURAR VISOR DE IMAGEN");
+
+    char actual[64] = {0};
+    obtener_visor_preferido(actual, sizeof(actual));
+    printf("Visor actual: %s\n\n", actual[0] ? actual : "auto");
+
+    printf("Escribe el visor a usar o 'auto'.\n");
+#ifdef _WIN32
+    printf("Opciones recomendadas: auto, mspaint\n");
+#else
+    printf("Opciones recomendadas: auto, xdg-open, gio, feh, eog, gwenview\n");
+#endif
+
+    char nuevo[64] = {0};
+    input_string("Visor: ", nuevo, (int)sizeof(nuevo));
+    trim_whitespace(nuevo);
+
+    if (nuevo[0] == '\0')
+    {
+        printf("No se realizaron cambios.\n");
+        pause_console();
+        return;
+    }
+
+#ifdef _WIN32
+    if (_stricmp(nuevo, "auto") != 0 && _stricmp(nuevo, "mspaint") != 0)
+    {
+        printf("Visor no soportado en Windows. Usa 'auto' o 'mspaint'.\n");
+        pause_console();
+        return;
+    }
+#else
+    if (strcasecmp(nuevo, "auto") != 0 && !comando_existe(nuevo))
+    {
+        printf("No se encontro ese comando en el sistema.\n");
+        pause_console();
+        return;
+    }
+#endif
+
+    const char *valor =
+#ifdef _WIN32
+        (_stricmp(nuevo, "auto") == 0) ? "" : nuevo;
+#else
+        (strcasecmp(nuevo, "auto") == 0) ? "" : nuevo;
+#endif
+
+    if (!guardar_visor_preferido(valor))
+    {
+        printf("No se pudo guardar la configuracion del visor.\n");
+        pause_console();
+        return;
+    }
+
+    printf("Visor guardado: %s\n", valor[0] ? valor : "auto");
+    pause_console();
+}
+
+static int pedir_imagen_camiseta_y_resolver_ruta(char *ruta_absoluta, size_t size)
+{
+    if (!hay_registros("camiseta"))
+    {
+        mostrar_no_hay_registros("camisetas");
+        return 0;
+    }
+
+    listar_camisetas_simple();
+    int id = input_int("\nID de camiseta (0 para cancelar): ");
+    if (id == 0)
+    {
+        return 0;
+    }
+
+    if (!existe_id("camiseta", id))
+    {
+        printf("ID inexistente.\n");
+        return 0;
+    }
+
+    if (!construir_ruta_absoluta_imagen_por_id(id, ruta_absoluta, size))
+    {
+        printf("No se encontro imagen cargada en disco para esa camiseta.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static void previsualizar_imagen_camiseta_consola()
+{
+    clear_screen();
+    print_header("PREVISUALIZAR IMAGEN (CONSOLA)");
+
+    char ruta_absoluta[1200] = {0};
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
+    {
+        pause_console();
+        return;
+    }
+
+    if (!comando_existe("chafa"))
+    {
+        if (!confirmar("No se detecto 'chafa'. Desea instalarlo automaticamente?"))
+        {
+            pause_console();
+            return;
+        }
+
+        printf("Instalando 'chafa'...\n");
+        if (!instalar_paquete_linux("chafa"))
+        {
+            printf("No se pudo instalar 'chafa'.\n");
+            pause_console();
+            return;
+        }
+    }
+
+    char cmd[1400];
+#ifdef _WIN32
+    snprintf(cmd, sizeof(cmd), "chafa --size 80x40 \"%s\"", ruta_absoluta);
+#else
+    snprintf(cmd, sizeof(cmd), "chafa --size 80x40 \"%s\"", ruta_absoluta);
+#endif
+
+    if (system(cmd) != 0)
+    {
+        printf("No se pudo previsualizar con chafa.\n");
+        pause_console();
+        return;
+    }
+
+    pause_console();
+}
+
+static void probar_visor_imagen_actual()
+{
+    clear_screen();
+    print_header("PROBAR VISOR DE IMAGEN");
+
+    char ruta_absoluta[1200] = {0};
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
+    {
+        pause_console();
+        return;
+    }
+
+    if (!abrir_imagen_en_sistema(ruta_absoluta))
+    {
+        printf("No se pudo abrir la imagen con el visor actual.\n");
+        pause_console();
+        return;
+    }
+
+    printf("Visor ejecutado correctamente.\n");
+    pause_console();
+}
+
+static void menu_ajustes_imagen_camiseta()
+{
+    MenuItem items[] =
+    {
+        {1, "Configurar visor", configurar_visor_preferido_imagen},
+        {2, "Probar visor", probar_visor_imagen_actual},
+        {3, "Previsualizar en consola", previsualizar_imagen_camiseta_consola},
+        {0, "Volver", NULL}
+    };
+    ejecutar_menu("AJUSTES IMAGEN", items, 4);
+}
+
+static int obtener_ruta_imagen_camiseta_db(int id, char *ruta, size_t size)
+{
+    if (!ruta || size == 0)
+    {
+        return 0;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT imagen_ruta FROM camiseta WHERE id=?"))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+    int ok = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *valor = sqlite3_column_text(stmt, 0);
+        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
+        {
+            ok = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -107,6 +716,27 @@ void crear_camiseta()
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s", id, nombre);
         app_log_event("CAMISETA", log_msg);
+
+        int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
+        if (desea_cargar_imagen)
+        {
+            if (!cargar_imagen_para_camiseta_id((int)id))
+            {
+                printf("No se pudo cargar la imagen en este momento.\n");
+                snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada, pero fallo carga de imagen inicial", id);
+                app_log_event("CAMISETA", log_msg);
+            }
+            else
+            {
+                snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada con imagen inicial", id);
+                app_log_event("CAMISETA", log_msg);
+            }
+        }
+        else
+        {
+            snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada sin imagen inicial (opcional)", id);
+            app_log_event("CAMISETA", log_msg);
+        }
     }
     else
     {
@@ -124,6 +754,80 @@ void crear_camiseta()
  * Proporciona visibilidad a los usuarios de las camisetas disponibles
  * para facilitar la toma de decisiones en otras operaciones.
  */
+static int cargar_imagen_para_camiseta_id(int id)
+{
+    if (id <= 0)
+    {
+        return 0;
+    }
+
+    char ruta_origen[1024] = {0};
+    printf("\nSe abrira el selector de archivos en Descargas.\n");
+    if (!seleccionar_imagen_usuario(ruta_origen, sizeof(ruta_origen)))
+    {
+        printf("No se selecciono ninguna imagen.\n");
+        return 0;
+    }
+
+    const char *ext = obtener_extension(ruta_origen);
+    if (!extension_imagen_soportada(ext))
+    {
+        printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        printf("No se pudo preparar la carpeta Imagenes.\n");
+        return 0;
+    }
+
+    char ts[32] = {0};
+    get_timestamp(ts, (int)sizeof(ts));
+
+    char nombre_destino[256] = {0};
+    snprintf(nombre_destino, sizeof(nombre_destino), "camiseta_%d_%s%s", id, ts, ext);
+
+    char ruta_destino[1200] = {0};
+#ifdef _WIN32
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s\\%s", images_dir, nombre_destino);
+#else
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s/%s", images_dir, nombre_destino);
+#endif
+
+    if (!copiar_archivo_binario(ruta_origen, ruta_destino))
+    {
+        printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
+        return 0;
+    }
+
+    char ruta_relativa_db[300] = {0};
+    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_destino);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "UPDATE camiseta SET imagen_ruta=? WHERE id=?"))
+    {
+        printf("Error al guardar ruta de imagen en DB.\n");
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, ruta_relativa_db, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        printf("Error al guardar ruta de imagen en DB.\n");
+        return 0;
+    }
+
+    printf("\nImagen cargada correctamente.\n");
+    printf("Guardada en: %s\n", ruta_destino);
+    return 1;
+}
+
 void listar_camisetas()
 {
     clear_screen();
@@ -186,6 +890,63 @@ void editar_camiseta()
     sqlite3_finalize(stmt);
 
     printf("\nCamiseta actualizada correctamente\n");
+    pause_console();
+}
+
+void cargar_imagen_camiseta()
+{
+    clear_screen();
+    print_header("CARGAR IMAGEN DE CAMISETA");
+
+    if (!hay_registros("camiseta"))
+    {
+        mostrar_no_hay_registros("camisetas");
+        pause_console();
+        return;
+    }
+
+    listar_camisetas_simple();
+    int id = input_int("\nID de camiseta (0 para cancelar): ");
+    if (id == 0)
+    {
+        return;
+    }
+
+    if (!existe_id("camiseta", id))
+    {
+        printf("ID inexistente.\n");
+        pause_console();
+        return;
+    }
+
+    if (!cargar_imagen_para_camiseta_id(id))
+    {
+        printf("No se pudo completar la carga de imagen.\n");
+    }
+
+    pause_console();
+}
+
+void ver_imagen_camiseta()
+{
+    clear_screen();
+    print_header("VER IMAGEN DE CAMISETA");
+
+    char ruta_absoluta[1200] = {0};
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
+    {
+        pause_console();
+        return;
+    }
+
+    if (!abrir_imagen_en_sistema(ruta_absoluta))
+    {
+        printf("No se pudo abrir la imagen en el sistema.\n");
+        pause_console();
+        return;
+    }
+
+    printf("Abriendo imagen...\n");
     pause_console();
 }
 
@@ -398,7 +1159,10 @@ void menu_camisetas()
         {3, "Modificar", editar_camiseta},
         {4, "Eliminar", eliminar_camiseta},
         {5, "Sortear", sortear_camiseta},
+        {6, "Cargar imagen", cargar_imagen_camiseta},
+        {7, "Ver imagen", ver_imagen_camiseta},
+        {8, "Ajustes imagen", menu_ajustes_imagen_camiseta},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("CAMISETAS", items, 6);
+    ejecutar_menu("CAMISETAS", items, 9);
 }

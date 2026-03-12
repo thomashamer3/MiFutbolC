@@ -20,9 +20,10 @@ RUN_AFTER_BUILD=0
 STRIP_BINARY=0
 INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
 OS_NAME="$(uname -s)"
+INSTALL_IMAGE_TOOLS="${INSTALL_IMAGE_TOOLS:-1}"
 
 # Progress bar (stage-based) for installation/build flow
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 CURRENT_STEP=0
 
 render_progress_bar() {
@@ -74,6 +75,14 @@ while [[ "$#" -gt 0 ]]; do
       INSTALL_PATH_MODE="none"
       shift
       ;;
+    --with-image-tools)
+      INSTALL_IMAGE_TOOLS=1
+      shift
+      ;;
+    --without-image-tools)
+      INSTALL_IMAGE_TOOLS=0
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: ./Instalador-Linux.sh [options]
@@ -85,6 +94,8 @@ Options:
   --path-user     Add MiFutbolC to PATH for current user (~/.local/bin) [default]
   --path-system   Add MiFutbolC to PATH globally (/usr/local/bin, requires sudo)
   --no-path       Do not modify PATH
+  --with-image-tools     Install optional image tools (feh/chafa/zenity) [default]
+  --without-image-tools  Skip optional image tools installation
   -h, --help      Show this help message
 
 You can also set BUILD_TYPE=Debug to enable debug build.
@@ -240,6 +251,69 @@ install_launcher_in_path() {
   esac
 }
 
+install_optional_image_tools() {
+  if [[ "${INSTALL_IMAGE_TOOLS}" != "1" ]]; then
+    echo "Herramientas de imagen opcionales: omitidas (--without-image-tools)."
+    return 0
+  fi
+
+  if [[ "${OS_NAME}" = "Darwin" ]]; then
+    if command -v brew >/dev/null 2>&1; then
+      echo "Instalando herramientas opcionales en macOS (chafa)..."
+      if brew install chafa; then
+        echo "chafa instalado correctamente."
+      else
+        echo "Aviso: no se pudo instalar chafa en macOS."
+      fi
+    else
+      echo "Aviso: Homebrew no detectado, se omite instalacion de herramientas opcionales."
+    fi
+    return 0
+  fi
+
+  if command -v apt-get >/dev/null 2>&1; then
+    echo "Instalando herramientas opcionales (feh/chafa/zenity) via apt-get..."
+    if sudo apt-get install -y feh chafa zenity; then
+      echo "Herramientas opcionales instaladas correctamente."
+    else
+      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+    fi
+    return 0
+  fi
+
+  if command -v dnf >/dev/null 2>&1; then
+    echo "Instalando herramientas opcionales (feh/chafa/zenity) via dnf..."
+    if sudo dnf install -y feh chafa zenity; then
+      echo "Herramientas opcionales instaladas correctamente."
+    else
+      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+    fi
+    return 0
+  fi
+
+  if command -v zypper >/dev/null 2>&1; then
+    echo "Instalando herramientas opcionales (feh/chafa/zenity) via zypper..."
+    if sudo zypper install -y feh chafa zenity; then
+      echo "Herramientas opcionales instaladas correctamente."
+    else
+      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+    fi
+    return 0
+  fi
+
+  if command -v pacman >/dev/null 2>&1; then
+    echo "Instalando herramientas opcionales (feh/chafa/zenity) via pacman..."
+    if sudo pacman -Sy --noconfirm feh chafa zenity; then
+      echo "Herramientas opcionales instaladas correctamente."
+    else
+      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+    fi
+    return 0
+  fi
+
+  echo "Aviso: no se detecto un gestor de paquetes compatible para herramientas opcionales."
+}
+
 step_progress "Verificando dependencias"
 check_deps
 
@@ -260,6 +334,9 @@ warn_sqlite_windows_macros() {
 
 step_progress "Revisando compatibilidad de sqlite3"
 warn_sqlite_windows_macros
+
+step_progress "Preparando herramientas opcionales de imagen"
+install_optional_image_tools
 
 # Source files
 SRC=(

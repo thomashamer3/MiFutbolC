@@ -92,6 +92,9 @@ static char EXPORT_DIR[1024];
 /** Directorio de importaciones */
 static char IMPORT_DIR[1024];
 
+/** Directorio de imagenes */
+static char IMAGES_DIR[1024];
+
 typedef enum
 {
     COPY_OK = 0,
@@ -472,6 +475,7 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
+        " imagen_ruta TEXT DEFAULT '',"
         " sorteada INTEGER DEFAULT 0);"
 
         "CREATE TABLE IF NOT EXISTS cancha ("
@@ -637,7 +641,8 @@ static int create_database_schema()
         " theme INTEGER DEFAULT 0,"
         " language INTEGER DEFAULT 0,"
         " mode INTEGER DEFAULT 0,"
-        " text_size INTEGER DEFAULT 1);"
+        " text_size INTEGER DEFAULT 1,"
+        " image_viewer TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -906,6 +911,7 @@ static void add_missing_columns()
     const char *alter_statements[] =
     {
         "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;",
+        "ALTER TABLE camiseta ADD COLUMN imagen_ruta TEXT DEFAULT '';",
         "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;",
@@ -915,6 +921,7 @@ static void add_missing_columns()
         "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN precio INTEGER DEFAULT 0;",
         "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
+        "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';",
         NULL
     };
 
@@ -960,6 +967,7 @@ int db_init()
     // Crear directorios de importacion y exportacion al iniciar
     get_import_dir();
     get_export_dir();
+    get_images_dir();
 
     app_log_write("INFO", "APP", "Inicializacion de base de datos completada");
 
@@ -1097,6 +1105,29 @@ const char *get_import_dir()
     }
 
     return IMPORT_DIR;
+}
+
+/**
+ * @brief Establece ubicacion accesible para archivos de imagen
+ *
+ * Configura directorio visible al usuario para almacenar imagenes
+ * asociadas a camisetas, al mismo nivel que importaciones y exportaciones.
+ *
+ * @return Puntero a cadena con la ruta del directorio de imagenes
+ */
+const char *get_images_dir()
+{
+    if (!configurar_directorio_usuario("./Imagenes",
+                                       NULL,
+                                       "Imagenes",
+                                       IMAGES_DIR,
+                                       sizeof(IMAGES_DIR),
+                                       "Imagenes"))
+    {
+        return NULL;
+    }
+
+    return IMAGES_DIR;
 }
 
 /**

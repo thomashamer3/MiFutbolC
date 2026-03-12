@@ -373,6 +373,13 @@ static void ensure_settings_schema()
     }
 
     err = NULL;
+    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';", NULL, NULL, &err);
+    if (err)
+    {
+        sqlite3_free(err);
+    }
+
+    err = NULL;
 }
 
 /**
