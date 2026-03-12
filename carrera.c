@@ -19,6 +19,19 @@
 
 /* ======== helpers internos ======== */
 
+#define SQL_EXPR_ANIO_FECHA_SEGURO \
+    "CASE " \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) " \
+    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 7, 4) AS INTEGER) " \
+    "  ELSE NULL " \
+    "END"
+
+#define SQL_EXPR_ANIO_FECHA_FLEX \
+    "CASE " \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) " \
+    "  ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) " \
+    "END"
+
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
@@ -42,6 +55,21 @@ static void imprimir_titulo_carrera_usuario(void)
         printf("\n  Carrera Futbolistica del Usuario\n");
 
     free(nombre_usuario);
+}
+
+static int iniciar_vista_carrera(const char *titulo)
+{
+    clear_screen();
+    print_header(titulo);
+
+    if (!hay_registros("partido"))
+    {
+        mostrar_no_hay_registros("partidos");
+        pause_console();
+        return 0;
+    }
+
+    return 1;
 }
 
 typedef struct
@@ -133,15 +161,8 @@ static void imprimir_racha_actual(const RachaActual *racha)
  * ======================================================== */
 static void mostrar_carrera_futbolistica(void)
 {
-    clear_screen();
-    print_header("CARRERA FUTBOLISTICA");
-
-    if (!hay_registros("partido"))
-    {
-        mostrar_no_hay_registros("partidos");
-        pause_console();
+    if (!iniciar_vista_carrera("CARRERA FUTBOLISTICA"))
         return;
-    }
 
     sqlite3_stmt *stmt;
     const char *sql =
@@ -207,15 +228,8 @@ static void mostrar_carrera_futbolistica(void)
  * ======================================================== */
 static void mostrar_historia_futbolistica(void)
 {
-    clear_screen();
-    print_header("TU HISTORIA FUTBOLISTICA");
-
-    if (!hay_registros("partido"))
-    {
-        mostrar_no_hay_registros("partidos");
-        pause_console();
+    if (!iniciar_vista_carrera("TU HISTORIA FUTBOLISTICA"))
         return;
-    }
 
     /* --- Datos globales y primer partido --- */
     sqlite3_stmt *stmt;
@@ -224,10 +238,7 @@ static void mostrar_historia_futbolistica(void)
         "  COUNT(*), "
         "  COALESCE(SUM(goles), 0), "
         "  COALESCE(SUM(asistencias), 0), "
-        "  MIN(CASE "
-        "        WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "
-        "        WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 7, 4) AS INTEGER) "
-        "        ELSE NULL END), "
+        "  MIN(" SQL_EXPR_ANIO_FECHA_SEGURO "), "
         "  MIN(fecha_hora) "
         "FROM partido";
 
@@ -257,10 +268,7 @@ static void mostrar_historia_futbolistica(void)
     sqlite3_stmt *stmt2;
     const char *sql_mejor =
         "SELECT "
-        "  CASE WHEN fecha_hora LIKE '____-__-__%' "
-        "       THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "
-        "       ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) "
-        "  END AS anio, "
+        "  " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, "
         "  SUM(goles) AS total_goles "
         "FROM partido "
         "GROUP BY anio "
@@ -302,10 +310,7 @@ static void mostrar_historia_futbolistica(void)
     sqlite3_stmt *stmt3;
     const char *sql_anios =
         "SELECT "
-        "  CASE WHEN fecha_hora LIKE '____-__-__%' "
-        "       THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "
-        "       ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) "
-        "  END AS anio, "
+        "  " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, "
         "  COUNT(*) AS partidos, "
         "  SUM(goles) AS goles, "
         "  SUM(asistencias) AS asistencias, "
@@ -341,25 +346,14 @@ static void mostrar_historia_futbolistica(void)
  * ======================================================== */
 static void mostrar_resumen_carrera(void)
 {
-    clear_screen();
-    print_header("RESUMEN GENERAL DE CARRERA");
-
-    if (!hay_registros("partido"))
-    {
-        mostrar_no_hay_registros("partidos");
-        pause_console();
+    if (!iniciar_vista_carrera("RESUMEN GENERAL DE CARRERA"))
         return;
-    }
 
     sqlite3_stmt *stmt;
     const char *sql =
         "SELECT "
-        "  MIN(CASE WHEN fecha_hora LIKE '____-__-__%' "
-        "           THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "
-        "           ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) END) AS inicio, "
-        "  MAX(CASE WHEN fecha_hora LIKE '____-__-__%' "
-        "           THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "
-        "           ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) END) AS fin, "
+        "  MIN(" SQL_EXPR_ANIO_FECHA_FLEX ") AS inicio, "
+        "  MAX(" SQL_EXPR_ANIO_FECHA_FLEX ") AS fin, "
         "  COUNT(*) AS partidos, "
         "  COALESCE(SUM(goles), 0) AS goles, "
         "  COALESCE(SUM(asistencias), 0) AS asistencias, "
@@ -422,9 +416,9 @@ void menu_carrera_futbolistica(void)
 {
     MenuItem items[] =
     {
-        {1, "Carrera Futbolistica", mostrar_carrera_futbolistica},
-        {2, "Tu Historia Futbolistica", mostrar_historia_futbolistica},
-        {3, "Resumen General de Carrera", mostrar_resumen_carrera},
+        {1, "Carrera Futbolistica", &mostrar_carrera_futbolistica},
+        {2, "Tu Historia Futbolistica", &mostrar_historia_futbolistica},
+        {3, "Resumen General de Carrera", &mostrar_resumen_carrera},
         {0, "Volver", NULL}
     };
 

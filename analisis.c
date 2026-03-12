@@ -34,6 +34,35 @@ static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql)
     return 0;
 }
 
+static void iniciar_pantalla_analisis(const char *titulo)
+{
+    clear_screen();
+    print_header(titulo);
+}
+
+static int normalizar_no_negativo(int valor)
+{
+    return (valor < 0) ? 0 : valor;
+}
+
+static int migrar_columna_duplicable(const char *sql_alter)
+{
+    char *err = NULL;
+    int rc = sqlite3_exec(db, sql_alter, NULL, NULL, &err);
+
+    if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
+    {
+        printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
+        sqlite3_free(err);
+        return 0;
+    }
+
+    if (err)
+        sqlite3_free(err);
+
+    return 1;
+}
+
 static int existe_id_entidad(const char *tabla, int id)
 {
     sqlite3_stmt *stmt;
@@ -229,8 +258,7 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
  */
 static void mostrar_analisis_basico()
 {
-    clear_screen();
-    print_header("ANALISIS DE RENDIMIENTO");
+    iniciar_pantalla_analisis("ANALISIS DE RENDIMIENTO");
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
@@ -280,33 +308,11 @@ static int asegurar_tabla_quimica_jugador_estadistica(void)
     }
 
     /* Migracion simple para bases ya existentes */
-    {
-        char *err = NULL;
-        int rc = sqlite3_exec(db,
-                              "ALTER TABLE quimica_jugador_estadistica ADD COLUMN companero_asistido TEXT DEFAULT ''",
-                              NULL, NULL, &err);
-        if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
-        {
-            printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
-            sqlite3_free(err);
-            return 0;
-        }
-        if (err) sqlite3_free(err);
-    }
+    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN companero_asistido TEXT DEFAULT ''"))
+        return 0;
 
-    {
-        char *err = NULL;
-        int rc = sqlite3_exec(db,
-                              "ALTER TABLE quimica_jugador_estadistica ADD COLUMN asistencias_del_usuario INTEGER DEFAULT 0",
-                              NULL, NULL, &err);
-        if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
-        {
-            printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
-            sqlite3_free(err);
-            return 0;
-        }
-        if (err) sqlite3_free(err);
-    }
+    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN asistencias_del_usuario INTEGER DEFAULT 0"))
+        return 0;
 
     return 1;
 }
@@ -380,8 +386,7 @@ static int seleccionar_partido_para_quimica(const char *prompt)
  */
 static void mostrar_mejor_quimica_jugadores()
 {
-    clear_screen();
-    print_header("MEJOR COMBINACION DE JUGADORES");
+    iniciar_pantalla_analisis("MEJOR COMBINACION DE JUGADORES");
 
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -495,8 +500,7 @@ static void mostrar_mejor_quimica_jugadores()
 
 static void crear_estadistica_quimica_jugador(void)
 {
-    clear_screen();
-    print_header("AGREGAR ESTADISTICA DE JUGADOR");
+    iniciar_pantalla_analisis("AGREGAR ESTADISTICA DE JUGADOR");
 
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -528,10 +532,10 @@ static void crear_estadistica_quimica_jugador(void)
     int asistencias_al_usuario = input_int("Asistencias del companero hacia ti: ");
     int asistencias_del_usuario = input_int("Asistencias tuyas hacia ese companero: ");
 
-    if (goles < 0) goles = 0;
-    if (asistencias < 0) asistencias = 0;
-    if (asistencias_al_usuario < 0) asistencias_al_usuario = 0;
-    if (asistencias_del_usuario < 0) asistencias_del_usuario = 0;
+    goles = normalizar_no_negativo(goles);
+    asistencias = normalizar_no_negativo(asistencias);
+    asistencias_al_usuario = normalizar_no_negativo(asistencias_al_usuario);
+    asistencias_del_usuario = normalizar_no_negativo(asistencias_del_usuario);
 
     input_string("Comentario (opcional): ", comentario, sizeof(comentario));
 
@@ -568,8 +572,7 @@ static void crear_estadistica_quimica_jugador(void)
 
 static void listar_estadisticas_quimica_jugador(void)
 {
-    clear_screen();
-    print_header("LISTADO DE ESTADISTICAS DE JUGADORES");
+    iniciar_pantalla_analisis("LISTADO DE ESTADISTICAS DE JUGADORES");
 
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -628,8 +631,7 @@ static void listar_estadisticas_quimica_jugador(void)
 
 static void editar_estadistica_quimica_jugador(void)
 {
-    clear_screen();
-    print_header("EDITAR ESTADISTICA DE JUGADOR");
+    iniciar_pantalla_analisis("EDITAR ESTADISTICA DE JUGADOR");
 
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -667,10 +669,10 @@ static void editar_estadistica_quimica_jugador(void)
     int asistencias_al_usuario = input_int("Nuevas asistencias del companero hacia ti: ");
     int asistencias_del_usuario = input_int("Nuevas asistencias tuyas hacia ese companero: ");
 
-    if (goles < 0) goles = 0;
-    if (asistencias < 0) asistencias = 0;
-    if (asistencias_al_usuario < 0) asistencias_al_usuario = 0;
-    if (asistencias_del_usuario < 0) asistencias_del_usuario = 0;
+    goles = normalizar_no_negativo(goles);
+    asistencias = normalizar_no_negativo(asistencias);
+    asistencias_al_usuario = normalizar_no_negativo(asistencias_al_usuario);
+    asistencias_del_usuario = normalizar_no_negativo(asistencias_del_usuario);
 
     input_string("Nuevo comentario (opcional): ", comentario, sizeof(comentario));
 
@@ -709,8 +711,7 @@ static void editar_estadistica_quimica_jugador(void)
 
 static void eliminar_estadistica_quimica_jugador(void)
 {
-    clear_screen();
-    print_header("ELIMINAR ESTADISTICA DE JUGADOR");
+    iniciar_pantalla_analisis("ELIMINAR ESTADISTICA DE JUGADOR");
 
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -764,11 +765,11 @@ static void analizar_quimica_jugadores()
 
     MenuItem items[] =
     {
-        {1, "Mejor Combinacion de Jugadores", mostrar_mejor_quimica_jugadores},
-        {2, "Agregar Estadistica de Jugador", crear_estadistica_quimica_jugador},
-        {3, "Listar Estadisticas de Jugadores", listar_estadisticas_quimica_jugador},
-        {4, "Editar Estadistica de Jugador", editar_estadistica_quimica_jugador},
-        {5, "Eliminar Estadistica de Jugador", eliminar_estadistica_quimica_jugador},
+        {1, "Mejor Combinacion de Jugadores", &mostrar_mejor_quimica_jugadores},
+        {2, "Agregar Estadistica de Jugador", &crear_estadistica_quimica_jugador},
+        {3, "Listar Estadisticas de Jugadores", &listar_estadisticas_quimica_jugador},
+        {4, "Editar Estadistica de Jugador", &editar_estadistica_quimica_jugador},
+        {5, "Eliminar Estadistica de Jugador", &eliminar_estadistica_quimica_jugador},
         {0, "Volver", NULL}
     };
 
@@ -951,8 +952,7 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
  */
 static void comparar_camisetas()
 {
-    clear_screen();
-    print_header("COMPARADOR: CAMISETAS");
+    iniciar_pantalla_analisis("COMPARADOR: CAMISETAS");
 
     int id1;
     int id2;
@@ -984,8 +984,7 @@ static void comparar_camisetas()
  */
 static void comparar_torneos()
 {
-    clear_screen();
-    print_header("COMPARADOR: TORNEOS");
+    iniciar_pantalla_analisis("COMPARADOR: TORNEOS");
 
     int id1;
     int id2;
@@ -1017,8 +1016,7 @@ static void comparar_torneos()
  */
 static void comparar_periodos()
 {
-    clear_screen();
-    print_header("COMPARADOR: PERIODOS");
+    iniciar_pantalla_analisis("COMPARADOR: PERIODOS");
 
     printf("Formatos de fecha: DD/MM/AAAA\n");
     printf("Ejemplo: 2024-01-01 al 2024-06-30\n\n");
@@ -1070,8 +1068,7 @@ static void comparar_periodos()
  */
 static void comparar_condiciones()
 {
-    clear_screen();
-    print_header("COMPARADOR: CONDICIONES");
+    iniciar_pantalla_analisis("COMPARADOR: CONDICIONES");
 
     printf("Tipos de condicion:\n");
     printf("1. Clima (0=Soleado, 1=Lluvia, 2=Nublado)\n");
@@ -1135,8 +1132,7 @@ static void comparar_condiciones()
  */
 static void mostrar_comparador_avanzado()
 {
-    clear_screen();
-    print_header("COMPARADOR AVANZADO");
+    iniciar_pantalla_analisis("COMPARADOR AVANZADO");
 
     MenuItem items[] =
     {
@@ -1155,8 +1151,7 @@ static void mostrar_comparador_avanzado()
  */
 void mostrar_analisis()
 {
-    clear_screen();
-    print_header("ANALISIS Y COMPARADOR");
+    iniciar_pantalla_analisis("ANALISIS Y COMPARADOR");
 
     MenuItem items[] =
     {
@@ -1274,8 +1269,7 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
  */
 static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
 {
-    clear_screen();
-    print_header(titulo);
+    iniciar_pantalla_analisis(titulo);
 
     EstadisticasMensuales stats[120]; // Maximo 10 anos de datos
     int num_meses = calcular_estadisticas_mensuales(stats, 120, columna);
@@ -1308,8 +1302,7 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
  */
 static void encontrar_mes_historico(int mejor)
 {
-    clear_screen();
-    print_header(mejor ? "MEJOR MES HISTORICO" : "PEOR MES HISTORICO");
+    iniciar_pantalla_analisis(mejor ? "MEJOR MES HISTORICO" : "PEOR MES HISTORICO");
 
     sqlite3_stmt *stmt;
     const char *sql = mejor ?
@@ -1359,8 +1352,7 @@ static void encontrar_mes_historico(int mejor)
  */
 static void comparar_inicio_fin_anio()
 {
-    clear_screen();
-    print_header("INICIO VS FIN DE ANIO");
+    iniciar_pantalla_analisis("INICIO VS FIN DE ANIO");
 
     sqlite3_stmt *stmt;
     /*
@@ -1415,8 +1407,7 @@ static void comparar_inicio_fin_anio()
  */
 static void comparar_meses_frios_calidos()
 {
-    clear_screen();
-    print_header("MESES FRIOS VS CALIDOS");
+    iniciar_pantalla_analisis("MESES FRIOS VS CALIDOS");
 
     sqlite3_stmt *stmt;
     const char *sql =
@@ -1516,8 +1507,7 @@ static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
  */
 static void calcular_progreso_total()
 {
-    clear_screen();
-    print_header("PROGRESO TOTAL DEL JUGADOR");
+    iniciar_pantalla_analisis("PROGRESO TOTAL DEL JUGADOR");
 
     sqlite3_stmt *stmt;
     const char *sql =
@@ -1594,8 +1584,7 @@ static void calcular_progreso_total()
  */
 void mostrar_evolucion_temporal()
 {
-    clear_screen();
-    print_header("EVOLUCION TEMPORAL");
+    iniciar_pantalla_analisis("EVOLUCION TEMPORAL");
 
     MenuItem items[] =
     {

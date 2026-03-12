@@ -602,8 +602,8 @@ static MenuItem* construir_menu_records()
         {12, "Mejor Racha Goleadora", mostrar_mejor_racha_goleadora},
         {13, "Peor Racha", mostrar_peor_racha},
         {14, "Partidos Consecutivos Anotando", mostrar_partidos_consecutivos_anotando},
-        {15, "Top 5 Mejores Partidos", mostrar_top5_mejores_partidos},
-        {16, "Ranking de Tus Camisetas", mostrar_ranking_camisetas},
+        {15, "Top 5 Mejores Partidos", &mostrar_top5_mejores_partidos},
+        {16, "Ranking de Tus Camisetas", &mostrar_ranking_camisetas},
         {0, "Volver", NULL}
     };
     return items;
