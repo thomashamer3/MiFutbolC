@@ -876,6 +876,67 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
     printf("  Rendimiento: %s\n", determinar_ganador(diff_rend, nombre1, nombre2));
 }
 
+static void comparar_y_mostrar_metricas(const char *condicion_sql_1,
+                                        const char *condicion_sql_2,
+                                        const char *nombre1,
+                                        const char *nombre2)
+{
+    MetricasComparacion m1 = {0};
+    MetricasComparacion m2 = {0};
+
+    calcular_metricas_por_condicion(&m1, condicion_sql_1);
+    calcular_metricas_por_condicion(&m2, condicion_sql_2);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    pause_console();
+}
+
+static void construir_condicion_sql_id(char *destino,
+                                       size_t destino_size,
+                                       const char *condicion_prefijo,
+                                       int id,
+                                       const char *condicion_sufijo)
+{
+    char id_txt[32];
+    sprintf_s(id_txt, sizeof(id_txt), "%d", id);
+
+    strcpy_s(destino, destino_size, condicion_prefijo);
+    strcat_s(destino, destino_size, id_txt);
+    strcat_s(destino, destino_size, condicion_sufijo);
+}
+
+static void comparar_entidades_por_tabla(const char *titulo_pantalla,
+                                         const char *tabla,
+                                         const char *titulo_lista,
+                                         const char *condicion_prefijo,
+                                         const char *condicion_sufijo,
+                                         const char *nombre_default_1,
+                                         const char *nombre_default_2)
+{
+    int id1;
+    int id2;
+    char sql1[256];
+    char sql2[256];
+    char nombre1[256];
+    char nombre2[256];
+
+    iniciar_pantalla_analisis(titulo_pantalla);
+
+    if (!listar_y_seleccionar_dos_entidades(tabla, titulo_lista, &id1, &id2))
+        return;
+
+    construir_condicion_sql_id(sql1, sizeof(sql1), condicion_prefijo, id1, condicion_sufijo);
+    construir_condicion_sql_id(sql2, sizeof(sql2), condicion_prefijo, id2, condicion_sufijo);
+
+    strcpy_s(nombre1, sizeof(nombre1), nombre_default_1);
+    strcpy_s(nombre2, sizeof(nombre2), nombre_default_2);
+
+    obtener_nombre_entidad(tabla, id1, nombre1, sizeof(nombre1));
+    obtener_nombre_entidad(tabla, id2, nombre2, sizeof(nombre2));
+
+    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
+}
+
 /**
  * @brief Funcion auxiliar para listar entidades y obtener dos IDs
  * Centraliza logica repetida en comparadores para evitar duplicacion
@@ -952,31 +1013,13 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
  */
 static void comparar_camisetas()
 {
-    iniciar_pantalla_analisis("COMPARADOR: CAMISETAS");
-
-    int id1;
-    int id2;
-    if (!listar_y_seleccionar_dos_entidades("camiseta", "Camiseta", &id1, &id2))
-        return;
-
-    char sql1[128];
-    char sql2[128];
-    snprintf(sql1, sizeof(sql1), "camiseta_id = %d", id1);
-    snprintf(sql2, sizeof(sql2), "camiseta_id = %d", id2);
-
-    MetricasComparacion m1 = {0};
-    MetricasComparacion m2 = {0};
-    calcular_metricas_por_condicion(&m1, sql1);
-    calcular_metricas_por_condicion(&m2, sql2);
-
-    char nombre1[256] = "Camiseta A";
-    char nombre2[256] = "Camiseta B";
-
-    obtener_nombre_entidad("camiseta", id1, nombre1, sizeof(nombre1));
-    obtener_nombre_entidad("camiseta", id2, nombre2, sizeof(nombre2));
-
-    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
-    pause_console();
+    comparar_entidades_por_tabla("COMPARADOR: CAMISETAS",
+                                 "camiseta",
+                                 "Camiseta",
+                                 "camiseta_id = ",
+                                 "",
+                                 "Camiseta A",
+                                 "Camiseta B");
 }
 
 /**
@@ -984,31 +1027,13 @@ static void comparar_camisetas()
  */
 static void comparar_torneos()
 {
-    iniciar_pantalla_analisis("COMPARADOR: TORNEOS");
-
-    int id1;
-    int id2;
-    if (!listar_y_seleccionar_dos_entidades("torneo", "Torneo", &id1, &id2))
-        return;
-
-    char sql1[128];
-    char sql2[128];
-    snprintf(sql1, sizeof(sql1), "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = %d)", id1);
-    snprintf(sql2, sizeof(sql2), "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = %d)", id2);
-
-    MetricasComparacion m1 = {0};
-    MetricasComparacion m2 = {0};
-    calcular_metricas_por_condicion(&m1, sql1);
-    calcular_metricas_por_condicion(&m2, sql2);
-
-    char nombre1[256] = "Torneo A";
-    char nombre2[256] = "Torneo B";
-
-    obtener_nombre_entidad("torneo", id1, nombre1, sizeof(nombre1));
-    obtener_nombre_entidad("torneo", id2, nombre2, sizeof(nombre2));
-
-    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
-    pause_console();
+    comparar_entidades_por_tabla("COMPARADOR: TORNEOS",
+                                 "torneo",
+                                 "Torneo",
+                                 "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = ",
+                                 ")",
+                                 "Torneo A",
+                                 "Torneo B");
 }
 
 /**
@@ -1049,18 +1074,12 @@ static void comparar_periodos()
     snprintf(sql1, sizeof(sql1), "fecha_hora BETWEEN '%s' AND '%s'", fecha1_inicio, fecha1_fin);
     snprintf(sql2, sizeof(sql2), "fecha_hora BETWEEN '%s' AND '%s'", fecha2_inicio, fecha2_fin);
 
-    MetricasComparacion m1 = {0};
-    MetricasComparacion m2 = {0};
-    calcular_metricas_por_condicion(&m1, sql1);
-    calcular_metricas_por_condicion(&m2, sql2);
-
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "Periodo %s a %s", fecha1_inicio, fecha1_fin);
     snprintf(nombre2, sizeof(nombre2), "Periodo %s a %s", fecha2_inicio, fecha2_fin);
 
-    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
-    pause_console();
+    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
 }
 
 /**
@@ -1113,18 +1132,12 @@ static void comparar_condiciones()
     snprintf(sql1, sizeof(sql1), "%s = %d", campo, valor1);
     snprintf(sql2, sizeof(sql2), "%s = %d", campo, valor2);
 
-    MetricasComparacion m1 = {0};
-    MetricasComparacion m2 = {0};
-    calcular_metricas_por_condicion(&m1, sql1);
-    calcular_metricas_por_condicion(&m2, sql2);
-
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "%s %d", tipo_texto, valor1);
     snprintf(nombre2, sizeof(nombre2), "%s %d", tipo_texto, valor2);
 
-    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
-    pause_console();
+    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
 }
 
 /**

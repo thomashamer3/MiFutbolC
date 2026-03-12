@@ -13,6 +13,66 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
 }
 
+static void iniciar_pantalla_ia(const char *titulo)
+{
+    clear_screen();
+    print_header(titulo);
+}
+
+static void limpiar_buffer_linea(void)
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+    {
+        /* Descarta caracteres restantes del buffer de entrada. */
+    }
+}
+
+static int leer_confirmacion_sn(const char *prompt)
+{
+    int respuesta;
+    printf("%s", prompt);
+    respuesta = getchar();
+    limpiar_buffer_linea();
+    return (respuesta != EOF && (respuesta == 's' || respuesta == 'S')) ? 1 : 0;
+}
+
+static void formatear_fecha_yyyy_mm_dd(time_t fecha, char *fecha_str, size_t tam)
+{
+    struct tm tm_fecha;
+#ifdef _WIN32
+    localtime_s(&tm_fecha, &fecha);
+#else
+    localtime_r(&fecha, &tm_fecha);
+#endif
+    strftime(fecha_str, tam, "%Y-%m-%d", &tm_fecha);
+}
+
+static void bind_rango_fechas_yyyy_mm_dd(sqlite3_stmt *stmt, time_t fecha_inicio, time_t fecha_fin)
+{
+    char fecha_inicio_str[20];
+    char fecha_fin_str[20];
+
+    formatear_fecha_yyyy_mm_dd(fecha_inicio, fecha_inicio_str, sizeof(fecha_inicio_str));
+    formatear_fecha_yyyy_mm_dd(fecha_fin, fecha_fin_str, sizeof(fecha_fin_str));
+
+    sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
+}
+
+static void ejecutar_upsert_perfil(const char *sql, int aceptados, int ignorados, float indice_prudencia)
+{
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, sql))
+    {
+        sqlite3_bind_int(stmt, 1, aceptados);
+        sqlite3_bind_int(stmt, 2, ignorados);
+        sqlite3_bind_double(stmt, 3, indice_prudencia);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
+
 static int parsear_fecha_ddmmaa(const char *fecha_str, struct tm *tm_fecha)
 {
     if (!fecha_str)
@@ -261,8 +321,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
 // Mostrar consejos actuales
 void mostrar_consejos_actuales()
 {
-    clear_screen();
-    print_header("Consejos Actuales del Entrenador IA");
+    iniciar_pantalla_ia("Consejos Actuales del Entrenador IA");
 
     EstadoJugador estado = evaluar_estado_jugador();
     Consejo *consejos = NULL;
@@ -290,11 +349,7 @@ void mostrar_consejos_actuales()
                consejos[i].mensaje);
 
         // Preguntar si siguio el consejo
-        printf("Seguiste este consejo? (s/n): ");
-        int respuesta = getchar();
-        while (getchar() != '\n'); // Limpiar buffer
-
-        int seguido = (respuesta != EOF && (respuesta == 's' || respuesta == 'S')) ? 1 : 0;
+        int seguido = leer_confirmacion_sn("Seguiste este consejo? (s/n): ");
         guardar_consejo_historial(consejos[i].mensaje, seguido);
     }
 
@@ -311,8 +366,7 @@ void mostrar_consejos_actuales()
 // Mostrar historial de consejos
 void mostrar_historial_consejos()
 {
-    clear_screen();
-    print_header("Historial de Consejos");
+    iniciar_pantalla_ia("Historial de Consejos");
 
     sqlite3_stmt *stmt;
     const char *sql = "SELECT fecha, consejo, seguido FROM consejos_historial ORDER BY fecha DESC;";
@@ -334,14 +388,8 @@ void mostrar_historial_consejos()
         const char *consejo = (const char*)sqlite3_column_text(stmt, 1);
         int seguido = sqlite3_column_int(stmt, 2);
 
-        struct tm tm_fecha;
         char fecha_str[20];
-#ifdef _WIN32
-        localtime_s(&tm_fecha, &fecha);
-#else
-        localtime_r(&fecha, &tm_fecha);
-#endif
-        strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
+        formatear_fecha_yyyy_mm_dd(fecha, fecha_str, sizeof(fecha_str));
 
         printf("%s - %s [%s]\n",
                fecha_str,
@@ -381,24 +429,7 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
 
     if (preparar_stmt(&stmt, sql))
     {
-        struct tm tm_inicio;
-        struct tm tm_fin;
-        char fecha_inicio_str[20];
-        char fecha_fin_str[20];
-
-#ifdef _WIN32
-        localtime_s(&tm_inicio, &fecha_inicio);
-        localtime_s(&tm_fin, &fecha_fin);
-#else
-        localtime_r(&fecha_inicio, &tm_inicio);
-        localtime_r(&fecha_fin, &tm_fin);
-#endif
-
-        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%Y-%m-%d", &tm_inicio);
-        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%Y-%m-%d", &tm_fin);
-
-        sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
+        bind_rango_fechas_yyyy_mm_dd(stmt, fecha_inicio, fecha_fin);
 
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -427,24 +458,7 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin,
 
     if (preparar_stmt(&stmt, sql_lesiones))
     {
-        struct tm tm_inicio;
-        struct tm tm_fin;
-        char fecha_inicio_str[20];
-        char fecha_fin_str[20];
-
-#ifdef _WIN32
-        localtime_s(&tm_inicio, &fecha_inicio);
-        localtime_s(&tm_fin, &fecha_fin);
-#else
-        localtime_r(&fecha_inicio, &tm_inicio);
-        localtime_r(&fecha_fin, &tm_fin);
-#endif
-
-        strftime(fecha_inicio_str, sizeof(fecha_inicio_str), "%Y-%m-%d", &tm_inicio);
-        strftime(fecha_fin_str, sizeof(fecha_fin_str), "%Y-%m-%d", &tm_fin);
-
-        sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
+        bind_rango_fechas_yyyy_mm_dd(stmt, fecha_inicio, fecha_fin);
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -632,8 +646,7 @@ static void mostrar_conclusion(int mejoras)
 // Evaluar decision pasada
 void evaluar_decision_pasada()
 {
-    clear_screen();
-    print_header("Evaluar Decision Pasada");
+    iniciar_pantalla_ia("Evaluar Decision Pasada");
 
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha, consejo, seguido FROM consejos_historial ORDER BY fecha DESC LIMIT 20;";
@@ -664,14 +677,8 @@ void evaluar_decision_pasada()
 #endif
         consejos_lista[count].seguido = sqlite3_column_int(stmt, 3);
 
-        struct tm tm_fecha;
         char fecha_str[20];
-#ifdef _WIN32
-        localtime_s(&tm_fecha, &consejos_lista[count].fecha);
-#else
-        localtime_r(&consejos_lista[count].fecha, &tm_fecha);
-#endif
-        strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
+        formatear_fecha_yyyy_mm_dd(consejos_lista[count].fecha, fecha_str, sizeof(fecha_str));
 
         printf("%d. %s - %s [%s]\n",
                consejos_lista[count].id, fecha_str, consejo,
@@ -695,17 +702,10 @@ void evaluar_decision_pasada()
     }
 
     // Analisis de impacto
-    clear_screen();
-    print_header("Analisis de Impacto de Decision");
+    iniciar_pantalla_ia("Analisis de Impacto de Decision");
 
-    struct tm tm_fecha;
     char fecha_str[20];
-#ifdef _WIN32
-    localtime_s(&tm_fecha, &consejo_seleccionado->fecha);
-#else
-    localtime_r(&consejo_seleccionado->fecha, &tm_fecha);
-#endif
-    strftime(fecha_str, sizeof(fecha_str), "%Y-%m-%d", &tm_fecha);
+    formatear_fecha_yyyy_mm_dd(consejo_seleccionado->fecha, fecha_str, sizeof(fecha_str));
 
     printf("\nConsejo: %s\n", consejo_seleccionado->consejo);
     printf("Fecha: %s\n", fecha_str);
@@ -759,8 +759,7 @@ void evaluar_decision_pasada()
 // Configurar nivel de intervencion
 void configurar_nivel_intervencion()
 {
-    clear_screen();
-    print_header("Configurar Nivel de Intervencion IA");
+    iniciar_pantalla_ia("Configurar Nivel de Intervencion IA");
 
     printf("\nNiveles de intervencion disponibles:\n");
     printf("1. Conservador - Solo consejos criticos\n");
@@ -862,27 +861,9 @@ void actualizar_perfil_usuario(int consejo_seguido)
 
     // Actualizar o insertar
     if (aceptados + ignorados > 1)   // Ya existe registro
-    {
-        if (preparar_stmt(&stmt, sql_update))
-        {
-            sqlite3_bind_int(stmt, 1, aceptados);
-            sqlite3_bind_int(stmt, 2, ignorados);
-            sqlite3_bind_double(stmt, 3, indice_prudencia);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-        }
-    }
+        ejecutar_upsert_perfil(sql_update, aceptados, ignorados, indice_prudencia);
     else     // Primer registro
-    {
-        if (preparar_stmt(&stmt, sql_insert))
-        {
-            sqlite3_bind_int(stmt, 1, aceptados);
-            sqlite3_bind_int(stmt, 2, ignorados);
-            sqlite3_bind_double(stmt, 3, indice_prudencia);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-        }
-    }
+        ejecutar_upsert_perfil(sql_insert, aceptados, ignorados, indice_prudencia);
 }
 
 // Funciones de activacion
@@ -893,11 +874,7 @@ void activar_ia_antes_partido()
 
     if (estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8)
     {
-        printf("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): ");
-        int respuesta = getchar();
-        while (getchar() != '\n');
-
-        if (respuesta != EOF && (respuesta == 's' || respuesta == 'S'))
+        if (leer_confirmacion_sn("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
         {
             mostrar_consejos_actuales();
         }
