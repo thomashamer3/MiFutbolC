@@ -236,7 +236,7 @@ void crear_temporada()
 
     // Determinar estado automaticamente
     determinar_estado_temporada(temporada.fecha_inicio, temporada.fecha_fin,
-                               temporada.estado, sizeof(temporada.estado));
+                                temporada.estado, sizeof(temporada.estado));
 
     // Guardar en base de datos - reutilizar ID libre
     sqlite3_stmt *stmt = NULL;

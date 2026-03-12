@@ -4,7 +4,7 @@
 ; ================================
 
 #define MyAppName "MiFutbolC"
-#define MyAppVersion "3.9.2"
+#define MyAppVersion "3.9.3"
 #define MyAppPublisher "Thomas Hamer"
 #define MyAppURL "https://github.com/thomashamer3/MiFutbolC"
 #define MyAppExeName "MiFutbolC.exe"
