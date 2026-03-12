@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-3.9.1-blue.svg)
+![Version](https://img.shields.io/badge/version-3.9.4-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -29,7 +29,7 @@
 - ⚽ **Registro de partidos** (con estadísticas detalladas)
 - 👥 **Administración de equipos** (jugadores, formaciones, posiciones)
 - 🏆 **Organización de torneos** (múltiples formatos y estructuras)
-- 📊 **Análisis avanzado** (rendimiento, tendencias, meta-análisis)
+- 📊 **Análisis avanzado** (rendimiento, tendencias, química entre jugadores, meta-análisis)
 - 🏥 **Gestión de salud** (lesiones y recuperación)
 - 🧘 **Bienestar integral** (hábitos, planificación, salud y reportes personales)
 - 💰 **Control financiero** (ingresos, gastos, balances)
@@ -97,6 +97,14 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - Combinaciones óptimas (cancha + camiseta)
 - Temporadas destacadas
 - Partidos especiales y extremos
+- Top 5 mejores partidos por rendimiento
+- Ranking de camisetas (partidos, victorias/empates/derrotas, winrate)
+
+#### Química entre Jugadores
+- **Mejor combinación de jugadores** con cálculo de winrate
+- **Modo híbrido**: combina duplas automáticas (equipos/partidos) y registros manuales
+- **CRUD de química**: alta, listado, edición y eliminación de estadísticas por jugador-partido
+- **Métricas manuales**: goles, asistencias, asistencias al usuario, posición y comentario
 
 ### 🏥 Gestión de Salud y Lesiones
 
@@ -423,7 +431,15 @@ Menú Principal → Análisis (12)
   ├── Análisis Básico
   ├── Comparador Avanzado
   ├── Análisis Táctico (Diagramas)
-  └── Entrenador IA
+  ├── Entrenador IA
+  └── Química Entre Jugadores
+
+Análisis → Química Entre Jugadores
+  ├── Mejor Combinación de Jugadores
+  ├── Agregar Estadística de Jugador
+  ├── Listar Estadísticas de Jugadores
+  ├── Editar Estadística de Jugador
+  └── Eliminar Estadística de Jugador
 
 Menú Principal → Bienestar (13)
   ├── Planificación Personal
@@ -817,7 +833,7 @@ Conteo referencial (puede variar según cambios y scripts de build).
 
 El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos. Tablas principales (resumen):
 
-- **Base**: `camiseta`, `cancha`, `partido`, `lesion`, `usuario`
+- **Base**: `camiseta`, `cancha`, `partido`, `lesion`, `usuario`, `quimica_jugador_estadistica`
 - **Equipos/Torneos**: `equipo`, `jugador`, `torneo`, `equipo_torneo`, `partido_torneo`, `equipo_torneo_estadisticas`, `jugador_estadisticas`, `equipo_historial`, `torneo_fases`, `equipo_fase`
 - **Temporadas**: `temporada`, `temporada_fase`, `torneo_temporada`, `equipo_temporada_fatiga`, `jugador_temporada_fatiga`, `equipo_temporada_evolucion`, `temporada_resumen`, `mensual_resumen`
 - **Configuración/Finanzas**: `settings`, `financiamiento`, `presupuesto_mensual`, `comparacion_historial`
@@ -910,6 +926,8 @@ El módulo de análisis de rendimiento (`analisis.c`) ofrece una evaluación det
 - **Cálculo de Rachas**: Determina la mejor racha de victorias consecutivas y la peor racha de derrotas consecutivas registradas.
 - **Análisis Motivacional**: Proporciona mensajes personalizados basados en el rendimiento comparativo, ofreciendo motivación o consejos constructivos para mejorar.
 - **Visualización de Últimos Partidos**: Muestra un resumen de los 5 partidos más recientes con detalles clave como fecha, goles, asistencias, rendimiento y resultado.
+- **Química Entre Jugadores (CRUD)**: Permite registrar y gestionar estadísticas por jugador-partido (goles, asistencias, asistencias al usuario, posición y comentario).
+- **Mejor Combinación Híbrida**: Calcula la mejor dupla usando datos automáticos de equipos/partidos y datos manuales del módulo de química.
 
 Este módulo utiliza consultas SQL avanzadas para calcular promedios y rachas, proporcionando insights valiosos para el seguimiento y mejora del rendimiento futbolístico.
 
@@ -963,7 +981,9 @@ Este módulo proporciona herramientas esenciales para la administración financi
 El módulo de récords y rankings (`records_rankings.c / records_rankings.h`) ofrece un análisis exhaustivo de los logros históricos y estadísticas destacadas del sistema:
 
 - **Récords de Partidos**: Máximo de goles y asistencias en un partido, mejor y peor rendimiento general.
+- **Top 5 Mejores Partidos**: Ranking de partidos por rendimiento general (con goles y asistencias).
 - **Combinaciones Óptimas**: Mejor y peor combinación de cancha + camiseta para rendimiento.
+- **Ranking de Camisetas**: Tabla comparativa por camiseta con partidos, victorias, empates, derrotas y winrate.
 - **Temporadas Destacadas**: Mejor y peor temporada basada en estadísticas acumuladas.
 - **Rachas**: Mejor racha goleadora, peor racha, partidos consecutivos anotando.
 - **Partidos Especiales**: Partidos sin goles, sin asistencias, mejor combinación de goles + asistencias.

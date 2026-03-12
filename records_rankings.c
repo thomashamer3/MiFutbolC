@@ -13,6 +13,9 @@
 
 static void mostrar_partido_rendimiento(const char *titulo, const char *order_clause);
 
+static void mostrar_top5_mejores_partidos(void);
+static void mostrar_ranking_camisetas(void);
+
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
@@ -473,6 +476,110 @@ void mostrar_partidos_consecutivos_anotando()
     pause_console();
 }
 
+static void mostrar_top5_mejores_partidos(void)
+{
+    clear_screen();
+    print_header("TOP 5 MEJORES PARTIDOS");
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT fecha_hora, goles, asistencias, rendimiento_general "
+        "FROM partido "
+        "ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, fecha_hora DESC "
+        "LIMIT 5";
+
+    printf("\nTop 5 mejores partidos\n");
+    printf("----------------------------------------\n");
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    int pos = 1;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
+        int goles = sqlite3_column_int(stmt, 1);
+        int asistencias = sqlite3_column_int(stmt, 2);
+        int rendimiento = sqlite3_column_int(stmt, 3);
+
+        printf("%d. %s    %d goles - %d asistencias    rendimiento %d\n",
+               pos,
+               fecha ? fecha : "N/A",
+               goles,
+               asistencias,
+               rendimiento);
+        pos++;
+    }
+
+    if (pos == 1)
+    {
+        mostrar_no_hay_registros("partidos disponibles");
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void mostrar_ranking_camisetas(void)
+{
+    clear_screen();
+    print_header("RANKING DE TUS CAMISETAS");
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT "
+        "  c.nombre, "
+        "  COUNT(p.id) AS partidos, "
+        "  SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
+        "  SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END) AS empates, "
+        "  SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END) AS derrotas, "
+        "  CASE WHEN COUNT(p.id) > 0 "
+        "       THEN (SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) * 100.0) / COUNT(p.id) "
+        "       ELSE 0 END AS winrate "
+        "FROM camiseta c "
+        "LEFT JOIN partido p ON p.camiseta_id = c.id "
+        "GROUP BY c.id, c.nombre "
+        "HAVING COUNT(p.id) > 0 "
+        "ORDER BY winrate DESC, victorias DESC, partidos DESC";
+
+    printf("\nRanking de tus camisetas\n");
+    printf("----------------------------------------\n");
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    int pos = 1;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+        int partidos = sqlite3_column_int(stmt, 1);
+        int victorias = sqlite3_column_int(stmt, 2);
+        int empates = sqlite3_column_int(stmt, 3);
+        int derrotas = sqlite3_column_int(stmt, 4);
+        double winrate = sqlite3_column_double(stmt, 5);
+
+        printf("%d) %s\n", pos, nombre ? nombre : "Camiseta sin nombre");
+        printf("   Partidos: %d  Victorias: %d  Empates: %d  Derrotas: %d\n",
+               partidos, victorias, empates, derrotas);
+        printf("   Winrate: %.0f%%\n\n", winrate);
+        pos++;
+    }
+
+    if (pos == 1)
+    {
+        mostrar_no_hay_registros("camisetas con partidos");
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 /**
  * Construye array de opciones del menu de records y rankings.
  * Centralizado aqui para mantener consistencia y facilitar mantenimiento.
@@ -495,6 +602,8 @@ static MenuItem* construir_menu_records()
         {12, "Mejor Racha Goleadora", mostrar_mejor_racha_goleadora},
         {13, "Peor Racha", mostrar_peor_racha},
         {14, "Partidos Consecutivos Anotando", mostrar_partidos_consecutivos_anotando},
+        {15, "Top 5 Mejores Partidos", mostrar_top5_mejores_partidos},
+        {16, "Ranking de Tus Camisetas", mostrar_ranking_camisetas},
         {0, "Volver", NULL}
     };
     return items;
@@ -506,5 +615,5 @@ static MenuItem* construir_menu_records()
 void menu_records_rankings()
 {
     MenuItem const *items = construir_menu_records();
-    ejecutar_menu("RECORDS & RANKINGS", items, 15);
+    ejecutar_menu("RECORDS & RANKINGS", items, 17);
 }

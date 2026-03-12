@@ -303,6 +303,7 @@ SRC=(
   financiamiento.c
   settings.c
   entrenador_ia.c
+  carrera.c
 )
 
 OUT="MiFutbolC"

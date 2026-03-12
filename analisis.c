@@ -257,6 +257,524 @@ static void mostrar_analisis_basico()
     pause_console();
 }
 
+static int asegurar_tabla_quimica_jugador_estadistica(void)
+{
+    const char *sql =
+        "CREATE TABLE IF NOT EXISTS quimica_jugador_estadistica ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " partido_id INTEGER NOT NULL,"
+        " jugador TEXT NOT NULL,"
+        " companero_asistido TEXT DEFAULT '',"
+        " posicion TEXT DEFAULT '',"
+        " goles INTEGER DEFAULT 0,"
+        " asistencias INTEGER DEFAULT 0,"
+        " asistencias_al_usuario INTEGER DEFAULT 0,"
+        " asistencias_del_usuario INTEGER DEFAULT 0,"
+        " comentario TEXT DEFAULT '',"
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));";
+
+    if (sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK)
+    {
+        printf("Error al preparar tabla de quimica: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    /* Migracion simple para bases ya existentes */
+    {
+        char *err = NULL;
+        int rc = sqlite3_exec(db,
+                              "ALTER TABLE quimica_jugador_estadistica ADD COLUMN companero_asistido TEXT DEFAULT ''",
+                              NULL, NULL, &err);
+        if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
+        {
+            printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
+            sqlite3_free(err);
+            return 0;
+        }
+        if (err) sqlite3_free(err);
+    }
+
+    {
+        char *err = NULL;
+        int rc = sqlite3_exec(db,
+                              "ALTER TABLE quimica_jugador_estadistica ADD COLUMN asistencias_del_usuario INTEGER DEFAULT 0",
+                              NULL, NULL, &err);
+        if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
+        {
+            printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
+            sqlite3_free(err);
+            return 0;
+        }
+        if (err) sqlite3_free(err);
+    }
+
+    return 1;
+}
+
+static void listar_partidos_para_quimica(void)
+{
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT id, fecha_hora, goles, asistencias, resultado "
+        "FROM partido "
+        "ORDER BY id ASC";
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("No se pudo listar partidos.\n");
+        return;
+    }
+
+    printf("\nPartidos disponibles:\n");
+    printf("----------------------------------------\n");
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+        int goles = sqlite3_column_int(stmt, 2);
+        int asistencias = sqlite3_column_int(stmt, 3);
+        int resultado = sqlite3_column_int(stmt, 4);
+
+        printf("ID:%d | %s | G:%d A:%d | %s\n",
+               id,
+               fecha ? fecha : "N/A",
+               goles,
+               asistencias,
+               resultado_to_text(resultado));
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static int seleccionar_partido_para_quimica(const char *prompt)
+{
+    int partido_id;
+
+    listar_partidos_para_quimica();
+
+    do
+    {
+        partido_id = input_int(prompt);
+        if (partido_id == 0)
+        {
+            return 0;
+        }
+
+        if (partido_id < 0 || !existe_id("partido", partido_id))
+        {
+            printf("ID de partido invalido.\n");
+            partido_id = 0;
+        }
+    }
+    while (partido_id == 0);
+
+    return partido_id;
+}
+
+/**
+ * @brief Muestra la mejor quimica entre dos jugadores
+ *
+ * Calcula la dupla con mejor winrate considerando partidos en los que
+ * ambos jugadores estuvieron en el mismo equipo asignado a un partido.
+ */
+static void mostrar_mejor_quimica_jugadores()
+{
+    clear_screen();
+    print_header("MEJOR COMBINACION DE JUGADORES");
+
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    if (!hay_registros("partido"))
+    {
+        printf("No hay suficientes datos para analizar quimica entre jugadores.\n");
+        printf("Necesitas al menos partidos registrados.\n");
+        pause_console();
+        return;
+    }
+
+    char *nombre_usuario = get_user_name();
+    if (!nombre_usuario || nombre_usuario[0] == '\0')
+    {
+        free(nombre_usuario);
+        nombre_usuario = (char *)malloc(8);
+        if (nombre_usuario)
+        {
+            strcpy_s(nombre_usuario, 8, "Usuario");
+        }
+    }
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "WITH duplas_auto AS ("
+        "  SELECT "
+        "    j1.id AS jugador_a_id, "
+        "    j1.nombre AS jugador_a, "
+        "    j2.id AS jugador_b_id, "
+        "    j2.nombre AS jugador_b, "
+        "    p.resultado AS resultado "
+        "  FROM equipo e "
+        "  JOIN partido p ON p.id = e.partido_id "
+        "  JOIN jugador j1 ON j1.equipo_id = e.id "
+        "  JOIN jugador j2 ON j2.equipo_id = e.id AND j1.id < j2.id "
+        "  WHERE e.partido_id > 0"
+        "), duplas_manual AS ("
+        "  SELECT DISTINCT "
+        "    -1 AS jugador_a_id, "
+        "    ? AS jugador_a, "
+        "    -1 AS jugador_b_id, "
+        "    q.jugador AS jugador_b, "
+        "    p.resultado AS resultado "
+        "  FROM quimica_jugador_estadistica q "
+        "  JOIN partido p ON p.id = q.partido_id "
+        "  WHERE q.jugador IS NOT NULL AND q.jugador <> ''"
+        "), duplas AS ("
+        "  SELECT * FROM duplas_auto "
+        "  UNION ALL "
+        "  SELECT * FROM duplas_manual"
+        "), resumen AS ("
+        "  SELECT "
+        "    jugador_a, jugador_b, "
+        "    SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
+        "    SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas, "
+        "    SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates "
+        "  FROM duplas "
+        "  GROUP BY jugador_a, jugador_b"
+        ") "
+        "SELECT "
+        "  jugador_a, jugador_b, victorias, derrotas, empates, "
+        "  CASE WHEN (victorias + derrotas) > 0 "
+        "       THEN (CAST(victorias AS REAL) * 100.0) / (victorias + derrotas) "
+        "       ELSE 0 END AS winrate "
+        "FROM resumen "
+        "ORDER BY winrate DESC, victorias DESC, (victorias + derrotas + empates) DESC "
+        "LIMIT 1";
+
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    {
+        pause_console();
+        free(nombre_usuario);
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, nombre_usuario, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        printf("No hay suficientes datos de duplas por partido.\n");
+        printf("Asegurate de tener equipos asignados y/o estadisticas manuales cargadas.\n");
+        sqlite3_finalize(stmt);
+        free(nombre_usuario);
+        pause_console();
+        return;
+    }
+
+    const char *jugador_a = (const char *)sqlite3_column_text(stmt, 0);
+    const char *jugador_b = (const char *)sqlite3_column_text(stmt, 1);
+    int victorias = sqlite3_column_int(stmt, 2);
+    int derrotas = sqlite3_column_int(stmt, 3);
+    int empates = sqlite3_column_int(stmt, 4);
+    double winrate = sqlite3_column_double(stmt, 5);
+
+    printf("\nMejor combinacion de jugadores\n");
+    printf("----------------------------------------\n");
+    printf("%s + %s\n", jugador_a ? jugador_a : "N/A", jugador_b ? jugador_b : "N/A");
+    printf("Victorias : %d\n", victorias);
+    printf("Derrotas  : %d\n", derrotas);
+    printf("Empates   : %d\n", empates);
+    printf("Winrate   : %.1f%%\n", winrate);
+
+    sqlite3_finalize(stmt);
+    free(nombre_usuario);
+    pause_console();
+}
+
+static void crear_estadistica_quimica_jugador(void)
+{
+    clear_screen();
+    print_header("AGREGAR ESTADISTICA DE JUGADOR");
+
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    if (!hay_registros("partido"))
+    {
+        mostrar_no_hay_registros("partidos");
+        pause_console();
+        return;
+    }
+
+    int partido_id = seleccionar_partido_para_quimica("Selecciona el ID del partido jugado: ");
+    if (partido_id == 0)
+        return;
+
+    char jugador[100];
+    char companero_asistido[100];
+    char posicion[40];
+    char comentario[200];
+    input_string("Nombre del companero que te asistio(Enter para Vacio): ", jugador, sizeof(jugador));
+    input_string("Nombre del companero al que asististe(Enter para Vacio): ", companero_asistido, sizeof(companero_asistido));
+    input_string("Posicion (ej: Mediocampista-Delantero): ", posicion, sizeof(posicion));
+
+    int goles = input_int("Goles del companero: ");
+    int asistencias = input_int("Asistencias totales del companero: ");
+    int asistencias_al_usuario = input_int("Asistencias del companero hacia ti: ");
+    int asistencias_del_usuario = input_int("Asistencias tuyas hacia ese companero: ");
+
+    if (goles < 0) goles = 0;
+    if (asistencias < 0) asistencias = 0;
+    if (asistencias_al_usuario < 0) asistencias_al_usuario = 0;
+    if (asistencias_del_usuario < 0) asistencias_del_usuario = 0;
+
+    input_string("Comentario (opcional): ", comentario, sizeof(comentario));
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "INSERT INTO quimica_jugador_estadistica "
+        "(partido_id, jugador, companero_asistido, posicion, goles, asistencias, asistencias_al_usuario, asistencias_del_usuario, comentario) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, partido_id);
+    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, companero_asistido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, posicion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, goles);
+    sqlite3_bind_int(stmt, 6, asistencias);
+    sqlite3_bind_int(stmt, 7, asistencias_al_usuario);
+    sqlite3_bind_int(stmt, 8, asistencias_del_usuario);
+    sqlite3_bind_text(stmt, 9, comentario, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE)
+        printf("Estadistica guardada correctamente.\n");
+    else
+        printf("No se pudo guardar la estadistica.\n");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void listar_estadisticas_quimica_jugador(void)
+{
+    clear_screen();
+    print_header("LISTADO DE ESTADISTICAS DE JUGADORES");
+
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT q.id, q.partido_id, p.fecha_hora, q.jugador, q.companero_asistido, q.posicion, "
+        "q.goles, q.asistencias, q.asistencias_al_usuario, q.asistencias_del_usuario "
+        "FROM quimica_jugador_estadistica q "
+        "LEFT JOIN partido p ON p.id = q.partido_id "
+        "ORDER BY q.id DESC";
+
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    {
+        pause_console();
+        return;
+    }
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        int partido_id = sqlite3_column_int(stmt, 1);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 2);
+        const char *jugador = (const char *)sqlite3_column_text(stmt, 3);
+        const char *companero_asistido = (const char *)sqlite3_column_text(stmt, 4);
+        const char *posicion = (const char *)sqlite3_column_text(stmt, 5);
+        int goles = sqlite3_column_int(stmt, 6);
+        int asistencias = sqlite3_column_int(stmt, 7);
+        int asist_usr = sqlite3_column_int(stmt, 8);
+        int asist_del_usr = sqlite3_column_int(stmt, 9);
+
+        printf("ID:%d | Partido:%d (%s) | Te asistio:%s | Asististe a:%s | %s | G:%d A:%d A->Tu:%d Tu->Comp:%d\n",
+               id,
+               partido_id,
+               fecha ? fecha : "N/A",
+               jugador ? jugador : "N/A",
+               companero_asistido ? companero_asistido : "N/A",
+               posicion ? posicion : "N/A",
+               goles,
+               asistencias,
+               asist_usr,
+               asist_del_usr);
+        count++;
+    }
+
+    if (count == 0)
+        mostrar_no_hay_registros("estadisticas de jugadores");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void editar_estadistica_quimica_jugador(void)
+{
+    clear_screen();
+    print_header("EDITAR ESTADISTICA DE JUGADOR");
+
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    listar_estadisticas_quimica_jugador();
+
+    int id = input_int("ID de la estadistica a editar (0 cancelar): ");
+    if (id <= 0)
+        return;
+
+    if (!existe_id("quimica_jugador_estadistica", id))
+    {
+        printf("ID invalido.\n");
+        pause_console();
+        return;
+    }
+
+    int partido_id = seleccionar_partido_para_quimica("Nuevo ID de partido jugado: ");
+    if (partido_id == 0)
+        return;
+
+    char jugador[100];
+    char companero_asistido[100];
+    char posicion[40];
+    char comentario[200];
+    input_string("Nuevo nombre del companero que te asistio: ", jugador, sizeof(jugador));
+    input_string("Nuevo nombre del companero al que asististe: ", companero_asistido, sizeof(companero_asistido));
+    input_string("Nueva posicion: ", posicion, sizeof(posicion));
+
+    int goles = input_int("Nuevos goles del companero: ");
+    int asistencias = input_int("Nuevas asistencias totales del companero: ");
+    int asistencias_al_usuario = input_int("Nuevas asistencias del companero hacia ti: ");
+    int asistencias_del_usuario = input_int("Nuevas asistencias tuyas hacia ese companero: ");
+
+    if (goles < 0) goles = 0;
+    if (asistencias < 0) asistencias = 0;
+    if (asistencias_al_usuario < 0) asistencias_al_usuario = 0;
+    if (asistencias_del_usuario < 0) asistencias_del_usuario = 0;
+
+    input_string("Nuevo comentario (opcional): ", comentario, sizeof(comentario));
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "UPDATE quimica_jugador_estadistica "
+        "SET partido_id = ?, jugador = ?, companero_asistido = ?, posicion = ?, goles = ?, asistencias = ?, "
+        "asistencias_al_usuario = ?, asistencias_del_usuario = ?, comentario = ? "
+        "WHERE id = ?";
+
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, partido_id);
+    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, companero_asistido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, posicion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, goles);
+    sqlite3_bind_int(stmt, 6, asistencias);
+    sqlite3_bind_int(stmt, 7, asistencias_al_usuario);
+    sqlite3_bind_int(stmt, 8, asistencias_del_usuario);
+    sqlite3_bind_text(stmt, 9, comentario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 10, id);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE)
+        printf("Estadistica actualizada correctamente.\n");
+    else
+        printf("No se pudo actualizar la estadistica.\n");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void eliminar_estadistica_quimica_jugador(void)
+{
+    clear_screen();
+    print_header("ELIMINAR ESTADISTICA DE JUGADOR");
+
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    listar_estadisticas_quimica_jugador();
+
+    int id = input_int("ID de la estadistica a eliminar (0 cancelar): ");
+    if (id <= 0)
+        return;
+
+    if (!existe_id("quimica_jugador_estadistica", id))
+    {
+        printf("ID invalido.\n");
+        pause_console();
+        return;
+    }
+
+    if (!confirmar("Seguro que deseas eliminar esta estadistica?"))
+        return;
+
+    sqlite3_stmt *stmt;
+    const char *sql = "DELETE FROM quimica_jugador_estadistica WHERE id = ?";
+
+    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE)
+        printf("Estadistica eliminada correctamente.\n");
+    else
+        printf("No se pudo eliminar la estadistica.\n");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void analizar_quimica_jugadores()
+{
+    if (!asegurar_tabla_quimica_jugador_estadistica())
+    {
+        pause_console();
+        return;
+    }
+
+    MenuItem items[] =
+    {
+        {1, "Mejor Combinacion de Jugadores", mostrar_mejor_quimica_jugadores},
+        {2, "Agregar Estadistica de Jugador", crear_estadistica_quimica_jugador},
+        {3, "Listar Estadisticas de Jugadores", listar_estadisticas_quimica_jugador},
+        {4, "Editar Estadistica de Jugador", editar_estadistica_quimica_jugador},
+        {5, "Eliminar Estadistica de Jugador", eliminar_estadistica_quimica_jugador},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("ANALISIS DE QUIMICA", items, 6);
+}
+
 /**
  * @brief Estructura para metricas de comparacion
  */
@@ -646,10 +1164,11 @@ void mostrar_analisis()
         {2, "Comparador Avanzado", mostrar_comparador_avanzado},
         {3, "Analisis Tactico (Diagramas)", &menu_tacticas_partido},
         {4, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
+        {5, "Quimica Entre Jugadores", analizar_quimica_jugadores},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ANALISIS Y COMPARADOR", items, 5);
+    ejecutar_menu("ANALISIS Y COMPARADOR", items, 6);
 }
 
 /**

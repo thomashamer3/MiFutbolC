@@ -61,7 +61,7 @@ MiFutbolC es una herramienta integral diseñada para:
 
 ### Opción 3: Compilación Manual
 
-#### Linux / macOS
+#### Linux / macOS (script)
 
 ```bash
 # Compilar todos los archivos fuente
@@ -89,22 +89,31 @@ gcc -o MiFutbolC \
 gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
 ```
 
-### Opción 4: Usando el Script de Compilación
+### Opción 4: Usando scripts del proyecto
 
 #### Linux / macOS
 
 ```bash
-chmod +x build.sh
-./build.sh
+chmod +x Instalador-Linux.sh
+./Instalador-Linux.sh
+
+# Debug
+./Instalador-Linux.sh --debug
+
+# Compilar y ejecutar
+./Instalador-Linux.sh run
 ```
 
-#### Windows
+#### Windows (script)
 
 ```bash
-.\build.bat
+mingw32-make
+
+# Debug
+mingw32-make BUILD_TYPE=Debug
 ```
 
-Estos scripts compilan automáticamente todos los archivos fuente con advertencias habilitadas y símbolos de depuración, y ejecutan el programa si la compilación es exitosa.
+En Linux/macOS, `Instalador-Linux.sh` también puede validar dependencias e instalar un launcher en `PATH`.
 
 ## Primer Uso
 
@@ -699,7 +708,7 @@ Análisis mensual automático:
 ## Análisis de Rendimiento
 
 Selecciona "12" en el menú principal para ver el análisis de rendimiento.
-Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**, **Análisis Táctico (Diagramas)** y **Entrenador IA**.
+Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**, **Análisis Táctico (Diagramas)**, **Entrenador IA** y **Química Entre Jugadores**.
 
 ### Funcionalidades del Análisis
 
@@ -717,6 +726,19 @@ Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**
 - Nivel de cansancio
 - Estado de ánimo
 - Diferencias con respecto al promedio histórico
+
+### Química Entre Jugadores
+
+Dentro de **Análisis** (opción 12), puedes entrar a **Química Entre Jugadores** para:
+
+- Ver la mejor combinación de jugadores por winrate
+- Registrar estadísticas manuales por partido (goles, asistencias, posición y comentario)
+- Listar, editar y eliminar registros de química
+
+En la selección de partido para química:
+
+- Los partidos se muestran del más reciente al más antiguo
+- Puedes ingresar `0` para cancelar la operación
 
 ## Bienestar
 
@@ -1130,7 +1152,7 @@ Aunque es posible usar herramientas como DB Browser for SQLite, se recomienda us
 
 1. Ve a Ajustes (opción 14)
 2. Entra en **Exportar**
-3. Selecciona "Todo" (opción 6)
+3. Selecciona "Todo" (opción 9)
 4. Elige formato JSON
 5. Guarda el archivo en un lugar seguro
 6. Para restaurar, usa **Ajustes → Importar**
@@ -1196,8 +1218,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 3.9  
-**Última actualización**: 10/03/2026  
+**Versión**: 3.9.4  
+**Última actualización**: 12/03/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

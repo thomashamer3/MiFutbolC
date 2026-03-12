@@ -202,7 +202,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1773257524 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1773282451 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"utils.h"
 	<stdio.h>
 	<stdlib.h>
@@ -231,6 +231,7 @@
 	"financiamiento.h"
 	"entrenador_ia.h"
 	"bienestar.h"
+	"carrera.h"
 
 1769973736 d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.h
 
@@ -286,7 +287,7 @@
 
 1769911246 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.h
 
-1773257523 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
+1773287191 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
 	"analisis.h"
 	"db.h"
 	"utils.h"
@@ -482,7 +483,7 @@
 	<string.h>
 	<stdlib.h>
 
-1773257524 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\records_rankings.c
+1773282823 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\records_rankings.c
 	"records_rankings.h"
 	"db.h"
 	"utils.h"
@@ -572,7 +573,7 @@
 	<string.h>
 	"sqlite3.h"
 
-1773121551 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1773285058 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 	<stdio.h>
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
@@ -2359,4 +2360,17 @@
 	<stdint.h>
 	<unistd.h>
 	<wchar.h>
+
+1773285000 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
+	"carrera.h"
+	"db.h"
+	"utils.h"
+	"menu.h"
+	"settings.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+
+1773281431 d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.h
 

@@ -32,6 +32,7 @@
 #include "financiamiento.h"
 #include "entrenador_ia.h"
 #include "bienestar.h"
+#include "carrera.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -107,6 +108,12 @@ static void abrir_menu_settings(void)
     menu_settings();
 }
 
+static void abrir_menu_carrera(void)
+{
+    app_log_event("CARRERA", "Ingreso al modulo Carrera Futbolistica");
+    menu_carrera_futbolistica();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Camisetas", &menu_camisetas},
@@ -121,7 +128,8 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {11, "Temporada", &abrir_menu_temporadas},
     {12, "Analisis", &abrir_menu_analisis},
     {13, "Bienestar", &abrir_menu_bienestar},
-    {14, "Ajustes", &abrir_menu_settings},
+    {14, "Carrera Futbolistica", &abrir_menu_carrera},
+    {15, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
