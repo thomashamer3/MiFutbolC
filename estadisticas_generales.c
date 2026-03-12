@@ -184,6 +184,21 @@ static void mostrar_query_simple(const char *header, const char *titulo, const c
     pause_console();
 }
 
+#define SQL_CAMISETA_AGREGADA(expr, orden) \
+    "SELECT c.nombre, " expr " " \
+    "FROM partido p " \
+    "JOIN camiseta c ON p.camiseta_id=c.id " \
+    "GROUP BY c.id " \
+    "ORDER BY 2 " orden " LIMIT 1"
+
+#define SQL_CAMISETA_POR_RESULTADO(resultado) \
+    "SELECT c.nombre, COUNT(*) " \
+    "FROM partido p " \
+    "JOIN camiseta c ON p.camiseta_id=c.id " \
+    "WHERE p.resultado = " resultado " " \
+    "GROUP BY c.id " \
+    "ORDER BY 2 DESC LIMIT 1"
+
 /**
  * @brief Muestra las estadisticas principales de las camisetas.
  *
@@ -205,86 +220,43 @@ void mostrar_estadisticas_generales()
     {
         {
             "Camiseta con mas Goles",
-            "SELECT c.nombre, IFNULL(SUM(p.goles),0) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(SUM(p.goles),0)", "DESC")
         },
         {
             "Camiseta con mas Asistencias",
-            "SELECT c.nombre, IFNULL(SUM(p.asistencias),0) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(SUM(p.asistencias),0)", "DESC")
         },
         {
             "Camiseta con mas Partidos",
-            "SELECT c.nombre, COUNT(*) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("COUNT(*)", "DESC")
         },
         {
             "Camiseta con mas Goles + Asistencias",
-            "SELECT c.nombre, IFNULL(SUM(p.goles+p.asistencias),0) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(SUM(p.goles+p.asistencias),0)", "DESC")
         },
         {
             "Camiseta con mejor Rendimiento General promedio",
-            "SELECT c.nombre, IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0.00)", "DESC")
         },
         {
             "Camiseta con mejor Estado de Animo promedio",
-            "SELECT c.nombre, IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(ROUND(AVG(p.estado_animo), 2), 0.00)", "DESC")
         },
         {
             "Camiseta con menos Cansancio promedio",
-            "SELECT c.nombre, IFNULL(ROUND(AVG(p.cansancio), 2), 0.00) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "GROUP BY c.id "
-            "ORDER BY 2 ASC LIMIT 1"
+            SQL_CAMISETA_AGREGADA("IFNULL(ROUND(AVG(p.cansancio), 2), 0.00)", "ASC")
         },
         {
             "Camiseta con mas Victorias",
-            "SELECT c.nombre, COUNT(*) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "WHERE p.resultado = 1 "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_POR_RESULTADO("1")
         },
         {
             "Camiseta con mas Empates",
-            "SELECT c.nombre, COUNT(*) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "WHERE p.resultado = 2 "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_POR_RESULTADO("2")
         },
         {
             "Camiseta con mas Derrotas",
-            "SELECT c.nombre, COUNT(*) "
-            "FROM partido p "
-            "JOIN camiseta c ON p.camiseta_id=c.id "
-            "WHERE p.resultado = 3 "
-            "GROUP BY c.id "
-            "ORDER BY 2 DESC LIMIT 1"
+            SQL_CAMISETA_POR_RESULTADO("3")
         },
         {
             "Camiseta mas Sorteada",
@@ -302,6 +274,9 @@ void mostrar_estadisticas_generales()
 
     pause_console();
 }
+
+#undef SQL_CAMISETA_POR_RESULTADO
+#undef SQL_CAMISETA_AGREGADA
 
 /**
  * @brief Muestra el total de partidos jugados

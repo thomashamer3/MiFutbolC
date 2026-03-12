@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2);
+
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -498,6 +500,60 @@ static void mostrar_mejor_quimica_jugadores()
     pause_console();
 }
 
+typedef struct
+{
+    char jugador[100];
+    char companero_asistido[100];
+    char posicion[40];
+    char comentario[200];
+    int goles;
+    int asistencias;
+    int asistencias_al_usuario;
+    int asistencias_del_usuario;
+} DatosQuimicaJugador;
+
+static void capturar_datos_quimica_jugador(DatosQuimicaJugador *datos, int es_edicion)
+{
+    if (!es_edicion)
+    {
+        input_string("Nombre del companero que te asistio(Enter para Vacio): ", datos->jugador, sizeof(datos->jugador));
+        input_string("Nombre del companero al que asististe(Enter para Vacio): ", datos->companero_asistido, sizeof(datos->companero_asistido));
+        input_string("Posicion (ej: Mediocampista-Delantero): ", datos->posicion, sizeof(datos->posicion));
+
+        datos->goles = normalizar_no_negativo(input_int("Goles del companero: "));
+        datos->asistencias = normalizar_no_negativo(input_int("Asistencias totales del companero: "));
+        datos->asistencias_al_usuario = normalizar_no_negativo(input_int("Asistencias del companero hacia ti: "));
+        datos->asistencias_del_usuario = normalizar_no_negativo(input_int("Asistencias tuyas hacia ese companero: "));
+
+        input_string("Comentario (opcional): ", datos->comentario, sizeof(datos->comentario));
+        return;
+    }
+
+    input_string("Nuevo nombre del companero que te asistio: ", datos->jugador, sizeof(datos->jugador));
+    input_string("Nuevo nombre del companero al que asististe: ", datos->companero_asistido, sizeof(datos->companero_asistido));
+    input_string("Nueva posicion: ", datos->posicion, sizeof(datos->posicion));
+
+    datos->goles = normalizar_no_negativo(input_int("Nuevos goles del companero: "));
+    datos->asistencias = normalizar_no_negativo(input_int("Nuevas asistencias totales del companero: "));
+    datos->asistencias_al_usuario = normalizar_no_negativo(input_int("Nuevas asistencias del companero hacia ti: "));
+    datos->asistencias_del_usuario = normalizar_no_negativo(input_int("Nuevas asistencias tuyas hacia ese companero: "));
+
+    input_string("Nuevo comentario (opcional): ", datos->comentario, sizeof(datos->comentario));
+}
+
+static void bind_datos_quimica_jugador(sqlite3_stmt *stmt, int partido_id, const DatosQuimicaJugador *datos)
+{
+    sqlite3_bind_int(stmt, 1, partido_id);
+    sqlite3_bind_text(stmt, 2, datos->jugador, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, datos->companero_asistido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, datos->posicion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, datos->goles);
+    sqlite3_bind_int(stmt, 6, datos->asistencias);
+    sqlite3_bind_int(stmt, 7, datos->asistencias_al_usuario);
+    sqlite3_bind_int(stmt, 8, datos->asistencias_del_usuario);
+    sqlite3_bind_text(stmt, 9, datos->comentario, -1, SQLITE_TRANSIENT);
+}
+
 static void crear_estadistica_quimica_jugador(void)
 {
     iniciar_pantalla_analisis("AGREGAR ESTADISTICA DE JUGADOR");
@@ -519,25 +575,8 @@ static void crear_estadistica_quimica_jugador(void)
     if (partido_id == 0)
         return;
 
-    char jugador[100];
-    char companero_asistido[100];
-    char posicion[40];
-    char comentario[200];
-    input_string("Nombre del companero que te asistio(Enter para Vacio): ", jugador, sizeof(jugador));
-    input_string("Nombre del companero al que asististe(Enter para Vacio): ", companero_asistido, sizeof(companero_asistido));
-    input_string("Posicion (ej: Mediocampista-Delantero): ", posicion, sizeof(posicion));
-
-    int goles = input_int("Goles del companero: ");
-    int asistencias = input_int("Asistencias totales del companero: ");
-    int asistencias_al_usuario = input_int("Asistencias del companero hacia ti: ");
-    int asistencias_del_usuario = input_int("Asistencias tuyas hacia ese companero: ");
-
-    goles = normalizar_no_negativo(goles);
-    asistencias = normalizar_no_negativo(asistencias);
-    asistencias_al_usuario = normalizar_no_negativo(asistencias_al_usuario);
-    asistencias_del_usuario = normalizar_no_negativo(asistencias_del_usuario);
-
-    input_string("Comentario (opcional): ", comentario, sizeof(comentario));
+    DatosQuimicaJugador datos = {0};
+    capturar_datos_quimica_jugador(&datos, 0);
 
     sqlite3_stmt *stmt;
     const char *sql =
@@ -551,15 +590,7 @@ static void crear_estadistica_quimica_jugador(void)
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, companero_asistido, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, posicion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 5, goles);
-    sqlite3_bind_int(stmt, 6, asistencias);
-    sqlite3_bind_int(stmt, 7, asistencias_al_usuario);
-    sqlite3_bind_int(stmt, 8, asistencias_del_usuario);
-    sqlite3_bind_text(stmt, 9, comentario, -1, SQLITE_TRANSIENT);
+    bind_datos_quimica_jugador(stmt, partido_id, &datos);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
         printf("Estadistica guardada correctamente.\n");
@@ -656,25 +687,8 @@ static void editar_estadistica_quimica_jugador(void)
     if (partido_id == 0)
         return;
 
-    char jugador[100];
-    char companero_asistido[100];
-    char posicion[40];
-    char comentario[200];
-    input_string("Nuevo nombre del companero que te asistio: ", jugador, sizeof(jugador));
-    input_string("Nuevo nombre del companero al que asististe: ", companero_asistido, sizeof(companero_asistido));
-    input_string("Nueva posicion: ", posicion, sizeof(posicion));
-
-    int goles = input_int("Nuevos goles del companero: ");
-    int asistencias = input_int("Nuevas asistencias totales del companero: ");
-    int asistencias_al_usuario = input_int("Nuevas asistencias del companero hacia ti: ");
-    int asistencias_del_usuario = input_int("Nuevas asistencias tuyas hacia ese companero: ");
-
-    goles = normalizar_no_negativo(goles);
-    asistencias = normalizar_no_negativo(asistencias);
-    asistencias_al_usuario = normalizar_no_negativo(asistencias_al_usuario);
-    asistencias_del_usuario = normalizar_no_negativo(asistencias_del_usuario);
-
-    input_string("Nuevo comentario (opcional): ", comentario, sizeof(comentario));
+    DatosQuimicaJugador datos = {0};
+    capturar_datos_quimica_jugador(&datos, 1);
 
     sqlite3_stmt *stmt;
     const char *sql =
@@ -689,15 +703,7 @@ static void editar_estadistica_quimica_jugador(void)
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, companero_asistido, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, posicion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 5, goles);
-    sqlite3_bind_int(stmt, 6, asistencias);
-    sqlite3_bind_int(stmt, 7, asistencias_al_usuario);
-    sqlite3_bind_int(stmt, 8, asistencias_del_usuario);
-    sqlite3_bind_text(stmt, 9, comentario, -1, SQLITE_TRANSIENT);
+    bind_datos_quimica_jugador(stmt, partido_id, &datos);
     sqlite3_bind_int(stmt, 10, id);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
@@ -906,12 +912,12 @@ static void construir_condicion_sql_id(char *destino,
 }
 
 static void comparar_entidades_por_tabla(const char *titulo_pantalla,
-                                         const char *tabla,
-                                         const char *titulo_lista,
-                                         const char *condicion_prefijo,
-                                         const char *condicion_sufijo,
-                                         const char *nombre_default_1,
-                                         const char *nombre_default_2)
+        const char *tabla,
+        const char *titulo_lista,
+        const char *condicion_prefijo,
+        const char *condicion_sufijo,
+        const char *nombre_default_1,
+        const char *nombre_default_2)
 {
     int id1;
     int id2;
