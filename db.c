@@ -17,7 +17,6 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <stdarg.h>
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
@@ -270,15 +269,7 @@ void app_log_event(const char *component, const char *message)
     app_log_write("INFO", component, message);
 }
 
-static void log_writef(const char *level, const char *component, const char *fmt, ...)
-{
-    char log_msg[1024];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(log_msg, sizeof(log_msg), fmt, args);
-    va_end(args);
-    app_log_write(level, component, log_msg);
-}
+static char log_buf_[1024];
 
 static int asegurar_directorio(const char *path, const char *nombre)
 {
@@ -291,16 +282,19 @@ static int asegurar_directorio(const char *path, const char *nombre)
 #ifdef _WIN32
         strerror_s(error_buf, sizeof(error_buf), errno);
         printf("Error creando directorio %s: %s\n", nombre, error_buf);
-        log_writef("ERROR", "FS", "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, error_buf);
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, error_buf);
+        app_log_write("ERROR", "FS", log_buf_);
 #else
         printf("Error creando directorio %s: %s\n", nombre, strerror(errno));
-        log_writef("ERROR", "FS", "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, strerror(errno));
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, strerror(errno));
+        app_log_write("ERROR", "FS", log_buf_);
 #endif
         return 0;
     }
     if (!already_exists)
     {
-        log_writef("INFO", "FS", "Directorio disponible: %.120s (%.860s)", nombre, path);
+        snprintf(log_buf_, sizeof(log_buf_), "Directorio disponible: %.120s (%.860s)", nombre, path);
+        app_log_write("INFO", "FS", log_buf_);
     }
     return 1;
 }
@@ -565,9 +559,12 @@ static int setup_database_paths()
     }
 #endif
 
-    log_writef("INFO", "PATHS", "Ruta de datos: %.1000s", DB_DIR);
-    log_writef("INFO", "PATHS", "Ruta de DB: %.1003s", DB_PATH);
-    log_writef("INFO", "PATHS", "Ruta de log: %.1002s", LOG_PATH);
+    snprintf(log_buf_, sizeof(log_buf_), "Ruta de datos: %.1000s", DB_DIR);
+    app_log_write("INFO", "PATHS", log_buf_);
+    snprintf(log_buf_, sizeof(log_buf_), "Ruta de DB: %.1003s", DB_PATH);
+    app_log_write("INFO", "PATHS", log_buf_);
+    snprintf(log_buf_, sizeof(log_buf_), "Ruta de log: %.1002s", LOG_PATH);
+    app_log_write("INFO", "PATHS", log_buf_);
     return 1;
 }
 
@@ -584,10 +581,12 @@ static int create_database_connection()
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
         printf("Error abriendo DB: %s\n", sqlite3_errmsg(db));
-        log_writef("ERROR", "DB", "Error abriendo DB %.700s: %.280s", DB_PATH, sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error abriendo DB %.700s: %.280s", DB_PATH, sqlite3_errmsg(db));
+        app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
-    log_writef("INFO", "DB", "Conexion SQLite abierta en %.996s", DB_PATH);
+    snprintf(log_buf_, sizeof(log_buf_), "Conexion SQLite abierta en %.996s", DB_PATH);
+    app_log_write("INFO", "DB", log_buf_);
     return 1;
 }
 
@@ -1038,7 +1037,8 @@ static int create_database_schema()
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
         printf("Error creando tablas\n");
-        log_writef("ERROR", "DB", "Error creando esquema: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error creando esquema: %s", sqlite3_errmsg(db));
+        app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
     app_log_write("INFO", "DB", "Esquema validado/creado");
@@ -1526,7 +1526,8 @@ void exportar_base_datos()
         if (result == COPY_SRC_ERROR)
         {
             printf("Error: No se encontro la base de datos en:\n%s\n", source_path);
-            log_writef("ERROR", "EXPORT", "No se encontro DB origen para exportar: %.980s", source_path);
+            snprintf(log_buf_, sizeof(log_buf_), "No se encontro DB origen para exportar: %.980s", source_path);
+            app_log_write("ERROR", "EXPORT", log_buf_);
             pause_console();
             return;
         }
@@ -1534,13 +1535,15 @@ void exportar_base_datos()
         if (result == COPY_DST_ERROR)
         {
             printf("Error creando archivo destino:\n%s\n", dest_path);
-            log_writef("ERROR", "EXPORT", "No se pudo abrir DB destino para exportar: %.977s", dest_path);
+            snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para exportar: %.977s", dest_path);
+            app_log_write("ERROR", "EXPORT", log_buf_);
             pause_console();
             return;
         }
 
         printf("Base de datos exportada a:\n%s\n", dest_path);
-        log_writef("INFO", "EXPORT", "Exportacion finalizada (copia directa): %.983s", dest_path);
+        snprintf(log_buf_, sizeof(log_buf_), "Exportacion finalizada (copia directa): %.983s", dest_path);
+        app_log_write("INFO", "EXPORT", log_buf_);
         pause_console();
         return;
     }
@@ -1550,7 +1553,8 @@ void exportar_base_datos()
     if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
     {
         printf("Error abriendo base de datos destino:\n%s\n", dest_path);
-        log_writef("ERROR", "EXPORT", "Error abriendo DB destino (%.700s): %.260s", dest_path, sqlite3_errmsg(dest_db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error abriendo DB destino (%.700s): %.260s", dest_path, sqlite3_errmsg(dest_db));
+        app_log_write("ERROR", "EXPORT", log_buf_);
         if (dest_db)
         {
             sqlite3_close(dest_db);
@@ -1563,7 +1567,8 @@ void exportar_base_datos()
     if (!backup)
     {
         printf("Error iniciando backup SQLite: %s\n", sqlite3_errmsg(dest_db));
-        log_writef("ERROR", "EXPORT", "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
+        app_log_write("ERROR", "EXPORT", log_buf_);
         sqlite3_close(dest_db);
         pause_console();
         return;
@@ -1578,19 +1583,22 @@ void exportar_base_datos()
     if (final_rc != SQLITE_OK)
     {
         printf("Error exportando base de datos (SQLite backup): %s\n", sqlite3_errstr(final_rc));
-        log_writef("ERROR", "EXPORT", "Error SQLite backup final_rc=%d (%s)", final_rc, sqlite3_errstr(final_rc));
+        snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup final_rc=%d (%s)", final_rc, sqlite3_errstr(final_rc));
+        app_log_write("ERROR", "EXPORT", log_buf_);
         pause_console();
         return;
     }
 
     printf("Base de datos exportada a:\n%s\n", dest_path);
-    log_writef("INFO", "EXPORT", "Exportacion finalizada (SQLite backup): %.982s", dest_path);
+    snprintf(log_buf_, sizeof(log_buf_), "Exportacion finalizada (SQLite backup): %.982s", dest_path);
+    app_log_write("INFO", "EXPORT", log_buf_);
     pause_console();
 }
 
 int backup_base_datos_automatico(const char *motivo)
 {
-    log_writef("INFO", "BACKUP", "Inicio de backup automatico. Motivo: %s", (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
+    snprintf(log_buf_, sizeof(log_buf_), "Inicio de backup automatico. Motivo: %s", (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
+    app_log_write("INFO", "BACKUP", log_buf_);
 
     const char *source_path = DB_PATH;
     const char *export_dir = get_export_dir();
@@ -1608,7 +1616,8 @@ int backup_base_datos_automatico(const char *motivo)
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
         printf("%s\n", get_text("backup_failed"));
-        log_writef("ERROR", "BACKUP", "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
+        app_log_write("ERROR", "BACKUP", log_buf_);
         return 0;
     }
 
@@ -1659,12 +1668,14 @@ int backup_base_datos_automatico(const char *motivo)
     if (result != COPY_OK)
     {
         printf("%s\n", get_text("backup_failed"));
-        log_writef("ERROR", "BACKUP", "Fallo copia de backup desde %.470s hacia %.470s", source_path, dest_path);
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo copia de backup desde %.470s hacia %.470s", source_path, dest_path);
+        app_log_write("ERROR", "BACKUP", log_buf_);
         return 0;
     }
 
     printf("%s\n%s\n", get_text("backup_created"), dest_path);
-    log_writef("INFO", "BACKUP", "Backup automatico completado: %.992s", dest_path);
+    snprintf(log_buf_, sizeof(log_buf_), "Backup automatico completado: %.992s", dest_path);
+    app_log_write("INFO", "BACKUP", log_buf_);
     return 1;
 }
 
@@ -1691,14 +1702,16 @@ void importar_base_datos()
     if (result == COPY_SRC_ERROR)
     {
         printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
-        log_writef("ERROR", "IMPORT", "No se encontro archivo de importacion: %.983s", source_path);
+        snprintf(log_buf_, sizeof(log_buf_), "No se encontro archivo de importacion: %.983s", source_path);
+        app_log_write("ERROR", "IMPORT", log_buf_);
         return;
     }
 
     if (result == COPY_DST_ERROR)
     {
         printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
-        log_writef("ERROR", "IMPORT", "No se pudo abrir DB destino para importar: %.977s", dest_path);
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para importar: %.977s", dest_path);
+        app_log_write("ERROR", "IMPORT", log_buf_);
         return;
     }
 
@@ -1707,7 +1720,8 @@ void importar_base_datos()
     printf("Destino: %s\n", dest_path);
     printf("Reinicia la aplicacion para usar la nueva base.\n");
 
-    log_writef("INFO", "IMPORT", "Importacion completada. Origen: %.470s | Destino: %.470s", source_path, dest_path);
+    snprintf(log_buf_, sizeof(log_buf_), "Importacion completada. Origen: %.470s | Destino: %.470s", source_path, dest_path);
+    app_log_write("INFO", "IMPORT", log_buf_);
 
     pause_console();
 }
