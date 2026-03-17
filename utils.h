@@ -559,5 +559,8 @@ int app_is_supported_image_extension(const char *ext);
 int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename);
 int app_get_file_name_from_path(const char *path, char *nombre, size_t size);
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name);
+int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *prefijo_base,
+                                     char *ruta_relativa_db, size_t ruta_size);
+int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_filename);
 
 #endif

@@ -3625,3 +3625,112 @@ int app_get_file_name_from_path(const char *path, char *nombre, size_t size)
 
     return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
 }
+
+int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *prefijo_base,
+                                     char *ruta_relativa_db, size_t ruta_size)
+{
+    if (!selector_filename || !prefijo_base || !ruta_relativa_db || ruta_size == 0)
+    {
+        return 0;
+    }
+
+    char ruta_origen[1024] = {0};
+    printf("\nSe abrira el selector de archivos en Descargas.\n");
+    if (!app_select_image_from_user(ruta_origen, sizeof(ruta_origen), selector_filename))
+    {
+        printf("No se selecciono ninguna imagen.\n");
+        return 0;
+    }
+
+    const char *ext = app_get_file_extension(ruta_origen);
+    if (!app_is_supported_image_extension(ext))
+    {
+        printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        printf("No se pudo preparar la carpeta Imagenes.\n");
+        return 0;
+    }
+
+    char ts[32] = {0};
+    get_timestamp(ts, (int)sizeof(ts));
+
+    char base_destino[220] = {0};
+    snprintf(base_destino, sizeof(base_destino), "%s_%s", prefijo_base, ts);
+
+    char nombre_destino_opt[256] = {0};
+    snprintf(nombre_destino_opt, sizeof(nombre_destino_opt), "%s.jpg", base_destino);
+
+    char nombre_destino_original[256] = {0};
+    snprintf(nombre_destino_original, sizeof(nombre_destino_original), "%s%s", base_destino, ext);
+
+    char ruta_destino_opt[1200] = {0};
+    char ruta_destino_original[1200] = {0};
+    app_build_path(ruta_destino_opt, sizeof(ruta_destino_opt), images_dir, nombre_destino_opt);
+    app_build_path(ruta_destino_original, sizeof(ruta_destino_original), images_dir, nombre_destino_original);
+
+    int optimizada = app_optimize_image_file(ruta_origen, ruta_destino_opt);
+    const char *nombre_final = NULL;
+
+    if (optimizada)
+    {
+        nombre_final = nombre_destino_opt;
+    }
+    else
+    {
+        if (!app_copy_binary_file(ruta_origen, ruta_destino_original))
+        {
+            printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
+            return 0;
+        }
+        nombre_final = nombre_destino_original;
+    }
+
+    snprintf(ruta_relativa_db, ruta_size, "Imagenes/%s", nombre_final);
+    return 1;
+}
+
+int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_filename)
+{
+    if (id <= 0 || !tabla)
+    {
+        return 0;
+    }
+
+    char prefijo[220] = {0};
+    snprintf(prefijo, sizeof(prefijo), "%s_%d", tabla, id);
+
+    char ruta_relativa_db[300] = {0};
+    if (!app_seleccionar_y_copiar_imagen(selector_filename, prefijo, ruta_relativa_db, sizeof(ruta_relativa_db)))
+    {
+        return 0;
+    }
+
+    char sql[200] = {0};
+    snprintf(sql, sizeof(sql), "UPDATE %s SET imagen_ruta=? WHERE id=?", tabla);
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        printf("Error al guardar ruta de imagen en DB.\n");
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, ruta_relativa_db, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        printf("Error al guardar ruta de imagen en DB.\n");
+        return 0;
+    }
+
+    printf("\nImagen cargada correctamente.\n");
+    return 1;
+}

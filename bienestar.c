@@ -108,63 +108,15 @@ static int menuimg_construir_ruta_absoluta(const char *menu_key, char *ruta_abso
 
 static int menuimg_cargar_para_menu_key(const char *menu_key)
 {
-    char ruta_origen[1024] = {0};
-    printf("\nSe abrira el selector de archivos en Descargas.\n");
-    if (!app_select_image_from_user(ruta_origen, sizeof(ruta_origen), "mifutbol_imagen_sel_bienestar.txt"))
-    {
-        printf("No se selecciono ninguna imagen.\n");
-        return 0;
-    }
-
-    const char *ext = app_get_file_extension(ruta_origen);
-    if (!app_is_supported_image_extension(ext))
-    {
-        printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
-        return 0;
-    }
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
-    {
-        printf("No se pudo preparar la carpeta Imagenes.\n");
-        return 0;
-    }
-
-    char ts[32] = {0};
-    get_timestamp(ts, (int)sizeof(ts));
-
-    char base_destino[220] = {0};
-    snprintf(base_destino, sizeof(base_destino), "bienestar_%s_%s", menu_key, ts);
-
-    char nombre_destino_opt[256] = {0};
-    snprintf(nombre_destino_opt, sizeof(nombre_destino_opt), "%s.jpg", base_destino);
-
-    char nombre_destino_original[256] = {0};
-    snprintf(nombre_destino_original, sizeof(nombre_destino_original), "%s%s", base_destino, ext);
-
-    char ruta_destino_opt[1200] = {0};
-    char ruta_destino_original[1200] = {0};
-    app_build_path(ruta_destino_opt, sizeof(ruta_destino_opt), images_dir, nombre_destino_opt);
-    app_build_path(ruta_destino_original, sizeof(ruta_destino_original), images_dir, nombre_destino_original);
-
-    int optimizada = app_optimize_image_file(ruta_origen, ruta_destino_opt);
-    const char *nombre_final = NULL;
-    if (optimizada)
-    {
-        nombre_final = nombre_destino_opt;
-    }
-    else
-    {
-        if (!app_copy_binary_file(ruta_origen, ruta_destino_original))
-        {
-            printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
-            return 0;
-        }
-        nombre_final = nombre_destino_original;
-    }
+    char prefijo[220] = {0};
+    snprintf(prefijo, sizeof(prefijo), "bienestar_%s", menu_key);
 
     char ruta_relativa_db[300] = {0};
-    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_final);
+    if (!app_seleccionar_y_copiar_imagen("mifutbol_imagen_sel_bienestar.txt", prefijo,
+                                          ruta_relativa_db, sizeof(ruta_relativa_db)))
+    {
+        return 0;
+    }
 
     if (!menuimg_guardar_ruta_menu(menu_key, ruta_relativa_db))
     {
