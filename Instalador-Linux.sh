@@ -19,6 +19,7 @@ ENABLE_NATIVE="${ENABLE_NATIVE:-0}"
 RUN_AFTER_BUILD=0
 STRIP_BINARY=0
 INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
+INSTALL_MODE_SYSTEM="system"
 OS_NAME="$(uname -s)"
 INSTALL_IMAGE_TOOLS="${INSTALL_IMAGE_TOOLS:-1}"
 OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING="Aviso: no se pudieron instalar todas las herramientas opcionales."
@@ -31,12 +32,11 @@ CURRENT_STEP=0
 render_progress_bar() {
   local current="$1"
   local total="$2"
-  local width=34
   local percent=$(( current * 100 / total ))
 
   printf "["
-  for ((i=0; i<current * width / total; i++)); do printf "#"; done
-  for ((i=current * width / total; i<width; i++)); do printf "."; done
+  for ((i=0; i<current * 34 / total; i++)); do printf "#"; done
+  for ((i=current * 34 / total; i<34; i++)); do printf "."; done
   printf "] %3d%%" "$percent"
   return 0
 }
@@ -70,7 +70,7 @@ while [[ "$#" -gt 0 ]]; do
       shift
       ;;
     --path-system)
-      INSTALL_PATH_MODE="system"
+      INSTALL_PATH_MODE="${INSTALL_MODE_SYSTEM}"
       shift
       ;;
     --no-path)
@@ -243,11 +243,11 @@ install_launcher_in_path() {
     user)
       install_user_launcher
       ;;
-    system)
+    "${INSTALL_MODE_SYSTEM}")
       install_system_launcher
       ;;
     *)
-      echo "Valor INSTALL_PATH_MODE no valido: ${INSTALL_PATH_MODE}. Use user/system/none."
+      echo "Valor INSTALL_PATH_MODE no valido: ${INSTALL_PATH_MODE}. Use user/${INSTALL_MODE_SYSTEM}/none."
       exit 1
       ;;
   esac
@@ -261,7 +261,6 @@ install_desktop_entry() {
   fi
 
   local source_icon=""
-  local source_desktop="mifutbolc.desktop"
   local desktop_dir=""
   local icon_dir=""
   local app_exec=""
@@ -274,7 +273,7 @@ install_desktop_entry() {
     fi
   done
 
-  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+  if [[ "${INSTALL_PATH_MODE}" = "${INSTALL_MODE_SYSTEM}" ]]; then
     desktop_dir="/usr/share/applications"
     icon_dir="/usr/share/icons/hicolor/256x256/apps"
     app_exec="/usr/local/bin/${OUT}"
@@ -288,7 +287,7 @@ install_desktop_entry() {
     fi
   fi
 
-  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+  if [[ "${INSTALL_PATH_MODE}" = "${INSTALL_MODE_SYSTEM}" ]]; then
     sudo mkdir -p "${desktop_dir}" "${icon_dir}"
   else
     mkdir -p "${desktop_dir}" "${icon_dir}"
@@ -314,7 +313,7 @@ Keywords=football;soccer;manager;estadisticas;torneo;
 StartupNotify=true
 EOF
 
-  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+  if [[ "${INSTALL_PATH_MODE}" = "${INSTALL_MODE_SYSTEM}" ]]; then
     sudo install -m 644 "${desktop_tmp}" "${desktop_dir}/mifutbolc.desktop"
   else
     install -m 644 "${desktop_tmp}" "${desktop_dir}/mifutbolc.desktop"
@@ -323,7 +322,7 @@ EOF
   rm -f "${desktop_tmp}"
 
   if [[ -n "${source_icon}" ]]; then
-    if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+    if [[ "${INSTALL_PATH_MODE}" = "${INSTALL_MODE_SYSTEM}" ]]; then
       sudo install -m 644 "${source_icon}" "${icon_dir}/mifutbolc.png"
     else
       install -m 644 "${source_icon}" "${icon_dir}/mifutbolc.png"
