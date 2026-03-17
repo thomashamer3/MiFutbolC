@@ -1445,6 +1445,78 @@ const char *get_images_dir()
     return IMAGES_DIR;
 }
 
+int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)
+{
+    if (!table_name || table_name[0] == '\0' || !ruta || size == 0 || id <= 0)
+    {
+        return 0;
+    }
+
+    for (size_t i = 0; table_name[i] != '\0'; i++)
+    {
+        unsigned char ch = (unsigned char)table_name[i];
+        if (!(isalnum(ch) || ch == '_'))
+        {
+            return 0;
+        }
+    }
+
+    char sql[256] = {0};
+    snprintf(sql, sizeof(sql), "SELECT imagen_ruta FROM %s WHERE id=?", table_name);
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    int ok = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *valor = sqlite3_column_text(stmt, 0);
+        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
+        {
+            ok = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, size_t size)
+{
+    if (!ruta_db || ruta_db[0] == '\0' || !ruta_absoluta || size == 0)
+    {
+        return 0;
+    }
+
+    char nombre_archivo[260] = {0};
+    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
+    {
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        return 0;
+    }
+
+    app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
+
+    FILE *f = NULL;
+    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
+    {
+        return 0;
+    }
+    fclose(f);
+
+    return 1;
+}
+
 /**
  * @brief Copia la base de datos SQLite a la carpeta de documentos
  *

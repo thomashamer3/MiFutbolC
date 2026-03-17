@@ -92,33 +92,18 @@ static int menuimg_obtener_ruta_menu(const char *menu_key, char *ruta, size_t si
 
 static int menuimg_construir_ruta_absoluta(const char *menu_key, char *ruta_absoluta, size_t size)
 {
+    if (!ruta_absoluta || size == 0)
+    {
+        return 0;
+    }
+
     char ruta_db[300] = {0};
     if (!menuimg_obtener_ruta_menu(menu_key, ruta_db, sizeof(ruta_db)))
     {
         return 0;
     }
 
-    char nombre_archivo[260] = {0};
-    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
-    {
-        return 0;
-    }
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
-    {
-        return 0;
-    }
-
-    app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
-
-    FILE *f = NULL;
-    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
-    {
-        return 0;
-    }
-    fclose(f);
-    return 1;
+    return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
 
 static int menuimg_cargar_para_menu_key(const char *menu_key)

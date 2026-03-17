@@ -11,6 +11,7 @@
 #ifndef DB_H
 #define DB_H
 
+#include <stddef.h>
 #include "compat_port.h"
 #include "sqlite3.h"
 
@@ -166,6 +167,34 @@ const char* get_import_dir();
  * @return Puntero constante a string con path del directorio de imagenes
  */
 const char* get_images_dir();
+
+/**
+ * @brief Obtiene la ruta de imagen almacenada para una entidad por ID
+ *
+ * Consulta la columna `imagen_ruta` en la tabla indicada y copia
+ * el valor en el buffer de salida.
+ *
+ * @param table_name Nombre de tabla (solo caracteres alfanumericos y '_')
+ * @param id ID de registro a consultar
+ * @param ruta Buffer de salida
+ * @param size Tamano del buffer de salida
+ * @return 1 si encontro una ruta valida, 0 en caso contrario
+ */
+int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size);
+
+/**
+ * @brief Resuelve ruta absoluta de imagen y valida que exista en disco
+ *
+ * Toma una ruta almacenada en DB (por ejemplo `Imagenes/archivo.jpg`),
+ * extrae el nombre de archivo, construye la ruta absoluta usando el
+ * directorio de imagenes de la aplicacion y verifica que el archivo exista.
+ *
+ * @param ruta_db Ruta almacenada en la base de datos
+ * @param ruta_absoluta Buffer de salida para ruta absoluta
+ * @param size Tamano del buffer de salida
+ * @return 1 si la ruta fue resuelta y el archivo existe, 0 en caso contrario
+ */
+int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, size_t size);
 
 /**
  * @brief Registra un evento informativo en el archivo de log de la aplicación

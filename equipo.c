@@ -51,34 +51,6 @@ static int abrir_imagen_en_sistema(const char *ruta)
     return system(cmd) == 0;
 }
 
-static int obtener_ruta_imagen_equipo_db(int id, char *ruta, size_t size)
-{
-    if (!ruta || size == 0)
-    {
-        return 0;
-    }
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT imagen_ruta FROM equipo WHERE id=?"))
-    {
-        return 0;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    int ok = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const unsigned char *valor = sqlite3_column_text(stmt, 0);
-        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
-        {
-            ok = 1;
-        }
-    }
-
-    sqlite3_finalize(stmt);
-    return ok;
-}
-
 static int construir_ruta_absoluta_imagen_equipo_por_id(int id, char *ruta_absoluta, size_t size)
 {
     if (!ruta_absoluta || size == 0)
@@ -87,33 +59,12 @@ static int construir_ruta_absoluta_imagen_equipo_por_id(int id, char *ruta_absol
     }
 
     char ruta_db[300] = {0};
-    if (!obtener_ruta_imagen_equipo_db(id, ruta_db, sizeof(ruta_db)))
+    if (!db_get_image_path_by_id("equipo", id, ruta_db, sizeof(ruta_db)))
     {
         return 0;
     }
 
-    char nombre_archivo[260] = {0};
-    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
-    {
-        return 0;
-    }
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
-    {
-        return 0;
-    }
-
-    app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
-
-    FILE *f = NULL;
-    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
-    {
-        return 0;
-    }
-    fclose(f);
-
-    return 1;
+    return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
 
 static int cargar_imagen_para_equipo_id(int id)
@@ -1404,12 +1355,10 @@ void save_equipo_to_db(const Equipo *equipo)
     {
         insert_jugadores_for_equipo(equipo_id, equipo);
         printf("Equipo guardado exitosamente con ID: %d\n", equipo_id);
-        if (confirmar("Desea cargar imagen para este equipo ahora?"))
+        if (confirmar("Desea cargar imagen para este equipo ahora?") &&
+            !cargar_imagen_para_equipo_id(equipo_id))
         {
-            if (!cargar_imagen_para_equipo_id(equipo_id))
-            {
-                printf("No se pudo cargar la imagen en este momento.\n");
-            }
+            printf("No se pudo cargar la imagen en este momento.\n");
         }
         handle_party_assignment(equipo_id);
     }
@@ -1868,24 +1817,22 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
         return;
     }
 
-    if (confirmar("Esta seguro que desea eliminar este jugador?"))
+    sqlite3_stmt *stmt;
+    const char *sql_delete = "DELETE FROM jugador WHERE id = ?;";
+    if (confirmar("Esta seguro que desea eliminar este jugador?") &&
+        sqlite3_prepare_v2(db, sql_delete, -1, &stmt, 0) == SQLITE_OK)
     {
-        sqlite3_stmt *stmt;
-        const char *sql_delete = "DELETE FROM jugador WHERE id = ?;";
-        if (sqlite3_prepare_v2(db, sql_delete, -1, &stmt, 0) == SQLITE_OK)
-        {
-            sqlite3_bind_int(stmt, 1, jugadores_ids[jugador_idx]);
+        sqlite3_bind_int(stmt, 1, jugadores_ids[jugador_idx]);
 
-            if (sqlite3_step(stmt) == SQLITE_DONE)
-            {
-                printf("Jugador eliminado exitosamente.\n");
-            }
-            else
-            {
-                printf("Error al eliminar el jugador: %s\n", sqlite3_errmsg(db));
-            }
-            sqlite3_finalize(stmt);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            printf("Jugador eliminado exitosamente.\n");
         }
+        else
+        {
+            printf("Error al eliminar el jugador: %s\n", sqlite3_errmsg(db));
+        }
+        sqlite3_finalize(stmt);
     }
 
     pause_console();
@@ -2245,11 +2192,7 @@ void eliminar_jugador_momentaneo(Equipo *equipo)
 
     if (confirmar("Esta seguro que desea eliminar este jugador?"))
     {
-        // Si es el capitan, quitar la marca de capitan
-        if (equipo->jugadores[jugador_idx].es_capitan)
-        {
-            equipo->jugadores[jugador_idx].es_capitan = 0;
-        }
+        equipo->jugadores[jugador_idx].es_capitan = 0;
 
         // Mover los jugadores restantes para llenar el espacio
         for (int i = jugador_idx; i < equipo->num_jugadores - 1; i++)

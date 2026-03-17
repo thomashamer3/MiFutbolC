@@ -20,7 +20,6 @@
 #define MAX_CAMISETAS_SORTEO 150
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
-static int obtener_ruta_imagen_camiseta_db(int id, char *ruta, size_t size);
 static void listar_camisetas_simple(void);
 static int cargar_imagen_para_camiseta_id(int id);
 
@@ -125,7 +124,7 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
     }
 
     char ruta_db[300] = {0};
-    if (!obtener_ruta_imagen_camiseta_db(id, ruta_db, sizeof(ruta_db)))
+    if (!db_get_image_path_by_id("camiseta", id, ruta_db, sizeof(ruta_db)))
     {
         return 0;
     }
@@ -426,34 +425,6 @@ static void menu_ajustes_imagen_camiseta()
         {0, "Volver", NULL}
     };
     ejecutar_menu("AJUSTES IMAGEN", items, 4);
-}
-
-static int obtener_ruta_imagen_camiseta_db(int id, char *ruta, size_t size)
-{
-    if (!ruta || size == 0)
-    {
-        return 0;
-    }
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT imagen_ruta FROM camiseta WHERE id=?"))
-    {
-        return 0;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    int ok = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const unsigned char *valor = sqlite3_column_text(stmt, 0);
-        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
-        {
-            ok = 1;
-        }
-    }
-
-    sqlite3_finalize(stmt);
-    return ok;
 }
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)

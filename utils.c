@@ -143,11 +143,90 @@ static void auth_build_password_hash(const char *plain_password, const char *sal
 static int auth_username_exists(sqlite3 *auth_db, const char *username);
 static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password);
 
+static int app_get_env_var_copy(const char *name, char *buffer, size_t size)
+{
+    if (!name || !buffer || size == 0)
+    {
+        return 0;
+    }
+
+#if defined(_WIN32) && defined(_MSC_VER)
+    char *value = NULL;
+    size_t value_len = 0;
+    if (_dupenv_s(&value, &value_len, name) != 0 || !value || value_len == 0)
+    {
+        if (value)
+        {
+            free(value);
+        }
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    strncpy_s(buffer, size, value, _TRUNCATE);
+    free(value);
+    return buffer[0] != '\0';
+#else
+    const char *value = getenv(name);
+    if (!value || value[0] == '\0')
+    {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    strncpy_s(buffer, size, value, _TRUNCATE);
+    return buffer[0] != '\0';
+#endif
+}
+
+static int app_build_local_appdata_path(char *dest, size_t size, const char *suffix)
+{
+#ifdef _WIN32
+    char local_app_data[1024] = {0};
+    if (!dest || size == 0 || !suffix)
+    {
+        return 0;
+    }
+
+    if (!app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    {
+        return 0;
+    }
+
+    if (strcpy_s(dest, size, local_app_data) != 0)
+    {
+        return 0;
+    }
+    if (strcat_s(dest, size, "\\MiFutbolC") != 0)
+    {
+        return 0;
+    }
+
+    if (suffix[0] != '\0')
+    {
+        if (strcat_s(dest, size, "\\") != 0)
+        {
+            return 0;
+        }
+        if (strcat_s(dest, size, suffix) != 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+#else
+    (void)dest;
+    (void)size;
+    (void)suffix;
+    return 0;
+#endif
+}
+
 static void auth_get_db_path(char *path, size_t size)
 {
 #ifdef _WIN32
-    const char *local_app_data = getenv("LOCALAPPDATA");
-    if (local_app_data && local_app_data[0] != '\0')
+    char local_app_data[1024] = {0};
+    if (app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         snprintf(path, size, "%s\\MiFutbolC\\data\\users.db", local_app_data);
         return;
@@ -161,8 +240,8 @@ static void auth_get_user_data_paths(const char *username,
                                      char *log_path, size_t log_size)
 {
 #ifdef _WIN32
-    const char *local_app_data = getenv("LOCALAPPDATA");
-    if (local_app_data && local_app_data[0] != '\0')
+    char local_app_data[1024] = {0};
+    if (app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         snprintf(db_path, db_size, "%s\\MiFutbolC\\data\\mifutbol_%s.db", local_app_data, username);
         snprintf(log_path, log_size, "%s\\MiFutbolC\\data\\mifutbol_%s.log", local_app_data, username);
@@ -176,14 +255,12 @@ static void auth_get_user_data_paths(const char *username,
 static int auth_ensure_parent_dirs(void)
 {
 #ifdef _WIN32
-    const char *local_app_data = getenv("LOCALAPPDATA");
     char base_dir[1024];
     char data_dir[1024];
 
-    if (local_app_data && local_app_data[0] != '\0')
+    if (app_build_local_appdata_path(base_dir, sizeof(base_dir), "") &&
+            app_build_local_appdata_path(data_dir, sizeof(data_dir), "data"))
     {
-        snprintf(base_dir, sizeof(base_dir), "%s\\MiFutbolC", local_app_data);
-        snprintf(data_dir, sizeof(data_dir), "%s\\MiFutbolC\\data", local_app_data);
         MKDIR(base_dir);
         MKDIR(data_dir);
         return 1;
@@ -483,10 +560,9 @@ static int auth_importar_usuario_legado_si_existe(sqlite3 *auth_db)
     char legacy1[1024];
     char legacy2[1024];
 #ifdef _WIN32
-    const char *local_app_data = getenv("LOCALAPPDATA");
-    if (local_app_data && local_app_data[0] != '\0')
+    if (app_build_local_appdata_path(legacy1, sizeof(legacy1), "data\\mifutbol.db"))
     {
-        snprintf(legacy1, sizeof(legacy1), "%s\\MiFutbolC\\data\\mifutbol.db", local_app_data);
+        /* ruta lista */
     }
     else
     {
