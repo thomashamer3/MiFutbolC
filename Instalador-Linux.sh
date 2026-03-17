@@ -22,6 +22,7 @@ INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
 OS_NAME="$(uname -s)"
 INSTALL_IMAGE_TOOLS="${INSTALL_IMAGE_TOOLS:-1}"
 OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING="Aviso: no se pudieron instalar todas las herramientas opcionales."
+OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS="Herramientas opcionales instaladas correctamente."
 
 # Progress bar (stage-based) for installation/build flow
 TOTAL_STEPS=7
@@ -31,13 +32,13 @@ render_progress_bar() {
   local current="$1"
   local total="$2"
   local width=34
-  local filled=$(( current * width / total ))
   local percent=$(( current * 100 / total ))
 
   printf "["
-  for ((i=0; i<filled; i++)); do printf "#"; done
-  for ((i=filled; i<width; i++)); do printf "."; done
+  for ((i=0; i<current * width / total; i++)); do printf "#"; done
+  for ((i=current * width / total; i<width; i++)); do printf "."; done
   printf "] %3d%%" "$percent"
+  return 0
 }
 
 step_progress() {
@@ -46,6 +47,7 @@ step_progress() {
   printf "\n[%d/%d] %s\n" "$CURRENT_STEP" "$TOTAL_STEPS" "$message"
   render_progress_bar "$CURRENT_STEP" "$TOTAL_STEPS"
   printf "\n"
+  return 0
 }
 
 # Simple argument parser
@@ -219,6 +221,7 @@ install_user_launcher() {
   fi
 
   echo "Instalado launcher de usuario: ${target_dir}/${OUT}"
+  return 0
 }
 
 install_system_launcher() {
@@ -229,6 +232,7 @@ install_system_launcher() {
   sudo mkdir -p "${target_dir}"
   sudo ln -sfn "${source_bin}" "${target_dir}/${OUT}"
   echo "Instalado launcher global: ${target_dir}/${OUT}"
+  return 0
 }
 
 install_launcher_in_path() {
@@ -247,6 +251,7 @@ install_launcher_in_path() {
       exit 1
       ;;
   esac
+  return 0
 }
 
 install_optional_image_tools() {
@@ -272,7 +277,7 @@ install_optional_image_tools() {
   if command -v apt-get >/dev/null 2>&1; then
     echo "Instalando herramientas opcionales (feh/chafa/zenity) via apt-get..."
     if sudo apt-get install -y feh chafa zenity; then
-      echo "Herramientas opcionales instaladas correctamente."
+      echo "${OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS}"
     else
       echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
@@ -282,7 +287,7 @@ install_optional_image_tools() {
   if command -v dnf >/dev/null 2>&1; then
     echo "Instalando herramientas opcionales (feh/chafa/zenity) via dnf..."
     if sudo dnf install -y feh chafa zenity; then
-      echo "Herramientas opcionales instaladas correctamente."
+      echo "${OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS}"
     else
       echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
@@ -292,7 +297,7 @@ install_optional_image_tools() {
   if command -v zypper >/dev/null 2>&1; then
     echo "Instalando herramientas opcionales (feh/chafa/zenity) via zypper..."
     if sudo zypper install -y feh chafa zenity; then
-      echo "Herramientas opcionales instaladas correctamente."
+      echo "${OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS}"
     else
       echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
@@ -302,7 +307,7 @@ install_optional_image_tools() {
   if command -v pacman >/dev/null 2>&1; then
     echo "Instalando herramientas opcionales (feh/chafa/zenity) via pacman..."
     if sudo pacman -Sy --noconfirm feh chafa zenity; then
-      echo "Herramientas opcionales instaladas correctamente."
+      echo "${OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS}"
     else
       echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi

@@ -1578,9 +1578,9 @@ static void menu_mode_settings()
  */
 void menu_custom_menus()
 {
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST)
     return;
-#endif
+#else
     custom_menu_changed = 0; // Reset flag at the beginning
     clear_screen();
     print_header(get_text("menu_settings"));
@@ -1637,6 +1637,7 @@ void menu_custom_menus()
     confirmar_guardado_configuracion(1);
     pause_console();
     menu_custom_menus(); // Recargar menu
+#endif
 }
 
 /**
@@ -1644,9 +1645,9 @@ void menu_custom_menus()
  */
 void menu_update()
 {
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST)
     return;
-#endif
+#else
 #ifdef _WIN32
     clear_screen();
     print_header(get_text("menu_update"));
@@ -1702,6 +1703,7 @@ void menu_update()
 #else
     printf("Actualizar solo esta soportado en Windows.\n");
     pause_console();
+#endif
 #endif
 }
 
