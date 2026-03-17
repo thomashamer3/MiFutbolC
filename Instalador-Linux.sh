@@ -254,6 +254,90 @@ install_launcher_in_path() {
   return 0
 }
 
+install_desktop_entry() {
+  if [[ "${OS_NAME}" != "Linux" ]]; then
+    echo "Instalacion de .desktop omitida: solo aplica a Linux."
+    return 0
+  fi
+
+  local source_icon=""
+  local source_desktop="mifutbolc.desktop"
+  local desktop_dir=""
+  local icon_dir=""
+  local app_exec=""
+  local desktop_tmp=""
+
+  for icon_candidate in "mifutbolc.png" "images/mifutbolc.png" "images/MiFutbolC.png"; do
+    if [[ -f "${icon_candidate}" ]]; then
+      source_icon="${icon_candidate}"
+      break
+    fi
+  done
+
+  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+    desktop_dir="/usr/share/applications"
+    icon_dir="/usr/share/icons/hicolor/256x256/apps"
+    app_exec="/usr/local/bin/${OUT}"
+  else
+    desktop_dir="${HOME}/.local/share/applications"
+    icon_dir="${HOME}/.local/share/icons/hicolor/256x256/apps"
+    if [[ "${INSTALL_PATH_MODE}" = "none" ]]; then
+      app_exec="$(pwd)/${OUT}"
+    else
+      app_exec="${HOME}/.local/bin/${OUT}"
+    fi
+  fi
+
+  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+    sudo mkdir -p "${desktop_dir}" "${icon_dir}"
+  else
+    mkdir -p "${desktop_dir}" "${icon_dir}"
+  fi
+
+  desktop_tmp="$(mktemp)"
+  cat > "${desktop_tmp}" <<EOF
+[Desktop Entry]
+Version=4.0
+Type=Application
+Name=MiFutbolC
+Name[es]=MiFutbolC
+GenericName=Football Manager (CLI)
+GenericName[es]=Gestor de Futbol (CLI)
+Comment=Manage your Football  from the terminal
+Comment[es]=Gestiona tu Futbol desde la terminal
+Exec=${app_exec}
+TryExec=${app_exec}
+Icon=mifutbolc
+Terminal=true
+Categories=Game;Sports;
+Keywords=football;soccer;manager;estadisticas;torneo;
+StartupNotify=true
+EOF
+
+  if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+    sudo install -m 644 "${desktop_tmp}" "${desktop_dir}/mifutbolc.desktop"
+  else
+    install -m 644 "${desktop_tmp}" "${desktop_dir}/mifutbolc.desktop"
+  fi
+
+  rm -f "${desktop_tmp}"
+
+  if [[ -n "${source_icon}" ]]; then
+    if [[ "${INSTALL_PATH_MODE}" = "system" ]]; then
+      sudo install -m 644 "${source_icon}" "${icon_dir}/mifutbolc.png"
+    else
+      install -m 644 "${source_icon}" "${icon_dir}/mifutbolc.png"
+    fi
+    echo "Icono instalado: ${icon_dir}/mifutbolc.png"
+  else
+    echo "Aviso: no se encontro un PNG de icono (mifutbolc.png o images/MiFutbolC.png)."
+    echo "El acceso .desktop se instalo, pero aparecera sin icono hasta agregar el PNG."
+  fi
+
+  echo "Acceso de menu instalado: ${desktop_dir}/mifutbolc.desktop"
+  return 0
+}
+
 install_optional_image_tools() {
   if [[ "${INSTALL_IMAGE_TOOLS}" != "1" ]]; then
     echo "Herramientas de imagen opcionales: omitidas (--without-image-tools)."
@@ -441,8 +525,9 @@ fi
 
 ls -lh "$OUT"
 
-step_progress "Configurando acceso global (PATH)"
+step_progress "Configurando accesos (PATH y menu)"
 install_launcher_in_path
+install_desktop_entry
 
 step_progress "Instalacion finalizada"
 echo "MiFutbolC esta listo para usar."
