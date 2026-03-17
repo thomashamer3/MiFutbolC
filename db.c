@@ -90,7 +90,7 @@ static uint64_t fnv1a64_string(const char *text)
     {
         return offset_basis;
     }
-    return fnv1a64_update(offset_basis, (const unsigned char *)text, strlen(text));
+    return fnv1a64_update(offset_basis, (const unsigned char *)text, strlen_s(text, SIZE_MAX));
 }
 
 static void bytes_to_hex(const unsigned char *bytes, size_t bytes_len, char *hex_out, size_t out_size)

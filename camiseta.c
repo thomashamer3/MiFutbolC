@@ -21,25 +21,8 @@
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
 static int obtener_ruta_imagen_camiseta_db(int id, char *ruta, size_t size);
-static int obtener_nombre_archivo(const char *path, char *nombre, size_t size);
 static void listar_camisetas_simple(void);
 static int cargar_imagen_para_camiseta_id(int id);
-
-static int comando_existe(const char *cmd)
-{
-    if (!cmd || cmd[0] == '\0')
-    {
-        return 0;
-    }
-
-    char check_cmd[256];
-#ifdef _WIN32
-    snprintf(check_cmd, sizeof(check_cmd), "where %s >nul 2>nul", cmd);
-#else
-    snprintf(check_cmd, sizeof(check_cmd), "command -v %s >/dev/null 2>&1", cmd);
-#endif
-    return system(check_cmd) == 0;
-}
 
 static void asegurar_fila_settings()
 {
@@ -109,19 +92,19 @@ static int instalar_paquete_linux(const char *package_name)
     }
 
     char install_cmd[512] = {0};
-    if (comando_existe("apt-get"))
+    if (app_command_exists("apt-get"))
     {
         snprintf(install_cmd, sizeof(install_cmd), "sudo apt-get update && sudo apt-get install -y %s", package_name);
     }
-    else if (comando_existe("dnf"))
+    else if (app_command_exists("dnf"))
     {
         snprintf(install_cmd, sizeof(install_cmd), "sudo dnf install -y %s", package_name);
     }
-    else if (comando_existe("pacman"))
+    else if (app_command_exists("pacman"))
     {
         snprintf(install_cmd, sizeof(install_cmd), "sudo pacman -Sy --noconfirm %s", package_name);
     }
-    else if (comando_existe("zypper"))
+    else if (app_command_exists("zypper"))
     {
         snprintf(install_cmd, sizeof(install_cmd), "sudo zypper --non-interactive install %s", package_name);
     }
@@ -148,7 +131,7 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
     }
 
     char nombre_archivo[260] = {0};
-    if (!obtener_nombre_archivo(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
+    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
     {
         return 0;
     }
@@ -159,11 +142,7 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
         return 0;
     }
 
-#ifdef _WIN32
-    snprintf(ruta_absoluta, size, "%s\\%s", images_dir, nombre_archivo);
-#else
-    snprintf(ruta_absoluta, size, "%s/%s", images_dir, nombre_archivo);
-#endif
+    app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
 
     FILE *f = NULL;
     if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
@@ -175,258 +154,6 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
     return 1;
 }
 
-static int copiar_archivo_binario(const char *source_path, const char *dest_path)
-{
-    FILE *src = NULL;
-    FILE *dst = NULL;
-
-    if (fopen_s(&src, source_path, "rb") != 0 || !src)
-    {
-        return 0;
-    }
-
-    if (fopen_s(&dst, dest_path, "wb") != 0 || !dst)
-    {
-        fclose(src);
-        return 0;
-    }
-
-    char buffer[8192];
-    size_t bytes = 0;
-    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
-    {
-        if (fwrite(buffer, 1, bytes, dst) != bytes)
-        {
-            fclose(src);
-            fclose(dst);
-            return 0;
-        }
-    }
-
-    fclose(src);
-    fclose(dst);
-    return 1;
-}
-
-static void escapar_comillas_simples_ps(const char *src, char *dst, size_t dst_size)
-{
-    if (!src || !dst || dst_size == 0)
-    {
-        return;
-    }
-
-    size_t j = 0;
-    size_t i = 0;
-    while (src[i] != '\0' && j + 1 < dst_size)
-    {
-        if (src[i] == '\'')
-        {
-            if (j + 2 >= dst_size)
-            {
-                break;
-            }
-            dst[j++] = '\'';
-            dst[j++] = '\'';
-        }
-        else
-        {
-            dst[j++] = src[i];
-        }
-        i++;
-    }
-    dst[j] = '\0';
-}
-
-static int optimizar_imagen_archivo(const char *source_path, const char *dest_path)
-{
-    if (!source_path || !dest_path)
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    if (comando_existe("magick"))
-    {
-        char cmd_magick[2600];
-        snprintf(cmd_magick,
-                 sizeof(cmd_magick),
-                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        if (system(cmd_magick) == 0)
-        {
-            return 1;
-        }
-    }
-
-    char src_ps[2200] = {0};
-    char dst_ps[2200] = {0};
-    escapar_comillas_simples_ps(source_path, src_ps, sizeof(src_ps));
-    escapar_comillas_simples_ps(dest_path, dst_ps, sizeof(dst_ps));
-
-    char cmd_ps[9000];
-    snprintf(cmd_ps,
-             sizeof(cmd_ps),
-             "powershell -NoProfile -Command \"$ErrorActionPreference='Stop';"
-             "Add-Type -AssemblyName System.Drawing;"
-             "$src='%s';$dst='%s';"
-             "$img=[System.Drawing.Image]::FromFile($src);"
-             "try{"
-             "$max=1280;$w=$img.Width;$h=$img.Height;"
-             "if($w -gt $h){$nw=[Math]::Min($w,$max);$nh=[int]($h*$nw/$w)}"
-             "else{$nh=[Math]::Min($h,$max);$nw=[int]($w*$nh/$h)};"
-             "$bmp=New-Object System.Drawing.Bitmap $nw,$nh;"
-             "$g=[System.Drawing.Graphics]::FromImage($bmp);"
-             "$g.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic;"
-             "$g.SmoothingMode=[System.Drawing.Drawing2D.SmoothingMode]::HighQuality;"
-             "$g.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality;"
-             "$g.DrawImage($img,0,0,$nw,$nh);"
-             "$enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|Where-Object{$_.MimeType -eq 'image/jpeg'}|Select-Object -First 1;"
-             "$ep=New-Object System.Drawing.Imaging.EncoderParameters 1;"
-             "$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality,92L);"
-             "$bmp.Save($dst,$enc,$ep);"
-             "$g.Dispose();$bmp.Dispose();"
-             "}finally{$img.Dispose()}\"",
-             src_ps,
-             dst_ps);
-
-    return system(cmd_ps) == 0;
-#else
-    char cmd[2600];
-    if (comando_existe("magick"))
-    {
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        return system(cmd) == 0;
-    }
-
-    if (comando_existe("convert"))
-    {
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "convert \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        return system(cmd) == 0;
-    }
-
-    return 0;
-#endif
-}
-
-static const char *obtener_extension(const char *path)
-{
-    if (!path)
-    {
-        return NULL;
-    }
-
-    const char *dot = strrchr(path, '.');
-    if (!dot || dot == path)
-    {
-        return NULL;
-    }
-    return dot;
-}
-
-static int extension_imagen_soportada(const char *ext)
-{
-    if (!ext)
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    return _stricmp(ext, ".jpg") == 0 ||
-           _stricmp(ext, ".jpeg") == 0 ||
-           _stricmp(ext, ".png") == 0 ||
-           _stricmp(ext, ".bmp") == 0 ||
-           _stricmp(ext, ".webp") == 0;
-#else
-    return strcasecmp(ext, ".jpg") == 0 ||
-           strcasecmp(ext, ".jpeg") == 0 ||
-           strcasecmp(ext, ".png") == 0 ||
-           strcasecmp(ext, ".bmp") == 0 ||
-           strcasecmp(ext, ".webp") == 0;
-#endif
-}
-
-static int seleccionar_imagen_usuario(char *ruta_origen, size_t size)
-{
-    if (!ruta_origen || size == 0)
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    const char *archivo_temp = "mifutbol_imagen_sel.txt";
-    remove(archivo_temp);
-
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; "
-             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
-             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
-             "$dlg.Filter = 'Imagenes|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
-             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
-             archivo_temp);
-
-    int rc = system(cmd);
-    (void)rc;
-
-    FILE *f = NULL;
-    if (fopen_s(&f, archivo_temp, "r") != 0 || !f)
-    {
-        return 0;
-    }
-
-    if (!fgets(ruta_origen, (int)size, f))
-    {
-        fclose(f);
-        remove(archivo_temp);
-        return 0;
-    }
-
-    fclose(f);
-    remove(archivo_temp);
-    trim_whitespace(ruta_origen);
-    return ruta_origen[0] != '\0';
-#else
-    input_string("Ruta de imagen: ", ruta_origen, (int)size);
-    trim_whitespace(ruta_origen);
-    return ruta_origen[0] != '\0';
-#endif
-}
-
-static int obtener_nombre_archivo(const char *path, char *nombre, size_t size)
-{
-    if (!path || !nombre || size == 0)
-    {
-        return 0;
-    }
-
-    const char *last_slash = strrchr(path, '/');
-    const char *last_backslash = strrchr(path, '\\');
-    const char *base = path;
-
-    if (last_slash && last_backslash)
-    {
-        base = (last_slash > last_backslash) ? last_slash + 1 : last_backslash + 1;
-    }
-    else if (last_slash)
-    {
-        base = last_slash + 1;
-    }
-    else if (last_backslash)
-    {
-        base = last_backslash + 1;
-    }
-
-    return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
-}
 
 static int abrir_imagen_en_sistema(const char *ruta)
 {
@@ -468,7 +195,6 @@ static int abrir_imagen_en_sistema(const char *ruta)
     char viewer[64] = {0};
     obtener_visor_preferido(viewer, sizeof(viewer));
 
-    char cmd_check[256];
     char cmd_open[1400];
 
     const char *visores[] = {"xdg-open", "gio", "feh", "eog", "gwenview", NULL};
@@ -476,7 +202,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
 
     if (viewer[0] != '\0' && strcmp(viewer, "auto") != 0)
     {
-        if (comando_existe(viewer))
+        if (app_command_exists(viewer))
         {
             visor = viewer;
         }
@@ -493,8 +219,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
             break;
         }
 
-        snprintf(cmd_check, sizeof(cmd_check), "command -v %s >/dev/null 2>&1", visores[i]);
-        if (system(cmd_check) == 0)
+        if (app_command_exists(visores[i]))
         {
             visor = visores[i];
             break;
@@ -570,7 +295,7 @@ static void configurar_visor_preferido_imagen()
         return;
     }
 #else
-    if (strcasecmp(nuevo, "auto") != 0 && !comando_existe(nuevo))
+    if (strcasecmp(nuevo, "auto") != 0 && !app_command_exists(nuevo))
     {
         printf("No se encontro ese comando en el sistema.\n");
         pause_console();
@@ -638,7 +363,7 @@ static void previsualizar_imagen_camiseta_consola()
         return;
     }
 
-    if (!comando_existe("chafa"))
+    if (!app_command_exists("chafa"))
     {
         if (!confirmar("No se detecto 'chafa'. Desea instalarlo automaticamente?"))
         {
@@ -656,11 +381,7 @@ static void previsualizar_imagen_camiseta_consola()
     }
 
     char cmd[1400];
-#ifdef _WIN32
     snprintf(cmd, sizeof(cmd), "chafa --size 80x40 \"%s\"", ruta_absoluta);
-#else
-    snprintf(cmd, sizeof(cmd), "chafa --size 80x40 \"%s\"", ruta_absoluta);
-#endif
 
     if (system(cmd) != 0)
     {
@@ -872,14 +593,14 @@ static int cargar_imagen_para_camiseta_id(int id)
 
     char ruta_origen[1024] = {0};
     printf("\nSe abrira el selector de archivos en Descargas.\n");
-    if (!seleccionar_imagen_usuario(ruta_origen, sizeof(ruta_origen)))
+    if (!app_select_image_from_user(ruta_origen, sizeof(ruta_origen), "mifutbol_imagen_sel.txt"))
     {
         printf("No se selecciono ninguna imagen.\n");
         return 0;
     }
 
-    const char *ext = obtener_extension(ruta_origen);
-    if (!extension_imagen_soportada(ext))
+    const char *ext = app_get_file_extension(ruta_origen);
+    if (!app_is_supported_image_extension(ext))
     {
         printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
         return 0;
@@ -906,15 +627,10 @@ static int cargar_imagen_para_camiseta_id(int id)
 
     char ruta_destino_opt[1200] = {0};
     char ruta_destino_original[1200] = {0};
-#ifdef _WIN32
-    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s\\%s", images_dir, nombre_destino_opt);
-    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s\\%s", images_dir, nombre_destino_original);
-#else
-    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s/%s", images_dir, nombre_destino_opt);
-    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s/%s", images_dir, nombre_destino_original);
-#endif
+    app_build_path(ruta_destino_opt, sizeof(ruta_destino_opt), images_dir, nombre_destino_opt);
+    app_build_path(ruta_destino_original, sizeof(ruta_destino_original), images_dir, nombre_destino_original);
 
-    int optimizada = optimizar_imagen_archivo(ruta_origen, ruta_destino_opt);
+    int optimizada = app_optimize_image_file(ruta_origen, ruta_destino_opt);
     const char *nombre_final = NULL;
     const char *ruta_final = NULL;
 
@@ -925,7 +641,7 @@ static int cargar_imagen_para_camiseta_id(int id)
     }
     else
     {
-        if (!copiar_archivo_binario(ruta_origen, ruta_destino_original))
+        if (!app_copy_binary_file(ruta_origen, ruta_destino_original))
         {
             printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
             return 0;

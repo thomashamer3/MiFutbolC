@@ -551,4 +551,13 @@ typedef struct
  */
 void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
 
+int app_command_exists(const char *cmd);
+int app_copy_binary_file(const char *source_path, const char *dest_path);
+int app_optimize_image_file(const char *source_path, const char *dest_path);
+const char *app_get_file_extension(const char *path);
+int app_is_supported_image_extension(const char *ext);
+int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename);
+int app_get_file_name_from_path(const char *path, char *nombre, size_t size);
+void app_build_path(char *dest, size_t size, const char *dir, const char *file_name);
+
 #endif
