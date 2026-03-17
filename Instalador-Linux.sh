@@ -21,6 +21,7 @@ STRIP_BINARY=0
 INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
 OS_NAME="$(uname -s)"
 INSTALL_IMAGE_TOOLS="${INSTALL_IMAGE_TOOLS:-1}"
+OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING="Aviso: no se pudieron instalar todas las herramientas opcionales."
 
 # Progress bar (stage-based) for installation/build flow
 TOTAL_STEPS=7
@@ -31,12 +32,11 @@ render_progress_bar() {
   local total="$2"
   local width=34
   local filled=$(( current * width / total ))
-  local empty=$(( width - filled ))
   local percent=$(( current * 100 / total ))
 
   printf "["
   for ((i=0; i<filled; i++)); do printf "#"; done
-  for ((i=0; i<empty; i++)); do printf "."; done
+  for ((i=filled; i<width; i++)); do printf "."; done
   printf "] %3d%%" "$percent"
 }
 
@@ -121,10 +121,8 @@ CFLAGS+=" -I. -include compat_port.h"
 LDFLAGS="${LDFLAGS:-}"
 
 # Optional native tuning for release builds (disabled by default for portability)
-if [[ "${BUILD_TYPE}" = "Release" ]]; then
-  if [[ "${ENABLE_NATIVE}" = "1" ]]; then
-    CFLAGS+=" -march=native"
-  fi
+if [[ "${BUILD_TYPE}" = "Release" ]] && [[ "${ENABLE_NATIVE}" = "1" ]]; then
+  CFLAGS+=" -march=native"
 fi
 
 # Dependency installation (Debian/Ubuntu)
@@ -276,7 +274,7 @@ install_optional_image_tools() {
     if sudo apt-get install -y feh chafa zenity; then
       echo "Herramientas opcionales instaladas correctamente."
     else
-      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+      echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
     return 0
   fi
@@ -286,7 +284,7 @@ install_optional_image_tools() {
     if sudo dnf install -y feh chafa zenity; then
       echo "Herramientas opcionales instaladas correctamente."
     else
-      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+      echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
     return 0
   fi
@@ -296,7 +294,7 @@ install_optional_image_tools() {
     if sudo zypper install -y feh chafa zenity; then
       echo "Herramientas opcionales instaladas correctamente."
     else
-      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+      echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
     return 0
   fi
@@ -306,12 +304,13 @@ install_optional_image_tools() {
     if sudo pacman -Sy --noconfirm feh chafa zenity; then
       echo "Herramientas opcionales instaladas correctamente."
     else
-      echo "Aviso: no se pudieron instalar todas las herramientas opcionales."
+      echo "${OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING}"
     fi
     return 0
   fi
 
   echo "Aviso: no se detecto un gestor de paquetes compatible para herramientas opcionales."
+  return 0
 }
 
 step_progress "Verificando dependencias"

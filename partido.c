@@ -1902,7 +1902,11 @@ static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
     int x = -1;
     int y = -1;
     char c = '\0';
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(args, "%d %d %c", &x, &y, &c, 1) == 3)
+#else
     if (sscanf(args, "%d %d %c", &x, &y, &c) == 3)
+#endif
     {
         if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
         {
@@ -1959,7 +1963,11 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
     {
         int x = -1;
         int y = -1;
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(line + 1, "%d %d", &x, &y) == 2)
+#else
         if (sscanf(line + 1, "%d %d", &x, &y) == 2)
+#endif
         {
             if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
             {

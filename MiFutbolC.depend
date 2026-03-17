@@ -105,7 +105,7 @@
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1773723222 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1773723995 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -156,7 +156,7 @@
 
 1773292021 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1773259731 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1773723995 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -361,7 +361,7 @@
 
 1769910897 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1773257523 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1773723995 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2067,7 +2067,7 @@
 	<string.h>
 	<time.h>
 
-1773292896 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1773723995 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2083,7 +2083,7 @@
 	<stdlib.h>
 	<string.h>
 
-1773289243 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
+1773723860 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
 	"db.h"
 	"utils.h"
 	"menu.h"

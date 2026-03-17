@@ -872,12 +872,10 @@ void activar_ia_antes_partido()
     // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
 
-    if (estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8)
+    if ((estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8) &&
+        leer_confirmacion_sn("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
     {
-        if (leer_confirmacion_sn("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
-        {
-            mostrar_consejos_actuales();
-        }
+        mostrar_consejos_actuales();
     }
 }
 

@@ -199,7 +199,12 @@ static int confirmar_guardado_configuracion(int default_on_fail)
     printf("Guardar configuracion? (S/N): ");
     char confirm;
     char input[16];
-    if (!fgets(input, sizeof(input), stdin) || sscanf(input, " %c", &confirm) != 1)
+    if (!fgets(input, sizeof(input), stdin)
+#if defined(_WIN32) && defined(_MSC_VER)
+            || sscanf_s(input, " %c", &confirm, 1) != 1)
+#else
+            || sscanf(input, " %c", &confirm) != 1)
+#endif
     {
         confirm = default_on_fail ? 'S' : 'N';
     }
@@ -1476,7 +1481,12 @@ static void reset_settings_to_defaults()
 
     char confirm;
     char input[16];
-    if (!fgets(input, sizeof(input), stdin) || sscanf(input, " %c", &confirm) != 1)
+    if (!fgets(input, sizeof(input), stdin)
+#if defined(_WIN32) && defined(_MSC_VER)
+            || sscanf_s(input, " %c", &confirm, 1) != 1)
+#else
+            || sscanf(input, " %c", &confirm) != 1)
+#endif
     {
         confirm = 'N';
     }

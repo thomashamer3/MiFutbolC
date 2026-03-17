@@ -1399,12 +1399,27 @@ static int procesar_partido_txt_line(const char *line)
 
     // Formato: CANCHA | FECHA | G:Goles A:Asistencias | CAMISETA | Res:Resultado
     // Cli:Clima Dia:Dia RG:Rendimiento Can:Cansancio EA:EstadoAnimo | Comentario
+    #if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line,
+                 " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | Res:%31[^ ] Cli:%31[^ ] "
+                 "Dia:%31[^ ] RG:%d Can:%d EA:%d | %511[^\n]",
+                 cancha, (unsigned)sizeof(cancha),
+                 fecha, (unsigned)sizeof(fecha),
+                 &goles, &asistencias,
+                 camiseta, (unsigned)sizeof(camiseta),
+                 resultado_str, (unsigned)sizeof(resultado_str),
+                 clima_str, (unsigned)sizeof(clima_str),
+                 dia_str, (unsigned)sizeof(dia_str),
+                 &rendimiento_general, &cansancio, &estado_animo,
+                 comentario, (unsigned)sizeof(comentario)) != 12)
+    #else
     if (sscanf(line,
                " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | Res:%31[^ ] Cli:%31[^ ] "
                "Dia:%31[^ ] RG:%d Can:%d EA:%d | %511[^\n]",
                cancha, fecha, &goles, &asistencias, camiseta, resultado_str,
                clima_str, dia_str, &rendimiento_general, &cansancio,
                &estado_animo, comentario) != 12)
+    #endif
         return 0;
 
     PartidoRawInput raw =
@@ -1488,11 +1503,25 @@ static int procesar_partido_csv_line(const char *line)
 
     // Formato:
     // cancha,fecha,goles,asistencias,camiseta,resultado,clima,dia,rendimiento_general,cansancio,estado_animo,comentario
+    #if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line,
+                 "%255[^,],%255[^,],%d,%d,%255[^,],%31[^,],%31[^,],%31[^,],%d,%d,%d,%511[^\n]",
+                 cancha, (unsigned)sizeof(cancha),
+                 fecha, (unsigned)sizeof(fecha),
+                 &goles, &asistencias,
+                 camiseta, (unsigned)sizeof(camiseta),
+                 resultado_str, (unsigned)sizeof(resultado_str),
+                 clima_str, (unsigned)sizeof(clima_str),
+                 dia_str, (unsigned)sizeof(dia_str),
+                 &rendimiento_general, &cansancio, &estado_animo,
+                 comentario, (unsigned)sizeof(comentario)) != 12)
+    #else
     if (sscanf(line,
                "%255[^,],%255[^,],%d,%d,%255[^,],%31[^,],%31[^,],%31[^,],%d,%d,%d,%511[^\n]",
                cancha, fecha, &goles, &asistencias, camiseta, resultado_str,
                clima_str, dia_str, &rendimiento_general, &cansancio,
                &estado_animo, comentario) != 12)
+    #endif
         return 0;
 
     PartidoRawInput raw =

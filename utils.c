@@ -717,7 +717,11 @@ int input_int(const char *msg)
         }
 
         char extra = '\0';
+        #if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
+        #else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
+        #endif
             return v;
 
         ui_printf("Entrada invalida. Intente nuevamente.\n");
