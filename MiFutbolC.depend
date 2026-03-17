@@ -76,7 +76,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1773727086 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1773727901 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -89,7 +89,6 @@
 	<ctype.h>
 	<stdint.h>
 	<inttypes.h>
-	<stdarg.h>
 	<direct.h>
 	<windows.h>
 	<ShlObj.h>
@@ -140,7 +139,7 @@
 	<stddef.h>
 	<stdio.h>
 
-1773725898 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1773727810 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"

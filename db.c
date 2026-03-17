@@ -512,24 +512,13 @@ static int setup_database_paths()
         return 0;
     }
 
-    memset(DB_DIR, 0, sizeof(DB_DIR));
-    strcpy_s(DB_DIR, sizeof(DB_DIR), appdata_path);
-    strcat_s(DB_DIR, sizeof(DB_DIR), "\\MiFutbolC\\data");
-
-    memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy_s(DB_PATH, sizeof(DB_PATH), appdata_path);
-    strcat_s(DB_PATH, sizeof(DB_PATH), "\\MiFutbolC\\data\\");
-    strcat_s(DB_PATH, sizeof(DB_PATH), db_filename);
-
-    memset(LOG_PATH, 0, sizeof(LOG_PATH));
-    strcpy_s(LOG_PATH, sizeof(LOG_PATH), appdata_path);
-    strcat_s(LOG_PATH, sizeof(LOG_PATH), "\\MiFutbolC\\data\\");
-    strcat_s(LOG_PATH, sizeof(LOG_PATH), log_filename);
+    snprintf(DB_DIR, sizeof(DB_DIR), "%s\\MiFutbolC\\data", appdata_path);
+    snprintf(DB_PATH, sizeof(DB_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path, db_filename);
+    snprintf(LOG_PATH, sizeof(LOG_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path, log_filename);
 
     // Crear directorios si no existen
-    char temp_path[MAX_PATH];
-    strcpy_s(temp_path, sizeof(temp_path), appdata_path);
-    strcat_s(temp_path, sizeof(temp_path), "\\MiFutbolC");
+    char temp_path[1024];
+    snprintf(temp_path, sizeof(temp_path), "%s\\MiFutbolC", appdata_path);
     if (!asegurar_directorio(temp_path, "MiFutbolC"))
     {
         return 0;
@@ -541,16 +530,9 @@ static int setup_database_paths()
     }
 #else
     // Para otros sistemas operativos, usar directorio actual
-    memset(DB_DIR, 0, sizeof(DB_DIR));
-    strcpy_s(DB_DIR, sizeof(DB_DIR), "./data");
-
-    memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy_s(DB_PATH, sizeof(DB_PATH), "./data/");
-    strcat_s(DB_PATH, sizeof(DB_PATH), db_filename);
-
-    memset(LOG_PATH, 0, sizeof(LOG_PATH));
-    strcpy_s(LOG_PATH, sizeof(LOG_PATH), "./data/");
-    strcat_s(LOG_PATH, sizeof(LOG_PATH), log_filename);
+    snprintf(DB_DIR, sizeof(DB_DIR), "./data");
+    snprintf(DB_PATH, sizeof(DB_PATH), "./data/%s", db_filename);
+    snprintf(LOG_PATH, sizeof(LOG_PATH), "./data/%s", log_filename);
 
     // Crear directorio si no existe
     if (!asegurar_directorio(DB_DIR, "data"))

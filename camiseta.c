@@ -129,28 +129,7 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
         return 0;
     }
 
-    char nombre_archivo[260] = {0};
-    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
-    {
-        return 0;
-    }
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
-    {
-        return 0;
-    }
-
-    app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
-
-    FILE *f = NULL;
-    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
-    {
-        return 0;
-    }
-    fclose(f);
-
-    return 1;
+    return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
 
 
@@ -621,6 +600,10 @@ void editar_camiseta()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Editada camiseta id=%d nuevo_nombre=%.180s", id, nombre);
+    app_log_event("CAMISETA", log_msg);
+
     printf("\nCamiseta actualizada correctamente\n");
     pause_console();
 }
@@ -730,6 +713,10 @@ void eliminar_camiseta()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d", id);
+    app_log_event("CAMISETA", log_msg);
+
     printf("\nCamiseta eliminada correctamente\n");
     pause_console();
 }
@@ -779,13 +766,16 @@ static int obtener_ids_disponibles(int ids[], int max)
  */
 static int seleccionar_id_aleatorio(const int ids[], int count)
 {
-    // Seed the random number generator with current time and process ID for better randomness
-    srand((unsigned int)(time(NULL) + _getpid()));
+    static int seeded = 0;
+    if (!seeded)
+    {
+        srand((unsigned int)(time(NULL) ^ _getpid()));
+        seeded = 1;
+    }
 
-    // Prevent division by zero
     if (count <= 0)
     {
-        return -1; // Return error code
+        return -1;
     }
 
     return ids[rand() % count];
