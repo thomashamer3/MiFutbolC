@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-3.9.4-blue.svg)
+![Version](https://img.shields.io/badge/version-4.0-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -40,6 +40,11 @@
 - 📥 **Importación de datos** (restauración desde JSON/TXT/CSV/HTML)
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
+- **Rutas de base de datos más seguras**: refactor de construcción de rutas con `snprintf` para mejorar robustez y legibilidad.
+- **Sistema de logs mejorado**: formateo de mensajes de log más consistente y seguro, reduciendo riesgos de errores en cadenas largas.
+- **Manejo de imágenes reforzado**: mejoras en selección de imágenes de camisetas y utilidades para actualizar rutas/imágenes en base de datos.
+- **Flujo de herramientas de imagen más claro**: nuevos mensajes de éxito y advertencia durante instalación/configuración de herramientas opcionales.
+- **Resolución de rutas de imagen desde BD**: soporte ampliado para recuperar y resolver rutas guardadas en base de datos de forma más confiable.
 
 ## ✨ Características Principales
 

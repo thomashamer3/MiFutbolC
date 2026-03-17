@@ -32,6 +32,10 @@ MiFutbolC es una herramienta integral diseñada para:
 **Bienestar Integral**: Hábitos, salud y reportes personales  
 **Entrenador IA**: Recomendaciones inteligentes basadas en datos  
 **Personalización**: Configuración de temas, idioma y preferencias  
+- **Rutas de base de datos más robustas**: mejora interna en la construcción de rutas usando `snprintf`.
+- **Logs más confiables**: ajustes en el formateo de mensajes para evitar inconsistencias en salidas de diagnóstico.
+- **Gestión de imágenes optimizada**: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
+- **Mejor feedback en herramientas opcionales**: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.
 
 ## Requisitos del Sistema
 
@@ -1239,7 +1243,7 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 
 **Desarrollado por**: Thomas Hamer  
 **Versión**: 3.9.4  
-**Última actualización**: 12/03/2026  
+**Última actualización**: 17/03/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*
