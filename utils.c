@@ -717,11 +717,11 @@ int input_int(const char *msg)
         }
 
         char extra = '\0';
-        #if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && defined(_MSC_VER)
         if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
-        #else
+#else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
-        #endif
+#endif
             return v;
 
         ui_printf("Entrada invalida. Intente nuevamente.\n");
@@ -3627,7 +3627,7 @@ int app_get_file_name_from_path(const char *path, char *nombre, size_t size)
 }
 
 int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *prefijo_base,
-                                     char *ruta_relativa_db, size_t ruta_size)
+                                    char *ruta_relativa_db, size_t ruta_size)
 {
     if (!selector_filename || !prefijo_base || !ruta_relativa_db || ruta_size == 0)
     {

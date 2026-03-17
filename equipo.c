@@ -1273,7 +1273,7 @@ void save_equipo_to_db(const Equipo *equipo)
         insert_jugadores_for_equipo(equipo_id, equipo);
         printf("Equipo guardado exitosamente con ID: %d\n", equipo_id);
         if (confirmar("Desea cargar imagen para este equipo ahora?") &&
-            !cargar_imagen_para_equipo_id(equipo_id))
+                !cargar_imagen_para_equipo_id(equipo_id))
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }
@@ -1737,7 +1737,7 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
     sqlite3_stmt *stmt;
     const char *sql_delete = "DELETE FROM jugador WHERE id = ?;";
     if (confirmar("Esta seguro que desea eliminar este jugador?") &&
-        sqlite3_prepare_v2(db, sql_delete, -1, &stmt, 0) == SQLITE_OK)
+            sqlite3_prepare_v2(db, sql_delete, -1, &stmt, 0) == SQLITE_OK)
     {
         sqlite3_bind_int(stmt, 1, jugadores_ids[jugador_idx]);
 

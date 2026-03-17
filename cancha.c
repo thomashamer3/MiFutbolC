@@ -210,7 +210,7 @@ void crear_cancha()
         snprintf(log_msg, sizeof(log_msg), "Creada cancha id=%lld nombre=%.180s", id, nombre);
         app_log_event("CANCHA", log_msg);
         if (confirmar("Desea cargar imagen para esta cancha ahora?") &&
-            !cargar_imagen_para_cancha_id((int)id))
+                !cargar_imagen_para_cancha_id((int)id))
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }

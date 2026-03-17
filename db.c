@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdarg.h>
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
@@ -269,6 +270,16 @@ void app_log_event(const char *component, const char *message)
     app_log_write("INFO", component, message);
 }
 
+static void log_writef(const char *level, const char *component, const char *fmt, ...)
+{
+    char log_msg[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(log_msg, sizeof(log_msg), fmt, args);
+    va_end(args);
+    app_log_write(level, component, log_msg);
+}
+
 static int asegurar_directorio(const char *path, const char *nombre)
 {
     errno = 0;
@@ -280,22 +291,16 @@ static int asegurar_directorio(const char *path, const char *nombre)
 #ifdef _WIN32
         strerror_s(error_buf, sizeof(error_buf), errno);
         printf("Error creando directorio %s: %s\n", nombre, error_buf);
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, error_buf);
-        app_log_write("ERROR", "FS", log_msg);
+        log_writef("ERROR", "FS", "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, error_buf);
 #else
         printf("Error creando directorio %s: %s\n", nombre, strerror(errno));
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, strerror(errno));
-        app_log_write("ERROR", "FS", log_msg);
+        log_writef("ERROR", "FS", "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, strerror(errno));
 #endif
         return 0;
     }
     if (!already_exists)
     {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Directorio disponible: %.120s (%.860s)", nombre, path);
-        app_log_write("INFO", "FS", log_msg);
+        log_writef("INFO", "FS", "Directorio disponible: %.120s (%.860s)", nombre, path);
     }
     return 1;
 }
@@ -540,16 +545,6 @@ static int setup_database_paths()
     {
         return 0;
     }
-
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Ruta de datos: %.1000s", DB_DIR);
-        app_log_write("INFO", "PATHS", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Ruta de DB: %.1003s", DB_PATH);
-        app_log_write("INFO", "PATHS", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Ruta de log: %.1002s", LOG_PATH);
-        app_log_write("INFO", "PATHS", log_msg);
-    }
 #else
     // Para otros sistemas operativos, usar directorio actual
     memset(DB_DIR, 0, sizeof(DB_DIR));
@@ -568,17 +563,11 @@ static int setup_database_paths()
     {
         return 0;
     }
-
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Ruta de datos: %.1000s", DB_DIR);
-        app_log_write("INFO", "PATHS", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Ruta de DB: %.1003s", DB_PATH);
-        app_log_write("INFO", "PATHS", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Ruta de log: %.1002s", LOG_PATH);
-        app_log_write("INFO", "PATHS", log_msg);
-    }
 #endif
+
+    log_writef("INFO", "PATHS", "Ruta de datos: %.1000s", DB_DIR);
+    log_writef("INFO", "PATHS", "Ruta de DB: %.1003s", DB_PATH);
+    log_writef("INFO", "PATHS", "Ruta de log: %.1002s", LOG_PATH);
     return 1;
 }
 
@@ -595,16 +584,10 @@ static int create_database_connection()
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
         printf("Error abriendo DB: %s\n", sqlite3_errmsg(db));
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Error abriendo DB %.700s: %.280s", DB_PATH, sqlite3_errmsg(db));
-        app_log_write("ERROR", "DB", log_msg);
+        log_writef("ERROR", "DB", "Error abriendo DB %.700s: %.280s", DB_PATH, sqlite3_errmsg(db));
         return 0;
     }
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Conexion SQLite abierta en %.996s", DB_PATH);
-        app_log_write("INFO", "DB", log_msg);
-    }
+    log_writef("INFO", "DB", "Conexion SQLite abierta en %.996s", DB_PATH);
     return 1;
 }
 
@@ -1055,9 +1038,7 @@ static int create_database_schema()
     if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
     {
         printf("Error creando tablas\n");
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Error creando esquema: %s", sqlite3_errmsg(db));
-        app_log_write("ERROR", "DB", log_msg);
+        log_writef("ERROR", "DB", "Error creando esquema: %s", sqlite3_errmsg(db));
         return 0;
     }
     app_log_write("INFO", "DB", "Esquema validado/creado");
@@ -1545,9 +1526,7 @@ void exportar_base_datos()
         if (result == COPY_SRC_ERROR)
         {
             printf("Error: No se encontro la base de datos en:\n%s\n", source_path);
-            char log_msg[1024] = {0};
-            snprintf(log_msg, sizeof(log_msg), "No se encontro DB origen para exportar: %.980s", source_path);
-            app_log_write("ERROR", "EXPORT", log_msg);
+            log_writef("ERROR", "EXPORT", "No se encontro DB origen para exportar: %.980s", source_path);
             pause_console();
             return;
         }
@@ -1555,19 +1534,13 @@ void exportar_base_datos()
         if (result == COPY_DST_ERROR)
         {
             printf("Error creando archivo destino:\n%s\n", dest_path);
-            char log_msg[1024] = {0};
-            snprintf(log_msg, sizeof(log_msg), "No se pudo abrir DB destino para exportar: %.977s", dest_path);
-            app_log_write("ERROR", "EXPORT", log_msg);
+            log_writef("ERROR", "EXPORT", "No se pudo abrir DB destino para exportar: %.977s", dest_path);
             pause_console();
             return;
         }
 
         printf("Base de datos exportada a:\n%s\n", dest_path);
-        {
-            char log_msg[1024] = {0};
-            snprintf(log_msg, sizeof(log_msg), "Exportacion finalizada (copia directa): %.983s", dest_path);
-            app_log_write("INFO", "EXPORT", log_msg);
-        }
+        log_writef("INFO", "EXPORT", "Exportacion finalizada (copia directa): %.983s", dest_path);
         pause_console();
         return;
     }
@@ -1577,9 +1550,7 @@ void exportar_base_datos()
     if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
     {
         printf("Error abriendo base de datos destino:\n%s\n", dest_path);
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Error abriendo DB destino (%.700s): %.260s", dest_path, sqlite3_errmsg(dest_db));
-        app_log_write("ERROR", "EXPORT", log_msg);
+        log_writef("ERROR", "EXPORT", "Error abriendo DB destino (%.700s): %.260s", dest_path, sqlite3_errmsg(dest_db));
         if (dest_db)
         {
             sqlite3_close(dest_db);
@@ -1592,9 +1563,7 @@ void exportar_base_datos()
     if (!backup)
     {
         printf("Error iniciando backup SQLite: %s\n", sqlite3_errmsg(dest_db));
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
-        app_log_write("ERROR", "EXPORT", log_msg);
+        log_writef("ERROR", "EXPORT", "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
         sqlite3_close(dest_db);
         pause_console();
         return;
@@ -1609,29 +1578,19 @@ void exportar_base_datos()
     if (final_rc != SQLITE_OK)
     {
         printf("Error exportando base de datos (SQLite backup): %s\n", sqlite3_errstr(final_rc));
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Error SQLite backup final_rc=%d (%s)", final_rc, sqlite3_errstr(final_rc));
-        app_log_write("ERROR", "EXPORT", log_msg);
+        log_writef("ERROR", "EXPORT", "Error SQLite backup final_rc=%d (%s)", final_rc, sqlite3_errstr(final_rc));
         pause_console();
         return;
     }
 
     printf("Base de datos exportada a:\n%s\n", dest_path);
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Exportacion finalizada (SQLite backup): %.982s", dest_path);
-        app_log_write("INFO", "EXPORT", log_msg);
-    }
+    log_writef("INFO", "EXPORT", "Exportacion finalizada (SQLite backup): %.982s", dest_path);
     pause_console();
 }
 
 int backup_base_datos_automatico(const char *motivo)
 {
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Inicio de backup automatico. Motivo: %s", (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
-        app_log_write("INFO", "BACKUP", log_msg);
-    }
+    log_writef("INFO", "BACKUP", "Inicio de backup automatico. Motivo: %s", (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
 
     const char *source_path = DB_PATH;
     const char *export_dir = get_export_dir();
@@ -1649,11 +1608,7 @@ int backup_base_datos_automatico(const char *motivo)
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
         printf("%s\n", get_text("backup_failed"));
-        {
-            char log_msg[1024] = {0};
-            snprintf(log_msg, sizeof(log_msg), "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
-            app_log_write("ERROR", "BACKUP", log_msg);
-        }
+        log_writef("ERROR", "BACKUP", "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
         return 0;
     }
 
@@ -1704,20 +1659,12 @@ int backup_base_datos_automatico(const char *motivo)
     if (result != COPY_OK)
     {
         printf("%s\n", get_text("backup_failed"));
-        {
-            char log_msg[1024] = {0};
-            snprintf(log_msg, sizeof(log_msg), "Fallo copia de backup desde %.470s hacia %.470s", source_path, dest_path);
-            app_log_write("ERROR", "BACKUP", log_msg);
-        }
+        log_writef("ERROR", "BACKUP", "Fallo copia de backup desde %.470s hacia %.470s", source_path, dest_path);
         return 0;
     }
 
     printf("%s\n%s\n", get_text("backup_created"), dest_path);
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Backup automatico completado: %.992s", dest_path);
-        app_log_write("INFO", "BACKUP", log_msg);
-    }
+    log_writef("INFO", "BACKUP", "Backup automatico completado: %.992s", dest_path);
     return 1;
 }
 
@@ -1744,18 +1691,14 @@ void importar_base_datos()
     if (result == COPY_SRC_ERROR)
     {
         printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "No se encontro archivo de importacion: %.983s", source_path);
-        app_log_write("ERROR", "IMPORT", log_msg);
+        log_writef("ERROR", "IMPORT", "No se encontro archivo de importacion: %.983s", source_path);
         return;
     }
 
     if (result == COPY_DST_ERROR)
     {
         printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "No se pudo abrir DB destino para importar: %.977s", dest_path);
-        app_log_write("ERROR", "IMPORT", log_msg);
+        log_writef("ERROR", "IMPORT", "No se pudo abrir DB destino para importar: %.977s", dest_path);
         return;
     }
 
@@ -1764,11 +1707,7 @@ void importar_base_datos()
     printf("Destino: %s\n", dest_path);
     printf("Reinicia la aplicacion para usar la nueva base.\n");
 
-    {
-        char log_msg[1024] = {0};
-        snprintf(log_msg, sizeof(log_msg), "Importacion completada. Origen: %.470s | Destino: %.470s", source_path, dest_path);
-        app_log_write("INFO", "IMPORT", log_msg);
-    }
+    log_writef("INFO", "IMPORT", "Importacion completada. Origen: %.470s | Destino: %.470s", source_path, dest_path);
 
     pause_console();
 }

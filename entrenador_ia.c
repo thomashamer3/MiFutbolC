@@ -873,7 +873,7 @@ void activar_ia_antes_partido()
     EstadoJugador estado = evaluar_estado_jugador();
 
     if ((estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8) &&
-        leer_confirmacion_sn("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
+            leer_confirmacion_sn("\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
     {
         mostrar_consejos_actuales();
     }
