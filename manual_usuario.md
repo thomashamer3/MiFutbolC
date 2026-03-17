@@ -119,17 +119,22 @@ En Linux/macOS, `Instalador-Linux.sh` también puede validar dependencias e inst
 
 Al ejecutar el programa por primera vez:
 
-1. Se creará automáticamente la base de datos SQLite
-   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.db`
-   - **Linux/macOS**: `./data/mifutbol.db`
+1. Se abrirá el flujo de **inicio de sesión multiusuario local**
+2. Podrás crear tu primer usuario local (o elegir uno existente)
+3. Cada perfil usará su propia base de datos SQLite
+   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
+   - **Linux/macOS**: `./data/mifutbol_<usuario>.db`
+
+   Además, se utiliza un registro de usuarios locales:
+   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
+   - **Linux/macOS**: `./data/users.db`
 
    También se crea automáticamente el archivo de log de actividad:
-   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.log`
-   - **Linux/macOS**: `./data/mifutbol.log`
+   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
+   - **Linux/macOS**: `./data/mifutbol_<usuario>.log`
 
-2. Se te pedirá que ingreses tu nombre de usuario
-3. Este nombre se guardará para futuras sesiones
-4. Se mostrarán los directorios de exportación e importación
+4. Podrás definir contraseña opcional para tu perfil
+5. Se mostrarán los directorios de exportación e importación
 
 ![Pantalla de bienvenida](images/bienvenido.png)
 
@@ -190,6 +195,15 @@ El menú principal ofrece las siguientes opciones:
 2. Elige "5" para sortear una camiseta
 3. El sistema seleccionará una camiseta disponible al azar
 4. Si todas ya fueron sorteadas, reinicia automáticamente el ciclo
+
+### Cargar Imagen de Camiseta
+
+Cuando uses la opción de cargar imagen para una camiseta:
+
+1. El sistema copiará la imagen al directorio `Imagenes/`
+2. Si detecta un optimizador disponible (por ejemplo ImageMagick), aplicará optimización automática
+3. La imagen se guarda en formato optimizado para reducir tamaño y mantener buena calidad
+4. Si no hay optimizador, se guarda una copia sin optimización
 
 ![Gestión de camisetas](images/menucamisetas.png)
 
@@ -981,13 +995,18 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
-### Cambiar Nombre de Usuario
+### Gestión de Usuario y Seguridad
 
 1. Selecciona "14" en el menú principal
 2. Elige "4" para abrir **Usuario**
-3. Cambia el nombre de usuario
-4. El nombre se guardará en la base de datos
-5. Se mostrará en el mensaje de bienvenida
+3. Desde este menú puedes:
+   - Mostrar nombre actual
+   - Editar nombre visible
+   - Agregar usuario local
+   - Modificar tu contraseña
+   - Quitar tu contraseña
+   - Eliminar tu cuenta local (irreversible)
+4. Los cambios se aplican al perfil activo
 
 ### Ver Configuración Actual
 
@@ -996,7 +1015,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 3. Se mostrará:
    - Tema actual
    - Idioma actual
-   - Nombre de usuario
+   - Nombre visible del perfil
    - Ubicación de la base de datos
    - Directorios de exportación e importación
 
@@ -1068,7 +1087,8 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 - Verifica que el directorio de datos existe y tienes permisos de escritura:
   - Windows: `%LOCALAPPDATA%\MiFutbolC\data\`
   - Linux/macOS: `./data/`
-- El programa creará automáticamente la base de datos `mifutbol.db` si no existe
+- El programa creará automáticamente la base de datos `mifutbol_<usuario>.db` del perfil activo si no existe
+- Verifica también que el archivo de usuarios `users.db` exista y sea accesible
 - Si la base de datos está corrupta, renómbrala y el programa creará una nueva
 - Verifica espacio disponible en disco
 

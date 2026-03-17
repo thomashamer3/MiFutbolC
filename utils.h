@@ -147,6 +147,16 @@ int existe_id(const char *tabla, int id);
 int confirmar(const char *msg);
 
 /**
+ * @brief Gestiona inicio de sesion/registro multiusuario local
+ *
+ * Debe ejecutarse antes de inicializar la base principal para definir
+ * el perfil activo y enrutar el archivo de datos del usuario.
+ *
+ * @return 1 si se eligió un usuario válido, 0 si se cancela/sale
+ */
+int iniciar_sesion_multiusuario_local(void);
+
+/**
  * @brief Pide el nombre del usuario en la primera ejecución
  */
 void pedir_nombre_usuario();
@@ -160,6 +170,18 @@ void mostrar_nombre_usuario();
  * @brief Permite editar el nombre del usuario
  */
 void editar_nombre_usuario();
+
+/**
+ * @brief Solicita configurar contraseña opcional al crear usuario
+ */
+void configurar_password_inicial_opcional();
+
+/**
+ * @brief Solicita contraseña al iniciar si existe una configurada
+ *
+ * @return 1 si la autenticación fue exitosa o no hay contraseña, 0 si falla
+ */
+int autenticar_usuario_si_tiene_password();
 
 /**
  * @brief Menú de gestión de usuario

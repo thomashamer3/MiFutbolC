@@ -22,7 +22,7 @@
     "|  |  |  | |  | |  |     |  `--'  |     |  |     |  |_)  | |  `--'  | |  `----.|  `----.\n" \
     "|__|  |__| |__| |__|      \\______/      |__|     |______/   \\______/  |_______| \\______|\n" \
     "Sistema de Gestion Futbolistica\n" \
-    "MiFutbolC v3.9.4\n\n"
+    "MiFutbolC v4.0\n\n"
 
 /**
  * @brief Título artístico para el módulo de Camisetas

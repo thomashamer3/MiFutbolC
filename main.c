@@ -1,4 +1,5 @@
 #include "menu.h"
+#include "utils.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -80,6 +81,11 @@ int main()
         return 1;
     }
 #endif
+
+    if (!iniciar_sesion_multiusuario_local())
+    {
+        return 0;
+    }
 
     initialize_application();
     handle_user_name();

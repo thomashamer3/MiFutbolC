@@ -24,7 +24,10 @@
 #include <stddef.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <inttypes.h>
 #ifdef _WIN32
+#include <conio.h>
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -38,6 +41,8 @@
 #endif
 #else
 #include <sys/stat.h>
+#include <termios.h>
+#include <unistd.h>
 #define MKDIR(path) mkdir(path, 0755)
 #endif
 
@@ -63,6 +68,448 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
         return 0;
     }
     return 1;
+}
+
+static uint64_t auth_fnv1a64_update(uint64_t hash, const unsigned char *data, size_t len)
+{
+    const uint64_t prime = 1099511628211ULL;
+    for (size_t i = 0; i < len; i++)
+    {
+        hash ^= (uint64_t)data[i];
+        hash *= prime;
+    }
+    return hash;
+}
+
+static uint64_t auth_fnv1a64_string(const char *text)
+{
+    const uint64_t offset_basis = 14695981039346656037ULL;
+    if (!text)
+    {
+        return offset_basis;
+    }
+    return auth_fnv1a64_update(offset_basis, (const unsigned char *)text, strlen(text));
+}
+
+static void auth_generate_salt_hex(char *salt_out, size_t out_size)
+{
+    static const char hex[] = "0123456789abcdef";
+    static int seeded = 0;
+    unsigned char salt[16];
+
+    if (!salt_out || out_size < 33)
+    {
+        return;
+    }
+
+    if (!seeded)
+    {
+        srand((unsigned int)time(NULL) ^ (unsigned int)clock());
+        seeded = 1;
+    }
+
+    for (int i = 0; i < 16; i++)
+    {
+        salt[i] = (unsigned char)(rand() % 256);
+        salt_out[i * 2] = hex[(salt[i] >> 4) & 0x0F];
+        salt_out[i * 2 + 1] = hex[salt[i] & 0x0F];
+    }
+    salt_out[32] = '\0';
+}
+
+static void auth_build_password_hash(const char *plain_password, const char *salt_hex,
+                                     char *hash_out, size_t out_size)
+{
+    char round_input[512];
+    uint64_t h1;
+    uint64_t h2;
+
+    if (!plain_password || !salt_hex || !hash_out || out_size < 17)
+    {
+        if (hash_out && out_size > 0)
+        {
+            hash_out[0] = '\0';
+        }
+        return;
+    }
+
+    snprintf(round_input, sizeof(round_input), "%s:%s", salt_hex, plain_password);
+    h1 = auth_fnv1a64_string(round_input);
+    snprintf(round_input, sizeof(round_input), "%s:%016" PRIx64 ":%s", plain_password, h1, salt_hex);
+    h2 = auth_fnv1a64_string(round_input);
+    snprintf(hash_out, out_size, "%016" PRIx64, h2);
+}
+
+static int auth_username_exists(sqlite3 *auth_db, const char *username);
+static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password);
+
+static void auth_get_db_path(char *path, size_t size)
+{
+#ifdef _WIN32
+    const char *local_app_data = getenv("LOCALAPPDATA");
+    if (local_app_data && local_app_data[0] != '\0')
+    {
+        snprintf(path, size, "%s\\MiFutbolC\\data\\users.db", local_app_data);
+        return;
+    }
+#endif
+    snprintf(path, size, "./data/users.db");
+}
+
+static void auth_get_user_data_paths(const char *username,
+                                     char *db_path, size_t db_size,
+                                     char *log_path, size_t log_size)
+{
+#ifdef _WIN32
+    const char *local_app_data = getenv("LOCALAPPDATA");
+    if (local_app_data && local_app_data[0] != '\0')
+    {
+        snprintf(db_path, db_size, "%s\\MiFutbolC\\data\\mifutbol_%s.db", local_app_data, username);
+        snprintf(log_path, log_size, "%s\\MiFutbolC\\data\\mifutbol_%s.log", local_app_data, username);
+        return;
+    }
+#endif
+    snprintf(db_path, db_size, "./data/mifutbol_%s.db", username);
+    snprintf(log_path, log_size, "./data/mifutbol_%s.log", username);
+}
+
+static int auth_ensure_parent_dirs(void)
+{
+#ifdef _WIN32
+    const char *local_app_data = getenv("LOCALAPPDATA");
+    char base_dir[1024];
+    char data_dir[1024];
+
+    if (local_app_data && local_app_data[0] != '\0')
+    {
+        snprintf(base_dir, sizeof(base_dir), "%s\\MiFutbolC", local_app_data);
+        snprintf(data_dir, sizeof(data_dir), "%s\\MiFutbolC\\data", local_app_data);
+        MKDIR(base_dir);
+        MKDIR(data_dir);
+        return 1;
+    }
+#endif
+    MKDIR("./data");
+    return 1;
+}
+
+static int auth_username_valido(const char *username)
+{
+    size_t len;
+
+    if (!username)
+    {
+        return 0;
+    }
+
+    len = safe_strnlen(username, 128);
+    if (len < 3 || len > 32)
+    {
+        return 0;
+    }
+
+    for (size_t i = 0; i < len; i++)
+    {
+        unsigned char c = (unsigned char)username[i];
+        if (!(isalnum(c) || c == '_' || c == '-'))
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int auth_open(sqlite3 **out_db)
+{
+    char path[1024];
+    const char *schema =
+        "CREATE TABLE IF NOT EXISTS local_users ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " username TEXT NOT NULL UNIQUE,"
+        " password_salt TEXT DEFAULT '',"
+        " password_hash TEXT DEFAULT '',"
+        " created_at TEXT DEFAULT CURRENT_TIMESTAMP);";
+
+    if (!out_db)
+    {
+        return 0;
+    }
+
+    auth_ensure_parent_dirs();
+    auth_get_db_path(path, sizeof(path));
+
+    if (sqlite3_open(path, out_db) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    if (sqlite3_exec(*out_db, schema, NULL, NULL, NULL) != SQLITE_OK)
+    {
+        sqlite3_close(*out_db);
+        *out_db = NULL;
+        return 0;
+    }
+
+    return 1;
+}
+
+static int auth_user_count(sqlite3 *auth_db)
+{
+    sqlite3_stmt *stmt = NULL;
+    int count = 0;
+
+    if (!auth_db)
+    {
+        return 0;
+    }
+
+    if (sqlite3_prepare_v2(auth_db, "SELECT COUNT(*) FROM local_users;", -1, &stmt, NULL) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            count = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    return count;
+}
+
+static int auth_file_exists(const char *path)
+{
+    FILE *f = NULL;
+#ifdef _WIN32
+    if (fopen_s(&f, path, "rb") != 0 || !f)
+    {
+        return 0;
+    }
+#else
+    f = fopen(path, "rb");
+    if (!f)
+    {
+        return 0;
+    }
+#endif
+    fclose(f);
+    return 1;
+}
+
+static void auth_normalizar_username_legado(const char *input, char *output, size_t out_size)
+{
+    size_t j = 0;
+
+    if (!output || out_size == 0)
+    {
+        return;
+    }
+
+    output[0] = '\0';
+    if (!input)
+    {
+        return;
+    }
+
+    for (size_t i = 0; input[i] != '\0' && j + 1 < out_size; i++)
+    {
+        unsigned char c = (unsigned char)input[i];
+        if (isalnum(c) || c == '_' || c == '-')
+        {
+            output[j++] = (char)c;
+        }
+        else if (c == ' ')
+        {
+            output[j++] = '_';
+        }
+        else
+        {
+            output[j++] = '_';
+        }
+    }
+    output[j] = '\0';
+
+    if (j < 3)
+    {
+        strncpy_s(output, out_size, "usuario", out_size - 1);
+    }
+    if (j > 32)
+    {
+        output[32] = '\0';
+    }
+}
+
+static int auth_legacy_open_if_exists(const char *legacy_db_path, sqlite3 **legacy_db)
+{
+    if (!legacy_db || !legacy_db_path || !auth_file_exists(legacy_db_path))
+    {
+        return 0;
+    }
+
+    if (sqlite3_open(legacy_db_path, legacy_db) != SQLITE_OK)
+    {
+        if (*legacy_db)
+        {
+            sqlite3_close(*legacy_db);
+            *legacy_db = NULL;
+        }
+        return 0;
+    }
+
+    return 1;
+}
+
+static int auth_legacy_load_user_with_password(sqlite3 *legacy_db,
+        char *username_raw, size_t username_size,
+        char *salt, size_t salt_size,
+        char *hash, size_t hash_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int found = 0;
+
+    if (sqlite3_prepare_v2(legacy_db,
+                           "SELECT nombre, password_salt, password_hash FROM usuario WHERE id = 1 LIMIT 1;",
+                           -1, &stmt, NULL) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+            const char *salt_db = (const char *)sqlite3_column_text(stmt, 1);
+            const char *hash_db = (const char *)sqlite3_column_text(stmt, 2);
+            strncpy_s(username_raw, username_size, nombre ? nombre : "", username_size - 1);
+            strncpy_s(salt, salt_size, salt_db ? salt_db : "", salt_size - 1);
+            strncpy_s(hash, hash_size, hash_db ? hash_db : "", hash_size - 1);
+            found = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return found;
+}
+
+static int auth_legacy_load_fallback_user(sqlite3 *legacy_db, char *username_raw, size_t username_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int found = 0;
+
+    if (sqlite3_prepare_v2(legacy_db,
+                           "SELECT nombre FROM usuario LIMIT 1;",
+                           -1, &stmt, NULL) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+            strncpy_s(username_raw, username_size, nombre ? nombre : "", username_size - 1);
+            found = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return found;
+}
+
+static int auth_insert_legacy_user(sqlite3 *auth_db, const char *username_norm,
+                                   const char *salt, const char *hash)
+{
+    int inserted = 0;
+
+    if (salt[0] != '\0' && hash[0] != '\0')
+    {
+        sqlite3_stmt *ins = NULL;
+        if (sqlite3_prepare_v2(auth_db,
+                               "INSERT INTO local_users(username, password_salt, password_hash) VALUES(?, ?, ?);",
+                               -1, &ins, NULL) == SQLITE_OK)
+        {
+            sqlite3_bind_text(ins, 1, username_norm, -1, SQLITE_STATIC);
+            sqlite3_bind_text(ins, 2, salt, -1, SQLITE_STATIC);
+            sqlite3_bind_text(ins, 3, hash, -1, SQLITE_STATIC);
+            inserted = (sqlite3_step(ins) == SQLITE_DONE);
+            sqlite3_finalize(ins);
+        }
+    }
+    else
+    {
+        inserted = auth_upsert_user(auth_db, username_norm, "");
+    }
+
+    return inserted;
+}
+
+static int auth_import_legacy_from_db(sqlite3 *auth_db, const char *legacy_db_path)
+{
+    sqlite3 *legacy_db = NULL;
+    char username_raw[128] = "";
+    char username_norm[64] = "";
+    char salt[64] = "";
+    char hash[64] = "";
+    int inserted = 0;
+
+    if (!auth_legacy_open_if_exists(legacy_db_path, &legacy_db))
+    {
+        return 0;
+    }
+
+    auth_legacy_load_user_with_password(legacy_db,
+                                        username_raw, sizeof(username_raw),
+                                        salt, sizeof(salt),
+                                        hash, sizeof(hash));
+
+    if (username_raw[0] == '\0')
+    {
+        auth_legacy_load_fallback_user(legacy_db, username_raw, sizeof(username_raw));
+    }
+
+    sqlite3_close(legacy_db);
+
+    if (username_raw[0] == '\0')
+    {
+        return 0;
+    }
+
+    auth_normalizar_username_legado(username_raw, username_norm, sizeof(username_norm));
+    if (!auth_username_valido(username_norm) || auth_username_exists(auth_db, username_norm))
+    {
+        return 0;
+    }
+
+    inserted = auth_insert_legacy_user(auth_db, username_norm, salt, hash);
+
+    if (inserted)
+    {
+        ui_printf("Usuario legado detectado e importado: %s\n", username_norm);
+    }
+
+    return inserted;
+}
+
+static int auth_importar_usuario_legado_si_existe(sqlite3 *auth_db)
+{
+    char legacy1[1024];
+    char legacy2[1024];
+#ifdef _WIN32
+    const char *local_app_data = getenv("LOCALAPPDATA");
+    if (local_app_data && local_app_data[0] != '\0')
+    {
+        snprintf(legacy1, sizeof(legacy1), "%s\\MiFutbolC\\data\\mifutbol.db", local_app_data);
+    }
+    else
+    {
+        legacy1[0] = '\0';
+    }
+#else
+    legacy1[0] = '\0';
+#endif
+    snprintf(legacy2, sizeof(legacy2), "./data/mifutbol.db");
+
+    if (legacy1[0] != '\0' && auth_import_legacy_from_db(auth_db, legacy1))
+    {
+        return 1;
+    }
+
+    if (auth_import_legacy_from_db(auth_db, legacy2))
+    {
+        return 1;
+    }
+
+    return 0;
 }
 
 static void uppercase_ascii(const char *src, char *dst, size_t size)
@@ -757,6 +1204,827 @@ static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
     }
 }
 
+static int leer_contrasena_no_vacia(const char *prompt, char *buffer, int size)
+{
+    if (!buffer || size <= 1)
+    {
+        return 0;
+    }
+
+    while (1)
+    {
+        ui_printf("%s", prompt);
+        int pos = 0;
+        int done = 0;
+
+        memset(buffer, 0, (size_t)size);
+
+        while (!done)
+        {
+#ifdef _WIN32
+            int ch = _getch();
+#else
+            struct termios oldt;
+            struct termios newt;
+            int ch;
+
+            if (tcgetattr(STDIN_FILENO, &oldt) != 0)
+            {
+                return 0;
+            }
+            newt = oldt;
+            newt.c_lflag &= (unsigned int)~(ECHO | ICANON);
+            tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+            ch = getchar();
+            tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+#endif
+
+            if (ch == '\r' || ch == '\n')
+            {
+                done = 1;
+                ui_printf("\n");
+            }
+            else if ((ch == 8 || ch == 127) && pos > 0)
+            {
+                pos--;
+                buffer[pos] = '\0';
+                ui_printf("\b \b");
+            }
+            else if (ch >= 32 && ch <= 126 && pos < (size - 1))
+            {
+                buffer[pos++] = (char)ch;
+                buffer[pos] = '\0';
+                ui_printf("*");
+            }
+        }
+
+        if (safe_strnlen(buffer, (size_t)size) >= 4)
+        {
+            return 1;
+        }
+
+        ui_printf("La contrasena debe tener al menos 4 caracteres.\n");
+    }
+}
+
+static int password_symbols_enabled(void)
+{
+    return 1;
+}
+
+static int es_simbolo_password_permitido(unsigned char c)
+{
+    const char *allowed = "!@#$%^&*()-_=+[]{};:,.?";
+    for (int i = 0; allowed[i] != '\0'; i++)
+    {
+        if ((unsigned char)allowed[i] == c)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int password_es_alfanumerica_con_reglas(const char *password)
+{
+    int has_upper = 0;
+    int has_lower = 0;
+    int has_digit = 0;
+
+    if (!password)
+    {
+        return 0;
+    }
+
+    for (int i = 0; password[i] != '\0'; i++)
+    {
+        unsigned char c = (unsigned char)password[i];
+        if (!isalnum(c) && !(password_symbols_enabled() && es_simbolo_password_permitido(c)))
+        {
+            return 0;
+        }
+        if (isupper(c))
+        {
+            has_upper = 1;
+        }
+        else if (islower(c))
+        {
+            has_lower = 1;
+        }
+        else if (isdigit(c))
+        {
+            has_digit = 1;
+        }
+    }
+
+    return has_upper && has_lower && has_digit;
+}
+
+static const char *fortaleza_password(const char *password)
+{
+    int has_upper = 0;
+    int has_lower = 0;
+    int has_digit = 0;
+    int score = 0;
+    size_t len = safe_strnlen(password, 256);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        unsigned char c = (unsigned char)password[i];
+        if (isupper(c))
+        {
+            has_upper = 1;
+        }
+        else if (islower(c))
+        {
+            has_lower = 1;
+        }
+        else if (isdigit(c))
+        {
+            has_digit = 1;
+        }
+    }
+
+    if (len >= 8)
+    {
+        score++;
+    }
+    if (len >= 12)
+    {
+        score++;
+    }
+    score += has_upper + has_lower + has_digit;
+
+    if (score >= 5)
+    {
+        return "ALTA";
+    }
+    if (score >= 3)
+    {
+        return "MEDIA";
+    }
+    return "BAJA";
+}
+
+static int flujo_configurar_password(int requiere_actual)
+{
+    char nueva[128];
+    char confirmar_pwd[128];
+
+    (void)requiere_actual;
+
+    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva, (int)sizeof(nueva)))
+    {
+        return 0;
+    }
+
+    if (!password_es_alfanumerica_con_reglas(nueva))
+    {
+        if (password_symbols_enabled())
+        {
+            ui_printf("La contrasena debe incluir mayuscula, minuscula y numero. Puede usar letras, numeros y simbolos permitidos (!@#$%^&*()-_=+[]{};:,.?).\n");
+        }
+        else
+        {
+            ui_printf("La contrasena debe usar solo letras y numeros, e incluir mayuscula, minuscula y numero.\n");
+        }
+        return 0;
+    }
+
+    ui_printf("Fortaleza estimada: %s\n", fortaleza_password(nueva));
+
+    if (!leer_contrasena_no_vacia("Confirma tu nueva contrasena: ", confirmar_pwd, (int)sizeof(confirmar_pwd)))
+    {
+        return 0;
+    }
+
+    if (strcmp(nueva, confirmar_pwd) != 0)
+    {
+        ui_printf("Las contrasenas no coinciden.\n");
+        return 0;
+    }
+
+    if (!set_user_password(nueva))
+    {
+        ui_printf("No se pudo guardar la contrasena.\n");
+        return 0;
+    }
+
+    ui_printf("Contrasena guardada correctamente.\n");
+    return 1;
+}
+
+static int auth_username_exists(sqlite3 *auth_db, const char *username)
+{
+    sqlite3_stmt *stmt = NULL;
+    int exists = 0;
+
+    if (sqlite3_prepare_v2(auth_db, "SELECT 1 FROM local_users WHERE username = ? LIMIT 1;", -1, &stmt, NULL) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+        exists = (sqlite3_step(stmt) == SQLITE_ROW);
+        sqlite3_finalize(stmt);
+    }
+    return exists;
+}
+
+static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password)
+{
+    sqlite3_stmt *stmt = NULL;
+    char salt[33] = "";
+    char hash[17] = "";
+    const char *sql = "INSERT INTO local_users(username, password_salt, password_hash) VALUES(?, ?, ?);";
+
+    if (plain_password && plain_password[0] != '\0')
+    {
+        auth_generate_salt_hex(salt, sizeof(salt));
+        auth_build_password_hash(plain_password, salt, hash, sizeof(hash));
+    }
+
+    if (sqlite3_prepare_v2(auth_db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, salt, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, hash, -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static int auth_get_password_fields(sqlite3 *auth_db, const char *username,
+                                    char *salt_out, size_t salt_size,
+                                    char *hash_out, size_t hash_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int ok = 0;
+
+    if (sqlite3_prepare_v2(auth_db,
+                           "SELECT password_salt, password_hash FROM local_users WHERE username = ? LIMIT 1;",
+                           -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *salt = (const char *)sqlite3_column_text(stmt, 0);
+        const char *hash = (const char *)sqlite3_column_text(stmt, 1);
+        if (salt_out && salt_size > 0)
+        {
+            strncpy_s(salt_out, salt_size, salt ? salt : "", salt_size - 1);
+        }
+        if (hash_out && hash_size > 0)
+        {
+            strncpy_s(hash_out, hash_size, hash ? hash : "", hash_size - 1);
+        }
+        ok = 1;
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int auth_verify_user_password(sqlite3 *auth_db, const char *username, const char *plain_password)
+{
+    char salt[64];
+    char hash[64];
+    char computed[32];
+
+    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash, sizeof(hash)))
+    {
+        return 0;
+    }
+
+    if (hash[0] == '\0')
+    {
+        return 1;
+    }
+
+    auth_build_password_hash(plain_password, salt, computed, sizeof(computed));
+    return strcmp(hash, computed) == 0;
+}
+
+static int auth_user_requires_password(sqlite3 *auth_db, const char *username)
+{
+    char salt[64];
+    char hash[64];
+    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash, sizeof(hash)))
+    {
+        return 0;
+    }
+    return hash[0] != '\0';
+}
+
+static int auth_prompt_password_login(sqlite3 *auth_db, const char *username)
+{
+    char intento[128];
+
+    if (!auth_user_requires_password(auth_db, username))
+    {
+        return 1;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (!leer_contrasena_no_vacia("Contrasena: ", intento, (int)sizeof(intento)))
+        {
+            continue;
+        }
+
+        if (auth_verify_user_password(auth_db, username, intento))
+        {
+            return 1;
+        }
+
+        ui_printf("Contrasena incorrecta. Intentos restantes: %d\n", 2 - i);
+    }
+
+    return 0;
+}
+
+static int auth_registrar_usuario_interactivo(sqlite3 *auth_db)
+{
+    char username[64];
+    char respuesta[16];
+    char nueva[128] = "";
+    char confirmar_pwd[128] = "";
+
+    leer_nombre_no_vacio("Nuevo usuario (3-32, letras/numeros/_/-): ",
+                         "Usuario obligatorio: ", username, (int)sizeof(username));
+
+    if (!auth_username_valido(username))
+    {
+        ui_printf("Usuario invalido. Usa 3-32 caracteres: letras, numeros, '_' o '-'.\n");
+        return 0;
+    }
+
+    if (auth_username_exists(auth_db, username))
+    {
+        ui_printf("Ese usuario ya existe.\n");
+        return 0;
+    }
+
+    ui_printf("Deseas poner contrasena para este usuario? (S/N): ");
+    if (!fgets(respuesta, sizeof(respuesta), stdin))
+    {
+        return 0;
+    }
+
+    if (respuesta[0] == 's' || respuesta[0] == 'S')
+    {
+        if (!leer_contrasena_no_vacia("Ingresa contrasena: ", nueva, (int)sizeof(nueva)))
+        {
+            return 0;
+        }
+        if (!password_es_alfanumerica_con_reglas(nueva))
+        {
+            ui_printf("La contrasena debe incluir mayuscula, minuscula y numero.\n");
+            return 0;
+        }
+        ui_printf("Fortaleza estimada: %s\n", fortaleza_password(nueva));
+        if (!leer_contrasena_no_vacia("Confirma contrasena: ", confirmar_pwd, (int)sizeof(confirmar_pwd)))
+        {
+            return 0;
+        }
+        if (strcmp(nueva, confirmar_pwd) != 0)
+        {
+            ui_printf("Las contrasenas no coinciden.\n");
+            return 0;
+        }
+    }
+
+    if (!auth_upsert_user(auth_db, username, nueva))
+    {
+        ui_printf("No se pudo crear el usuario.\n");
+        return 0;
+    }
+
+    ui_printf("Usuario '%s' creado correctamente.\n", username);
+    return 1;
+}
+
+static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out, size_t out_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    char users[64][64];
+    int count = 0;
+
+    if (!username_out || out_size == 0)
+    {
+        return 0;
+    }
+
+    if (sqlite3_prepare_v2(auth_db, "SELECT username FROM local_users ORDER BY username;", -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW && count < 64)
+    {
+        const char *u = (const char *)sqlite3_column_text(stmt, 0);
+        strncpy_s(users[count], sizeof(users[count]), u ? u : "", sizeof(users[count]) - 1);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        return 0;
+    }
+
+    ui_printf("\nUsuarios locales:\n");
+    for (int i = 0; i < count; i++)
+    {
+        ui_printf("%d. %s\n", i + 1, users[i]);
+    }
+    ui_printf("0. Volver\n");
+
+    int op = input_int("> ");
+    if (op <= 0 || op > count)
+    {
+        return 0;
+    }
+
+    strncpy_s(username_out, out_size, users[op - 1], out_size - 1);
+    return 1;
+}
+
+static int auth_get_single_username(sqlite3 *auth_db, char *username_out, size_t out_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int ok = 0;
+
+    if (!username_out || out_size == 0)
+    {
+        return 0;
+    }
+
+    if (sqlite3_prepare_v2(auth_db,
+                           "SELECT username FROM local_users ORDER BY username LIMIT 1;",
+                           -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *u = (const char *)sqlite3_column_text(stmt, 0);
+        strncpy_s(username_out, out_size, u ? u : "", out_size - 1);
+        ok = (username_out[0] != '\0');
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int auth_activar_usuario_y_cerrar(sqlite3 *auth_db, const char *username)
+{
+    db_set_active_user(username);
+    sqlite3_close(auth_db);
+    return 1;
+}
+
+static int auth_flujo_sin_usuarios(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
+{
+    if (auth_importar_usuario_legado_si_existe(auth_db))
+    {
+        return 0;
+    }
+
+    ui_printf("\nNo hay usuarios locales. Crea tu primer usuario para continuar.\n");
+    ui_printf("Con un solo usuario es suficiente; agregar mas usuarios es opcional.\n");
+
+    if (!auth_registrar_usuario_interactivo(auth_db))
+    {
+        return 0;
+    }
+
+    if (!auth_seleccionar_usuario(auth_db, selected_user, selected_user_size))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int auth_flujo_un_usuario(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
+{
+    if (!auth_get_single_username(auth_db, selected_user, selected_user_size))
+    {
+        ui_printf("No se pudo cargar el usuario local.\n");
+        return 0;
+    }
+
+    if (!auth_prompt_password_login(auth_db, selected_user))
+    {
+        ui_printf("Acceso denegado.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int auth_menu_multiusuario(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
+{
+    ui_printf("\n=== MULTIUSUARIO LOCAL ===\n");
+    ui_printf("1. Iniciar sesion\n");
+    ui_printf("2. Agregar usuario local (opcional)\n");
+    ui_printf("0. Salir\n");
+
+    int op = input_int("> ");
+    if (op == 0)
+    {
+        return 0;
+    }
+
+    if (op == 2)
+    {
+        auth_registrar_usuario_interactivo(auth_db);
+        return -1;
+    }
+
+    if (op != 1)
+    {
+        ui_printf("Opcion invalida.\n");
+        return -1;
+    }
+
+    if (!auth_seleccionar_usuario(auth_db, selected_user, selected_user_size))
+    {
+        return -1;
+    }
+
+    if (!auth_prompt_password_login(auth_db, selected_user))
+    {
+        ui_printf("Acceso denegado.\n");
+        return -1;
+    }
+
+    return 1;
+}
+
+int iniciar_sesion_multiusuario_local(void)
+{
+    sqlite3 *auth_db = NULL;
+    char selected_user[64];
+
+    if (!auth_open(&auth_db))
+    {
+        ui_printf("No se pudo abrir el registro local de usuarios.\n");
+        return 0;
+    }
+
+    while (1)
+    {
+        int total = auth_user_count(auth_db);
+        if (total == 0)
+        {
+            if (auth_flujo_sin_usuarios(auth_db, selected_user, sizeof(selected_user)))
+            {
+                return auth_activar_usuario_y_cerrar(auth_db, selected_user);
+            }
+            continue;
+        }
+
+        if (total == 1)
+        {
+            if (auth_flujo_un_usuario(auth_db, selected_user, sizeof(selected_user)))
+            {
+                return auth_activar_usuario_y_cerrar(auth_db, selected_user);
+            }
+            continue;
+        }
+
+        int action = auth_menu_multiusuario(auth_db, selected_user, sizeof(selected_user));
+        if (action == 0)
+        {
+            sqlite3_close(auth_db);
+            return 0;
+        }
+        if (action < 0)
+        {
+            continue;
+        }
+
+        return auth_activar_usuario_y_cerrar(auth_db, selected_user);
+    }
+}
+
+void configurar_password_inicial_opcional()
+{
+    char respuesta[16];
+
+    if (user_has_password())
+    {
+        return;
+    }
+
+    ui_printf("\nDeseas configurar una contrasena para tu usuario? (S/N): ");
+    if (!fgets(respuesta, sizeof(respuesta), stdin))
+    {
+        return;
+    }
+
+    if (respuesta[0] == 's' || respuesta[0] == 'S')
+    {
+        flujo_configurar_password(0);
+    }
+    else
+    {
+        ui_printf("Contrasena omitida. Puedes configurarla luego en Ajustes -> Usuario.\n");
+    }
+}
+
+int autenticar_usuario_si_tiene_password()
+{
+    char intento[128];
+
+    if (!user_has_password())
+    {
+        return 1;
+    }
+
+    ui_printf("\nEste perfil tiene contrasena.\n");
+    for (int i = 0; i < 3; i++)
+    {
+        if (!leer_contrasena_no_vacia("Ingresa tu contrasena: ", intento, (int)sizeof(intento)))
+        {
+            continue;
+        }
+
+        if (verify_user_password(intento))
+        {
+            return 1;
+        }
+
+        ui_printf("Contrasena incorrecta. Intentos restantes: %d\n", 2 - i);
+    }
+
+    return 0;
+}
+
+static void configurar_o_cambiar_password_usuario()
+{
+    sqlite3 *auth_db = NULL;
+    char actual[128];
+    char nueva[128];
+    char confirmar_pwd[128];
+    sqlite3_stmt *stmt = NULL;
+    const char *username = db_get_active_user();
+    char salt[33];
+    char hash[17];
+
+    if (!username || username[0] == '\0')
+    {
+        ui_printf("No hay sesion activa.\n");
+        pause_console();
+        return;
+    }
+
+    if (!auth_open(&auth_db))
+    {
+        ui_printf("No se pudo abrir el registro de usuarios.\n");
+        pause_console();
+        return;
+    }
+
+    if (auth_user_requires_password(auth_db, username))
+    {
+        if (!leer_contrasena_no_vacia("Ingresa tu contrasena actual: ", actual, (int)sizeof(actual)))
+        {
+            ui_printf("Contrasena actual incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+
+        if (!auth_verify_user_password(auth_db, username, actual))
+        {
+            ui_printf("Contrasena actual incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+    }
+
+    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva, (int)sizeof(nueva)))
+    {
+        sqlite3_close(auth_db);
+        pause_console();
+        return;
+    }
+    if (!password_es_alfanumerica_con_reglas(nueva))
+    {
+        ui_printf("La contrasena debe incluir mayuscula, minuscula y numero.\n");
+        sqlite3_close(auth_db);
+        pause_console();
+        return;
+    }
+    ui_printf("Fortaleza estimada: %s\n", fortaleza_password(nueva));
+    if (!leer_contrasena_no_vacia("Confirma tu nueva contrasena: ", confirmar_pwd, (int)sizeof(confirmar_pwd)) ||
+            strcmp(nueva, confirmar_pwd) != 0)
+    {
+        ui_printf("Las contrasenas no coinciden.\n");
+        sqlite3_close(auth_db);
+        pause_console();
+        return;
+    }
+
+    auth_generate_salt_hex(salt, sizeof(salt));
+    auth_build_password_hash(nueva, salt, hash, sizeof(hash));
+
+    if (sqlite3_prepare_v2(auth_db,
+                           "UPDATE local_users SET password_salt = ?, password_hash = ? WHERE username = ?;",
+                           -1, &stmt, NULL) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, salt, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, hash, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, username, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            ui_printf("Contrasena actualizada correctamente.\n");
+        }
+        else
+        {
+            ui_printf("No se pudo actualizar la contrasena.\n");
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(auth_db);
+    pause_console();
+}
+
+static void quitar_password_usuario()
+{
+    sqlite3 *auth_db = NULL;
+    sqlite3_stmt *stmt = NULL;
+    const char *username = db_get_active_user();
+    char actual[128];
+
+    if (!username || username[0] == '\0')
+    {
+        ui_printf("No hay sesion activa.\n");
+        pause_console();
+        return;
+    }
+
+    if (!auth_open(&auth_db))
+    {
+        ui_printf("No se pudo abrir el registro de usuarios.\n");
+        pause_console();
+        return;
+    }
+
+    if (auth_user_requires_password(auth_db, username))
+    {
+        if (!leer_contrasena_no_vacia("Para quitarla, ingresa tu contrasena actual: ", actual, (int)sizeof(actual)))
+        {
+            ui_printf("Contrasena incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+
+        if (!auth_verify_user_password(auth_db, username, actual))
+        {
+            ui_printf("Contrasena incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+    }
+
+    if (sqlite3_prepare_v2(auth_db,
+                           "UPDATE local_users SET password_salt = '', password_hash = '' WHERE username = ?;",
+                           -1, &stmt, NULL) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            ui_printf("Contrasena eliminada correctamente.\n");
+        }
+        else
+        {
+            ui_printf("No se pudo eliminar la contrasena.\n");
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(auth_db);
+    pause_console();
+}
+
 /**
  * Recopila la identidad del usuario en el inicio para personalizar la
  * aplicacion y mantener un registro de uso.
@@ -822,6 +2090,100 @@ void editar_nombre_usuario()
     pause_console();
 }
 
+static void agregar_usuario_local()
+{
+    sqlite3 *auth_db = NULL;
+    if (!auth_open(&auth_db))
+    {
+        ui_printf("No se pudo abrir el registro de usuarios.\n");
+        pause_console();
+        return;
+    }
+
+    auth_registrar_usuario_interactivo(auth_db);
+    sqlite3_close(auth_db);
+    pause_console();
+}
+
+static void eliminar_mi_cuenta_local()
+{
+    sqlite3 *auth_db = NULL;
+    sqlite3_stmt *stmt = NULL;
+    const char *username = db_get_active_user();
+    char actual[128];
+    char user_db_path[1024];
+    char user_log_path[1024];
+
+    if (!username || username[0] == '\0')
+    {
+        ui_printf("No hay sesion activa.\n");
+        pause_console();
+        return;
+    }
+
+    ui_printf("ATENCION: Esta accion es IRREVERSIBLE y eliminara tu cuenta local.\n");
+    if (!confirmar("Estas seguro de continuar"))
+    {
+        ui_printf("Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    if (!auth_open(&auth_db))
+    {
+        ui_printf("No se pudo abrir el registro de usuarios.\n");
+        pause_console();
+        return;
+    }
+
+    if (auth_user_requires_password(auth_db, username))
+    {
+        if (!leer_contrasena_no_vacia("Confirma tu contrasena actual: ", actual, (int)sizeof(actual)))
+        {
+            ui_printf("Contrasena incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+
+        if (!auth_verify_user_password(auth_db, username, actual))
+        {
+            ui_printf("Contrasena incorrecta.\n");
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+    }
+
+    if (sqlite3_prepare_v2(auth_db, "DELETE FROM local_users WHERE username = ?;", -1, &stmt, NULL) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            ui_printf("Cuenta eliminada. Cerrando aplicacion...\n");
+        }
+        else
+        {
+            ui_printf("No se pudo eliminar la cuenta.\n");
+            sqlite3_finalize(stmt);
+            sqlite3_close(auth_db);
+            pause_console();
+            return;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(auth_db);
+
+    auth_get_user_data_paths(username,
+                             user_db_path, sizeof(user_db_path),
+                             user_log_path, sizeof(user_log_path));
+    db_close();
+    remove(user_db_path);
+    remove(user_log_path);
+    exit(0);
+}
+
 /**
  * Proporciona una interfaz estructurada para gestionar opciones relacionadas
  * con el perfil del usuario.
@@ -829,11 +2191,15 @@ void editar_nombre_usuario()
 void menu_usuario()
 {
     MenuItem items[] = {{1, "Mostrar Nombre", mostrar_nombre_usuario},
-        {2, "Editar Nombre", editar_nombre_usuario},
+        {2, "Editar Nombre Visible", editar_nombre_usuario},
+        {3, "Agregar Usuario Local", agregar_usuario_local},
+        {4, "Modificar Mi Contrasena", configurar_o_cambiar_password_usuario},
+        {5, "Quitar Mi Contrasena", quitar_password_usuario},
+        {6, "Eliminar Mi Cuenta (Irreversible)", eliminar_mi_cuenta_local},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("USUARIO", items, 3);
+    ejecutar_menu("USUARIO", items, 7);
 }
 
 /**

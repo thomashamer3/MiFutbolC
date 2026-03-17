@@ -191,6 +191,11 @@ void initialize_application()
         exit(1);
     }
 
+    if (db_get_active_user()[0] != '\0')
+    {
+        set_user_name(db_get_active_user());
+    }
+
     settings_init();
     app_log_event("APP", "Aplicacion iniciada");
 
@@ -206,9 +211,9 @@ void handle_user_name()
 
     nombre_usuario = get_user_name();
 
-    if (!nombre_usuario)
+    if (!nombre_usuario && db_get_active_user()[0] != '\0')
     {
-        pedir_nombre_usuario();
+        set_user_name(db_get_active_user());
         nombre_usuario = get_user_name();
     }
 

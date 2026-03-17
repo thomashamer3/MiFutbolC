@@ -15,6 +15,8 @@
 #include <time.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdint.h>
+#include <inttypes.h>
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
@@ -70,6 +72,104 @@ static void sanitize_filename_token(char *token)
     }
 }
 
+static uint64_t fnv1a64_update(uint64_t hash, const unsigned char *data, size_t len)
+{
+    const uint64_t prime = 1099511628211ULL;
+    for (size_t i = 0; i < len; i++)
+    {
+        hash ^= (uint64_t)data[i];
+        hash *= prime;
+    }
+    return hash;
+}
+
+static uint64_t fnv1a64_string(const char *text)
+{
+    const uint64_t offset_basis = 14695981039346656037ULL;
+    if (!text)
+    {
+        return offset_basis;
+    }
+    return fnv1a64_update(offset_basis, (const unsigned char *)text, strlen(text));
+}
+
+static void bytes_to_hex(const unsigned char *bytes, size_t bytes_len, char *hex_out, size_t out_size)
+{
+    static const char hex[] = "0123456789abcdef";
+    if (!bytes || !hex_out || out_size == 0)
+    {
+        return;
+    }
+
+    size_t required = bytes_len * 2 + 1;
+    if (out_size < required)
+    {
+        hex_out[0] = '\0';
+        return;
+    }
+
+    for (size_t i = 0; i < bytes_len; i++)
+    {
+        hex_out[i * 2] = hex[(bytes[i] >> 4) & 0x0F];
+        hex_out[i * 2 + 1] = hex[bytes[i] & 0x0F];
+    }
+    hex_out[bytes_len * 2] = '\0';
+}
+
+static void generate_salt_hex(char *salt_out, size_t out_size)
+{
+    enum
+    {
+        SALT_BYTES = 16
+    };
+    static int seeded = 0;
+    unsigned char salt_bytes[SALT_BYTES];
+
+    if (!salt_out || out_size < (SALT_BYTES * 2 + 1))
+    {
+        return;
+    }
+
+    if (!seeded)
+    {
+        unsigned int seed = (unsigned int)time(NULL) ^ (unsigned int)clock();
+        srand(seed);
+        seeded = 1;
+    }
+
+    for (int i = 0; i < SALT_BYTES; i++)
+    {
+        salt_bytes[i] = (unsigned char)(rand() % 256);
+    }
+
+    bytes_to_hex(salt_bytes, SALT_BYTES, salt_out, out_size);
+}
+
+static void build_password_hash(const char *plain_password, const char *salt_hex, char *hash_out, size_t out_size)
+{
+    char round_input[512];
+    uint64_t h1;
+    uint64_t h2;
+
+    if (!plain_password || !salt_hex || !hash_out || out_size < 17)
+    {
+        if (hash_out && out_size > 0)
+        {
+            hash_out[0] = '\0';
+        }
+        return;
+    }
+
+    snprintf(round_input, sizeof(round_input), "%s:%s", salt_hex, plain_password);
+    h1 = fnv1a64_string(round_input);
+
+    snprintf(round_input, sizeof(round_input), "%s:%016" PRIx64 ":%s", plain_password,
+             h1, salt_hex);
+    h2 = fnv1a64_string(round_input);
+
+    snprintf(hash_out, out_size, "%016" PRIx64, h2);
+}
+
 #ifdef _WIN32
 static char error_buf[256];
 #endif
@@ -94,6 +194,9 @@ static char IMPORT_DIR[1024];
 
 /** Directorio de imagenes */
 static char IMAGES_DIR[1024];
+
+/** Usuario local activo para enrutar la base por perfil */
+static char ACTIVE_USER[128];
 
 typedef enum
 {
@@ -346,6 +449,32 @@ static int append_str(char *dest, size_t *used, size_t cap, const char *str)
     return 1;
 }
 
+int db_set_active_user(const char *username)
+{
+    size_t len;
+
+    if (!username)
+    {
+        return 0;
+    }
+
+    len = strlen_s(username, sizeof(ACTIVE_USER));
+    if (len == 0 || len >= sizeof(ACTIVE_USER))
+    {
+        return 0;
+    }
+
+    memset(ACTIVE_USER, 0, sizeof(ACTIVE_USER));
+    strcpy_s(ACTIVE_USER, sizeof(ACTIVE_USER), username);
+    sanitize_filename_token(ACTIVE_USER);
+    return ACTIVE_USER[0] != '\0';
+}
+
+const char *db_get_active_user(void)
+{
+    return ACTIVE_USER;
+}
+
 /**
  * @brief Configura rutas y directorios para almacenamiento de datos
  *
@@ -356,6 +485,20 @@ static int append_str(char *dest, size_t *used, size_t cap, const char *str)
  */
 static int setup_database_paths()
 {
+    char db_filename[256];
+    char log_filename[256];
+
+    if (ACTIVE_USER[0] != '\0')
+    {
+        snprintf(db_filename, sizeof(db_filename), "mifutbol_%s.db", ACTIVE_USER);
+        snprintf(log_filename, sizeof(log_filename), "mifutbol_%s.log", ACTIVE_USER);
+    }
+    else
+    {
+        strcpy_s(db_filename, sizeof(db_filename), "mifutbol.db");
+        strcpy_s(log_filename, sizeof(log_filename), "mifutbol.log");
+    }
+
 #ifdef _WIN32
     // Usar AppData\Local para la base de datos (oculta, interna)
     char appdata_path[MAX_PATH];
@@ -376,11 +519,13 @@ static int setup_database_paths()
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
     strcpy_s(DB_PATH, sizeof(DB_PATH), appdata_path);
-    strcat_s(DB_PATH, sizeof(DB_PATH), "\\MiFutbolC\\data\\mifutbol.db");
+    strcat_s(DB_PATH, sizeof(DB_PATH), "\\MiFutbolC\\data\\");
+    strcat_s(DB_PATH, sizeof(DB_PATH), db_filename);
 
     memset(LOG_PATH, 0, sizeof(LOG_PATH));
     strcpy_s(LOG_PATH, sizeof(LOG_PATH), appdata_path);
-    strcat_s(LOG_PATH, sizeof(LOG_PATH), "\\MiFutbolC\\data\\mifutbol.log");
+    strcat_s(LOG_PATH, sizeof(LOG_PATH), "\\MiFutbolC\\data\\");
+    strcat_s(LOG_PATH, sizeof(LOG_PATH), log_filename);
 
     // Crear directorios si no existen
     char temp_path[MAX_PATH];
@@ -411,10 +556,12 @@ static int setup_database_paths()
     strcpy_s(DB_DIR, sizeof(DB_DIR), "./data");
 
     memset(DB_PATH, 0, sizeof(DB_PATH));
-    strcpy_s(DB_PATH, sizeof(DB_PATH), "./data/mifutbol.db");
+    strcpy_s(DB_PATH, sizeof(DB_PATH), "./data/");
+    strcat_s(DB_PATH, sizeof(DB_PATH), db_filename);
 
     memset(LOG_PATH, 0, sizeof(LOG_PATH));
-    strcpy_s(LOG_PATH, sizeof(LOG_PATH), "./data/mifutbol.log");
+    strcpy_s(LOG_PATH, sizeof(LOG_PATH), "./data/");
+    strcat_s(LOG_PATH, sizeof(LOG_PATH), log_filename);
 
     // Crear directorio si no existe
     if (!asegurar_directorio(DB_DIR, "data"))
@@ -480,7 +627,8 @@ static int create_database_schema()
 
         "CREATE TABLE IF NOT EXISTS cancha ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " nombre TEXT NOT NULL);"
+        " nombre TEXT NOT NULL,"
+        " imagen_ruta TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS partido ("
         " id INTEGER PRIMARY KEY,"
@@ -512,7 +660,9 @@ static int create_database_schema()
 
         "CREATE TABLE IF NOT EXISTS usuario ("
         " id INTEGER PRIMARY KEY,"
-        " nombre TEXT NOT NULL);"
+        " nombre TEXT NOT NULL,"
+        " password_salt TEXT DEFAULT '',"
+        " password_hash TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS equipo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -520,7 +670,8 @@ static int create_database_schema()
         " tipo INTEGER NOT NULL,"
         " tipo_futbol INTEGER NOT NULL,"
         " num_jugadores INTEGER NOT NULL,"
-        " partido_id INTEGER DEFAULT -1);"
+        " partido_id INTEGER DEFAULT -1,"
+        " imagen_ruta TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS jugador ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -872,6 +1023,15 @@ static int create_database_schema()
         " resultado TEXT DEFAULT '',"
         " notas TEXT DEFAULT '');"
 
+        "CREATE TABLE IF NOT EXISTS bienestar_estudio_archivo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " control_id INTEGER NOT NULL,"
+        " nombre_original TEXT NOT NULL,"
+        " ruta_archivo TEXT NOT NULL,"
+        " tipo_archivo TEXT DEFAULT '',"
+        " fecha_subida TEXT NOT NULL,"
+        " FOREIGN KEY(control_id) REFERENCES bienestar_control_medico(id));"
+
         "CREATE TABLE IF NOT EXISTS bienestar_recomendacion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " fecha TEXT NOT NULL,"
@@ -879,6 +1039,10 @@ static int create_database_schema()
         " riesgo_lesion INTEGER DEFAULT 0,"
         " resumen TEXT DEFAULT '',"
         " rutina TEXT DEFAULT '');"
+
+        "CREATE TABLE IF NOT EXISTS bienestar_menu_imagen ("
+        " menu_key TEXT PRIMARY KEY,"
+        " imagen_ruta TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS tactica_diagrama ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -912,6 +1076,8 @@ static void add_missing_columns()
     {
         "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;",
         "ALTER TABLE camiseta ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE equipo ADD COLUMN imagen_ruta TEXT DEFAULT '';",
         "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;",
@@ -922,6 +1088,8 @@ static void add_missing_columns()
         "ALTER TABLE partido ADD COLUMN precio INTEGER DEFAULT 0;",
         "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
         "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';",
+        "ALTER TABLE usuario ADD COLUMN password_salt TEXT DEFAULT '';",
+        "ALTER TABLE usuario ADD COLUMN password_hash TEXT DEFAULT '';",
         NULL
     };
 
@@ -1032,12 +1200,159 @@ char *get_user_name()
 int set_user_name(const char *nombre)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO usuario (id, nombre) VALUES (1, ?);";
+    const char *sql_update = "UPDATE usuario SET nombre = ? WHERE id = 1;";
+    const char *sql_insert =
+        "INSERT INTO usuario (id, nombre, password_salt, password_hash) VALUES (1, ?, '', '');";
+    int result = 0;
+
+    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            result = sqlite3_changes(db) > 0;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (result)
+    {
+        return 1;
+    }
+
+    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            result = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return result;
+}
+
+int user_has_password(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "SELECT password_hash FROM usuario WHERE id = 1;";
+    int has_password = 0;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const unsigned char *hash = sqlite3_column_text(stmt, 0);
+            has_password = (hash && hash[0] != '\0');
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return has_password;
+}
+
+int set_user_password(const char *plain_password)
+{
+    sqlite3_stmt *stmt = NULL;
+    char salt_hex[33];
+    char hash_hex[17];
+    int result = 0;
+    char *nombre = NULL;
+    const char *sql_update = "UPDATE usuario SET password_salt = ?, password_hash = ? WHERE id = 1;";
+    const char *sql_insert =
+        "INSERT INTO usuario (id, nombre, password_salt, password_hash) VALUES (1, ?, ?, ?);";
+
+    if (!plain_password || plain_password[0] == '\0')
+    {
+        return 0;
+    }
+
+    generate_salt_hex(salt_hex, sizeof(salt_hex));
+    build_password_hash(plain_password, salt_hex, hash_hex, sizeof(hash_hex));
+
+    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, salt_hex, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, hash_hex, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            result = sqlite3_changes(db) > 0;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (result)
+    {
+        return 1;
+    }
+
+    nombre = get_user_name();
+    if (!nombre)
+    {
+        nombre = STRDUP("Usuario");
+    }
+
+    if (!nombre)
+    {
+        return 0;
+    }
+
+    if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, salt_hex, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, hash_hex, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
+            result = 1;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    free(nombre);
+    return result;
+}
+
+int verify_user_password(const char *plain_password)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "SELECT password_salt, password_hash FROM usuario WHERE id = 1;";
+    int verified = 0;
+
+    if (!plain_password || plain_password[0] == '\0')
+    {
+        return 0;
+    }
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *salt = (const char *)sqlite3_column_text(stmt, 0);
+            const char *stored_hash = (const char *)sqlite3_column_text(stmt, 1);
+
+            if (salt && stored_hash && salt[0] != '\0' && stored_hash[0] != '\0')
+            {
+                char computed_hash[17];
+                build_password_hash(plain_password, salt, computed_hash, sizeof(computed_hash));
+                verified = (strcmp(computed_hash, stored_hash) == 0);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return verified;
+}
+
+int clear_user_password(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "UPDATE usuario SET password_salt = '', password_hash = '' WHERE id = 1;";
     int result = 0;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
     {
-        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             result = 1;

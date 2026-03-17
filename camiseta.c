@@ -208,6 +208,115 @@ static int copiar_archivo_binario(const char *source_path, const char *dest_path
     return 1;
 }
 
+static void escapar_comillas_simples_ps(const char *src, char *dst, size_t dst_size)
+{
+    if (!src || !dst || dst_size == 0)
+    {
+        return;
+    }
+
+    size_t j = 0;
+    size_t i = 0;
+    while (src[i] != '\0' && j + 1 < dst_size)
+    {
+        if (src[i] == '\'')
+        {
+            if (j + 2 >= dst_size)
+            {
+                break;
+            }
+            dst[j++] = '\'';
+            dst[j++] = '\'';
+        }
+        else
+        {
+            dst[j++] = src[i];
+        }
+        i++;
+    }
+    dst[j] = '\0';
+}
+
+static int optimizar_imagen_archivo(const char *source_path, const char *dest_path)
+{
+    if (!source_path || !dest_path)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    if (comando_existe("magick"))
+    {
+        char cmd_magick[2600];
+        snprintf(cmd_magick,
+                 sizeof(cmd_magick),
+                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        if (system(cmd_magick) == 0)
+        {
+            return 1;
+        }
+    }
+
+    char src_ps[2200] = {0};
+    char dst_ps[2200] = {0};
+    escapar_comillas_simples_ps(source_path, src_ps, sizeof(src_ps));
+    escapar_comillas_simples_ps(dest_path, dst_ps, sizeof(dst_ps));
+
+    char cmd_ps[9000];
+    snprintf(cmd_ps,
+             sizeof(cmd_ps),
+             "powershell -NoProfile -Command \"$ErrorActionPreference='Stop';"
+             "Add-Type -AssemblyName System.Drawing;"
+             "$src='%s';$dst='%s';"
+             "$img=[System.Drawing.Image]::FromFile($src);"
+             "try{"
+             "$max=1280;$w=$img.Width;$h=$img.Height;"
+             "if($w -gt $h){$nw=[Math]::Min($w,$max);$nh=[int]($h*$nw/$w)}"
+             "else{$nh=[Math]::Min($h,$max);$nw=[int]($w*$nh/$h)};"
+             "$bmp=New-Object System.Drawing.Bitmap $nw,$nh;"
+             "$g=[System.Drawing.Graphics]::FromImage($bmp);"
+             "$g.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic;"
+             "$g.SmoothingMode=[System.Drawing.Drawing2D.SmoothingMode]::HighQuality;"
+             "$g.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality;"
+             "$g.DrawImage($img,0,0,$nw,$nh);"
+             "$enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|Where-Object{$_.MimeType -eq 'image/jpeg'}|Select-Object -First 1;"
+             "$ep=New-Object System.Drawing.Imaging.EncoderParameters 1;"
+             "$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality,92L);"
+             "$bmp.Save($dst,$enc,$ep);"
+             "$g.Dispose();$bmp.Dispose();"
+             "}finally{$img.Dispose()}\"",
+             src_ps,
+             dst_ps);
+
+    return system(cmd_ps) == 0;
+#else
+    char cmd[2600];
+    if (comando_existe("magick"))
+    {
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        return system(cmd) == 0;
+    }
+
+    if (comando_existe("convert"))
+    {
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "convert \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        return system(cmd) == 0;
+    }
+
+    return 0;
+#endif
+}
+
 static const char *obtener_extension(const char *path)
 {
     if (!path)
@@ -786,24 +895,53 @@ static int cargar_imagen_para_camiseta_id(int id)
     char ts[32] = {0};
     get_timestamp(ts, (int)sizeof(ts));
 
-    char nombre_destino[256] = {0};
-    snprintf(nombre_destino, sizeof(nombre_destino), "camiseta_%d_%s%s", id, ts, ext);
+    char base_destino[220] = {0};
+    snprintf(base_destino, sizeof(base_destino), "camiseta_%d_%s", id, ts);
 
-    char ruta_destino[1200] = {0};
+    char nombre_destino_opt[256] = {0};
+    snprintf(nombre_destino_opt, sizeof(nombre_destino_opt), "%s.jpg", base_destino);
+
+    char nombre_destino_original[256] = {0};
+    snprintf(nombre_destino_original, sizeof(nombre_destino_original), "%s%s", base_destino, ext);
+
+    char ruta_destino_opt[1200] = {0};
+    char ruta_destino_original[1200] = {0};
 #ifdef _WIN32
-    snprintf(ruta_destino, sizeof(ruta_destino), "%s\\%s", images_dir, nombre_destino);
+    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s\\%s", images_dir, nombre_destino_opt);
+    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s\\%s", images_dir, nombre_destino_original);
 #else
-    snprintf(ruta_destino, sizeof(ruta_destino), "%s/%s", images_dir, nombre_destino);
+    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s/%s", images_dir, nombre_destino_opt);
+    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s/%s", images_dir, nombre_destino_original);
 #endif
 
-    if (!copiar_archivo_binario(ruta_origen, ruta_destino))
+    int optimizada = optimizar_imagen_archivo(ruta_origen, ruta_destino_opt);
+    const char *nombre_final = NULL;
+    const char *ruta_final = NULL;
+
+    if (optimizada)
+    {
+        nombre_final = nombre_destino_opt;
+        ruta_final = ruta_destino_opt;
+    }
+    else
+    {
+        if (!copiar_archivo_binario(ruta_origen, ruta_destino_original))
+        {
+            printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
+            return 0;
+        }
+        nombre_final = nombre_destino_original;
+        ruta_final = ruta_destino_original;
+    }
+
+    if (!nombre_final || !ruta_final)
     {
         printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
         return 0;
     }
 
     char ruta_relativa_db[300] = {0};
-    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_destino);
+    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_final);
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "UPDATE camiseta SET imagen_ruta=? WHERE id=?"))
@@ -824,7 +962,14 @@ static int cargar_imagen_para_camiseta_id(int id)
     }
 
     printf("\nImagen cargada correctamente.\n");
-    printf("Guardada en: %s\n", ruta_destino);
+    if (optimizada)
+    {
+        printf("Optimizada (max 1280px, calidad alta) y guardada en: %s\n", ruta_final);
+    }
+    else
+    {
+        printf("Guardada sin optimizacion (no habia optimizador disponible) en: %s\n", ruta_final);
+    }
     return 1;
 }
 
@@ -1159,9 +1304,9 @@ void menu_camisetas()
         {3, "Modificar", editar_camiseta},
         {4, "Eliminar", eliminar_camiseta},
         {5, "Sortear", sortear_camiseta},
-        {6, "Cargar imagen", cargar_imagen_camiseta},
-        {7, "Ver imagen", ver_imagen_camiseta},
-        {8, "Ajustes imagen", menu_ajustes_imagen_camiseta},
+        {6, "Cargar Imagen", cargar_imagen_camiseta},
+        {7, "Ver Camiseta", ver_imagen_camiseta},
+        {8, "Ajustes Imagen", menu_ajustes_imagen_camiseta},
         {0, "Volver", NULL}
     };
     ejecutar_menu("CAMISETAS", items, 9);

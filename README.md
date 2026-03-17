@@ -46,6 +46,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### 🎽 Gestión de Equipamiento y Recursos
 
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
+- **Imágenes de Camisetas**: Carga de imágenes con optimización automática (redimensionado y compresión) cuando hay herramientas disponibles
 - **Gestión de Canchas**: Administrar infraestructura deportiva (crear, listar, modificar y eliminar)
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
@@ -168,7 +169,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 - **Temas de Interfaz**: Claro, Oscuro, Azul, Verde, Rojo, Púrpura, Clásico, Alto Contraste
 - **Multiidioma**: Español e Inglés
-- **Nombres de Usuario**: Sistema de personalización con persistencia entre sesiones
+- **Multiusuario Local**: Inicio de sesión por perfil local con datos separados por usuario
+- **Seguridad por Usuario**: Contraseña opcional por perfil, con gestión desde Ajustes -> Usuario
+- **Nombres de Usuario**: Personalización del nombre visible por perfil
 - **Configuración Persistente**: Preferencias guardadas en base de datos
 
 ### 🎨 Interfaz y Experiencia de Usuario
@@ -347,10 +350,11 @@ El script `build.sh`:
 
 Al ejecutar `MiFutbolC`, el sistema:
 
-1. **Inicializa la base de datos** (si es la primera vez)
-2. **Carga la configuración** del usuario (tema, idioma)
-3. **Solicita nombre de usuario** (solo la primera vez)
-4. **Muestra el menú principal**
+1. **Abre el inicio de sesión multiusuario local**
+2. **Selecciona o crea un perfil local** (opcionalmente con contraseña)
+3. **Inicializa la base de datos del perfil activo**
+4. **Carga la configuración** del usuario (tema, idioma)
+5. **Muestra el menú principal**
 
 ### Menú Principal
 
@@ -385,7 +389,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 Menú Principal → Ajustes (14)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
-  └── Modificar nombre de usuario
+  └── Usuario (nombre visible, contraseña y cuentas locales)
 ```
 
 #### 2️⃣ Crear Recursos Básicos
@@ -773,7 +777,9 @@ MiFutbolC/
 │
 ├── 💾 DATOS Y EXPORTACIONES (runtime)
 │   └── data/                                    # Se crea en ejecución
-│       ├── mifutbol.db                          # Base de datos SQLite
+│       ├── users.db                             # Registro de usuarios locales
+│       ├── mifutbol_<usuario>.db                # Base de datos por perfil
+│       ├── mifutbol_<usuario>.log               # Log por perfil
 │       ├── *.csv                                # Archivos exportados CSV
 │       ├── *.txt                                # Archivos exportados TXT
 │       ├── *.json                               # Archivos exportados JSON
@@ -814,13 +820,17 @@ Conteo referencial (puede variar según cambios y scripts de build).
 ### Información General
 
 - **Motor**: SQLite3 (embebido)
-- **Archivo**: `mifutbol.db`
+- **Archivos de datos por perfil**: `mifutbol_<usuario>.db`
+- **Registro de usuarios locales**: `users.db`
 - **Ubicación**:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.db`
-  - Linux/macOS: `./data/mifutbol.db`
+  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
+  - Linux/macOS: `./data/mifutbol_<usuario>.db`
+- **Archivo de usuarios**:
+  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
+  - Linux/macOS: `./data/users.db`
 - **Archivo de log**:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol.log`
-  - Linux/macOS: `./data/mifutbol.log`
+  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
+  - Linux/macOS: `./data/mifutbol_<usuario>.log`
 - **Características**: Transacciones ACID, sin servidor, archivo único
 
 **Directorios de importación/exportación**
@@ -1224,7 +1234,7 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 ### Limitaciones Conocidas
 
 - La interfaz es solo de consola (no hay GUI gráfica)
-- Diseñado principalmente para uso individual (no multiusuario)
+- Multiusuario local orientado a un mismo equipo/dispositivo (no multiusuario concurrente en red)
 - Base de datos local (no hay sincronización en la nube)
 
 ## 🔗 Enlaces Útiles

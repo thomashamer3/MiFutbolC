@@ -24,6 +24,24 @@
 extern sqlite3 *db;
 
 /**
+ * @brief Define el usuario local activo para enrutar la base de datos
+ *
+ * Debe llamarse antes de db_init() para que la aplicación abra el archivo
+ * de datos correspondiente al usuario seleccionado.
+ *
+ * @param username Nombre de usuario local
+ * @return 1 si se asignó correctamente, 0 en caso de entrada inválida
+ */
+int db_set_active_user(const char *username);
+
+/**
+ * @brief Obtiene el usuario local activo
+ *
+ * @return Nombre de usuario activo o cadena vacía si no se definió
+ */
+const char *db_get_active_user(void);
+
+/**
  * @brief Crea un backup automático de la base de datos
  *
  * Esta función genera una copia con timestamp en la carpeta de exportaciones
@@ -73,6 +91,38 @@ char* get_user_name();
  * @return 1 si operación de escritura exitosa, 0 en caso de error de BD
  */
 int set_user_name(const char* nombre);
+
+/**
+ * @brief Verifica si el usuario tiene contraseña configurada
+ *
+ * @return 1 si existe hash de contraseña, 0 si no existe
+ */
+int user_has_password(void);
+
+/**
+ * @brief Configura o actualiza la contraseña del usuario
+ *
+ * La contraseña se almacena como hash con salt en la base de datos.
+ *
+ * @param plain_password Contraseña en texto plano
+ * @return 1 si la operación fue exitosa, 0 en caso de error
+ */
+int set_user_password(const char *plain_password);
+
+/**
+ * @brief Verifica una contraseña contra el hash almacenado
+ *
+ * @param plain_password Contraseña ingresada en texto plano
+ * @return 1 si coincide, 0 si no coincide o no existe contraseña
+ */
+int verify_user_password(const char *plain_password);
+
+/**
+ * @brief Elimina la contraseña del usuario
+ *
+ * @return 1 si la operación fue exitosa, 0 en caso de error
+ */
+int clear_user_password(void);
 
 /**
  * @brief Proporciona ruta absoluta al directorio de datos internos

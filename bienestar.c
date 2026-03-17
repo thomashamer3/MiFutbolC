@@ -14,11 +14,525 @@
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
+#ifdef _WIN32
+#include <process.h>
+#include <io.h>
+#else
+#include "process.h"
+#include <strings.h>
+#endif
 
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+}
+
+static int menuimg_comando_existe(const char *cmd)
+{
+    if (!cmd || cmd[0] == '\0')
+    {
+        return 0;
+    }
+
+    char check_cmd[256];
+#ifdef _WIN32
+    snprintf(check_cmd, sizeof(check_cmd), "where %s >nul 2>nul", cmd);
+#else
+    snprintf(check_cmd, sizeof(check_cmd), "command -v %s >/dev/null 2>&1", cmd);
+#endif
+    return system(check_cmd) == 0;
+}
+
+static int menuimg_copiar_archivo_binario(const char *source_path, const char *dest_path)
+{
+    FILE *src = NULL;
+    FILE *dst = NULL;
+
+    if (fopen_s(&src, source_path, "rb") != 0 || !src)
+    {
+        return 0;
+    }
+
+    if (fopen_s(&dst, dest_path, "wb") != 0 || !dst)
+    {
+        fclose(src);
+        return 0;
+    }
+
+    char buffer[8192];
+    size_t bytes = 0;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
+    {
+        if (fwrite(buffer, 1, bytes, dst) != bytes)
+        {
+            fclose(src);
+            fclose(dst);
+            return 0;
+        }
+    }
+
+    fclose(src);
+    fclose(dst);
+    return 1;
+}
+
+static void menuimg_escapar_comillas_simples_ps(const char *src, char *dst, size_t dst_size)
+{
+    if (!src || !dst || dst_size == 0)
+    {
+        return;
+    }
+
+    size_t j = 0;
+    size_t i = 0;
+    while (src[i] != '\0' && j + 1 < dst_size)
+    {
+        if (src[i] == '\'')
+        {
+            if (j + 2 >= dst_size)
+            {
+                break;
+            }
+            dst[j++] = '\'';
+            dst[j++] = '\'';
+        }
+        else
+        {
+            dst[j++] = src[i];
+        }
+        i++;
+    }
+    dst[j] = '\0';
+}
+
+static int menuimg_optimizar_imagen_archivo(const char *source_path, const char *dest_path)
+{
+    if (!source_path || !dest_path)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    if (menuimg_comando_existe("magick"))
+    {
+        char cmd_magick[2600];
+        snprintf(cmd_magick,
+                 sizeof(cmd_magick),
+                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        if (system(cmd_magick) == 0)
+        {
+            return 1;
+        }
+    }
+
+    char src_ps[2200] = {0};
+    char dst_ps[2200] = {0};
+    menuimg_escapar_comillas_simples_ps(source_path, src_ps, sizeof(src_ps));
+    menuimg_escapar_comillas_simples_ps(dest_path, dst_ps, sizeof(dst_ps));
+
+    char cmd_ps[9000];
+    snprintf(cmd_ps,
+             sizeof(cmd_ps),
+             "powershell -NoProfile -Command \"$ErrorActionPreference='Stop';"
+             "Add-Type -AssemblyName System.Drawing;"
+             "$src='%s';$dst='%s';"
+             "$img=[System.Drawing.Image]::FromFile($src);"
+             "try{"
+             "$max=1280;$w=$img.Width;$h=$img.Height;"
+             "if($w -gt $h){$nw=[Math]::Min($w,$max);$nh=[int]($h*$nw/$w)}"
+             "else{$nh=[Math]::Min($h,$max);$nw=[int]($w*$nh/$h)};"
+             "$bmp=New-Object System.Drawing.Bitmap $nw,$nh;"
+             "$g=[System.Drawing.Graphics]::FromImage($bmp);"
+             "$g.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic;"
+             "$g.SmoothingMode=[System.Drawing.Drawing2D.SmoothingMode]::HighQuality;"
+             "$g.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality;"
+             "$g.DrawImage($img,0,0,$nw,$nh);"
+             "$enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|Where-Object{$_.MimeType -eq 'image/jpeg'}|Select-Object -First 1;"
+             "$ep=New-Object System.Drawing.Imaging.EncoderParameters 1;"
+             "$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality,92L);"
+             "$bmp.Save($dst,$enc,$ep);"
+             "$g.Dispose();$bmp.Dispose();"
+             "}finally{$img.Dispose()}\"",
+             src_ps,
+             dst_ps);
+
+    return system(cmd_ps) == 0;
+#else
+    char cmd[2600];
+    if (menuimg_comando_existe("magick"))
+    {
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        return system(cmd) == 0;
+    }
+
+    if (menuimg_comando_existe("convert"))
+    {
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "convert \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
+                 source_path,
+                 dest_path);
+        return system(cmd) == 0;
+    }
+
+    return 0;
+#endif
+}
+
+static const char *menuimg_obtener_extension(const char *path)
+{
+    if (!path)
+    {
+        return NULL;
+    }
+
+    const char *dot = strrchr(path, '.');
+    if (!dot || dot == path)
+    {
+        return NULL;
+    }
+    return dot;
+}
+
+static int menuimg_extension_imagen_soportada(const char *ext)
+{
+    if (!ext)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    return _stricmp(ext, ".jpg") == 0 ||
+           _stricmp(ext, ".jpeg") == 0 ||
+           _stricmp(ext, ".png") == 0 ||
+           _stricmp(ext, ".bmp") == 0 ||
+           _stricmp(ext, ".webp") == 0;
+#else
+    return strcasecmp(ext, ".jpg") == 0 ||
+           strcasecmp(ext, ".jpeg") == 0 ||
+           strcasecmp(ext, ".png") == 0 ||
+           strcasecmp(ext, ".bmp") == 0 ||
+           strcasecmp(ext, ".webp") == 0;
+#endif
+}
+
+static int menuimg_seleccionar_imagen_usuario(char *ruta_origen, size_t size)
+{
+    if (!ruta_origen || size == 0)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    const char *archivo_temp = "mifutbol_imagen_sel_bienestar.txt";
+    remove(archivo_temp);
+
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; "
+             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
+             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
+             "$dlg.Filter = 'Imagenes|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
+             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
+             archivo_temp);
+
+    system(cmd);
+
+    FILE *f = NULL;
+    if (fopen_s(&f, archivo_temp, "r") != 0 || !f)
+    {
+        return 0;
+    }
+
+    if (!fgets(ruta_origen, (int)size, f))
+    {
+        fclose(f);
+        remove(archivo_temp);
+        return 0;
+    }
+
+    fclose(f);
+    remove(archivo_temp);
+    trim_whitespace(ruta_origen);
+    return ruta_origen[0] != '\0';
+#else
+    input_string("Ruta de imagen: ", ruta_origen, (int)size);
+    trim_whitespace(ruta_origen);
+    return ruta_origen[0] != '\0';
+#endif
+}
+
+static int menuimg_abrir_imagen_en_sistema(const char *ruta)
+{
+    if (!ruta || ruta[0] == '\0')
+    {
+        return 0;
+    }
+
+    char cmd[1400];
+#ifdef _WIN32
+    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
+#else
+    snprintf(cmd, sizeof(cmd), "xdg-open \"%s\" >/dev/null 2>&1", ruta);
+#endif
+    return system(cmd) == 0;
+}
+
+static int menuimg_guardar_ruta_menu(const char *menu_key, const char *ruta_relativa)
+{
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "INSERT INTO bienestar_menu_imagen(menu_key, imagen_ruta) VALUES(?, ?) "
+        "ON CONFLICT(menu_key) DO UPDATE SET imagen_ruta=excluded.imagen_ruta";
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, menu_key, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, ruta_relativa, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE;
+}
+
+static int menuimg_obtener_ruta_menu(const char *menu_key, char *ruta, size_t size)
+{
+    if (!ruta || size == 0)
+    {
+        return 0;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT imagen_ruta FROM bienestar_menu_imagen WHERE menu_key=?"))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, menu_key, -1, SQLITE_TRANSIENT);
+    int ok = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *valor = sqlite3_column_text(stmt, 0);
+        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
+        {
+            ok = 1;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int menuimg_obtener_nombre_archivo(const char *path, char *nombre, size_t size)
+{
+    if (!path || !nombre || size == 0)
+    {
+        return 0;
+    }
+
+    const char *last_slash = strrchr(path, '/');
+    const char *last_backslash = strrchr(path, '\\');
+    const char *base = path;
+
+    if (last_slash && last_backslash)
+    {
+        base = (last_slash > last_backslash) ? last_slash + 1 : last_backslash + 1;
+    }
+    else if (last_slash)
+    {
+        base = last_slash + 1;
+    }
+    else if (last_backslash)
+    {
+        base = last_backslash + 1;
+    }
+
+    return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
+}
+
+static int menuimg_construir_ruta_absoluta(const char *menu_key, char *ruta_absoluta, size_t size)
+{
+    char ruta_db[300] = {0};
+    if (!menuimg_obtener_ruta_menu(menu_key, ruta_db, sizeof(ruta_db)))
+    {
+        return 0;
+    }
+
+    char nombre_archivo[260] = {0};
+    if (!menuimg_obtener_nombre_archivo(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
+    {
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    snprintf(ruta_absoluta, size, "%s\\%s", images_dir, nombre_archivo);
+#else
+    snprintf(ruta_absoluta, size, "%s/%s", images_dir, nombre_archivo);
+#endif
+
+    FILE *f = NULL;
+    if (fopen_s(&f, ruta_absoluta, "rb") != 0 || !f)
+    {
+        return 0;
+    }
+    fclose(f);
+    return 1;
+}
+
+static int menuimg_cargar_para_menu_key(const char *menu_key)
+{
+    char ruta_origen[1024] = {0};
+    printf("\nSe abrira el selector de archivos en Descargas.\n");
+    if (!menuimg_seleccionar_imagen_usuario(ruta_origen, sizeof(ruta_origen)))
+    {
+        printf("No se selecciono ninguna imagen.\n");
+        return 0;
+    }
+
+    const char *ext = menuimg_obtener_extension(ruta_origen);
+    if (!menuimg_extension_imagen_soportada(ext))
+    {
+        printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
+        return 0;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        printf("No se pudo preparar la carpeta Imagenes.\n");
+        return 0;
+    }
+
+    char ts[32] = {0};
+    get_timestamp(ts, (int)sizeof(ts));
+
+    char base_destino[220] = {0};
+    snprintf(base_destino, sizeof(base_destino), "bienestar_%s_%s", menu_key, ts);
+
+    char nombre_destino_opt[256] = {0};
+    snprintf(nombre_destino_opt, sizeof(nombre_destino_opt), "%s.jpg", base_destino);
+
+    char nombre_destino_original[256] = {0};
+    snprintf(nombre_destino_original, sizeof(nombre_destino_original), "%s%s", base_destino, ext);
+
+    char ruta_destino_opt[1200] = {0};
+    char ruta_destino_original[1200] = {0};
+#ifdef _WIN32
+    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s\\%s", images_dir, nombre_destino_opt);
+    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s\\%s", images_dir, nombre_destino_original);
+#else
+    snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s/%s", images_dir, nombre_destino_opt);
+    snprintf(ruta_destino_original, sizeof(ruta_destino_original), "%s/%s", images_dir, nombre_destino_original);
+#endif
+
+    int optimizada = menuimg_optimizar_imagen_archivo(ruta_origen, ruta_destino_opt);
+    const char *nombre_final = NULL;
+    if (optimizada)
+    {
+        nombre_final = nombre_destino_opt;
+    }
+    else
+    {
+        if (!menuimg_copiar_archivo_binario(ruta_origen, ruta_destino_original))
+        {
+            printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
+            return 0;
+        }
+        nombre_final = nombre_destino_original;
+    }
+
+    char ruta_relativa_db[300] = {0};
+    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_final);
+
+    if (!menuimg_guardar_ruta_menu(menu_key, ruta_relativa_db))
+    {
+        printf("Error al guardar ruta de imagen en DB.\n");
+        return 0;
+    }
+
+    printf("\nImagen cargada correctamente.\n");
+    return 1;
+}
+
+static void menuimg_cargar_menu(const char *titulo, const char *menu_key)
+{
+    clear_screen();
+    print_header(titulo);
+
+    if (!menuimg_cargar_para_menu_key(menu_key))
+    {
+        printf("No se pudo completar la carga de imagen.\n");
+    }
+
+    pause_console();
+}
+
+static void menuimg_ver_menu(const char *titulo, const char *menu_key)
+{
+    clear_screen();
+    print_header(titulo);
+
+    char ruta_absoluta[1200] = {0};
+    if (!menuimg_construir_ruta_absoluta(menu_key, ruta_absoluta, sizeof(ruta_absoluta)))
+    {
+        printf("No se encontro imagen cargada para este menu.\n");
+        pause_console();
+        return;
+    }
+
+    if (!menuimg_abrir_imagen_en_sistema(ruta_absoluta))
+    {
+        printf("No se pudo abrir la imagen en el sistema.\n");
+        pause_console();
+        return;
+    }
+
+    printf("Abriendo imagen...\n");
+    pause_console();
+}
+
+static void cargar_imagen_menu_entrenamiento(void)
+{
+    menuimg_cargar_menu("CARGAR IMAGEN MENU ENTRENAMIENTO", "entrenamiento");
+}
+
+static void ver_imagen_menu_entrenamiento(void)
+{
+    menuimg_ver_menu("VER IMAGEN MENU ENTRENAMIENTO", "entrenamiento");
+}
+
+static void cargar_imagen_menu_alimentacion(void)
+{
+    menuimg_cargar_menu("CARGAR IMAGEN MENU ALIMENTACION", "alimentacion");
+}
+
+static void ver_imagen_menu_alimentacion(void)
+{
+    menuimg_ver_menu("VER IMAGEN MENU ALIMENTACION", "alimentacion");
+}
+
+static void cargar_imagen_menu_salud(void)
+{
+    menuimg_cargar_menu("CARGAR IMAGEN MENU SALUD", "salud");
+}
+
+static void ver_imagen_menu_salud(void)
+{
+    menuimg_ver_menu("VER IMAGEN MENU SALUD", "salud");
 }
 
 static double clamp_double(double value, double min_val, double max_val)
@@ -2025,12 +2539,14 @@ static void mostrar_entrenamiento_expandido(void)
         {5, "Asociar ejercicio a entrenamiento",&asociar_ejercicio},
         {6, "Comparar entrenamiento vs rendimiento",&comparar_entrenamiento_vs_rendimiento},
         {7, "Alertas de intensidad", &alertas_entrenamiento},
+        {8, "Cargar imagen del menu", &cargar_imagen_menu_entrenamiento},
+        {9, "Ver imagen del menu", &ver_imagen_menu_entrenamiento},
         {0, "Volver", NULL}
     };
 
     clear_screen();
     print_header("ENTRENAMIENTO (EXPANDIDO)");
-    ejecutar_menu("ENTRENAMIENTO (EXPANDIDO)", items, 8);
+    ejecutar_menu("ENTRENAMIENTO (EXPANDIDO)", items, 10);
 }
 
 static const char *tipo_comida_texto(int tipo)
@@ -2383,12 +2899,14 @@ static void mostrar_alimentacion_expandido(void)
         {5, "Alimentacion vs rendimiento",&comparacion_alimentacion_vs_rendimiento},
         {6, "Flags: comiste mal antes del partido",&flags_alimentacion},
         {7, "Estadisticas de alimentacion", &estadisticas_alimentacion},
+        {8, "Cargar imagen del menu", &cargar_imagen_menu_alimentacion},
+        {9, "Ver imagen del menu", &ver_imagen_menu_alimentacion},
         {0, "Volver", NULL}
     };
 
     clear_screen();
     print_header("ALIMENTACION (EXPANDIDO)");
-    ejecutar_menu("ALIMENTACION (EXPANDIDO)", items, 8);
+    ejecutar_menu("ALIMENTACION (EXPANDIDO)", items, 10);
 }
 
 static void mostrar_salud_perfil(void)
@@ -2657,6 +3175,500 @@ static void eliminar_control_medico(void)
     finalizar_ejecucion(stmt, "Control medico eliminado.", "Error eliminando control medico.");
 }
 
+/* ========== ARCHIVOS ADJUNTOS A CONTROLES MEDICOS ========== */
+
+static int estudio_arch_es_imagen(const char *ext)
+{
+    if (!ext)
+    {
+        return 0;
+    }
+#ifdef _WIN32
+    return _stricmp(ext, ".jpg") == 0 || _stricmp(ext, ".jpeg") == 0 ||
+           _stricmp(ext, ".png") == 0 || _stricmp(ext, ".bmp") == 0 ||
+           _stricmp(ext, ".webp") == 0;
+#else
+    return strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0 ||
+           strcasecmp(ext, ".png") == 0 || strcasecmp(ext, ".bmp") == 0 ||
+           strcasecmp(ext, ".webp") == 0;
+#endif
+}
+
+static int estudio_arch_extension_soportada(const char *ext)
+{
+    if (!ext)
+    {
+        return 0;
+    }
+    if (estudio_arch_es_imagen(ext))
+    {
+        return 1;
+    }
+#ifdef _WIN32
+    return _stricmp(ext, ".pdf") == 0 || _stricmp(ext, ".docx") == 0 ||
+           _stricmp(ext, ".doc") == 0 || _stricmp(ext, ".txt") == 0 ||
+           _stricmp(ext, ".xlsx") == 0 || _stricmp(ext, ".csv") == 0;
+#else
+    return strcasecmp(ext, ".pdf") == 0 || strcasecmp(ext, ".docx") == 0 ||
+           strcasecmp(ext, ".doc") == 0 || strcasecmp(ext, ".txt") == 0 ||
+           strcasecmp(ext, ".xlsx") == 0 || strcasecmp(ext, ".csv") == 0;
+#endif
+}
+
+static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
+{
+    if (!ruta || size == 0)
+    {
+        return 0;
+    }
+#ifdef _WIN32
+    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
+    remove(arch_temp);
+
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -NoProfile -Command \""
+             "Add-Type -AssemblyName System.Windows.Forms; "
+             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
+             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
+             "$dlg.Filter = 'Archivos de estudio|*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.pdf;*.docx;*.doc;*.txt;*.xlsx;*.csv|Todos|*.*'; "
+             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) "
+             "{ [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
+             arch_temp);
+
+    system(cmd);
+
+    FILE *f = NULL;
+    if (fopen_s(&f, arch_temp, "r") != 0 || !f)
+    {
+        return 0;
+    }
+
+    if (!fgets(ruta, (int)size, f))
+    {
+        fclose(f);
+        remove(arch_temp);
+        return 0;
+    }
+
+    fclose(f);
+    remove(arch_temp);
+    trim_whitespace(ruta);
+    return ruta[0] != '\0';
+#else
+    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
+    remove(arch_temp);
+
+    if (menuimg_comando_existe("zenity"))
+    {
+        char cmd[2200];
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "zenity --file-selection --title=\"Seleccionar archivo de estudio\" > \"%s\" 2>/dev/null",
+                 arch_temp);
+        system(cmd);
+    }
+    else if (menuimg_comando_existe("kdialog"))
+    {
+        char cmd[2200];
+        snprintf(cmd,
+                 sizeof(cmd),
+                 "kdialog --getopenfilename ~ > \"%s\" 2>/dev/null",
+                 arch_temp);
+        system(cmd);
+    }
+
+    FILE *f = NULL;
+    if (fopen_s(&f, arch_temp, "r") == 0 && f)
+    {
+        if (fgets(ruta, (int)size, f))
+        {
+            fclose(f);
+            remove(arch_temp);
+            trim_whitespace(ruta);
+            if (ruta[0] != '\0')
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            fclose(f);
+            remove(arch_temp);
+        }
+    }
+
+    input_string("Ruta del archivo: ", ruta, (int)size);
+    trim_whitespace(ruta);
+    return ruta[0] != '\0';
+#endif
+}
+
+static void listar_controles_medicos_ids(void)
+{
+    const char *sql =
+        "SELECT id, fecha, tipo, profesional "
+        "FROM bienestar_control_medico ORDER BY fecha DESC, id DESC LIMIT 30";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_consulta(&stmt, sql, "Error consultando controles.", 0))
+    {
+        return;
+    }
+
+    ui_printf_centered_line("ID  | Fecha      | Tipo                 | Profesional");
+    ui_printf_centered_line("---------------------------------------------------------");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *fecha_iso = (const char *)sqlite3_column_text(stmt, 1);
+        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
+        const char *prof = (const char *)sqlite3_column_text(stmt, 3);
+
+        char fecha_disp[32];
+        format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
+
+        ui_printf_centered_line("%-4d| %-10s | %-20s | %s",
+                                id, fecha_disp, tipo ? tipo : "", prof ? prof : "");
+        count++;
+    }
+
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay controles registrados.");
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void adjuntar_archivo_control(void)
+{
+    clear_screen();
+    print_header("ADJUNTAR ARCHIVO A CONTROL MEDICO");
+
+    printf("Controles medicos disponibles:\n");
+    listar_controles_medicos_ids();
+
+    int control_id = input_int("\nID del control (0 para cancelar): ");
+    if (control_id == 0)
+    {
+        return;
+    }
+
+    sqlite3_stmt *check;
+    if (!preparar_stmt(&check, "SELECT id FROM bienestar_control_medico WHERE id = ?"))
+    {
+        printf("Error verificando control.\n");
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int(check, 1, control_id);
+    int existe = sqlite3_step(check) == SQLITE_ROW;
+    sqlite3_finalize(check);
+
+    if (!existe)
+    {
+        printf("No se encontro el control con ID %d.\n", control_id);
+        pause_console();
+        return;
+    }
+
+    printf("\nSe abrira el selector de archivos (imagenes y documentos).\n");
+    char ruta_origen[1024] = {0};
+    if (!estudio_arch_seleccionar_archivo(ruta_origen, sizeof(ruta_origen)))
+    {
+        printf("No se selecciono ningun archivo.\n");
+        pause_console();
+        return;
+    }
+
+    const char *ext = menuimg_obtener_extension(ruta_origen);
+    if (!estudio_arch_extension_soportada(ext))
+    {
+        printf("Formato no soportado. Usa: JPG, PNG, BMP, WEBP, PDF, DOCX, DOC, TXT, XLSX o CSV.\n");
+        pause_console();
+        return;
+    }
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        printf("No se pudo preparar la carpeta Imagenes.\n");
+        pause_console();
+        return;
+    }
+
+    char nombre_original[260] = {0};
+    menuimg_obtener_nombre_archivo(ruta_origen, nombre_original, sizeof(nombre_original));
+
+    char ts[32] = {0};
+    get_timestamp(ts, (int)sizeof(ts));
+
+    char nombre_destino[300] = {0};
+    snprintf(nombre_destino, sizeof(nombre_destino), "estudio_%d_%s%s",
+             control_id, ts, ext ? ext : "");
+
+    char ruta_destino[1200] = {0};
+#ifdef _WIN32
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s\\%s", images_dir, nombre_destino);
+#else
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s/%s", images_dir, nombre_destino);
+#endif
+
+    int copiado = 0;
+    if (estudio_arch_es_imagen(ext))
+    {
+        char nombre_opt[300] = {0};
+        snprintf(nombre_opt, sizeof(nombre_opt), "estudio_%d_%s.jpg", control_id, ts);
+
+        char ruta_destino_opt[1200] = {0};
+#ifdef _WIN32
+        snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s\\%s", images_dir, nombre_opt);
+#else
+        snprintf(ruta_destino_opt, sizeof(ruta_destino_opt), "%s/%s", images_dir, nombre_opt);
+#endif
+        if (menuimg_optimizar_imagen_archivo(ruta_origen, ruta_destino_opt))
+        {
+            strncpy_s(nombre_destino, sizeof(nombre_destino), nombre_opt, _TRUNCATE);
+            strncpy_s(ruta_destino, sizeof(ruta_destino), ruta_destino_opt, _TRUNCATE);
+            copiado = 1;
+        }
+    }
+
+    if (!copiado && !menuimg_copiar_archivo_binario(ruta_origen, ruta_destino))
+    {
+        printf("No se pudo copiar el archivo.\n");
+        pause_console();
+        return;
+    }
+
+    const char *tipo_archivo = estudio_arch_es_imagen(ext) ? "imagen" : "documento";
+
+    char ruta_relativa_db[320] = {0};
+    snprintf(ruta_relativa_db, sizeof(ruta_relativa_db), "Imagenes/%s", nombre_destino);
+
+    char fecha_hoy_buf[32] = {0};
+    fecha_hoy(fecha_hoy_buf, sizeof(fecha_hoy_buf));
+
+    const char *sql =
+        "INSERT INTO bienestar_estudio_archivo "
+        "(control_id, nombre_original, ruta_archivo, tipo_archivo, fecha_subida) "
+        "VALUES (?, ?, ?, ?, ?)";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_con_mensaje(&stmt, sql, "Error preparando insercion."))
+    {
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, control_id);
+    sqlite3_bind_text(stmt, 2, nombre_original, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, ruta_relativa_db, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, tipo_archivo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_hoy_buf, -1, SQLITE_TRANSIENT);
+
+    finalizar_ejecucion(stmt, "Archivo adjuntado correctamente.", "Error guardando archivo en DB.");
+}
+
+static void ver_archivos_control(void)
+{
+    clear_screen();
+    print_header("ARCHIVOS DE CONTROL MEDICO");
+
+    printf("Controles medicos disponibles:\n");
+    listar_controles_medicos_ids();
+
+    int control_id = input_int("\nID del control (0 para cancelar): ");
+    if (control_id == 0)
+    {
+        return;
+    }
+
+    const char *sql =
+        "SELECT id, nombre_original, tipo_archivo, fecha_subida "
+        "FROM bienestar_estudio_archivo WHERE control_id = ? ORDER BY id ASC";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_consulta(&stmt, sql, "Error consultando archivos.", 1))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, control_id);
+
+    clear_screen();
+    print_header("ARCHIVOS DEL CONTROL");
+
+    ui_printf_centered_line("ID  | Nombre                      | Tipo      | Fecha");
+    ui_printf_centered_line("-------------------------------------------------------");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 3);
+
+        char fecha_disp[32];
+        format_fecha_mostrar(fecha, fecha_disp, sizeof(fecha_disp));
+
+        ui_printf_centered_line("%-4d| %-28s | %-9s | %s",
+                                id, nombre ? nombre : "", tipo ? tipo : "", fecha_disp);
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay archivos adjuntos para este control.");
+        pause_console();
+        return;
+    }
+
+    int archivo_id = input_int("\nID del archivo para abrir (0 para volver): ");
+    if (archivo_id == 0)
+    {
+        return;
+    }
+
+    sqlite3_stmt *stmt2;
+    if (!preparar_stmt(&stmt2,
+                       "SELECT ruta_archivo FROM bienestar_estudio_archivo "
+                       "WHERE id = ? AND control_id = ?"))
+    {
+        printf("Error consultando archivo.\n");
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int(stmt2, 1, archivo_id);
+    sqlite3_bind_int(stmt2, 2, control_id);
+
+    char ruta_relativa[400] = {0};
+    if (sqlite3_step(stmt2) == SQLITE_ROW)
+    {
+        const unsigned char *r = sqlite3_column_text(stmt2, 0);
+        if (r)
+        {
+            strncpy_s(ruta_relativa, sizeof(ruta_relativa), (const char *)r, _TRUNCATE);
+        }
+    }
+    sqlite3_finalize(stmt2);
+
+    if (ruta_relativa[0] == '\0')
+    {
+        printf("Archivo no encontrado.\n");
+        pause_console();
+        return;
+    }
+
+    char nombre_archivo[260] = {0};
+    menuimg_obtener_nombre_archivo(ruta_relativa, nombre_archivo, sizeof(nombre_archivo));
+
+    const char *images_dir = get_images_dir();
+    if (!images_dir)
+    {
+        printf("No se pudo obtener la carpeta de imagenes.\n");
+        pause_console();
+        return;
+    }
+
+    char ruta_absoluta[1200] = {0};
+#ifdef _WIN32
+    snprintf(ruta_absoluta, sizeof(ruta_absoluta), "%s\\%s", images_dir, nombre_archivo);
+#else
+    snprintf(ruta_absoluta, sizeof(ruta_absoluta), "%s/%s", images_dir, nombre_archivo);
+#endif
+
+    if (!menuimg_abrir_imagen_en_sistema(ruta_absoluta))
+    {
+        printf("No se pudo abrir el archivo en el sistema.\n");
+        pause_console();
+        return;
+    }
+
+    printf("Abriendo archivo...\n");
+    pause_console();
+}
+
+static void eliminar_archivo_control(void)
+{
+    clear_screen();
+    print_header("ELIMINAR ARCHIVO DE CONTROL MEDICO");
+
+    printf("Controles medicos disponibles:\n");
+    listar_controles_medicos_ids();
+
+    int control_id = input_int("\nID del control (0 para cancelar): ");
+    if (control_id == 0)
+    {
+        return;
+    }
+
+    const char *sql =
+        "SELECT id, nombre_original, tipo_archivo "
+        "FROM bienestar_estudio_archivo WHERE control_id = ? ORDER BY id ASC";
+
+    sqlite3_stmt *stmt;
+    if (!preparar_consulta(&stmt, sql, "Error consultando archivos.", 1))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, control_id);
+
+    ui_printf_centered_line("ID  | Nombre                      | Tipo");
+    ui_printf_centered_line("-------------------------------------------");
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
+
+        ui_printf_centered_line("%-4d| %-28s | %s",
+                                id, nombre ? nombre : "", tipo ? tipo : "");
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        ui_printf_centered_line("No hay archivos adjuntos para este control.");
+        pause_console();
+        return;
+    }
+
+    int archivo_id = input_int("\nID del archivo a eliminar (0 para cancelar): ");
+    if (archivo_id == 0)
+    {
+        return;
+    }
+
+    if (!confirmar("Confirmar eliminacion del archivo"))
+    {
+        printf("Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    sqlite3_stmt *stmt2;
+    if (!preparar_stmt_con_mensaje(&stmt2,
+                                   "DELETE FROM bienestar_estudio_archivo "
+                                   "WHERE id = ? AND control_id = ?",
+                                   "Error preparando eliminacion."))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt2, 1, archivo_id);
+    sqlite3_bind_int(stmt2, 2, control_id);
+
+    finalizar_ejecucion(stmt2, "Archivo eliminado del registro.", "Error eliminando archivo.");
+}
+
 static void menu_salud(void)
 {
     MenuItem items[] =
@@ -2667,12 +3679,17 @@ static void menu_salud(void)
         {4, "Ver controles medicos", &listar_controles_medicos},
         {5, "Editar control medico", &editar_control_medico},
         {6, "Eliminar control medico", &eliminar_control_medico},
+        {7, "Adjuntar archivo a control", &adjuntar_archivo_control},
+        {8, "Ver archivos de control", &ver_archivos_control},
+        {9, "Eliminar archivo de control", &eliminar_archivo_control},
+        {10, "Cargar imagen del menu", &cargar_imagen_menu_salud},
+        {11, "Ver imagen del menu", &ver_imagen_menu_salud},
         {0, "Volver", NULL}
     };
 
     clear_screen();
     print_header("SALUD");
-    ejecutar_menu("SALUD", items, 7);
+    ejecutar_menu("SALUD", items, 12);
 }
 
 static void guardar_recomendacion(const char *fecha, int score, int riesgo, const char *resumen, const char *rutina)

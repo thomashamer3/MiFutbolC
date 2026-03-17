@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1773208982 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1773367576 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"menu.h"
+	"utils.h"
 	<errno.h>
 	<stdio.h>
 	<stdlib.h>
@@ -75,7 +76,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1773292896 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1773720782 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -86,6 +87,8 @@
 	<time.h>
 	<errno.h>
 	<ctype.h>
+	<stdint.h>
+	<inttypes.h>
 	<direct.h>
 	<windows.h>
 	<ShlObj.h>
@@ -94,14 +97,14 @@
 	"ShlObj.h"
 	<sys/stat.h>
 
-1773292021 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
+1773367461 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
 	"compat_port.h"
 	"sqlite3.h"
 
 1766432983 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1773258183 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1773457116 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -118,19 +121,24 @@
 	<stddef.h>
 	<errno.h>
 	<stdarg.h>
+	<stdint.h>
+	<inttypes.h>
+	<conio.h>
 	<direct.h>
 	"direct.h"
 	<windows.h>
 	"compat_windows.h"
 	<sys/stat.h>
+	<termios.h>
+	<unistd.h>
 
-1773258183 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1773367576 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	"cJSON.h"
 	"sqlite3.h"
 	<stddef.h>
 	<stdio.h>
 
-1773293884 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1773468134 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -204,7 +212,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1773282451 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1773367576 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"utils.h"
 	<stdio.h>
 	<stdlib.h>
@@ -283,7 +291,7 @@
 	<string.h>
 	<stdlib.h>
 
-1769907664 d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.h
+1773470444 d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.h
 
 1769907514 d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.h
 
@@ -309,7 +317,7 @@
 	<stdio.h>
 	<string.h>
 
-1773257523 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1773470444 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -317,6 +325,10 @@
 	<string.h>
 	<ctype.h>
 	<limits.h>
+	<process.h>
+	<io.h>
+	"process.h"
+	<strings.h>
 
 1766774181 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cjson.c
 	<string.h>
@@ -544,9 +556,9 @@
 	"direct.h"
 	<string.h>
 
-1769907971 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
+1773470444 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1773259853 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1773470444 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -562,6 +574,10 @@
 	"sqlite3.h"
 	<ctype.h>
 	<limits.h>
+	<process.h>
+	<io.h>
+	"process.h"
+	<strings.h>
 
 1767667294 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
 
@@ -575,7 +591,7 @@
 	<string.h>
 	"sqlite3.h"
 
-1773285058 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1773468051 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 	<stdio.h>
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
@@ -2239,7 +2255,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1773258911 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1773721225 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"menu.h"
 	"utils.h"
@@ -2251,6 +2267,10 @@
 	<ctype.h>
 	<limits.h>
 	<time.h>
+	<process.h>
+	<io.h>
+	"process.h"
+	<strings.h>
 
 1770159151 d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.h
 
@@ -2375,4 +2395,13 @@
 	<time.h>
 
 1773281431 d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.h
+
+1765442468 c:\msys64\mingw64\include\conio.h
+	<crtdefs.h>
+	<corecrt_stdio_config.h>
+	<stddef.h>
+	<sec_api/conio_s.h>
+
+1765442468 c:\msys64\mingw64\include\sec_api\conio_s.h
+	<conio.h>
 
