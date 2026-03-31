@@ -8,6 +8,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-Open%20Source-brightgreen.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=thomashamer3_MiFutbolC&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=thomashamer3_MiFutbolC)
+[![CodeFactor](https://www.codefactor.io/repository/github/thomashamer3/mifutbolc/badge)](https://www.codefactor.io/repository/github/thomashamer3/mifutbolc)
 
 **Sistema completo de gestión, análisis y simulación de datos futbolísticos desarrollado en C**
 
