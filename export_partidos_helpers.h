@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "cJSON.h"
 #include "sqlite3.h"
+#include "export.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

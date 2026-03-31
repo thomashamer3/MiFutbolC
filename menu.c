@@ -33,6 +33,7 @@
 #include "entrenador_ia.h"
 #include "bienestar.h"
 #include "carrera.h"
+#include "recordatorios.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -129,7 +130,8 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {12, "Analisis", &abrir_menu_analisis},
     {13, "Bienestar", &abrir_menu_bienestar},
     {14, "Carrera Futbolistica", &abrir_menu_carrera},
-    {15, "Ajustes", &abrir_menu_settings},
+    {15, "Recordatorios", &menu_recordatorios},
+    {16, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 

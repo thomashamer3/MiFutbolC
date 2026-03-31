@@ -84,10 +84,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="bienestar.h" />
-		<Unit filename="carrera.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="carrera.h" />
 		<Unit filename="cJSON.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -100,7 +96,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="cancha.h" />
+		<Unit filename="carrera.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="carrera.h" />
 		<Unit filename="compat_port.h" />
+		<Unit filename="compat_windows.h" />
 		<Unit filename="db.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -219,6 +220,10 @@
 		</Unit>
 		<Unit filename="pdfgen.h" />
 		<Unit filename="process.h" />
+		<Unit filename="recordatorios.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="recordatorios.h" />
 		<Unit filename="records_rankings.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -246,7 +251,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="utils.h" />
-		<Unit filename="compat_windows.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
