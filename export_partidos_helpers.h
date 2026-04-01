@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define EXPORT_PARTIDOS_HELPERS_UNUSED __attribute__((unused))
+#else
+#define EXPORT_PARTIDOS_HELPERS_UNUSED
+#endif
+
 /* ===================== DATABASE HELPERS ===================== */
 
 /**
@@ -76,19 +82,11 @@ static void close_export_file(FILE* file)
     }
 }
 
-/* ===================== DATA PROCESSING HELPERS ===================== */
-
-// trim_cancha_text removida - usar trim_trailing_spaces de utils.h directamente
-
-/* ===================== FORMAT-SPECIFIC HELPERS ===================== */
-
-/* ===================== GENERIC EXPORT HELPERS ===================== */
-
 /**
  * Generic export function for handling common export patterns.
  * Takes a filename and a write function pointer to handle format-specific writing.
  */
-static void export_partidos_generic(const char* filename, void (*write_function)(FILE*, sqlite3_stmt*))
+static EXPORT_PARTIDOS_HELPERS_UNUSED void export_partidos_generic(const char* filename, void (*write_function)(FILE*, sqlite3_stmt*))
 {
     if (!check_partido_records())
     {
@@ -117,7 +115,7 @@ static void export_partidos_generic(const char* filename, void (*write_function)
  * Generic export function for handling specific partido exports.
  * Takes an order by clause, filename, and write function pointer.
  */
-static void export_partido_especifico_generic(const char* order_by_clause, const char* filename, void (*write_function)(FILE*, sqlite3_stmt*))
+static EXPORT_PARTIDOS_HELPERS_UNUSED void export_partido_especifico_generic(const char* order_by_clause, const char* filename, void (*write_function)(FILE*, sqlite3_stmt*))
 {
     if (!check_partido_records())
     {

@@ -22,6 +22,41 @@ static const char *SQL_STATS_MONTH =
     "GROUP BY substr(fecha_hora, 4, 7), c.id "
     "ORDER BY substr(fecha_hora, 4, 7) DESC, SUM(goles) DESC";
 
+typedef struct
+{
+    const char *json_key;
+    const char *metric;
+    const char *order;
+    const char *label;
+} stat_def_t;
+
+typedef struct
+{
+    const char *month;
+    const char *camiseta;
+    int partidos;
+    int goles;
+    int asistencias;
+    double avg_goles;
+    double avg_asistencias;
+} month_stat_row_t;
+
+static const stat_def_t STAT_DEFS[] =
+{
+    {"mas_goles", "SUM(goles)", "DESC", "Mas Goles"},
+    {"mas_asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias"},
+    {"mas_partidos", "COUNT(*)", "DESC", "Mas Partidos"},
+    {"mas_goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias"},
+    {"mejor_rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento"},
+    {"mejor_estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo"},
+    {"menos_cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio"},
+    {"mas_victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias"},
+    {"mas_empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates"},
+    {"mas_derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas"}
+};
+
+#define STAT_DEFS_COUNT (sizeof(STAT_DEFS) / sizeof(STAT_DEFS[0]))
+
 /* ============================================================================
  * HELPER ESTaTICOS
  * ============================================================================ */
@@ -52,6 +87,18 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
     return result;
 }
 
+/** @brief Lee una fila de estadisticas por mes desde el statement actual */
+static void read_month_stat_row(sqlite3_stmt *stmt, month_stat_row_t *row)
+{
+    row->month = (const char *)sqlite3_column_text(stmt, 0);
+    row->camiseta = (const char *)sqlite3_column_text(stmt, 1);
+    row->partidos = sqlite3_column_int(stmt, 2);
+    row->goles = sqlite3_column_int(stmt, 3);
+    row->asistencias = sqlite3_column_int(stmt, 4);
+    row->avg_goles = sqlite3_column_double(stmt, 5);
+    row->avg_asistencias = sqlite3_column_double(stmt, 6);
+}
+
 /** @brief Escribe estadistica en JSON */
 static void json_write_stat(cJSON *json, const char *cat,
                             const char *nombre, int valor)
@@ -63,41 +110,35 @@ static void json_write_stat(cJSON *json, const char *cat,
 }
 
 /** @brief Escribe estadisticas en formato CSV */
-static void write_stats_csv(FILE *file, const char *,
-                            const char *metric, const char *order,
-                            const char *label)
+static void write_stats_csv(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
+    if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
     {
-        fprintf(file, "%s,%s,%d\n", label, nombre, valor);
+        fprintf(file, "%s,%s,%d\n", def->label, nombre, valor);
     }
 }
 
 /** @brief Escribe estadisticas en formato TXT */
-static void write_stats_txt(FILE *file, const char *,
-                            const char *metric, const char *order,
-                            const char *label)
+static void write_stats_txt(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
+    if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
     {
-        fprintf(file, "%s: %s (%d)\n", label, nombre, valor);
+        fprintf(file, "%s: %s (%d)\n", def->label, nombre, valor);
     }
 }
 
 /** @brief Escribe estadisticas en formato HTML */
-static void write_stats_html(FILE *file, const char *,
-                             const char *metric, const char *order,
-                             const char *label)
+static void write_stats_html(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
     int valor;
-    if (get_top_camiseta(metric, order, nombre, sizeof(nombre), &valor))
+    if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
     {
-        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", label, nombre, valor);
+        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", def->label, nombre, valor);
     }
 }
 
@@ -109,27 +150,13 @@ static cJSON *json_build_estadisticas(void)
 
     char nombre[256];
     int valor;
-
-    if (get_top_camiseta("SUM(goles)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_goles", nombre, valor);
-    if (get_top_camiseta("SUM(asistencias)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_asistencias", nombre, valor);
-    if (get_top_camiseta("COUNT(*)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_partidos", nombre, valor);
-    if (get_top_camiseta("SUM(goles+asistencias)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_goles_asistencias", nombre, valor);
-    if (get_top_camiseta("AVG(rendimiento_general)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mejor_rendimiento", nombre, valor);
-    if (get_top_camiseta("AVG(estado_animo)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mejor_estado_animo", nombre, valor);
-    if (get_top_camiseta("AVG(cansancio)", "ASC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "menos_cansancio", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_victorias", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_empates", nombre, valor);
-    if (get_top_camiseta("SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", nombre, sizeof(nombre), &valor))
-        json_write_stat(root, "mas_derrotas", nombre, valor);
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
+        if (get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order, nombre, sizeof(nombre), &valor))
+        {
+            json_write_stat(root, STAT_DEFS[i].json_key, nombre, valor);
+        }
+    }
 
     return root;
 }
@@ -153,17 +180,12 @@ void exportar_estadisticas_generales_csv(void)
     }
 
     fprintf(file, "Categoria,Camiseta,Valor\n");
-
-    write_stats_csv(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
-    write_stats_csv(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
-    write_stats_csv(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
-    write_stats_csv(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
-    write_stats_csv(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
-    write_stats_csv(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
-    write_stats_csv(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
-    write_stats_csv(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
-    write_stats_csv(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
-    write_stats_csv(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
+    {
+        for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        {
+            write_stats_csv(file, &STAT_DEFS[i]);
+        }
+    }
 
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_generales.csv"));
@@ -184,17 +206,12 @@ void exportar_estadisticas_generales_txt(void)
     }
 
     fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
-
-    write_stats_txt(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
-    write_stats_txt(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
-    write_stats_txt(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
-    write_stats_txt(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
-    write_stats_txt(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
-    write_stats_txt(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
-    write_stats_txt(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
-    write_stats_txt(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
-    write_stats_txt(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
-    write_stats_txt(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
+    {
+        for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        {
+            write_stats_txt(file, &STAT_DEFS[i]);
+        }
+    }
 
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_generales.txt"));
@@ -244,17 +261,12 @@ void exportar_estadisticas_generales_html(void)
     fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
     fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
     fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
-
-    write_stats_html(file, "goles", "SUM(goles)", "DESC", "Mas Goles");
-    write_stats_html(file, "asistencias", "SUM(asistencias)", "DESC", "Mas Asistencias");
-    write_stats_html(file, "partidos", "COUNT(*)", "DESC", "Mas Partidos");
-    write_stats_html(file, "goles_asistencias", "SUM(goles+asistencias)", "DESC", "Mas Goles+Asistencias");
-    write_stats_html(file, "rendimiento", "AVG(rendimiento_general)", "DESC", "Mejor Rendimiento");
-    write_stats_html(file, "estado_animo", "AVG(estado_animo)", "DESC", "Mejor Estado Animo");
-    write_stats_html(file, "cansancio", "AVG(cansancio)", "ASC", "Menos Cansancio");
-    write_stats_html(file, "victorias", "SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END)", "DESC", "Mas Victorias");
-    write_stats_html(file, "empates", "SUM(CASE WHEN resultado=2 THEN 1 ELSE 0 END)", "DESC", "Mas Empates");
-    write_stats_html(file, "derrotas", "SUM(CASE WHEN resultado=3 THEN 1 ELSE 0 END)", "DESC", "Mas Derrotas");
+    {
+        for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        {
+            write_stats_html(file, &STAT_DEFS[i]);
+        }
+    }
 
     fprintf(file, "</table>\n</body>\n</html>\n");
     fclose(file);
@@ -377,34 +389,29 @@ void exportar_estadisticas_por_mes_json(void)
 
     char current[8] = "";
     cJSON *current_array = NULL;
+    month_stat_row_t row;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *month = (const char *)sqlite3_column_text(stmt, 0);
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int goles = sqlite3_column_int(stmt, 3);
-        int asistencias = sqlite3_column_int(stmt, 4);
-        double avg_goles = sqlite3_column_double(stmt, 5);
-        double avg_asistencias = sqlite3_column_double(stmt, 6);
+        read_month_stat_row(stmt, &row);
 
-        if (strcmp(current, month) != 0)
+        if (strcmp(current, row.month) != 0)
         {
             if (current_array)
             {
                 cJSON_AddItemToObject(root, current, current_array);
             }
-            strcpy_s(current, sizeof(current), month);
+            strcpy_s(current, sizeof(current), row.month);
             current_array = cJSON_CreateArray();
         }
 
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "camiseta", camiseta);
-        cJSON_AddNumberToObject(item, "partidos", partidos);
-        cJSON_AddNumberToObject(item, "goles", goles);
-        cJSON_AddNumberToObject(item, "asistencias", asistencias);
-        cJSON_AddNumberToObject(item, "avg_goles", avg_goles);
-        cJSON_AddNumberToObject(item, "avg_asistencias", avg_asistencias);
+        cJSON_AddStringToObject(item, "camiseta", row.camiseta);
+        cJSON_AddNumberToObject(item, "partidos", row.partidos);
+        cJSON_AddNumberToObject(item, "goles", row.goles);
+        cJSON_AddNumberToObject(item, "asistencias", row.asistencias);
+        cJSON_AddNumberToObject(item, "avg_goles", row.avg_goles);
+        cJSON_AddNumberToObject(item, "avg_asistencias", row.avg_asistencias);
         cJSON_AddItemToArray(current_array, item);
     }
 
@@ -451,28 +458,23 @@ void exportar_estadisticas_por_mes_html(void)
 
     char current[8] = "";
     int hay = 0;
+    month_stat_row_t row;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *month = (const char *)sqlite3_column_text(stmt, 0);
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int goles = sqlite3_column_int(stmt, 3);
-        int asistencias = sqlite3_column_int(stmt, 4);
-        double avg_goles = sqlite3_column_double(stmt, 5);
-        double avg_asistencias = sqlite3_column_double(stmt, 6);
+        read_month_stat_row(stmt, &row);
 
-        if (strcmp(current, month) != 0)
+        if (strcmp(current, row.month) != 0)
         {
             if (hay) fprintf(file, "</table><br>");
-            fprintf(file, "<h2>%s</h2><table border='1'>", month);
+            fprintf(file, "<h2>%s</h2><table border='1'>", row.month);
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
-            strcpy_s(current, sizeof(current), month);
+            strcpy_s(current, sizeof(current), row.month);
         }
 
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                camiseta, partidos, goles, asistencias, avg_goles, avg_asistencias);
+                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles, row.avg_asistencias);
         hay = 1;
     }
 

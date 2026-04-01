@@ -197,7 +197,7 @@ static int obtener_id_inventario_por_camiseta(int camiseta_id)
 }
 
 static int obtener_item_inventario_equivalente(int tipo, const char *nombre, int estado,
-                                               double valor, const char *fecha_compra)
+        double valor, const char *fecha_compra)
 {
     sqlite3_stmt *stmt;
     int id = 0;
@@ -391,6 +391,39 @@ static void listar_inventario_simple(void)
     }
 
     sqlite3_finalize(stmt);
+}
+
+static int seleccionar_coleccion_valida(const char *prompt, int *coleccion_id,
+                                        char *nombre_coleccion, size_t nombre_size)
+{
+    printf("Colecciones disponibles:\n");
+    listar_colecciones_simple();
+
+    int id = input_int(prompt);
+    if (id == 0)
+    {
+        return 0;
+    }
+
+    if (!existe_id("coleccion", id))
+    {
+        printf("ID de coleccion inexistente.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (coleccion_id)
+    {
+        *coleccion_id = id;
+    }
+
+    if (nombre_coleccion && nombre_size > 0)
+    {
+        nombre_coleccion[0] = '\0';
+        obtener_nombre_entidad("coleccion", id, nombre_coleccion, nombre_size);
+    }
+
+    return 1;
 }
 
 static void crear_item_inventario(void)
@@ -732,23 +765,15 @@ static void quitar_item_de_coleccion(void)
         return;
     }
 
-    printf("Colecciones disponibles:\n");
-    listar_colecciones_simple();
-    int coleccion_id = input_int("\nID de coleccion (0 para cancelar): ");
-    if (coleccion_id == 0)
-    {
-        return;
-    }
-
-    if (!existe_id("coleccion", coleccion_id))
-    {
-        printf("ID de coleccion inexistente.\n");
-        pause_console();
-        return;
-    }
-
+    int coleccion_id = 0;
     char nombre_coleccion[128] = {0};
-    obtener_nombre_entidad("coleccion", coleccion_id, nombre_coleccion, sizeof(nombre_coleccion));
+    if (!seleccionar_coleccion_valida("\nID de coleccion (0 para cancelar): ",
+                                      &coleccion_id,
+                                      nombre_coleccion,
+                                      sizeof(nombre_coleccion)))
+    {
+        return;
+    }
     printf("\nItems de la coleccion '%s':\n", nombre_coleccion[0] ? nombre_coleccion : "(sin nombre)");
 
     sqlite3_stmt *stmt_list;
@@ -838,24 +863,15 @@ static void ver_items_por_coleccion(void)
         return;
     }
 
-    printf("Colecciones disponibles:\n");
-    listar_colecciones_simple();
-
-    int coleccion_id = input_int("\nID de coleccion (0 para cancelar): ");
-    if (coleccion_id == 0)
-    {
-        return;
-    }
-
-    if (!existe_id("coleccion", coleccion_id))
-    {
-        printf("ID de coleccion inexistente.\n");
-        pause_console();
-        return;
-    }
-
+    int coleccion_id = 0;
     char nombre_coleccion[128] = {0};
-    obtener_nombre_entidad("coleccion", coleccion_id, nombre_coleccion, sizeof(nombre_coleccion));
+    if (!seleccionar_coleccion_valida("\nID de coleccion (0 para cancelar): ",
+                                      &coleccion_id,
+                                      nombre_coleccion,
+                                      sizeof(nombre_coleccion)))
+    {
+        return;
+    }
 
     printf("\nColeccion: %s\n", nombre_coleccion[0] ? nombre_coleccion : "(sin nombre)");
 
@@ -1098,49 +1114,54 @@ static void exportar_backup_colecciones_json(void)
     pause_console();
 }
 
-static int guardar_item_inventario_importado(int tipo, const char *nombre, int estado,
-                                             double valor, const char *fecha_compra, int camiseta_id)
+static int normalizar_estado_inventario(int estado)
 {
-    if (estado != INV_ESTADO_NUEVO && estado != INV_ESTADO_USADO)
+    if (estado == INV_ESTADO_NUEVO || estado == INV_ESTADO_USADO)
     {
-        estado = INV_ESTADO_NUEVO;
+        return estado;
     }
+    return INV_ESTADO_NUEVO;
+}
 
-    if (tipo == INV_TIPO_CAMISETA)
-    {
-        if (camiseta_id <= 0 || !existe_id("camiseta", camiseta_id))
-        {
-            return 0;
-        }
+static const char *texto_seguro(const char *text)
+{
+    return text ? text : "";
+}
 
-        sqlite3_stmt *stmt;
-        if (!preparar_stmt(&stmt,
-                           "INSERT INTO inventario_item(tipo, nombre, estado, valor, fecha_compra, camiseta_id) "
-                           "VALUES(1, '', ?, ?, ?, ?) "
-                           "ON CONFLICT(camiseta_id) DO UPDATE SET "
-                           "estado = excluded.estado, valor = excluded.valor, fecha_compra = excluded.fecha_compra"))
-        {
-            return 0;
-        }
-
-        sqlite3_bind_int(stmt, 1, estado);
-        sqlite3_bind_double(stmt, 2, valor);
-        sqlite3_bind_text(stmt, 3, fecha_compra ? fecha_compra : "", -1, SQLITE_TRANSIENT);
-        sqlite3_bind_int(stmt, 4, camiseta_id);
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-
-        return obtener_id_inventario_por_camiseta(camiseta_id);
-    }
-
-    if (tipo != INV_TIPO_BOTINES && tipo != INV_TIPO_ACCESORIO)
+static int guardar_item_camiseta_importado(int estado, double valor, const char *fecha_compra, int camiseta_id)
+{
+    if (camiseta_id <= 0 || !existe_id("camiseta", camiseta_id))
     {
         return 0;
     }
 
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt,
+                       "INSERT INTO inventario_item(tipo, nombre, estado, valor, fecha_compra, camiseta_id) "
+                       "VALUES(1, '', ?, ?, ?, ?) "
+                       "ON CONFLICT(camiseta_id) DO UPDATE SET "
+                       "estado = excluded.estado, valor = excluded.valor, fecha_compra = excluded.fecha_compra"))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, estado);
+    sqlite3_bind_double(stmt, 2, valor);
+    sqlite3_bind_text(stmt, 3, texto_seguro(fecha_compra), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, camiseta_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    return obtener_id_inventario_por_camiseta(camiseta_id);
+}
+
+static int guardar_item_generico_importado(int tipo, const char *nombre, int estado,
+        double valor, const char *fecha_compra)
+{
+    const char *fecha_segura = texto_seguro(fecha_compra);
     const char *nombre_final = (nombre && nombre[0] != '\0') ? nombre : "Item importado";
-    int existente_id = obtener_item_inventario_equivalente(tipo, nombre_final, estado, valor,
-                                                            fecha_compra ? fecha_compra : "");
+
+    int existente_id = obtener_item_inventario_equivalente(tipo, nombre_final, estado, valor, fecha_segura);
     if (existente_id > 0)
     {
         return existente_id;
@@ -1158,7 +1179,7 @@ static int guardar_item_inventario_importado(int tipo, const char *nombre, int e
     sqlite3_bind_text(stmt, 2, nombre_final, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, estado);
     sqlite3_bind_double(stmt, 4, valor);
-    sqlite3_bind_text(stmt, 5, fecha_compra ? fecha_compra : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_segura, -1, SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -1168,6 +1189,24 @@ static int guardar_item_inventario_importado(int tipo, const char *nombre, int e
 
     sqlite3_finalize(stmt);
     return (int)sqlite3_last_insert_rowid(db);
+}
+
+static int guardar_item_inventario_importado(int tipo, const char *nombre, int estado,
+        double valor, const char *fecha_compra, int camiseta_id)
+{
+    int estado_normalizado = normalizar_estado_inventario(estado);
+
+    if (tipo == INV_TIPO_CAMISETA)
+    {
+        return guardar_item_camiseta_importado(estado_normalizado, valor, fecha_compra, camiseta_id);
+    }
+
+    if (tipo != INV_TIPO_BOTINES && tipo != INV_TIPO_ACCESORIO)
+    {
+        return 0;
+    }
+
+    return guardar_item_generico_importado(tipo, nombre, estado_normalizado, valor, fecha_compra);
 }
 
 static int importar_colecciones_desde_json(cJSON *colecciones, IdMap *coleccion_map, int map_capacity)
@@ -1253,10 +1292,10 @@ static int resolver_id_map_o_existente(const IdMap *map, int map_count, const ch
 }
 
 static int importar_relaciones_desde_json(cJSON *relaciones,
-                                          const IdMap *coleccion_map,
-                                          int coleccion_map_count,
-                                          const IdMap *inventario_map,
-                                          int inventario_map_count)
+        const IdMap *coleccion_map,
+        int coleccion_map_count,
+        const IdMap *inventario_map,
+        int inventario_map_count)
 {
     int relaciones_agregadas = 0;
     cJSON *item = NULL;
@@ -1272,14 +1311,14 @@ static int importar_relaciones_desde_json(cJSON *relaciones,
         int old_inventario_id = cjson_obj_int_or(item, "inventario_id", 0);
 
         int new_coleccion_id = resolver_id_map_o_existente(coleccion_map,
-                                                            coleccion_map_count,
-                                                            "coleccion",
-                                                            old_coleccion_id);
+                               coleccion_map_count,
+                               "coleccion",
+                               old_coleccion_id);
 
         int new_inventario_id = resolver_id_map_o_existente(inventario_map,
-                                                            inventario_map_count,
-                                                            "inventario_item",
-                                                            old_inventario_id);
+                                inventario_map_count,
+                                "inventario_item",
+                                old_inventario_id);
 
         if (new_coleccion_id <= 0 || new_inventario_id <= 0)
         {
@@ -1381,10 +1420,10 @@ static void importar_backup_colecciones_json(void)
     int coleccion_map_count = importar_colecciones_desde_json(colecciones, coleccion_map, colecciones_size);
     int inventario_map_count = importar_inventario_desde_json(inventario, inventario_map, inventario_size);
     int relaciones_agregadas = importar_relaciones_desde_json(relaciones,
-                                                              coleccion_map,
-                                                              coleccion_map_count,
-                                                              inventario_map,
-                                                              inventario_map_count);
+                               coleccion_map,
+                               coleccion_map_count,
+                               inventario_map,
+                               inventario_map_count);
 
     sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
 
@@ -1403,17 +1442,17 @@ void menu_colecciones_inventario(void)
 {
     MenuItem items[] =
     {
-        {1, "Crear item de inventario", crear_item_inventario},
-        {2, "Listar inventario", listar_inventario_completo},
-        {3, "Sincronizar camisetas al inventario", sincronizar_camisetas_a_inventario},
-        {4, "Crear coleccion", crear_coleccion},
-        {5, "Listar colecciones", listar_colecciones_completo},
-        {6, "Agregar item a coleccion", agregar_item_a_coleccion},
-        {7, "Quitar item de coleccion", quitar_item_de_coleccion},
-        {8, "Ver items por coleccion", ver_items_por_coleccion},
-        {9, "Filtrar y buscar inventario", filtrar_buscar_inventario},
-        {10, "Exportar backup JSON", exportar_backup_colecciones_json},
-        {11, "Importar backup JSON", importar_backup_colecciones_json},
+        {1, "Crear item de inventario", &crear_item_inventario},
+        {2, "Listar inventario", &listar_inventario_completo},
+        {3, "Sincronizar camisetas al inventario", &sincronizar_camisetas_a_inventario},
+        {4, "Crear coleccion", &crear_coleccion},
+        {5, "Listar colecciones", &listar_colecciones_completo},
+        {6, "Agregar item a coleccion", &agregar_item_a_coleccion},
+        {7, "Quitar item de coleccion", &quitar_item_de_coleccion},
+        {8, "Ver items por coleccion", &ver_items_por_coleccion},
+        {9, "Filtrar y buscar inventario", &filtrar_buscar_inventario},
+        {10, "Exportar backup JSON", &exportar_backup_colecciones_json},
+        {11, "Importar backup JSON", &importar_backup_colecciones_json},
         {0, "Volver", NULL}
     };
 

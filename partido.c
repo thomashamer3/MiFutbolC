@@ -304,10 +304,10 @@ static int recopilar_datos_partido(DatosPartido *datos)
     datos->goles = pedir_entero_minimo("Goles: ", 0,
                                        "Goles invalidos. Ingrese 0 o mas: ");
     datos->asistencias = pedir_entero_minimo("Asistencias: ", 0,
-                                             "Asistencias invalidas. Ingrese 0 o mas: ");
+                         "Asistencias invalidas. Ingrese 0 o mas: ");
     datos->resultado = pedir_entero_en_rango("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
-                                             1, 3,
-                                             "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+                       1, 3,
+                       "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
 
     listar_camisetas();
     datos->camiseta = pedir_id_existente("ID Camiseta: ",
@@ -315,14 +315,14 @@ static int recopilar_datos_partido(DatosPartido *datos)
                                          "La camiseta no existe. Intente nuevamente.",
                                          0);
     datos->rendimiento_general = pedir_entero_en_rango("Rendimiento general (1-10): ",
-                                                       1, 10,
-                                                       "Rendimiento invalido. Ingrese entre 1 y 10: ");
+                                 1, 10,
+                                 "Rendimiento invalido. Ingrese entre 1 y 10: ");
     datos->cansancio = pedir_entero_en_rango("Cansancio (1-10): ",
-                                             1, 10,
-                                             "Cansancio invalido. Ingrese entre 1 y 10:  ");
+                       1, 10,
+                       "Cansancio invalido. Ingrese entre 1 y 10:  ");
     datos->estado_animo = pedir_entero_en_rango("Estado de Animo (1-10): ",
-                                                1, 10,
-                                                "Estado de Animo invalido. Ingrese entre 1 y 10: ");
+                          1, 10,
+                          "Estado de Animo invalido. Ingrese entre 1 y 10: ");
     input_string("Comentario personal: ", datos->comentario_personal, 256);
     datos->clima = pedir_entero_en_rango("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):",
                                          1, 6,
@@ -1966,7 +1966,7 @@ static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
 }
 
 static int tactica_borrar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
-                         char *grid_text, size_t grid_text_size)
+                          char *grid_text, size_t grid_text_size)
 {
     int x = -1;
     int y = -1;
@@ -2334,7 +2334,8 @@ static int partido_prompt_tag_input(const char *prompt, char *out, size_t size)
 static void partido_ui_agregar_tag(int partido_id)
 {
     char tag[PARTIDO_TAG_MAX_LEN] = {0};
-    if (!partido_prompt_tag_input("Etiqueta (ej: Final, Amistoso, Importante): ", tag, sizeof(tag))) {
+    if (!partido_prompt_tag_input("Etiqueta (ej: Final, Amistoso, Importante): ", tag, sizeof(tag)))
+    {
         ui_printf("Etiqueta vacia.\n");
         pause_console();
         return;
@@ -2347,7 +2348,8 @@ static void partido_ui_agregar_tag(int partido_id)
 static void partido_ui_quitar_tag(int partido_id)
 {
     char tag[PARTIDO_TAG_MAX_LEN] = {0};
-    if (!partido_prompt_tag_input("Etiqueta a quitar: ", tag, sizeof(tag))) {
+    if (!partido_prompt_tag_input("Etiqueta a quitar: ", tag, sizeof(tag)))
+    {
         ui_printf("Etiqueta vacía.\n");
         pause_console();
         return;
@@ -2376,9 +2378,16 @@ static void partido_manage_tags_for_id(int id)
 
         switch (opt2)
         {
-            case 1: partido_ui_agregar_tag(id); break;
-            case 2: partido_ui_quitar_tag(id); break;
-            default: ui_printf("Opcion invalida.\n"); pause_console(); break;
+        case 1:
+            partido_ui_agregar_tag(id);
+            break;
+        case 2:
+            partido_ui_quitar_tag(id);
+            break;
+        default:
+            ui_printf("Opcion invalida.\n");
+            pause_console();
+            break;
         }
     }
 }
@@ -2443,7 +2452,7 @@ static int partido_mostrar_favoritos(void)
 
 static void menu_marcar_favorito_partido()
 {
-    for (;;) 
+    for (;;)
     {
         clear_screen();
         print_header("FAVORITOS");
@@ -2456,37 +2465,37 @@ static void menu_marcar_favorito_partido()
 
         switch (opt)
         {
-            case 1:
+        case 1:
+        {
+            tactica_mostrar_partidos_disponibles();
+            int id = input_int("ID de partido (0 para cancelar): ");
+            if (id == 0) break;
+            if (!existe_id("partido", id))
             {
-                tactica_mostrar_partidos_disponibles();
-                int id = input_int("ID de partido (0 para cancelar): ");
-                if (id == 0) break;
-                if (!existe_id("partido", id))
-                {
-                    printf("Partido no encontrado.\n");
-                    pause_console();
-                    break;
-                }
-                {
-                    int fav = partido_obtener_favorito(id);
-                    partido_marcar_favorito(id, !fav);
-                    ui_printf("Partido %s favorito.\n", !fav ? "marcado como" : "desmarcado como");
-                }
+                printf("Partido no encontrado.\n");
                 pause_console();
                 break;
             }
-            case 2:
             {
-                clear_screen();
-                print_header("PARTIDOS FAVORITOS");
-                partido_mostrar_favoritos();
-                pause_console();
-                break;
+                int fav = partido_obtener_favorito(id);
+                partido_marcar_favorito(id, !fav);
+                ui_printf("Partido %s favorito.\n", !fav ? "marcado como" : "desmarcado como");
             }
-            default:
-                ui_printf("Opcion no reconocida.\n");
-                pause_console();
-                break;
+            pause_console();
+            break;
+        }
+        case 2:
+        {
+            clear_screen();
+            print_header("PARTIDOS FAVORITOS");
+            partido_mostrar_favoritos();
+            pause_console();
+            break;
+        }
+        default:
+            ui_printf("Opcion no reconocida.\n");
+            pause_console();
+            break;
         }
     }
 }
@@ -2564,7 +2573,8 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
 
 static void menu_gestion_tags_partido()
 {
-    for (;;) {
+    for (;;)
+    {
         clear_screen();
         print_header("GESTIONAR ETIQUETAS (TAGS)");
 
@@ -2574,7 +2584,8 @@ static void menu_gestion_tags_partido()
         int opt = input_int("Opcion: ");
         if (opt == 0) return;
 
-        switch (opt) {
+        switch (opt)
+        {
         case 1:
         {
             tactica_mostrar_partidos_disponibles();

@@ -34,6 +34,8 @@
 - 📊 **Análisis avanzado** (rendimiento, tendencias, química entre jugadores, meta-análisis)
 - 🏥 **Gestión de salud** (lesiones y recuperación)
 - 🧘 **Bienestar integral** (hábitos, planificación, salud y reportes personales)
+- ⏰ **Gestión de recordatorios** (agenda personal, filtros y seguimiento)
+- 🗂️ **Colecciones e inventario** (items, colecciones y sincronización con camisetas)
 - 💰 **Control financiero** (ingresos, gastos, balances)
 - 🎖️ **Sistema gamificado** (logros y badges)
 - 🤖 **Entrenador IA** (recomendaciones inteligentes)
@@ -144,6 +146,20 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Entrenamiento y Alimentación**: Registro y control de prácticas saludables
 - **Mental y Salud**: Evaluación de bienestar mental, controles médicos y reportes
 - **Informe Personal Mensual (PDF)**: Resumen automático con métricas clave
+
+### ⏰ Recordatorios
+
+- **Gestión de Recordatorios**: Crear, editar, eliminar y listar recordatorios personales
+- **Agenda Integrada**: Vista de eventos próximos y pasados
+- **Filtros por Temática**: Búsqueda de recordatorios por categoría
+- **Portabilidad**: Exportar e importar recordatorios
+
+### 🗂️ Colecciones e Inventario
+
+- **Inventario de Ítems**: Crear y listar items asociados a tu actividad
+- **Sincronización con Camisetas**: Vincular camisetas existentes al inventario
+- **Colecciones Personalizadas**: Crear colecciones y agregar/quitar items
+- **Respaldo del Módulo**: Exportación e importación de backup en JSON
 
 ### 🤖 Entrenador IA
 
@@ -377,13 +393,15 @@ Al ejecutar `MiFutbolC`, el sistema:
 5. Lesiones
 6. Estadísticas
 7. Logros
-8. (Reservado)
-9. Financiamiento
-10. Torneos
-11. Temporada
-12. Análisis
-13. Bienestar
-14. Ajustes
+8. Financiamiento
+9. Torneos
+10. Temporada
+11. Análisis
+12. Bienestar
+13. Carrera Futbolistica
+14. Recordatorios
+15. Colecciones
+16. Ajustes
 0. Salir
 >
 ```
@@ -393,7 +411,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (14)
+Menú Principal → Ajustes (16)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Usuario (nombre visible, contraseña y cuentas locales)
@@ -422,7 +440,7 @@ Menú Principal → Partidos (4) → Crear partido
 #### 4️⃣ Organizar un Torneo
 
 ```
-Menú Principal → Torneos (10)
+Menú Principal → Torneos (9)
   ├── Crear torneo
   ├── Listar torneos
   ├── Modificar torneo
@@ -438,7 +456,7 @@ Menú Principal → Estadísticas (6)
   ├── Estadísticas por mes
   └── Meta-análisis
 
-Menú Principal → Análisis (12)
+Menú Principal → Análisis (11)
   ├── Análisis Básico
   ├── Comparador Avanzado
   ├── Análisis Táctico (Diagramas)
@@ -452,7 +470,7 @@ Análisis → Química Entre Jugadores
   ├── Editar Estadística de Jugador
   └── Eliminar Estadística de Jugador
 
-Menú Principal → Bienestar (13)
+Menú Principal → Bienestar (12)
   ├── Planificación Personal
   ├── Mentalidad y Hábitos
   ├── Entrenamiento
@@ -463,17 +481,38 @@ Menú Principal → Bienestar (13)
 #### 6️⃣ Gestionar Finanzas
 
 ```
-Menú Principal → Financiamiento (9)
+Menú Principal → Financiamiento (8)
   ├── Registrar ingreso
   ├── Registrar gasto
   ├── Ver balance
   └── Presupuestos mensuales
 ```
 
-#### 7️⃣ Exportar Datos
+#### 7️⃣ Gestionar Recordatorios
 
 ```
-Menú Principal → Ajustes (14) → Exportar
+Menú Principal → Recordatorios (14)
+  ├── Listar recordatorios
+  ├── Agregar/editar/eliminar recordatorio
+  ├── Filtrar por temática
+  └── Agenda (eventos próximos y pasados)
+```
+
+#### 8️⃣ Gestionar Inventario y Colecciones
+
+```
+Menú Principal → Colecciones (15)
+  ├── Crear y listar inventario
+  ├── Sincronizar camisetas al inventario
+  ├── Crear y listar colecciones
+  ├── Agregar/quitar ítems a colecciones
+  └── Exportar/Importar backup JSON
+```
+
+#### 9️⃣ Exportar Datos
+
+```
+Menú Principal → Ajustes (16) → Exportar
   ├── Seleccionar módulo (camisetas, partidos, etc.)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
    └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
@@ -495,7 +534,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 #### Ejemplo 2: Crear un Torneo de Fútbol 5
 
 1. Crea al menos 4 equipos (Menú → Equipos → Crear)
-2. Ve a Torneos (opción 10)
+2. Ve a Torneos (opción 9)
 3. Selecciona "Crear torneo"
 4. Ingresa nombre: `"Copa Primavera 2026"`
 5. Selecciona formato: `Round Robin`
@@ -504,7 +543,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 
 #### Ejemplo 3: Analizar tu Rendimiento
 
-1. Ve a Análisis (opción 12)
+1. Ve a Análisis (opción 11)
 2. El sistema muestra:
    - Comparación últimos 5 partidos vs promedio general
    - Mejor racha de victorias
@@ -1060,7 +1099,7 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, opción 8 reservada, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Salir).
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.

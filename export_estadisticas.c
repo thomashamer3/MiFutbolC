@@ -30,6 +30,10 @@ static const char *SQL_STATS_BY_ANIO =
     "GROUP BY anio, c.id "
     "ORDER BY anio DESC, total_goles DESC";
 
+typedef void (*anio_header_writer_t)(FILE *file, const char *anio, int hay);
+typedef void (*anio_row_writer_t)(FILE *file, const EstadisticaAnio *stats);
+typedef void (*anio_footer_writer_t)(FILE *file, int hay);
+
 /* ============================================================================
  * HELPER ESTaTICOS
  * ============================================================================ */
@@ -139,6 +143,75 @@ static void write_stats_json(FILE *file)
     sqlite3_finalize(stmt);
 }
 
+static void write_stats_anio_txt_header(FILE *file, const char *anio, int hay)
+{
+    if (hay) fprintf(file, "\n");
+    fprintf(file, "Anio: %s\n", anio);
+    fprintf(file, "----------------------------------------\n");
+}
+
+static void write_stats_anio_txt_row(FILE *file, const EstadisticaAnio *stats)
+{
+    fprintf(file, "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
+            stats->camiseta, stats->partidos, stats->total_goles, stats->total_asistencias, stats->avg_goles, stats->avg_asistencias);
+}
+
+static void write_stats_anio_html_header(FILE *file, const char *anio, int hay)
+{
+    if (hay) fprintf(file, "</table><br>");
+    fprintf(file, "<h2>Anio: %s</h2><table border='1'>", anio);
+    fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/P</th><th>A/P</th></tr>");
+}
+
+static void write_stats_anio_html_row(FILE *file, const EstadisticaAnio *stats)
+{
+    fprintf(file,
+            "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
+            stats->camiseta, stats->partidos, stats->total_goles, stats->total_asistencias, stats->avg_goles, stats->avg_asistencias);
+}
+
+static void write_stats_anio_html_footer(FILE *file, int hay)
+{
+    if (hay) fprintf(file, "</table>");
+}
+
+static void write_stats_anio_common(FILE *file,
+                                    anio_header_writer_t write_header,
+                                    anio_row_writer_t write_row,
+                                    anio_footer_writer_t write_footer)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
+    {
+        return;
+    }
+
+    char current_anio[5] = "";
+    int hay = 0;
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
+
+        if (strcmp(current_anio, stats.anio) != 0)
+        {
+            write_header(file, stats.anio, hay);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
+        }
+
+        write_row(file, &stats);
+        hay = 1;
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (write_footer)
+    {
+        write_footer(file, hay);
+    }
+}
+
 /** @brief Escribe estadisticas por ano en formato CSV */
 static void write_stats_anio_csv(FILE *file)
 {
@@ -166,66 +239,19 @@ static void write_stats_anio_csv(FILE *file)
 /** @brief Escribe estadisticas por ano en formato TXT */
 static void write_stats_anio_txt(FILE *file)
 {
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
-    {
-        return;
-    }
-
-    char current_anio[5] = "";
-    int hay = 0;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        EstadisticaAnio stats;
-        extraer_estadistica_anio(stmt, &stats);
-
-        if (strcmp(current_anio, stats.anio) != 0)
-        {
-            if (hay) fprintf(file, "\n");
-            fprintf(file, "Anio: %s\n", stats.anio);
-            fprintf(file, "----------------------------------------\n");
-            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
-        }
-
-        fprintf(file, "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-                stats.camiseta, stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
-        hay = 1;
-    }
+    write_stats_anio_common(file,
+                            write_stats_anio_txt_header,
+                            write_stats_anio_txt_row,
+                            NULL);
 }
 
 /** @brief Escribe estadisticas por ano en formato HTML */
 static void write_stats_anio_html(FILE *file)
 {
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO))
-    {
-        return;
-    }
-
-    char current_anio[5] = "";
-    int hay = 0;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        EstadisticaAnio stats;
-        extraer_estadistica_anio(stmt, &stats);
-
-        if (strcmp(current_anio, stats.anio) != 0)
-        {
-            if (hay) fprintf(file, "</table><br>");
-            fprintf(file, "<h2>Anio: %s</h2><table border='1'>", stats.anio);
-            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/P</th><th>A/P</th></tr>");
-            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
-        }
-
-        fprintf(file,
-                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                stats.camiseta, stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
-        hay = 1;
-    }
-
-    if (hay) fprintf(file, "</table>");
+    write_stats_anio_common(file,
+                            write_stats_anio_html_header,
+                            write_stats_anio_html_row,
+                            write_stats_anio_html_footer);
 }
 
 /** @brief Escribe estadisticas por ano en formato JSON */

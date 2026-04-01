@@ -1173,7 +1173,8 @@ static int titulo_coincide_regla_ascii(const char *titulo, const HeaderAsciiRule
  */
 static const char *obtener_ascii_por_titulo(const char *titulo)
 {
-    static const HeaderAsciiRule rules[] = {
+    static const HeaderAsciiRule rules[] =
+    {
         {ASCII_BIENVENIDA, "MI FUTBOL C", NULL},
         {ASCII_CAMISETA, "CAMISETA", "CAMISETAS"},
         {ASCII_CANCHA, "CANCHAS", NULL},
@@ -1190,7 +1191,10 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         {ASCII_TORNEOS, "TORNEOS", NULL},
         {ASCII_AJUSTES, "AJUSTES", "SETTINGS"},
         {ASCII_TEMPORADA, "TEMPORADA", "SEASON"},
-        {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL}};
+        {ASCII_RECORDATORIOS, "RECORDATORIOS", NULL},
+        {ASCII_COLECCIONES, "COLECCIONES", NULL},
+        {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL}
+    };
 
     for (size_t i = 0; i < sizeof(rules) / sizeof(rules[0]); i++)
     {
@@ -2380,14 +2384,16 @@ char *remover_tildes(const char *str)
         return buffer;
     }
 
-    const unsigned char acentos[][3] = {
+    const unsigned char acentos[][3] =
+    {
         {0xE1, 0xC1, 'a'},
         {0xE9, 0xC9, 'e'},
         {0xED, 0xCD, 'i'},
         {0xF3, 0xD3, 'o'},
         {0xFA, 0xDA, 'u'},
         {0xF1, 0xD1, 'n'},
-        {0xFC, 0xDC, 'u'}};
+        {0xFC, 0xDC, 'u'}
+    };
 
     const char *p = str;
     while (*p != '\0' && j < sizeof(buffer) - 1)

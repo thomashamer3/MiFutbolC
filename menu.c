@@ -50,6 +50,18 @@ static void abrir_menu_equipos(void)
     menu_equipos();
 }
 
+static void abrir_menu_camisetas(void)
+{
+    app_log_event("CAMISETAS", "Ingreso al modulo Camisetas");
+    menu_camisetas();
+}
+
+static void abrir_menu_canchas(void)
+{
+    app_log_event("CANCHAS", "Ingreso al modulo Canchas");
+    menu_canchas();
+}
+
 static void abrir_menu_partidos(void)
 {
     app_log_event("PARTIDOS", "Ingreso al modulo Partidos");
@@ -122,24 +134,30 @@ static void abrir_menu_colecciones(void)
     menu_colecciones_inventario();
 }
 
+static void abrir_menu_recordatorios(void)
+{
+    app_log_event("RECORDATORIOS", "Ingreso al modulo Recordatorios");
+    menu_recordatorios();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
-    {1, "Camisetas", &menu_camisetas},
-    {2, "Canchas", &menu_canchas},
+    {1, "Camisetas", &abrir_menu_camisetas},
+    {2, "Canchas", &abrir_menu_canchas},
     {3, "Equipos", &abrir_menu_equipos},
     {4, "Partidos", &abrir_menu_partidos},
     {5, "Lesiones", &abrir_menu_lesiones},
     {6, "Estadisticas", &abrir_menu_estadisticas},
     {7, "Logros", &abrir_menu_logros},
-    {9, "Financiamiento", &abrir_menu_financiamiento},
-    {10, "Torneos", &abrir_menu_torneos},
-    {11, "Temporada", &abrir_menu_temporadas},
-    {12, "Analisis", &abrir_menu_analisis},
-    {13, "Bienestar", &abrir_menu_bienestar},
-    {14, "Carrera Futbolistica", &abrir_menu_carrera},
-    {15, "Recordatorios", &menu_recordatorios},
+    {8, "Financiamiento", &abrir_menu_financiamiento},
+    {9, "Torneos", &abrir_menu_torneos},
+    {10, "Temporada", &abrir_menu_temporadas},
+    {11, "Analisis", &abrir_menu_analisis},
+    {12, "Bienestar", &abrir_menu_bienestar},
+    {13, "Carrera Futbolistica", &abrir_menu_carrera},
+    {14, "Recordatorios", &abrir_menu_recordatorios},
+    {15, "Colecciones", &abrir_menu_colecciones},
     {16, "Ajustes", &abrir_menu_settings},
-    {17, "Colecciones e Inventario", &abrir_menu_colecciones},
     {0, "Salir", NULL}
 };
 

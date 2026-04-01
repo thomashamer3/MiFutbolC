@@ -17,6 +17,8 @@ MiFutbolC es una herramienta integral diseñada para:
 - Exportar e importar datos en múltiples formatos
 - Ofrecer un sistema gamificado de logros y recompensas
 - Registrar bienestar integral (hábitos, salud y planificación)
+- Gestionar recordatorios y agenda personal
+- Administrar colecciones e inventario de ítems
 - Recibir recomendaciones inteligentes del Entrenador IA
 
 ### Beneficios Clave
@@ -153,13 +155,15 @@ El menú principal ofrece las siguientes opciones:
 5. **Lesiones** - Gestionar lesiones de jugadores
 6. **Estadísticas** - Ver estadísticas por categorías y rendimiento
 7. **Logros** - Gestionar logros y badges
-8. **(Reservado)** - Actualmente sin módulo asignado
-9. **Financiamiento** - Gestionar finanzas del equipo
-10. **Torneos** - Gestionar torneos de fútbol
-11. **Temporada** - Gestionar temporadas y ciclos deportivos
-12. **Análisis** - Ver análisis de rendimiento, comparador y Entrenador IA
-13. **Bienestar** - Planificación, hábitos, salud y reportes personales
-14. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
+8. **Financiamiento** - Gestionar finanzas del equipo
+9. **Torneos** - Gestionar torneos de fútbol
+10. **Temporada** - Gestionar temporadas y ciclos deportivos
+11. **Análisis** - Ver análisis de rendimiento, comparador y Entrenador IA
+12. **Bienestar** - Planificación, hábitos, salud y reportes personales
+13. **Carrera Futbolística** - Seguimiento de progreso y objetivos de carrera
+14. **Recordatorios** - Gestionar recordatorios, agenda y exportación/importación del módulo
+15. **Colecciones** - Administrar ítems, colecciones y backups JSON
+16. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -834,9 +838,33 @@ El Entrenador IA se activa automáticamente:
 - Al revisar estadísticas
 - Cuando detecta situaciones de riesgo
 
+## Recordatorios
+
+Selecciona "14" en el menú principal para acceder al módulo de recordatorios.
+
+### Funcionalidades de Recordatorios
+
+- **Listar recordatorios**: Visualización completa de recordatorios guardados
+- **Agregar/Editar/Eliminar**: Gestión completa de entradas
+- **Filtrar por temática**: Consulta por categoría
+- **Exportar e importar**: Portabilidad de recordatorios
+- **Agenda**: Vista de eventos próximos y eventos pasados
+
+## Colecciones e Inventario
+
+Selecciona "15" en el menú principal para abrir el módulo de colecciones e inventario.
+
+### Funcionalidades de Colecciones e Inventario
+
+- **Inventario**: Crear items, listar y filtrar inventario
+- **Sincronización**: Sincronizar camisetas al inventario
+- **Colecciones**: Crear colecciones y listar su contenido
+- **Vinculación de ítems**: Agregar o quitar ítems de una colección
+- **Backups JSON**: Exportar e importar respaldo del módulo
+
 ## Exportar Datos
 
-Selecciona "14" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
+Selecciona "16" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
@@ -916,7 +944,7 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "14" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
+Selecciona "16" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
 
 ### Preparación para Importar
 
@@ -928,7 +956,7 @@ Selecciona "14" en el menú principal (Ajustes) y luego **Importar** (opción 9)
 
 ### Proceso de Importación
 
-1. Selecciona "14" en el menú principal y luego **Importar**
+1. Selecciona "16" en el menú principal y luego **Importar**
 2. Elige una opción del menú de importación:
    - "1" Importar desde JSON
    - "2" Importar desde TXT
@@ -965,11 +993,11 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "14" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "16" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -985,7 +1013,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -995,13 +1023,13 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Accesibilidad
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
 ### Gestión de Usuario y Seguridad
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Desde este menú puedes:
    - Mostrar nombre actual
@@ -1014,7 +1042,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Ver Configuración Actual
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
@@ -1025,7 +1053,7 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
@@ -1035,18 +1063,18 @@ Selecciona "14" en el menú principal para acceder al menú de configuración de
 
 ### Modo de Menú
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "7" para configurar el modo
 3. Selecciona modo Simple, Avanzado o Personalizado
 
 ### Exportar / Importar desde Ajustes
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "8" para **Exportar** o "9" para **Importar**
 
 ### Actualizar aplicación
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "16" en el menú principal
 2. Elige "10" para abrir el flujo de actualización
 3. En Windows, podrás buscar y ejecutar la actualización
 
@@ -1174,7 +1202,7 @@ Aunque es posible usar herramientas como DB Browser for SQLite, se recomienda us
 
 ### ¿Cómo hago un backup completo?
 
-1. Ve a Ajustes (opción 14)
+1. Ve a Ajustes (opción 16)
 2. Entra en **Exportar**
 3. Selecciona "Todo" (opción 9)
 4. Elige formato JSON
@@ -1242,8 +1270,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 3.9.4  
-**Última actualización**: 17/03/2026  
+**Versión**: 4.1  
+**Última actualización**: 1/04/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

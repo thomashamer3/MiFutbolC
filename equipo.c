@@ -341,20 +341,26 @@ static int procesar_opcion_gestion_equipo(Equipo *equipo, int opcion)
     switch (opcion)
     {
     case 1:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Modificar jugador");
         modificar_jugador_momentaneo(equipo);
         return 0;
     case 2:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Agregar jugador");
         agregar_jugador_momentaneo(equipo);
         return 0;
     case 3:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Eliminar jugador");
         eliminar_jugador_momentaneo(equipo);
         return 0;
     case 4:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Cambiar capitan");
         cambiar_capitan_momentaneo(equipo);
         return 0;
     case 5:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Salir");
         return 1;
     default:
+        app_log_event("EQUIPOS", "Gestion equipo momentaneo -> Opcion invalida");
         printf("Opcion invalida.\n");
         pause_console();
         return 0;
@@ -418,7 +424,11 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
 
 typedef int (*hay_arquero_cb_t)(void *ctx);
 
-typedef struct { const int *posiciones; int count; } PosicionesCtx;
+typedef struct
+{
+    const int *posiciones;
+    int count;
+} PosicionesCtx;
 
 static int hay_arquero_posiciones(void *ctx)
 {
@@ -1622,7 +1632,11 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
     /* Seleccionar posicion usando helper con callback que revisa posiciones actuales */
     PosicionesCtx pctx = { jugadores_posiciones, jugador_count };
     int pos = seleccionar_posicion_con_check(hay_arquero_posiciones, &pctx);
-    if (pos == -1) { pause_console(); return; }
+    if (pos == -1)
+    {
+        pause_console();
+        return;
+    }
     nuevo_jugador.posicion = (Posicion)pos;
 
     nuevo_jugador.es_capitan = 0;
@@ -1715,7 +1729,11 @@ void agregar_jugador_momentaneo(Equipo *equipo)
 
     /* Seleccionar posicion usando helper con callback que revisa el equipo actual */
     int pos = seleccionar_posicion_con_check(hay_arquero_en_equipo, equipo);
-    if (pos == -1) { pause_console(); return; }
+    if (pos == -1)
+    {
+        pause_console();
+        return;
+    }
     nuevo_jugador->posicion = (Posicion)pos;
 
     nuevo_jugador->es_capitan = 0;
@@ -1890,6 +1908,18 @@ void crear_equipo_fijo()
     save_equipo_to_db(&equipo);
 }
 
+static void accion_crear_un_equipo_momentaneo(void)
+{
+    app_log_event("EQUIPOS", "Crear equipo momentaneo -> Un solo equipo");
+    crear_un_equipo_momentaneo();
+}
+
+static void accion_crear_dos_equipos_momentaneos(void)
+{
+    app_log_event("EQUIPOS", "Crear equipo momentaneo -> Dos equipos");
+    crear_dos_equipos_momentaneos();
+}
+
 /**
  * @brief Crea un nuevo equipo momentaneo que no se guarda en la base de datos
  *
@@ -1900,32 +1930,14 @@ void crear_equipo_fijo()
  */
 void crear_equipo_momentaneo()
 {
-    clear_screen();
-    print_header("CREAR EQUIPO MOMENTANEO");
-
-    // Preguntar si quiere crear 1 o 2 equipos
-    printf("Seleccione cuantos equipos momentaneos desea crear:\n");
-    printf("1. Un solo equipo\n");
-    printf("2. Dos equipos (Local y Visitante)\n");
-    printf("3. Volver\n");
-
-    int opcion_equipos = input_int(">");
-
-    switch (opcion_equipos)
+    MenuItem items[] =
     {
-    case 1:
-        crear_un_equipo_momentaneo();
-        break;
-    case 2:
-        crear_dos_equipos_momentaneos();
-        break;
-    case 3:
-        return;
-    default:
-        printf("Opcion invalida. Volviendo al menu principal.\n");
-        pause_console();
-        return;
-    }
+        {1, "Un solo equipo", accion_crear_un_equipo_momentaneo},
+        {2, "Dos equipos (Local y Visitante)", accion_crear_dos_equipos_momentaneos},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("CREAR EQUIPO MOMENTANEO", items, 3);
 }
 
 /**
@@ -2201,24 +2213,30 @@ void crear_dos_equipos_momentaneos()
     switch (opcion_tipo)
     {
     case 1:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Tipo futbol 5");
         tipo_futbol = FUTBOL_5;
         num_jugadores = 5;
         break;
     case 2:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Tipo futbol 7");
         tipo_futbol = FUTBOL_7;
         num_jugadores = 7;
         break;
     case 3:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Tipo futbol 8");
         tipo_futbol = FUTBOL_8;
         num_jugadores = 8;
         break;
     case 4:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Tipo futbol 11");
         tipo_futbol = FUTBOL_11;
         num_jugadores = 11;
         break;
     case 5:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Volver");
         return;
     default:
+        app_log_event("EQUIPOS", "Crear dos equipos momentaneos -> Opcion invalida");
         printf("Opcion invalida. Volviendo al menu principal.\n");
         pause_console();
         return;
@@ -2305,18 +2323,23 @@ void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visi
         switch (opcion)
         {
         case 1:
+            app_log_event("EQUIPOS", "Gestion dos equipos -> Gestionar LOCAL");
             gestionar_equipo_individual(equipo_local, "LOCAL");
             break;
         case 2:
+            app_log_event("EQUIPOS", "Gestion dos equipos -> Gestionar VISITANTE");
             gestionar_equipo_individual(equipo_visitante, "VISITANTE");
             break;
         case 3:
+            app_log_event("EQUIPOS", "Gestion dos equipos -> Simular partido");
             simular_partido(equipo_local, equipo_visitante);
             break;
         case 4:
+            app_log_event("EQUIPOS", "Gestion dos equipos -> Finalizar");
             salir = 1;
             break;
         default:
+            app_log_event("EQUIPOS", "Gestion dos equipos -> Opcion invalida");
             printf("Opcion invalida.\n");
             pause_console();
         }
@@ -2331,6 +2354,10 @@ void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visi
  */
 void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
 {
+    char log_msg[128];
+    snprintf(log_msg, sizeof(log_msg), "Gestion equipo individual -> %s", tipo_equipo ? tipo_equipo : "(sin tipo)");
+    app_log_event("EQUIPOS", log_msg);
+
     int salir = 0;
 
     while (!salir)
@@ -2351,6 +2378,18 @@ void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
     }
 }
 
+static void accion_crear_equipo_fijo(void)
+{
+    app_log_event("EQUIPOS", "Crear equipo -> Fijo");
+    crear_equipo_fijo();
+}
+
+static void accion_crear_equipo_momentaneo(void)
+{
+    app_log_event("EQUIPOS", "Crear equipo -> Momentaneo");
+    crear_equipo_momentaneo();
+}
+
 /**
  * @brief Funcion principal para crear equipos
  *
@@ -2360,30 +2399,14 @@ void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
  */
 void crear_equipo()
 {
-    clear_screen();
-    print_header("CREAR EQUIPO");
-
-    printf("Seleccione el tipo de equipo:\n");
-    printf("1. Fijo\n");
-    printf("2. Momentaneo\n");
-    printf("3. Volver\n");
-
-    int opcion = input_int(">");
-
-    switch (opcion)
+    MenuItem items[] =
     {
-    case 1:
-        crear_equipo_fijo();
-        break;
-    case 2:
-        crear_equipo_momentaneo();
-        break;
-    case 3:
-        return;
-    default:
-        printf("Opcion invalida.\n");
-        pause_console();
-    }
+        {1, "Fijo", accion_crear_equipo_fijo},
+        {2, "Momentaneo", accion_crear_equipo_momentaneo},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("CREAR EQUIPO", items, 3);
 }
 
 /**

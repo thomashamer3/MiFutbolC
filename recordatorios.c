@@ -1,5 +1,7 @@
 #include "recordatorios.h"
 #include "utils.h"
+#include "menu.h"
+#include "db.h"
 #include "cJSON.h"
 #include "export_partidos_helpers.h"
 #include <stdio.h>
@@ -12,7 +14,8 @@
 #define MAX_TEMATICA 64
 #define MAX_FECHA 64
 
-typedef struct {
+typedef struct
+{
     long long id;
     char fecha[MAX_FECHA];
     char nota[MAX_NOTA];
@@ -304,6 +307,41 @@ static int find_index_by_id(const Reminder *arr, int count, long long id)
     return -1;
 }
 
+static void editar_fecha_recordatorio(Reminder *r)
+{
+    if (!r) return;
+    printf("Valor actual fecha: %s\n", r->fecha);
+    input_date("Nueva fecha (dd/mm/yyyy hh:mm):", r->fecha, MAX_FECHA);
+}
+
+static void editar_nota_recordatorio(Reminder *r)
+{
+    char buf[MAX_NOTA];
+    if (!r) return;
+
+    printf("Valor actual nota:\n%s\n", r->nota);
+    input_string_extended("Nueva nota:", buf, MAX_NOTA);
+    if (buf[0] != '\0')
+    {
+        strncpy_s(r->nota, MAX_NOTA, buf, MAX_NOTA - 1);
+        r->nota[MAX_NOTA - 1] = '\0';
+    }
+}
+
+static void editar_tematica_recordatorio(Reminder *r)
+{
+    char tema[MAX_TEMATICA];
+    if (!r) return;
+
+    printf("Valor actual temática: %s\n", r->tematica);
+    elegir_tematica(tema, MAX_TEMATICA);
+    if (tema[0] != '\0')
+    {
+        strncpy_s(r->tematica, MAX_TEMATICA, tema, MAX_TEMATICA - 1);
+        r->tematica[MAX_TEMATICA - 1] = '\0';
+    }
+}
+
 static void editar_recordatorio()
 {
     int count = 0;
@@ -325,19 +363,33 @@ static void editar_recordatorio()
         return;
     }
 
-    char buf[MAX_NOTA];
-    printf("Valor actual fecha: %s\n", arr[idx].fecha);
-    input_date("Nueva fecha (dejar vacio para mantener):", buf, MAX_FECHA);
-    if (buf[0] != '\0') { strncpy_s(arr[idx].fecha, MAX_FECHA, buf, MAX_FECHA - 1); arr[idx].fecha[MAX_FECHA - 1] = '\0'; }
+    printf("\n¿Que desea modificar?\n");
+    printf("1) Todos los atributos\n");
+    printf("2) Solo fecha\n");
+    printf("3) Solo nota\n");
+    printf("4) Solo temática\n");
+    printf("5) Cancelar\n");
+    int opcion = input_int_rango(">", 1, 5);
 
-    printf("Valor actual nota:\n%s\n", arr[idx].nota);
-    input_string_extended("Nueva nota (dejar vacio para mantener):", buf, MAX_NOTA);
-    if (buf[0] != '\0') { strncpy_s(arr[idx].nota, MAX_NOTA, buf, MAX_NOTA - 1); arr[idx].nota[MAX_NOTA - 1] = '\0'; }
+    if (opcion == 5)
+    {
+        ui_puts("Edicion cancelada.");
+        free(arr);
+        return;
+    }
 
-    printf("Valor actual temática: %s\n", arr[idx].tematica);
-    char tema[MAX_TEMATICA];
-    elegir_tematica(tema, MAX_TEMATICA);
-    if (tema[0] != '\0') { strncpy_s(arr[idx].tematica, MAX_TEMATICA, tema, MAX_TEMATICA - 1); arr[idx].tematica[MAX_TEMATICA - 1] = '\0'; }
+    if (opcion == 1 || opcion == 2)
+    {
+        editar_fecha_recordatorio(&arr[idx]);
+    }
+    if (opcion == 1 || opcion == 3)
+    {
+        editar_nota_recordatorio(&arr[idx]);
+    }
+    if (opcion == 1 || opcion == 4)
+    {
+        editar_tematica_recordatorio(&arr[idx]);
+    }
 
     if (!save_reminders(arr, count))
     {
@@ -525,7 +577,8 @@ static void import_recordatorios()
 }
 
 /* ===================== AGENDA (Partidos + Recordatorios) ===================== */
-typedef struct {
+typedef struct
+{
     time_t ts;
     char tipo[32];
     char fechastr[64];
@@ -694,10 +747,22 @@ static void mostrar_agenda()
     /* Inicialmente reservar una capacidad pequeña; append_agenda_item la aumentará */
     cap = 16;
     items = (AgendaItem*)malloc(sizeof(AgendaItem) * cap);
-    if (!items) { mostrar_error_operacion("agenda", "memoria"); return; }
+    if (!items)
+    {
+        mostrar_error_operacion("agenda", "memoria");
+        return;
+    }
 
-    if (!add_reminders_to_items(&items, &cap, &nitems)) { free(items); return; }
-    if (!add_partidos_to_items(&items, &cap, &nitems)) { free(items); return; }
+    if (!add_reminders_to_items(&items, &cap, &nitems))
+    {
+        free(items);
+        return;
+    }
+    if (!add_partidos_to_items(&items, &cap, &nitems))
+    {
+        free(items);
+        return;
+    }
 
     if (nitems == 0)
     {
@@ -742,42 +807,79 @@ static void mostrar_agenda()
 }
 
 
+static void accion_listar_recordatorios(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Listar recordatorios");
+    int count = 0;
+    Reminder *arr = load_reminders(&count);
+    listar_recordatorios(arr, count);
+    free(arr);
+    pause_console();
+}
+
+static void accion_agregar_recordatorio(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Agregar recordatorio");
+    agregar_recordatorio();
+    pause_console();
+}
+
+static void accion_editar_recordatorio(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Editar recordatorio");
+    editar_recordatorio();
+    pause_console();
+}
+
+static void accion_eliminar_recordatorio(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Eliminar recordatorio");
+    eliminar_recordatorio();
+    pause_console();
+}
+
+static void accion_filtrar_recordatorios(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Filtrar por tematica");
+    filtrar_por_tematica();
+    pause_console();
+}
+
+static void accion_exportar_recordatorios(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Exportar recordatorios");
+    export_recordatorios();
+    pause_console();
+}
+
+static void accion_importar_recordatorios(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Importar recordatorios");
+    import_recordatorios();
+    pause_console();
+}
+
+static void accion_mostrar_agenda(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Agenda");
+    mostrar_agenda();
+    pause_console();
+}
+
 void menu_recordatorios(void)
 {
-    while (1)
+    MenuItem items[] =
     {
-        clear_screen();
-        print_header("Recordatorios");
-        printf("1. Listar recordatorios\n");
-        printf("2. Agregar recordatorio\n");
-        printf("3. Editar recordatorio\n");
-        printf("4. Eliminar recordatorio\n");
-        printf("5. Filtrar por temática\n");
-        printf("6. Exportar recordatorios\n");
-        printf("7. Importar recordatorios\n");
-        printf("8. Agenda\n");
-        printf("0. Volver\n");
+        {1, "Listar recordatorios", accion_listar_recordatorios},
+        {2, "Agregar recordatorio", accion_agregar_recordatorio},
+        {3, "Editar recordatorio", accion_editar_recordatorio},
+        {4, "Eliminar recordatorio", accion_eliminar_recordatorio},
+        {5, "Filtrar por tematica", accion_filtrar_recordatorios},
+        {6, "Exportar recordatorios", accion_exportar_recordatorios},
+        {7, "Importar recordatorios", accion_importar_recordatorios},
+        {8, "Agenda", accion_mostrar_agenda},
+        {0, "Volver", NULL}
+    };
 
-        int op = input_int_rango(">", 0, 8);
-        switch (op)
-        {
-            case 1: {
-                int count = 0;
-                Reminder *arr = load_reminders(&count);
-                listar_recordatorios(arr, count);
-                free(arr);
-                pause_console();
-                break;
-            }
-            case 2: agregar_recordatorio(); pause_console(); break;
-            case 3: editar_recordatorio(); pause_console(); break;
-            case 4: eliminar_recordatorio(); pause_console(); break;
-            case 5: filtrar_por_tematica(); pause_console(); break;
-            case 6: export_recordatorios(); pause_console(); break;
-            case 7: import_recordatorios(); pause_console(); break;
-            case 8: mostrar_agenda(); pause_console(); break;
-            case 0: return;
-            default: break;
-        }
-    }
+    ejecutar_menu("RECORDATORIOS", items, 9);
 }
