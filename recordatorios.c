@@ -49,8 +49,12 @@ static Reminder *load_reminders(int *out_count)
         fclose(f);
         return NULL;
     }
-    fread(buf, 1, (size_t)len, f);
-    buf[len] = '\0';
+    size_t read = fread(buf, 1, (size_t)len, f);
+    /* Asegurar terminador usando la longitud real leída */
+    if (read > 0 && read <= (size_t)len)
+        buf[read] = '\0';
+    else
+        buf[0] = '\0';
     fclose(f);
 
     cJSON *root = cJSON_Parse(buf);
@@ -93,6 +97,7 @@ static Reminder *load_reminders(int *out_count)
 
 static int write_reminders_to_file(const Reminder *arr, int count, const char *path)
 {
+    if (count > 0 && !arr) return 0;
     cJSON *root = cJSON_CreateArray();
     if (!root) return 0;
 
@@ -152,8 +157,11 @@ static Reminder *load_reminders_from_file(const char *path, int *out_count)
         fclose(f);
         return NULL;
     }
-    fread(buf, 1, (size_t)len, f);
-    buf[len] = '\0';
+    size_t read = fread(buf, 1, (size_t)len, f);
+    if (read > 0 && read <= (size_t)len)
+        buf[read] = '\0';
+    else
+        buf[0] = '\0';
     fclose(f);
 
     cJSON *root = cJSON_Parse(buf);
@@ -425,6 +433,49 @@ static void export_recordatorios()
     free(arr);
 }
 
+static int merge_and_save_reminders(Reminder *newarr, int new_count)
+{
+    int exist_count = 0;
+    Reminder *exist = load_reminders(&exist_count);
+    if (!exist) exist_count = 0;
+
+    size_t merged_count = (size_t)exist_count + (size_t)new_count;
+
+    /* Comprobar overflow en la multiplicación */
+    if (merged_count > SIZE_MAX / sizeof(Reminder))
+    {
+        free(exist);
+        return 0;
+    }
+
+    Reminder *merged = (Reminder*)malloc(sizeof(Reminder) * merged_count);
+    if (!merged)
+    {
+        free(exist);
+        return 0;
+    }
+
+    /* Copiar existentes (si los hay) */
+    if (exist_count > 0)
+        memcpy(merged, exist, sizeof(Reminder) * (size_t)exist_count);
+
+    long long maxid = 0;
+    for (int i = 0; i < exist_count; i++) if (merged[i].id > maxid) maxid = merged[i].id;
+
+    for (int i = 0; i < new_count; i++)
+    {
+        size_t idx = (size_t)exist_count + (size_t)i;
+        newarr[i].id = ++maxid;
+        merged[idx] = newarr[i];
+    }
+
+    int saved = save_reminders(merged, (int)merged_count);
+
+    free(merged);
+    free(exist);
+    return saved;
+}
+
 static void import_recordatorios()
 {
     char path[260];
@@ -450,32 +501,14 @@ static void import_recordatorios()
         else
             ui_puts("Importación completada (reemplazado).");
     }
+
+    if (!merge_and_save_reminders(newarr, new_count))
+    {
+        mostrar_error_operacion("recordatorios", "importar");
+    }
     else
     {
-        int exist_count = 0;
-        Reminder *exist = load_reminders(&exist_count);
-        if (!exist) exist_count = 0;
-        size_t merged_count = (size_t)exist_count + (size_t)new_count;
-        Reminder *merged = (Reminder*)realloc(exist, sizeof(Reminder) * merged_count);
-        if (!merged)
-        {
-            mostrar_error_operacion("recordatorios", "importar");
-            free(newarr);
-            free(exist);
-            return;
-        }
-        long long maxid = 0;
-        for (int i = 0; i < exist_count; i++) if (merged[i].id > maxid) maxid = merged[i].id;
-        for (int i = 0; i < new_count; i++)
-        {
-            newarr[i].id = ++maxid;
-            merged[exist_count + i] = newarr[i];
-        }
-        if (!save_reminders(merged, (int)merged_count))
-            mostrar_error_operacion("recordatorios", "guardar");
-        else
-            ui_puts("Importación completada (fusionado).");
-        free(merged);
+        ui_puts("Importación completada (fusionado).");
     }
     free(newarr);
 }
@@ -497,17 +530,37 @@ static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm)
     int d=0;
     int H=0;
     int M=0;
+    /* Intentar formato de almacenamiento: YYYY-MM-DD HH:MM */
     int parts = sscanf(s, "%4d-%2d-%2d %2d:%2d", &y, &m, &d, &H, &M);
-    if (parts < 3) return 0;
-    memset(out_tm, 0, sizeof(*out_tm));
-    out_tm->tm_year = y - 1900;
-    out_tm->tm_mon = m - 1;
-    out_tm->tm_mday = d;
-    out_tm->tm_hour = (parts >= 4) ? H : 0;
-    out_tm->tm_min = (parts >= 5) ? M : 0;
-    out_tm->tm_sec = 0;
-    out_tm->tm_isdst = -1;
-    return 1;
+    if (parts >= 3)
+    {
+        memset(out_tm, 0, sizeof(*out_tm));
+        out_tm->tm_year = y - 1900;
+        out_tm->tm_mon = m - 1;
+        out_tm->tm_mday = d;
+        out_tm->tm_hour = (parts >= 4) ? H : 0;
+        out_tm->tm_min = (parts >= 5) ? M : 0;
+        out_tm->tm_sec = 0;
+        out_tm->tm_isdst = -1;
+        return 1;
+    }
+
+    /* Fallback: aceptar formato dd/mm/YYYY HH:MM (por compatibilidad con JSON viejo) */
+    parts = sscanf(s, "%2d/%2d/%4d %2d:%2d", &d, &m, &y, &H, &M);
+    if (parts >= 3)
+    {
+        memset(out_tm, 0, sizeof(*out_tm));
+        out_tm->tm_year = y - 1900;
+        out_tm->tm_mon = m - 1;
+        out_tm->tm_mday = d;
+        out_tm->tm_hour = (parts >= 4) ? H : 0;
+        out_tm->tm_min = (parts >= 5) ? M : 0;
+        out_tm->tm_sec = 0;
+        out_tm->tm_isdst = -1;
+        return 1;
+    }
+
+    return 0;
 }
 
 static time_t parse_datetime_ts(const char *s)
@@ -525,58 +578,106 @@ static int agenda_item_cmp(const void *a, const void *b)
     if (x->ts > y->ts) return 1;
     return 0;
 }
+/* Helpers para manejo seguro del array dinámico de AgendaItem */
+static int append_agenda_item(AgendaItem **items, size_t *cap, size_t *nitems, const AgendaItem *src)
+{
+    if (*nitems >= *cap)
+    {
+        size_t newcap = (*cap == 0) ? 16 : (*cap * 2);
+        AgendaItem *tmp = (AgendaItem*)realloc(*items, sizeof(AgendaItem) * newcap);
+        if (!tmp) return 0;
+        *items = tmp;
+        *cap = newcap;
+    }
+    (*items)[(*nitems)++] = *src;
+    return 1;
+}
 
-static void mostrar_agenda()
+static int add_reminders_to_items(AgendaItem **items, size_t *cap, size_t *nitems)
 {
     int rcount = 0;
     Reminder *rarr = load_reminders(&rcount);
+    if (!rarr || rcount == 0)
+    {
+        free(rarr);
+        return 1; /* no hay recordatorios, no es error */
+    }
 
-    /* Dynamic array for items */
-    size_t cap = (size_t)(rcount + 16);
-    size_t nitems = 0;
-    AgendaItem *items = (AgendaItem*)malloc(sizeof(AgendaItem) * cap);
-    if (!items) { free(rarr); mostrar_error_operacion("agenda", "memoria"); return; }
-
-    /* Add reminders */
     for (int i = 0; i < rcount; i++)
     {
-        if (nitems >= cap) { cap *= 2; items = (AgendaItem*)realloc(items, sizeof(AgendaItem) * cap); if (!items) break; }
-        AgendaItem *it = &items[nitems++];
-        it->ts = parse_datetime_ts(rarr[i].fecha);
-        strncpy_s(it->tipo, sizeof(it->tipo), "Recordatorio", sizeof(it->tipo)-1);
-        strncpy_s(it->fechastr, sizeof(it->fechastr), rarr[i].fecha, sizeof(it->fechastr)-1);
-        strncpy_s(it->titulo, sizeof(it->titulo), rarr[i].tematica, sizeof(it->titulo)-1);
-        strncpy_s(it->detalle, sizeof(it->detalle), rarr[i].nota, sizeof(it->detalle)-1);
+        AgendaItem it;
+        memset(&it, 0, sizeof(it));
+        it.ts = parse_datetime_ts(rarr[i].fecha);
+        strncpy_s(it.tipo, sizeof(it.tipo), "Recordatorio", sizeof(it.tipo)-1);
+        strncpy_s(it.fechastr, sizeof(it.fechastr), rarr[i].fecha, sizeof(it.fechastr)-1);
+        strncpy_s(it.titulo, sizeof(it.titulo), rarr[i].tematica, sizeof(it.titulo)-1);
+        strncpy_s(it.detalle, sizeof(it.detalle), rarr[i].nota, sizeof(it.detalle)-1);
+
+        if (!append_agenda_item(items, cap, nitems, &it))
+        {
+            free(rarr);
+            mostrar_error_operacion("agenda", "memoria");
+            return 0;
+        }
     }
     free(rarr);
+    return 1;
+}
 
-    /* Add partidos using the same query helpers used by export */
+static int add_partidos_to_items(AgendaItem **items, size_t *cap, size_t *nitems)
+{
     sqlite3_stmt *stmt = prepare_partido_query("ORDER BY p.fecha_hora ASC");
-    if (stmt)
-    {
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const unsigned char *cancha = sqlite3_column_text(stmt, 0);
-            const unsigned char *fecha = sqlite3_column_text(stmt, 1);
-            const unsigned char *camiseta = sqlite3_column_text(stmt, 4);
-            const unsigned char *resultado = sqlite3_column_text(stmt, 5);
-            const unsigned char *comentario = sqlite3_column_text(stmt, 11);
+    if (!stmt) return 1; /* no hay partidos o error silencioso */
 
-            if (nitems >= cap) { cap *= 2; items = (AgendaItem*)realloc(items, sizeof(AgendaItem) * cap); if (!items) break; }
-            AgendaItem *it = &items[nitems++];
-            const char *fecha_s = fecha ? (const char*)fecha : "";
-            it->ts = parse_datetime_ts(fecha_s);
-            strncpy_s(it->tipo, sizeof(it->tipo), "Partido", sizeof(it->tipo)-1);
-            strncpy_s(it->fechastr, sizeof(it->fechastr), fecha_s, sizeof(it->fechastr)-1);
-            char titulo_tmp[128];
-            snprintf(titulo_tmp, sizeof(titulo_tmp), "%s - %s", cancha ? (const char*)cancha : "Cancha", camiseta ? (const char*)camiseta : "");
-            strncpy_s(it->titulo, sizeof(it->titulo), titulo_tmp, sizeof(it->titulo)-1);
-            char detalle_tmp[512];
-            snprintf(detalle_tmp, sizeof(detalle_tmp), "Resultado: %s %s", resultado ? (const char*)resultado : "", comentario ? (const char*)comentario : "");
-            strncpy_s(it->detalle, sizeof(it->detalle), detalle_tmp, sizeof(it->detalle)-1);
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        AgendaItem it;
+        memset(&it, 0, sizeof(it));
+        const unsigned char *cancha = sqlite3_column_text(stmt, 0);
+        const unsigned char *fecha = sqlite3_column_text(stmt, 1);
+        const unsigned char *camiseta = sqlite3_column_text(stmt, 4);
+        const unsigned char *resultado = sqlite3_column_text(stmt, 5);
+        const unsigned char *comentario = sqlite3_column_text(stmt, 11);
+
+        const char *fecha_s = fecha ? (const char*)fecha : "";
+        it.ts = parse_datetime_ts(fecha_s);
+        strncpy_s(it.tipo, sizeof(it.tipo), "Partido", sizeof(it.tipo)-1);
+        strncpy_s(it.fechastr, sizeof(it.fechastr), fecha_s, sizeof(it.fechastr)-1);
+        char titulo_tmp[128];
+        snprintf(titulo_tmp, sizeof(titulo_tmp), "%s - %s",
+                 cancha ? (const char*)cancha : "Cancha",
+                 camiseta ? (const char*)camiseta : "");
+        strncpy_s(it.titulo, sizeof(it.titulo), titulo_tmp, sizeof(it.titulo)-1);
+        char detalle_tmp[512];
+        snprintf(detalle_tmp, sizeof(detalle_tmp), "Resultado: %s %s",
+                 resultado ? (const char*)resultado : "",
+                 comentario ? (const char*)comentario : "");
+        strncpy_s(it.detalle, sizeof(it.detalle), detalle_tmp, sizeof(it.detalle)-1);
+
+        if (!append_agenda_item(items, cap, nitems, &it))
+        {
+            sqlite3_finalize(stmt);
+            mostrar_error_operacion("agenda", "memoria");
+            return 0;
         }
-        sqlite3_finalize(stmt);
     }
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static void mostrar_agenda()
+{
+    size_t cap = 0;
+    size_t nitems = 0;
+    AgendaItem *items = NULL;
+
+    /* Inicialmente reservar una capacidad pequeña; append_agenda_item la aumentará */
+    cap = 16;
+    items = (AgendaItem*)malloc(sizeof(AgendaItem) * cap);
+    if (!items) { mostrar_error_operacion("agenda", "memoria"); return; }
+
+    if (!add_reminders_to_items(&items, &cap, &nitems)) { free(items); return; }
+    if (!add_partidos_to_items(&items, &cap, &nitems)) { free(items); return; }
 
     if (nitems == 0)
     {

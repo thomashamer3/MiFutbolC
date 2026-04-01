@@ -344,7 +344,10 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     }
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_int(stmt, 2, datos->cancha_id);
-    sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
+    /* Convertir fecha a formato de almacenamiento (YYYY-MM-DD HH:MM) */
+    char fecha_storage[64] = {0};
+    convert_display_date_to_storage(fecha, fecha_storage, sizeof(fecha_storage));
+    sqlite3_bind_text(stmt, 3, fecha_storage, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 4, datos->goles);
     sqlite3_bind_int(stmt, 5, datos->asistencias);
     sqlite3_bind_int(stmt, 6, datos->camiseta);
@@ -783,13 +786,16 @@ static void modificar_fecha_hora_partido()
     fgets(hora, sizeof(hora), stdin);
     hora[strcspn(hora, "\n")] = 0;
     snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
+    /* Convertir a formato de almacenamiento antes de actualizar */
+    char fecha_storage[64] = {0};
+    convert_display_date_to_storage(fecha_hora, fecha_storage, sizeof(fecha_storage));
     sqlite3_stmt *stmt;
     if (!preparar_stmt("UPDATE partido SET fecha_hora=? WHERE id=?", &stmt))
     {
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, fecha_hora, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha_storage, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -950,7 +956,10 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
         return;
     }
     sqlite3_bind_int(stmt, 1, datos->cancha_id);
-    sqlite3_bind_text(stmt, 2, fecha_hora, -1, SQLITE_TRANSIENT);
+    /* Asegurar formato de almacenamiento (YYYY-MM-DD HH:MM) */
+    char fecha_storage[64] = {0};
+    convert_display_date_to_storage(fecha_hora, fecha_storage, sizeof(fecha_storage));
+    sqlite3_bind_text(stmt, 2, fecha_storage, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, datos->goles);
     sqlite3_bind_int(stmt, 4, datos->asistencias);
     sqlite3_bind_int(stmt, 5, datos->camiseta);

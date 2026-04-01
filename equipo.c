@@ -390,6 +390,71 @@ int update_player_captain_status(int player_id, int is_captain)
 
 void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros, const int *jugadores_posiciones);
 void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros, int jugador_count);
+
+typedef int (*hay_arquero_cb_t)(void *ctx);
+
+typedef struct { const int *posiciones; int count; } PosicionesCtx;
+
+static int hay_arquero_posiciones(void *ctx)
+{
+    PosicionesCtx const *p = (PosicionesCtx*)ctx;
+    if (!p || !p->posiciones) return 0;
+    for (int i = 0; i < p->count; i++)
+        if (p->posiciones[i] == ARQUERO) return 1;
+    return 0;
+}
+
+static int hay_arquero_en_equipo(void *ctx)
+{
+    Equipo const *e = (Equipo*)ctx;
+    if (!e) return 0;
+    for (int i = 0; i < e->num_jugadores; i++)
+        if (e->jugadores[i].posicion == ARQUERO) return 1;
+    return 0;
+}
+
+static void input_nombre_jugador(char *out, size_t size)
+{
+    do
+    {
+        input_string("Nombre: ", out, size);
+        if (safe_strnlen(out, size) == 0)
+        {
+            printf("El nombre no puede estar vacio. Intente nuevamente.\n");
+        }
+    }
+    while (safe_strnlen(out, size) == 0);
+}
+
+static int seleccionar_posicion_con_check(hay_arquero_cb_t cb, void *ctx)
+{
+    printf("Posicion:\n");
+    printf("1. Arquero\n");
+    printf("2. Defensor\n");
+    printf("3. Mediocampista\n");
+    printf("4. Delantero\n");
+
+    int opcion_posicion = input_int(">");
+    switch (opcion_posicion)
+    {
+    case 1:
+        if (cb && cb(ctx))
+        {
+            printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
+            return -1;
+        }
+        return ARQUERO;
+    case 2:
+        return DEFENSOR;
+    case 3:
+        return MEDIOCAMPISTA;
+    case 4:
+        return DELANTERO;
+    default:
+        printf("Posicion invalida. Se asignara como Delantero.\n");
+        return DELANTERO;
+    }
+}
 /**
  * @brief Cambia el capitan de un equipo en la base de datos
  *
@@ -1499,18 +1564,8 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
 
     Jugador nuevo_jugador;
 
-    // Nombre del jugador
-    char nombre_temp[50];
-    do
-    {
-        input_string("Nombre: ", nombre_temp, sizeof(nombre_temp));
-        if (safe_strnlen(nombre_temp, sizeof(nombre_temp)) == 0)
-        {
-            printf("El nombre no puede estar vacio. Intente nuevamente.\n");
-        }
-    }
-    while (safe_strnlen(nombre_temp, sizeof(nombre_temp)) == 0);
-    snprintf(nuevo_jugador.nombre, sizeof(nuevo_jugador.nombre), "%s", nombre_temp);
+    /* Leer nombre usando helper reutilizable */
+    input_nombre_jugador(nuevo_jugador.nombre, sizeof(nuevo_jugador.nombre));
 
     // Numero del jugador
     int numero_valido = 0;
@@ -1528,38 +1583,11 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
         }
     }
 
-    // Posicion del jugador
-    printf("Posicion:\n");
-    printf("1. Arquero\n");
-    printf("2. Defensor\n");
-    printf("3. Mediocampista\n");
-    printf("4. Delantero\n");
-
-    int opcion_posicion = input_int(">");
-    switch (opcion_posicion)
-    {
-    case 1:
-        if (ya_hay_arquero(jugadores_posiciones, jugador_count, -1))
-        {
-            printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
-            pause_console();
-            return;
-        }
-        nuevo_jugador.posicion = ARQUERO;
-        break;
-    case 2:
-        nuevo_jugador.posicion = DEFENSOR;
-        break;
-    case 3:
-        nuevo_jugador.posicion = MEDIOCAMPISTA;
-        break;
-    case 4:
-        nuevo_jugador.posicion = DELANTERO;
-        break;
-    default:
-        printf("Posicion invalida. Se asignara como Delantero.\n");
-        nuevo_jugador.posicion = DELANTERO;
-    }
+    /* Seleccionar posicion usando helper con callback que revisa posiciones actuales */
+    PosicionesCtx pctx = { jugadores_posiciones, jugador_count };
+    int pos = seleccionar_posicion_con_check(hay_arquero_posiciones, &pctx);
+    if (pos == -1) { pause_console(); return; }
+    nuevo_jugador.posicion = (Posicion)pos;
 
     nuevo_jugador.es_capitan = 0;
 
@@ -1619,18 +1647,8 @@ void agregar_jugador_momentaneo(Equipo *equipo)
 
     Jugador *nuevo_jugador = &equipo->jugadores[equipo->num_jugadores];
 
-    // Nombre del jugador
-    char nombre_temp[50];
-    do
-    {
-        input_string("Nombre: ", nombre_temp, sizeof(nombre_temp));
-        if (safe_strnlen(nombre_temp, sizeof(nombre_temp)) == 0)
-        {
-            printf("El nombre no puede estar vacio. Intente nuevamente.\n");
-        }
-    }
-    while (safe_strnlen(nombre_temp, sizeof(nombre_temp)) == 0);
-    snprintf(nuevo_jugador->nombre, sizeof(nuevo_jugador->nombre), "%s", nombre_temp);
+    /* Leer nombre usando helper reutilizable */
+    input_nombre_jugador(nuevo_jugador->nombre, sizeof(nuevo_jugador->nombre));
 
     // Numero del jugador
     int numero_valido = 0;
@@ -1659,41 +1677,10 @@ void agregar_jugador_momentaneo(Equipo *equipo)
         }
     }
 
-    // Posicion del jugador
-    printf("Posicion:\n");
-    printf("1. Arquero\n");
-    printf("2. Defensor\n");
-    printf("3. Mediocampista\n");
-    printf("4. Delantero\n");
-
-    int opcion_posicion = input_int(">");
-    switch (opcion_posicion)
-    {
-    case 1:
-        for (int i = 0; i < equipo->num_jugadores; i++)
-        {
-            if (equipo->jugadores[i].posicion == ARQUERO)
-            {
-                printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
-                pause_console();
-                return;
-            }
-        }
-        nuevo_jugador->posicion = ARQUERO;
-        break;
-    case 2:
-        nuevo_jugador->posicion = DEFENSOR;
-        break;
-    case 3:
-        nuevo_jugador->posicion = MEDIOCAMPISTA;
-        break;
-    case 4:
-        nuevo_jugador->posicion = DELANTERO;
-        break;
-    default:
-        printf("Posicion invalida. Se asignara como Delantero.\n");
-        nuevo_jugador->posicion = DELANTERO;
-    }
+    /* Seleccionar posicion usando helper con callback que revisa el equipo actual */
+    int pos = seleccionar_posicion_con_check(hay_arquero_en_equipo, equipo);
+    if (pos == -1) { pause_console(); return; }
+    nuevo_jugador->posicion = (Posicion)pos;
 
     nuevo_jugador->es_capitan = 0;
     equipo->num_jugadores++;

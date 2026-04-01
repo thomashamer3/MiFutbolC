@@ -1890,6 +1890,35 @@ static void modificar_item_especifico_transaccion(int id_transaccion)
     printf("Item especifico actualizado exitosamente.\n");
 }
 
+/* Helper: obtener transaccion por ID y llenar estructura TransaccionFinanciera */
+static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera *out)
+{
+    if (!out) return 0;
+    sqlite3_stmt *stmt;
+    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
+    if (!preparar_stmt(sql_obtener, &stmt))
+        return 0;
+    sqlite3_bind_int(stmt, 1, id_transaccion);
+    int found = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        out->id = id_transaccion;
+        strncpy_s(out->fecha, sizeof(out->fecha), (const char *)sqlite3_column_text(stmt, 0), sizeof(out->fecha) - 1);
+        out->tipo = sqlite3_column_int(stmt, 1);
+        out->categoria = sqlite3_column_int(stmt, 2);
+        strncpy_s(out->descripcion, sizeof(out->descripcion), (const char *)sqlite3_column_text(stmt, 3), sizeof(out->descripcion) - 1);
+        out->monto = sqlite3_column_int(stmt, 4);
+        const char *item = (const char *)sqlite3_column_text(stmt, 5);
+        if (item)
+            strncpy_s(out->item_especifico, sizeof(out->item_especifico), item, sizeof(out->item_especifico) - 1);
+        else
+            out->item_especifico[0] = '\0';
+        found = 1;
+    }
+    sqlite3_finalize(stmt);
+    return found;
+}
+
 /**
  * @brief Modificar una transaccion financiera existente
  */
@@ -1948,33 +1977,12 @@ void modificar_transaccion()
         return;
     }
 
-    // Obtener datos actuales
     TransaccionFinanciera transaccion = {0};
-    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
-
-    if (preparar_stmt(sql_obtener, &stmt))
+    if (!obtener_transaccion_por_id(id_transaccion, &transaccion))
     {
-        sqlite3_bind_int(stmt, 1, id_transaccion);
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            transaccion.id = id_transaccion;
-            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha), (const char *)sqlite3_column_text(stmt, 0), sizeof(transaccion.fecha) - 1);
-            transaccion.tipo = sqlite3_column_int(stmt, 1);
-            transaccion.categoria = sqlite3_column_int(stmt, 2);
-            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion), (const char *)sqlite3_column_text(stmt, 3), sizeof(transaccion.descripcion) - 1);
-            transaccion.monto = sqlite3_column_int(stmt, 4);
-            const char *item = (const char *)sqlite3_column_text(stmt, 5);
-            if (item)
-            {
-                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item, sizeof(transaccion.item_especifico) - 1);
-            }
-            else
-            {
-                transaccion.item_especifico[0] = '\0';
-            }
-        }
-        sqlite3_finalize(stmt);
+        printf("No se pudo obtener la transaccion.\n");
+        pause_console();
+        return;
     }
 
     // Mostrar datos actuales y opciones de modificacion

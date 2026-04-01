@@ -482,11 +482,10 @@ static int input_torneo_data(Torneo *torneo)
  * Determina el formato y tipo de torneo basado en la cantidad de equipos.
  * Utiliza logica de rangos para simplificar la seleccion automatica.
  */
-static void determine_formato_torneo(Torneo *torneo)
+/* Helper: mostrar opciones y obtener la opcion segun la cantidad de equipos */
+static int prompt_formato_por_cantidad(int cantidad)
 {
-    int cantidad = torneo->cantidad_equipos;
-    int opcion = 0;
-
+    int opcion = -1;
     if (cantidad >= 4 && cantidad <= 6)
     {
         printf("\nPara 4-6 equipos, seleccione el formato:\n");
@@ -518,14 +517,20 @@ static void determine_formato_torneo(Torneo *torneo)
         printf("2. Eliminacion directa por fases\n");
         opcion = input_int(">");
     }
-    else
+    return opcion;
+}
+
+static void determine_formato_torneo(Torneo *torneo)
+{
+    int cantidad = torneo->cantidad_equipos;
+    int opcion = prompt_formato_por_cantidad(cantidad);
+    if (opcion < 0)
     {
         printf("Cantidad de equipos no valida. Se seleccionara formato por defecto.\n");
         torneo->formato_torneo = ROUND_ROBIN;
         torneo->tipo_torneo = IDA_Y_VUELTA;
         return;
     }
-
     obtener_formato_por_cantidad(opcion, cantidad, &torneo->tipo_torneo, &torneo->formato_torneo);
 }
 
@@ -891,45 +896,12 @@ static void actualizar_equipo_fijo(int torneo_id)
  */
 static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
 {
-    int opcion = 0;
-
-    if (cantidad >= 4 && cantidad <= 6)
-    {
-        printf("\nPara 4-6 equipos, seleccione el formato:\n");
-        printf("1. Round-robin (sistema liga)\n");
-        printf("2. Mini grupo con final\n");
-        opcion = input_int(">");
-    }
-    else if (cantidad >= 7 && cantidad <= 12)
-    {
-        printf("\nPara 7-12 equipos, seleccione el formato:\n");
-        printf("1. Liga simple\n");
-        printf("2. Liga doble\n");
-        printf("3. Grupos + final\n");
-        printf("4. Copa simple\n");
-        opcion = input_int(">");
-    }
-    else if (cantidad >= 13 && cantidad <= 20)
-    {
-        printf("\nPara 13-20 equipos, seleccione el formato:\n");
-        printf("1. Grupos (4-5 grupos) + eliminacion\n");
-        printf("2. Copa + repechaje\n");
-        printf("3. Liga grande\n");
-        opcion = input_int(">");
-    }
-    else if (cantidad >= 21)
-    {
-        printf("\nPara 21 o mas equipos, seleccione el formato:\n");
-        printf("1. Multiples grupos\n");
-        printf("2. Eliminacion directa por fases\n");
-        opcion = input_int(">");
-    }
-    else
+    int opcion = prompt_formato_por_cantidad(cantidad);
+    if (opcion < 0)
     {
         printf("Cantidad de equipos no valida. No se actualizara el formato.\n");
         return;
     }
-
     TipoTorneos tipo;
     FormatoTorneos formato;
     obtener_formato_por_cantidad(opcion, cantidad, &tipo, &formato);
