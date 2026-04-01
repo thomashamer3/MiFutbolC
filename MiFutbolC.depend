@@ -105,7 +105,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1775070785 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1775072950 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -561,7 +561,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1775072723 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1775073825 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -2411,7 +2411,7 @@
 
 1774970153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.h
 
-1775072716 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
+1775073886 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
 	"recordatorios.h"
 	"utils.h"
 	"menu.h"

@@ -870,14 +870,14 @@ void menu_recordatorios(void)
 {
     MenuItem items[] =
     {
-        {1, "Listar recordatorios", accion_listar_recordatorios},
-        {2, "Agregar recordatorio", accion_agregar_recordatorio},
-        {3, "Editar recordatorio", accion_editar_recordatorio},
-        {4, "Eliminar recordatorio", accion_eliminar_recordatorio},
-        {5, "Filtrar por tematica", accion_filtrar_recordatorios},
-        {6, "Exportar recordatorios", accion_exportar_recordatorios},
-        {7, "Importar recordatorios", accion_importar_recordatorios},
-        {8, "Agenda", accion_mostrar_agenda},
+        {1, "Listar recordatorios", &accion_listar_recordatorios},
+        {2, "Agregar recordatorio", &accion_agregar_recordatorio},
+        {3, "Editar recordatorio", &accion_editar_recordatorio},
+        {4, "Eliminar recordatorio", &accion_eliminar_recordatorio},
+        {5, "Filtrar por tematica", &accion_filtrar_recordatorios},
+        {6, "Exportar recordatorios", &accion_exportar_recordatorios},
+        {7, "Importar recordatorios", &accion_importar_recordatorios},
+        {8, "Agenda", &accion_mostrar_agenda},
         {0, "Volver", NULL}
     };
 

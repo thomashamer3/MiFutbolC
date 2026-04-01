@@ -1932,8 +1932,8 @@ void crear_equipo_momentaneo()
 {
     MenuItem items[] =
     {
-        {1, "Un solo equipo", accion_crear_un_equipo_momentaneo},
-        {2, "Dos equipos (Local y Visitante)", accion_crear_dos_equipos_momentaneos},
+        {1, "Un solo equipo", &accion_crear_un_equipo_momentaneo},
+        {2, "Dos equipos (Local y Visitante)", &accion_crear_dos_equipos_momentaneos},
         {0, "Volver", NULL}
     };
 
@@ -2401,8 +2401,8 @@ void crear_equipo()
 {
     MenuItem items[] =
     {
-        {1, "Fijo", accion_crear_equipo_fijo},
-        {2, "Momentaneo", accion_crear_equipo_momentaneo},
+        {1, "Fijo", &accion_crear_equipo_fijo},
+        {2, "Momentaneo", &accion_crear_equipo_momentaneo},
         {0, "Volver", NULL}
     };
 
