@@ -92,6 +92,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="camiseta.h" />
+		<Unit filename="colecciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="colecciones.h" />
 		<Unit filename="cancha.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -34,6 +34,7 @@
 #include "bienestar.h"
 #include "carrera.h"
 #include "recordatorios.h"
+#include "colecciones.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -115,6 +116,12 @@ static void abrir_menu_carrera(void)
     menu_carrera_futbolistica();
 }
 
+static void abrir_menu_colecciones(void)
+{
+    app_log_event("COLECCIONES", "Ingreso al modulo Colecciones e Inventario");
+    menu_colecciones_inventario();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Camisetas", &menu_camisetas},
@@ -132,6 +139,7 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {14, "Carrera Futbolistica", &abrir_menu_carrera},
     {15, "Recordatorios", &menu_recordatorios},
     {16, "Ajustes", &abrir_menu_settings},
+    {17, "Colecciones e Inventario", &abrir_menu_colecciones},
     {0, "Salir", NULL}
 };
 

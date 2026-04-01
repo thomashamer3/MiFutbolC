@@ -24,6 +24,7 @@ SRC = \
   bienestar.c \
   cJSON.c \
   camiseta.c \
+  colecciones.c \
   cancha.c \
   db.c \
   estadisticas.c \
