@@ -336,6 +336,31 @@ void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombre
 // Prototipo para seleccion de posicion (evita declaracion implicita al usarla antes)
 Posicion select_posicion();
 
+static int procesar_opcion_gestion_equipo(Equipo *equipo, int opcion)
+{
+    switch (opcion)
+    {
+    case 1:
+        modificar_jugador_momentaneo(equipo);
+        return 0;
+    case 2:
+        agregar_jugador_momentaneo(equipo);
+        return 0;
+    case 3:
+        eliminar_jugador_momentaneo(equipo);
+        return 0;
+    case 4:
+        cambiar_capitan_momentaneo(equipo);
+        return 0;
+    case 5:
+        return 1;
+    default:
+        printf("Opcion invalida.\n");
+        pause_console();
+        return 0;
+    }
+}
+
 /**
  * @brief Actualiza el nombre de un jugador en la base de datos
  *
@@ -413,11 +438,22 @@ static int hay_arquero_en_equipo(void *ctx)
     return 0;
 }
 
+static int size_t_to_int_checked(size_t value)
+{
+    if (value > (size_t)INT_MAX)
+    {
+        return INT_MAX;
+    }
+    return (int)value;
+}
+
 static void input_nombre_jugador(char *out, size_t size)
 {
+    int input_size = size_t_to_int_checked(size);
+
     do
     {
-        input_string("Nombre: ", out, size);
+        input_string("Nombre: ", out, input_size);
         if (safe_strnlen(out, size) == 0)
         {
             printf("El nombre no puede estar vacio. Intente nuevamente.\n");
@@ -1938,38 +1974,14 @@ void gestionar_equipo_momentaneo(Equipo *equipo)
         printf("5. Finalizar\n");
 
         int opcion = input_int("Seleccione una opcion: ");
-
-        switch (opcion)
-        {
-        case 1:
-            modificar_jugador_momentaneo(equipo);
-            break;
-        case 2:
-            agregar_jugador_momentaneo(equipo);
-            break;
-        case 3:
-            eliminar_jugador_momentaneo(equipo);
-            break;
-        case 4:
-            cambiar_capitan_momentaneo(equipo);
-            break;
-        case 5:
-            salir = 1;
-            break;
-        default:
-            printf("Opcion invalida.\n");
-            pause_console();
-        }
+        salir = procesar_opcion_gestion_equipo(equipo, opcion);
     }
 
     printf("Este equipo es momentaneo y no se guardara.\n");
     pause_console();
 }
 
-/**
- * @brief Modifica un jugador existente en un equipo momentaneo
- */
-void modificar_jugador_momentaneo(Equipo *equipo)
+static int seleccionar_jugador_momentaneo_para_modificar(const Equipo *equipo)
 {
     printf("\nSeleccione el jugador a modificar (1-%d):\n", equipo->num_jugadores);
     for (int i = 0; i < equipo->num_jugadores; i++)
@@ -1982,8 +1994,97 @@ void modificar_jugador_momentaneo(Equipo *equipo)
     {
         printf("Seleccion invalida.\n");
         pause_console();
-        return;
+        return -1;
     }
+
+    return jugador_idx;
+}
+
+static int actualizar_posicion_jugador_momentaneo(Equipo *equipo, int jugador_idx)
+{
+    Jugador *jugador = &equipo->jugadores[jugador_idx];
+
+    printf("Seleccione nueva posicion:\n");
+    printf("1. Arquero\n");
+    printf("2. Defensor\n");
+    printf("3. Mediocampista\n");
+    printf("4. Delantero\n");
+
+    int opcion_posicion = input_int(">");
+    switch (opcion_posicion)
+    {
+    case 1:
+        if (ya_hay_arquero_en_equipo(equipo, equipo->num_jugadores, jugador_idx))
+        {
+            printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
+            pause_console();
+            return -1;
+        }
+        jugador->posicion = ARQUERO;
+        break;
+    case 2:
+        jugador->posicion = DEFENSOR;
+        break;
+    case 3:
+        jugador->posicion = MEDIOCAMPISTA;
+        break;
+    case 4:
+        jugador->posicion = DELANTERO;
+        break;
+    default:
+        printf("Posicion invalida.\n");
+    }
+
+    printf("Posicion actualizada.\n");
+    return 1;
+}
+
+static int procesar_campo_jugador_momentaneo(Equipo *equipo, int jugador_idx, int campo)
+{
+    Jugador *jugador = &equipo->jugadores[jugador_idx];
+
+    switch (campo)
+    {
+    case 1:
+    {
+        char nuevo_nombre[50];
+        input_string("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
+        snprintf(jugador->nombre, sizeof(jugador->nombre), "%s", nuevo_nombre);
+        printf("Nombre actualizado.\n");
+        return 1;
+    }
+    case 2:
+    {
+        int nuevo_numero = input_int("Nuevo numero: ");
+        if (numero_repetido_en_equipo(equipo, equipo->num_jugadores, nuevo_numero, jugador_idx))
+        {
+            printf("El numero ya esta en uso.\n");
+        }
+        else
+        {
+            jugador->numero = nuevo_numero;
+            printf("Numero actualizado.\n");
+        }
+        return 1;
+    }
+    case 3:
+        return actualizar_posicion_jugador_momentaneo(equipo, jugador_idx);
+    case 4:
+        return 0;
+    default:
+        printf("Opcion invalida.\n");
+        return 1;
+    }
+}
+
+/**
+ * @brief Modifica un jugador existente en un equipo momentaneo
+ */
+void modificar_jugador_momentaneo(Equipo *equipo)
+{
+    int jugador_idx = seleccionar_jugador_momentaneo_para_modificar(equipo);
+    if (jugador_idx < 0)
+        return;
 
     Jugador *jugador = &equipo->jugadores[jugador_idx];
 
@@ -1995,84 +2096,11 @@ void modificar_jugador_momentaneo(Equipo *equipo)
 
     int campo = input_int("Seleccione el campo a modificar: ");
 
-    switch (campo)
-    {
-    case 1:
-    {
-        char nuevo_nombre[50];
-        input_string("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
-        snprintf(jugador->nombre, sizeof(jugador->nombre), "%s", nuevo_nombre);
-        printf("Nombre actualizado.\n");
-        break;
-    }
-    case 2:
-    {
-        int nuevo_numero = input_int("Nuevo numero: ");
-
-        // Verificar si el numero ya existe
-        int numero_existe = 0;
-        for (int i = 0; i < equipo->num_jugadores; i++)
-        {
-            if (i != jugador_idx && equipo->jugadores[i].numero == nuevo_numero)
-            {
-                numero_existe = 1;
-                break;
-            }
-        }
-
-        if (numero_existe)
-        {
-            printf("El numero ya esta en uso.\n");
-        }
-        else
-        {
-            jugador->numero = nuevo_numero;
-            printf("Numero actualizado.\n");
-        }
-        break;
-    }
-    case 3:
-    {
-        printf("Seleccione nueva posicion:\n");
-        printf("1. Arquero\n");
-        printf("2. Defensor\n");
-        printf("3. Mediocampista\n");
-        printf("4. Delantero\n");
-
-        int opcion_posicion = input_int(">");
-        switch (opcion_posicion)
-        {
-        case 1:
-            if (ya_hay_arquero_en_equipo(equipo, equipo->num_jugadores, jugador_idx))
-            {
-                printf("Ya hay un arquero en este equipo. Solo se permite uno.\n");
-                pause_console();
-                return;
-            }
-            jugador->posicion = ARQUERO;
-            break;
-        case 2:
-            jugador->posicion = DEFENSOR;
-            break;
-        case 3:
-            jugador->posicion = MEDIOCAMPISTA;
-            break;
-        case 4:
-            jugador->posicion = DELANTERO;
-            break;
-        default:
-            printf("Posicion invalida.\n");
-        }
-        printf("Posicion actualizada.\n");
-        break;
-    }
-    case 4:
+    int resultado = procesar_campo_jugador_momentaneo(equipo, jugador_idx, campo);
+    if (resultado == 0)
         return;
-    default:
-        printf("Opcion invalida.\n");
-    }
-
-    pause_console();
+    if (resultado > 0)
+        pause_console();
 }
 
 /**
@@ -2319,28 +2347,7 @@ void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
         printf("5. Volver\n");
 
         int opcion = input_int("Seleccione una opcion: ");
-
-        switch (opcion)
-        {
-        case 1:
-            modificar_jugador_momentaneo(equipo);
-            break;
-        case 2:
-            agregar_jugador_momentaneo(equipo);
-            break;
-        case 3:
-            eliminar_jugador_momentaneo(equipo);
-            break;
-        case 4:
-            cambiar_capitan_momentaneo(equipo);
-            break;
-        case 5:
-            salir = 1;
-            break;
-        default:
-            printf("Opcion invalida.\n");
-            pause_console();
-        }
+        salir = procesar_opcion_gestion_equipo(equipo, opcion);
     }
 }
 

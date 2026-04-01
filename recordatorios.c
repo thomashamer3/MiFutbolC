@@ -19,6 +19,20 @@ typedef struct {
     char tematica[MAX_TEMATICA];
 } Reminder;
 
+static FILE *open_file_portable(const char *path, const char *mode)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+    FILE *f = NULL;
+    if (fopen_s(&f, path, mode) != 0)
+    {
+        return NULL;
+    }
+    return f;
+#else
+    return fopen(path, mode);
+#endif
+}
+
 static size_t safe_strlen_s(const char *s, size_t max_len)
 {
     size_t i = 0;
@@ -27,10 +41,9 @@ static size_t safe_strlen_s(const char *s, size_t max_len)
     return i;
 }
 
-static Reminder *load_reminders(int *out_count)
+static char *read_text_file(const char *path)
 {
-    *out_count = 0;
-    FILE *f = fopen(STORAGE_PATH, "rb");
+    FILE *f = open_file_portable(path, "rb");
     if (!f)
         return NULL;
 
@@ -49,13 +62,76 @@ static Reminder *load_reminders(int *out_count)
         fclose(f);
         return NULL;
     }
+
     size_t read = fread(buf, 1, (size_t)len, f);
-    /* Asegurar terminador usando la longitud real leída */
+    fclose(f);
+
     if (read > 0 && read <= (size_t)len)
         buf[read] = '\0';
     else
         buf[0] = '\0';
-    fclose(f);
+
+    return buf;
+}
+
+static void reminder_from_json(Reminder *dst, cJSON const *it, int fallback_id)
+{
+    cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
+    cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
+    cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
+    cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
+
+    dst->id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : fallback_id;
+    strncpy_s(dst->fecha, MAX_FECHA, jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", MAX_FECHA - 1);
+    dst->fecha[MAX_FECHA - 1] = '\0';
+    strncpy_s(dst->nota, MAX_NOTA, jnota && cJSON_IsString(jnota) ? jnota->valuestring : "", MAX_NOTA - 1);
+    dst->nota[MAX_NOTA - 1] = '\0';
+    strncpy_s(dst->tematica, MAX_TEMATICA, jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", MAX_TEMATICA - 1);
+    dst->tematica[MAX_TEMATICA - 1] = '\0';
+}
+
+static Reminder *parse_reminders_array(const cJSON *root, int *out_count)
+{
+    int count = cJSON_GetArraySize(root);
+    Reminder *arr = (Reminder*)calloc((size_t)count, sizeof(Reminder));
+    if (!arr)
+    {
+        return NULL;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        cJSON const *it = cJSON_GetArrayItem(root, i);
+        if (it && cJSON_IsObject(it))
+        {
+            reminder_from_json(&arr[i], it, i + 1);
+        }
+        else
+        {
+            arr[i].id = i + 1;
+            arr[i].fecha[0] = '\0';
+            arr[i].nota[0] = '\0';
+            arr[i].tematica[0] = '\0';
+        }
+    }
+
+    *out_count = count;
+    return arr;
+}
+
+static Reminder *load_reminders_from_path(const char *path, int *out_count)
+{
+    if (!out_count || !path)
+    {
+        return NULL;
+    }
+
+    *out_count = 0;
+    char *buf = read_text_file(path);
+    if (!buf)
+    {
+        return NULL;
+    }
 
     cJSON *root = cJSON_Parse(buf);
     free(buf);
@@ -65,34 +141,15 @@ static Reminder *load_reminders(int *out_count)
         return NULL;
     }
 
-    int count = cJSON_GetArraySize(root);
-    Reminder *arr = (Reminder*)malloc(sizeof(Reminder) * (size_t)count);
-    if (!arr)
-    {
-        cJSON_Delete(root);
-        return NULL;
-    }
-
-    for (int i = 0; i < count; i++)
-    {
-        cJSON const *it = cJSON_GetArrayItem(root, i);
-        cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
-        cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-        cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-        cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
-
-        arr[i].id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : (i + 1);
-        strncpy_s(arr[i].fecha, MAX_FECHA, jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", MAX_FECHA - 1);
-        arr[i].fecha[MAX_FECHA - 1] = '\0';
-        strncpy_s(arr[i].nota, MAX_NOTA, jnota && cJSON_IsString(jnota) ? jnota->valuestring : "", MAX_NOTA - 1);
-        arr[i].nota[MAX_NOTA - 1] = '\0';
-        strncpy_s(arr[i].tematica, MAX_TEMATICA, jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", MAX_TEMATICA - 1);
-        arr[i].tematica[MAX_TEMATICA - 1] = '\0';
-    }
+    Reminder *arr = parse_reminders_array(root, out_count);
 
     cJSON_Delete(root);
-    *out_count = count;
     return arr;
+}
+
+static Reminder *load_reminders(int *out_count)
+{
+    return load_reminders_from_path(STORAGE_PATH, out_count);
 }
 
 static int write_reminders_to_file(const Reminder *arr, int count, const char *path)
@@ -103,12 +160,28 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
 
     for (int i = 0; i < count; i++)
     {
+        long long id_value = 0;
+        const char *fecha = "";
+        const char *nota = "";
+        const char *tematica = "";
+
+        if (arr)
+        {
+            Reminder current;
+            memset(&current, 0, sizeof(current));
+            memcpy(&current, &arr[i], sizeof(current));
+            id_value = current.id;
+            fecha = current.fecha;
+            nota = current.nota;
+            tematica = current.tematica;
+        }
+
         cJSON *obj = cJSON_CreateObject();
         if (!obj) continue;
-        cJSON_AddNumberToObject(obj, "id", (double)arr[i].id);
-        cJSON_AddStringToObject(obj, "fecha", arr[i].fecha);
-        cJSON_AddStringToObject(obj, "nota", arr[i].nota);
-        cJSON_AddStringToObject(obj, "tematica", arr[i].tematica);
+        cJSON_AddNumberToObject(obj, "id", (double)id_value);
+        cJSON_AddStringToObject(obj, "fecha", fecha);
+        cJSON_AddStringToObject(obj, "nota", nota);
+        cJSON_AddStringToObject(obj, "tematica", tematica);
         cJSON_AddItemToArray(root, obj);
     }
 
@@ -116,7 +189,7 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
     cJSON_Delete(root);
     if (!out) return 0;
 
-    FILE *f = fopen(path, "wb");
+    FILE *f = open_file_portable(path, "wb");
     if (!f)
     {
         free(out);
@@ -137,69 +210,7 @@ static int save_reminders(const Reminder *arr, int count)
 
 static Reminder *load_reminders_from_file(const char *path, int *out_count)
 {
-    *out_count = 0;
-    FILE *f = fopen(path, "rb");
-    if (!f)
-        return NULL;
-
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (len <= 0)
-    {
-        fclose(f);
-        return NULL;
-    }
-
-    char *buf = (char*)malloc((size_t)len + 1);
-    if (!buf)
-    {
-        fclose(f);
-        return NULL;
-    }
-    size_t read = fread(buf, 1, (size_t)len, f);
-    if (read > 0 && read <= (size_t)len)
-        buf[read] = '\0';
-    else
-        buf[0] = '\0';
-    fclose(f);
-
-    cJSON *root = cJSON_Parse(buf);
-    free(buf);
-    if (!root || !cJSON_IsArray(root))
-    {
-        if (root) cJSON_Delete(root);
-        return NULL;
-    }
-
-    int count = cJSON_GetArraySize(root);
-    Reminder *arr = (Reminder*)malloc(sizeof(Reminder) * (size_t)count);
-    if (!arr)
-    {
-        cJSON_Delete(root);
-        return NULL;
-    }
-
-    for (int i = 0; i < count; i++)
-    {
-        cJSON const *it = cJSON_GetArrayItem(root, i);
-        cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
-        cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-        cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-        cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
-
-        arr[i].id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : (i + 1);
-        strncpy_s(arr[i].fecha, MAX_FECHA, jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", MAX_FECHA - 1);
-        arr[i].fecha[MAX_FECHA - 1] = '\0';
-        strncpy_s(arr[i].nota, MAX_NOTA, jnota && cJSON_IsString(jnota) ? jnota->valuestring : "", MAX_NOTA - 1);
-        arr[i].nota[MAX_NOTA - 1] = '\0';
-        strncpy_s(arr[i].tematica, MAX_TEMATICA, jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", MAX_TEMATICA - 1);
-        arr[i].tematica[MAX_TEMATICA - 1] = '\0';
-    }
-
-    cJSON_Delete(root);
-    *out_count = count;
-    return arr;
+    return load_reminders_from_path(path, out_count);
 }
 
 static long long obtener_siguiente_id_local(const Reminder *arr, int count)
@@ -531,7 +542,12 @@ static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm)
     int H=0;
     int M=0;
     /* Intentar formato de almacenamiento: YYYY-MM-DD HH:MM */
-    int parts = sscanf(s, "%4d-%2d-%2d %2d:%2d", &y, &m, &d, &H, &M);
+    int parts;
+#if defined(_WIN32) && defined(_MSC_VER)
+    parts = sscanf_s(s, "%4d-%2d-%2d %2d:%2d", &y, &m, &d, &H, &M);
+#else
+    parts = sscanf(s, "%4d-%2d-%2d %2d:%2d", &y, &m, &d, &H, &M);
+#endif
     if (parts >= 3)
     {
         memset(out_tm, 0, sizeof(*out_tm));
@@ -546,7 +562,11 @@ static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm)
     }
 
     /* Fallback: aceptar formato dd/mm/YYYY HH:MM (por compatibilidad con JSON viejo) */
+#if defined(_WIN32) && defined(_MSC_VER)
+    parts = sscanf_s(s, "%2d/%2d/%4d %2d:%2d", &d, &m, &y, &H, &M);
+#else
     parts = sscanf(s, "%2d/%2d/%4d %2d:%2d", &d, &m, &y, &H, &M);
+#endif
     if (parts >= 3)
     {
         memset(out_tm, 0, sizeof(*out_tm));

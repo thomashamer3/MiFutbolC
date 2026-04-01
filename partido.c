@@ -228,6 +228,52 @@ static void listar_canchas_disponibles()
     sqlite3_finalize(stmt_canchas);
 }
 
+static void inicializar_datos_partido(DatosPartido *datos)
+{
+    memset(datos, 0, sizeof(*datos));
+    strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
+}
+
+static int pedir_id_existente(const char *prompt, const char *tabla,
+                              const char *mensaje_error, int permite_cancelar)
+{
+    while (1)
+    {
+        int id = input_int(prompt);
+        if (permite_cancelar && id == 0)
+        {
+            return 0;
+        }
+
+        if (existe_id(tabla, id))
+        {
+            return id;
+        }
+
+        printf("%s\n", mensaje_error);
+    }
+}
+
+static int pedir_entero_minimo(const char *prompt_inicial, int minimo, const char *prompt_error)
+{
+    int valor = input_int(prompt_inicial);
+    while (valor < minimo)
+    {
+        valor = input_int(prompt_error);
+    }
+    return valor;
+}
+
+static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max, const char *prompt_error)
+{
+    int valor = input_int(prompt_inicial);
+    while (valor < min || valor > max)
+    {
+        valor = input_int(prompt_error);
+    }
+    return valor;
+}
+
 /**
  * @brief Recopila todos los datos necesarios para un partido desde el usuario
  *
@@ -239,85 +285,53 @@ static void listar_canchas_disponibles()
  */
 static int recopilar_datos_partido(DatosPartido *datos)
 {
-    // Initialize all fields to safe default values
-    datos->cancha_id = 0;
-    datos->goles = 0;
-    datos->asistencias = 0;
-    datos->camiseta = 0;
-    datos->resultado = 0;
-    datos->rendimiento_general = 0;
-    datos->cansancio = 0;
-    datos->estado_animo = 0;
-    datos->clima = 0;
-    datos->dia = 0;
-    datos->precio = 0;
-    strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
-
-    while (1)
+    if (!datos)
     {
-        datos->cancha_id = input_int("ID Cancha, (0 para Cancelar): ");
-        if (datos->cancha_id == 0)
-            return 0;
-        if (existe_id("cancha", datos->cancha_id))
-            break;
-        printf("La cancha no existe. Intente nuevamente.\n");
+        return 0;
     }
 
-    datos->goles = input_int("Goles: ");
-    while (datos->goles < 0)
+    inicializar_datos_partido(datos);
+
+    datos->cancha_id = pedir_id_existente("ID Cancha, (0 para Cancelar): ",
+                                          "cancha",
+                                          "La cancha no existe. Intente nuevamente.",
+                                          1);
+    if (datos->cancha_id == 0)
     {
-        datos->goles = input_int("Goles invalidos. Ingrese 0 o mas: ");
+        return 0;
     }
 
-    datos->asistencias = input_int("Asistencias: ");
-    while (datos->asistencias < 0)
-    {
-        datos->asistencias = input_int("Asistencias invalidas. Ingrese 0 o mas: ");
-    }
-    datos->resultado = input_int("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (datos->resultado < 1 || datos->resultado > 3)
-    {
-        datos->resultado = input_int("Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
-    }
+    datos->goles = pedir_entero_minimo("Goles: ", 0,
+                                       "Goles invalidos. Ingrese 0 o mas: ");
+    datos->asistencias = pedir_entero_minimo("Asistencias: ", 0,
+                                             "Asistencias invalidas. Ingrese 0 o mas: ");
+    datos->resultado = pedir_entero_en_rango("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
+                                             1, 3,
+                                             "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+
     listar_camisetas();
-    while (1)
-    {
-        datos->camiseta = input_int("ID Camiseta: ");
-        if (existe_id("camiseta", datos->camiseta))
-            break;
-        printf("La camiseta no existe. Intente nuevamente.\n");
-    }
-    datos->rendimiento_general = input_int("Rendimiento general (1-10): ");
-    while (datos->rendimiento_general < 1 || datos->rendimiento_general > 10)
-    {
-        datos->rendimiento_general = input_int("Rendimiento invalido. Ingrese entre 1 y 10: ");
-    }
-    datos->cansancio = input_int("Cansancio (1-10): ");
-    while (datos->cansancio < 1 || datos->cansancio > 10)
-    {
-        datos->cansancio = input_int("Cansancio invalido. Ingrese entre 1 y 10:  ");
-    }
-    datos->estado_animo = input_int("Estado de Animo (1-10): ");
-    while (datos->estado_animo < 1 || datos->estado_animo > 10)
-    {
-        datos->estado_animo = input_int("Estado de Animo invalido. Ingrese entre 1 y 10: ");
-    }
+    datos->camiseta = pedir_id_existente("ID Camiseta: ",
+                                         "camiseta",
+                                         "La camiseta no existe. Intente nuevamente.",
+                                         0);
+    datos->rendimiento_general = pedir_entero_en_rango("Rendimiento general (1-10): ",
+                                                       1, 10,
+                                                       "Rendimiento invalido. Ingrese entre 1 y 10: ");
+    datos->cansancio = pedir_entero_en_rango("Cansancio (1-10): ",
+                                             1, 10,
+                                             "Cansancio invalido. Ingrese entre 1 y 10:  ");
+    datos->estado_animo = pedir_entero_en_rango("Estado de Animo (1-10): ",
+                                                1, 10,
+                                                "Estado de Animo invalido. Ingrese entre 1 y 10: ");
     input_string("Comentario personal: ", datos->comentario_personal, 256);
-    datos->clima = input_int("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):");
-    while (datos->clima < 1 || datos->clima > 6)
-    {
-        datos->clima = input_int("Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    }
-    datos->dia = input_int("Dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (datos->dia < 1 || datos->dia > 3)
-    {
-        datos->dia = input_int("Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
-    }
-    datos->precio = input_int("Precio del partido: ");
-    while (datos->precio < 0)
-    {
-        datos->precio = input_int("Precio invalido. Ingrese 0 o mas: ");
-    }
+    datos->clima = pedir_entero_en_rango("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):",
+                                         1, 6,
+                                         "Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
+    datos->dia = pedir_entero_en_rango("Dia (1=Dia, 2=Tarde, 3=Noche): ",
+                                       1, 3,
+                                       "Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
+    datos->precio = pedir_entero_minimo("Precio del partido: ", 0,
+                                        "Precio invalido. Ingrese 0 o mas: ");
 
     return 1;
 }
@@ -895,13 +909,22 @@ static void modificar_precio_partido()
  * validando cada entrada para asegurar consistencia de datos.
  *
  * @param datos Puntero a la estructura DatosPartido donde almacenar los datos
+ * @return 1 si se recopilaron datos validos, 0 si hubo validacion fallida
  */
-static void recopilar_datos_completos_partido(DatosPartido *datos)
+static int recopilar_datos_completos_partido(DatosPartido *datos)
 {
+    if (!datos)
+        return 0;
+
+    memset(datos, 0, sizeof(*datos));
+
     listar_canchas_disponibles();
     datos->cancha_id = input_int("Nuevo ID Cancha: ");
     if (!existe_id("cancha", datos->cancha_id))
-        return;
+    {
+        printf("La cancha no existe\n");
+        return 0;
+    }
     char fecha[20];
     char hora[10];
     input_date("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, 20);
@@ -919,7 +942,7 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
     if (!existe_id("camiseta", datos->camiseta))
     {
         printf("La camiseta no existe\n");
-        return;
+        return 0;
     }
     datos->clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
     while (datos->clima < 1 || datos->clima > 6)
@@ -932,6 +955,8 @@ static void recopilar_datos_completos_partido(DatosPartido *datos)
         datos->dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
     }
     datos->precio = input_int("Nuevo precio del partido: ");
+
+    return 1;
 }
 
 /**
@@ -983,7 +1008,11 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
 static void modificar_todo_partido()
 {
     DatosPartido datos;
-    recopilar_datos_completos_partido(&datos);
+    if (!recopilar_datos_completos_partido(&datos))
+    {
+        pause_console();
+        return;
+    }
     actualizar_partido_completo(&datos, datos.comentario_personal);
 }
 /**
@@ -1936,6 +1965,37 @@ static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
     return 0;
 }
 
+static int tactica_borrar(const char *args, char grid[TACTIC_H][TACTIC_W + 1],
+                         char *grid_text, size_t grid_text_size)
+{
+    int x = -1;
+    int y = -1;
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(args, "%d %d", &x, &y) == 2)
+#else
+    if (sscanf(args, "%d %d", &x, &y) == 2)
+#endif
+    {
+        if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
+        {
+            grid[y][x] = '.';
+            tactica_build_grid_string(grid, grid_text, grid_text_size);
+        }
+        else
+        {
+            ui_printf("Fuera de rango.\n");
+            pause_console();
+        }
+    }
+    else
+    {
+        ui_printf("Formato: d Col Fila (ej: d 10 5)\n");
+        pause_console();
+    }
+
+    return 0;
+}
+
 static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC_W + 1], char *grid_text,
                                     size_t grid_text_size, int partido_id, const char *nombre)
 {
@@ -1969,33 +2029,7 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
 
     case 'd':
     case 'D':
-    {
-        int x = -1;
-        int y = -1;
-#if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(line + 1, "%d %d", &x, &y) == 2)
-#else
-        if (sscanf(line + 1, "%d %d", &x, &y) == 2)
-#endif
-        {
-            if (x >= 0 && x < TACTIC_W && y >= 0 && y < TACTIC_H)
-            {
-                grid[y][x] = '.';
-                tactica_build_grid_string(grid, grid_text, grid_text_size);
-            }
-            else
-            {
-                ui_printf("Fuera de rango.\n");
-                pause_console();
-            }
-        }
-        else
-        {
-            ui_printf("Formato: d Col Fila (ej: d 10 5)\n");
-            pause_console();
-        }
-        return 0;
-    }
+        return tactica_borrar(line + 1, grid, grid_text, grid_text_size);
 
     default:
         if (isdigit((unsigned char)cmd))

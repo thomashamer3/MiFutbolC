@@ -1652,6 +1652,87 @@ void importar_camisetas_html()
            count);
 }
 
+typedef struct
+{
+    char cancha[256];
+    char fecha[256];
+    char camiseta[256];
+    char resultado_str[32];
+    char clima_str[32];
+    char dia_str[32];
+    char comentario[512];
+    int goles;
+    int asistencias;
+    int rendimiento_general;
+    int cansancio;
+    int estado_animo;
+} PartidoHtmlRowData;
+
+static int extraer_siguiente_td_html(char **ptr, char **td_value)
+{
+    if (!ptr || !*ptr || !td_value)
+        return 0;
+
+    char *td = strstr(*ptr, "<td>");
+    if (!td)
+        return 0;
+    td += 4;
+
+    char *end = strstr(td, "</td>");
+    if (!end)
+        return 0;
+
+    *end = '\0';
+    *td_value = td;
+    *ptr = end + 5;
+    return 1;
+}
+
+static void asignar_celda_partido_html(PartidoHtmlRowData *data, int idx, const char *value)
+{
+    switch (idx)
+    {
+    case 0:
+        strcpy_s(data->cancha, sizeof(data->cancha), value);
+        break;
+    case 1:
+        strcpy_s(data->fecha, sizeof(data->fecha), value);
+        break;
+    case 2:
+        data->goles = atoi(value);
+        break;
+    case 3:
+        data->asistencias = atoi(value);
+        break;
+    case 4:
+        strcpy_s(data->camiseta, sizeof(data->camiseta), value);
+        break;
+    case 5:
+        strcpy_s(data->resultado_str, sizeof(data->resultado_str), value);
+        break;
+    case 6:
+        strcpy_s(data->clima_str, sizeof(data->clima_str), value);
+        break;
+    case 7:
+        strcpy_s(data->dia_str, sizeof(data->dia_str), value);
+        break;
+    case 8:
+        data->rendimiento_general = atoi(value);
+        break;
+    case 9:
+        data->cansancio = atoi(value);
+        break;
+    case 10:
+        data->estado_animo = atoi(value);
+        break;
+    case 11:
+        strcpy_s(data->comentario, sizeof(data->comentario), value);
+        break;
+    default:
+        break;
+    }
+}
+
 /**
  * @brief Procesa una fila de partido desde HTML y la inserta en la base de
  * datos.
@@ -1661,63 +1742,24 @@ void importar_camisetas_html()
  */
 static int procesar_partido_html_row(char **ptr)
 {
-    char cancha[256];
-    char fecha[256];
-    char camiseta[256];
-    char resultado_str[32];
-    char clima_str[32];
-    char dia_str[32];
-    char comentario[512];
-    int goles = 0;
-    int asistencias = 0;
-    int rendimiento_general = 0;
-    int cansancio = 0;
-    int estado_animo = 0;
+    PartidoHtmlRowData data;
+    memset(&data, 0, sizeof(data));
 
     // Extraer celdas
     for (int i = 0; i < 12; i++)
     {
-        char const *td = strstr(*ptr, "<td>");
-        if (!td)
+        char *td = NULL;
+        if (!extraer_siguiente_td_html(ptr, &td))
             return 0;
-        td += 4;
-        char *end = strstr(td, "</td>");
-        if (!end)
-            return 0;
-        *end = '\0';
 
-        if (i == 0)
-            strcpy_s(cancha, sizeof(cancha), td);
-        else if (i == 1)
-            strcpy_s(fecha, sizeof(fecha), td);
-        else if (i == 2)
-            goles = atoi(td);
-        else if (i == 3)
-            asistencias = atoi(td);
-        else if (i == 4)
-            strcpy_s(camiseta, sizeof(camiseta), td);
-        else if (i == 5)
-            strcpy_s(resultado_str, sizeof(resultado_str), td);
-        else if (i == 6)
-            strcpy_s(clima_str, sizeof(clima_str), td);
-        else if (i == 7)
-            strcpy_s(dia_str, sizeof(dia_str), td);
-        else if (i == 8)
-            rendimiento_general = atoi(td);
-        else if (i == 9)
-            cansancio = atoi(td);
-        else if (i == 10)
-            estado_animo = atoi(td);
-        else if (i == 11)
-            strcpy_s(comentario, sizeof(comentario), td);
-        *ptr = end + 5;
+        asignar_celda_partido_html(&data, i, td);
     }
 
     PartidoRawInput raw =
     {
-        cancha, fecha, goles, asistencias, camiseta,
-        resultado_str, clima_str, dia_str,
-        rendimiento_general, cansancio, estado_animo, comentario
+        data.cancha, data.fecha, data.goles, data.asistencias, data.camiseta,
+        data.resultado_str, data.clima_str, data.dia_str,
+        data.rendimiento_general, data.cansancio, data.estado_animo, data.comentario
     };
 
     return procesar_partido_desde_raw(&raw);

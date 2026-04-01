@@ -1144,6 +1144,28 @@ void clear_screen()
 #endif
 }
 
+typedef struct
+{
+    const char *ascii;
+    const char *keyword_primary;
+    const char *keyword_secondary;
+} HeaderAsciiRule;
+
+static int titulo_coincide_regla_ascii(const char *titulo, const HeaderAsciiRule *rule)
+{
+    if (!titulo || !rule || !rule->keyword_primary)
+    {
+        return 0;
+    }
+
+    if (strstr(titulo, rule->keyword_primary))
+    {
+        return 1;
+    }
+
+    return rule->keyword_secondary && strstr(titulo, rule->keyword_secondary);
+}
+
 /**
  * Muestra informacion contextual del usuario y fecha para personalizar la
  * experiencia y registrar el momento de las operaciones, incluyendo arte ASCII
@@ -1151,40 +1173,33 @@ void clear_screen()
  */
 static const char *obtener_ascii_por_titulo(const char *titulo)
 {
-    if (strstr(titulo, "MI FUTBOL C"))
-        return ASCII_BIENVENIDA;
-    if (strstr(titulo, "CAMISETA") || strstr(titulo, "CAMISETAS"))
-        return ASCII_CAMISETA;
-    if (strstr(titulo, "CANCHAS"))
-        return ASCII_CANCHA;
-    if (strstr(titulo, "PARTIDO") || strstr(titulo, "PARTIDOS"))
-        return ASCII_FUTBOL;
-    if (strstr(titulo, "EQUIPOS"))
-        return ASCII_EQUIPO;
-    if (strstr(titulo, "ESTADISTICA") || strstr(titulo, "ESTADISTICAS"))
-        return ASCII_ESTADISTICAS;
-    if (strstr(titulo, "LOGROS"))
-        return ASCII_LOGROS;
-    if (strstr(titulo, "ANALISIS") || strstr(titulo, "EVOLUCION TEMPORAL"))
-        return ASCII_ANALISIS;
-    if (strstr(titulo, "BIENESTAR") || strstr(titulo, "WELLNESS"))
-        return ASCII_BIENESTAR;
-    if (strstr(titulo, "LESIONES"))
-        return ASCII_LESIONES;
-    if (strstr(titulo, "FINANCIAMIENTO"))
-        return ASCII_FINANCIAMIENTO;
-    if (strstr(titulo, "EXPORTAR"))
-        return ASCII_EXPORTAR;
-    if (strstr(titulo, "IMPORTAR"))
-        return ASCII_IMPORTAR;
-    if (strstr(titulo, "TORNEOS"))
-        return ASCII_TORNEOS;
-    if (strstr(titulo, "AJUSTES") || strstr(titulo, "SETTINGS"))
-        return ASCII_AJUSTES;
-    if (strstr(titulo, "TEMPORADA") || strstr(titulo, "SEASON"))
-        return ASCII_TEMPORADA;
-    if (strstr(titulo, "ENTRENADOR IA"))
-        return ASCII_ENTRENADOR_IA;
+    static const HeaderAsciiRule rules[] = {
+        {ASCII_BIENVENIDA, "MI FUTBOL C", NULL},
+        {ASCII_CAMISETA, "CAMISETA", "CAMISETAS"},
+        {ASCII_CANCHA, "CANCHAS", NULL},
+        {ASCII_FUTBOL, "PARTIDO", "PARTIDOS"},
+        {ASCII_EQUIPO, "EQUIPOS", NULL},
+        {ASCII_ESTADISTICAS, "ESTADISTICA", "ESTADISTICAS"},
+        {ASCII_LOGROS, "LOGROS", NULL},
+        {ASCII_ANALISIS, "ANALISIS", "EVOLUCION TEMPORAL"},
+        {ASCII_BIENESTAR, "BIENESTAR", "WELLNESS"},
+        {ASCII_LESIONES, "LESIONES", NULL},
+        {ASCII_FINANCIAMIENTO, "FINANCIAMIENTO", NULL},
+        {ASCII_EXPORTAR, "EXPORTAR", NULL},
+        {ASCII_IMPORTAR, "IMPORTAR", NULL},
+        {ASCII_TORNEOS, "TORNEOS", NULL},
+        {ASCII_AJUSTES, "AJUSTES", "SETTINGS"},
+        {ASCII_TEMPORADA, "TEMPORADA", "SEASON"},
+        {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL}};
+
+    for (size_t i = 0; i < sizeof(rules) / sizeof(rules[0]); i++)
+    {
+        if (titulo_coincide_regla_ascii(titulo, &rules[i]))
+        {
+            return rules[i].ascii;
+        }
+    }
+
     return NULL;
 }
 
@@ -2359,26 +2374,37 @@ char *remover_tildes(const char *str)
     static char buffer[256];
     size_t j = 0;
 
+    if (!str)
+    {
+        buffer[0] = '\0';
+        return buffer;
+    }
+
+    const unsigned char acentos[][3] = {
+        {0xE1, 0xC1, 'a'},
+        {0xE9, 0xC9, 'e'},
+        {0xED, 0xCD, 'i'},
+        {0xF3, 0xD3, 'o'},
+        {0xFA, 0xDA, 'u'},
+        {0xF1, 0xD1, 'n'},
+        {0xFC, 0xDC, 'u'}};
+
     const char *p = str;
     while (*p != '\0' && j < sizeof(buffer) - 1)
     {
         unsigned char c = (unsigned char)*p++;
-        if (c == 0xE1 || c == 0xC1)
-            buffer[j++] = 'a'; // a, a
-        else if (c == 0xE9 || c == 0xC9)
-            buffer[j++] = 'e'; // e, e
-        else if (c == 0xED || c == 0xCD)
-            buffer[j++] = 'i'; // i, i
-        else if (c == 0xF3 || c == 0xD3)
-            buffer[j++] = 'o'; // o, o
-        else if (c == 0xFA || c == 0xDA)
-            buffer[j++] = 'u'; // u, u
-        else if (c == 0xF1 || c == 0xD1)
-            buffer[j++] = 'n'; // n, n
-        else if (c == 0xFC || c == 0xDC)
-            buffer[j++] = 'u'; // u, u
-        else
-            buffer[j++] = (char)c;
+        char out = (char)c;
+
+        for (size_t i = 0; i < sizeof(acentos) / sizeof(acentos[0]); i++)
+        {
+            if (c == acentos[i][0] || c == acentos[i][1])
+            {
+                out = (char)acentos[i][2];
+                break;
+            }
+        }
+
+        buffer[j++] = out;
     }
     buffer[j] = '\0';
     return buffer;

@@ -151,6 +151,73 @@ static int listar_torneos_generico(const char *no_records_msg)
     return 1;
 }
 
+static void asignar_formato_4_a_6(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
+{
+    if (opcion == 1)
+    {
+        *formato = ROUND_ROBIN;
+        *tipo = IDA_Y_VUELTA;
+    }
+    else if (opcion == 2)
+    {
+        *formato = MINI_GRUPO_CON_FINAL;
+        *tipo = GRUPOS_Y_ELIMINACION;
+    }
+}
+
+static void asignar_formato_7_a_12(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
+{
+    switch (opcion)
+    {
+    case 2:
+        *formato = LIGA_DOBLE;
+        *tipo = IDA_Y_VUELTA;
+        break;
+    case 3:
+        *formato = GRUPOS_CON_FINAL;
+        *tipo = GRUPOS_Y_ELIMINACION;
+        break;
+    case 4:
+        *formato = COPA_SIMPLE;
+        *tipo = ELIMINACION_DIRECTA;
+        break;
+    default:
+        break;
+    }
+}
+
+static void asignar_formato_13_a_20(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
+{
+    *tipo = GRUPOS_Y_ELIMINACION;
+    *formato = GRUPOS_ELIMINACION;
+
+    switch (opcion)
+    {
+    case 2:
+        *formato = COPA_REPECHAJE;
+        *tipo = ELIMINACION_DIRECTA;
+        break;
+    case 3:
+        *formato = LIGA_GRANDE;
+        *tipo = IDA_Y_VUELTA;
+        break;
+    default:
+        break;
+    }
+}
+
+static void asignar_formato_21_o_mas(int opcion, TipoTorneos *tipo, FormatoTorneos *formato)
+{
+    *tipo = GRUPOS_Y_ELIMINACION;
+    *formato = MULTIPLES_GRUPOS;
+
+    if (opcion == 2)
+    {
+        *formato = ELIMINACION_FASES;
+        *tipo = ELIMINACION_DIRECTA;
+    }
+}
+
 /**
  * @brief Funcion generica para obtener formato segun cantidad de equipos y opcion
  */
@@ -161,64 +228,19 @@ static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *
 
     if (cantidad >= 4 && cantidad <= 6)
     {
-        if (opcion == 1)
-        {
-            *formato = ROUND_ROBIN;
-            *tipo = IDA_Y_VUELTA;
-        }
-        else if (opcion == 2)
-        {
-            *formato = MINI_GRUPO_CON_FINAL;
-            *tipo = GRUPOS_Y_ELIMINACION;
-        }
+        asignar_formato_4_a_6(opcion, tipo, formato);
     }
     else if (cantidad >= 7 && cantidad <= 12)
     {
-        switch (opcion)
-        {
-        case 2:
-            *formato = LIGA_DOBLE;
-            *tipo = IDA_Y_VUELTA;
-            break;
-        case 3:
-            *formato = GRUPOS_CON_FINAL;
-            *tipo = GRUPOS_Y_ELIMINACION;
-            break;
-        case 4:
-            *formato = COPA_SIMPLE;
-            *tipo = ELIMINACION_DIRECTA;
-            break;
-        default:
-            break;
-        }
+        asignar_formato_7_a_12(opcion, tipo, formato);
     }
     else if (cantidad >= 13 && cantidad <= 20)
     {
-        *tipo = GRUPOS_Y_ELIMINACION;
-        *formato = GRUPOS_ELIMINACION;
-        switch (opcion)
-        {
-        case 2:
-            *formato = COPA_REPECHAJE;
-            *tipo = ELIMINACION_DIRECTA;
-            break;
-        case 3:
-            *formato = LIGA_GRANDE;
-            *tipo = IDA_Y_VUELTA;
-            break;
-        default:
-            break;
-        }
+        asignar_formato_13_a_20(opcion, tipo, formato);
     }
     else if (cantidad >= 21)
     {
-        *tipo = GRUPOS_Y_ELIMINACION;
-        *formato = MULTIPLES_GRUPOS;
-        if (opcion == 2)
-        {
-            *formato = ELIMINACION_FASES;
-            *tipo = ELIMINACION_DIRECTA;
-        }
+        asignar_formato_21_o_mas(opcion, tipo, formato);
     }
 }
 

@@ -416,6 +416,107 @@ void listar_temporadas()
     pause_console();
 }
 
+static void actualizar_nombre_temporada(int temporada_id)
+{
+    char nuevo_nombre[100];
+    solicitar_texto_no_vacio("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "UPDATE temporada SET nombre = ? WHERE id = ?;";
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, nuevo_nombre, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, temporada_id);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        printf("Nombre actualizado.\n");
+    }
+}
+
+static void actualizar_fechas_temporada(int temporada_id)
+{
+    char nueva_fecha_inicio[20];
+    char nueva_fecha_fin[20];
+
+    solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
+    solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+    while (strcmp(nueva_fecha_fin, nueva_fecha_inicio) < 0)
+    {
+        printf("La fecha de fin no puede ser anterior a la de inicio.\n");
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "UPDATE temporada SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?;";
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, nueva_fecha_inicio, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, nueva_fecha_fin, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 3, temporada_id);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        printf("Fechas actualizadas.\n");
+    }
+}
+
+static void actualizar_descripcion_temporada(int temporada_id)
+{
+    char nueva_descripcion[500];
+    input_string("Nueva descripcion: ", nueva_descripcion, sizeof(nueva_descripcion));
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "UPDATE temporada SET descripcion = ? WHERE id = ?;";
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, nueva_descripcion, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, temporada_id);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        printf("Descripcion actualizada.\n");
+    }
+}
+
+static int actualizar_estado_temporada(int temporada_id)
+{
+    printf("Nuevo estado:\n");
+    printf("1. Planificada\n");
+    printf("2. Activa\n");
+    printf("3. Finalizada\n");
+
+    int estado_opcion = input_int(">");
+    const char *nuevo_estado = NULL;
+
+    switch (estado_opcion)
+    {
+    case 1:
+        nuevo_estado = "Planificada";
+        break;
+    case 2:
+        nuevo_estado = "Activa";
+        break;
+    case 3:
+        nuevo_estado = "Finalizada";
+        break;
+    default:
+        printf("Opcion invalida.\n");
+        pause_console();
+        return 0;
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql = "UPDATE temporada SET estado = ? WHERE id = ?;";
+    if (preparar_stmt(sql, &stmt))
+    {
+        sqlite3_bind_text(stmt, 1, nuevo_estado, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, temporada_id);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        printf("Estado actualizado.\n");
+    }
+
+    return 1;
+}
+
 void modificar_temporada()
 {
     clear_screen();
@@ -442,103 +543,21 @@ void modificar_temporada()
 
     int opcion = input_int(">");
 
-    sqlite3_stmt *stmt;
     switch (opcion)
     {
     case 1:
-    {
-        char nuevo_nombre[100];
-        solicitar_texto_no_vacio("Nuevo nombre: ", nuevo_nombre, sizeof(nuevo_nombre));
-
-        const char *sql = "UPDATE temporada SET nombre = ? WHERE id = ?;";
-        if (preparar_stmt(sql, &stmt))
-        {
-            sqlite3_bind_text(stmt, 1, nuevo_nombre, -1, SQLITE_STATIC);
-            sqlite3_bind_int(stmt, 2, temporada_id);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            printf("Nombre actualizado.\n");
-        }
+        actualizar_nombre_temporada(temporada_id);
         break;
-    }
     case 2:
-    {
-        char nueva_fecha_inicio[20];
-        char nueva_fecha_fin[20];
-        solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
-        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
-        while (strcmp(nueva_fecha_fin, nueva_fecha_inicio) < 0)
-        {
-            printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-            solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
-        }
-
-        const char *sql = "UPDATE temporada SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?;";
-        if (preparar_stmt(sql, &stmt))
-        {
-            sqlite3_bind_text(stmt, 1, nueva_fecha_inicio, -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 2, nueva_fecha_fin, -1, SQLITE_STATIC);
-            sqlite3_bind_int(stmt, 3, temporada_id);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            printf("Fechas actualizadas.\n");
-        }
+        actualizar_fechas_temporada(temporada_id);
         break;
-    }
     case 3:
-    {
-        char nueva_descripcion[500];
-        input_string("Nueva descripcion: ", nueva_descripcion, sizeof(nueva_descripcion));
-
-        const char *sql = "UPDATE temporada SET descripcion = ? WHERE id = ?;";
-        if (preparar_stmt(sql, &stmt))
-        {
-            sqlite3_bind_text(stmt, 1, nueva_descripcion, -1, SQLITE_STATIC);
-            sqlite3_bind_int(stmt, 2, temporada_id);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            printf("Descripcion actualizada.\n");
-        }
+        actualizar_descripcion_temporada(temporada_id);
         break;
-    }
     case 4:
-    {
-        printf("Nuevo estado:\n");
-        printf("1. Planificada\n");
-        printf("2. Activa\n");
-        printf("3. Finalizada\n");
-
-        int estado_opcion = input_int(">");
-        const char *nuevo_estado;
-
-        switch (estado_opcion)
-        {
-        case 1:
-            nuevo_estado = "Planificada";
-            break;
-        case 2:
-            nuevo_estado = "Activa";
-            break;
-        case 3:
-            nuevo_estado = "Finalizada";
-            break;
-        default:
-            printf("Opcion invalida.\n");
-            pause_console();
+        if (!actualizar_estado_temporada(temporada_id))
             return;
-        }
-
-        const char *sql = "UPDATE temporada SET estado = ? WHERE id = ?;";
-        if (preparar_stmt(sql, &stmt))
-        {
-            sqlite3_bind_text(stmt, 1, nuevo_estado, -1, SQLITE_STATIC);
-            sqlite3_bind_int(stmt, 2, temporada_id);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            printf("Estado actualizado.\n");
-        }
         break;
-    }
     default:
         printf("Opcion invalida.\n");
     }
