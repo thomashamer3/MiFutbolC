@@ -11,5 +11,6 @@
         "projectKey": "thomashamer3_MiFutbolC"
     },
     "sonarlint.pathToCompileCommands": "${workspaceFolder}\\bw-output\\compile_commands.json",
-    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe"
+    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
+    "codeQL.createQuery.qlPackLocation": "d:\\ANIME\\Libros\\Lenguaje C\\Proyectos\\MiFutbolC"
 }
