@@ -66,6 +66,66 @@ static void to_lowercase(char *str)
     }
 }
 
+static int construir_patron_busqueda(const char *termino, char *patron_lower, size_t patron_size)
+{
+    char patron[256];
+    snprintf(patron, sizeof(patron), "%%%s%%", termino);
+
+    if (copiar_cadena_segura(patron_lower, patron_size, patron) != 0)
+    {
+        patron_lower[0] = '\0';
+        return 0;
+    }
+
+    to_lowercase(patron_lower);
+    return 1;
+}
+
+static const char *texto_sqlite_o_default(const unsigned char *texto, const char *defecto)
+{
+    return texto ? (const char *)texto : defecto;
+}
+
+typedef void (*imprimir_fila_fn)(sqlite3_stmt *stmt);
+
+static int ejecutar_busqueda_generica(const char *sql,
+                                      const char *titulo,
+                                      const char *patron_lower,
+                                      int cantidad_binds,
+                                      imprimir_fila_fn imprimir_fila)
+{
+    sqlite3_stmt *stmt;
+    int count = 0;
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return 0;
+    }
+
+    for (int i = 1; i <= cantidad_binds; i++)
+    {
+        sqlite3_bind_text(stmt, i, patron_lower, -1, SQLITE_TRANSIENT);
+    }
+
+    printf("\n  %s\n", titulo);
+    printf("  %s\n", "────────────────────────────────────────────────────────");
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        imprimir_fila(stmt);
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        printf("  (No se encontraron resultados)\n");
+    }
+
+    return count;
+}
+
 static const char *modalidad_to_texto(int modalidad)
 {
     switch (modalidad)
@@ -83,12 +143,63 @@ static const char *modalidad_to_texto(int modalidad)
     }
 }
 
+static void imprimir_fila_partido(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *cancha = sqlite3_column_text(stmt, 1);
+    const unsigned char *fecha = sqlite3_column_text(stmt, 2);
+    const unsigned char *hora = sqlite3_column_text(stmt, 3);
+    int goles = sqlite3_column_int(stmt, 4);
+    int asistencias = sqlite3_column_int(stmt, 5);
+    const unsigned char *camiseta = sqlite3_column_text(stmt, 6);
+
+    printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n",
+           id,
+           texto_sqlite_o_default(cancha, "Sin cancha"),
+           texto_sqlite_o_default(fecha, "Sin fecha"),
+           texto_sqlite_o_default(hora, "Sin hora"),
+           goles,
+           asistencias,
+           texto_sqlite_o_default(camiseta, "Sin camiseta"));
+}
+
+static void imprimir_fila_equipo(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    int modalidad = sqlite3_column_int(stmt, 2);
+
+    printf("  ID %d: %s (%s)\n",
+           id,
+           texto_sqlite_o_default(nombre, "Sin nombre"),
+           modalidad_to_texto(modalidad));
+}
+
+static void imprimir_fila_camiseta(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    const unsigned char *color = sqlite3_column_text(stmt, 2);
+
+    printf("  ID %d: %s (%s)\n",
+           id,
+           texto_sqlite_o_default(nombre, "Sin nombre"),
+           texto_sqlite_o_default(color, "Sin color"));
+}
+
+static void imprimir_fila_cancha(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+
+    printf("  ID %d: %s\n", id, texto_sqlite_o_default(nombre, "Sin nombre"));
+}
+
 /**
  * @brief Busca en partidos
  */
 int buscar_en_partidos(const char *termino)
 {
-    sqlite3_stmt *stmt;
     const char *sql =
         "SELECT p.id, p.cancha, p.fecha, p.hora, p.goles, p.asistencias, c.nombre "
         "FROM partido p "
@@ -96,53 +207,13 @@ int buscar_en_partidos(const char *termino)
         "WHERE LOWER(p.cancha) LIKE ? OR LOWER(c.nombre) LIKE ? "
         "ORDER BY p.fecha DESC, p.hora DESC;";
 
-    char patron[256];
-    snprintf(patron, sizeof(patron), "%%%s%%", termino);
-
     char patron_lower[256];
-    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
-    {
-        patron_lower[0] = '\0';
-    }
-    to_lowercase(patron_lower);
-
-    int count = 0;
-
-    if (!preparar_stmt(sql, &stmt))
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
     {
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, patron_lower, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, patron_lower, -1, SQLITE_TRANSIENT);
-
-    printf("\n  🎯 Partidos encontrados:\n");
-    printf("  %s\n", "────────────────────────────────────────────────────────");
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const unsigned char *cancha = sqlite3_column_text(stmt, 1);
-        const unsigned char *fecha = sqlite3_column_text(stmt, 2);
-        const unsigned char *hora = sqlite3_column_text(stmt, 3);
-        int goles = sqlite3_column_int(stmt, 4);
-        int asistencias = sqlite3_column_int(stmt, 5);
-        const unsigned char *camiseta = sqlite3_column_text(stmt, 6);
-
-        printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n",
-               id, cancha, fecha, hora, goles, asistencias,
-               camiseta ? (const char*)camiseta : "Sin camiseta");
-        count++;
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("  (No se encontraron resultados)\n");
-    }
-
-    return count;
+    return ejecutar_busqueda_generica(sql, "🎯 Partidos encontrados:", patron_lower, 2, imprimir_fila_partido);
 }
 
 /**
@@ -150,53 +221,19 @@ int buscar_en_partidos(const char *termino)
  */
 int buscar_en_equipos(const char *termino)
 {
-    sqlite3_stmt *stmt;
     const char *sql =
         "SELECT id, nombre, modalidad "
         "FROM equipo "
         "WHERE LOWER(nombre) LIKE ? "
         "ORDER BY nombre;";
 
-    char patron[256];
-    snprintf(patron, sizeof(patron), "%%%s%%", termino);
-
     char patron_lower[256];
-    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
-    {
-        patron_lower[0] = '\0';
-    }
-    to_lowercase(patron_lower);
-
-    int count = 0;
-
-    if (!preparar_stmt(sql, &stmt))
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
     {
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, patron_lower, -1, SQLITE_TRANSIENT);
-
-    printf("\n  👥 Equipos encontrados:\n");
-    printf("  %s\n", "────────────────────────────────────────────────────────");
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const unsigned char *nombre = sqlite3_column_text(stmt, 1);
-        int modalidad = sqlite3_column_int(stmt, 2);
-
-        printf("  ID %d: %s (%s)\n", id, nombre, modalidad_to_texto(modalidad));
-        count++;
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("  (No se encontraron resultados)\n");
-    }
-
-    return count;
+    return ejecutar_busqueda_generica(sql, "👥 Equipos encontrados:", patron_lower, 1, imprimir_fila_equipo);
 }
 
 /**
@@ -204,54 +241,19 @@ int buscar_en_equipos(const char *termino)
  */
 int buscar_en_camisetas(const char *termino)
 {
-    sqlite3_stmt *stmt;
     const char *sql =
         "SELECT id, nombre, color "
         "FROM camiseta "
         "WHERE LOWER(nombre) LIKE ? OR LOWER(color) LIKE ? "
         "ORDER BY nombre;";
 
-    char patron[256];
-    snprintf(patron, sizeof(patron), "%%%s%%", termino);
-
     char patron_lower[256];
-    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
-    {
-        patron_lower[0] = '\0';
-    }
-    to_lowercase(patron_lower);
-
-    int count = 0;
-
-    if (!preparar_stmt(sql, &stmt))
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
     {
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, patron_lower, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, patron_lower, -1, SQLITE_TRANSIENT);
-
-    printf("\n  👕 Camisetas encontradas:\n");
-    printf("  %s\n", "────────────────────────────────────────────────────────");
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const unsigned char *nombre = sqlite3_column_text(stmt, 1);
-        const unsigned char *color = sqlite3_column_text(stmt, 2);
-
-        printf("  ID %d: %s (%s)\n", id, nombre, color);
-        count++;
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("  (No se encontraron resultados)\n");
-    }
-
-    return count;
+    return ejecutar_busqueda_generica(sql, "👕 Camisetas encontradas:", patron_lower, 2, imprimir_fila_camiseta);
 }
 
 /**
@@ -259,52 +261,19 @@ int buscar_en_camisetas(const char *termino)
  */
 int buscar_en_canchas(const char *termino)
 {
-    sqlite3_stmt *stmt;
     const char *sql =
         "SELECT id, nombre "
         "FROM cancha "
         "WHERE LOWER(nombre) LIKE ? "
         "ORDER BY nombre;";
 
-    char patron[256];
-    snprintf(patron, sizeof(patron), "%%%s%%", termino);
-
     char patron_lower[256];
-    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
-    {
-        patron_lower[0] = '\0';
-    }
-    to_lowercase(patron_lower);
-
-    int count = 0;
-
-    if (!preparar_stmt(sql, &stmt))
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
     {
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, patron_lower, -1, SQLITE_TRANSIENT);
-
-    printf("\n  🏟️  Canchas encontradas:\n");
-    printf("  %s\n", "────────────────────────────────────────────────────────");
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const unsigned char *nombre = sqlite3_column_text(stmt, 1);
-
-        printf("  ID %d: %s\n", id, nombre);
-        count++;
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (count == 0)
-    {
-        printf("  (No se encontraron resultados)\n");
-    }
-
-    return count;
+    return ejecutar_busqueda_generica(sql, "🏟️  Canchas encontradas:", patron_lower, 1, imprimir_fila_cancha);
 }
 
 /**
