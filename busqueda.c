@@ -17,6 +17,44 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
 }
 
+static int copiar_cadena_segura(char *dest, size_t dest_size, const char *src)
+{
+    if (!dest || !src || dest_size == 0)
+    {
+        return 1;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strncpy_s(dest, dest_size, src, dest_size - 1);
+#elif defined(_MSC_VER)
+    return strncpy_s(dest, dest_size, src, _TRUNCATE);
+#else
+    snprintf(dest, dest_size, "%s", src);
+    return 0;
+#endif
+}
+
+static size_t longitud_segura(const char *texto, size_t max_len)
+{
+    if (!texto)
+    {
+        return 0;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strlen_s(texto, max_len);
+#elif defined(_MSC_VER)
+    return strnlen_s(texto, max_len);
+#else
+    size_t i = 0;
+    while (i < max_len && texto[i] != '\0')
+    {
+        i++;
+    }
+    return i;
+#endif
+}
+
 /**
  * @brief Convierte una cadena a minúsculas para búsqueda case-insensitive
  */
@@ -25,6 +63,23 @@ static void to_lowercase(char *str)
     for (int i = 0; str[i]; i++)
     {
         str[i] = (char)tolower((unsigned char)str[i]);
+    }
+}
+
+static const char *modalidad_to_texto(int modalidad)
+{
+    switch (modalidad)
+    {
+    case 5:
+        return "Futbol 5";
+    case 7:
+        return "Futbol 7";
+    case 8:
+        return "Futbol 8";
+    case 11:
+        return "Futbol 11";
+    default:
+        return "Desconocido";
     }
 }
 
@@ -45,8 +100,10 @@ int buscar_en_partidos(const char *termino)
     snprintf(patron, sizeof(patron), "%%%s%%", termino);
 
     char patron_lower[256];
-    strncpy(patron_lower, patron, sizeof(patron_lower) - 1);
-    patron_lower[sizeof(patron_lower) - 1] = '\0';
+    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
+    {
+        patron_lower[0] = '\0';
+    }
     to_lowercase(patron_lower);
 
     int count = 0;
@@ -104,8 +161,10 @@ int buscar_en_equipos(const char *termino)
     snprintf(patron, sizeof(patron), "%%%s%%", termino);
 
     char patron_lower[256];
-    strncpy(patron_lower, patron, sizeof(patron_lower) - 1);
-    patron_lower[sizeof(patron_lower) - 1] = '\0';
+    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
+    {
+        patron_lower[0] = '\0';
+    }
     to_lowercase(patron_lower);
 
     int count = 0;
@@ -126,27 +185,7 @@ int buscar_en_equipos(const char *termino)
         const unsigned char *nombre = sqlite3_column_text(stmt, 1);
         int modalidad = sqlite3_column_int(stmt, 2);
 
-        const char *mod_str = "";
-        switch (modalidad)
-        {
-        case 5:
-            mod_str = "Futbol 5";
-            break;
-        case 7:
-            mod_str = "Futbol 7";
-            break;
-        case 8:
-            mod_str = "Futbol 8";
-            break;
-        case 11:
-            mod_str = "Futbol 11";
-            break;
-        default:
-            mod_str = "Desconocido";
-            break;
-        }
-
-        printf("  ID %d: %s (%s)\n", id, nombre, mod_str);
+        printf("  ID %d: %s (%s)\n", id, nombre, modalidad_to_texto(modalidad));
         count++;
     }
 
@@ -176,8 +215,10 @@ int buscar_en_camisetas(const char *termino)
     snprintf(patron, sizeof(patron), "%%%s%%", termino);
 
     char patron_lower[256];
-    strncpy(patron_lower, patron, sizeof(patron_lower) - 1);
-    patron_lower[sizeof(patron_lower) - 1] = '\0';
+    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
+    {
+        patron_lower[0] = '\0';
+    }
     to_lowercase(patron_lower);
 
     int count = 0;
@@ -229,8 +270,10 @@ int buscar_en_canchas(const char *termino)
     snprintf(patron, sizeof(patron), "%%%s%%", termino);
 
     char patron_lower[256];
-    strncpy(patron_lower, patron, sizeof(patron_lower) - 1);
-    patron_lower[sizeof(patron_lower) - 1] = '\0';
+    if (copiar_cadena_segura(patron_lower, sizeof(patron_lower), patron) != 0)
+    {
+        patron_lower[0] = '\0';
+    }
     to_lowercase(patron_lower);
 
     int count = 0;
@@ -309,7 +352,7 @@ void menu_busqueda_global()
     termino[strcspn(termino, "\n")] = '\0';
 
     // Validar longitud mínima
-    if (strlen(termino) < 2)
+    if (longitud_segura(termino, sizeof(termino)) < 2)
     {
         printf("\nEl termino debe tener al menos 2 caracteres.\n");
         pause_console();

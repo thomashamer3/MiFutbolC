@@ -377,6 +377,53 @@ void mostrar_calendario()
     pause_console();
 }
 
+static void avanzar_mes(int *mes_actual, int *anio_actual)
+{
+    (*mes_actual)++;
+    if (*mes_actual > 12)
+    {
+        *mes_actual = 1;
+        (*anio_actual)++;
+    }
+}
+
+static void retroceder_mes(int *mes_actual, int *anio_actual)
+{
+    (*mes_actual)--;
+    if (*mes_actual < 1)
+    {
+        *mes_actual = 12;
+        (*anio_actual)--;
+    }
+}
+
+static void volver_a_hoy(int *mes_actual, int *anio_actual)
+{
+    time_t hoy = time(NULL);
+    struct tm tm_hoy_buf;
+    if (obtener_tiempo_local(hoy, &tm_hoy_buf))
+    {
+        *mes_actual = tm_hoy_buf.tm_mon + 1;
+        *anio_actual = tm_hoy_buf.tm_year + 1900;
+    }
+}
+
+static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
+{
+    printf("\nIngrese dia (1-%d): ", dias_en_mes(mes_actual, anio_actual));
+    int dia = input_int("");
+
+    if (dia >= 1 && dia <= dias_en_mes(mes_actual, anio_actual))
+    {
+        mostrar_eventos_dia(dia, mes_actual, anio_actual);
+    }
+    else
+    {
+        printf("\nDia invalido.\n");
+        pause_console();
+    }
+}
+
 /**
  * @brief Menú de navegación del calendario
  */
@@ -414,52 +461,29 @@ void menu_calendario()
 
         opcion[strcspn(opcion, "\n")] = '\0';
 
-        if (opcion[0] == '0')
+        switch (opcion[0])
         {
-            salir = 1;
-        }
-        else if (opcion[0] == 'N' || opcion[0] == 'n')
-        {
-            mes_actual++;
-            if (mes_actual > 12)
-            {
-                mes_actual = 1;
-                anio_actual++;
-            }
-        }
-        else if (opcion[0] == 'P' || opcion[0] == 'p')
-        {
-            mes_actual--;
-            if (mes_actual < 1)
-            {
-                mes_actual = 12;
-                anio_actual--;
-            }
-        }
-        else if (opcion[0] == 'H' || opcion[0] == 'h')
-        {
-            time_t hoy = time(NULL);
-            struct tm tm_hoy_buf;
-            if (obtener_tiempo_local(hoy, &tm_hoy_buf))
-            {
-                mes_actual = tm_hoy_buf.tm_mon + 1;
-                anio_actual = tm_hoy_buf.tm_year + 1900;
-            }
-        }
-        else if (opcion[0] == 'V' || opcion[0] == 'v')
-        {
-            printf("\nIngrese dia (1-%d): ", dias_en_mes(mes_actual, anio_actual));
-            int dia = input_int("");
-
-            if (dia >= 1 && dia <= dias_en_mes(mes_actual, anio_actual))
-            {
-                mostrar_eventos_dia(dia, mes_actual, anio_actual);
-            }
-            else
-            {
-                printf("\nDia invalido.\n");
-                pause_console();
-            }
+            case '0':
+                salir = 1;
+                break;
+            case 'N':
+            case 'n':
+                avanzar_mes(&mes_actual, &anio_actual);
+                break;
+            case 'P':
+            case 'p':
+                retroceder_mes(&mes_actual, &anio_actual);
+                break;
+            case 'H':
+            case 'h':
+                volver_a_hoy(&mes_actual, &anio_actual);
+                break;
+            case 'V':
+            case 'v':
+                ver_eventos_mes_actual(mes_actual, anio_actual);
+                break;
+            default:
+                break;
         }
     }
 }

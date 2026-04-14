@@ -274,6 +274,27 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max, c
     return valor;
 }
 
+static size_t longitud_segura(const char *texto, size_t max_len)
+{
+    if (!texto)
+    {
+        return 0;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strlen_s(texto, max_len);
+#elif defined(_MSC_VER)
+    return strnlen_s(texto, max_len);
+#else
+    size_t i = 0;
+    while (i < max_len && texto[i] != '\0')
+    {
+        i++;
+    }
+    return i;
+#endif
+}
+
 /**
  * @brief Recopila todos los datos necesarios para un partido desde el usuario
  *
@@ -530,7 +551,7 @@ void crear_partido()
     {
         // Validar que tenga al menos un formato básico
         trim_whitespace(fecha);
-        if (strlen(fecha) < 10)
+        if (longitud_segura(fecha, sizeof(fecha)) < 10)
         {
             printf("Formato de fecha invalido. Usando fecha/hora actual.\n");
             get_datetime(fecha, sizeof(fecha));
