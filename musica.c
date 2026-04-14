@@ -932,6 +932,79 @@ static void eq_update_treble(void)
     ma_hishelf_node_reinit(&cfg, &g_eq_treble);
 }
 
+static float eq_limitar_db(float valor)
+{
+    if (valor < EQ_DB_MIN)
+        return EQ_DB_MIN;
+    if (valor > EQ_DB_MAX)
+        return EQ_DB_MAX;
+    return valor;
+}
+
+static void eq_ajustar_banda(float *valor_db, float delta, void (*update_fn)(void))
+{
+    *valor_db = eq_limitar_db(*valor_db + delta);
+    update_fn();
+}
+
+static void eq_restablecer_bandas(void)
+{
+    g_eq_bass_db = 0.0f;
+    g_eq_mid_db = 0.0f;
+    g_eq_treble_db = 0.0f;
+    eq_update_bass();
+    eq_update_mid();
+    eq_update_treble();
+}
+
+static int procesar_opcion_ecualizador(int op)
+{
+    if (op == 0)
+        return 1;
+
+    if (op == 1)
+    {
+        g_eq_activo = !g_eq_activo;
+        eq_reroute_sonido();
+        return 0;
+    }
+
+    if (op == 8)
+    {
+        eq_restablecer_bandas();
+        return 0;
+    }
+
+    typedef struct
+    {
+        int opcion;
+        float *valor_db;
+        float delta;
+        void (*update_fn)(void);
+    } EqAjuste;
+
+    static EqAjuste ajustes[] =
+    {
+        {2, &g_eq_bass_db, EQ_DB_STEP,  eq_update_bass},
+        {3, &g_eq_bass_db, -EQ_DB_STEP, eq_update_bass},
+        {4, &g_eq_mid_db,  EQ_DB_STEP,  eq_update_mid},
+        {5, &g_eq_mid_db,  -EQ_DB_STEP, eq_update_mid},
+        {6, &g_eq_treble_db, EQ_DB_STEP,  eq_update_treble},
+        {7, &g_eq_treble_db, -EQ_DB_STEP, eq_update_treble}
+    };
+
+    for (int i = 0; i < (int)(sizeof(ajustes) / sizeof(ajustes[0])); i++)
+    {
+        if (ajustes[i].opcion == op)
+        {
+            eq_ajustar_banda(ajustes[i].valor_db, ajustes[i].delta, ajustes[i].update_fn);
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 /** Menu interactivo del ecualizador */
 static void menu_ecualizador(void)
 {
@@ -967,54 +1040,7 @@ static void menu_ecualizador(void)
         ui_printf("  [0] Volver\n\n");
 
         int op = input_int("  Opcion: ");
-        switch (op)
-        {
-        case 1:
-            g_eq_activo = !g_eq_activo;
-            eq_reroute_sonido();
-            break;
-        case 2:
-            g_eq_bass_db += EQ_DB_STEP;
-            if (g_eq_bass_db > EQ_DB_MAX) g_eq_bass_db = EQ_DB_MAX;
-            eq_update_bass();
-            break;
-        case 3:
-            g_eq_bass_db -= EQ_DB_STEP;
-            if (g_eq_bass_db < EQ_DB_MIN) g_eq_bass_db = EQ_DB_MIN;
-            eq_update_bass();
-            break;
-        case 4:
-            g_eq_mid_db += EQ_DB_STEP;
-            if (g_eq_mid_db > EQ_DB_MAX) g_eq_mid_db = EQ_DB_MAX;
-            eq_update_mid();
-            break;
-        case 5:
-            g_eq_mid_db -= EQ_DB_STEP;
-            if (g_eq_mid_db < EQ_DB_MIN) g_eq_mid_db = EQ_DB_MIN;
-            eq_update_mid();
-            break;
-        case 6:
-            g_eq_treble_db += EQ_DB_STEP;
-            if (g_eq_treble_db > EQ_DB_MAX) g_eq_treble_db = EQ_DB_MAX;
-            eq_update_treble();
-            break;
-        case 7:
-            g_eq_treble_db -= EQ_DB_STEP;
-            if (g_eq_treble_db < EQ_DB_MIN) g_eq_treble_db = EQ_DB_MIN;
-            eq_update_treble();
-            break;
-        case 8:
-            g_eq_bass_db = g_eq_mid_db = g_eq_treble_db = 0.0f;
-            eq_update_bass();
-            eq_update_mid();
-            eq_update_treble();
-            break;
-        case 0:
-            salir_eq = 1;
-            break;
-        default:
-            break;
-        }
+        salir_eq = procesar_opcion_ecualizador(op);
     }
 }
 
@@ -1686,6 +1712,98 @@ void musica_iniciar_automatica(void)
     g_estado = ESTADO_REPRODUCIENDO;
 }
 
+static void accion_reproducir_pausar(void)
+{
+    if (g_estado == ESTADO_REPRODUCIENDO)
+        pausar();
+    else
+        reproducir();
+}
+
+static void accion_cambiar_modo_repeticion(void)
+{
+    g_modo_rep = (ModoRepeticion)((g_modo_rep + 1) % 4);
+    if (g_modo_rep == REPETIR_ALEATORIO)
+        g_rand_seed ^= (unsigned int)(g_pista_actual + 1) * 2654435761u;
+}
+
+static void accion_musica_al_iniciar(void)
+{
+    settings_set_music_autoplay(settings_get_music_autoplay() ? 0 : 1);
+    ui_printf("  Musica al iniciar: %s\n",
+              settings_get_music_autoplay() ? "ACTIVADA" : "DESACTIVADA");
+    pause_console();
+}
+
+static void accion_actualizar_lista(void)
+{
+    int estaba_reproduciendo = (g_estado == ESTADO_REPRODUCIENDO);
+    descargar_sonido();
+    g_pista_actual = -1;
+    escanear_directorio();
+    ui_printf("  Lista actualizada: %d pista(s) encontrada(s).\n", g_num_pistas);
+    if (estaba_reproduciendo)
+        ui_printf("  La pista fue detenida al recargar la lista.\n");
+    pause_console();
+}
+
+typedef void (*AccionMenuMusicaFn)(void);
+
+static int procesar_opcion_menu_musica(int opcion)
+{
+    typedef struct
+    {
+        int opcion;
+        AccionMenuMusicaFn fn;
+    } OpcionMenuMusica;
+
+    if (opcion == 0)
+        return 1;
+    if (opcion == 8)
+    {
+        accion_cambiar_modo_repeticion();
+        return 0;
+    }
+    if (opcion == 9)
+    {
+        accion_actualizar_lista();
+        return 0;
+    }
+    if (opcion == 14)
+    {
+        accion_musica_al_iniciar();
+        return 0;
+    }
+
+    static const OpcionMenuMusica opciones[] =
+    {
+        {1,  accion_reproducir_pausar},
+        {2,  detener},
+        {3,  pista_anterior},
+        {4,  siguiente_pista},
+        {5,  mostrar_lista_pistas},
+        {6,  subir_volumen},
+        {7,  bajar_volumen},
+        {10, agregar_cancion_menu},
+        {11, eliminar_cancion_menu},
+        {12, menu_ecualizador},
+        {13, menu_playlists}
+    };
+
+    for (int i = 0; i < (int)(sizeof(opciones) / sizeof(opciones[0])); i++)
+    {
+        if (opciones[i].opcion == opcion)
+        {
+            opciones[i].fn();
+            return 0;
+        }
+    }
+
+    ui_printf("  Opcion invalida.\n");
+    pause_console();
+    return 0;
+}
+
 void menu_musica(void)
 {
     /* Iniciar motor de audio la primera vez */
@@ -1705,91 +1823,7 @@ void menu_musica(void)
         dibujar_reproductor();
 
         int opcion = input_int("  Opcion: ");
-        switch (opcion)
-        {
-        case 1: /* Reproducir / Pausar */
-            if (g_estado == ESTADO_REPRODUCIENDO)
-                pausar();
-            else
-                reproducir();
-            break;
-
-        case 2: /* Detener */
-            detener();
-            break;
-
-        case 3: /* Anterior */
-            pista_anterior();
-            break;
-
-        case 4: /* Siguiente */
-            siguiente_pista();
-            break;
-
-        case 5: /* Seleccionar pista */
-            mostrar_lista_pistas();
-            break;
-
-        case 6: /* Subir volumen */
-            subir_volumen();
-            break;
-
-        case 7: /* Bajar volumen */
-            bajar_volumen();
-            break;
-
-        case 8: /* Cambiar modo repeticion / shuffle */
-            g_modo_rep = (ModoRepeticion)((g_modo_rep + 1) % 4);
-            /* Sembrar aleatoriedad al activar shuffle */
-            if (g_modo_rep == REPETIR_ALEATORIO)
-                g_rand_seed ^= (unsigned int)(g_pista_actual + 1) * 2654435761u;
-            break;
-
-        case 10: /* Agregar cancion */
-            agregar_cancion_menu();
-            break;
-
-        case 11: /* Eliminar cancion */
-            eliminar_cancion_menu();
-            break;
-
-        case 12: /* Ecualizador */
-            menu_ecualizador();
-            break;
-
-        case 13: /* Playlists */
-            menu_playlists();
-            break;
-
-        case 14: /* Musica al iniciar */
-            settings_set_music_autoplay(settings_get_music_autoplay() ? 0 : 1);
-            ui_printf("  Musica al iniciar: %s\n",
-                      settings_get_music_autoplay() ? "ACTIVADA" : "DESACTIVADA");
-            pause_console();
-            break;
-
-        case 9: /* Actualizar lista */
-        {
-            int estaba_reproduciendo = (g_estado == ESTADO_REPRODUCIENDO);
-            descargar_sonido();
-            g_pista_actual = -1;
-            escanear_directorio();
-            ui_printf("  Lista actualizada: %d pista(s) encontrada(s).\n", g_num_pistas);
-            if (estaba_reproduciendo)
-                ui_printf("  La pista fue detenida al recargar la lista.\n");
-            pause_console();
-            break;
-        }
-
-        case 0: /* Volver */
-            salir = 1;
-            break;
-
-        default:
-            ui_printf("  Opcion invalida.\n");
-            pause_console();
-            break;
-        }
+        salir = procesar_opcion_menu_musica(opcion);
     }
     /* El audio sigue reproduciendose en segundo plano al volver al menu */
 }

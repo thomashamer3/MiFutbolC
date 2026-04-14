@@ -254,6 +254,76 @@ static int mostrar_eventos_finanzas(const char *fecha)
     return eventos;
 }
 
+static void imprimir_encabezado_calendario_mes(int usar_unicode,
+        const char *nombre_mes,
+        int anio)
+{
+    if (usar_unicode)
+    {
+        printf("╔══════════════════════════════════════════════════════════════╗\n");
+        printf("║              %s %d%-35s║\n", nombre_mes, anio, "");
+        printf("╠══════════════════════════════════════════════════════════════╣\n");
+        printf("║   L   M   M   J   V   S   D                                  ║\n");
+        printf("╟──────────────────────────────────────────────────────────────╢\n");
+        return;
+    }
+
+    printf("+--------------------------------------------------------------+\n");
+    printf("|              %s %d%-35s|\n", nombre_mes, anio, "");
+    printf("+--------------------------------------------------------------+\n");
+    printf("|   L   M   M   J   V   S   D                                  |\n");
+    printf("|--------------------------------------------------------------|\n");
+}
+
+static int es_dia_hoy(int dia, int mes, int anio, int hay_hoy, const struct tm *tm_hoy)
+{
+    return (hay_hoy &&
+            dia == tm_hoy->tm_mday &&
+            mes == tm_hoy->tm_mon + 1 &&
+            anio == tm_hoy->tm_year + 1900);
+}
+
+static void imprimir_celda_dia(int dia, const char *icono, int es_hoy)
+{
+    if (es_hoy)
+    {
+        printf(" [%2d%s]", dia, icono);
+    }
+    else
+    {
+        printf("  %2d%s ", dia, icono);
+    }
+}
+
+static void imprimir_salto_semana_si_corresponde(int pos, int dia_actual, int dias, int usar_unicode)
+{
+    if (pos % 7 == 0 && dia_actual <= dias)
+    {
+        printf(" %s\n%s", usar_unicode ? "║" : "|", usar_unicode ? "║" : "|");
+    }
+}
+
+static void completar_ultima_semana(int *pos)
+{
+    while (*pos % 7 != 0)
+    {
+        printf("     ");
+        (*pos)++;
+    }
+}
+
+static void imprimir_pie_calendario_mes(int usar_unicode)
+{
+    if (usar_unicode)
+    {
+        printf("╚══════════════════════════════════════════════════════════════╝\n");
+    }
+    else
+    {
+        printf("+--------------------------------------------------------------+\n");
+    }
+}
+
 void mostrar_calendario_mes(int mes, int anio)
 {
     clear_screen();
@@ -266,22 +336,7 @@ void mostrar_calendario_mes(int mes, int anio)
     };
 
     printf("\n");
-    if (usar_unicode)
-    {
-        printf("╔══════════════════════════════════════════════════════════════╗\n");
-        printf("║              %s %d%-35s║\n", nombres_meses[mes - 1], anio, "");
-        printf("╠══════════════════════════════════════════════════════════════╣\n");
-        printf("║   L   M   M   J   V   S   D                                  ║\n");
-        printf("╟──────────────────────────────────────────────────────────────╢\n");
-    }
-    else
-    {
-        printf("+--------------------------------------------------------------+\n");
-        printf("|              %s %d%-35s|\n", nombres_meses[mes - 1], anio, "");
-        printf("+--------------------------------------------------------------+\n");
-        printf("|   L   M   M   J   V   S   D                                  |\n");
-        printf("|--------------------------------------------------------------|\n");
-    }
+    imprimir_encabezado_calendario_mes(usar_unicode, nombres_meses[mes - 1], anio);
 
     int dias = dias_en_mes(mes, anio);
     int primer_dia = primer_dia_semana(mes, anio);
@@ -310,44 +365,21 @@ void mostrar_calendario_mes(int mes, int anio)
         char icono[4] = " ";
         obtener_icono_dia(dia_actual, mes, anio, icono, sizeof(icono));
 
-        if (hay_hoy &&
-                dia_actual == tm_hoy.tm_mday &&
-                mes == tm_hoy.tm_mon + 1 &&
-                anio == tm_hoy.tm_year + 1900)
-        {
-            printf(" [%2d%s]", dia_actual, icono);
-        }
-        else
-        {
-            printf("  %2d%s ", dia_actual, icono);
-        }
+        int hoy = es_dia_hoy(dia_actual, mes, anio, hay_hoy, &tm_hoy);
+        imprimir_celda_dia(dia_actual, icono, hoy);
 
         pos++;
         dia_actual++;
 
-        // Nueva línea cada 7 días
-        if (pos % 7 == 0 && dia_actual <= dias)
-        {
-            printf(" %s\n%s", usar_unicode ? "║" : "|", usar_unicode ? "║" : "|");
-        }
+        // Nueva linea cada 7 dias
+        imprimir_salto_semana_si_corresponde(pos, dia_actual, dias, usar_unicode);
     }
 
-    // Completar última línea
-    while (pos % 7 != 0)
-    {
-        printf("     ");
-        pos++;
-    }
+    // Completar ultima linea
+    completar_ultima_semana(&pos);
 
     printf(" %s\n", usar_unicode ? "║" : "|");
-    if (usar_unicode)
-    {
-        printf("╚══════════════════════════════════════════════════════════════╝\n");
-    }
-    else
-    {
-        printf("+--------------------------------------------------------------+\n");
-    }
+    imprimir_pie_calendario_mes(usar_unicode);
     printf("\nLeyenda: [Hoy]  %s=Partido  !=Recordatorio  $=Finanza\n", simbolo_partido_calendario());
     printf("\n");
 }
