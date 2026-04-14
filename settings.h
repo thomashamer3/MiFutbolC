@@ -151,4 +151,15 @@ void set_custom_menu_enabled(const char* menu_name, int enabled);
  */
 void menu_settings();
 
+/**
+ * @brief Verifica si hay actualizaciones disponibles de forma silenciosa
+ * 
+ * Esta función verifica si hay una nueva versión disponible en GitHub
+ * y muestra una notificación discreta si es así.
+ * 
+ * @param mostrar_mensaje Si es 0, solo verifica sin mostrar nada si está actualizado
+ *                        Si es 1, muestra mensaje tanto si hay actualización como si no
+ */
+void verificar_actualizacion_disponible(int mostrar_mensaje);
+
 #endif /* SETTINGS_H */

@@ -376,11 +376,14 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
-        printf("Partido creado correctamente con ID %lld\n", id);
+        char descripcion[100];
+        snprintf(descripcion, sizeof(descripcion), "ID: %lld", id);
+        mostrar_alerta_operacion("Partido", "Creado", descripcion);
     }
     else
     {
         printf("Error al crear el partido: %s\n", sqlite3_errmsg(db));
+        pause_console();
     }
     sqlite3_finalize(stmt);
 }
@@ -512,7 +515,29 @@ void crear_partido()
         return;
 
     char fecha[20];
-    get_datetime(fecha, sizeof(fecha));
+    printf("\nFecha y Hora del partido (dd/mm/yyyy hh:mm):\n");
+    printf("(Presione Enter para usar fecha/hora actual): ");
+    fgets(fecha, sizeof(fecha), stdin);
+    fecha[strcspn(fecha, "\n")] = 0;
+    
+    // Si el usuario presiona Enter (string vacío), usar fecha/hora actual
+    if (fecha[0] == '\0' || (fecha[0] == ' ' && fecha[1] == '\0'))
+    {
+        get_datetime(fecha, sizeof(fecha));
+        printf("Usando fecha/hora actual: %s\n", fecha);
+    }
+    else
+    {
+        // Validar que tenga al menos un formato básico
+        trim_whitespace(fecha);
+        if (strlen(fecha) < 10)
+        {
+            printf("Formato de fecha invalido. Usando fecha/hora actual.\n");
+            get_datetime(fecha, sizeof(fecha));
+        }
+        printf("Fecha/hora ingresada: %s\n", fecha);
+    }
+    
     long long id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
 
@@ -606,8 +631,7 @@ void eliminar_partido()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    printf("Partido Eliminado Correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Partido", "Eliminado", NULL);
 }
 
 /**
@@ -778,8 +802,7 @@ static void modificar_cancha_partido()
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Cancha modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Partido", "Cancha Modificada", NULL);
 }
 
 /**
@@ -813,8 +836,7 @@ static void modificar_fecha_hora_partido()
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Fecha y hora modificadas correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Partido", "Fecha y Hora Modificadas", NULL);
 }
 
 /**
@@ -866,8 +888,7 @@ static void modificar_camiseta_partido()
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Camiseta modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Partido", "Camiseta Modificada", NULL);
 }
 
 /**
@@ -995,8 +1016,7 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_int(stmt, 10, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Partido Modificado Correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Partido", "Modificado", NULL);
 }
 
 /**

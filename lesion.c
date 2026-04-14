@@ -232,12 +232,9 @@ void crear_lesion()
         free(jugador);
     }
 
-    printf("\nLesion creada correctamente con estado: %s\n", estado);
-    if (partido_id > 0)
-    {
-        printf("Asociada al partido ID: %d\n", partido_id);
-    }
-    pause_console();
+    char info[200];
+    snprintf(info, sizeof(info), "Estado: %s%s", estado, partido_id > 0 ? " - Asociada a partido" : "");
+    mostrar_alerta_operacion("Lesión", "Creada", info);
 }
 
 /**
@@ -304,8 +301,7 @@ static void modificar_tipo_lesion()
     char tipo[100];
     solicitar_texto_no_vacio("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
     ejecutar_update_texto("UPDATE lesion SET tipo=? WHERE id=?", tipo, current_lesion_id);
-    printf("Tipo modificado correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Tipo Modificado", NULL);
 }
 
 /**
@@ -316,8 +312,7 @@ static void modificar_descripcion_lesion()
     char descripcion[200];
     solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
     ejecutar_update_texto("UPDATE lesion SET descripcion=? WHERE id=?", descripcion, current_lesion_id);
-    printf("Descripcion modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Descripción Modificada", NULL);
 }
 
 /**
@@ -336,8 +331,7 @@ static void modificar_fecha_lesion()
     hora[strcspn(hora, "\n")] = 0;
     snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
     ejecutar_update_texto("UPDATE lesion SET fecha=? WHERE id=?", fecha_hora, current_lesion_id);
-    printf("Fecha modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Fecha Modificada", NULL);
 }
 
 /**
@@ -357,8 +351,7 @@ static void modificar_camiseta_lesion()
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
     ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id, current_lesion_id);
-    printf("Camiseta modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Camiseta Modificada", NULL);
 }
 
 /**
@@ -376,7 +369,9 @@ static void modificar_estado_lesion()
     const char *estado = solicitar_estado_lesion("Seleccione nuevo estado (1-5): ");
 
     ejecutar_update_texto("UPDATE lesion SET estado=? WHERE id=?", estado, current_lesion_id);
-    printf("Estado modificado correctamente a: %s\n", estado);
+    char info[100];
+    snprintf(info, sizeof(info), "%s", estado);
+    mostrar_alerta_operacion("Lesión", "Estado Modificado", info);
 }
 
 /**
@@ -416,13 +411,14 @@ static void modificar_partido_lesion()
 
     if (partido_id > 0)
     {
-        printf("Partido modificado correctamente al ID: %d\n", partido_id);
+        char info[100];
+        snprintf(info, sizeof(info), "Asociada a partido ID: %d", partido_id);
+        mostrar_alerta_operacion("Lesión", "Partido Modificado", info);
     }
     else
     {
-        printf("Asociacion con partido eliminada.\n");
+        mostrar_alerta_operacion("Lesión", "Asociación con Partido Eliminada", NULL);
     }
-    pause_console();
 }
 
 /**
@@ -474,8 +470,7 @@ static void modificar_todo_lesion()
     sqlite3_bind_int(stmt, 6, current_lesion_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    printf("Lesion modificada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Modificada", NULL);
 }
 
 /**
@@ -573,8 +568,7 @@ void eliminar_lesion()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    printf("\nLesion eliminada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Lesión", "Eliminada", NULL);
 }
 
 /**

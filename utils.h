@@ -563,4 +563,21 @@ int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *p
                                     char *ruta_relativa_db, size_t ruta_size);
 int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_filename);
 
+/**
+ * @brief Muestra una alerta visual de operacion exitosa
+ *
+ * Notifica al usuario cuando una entidad ha sido creada, modificada o eliminada
+ * exitosamente. Muestra un mensaje formateado con bordes y registra el evento
+ * en el log de la aplicacion.
+ *
+ * @param entidad El tipo de entidad (ej: "Camiseta", "Cancha", "Partido", "Lesion", "Equipo")
+ * @param operacion El tipo de operacion realizada (ej: "Creada", "Modificada", "Eliminada")
+ * @param nombre_item Nombre o descripcion especifica del item (opcional, puede ser NULL)
+ *
+ * @example
+ * mostrar_alerta_operacion("Camiseta", "Creada", "Real Madrid 2023");
+ * mostrar_alerta_operacion("Partido", "Eliminado", NULL);
+ */
+void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item);
+
 #endif

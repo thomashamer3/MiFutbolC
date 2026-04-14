@@ -104,6 +104,22 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="carrera.h" />
+		<Unit filename="dashboard.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="dashboard.h" />
+		<Unit filename="busqueda.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="busqueda.h" />
+		<Unit filename="calendario.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="calendario.h" />
+		<Unit filename="atajos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="atajos.h" />
 		<Unit filename="compat_port.h" />
 		<Unit filename="compat_windows.h" />
 		<Unit filename="db.c">

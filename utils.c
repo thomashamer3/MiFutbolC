@@ -3766,3 +3766,46 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_fi
     printf("\nImagen cargada correctamente.\n");
     return 1;
 }
+
+/**
+ * @brief Muestra una alerta visual de operacion exitosa
+ *
+ * Notifica al usuario cuando una entidad ha sido creada, modificada o eliminada
+ * exitosamente. Muestra un mensaje formateado con bordes y registra el evento
+ * en el log de la aplicacion.
+ */
+void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item)
+{
+    char log_msg[512];
+    const char *entidad_safe = entidad ? entidad : "Entidad";
+    const char *operacion_safe = operacion ? operacion : "Procesada";
+
+    printf("\n");
+    printf("========================================\n");
+    printf("  \xE2\x9C\x93 OPERACION EXITOSA\n");
+    printf("========================================\n\n");
+
+    printf("  Entidad  : %s\n", entidad_safe);
+    printf("  Operacion: %s\n", operacion_safe);
+
+    if (nombre_item && nombre_item[0] != '\0')
+    {
+        printf("  Detalle  : %s\n", nombre_item);
+    }
+
+    printf("\n========================================\n");
+
+    if (nombre_item && nombre_item[0] != '\0')
+    {
+        snprintf(log_msg, sizeof(log_msg), "%s %s: %.200s",
+                 entidad_safe, operacion_safe, nombre_item);
+    }
+    else
+    {
+        snprintf(log_msg, sizeof(log_msg), "%s %s exitosamente",
+                 entidad_safe, operacion_safe);
+    }
+
+    app_log_event("OPERACION", log_msg);
+    pause_console();
+}

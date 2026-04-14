@@ -1,5 +1,8 @@
 #include "menu.h"
 #include "utils.h"
+#include "settings.h"
+#include "dashboard.h"
+#include "atajos.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -90,10 +93,22 @@ int main()
     initialize_application();
     handle_user_name();
 
+    // Verificar actualizaciones al inicio (modo silencioso - solo muestra si hay actualización)
+    verificar_actualizacion_disponible(0);
+    
+    // Mostrar Dashboard inicial con resumen de actividades
+    mostrar_dashboard();
+    
+    // Inicializar sistema de atajos de teclado
+    inicializar_atajos();
+
     int count;
     MenuItem* filtered_items = create_filtered_menu(&count);
 
     run_menu(filtered_items, count);
+    
+    // Finalizar sistema de atajos de teclado
+    finalizar_atajos();
 
     return 0;
 }

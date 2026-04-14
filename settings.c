@@ -37,7 +37,7 @@ void menu_update();
 #define UPDATE_REPO "thomashamer3/MiFutbolC"
 
 // Version actual de la aplicacion. Debe mantenerse en sincronia con el instalador (MiFutbolC.iss)
-#define APP_VERSION "3.9"
+#define APP_VERSION "4.1"
 
 // Configuracion global
 static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
@@ -1730,4 +1730,76 @@ void menu_settings()
     const int item_count = (int)(sizeof(items) / sizeof(items[0]));
 
     ejecutar_menu(get_text("menu_settings"), items, item_count);
+}
+
+/**
+ * @brief Verifica si hay actualizaciones disponibles de forma silenciosa
+ */
+void verificar_actualizacion_disponible(int mostrar_mensaje)
+{
+#if defined(UNIT_TEST)
+    return;
+#else
+#ifdef _WIN32
+    const char *owner_repo = UPDATE_REPO;
+    char repo_name[128] = {0};
+    obtener_nombre_repo(owner_repo, repo_name, sizeof(repo_name));
+
+    char temp_path[MAX_PATH];
+    if (GetTempPathA(MAX_PATH, temp_path) == 0)
+    {
+        return;
+    }
+
+    char *latest_tag = obtener_latest_release_tag(owner_repo, repo_name, temp_path);
+    if (!latest_tag)
+    {
+        if (mostrar_mensaje)
+        {
+            printf("No se pudo verificar actualizaciones.\n");
+        }
+        return;
+    }
+
+    int cmp = comparar_versiones(APP_VERSION, latest_tag);
+    
+    if (cmp < 0)
+    {
+        // Hay una nueva versión disponible
+        printf("\n");
+        printf("╔══════════════════════════════════════════════════════════════╗\n");
+        printf("║                                                              ║\n");
+        printf("║           ¡NUEVA VERSION DISPONIBLE!                        ║\n");
+        printf("║                                                              ║\n");
+        printf("║  Version actual:  %-10s                             ║\n", APP_VERSION);
+        printf("║  Nueva version:   %-10s                             ║\n", latest_tag);
+        printf("║                                                              ║\n");
+        printf("║  Para actualizar, ve a Ajustes > Actualizar                 ║\n");
+        printf("║                                                              ║\n");
+        printf("╚══════════════════════════════════════════════════════════════╝\n");
+        printf("\n");
+        pause_console();
+    }
+    else if (mostrar_mensaje)
+    {
+        if (cmp > 0)
+        {
+            printf("Estas usando una version de desarrollo (%s).\n", APP_VERSION);
+        }
+        else
+        {
+            printf("✓ Estas usando la ultima version (%s).\n", APP_VERSION);
+        }
+        pause_console();
+    }
+
+    free(latest_tag);
+#else
+    if (mostrar_mensaje)
+    {
+        printf("La verificación automatica solo esta disponible en Windows.\n");
+        pause_console();
+    }
+#endif
+#endif
 }

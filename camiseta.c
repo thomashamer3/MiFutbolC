@@ -517,15 +517,17 @@ void crear_camiseta()
             snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada sin imagen inicial (opcional)", id);
             app_log_event("CAMISETA", log_msg);
         }
+        
+        mostrar_alerta_operacion("Camiseta", "Creada", nombre);
     }
     else
     {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s", nombre);
         app_log_event("CAMISETA", log_msg);
+        printf("\nError al crear la camiseta en la base de datos.\n");
+        pause_console();
     }
-
-    pause_console();
 }
 
 /**
@@ -604,8 +606,7 @@ void editar_camiseta()
     snprintf(log_msg, sizeof(log_msg), "Editada camiseta id=%d nuevo_nombre=%.180s", id, nombre);
     app_log_event("CAMISETA", log_msg);
 
-    printf("\nCamiseta actualizada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Camiseta", "Modificada", nombre);
 }
 
 void cargar_imagen_camiseta()
@@ -717,8 +718,7 @@ void eliminar_camiseta()
     snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d", id);
     app_log_event("CAMISETA", log_msg);
 
-    printf("\nCamiseta eliminada correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Camiseta", "Eliminada", NULL);
 }
 
 /**

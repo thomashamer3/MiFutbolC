@@ -215,4 +215,46 @@ void activar_ia_estadisticas();
  */
 void menu_entrenador_ia();
 
+// ═══════════════════════════════════════════════════════════════════════════
+// NUEVAS FUNCIONES MEJORADAS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * @brief Predice el resultado probable de un próximo partido
+ *
+ * Analiza datos históricos de rendimiento, condición física,
+ * cancha, clima y otros factores para estimar probabilidad de victoria.
+ */
+void predecir_resultado_partido();
+
+/**
+ * @brief Recomienda formación óptima según rival y condiciones
+ *
+ * Sugiere la mejor formación táctica basada en análisis histórico.
+ */
+void recomendar_formacion();
+
+/**
+ * @brief Muestra alertas de rendimiento basadas en patrones
+ *
+ * Identifica tendencias negativas y patrones problemáticos
+ * en el rendimiento del jugador/equipo.
+ */
+void mostrar_alertas_rendimiento();
+
+/**
+ * @brief Sugiere períodos óptimos de descanso
+ *
+ * Analiza cansancio acumulado y recomienda cuándo descansar
+ * para optimizar rendimiento.
+ */
+void sugerir_descanso();
+
+/**
+ * @brief Identifica puntos débiles del equipo
+ *
+ * Analiza estadísticas para encontrar áreas de mejora.
+ */
+void analizar_puntos_debiles();
+
 #endif

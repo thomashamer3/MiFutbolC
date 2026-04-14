@@ -214,7 +214,7 @@ void crear_cancha()
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }
-        printf("Cancha creada correctamente\n");
+        mostrar_alerta_operacion("Cancha", "Creada", nombre);
     }
     else
     {
@@ -222,9 +222,8 @@ void crear_cancha()
         snprintf(log_msg, sizeof(log_msg), "Error al crear cancha nombre=%.180s", nombre);
         app_log_event("CANCHA", log_msg);
         printf("Error al crear la cancha.\n");
+        pause_console();
     }
-
-    pause_console();
 }
 
 /**
@@ -282,8 +281,7 @@ void eliminar_cancha()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    printf("Cancha Eliminada Correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
 }
 
 /**
@@ -333,8 +331,7 @@ void modificar_cancha()
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    printf("Cancha Modificada Correctamente\n");
-    pause_console();
+    mostrar_alerta_operacion("Cancha", "Modificada", nombre);
 }
 
 /**

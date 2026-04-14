@@ -439,6 +439,8 @@ static void crear_item_inventario(void)
     input_string("Fecha compra (YYYY-MM-DD, opcional): ", fecha_compra, (int)sizeof(fecha_compra));
     trim_whitespace(fecha_compra);
 
+    char nombre_item[120] = {0};
+
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt,
                        "INSERT INTO inventario_item(tipo, nombre, estado, valor, fecha_compra, camiseta_id) "
@@ -495,7 +497,6 @@ static void crear_item_inventario(void)
     }
     else
     {
-        char nombre_item[120];
         leer_texto_obligatorio("Nombre del item: ", nombre_item, (int)sizeof(nombre_item));
         sqlite3_bind_text(stmt, 2, nombre_item, -1, SQLITE_TRANSIENT);
         sqlite3_bind_null(stmt, 6);
@@ -510,8 +511,8 @@ static void crear_item_inventario(void)
     }
 
     sqlite3_finalize(stmt);
-    printf("Item de inventario creado correctamente.\n");
-    pause_console();
+    const char *detalle = (tipo == INV_TIPO_CAMISETA) ? "Camiseta vinculada" : nombre_item;
+    mostrar_alerta_operacion("Item de Inventario", "Creado", detalle);
 }
 
 static void listar_inventario_completo(void)
@@ -622,8 +623,7 @@ static void crear_coleccion(void)
     }
 
     sqlite3_finalize(stmt);
-    printf("Coleccion creada correctamente.\n");
-    pause_console();
+    mostrar_alerta_operacion("Colección", "Creada", nombre);
 }
 
 static void listar_colecciones_completo(void)
@@ -744,13 +744,12 @@ static void agregar_item_a_coleccion(void)
     if (cambios == 0)
     {
         printf("Ese item ya estaba dentro de la coleccion.\n");
+        pause_console();
     }
     else
     {
-        printf("Item agregado a la coleccion correctamente.\n");
+        mostrar_alerta_operacion("Item", "Agregado a Colección", NULL);
     }
-
-    pause_console();
 }
 
 static void quitar_item_de_coleccion(void)
@@ -842,13 +841,12 @@ static void quitar_item_de_coleccion(void)
     if (cambios == 0)
     {
         printf("No existia esa relacion en la coleccion.\n");
+        pause_console();
     }
     else
     {
-        printf("Item quitado de la coleccion correctamente.\n");
+        mostrar_alerta_operacion("Item", "Quitado de Colección", NULL);
     }
-
-    pause_console();
 }
 
 static void ver_items_por_coleccion(void)

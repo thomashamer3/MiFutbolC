@@ -1,5 +1,6 @@
 ﻿#include "menu.h"
 #include "utils.h"
+#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,10 @@
 #include "carrera.h"
 #include "recordatorios.h"
 #include "colecciones.h"
+#include "dashboard.h"
+#include "busqueda.h"
+#include "calendario.h"
+#include "atajos.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -140,24 +145,52 @@ static void abrir_menu_recordatorios(void)
     menu_recordatorios();
 }
 
+static void abrir_dashboard(void)
+{
+    app_log_event("DASHBOARD", "Ingreso al Dashboard");
+    mostrar_dashboard();
+}
+
+static void abrir_busqueda_global(void)
+{
+    app_log_event("BUSQUEDA", "Ingreso a Busqueda Global");
+    menu_busqueda_global();
+}
+
+static void abrir_calendario(void)
+{
+    app_log_event("CALENDARIO", "Ingreso al Calendario");
+    menu_calendario();
+}
+
+static void abrir_entrenador_ia(void)
+{
+    app_log_event("ENTRENADOR_IA", "Ingreso al Entrenador IA");
+    menu_entrenador_ia();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
-    {1, "Camisetas", &abrir_menu_camisetas},
-    {2, "Canchas", &abrir_menu_canchas},
-    {3, "Equipos", &abrir_menu_equipos},
-    {4, "Partidos", &abrir_menu_partidos},
-    {5, "Lesiones", &abrir_menu_lesiones},
-    {6, "Estadisticas", &abrir_menu_estadisticas},
-    {7, "Logros", &abrir_menu_logros},
-    {8, "Financiamiento", &abrir_menu_financiamiento},
-    {9, "Torneos", &abrir_menu_torneos},
-    {10, "Temporada", &abrir_menu_temporadas},
-    {11, "Analisis", &abrir_menu_analisis},
-    {12, "Bienestar", &abrir_menu_bienestar},
-    {13, "Carrera Futbolistica", &abrir_menu_carrera},
-    {14, "Recordatorios", &abrir_menu_recordatorios},
-    {15, "Colecciones", &abrir_menu_colecciones},
-    {16, "Ajustes", &abrir_menu_settings},
+    {1, "Dashboard", &abrir_dashboard},
+    {2, "Busqueda Global", &abrir_busqueda_global},
+    {3, "Calendario", &abrir_calendario},
+    {4, "Entrenador IA", &abrir_entrenador_ia},
+    {5, "Camisetas", &abrir_menu_camisetas},
+    {6, "Canchas", &abrir_menu_canchas},
+    {7, "Equipos", &abrir_menu_equipos},
+    {8, "Partidos", &abrir_menu_partidos},
+    {9, "Lesiones", &abrir_menu_lesiones},
+    {10, "Estadisticas", &abrir_menu_estadisticas},
+    {11, "Logros", &abrir_menu_logros},
+    {12, "Financiamiento", &abrir_menu_financiamiento},
+    {13, "Torneos", &abrir_menu_torneos},
+    {14, "Temporada", &abrir_menu_temporadas},
+    {15, "Analisis", &abrir_menu_analisis},
+    {16, "Bienestar", &abrir_menu_bienestar},
+    {17, "Carrera Futbolistica", &abrir_menu_carrera},
+    {18, "Recordatorios", &abrir_menu_recordatorios},
+    {19, "Colecciones", &abrir_menu_colecciones},
+    {20, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 

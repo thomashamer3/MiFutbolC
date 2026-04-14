@@ -927,8 +927,482 @@ void menu_entrenador_ia()
         {2, "Ver historial de consejos", mostrar_historial_consejos},
         {3, "Evaluar decision pasada", evaluar_decision_pasada},
         {4, "Configurar nivel de intervencion", configurar_nivel_intervencion},
+        {5, "Predecir resultado de partido", predecir_resultado_partido},
+        {6, "Recomendar formacion optima", recomendar_formacion},
+        {7, "Ver alertas de rendimiento", mostrar_alertas_rendimiento},
+        {8, "Sugerir periodo de descanso", sugerir_descanso},
+        {9, "Analizar puntos debiles", analizar_puntos_debiles},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ENTRENADOR IA", items, 5);
+    ejecutar_menu("ENTRENADOR IA", items, 10);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NUEVAS FUNCIONES MEJORADAS DEL ENTRENADOR IA
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * @brief Predice resultado de un próximo partido
+ */
+void predecir_resultado_partido()
+{
+    iniciar_pantalla_ia("Prediccion de Resultado");
+
+    EstadoJugador estado = evaluar_estado_jugador();
+
+    // Calcular probabilidad de victoria basada en métricas
+    float prob_victoria = 50.0f; // Base 50%
+
+    // Ajustar por rendimiento
+    prob_victoria += (estado.rendimiento_promedio - 5.0f) * 5.0f;
+
+    // Ajustar por cansancio (negativo)
+    prob_victoria -= (estado.cansancio_promedio - 5.0f) * 3.0f;
+
+    // Ajustar por estado de ánimo
+    prob_victoria += (estado.estado_animo_promedio - 5.0f) * 4.0f;
+
+    // Ajustar por racha
+    if (estado.derrotas_consecutivas > 0)
+    {
+        prob_victoria -= (float)estado.derrotas_consecutivas * 5.0f;
+    }
+
+    // Limitar entre 5% y 95%
+    if (prob_victoria < 5.0f) prob_victoria = 5.0f;
+    if (prob_victoria > 95.0f) prob_victoria = 95.0f;
+
+    float prob_empate = (100.0f - prob_victoria) * 0.3f;
+    float prob_derrota = 100.0f - prob_victoria - prob_empate;
+
+    printf("\n╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║             PREDICCIoN PARA EL PRoXIMO PARTIDO              ║\n");
+    printf("╠══════════════════════════════════════════════════════════════╣\n");
+    printf("║                                                              ║\n");
+    printf("║  Probabilidad de VICTORIA:  %.0f%%%-27s║\n", prob_victoria, "");
+    printf("║  Probabilidad de EMPATE:    %.0f%%%-27s║\n", prob_empate, "");
+    printf("║  Probabilidad de DERROTA:   %.0f%%%-27s║\n", prob_derrota, "");
+    printf("║                                                              ║\n");
+    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+
+    printf("Factores clave:\n");
+    printf("  • Rendimiento actual: %.1f/10\n", estado.rendimiento_promedio);
+    printf("  • Cansancio: %.1f/10\n", estado.cansancio_promedio);
+    printf("  • Estado de animo: %.1f/10\n", estado.estado_animo_promedio);
+    if (estado.derrotas_consecutivas > 0)
+    {
+        printf("  • Racha negativa: %d derrotas consecutivas\n", estado.derrotas_consecutivas);
+    }
+    printf("\n");
+
+    pause_console();
+}
+
+/**
+ * @brief Recomienda formación táctica
+ */
+void recomendar_formacion()
+{
+    iniciar_pantalla_ia("Recomendacion de Formacion");
+
+    EstadoJugador estado = evaluar_estado_jugador();
+
+    printf("\nAnalizando estado del equipo...\n\n");
+
+    const char *formacion_recomendada;
+    const char *razon;
+
+    // Lógica de recomendación
+    if (estado.cansancio_promedio > 7.0f)
+    {
+        formacion_recomendada = "4-5-1 (Defensiva)";
+        razon = "Equipo cansado - Priorizar defensa y conservar energia";
+    }
+    else if (estado.rendimiento_promedio >= 7.0f)
+    {
+        formacion_recomendada = "4-3-3 (Ofensiva)";
+        razon = "Buen rendimiento - Aprovechar momento ofensivo";
+    }
+    else if (estado.derrotas_consecutivas >= 2)
+    {
+        formacion_recomendada = "4-4-2 (Equilibrada)";
+        razon = "Racha negativa - Buscar equilibrio y confianza";
+    }
+    else if (estado.estado_animo_promedio < 4.0f)
+    {
+        formacion_recomendada = "5-3-2 (Conservadora)";
+        razon = "Moral baja - Asegurar defensa y jugar simple";
+    }
+    else
+    {
+        formacion_recomendada = "4-2-3-1 (Balanceada)";
+        razon = "Estado normal - Formacion balanceada es optima";
+    }
+
+    printf("╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║              FORMACIoN RECOMENDADA                           ║\n");
+    printf("╠══════════════════════════════════════════════════════════════╣\n");
+    printf("║                                                              ║\n");
+    printf("║  %s%-44s║\n", formacion_recomendada, "");
+    printf("║                                                              ║\n");
+    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+
+    printf("Razon: %s\n\n", razon);
+
+    printf("Consejos adicionales:\n");
+    if (estado.cansancio_promedio > 6.0f)
+    {
+        printf("  • Considerar rotacion de jugadores\n");
+    }
+    if (estado.riesgo_lesion > 2.0f)
+    {
+        printf("  • Evitar jugadores con alto riesgo de lesion\n");
+    }
+    if (estado.estado_animo_promedio < 5.0f)
+    {
+        printf("  • Dar charla motivacional antes del partido\n");
+    }
+    printf("\n");
+
+    pause_console();
+}
+
+/**
+ * @brief Muestra alertas de rendimiento
+ */
+void mostrar_alertas_rendimiento()
+{
+    iniciar_pantalla_ia("Alertas de Rendimiento");
+
+    sqlite3_stmt *stmt = NULL;
+    int alertas_encontradas = 0;
+
+    printf("\n╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║              ALERTAS DE RENDIMIENTO DETECTADAS              ║\n");
+    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+
+    // Alerta 1: Rendimiento bajo en días específicos
+    const char *sql_dias =
+        "SELECT strftime('%w', fecha) as dia, AVG(rendimiento_general) as promedio "
+        "FROM partido GROUP BY dia HAVING promedio < 4.0;";
+
+    if (preparar_stmt(&stmt, sql_dias))
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int dia = sqlite3_column_int(stmt, 0);
+            float promedio = (float)sqlite3_column_double(stmt, 1);
+
+            const char *nombre_dia[] = {"Domingo", "Lunes", "Martes", "Miercoles",
+                                        "Jueves", "Viernes", "Sabado"
+                                       };
+
+            printf("⚠️  ALERTA: Rendimiento bajo los %s (%.1f/10)\n",
+                   nombre_dia[dia], promedio);
+            printf("    Recomendacion: Evitar partidos importantes este dia\n\n");
+            alertas_encontradas++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Alerta 2: Partidos con mucho cansancio
+    const char *sql_cansancio =
+        "SELECT COUNT(*) FROM partido WHERE cansancio >= 8;";
+
+    if (preparar_stmt(&stmt, sql_cansancio))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int count = sqlite3_column_int(stmt, 0);
+            if (count > 5)
+            {
+                printf("⚠️  ALERTA: %d partidos con cansancio critico (>=8)\n", count);
+                printf("    Recomendacion: Aumentar periodos de descanso\n\n");
+                alertas_encontradas++;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    // Alerta 3: Tendencia negativa reciente
+    const char *sql_tendencia =
+        "SELECT AVG(rendimiento_general) FROM (SELECT rendimiento_general FROM partido ORDER BY fecha DESC, hora DESC LIMIT 5);";
+
+    if (preparar_stmt(&stmt, sql_tendencia))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            float promedio_reciente = (float)sqlite3_column_double(stmt, 0);
+            if (promedio_reciente < 4.5f)
+            {
+                printf("⚠️  ALERTA: Tendencia negativa en ultimos 5 partidos (%.1f/10)\n",
+                       promedio_reciente);
+                printf("    Recomendacion: Analizar tacticas y motivacion del equipo\n\n");
+                alertas_encontradas++;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (alertas_encontradas == 0)
+    {
+        printf("✅ No se detectaron alertas criticas.\n");
+        printf("   El rendimiento esta dentro de parametros normales.\n\n");
+    }
+
+    pause_console();
+}
+
+/**
+ * @brief Sugiere períodos de descanso
+ */
+void sugerir_descanso()
+{
+    iniciar_pantalla_ia("Sugerencia de Descanso");
+
+    EstadoJugador estado = evaluar_estado_jugador();
+
+    printf("\n╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║           ANALISIS DE NECESIDAD DE DESCANSO                 ║\n");
+    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+
+    printf("Estado actual:\n");
+    printf("  • Cansancio promedio: %.1f/10\n", estado.cansancio_promedio);
+    printf("  • Partidos consecutivos: %d\n", estado.partidos_consecutivos);
+    printf("  • Dias desde ultimo partido: %d\n", estado.dias_descanso);
+    printf("  • Riesgo de lesion: %.1f/5\n\n", estado.riesgo_lesion);
+
+    // Lógica de recomendación
+    int dias_descanso_recomendados = 0;
+    const char *urgencia;
+
+    if (estado.cansancio_promedio >= 8.0f)
+    {
+        dias_descanso_recomendados = 7;
+        urgencia = "URGENTE";
+    }
+    else if (estado.cansancio_promedio >= 6.0f || estado.partidos_consecutivos >= 4)
+    {
+        dias_descanso_recomendados = 5;
+        urgencia = "Recomendado";
+    }
+    else if (estado.partidos_consecutivos >= 3)
+    {
+        dias_descanso_recomendados = 3;
+        urgencia = "Sugerido";
+    }
+    else if (estado.dias_descanso >= 10)
+    {
+        dias_descanso_recomendados = 0;
+        urgencia = "No necesario - Ya descansado";
+    }
+    else
+    {
+        dias_descanso_recomendados = 2;
+        urgencia = "Mantenimiento";
+    }
+
+    printf("═══════════════════════════════════════════════════════════════\n");
+    printf("RECOMENDACIoN\n");
+    printf("═══════════════════════════════════════════════════════════════\n\n");
+
+    if (dias_descanso_recomendados > 0)
+    {
+        printf("Descanso recomendado: %d dias\n", dias_descanso_recomendados);
+        printf("Nivel de urgencia: %s\n\n", urgencia);
+
+        if (estado.riesgo_lesion > 2.5f)
+        {
+            printf("⚠️  IMPORTANTE: Alto riesgo de lesion detectado!\n");
+            printf("   El descanso es CRITICO para evitar lesiones.\n\n");
+        }
+
+        printf("Durante el descanso:\n");
+        printf("  □ Evitar partidos oficiales\n");
+        printf("  □ Reducir intensidad de entrenamientos\n");
+        printf("  □ Enfocarse en recuperacion y estiramiento\n");
+        if (estado.estado_animo_promedio < 5.0f)
+        {
+            printf("  □ Trabajar en aspectos mentales y motivacion\n");
+        }
+    }
+    else
+    {
+        printf("✓ No requieres descanso adicional en este momento.\n");
+        printf("  Estado general es bueno para continuar jugando.\n");
+    }
+
+    printf("\n");
+    pause_console();
+}
+
+static int analizar_debilidad_goles(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_goles = "SELECT AVG(goles) FROM partido;";
+
+    if (!preparar_stmt(&stmt, sql_goles))
+    {
+        return 0;
+    }
+
+    int identificada = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        float promedio_goles = (float)sqlite3_column_double(stmt, 0);
+        if (promedio_goles < 1.5f)
+        {
+            printf("⚠️  DEBILIDAD: Capacidad ofensiva (%.1f goles/partido)\n", promedio_goles);
+            printf("    Sugerencias:\n");
+            printf("      • Practicar definicion y finalizacion\n");
+            printf("      • Trabajar jugadas de ataque\n");
+            printf("      • Revisar posicionamiento ofensivo\n\n");
+            identificada = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return identificada;
+}
+
+static int analizar_debilidad_asistencias(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_asistencias = "SELECT AVG(asistencias) FROM partido;";
+
+    if (!preparar_stmt(&stmt, sql_asistencias))
+    {
+        return 0;
+    }
+
+    int identificada = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        float promedio_asist = (float)sqlite3_column_double(stmt, 0);
+        if (promedio_asist < 1.0f)
+        {
+            printf("⚠️  DEBILIDAD: Juego en equipo (%.1f asistencias/partido)\n", promedio_asist);
+            printf("    Sugerencias:\n");
+            printf("      • Mejorar comunicacion en cancha\n");
+            printf("      • Practicar pases y movimientos sin balon\n");
+            printf("      • Fomentar juego colectivo\n\n");
+            identificada = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return identificada;
+}
+
+static int obtener_count_desde_sql(const char *sql, int *valor)
+{
+    sqlite3_stmt *stmt = NULL;
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    int ok = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        *valor = sqlite3_column_int(stmt, 0);
+        ok = 1;
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int analizar_debilidad_lesiones(void)
+{
+    const char *sql_lesiones = "SELECT COUNT(*) FROM lesion;";
+    const char *sql_partidos = "SELECT COUNT(*) FROM partido;";
+    int total_lesiones = 0;
+    int total_partidos = 0;
+
+    if (!obtener_count_desde_sql(sql_lesiones, &total_lesiones) ||
+        !obtener_count_desde_sql(sql_partidos, &total_partidos) ||
+        total_partidos <= 0)
+    {
+        return 0;
+    }
+
+    float tasa_lesiones = (float)total_lesiones / (float)total_partidos;
+    if (tasa_lesiones <= 0.3f)
+    {
+        return 0;
+    }
+
+    printf("⚠️  DEBILIDAD: Alta tasa de lesiones (%.1f%%)\n", tasa_lesiones * 100);
+    printf("    Sugerencias:\n");
+    printf("      • Mejorar calentamiento pre-partido\n");
+    printf("      • Aumentar trabajo de flexibilidad\n");
+    printf("      • Revisar carga de entrenamientos\n");
+    printf("      • Consultar con fisioterapeuta\n\n");
+    return 1;
+}
+
+static int analizar_debilidad_consistencia(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char *sql_varianza =
+        "SELECT MAX(rendimiento_general) - MIN(rendimiento_general) FROM partido;";
+
+    if (!preparar_stmt(&stmt, sql_varianza))
+    {
+        return 0;
+    }
+
+    int identificada = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int varianza = sqlite3_column_int(stmt, 0);
+        if (varianza > 6)
+        {
+            printf("⚠️  DEBILIDAD: Falta de consistencia (varianza: %d puntos)\n", varianza);
+            printf("    Sugerencias:\n");
+            printf("      • Establecer rutinas pre-partido\n");
+            printf("      • Trabajar aspectos mentales\n");
+            printf("      • Mantener formacion estable\n\n");
+            identificada = 1;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return identificada;
+}
+
+/**
+ * @brief Analiza puntos débiles del equipo
+ */
+void analizar_puntos_debiles()
+{
+    iniciar_pantalla_ia("Analisis de Puntos Debiles");
+
+    printf("\n╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║           ANaLISIS DE AREAS DE MEJORA                       ║\n");
+    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+
+    int areas_identificadas = 0;
+    areas_identificadas += analizar_debilidad_goles();
+    areas_identificadas += analizar_debilidad_asistencias();
+    areas_identificadas += analizar_debilidad_lesiones();
+    areas_identificadas += analizar_debilidad_consistencia();
+
+    if (areas_identificadas == 0)
+    {
+        printf("✅ No se identificaron debilidades criticas.\n");
+        printf("   El equipo muestra un desarrollo equilibrado.\n");
+        printf("   Continua con el trabajo actual.\n\n");
+    }
+    else
+    {
+        printf("═══════════════════════════════════════════════════════════════\n");
+        printf("Total de areas identificadas: %d\n", areas_identificadas);
+        printf("Prioriza trabajar en estos aspectos durante entrenamientos.\n\n");
+    }
+
+    pause_console();
 }

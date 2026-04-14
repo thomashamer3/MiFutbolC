@@ -61,7 +61,11 @@ SRC = \
   financiamiento.c \
   settings.c \
   entrenador_ia.c \
-  carrera.c
+  carrera.c \
+  dashboard.c \
+  busqueda.c \
+  calendario.c \
+  atajos.c
 
 OUT = MiFutbolC
 

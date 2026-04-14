@@ -507,11 +507,14 @@ static void guardar_transaccion_db(const TransaccionFinanciera *transaccion)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Transaccion guardada exitosamente con ID: %lld\n", sqlite3_last_insert_rowid(db));
+            char desc[200];
+            snprintf(desc, sizeof(desc), "%s - $%d", transaccion->descripcion, transaccion->monto);
+            mostrar_alerta_operacion("Transacción", "Guardada", desc);
         }
         else
         {
             printf("Error al guardar la transaccion: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
@@ -694,11 +697,12 @@ static void actualizar_presupuesto(const PresupuestoMensual *presupuesto)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Presupuesto actualizado exitosamente.\n");
+            mostrar_alerta_operacion("Presupuesto", "Actualizado", presupuesto->mes_anio);
         }
         else
         {
             printf("Error al actualizar presupuesto: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
@@ -723,11 +727,12 @@ static void insertar_presupuesto(const PresupuestoMensual *presupuesto)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Presupuesto configurado exitosamente.\n");
+            mostrar_alerta_operacion("Presupuesto", "Configurado", presupuesto->mes_anio);
         }
         else
         {
             printf("Error al guardar presupuesto: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
@@ -1769,8 +1774,10 @@ void exportar_financiamiento()
 
     finalizar_archivos_exportacion(&finalize_params);
 
-    printf("\nExportacion completada exitosamente!\n");
-    printf("Total de transacciones exportadas: %d\n", count);
+    char info[100];
+    snprintf(info, sizeof(info), "%d transacciones", count);
+    mostrar_alerta_operacion("Datos Financieros", "Exportados", info);
+
     printf("Balance neto: $");
     mostrar_monto(total_ingresos - total_gastos);
 
@@ -1814,7 +1821,7 @@ static void modificar_fecha_transaccion(int id_transaccion)
     }
     const char *sql = "UPDATE financiamiento SET fecha = ? WHERE id = ?;";
     ejecutar_update_texto(sql, nueva_fecha, id_transaccion);
-    printf("Fecha actualizada exitosamente.\n");
+    mostrar_alerta_operacion("Transacción", "Fecha Actualizada", nueva_fecha);
 }
 
 /**
@@ -1831,7 +1838,7 @@ static void modificar_tipo_transaccion(int id_transaccion)
     }
     const char *sql = "UPDATE financiamiento SET tipo = ? WHERE id = ?;";
     ejecutar_update_int(sql, nuevo_tipo, id_transaccion);
-    printf("Tipo actualizado exitosamente.\n");
+    mostrar_alerta_operacion("Transacción", "Tipo Actualizado", nuevo_tipo == 0 ? "Ingreso" : "Gasto");
 }
 
 /**
@@ -1850,7 +1857,7 @@ static void modificar_categoria_transaccion(int id_transaccion)
     }
     const char *sql = "UPDATE financiamiento SET categoria = ? WHERE id = ?;";
     ejecutar_update_int(sql, nueva_categoria, id_transaccion);
-    printf("Categoria actualizada exitosamente.\n");
+    mostrar_alerta_operacion("Transacción", "Categoría Actualizada", NULL);
 }
 
 /**
@@ -1863,7 +1870,7 @@ static void modificar_descripcion_transaccion(int id_transaccion)
     solicitar_texto_no_vacio("", nueva_descripcion, sizeof(nueva_descripcion));
     const char *sql = "UPDATE financiamiento SET descripcion = ? WHERE id = ?;";
     ejecutar_update_texto(sql, nueva_descripcion, id_transaccion);
-    printf("Descripcion actualizada exitosamente.\n");
+    mostrar_alerta_operacion("Transacción", "Descripción Actualizada", nueva_descripcion);
 }
 
 /**
@@ -1874,7 +1881,9 @@ static void modificar_monto_transaccion(int id_transaccion)
     int nuevo_monto = solicitar_monto_no_negativo("Nuevo monto: ");
     const char *sql = "UPDATE financiamiento SET monto = ? WHERE id = ?;";
     ejecutar_update_int(sql, nuevo_monto, id_transaccion);
-    printf("Monto actualizado exitosamente.\n");
+    char info[50];
+    snprintf(info, sizeof(info), "$%d", nuevo_monto);
+    mostrar_alerta_operacion("Transacción", "Monto Actualizado", info);
 }
 
 /**
@@ -1887,7 +1896,7 @@ static void modificar_item_especifico_transaccion(int id_transaccion)
     input_string("", nuevo_item, sizeof(nuevo_item));
     const char *sql = "UPDATE financiamiento SET item_especifico = ? WHERE id = ?;";
     ejecutar_update_texto(sql, nuevo_item, id_transaccion);
-    printf("Item especifico actualizado exitosamente.\n");
+    mostrar_alerta_operacion("Transacción", "Item Actualizado", nuevo_item);
 }
 
 /* Helper: obtener transaccion por ID y llenar estructura TransaccionFinanciera */
@@ -2126,11 +2135,12 @@ void eliminar_transaccion()
 
             if (sqlite3_step(stmt) == SQLITE_DONE)
             {
-                printf("Transaccion eliminada exitosamente.\n");
+                mostrar_alerta_operacion("Transacción", "Eliminada", NULL);
             }
             else
             {
                 printf("Error al eliminar la transaccion: %s\n", sqlite3_errmsg(db));
+                pause_console();
             }
             sqlite3_finalize(stmt);
         }

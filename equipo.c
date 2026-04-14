@@ -547,14 +547,13 @@ void cambiar_capitan_equipo(int equipo_id, EquipoPlayerInfo *info)
     sql_update = "UPDATE jugador SET es_capitan = 1 WHERE id = ?;";
     if (ejecutar_update_id(sql_update, info->jugadores_ids[nuevo_capitan_idx]))
     {
-        printf("Capitan cambiado exitosamente.\n");
+        mostrar_alerta_operacion("Equipo", "Capitán Cambiado", NULL);
     }
     else
     {
         printf("Error al cambiar el capitan: %s\n", sqlite3_errmsg(db));
+        pause_console();
     }
-
-    pause_console();
 }
 
 /**
@@ -689,11 +688,12 @@ void handle_modify_team_name(int equipo_id)
     const char *sql_update = "UPDATE equipo SET nombre = ? WHERE id = ?;";
     if (ejecutar_update_text(sql_update, nuevo_nombre, equipo_id))
     {
-        printf("Nombre actualizado exitosamente.\n");
+        mostrar_alerta_operacion("Equipo", "Nombre Actualizado", nuevo_nombre);
     }
     else
     {
         printf("Error al actualizar el nombre: %s\n", sqlite3_errmsg(db));
+        pause_console();
     }
 }
 
@@ -738,11 +738,12 @@ void handle_modify_team_type(int equipo_id)
     const char *sql_update = "UPDATE equipo SET tipo_futbol = ? WHERE id = ?;";
     if (ejecutar_update_int(sql_update, tipo_futbol, equipo_id))
     {
-        printf("Tipo de futbol actualizado exitosamente.\n");
+        mostrar_alerta_operacion("Equipo", "Tipo de Fútbol Actualizado", NULL);
     }
     else
     {
         printf("Error al actualizar el tipo de futbol: %s\n", sqlite3_errmsg(db));
+        pause_console();
     }
 }
 
@@ -1382,13 +1383,15 @@ void save_equipo_to_db(const Equipo *equipo)
     if (equipo_id != -1)
     {
         insert_jugadores_for_equipo(equipo_id, equipo);
-        printf("Equipo guardado exitosamente con ID: %d\n", equipo_id);
+        char info[100];
+        snprintf(info, sizeof(info), "%s - ID: %d", equipo->nombre, equipo_id);
         if (confirmar("Desea cargar imagen para este equipo ahora?") &&
                 !cargar_imagen_para_equipo_id(equipo_id))
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }
         handle_party_assignment(equipo_id);
+        mostrar_alerta_operacion("Equipo", "Guardado", info);
     }
 }
 
@@ -1654,16 +1657,15 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Jugador agregado exitosamente.\n");
+            mostrar_alerta_operacion("Jugador", "Agregado al Equipo", nuevo_jugador.nombre);
         }
         else
         {
             printf("Error al agregar el jugador: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
-
-    pause_console();
 }
 
 /**
@@ -1739,8 +1741,7 @@ void agregar_jugador_momentaneo(Equipo *equipo)
     nuevo_jugador->es_capitan = 0;
     equipo->num_jugadores++;
 
-    printf("Jugador agregado exitosamente.\n");
-    pause_console();
+    mostrar_alerta_operacion("Jugador", "Agregado", nuevo_jugador->nombre);
 }
 
 /**
@@ -1784,11 +1785,12 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Jugador eliminado exitosamente.\n");
+            mostrar_alerta_operacion("Jugador", "Eliminado del Equipo", NULL);
         }
         else
         {
             printf("Error al eliminar el jugador: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
@@ -2145,10 +2147,12 @@ void eliminar_jugador_momentaneo(Equipo *equipo)
         }
 
         equipo->num_jugadores--;
-        printf("Jugador eliminado exitosamente.\n");
+        mostrar_alerta_operacion("Jugador", "Eliminado", NULL);
     }
-
-    pause_console();
+    else
+    {
+        pause_console();
+    }
 }
 
 /**
@@ -2567,11 +2571,12 @@ void eliminar_equipo()
 
             if (sqlite3_step(stmt) == SQLITE_DONE)
             {
-                printf("Equipo eliminado exitosamente.\n");
+                mostrar_alerta_operacion("Equipo", "Eliminado", NULL);
             }
             else
             {
                 printf("Error al eliminar el equipo: %s\n", sqlite3_errmsg(db));
+                pause_console();
             }
             sqlite3_finalize(stmt);
         }

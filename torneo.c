@@ -392,16 +392,19 @@ void asociar_equipos_torneo(int torneo_id)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Equipo asociado al torneo exitosamente.\n");
+            mostrar_alerta_operacion("Torneo", "Equipo Asociado", NULL);
         }
         else
         {
             printf("Error al asociar equipo al torneo: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
-
-    pause_console();
+    else
+    {
+        pause_console();
+    }
 }
 
 /**
@@ -623,7 +626,9 @@ void crear_torneo()
     if (torneo_id == -1)
         return;
 
-    printf("Torneo guardado exitosamente con ID: %d\n", torneo_id);
+    char info[100];
+    snprintf(info, sizeof(info), "%s - ID: %d", torneo.nombre, torneo_id);
+    mostrar_alerta_operacion("Torneo", "Guardado", info);
 
     printf("\nAgregar equipos al torneo:\n");
     printf("1. Agregar equipos por nombre (solo nombres para llaves)\n");
@@ -821,8 +826,7 @@ void eliminar_torneo()
         }
     }
 
-    printf("Torneo eliminado exitosamente.\n");
-    pause_console();
+    mostrar_alerta_operacion("Torneo", "Eliminado", NULL);
 }
 
 /**
@@ -842,11 +846,12 @@ static void actualizar_nombre_torneo(int torneo_id)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Nombre actualizado exitosamente.\n");
+            mostrar_alerta_operacion("Torneo", "Nombre Actualizado", nuevo_nombre);
         }
         else
         {
             printf("Error al actualizar el nombre: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }

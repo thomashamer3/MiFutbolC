@@ -256,7 +256,9 @@ void crear_temporada()
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Temporada creada exitosamente con ID: %d\n", nuevo_id);
+            char info[100];
+            snprintf(info, sizeof(info), "%s - ID: %d", temporada.nombre, nuevo_id);
+            mostrar_alerta_operacion("Temporada", "Creada", info);
 
             // Crear fases por defecto
             crear_fases_temporada_defecto(nuevo_id);
@@ -264,6 +266,7 @@ void crear_temporada()
         else
         {
             printf("Error al crear la temporada: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
@@ -609,14 +612,13 @@ void eliminar_temporada()
             }
         }
 
-        printf("Temporada eliminada exitosamente.\n");
+        mostrar_alerta_operacion("Temporada", "Eliminada", NULL);
     }
     else
     {
         printf("Eliminacion cancelada.\n");
+        pause_console();
     }
-
-    pause_console();
 }
 
 // ========== FUNCIONES DE FATIGA Y EVOLUCIoN ==========
@@ -900,7 +902,7 @@ void generar_resumen_temporada(int temporada_id)
         sqlite3_finalize(stmt);
     }
 
-    printf("Resumen de temporada generado exitosamente.\n");
+    mostrar_alerta_operacion("Resumen de Temporada", "Generado", NULL);
 }
 
 void comparar_temporadas(int temporada1_id, int temporada2_id)
@@ -1222,7 +1224,7 @@ void exportar_resumen_temporada(int temporada_id)
     }
 
     fclose(file);
-    printf("Resumen exportado exitosamente a: %s\n", filepath);
+    mostrar_alerta_operacion("Resumen de Temporada", "Exportado", filepath);
 }
 
 // ========== MENu PRINCIPAL ==========
@@ -1392,16 +1394,19 @@ void asociar_torneo_temporada(int torneo_id)
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Torneo asociado a temporada exitosamente.\n");
+            mostrar_alerta_operacion("Temporada", "Torneo Asociado", NULL);
         }
         else
         {
             printf("Error al asociar torneo: %s\n", sqlite3_errmsg(db));
+            pause_console();
         }
         sqlite3_finalize(stmt);
     }
-
-    pause_console();
+    else
+    {
+        pause_console();
+    }
 }
 
 // ========== FUNCIONES DE RESUMEN MENSUAL ==========
@@ -1554,7 +1559,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
         sqlite3_finalize(stmt);
     }
 
-    printf("Resumen mensual %s generado exitosamente.\n", mes_anio);
+    mostrar_alerta_operacion("Resumen Mensual", "Generado", mes_anio);
 }
 
 void mostrar_resumen_mensual(int temporada_id, const char* mes_anio)
@@ -1785,7 +1790,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
     }
 
     fclose(file);
-    printf("Resumen mensual exportado exitosamente a: %s\n", filepath);
+    mostrar_alerta_operacion("Resumen Mensual", "Exportado", filepath);
 }
 
 // ========== FUNCIoN DE COMPARACIoN DE TEMPORADAS ==========

@@ -121,10 +121,11 @@ static int menuimg_cargar_para_menu_key(const char *menu_key)
     if (!menuimg_guardar_ruta_menu(menu_key, ruta_relativa_db))
     {
         printf("Error al guardar ruta de imagen en DB.\n");
+        pause_console();
         return 0;
     }
 
-    printf("\nImagen cargada correctamente.\n");
+    mostrar_alerta_operacion("Imagen", "Cargada", NULL);
     return 1;
 }
 
@@ -1863,14 +1864,13 @@ static void informe_personal_mensual_pdf(void)
 
     if (generar_informe_personal_mensual_pdf(mes_yyyy_mm))
     {
-        printf("Informe mensual generado correctamente.\n");
+        mostrar_alerta_operacion("Informe Mensual", "Generado", mes_yyyy_mm);
     }
     else
     {
         printf("No se pudo generar el informe mensual.\n");
+        pause_console();
     }
-
-    pause_console();
 }
 
 static const char *tipo_entrenamiento_texto(int tipo)
