@@ -159,4 +159,7 @@ void exportar_estadisticas_por_anio_json();
  */
 void exportar_estadisticas_por_anio_html();
 
+/** @brief Exporta estadisticas generales a Markdown (GFM) */
+void exportar_estadisticas_generales_md();
+
 #endif /* EXPORT_ESTADISTICAS_GENERALES_H */

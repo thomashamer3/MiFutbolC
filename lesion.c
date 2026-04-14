@@ -9,12 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 static int current_lesion_id;
 
-/**
- * @brief Preparar statement y reportar errores
- */
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
@@ -25,9 +21,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-/**
- * @brief Obtener estado por opcion
- */
 static const char *estado_por_opcion(int opcion)
 {
     switch (opcion)
@@ -47,9 +40,6 @@ static const char *estado_por_opcion(int opcion)
     }
 }
 
-/**
- * @brief Ejecutar update simple con texto
- */
 static void ejecutar_update_texto(const char *sql, const char *valor, int id)
 {
     sqlite3_stmt *stmt;
@@ -63,9 +53,6 @@ static void ejecutar_update_texto(const char *sql, const char *valor, int id)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Ejecutar update simple con entero
- */
 static void ejecutar_update_int(const char *sql, int valor, int id)
 {
     sqlite3_stmt *stmt;
@@ -102,11 +89,6 @@ static const char *solicitar_estado_lesion(const char *prompt)
     }
 }
 
-/**
- * @brief Solicita al usuario el ID de un partido
- * @param permitir_omitir Si es true, permite ingresar 0 para omitir
- * @return ID del partido seleccionado (0 si se omite o cancela)
- */
 static int solicitar_partido_id(int permitir_omitir)
 {
     listar_partidos();
@@ -140,13 +122,6 @@ static int solicitar_partido_id(int permitir_omitir)
     return partido_id;
 }
 
-/**
- * @brief Crea una nueva lesion en la base de datos
- *
- * Solicita al usuario el tipo, descripcion de la lesion, el ID de la camiseta asociada
- * y el estado inicial, y la inserta en la tabla 'lesion'. El nombre del jugador se obtiene del usuario actual.
- * Utiliza el ID mas pequeno disponible para reutilizar IDs eliminados.
- */
 void crear_lesion()
 {
     clear_screen();
@@ -237,13 +212,6 @@ void crear_lesion()
     mostrar_alerta_operacion("Lesión", "Creada", info);
 }
 
-/**
- * @brief Muestra un listado de todas las lesiones registradas
- *
- * Consulta la base de datos y muestra en pantalla todas las lesiones
- * con sus respectivos datos: ID, tipo, descripcion, fecha y estado.
- * Si no hay lesiones registradas, muestra un mensaje informativo.
- */
 void listar_lesiones()
 {
     mostrar_pantalla("LISTADO DE LESIONES");
@@ -293,9 +261,6 @@ void listar_lesiones()
     pause_console();
 }
 
-/**
- * @brief Modifica el tipo de una lesion existente
- */
 static void modificar_tipo_lesion()
 {
     char tipo[100];
@@ -304,9 +269,6 @@ static void modificar_tipo_lesion()
     mostrar_alerta_operacion("Lesión", "Tipo Modificado", NULL);
 }
 
-/**
- * @brief Modifica la descripcion de una lesion existente
- */
 static void modificar_descripcion_lesion()
 {
     char descripcion[200];
@@ -315,9 +277,6 @@ static void modificar_descripcion_lesion()
     mostrar_alerta_operacion("Lesión", "Descripción Modificada", NULL);
 }
 
-/**
- * @brief Modifica la fecha de una lesion existente
- */
 static void modificar_fecha_lesion()
 {
     char fecha[20];
@@ -334,9 +293,6 @@ static void modificar_fecha_lesion()
     mostrar_alerta_operacion("Lesión", "Fecha Modificada", NULL);
 }
 
-/**
- * @brief Modifica la camiseta de una lesion existente
- */
 static void modificar_camiseta_lesion()
 {
     listar_camisetas();
@@ -354,9 +310,6 @@ static void modificar_camiseta_lesion()
     mostrar_alerta_operacion("Lesión", "Camiseta Modificada", NULL);
 }
 
-/**
- * @brief Modifica el estado de una lesion existente
- */
 static void modificar_estado_lesion()
 {
     printf("\nEstados disponibles:\n");
@@ -374,9 +327,6 @@ static void modificar_estado_lesion()
     mostrar_alerta_operacion("Lesión", "Estado Modificado", info);
 }
 
-/**
- * @brief Modifica el partido asociado a una lesion existente
- */
 static void modificar_partido_lesion()
 {
     printf("\nDesea asociar esta lesion a un partido? (S/N): ");
@@ -421,9 +371,6 @@ static void modificar_partido_lesion()
     }
 }
 
-/**
- * @brief Modifica todos los campos de una lesion existente
- */
 static void modificar_todo_lesion()
 {
     char tipo[100];
@@ -473,12 +420,6 @@ static void modificar_todo_lesion()
     mostrar_alerta_operacion("Lesión", "Modificada", NULL);
 }
 
-/**
- * @brief Permite modificar una lesion existente
- *
- * Muestra la lista de lesiones disponibles, solicita el ID a modificar,
- * verifica que exista y muestra un menu con opciones para modificar campos individuales o todos.
- */
 void modificar_lesion()
 {
     mostrar_pantalla("MODIFICAR LESION");
@@ -522,13 +463,6 @@ void modificar_lesion()
     ejecutar_menu("MODIFICAR LESION", items, 8);
 }
 
-/**
- * @brief Elimina una lesion de la base de datos
- *
- * Muestra la lista de lesiones disponibles, solicita el ID a eliminar,
- * verifica que exista y solicita confirmacion antes de eliminar.
- * Una vez eliminada, el ID queda disponible para reutilizacion.
- */
 void eliminar_lesion()
 {
     mostrar_pantalla("ELIMINAR LESION");
@@ -571,13 +505,6 @@ void eliminar_lesion()
     mostrar_alerta_operacion("Lesión", "Eliminada", NULL);
 }
 
-/**
- * @brief Calcula la diferencia en dias entre dos fechas de lesiones
- *
- * @param fecha1 Primera fecha en formato string
- * @param fecha2 Segunda fecha en formato string
- * @return Diferencia en dias (positivo si fecha2 es posterior a fecha1)
- */
 static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
 {
     // Para simplificar, usaremos una conversion basica
@@ -607,9 +534,6 @@ static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
     return dias2 - dias1;
 }
 
-/**
- * @brief Muestra diferencias de dias entre lesiones consecutivas
- */
 void mostrar_diferencias_lesiones()
 {
     clear_screen();
@@ -657,9 +581,6 @@ void mostrar_diferencias_lesiones()
     pause_console();
 }
 
-/**
- * @brief Pregunta al usuario si desea actualizar el estado de las lesiones activas
- */
 void actualizar_estados_lesiones()
 {
     mostrar_pantalla("ACTUALIZAR ESTADOS DE LESIONES");
@@ -721,13 +642,6 @@ void actualizar_estados_lesiones()
     pause_console();
 }
 
-/**
- * @brief Muestra el menu principal de gestion de lesiones
- *
- * Presenta un menu interactivo con opciones para crear, listar, editar
- * y eliminar lesiones. Utiliza la funcion ejecutar_menu para manejar
- * la navegacion del menu y delega las operaciones a las funciones correspondientes.
- */
 void menu_lesiones()
 {
     MenuItem items[] =

@@ -1,8 +1,4 @@
-﻿/**
- * @file financiamiento.c
- * @brief Implementacion de funciones para la gestion financiera en MiFutbolC
- */
-
+﻿
 #include "financiamiento.h"
 #include "db.h"
 #include "utils.h"
@@ -22,10 +18,6 @@
 #define PATH_SEP "/"
 #endif
 
-
-/**
- * @brief Convierte un tipo de transaccion enumerado a su nombre textual
- */
 const char *get_nombre_tipo_transaccion(TipoTransaccion tipo)
 {
     switch (tipo)
@@ -39,9 +31,6 @@ const char *get_nombre_tipo_transaccion(TipoTransaccion tipo)
     }
 }
 
-/**
- * @brief Convierte una categoria financiera enumerada a su nombre textual
- */
 const char *get_nombre_categoria(CategoriaFinanciera categoria)
 {
     switch (categoria)
@@ -67,9 +56,6 @@ const char *get_nombre_categoria(CategoriaFinanciera categoria)
     }
 }
 
-/**
- * @brief Retorna un monto entero formateado como string con puntos como separadores
- */
 char *formato_monto(int monto)
 {
     static char buf[20];
@@ -102,9 +88,6 @@ char *formato_monto(int monto)
     return buf;
 }
 
-/**
- * @brief Preparar un statement y reportar error
- */
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
@@ -115,9 +98,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-/**
- * @brief Mostrar fecha en formato DD/MM/YYYY desde YYYY-MM-DD
- */
 static void mostrar_fecha_display(const char *fecha_db, char *fecha_display, size_t size)
 {
     int year = 0;
@@ -134,9 +114,6 @@ static void mostrar_fecha_display(const char *fecha_db, char *fecha_display, siz
     }
 }
 
-/**
- * @brief Obtener mes y ano actual en formato YYYY-MM
- */
 static void obtener_mes_anio_actual(char *mes_anio)
 {
     time_t t = time(NULL);
@@ -145,9 +122,6 @@ static void obtener_mes_anio_actual(char *mes_anio)
     snprintf(mes_anio, 32, "%04d-%02d", tm.tm_year + 1900, tm.tm_mon + 1);
 }
 
-/**
- * @brief Ejecutar update simple con entero
- */
 static void ejecutar_update_int(const char *sql, int valor, int id_transaccion)
 {
     sqlite3_stmt *stmt;
@@ -160,9 +134,6 @@ static void ejecutar_update_int(const char *sql, int valor, int id_transaccion)
     }
 }
 
-/**
- * @brief Ejecutar update simple con texto
- */
 static void ejecutar_update_texto(const char *sql, const char *valor, int id_transaccion)
 {
     sqlite3_stmt *stmt;
@@ -196,17 +167,11 @@ static int solicitar_monto_no_negativo(const char *prompt)
     return monto;
 }
 
-/**
- * @brief Muestra un monto entero con formato de miles (puntos como separadores)
- */
 void mostrar_monto(int monto)
 {
     printf("%s\n", formato_monto(monto));
 }
 
-/**
- * @brief Muestra por pantalla toda la informacion detallada de una transaccion financiera
- */
 void mostrar_transaccion(TransaccionFinanciera *transaccion)
 {
     // Verificar que el puntero no sea nulo
@@ -234,9 +199,6 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion)
     ui_printf("\n");
 }
 
-/**
- * @brief Obtiene la fecha actual en formato YYYY-MM-DD
- */
 void obtener_fecha_actual(char *fecha)
 {
     time_t t = time(NULL);
@@ -245,12 +207,6 @@ void obtener_fecha_actual(char *fecha)
     strftime(fecha, 11, "%Y-%m-%d", &tm);
 }
 
-/**
- * @brief Convierte una fecha de formato DD/MM/YYYY a YYYY-MM-DD
- * @param fecha_ddmmyyyy Fecha en formato DD/MM/YYYY
- * @param fecha_yyyymmdd Buffer donde se almacenara la fecha convertida (YYYY-MM-DD)
- * @return 1 si la conversion fue exitosa, 0 si hubo error
- */
 int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_yyyymmdd)
 {
     int dia = 0;
@@ -274,16 +230,7 @@ int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_
     return 1; // exito
 }
 
-/**
- * @brief Obtiene el siguiente ID disponible para una nueva transaccion financiera
- *
- * Busca el ID mas pequeno disponible reutilizando espacios de IDs eliminados.
- * Utiliza una consulta SQL que encuentra el primer hueco en la secuencia de IDs.
- *
- * @return El ID disponible mas pequeno (comenzando desde 1 si la tabla esta vacia)
- */
 // FUNCIoN ELIMINADA: ahora usa obtener_siguiente_id("financiamiento") de utils.c
-
 
 static int seleccionar_tipo_transaccion(TransaccionFinanciera *transaccion)
 {
@@ -552,10 +499,6 @@ static void truncar_resultado_partido(char const *item_especifico)
     }
 }
 
-
-/**
- * @brief Agregar una nueva transaccion financiera
- */
 void agregar_transaccion()
 {
     clear_screen();
@@ -610,9 +553,6 @@ void agregar_transaccion()
     pause_console();
 }
 
-/**
- * @brief Gestion de presupuestos mensuales - menu principal
- */
 void menu_presupuestos_mensuales()
 {
 #ifdef UNIT_TEST
@@ -644,9 +584,6 @@ void menu_presupuestos_mensuales()
     ejecutar_menu("PRESUPUESTOS MENSUALES", items, 4);
 }
 
-/**
- * @brief Recopilar datos del presupuesto desde la entrada del usuario
- */
 static void recopilar_datos_presupuesto(PresupuestoMensual *presupuesto)
 {
     presupuesto->presupuesto_total = input_int("Presupuesto total mensual: ");
@@ -660,9 +597,6 @@ static void recopilar_datos_presupuesto(PresupuestoMensual *presupuesto)
     }
 }
 
-/**
- * @brief Verificar si existe un presupuesto para el mes dado
- */
 static int presupuesto_existe(const char *mes_anio)
 {
     sqlite3_stmt *stmt;
@@ -679,9 +613,6 @@ static int presupuesto_existe(const char *mes_anio)
     return existe;
 }
 
-/**
- * @brief Actualizar presupuesto existente
- */
 static void actualizar_presupuesto(const PresupuestoMensual *presupuesto)
 {
     sqlite3_stmt *stmt;
@@ -708,9 +639,6 @@ static void actualizar_presupuesto(const PresupuestoMensual *presupuesto)
     }
 }
 
-/**
- * @brief Insertar nuevo presupuesto
- */
 static void insertar_presupuesto(const PresupuestoMensual *presupuesto)
 {
     sqlite3_stmt *stmt;
@@ -738,9 +666,6 @@ static void insertar_presupuesto(const PresupuestoMensual *presupuesto)
     }
 }
 
-/**
- * @brief Configurar presupuesto mensual
- */
 void configurar_presupuesto_mensual()
 {
     clear_screen();
@@ -774,9 +699,6 @@ void configurar_presupuesto_mensual()
     pause_console();
 }
 
-/**
- * @brief Ver estado actual del presupuesto mensual
- */
 void ver_estado_presupuesto()
 {
     clear_screen();
@@ -861,9 +783,6 @@ void ver_estado_presupuesto()
     pause_console();
 }
 
-/**
- * @brief Verificar limites de gasto y mostrar alertas
- */
 void verificar_alertas_presupuesto()
 {
     clear_screen();
@@ -918,9 +837,6 @@ void verificar_alertas_presupuesto()
     pause_console();
 }
 
-/**
- * @brief Obtener gastos totales del mes actual
- */
 int obtener_gastos_mes_actual()
 {
     char mes_anio[32];
@@ -943,9 +859,6 @@ int obtener_gastos_mes_actual()
     return gastos;
 }
 
-/**
- * @brief Obtener presupuesto y limite del mes actual
- */
 int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
 {
     char mes_anio[32];
@@ -977,9 +890,6 @@ int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
     return 0; // No encontrado
 }
 
-/**
- * @brief Mostrar alertas cuando se exceden limites
- */
 void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite)
 {
     int exceso = gastos_actuales - limite;
@@ -1001,9 +911,6 @@ void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite)
     printf("\n");
 }
 
-/**
- * @brief Obtener estadisticas generales de financiamiento
- */
 static void obtener_estadisticas_generales(int *total_ingresos, int *total_gastos, int *num_transacciones)
 {
     sqlite3_stmt *stmt;
@@ -1031,9 +938,6 @@ static void obtener_estadisticas_generales(int *total_ingresos, int *total_gasto
     }
 }
 
-/**
- * @brief Imprimir resumen general
- */
 static void imprimir_resumen_general(int num_transacciones, int total_ingresos, int total_gastos)
 {
     printf("\n=== RESUMEN GENERAL ===\n");
@@ -1046,9 +950,6 @@ static void imprimir_resumen_general(int num_transacciones, int total_ingresos, 
     mostrar_monto(total_ingresos - total_gastos);
 }
 
-/**
- * @brief Imprimir desglose por categorias de ingresos
- */
 static void imprimir_ingresos_por_categoria()
 {
     sqlite3_stmt *stmt;
@@ -1078,9 +979,6 @@ static void imprimir_ingresos_por_categoria()
     }
 }
 
-/**
- * @brief Imprimir desglose por categorias de gastos
- */
 static void imprimir_gastos_por_categoria()
 {
     sqlite3_stmt *stmt;
@@ -1110,9 +1008,6 @@ static void imprimir_gastos_por_categoria()
     }
 }
 
-/**
- * @brief Imprimir estadisticas de equipamiento
- */
 static void imprimir_estadisticas_equipamiento()
 {
     sqlite3_stmt *stmt;
@@ -1142,9 +1037,6 @@ static void imprimir_estadisticas_equipamiento()
     }
 }
 
-/**
- * @brief Imprimir balance mensual
- */
 static void imprimir_balance_mensual()
 {
     sqlite3_stmt *stmt;
@@ -1183,9 +1075,6 @@ static void imprimir_balance_mensual()
     }
 }
 
-/**
- * @brief Mostrar resumen financiero del equipo
- */
 void mostrar_resumen_financiero()
 {
     clear_screen();
@@ -1213,9 +1102,6 @@ void mostrar_resumen_financiero()
     pause_console();
 }
 
-/**
- * @brief Mostrar balance general de gastos
- */
 void ver_balance_gastos()
 {
     clear_screen();
@@ -1332,9 +1218,6 @@ void ver_balance_gastos()
     pause_console();
 }
 
-/**
- * @brief Estructura para parametros de preparacion de exportacion
- */
 typedef struct
 {
     const char *export_dir;
@@ -1350,9 +1233,6 @@ typedef struct
     cJSON **json_array;
 } ExportPrepParams;
 
-/**
- * @brief Limpiar archivos de exportacion abiertos
- */
 static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *html_file, FILE *json_file, cJSON *json_array)
 {
     if (csv_file)
@@ -1382,9 +1262,6 @@ static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *h
     }
 }
 
-/**
- * @brief Helper function to open a file and handle errors
- */
 static void abrir_archivo(FILE **file, const char *filename, const char *mode, const char *tipo_archivo)
 {
     errno_t err = fopen_s(file, filename, mode);
@@ -1395,9 +1272,6 @@ static void abrir_archivo(FILE **file, const char *filename, const char *mode, c
     }
 }
 
-/**
- * @brief Helper function to close previously opened files
- */
 static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *html_file)
 {
     if (csv_file) fclose(csv_file);
@@ -1405,9 +1279,6 @@ static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *htm
     if (html_file) fclose(html_file);
 }
 
-/**
- * @brief Preparar archivos de exportacion
- */
 static void preparar_archivos_exportacion(ExportPrepParams *params)
 {
 
@@ -1476,9 +1347,6 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 }
 
-/**
- * @brief Estructura para parametros de exportacion de transacciones
- */
 typedef struct
 {
     FILE *csv_file;
@@ -1490,9 +1358,6 @@ typedef struct
     int *total_gastos;
 } ExportParams;
 
-/**
- * @brief Procesar transaccion para exportacion
- */
 static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *params)
 {
     int id = sqlite3_column_int(stmt, 0);
@@ -1575,9 +1440,6 @@ static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *p
     cJSON_AddItemToArray(params->json_array, item_obj);
 }
 
-/**
- * @brief Estructura para parametros de finalizacion de exportacion
- */
 typedef struct
 {
     const char *csv_filename;
@@ -1594,9 +1456,6 @@ typedef struct
     int total_gastos;
 } ExportFinalizeParams;
 
-/**
- * @brief Finalizar archivos de exportacion
- */
 static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
 {
     // CSV
@@ -1665,9 +1524,6 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
     }
 }
 
-/**
- * @brief Exportar transacciones financieras a multiples formatos
- */
 void exportar_financiamiento()
 {
     clear_screen();
@@ -1784,9 +1640,6 @@ void exportar_financiamiento()
     pause_console();
 }
 
-/**
- * @brief Menu principal de gestion financiera
- */
 void menu_financiamiento()
 {
     MenuItem items[] =
@@ -1805,9 +1658,6 @@ void menu_financiamiento()
     ejecutar_menu("FINANCIAMIENTO", items, 9);
 }
 
-/**
- * @brief Modificar la fecha de una transaccion financiera
- */
 static void modificar_fecha_transaccion(int id_transaccion)
 {
     printf("Nueva fecha (DD/MM/AAAA, Enter=hoy): ");
@@ -1824,9 +1674,6 @@ static void modificar_fecha_transaccion(int id_transaccion)
     mostrar_alerta_operacion("Transacción", "Fecha Actualizada", nueva_fecha);
 }
 
-/**
- * @brief Modificar el tipo de una transaccion financiera
- */
 static void modificar_tipo_transaccion(int id_transaccion)
 {
     printf("Nuevo tipo:\n1. Ingreso\n2. Gasto\n");
@@ -1841,9 +1688,6 @@ static void modificar_tipo_transaccion(int id_transaccion)
     mostrar_alerta_operacion("Transacción", "Tipo Actualizado", nuevo_tipo == 0 ? "Ingreso" : "Gasto");
 }
 
-/**
- * @brief Modificar la categoria de una transaccion financiera
- */
 static void modificar_categoria_transaccion(int id_transaccion)
 {
     printf("Nueva categoria:\n");
@@ -1860,9 +1704,6 @@ static void modificar_categoria_transaccion(int id_transaccion)
     mostrar_alerta_operacion("Transacción", "Categoría Actualizada", NULL);
 }
 
-/**
- * @brief Modificar la descripcion de una transaccion financiera
- */
 static void modificar_descripcion_transaccion(int id_transaccion)
 {
     printf("Nueva descripcion: ");
@@ -1873,9 +1714,6 @@ static void modificar_descripcion_transaccion(int id_transaccion)
     mostrar_alerta_operacion("Transacción", "Descripción Actualizada", nueva_descripcion);
 }
 
-/**
- * @brief Modificar el monto de una transaccion financiera
- */
 static void modificar_monto_transaccion(int id_transaccion)
 {
     int nuevo_monto = solicitar_monto_no_negativo("Nuevo monto: ");
@@ -1886,9 +1724,6 @@ static void modificar_monto_transaccion(int id_transaccion)
     mostrar_alerta_operacion("Transacción", "Monto Actualizado", info);
 }
 
-/**
- * @brief Modificar el item especifico de una transaccion financiera
- */
 static void modificar_item_especifico_transaccion(int id_transaccion)
 {
     printf("Nuevo item especifico: ");
@@ -1928,9 +1763,6 @@ static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera 
     return found;
 }
 
-/**
- * @brief Modificar una transaccion financiera existente
- */
 void modificar_transaccion()
 {
     clear_screen();
@@ -2040,9 +1872,6 @@ void modificar_transaccion()
     pause_console();
 }
 
-/**
- * @brief Eliminar una transaccion financiera
- */
 void eliminar_transaccion()
 {
     clear_screen();
@@ -2153,9 +1982,6 @@ void eliminar_transaccion()
     pause_console();
 }
 
-/**
- * @brief Listar todas las transacciones financieras
- */
 void listar_transacciones()
 {
     clear_screen();

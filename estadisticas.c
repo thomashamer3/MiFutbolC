@@ -1,11 +1,4 @@
-﻿/**
- * @file estadisticas.c
- * @brief Modulo principal para el menu de estadisticas en partidos de futbol.
- *
- * Este archivo contiene la funcion principal del menu de estadisticas
- * que permite acceder a las diferentes opciones de visualizacion de estadisticas.
- */
-
+﻿
 #include "estadisticas.h"
 #include "estadisticas_generales.h"
 #include "estadisticas_mes.h"
@@ -16,15 +9,6 @@
 #include "entrenador_ia.h"
 #include "utils.h"
 
-
-/**
- * @brief Menu principal de estadisticas
- *
- * Este menu centraliza el acceso a todas las categorias de estadisticas,
- * permitiendo a los usuarios navegar facilmente entre diferentes tipos de analisis.
- * La organizacion en categorias ayuda a los usuarios a encontrar rapidamente
- * la informacion que necesitan sin abrumarlos con demasiadas opciones a la vez.
- */
 void menu_estadisticas()
 {
     // Activar IA al abrir estadisticas
@@ -45,14 +29,6 @@ void menu_estadisticas()
     ejecutar_menu("ESTADISTICAS", items, 6);
 }
 
-/**
- * @brief Sub-menu de estadisticas generales
- *
- * Proporciona acceso a estadisticas agregadas en diferentes periodos de tiempo.
- * Esto permite a los usuarios analizar tendencias a lo largo del tiempo y comparar
- * el rendimiento en diferentes escalas temporales, lo que es esencial para identificar
- * patrones y tomar decisiones informadas sobre el entrenamiento y estrategia.
- */
 void menu_estadisticas_generales()
 {
     MenuItem items[] =
@@ -67,14 +43,6 @@ void menu_estadisticas_generales()
     ejecutar_menu("ESTADISTICAS GENERALES", items, 5);
 }
 
-/**
- * @brief Sub-menu de estadisticas de partidos
- *
- * Ofrece analisis detallado de los partidos jugados, incluyendo metricas
- * que ayudan a identificar patrones de rendimiento bajo diferentes condiciones.
- * Esto es crucial para entender como factores como el cansancio y la dificultad
- * afectan el desempeno, permitiendo ajustar estrategias para futuros encuentros.
- */
 void menu_estadisticas_partidos()
 {
     MenuItem items[] =
@@ -90,14 +58,6 @@ void menu_estadisticas_partidos()
     ejecutar_menu("ESTADISTICAS DE PARTIDOS", items, 6);
 }
 
-/**
- * @brief Sub-menu de estadisticas de goles
- *
- * Proporciona analisis de la productividad ofensiva, correlacionando goles
- * con diversos factores contextuales. Esto ayuda a identificar las condiciones
- * optimas para el rendimiento ofensivo y entender como diferentes variables
- * afectan la capacidad de anotacion, informacion valiosa para la estrategia de juego.
- */
 void menu_estadisticas_goles()
 {
     MenuItem items[] =
@@ -114,14 +74,6 @@ void menu_estadisticas_goles()
     ejecutar_menu("ESTADISTICAS DE GOLES", items, 7);
 }
 
-/**
- * @brief Sub-menu de estadisticas de asistencias
- *
- * Analiza el juego en equipo y la creacion de oportunidades de gol.
- * Las asistencias son un indicador clave del trabajo colectivo y la efectividad
- * del juego ofensivo. Este analisis ayuda a evaluar la calidad del juego en equipo
- * y como diferentes condiciones afectan la capacidad de crear oportunidades para los companeros.
- */
 void menu_estadisticas_asistencias()
 {
     MenuItem items[] =
@@ -137,15 +89,6 @@ void menu_estadisticas_asistencias()
     ejecutar_menu("ESTADISTICAS DE ASISTENCIAS", items, 6);
 }
 
-/**
- * @brief Sub-menu de estadisticas de rendimiento
- *
- * Ofrece un analisis exhaustivo del rendimiento bajo diversas condiciones.
- * Este es el menu mas completo ya que el rendimiento es la metrica mas importante
- * para evaluar el desempeno global. Proporciona informacion detallada sobre como
- * factores externos e internos afectan el rendimiento, permitiendo optimizar
- * el entrenamiento y la preparacion para maximizar el desempeno en diferentes contextos.
- */
 void menu_estadisticas_rendimiento()
 {
     MenuItem items[] =

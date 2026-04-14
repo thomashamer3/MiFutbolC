@@ -1,8 +1,4 @@
-﻿/**
-* @file equipo.c
-* @brief Implementacion de funciones para la gestion de equipos en MiFutbolC
-*/
-
+﻿
 #include "equipo.h"
 #include "db.h"
 #include "utils.h"
@@ -28,7 +24,6 @@
 #include "process.h"
 #include <strings.h>
 #endif
-
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -367,52 +362,24 @@ static int procesar_opcion_gestion_equipo(Equipo *equipo, int opcion)
     }
 }
 
-/**
- * @brief Actualiza el nombre de un jugador en la base de datos
- *
- * @param player_id ID del jugador
- * @param new_name Nuevo nombre del jugador
- * @return 1 si se actualizo exitosamente, 0 si hubo error
- */
 int update_player_name(int player_id, const char *new_name)
 {
     const char *sql = "UPDATE jugador SET nombre = ? WHERE id = ?;";
     return ejecutar_update_text(sql, new_name, player_id);
 }
 
-/**
- * @brief Actualiza el numero de un jugador en la base de datos
- *
- * @param player_id ID del jugador
- * @param new_number Nuevo numero del jugador
- * @return 1 si se actualizo exitosamente, 0 si hubo error
- */
 int update_player_number(int player_id, int new_number)
 {
     const char *sql = "UPDATE jugador SET numero = ? WHERE id = ?;";
     return ejecutar_update_int(sql, new_number, player_id);
 }
 
-/**
- * @brief Actualiza la posicion de un jugador en la base de datos
- *
- * @param player_id ID del jugador
- * @param new_position Nueva posicion del jugador
- * @return 1 si se actualizo exitosamente, 0 si hubo error
- */
 int update_player_position(int player_id, Posicion new_position)
 {
     const char *sql = "UPDATE jugador SET posicion = ? WHERE id = ?;";
     return ejecutar_update_int(sql, new_position, player_id);
 }
 
-/**
- * @brief Actualiza el estado de capitan de un jugador en la base de datos
- *
- * @param player_id ID del jugador
- * @param is_captain Nuevo estado de capitan (1=capitan, 0=no capitan)
- * @return 1 si se actualizo exitosamente, 0 si hubo error
- */
 int update_player_captain_status(int player_id, int is_captain)
 {
     const char *sql = "UPDATE jugador SET es_capitan = ? WHERE id = ?;";
@@ -501,15 +468,7 @@ static int seleccionar_posicion_con_check(hay_arquero_cb_t cb, void *ctx)
         return DELANTERO;
     }
 }
-/**
- * @brief Cambia el capitan de un equipo en la base de datos
- *
- * Funcion helper que maneja el cambio de capitan,
- * reduciendo la complejidad de anidamiento en modificar_equipo().
- *
- * @param equipo_id ID del equipo
- * @param info Puntero a estructura con informacion de los jugadores
- */
+
 void cambiar_capitan_equipo(int equipo_id, EquipoPlayerInfo *info)
 {
     printf("\nSeleccione el nuevo capitan:\n");
@@ -556,14 +515,6 @@ void cambiar_capitan_equipo(int equipo_id, EquipoPlayerInfo *info)
     }
 }
 
-/**
- * @brief Asigna un equipo a un partido existente
- *
- * Funcion helper que maneja la logica de asignacion de un equipo a un partido,
- * reduciendo la complejidad de anidamiento en handle_modify_team_assignment().
- *
- * @param equipo_id ID del equipo a asignar
- */
 void assign_team_to_party(int equipo_id)
 {
     listar_partidos();
@@ -582,14 +533,6 @@ void assign_team_to_party(int equipo_id)
     }
 }
 
-/**
- * @brief Remueve la asignacion de partido de un equipo
- *
- * Funcion helper que maneja la logica de remover la asignacion de partido,
- * reduciendo la complejidad de anidamiento en handle_modify_team_assignment().
- *
- * @param equipo_id ID del equipo a desasignar
- */
 void remove_team_from_party(int equipo_id)
 {
     const char *sql_update = "UPDATE equipo SET partido_id = -1 WHERE id = ?;";
@@ -610,10 +553,6 @@ void handle_modify_team_type(int equipo_id);
 void handle_modify_team_assignment(int equipo_id);
 void handle_modify_players(int equipo_id);
 
-/**
- * @brief Obtiene el ID de un equipo para modificar desde entrada del usuario
- * @return ID del equipo seleccionado o 0 si se cancela
- */
 int get_equipo_id_to_modify()
 {
     int equipo_id = input_int("\nIngrese el ID del equipo a modificar (0 para cancelar): ");
@@ -637,12 +576,6 @@ void handle_modify_player_number(int player_id, const int *all_numbers, int coun
 void handle_modify_player_position(int player_id, const int *all_positions, int count, int current_index);
 void handle_toggle_player_captain(int player_id);
 
-/**
- * @brief Muestra la lista de equipos disponibles para modificacion
- *
- * Funcion helper que extrae la logica de mostrar equipos disponibles,
- * reduciendo la complejidad de anidamiento en modificar_equipo().
- */
 void show_available_teams_for_modification()
 {
     sqlite3_stmt *stmt;
@@ -672,14 +605,6 @@ void show_available_teams_for_modification()
     }
 }
 
-/**
- * @brief Maneja la modificacion del nombre del equipo
- *
- * Funcion helper que extrae la logica de modificacion del nombre del equipo,
- * reduciendo la complejidad del switch en modificar_equipo().
- *
- * @param equipo_id ID del equipo a modificar
- */
 void handle_modify_team_name(int equipo_id)
 {
     char nuevo_nombre[50];
@@ -697,14 +622,6 @@ void handle_modify_team_name(int equipo_id)
     }
 }
 
-/**
- * @brief Maneja la modificacion del tipo de futbol del equipo
- *
- * Funcion helper que extrae la logica de modificacion del tipo de futbol,
- * reduciendo la complejidad del switch en modificar_equipo().
- *
- * @param equipo_id ID del equipo a modificar
- */
 void handle_modify_team_type(int equipo_id)
 {
     printf("\nSeleccione el nuevo tipo de futbol:\n");
@@ -747,14 +664,6 @@ void handle_modify_team_type(int equipo_id)
     }
 }
 
-/**
- * @brief Maneja la modificacion de la asignacion a partido del equipo
- *
- * Funcion helper que extrae la logica de modificacion de asignacion a partido,
- * reduciendo la complejidad del switch en modificar_equipo().
- *
- * @param equipo_id ID del equipo a modificar
- */
 void handle_modify_team_assignment(int equipo_id)
 {
     if (confirmar("Desea asignar este equipo a un partido?"))
@@ -767,14 +676,6 @@ void handle_modify_team_assignment(int equipo_id)
     }
 }
 
-/**
- * @brief Maneja el menu de modificacion de jugadores del equipo
- *
- * Funcion helper que extrae la logica completa de modificacion de jugadores,
- * reduciendo significativamente la complejidad del switch en modificar_equipo().
- *
- * @param equipo_id ID del equipo cuyos jugadores se van a modificar
- */
 void handle_modify_players(int equipo_id)
 {
     printf("\n=== MODIFICAR JUGADORES ===\n");
@@ -867,14 +768,6 @@ void handle_modify_players(int equipo_id)
     }
 }
 
-/**
- * @brief Maneja la modificacion del nombre de un jugador
- *
- * Funcion helper que extrae la logica de modificacion del nombre,
- * reduciendo la complejidad del switch en modificar_jugador_existente().
- *
- * @param player_id ID del jugador a modificar
- */
 void handle_modify_player_name(int player_id)
 {
     char nuevo_nombre[50];
@@ -890,16 +783,6 @@ void handle_modify_player_name(int player_id)
     }
 }
 
-/**
- * @brief Maneja la modificacion del numero de un jugador
- *
- * Funcion helper que extrae la logica de modificacion del numero,
- * incluyendo validacion de duplicados, reduciendo la complejidad del switch.
- *
- * @param player_id ID del jugador a modificar
- * @param all_numbers Array con todos los numeros de jugadores del equipo
- * @param count Numero total de jugadores en el equipo
- */
 void handle_modify_player_number(int player_id, const int *all_numbers, int count)
 {
     int nuevo_numero = input_int("Ingrese el nuevo numero: ");
@@ -921,14 +804,6 @@ void handle_modify_player_number(int player_id, const int *all_numbers, int coun
     }
 }
 
-/**
- * @brief Maneja la modificacion de la posicion de un jugador
- *
- * Funcion helper que extrae la logica de seleccion y actualizacion de posicion,
- * reduciendo la complejidad del switch en modificar_jugador_existente().
- *
- * @param player_id ID del jugador a modificar
- */
 void handle_modify_player_position(int player_id, const int *all_positions, int count, int current_index)
 {
     printf("Seleccione la nueva posicion:\n");
@@ -976,15 +851,6 @@ void handle_modify_player_position(int player_id, const int *all_positions, int 
     }
 }
 
-/**
- * @brief Obtiene el estado actual de capitan de un jugador
- *
- * Funcion helper que consulta la base de datos para obtener el estado
- * de capitan actual de un jugador especifico.
- *
- * @param player_id ID del jugador
- * @return 1 si es capitan, 0 si no lo es, -1 en caso de error
- */
 int get_player_captain_status(int player_id)
 {
     sqlite3_stmt *stmt;
@@ -1004,14 +870,6 @@ int get_player_captain_status(int player_id)
     return status;
 }
 
-/**
- * @brief Maneja el cambio del estado de capitan de un jugador
- *
- * Funcion helper que extrae la logica de toggle del estado de capitan,
- * reduciendo la complejidad del switch en modificar_jugador_existente().
- *
- * @param player_id ID del jugador a modificar
- */
 void handle_toggle_player_captain(int player_id)
 {
     // Cambiar estado de capitan
@@ -1034,15 +892,6 @@ void handle_toggle_player_captain(int player_id)
     }
 }
 
-/**
- * @brief Inserta un registro de equipo en la base de datos
- *
- * Funcion helper que maneja la insercion del registro del equipo,
- * retornando el ID del equipo insertado o -1 en caso de error.
- *
- * @param equipo Puntero al equipo a insertar
- * @return ID del equipo insertado, o -1 si hay error
- */
 int insert_equipo_record(const Equipo *equipo)
 {
     sqlite3_stmt *stmt;
@@ -1104,15 +953,6 @@ int insert_equipo_record(const Equipo *equipo)
     }
 }
 
-/**
- * @brief Inserta todos los jugadores de un equipo en la base de datos
- *
- * Funcion helper que maneja la insercion de todos los jugadores
- * asociados a un equipo especifico.
- *
- * @param equipo_id ID del equipo al que pertenecen los jugadores
- * @param equipo Puntero al equipo que contiene los jugadores
- */
 void insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
 {
     sqlite3_stmt *stmt_jugador;
@@ -1136,14 +976,6 @@ void insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
     }
 }
 
-/**
- * @brief Maneja la asignacion opcional de un equipo a un partido
- *
- * Funcion helper que pregunta al usuario si desea asignar el equipo
- * a un partido existente y maneja la logica correspondiente.
- *
- * @param equipo_id ID del equipo a asignar
- */
 void handle_party_assignment(int equipo_id)
 {
     if (!confirmar("Desea asignar este equipo a un partido existente?"))
@@ -1173,9 +1005,6 @@ void handle_party_assignment(int equipo_id)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Genera cancha de futbol animada con balon en movimiento
- */
 void mostrar_cancha_animada(int minuto, int evento_tipo)
 {
     // Posiciones del balon basadas en el minuto y tipo de evento
@@ -1211,15 +1040,6 @@ void mostrar_cancha_animada(int minuto, int evento_tipo)
     printf("=======================================\n");
 }
 
-/**
- * @brief Convierte una posicion enumerada a su nombre textual
- *
- * Proporciona representacion legible de posiciones para interfaz de usuario,
- * facilitando la comprension y seleccion de roles de jugadores.
- *
- * @param posicion El valor enumerado de la posicion
- * @return Cadena constante con el nombre de la posicion, o "Desconocido" si no es valida
- */
 const char* get_nombre_posicion(Posicion posicion)
 {
     switch (posicion)
@@ -1237,15 +1057,6 @@ const char* get_nombre_posicion(Posicion posicion)
     }
 }
 
-/**
- * @brief Convierte un tipo de futbol enumerado a su nombre textual
- *
- * Facilita la presentacion de modalidades deportivas en interfaz de usuario,
- * permitiendo seleccion y visualizacion clara de formatos de juego disponibles.
- *
- * @param tipo El valor enumerado del tipo de futbol
- * @return Cadena constante con el nombre del tipo de futbol, o "Desconocido" si no es valido
- */
 const char* get_nombre_tipo_futbol(TipoFutbol tipo)
 {
     switch (tipo)
@@ -1263,16 +1074,6 @@ const char* get_nombre_tipo_futbol(TipoFutbol tipo)
     }
 }
 
-/**
- * @brief Solicita y valida la entrada de datos para un jugador
- *
- * Esta funcion helper centraliza la logica de entrada de datos para jugadores,
- * reduciendo la complejidad cognitiva en funciones mas grandes al extraer
- * la logica repetitiva de validacion de nombre y seleccion de posicion.
- *
- * @param jugador Puntero al jugador que se va a modificar
- * @param numero_auto Si es verdadero, asigna numeros automaticamente
- */
 void input_jugador_data(Jugador *jugador, int numero_auto)
 {
     // Nombre del jugador
@@ -1304,14 +1105,6 @@ void input_jugador_data(Jugador *jugador, int numero_auto)
     jugador->es_capitan = 0;
 }
 
-/**
- * @brief Muestra menu de seleccion de posicion y retorna la posicion elegida
- *
- * Funcion helper que extrae la logica de seleccion de posicion, reduciendo
- * duplicacion de codigo y mejorando la mantenibilidad.
- *
- * @return La posicion seleccionada por el usuario
- */
 Posicion select_posicion()
 {
     printf("Posicion:\n");
@@ -1337,15 +1130,6 @@ Posicion select_posicion()
     }
 }
 
-/**
- * @brief Muestra lista de jugadores y permite seleccionar capitan
- *
- * Funcion helper que centraliza la logica de seleccion de capitan,
- * reduciendo complejidad en funciones que crean equipos.
- *
- * @param equipo Puntero al equipo
- * @return indice del capitan seleccionado, o -1 si no se selecciona
- */
 int select_capitan(Equipo *equipo)
 {
     printf("\nSeleccione el capitan del equipo (1-%d):\n", equipo->num_jugadores);
@@ -1367,15 +1151,6 @@ int select_capitan(Equipo *equipo)
     }
 }
 
-/**
- * @brief Guarda un equipo completo en la base de datos
- *
- * Funcion helper que encapsula toda la logica de guardado de equipo
- * y jugadores en la base de datos, reduciendo complejidad en crear_equipo_fijo.
- * Utiliza funciones helper para mantener bajo nivel de complejidad cognitiva.
- *
- * @param equipo Puntero al equipo a guardar
- */
 void save_equipo_to_db(const Equipo *equipo)
 {
     int equipo_id = insert_equipo_record(equipo);
@@ -1395,16 +1170,6 @@ void save_equipo_to_db(const Equipo *equipo)
     }
 }
 
-/**
- * @brief Inicializa los datos basicos de un equipo
- *
- * Funcion helper que configura nombre, tipo de futbol y numero de jugadores,
- * reduciendo duplicacion de codigo entre diferentes funciones de creacion de equipos.
- *
- * @param equipo Puntero al equipo a inicializar
- * @param tipo_futbol Tipo de futbol seleccionado
- * @param num_jugadores Numero de jugadores calculado
- */
 void input_equipo_basico(Equipo *equipo, TipoFutbol tipo_futbol, int num_jugadores)
 {
     equipo->tipo_futbol = tipo_futbol;
@@ -1414,16 +1179,6 @@ void input_equipo_basico(Equipo *equipo, TipoFutbol tipo_futbol, int num_jugador
     solicitar_nombre_equipo("Ingrese el nombre del equipo: ", equipo->nombre, sizeof(equipo->nombre));
 }
 
-/**
- * @brief Crea los jugadores para un equipo solicitando datos al usuario
- *
- * Funcion helper que maneja la creacion de todos los jugadores de un equipo,
- * reduciendo la complejidad de anidamiento en funciones de creacion de equipos.
- *
- * @param equipo Puntero al equipo cuyos jugadores se van a crear
- * @param auto_numero Si es verdadero, asigna numeros automaticamente secuenciales
- * @param prefix Prefijo para los mensajes de jugador (ej. "EQUIPO LOCAL - ")
- */
 void crear_jugadores_equipo(Equipo *equipo, int auto_numero, const char *prefix)
 {
     for (int i = 0; i < equipo->num_jugadores; i++)
@@ -1461,14 +1216,6 @@ void crear_jugadores_equipo(Equipo *equipo, int auto_numero, const char *prefix)
     }
 }
 
-/**
- * @brief Muestra menu para seleccionar tipo de futbol y retorna la seleccion
- *
- * Funcion helper que extrae la logica de seleccion de tipo de futbol,
- * reduciendo duplicacion de codigo y mejorando mantenibilidad.
- *
- * @return El tipo de futbol seleccionado, o -1 si el usuario cancela
- */
 TipoFutbol seleccionar_tipo_futbol()
 {
     printf("\nSeleccione el tipo de futbol:\n");
@@ -1498,15 +1245,6 @@ TipoFutbol seleccionar_tipo_futbol()
     }
 }
 
-/**
- * @brief Retorna el numero de jugadores correspondiente a un tipo de futbol
- *
- * Funcion helper que encapsula la logica de conversion de tipo de futbol
- * a numero de jugadores, centralizando esta regla de negocio.
- *
- * @param tipo_futbol El tipo de futbol
- * @return Numero de jugadores para ese tipo de futbol
- */
 int get_num_jugadores_por_tipo(TipoFutbol tipo_futbol)
 {
     switch (tipo_futbol)
@@ -1524,18 +1262,6 @@ int get_num_jugadores_por_tipo(TipoFutbol tipo_futbol)
     }
 }
 
-/**
- * @brief Modifica un jugador existente en la base de datos
- *
- * Funcion helper que maneja la modificacion de campos especificos de un jugador,
- * reduciendo la complejidad de anidamiento en modificar_equipo().
- *
- * @param jugadores_ids Array con los IDs de los jugadores
- * @param jugadores_nombres Array con los nombres de los jugadores
- * @param jugadores_numeros Array con los numeros de los jugadores
- * @param jugadores_capitanes Array con el estado de capitan de los jugadores
- * @param jugador_count Numero total de jugadores
- */
 void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombres[][50],
                                  const int *jugadores_numeros, const int *jugadores_posiciones, const int *jugadores_capitanes, int jugador_count)
 {
@@ -1592,16 +1318,6 @@ void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombre
     pause_console();
 }
 
-/**
- * @brief Agrega un nuevo jugador a un equipo en la base de datos
- *
- * Funcion helper que maneja la logica de agregar un jugador,
- * reduciendo la complejidad de anidamiento en modificar_equipo().
- *
- * @param equipo_id ID del equipo
- * @param jugador_count Numero actual de jugadores
- * @param jugadores_numeros Array con los numeros de los jugadores existentes
- */
 void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros, const int *jugadores_posiciones)
 {
     if (jugador_count >= 11)
@@ -1668,9 +1384,6 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
     }
 }
 
-/**
- * @brief Agrega un jugador nuevo a un equipo momentaneo (si hay espacio)
- */
 void agregar_jugador_momentaneo(Equipo *equipo)
 {
     int max_jugadores = 0;
@@ -1744,16 +1457,6 @@ void agregar_jugador_momentaneo(Equipo *equipo)
     mostrar_alerta_operacion("Jugador", "Agregado", nuevo_jugador->nombre);
 }
 
-/**
- * @brief Elimina un jugador existente de la base de datos
- *
- * Funcion helper que maneja la eliminacion de un jugador,
- * reduciendo la complejidad de anidamiento en modificar_equipo().
- *
- * @param jugadores_ids Array con los IDs de los jugadores
- * @param jugadores_numeros Array con los numeros de los jugadores
- * @param jugador_count Numero total de jugadores
- */
 void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros, int jugador_count)
 {
     int jugador_num = input_int("Ingrese el numero del jugador a eliminar: ");
@@ -1798,14 +1501,6 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
     pause_console();
 }
 
-/**
- * @brief Muestra los jugadores de un equipo especifico
- *
- * Funcion helper que extrae la logica de mostrar jugadores de un equipo,
- * reduciendo la complejidad de anidamiento en listar_equipos().
- *
- * @param equipo_id ID del equipo cuyos jugadores se van a mostrar
- */
 void mostrar_jugadores_equipo(int equipo_id)
 {
     sqlite3_stmt *stmt_jugadores;
@@ -1845,15 +1540,6 @@ void mostrar_jugadores_equipo(int equipo_id)
     }
 }
 
-/**
- * @brief Muestra por pantalla toda la informacion detallada de un equipo
- *
- * Esta funcion presenta en consola la informacion completa de un equipo,
- * incluyendo sus datos basicos, tipo de futbol, numero de jugadores y
- * la lista completa de jugadores con sus posiciones y roles.
- *
- * @param equipo Puntero al equipo cuya informacion se va a mostrar
- */
 void mostrar_equipo(const Equipo *equipo)
 {
     printf("\n=== INFORMACION DEL EQUIPO ===\n");
@@ -1877,14 +1563,6 @@ void mostrar_equipo(const Equipo *equipo)
     printf("\n");
 }
 
-/**
- * @brief Crea un nuevo equipo fijo que se guarda permanentemente en la base de datos
- *
- * Esta funcion guia al usuario a traves del proceso completo de creacion de un equipo
- * permanente. Solicita el nombre, tipo de futbol, informacion de cada jugador y
- * seleccion de capitan. El equipo y sus jugadores se guardan en la base de datos
- * y opcionalmente se puede asignar a un partido existente.
- */
 void crear_equipo_fijo()
 {
     Equipo equipo;
@@ -1922,14 +1600,6 @@ static void accion_crear_dos_equipos_momentaneos(void)
     crear_dos_equipos_momentaneos();
 }
 
-/**
- * @brief Crea un nuevo equipo momentaneo que no se guarda en la base de datos
- *
- * Esta funcion guia al usuario a traves del proceso de creacion de un equipo
- * temporal. Solicita el nombre, tipo de futbol, informacion de cada jugador y
- * seleccion de capitan. El equipo se crea en memoria pero no se persiste,
- * siendo util para partidos puntuales o simulaciones.
- */
 void crear_equipo_momentaneo()
 {
     MenuItem items[] =
@@ -1942,9 +1612,6 @@ void crear_equipo_momentaneo()
     ejecutar_menu("CREAR EQUIPO MOMENTANEO", items, 3);
 }
 
-/**
- * @brief Crea un solo equipo momentaneo
- */
 void crear_un_equipo_momentaneo()
 {
     Equipo equipo;
@@ -1968,9 +1635,6 @@ void crear_un_equipo_momentaneo()
     gestionar_equipo_momentaneo(&equipo);
 }
 
-/**
- * @brief Muestra el equipo y ofrece opciones de gestion de jugadores
- */
 void gestionar_equipo_momentaneo(Equipo *equipo)
 {
     int salir = 0;
@@ -2091,9 +1755,6 @@ static int procesar_campo_jugador_momentaneo(Equipo *equipo, int jugador_idx, in
     }
 }
 
-/**
- * @brief Modifica un jugador existente en un equipo momentaneo
- */
 void modificar_jugador_momentaneo(Equipo *equipo)
 {
     int jugador_idx = seleccionar_jugador_momentaneo_para_modificar(equipo);
@@ -2117,9 +1778,6 @@ void modificar_jugador_momentaneo(Equipo *equipo)
         pause_console();
 }
 
-/**
- * @brief Elimina un jugador de un equipo momentaneo
- */
 void eliminar_jugador_momentaneo(Equipo *equipo)
 {
     printf("\nSeleccione el jugador a eliminar (1-%d):\n", equipo->num_jugadores);
@@ -2155,9 +1813,6 @@ void eliminar_jugador_momentaneo(Equipo *equipo)
     }
 }
 
-/**
- * @brief Cambia el capitan de un equipo momentaneo
- */
 void cambiar_capitan_momentaneo(Equipo *equipo)
 {
     printf("\nSeleccione el nuevo capitan (1-%d):\n", equipo->num_jugadores);
@@ -2188,9 +1843,6 @@ void cambiar_capitan_momentaneo(Equipo *equipo)
     pause_console();
 }
 
-/**
- * @brief Crea dos equipos momentaneos (Local y Visitante)
- */
 void crear_dos_equipos_momentaneos()
 {
     Equipo equipo_local;
@@ -2301,9 +1953,6 @@ void crear_dos_equipos_momentaneos()
     gestionar_dos_equipos_momentaneos(&equipo_local, &equipo_visitante);
 }
 
-/**
- * @brief Muestra ambos equipos y ofrece opciones de gestion de jugadores
- */
 void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visitante)
 {
     int salir = 0;
@@ -2353,9 +2002,6 @@ void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visi
     pause_console();
 }
 
-/**
- * @brief Gestiona un equipo individual dentro del contexto de dos equipos
- */
 void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
 {
     char log_msg[128];
@@ -2394,13 +2040,6 @@ static void accion_crear_equipo_momentaneo(void)
     crear_equipo_momentaneo();
 }
 
-/**
- * @brief Funcion principal para crear equipos
- *
- * Muestra un menu que permite al usuario elegir entre crear un equipo fijo
- * (que se guarda en la base de datos) o un equipo momentaneo (que no se guarda).
- * Delegada a las funciones especificas segun la opcion seleccionada.
- */
 void crear_equipo()
 {
     MenuItem items[] =
@@ -2413,14 +2052,6 @@ void crear_equipo()
     ejecutar_menu("CREAR EQUIPO", items, 3);
 }
 
-/**
- * @brief Muestra un listado completo de todos los equipos registrados en el sistema
- *
- * Esta funcion consulta la base de datos y presenta en pantalla todos los equipos
- * con sus respectivos datos, incluyendo informacion detallada de cada jugador.
- * Muestra el ID, nombre, tipo, tipo de futbol, numero de jugadores y asignacion
- * a partidos para cada equipo registrado.
- */
 void listar_equipos()
 {
     clear_screen();
@@ -2472,19 +2103,6 @@ void listar_equipos()
     pause_console();
 }
 
-/**
- * @brief Permite modificar los datos de un equipo existente en la base de datos
- *
- * Esta funcion presenta un menu interactivo que permite al usuario modificar
- * diversos aspectos de un equipo existente, incluyendo su nombre, tipo de futbol,
- * asignacion a partidos y gestion completa de jugadores (modificar, agregar,
- * eliminar o cambiar capitan). Muestra primero la lista de equipos disponibles
- * y solicita confirmacion antes de aplicar cualquier cambio.
- *
- * La complejidad cognitiva se ha reducido significativamente mediante el uso
- * de funciones helper que encapsulan logica especifica, siguiendo el principio
- * de responsabilidad unica y evitando anidamiento profundo.
- */
 void modificar_equipo()
 {
     clear_screen();
@@ -2531,15 +2149,6 @@ void modificar_equipo()
     pause_console();
 }
 
-/**
- * @brief Elimina un equipo existente de la base de datos
- *
- * Esta funcion permite al usuario eliminar permanentemente un equipo y todos sus
- * jugadores asociados. Muestra primero la lista de equipos disponibles, solicita
- * confirmacion del ID a eliminar y requiere confirmacion explicita antes de
- * proceder con la eliminacion. Primero elimina todos los jugadores asociados
- * y luego elimina el registro del equipo.
- */
 void eliminar_equipo()
 {
     clear_screen();
@@ -2589,11 +2198,6 @@ void eliminar_equipo()
     pause_console();
 }
 
-/**
- * @brief Inicializa las estadisticas del partido
- *
- * @param stats Puntero a estructura de estadisticas del partido
- */
 void inicializar_estadisticas_partido(PartidoStats *stats)
 {
     stats->goles_local = 0;
@@ -2608,12 +2212,6 @@ void inicializar_estadisticas_partido(PartidoStats *stats)
     }
 }
 
-/**
- * @brief Muestra la informacion inicial del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- */
 void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equipo_visitante)
 {
     printf("=== PARTIDO ENTRE %s VS %s ===\n\n", equipo_local->nombre, equipo_visitante->nombre);
@@ -2645,11 +2243,6 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
     Sleep(3000); // Esperar 3 segundos antes de comenzar
 }
 
-/**
- * @brief Genera un evento aleatorio y retorna el tipo
- *
- * @return Tipo de evento (0=normal, 1=gol, 2=oportunidad, 3=falta)
- */
 int generar_evento_aleatorio()
 {
     unsigned int random_value;
@@ -2662,16 +2255,6 @@ int generar_evento_aleatorio()
     return 0; // normal
 }
 
-/**
- * @brief Maneja un gol del equipo local
- *
- * @param equipo_local Puntero al equipo local
- * @param minuto_actual Minuto actual del partido
- * @param goles_local Puntero a contador de goles local
- * @param goles_jugadores_local Array de goles por jugador local
- * @param asistencias_jugadores_local Array de asistencias por jugador local
- * @return Tipo de evento para la cancha animada
- */
 int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_local,
                       int goles_jugadores_local[], int asistencias_jugadores_local[])
 {
@@ -2708,16 +2291,6 @@ int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_
     return 1; // tipo_evento para cancha
 }
 
-/**
- * @brief Maneja un gol del equipo visitante
- *
- * @param equipo_visitante Puntero al equipo visitante
- * @param minuto_actual Minuto actual del partido
- * @param goles_visitante Puntero a contador de goles visitante
- * @param goles_jugadores_visitante Array de goles por jugador visitante
- * @param asistencias_jugadores_visitante Array de asistencias por jugador visitante
- * @return Tipo de evento para la cancha animada
- */
 int manejar_gol_visitante(const Equipo *equipo_visitante, int minuto_actual, int *goles_visitante,
                           int goles_jugadores_visitante[], int asistencias_jugadores_visitante[])
 {
@@ -2754,14 +2327,6 @@ int manejar_gol_visitante(const Equipo *equipo_visitante, int minuto_actual, int
     return 1; // tipo_evento para cancha
 }
 
-/**
- * @brief Maneja una oportunidad de gol
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param minuto_actual Minuto actual del partido
- * @return Tipo de evento para la cancha animada
- */
 int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual)
 {
     unsigned int random_value;
@@ -2777,14 +2342,6 @@ int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_vis
     return 2; // tipo_evento para cancha
 }
 
-/**
- * @brief Maneja una falta
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param minuto_actual Minuto actual del partido
- * @return Tipo de evento para la cancha animada
- */
 int manejar_falta(const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual)
 {
     unsigned int random_value;
@@ -2800,28 +2357,12 @@ int manejar_falta(const Equipo *equipo_local, const Equipo *equipo_visitante, in
     return 3; // tipo_evento para cancha
 }
 
-/**
- * @brief Maneja un evento normal del partido
- *
- * @param minuto_actual Minuto actual del partido
- * @return Tipo de evento para la cancha animada
- */
 int manejar_evento_normal(int minuto_actual)
 {
     printf("*** El partido continua... (Minuto %d) ***\n", minuto_actual);
     return 0; // tipo_evento para cancha
 }
 
-/**
- * @brief Procesa un evento aleatorio del partido
- *
- * @param tipo_evento Tipo de evento a procesar
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param minuto_actual Minuto actual del partido
- * @param stats Puntero a estructura de estadisticas del partido
- * @return Tipo de evento para la cancha animada
- */
 int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual, PartidoStats *stats)
 {
     switch (tipo_evento)
@@ -2841,14 +2382,6 @@ int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *e
     }
 }
 
-/**
- * @brief Simula un minuto del partido
- *
- * @param minuto_actual Minuto actual del partido
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param stats Puntero a estructura de estadisticas del partido
- */
 void simular_minuto_partido(int minuto_actual, const Equipo *equipo_local, const Equipo *equipo_visitante, PartidoStats *stats)
 {
     clear_screen();
@@ -2870,14 +2403,6 @@ void simular_minuto_partido(int minuto_actual, const Equipo *equipo_local, const
     Sleep(1000);
 }
 
-/**
- * @brief Muestra el resultado final del partido
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param goles_local Goles del equipo local
- * @param goles_visitante Goles del equipo visitante
- */
 void mostrar_resultado_final(const Equipo *equipo_local, const Equipo *equipo_visitante,
                              int goles_local, int goles_visitante)
 {
@@ -2902,13 +2427,6 @@ void mostrar_resultado_final(const Equipo *equipo_local, const Equipo *equipo_vi
     }
 }
 
-/**
- * @brief Muestra las estadisticas finales de los jugadores
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- * @param stats Puntero a estructura de estadisticas del partido
- */
 void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *equipo_visitante, const PartidoStats *stats)
 {
     printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
@@ -2952,16 +2470,6 @@ void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *eq
     }
 }
 
-/**
- * @brief Simula un partido entre dos equipos en ASCII art
- *
- * Esta funcion simula un partido de futbol de 60 minutos entre dos equipos momentaneos.
- * Muestra la cancha en ASCII, los jugadores de ambos equipos, genera eventos aleatorios
- * como goles y asistencias, y muestra el marcador en tiempo real.
- *
- * @param equipo_local Puntero al equipo local
- * @param equipo_visitante Puntero al equipo visitante
- */
 void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
 {
     clear_screen();
@@ -3000,15 +2508,6 @@ void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
     getchar();
 }
 
-/**
- * @brief Muestra el menu principal de gestion de equipos
- *
- * Presenta un menu interactivo con opciones para crear, listar, modificar
- * y eliminar equipos. Utiliza la funcion ejecutar_menu para manejar
- * la navegacion del menu y delega las operaciones a las funciones correspondientes.
- * Este es el punto de entrada principal para todas las operaciones relacionadas
- * con equipos en el sistema MiFutbolC.
- */
 void menu_equipos()
 {
     MenuItem items[] =

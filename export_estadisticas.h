@@ -74,4 +74,15 @@ void exportar_estadisticas_json();
  */
 void exportar_estadisticas_html();
 
+/**
+ * @brief Exporta las estadisticas a formato Markdown (GitHub Flavored Markdown)
+ *
+ * Genera un archivo .md con tabla GFM de estadisticas por camiseta.
+ * Ideal para incluir en README o wikis de GitHub.
+ *
+ * @pre La base de datos debe contener registros en la tabla 'partido'
+ * @post Crea el archivo 'estadisticas.md' en el directorio de exportacion
+ */
+void exportar_estadisticas_md();
+
 #endif /* EXPORT_ESTADISTICAS_H */

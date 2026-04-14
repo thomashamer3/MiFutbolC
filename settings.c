@@ -1,10 +1,4 @@
-﻿/**
- * @file settings.c
- * @brief Implementacion del sistema de configuracion avanzada
- *
- * Incluye temas de interfaz, internacionalizacion y persistencia en base de datos.
- */
-
+﻿
 #include "settings.h"
 #include "db.h"
 #include "utils.h"
@@ -12,6 +6,7 @@
 #include "export.h"
 #include "export_all.h"
 #include "import.h"
+#include "busqueda.h"
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
@@ -40,7 +35,7 @@ void menu_update();
 #define APP_VERSION "4.1"
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM};
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE, TEXT_SIZE_MEDIUM, 1};
 
 // Flag para rastrear cambios en menu personalizado
 static int custom_menu_changed = 0;
@@ -77,6 +72,11 @@ static void set_mode_int(int value)
 static void set_text_size_int(int value)
 {
     settings_set_text_size((TextSizeType)value);
+}
+
+static void set_music_autoplay_int(int value)
+{
+    settings_set_music_autoplay(value);
 }
 
 static void aplicar_config_y_pausar(void (*setter)(int), int value)
@@ -176,6 +176,18 @@ static void mode_set_custom()
     pause_console();
 }
 
+static void toggle_music_autoplay_setting()
+{
+    aplicar_config_y_pausar(set_music_autoplay_int,
+                            current_settings.music_autoplay ? 0 : 1);
+}
+
+static void abrir_busqueda_global_desde_settings(void)
+{
+    app_log_event("BUSQUEDA", "Ingreso a Busqueda Global desde Ajustes");
+    menu_busqueda_global();
+}
+
 static void habilitar_menus_basicos_custom()
 {
     set_custom_menu_enabled("camisetas", 1);
@@ -194,17 +206,34 @@ struct MenuOption
     const char* display_name;
 };
 
+static int extraer_primer_caracter(const char *input, char *out)
+{
+    if (!input || !out)
+    {
+        return 0;
+    }
+
+    for (size_t i = 0; input[i] != '\0'; ++i)
+    {
+        char c = input[i];
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        {
+            continue;
+        }
+        *out = c;
+        return 1;
+    }
+
+    return 0;
+}
+
 static int confirmar_guardado_configuracion(int default_on_fail)
 {
     printf("Guardar configuracion? (S/N): ");
     char confirm;
     char input[16];
     if (!fgets(input, sizeof(input), stdin)
-#if defined(_WIN32) && defined(_MSC_VER)
-            || sscanf_s(input, " %c", &confirm, 1) != 1)
-#else
-            || sscanf(input, " %c", &confirm) != 1)
-#endif
+            || !extraer_primer_caracter(input, &confirm))
     {
         confirm = default_on_fail ? 'S' : 'N';
     }
@@ -278,6 +307,9 @@ static const TextEntry text_entries[] =
     {"settings_theme", "Tema de Interfaz", "Interface Theme"},
     {"settings_language", "Idioma", "Language"},
     {"settings_mode", "Modo", "Mode"},
+    {"settings_music_autoplay", "Musica al iniciar", "Music on startup"},
+    {"state_enabled", "Habilitada", "Enabled"},
+    {"state_disabled", "Deshabilitada", "Disabled"},
     {"settings_accessibility", "Accesibilidad", "Accessibility"},
     {"settings_visual_mode", "Modo Visual", "Visual Mode"},
     {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
@@ -385,15 +417,19 @@ static void ensure_settings_schema()
     }
 
     err = NULL;
+    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_autoplay INTEGER DEFAULT 1;", NULL, NULL, &err);
+    if (err)
+    {
+        sqlite3_free(err);
+    }
+
+    err = NULL;
 }
 
-/**
- * @brief Inicializa el sistema de configuracion cargando desde BD
- */
 void settings_init()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT theme, language, mode, text_size FROM settings WHERE id = 1;";
+    const char *sql = "SELECT theme, language, mode, text_size, music_autoplay FROM settings WHERE id = 1;";
     int has_settings = 0;
 
     ensure_settings_schema();
@@ -406,6 +442,7 @@ void settings_init()
             current_settings.language = sqlite3_column_int(stmt, 1);
             current_settings.mode = sqlite3_column_int(stmt, 2);
             current_settings.text_size = sqlite3_column_int(stmt, 3);
+            current_settings.music_autoplay = sqlite3_column_int(stmt, 4) ? 1 : 0;
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -459,13 +496,10 @@ void settings_init()
     settings_apply_text_size();
 }
 
-/**
- * @brief Guarda la configuracion actual en la base de datos
- */
 void settings_save()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size) VALUES (1, ?, ?, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings (id, theme, language, mode, text_size, music_autoplay) VALUES (1, ?, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -473,6 +507,7 @@ void settings_save()
         sqlite3_bind_int(stmt, 2, current_settings.language);
         sqlite3_bind_int(stmt, 3, current_settings.mode);
         sqlite3_bind_int(stmt, 4, current_settings.text_size);
+        sqlite3_bind_int(stmt, 5, current_settings.music_autoplay ? 1 : 0);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -482,17 +517,11 @@ void settings_save()
     }
 }
 
-/**
- * @brief Obtiene la configuracion actual
- */
 AppSettings* settings_get()
 {
     return &current_settings;
 }
 
-/**
- * @brief Establece el tema de la interfaz
- */
 void settings_set_theme(ThemeType theme)
 {
     current_settings.theme = theme;
@@ -500,18 +529,12 @@ void settings_set_theme(ThemeType theme)
     settings_save();
 }
 
-/**
- * @brief Establece el idioma de la aplicacion
- */
 void settings_set_language(LanguageType language)
 {
     current_settings.language = language;
     settings_save();
 }
 
-/**
- * @brief Establece el tamano de texto de la aplicacion
- */
 void settings_set_text_size(TextSizeType text_size)
 {
     current_settings.text_size = text_size;
@@ -519,9 +542,6 @@ void settings_set_text_size(TextSizeType text_size)
     settings_save();
 }
 
-/**
- * @brief Establece el modo de la aplicacion
- */
 void settings_set_mode(ModeType mode)
 {
     current_settings.mode = mode;
@@ -536,17 +556,22 @@ void settings_set_mode(ModeType mode)
     settings_save();
 }
 
-/**
- * @brief Obtiene el modo actual de la aplicacion
- */
 ModeType settings_get_mode()
 {
     return current_settings.mode;
 }
 
-/**
- * @brief Aplica el tema actual a la consola
- */
+void settings_set_music_autoplay(int enabled)
+{
+    current_settings.music_autoplay = enabled ? 1 : 0;
+    settings_save();
+}
+
+int settings_get_music_autoplay(void)
+{
+    return current_settings.music_autoplay;
+}
+
 void settings_apply_theme()
 {
 #ifdef _WIN32
@@ -646,9 +671,6 @@ static void settings_apply_text_size()
 #endif
 }
 
-/**
- * @brief Obtiene el texto correspondiente al idioma actual
- */
 const char* get_text(const char* key)
 {
     for (int i = 0; text_entries[i].key != NULL; i++)
@@ -999,6 +1021,49 @@ static int ejecutar_instalador(const char *dest)
 
 // Compara versiones semanticas simples (mayor.minor.patch).
 // Retorna -1 si a < b, 0 si son iguales, 1 si a > b.
+static void parsear_version_tripleta(const char *version, int *major, int *minor, int *patch)
+{
+    const char *p = version ? version : "";
+    char *endptr = NULL;
+
+    *major = 0;
+    *minor = 0;
+    *patch = 0;
+
+    long value = strtol(p, &endptr, 10);
+    if (endptr == p)
+    {
+        return;
+    }
+    *major = (int)value;
+
+    if (*endptr != '.')
+    {
+        return;
+    }
+
+    p = endptr + 1;
+    value = strtol(p, &endptr, 10);
+    if (endptr == p)
+    {
+        return;
+    }
+    *minor = (int)value;
+
+    if (*endptr != '.')
+    {
+        return;
+    }
+
+    p = endptr + 1;
+    value = strtol(p, &endptr, 10);
+    if (endptr == p)
+    {
+        return;
+    }
+    *patch = (int)value;
+}
+
 static int comparar_versiones(const char *a, const char *b)
 {
     int am = 0;
@@ -1018,8 +1083,8 @@ static int comparar_versiones(const char *a, const char *b)
         b++;
     }
 
-    sscanf_s(a ? a : "", "%d.%d.%d", &am, &an, &ap);
-    sscanf_s(b ? b : "", "%d.%d.%d", &bm, &bn, &bp);
+    parsear_version_tripleta(a, &am, &an, &ap);
+    parsear_version_tripleta(b, &bm, &bn, &bp);
 
     if (am != bm) return am < bm ? -1 : 1;
     if (an != bn) return an < bn ? -1 : 1;
@@ -1331,9 +1396,6 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, con
 }
 #endif
 
-/**
- * @brief Submenu para configuracion de temas
- */
 static void menu_theme_settings()
 {
     MenuItem items[] =
@@ -1352,9 +1414,6 @@ static void menu_theme_settings()
     ejecutar_menu(get_text("settings_theme"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
-/**
- * @brief Submenu para configuracion de idioma
- */
 static void menu_language_settings()
 {
     MenuItem items[] =
@@ -1367,9 +1426,6 @@ static void menu_language_settings()
     ejecutar_menu(get_text("settings_language"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
-/**
- * @brief Obtiene el nombre del tema actual
- */
 static const char* get_current_theme_name()
 {
     switch (current_settings.theme)
@@ -1409,9 +1465,6 @@ static const char* get_current_text_size_name()
     }
 }
 
-/**
- * @brief Muestra la configuracion actual
- */
 static void show_current_settings()
 {
     clear_screen();
@@ -1420,6 +1473,8 @@ static void show_current_settings()
     printf("Tema: %s\n", get_current_theme_name());
     printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish") : get_text("lang_english"));
     printf("Tamanio de texto: %s\n", get_current_text_size_name());
+    printf("Musica al iniciar: %s\n",
+           current_settings.music_autoplay ? get_text("state_enabled") : get_text("state_disabled"));
 
     char *usuario = get_user_name();
     if (usuario)
@@ -1436,9 +1491,6 @@ static void show_current_settings()
     pause_console();
 }
 
-/**
- * @brief Submenu para tamano de texto
- */
 static void menu_text_size_settings()
 {
     MenuItem items[] =
@@ -1452,9 +1504,6 @@ static void menu_text_size_settings()
     ejecutar_menu(get_text("settings_text_size"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
-/**
- * @brief Submenu de accesibilidad
- */
 static void menu_accessibility_settings()
 {
     MenuItem items[] =
@@ -1468,9 +1517,6 @@ static void menu_accessibility_settings()
     ejecutar_menu(get_text("settings_accessibility"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
-/**
- * @brief Restablece la configuracion a valores por defecto
- */
 static void reset_settings_to_defaults()
 {
     clear_screen();
@@ -1482,11 +1528,7 @@ static void reset_settings_to_defaults()
     char confirm;
     char input[16];
     if (!fgets(input, sizeof(input), stdin)
-#if defined(_WIN32) && defined(_MSC_VER)
-            || sscanf_s(input, " %c", &confirm, 1) != 1)
-#else
-            || sscanf(input, " %c", &confirm) != 1)
-#endif
+            || !extraer_primer_caracter(input, &confirm))
     {
         confirm = 'N';
     }
@@ -1495,7 +1537,11 @@ static void reset_settings_to_defaults()
     {
         current_settings.theme = THEME_LIGHT;
         current_settings.language = LANGUAGE_SPANISH;
+        current_settings.mode = MODE_SIMPLE;
+        current_settings.text_size = TEXT_SIZE_MEDIUM;
+        current_settings.music_autoplay = 1;
         settings_apply_theme();
+        settings_apply_text_size();
         settings_save();
 
         // Limpiar nombre de usuario tambien
@@ -1517,9 +1563,6 @@ static void reset_settings_to_defaults()
     pause_console();
 }
 
-/**
- * @brief Verifica si un menu esta habilitado en modo Custom
- */
 int is_custom_menu_enabled(const char* menu_name)
 {
     sqlite3_stmt *stmt;
@@ -1539,9 +1582,6 @@ int is_custom_menu_enabled(const char* menu_name)
     return enabled;
 }
 
-/**
- * @brief Establece el estado de un menu en modo Custom
- */
 void set_custom_menu_enabled(const char* menu_name, int enabled)
 {
     sqlite3_stmt *stmt;
@@ -1557,9 +1597,6 @@ void set_custom_menu_enabled(const char* menu_name, int enabled)
     }
 }
 
-/**
- * @brief Submenu para configuracion de modo
- */
 static void menu_mode_settings()
 {
     MenuItem items[] =
@@ -1573,9 +1610,6 @@ static void menu_mode_settings()
     ejecutar_menu(get_text("settings_mode"), items, (int)(sizeof(items)/sizeof(items[0])));
 }
 
-/**
- * @brief Menu para configurar menus personalizados en modo Custom
- */
 void menu_custom_menus()
 {
 #if defined(UNIT_TEST)
@@ -1640,9 +1674,6 @@ void menu_custom_menus()
 #endif
 }
 
-/**
- * @brief Descarga la ultima release .exe desde GitHub Releases y la ejecuta (Windows)
- */
 void menu_update()
 {
 #if defined(UNIT_TEST)
@@ -1707,9 +1738,6 @@ void menu_update()
 #endif
 }
 
-/**
- * @brief Menu principal de configuracion
- */
 void menu_settings()
 {
     MenuItem items[] =
@@ -1723,7 +1751,9 @@ void menu_settings()
         {7, get_text("settings_mode"), menu_mode_settings},
         {8, get_text("menu_exportar"), menu_exportar},
         {9, get_text("menu_importar"), menu_importar},
-        {10, get_text("menu_update"), menu_update},
+        {10, "Busqueda Global", abrir_busqueda_global_desde_settings},
+        {11, get_text("menu_update"), menu_update},
+        {12, get_text("settings_music_autoplay"), toggle_music_autoplay_setting},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1732,9 +1762,6 @@ void menu_settings()
     ejecutar_menu(get_text("menu_settings"), items, item_count);
 }
 
-/**
- * @brief Verifica si hay actualizaciones disponibles de forma silenciosa
- */
 void verificar_actualizacion_disponible(int mostrar_mensaje)
 {
 #if defined(UNIT_TEST)
@@ -1762,7 +1789,7 @@ void verificar_actualizacion_disponible(int mostrar_mensaje)
     }
 
     int cmp = comparar_versiones(APP_VERSION, latest_tag);
-    
+
     if (cmp < 0)
     {
         // Hay una nueva versión disponible

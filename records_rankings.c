@@ -1,9 +1,4 @@
-﻿/**
- * @file records_rankings.c
- * @brief Implementacion de records y rankings en MiFutbolC
- */
-
-#include "records_rankings.h"
+﻿#include "records_rankings.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -54,9 +49,6 @@ static void mostrar_combinacion(const char *titulo, const char *sql)
     }
 }
 
-/**
- * @brief Funcion auxiliar para mostrar temporadas
- */
 static void mostrar_temporada(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt;
@@ -88,9 +80,6 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     }
 }
 
-/**
- * @brief Muestra el record de goles en un partido
- */
 void mostrar_record_goles_partido()
 {
     clear_screen();
@@ -105,9 +94,6 @@ void mostrar_record_goles_partido()
     pause_console();
 }
 
-/**
- * @brief Muestra el record de asistencias en un partido
- */
 void mostrar_record_asistencias_partido()
 {
     mostrar_record_simple("Record de Asistencias en un Partido",
@@ -117,9 +103,6 @@ void mostrar_record_asistencias_partido()
     pause_console();
 }
 
-/**
- * @brief Muestra la mejor combinacion cancha + camiseta
- */
 void mostrar_mejor_combinacion_cancha_camiseta()
 {
     clear_screen();
@@ -136,9 +119,6 @@ void mostrar_mejor_combinacion_cancha_camiseta()
     pause_console();
 }
 
-/**
- * @brief Muestra la peor combinacion cancha + camiseta
- */
 void mostrar_peor_combinacion_cancha_camiseta()
 {
     clear_screen();
@@ -155,9 +135,6 @@ void mostrar_peor_combinacion_cancha_camiseta()
     pause_console();
 }
 
-/**
- * @brief Muestra la mejor temporada
- */
 void mostrar_mejor_temporada()
 {
     clear_screen();
@@ -169,9 +146,6 @@ void mostrar_mejor_temporada()
     pause_console();
 }
 
-/**
- * @brief Muestra la peor temporada
- */
 void mostrar_peor_temporada()
 {
     clear_screen();
@@ -183,9 +157,6 @@ void mostrar_peor_temporada()
     pause_console();
 }
 
-/**
- * @brief Muestra el partido con mejor rendimiento_general
- */
 void mostrar_partido_mejor_rendimiento_general()
 {
     clear_screen();
@@ -195,9 +166,6 @@ void mostrar_partido_mejor_rendimiento_general()
                                 "ORDER BY p.rendimiento_general DESC LIMIT 1");
 }
 
-/**
- * @brief Muestra el partido con peor rendimiento_general
- */
 void mostrar_partido_peor_rendimiento_general()
 {
     clear_screen();
@@ -241,9 +209,6 @@ static void mostrar_partido_rendimiento(const char *titulo, const char *order_cl
     pause_console();
 }
 
-/**
- * @brief Muestra el partido con mejor combinacion (goles + asistencias)
- */
 void mostrar_partido_mejor_combinacion_goles_asistencias()
 {
     clear_screen();
@@ -332,18 +297,12 @@ static void mostrar_lista_partidos(const char *header, const char *titulo, const
     pause_console();
 }
 
-/**
- * @brief Muestra los partidos sin goles
- */
 void mostrar_partidos_sin_goles()
 {
     mostrar_lista_partidos("PARTIDOS SIN GOLES", "Partidos sin Goles",
                            "p.goles = 0", "No hay partidos sin goles.");
 }
 
-/**
- * @brief Muestra los partidos sin asistencias
- */
 void mostrar_partidos_sin_asistencias()
 {
     mostrar_lista_partidos("PARTIDOS SIN ASISTENCIAS", "Partidos sin Asistencias",
@@ -437,9 +396,6 @@ static void mostrar_racha(const char *titulo, int tipo_racha)
     mostrar_racha_info(titulo, racha);
 }
 
-/**
- * @brief Muestra la mejor racha goleadora
- */
 void mostrar_mejor_racha_goleadora()
 {
     clear_screen();
@@ -450,9 +406,6 @@ void mostrar_mejor_racha_goleadora()
     pause_console();
 }
 
-/**
- * @brief Muestra la peor racha
- */
 void mostrar_peor_racha()
 {
     clear_screen();
@@ -463,9 +416,6 @@ void mostrar_peor_racha()
     pause_console();
 }
 
-/**
- * @brief Muestra los partidos consecutivos anotando
- */
 void mostrar_partidos_consecutivos_anotando()
 {
     clear_screen();
@@ -609,9 +559,6 @@ static MenuItem* construir_menu_records()
     return items;
 }
 
-/**
- * @brief Muestra el menu de records y rankings
- */
 void menu_records_rankings()
 {
     MenuItem const *items = construir_menu_records();

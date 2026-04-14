@@ -1,11 +1,4 @@
-﻿/**
- * @file export_camisetas_mejorado.c
- * @brief Funciones mejoradas para exportar datos de camisetas con analisis avanzado
- *
- * Este archivo contiene funciones mejoradas para exportar datos de camisetas
- * con estadisticas avanzadas, eficiencia y analisis de rendimiento.
- */
-
+﻿
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -19,13 +12,6 @@
 #endif
 #include <string.h>
 
-/**
- * @brief Estructura para almacenar datos de camiseta con analisis avanzado
- *
- * Esta estructura centraliza los datos de camiseta con analisis avanzado que se utilizan
- * en todas las funciones de exportacion, evitando la duplicacion de codigo y facilitando
- * el mantenimiento.
- */
 typedef struct
 {
     int id;
@@ -70,16 +56,6 @@ static CamisetaDataMejorado leer_camiseta_mejorada(sqlite3_stmt *stmt)
     return data;
 }
 
-/**
- * @brief Obtiene los datos de camisetas con analisis avanzado de la base de datos
- *
- * Funcion estatica que encapsula la consulta SQL comun utilizada por todas
- * las funciones de exportacion mejorada. Esto evita la duplicacion de codigo y centraliza
- * la logica de acceso a datos con analisis avanzado.
- *
- * @param[out] count Puntero a entero para almacenar el numero de camisetas encontradas
- * @return sqlite3_stmt* Statement preparado para iterar sobre los resultados
- */
 static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
 {
     sqlite3_stmt *stmt;
@@ -113,13 +89,6 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
     return stmt;
 }
 
-/**
- * @brief Exporta las camisetas con analisis avanzado a un archivo CSV mejorado
- *
- * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
- * El formato CSV mejorado es ideal para analisis avanzado en herramientas como Excel,
- * proporcionando metricas de eficiencia y rendimiento que no estan disponibles en la exportacion estandar.
- */
 void exportar_camisetas_csv_mejorado()
 {
     int count;
@@ -165,13 +134,6 @@ void exportar_camisetas_csv_mejorado()
     fclose(f);
 }
 
-/**
- * @brief Exporta las camisetas con analisis avanzado a un archivo TXT mejorado
- *
- * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
- * El formato TXT mejorado es ideal para documentacion legible con analisis avanzado,
- * proporcionando informacion detallada sobre eficiencia y rendimiento para informes tecnicos.
- */
 void exportar_camisetas_txt_mejorado()
 {
     int count;
@@ -229,13 +191,6 @@ void exportar_camisetas_txt_mejorado()
     fclose(f);
 }
 
-/**
- * @brief Exporta las camisetas con analisis avanzado a un archivo JSON mejorado
- *
- * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
- * El formato JSON mejorado es ideal para integracion con aplicaciones y APIs,
- * proporcionando datos estructurados con analisis avanzado para procesamiento automatizado.
- */
 void exportar_camisetas_json_mejorado()
 {
     int count;
@@ -287,14 +242,6 @@ void exportar_camisetas_json_mejorado()
     fclose(f);
 }
 
-/**
- * @brief Exporta las camisetas con analisis avanzado a un archivo HTML mejorado
- *
- * Utiliza la funcion comun de obtencion de datos para evitar duplicacion de codigo.
- * El formato HTML mejorado es ideal para visualizacion interactiva en navegadores web,
- * proporcionando una interfaz de usuario amigable con analisis avanzado para presentacion
- * de datos y reportes visuales.
- */
 void exportar_camisetas_html_mejorado()
 {
     int count;

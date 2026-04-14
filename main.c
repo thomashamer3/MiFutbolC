@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "dashboard.h"
 #include "atajos.h"
+#include "musica.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -91,6 +92,10 @@ int main()
     }
 
     initialize_application();
+    if (settings_get_music_autoplay())
+    {
+        musica_iniciar_automatica();
+    }
     handle_user_name();
 
     // Verificar actualizaciones al inicio (modo silencioso - solo muestra si hay actualización)

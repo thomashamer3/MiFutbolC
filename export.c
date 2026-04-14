@@ -1,11 +1,4 @@
-﻿/**
- * @file export.c
- * @brief Funciones para exportar datos de la base de datos a diferentes formatos
- *
- * Este archivo contiene funciones para exportar datos de lesiones, partidos,
- * estadisticas y analisis a formatos CSV, TXT, JSON y HTML.
- */
-
+﻿
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -25,15 +18,6 @@
 #define PATH_SEP "/"
 #endif
 
-/**
- * @brief Construye la ruta completa para un archivo de exportacion
- *
- * Combina el directorio de datos con el nombre del archivo proporcionado
- * para crear una ruta completa.
- *
- * @param filename Nombre del archivo a exportar
- * @return Cadena de caracteres con la ruta completa del archivo
- */
 char *get_export_path(const char *filename)
 {
     static char path[1024];
@@ -51,8 +35,6 @@ char *get_export_path(const char *filename)
     }
     return path;
 }
-
-
 
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 
@@ -107,11 +89,6 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
                           "FROM partido");
 }
 
-/**
- * @brief Calcula estadisticas de los ultimos 5 partidos
- *
- * @param stats Puntero a la estructura donde almacenar las estadisticas
- */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
     calcular_estadisticas(stats,
@@ -119,12 +96,6 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
                           "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
-/**
- * @brief Calcula la racha mas larga de victorias y derrotas
- *
- * @param mejor_racha_victorias Puntero donde almacenar la mejor racha de victorias
- * @param peor_racha_derrotas Puntero donde almacenar la peor racha de derrotas
- */
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
@@ -448,13 +419,6 @@ void exportar_estado_animo_cansancio_txt()
     fclose(f);
 }
 
-/**
- * @brief Genera un mensaje motivacional basado en el rendimiento
- *
- * @param ultimos Puntero a estadisticas de ultimos 5 partidos
- * @param generales Puntero a estadisticas generales
- * @return Cadena de texto con el mensaje motivacional
- */
 static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas *generales)
 {
     double diff_goles = ultimos->avg_goles - generales->avg_goles;

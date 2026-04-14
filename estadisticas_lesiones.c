@@ -59,12 +59,6 @@ static double calcular_promedio_rendimiento(const char *sql)
     return avg;
 }
 
-/**
- * @brief Cuenta total de incidentes medicos registrados
- *
- * Proporciona metrica base para evaluacion de frecuencia de lesiones
- * y contextualizacion de otros indicadores estadisticos.
- */
 static void mostrar_total_lesiones()
 {
     sqlite3_stmt *stmt;
@@ -80,12 +74,6 @@ static void mostrar_total_lesiones()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Clasifica incidentes medicos por categorias diagnosticas
- *
- * Facilita identificacion de patrones de tipos de lesiones mas frecuentes
- * para diseno de programas preventivos especificos.
- */
 static void mostrar_lesiones_por_tipo()
 {
     sqlite3_stmt *stmt;
@@ -101,12 +89,6 @@ static void mostrar_lesiones_por_tipo()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Distribuye incidentes medicos por jugadores/camisetas
- *
- * Identifica jugadores con mayor susceptibilidad a lesiones para
- * intervenciones preventivas individualizadas.
- */
 static void mostrar_lesiones_por_camiseta()
 {
     sqlite3_stmt *stmt;
@@ -123,12 +105,6 @@ static void mostrar_lesiones_por_camiseta()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Analiza distribucion temporal mensual de incidentes
- *
- * Detecta periodos de mayor riesgo estacional para optimizar
- * preparacion fisica y estrategias preventivas.
- */
 static void mostrar_lesiones_por_mes()
 {
     sqlite3_stmt *stmt;
@@ -145,12 +121,6 @@ static void mostrar_lesiones_por_mes()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Identifica periodo de mayor riesgo lesional
- *
- * Determina mes con mayor incidencia para focalizar medidas
- * preventivas y ajuste de cargas de entrenamiento.
- */
 static void mostrar_mes_con_mas_lesiones()
 {
     sqlite3_stmt *stmt;
@@ -171,12 +141,6 @@ static void mostrar_mes_con_mas_lesiones()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Evalua frecuencia temporal de recidivas lesionales
- *
- * Calcula intervalos promedio entre lesiones consecutivas para
- * identificar patrones de recuperacion y riesgo de reinjury.
- */
 static void mostrar_tiempo_promedio_entre_lesiones()
 {
     // Obtener todas las fechas de lesiones ordenadas por camiseta y fecha
@@ -217,36 +181,18 @@ static void mostrar_tiempo_promedio_entre_lesiones()
     }
 }
 
-/**
- * @brief Evalua impacto lesional en rendimiento atletico
- *
- * Compara metricas de produccion (goles + asistencias) antes y despues
- * de incidentes medicos para cuantificar efectos en desempeno deportivo.
- */
 static double calcular_rendimiento_promedio_antes()
 {
     return calcular_promedio_rendimiento(
                "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha < l.fecha");
 }
 
-/**
- * @brief Evalua impacto lesional en rendimiento atletico
- *
- * Compara metricas de produccion (goles + asistencias) antes y despues
- * de incidentes medicos para cuantificar efectos en desempeno deportivo.
- */
 static double calcular_rendimiento_promedio_despues()
 {
     return calcular_promedio_rendimiento(
                "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha > l.fecha");
 }
 
-/**
- * @brief Muestra rendimiento promedio antes y despues de lesiones
- *
- * Proporciona evidencia cuantitativa sobre impacto de lesiones
- * en capacidad productiva del jugador para planificacion de rehabilitacion.
- */
 static void mostrar_rendimiento_promedio()
 {
     double antes = calcular_rendimiento_promedio_antes();
@@ -256,13 +202,6 @@ static void mostrar_rendimiento_promedio()
     printf("Baja el rendimiento previo a una lesion? %s\n", (antes < despues) ? "Si" : "No");
 }
 
-/**
- * @brief Ejecuta analisis integral de estadisticas lesionales
- *
- * Coordina multiples consultas estadisticas para proporcionar
- * panorama completo de patrones de lesiones y sus correlaciones
- * con rendimiento deportivo.
- */
 void mostrar_estadisticas_lesiones()
 {
     clear_screen();

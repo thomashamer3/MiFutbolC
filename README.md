@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-4.1-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -161,6 +161,20 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Colecciones Personalizadas**: Crear colecciones y agregar/quitar items
 - **Respaldo del Módulo**: Exportación e importación de backup en JSON
 
+### 🎵 Reproductor de Música
+
+- **Reproducción MP3**: Reproducción de archivos `.mp3` desde la carpeta `Musica/`
+- **Controles Completos**: Reproducir, pausar, detener, pista anterior y siguiente
+- **Barra de Progreso**: Posición actual y duración total de la pista en tiempo real
+- **Control de Volumen**: Subir y bajar en pasos del 10 % con barra visual
+- **Modos de Repetición**: Sin repetición, repetir pista, repetir lista, shuffle aleatorio
+- **Ecualizador 3 Bandas**: Ajuste de graves (200 Hz), medios (1 kHz) y agudos (8 kHz) de ±12 dB
+- **Playlists**: Crear, cargar y eliminar listas de reproducción personalizadas
+- **Gestión de Archivos**: Agregar y eliminar canciones directamente desde el menú
+- **Inicio Automático**: Opción para reproducir música al arrancar la aplicación
+- **Fade In/Out**: Transiciones suaves entre pistas (400 ms entrada, 250 ms salida)
+- **Multiplataforma**: Windows y Linux/macOS vía miniaudio
+
 ### 🤖 Entrenador IA
 
 - **Recomendaciones Inteligentes**: Sugerencias basadas en análisis de datos históricos
@@ -228,6 +242,12 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Propósito**: Generación de informes PDF del sistema
 - **Dependencias externas**: No requiere dependencias adicionales para PDF
 
+#### miniaudio (Incluida - Dominio Público / MIT-0)
+- **Archivo**: `miniaudio.h`
+- **Propósito**: Motor de audio multiplataforma para reproducción de archivos MP3
+- **Características**: Header-only, sin dependencias externas, soporta Windows y Linux/macOS
+- **Uso**: Streaming de audio, grafo de nodos DSP para ecualizador, fade in/out y control de volumen
+
 ### Herramientas de Desarrollo
 
 - **CodeBlocks**: IDE recomendado para desarrollo (incluye proyecto `.cbp`)
@@ -240,6 +260,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
 ✅ **cJSON**: Biblioteca completa incluida en el proyecto  
 ✅ **pdfgen**: Motor PDF incluido en el proyecto  
+✅ **miniaudio**: Motor de audio incluido en el proyecto  
 ✅ **Runtime sin DLLs**: El proyecto no requiere DLLs adicionales para ejecutarse  
 
 
@@ -386,22 +407,24 @@ Al ejecutar `MiFutbolC`, el sistema:
         MIFUTBOLC - MENÚ PRINCIPAL
 ═══════════════════════════════════════
 
-1. Camisetas
-2. Canchas
-3. Equipos
-4. Partidos
-5. Lesiones
-6. Estadísticas
-7. Logros
-8. Financiamiento
-9. Torneos
-10. Temporada
-11. Análisis
-12. Bienestar
-13. Carrera Futbolistica
-14. Recordatorios
-15. Colecciones
-16. Ajustes
+1. Dashboard
+2. Calendario
+3. Camisetas
+4. Canchas
+5. Equipos
+6. Partidos
+7. Lesiones
+8. Estadísticas
+9. Logros
+10. Financiamiento
+11. Torneos
+12. Temporada
+13. Análisis
+14. Bienestar
+15. Carrera Futbolistica
+16. Recordatorios
+17. Colecciones
+18. Ajustes
 0. Salir
 >
 ```
@@ -411,7 +434,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (16)
+Menú Principal → Ajustes (18)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Usuario (nombre visible, contraseña y cuentas locales)
@@ -420,15 +443,15 @@ Menú Principal → Ajustes (16)
 #### 2️⃣ Crear Recursos Básicos
 
 ```
-Menú Principal → Camisetas (1) → Crear camiseta
-Menú Principal → Canchas (2) → Crear cancha
-Menú Principal → Equipos (3) → Crear equipo
+Menú Principal → Camisetas (3) → Crear camiseta
+Menú Principal → Canchas (4) → Crear cancha
+Menú Principal → Equipos (5) → Crear equipo
 ```
 
 #### 3️⃣ Registrar un Partido
 
 ```
-Menú Principal → Partidos (4) → Crear partido
+Menú Principal → Partidos (6) → Crear partido
   ├── Seleccionar cancha
   ├── Seleccionar camiseta
   ├── Ingresar goles y asistencias
@@ -440,7 +463,7 @@ Menú Principal → Partidos (4) → Crear partido
 #### 4️⃣ Organizar un Torneo
 
 ```
-Menú Principal → Torneos (9)
+Menú Principal → Torneos (11)
   ├── Crear torneo
   ├── Listar torneos
   ├── Modificar torneo
@@ -450,13 +473,13 @@ Menú Principal → Torneos (9)
 #### 5️⃣ Analizar Rendimiento
 
 ```
-Menú Principal → Estadísticas (6)
+Menú Principal → Estadísticas (8)
   ├── Ver estadísticas generales
   ├── Estadísticas por año
   ├── Estadísticas por mes
   └── Meta-análisis
 
-Menú Principal → Análisis (11)
+Menú Principal → Análisis (13)
   ├── Análisis Básico
   ├── Comparador Avanzado
   ├── Análisis Táctico (Diagramas)
@@ -470,7 +493,7 @@ Análisis → Química Entre Jugadores
   ├── Editar Estadística de Jugador
   └── Eliminar Estadística de Jugador
 
-Menú Principal → Bienestar (12)
+Menú Principal → Bienestar (14)
   ├── Planificación Personal
   ├── Mentalidad y Hábitos
   ├── Entrenamiento
@@ -481,7 +504,7 @@ Menú Principal → Bienestar (12)
 #### 6️⃣ Gestionar Finanzas
 
 ```
-Menú Principal → Financiamiento (8)
+Menú Principal → Financiamiento (10)
   ├── Registrar ingreso
   ├── Registrar gasto
   ├── Ver balance
@@ -491,7 +514,7 @@ Menú Principal → Financiamiento (8)
 #### 7️⃣ Gestionar Recordatorios
 
 ```
-Menú Principal → Recordatorios (14)
+Menú Principal → Recordatorios (16)
   ├── Listar recordatorios
   ├── Agregar/editar/eliminar recordatorio
   ├── Filtrar por temática
@@ -501,7 +524,7 @@ Menú Principal → Recordatorios (14)
 #### 8️⃣ Gestionar Inventario y Colecciones
 
 ```
-Menú Principal → Colecciones (15)
+Menú Principal → Colecciones (17)
   ├── Crear y listar inventario
   ├── Sincronizar camisetas al inventario
   ├── Crear y listar colecciones
@@ -512,7 +535,7 @@ Menú Principal → Colecciones (15)
 #### 9️⃣ Exportar Datos
 
 ```
-Menú Principal → Ajustes (16) → Exportar
+Menú Principal → Ajustes (18) → Exportar
   ├── Seleccionar módulo (camisetas, partidos, etc.)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
    └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
@@ -526,7 +549,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 #### Ejemplo 1: Registrar tu Primera Camiseta
 
 1. Ejecuta el programa
-2. Selecciona `1` (Camisetas)
+2. Selecciona `3` (Camisetas)
 3. Selecciona `1` (Crear camiseta)
 4. Ingresa el nombre: `"Camiseta Roja"`
 5. La camiseta se guarda automáticamente con ID único
@@ -534,7 +557,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 #### Ejemplo 2: Crear un Torneo de Fútbol 5
 
 1. Crea al menos 4 equipos (Menú → Equipos → Crear)
-2. Ve a Torneos (opción 9)
+2. Ve a Torneos (opción 11)
 3. Selecciona "Crear torneo"
 4. Ingresa nombre: `"Copa Primavera 2026"`
 5. Selecciona formato: `Round Robin`
@@ -543,7 +566,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 
 #### Ejemplo 3: Analizar tu Rendimiento
 
-1. Ve a Análisis (opción 11)
+1. Ve a Análisis (opción 13)
 2. El sistema muestra:
    - Comparación últimos 5 partidos vs promedio general
    - Mejor racha de victorias
@@ -1099,7 +1122,7 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Dashboard, Calendario, Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Salir).
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.

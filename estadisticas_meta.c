@@ -1,11 +1,4 @@
-﻿/**
- * @file estadisticas_meta.c
- * @brief Modulo para estadisticas avanzadas y meta-analisis en partidos de futbol.
- *
- * Este archivo contiene funciones para analizar consistencia, partidos atipicos,
- * dependencia del contexto, impacto del cansancio y estado de animo.
- */
-
+﻿
 #include "estadisticas_meta.h"
 #include "db.h"
 #include "utils.h"
@@ -92,12 +85,6 @@ static void query(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Muestra la consistencia del rendimiento (variabilidad)
- *
- * Analiza la desviacion estandar y coeficiente de variacion del rendimiento general
- * para evaluar la consistencia del jugador/equipo.
- */
 void mostrar_consistencia_rendimiento()
 {
     clear_screen();
@@ -124,9 +111,6 @@ void mostrar_consistencia_rendimiento()
     pause_console();
 }
 
-/**
- * @brief Funcion generica para mostrar partidos con ciertos criterios SQL
- */
 static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion, const char *sql)
 {
     clear_screen();
@@ -164,11 +148,6 @@ static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion
     pause_console();
 }
 
-/**
- * @brief Muestra los partidos atipicos (muy buenos/muy malos)
- *
- * Identifica partidos con rendimiento significativamente diferente al promedio.
- */
 void mostrar_partidos_outliers()
 {
     clear_screen();
@@ -250,11 +229,6 @@ void mostrar_partidos_outliers()
     pause_console();
 }
 
-/**
- * @brief Muestra la dependencia del contexto
- *
- * Analiza como el rendimiento varia segun diferentes contextos (clima, dia, etc.)
- */
 void mostrar_dependencia_contexto()
 {
     clear_screen();
@@ -278,11 +252,6 @@ void mostrar_dependencia_contexto()
     pause_console();
 }
 
-/**
- * @brief Muestra el impacto real del cansancio
- *
- * Analiza la correlacion entre cansancio y rendimiento
- */
 void mostrar_impacto_real_cansancio()
 {
     clear_screen();
@@ -317,11 +286,6 @@ void mostrar_impacto_real_cansancio()
     pause_console();
 }
 
-/**
- * @brief Muestra el impacto real del estado de animo
- *
- * Analiza la correlacion entre estado de animo y rendimiento
- */
 void mostrar_impacto_real_estado_animo()
 {
     clear_screen();
@@ -356,11 +320,6 @@ void mostrar_impacto_real_estado_animo()
     pause_console();
 }
 
-/**
- * @brief Muestra la eficiencia: goles por partido vs rendimiento
- *
- * Analiza la relacion entre produccion de goles y rendimiento general
- */
 void mostrar_eficiencia_goles_vs_rendimiento()
 {
     clear_screen();
@@ -389,11 +348,6 @@ void mostrar_eficiencia_goles_vs_rendimiento()
     pause_console();
 }
 
-/**
- * @brief Muestra la eficiencia: asistencias por partido vs cansancio
- *
- * Analiza como el cansancio afecta la capacidad de asistir
- */
 void mostrar_eficiencia_asistencias_vs_cansancio()
 {
     clear_screen();
@@ -418,11 +372,6 @@ void mostrar_eficiencia_asistencias_vs_cansancio()
     pause_console();
 }
 
-/**
- * @brief Muestra el rendimiento obtenido por esfuerzo
- *
- * Analiza la relacion entre esfuerzo (cansancio) y resultados
- */
 void mostrar_rendimiento_por_esfuerzo()
 {
     clear_screen();
@@ -445,11 +394,6 @@ void mostrar_rendimiento_por_esfuerzo()
     pause_console();
 }
 
-/**
- * @brief Muestra partidos exigentes bien rendidos
- *
- * Identifica partidos dificiles con buen rendimiento
- */
 void mostrar_partidos_exigentes_bien_rendidos()
 {
     mostrar_partidos_con_sql(
@@ -462,11 +406,6 @@ void mostrar_partidos_exigentes_bien_rendidos()
     );
 }
 
-/**
- * @brief Muestra partidos faciles mal rendidos
- *
- * Identifica partidos faciles con bajo rendimiento
- */
 void mostrar_partidos_faciles_mal_rendidos()
 {
     mostrar_partidos_con_sql(

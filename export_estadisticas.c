@@ -38,7 +38,6 @@ typedef void (*anio_footer_writer_t)(FILE *file, int hay);
  * HELPER ESTaTICOS
  * ============================================================================ */
 
-/** @brief Escribe estadisticas en formato CSV */
 static void write_stats_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -62,7 +61,6 @@ static void write_stats_csv(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe estadisticas en formato TXT */
 static void write_stats_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -86,7 +84,6 @@ static void write_stats_txt(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe estadisticas en formato HTML */
 static void write_stats_html(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -111,7 +108,6 @@ static void write_stats_html(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe estadisticas en formato JSON */
 static void write_stats_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
@@ -212,7 +208,6 @@ static void write_stats_anio_common(FILE *file,
     }
 }
 
-/** @brief Escribe estadisticas por ano en formato CSV */
 static void write_stats_anio_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -236,7 +231,6 @@ static void write_stats_anio_csv(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe estadisticas por ano en formato TXT */
 static void write_stats_anio_txt(FILE *file)
 {
     write_stats_anio_common(file,
@@ -245,7 +239,6 @@ static void write_stats_anio_txt(FILE *file)
                             NULL);
 }
 
-/** @brief Escribe estadisticas por ano en formato HTML */
 static void write_stats_anio_html(FILE *file)
 {
     write_stats_anio_common(file,
@@ -254,7 +247,6 @@ static void write_stats_anio_html(FILE *file)
                             write_stats_anio_html_footer);
 }
 
-/** @brief Escribe estadisticas por ano en formato JSON */
 static void write_stats_anio_json(FILE *file)
 {
     cJSON *root = cJSON_CreateObject();
@@ -306,16 +298,35 @@ static void write_stats_anio_json(FILE *file)
     sqlite3_finalize(stmt);
 }
 
+static void write_stats_md(FILE *file)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
+        return;
+
+    fprintf(file, "| Camiseta | Goles | Asistencias | Partidos |"
+            " Victorias | Empates | Derrotas |\n");
+    fprintf(file, "|----------|-------|-------------|----------|"
+            "-----------|---------|----------|\n");
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        fprintf(file, "| %s | %d | %d | %d | %d | %d | %d |\n",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1),
+                sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5),
+                sqlite3_column_int(stmt, 6));
+    }
+    sqlite3_finalize(stmt);
+}
+
 /* ============================================================================
  * EXPORTACIoN ESTADiSTICAS (4 formatos)
  * ============================================================================ */
 
-/**
- * @brief Exporta las estadisticas a un archivo CSV
- *
- * Crea un archivo CSV con las estadisticas agrupadas por camiseta,
- * incluyendo nombre, suma de goles, suma de asistencias, numero de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH.
- */
 void exportar_estadisticas_csv()
 {
     if (!has_records("partido"))
@@ -337,12 +348,6 @@ void exportar_estadisticas_csv()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.csv"));
 }
 
-/**
- * @brief Exporta las estadisticas a un archivo de texto plano
- *
- * Crea un archivo de texto con un listado formateado de las estadisticas
- * agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias y numero de partidos. El archivo se guarda en la ruta definida por EXPORT_PATH.
- */
 void exportar_estadisticas_txt()
 {
     if (!has_records("partido"))
@@ -363,12 +368,6 @@ void exportar_estadisticas_txt()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.txt"));
 }
 
-/**
- * @brief Exporta las estadisticas a un archivo JSON
- *
- * Crea un archivo JSON con un array de objetos representando las estadisticas
- * agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias y numero de partidos. El archivo se guarda en la ruta definida por EXPORT_PATH.
- */
 void exportar_estadisticas_json()
 {
     if (!has_records("partido"))
@@ -389,12 +388,6 @@ void exportar_estadisticas_json()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.json"));
 }
 
-/**
- * @brief Exporta las estadisticas a un archivo HTML
- *
- * Crea un archivo HTML con una tabla que muestra las estadisticas
- * agrupadas por camiseta, incluyendo nombre, suma de goles, suma de asistencias, numero de partidos, victorias, empates y derrotas. El archivo se guarda en la ruta definida por EXPORT_PATH.
- */
 void exportar_estadisticas_html()
 {
     if (!has_records("partido"))
@@ -421,13 +414,32 @@ void exportar_estadisticas_html()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
 }
 
+void exportar_estadisticas_md()
+{
+    if (!has_records("partido"))
+    {
+        mostrar_no_hay_registros("estadisticas para exportar");
+        return;
+    }
+
+    FILE *f = abrir_archivo_exportacion("estadisticas.md",
+                                        "Error al crear el archivo Markdown");
+    if (!f)
+        return;
+
+    fprintf(f, "# Estadisticas por Camiseta\n\n");
+    fprintf(f, "*Generado por MiFutbolC*\n\n");
+    write_stats_md(f);
+    fprintf(f, "\n");
+
+    fclose(f);
+    printf("Archivo exportado a: %s\n", get_export_path("estadisticas.md"));
+}
+
 /* ============================================================================
  * EXPORTACIoN ESTADiSTICAS POR AnO (4 formatos)
  * ============================================================================ */
 
-/**
- * @brief Exporta las estadisticas por ano a un archivo CSV
- */
 void exportar_estadisticas_por_anio_csv()
 {
     if (!has_records("partido"))
@@ -449,9 +461,6 @@ void exportar_estadisticas_por_anio_csv()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.csv"));
 }
 
-/**
- * @brief Exporta las estadisticas por ano a un archivo de texto plano
- */
 void exportar_estadisticas_por_anio_txt()
 {
     if (!has_records("partido"))
@@ -472,9 +481,6 @@ void exportar_estadisticas_por_anio_txt()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.txt"));
 }
 
-/**
- * @brief Exporta las estadisticas por ano a un archivo JSON
- */
 void exportar_estadisticas_por_anio_json()
 {
     if (!has_records("partido"))
@@ -495,9 +501,6 @@ void exportar_estadisticas_por_anio_json()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.json"));
 }
 
-/**
- * @brief Exporta las estadisticas por ano a un archivo HTML
- */
 void exportar_estadisticas_por_anio_html()
 {
     if (!has_records("partido"))

@@ -806,7 +806,6 @@ static void mostrar_agenda()
     free(items);
 }
 
-
 static void accion_listar_recordatorios(void)
 {
     app_log_event("RECORDATORIOS", "Opcion seleccionada: Listar recordatorios");

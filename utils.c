@@ -1,13 +1,4 @@
-﻿/**
- * @file utils.c
- * @brief Funciones utilitarias para entrada/salida, manejo de fechas y
- * operaciones de base de datos.
- *
- * Este archivo contiene funciones auxiliares para interactuar con el usuario,
- * manejar fechas y horas, limpiar la pantalla, verificar existencia de IDs en
- * la base de datos, y gestionar directorios de exportacion.
- */
-
+﻿
 #include "utils.h"
 #include "export.h"
 #include "ascii_art.h"
@@ -662,7 +653,6 @@ int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
     snprintf(buffer, sizeof(buffer), "%s", formatted);
     sqlite3_free(formatted);
 
-
     return fprintf(stdout, "%s\n", buffer);
 }
 
@@ -672,7 +662,6 @@ static int ui_readline(char *buffer, int size)
     {
         return 0;
     }
-
 
     return fgets(buffer, size, stdin) != NULL;
 }
@@ -1255,10 +1244,18 @@ void print_header(const char *titulo)
         mostrar_datos = 0;
     }
 
-
     print_header_stdout(ascii, titulo_display, nombre_usuario, fecha,
                         mostrar_datos);
     free_nombre_usuario_if_needed(nombre_usuario);
+}
+
+int consola_soporta_unicode(void)
+{
+#ifdef _WIN32
+    return 0;
+#else
+    return 1;
+#endif
 }
 
 /**
@@ -2529,10 +2526,6 @@ int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
     return found;
 }
 
-/**
- * @brief Obtiene el siguiente ID disponible para una tabla
- * Implementa el patron usado en camiseta, cancha, lesion, etc.
- */
 long long obtener_siguiente_id(const char *tabla)
 {
     sqlite3_stmt *stmt;
@@ -2564,9 +2557,6 @@ long long obtener_siguiente_id(const char *tabla)
     return id;
 }
 
-/**
- * @brief Verifica si hay registros en una tabla
- */
 int hay_registros(const char *tabla)
 {
     sqlite3_stmt *stmt;
@@ -2588,9 +2578,6 @@ int hay_registros(const char *tabla)
     return count > 0;
 }
 
-/**
- * @brief Obtiene el ID de una entidad por nombre
- */
 int obtener_id_por_nombre(const char *tabla, const char *nombre)
 {
     sqlite3_stmt *stmt;
@@ -2613,9 +2600,6 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
     return id;
 }
 
-/**
- * @brief Lista todas las entidades de una tabla
- */
 void listar_entidades(const char *tabla, const char *titulo, const char *mensaje_vacio)
 {
     if (!tabla || !titulo || !mensaje_vacio) return;
@@ -2648,9 +2632,6 @@ void listar_entidades(const char *tabla, const char *titulo, const char *mensaje
     pause_console();
 }
 
-/**
- * @brief Solicita un entero validado en rango
- */
 int input_int_rango(const char *msg, int min, int max)
 {
     int valor;
@@ -2664,9 +2645,6 @@ int input_int_rango(const char *msg, int min, int max)
     return valor;
 }
 
-/**
- * @brief Muestra "no hay registros"
- */
 void mostrar_no_hay_registros(const char *entidad)
 {
     if (!entidad) return;
@@ -2675,36 +2653,24 @@ void mostrar_no_hay_registros(const char *entidad)
            (entidad[len-1] == 'a' || entidad[len-1] == 'o') ? "o" : "os");
 }
 
-/**
- * @brief Muestra "entidad no existe"
- */
 void mostrar_no_existe(const char *entidad)
 {
     if (!entidad) return;
     printf("El %s no existe.\n", entidad);
 }
 
-/**
- * @brief Muestra error de operacion
- */
 void mostrar_error_operacion(const char *entidad, const char *operacion)
 {
     if (!entidad || !operacion) return;
     printf("Error al %s el %s.\n", operacion, entidad);
 }
 
-/**
- * @brief Atajo para clear_screen + print_header
- */
 void mostrar_pantalla(const char *titulo)
 {
     clear_screen();
     print_header(titulo);
 }
 
-/**
- * @brief Elimina espacios en blanco al final de una cadena
- */
 char* trim_trailing_spaces(char *str)
 {
     if (!str) return str;
@@ -2717,10 +2683,6 @@ char* trim_trailing_spaces(char *str)
     return str;
 }
 
-/**
- * @brief Ejecuta una consulta SQL y devuelve el statement preparado
- * Funcion comun para centralizar la ejecucion de consultas
- */
 sqlite3_stmt* execute_query(const char *sql)
 {
     sqlite3_stmt *stmt;
@@ -2731,10 +2693,6 @@ sqlite3_stmt* execute_query(const char *sql)
     return stmt;
 }
 
-/**
- * @brief Lista equipos disponibles para seleccion
- * Funcion comun usada en multiples modulos para mostrar equipos
- */
 int list_available_teams(const char *no_records_msg, int pause_on_empty)
 {
     sqlite3_stmt *stmt;
@@ -2775,10 +2733,6 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
     return 0;
 }
 
-/**
- * @brief Obtiene el ID de un equipo seleccionado por el usuario
- * Funcion comun para seleccion de equipos con validacion
- */
 int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_error)
 {
     if (!list_available_teams(no_records_msg, pause_on_error))
@@ -2802,10 +2756,6 @@ int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_
     return equipo_id;
 }
 
-/**
- * @brief Escribe encabezado CSV para exportaciones
- * Funcion comun para formato consistente en exportaciones CSV
- */
 void write_csv_header(FILE *f, const char *header)
 {
     fprintf(f, "%s\n", header);
@@ -2818,10 +2768,6 @@ static char *get_trimmed_cancha_from_stmt(sqlite3_stmt *stmt)
     return cancha_trimmed;
 }
 
-/**
- * @brief Escribe fila CSV con datos de partido
- * Funcion comun para exportar datos de partidos a CSV
- */
 void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
@@ -2841,10 +2787,6 @@ void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
     free(cancha_trimmed);
 }
 
-/**
- * @brief Escribe fila TXT con datos de partido
- * Funcion comun para exportar datos de partidos a TXT
- */
 void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
@@ -2864,10 +2806,6 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
     free(cancha_trimmed);
 }
 
-/**
- * @brief Escribe objeto JSON con datos de partido
- * Funcion comun para exportar datos de partidos a JSON
- */
 void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
@@ -2888,10 +2826,6 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
     free(cancha_trimmed);
 }
 
-/**
- * @brief Escribe fila HTML con datos de partido
- * Funcion comun para exportar datos de partidos a HTML
- */
 void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
@@ -2912,10 +2846,6 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
     free(cancha_trimmed);
 }
 
-/**
- * @brief Funcion comun para mostrar records simples
- * Centraliza la logica de mostrar records con formato consistente
- */
 void mostrar_record_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
@@ -2943,10 +2873,6 @@ void mostrar_record_simple(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Funcion comun para mostrar combinaciones cancha-camiseta
- * Centraliza la logica de mostrar combinaciones con formato consistente
- */
 void mostrar_combinacion_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
@@ -2969,10 +2895,6 @@ void mostrar_combinacion_simple(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Funcion comun para mostrar temporadas
- * Centraliza la logica de mostrar temporadas con formato consistente
- */
 void mostrar_temporada_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
@@ -3002,12 +2924,6 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
-
-
-/**
- * @brief Funcion generica para exportar records a CSV
- * Centraliza la logica de exportacion CSV para records individuales
- */
 void exportar_record_simple_csv(const char *titulo, const char *sql, const char *filename)
 {
     FILE *file = NULL;
@@ -3035,10 +2951,6 @@ void exportar_record_simple_csv(const char *titulo, const char *sql, const char 
     fclose(file);
 }
 
-/**
- * @brief Funcion generica para exportar un partido especifico a CSV
- * Centraliza la logica comun de exportacion de partidos especificos
- */
 void exportar_partido_especifico_csv(const char *order_by, const char *filename)
 {
     if (!has_records("partido"))
@@ -3074,10 +2986,6 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
     fclose(f);
 }
 
-/**
- * @brief Funcion generica para exportar un partido especifico a TXT
- * Centraliza la logica comun de exportacion de partidos especificos
- */
 void exportar_partido_especifico_txt(const char *order_by, const char *filename, const char *title)
 {
     if (!has_records("partido"))
@@ -3113,10 +3021,6 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
     fclose(f);
 }
 
-/**
- * @brief Funcion generica para exportar un partido especifico a JSON
- * Centraliza la logica comun de exportacion de partidos especificos
- */
 void exportar_partido_especifico_json(const char *order_by, const char *filename)
 {
     if (!has_records("partido"))
@@ -3157,10 +3061,6 @@ void exportar_partido_especifico_json(const char *order_by, const char *filename
     fclose(f);
 }
 
-/**
- * @brief Funcion generica para exportar un partido especifico a HTML
- * Centraliza la logica comun de exportacion de partidos especificos
- */
 void exportar_partido_especifico_html(const char *order_by, const char *filename, const char *title)
 {
     if (!has_records("partido"))
@@ -3767,13 +3667,6 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_fi
     return 1;
 }
 
-/**
- * @brief Muestra una alerta visual de operacion exitosa
- *
- * Notifica al usuario cuando una entidad ha sido creada, modificada o eliminada
- * exitosamente. Muestra un mensaje formateado con bordes y registra el evento
- * en el log de la aplicacion.
- */
 void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item)
 {
     char log_msg[512];

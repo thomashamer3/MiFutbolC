@@ -1,11 +1,4 @@
-﻿/**
- * @file db.c
- * @brief Modulo para la gestion de la base de datos SQLite
- *
- * Este archivo contiene las funciones necesarias para inicializar, configurar y cerrar
- * la conexion a la base de datos SQLite utilizada por la aplicacion MiFutbolC.
- */
-#include "export.h"
+﻿#include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "settings.h"
@@ -474,14 +467,6 @@ const char *db_get_active_user(void)
     return ACTIVE_USER;
 }
 
-/**
- * @brief Configura rutas y directorios para almacenamiento de datos
- *
- * Establece ubicaciones especificas del sistema operativo para
- * base de datos interna y directorios de usuario accesibles.
- *
- * @return 1 si configuracion exitosa, 0 en caso de error
- */
 static int setup_database_paths()
 {
     char db_filename[256];
@@ -550,14 +535,6 @@ static int setup_database_paths()
     return 1;
 }
 
-/**
- * @brief Establece conexion activa con base de datos SQLite
- *
- * Abre archivo de base de datos y configura puntero global para
- * operaciones subsiguientes de consulta y modificacion.
- *
- * @return 1 si conexion exitosa, 0 en caso de error
- */
 static int create_database_connection()
 {
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
@@ -572,14 +549,6 @@ static int create_database_connection()
     return 1;
 }
 
-/**
- * @brief Crea esquema completo de tablas si no existen
- *
- * Define estructura relacional completa incluyendo todas las entidades,
- * restricciones de integridad referencial y valores por defecto.
- *
- * @return 1 si creacion exitosa, 0 en caso de error
- */
 static int create_database_schema()
 {
     const char *sql_create =
@@ -1061,12 +1030,6 @@ static int create_database_schema()
     return 1;
 }
 
-/**
- * @brief Agrega columnas faltantes por evolucion del esquema
- *
- * Ejecuta sentencias ALTER TABLE para anadir campos nuevos sin
- * afectar datos existentes, ignorando errores de columnas duplicadas.
- */
 static void add_missing_columns()
 {
     const char *alter_statements[] =
@@ -1096,14 +1059,6 @@ static void add_missing_columns()
     }
 }
 
-/**
- * @brief Inicializa el entorno completo de persistencia de datos
- *
- * Orquesta configuracion de rutas, conexion a base de datos,
- * creacion de esquema y preparacion de directorios auxiliares.
- *
- * @return 1 si inicializacion completa exitosa, 0 en caso de error
- */
 int db_init()
 {
     app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
@@ -1139,12 +1094,6 @@ int db_init()
     return 1;
 }
 
-/**
- * @brief Libera recursos de conexion a base de datos
- *
- * Evita fugas de memoria cerrando conexiones SQLite activas
- * de manera ordenada durante el cierre de la aplicacion.
- */
 void db_close()
 {
     if (db)
@@ -1155,14 +1104,6 @@ void db_close()
     }
 }
 
-/**
- * @brief Recupera identidad del usuario para personalizacion
- *
- * Permite adaptar la interfaz y mensajes segun el usuario identificado,
- * mejorando la experiencia personalizada de la aplicacion.
- *
- * @return Puntero a cadena con el nombre del usuario, o NULL si no existe
- */
 char *get_user_name()
 {
     sqlite3_stmt *stmt;
@@ -1185,15 +1126,6 @@ char *get_user_name()
     return nombre;
 }
 
-/**
- * @brief Persiste identidad del usuario para sesiones futuras
- *
- * Almacena nombre de usuario en tabla dedicada para mantener
- * consistencia en configuraciones personales entre ejecuciones.
- *
- * @param nombre El nombre del usuario a guardar
- * @return 1 si la operacion fue exitosa, 0 en caso de error
- */
 int set_user_name(const char *nombre)
 {
     sqlite3_stmt *stmt;
@@ -1360,27 +1292,11 @@ int clear_user_password(void)
     return result;
 }
 
-/**
- * @brief Proporciona acceso al directorio de almacenamiento interno
- *
- * Facilita operaciones de archivo que requieren ubicacion de datos
- * persistentes, manteniendo separacion entre datos de aplicacion y usuario.
- *
- * @return Puntero a cadena con la ruta del directorio de datos
- */
 const char *get_data_dir()
 {
     return DB_DIR;
 }
 
-/**
- * @brief Establece ubicacion accesible para archivos exportados
- *
- * Configura directorio visible al usuario para almacenamiento de
- * datos exportados, permitiendo facil acceso y backup de informacion.
- *
- * @return Puntero a cadena con la ruta del directorio de exportaciones
- */
 const char *get_export_dir()
 {
     if (!configurar_directorio_usuario("./Exportaciones",
@@ -1396,14 +1312,6 @@ const char *get_export_dir()
     return EXPORT_DIR;
 }
 
-/**
- * @brief Establece ubicacion accesible para archivos a importar
- *
- * Configura directorio visible al usuario para colocacion de
- * archivos de importacion, facilitando carga masiva de datos.
- *
- * @return Puntero a cadena con la ruta del directorio de importaciones
- */
 const char *get_import_dir()
 {
     if (!configurar_directorio_usuario("./Importaciones",
@@ -1419,14 +1327,6 @@ const char *get_import_dir()
     return IMPORT_DIR;
 }
 
-/**
- * @brief Establece ubicacion accesible para archivos de imagen
- *
- * Configura directorio visible al usuario para almacenar imagenes
- * asociadas a camisetas, al mismo nivel que importaciones y exportaciones.
- *
- * @return Puntero a cadena con la ruta del directorio de imagenes
- */
 const char *get_images_dir()
 {
     if (!configurar_directorio_usuario("./Imagenes",
@@ -1514,13 +1414,6 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
     return 1;
 }
 
-/**
- * @brief Copia la base de datos SQLite a la carpeta de documentos
- *
- * Esta funcion realiza una copia exacta del archivo de base de datos
- * desde la ubicacion de datos internos (AppData) a la carpeta de exportacion
- * (Documentos del usuario) para respaldo y portabilidad.
- */
 void exportar_base_datos()
 {
     app_log_write("INFO", "EXPORT", "Inicio de exportacion de base de datos");

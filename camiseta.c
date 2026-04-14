@@ -16,7 +16,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-
 #define MAX_CAMISETAS_SORTEO 150
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
@@ -131,7 +130,6 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
 
     return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
-
 
 static int abrir_imagen_en_sistema(const char *ruta)
 {
@@ -465,12 +463,6 @@ static void listar_camisetas_simple()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Crea una nueva camiseta en la base de datos
- *
- * Permite a los usuarios agregar camisetas para gestion y sorteos,
- * reutilizando IDs eliminados para mantener la secuencia.
- */
 void crear_camiseta()
 {
     clear_screen();
@@ -517,7 +509,7 @@ void crear_camiseta()
             snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada sin imagen inicial (opcional)", id);
             app_log_event("CAMISETA", log_msg);
         }
-        
+
         mostrar_alerta_operacion("Camiseta", "Creada", nombre);
     }
     else
@@ -530,12 +522,6 @@ void crear_camiseta()
     }
 }
 
-/**
- * @brief Muestra un listado de todas las camisetas registradas
- *
- * Proporciona visibilidad a los usuarios de las camisetas disponibles
- * para facilitar la toma de decisiones en otras operaciones.
- */
 static int cargar_imagen_para_camiseta_id(int id)
 {
     return app_cargar_imagen_entidad(id, "camiseta", "mifutbol_imagen_sel.txt");
@@ -552,12 +538,6 @@ void listar_camisetas()
     pause_console();
 }
 
-/**
- * @brief Permite editar el nombre de una camiseta existente
- *
- * Permite correcciones en la informacion de camisetas sin necesidad
- * de eliminar y recrear registros, mejorando la usabilidad.
- */
 void editar_camiseta()
 {
     clear_screen();
@@ -666,12 +646,6 @@ void ver_imagen_camiseta()
     pause_console();
 }
 
-/**
- * @brief Elimina una camiseta de la base de datos
- *
- * Permite remover camisetas que ya no son necesarias mientras
- * mantiene la integridad de los datos con validaciones y confirmaciones.
- */
 void eliminar_camiseta()
 {
     clear_screen();
@@ -721,25 +695,12 @@ void eliminar_camiseta()
     mostrar_alerta_operacion("Camiseta", "Eliminada", NULL);
 }
 
-/**
- * @brief Reinicia el estado de sorteo de todas las camisetas
- *
- * Necesario cuando todas las camisetas han sido sorteadas para permitir
- * nuevos sorteos sin requerir recrear registros.
- */
 static void reiniciar_sorteo()
 {
     sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0", 0, 0, 0);
     printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
 }
 
-/**
- * @brief Obtiene la lista de IDs de camisetas disponibles para sorteo
- *
- * @param ids Array donde almacenar los IDs
- * @param max Tamano maximo del array
- * @return Numero de IDs obtenidos
- */
 static int obtener_ids_disponibles(int ids[], int max)
 {
     sqlite3_stmt *stmt;
@@ -757,13 +718,6 @@ static int obtener_ids_disponibles(int ids[], int max)
     return i;
 }
 
-/**
- * @brief Selecciona aleatoriamente un ID de la lista proporcionada
- *
- * @param ids Array de IDs disponibles
- * @param count Numero de IDs en el array
- * @return ID seleccionado aleatoriamente
- */
 static int seleccionar_id_aleatorio(const int ids[], int count)
 {
     static int seeded = 0;
@@ -781,11 +735,6 @@ static int seleccionar_id_aleatorio(const int ids[], int count)
     return ids[rand() % count];
 }
 
-/**
- * @brief Marca una camiseta como sorteada en la base de datos
- *
- * @param id ID de la camiseta a marcar
- */
 static void marcar_camiseta_sorteada(int id)
 {
     sqlite3_stmt *stmt;
@@ -798,12 +747,6 @@ static void marcar_camiseta_sorteada(int id)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Obtiene el nombre de una camiseta por su ID
- *
- * @param id ID de la camiseta
- * @return Nombre de la camiseta (debe ser liberado con free)
- */
 static char* obtener_nombre_camiseta(int id)
 {
     char nombre_buffer[256];
@@ -816,13 +759,6 @@ static char* obtener_nombre_camiseta(int id)
     return strdup("Desconocida");
 }
 
-/**
- * @brief Realiza un sorteo aleatorio entre las camisetas disponibles
- *
- * Permite sorteos continuos reutilizando camisetas ya sorteadas cuando
- * se agotan las disponibles, manteniendo la funcionalidad del sistema
- * sin necesidad de intervencion manual del usuario.
- */
 void sortear_camiseta()
 {
     clear_screen();
@@ -866,12 +802,6 @@ void sortear_camiseta()
     pause_console();
 }
 
-/**
- * @brief Muestra el menu principal de gestion de camisetas
- *
- * Proporciona una interfaz estructurada para las operaciones de
- * gestion de camisetas, centralizando el acceso a todas las funcionalidades.
- */
 void menu_camisetas()
 {
     MenuItem items[] =

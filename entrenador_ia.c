@@ -942,9 +942,6 @@ void menu_entrenador_ia()
 // NUEVAS FUNCIONES MEJORADAS DEL ENTRENADOR IA
 // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * @brief Predice resultado de un próximo partido
- */
 void predecir_resultado_partido()
 {
     iniciar_pantalla_ia("Prediccion de Resultado");
@@ -999,9 +996,6 @@ void predecir_resultado_partido()
     pause_console();
 }
 
-/**
- * @brief Recomienda formación táctica
- */
 void recomendar_formacion()
 {
     iniciar_pantalla_ia("Recomendacion de Formacion");
@@ -1068,9 +1062,6 @@ void recomendar_formacion()
     pause_console();
 }
 
-/**
- * @brief Muestra alertas de rendimiento
- */
 void mostrar_alertas_rendimiento()
 {
     iniciar_pantalla_ia("Alertas de Rendimiento");
@@ -1147,16 +1138,13 @@ void mostrar_alertas_rendimiento()
 
     if (alertas_encontradas == 0)
     {
-        printf("✅ No se detectaron alertas criticas.\n");
+        printf("No se detectaron alertas criticas.\n");
         printf("   El rendimiento esta dentro de parametros normales.\n\n");
     }
 
     pause_console();
 }
 
-/**
- * @brief Sugiere períodos de descanso
- */
 void sugerir_descanso()
 {
     iniciar_pantalla_ia("Sugerencia de Descanso");
@@ -1323,8 +1311,8 @@ static int analizar_debilidad_lesiones(void)
     int total_partidos = 0;
 
     if (!obtener_count_desde_sql(sql_lesiones, &total_lesiones) ||
-        !obtener_count_desde_sql(sql_partidos, &total_partidos) ||
-        total_partidos <= 0)
+            !obtener_count_desde_sql(sql_partidos, &total_partidos) ||
+            total_partidos <= 0)
     {
         return 0;
     }
@@ -1374,15 +1362,12 @@ static int analizar_debilidad_consistencia(void)
     return identificada;
 }
 
-/**
- * @brief Analiza puntos débiles del equipo
- */
 void analizar_puntos_debiles()
 {
     iniciar_pantalla_ia("Analisis de Puntos Debiles");
 
     printf("\n╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║           ANaLISIS DE AREAS DE MEJORA                       ║\n");
+    printf("║           ANALISIS DE AREAS DE MEJORA                       ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n\n");
 
     int areas_identificadas = 0;

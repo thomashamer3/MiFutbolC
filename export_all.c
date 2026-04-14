@@ -1,11 +1,4 @@
-﻿/**
- * @file export_all.c
- * @brief Modulo para exportar todos los datos del sistema en multiples formatos.
- *
- * Este archivo contiene la funcion principal para exportar camisetas, partidos,
- * lesiones y estadisticas en formatos CSV, TXT, JSON y HTML.
- */
-
+﻿
 #include "export_all.h"
 #include "export_all_mejorado.h"
 #include "export.h"
@@ -53,6 +46,7 @@ static void exportar_estadisticas_all()
     exportar_estadisticas_txt();
     exportar_estadisticas_json();
     exportar_estadisticas_html();
+    exportar_estadisticas_md();
 }
 
 static void exportar_analisis_all()
@@ -69,6 +63,7 @@ static void exportar_estadisticas_generales_all()
     exportar_estadisticas_generales_txt();
     exportar_estadisticas_generales_json();
     exportar_estadisticas_generales_html();
+    exportar_estadisticas_generales_md();
 }
 
 static void exportar_estadisticas_por_mes_all()
@@ -151,14 +146,6 @@ static void exportar_todo_csv()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de datos de camisetas
- *
- * Centraliza la exportacion de datos de camisetas en todos los formatos disponibles,
- * proporcionando una solucion completa para el analisis de rendimiento de jugadores.
- * Esto es esencial para equipos que necesitan evaluar multiples aspectos del desempeno
- * en diferentes formatos para diferentes usos (hojas de calculo, informes, APIs, visualizacion web).
- */
 static void exportar_camisetas_todo()
 {
     printf("Exportando camisetas...\n");
@@ -167,13 +154,6 @@ static void exportar_camisetas_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de datos de partidos
- *
- * Proporciona una exportacion completa de todos los partidos registrados en el sistema,
- * permitiendo un analisis exhaustivo del historial de encuentros. Esto es crucial para
- * evaluar el rendimiento del equipo a lo largo del tiempo y bajo diferentes condiciones.
- */
 static void exportar_partidos_todo()
 {
     printf("Exportando partidos...\n");
@@ -182,13 +162,6 @@ static void exportar_partidos_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de datos de lesiones
- *
- * Centraliza la exportacion de datos de lesiones en todos los formatos, proporcionando
- * informacion crucial para el analisis medico y de rendimiento. Esto permite a los equipos
- * medicos y entrenadores evaluar el impacto de las lesiones en el desempeno de los jugadores.
- */
 static void exportar_lesiones_todo()
 {
     printf("Exportando lesiones...\n");
@@ -197,13 +170,6 @@ static void exportar_lesiones_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de estadisticas basicas
- *
- * Proporciona una exportacion completa de estadisticas basicas en todos los formatos,
- * ofreciendo una vision general del rendimiento del equipo. Esto es util para informes
- * rapidos y analisis preliminares del desempeno general.
- */
 static void exportar_estadisticas_todo()
 {
     printf("Exportando estadisticas...\n");
@@ -212,13 +178,6 @@ static void exportar_estadisticas_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de analisis avanzados
- *
- * Centraliza la exportacion de analisis avanzados en todos los formatos, proporcionando
- * informacion detallada para la toma de decisiones estrategicas. Esto es esencial para
- * equipos que necesitan un analisis profundo del rendimiento y patrones de juego.
- */
 static void exportar_analisis_todo()
 {
     printf("Exportando analisis...\n");
@@ -227,13 +186,6 @@ static void exportar_analisis_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de estadisticas generales
- *
- * Proporciona una exportacion completa de estadisticas generales en todos los formatos,
- * ofreciendo una vision agregada del rendimiento del equipo. Esto es util para informes
- * ejecutivos y analisis de alto nivel del desempeno general del equipo.
- */
 static void exportar_estadisticas_generales_todo()
 {
     printf("Exportando estadisticas generales...\n");
@@ -242,13 +194,6 @@ static void exportar_estadisticas_generales_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de estadisticas mensuales
- *
- * Centraliza la exportacion de estadisticas por mes en todos los formatos, permitiendo
- * un analisis temporal detallado del rendimiento. Esto es esencial para identificar
- * patrones estacionales y evaluar el progreso mensual del equipo.
- */
 static void exportar_estadisticas_por_mes_todo()
 {
     printf("Exportando estadisticas por mes...\n");
@@ -257,13 +202,6 @@ static void exportar_estadisticas_por_mes_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de estadisticas anuales
- *
- * Proporciona una exportacion completa de estadisticas por ano en todos los formatos,
- * permitiendo un analisis de largo plazo del rendimiento del equipo. Esto es crucial
- * para evaluar el progreso anual y planificar estrategias a largo plazo.
- */
 static void exportar_estadisticas_por_anio_todo()
 {
     printf("Exportando estadisticas por anio...\n");
@@ -272,13 +210,6 @@ static void exportar_estadisticas_por_anio_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral de records y rankings
- *
- * Centraliza la exportacion de records y rankings en todos los formatos, proporcionando
- * informacion sobre los mejores y peores desempenos. Esto es esencial para identificar
- * patrones de exito y areas de mejora, asi como para celebrar logros y establecer metas.
- */
 static void exportar_records_rankings_todo()
 {
     printf("Exportando records & rankings...\n");
@@ -287,13 +218,6 @@ static void exportar_records_rankings_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral del partido con mas goles
- *
- * Proporciona una exportacion completa del partido con mayor anotacion en todos los formatos,
- * permitiendo analizar las condiciones y factores que llevaron al mejor desempeno ofensivo.
- * Esto es util para replicar estrategias exitosas en futuros encuentros.
- */
 static void exportar_partido_mas_goles_todo()
 {
     printf("Exportando partido con mas goles...\n");
@@ -305,9 +229,6 @@ static void exportar_partido_mas_goles_todo()
     pause_console();
 }
 
-/**
- * @brief Exporta partido con mas asistencias en todos los formatos.
- */
 static void exportar_partido_mas_asistencias_todo()
 {
     printf("Exportando partido con mas asistencias...\n");
@@ -319,9 +240,6 @@ static void exportar_partido_mas_asistencias_todo()
     pause_console();
 }
 
-/**
- * @brief Exporta partido mas reciente con menos goles en todos los formatos.
- */
 static void exportar_partido_menos_goles_reciente_todo()
 {
     printf("Exportando partido menos goles reciente...\n");
@@ -333,14 +251,6 @@ static void exportar_partido_menos_goles_reciente_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion integral del partido mas reciente con menos asistencias
- *
- * Proporciona una exportacion completa del partido mas reciente con menor numero de asistencias
- * en todos los formatos, permitiendo analizar las condiciones que llevaron a un bajo desempeno
- * en la creacion de oportunidades de gol. Esto es util para identificar areas de mejora
- * en el juego en equipo y la estrategia ofensiva.
- */
 static void exportar_partido_menos_asistencias_reciente_todo()
 {
     printf("Exportando partido menos asistencias reciente...\n");
@@ -352,24 +262,6 @@ static void exportar_partido_menos_asistencias_reciente_todo()
     pause_console();
 }
 
-/**
- * @brief Exportacion completa de todos los datos del sistema
- *
- * Funcion maestra que realiza una exportacion exhaustiva de todos los datos disponibles
- * en el sistema, incluyendo camisetas, partidos, lesiones, estadisticas y analisis.
- * Esta es la funcion mas completa y genera una copia de seguridad integral de todos
- * los datos en multiples formatos para diferentes usos y aplicaciones.
- *
- * @details La exportacion completa incluye:
- * - Todos los tipos de datos: camisetas, partidos, lesiones, estadisticas
- * - Todos los formatos: CSV, TXT, JSON, HTML
- * - Datos especificos: partidos destacados, records, rankings
- * - Analisis temporales: por mes, por ano
- *
- * @note Esta funcion es la mas completa pero tambien la mas lenta y consume mas recursos,
- *       ya que exporta todos los datos disponibles en el sistema. Se recomienda usarla
- *       para copias de seguridad completas o cuando se necesiten todos los datos.
- */
 static void exportar_todo()
 {
     printf("Exportando todo...\n");
@@ -426,9 +318,6 @@ static void exportar_todo()
     pause_console();
 }
 
-/**
- * @brief Genera un informe total en PDF
- */
 static void exportar_informe_total_pdf()
 {
     printf("Generando informe total en PDF...\n");
@@ -436,9 +325,6 @@ static void exportar_informe_total_pdf()
     pause_console();
 }
 
-/**
- * @brief Sub-menu para exportar partidos.
- */
 static void menu_exportar_partidos()
 {
     MenuItem items[] =
@@ -453,9 +339,6 @@ static void menu_exportar_partidos()
     ejecutar_menu(get_text("export_partidos_menu_title"), items, 6);
 }
 
-/**
- * @brief Sub-menu para exportar estadisticas generales.
- */
 static void menu_exportar_estadisticas_generales()
 {
     MenuItem items[] =

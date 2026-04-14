@@ -14,7 +14,6 @@
 #include <strings.h>
 #endif
 
-
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
@@ -176,14 +175,6 @@ void ver_imagen_cancha()
     pause_console();
 }
 
-
-
-/**
- * @brief Crea una nueva cancha en la base de datos
- *
- * Permite a los usuarios agregar canchas para asignacion en partidos,
- * reutilizando IDs eliminados para mantener la secuencia.
- */
 void crear_cancha()
 {
     char nombre[100];
@@ -226,24 +217,12 @@ void crear_cancha()
     }
 }
 
-/**
- * @brief Muestra un listado de todas las canchas registradas
- *
- * Proporciona visibilidad de canchas disponibles para seleccion
- * en partidos y operaciones de gestion.
- */
 void listar_canchas()
 {
     app_log_event("CANCHA", "Listado de canchas consultado");
     listar_entidades("cancha", "LISTADO DE CANCHAS", "No hay canchas cargadas.");
 }
 
-/**
- * @brief Elimina una cancha de la base de datos
- *
- * Permite remover canchas obsoletas mientras mantiene integridad
- * de datos con validaciones y confirmaciones de usuario.
- */
 void eliminar_cancha()
 {
     mostrar_pantalla("ELIMINAR CANCHA");
@@ -284,12 +263,6 @@ void eliminar_cancha()
     mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
 }
 
-/**
- * @brief Permite modificar el nombre de una cancha existente
- *
- * Permite correcciones en nombres de canchas sin necesidad
- * de eliminar y recrear registros, mejorando usabilidad.
- */
 void modificar_cancha()
 {
     mostrar_pantalla("MODIFICAR CANCHA");
@@ -334,12 +307,6 @@ void modificar_cancha()
     mostrar_alerta_operacion("Cancha", "Modificada", nombre);
 }
 
-/**
- * @brief Muestra el menu principal de gestion de canchas
- *
- * Proporciona interfaz centralizada para operaciones CRUD de canchas,
- * facilitando la navegacion y delegacion de tareas especificas.
- */
 void menu_canchas()
 {
     MenuItem items[] =

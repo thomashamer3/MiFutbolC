@@ -215,10 +215,6 @@ void activar_ia_estadisticas();
  */
 void menu_entrenador_ia();
 
-// ═══════════════════════════════════════════════════════════════════════════
-// NUEVAS FUNCIONES MEJORADAS
-// ═══════════════════════════════════════════════════════════════════════════
-
 /**
  * @brief Predice el resultado probable de un próximo partido
  *

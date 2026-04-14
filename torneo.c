@@ -8,12 +8,6 @@
 #include <string.h>
 #include "sqlite3.h"
 
-
-/**
- * @file torneo.c
- * @brief Implementacion de funciones para la gestion de torneos en MiFutbolC
- */
-
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
@@ -74,15 +68,6 @@ const char* get_nombre_tipo_torneo(TipoTorneos tipo)
     }
 }
 
-/**
- * @brief Convierte un formato de torneo enumerado a su nombre textual
- *
- * Esta funcion toma un valor del enum FormatoTorneos y devuelve la cadena
- * correspondiente en espanol para mostrar al usuario.
- *
- * @param formato El valor enumerado del formato de torneo
- * @return Cadena constante con el nombre del formato de torneo, o "Desconocido" si no es valido
- */
 const char* get_nombre_formato_torneo(FormatoTorneos formato)
 {
     switch (formato)
@@ -114,9 +99,6 @@ const char* get_nombre_formato_torneo(FormatoTorneos formato)
     }
 }
 
-/**
- * @brief Funcion generica para listar torneos
- */
 static int listar_torneos_generico(const char *no_records_msg)
 {
     sqlite3_stmt *stmt;
@@ -218,9 +200,6 @@ static void asignar_formato_21_o_mas(int opcion, TipoTorneos *tipo, FormatoTorne
     }
 }
 
-/**
- * @brief Funcion generica para obtener formato segun cantidad de equipos y opcion
- */
 static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *tipo, FormatoTorneos *formato)
 {
     *tipo = SOLO_IDA;
@@ -263,9 +242,6 @@ void mostrar_torneo(Torneo *torneo)
     ui_printf("\n");
 }
 
-/**
- * @brief Agrega un equipo al torneo solo por nombre (sin crear equipo completo)
- */
 static void agregar_equipo_nombre_torneo(int torneo_id)
 {
     char nombre[50] = {0};
@@ -307,9 +283,6 @@ static void agregar_equipo_nombre_torneo(int torneo_id)
     pause_console();
 }
 
-/**
- * @brief Agrega varios equipos por nombre de una vez
- */
 static void agregar_equipos_nombres_torneo(int torneo_id)
 {
     clear_screen();
@@ -347,9 +320,6 @@ static void agregar_equipos_nombres_torneo(int torneo_id)
     pause_console();
 }
 
-/**
- * @brief Asocia equipos a un torneo
- */
 void asociar_equipos_torneo(int torneo_id)
 {
     clear_screen();
@@ -407,14 +377,6 @@ void asociar_equipos_torneo(int torneo_id)
     }
 }
 
-/**
- * @brief Crea un equipo fijo para un torneo
- *
- * Esta funcion crea un nuevo equipo y lo asocia como equipo fijo a un torneo.
- * Si torneo_id es -1, solo crea el equipo sin asociarlo.
- *
- * @param torneo_id ID del torneo al que se asociara el equipo fijo, o -1 para solo crear el equipo
- */
 void crear_equipo_fijo_torneo(int torneo_id)
 {
     crear_equipo();
@@ -829,9 +791,6 @@ void eliminar_torneo()
     mostrar_alerta_operacion("Torneo", "Eliminado", NULL);
 }
 
-/**
- * @brief Actualiza el nombre del torneo en la base de datos
- */
 static void actualizar_nombre_torneo(int torneo_id)
 {
     char nuevo_nombre[50];
@@ -857,19 +816,12 @@ static void actualizar_nombre_torneo(int torneo_id)
     }
 }
 
-/**
- * @brief Muestra lista de equipos disponibles y retorna ID seleccionado
- * @return ID del equipo seleccionado, o 0 si se cancela
- */
 static int seleccionar_equipo_disponible(void)
 {
     return select_team_id("\nIngrese el ID del equipo fijo (0 para cancelar): ",
                           "equipos registrados", 1);
 }
 
-/**
- * @brief Actualiza el equipo fijo del torneo
- */
 static void actualizar_equipo_fijo(int torneo_id)
 {
     int nuevo_tiene_equipo_fijo = confirmar("El torneo tiene equipo fijo?");
@@ -918,9 +870,6 @@ static void actualizar_equipo_fijo(int torneo_id)
     }
 }
 
-/**
- * @brief Maneja la actualizacion de tipo y formato de torneo
- */
 static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
 {
     int opcion = prompt_formato_por_cantidad(cantidad);
@@ -935,9 +884,6 @@ static void actualizar_tipo_formato_torneo(int torneo_id, int cantidad)
     aplicar_actualizacion_formato(torneo_id, tipo, formato);
 }
 
-/**
- * @brief Muestra los equipos asociados a un torneo
- */
 static void listar_equipos_asociados(int torneo_id)
 {
     printf("=== EQUIPOS ASOCIADOS ===\n");
@@ -979,11 +925,7 @@ static void listar_equipos_asociados(int torneo_id)
         mostrar_no_hay_registros("equipos asociados a este torneo");
     }
 }
-/**
- * @brief Obtiene el nombre de un equipo por su ID
- * @param equipo_id ID del equipo
- * @return Nombre del equipo o "Desconocido"
- */
+
 const char* get_equipo_nombre(int equipo_id)
 {
     static char nombre[50];
@@ -1022,9 +964,6 @@ const char* get_equipo_nombre(int equipo_id)
     return nombre;
 }
 
-/**
- * @brief Menu principal de gestion de torneos
- */
 void menu_torneos()
 {
     MenuItem items[] =

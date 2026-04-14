@@ -1,11 +1,4 @@
-﻿/**
- * @file logros.c
- * @brief Sistema de logros y badges para MiFutbolC
- *
- * Este archivo implementa el sistema de logros basado en estadisticas
- * conseguidas por las camisetas en partidos de futbol.
- */
-
+﻿
 #include "logros.h"
 #include "db.h"
 #include "utils.h"
@@ -13,10 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
-/**
- * @brief Preparar statement y reportar errores
- */
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
@@ -27,10 +16,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-/**
- * @struct Logro
- * @brief Estructura que representa un logro/badge
- */
 typedef struct
 {
     const char *nombre;
@@ -39,18 +24,12 @@ typedef struct
     const char *tipo; // tipos disponibles: "goles", "asistencias", "partidos", "goles+asistencias", "victorias", "empates", "derrotas", "rendimiento_general", "estado_animo", "canchas_distintas", "hat_tricks", "poker_asistencias", "rendimiento_perfecto", "animo_perfecto", "goles_victorias", "asistencias_victorias", "rendimiento_victorias", "animo_victorias", "goles_derrotas", "asistencias_derrotas", "rendimiento_empates", "animo_empates", y muchos mas (ver LOGRO_QUERIES)
 } Logro;
 
-/**
- * @brief Estructura para mapear tipos de logros con sus consultas SQL
- */
 typedef struct
 {
     const char *tipo;
     const char *sql;
 } LogroQuery;
 
-/**
- * @brief Array de consultas SQL predefinidas para cada tipo de logro
- */
 static const LogroQuery LOGRO_QUERIES[] =
 {
     {"goles", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ?"},
@@ -111,9 +90,6 @@ static const LogroQuery LOGRO_QUERIES[] =
 
 #define NUM_QUERIES (sizeof(LOGRO_QUERIES) / sizeof(LogroQuery))
 
-/**
- * @brief Array de logros disponibles en el sistema
- */
 static const Logro LOGROS[] =
 {
     {"Primer Gol", "Anotar tu primer gol", 1, "goles"},
@@ -297,15 +273,6 @@ static const Logro LOGROS[] =
 
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
-
-
-/**
- * @brief Obtiene el progreso actual de una camiseta para un logro especifico (version optimizada)
- *
- * @param camiseta_id ID de la camiseta
- * @param tipo Tipo de estadistica
- * @return Valor actual de la estadistica
- */
 static int obtener_progreso_logro(int camiseta_id, const char *tipo)
 {
     // Buscar la consulta correspondiente en el array
@@ -338,14 +305,6 @@ static int obtener_progreso_logro(int camiseta_id, const char *tipo)
     return 0;
 }
 
-/**
- * @brief Determina el estado de un logro para una camiseta especifica
- *
- * @param camiseta_id ID de la camiseta
- * @param logro Puntero al logro
- * @param progreso Puntero donde se almacenara el progreso actual
- * @return 0: No iniciado, 1: En progreso, 2: Completado
- */
 static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progreso)
 {
     *progreso = obtener_progreso_logro(camiseta_id, logro->tipo);
@@ -364,28 +323,11 @@ static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progre
     }
 }
 
-/**
- * @brief Obtiene el nombre de una camiseta desde la base de datos
- *
- * Para mostrar informacion contextual al usuario, recupera el nombre asociado al ID.
- *
- * @param camiseta_id ID de la camiseta
- * @param nombre Buffer para almacenar el nombre
- */
 static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
 {
     obtener_nombre_entidad("camiseta", camiseta_id, nombre, 256);
 }
 
-/**
- * @brief Muestra un logro individual con su estado y progreso
- *
- * Para mantener consistencia visual, centraliza la logica de impresion de cada logro.
- *
- * @param logro Puntero al logro
- * @param estado Estado del logro (0,1,2)
- * @param progreso Progreso actual
- */
 static void mostrar_logro_individual(const Logro *logro, int estado, int progreso)
 {
     const char *estado_texto;
@@ -417,14 +359,6 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
     ui_printf("\n");
 }
 
-/**
- * @brief Muestra los logros de una camiseta especifica
- *
- * Para proporcionar feedback al usuario, lista logros filtrados segun el criterio seleccionado.
- *
- * @param camiseta_id ID de la camiseta
- * @param filtro 0: Todos, 1: Solo completados, 2: Solo en progreso
- */
 static void mostrar_logros_camiseta(int camiseta_id, int filtro)
 {
     char nombre_camiseta[100];
@@ -461,11 +395,6 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     }
 }
 
-/**
- * @brief Lista camisetas que tienen partidos asociados
- *
- * Para evitar mostrar camisetas sin logros, filtra solo las que han jugado partidos.
- */
 static void listar_camisetas_con_partidos()
 {
     ui_printf_centered_line("Camisetas disponibles:");
@@ -490,13 +419,6 @@ static void listar_camisetas_con_partidos()
     }
 }
 
-/**
- * @brief Permite al usuario seleccionar una camiseta valida
- *
- * Valida la seleccion para asegurar que la camiseta existe antes de proceder.
- *
- * @return ID de la camiseta o -1 si invalida
- */
 static int seleccionar_camiseta()
 {
     int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
@@ -508,15 +430,6 @@ static int seleccionar_camiseta()
     return camiseta_id;
 }
 
-/**
- * @brief Muestra logros con un filtro especifico
- *
- * Centraliza la logica comun de mostrar logros para diferentes vistas,
- * reduciendo duplicacion de codigo y mejorando mantenibilidad.
- *
- * @param titulo Titulo de la vista
- * @param filtro Tipo de filtro (0=todos, 1=completados, 2=en progreso)
- */
 static void mostrar_logros_con_filtro(const char *titulo, int filtro)
 {
     clear_screen();
@@ -528,41 +441,26 @@ static void mostrar_logros_con_filtro(const char *titulo, int filtro)
     pause_console();
 }
 
-/**
- * @brief Muestra todos los logros disponibles con su estado
- */
 void mostrar_todos_logros()
 {
     mostrar_logros_con_filtro("TODOS LOS LOGROS", 0);
 }
 
-/**
- * @brief Muestra solo los logros completados
- */
 void mostrar_logros_completados()
 {
     mostrar_logros_con_filtro("LOGROS COMPLETADOS", 1);
 }
 
-/**
- * @brief Muestra los logros en progreso
- */
 void mostrar_logros_en_progreso()
 {
     mostrar_logros_con_filtro("LOGROS EN PROGRESO", 2);
 }
 
-/**
- * @brief Muestra los logros no completados
- */
 void mostrar_logros_no_completados()
 {
     mostrar_logros_con_filtro("LOGROS NO COMPLETADOS", 3);
 }
 
-/**
- * @brief Muestra el menu principal de logros y badges
- */
 void menu_logros()
 {
     MenuItem items[] =

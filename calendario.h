@@ -3,10 +3,10 @@
  * @brief Calendario dinámico visual para MiFutbolC
  *
  * Muestra un calendario mensual con eventos marcados:
- * - ⚽ Partidos programados
- * - 🏥 Recordatorios médicos/lesiones
- * - 💰 Transacciones financieras
- * - 🎯 Logros desbloqueados
+ * - Partidos programados
+ * - Recordatorios médicos/lesiones
+ * - Transacciones financieras
+ * - Logros desbloqueados
  */
 
 #ifndef CALENDARIO_H

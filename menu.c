@@ -31,7 +31,6 @@
 #include "ascii_art.h"
 #include "settings.h"
 #include "financiamiento.h"
-#include "entrenador_ia.h"
 #include "bienestar.h"
 #include "carrera.h"
 #include "recordatorios.h"
@@ -40,6 +39,7 @@
 #include "busqueda.h"
 #include "calendario.h"
 #include "atajos.h"
+#include "musica.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -151,46 +151,39 @@ static void abrir_dashboard(void)
     mostrar_dashboard();
 }
 
-static void abrir_busqueda_global(void)
-{
-    app_log_event("BUSQUEDA", "Ingreso a Busqueda Global");
-    menu_busqueda_global();
-}
-
 static void abrir_calendario(void)
 {
     app_log_event("CALENDARIO", "Ingreso al Calendario");
     menu_calendario();
 }
 
-static void abrir_entrenador_ia(void)
+static void abrir_menu_musica(void)
 {
-    app_log_event("ENTRENADOR_IA", "Ingreso al Entrenador IA");
-    menu_entrenador_ia();
+    app_log_event("MUSICA", "Ingreso al Reproductor de Musica");
+    menu_musica();
 }
 
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Dashboard", &abrir_dashboard},
-    {2, "Busqueda Global", &abrir_busqueda_global},
-    {3, "Calendario", &abrir_calendario},
-    {4, "Entrenador IA", &abrir_entrenador_ia},
-    {5, "Camisetas", &abrir_menu_camisetas},
-    {6, "Canchas", &abrir_menu_canchas},
-    {7, "Equipos", &abrir_menu_equipos},
-    {8, "Partidos", &abrir_menu_partidos},
-    {9, "Lesiones", &abrir_menu_lesiones},
-    {10, "Estadisticas", &abrir_menu_estadisticas},
-    {11, "Logros", &abrir_menu_logros},
-    {12, "Financiamiento", &abrir_menu_financiamiento},
-    {13, "Torneos", &abrir_menu_torneos},
-    {14, "Temporada", &abrir_menu_temporadas},
-    {15, "Analisis", &abrir_menu_analisis},
-    {16, "Bienestar", &abrir_menu_bienestar},
-    {17, "Carrera Futbolistica", &abrir_menu_carrera},
-    {18, "Recordatorios", &abrir_menu_recordatorios},
-    {19, "Colecciones", &abrir_menu_colecciones},
-    {20, "Ajustes", &abrir_menu_settings},
+    {2, "Calendario", &abrir_calendario},
+    {3, "Camisetas", &abrir_menu_camisetas},
+    {4, "Canchas", &abrir_menu_canchas},
+    {5, "Equipos", &abrir_menu_equipos},
+    {6, "Partidos", &abrir_menu_partidos},
+    {7, "Lesiones", &abrir_menu_lesiones},
+    {8, "Estadisticas", &abrir_menu_estadisticas},
+    {9, "Logros", &abrir_menu_logros},
+    {10, "Financiamiento", &abrir_menu_financiamiento},
+    {11, "Torneos", &abrir_menu_torneos},
+    {12, "Temporada", &abrir_menu_temporadas},
+    {13, "Analisis", &abrir_menu_analisis},
+    {14, "Bienestar", &abrir_menu_bienestar},
+    {15, "Carrera Futbolistica", &abrir_menu_carrera},
+    {16, "Recordatorios", &abrir_menu_recordatorios},
+    {17, "Colecciones", &abrir_menu_colecciones},
+    {18, "Ajustes", &abrir_menu_settings},
+    {19, "Musica", &abrir_menu_musica},
     {0, "Salir", NULL}
 };
 
@@ -209,7 +202,6 @@ static const MenuItem *buscar_item(const MenuItem *items, int cantidad, int opci
     }
     return NULL;
 }
-
 
 #ifdef UNIT_TEST
 static MenuTestCapture *g_menu_test_capture = NULL;
@@ -235,9 +227,6 @@ void menu_test_set_capture(MenuTestCapture *capture)
 }
 #endif
 
-/**
- * @brief Inicializa la aplicacion: consola, locale, base de datos y configuracion
- */
 void initialize_application()
 {
 #ifdef _WIN32
@@ -262,9 +251,6 @@ void initialize_application()
 
 }
 
-/**
- * @brief Maneja la verificacion y creacion del nombre de usuario
- */
 void handle_user_name()
 {
     char* nombre_usuario;
@@ -290,9 +276,6 @@ void handle_user_name()
     }
 }
 
-/**
- * @brief Crea el menu filtrado dinamicamente
- */
 MenuItem* create_filtered_menu(int* count)
 {
     *count = (int)MENU_ITEM_COUNT;
@@ -315,9 +298,6 @@ MenuItem* create_filtered_menu(int* count)
     return filtered_items;
 }
 
-/**
- * @brief Ejecuta el menu principal y libera recursos
- */
 void run_menu(MenuItem* filtered_items, int count)
 {
     ejecutar_menu(get_text("menu_title"), filtered_items, count);
@@ -378,13 +358,6 @@ static int ejecutar_accion_menu(const char *titulo, const MenuItem *selected, ch
     return 1;
 }
 
-/**
- * @brief Ejecuta un menu interactivo en la consola
- *
- * Esta funcion muestra un menu con el titulo proporcionado y una lista de opciones.
- * Permite al usuario seleccionar una opcion y ejecuta la accion correspondiente.
- * Si la accion es NULL, sale del menu.
- */
 void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
 #ifdef UNIT_TEST

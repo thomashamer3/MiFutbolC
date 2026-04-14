@@ -117,6 +117,14 @@ void clear_screen();
 void print_header(const char *titulo);
 
 /**
+ * @brief Indica si la consola actual debe usar salida Unicode.
+ *
+ * En Windows se devuelve 0 para evitar mojibake en terminales sin UTF-8.
+ * En otros sistemas se devuelve 1.
+ */
+int consola_soporta_unicode(void);
+
+/**
  * @brief Pausa la ejecución del programa hasta que el usuario presione una tecla.
  */
 void pause_console();

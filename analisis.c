@@ -1,12 +1,4 @@
-﻿/**
- * @file analisis.c
- * @brief Modulo para el analisis de rendimiento en partidos de futbol.
- *
- * Este archivo contiene funciones para analizar el rendimiento comparando
- * los ultimos 5 partidos con promedios generales, y calculando rachas.
- */
-
-#include "analisis.h"
+﻿#include "analisis.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -18,7 +10,6 @@
 #include <string.h>
 
 static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2);
-
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -85,13 +76,6 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
     input_date(prompt, buffer, size);
 }
 
-/**
- * @brief Calcula estadisticas generales de todos los partidos
- *
- * Establece linea base de rendimiento historico para comparaciones.
- *
- * @param stats Puntero a la estructura donde almacenar las estadisticas
- */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
     calcular_estadisticas(stats,
@@ -99,11 +83,6 @@ static void calcular_estadisticas_generales(Estadisticas *stats)
                           "FROM partido");
 }
 
-/**
- * @brief Calcula estadisticas de los ultimos 5 partidos
- *
- * @param stats Puntero a la estructura donde almacenar las estadisticas
- */
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
     calcular_estadisticas(stats,
@@ -111,12 +90,6 @@ static void calcular_estadisticas_ultimos5(Estadisticas *stats)
                           "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
-/**
- * @brief Calcula la racha mas larga de victorias y derrotas
- *
- * @param mejor_racha_victorias Puntero donde almacenar la mejor racha de victorias
- * @param peor_racha_derrotas Puntero donde almacenar la peor racha de derrotas
- */
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
@@ -141,12 +114,6 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Muestra los ultimos 5 partidos
- *
- * Facilita la visualizacion rapida del rendimiento reciente para contextualizar
- * las estadisticas comparativas.
- */
 static void mostrar_ultimos5_partidos()
 {
     printf("\nULTIMOS 5 PARTIDOS:\n");
@@ -183,15 +150,6 @@ static void mostrar_ultimos5_partidos()
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Muestra comparacion de estadisticas ultimos 5 vs general
- *
- * Permite identificar tendencias recientes respecto al rendimiento historico
- * para tomar decisiones de mejora.
- *
- * @param ultimos Estadisticas de ultimos 5 partidos
- * @param generales Estadisticas generales
- */
 static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos, const Estadisticas *generales)
 {
     printf("\nCOMPARACION ULTIMOS 5 VS PROMEDIO GENERAL:\n");
@@ -203,14 +161,6 @@ static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos, const 
     printf("Estado Animo: %.1f vs %.1f\n", ultimos->avg_animo, generales->avg_animo);
 }
 
-/**
- * @brief Muestra rachas de victorias y derrotas
- *
- * Ayuda a entender patrones de consistencia en el rendimiento competitivo.
- *
- * @param mejor_racha_v Mejor racha de victorias
- * @param peor_racha_d Peor racha de derrotas
- */
 static void mostrar_rachas(int mejor_racha_v, int peor_racha_d)
 {
     printf("\nRACHAS:\n");
@@ -219,15 +169,6 @@ static void mostrar_rachas(int mejor_racha_v, int peor_racha_d)
     printf("Peor racha de derrotas: %d partidos\n", peor_racha_d);
 }
 
-/**
- * @brief Genera un mensaje motivacional basado en el rendimiento
- *
- * Proporciona retroalimentacion psicologica para mantener la motivacion
- * y enfoque en el desarrollo deportivo.
- *
- * @param ultimos Puntero a estadisticas de ultimos 5 partidos
- * @param generales Puntero a estadisticas generales
- */
 static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas *generales)
 {
     printf("\nANALISIS MOTIVACIONAL:\n");
@@ -255,9 +196,6 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
     }
 }
 
-/**
- * @brief Muestra el analisis basico de rendimiento
- */
 static void mostrar_analisis_basico()
 {
     iniciar_pantalla_analisis("ANALISIS DE RENDIMIENTO");
@@ -380,12 +318,6 @@ static int seleccionar_partido_para_quimica(const char *prompt)
     return partido_id;
 }
 
-/**
- * @brief Muestra la mejor quimica entre dos jugadores
- *
- * Calcula la dupla con mejor winrate considerando partidos en los que
- * ambos jugadores estuvieron en el mismo equipo asignado a un partido.
- */
 static void mostrar_mejor_quimica_jugadores()
 {
     iniciar_pantalla_analisis("MEJOR COMBINACION DE JUGADORES");
@@ -782,9 +714,6 @@ static void analizar_quimica_jugadores()
     ejecutar_menu("ANALISIS DE QUIMICA", items, 6);
 }
 
-/**
- * @brief Estructura para metricas de comparacion
- */
 typedef struct
 {
     double goles;
@@ -793,14 +722,6 @@ typedef struct
     int partidos;
 } MetricasComparacion;
 
-/**
- * @brief Determina el ganador basado en la diferencia
- *
- * @param diff Diferencia entre metricas
- * @param nombre1 Nombre del primer elemento
- * @param nombre2 Nombre del segundo elemento
- * @return Nombre del ganador o "Empate"
- */
 static const char *determinar_ganador(double diff, const char *nombre1, const char *nombre2)
 {
     if (diff > 0)
@@ -810,9 +731,6 @@ static const char *determinar_ganador(double diff, const char *nombre1, const ch
     return "Empate";
 }
 
-/**
- * @brief Calcula metricas para una condicion especifica
- */
 static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const char *condicion_sql)
 {
     sqlite3_stmt *stmt;
@@ -840,9 +758,6 @@ static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Muestra comparacion entre dos metricas
- */
 static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, const MetricasComparacion *m2,
         const char *nombre1, const char *nombre2)
 {
@@ -943,16 +858,6 @@ static void comparar_entidades_por_tabla(const char *titulo_pantalla,
     comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
 }
 
-/**
- * @brief Funcion auxiliar para listar entidades y obtener dos IDs
- * Centraliza logica repetida en comparadores para evitar duplicacion
- *
- * @param tabla Nombre de la tabla a consultar
- * @param titulo Titulo a mostrar
- * @param id1 Puntero para almacenar primer ID
- * @param id2 Puntero para almacenar segundo ID
- * @return 1 si se obtuvieron dos IDs validos, 0 si hay menos de 2 entidades
- */
 static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
 {
     sqlite3_stmt *stmt;
@@ -1014,9 +919,6 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
     }
 }
 
-/**
- * @brief Compara dos camisetas
- */
 static void comparar_camisetas()
 {
     comparar_entidades_por_tabla("COMPARADOR: CAMISETAS",
@@ -1028,9 +930,6 @@ static void comparar_camisetas()
                                  "Camiseta B");
 }
 
-/**
- * @brief Compara dos torneos
- */
 static void comparar_torneos()
 {
     comparar_entidades_por_tabla("COMPARADOR: TORNEOS",
@@ -1042,9 +941,6 @@ static void comparar_torneos()
                                  "Torneo B");
 }
 
-/**
- * @brief Compara dos periodos
- */
 static void comparar_periodos()
 {
     iniciar_pantalla_analisis("COMPARADOR: PERIODOS");
@@ -1088,9 +984,6 @@ static void comparar_periodos()
     comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
 }
 
-/**
- * @brief Compara dos condiciones
- */
 static void comparar_condiciones()
 {
     iniciar_pantalla_analisis("COMPARADOR: CONDICIONES");
@@ -1146,9 +1039,6 @@ static void comparar_condiciones()
     comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
 }
 
-/**
- * @brief Muestra el menu del comparador avanzado
- */
 static void mostrar_comparador_avanzado()
 {
     iniciar_pantalla_analisis("COMPARADOR AVANZADO");
@@ -1165,9 +1055,6 @@ static void mostrar_comparador_avanzado()
     ejecutar_menu("COMPARADOR AVANZADO", items, 5);
 }
 
-/**
- * @brief Muestra el analisis completo de rendimiento
- */
 void mostrar_analisis()
 {
     iniciar_pantalla_analisis("ANALISIS Y COMPARADOR");
@@ -1185,9 +1072,6 @@ void mostrar_analisis()
     ejecutar_menu("ANALISIS Y COMPARADOR", items, 6);
 }
 
-/**
- * @brief Estructura para almacenar estadisticas mensuales
- */
 typedef struct
 {
     int mes;
@@ -1196,12 +1080,6 @@ typedef struct
     int total_partidos;
 } EstadisticasMensuales;
 
-/**
- * @brief Convierte numero de mes a nombre
- *
- * @param mes Numero del mes (1-12)
- * @return Nombre del mes en espanol
- */
 static const char *mes_to_text(int mes)
 {
     switch (mes)
@@ -1235,14 +1113,6 @@ static const char *mes_to_text(int mes)
     }
 }
 
-/**
- * @brief Calcula estadisticas mensuales para una metrica especifica
- *
- * @param stats Array donde almacenar las estadisticas mensuales
- * @param max_stats Tamano maximo del array
- * @param columna Nombre de la columna a promediar (goles, asistencias, rendimiento_general)
- * @return Numero de meses con datos
- */
 static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max_stats, const char *columna)
 {
     sqlite3_stmt *stmt;
@@ -1280,12 +1150,6 @@ static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max
     return count;
 }
 
-/**
- * @brief Muestra la evolucion mensual de una metrica
- *
- * @param titulo Titulo a mostrar
- * @param columna Nombre de la columna de la base de datos
- */
 static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
 {
     iniciar_pantalla_analisis(titulo);
@@ -1314,11 +1178,6 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
     pause_console();
 }
 
-/**
- * @brief Encuentra el mejor o peor mes historico
- *
- * @param mejor 1 para mejor mes, 0 para peor mes
- */
 static void encontrar_mes_historico(int mejor)
 {
     iniciar_pantalla_analisis(mejor ? "MEJOR MES HISTORICO" : "PEOR MES HISTORICO");
@@ -1366,9 +1225,6 @@ static void encontrar_mes_historico(int mejor)
 
 }
 
-/**
- * @brief Compara rendimiento al inicio vs fin de ano
- */
 static void comparar_inicio_fin_anio()
 {
     iniciar_pantalla_analisis("INICIO VS FIN DE ANIO");
@@ -1421,9 +1277,6 @@ static void comparar_inicio_fin_anio()
     pause_console();
 }
 
-/**
- * @brief Compara rendimiento en meses frios vs calidos
- */
 static void comparar_meses_frios_calidos()
 {
     iniciar_pantalla_analisis("MESES FRIOS VS CALIDOS");
@@ -1484,11 +1337,6 @@ static void comparar_meses_frios_calidos()
     pause_console();
 }
 
-/**
- * @brief Calcula y muestra la tendencia de rendimiento
- *
- * @param stmt Statement preparado para calcular tendencia
- */
 static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
 {
     double avg_primeros = 0;
@@ -1521,9 +1369,6 @@ static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
     sqlite3_finalize(tend_stmt);
 }
 
-/**
- * @brief Calcula y muestra el progreso total del jugador
- */
 static void calcular_progreso_total()
 {
     iniciar_pantalla_analisis("PROGRESO TOTAL DEL JUGADOR");
@@ -1598,9 +1443,6 @@ static void calcular_progreso_total()
     pause_console();
 }
 
-/**
- * @brief Muestra el menu de evolucion temporal
- */
 void mostrar_evolucion_temporal()
 {
     iniciar_pantalla_analisis("EVOLUCION TEMPORAL");
@@ -1621,65 +1463,41 @@ void mostrar_evolucion_temporal()
     ejecutar_menu("EVOLUCION TEMPORAL", items, 9);
 }
 
-/**
- * @brief Muestra la evolucion mensual de goles
- */
 void evolucion_mensual_goles()
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE GOLES", "goles");
 }
 
-/**
- * @brief Muestra la evolucion mensual de asistencias
- */
 void evolucion_mensual_asistencias()
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE ASISTENCIAS", "asistencias");
 }
 
-/**
- * @brief Muestra la evolucion mensual de rendimiento
- */
 void evolucion_mensual_rendimiento()
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE RENDIMIENTO", "rendimiento_general");
 }
 
-/**
- * @brief Muestra el mejor mes historico
- */
 void mejor_mes_historico()
 {
     encontrar_mes_historico(1);
 }
 
-/**
- * @brief Muestra el peor mes historico
- */
 void peor_mes_historico()
 {
     encontrar_mes_historico(0);
 }
 
-/**
- * @brief Compara el rendimiento al inicio vs fin de ano
- */
 void inicio_vs_fin_anio()
 {
     comparar_inicio_fin_anio();
 }
 
-/**
- * @brief Compara el rendimiento en meses frios vs calidos
- */
 void meses_frios_vs_calidos()
 {
     comparar_meses_frios_calidos();
 }
 
-/**
- * @brief Muestra el progreso total del jugador
- */
 void progreso_total_jugador()
 {
     calcular_progreso_total();

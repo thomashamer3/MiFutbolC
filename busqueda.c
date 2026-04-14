@@ -1,8 +1,3 @@
-/**
- * @file busqueda.c
- * @brief Implementación del sistema de búsqueda global
- */
-
 #include "busqueda.h"
 #include "db.h"
 #include "utils.h"
@@ -55,15 +50,21 @@ static size_t longitud_segura(const char *texto, size_t max_len)
 #endif
 }
 
-/**
- * @brief Convierte una cadena a minúsculas para búsqueda case-insensitive
- */
 static void to_lowercase(char *str)
 {
     for (int i = 0; str[i]; i++)
     {
         str[i] = (char)tolower((unsigned char)str[i]);
     }
+}
+
+static const char *linea_separadora_busqueda(void)
+{
+    if (consola_soporta_unicode())
+    {
+        return "────────────────────────────────────────────────────────";
+    }
+    return "--------------------------------------------------------";
 }
 
 static int construir_patron_busqueda(const char *termino, char *patron_lower, size_t patron_size)
@@ -89,7 +90,8 @@ static const char *texto_sqlite_o_default(const unsigned char *texto, const char
 typedef void (*imprimir_fila_fn)(sqlite3_stmt *stmt);
 
 static int ejecutar_busqueda_generica(const char *sql,
-                                      const char *titulo,
+                                      const char *titulo_unicode,
+                                      const char *titulo_ascii,
                                       const char *patron_lower,
                                       int cantidad_binds,
                                       imprimir_fila_fn imprimir_fila)
@@ -107,8 +109,8 @@ static int ejecutar_busqueda_generica(const char *sql,
         sqlite3_bind_text(stmt, i, patron_lower, -1, SQLITE_TRANSIENT);
     }
 
-    printf("\n  %s\n", titulo);
-    printf("  %s\n", "────────────────────────────────────────────────────────");
+    printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
+    printf("  %s\n", linea_separadora_busqueda());
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -153,7 +155,20 @@ static void imprimir_fila_partido(sqlite3_stmt *stmt)
     int asistencias = sqlite3_column_int(stmt, 5);
     const unsigned char *camiseta = sqlite3_column_text(stmt, 6);
 
-    printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n",
+    if (consola_soporta_unicode())
+    {
+        printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n",
+               id,
+               texto_sqlite_o_default(cancha, "Sin cancha"),
+               texto_sqlite_o_default(fecha, "Sin fecha"),
+               texto_sqlite_o_default(hora, "Sin hora"),
+               goles,
+               asistencias,
+               texto_sqlite_o_default(camiseta, "Sin camiseta"));
+        return;
+    }
+
+    printf("  ID %d: %s | %s %s | G:%d A:%d | Camiseta:%s\n",
            id,
            texto_sqlite_o_default(cancha, "Sin cancha"),
            texto_sqlite_o_default(fecha, "Sin fecha"),
@@ -195,9 +210,6 @@ static void imprimir_fila_cancha(sqlite3_stmt *stmt)
     printf("  ID %d: %s\n", id, texto_sqlite_o_default(nombre, "Sin nombre"));
 }
 
-/**
- * @brief Busca en partidos
- */
 int buscar_en_partidos(const char *termino)
 {
     const char *sql =
@@ -213,12 +225,14 @@ int buscar_en_partidos(const char *termino)
         return 0;
     }
 
-    return ejecutar_busqueda_generica(sql, "🎯 Partidos encontrados:", patron_lower, 2, imprimir_fila_partido);
+    return ejecutar_busqueda_generica(sql,
+                                      "🎯 Partidos encontrados:",
+                                      "Partidos encontrados:",
+                                      patron_lower,
+                                      2,
+                                      imprimir_fila_partido);
 }
 
-/**
- * @brief Busca en equipos
- */
 int buscar_en_equipos(const char *termino)
 {
     const char *sql =
@@ -233,12 +247,13 @@ int buscar_en_equipos(const char *termino)
         return 0;
     }
 
-    return ejecutar_busqueda_generica(sql, "👥 Equipos encontrados:", patron_lower, 1, imprimir_fila_equipo);
+    return ejecutar_busqueda_generica(sql,
+                                      "👥 Equipos encontrados:",
+                                      "Equipos encontrados:",
+                                      patron_lower,
+                                      1,
+                                      imprimir_fila_equipo);
 }
-
-/**
- * @brief Busca en camisetas
- */
 int buscar_en_camisetas(const char *termino)
 {
     const char *sql =
@@ -253,12 +268,13 @@ int buscar_en_camisetas(const char *termino)
         return 0;
     }
 
-    return ejecutar_busqueda_generica(sql, "👕 Camisetas encontradas:", patron_lower, 2, imprimir_fila_camiseta);
+    return ejecutar_busqueda_generica(sql,
+                                      "👕 Camisetas encontradas:",
+                                      "Camisetas encontradas:",
+                                      patron_lower,
+                                      2,
+                                      imprimir_fila_camiseta);
 }
-
-/**
- * @brief Busca en canchas
- */
 int buscar_en_canchas(const char *termino)
 {
     const char *sql =
@@ -273,19 +289,23 @@ int buscar_en_canchas(const char *termino)
         return 0;
     }
 
-    return ejecutar_busqueda_generica(sql, "🏟️  Canchas encontradas:", patron_lower, 1, imprimir_fila_cancha);
+    return ejecutar_busqueda_generica(sql,
+                                      "🏟️  Canchas encontradas:",
+                                      "Canchas encontradas:",
+                                      patron_lower,
+                                      1,
+                                      imprimir_fila_cancha);
 }
-
-/**
- * @brief Búsqueda global en todas las tablas
- */
 void buscar_global(const char *termino)
 {
     clear_screen();
     print_header("BUSQUEDA GLOBAL");
+    const char *linea = consola_soporta_unicode() ?
+                        "════════════════════════════════════════════════════════════════" :
+                        "================================================================";
 
     printf("Buscando: \"%s\"\n", termino);
-    printf("════════════════════════════════════════════════════════════════\n\n");
+    printf("%s\n\n", linea);
 
     int total = 0;
 
@@ -295,15 +315,12 @@ void buscar_global(const char *termino)
     total += buscar_en_camisetas(termino);
     total += buscar_en_canchas(termino);
 
-    printf("\n════════════════════════════════════════════════════════════════\n");
+    printf("\n%s\n", linea);
     printf("Total de resultados: %d\n\n", total);
 
     pause_console();
 }
 
-/**
- * @brief Menú de búsqueda global
- */
 void menu_busqueda_global()
 {
     clear_screen();

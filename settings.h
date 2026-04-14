@@ -50,6 +50,7 @@ typedef struct
     LanguageType language;
     ModeType mode;
     TextSizeType text_size;
+    int music_autoplay;
 } AppSettings;
 
 /**
@@ -103,6 +104,16 @@ void settings_set_mode(ModeType mode);
  * @brief Obtiene el modo actual de la aplicación
  */
 ModeType settings_get_mode();
+
+/**
+ * @brief Habilita o deshabilita la reproduccion automatica al iniciar.
+ */
+void settings_set_music_autoplay(int enabled);
+
+/**
+ * @brief Indica si la musica debe reproducirse al iniciar.
+ */
+int settings_get_music_autoplay(void);
 
 
 // Funciones wrapper para internacionalización de menús

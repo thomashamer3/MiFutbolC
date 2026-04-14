@@ -1,8 +1,3 @@
-/**
- * @file calendario.c
- * @brief Implementación del calendario dinámico visual
- */
-
 #include "calendario.h"
 #include "db.h"
 #include "utils.h"
@@ -26,9 +21,24 @@ static int obtener_tiempo_local(time_t instante, struct tm *out_tm)
 #endif
 }
 
-/**
- * @brief Obtiene el número de días en un mes
- */
+static const char *linea_division_eventos(void)
+{
+    if (consola_soporta_unicode())
+    {
+        return "────────────────────────────────────────────────────────";
+    }
+    return "--------------------------------------------------------";
+}
+
+static const char *simbolo_partido_calendario(void)
+{
+    if (consola_soporta_unicode())
+    {
+        return "⚽";
+    }
+    return "P";
+}
+
 static int dias_en_mes(int mes, int anio)
 {
     int dias[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -42,10 +52,6 @@ static int dias_en_mes(int mes, int anio)
     return dias[mes - 1];
 }
 
-/**
- * @brief Obtiene el día de la semana del primer día del mes
- * @return 0=Domingo, 1=Lunes, ..., 6=Sábado
- */
 static int primer_dia_semana(int mes, int anio)
 {
     struct tm fecha = {0};
@@ -58,9 +64,6 @@ static int primer_dia_semana(int mes, int anio)
     return fecha.tm_wday;
 }
 
-/**
- * @brief Obtiene el icono de eventos para un día específico
- */
 static void obtener_icono_dia(int dia, int mes, int anio, char *icono, size_t tam)
 {
     char fecha[11];
@@ -110,7 +113,7 @@ static void obtener_icono_dia(int dia, int mes, int anio, char *icono, size_t ta
     // Asignar icono según prioridad
     if (tiene_partido)
     {
-        snprintf(icono, tam, "%c", (char)254); // ⚽ aproximado en ASCII extendido
+        snprintf(icono, tam, "%s", simbolo_partido_calendario());
     }
     else if (tiene_recordatorio)
     {
@@ -145,8 +148,8 @@ static int mostrar_eventos_partidos(const char *fecha)
     {
         if (!tiene_partidos)
         {
-            printf("⚽ PARTIDOS:\n");
-            printf("────────────────────────────────────────────────────────\n");
+            printf("%s PARTIDOS:\n", consola_soporta_unicode() ? "⚽" : "P");
+            printf("%s\n", linea_division_eventos());
             tiene_partidos = 1;
         }
 
@@ -188,8 +191,8 @@ static int mostrar_eventos_recordatorios(const char *fecha)
     {
         if (!tiene_recordatorios)
         {
-            printf("⏰ RECORDATORIOS:\n");
-            printf("────────────────────────────────────────────────────────\n");
+            printf("%s RECORDATORIOS:\n", consola_soporta_unicode() ? "⏰" : "R");
+            printf("%s\n", linea_division_eventos());
             tiene_recordatorios = 1;
         }
 
@@ -228,8 +231,8 @@ static int mostrar_eventos_finanzas(const char *fecha)
     {
         if (!tiene_finanzas)
         {
-            printf("💰 FINANZAS:\n");
-            printf("────────────────────────────────────────────────────────\n");
+            printf("%s FINANZAS:\n", consola_soporta_unicode() ? "💰" : "$ ");
+            printf("%s\n", linea_division_eventos());
             tiene_finanzas = 1;
         }
 
@@ -251,12 +254,10 @@ static int mostrar_eventos_finanzas(const char *fecha)
     return eventos;
 }
 
-/**
- * @brief Muestra el calendario de un mes específico
- */
 void mostrar_calendario_mes(int mes, int anio)
 {
     clear_screen();
+    int usar_unicode = consola_soporta_unicode();
 
     const char *nombres_meses[] =
     {
@@ -265,11 +266,22 @@ void mostrar_calendario_mes(int mes, int anio)
     };
 
     printf("\n");
-    printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║              %s %d%-35s║\n", nombres_meses[mes - 1], anio, "");
-    printf("╠══════════════════════════════════════════════════════════════╣\n");
-    printf("║   L   M   M   J   V   S   D                                  ║\n");
-    printf("╟──────────────────────────────────────────────────────────────╢\n");
+    if (usar_unicode)
+    {
+        printf("╔══════════════════════════════════════════════════════════════╗\n");
+        printf("║              %s %d%-35s║\n", nombres_meses[mes - 1], anio, "");
+        printf("╠══════════════════════════════════════════════════════════════╣\n");
+        printf("║   L   M   M   J   V   S   D                                  ║\n");
+        printf("╟──────────────────────────────────────────────────────────────╢\n");
+    }
+    else
+    {
+        printf("+--------------------------------------------------------------+\n");
+        printf("|              %s %d%-35s|\n", nombres_meses[mes - 1], anio, "");
+        printf("+--------------------------------------------------------------+\n");
+        printf("|   L   M   M   J   V   S   D                                  |\n");
+        printf("|--------------------------------------------------------------|\n");
+    }
 
     int dias = dias_en_mes(mes, anio);
     int primer_dia = primer_dia_semana(mes, anio);
@@ -283,7 +295,7 @@ void mostrar_calendario_mes(int mes, int anio)
     struct tm tm_hoy = {0};
     int hay_hoy = obtener_tiempo_local(ahora, &tm_hoy);
 
-    printf("║");
+    printf("%s", usar_unicode ? "║" : "|");
 
     // Espacios iniciales
     for (int i = 0; i < dia_inicio; i++)
@@ -299,9 +311,9 @@ void mostrar_calendario_mes(int mes, int anio)
         obtener_icono_dia(dia_actual, mes, anio, icono, sizeof(icono));
 
         if (hay_hoy &&
-            dia_actual == tm_hoy.tm_mday &&
-            mes == tm_hoy.tm_mon + 1 &&
-            anio == tm_hoy.tm_year + 1900)
+                dia_actual == tm_hoy.tm_mday &&
+                mes == tm_hoy.tm_mon + 1 &&
+                anio == tm_hoy.tm_year + 1900)
         {
             printf(" [%2d%s]", dia_actual, icono);
         }
@@ -316,7 +328,7 @@ void mostrar_calendario_mes(int mes, int anio)
         // Nueva línea cada 7 días
         if (pos % 7 == 0 && dia_actual <= dias)
         {
-            printf(" ║\n║");
+            printf(" %s\n%s", usar_unicode ? "║" : "|", usar_unicode ? "║" : "|");
         }
     }
 
@@ -327,26 +339,40 @@ void mostrar_calendario_mes(int mes, int anio)
         pos++;
     }
 
-    printf(" ║\n");
-    printf("╚══════════════════════════════════════════════════════════════╝\n");
-    printf("\nLeyenda: [Hoy]  %c=Partido  !=Recordatorio  $=Finanza\n", (char)254);
+    printf(" %s\n", usar_unicode ? "║" : "|");
+    if (usar_unicode)
+    {
+        printf("╚══════════════════════════════════════════════════════════════╝\n");
+    }
+    else
+    {
+        printf("+--------------------------------------------------------------+\n");
+    }
+    printf("\nLeyenda: [Hoy]  %s=Partido  !=Recordatorio  $=Finanza\n", simbolo_partido_calendario());
     printf("\n");
 }
 
-/**
- * @brief Muestra eventos de un día específico
- */
 void mostrar_eventos_dia(int dia, int mes, int anio)
 {
     clear_screen();
+    int usar_unicode = consola_soporta_unicode();
 
     char fecha[11];
     snprintf(fecha, sizeof(fecha), "%04d-%02d-%02d", anio, mes, dia);
 
     printf("\n");
-    printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║              Eventos del dia %02d/%02d/%04d%-19s║\n", dia, mes, anio, "");
-    printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+    if (usar_unicode)
+    {
+        printf("╔══════════════════════════════════════════════════════════════╗\n");
+        printf("║              Eventos del dia %02d/%02d/%04d%-19s║\n", dia, mes, anio, "");
+        printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+    }
+    else
+    {
+        printf("+--------------------------------------------------------------+\n");
+        printf("|              Eventos del dia %02d/%02d/%04d%-19s|\n", dia, mes, anio, "");
+        printf("+--------------------------------------------------------------+\n\n");
+    }
 
     int eventos_totales = 0;
     eventos_totales += mostrar_eventos_partidos(fecha);
@@ -361,9 +387,6 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
     pause_console();
 }
 
-/**
- * @brief Muestra el calendario del mes actual
- */
 void mostrar_calendario()
 {
     time_t ahora = time(NULL);
@@ -424,9 +447,6 @@ static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
     }
 }
 
-/**
- * @brief Menú de navegación del calendario
- */
 void menu_calendario()
 {
     time_t ahora = time(NULL);
@@ -463,27 +483,27 @@ void menu_calendario()
 
         switch (opcion[0])
         {
-            case '0':
-                salir = 1;
-                break;
-            case 'N':
-            case 'n':
-                avanzar_mes(&mes_actual, &anio_actual);
-                break;
-            case 'P':
-            case 'p':
-                retroceder_mes(&mes_actual, &anio_actual);
-                break;
-            case 'H':
-            case 'h':
-                volver_a_hoy(&mes_actual, &anio_actual);
-                break;
-            case 'V':
-            case 'v':
-                ver_eventos_mes_actual(mes_actual, anio_actual);
-                break;
-            default:
-                break;
+        case '0':
+            salir = 1;
+            break;
+        case 'N':
+        case 'n':
+            avanzar_mes(&mes_actual, &anio_actual);
+            break;
+        case 'P':
+        case 'p':
+            retroceder_mes(&mes_actual, &anio_actual);
+            break;
+        case 'H':
+        case 'h':
+            volver_a_hoy(&mes_actual, &anio_actual);
+            break;
+        case 'V':
+        case 'v':
+            ver_eventos_mes_actual(mes_actual, anio_actual);
+            break;
+        default:
+            break;
         }
     }
 }

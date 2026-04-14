@@ -1,8 +1,4 @@
-﻿/**
- * @file export_records_rankings.c
- * @brief Implementacion de exportacion de records y rankings en MiFutbolC
- */
-
+﻿
 #include "export_records_rankings.h"
 #include "db.h"
 #include "utils.h"
@@ -336,9 +332,6 @@ static void write_temporada_txt(FILE *file, const char *label, const char *sql)
         sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Exporta el record de goles en un partido a CSV
- */
 void exportar_record_goles_partido_csv()
 {
     exportar_record_csv("Record de Goles en un Partido",
@@ -349,9 +342,6 @@ void exportar_record_goles_partido_csv()
                         get_export_path("record_goles_partido.csv"));
 }
 
-/**
- * @brief Exporta el record de asistencias en un partido a CSV
- */
 void exportar_record_asistencias_partido_csv()
 {
     exportar_record_csv("Record de Asistencias en un Partido",
@@ -362,9 +352,6 @@ void exportar_record_asistencias_partido_csv()
                         get_export_path("record_asistencias_partido.csv"));
 }
 
-/**
- * @brief Exporta la mejor combinacion cancha + camiseta a CSV
- */
 void exportar_mejor_combinacion_cancha_camiseta_csv()
 {
     exportar_combinacion_csv("Mejor Combinacion Cancha + Camiseta",
@@ -377,9 +364,6 @@ void exportar_mejor_combinacion_cancha_camiseta_csv()
                              get_export_path("mejor_combinacion_cancha_camiseta.csv"));
 }
 
-/**
- * @brief Exporta la peor combinacion cancha + camiseta a CSV
- */
 void exportar_peor_combinacion_cancha_camiseta_csv()
 {
     exportar_combinacion_csv("Peor Combinacion Cancha + Camiseta",
@@ -392,9 +376,6 @@ void exportar_peor_combinacion_cancha_camiseta_csv()
                              get_export_path("peor_combinacion_cancha_camiseta.csv"));
 }
 
-/**
- * @brief Exporta la mejor temporada a CSV
- */
 void exportar_mejor_temporada_csv()
 {
     exportar_temporada_csv("Mejor Temporada",
@@ -406,9 +387,6 @@ void exportar_mejor_temporada_csv()
                            get_export_path("mejor_temporada.csv"));
 }
 
-/**
- * @brief Exporta la peor temporada a CSV
- */
 void exportar_peor_temporada_csv()
 {
     exportar_temporada_csv("Peor Temporada",

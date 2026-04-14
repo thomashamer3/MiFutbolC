@@ -15,12 +15,6 @@
 #define PATH_SEP "/"
 #endif
 
-
-/**
- * @file temporada.c
- * @brief Implementacion del Sistema de Temporadas y Ciclos Deportivos
- */
-
 // ========== FUNCIONES AUXILIARES ==========
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -103,9 +97,6 @@ int fecha_en_temporada(const char* fecha, int temporada_id)
     return 0;
 }
 
-/**
- * @brief Obtiene el nombre de una temporada por su ID.
- */
 static void obtener_nombre_temporada(int temporada_id, char *nombre_buf, size_t buf_len)
 {
     sqlite3_stmt *stmt = NULL;

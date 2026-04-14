@@ -1,8 +1,4 @@
-﻿/**
- * @file import.c
- * @brief Modulo para importar datos desde archivos JSON a la base de datos.
- */
-
+﻿
 #include "import.h"
 #include "cJSON.h"
 #include "db.h"
@@ -125,18 +121,12 @@ static void importar_estadisticas_desde_archivo(const char *filename, const char
 // trim_trailing_spaces() fue movido a utils.c como funci\u00f3n gen\u00e9rica
 // Se puede usar directamente desde utils.h
 
-/**
- * @brief Estructura para almacenar datos de una camiseta.
- */
 struct CamisetaData
 {
     int id;
     char nombre[256];
 };
 
-/**
- * @brief Estructura para almacenar datos de una lesion.
- */
 struct LesionData
 {
     int id;
@@ -146,9 +136,6 @@ struct LesionData
     char fecha[256];
 };
 
-/**
- * @brief Estructura para almacenar datos de estadisticas.
- */
 struct EstadisticaData
 {
     char camiseta[256];
@@ -160,13 +147,6 @@ struct EstadisticaData
     int derrotas;
 };
 
-/**
- * @brief Construye el nombre del archivo completo.
- *
- * @param extension Extension del archivo (e.g., "json").
- * @param filename Buffer para almacenar el nombre completo.
- * @param size Tamano del buffer.
- */
 static void build_filename(const char *extension, char *filename, size_t size)
 {
     strcpy_s(filename, size, get_import_dir());
@@ -175,15 +155,6 @@ static void build_filename(const char *extension, char *filename, size_t size)
     strncat_s(filename, size, extension, size - filename_len - 1);
 }
 
-/**
- * @brief Lee el contenido completo de un archivo de texto.
- *
- * Para permitir el analisis eficiente del contenido sin multiples lecturas de
- * disco.
- *
- * @param filename Ruta del archivo a leer.
- * @return Puntero al contenido del archivo o NULL si hay error.
- */
 static char *read_file_content(const char *filename)
 {
     FILE *file = NULL;
@@ -219,9 +190,6 @@ static char *read_file_content(const char *filename)
     return content;
 }
 
-/**
- * @brief Preparar statement y reportar errores.
- */
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
@@ -232,12 +200,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-/**
- * @brief Funcion generica para cargar y validar un archivo JSON
- * @param json_filename Nombre del archivo JSON (ej: "partidos.json")
- * @param entity_name Nombre de la entidad para mensajes (ej: "partidos")
- * @return puntero a cJSON si es valido y es un array, NULL en caso contrario
- */
 static cJSON *cargar_json_array(const char *json_filename, const char *entity_name, int *out_count)
 {
     char filename[1024];
@@ -274,12 +236,6 @@ static cJSON *cargar_json_array(const char *json_filename, const char *entity_na
     return json;
 }
 
-/**
- * @brief Funcion generica para abrir archivos de texto (CSV/TXT) para importacion
- * @param txt_filename Nombre del archivo (ej: "lesiones.csv")
- * @param skip_header Si es true, salta la primera linea
- * @return FILE* abierto o NULL si hay error
- */
 static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip_header)
 {
     char filename[1024];
@@ -309,15 +265,6 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
     return file;
 }
 
-/**
- * @brief Procesa e inserta un partido validando cancha, camiseta y duplicados
- *
- * Esta funcion centraliza la logica comun de validacion e insercion de partidos
- * que se usa en todas las funciones de importacion (TXT, CSV, HTML).
- *
- * @param input Puntero a estructura con los datos del partido a procesar
- * @return 1 si el partido fue insertado, 0 si hubo error o ya existe
- */
 static int procesar_e_insertar_partido(const PartidoInput *input)
 {
     // Obtener ID de cancha
@@ -361,9 +308,6 @@ static int procesar_e_insertar_partido(const PartidoInput *input)
     return 1;
 }
 
-/**
- * @brief Verifica si existe un registro por ID en la tabla dada.
- */
 static int id_existe_en_tabla(const char *tabla, int id)
 {
     sqlite3_stmt *stmt;
@@ -382,9 +326,6 @@ static int id_existe_en_tabla(const char *tabla, int id)
     return exists;
 }
 
-/**
- * @brief Inserta una camiseta en la base de datos.
- */
 static void insertar_camiseta(int id, const char *nombre)
 {
     sqlite3_stmt *stmt;
@@ -401,9 +342,6 @@ static void insertar_camiseta(int id, const char *nombre)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Inserta una lesion en la base de datos.
- */
 static void insertar_lesion(int id, const char *jugador, const char *tipo,
                             const char *descripcion, const char *fecha)
 {
@@ -425,9 +363,6 @@ static void insertar_lesion(int id, const char *jugador, const char *tipo,
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Ejecuta importacion con mensajes y pausa.
- */
 static void importar_con_pausa(const char *inicio, const char *fin,
                                void (*func)())
 {
@@ -736,12 +671,6 @@ static void importar_estadisticas_desde_archivo(const char *filename, const char
            formato, count);
 }
 
-/**
- * @brief Parsea e inserta una camiseta desde JSON.
- *
- * @param item Objeto JSON de la camiseta.
- * @return 1 si se inserto correctamente, 0 si no.
- */
 static int parse_camiseta_json(cJSON const *item)
 {
     if (!cJSON_IsObject(item))
@@ -770,12 +699,6 @@ static int parse_camiseta_json(cJSON const *item)
     return 1;
 }
 
-/**
- * @brief Funcion generica para importar desde JSON.
- *
- * @param extension Extension del archivo.
- * @param parser Funcion para parsear un item JSON.
- */
 static void import_json_generic(const char *extension,
                                 int (*parser)(cJSON const *))
 {
@@ -818,23 +741,12 @@ static void import_json_generic(const char *extension,
     cJSON_Delete(json);
     printf("Importacion completada. %d items importados\n", imported);
 }
-/**
- * @brief Importa camisetas desde archivo JSON.
- *
- * Lee el archivo JSON de camisetas y las inserta en la base de datos.
- */
+
 void importar_camisetas_json()
 {
     import_json_generic("camisetas.json", parse_camiseta_json);
 }
 
-/**
- * @brief Obtiene el ID de una cancha por nombre, creando una nueva si no
- * existe.
- *
- * @param cancha_nombre Nombre de la cancha.
- * @return ID de la cancha o -1 si hay error.
- */
 static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre)
 {
     // Buscar cancha existente
@@ -869,14 +781,6 @@ static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre)
     return cancha_id;
 }
 
-/**
- * @brief Verifica si ya existe un partido con los mismos datos.
- *
- * @param cancha_id ID de la cancha.
- * @param fecha Fecha y hora del partido.
- * @param camiseta_id ID de la camiseta.
- * @return 1 si existe, 0 si no existe.
- */
 static int partido_existe(sqlite3_int64 cancha_id, const char *fecha,
                           int camiseta_id)
 {
@@ -897,11 +801,6 @@ static int partido_existe(sqlite3_int64 cancha_id, const char *fecha,
     return exists;
 }
 
-/**
- * @brief Obtiene el siguiente ID disponible para un partido.
- *
- * @return ID del partido.
- */
 static int obtener_siguiente_partido_id()
 {
     int partido_id = 1;
@@ -921,11 +820,6 @@ static int obtener_siguiente_partido_id()
 
 // Estructura PartidoData ya definida en forward declarations
 
-/**
- * @brief Inserta un partido en la base de datos.
- *
- * @param data Estructura con los datos del partido.
- */
 static void insertar_partido(PartidoData data)
 {
     sqlite3_stmt *stmt;
@@ -955,13 +849,6 @@ static void insertar_partido(PartidoData data)
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Procesa un item de partido desde JSON y lo inserta en la base de
- * datos.
- *
- * @param item El objeto JSON del partido.
- * @return 1 si se importo correctamente, 0 si no.
- */
 static int procesar_partido_json_item(cJSON const *item)
 {
     if (!cJSON_IsObject(item))
@@ -1012,11 +899,6 @@ static int procesar_partido_json_item(cJSON const *item)
     return procesar_e_insertar_partido(&input);
 }
 
-/**
- * @brief Importa partidos desde archivo JSON.
- *
- * Lee el archivo JSON de partidos y los inserta en la base de datos.
- */
 void importar_partidos_json()
 {
     int count;
@@ -1037,11 +919,6 @@ void importar_partidos_json()
            imported);
 }
 
-/**
- * @brief Importa lesiones desde archivo JSON.
- *
- * Lee el archivo JSON de lesiones y las inserta en la base de datos.
- */
 void importar_lesiones_json()
 {
     int count;
@@ -1088,11 +965,6 @@ void importar_lesiones_json()
     printf("Importacion de lesiones completada\n");
 }
 
-/**
- * @brief Importa estadisticas desde archivo JSON.
- *
- * Lee el archivo JSON de estadisticas y las inserta en la base de datos.
- */
 void importar_estadisticas_json()
 {
     if (!crear_tabla_estadisticas())
@@ -1158,69 +1030,30 @@ void importar_estadisticas_json()
     printf("Importacion de estadisticas completada\n");
 }
 
-/**
- * @brief Importa camisetas desde archivo JSON con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_camisetas_json_con_pausa, "camisetas", "JSON", importar_camisetas_json)
 
-/**
- * @brief Importa partidos desde archivo JSON con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_partidos_json_con_pausa, "partidos", "JSON", importar_partidos_json)
 
-/**
- * @brief Importa lesiones desde archivo JSON con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_lesiones_json_con_pausa, "lesiones", "JSON", importar_lesiones_json)
 
-/**
- * @brief Importa estadisticas desde archivo JSON con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_json_con_pausa, "estadisticas", "JSON", importar_estadisticas_json)
 
-/**
- * @brief Importa camisetas desde archivo TXT con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_camisetas_txt_con_pausa, "camisetas", "TXT", importar_camisetas_txt)
 
-/**
- * @brief Importa partidos desde archivo TXT con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_partidos_txt_con_pausa, "partidos", "TXT", importar_partidos_txt)
 
-/**
- * @brief Importa lesiones desde archivo TXT con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_lesiones_txt_con_pausa, "lesiones", "TXT", importar_lesiones_txt)
 
-/**
- * @brief Importa estadisticas desde archivo TXT con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_txt_con_pausa, "estadisticas", "TXT", importar_estadisticas_txt)
 
-/**
- * @brief Importa camisetas desde archivo CSV con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_camisetas_csv_con_pausa, "camisetas", "CSV", importar_camisetas_csv)
 
-/**
- * @brief Importa partidos desde archivo CSV con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_partidos_csv_con_pausa, "partidos", "CSV", importar_partidos_csv)
 
-/**
- * @brief Importa lesiones desde archivo CSV con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_lesiones_csv_con_pausa, "lesiones", "CSV", importar_lesiones_csv)
 
-/**
- * @brief Importa estadisticas desde archivo CSV con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_csv_con_pausa, "estadisticas", "CSV", importar_estadisticas_csv)
 
-/**
- * @brief Importa todos los datos desde archivos CSV con pausa.
- */
 static void importar_todo_csv_con_pausa()
 {
     ImportTodoConfig config =
@@ -1235,29 +1068,14 @@ static void importar_todo_csv_con_pausa()
     importar_todo_con_config(&config);
 }
 
-/**
- * @brief Importa camisetas desde archivo HTML con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_camisetas_html_con_pausa, "camisetas", "HTML", importar_camisetas_html)
 
-/**
- * @brief Importa partidos desde archivo HTML con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_partidos_html_con_pausa, "partidos", "HTML", importar_partidos_html)
 
-/**
- * @brief Importa lesiones desde archivo HTML con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_lesiones_html_con_pausa, "lesiones", "HTML", importar_lesiones_html)
 
-/**
- * @brief Importa estadisticas desde archivo HTML con pausa.
- */
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_html_con_pausa, "estadisticas", "HTML", importar_estadisticas_html)
 
-/**
- * @brief Importa todos los datos desde archivos HTML con pausa.
- */
 static void importar_todo_html_con_pausa()
 {
     ImportTodoConfig config =
@@ -1272,9 +1090,6 @@ static void importar_todo_html_con_pausa()
     importar_todo_con_config(&config);
 }
 
-/**
- * @brief Importa todos los datos desde archivos TXT con pausa.
- */
 static void importar_todo_txt_con_pausa()
 {
     ImportTodoConfig config =
@@ -1291,23 +1106,11 @@ static void importar_todo_txt_con_pausa()
 
 /* ===================== IMPORTACIoN DESDE TXT ===================== */
 
-/**
- * @brief Importa camisetas desde archivo TXT.
- *
- * Lee el archivo TXT de camisetas y las inserta en la base de datos.
- * El formato esperado es: ID - NOMBRE
- */
 void importar_camisetas_txt()
 {
     importar_camisetas_desde_archivo("camisetas.txt", "TXT", parse_camiseta_txt_line);
 }
 
-/**
- * @brief Convierte una cadena de resultado a numero.
- *
- * @param resultado_str Cadena del resultado.
- * @return Numero correspondiente al resultado.
- */
 static int convertir_resultado(const char *resultado_str)
 {
     if (strcmp(resultado_str, "VICTORIA") == 0)
@@ -1319,12 +1122,6 @@ static int convertir_resultado(const char *resultado_str)
     return 0;
 }
 
-/**
- * @brief Convierte una cadena de clima a numero.
- *
- * @param clima_str Cadena del clima.
- * @return Numero correspondiente al clima.
- */
 static int convertir_clima(const char *clima_str)
 {
     if (strcmp(clima_str, "Despejado") == 0)
@@ -1342,12 +1139,6 @@ static int convertir_clima(const char *clima_str)
     return 0;
 }
 
-/**
- * @brief Convierte una cadena de dia a numero.
- *
- * @param dia_str Cadena del dia.
- * @return Numero correspondiente al dia.
- */
 static int convertir_dia(const char *dia_str)
 {
     if (strcmp(dia_str, "Dia") == 0)
@@ -1375,13 +1166,6 @@ static int procesar_partido_desde_raw(const PartidoRawInput *raw)
     return procesar_e_insertar_partido(&input);
 }
 
-/**
- * @brief Procesa una linea de partido desde TXT y la inserta en la base de
- * datos.
- *
- * @param line Linea a procesar.
- * @return 1 si se proceso correctamente, 0 si no.
- */
 static int procesar_partido_txt_line(const char *line)
 {
     char cancha[256];
@@ -1432,35 +1216,16 @@ static int procesar_partido_txt_line(const char *line)
     return procesar_partido_desde_raw(&raw);
 }
 
-/**
- * @brief Importa partidos desde archivo TXT.
- *
- * Lee el archivo TXT de partidos y los inserta en la base de datos.
- * El formato esperado es complejo con multiples campos separados por |
- */
 void importar_partidos_txt()
 {
     importar_partidos_desde_archivo("partidos.txt", "TXT", procesar_partido_txt_line);
 }
 
-/**
- * @brief Importa lesiones desde archivo TXT.
- *
- * Lee el archivo TXT de lesiones y las inserta en la base de datos.
- * El formato esperado es: ID - JUGADOR | TIPO | DESCRIPCION | FECHA
- */
 void importar_lesiones_txt()
 {
     importar_lesiones_desde_archivo("lesiones.txt", "TXT", parse_lesion_txt_line);
 }
 
-/**
- * @brief Importa estadisticas desde archivo TXT.
- *
- * Lee el archivo TXT de estadisticas y las inserta en la base de datos.
- * El formato esperado es: CAMISETA | G:Goles A:Asistencias P:Partidos
- * V:Victorias E:Empates D:Derrotas
- */
 void importar_estadisticas_txt()
 {
     importar_estadisticas_desde_archivo("estadisticas.txt", "TXT", parse_estadistica_txt_line, 1);
@@ -1468,24 +1233,11 @@ void importar_estadisticas_txt()
 
 /* ===================== IMPORTACIoN DESDE CSV ===================== */
 
-/**
- * @brief Importa camisetas desde archivo CSV.
- *
- * Lee el archivo CSV de camisetas y las inserta en la base de datos.
- * El formato esperado es: id,nombre
- */
 void importar_camisetas_csv()
 {
     importar_camisetas_desde_archivo("camisetas.csv", "CSV", parse_camiseta_csv_line);
 }
 
-/**
- * @brief Procesa una linea de partido desde CSV y la inserta en la base de
- * datos.
- *
- * @param line Linea a procesar.
- * @return 1 si se proceso correctamente, 0 si no.
- */
 static int procesar_partido_csv_line(const char *line)
 {
     char cancha[256];
@@ -1534,35 +1286,16 @@ static int procesar_partido_csv_line(const char *line)
     return procesar_partido_desde_raw(&raw);
 }
 
-/**
- * @brief Importa partidos desde archivo CSV.
- *
- * Lee el archivo CSV de partidos y los inserta en la base de datos.
- * El formato esperado es complejo con multiples campos separados por coma.
- */
 void importar_partidos_csv()
 {
     importar_partidos_desde_archivo("partidos.csv", "CSV", procesar_partido_csv_line);
 }
 
-/**
- * @brief Importa lesiones desde archivo CSV.
- *
- * Lee el archivo CSV de lesiones y las inserta en la base de datos.
- * El formato esperado es: id,jugador,tipo,descripcion,fecha
- */
 void importar_lesiones_csv()
 {
     importar_lesiones_desde_archivo("lesiones.csv", "CSV", parse_lesion_csv_line);
 }
 
-/**
- * @brief Importa estadisticas desde archivo CSV.
- *
- * Lee el archivo CSV de estadisticas y las inserta en la base de datos.
- * El formato esperado es:
- * camiseta,goles,asistencias,partidos,victorias,empates,derrotas
- */
 void importar_estadisticas_csv()
 {
     importar_estadisticas_desde_archivo("estadisticas.csv", "CSV", parse_estadistica_csv_line, 0);
@@ -1570,12 +1303,6 @@ void importar_estadisticas_csv()
 
 /* ===================== IMPORTACIoN DESDE HTML ===================== */
 
-/**
- * @brief Importa camisetas desde archivo HTML.
- *
- * Lee el archivo HTML de camisetas y las inserta en la base de datos.
- * Asume un formato simple de tabla HTML con <td> para id y nombre.
- */
 void importar_camisetas_html()
 {
     char filename[1024];
@@ -1733,13 +1460,6 @@ static void asignar_celda_partido_html(PartidoHtmlRowData *data, int idx, const 
     }
 }
 
-/**
- * @brief Procesa una fila de partido desde HTML y la inserta en la base de
- * datos.
- *
- * @param ptr Puntero a la fila <tr> en el contenido HTML.
- * @return 1 si se proceso correctamente, 0 si no.
- */
 static int procesar_partido_html_row(char **ptr)
 {
     PartidoHtmlRowData data;
@@ -1765,12 +1485,6 @@ static int procesar_partido_html_row(char **ptr)
     return procesar_partido_desde_raw(&raw);
 }
 
-/**
- * @brief Importa partidos desde archivo HTML.
- *
- * Lee el archivo HTML de partidos y los inserta en la base de datos.
- * Asume un formato simple de tabla HTML.
- */
 void importar_partidos_html()
 {
     char filename[1024];
@@ -1800,12 +1514,6 @@ void importar_partidos_html()
         count);
 }
 
-/**
- * @brief Importa lesiones desde archivo HTML.
- *
- * Lee el archivo HTML de lesiones y las inserta en la base de datos.
- * Asume un formato simple de tabla HTML.
- */
 void importar_lesiones_html()
 {
     char filename[1024];
@@ -1907,11 +1615,6 @@ void importar_lesiones_html()
         count);
 }
 
-/**
- * @brief Crea la tabla de estadisticas si no existe.
- *
- * @return true si la tabla se creo o ya existe, false si hubo error.
- */
 static bool crear_tabla_estadisticas()
 {
     const char *create_table_sql =
@@ -1935,9 +1638,6 @@ static bool crear_tabla_estadisticas()
     return true;
 }
 
-/**
- * @brief Estructura para almacenar datos de estadisticas.
- */
 typedef struct
 {
     char camiseta[256];
@@ -1949,14 +1649,6 @@ typedef struct
     int derrotas;
 } EstadisticasData;
 
-/**
- * @brief Extrae datos de estadisticas de una fila HTML.
- *
- * @param ptr Puntero al contenido HTML.
- * @param data Puntero a la estructura EstadisticasData para almacenar los
- * datos.
- * @return true si la extraccion fue exitosa, false si no.
- */
 static bool extraer_datos_estadisticas_html(char **ptr,
         EstadisticasData *data)
 {
@@ -1991,12 +1683,6 @@ static bool extraer_datos_estadisticas_html(char **ptr,
     return true;
 }
 
-/**
- * @brief Obtiene el ID de una camiseta por nombre.
- *
- * @param camiseta_nombre Nombre de la camiseta.
- * @return ID de la camiseta o -1 si no existe.
- */
 static int obtener_camiseta_id_estadistica(const char *camiseta_nombre)
 {
     sqlite3_stmt *camiseta_stmt;
@@ -2014,12 +1700,6 @@ static int obtener_camiseta_id_estadistica(const char *camiseta_nombre)
     return camiseta_id;
 }
 
-/**
- * @brief Verifica si ya existe una estadistica para una camiseta.
- *
- * @param camiseta_id ID de la camiseta.
- * @return true si existe, false si no existe.
- */
 static bool estadistica_existe(int camiseta_id)
 {
     sqlite3_stmt *check_stmt;
@@ -2035,17 +1715,6 @@ static bool estadistica_existe(int camiseta_id)
     return exists > 0;
 }
 
-/**
- * @brief Inserta una estadistica en la base de datos.
- *
- * @param camiseta_id ID de la camiseta.
- * @param goles Goles.
- * @param asistencias Asistencias.
- * @param partidos Partidos.
- * @param victorias Victorias.
- * @param empates Empates.
- * @param derrotas Derrotas.
- */
 static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
                                  int partidos, int victorias, int empates,
                                  int derrotas)
@@ -2069,12 +1738,6 @@ static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
     sqlite3_finalize(stmt);
 }
 
-/**
- * @brief Importa estadisticas desde archivo HTML.
- *
- * Lee el archivo HTML de estadisticas y las inserta en la base de datos.
- * Asume un formato simple de tabla HTML.
- */
 void importar_estadisticas_html()
 {
     if (!crear_tabla_estadisticas())
@@ -2131,9 +1794,6 @@ void importar_estadisticas_html()
            count);
 }
 
-/**
- * @brief Importa todos los datos desde archivos JSON con pausa.
- */
 static void importar_todo_con_pausa()
 {
     ImportTodoConfig config =
@@ -2148,9 +1808,6 @@ static void importar_todo_con_pausa()
     importar_todo_con_config(&config);
 }
 
-/**
- * @brief Submenu para importar datos desde archivos JSON.
- */
 static void submenu_importar_json()
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_json_con_pausa},
@@ -2163,9 +1820,6 @@ static void submenu_importar_json()
     ejecutar_menu(get_text("import_menu_json_title"), items, 6);
 }
 
-/**
- * @brief Submenu para importar datos desde archivos TXT.
- */
 static void submenu_importar_txt()
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_txt_con_pausa},
@@ -2178,9 +1832,6 @@ static void submenu_importar_txt()
     ejecutar_menu(get_text("import_menu_txt_title"), items, 6);
 }
 
-/**
- * @brief Submenu para importar datos desde archivos CSV.
- */
 static void submenu_importar_csv()
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_csv_con_pausa},
@@ -2193,9 +1844,6 @@ static void submenu_importar_csv()
     ejecutar_menu(get_text("import_menu_csv_title"), items, 6);
 }
 
-/**
- * @brief Submenu para importar datos desde archivos HTML.
- */
 static void submenu_importar_html()
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_html_con_pausa},
@@ -2250,14 +1898,6 @@ static void importar_base_datos_con_backup()
     importar_base_datos();
 }
 
-/**
- * @brief Menu principal para importar datos desde archivos segun seleccion del
- * usuario.
- *
- * Esta funcion muestra un menu principal para que el usuario seleccione el
- * formato de archivo desde el cual importar: JSON, TXT, CSV o HTML. Cada opcion
- * lleva a un submenu especifico para ese formato.
- */
 void menu_importar()
 {
     MenuItem items[] = {{1, get_text("import_from_json"),&menu_importar_json_con_backup},

@@ -1,8 +1,4 @@
-﻿/**
- * @file export_pdf.c
- * @brief Generacion de informes en PDF con libharu.
- */
-
+﻿
 #include "export_pdf.h"
 #include "export_camisetas.h"
 #include "export_camisetas_mejorado.h"
@@ -200,12 +196,6 @@ static int preparar_stmt_pdf(sqlite3_stmt **stmt, const char *sql)
 
 typedef void (*PdfRowHandler)(PdfCtx *ctx, sqlite3_stmt *stmt);
 
-/**
- * @brief Ejecuta una consulta que devuelve una sola fila.
- *
- * Esta funcion prepara el statement, enlaza "mes_yyyy_mm" en todos los parametros
- * (para consultas que usan el mismo valor repetido) y ejecuta el handler si hay fila.
- */
 static void ejecutar_consulta_una_fila(PdfCtx *ctx, const char *sql, const char *mes_yyyy_mm, int bind_count, PdfRowHandler row_handler)
 {
     sqlite3_stmt *stmt = NULL;

@@ -1,11 +1,4 @@
-﻿/**
- * @file export_lesiones_mejorado.c
- * @brief Funciones mejoradas para exportar datos de lesiones con analisis avanzado
- *
- * Este archivo contiene funciones mejoradas para exportar datos de lesiones
- * con estadisticas avanzadas y analisis de impacto.
- */
-
+﻿
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -41,7 +34,6 @@ static const char *SQL_LESIONES_AVANZADO =
  * HELPER ESTaTICOS
  * ============================================================================ */
 
-/** @brief Escribe lesiones en formato CSV */
 static void write_lesiones_csv(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -69,7 +61,6 @@ static void write_lesiones_csv(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe lesiones en formato TXT */
 static void write_lesiones_txt(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -106,7 +97,6 @@ static void write_lesiones_txt(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe lesiones en formato HTML */
 static void write_lesiones_html(FILE *file)
 {
     sqlite3_stmt *stmt;
@@ -135,7 +125,6 @@ static void write_lesiones_html(FILE *file)
     sqlite3_finalize(stmt);
 }
 
-/** @brief Escribe lesiones en formato JSON */
 static void write_lesiones_json(FILE *file)
 {
     cJSON *root = cJSON_CreateArray();
@@ -175,21 +164,6 @@ static void write_lesiones_json(FILE *file)
  * EXPORTACIoN LESIONES MEJORADO (4 formatos)
  * ============================================================================ */
 
-/**
- * @brief Exporta las lesiones con analisis avanzado a un archivo CSV mejorado
- *
- * Crea un archivo CSV con estadisticas avanzadas incluyendo impacto en rendimiento.
- *
- * Esta funcion exporta los datos de lesiones con metricas avanzadas como:
- * - Partidos antes y despues de la lesion
- * - Rendimiento antes y despues de la lesion
- * - Impacto en rendimiento (porcentaje de cambio)
- * - Informacion detallada del jugador y tipo de lesion
- *
- * @see exportar_lesiones_txt_mejorado()
- * @see exportar_lesiones_json_mejorado()
- * @see exportar_lesiones_html_mejorado()
- */
 void exportar_lesiones_csv_mejorado()
 {
     if (!has_records("lesion"))
@@ -211,21 +185,6 @@ void exportar_lesiones_csv_mejorado()
     printf("Archivo exportado a: %s\n", get_export_path("lesiones_mejorado.csv"));
 }
 
-/**
- * @brief Exporta las lesiones con analisis avanzado a un archivo TXT mejorado
- *
- * Crea un archivo de texto con estadisticas avanzadas y analisis de impacto.
- *
- * Esta funcion exporta los datos de lesiones en formato de texto legible con metricas avanzadas como:
- * - Partidos antes y despues de la lesion
- * - Rendimiento antes y despues de la lesion
- * - Impacto en rendimiento (porcentaje de cambio)
- * - Informacion detallada del jugador y tipo de lesion
- *
- * @see exportar_lesiones_csv_mejorado()
- * @see exportar_lesiones_json_mejorado()
- * @see exportar_lesiones_html_mejorado()
- */
 void exportar_lesiones_txt_mejorado()
 {
     if (!has_records("lesion"))
@@ -247,21 +206,6 @@ void exportar_lesiones_txt_mejorado()
     printf("Archivo exportado a: %s\n", get_export_path("lesiones_mejorado.txt"));
 }
 
-/**
- * @brief Exporta las lesiones con analisis avanzado a un archivo JSON mejorado
- *
- * Crea un archivo JSON con estadisticas avanzadas y analisis de impacto.
- *
- * Esta funcion exporta los datos de lesiones en formato JSON con metricas avanzadas como:
- * - Partidos antes y despues de la lesion
- * - Rendimiento antes y despues de la lesion
- * - Impacto en rendimiento (porcentaje de cambio)
- * - Informacion detallada del jugador y tipo de lesion
- *
- * @see exportar_lesiones_csv_mejorado()
- * @see exportar_lesiones_txt_mejorado()
- * @see exportar_lesiones_html_mejorado()
- */
 void exportar_lesiones_json_mejorado()
 {
     if (!has_records("lesion"))
@@ -282,21 +226,6 @@ void exportar_lesiones_json_mejorado()
     printf("Archivo exportado a: %s\n", get_export_path("lesiones_mejorado.json"));
 }
 
-/**
- * @brief Exporta las lesiones con analisis avanzado a un archivo HTML mejorado
- *
- * Crea un archivo HTML con estadisticas avanzadas y analisis de impacto.
- *
- * Esta funcion exporta los datos de lesiones en formato HTML con metricas avanzadas como:
- * - Partidos antes y despues de la lesion
- * - Rendimiento antes y despues de la lesion
- * - Impacto en rendimiento (porcentaje de cambio)
- * - Informacion detallada del jugador y tipo de lesion
- *
- * @see exportar_lesiones_csv_mejorado()
- * @see exportar_lesiones_txt_mejorado()
- * @see exportar_lesiones_json_mejorado()
- */
 void exportar_lesiones_html_mejorado()
 {
     if (!has_records("lesion"))

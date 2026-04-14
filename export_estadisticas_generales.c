@@ -1,8 +1,4 @@
-﻿/**
- * @file export_estadisticas_generales.c
- * @brief Funciones de exportacion de estadisticas
- */
-
+﻿
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -61,7 +57,6 @@ static const stat_def_t STAT_DEFS[] =
  * HELPER ESTaTICOS
  * ============================================================================ */
 
-/** @brief Obtiene top 1 por metrica (reutilizable) */
 static int get_top_camiseta(const char *metric, const char *orderDir,
                             char *nombre, size_t nombre_size, int *valor)
 {
@@ -87,7 +82,6 @@ static int get_top_camiseta(const char *metric, const char *orderDir,
     return result;
 }
 
-/** @brief Lee una fila de estadisticas por mes desde el statement actual */
 static void read_month_stat_row(sqlite3_stmt *stmt, month_stat_row_t *row)
 {
     row->month = (const char *)sqlite3_column_text(stmt, 0);
@@ -99,7 +93,6 @@ static void read_month_stat_row(sqlite3_stmt *stmt, month_stat_row_t *row)
     row->avg_asistencias = sqlite3_column_double(stmt, 6);
 }
 
-/** @brief Escribe estadistica en JSON */
 static void json_write_stat(cJSON *json, const char *cat,
                             const char *nombre, int valor)
 {
@@ -109,7 +102,6 @@ static void json_write_stat(cJSON *json, const char *cat,
     cJSON_AddItemToObject(json, cat, stat);
 }
 
-/** @brief Escribe estadisticas en formato CSV */
 static void write_stats_csv(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
@@ -120,7 +112,6 @@ static void write_stats_csv(FILE *file, const stat_def_t *def)
     }
 }
 
-/** @brief Escribe estadisticas en formato TXT */
 static void write_stats_txt(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
@@ -131,7 +122,6 @@ static void write_stats_txt(FILE *file, const stat_def_t *def)
     }
 }
 
-/** @brief Escribe estadisticas en formato HTML */
 static void write_stats_html(FILE *file, const stat_def_t *def)
 {
     char nombre[256];
@@ -142,7 +132,14 @@ static void write_stats_html(FILE *file, const stat_def_t *def)
     }
 }
 
-/** @brief Construye objeto JSON con estadisticas generales */
+static void write_stats_md(FILE *file, const stat_def_t *def)
+{
+    char nombre[256];
+    int valor;
+    if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
+        fprintf(file, "| %s | %s | %d |\n", def->label, nombre, valor);
+}
+
 static cJSON *json_build_estadisticas(void)
 {
     cJSON *root = cJSON_CreateObject();
@@ -273,6 +270,31 @@ void exportar_estadisticas_generales_html(void)
     printf("Exportado: %s\n", get_export_path("estadisticas_generales.html"));
 }
 
+void exportar_estadisticas_generales_md(void)
+{
+    if (!has_records("partido"))
+    {
+        printf("No hay registros.\n");
+        return;
+    }
+
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.md",
+                                           "Error Markdown");
+    if (!file)
+        return;
+
+    fprintf(file, "# Estadisticas Generales\n\n");
+    fprintf(file, "*Generado por MiFutbolC*\n\n");
+    fprintf(file, "| Categoria | Camiseta | Valor |\n");
+    fprintf(file, "|-----------|----------|-------|\n");
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        write_stats_md(file, &STAT_DEFS[i]);
+    fprintf(file, "\n");
+
+    fclose(file);
+    printf("Exportado: %s\n", get_export_path("estadisticas_generales.md"));
+}
+
 /* ============================================================================
  * EXPORTACIoN POR MES
  * ============================================================================ */
@@ -361,9 +383,6 @@ void exportar_estadisticas_por_mes_txt(void)
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.txt"));
 }
 
-/**
- * @brief Exporta estadisticas por mes en formato JSON
- */
 void exportar_estadisticas_por_mes_json(void)
 {
     if (!has_records("partido"))
@@ -429,9 +448,6 @@ void exportar_estadisticas_por_mes_json(void)
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.json"));
 }
 
-/**
- * @brief Exporta estadisticas por mes en formato HTML
- */
 void exportar_estadisticas_por_mes_html(void)
 {
     if (!has_records("partido"))

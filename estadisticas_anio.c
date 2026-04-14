@@ -1,23 +1,10 @@
-﻿/**
- * @file estadisticas_anio.c
- * @brief Modulo de analisis estadistico temporal anual
- *
- * Implementa consultas SQL para agregacion de metricas deportivas por ano,
- * permitiendo evaluacion de rendimiento longitudinal y tendencias historicas.
- */
-
+﻿
 #include "estadisticas_anio.h"
 #include "db.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
 
-/**
- * @brief Visualiza evolucion anual del rendimiento deportivo
- *
- * Agrega metricas por ano para identificar patrones estacionales,
- * comparar rendimiento interanual y evaluar progreso a largo plazo.
- */
 void mostrar_estadisticas_por_anio()
 {
     clear_screen();

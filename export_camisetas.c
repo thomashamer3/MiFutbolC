@@ -1,11 +1,4 @@
-﻿/**
- * @file export_camisetas.c
- * @brief Funciones para exportar datos de camisetas a diferentes formatos
- *
- * Este archivo contiene funciones para exportar datos de camisetas
- * a formatos CSV, TXT, JSON y HTML.
- */
-
+﻿
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -19,16 +12,6 @@
 #endif
 #include <string.h>
 
-/**
- * @brief Obtiene los datos de camisetas de la base de datos
- *
- * Funcion estatica que encapsula la consulta SQL comun utilizada por todas
- * las funciones de exportacion. Esto evita la duplicacion de codigo y centraliza
- * la logica de acceso a datos.
- *
- * @param[out] count Puntero a entero para almacenar el numero de camisetas encontradas
- * @return sqlite3_stmt* Statement preparado para iterar sobre los resultados
- */
 static sqlite3_stmt* obtener_datos_camisetas(int *count)
 {
     sqlite3_stmt *stmt;
@@ -57,12 +40,6 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
     return stmt;
 }
 
-/**
- * @brief Configuracion para exportacion generica
- *
- * Estructura que define los parametros para una exportacion generica,
- * permitiendo reutilizar el codigo comun para diferentes formatos.
- */
 typedef struct
 {
     const char *filename;           /**< Nombre del archivo de salida */
@@ -72,16 +49,6 @@ typedef struct
     void (*write_footer)(FILE *f, void *context); /**< Funcion para escribir pie */
 } ExportConfig;
 
-/**
- * @brief Abre un archivo de exportacion con manejo de errores
- *
- * Funcion auxiliar que encapsula la apertura de archivos de exportacion
- * y el manejo de errores, evitando duplicacion de codigo.
- *
- * @param filename Nombre del archivo a abrir
- * @param stmt Statement de SQLite para liberar en caso de error
- * @return FILE* Puntero al archivo abierto, o NULL si falla
- */
 static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
 {
     FILE *f;
@@ -94,14 +61,6 @@ static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
     return f;
 }
 
-/**
- * @brief Funcion generica para exportar camisetas
- *
- * Implementa el flujo comun de exportacion utilizando una configuracion
- * que define como escribir encabezado, filas y pie para cada formato.
- *
- * @param config Configuracion de exportacion
- */
 static void export_camisetas_generic(ExportConfig *config)
 {
     int count;
@@ -133,17 +92,11 @@ static void export_camisetas_generic(ExportConfig *config)
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
-/**
- * @brief Escribe el encabezado CSV
- */
 static void write_csv_header(FILE *f, void *)
 {
     fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio\n");
 }
 
-/**
- * @brief Escribe una fila CSV
- */
 static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f\n",
@@ -161,17 +114,11 @@ static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-/**
- * @brief Escribe el encabezado TXT
- */
 static void write_txt_header(FILE *f, void *)
 {
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
 }
 
-/**
- * @brief Escribe una fila TXT
- */
 static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f, "ID: %d - Nombre: %s\n"
@@ -199,9 +146,6 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-/**
- * @brief Escribe una fila JSON (agrega objeto al array)
- */
 static void write_json_row(FILE *, sqlite3_stmt *stmt, void *context)
 {
     cJSON *root = (cJSON *)context;
@@ -221,9 +165,6 @@ static void write_json_row(FILE *, sqlite3_stmt *stmt, void *context)
     cJSON_AddItemToArray(root, item);
 }
 
-/**
- * @brief Escribe el pie JSON (imprime el JSON al archivo)
- */
 static void write_json_footer(FILE *f, void *context)
 {
     cJSON *root = (cJSON *)context;
@@ -233,9 +174,6 @@ static void write_json_footer(FILE *f, void *context)
     cJSON_Delete(root);
 }
 
-/**
- * @brief Escribe el encabezado HTML
- */
 static void write_html_header(FILE *f, void *)
 {
     fprintf(f,
@@ -243,9 +181,6 @@ static void write_html_header(FILE *f, void *)
             "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th></tr>");
 }
 
-/**
- * @brief Escribe una fila HTML
- */
 static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *)
 {
     fprintf(f,
@@ -264,9 +199,6 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-/**
- * @brief Escribe el pie HTML
- */
 static void write_html_footer(FILE *f, void *)
 {
     fprintf(f, "</table></body></html>");
@@ -277,12 +209,6 @@ static void write_html_footer(FILE *f, void *)
 /** @name Funciones de exportacion de camisetas */
 /** @{ */
 
-/**
- * @brief Exporta las camisetas a un archivo CSV
- *
- * Utiliza la funcion generica de exportacion para evitar duplicacion de codigo.
- * El formato CSV es ideal para importacion en hojas de calculo y analisis de datos.
- */
 void exportar_camisetas_csv()
 {
     ExportConfig config =
@@ -296,12 +222,6 @@ void exportar_camisetas_csv()
     export_camisetas_generic(&config);
 }
 
-/**
- * @brief Exporta las camisetas a un archivo de texto plano
- *
- * Utiliza la funcion generica de exportacion para evitar duplicacion de codigo.
- * El formato TXT es ideal para visualizacion humana y documentacion impresa.
- */
 void exportar_camisetas_txt()
 {
     ExportConfig config =
@@ -315,12 +235,6 @@ void exportar_camisetas_txt()
     export_camisetas_generic(&config);
 }
 
-/**
- * @brief Exporta las camisetas a un archivo JSON
- *
- * Utiliza la funcion generica de exportacion para evitar duplicacion de codigo.
- * El formato JSON es ideal para APIs y aplicaciones web que necesitan datos estructurados.
- */
 void exportar_camisetas_json()
 {
     cJSON *root = cJSON_CreateArray();
@@ -335,12 +249,6 @@ void exportar_camisetas_json()
     export_camisetas_generic(&config);
 }
 
-/**
- * @brief Exporta las camisetas a un archivo HTML
- *
- * Utiliza la funcion generica de exportacion para evitar duplicacion de codigo.
- * El formato HTML es ideal para visualizacion en navegadores web y reportes interactivos.
- */
 void exportar_camisetas_html()
 {
     ExportConfig config =

@@ -1,12 +1,4 @@
-﻿/**
- * @file estadisticas_generales.c
- * @brief Modulo de analisis estadistico global de rendimiento deportivo
- *
- * Implementa consultas SQL para metricas agregadas de partidos,
- * incluyendo analisis por clima, dia de semana, cansancio y estado animico,
- * utilizando funciones de agrupamiento y JOINs para insights comprehensivos.
- */
-
+﻿
 #include "estadisticas_generales.h"
 #include "db.h"
 #include "utils.h"
@@ -14,20 +6,11 @@
 #include <string.h>
 #include <time.h>
 
-/**
- * @brief Funcion auxiliar para generar el CASE WHEN para clima
- * @return Cadena SQL con el CASE WHEN para convertir clima numerico a texto
- */
 static const char* get_clima_case_sql()
 {
     return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' END";
 }
 
-/**
- * @brief Funcion auxiliar para generar el CASE WHEN para niveles (estado_animo/cansancio)
- * @param columna Nombre de la columna ('estado_animo' o 'cansancio')
- * @return Cadena SQL con el CASE WHEN para convertir rangos numericos a texto
- */
 static const char* get_nivel_case_sql(const char* columna)
 {
     static char sql[256];
@@ -37,13 +20,6 @@ static const char* get_nivel_case_sql(const char* columna)
     return sql;
 }
 
-/**
- * @brief Funcion generica para mostrar estadisticas por dia de la semana
- * @param titulo Titulo a mostrar
- * @param columna Columna a promediar ('rendimiento_general', 'goles', 'asistencias')
- * @param order_by Orden ('DESC' o 'ASC')
- * @param limit Limite de resultados (0 para sin limite)
- */
 static void mostrar_por_dia_semana(const char* titulo, const char* columna, const char* order_by, int limit)
 {
     clear_screen();
@@ -103,15 +79,6 @@ static void mostrar_por_dia_semana(const char* titulo, const char* columna, cons
 // Array de dias de la semana en espanol
 const char* dias[] = {"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"};
 
-/**
- * @brief Funcion auxiliar para ejecutar consultas SQL y mostrar resultados.
- *
- * Esta funcion ejecuta una consulta SQL preparada y muestra los resultados
- * en formato de tabla con el titulo proporcionado.
- *
- * @param titulo El titulo a mostrar antes de los resultados.
- * @param sql La consulta SQL a ejecutar.
- */
 static void query(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt;
@@ -199,13 +166,6 @@ static void mostrar_query_simple(const char *header, const char *titulo, const c
     "GROUP BY c.id " \
     "ORDER BY 2 DESC LIMIT 1"
 
-/**
- * @brief Muestra las estadisticas principales de las camisetas.
- *
- * Esta funcion imprime un encabezado y ejecuta varias consultas para mostrar
- * estadisticas como la camiseta con mas goles, asistencias, partidos jugados
- * y la suma de goles mas asistencias. Al final, pausa la consola.
- */
 void mostrar_estadisticas_generales()
 {
     clear_screen();
@@ -278,9 +238,6 @@ void mostrar_estadisticas_generales()
 #undef SQL_CAMISETA_POR_RESULTADO
 #undef SQL_CAMISETA_AGREGADA
 
-/**
- * @brief Muestra el total de partidos jugados
- */
 void mostrar_total_partidos_jugados()
 {
     mostrar_query_simple("TOTAL DE PARTIDOS JUGADOS",
@@ -288,9 +245,6 @@ void mostrar_total_partidos_jugados()
                          "SELECT COUNT(*) FROM partido");
 }
 
-/**
- * @brief Muestra el promedio de goles por partido
- */
 void mostrar_promedio_goles_por_partido()
 {
     mostrar_query_simple("PROMEDIO DE GOLES POR PARTIDO",
@@ -298,9 +252,6 @@ void mostrar_promedio_goles_por_partido()
                          "SELECT ROUND(AVG(goles), 2) FROM partido");
 }
 
-/**
- * @brief Muestra el promedio de asistencias por partido
- */
 void mostrar_promedio_asistencias_por_partido()
 {
     mostrar_query_simple("PROMEDIO DE ASISTENCIAS POR PARTIDO",
@@ -308,9 +259,6 @@ void mostrar_promedio_asistencias_por_partido()
                          "SELECT ROUND(AVG(asistencias), 2) FROM partido");
 }
 
-/**
- * @brief Muestra el promedio de rendimiento_general
- */
 void mostrar_promedio_rendimiento_general()
 {
     mostrar_query_simple("PROMEDIO DE RENDIMIENTO_GENERAL",
@@ -318,9 +266,6 @@ void mostrar_promedio_rendimiento_general()
                          "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
 }
 
-/**
- * @brief Muestra el rendimiento promedio por clima
- */
 void mostrar_rendimiento_promedio_por_clima()
 {
     char sql[1024];
@@ -338,9 +283,6 @@ void mostrar_rendimiento_promedio_por_clima()
                          sql);
 }
 
-/**
- * @brief Muestra los goles por clima
- */
 void mostrar_goles_por_clima()
 {
     char sql[1024];
@@ -358,9 +300,6 @@ void mostrar_goles_por_clima()
                          sql);
 }
 
-/**
- * @brief Muestra las asistencias por clima
- */
 void mostrar_asistencias_por_clima()
 {
     char sql[1024];
@@ -378,9 +317,6 @@ void mostrar_asistencias_por_clima()
                          sql);
 }
 
-/**
- * @brief Muestra el clima donde se rinde mejor
- */
 void mostrar_clima_mejor_rendimiento()
 {
     char sql[1024];
@@ -398,9 +334,6 @@ void mostrar_clima_mejor_rendimiento()
                          sql);
 }
 
-/**
- * @brief Muestra el clima donde se rinde peor
- */
 void mostrar_clima_peor_rendimiento()
 {
     char sql[1024];
@@ -418,49 +351,31 @@ void mostrar_clima_peor_rendimiento()
                          sql);
 }
 
-/**
- * @brief Muestra el mejor dia de la semana
- */
 void mostrar_mejor_dia_semana()
 {
     mostrar_por_dia_semana("MEJOR DIA DE LA SEMANA", "rendimiento_general", "DESC", 1);
 }
 
-/**
- * @brief Muestra el peor dia de la semana
- */
 void mostrar_peor_dia_semana()
 {
     mostrar_por_dia_semana("PEOR DIA DE LA SEMANA", "rendimiento_general", "ASC", 1);
 }
 
-/**
- * @brief Muestra los goles promedio por dia
- */
 void mostrar_goles_promedio_por_dia()
 {
     mostrar_por_dia_semana("GOLES PROMEDIO POR DIA", "goles", "ds.dia_num", 0);
 }
 
-/**
- * @brief Muestra las asistencias promedio por dia
- */
 void mostrar_asistencias_promedio_por_dia()
 {
     mostrar_por_dia_semana("ASISTENCIAS PROMEDIO POR DIA", "asistencias", "ds.dia_num", 0);
 }
 
-/**
- * @brief Muestra el rendimiento promedio por dia
- */
 void mostrar_rendimiento_promedio_por_dia()
 {
     mostrar_por_dia_semana("RENDIMIENTO PROMEDIO POR DIA", "rendimiento_general", "ds.dia_num", 0);
 }
 
-/**
- * @brief Muestra el rendimiento segun nivel de cansancio
- */
 void mostrar_rendimiento_por_nivel_cansancio()
 {
     char sql[1024];
@@ -478,9 +393,6 @@ void mostrar_rendimiento_por_nivel_cansancio()
                          sql);
 }
 
-/**
- * @brief Muestra los goles con cansancio alto vs bajo
- */
 void mostrar_goles_cansancio_alto_vs_bajo()
 {
     clear_screen();
@@ -532,9 +444,6 @@ void mostrar_goles_cansancio_alto_vs_bajo()
     pause_console();
 }
 
-/**
- * @brief Muestra los partidos jugados con cansancio alto
- */
 void mostrar_partidos_cansancio_alto()
 {
     mostrar_query_simple("PARTIDOS JUGADOS CON CANSANCIO ALTO",
@@ -542,9 +451,6 @@ void mostrar_partidos_cansancio_alto()
                          "SELECT COUNT(*) AS partidos_cansancio_alto FROM partido WHERE cansancio > 7");
 }
 
-/**
- * @brief Muestra la caida de rendimiento por cansancio acumulado
- */
 void mostrar_caida_rendimiento_cansancio_acumulado()
 {
     clear_screen();
@@ -579,9 +485,6 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
     pause_console();
 }
 
-/**
- * @brief Muestra el rendimiento segun estado de animo
- */
 void mostrar_rendimiento_por_estado_animo()
 {
     char sql[1024];
@@ -599,9 +502,6 @@ void mostrar_rendimiento_por_estado_animo()
                          sql);
 }
 
-/**
- * @brief Muestra los goles segun estado de animo
- */
 void mostrar_goles_por_estado_animo()
 {
     char sql[1024];
@@ -619,9 +519,6 @@ void mostrar_goles_por_estado_animo()
                          sql);
 }
 
-/**
- * @brief Muestra las asistencias segun estado de animo
- */
 void mostrar_asistencias_por_estado_animo()
 {
     char sql[1024];
@@ -639,9 +536,6 @@ void mostrar_asistencias_por_estado_animo()
                          sql);
 }
 
-/**
- * @brief Muestra el estado de animo ideal para jugar
- */
 void mostrar_estado_animo_ideal()
 {
     char sql[1024];
@@ -658,13 +552,7 @@ void mostrar_estado_animo_ideal()
                          "Estado de Animo Ideal",
                          sql);
 }
-/**
- * @brief Obtiene el dia de la semana para una fecha dada
- * @param dia Dia del mes (1-31)
- * @param mes Mes del ano (1-12)
- * @param anio Ano (ej. 2023)
- * @return Nombre del dia de la semana en espanol
- */
+
 const char* obtener_dia_semana(int dia, int mes, int anio)
 {
     struct tm fecha = {0};

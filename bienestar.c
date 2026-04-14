@@ -1,9 +1,4 @@
-﻿/**
- * @file bienestar.c
- * @brief Menu y herramientas de bienestar
- */
-
-#include "bienestar.h"
+﻿#include "bienestar.h"
 #include "menu.h"
 #include "utils.h"
 #include "db.h"
@@ -21,7 +16,6 @@
 #include "process.h"
 #include <strings.h>
 #endif
-
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {

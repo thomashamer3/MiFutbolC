@@ -1,11 +1,4 @@
-﻿/**
- * @file estadisticas_mes.c
- * @brief Modulo para mostrar estadisticas historicas agrupadas por mes.
- *
- * Este archivo contiene funciones para consultar y mostrar estadisticas
- * individuales por camiseta agrupadas por mes.
- */
-
+﻿
 #include "estadisticas_mes.h"
 #include "db.h"
 #include "utils.h"

@@ -1,12 +1,3 @@
-/**
- * @file carrera.c
- * @brief Modulo de Carrera Futbolistica del usuario
- *
- * Implementa un resumen integral de toda la trayectoria deportiva,
- * con tres secciones: carrera (resultados globales), historia
- * (cronologia y mejor anio) y resumen general (promedios por anio).
- */
-
 #include "carrera.h"
 #include "db.h"
 #include "utils.h"

@@ -1,0 +1,1795 @@
+
+/* ---- miniaudio: un solo TU define la implementacion ---- */
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
+
+#include "musica.h"
+#include "utils.h"
+#include "settings.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>   /* usleep */
+#endif
+
+/* ---- Constantes ---- */
+#define MUSICA_DIR    "Musica"
+#define MAX_PISTAS    256
+#define MAX_NOMBRE    512
+#define MAX_RUTA      512
+#define PASO_VOLUMEN  0.1f
+#define BARRA_ANCHO   20    /* caracteres de la barra de volumen */
+#define PROG_ANCHO    30    /* ancho de la barra de progreso */
+
+/* ---- Fade ---- */
+#define FADE_IN_MS    400u  /* ms de fade-in al cargar pista */
+#define FADE_OUT_MS   250u  /* ms de fade-out al cambiar pista */
+
+/* ---- Ecualizador ---- */
+#define EQ_BASS_FREQ    200.0   /* Hz - graves */
+#define EQ_MID_FREQ    1000.0   /* Hz - medios */
+#define EQ_TREBLE_FREQ 8000.0   /* Hz - agudos */
+#define EQ_Q             0.7    /* Q / pendiente de filtro */
+#define EQ_DB_STEP       3.0f   /* dB por pulsacion */
+#define EQ_DB_MIN       -12.0f
+#define EQ_DB_MAX        12.0f
+
+/* ---- Playlists ---- */
+#define MAX_PLAYLIST_NAME  128
+#define PROG_ANCHO    30    /* ancho de la barra de progreso */
+
+/* ---- Fade ---- */
+#define FADE_IN_MS    400u  /* milisegundos de fade-in al cargar pista */
+#define FADE_OUT_MS   250u  /* milisegundos de fade-out al cambiar pista */
+
+/* ---- Ecualizador ---- */
+#define EQ_BASS_FREQ    200.0   /* Hz - frecuencia de corte graves */
+#define EQ_MID_FREQ    1000.0   /* Hz - frecuencia central medios */
+#define EQ_TREBLE_FREQ 8000.0   /* Hz - frecuencia de corte agudos */
+#define EQ_Q             0.7    /* Q / pendiente de filtro */
+#define EQ_DB_STEP       3.0f   /* dB por pulsacion */
+#define EQ_DB_MIN       -12.0f
+#define EQ_DB_MAX        12.0f
+
+/* ---- Playlists ---- */
+#define MAX_PLAYLIST_NAME  128
+
+/* ---- Tipos ---- */
+typedef enum
+{
+    ESTADO_DETENIDO = 0,
+    ESTADO_REPRODUCIENDO,
+    ESTADO_PAUSADO
+} EstadoReproductor;
+
+typedef enum
+{
+    REPETIR_NINGUNO = 0,
+    REPETIR_PISTA,
+    REPETIR_LISTA,
+    REPETIR_ALEATORIO
+} ModoRepeticion;
+
+typedef struct
+{
+    char nombre[MAX_NOMBRE];
+    char ruta[MAX_RUTA];
+} Pista;
+
+/* ---- Estado global del reproductor ---- */
+static ma_engine g_engine;
+static ma_sound g_sonido;
+static int g_engine_listo = 0;
+static int g_sonido_listo = 0;
+static Pista g_pistas[MAX_PISTAS];
+static int g_num_pistas = 0;
+static int g_pista_actual = -1;
+static EstadoReproductor g_estado = ESTADO_DETENIDO;
+static float g_volumen = 0.8f;
+static ModoRepeticion g_modo_rep = REPETIR_NINGUNO;
+static unsigned int g_rand_seed = 12345;
+
+/* ---- Ecualizador 3 bandas (nodos del grafo de audio de miniaudio) ---- */
+static ma_loshelf_node  g_eq_bass;
+static ma_peak_node     g_eq_mid;
+static ma_hishelf_node  g_eq_treble;
+static int              g_eq_listo     = 0;   /* 1 = nodos inicializados */
+static int              g_eq_activo    = 0;   /* 1 = cadena EQ conectada */
+static float            g_eq_bass_db   = 0.0f;
+static float            g_eq_mid_db    = 0.0f;
+static float            g_eq_treble_db = 0.0f;
+
+/* ============================================================
+ * Utilidades internas
+ * ============================================================ */
+
+/** Sleep portable en milisegundos */
+static void dormir_ms(unsigned int ms)
+{
+#ifdef _WIN32
+    Sleep((DWORD)ms);
+#else
+    usleep((useconds_t)ms * 1000u);
+#endif
+}
+
+/** Verifica si la extension de un nombre de archivo es .mp3 (sin distincion de caso) */
+static int es_mp3(const char *nombre)
+{
+    size_t len = strlen_s(nombre, MAX_NOMBRE);
+    if (len < 5)
+        return 0; /* At least "x.mp3" */
+    const char *ext = nombre + len - 4;
+    return (tolower((unsigned char)ext[0]) == '.' &&
+            tolower((unsigned char)ext[1]) == 'm' &&
+            tolower((unsigned char)ext[2]) == 'p' &&
+            tolower((unsigned char)ext[3]) == '3');
+}
+
+/** Crea la carpeta "Musica" si no existe */
+static void crear_dir_musica(void)
+{
+#ifdef _WIN32
+    CreateDirectoryA(MUSICA_DIR, NULL); /* No error si ya existe */
+#else
+    mkdir(MUSICA_DIR, 0755); /* No error si ya existe */
+#endif
+}
+
+/** Escanea MUSICA_DIR y llena g_pistas / g_num_pistas */
+static void escanear_directorio(void)
+{
+    g_num_pistas = 0;
+
+    crear_dir_musica();
+
+#ifdef _WIN32
+    char patron[MAX_RUTA];
+    snprintf(patron, sizeof(patron), "%s\\*.mp3", MUSICA_DIR);
+
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(patron, &fd);
+    if (hFind == INVALID_HANDLE_VALUE)
+        return;
+
+    do
+    {
+        if (g_num_pistas >= MAX_PISTAS)
+            break;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            continue;
+        if (!es_mp3(fd.cFileName))
+            continue;
+
+        snprintf(g_pistas[g_num_pistas].nombre,
+                 MAX_NOMBRE, "%s", fd.cFileName);
+        snprintf(g_pistas[g_num_pistas].ruta,
+                 MAX_RUTA, "%s\\%s", MUSICA_DIR, fd.cFileName);
+        g_num_pistas++;
+    }
+    while (FindNextFileA(hFind, &fd));
+
+    FindClose(hFind);
+#else
+    DIR *dir = opendir(MUSICA_DIR);
+    if (!dir)
+        return;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && g_num_pistas < MAX_PISTAS)
+    {
+        if (!es_mp3(entry->d_name))
+            continue;
+        snprintf(g_pistas[g_num_pistas].nombre,
+                 MAX_NOMBRE, "%s", entry->d_name);
+        snprintf(g_pistas[g_num_pistas].ruta,
+                 MAX_RUTA, "%s/%s", MUSICA_DIR, entry->d_name);
+        g_num_pistas++;
+    }
+    closedir(dir);
+#endif
+}
+
+/* ============================================================
+ * Motor de audio
+ * ============================================================ */
+
+static int inicializar_engine(void)
+{
+    if (g_engine_listo)
+        return 1;
+
+    ma_result res = ma_engine_init(NULL, &g_engine);
+    if (res != MA_SUCCESS)
+    {
+        ui_printf("Error: No se pudo inicializar el motor de audio (codigo %d).\n", res);
+        return 0;
+    }
+    g_engine_listo = 1;
+    atexit(musica_cleanup);
+
+    /* Inicializar nodos del ecualizador en el grafo del engine */
+    {
+        ma_uint32 ch = ma_engine_get_channels(&g_engine);
+        ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+
+        ma_loshelf_node_config bassCfg =
+            ma_loshelf_node_config_init(ch, sr, (double)g_eq_bass_db,   EQ_Q, EQ_BASS_FREQ);
+        ma_peak_node_config    midCfg  =
+            ma_peak_node_config_init   (ch, sr, (double)g_eq_mid_db,    EQ_Q, EQ_MID_FREQ);
+        ma_hishelf_node_config trebCfg =
+            ma_hishelf_node_config_init(ch, sr, (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
+
+        if (ma_loshelf_node_init(ma_engine_get_node_graph(&g_engine),
+                                 &bassCfg, NULL, &g_eq_bass) == MA_SUCCESS &&
+                ma_peak_node_init   (ma_engine_get_node_graph(&g_engine),
+                                     &midCfg,  NULL, &g_eq_mid)  == MA_SUCCESS &&
+                ma_hishelf_node_init(ma_engine_get_node_graph(&g_engine),
+                                     &trebCfg, NULL, &g_eq_treble) == MA_SUCCESS)
+        {
+            /* Cadena fija: bass -> mid -> treble -> endpoint */
+            ma_node_attach_output_bus(&g_eq_bass,   0, &g_eq_mid,    0);
+            ma_node_attach_output_bus(&g_eq_mid,    0, &g_eq_treble, 0);
+            ma_node_attach_output_bus(&g_eq_treble, 0,
+                                      ma_engine_get_endpoint(&g_engine), 0);
+            g_eq_listo = 1;
+        }
+    }
+    return 1;
+}
+
+static void descargar_sonido(void)
+{
+    if (g_sonido_listo)
+    {
+        ma_sound_stop(&g_sonido);
+        ma_sound_uninit(&g_sonido);
+        g_sonido_listo = 0;
+    }
+    g_estado = ESTADO_DETENIDO;
+}
+
+static int cargar_pista(int indice)
+{
+    if (indice < 0 || indice >= g_num_pistas)
+        return 0;
+
+    /* Fade-out suave si habia algo reproduciendose */
+    if (g_sonido_listo && g_estado == ESTADO_REPRODUCIENDO)
+    {
+        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
+                                          (ma_uint64)FADE_OUT_MS);
+        dormir_ms(FADE_OUT_MS + 30u);
+    }
+
+    descargar_sonido();
+
+    ma_result res = ma_sound_init_from_file(
+                        &g_engine,
+                        g_pistas[indice].ruta,
+                        MA_SOUND_FLAG_STREAM, /* Streaming: carga por bloques */
+                        NULL, NULL,
+                        &g_sonido);
+
+    if (res != MA_SUCCESS)
+    {
+        ui_printf("Error: No se pudo cargar '%s' (codigo %d).\n",
+                  g_pistas[indice].nombre, res);
+        return 0;
+    }
+
+    /* Rerouting EQ: si el EQ esta activo, desconectar del endpoint y
+       conectar a la cadena bass->mid->treble->endpoint */
+    if (g_eq_activo && g_eq_listo)
+    {
+        ma_node_detach_output_bus(&g_sonido, 0);
+        ma_node_attach_output_bus(&g_sonido, 0, &g_eq_bass, 0);
+    }
+
+    /* Fade-in: el volumen comenzara en 0 y subira cuando se llame start() */
+    ma_sound_set_fade_in_milliseconds(&g_sonido, 0.0f, g_volumen,
+                                      (ma_uint64)FADE_IN_MS);
+
+    g_pista_actual = indice;
+    g_sonido_listo = 1;
+    return 1;
+}
+
+/* ============================================================
+ * Controles de reproduccion
+ * ============================================================ */
+
+static void reproducir(void)
+{
+    if (!g_engine_listo)
+        return;
+
+    if (g_num_pistas == 0)
+    {
+        ui_printf("No hay pistas en la carpeta '%s'.\n", MUSICA_DIR);
+        pause_console();
+        return;
+    }
+
+    if (g_estado == ESTADO_PAUSADO && g_sonido_listo)
+    {
+        /* Reanudar */
+        ma_sound_start(&g_sonido);
+        g_estado = ESTADO_REPRODUCIENDO;
+        return;
+    }
+
+    /* Nueva pista: si no hay ninguna cargada, cargar la primera */
+    if ((!g_sonido_listo || g_pista_actual < 0) && !cargar_pista(0))
+        return;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
+}
+
+static void pausar(void)
+{
+    if (!g_sonido_listo || g_estado != ESTADO_REPRODUCIENDO)
+        return;
+
+    ma_sound_stop(&g_sonido); /* miniaudio: stop == pause, mantiene posicion */
+    g_estado = ESTADO_PAUSADO;
+}
+
+static void detener(void)
+{
+    if (!g_sonido_listo)
+        return;
+
+    if (g_estado == ESTADO_REPRODUCIENDO)
+    {
+        /* Fade-out antes de detener */
+        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
+                                          (ma_uint64)FADE_OUT_MS);
+        dormir_ms(FADE_OUT_MS + 30u);
+    }
+
+    ma_sound_stop(&g_sonido);
+    ma_sound_seek_to_pcm_frame(&g_sonido, 0); /* Rebobinar al inicio */
+    g_estado = ESTADO_DETENIDO;
+}
+
+/** LCG minimo para shuffle sin stdlib rand (reproducible, hilo-no-critico) */
+static int siguiente_pista_aleatoria(void)
+{
+    if (g_num_pistas <= 1)
+        return 0;
+    g_rand_seed = g_rand_seed * 1664525u + 1013904223u;
+    int sig = (int)(g_rand_seed % (unsigned int)g_num_pistas);
+    /* Evitar repetir la misma pista si hay mas de una */
+    if (sig == g_pista_actual)
+        sig = (sig + 1) % g_num_pistas;
+    return sig;
+}
+
+static void siguiente_pista(void)
+{
+    if (g_num_pistas == 0)
+        return;
+
+    int sig;
+    if (g_pista_actual < 0)
+        sig = 0;
+    else if (g_modo_rep == REPETIR_ALEATORIO)
+        sig = siguiente_pista_aleatoria();
+    else
+        sig = (g_pista_actual + 1) % g_num_pistas;
+
+    if (!cargar_pista(sig))
+        return;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
+}
+
+static void pista_anterior(void)
+{
+    if (g_num_pistas == 0)
+        return;
+
+    int ant;
+    if (g_pista_actual <= 0)
+        ant = g_num_pistas - 1;
+    else
+        ant = g_pista_actual - 1;
+
+    if (!cargar_pista(ant))
+        return;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
+}
+
+static void subir_volumen(void)
+{
+    g_volumen += PASO_VOLUMEN;
+    if (g_volumen > 1.0f)
+        g_volumen = 1.0f;
+    if (g_sonido_listo)
+        ma_sound_set_volume(&g_sonido, g_volumen);
+}
+
+static void bajar_volumen(void)
+{
+    g_volumen -= PASO_VOLUMEN;
+    if (g_volumen < 0.0f)
+        g_volumen = 0.0f;
+    if (g_sonido_listo)
+        ma_sound_set_volume(&g_sonido, g_volumen);
+}
+
+/**
+ * Avanza automaticamente si la pista termino (llamado antes de dibujar el menu).
+ */
+static void verificar_fin_pista(void)
+{
+    if (!g_sonido_listo || g_estado != ESTADO_REPRODUCIENDO)
+        return;
+
+    if (!ma_sound_at_end(&g_sonido))
+        return;
+
+    /* La pista termino */
+    switch (g_modo_rep)
+    {
+    case REPETIR_PISTA:
+        ma_sound_seek_to_pcm_frame(&g_sonido, 0);
+        ma_sound_start(&g_sonido);
+        break;
+
+    case REPETIR_LISTA:
+        siguiente_pista();
+        break;
+
+    case REPETIR_ALEATORIO:
+        siguiente_pista();
+        break;
+
+    case REPETIR_NINGUNO:
+    default:
+        if (g_pista_actual >= 0 && g_pista_actual < g_num_pistas - 1)
+            siguiente_pista(); /* Avanza si no es la ultima */
+        else
+        {
+            detener();
+        }
+        break;
+    }
+}
+
+/* ============================================================
+ * Interfaz de usuario
+ * ============================================================ */
+
+/** Dibuja una barra de progreso ASCII/Unicode para el volumen */
+static void dibujar_barra_volumen(void)
+{
+    int llenos = (int)(g_volumen * BARRA_ANCHO + 0.5f);
+    int vacios = BARRA_ANCHO - llenos;
+    int porcentaje = (int)(g_volumen * 100.0f + 0.5f);
+
+    int unicode = consola_soporta_unicode();
+
+    ui_printf("  Volumen: [");
+    for (int i = 0; i < llenos; i++)
+        ui_printf("%s", unicode ? "\u2588" : "#");
+    for (int i = 0; i < vacios; i++)
+        ui_printf("%s", unicode ? "\u2591" : "-");
+    ui_printf("] %3d%%\n", porcentaje);
+}
+
+/** Renderiza la barra de progreso de la pista activa */
+static void dibujar_barra_progreso(int unicode)
+{
+    if (!g_engine_listo || !g_sonido_listo)
+        return;
+
+    ma_uint64 cur = 0;
+    ma_uint64 len = 0;
+    ma_sound_get_cursor_in_pcm_frames(&g_sonido, &cur);
+    ma_sound_get_length_in_pcm_frames(&g_sonido, &len);
+    ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+
+    float pos_s = (sr > 0) ? (float)cur / (float)sr : 0.0f;
+    float tot_s = (sr > 0 && len > 0) ? (float)len / (float)sr : 0.0f;
+
+    int rellenos = (tot_s > 0.0f)
+                   ? (int)(pos_s / tot_s * PROG_ANCHO + 0.5f) : 0;
+    if (rellenos > PROG_ANCHO) rellenos = PROG_ANCHO;
+    int vacios = PROG_ANCHO - rellenos;
+
+    ui_printf("  Progreso: [");
+    for (int i = 0; i < rellenos; i++) ui_printf("%s", unicode ? "\u2580" : "#");
+    for (int i = 0; i < vacios;   i++) ui_printf("%s", unicode ? "\u2591" : "-");
+    if (tot_s > 0.0f)
+        ui_printf("] %02d:%02d / %02d:%02d\n",
+                  (int)pos_s / 60, (int)pos_s % 60,
+                  (int)tot_s / 60, (int)tot_s % 60);
+    else
+        ui_printf("] %02d:%02d / --:--\n", (int)pos_s / 60, (int)pos_s % 60);
+}
+
+/** Renderiza el nombre y progreso de la pista activa (o mensaje de sin pista) */
+static void dibujar_pista_actual(int unicode,
+                                 const char *flechaP,
+                                 const char *pausa,
+                                 const char *stop)
+{
+    if (g_pista_actual < 0 || g_num_pistas == 0)
+    {
+        ui_printf("  %s Ninguna pista seleccionada\n", stop);
+        return;
+    }
+
+    const char *icono;
+    if (g_estado == ESTADO_REPRODUCIENDO)
+        icono = flechaP;
+    else if (g_estado == ESTADO_PAUSADO)
+        icono = pausa;
+    else
+        icono = stop;
+    ui_printf("  %s Reproduciendo [%d/%d]:\n", icono,
+              g_pista_actual + 1, g_num_pistas);
+    ui_printf("    %s\n", g_pistas[g_pista_actual].nombre);
+    dibujar_barra_progreso(unicode);
+}
+
+/** Renderiza estado, volumen, modo repeticion y EQ */
+static void dibujar_info_estado(void)
+{
+    static const char * const ESTADOS[] =
+    { "DETENIDO", "REPRODUCIENDO", "PAUSADO" };
+    ui_printf("  Estado  : %s\n", ESTADOS[(int)g_estado]);
+
+    dibujar_barra_volumen();
+
+    const char *rep_str;
+    if      (g_modo_rep == REPETIR_PISTA)     rep_str = "Repetir pista";
+    else if (g_modo_rep == REPETIR_LISTA)     rep_str = "Repetir lista";
+    else if (g_modo_rep == REPETIR_ALEATORIO) rep_str = "Aleatorio (shuffle)";
+    else                                      rep_str = "Sin repeticion";
+    ui_printf("  Repetir : %s\n", rep_str);
+
+    if (g_eq_activo)
+        ui_printf("  EQ      : ACTIVO  B:%+.0f  M:%+.0f  A:%+.0f dB\n",
+                  (double)g_eq_bass_db, (double)g_eq_mid_db,
+                  (double)g_eq_treble_db);
+    else
+        ui_printf("  EQ      : Desactivado\n");
+
+    ui_printf("  AutoIni : %s\n", settings_get_music_autoplay() ? "Activada" : "Desactivada");
+}
+
+/** Imprime las opciones del menu principal del reproductor */
+static void dibujar_opciones_reproductor(const char *linea)
+{
+    for (int i = 0; i < 50; i++) ui_printf("%s", linea);
+    ui_printf("\n");
+    ui_printf("  [1] Reproducir / Pausar\n");
+    ui_printf("  [2] Detener\n");
+    ui_printf("  [3] Pista anterior\n");
+    ui_printf("  [4] Pista siguiente\n");
+    ui_printf("  [5] Seleccionar pista de la lista\n");
+    ui_printf("  [6] Subir volumen (+10%%)\n");
+    ui_printf("  [7] Bajar volumen (-10%%)\n");
+    ui_printf("  [8] Cambiar modo repeticion / shuffle\n");
+    ui_printf("  [9] Actualizar lista\n");
+    ui_printf("  [10] Agregar cancion a la carpeta\n");
+    ui_printf("  [11] Eliminar cancion de la carpeta\n");
+    ui_printf("  [12] Ecualizador (3 bandas)\n");
+    ui_printf("  [13] Playlists\n");
+    ui_printf("  [14] Musica al iniciar (ON/OFF)\n");
+    for (int i = 0; i < 50; i++) ui_printf("%s", linea);
+    ui_printf("\n");
+    ui_printf("  [0] Volver al menu principal\n\n");
+}
+
+/** Renderiza el encabezado y la vista del reproductor */
+static void dibujar_reproductor(void)
+{
+    clear_screen();
+
+    int unicode = consola_soporta_unicode();
+    const char *linea   = unicode ? "\u2550" : "=";
+    const char *nota    = unicode ? "\u266b" : "*";
+    const char *flechaP = unicode ? "\u25ba" : ">";
+    const char *pausa   = unicode ? "\u23f8" : "||";
+    const char *stop    = unicode ? "\u25a0" : "[]";
+
+    ui_printf("\n");
+    for (int i = 0; i < 50; i++) ui_printf("%s", linea);
+    ui_printf("\n");
+    ui_printf("   %s  REPRODUCTOR DE MUSICA  %s\n", nota, nota);
+    for (int i = 0; i < 50; i++) ui_printf("%s", linea);
+    ui_printf("\n");
+    ui_printf("  Carpeta : %s/\n", MUSICA_DIR);
+    ui_printf("  Pistas  : %d archivo(s) MP3\n", g_num_pistas);
+    ui_printf("\n");
+
+    dibujar_pista_actual(unicode, flechaP, pausa, stop);
+    dibujar_info_estado();
+    dibujar_opciones_reproductor(linea);
+}
+
+/** Muestra la lista de pistas para seleccionar */
+static void mostrar_lista_pistas(void)
+{
+    clear_screen();
+    print_header("Lista de Pistas");
+
+    if (g_num_pistas == 0)
+    {
+        ui_printf("  No se encontraron archivos MP3 en '%s/'.\n\n", MUSICA_DIR);
+        ui_printf("  Coloque sus archivos .mp3 dentro de la carpeta '%s/'\n", MUSICA_DIR);
+        ui_printf("  y presione [9] para actualizar la lista.\n\n");
+        pause_console();
+        return;
+    }
+
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        const char *marca = (i == g_pista_actual) ? " [*]" : "    ";
+        ui_printf("  %s %3d. %s\n", marca, i + 1, g_pistas[i].nombre);
+    }
+    ui_printf("\n");
+
+    int seleccion = input_int("  Seleccione pista (0 para cancelar): ");
+    if (seleccion <= 0 || seleccion > g_num_pistas)
+        return;
+
+    if (!cargar_pista(seleccion - 1))
+        return;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
+}
+
+/* ============================================================
+ * Gestion de canciones
+ * ============================================================ */
+
+/**
+ * Copia un archivo MP3 desde una ruta arbitraria a la carpeta Musica/.
+ * Retorna 1 si se copio correctamente, 0 si hubo error.
+ */
+static int copiar_archivo_mp3(const char *ruta_origen, const char *nombre_destino)
+{
+    crear_dir_musica();
+
+    char ruta_destino[MAX_RUTA * 2];
+#ifdef _WIN32
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s\\%s", MUSICA_DIR, nombre_destino);
+#else
+    snprintf(ruta_destino, sizeof(ruta_destino), "%s/%s", MUSICA_DIR, nombre_destino);
+#endif
+
+    /* Verificar que no sobreescriba una pista que se esta reproduciendo */
+    if (g_sonido_listo && g_pista_actual >= 0 &&
+            strcmp(g_pistas[g_pista_actual].ruta, ruta_destino) == 0)
+    {
+        ui_printf("  Error: esa pista esta en reproduccion. Detenla primero.\n");
+        return 0;
+    }
+
+#ifdef _WIN32
+    if (!CopyFileA(ruta_origen, ruta_destino, FALSE))
+    {
+        ui_printf("  Error al copiar el archivo (codigo Windows %lu).\n",
+                  (unsigned long)GetLastError());
+        return 0;
+    }
+#else
+    FILE *src = fopen(ruta_origen, "rb");
+    if (!src)
+    {
+        ui_printf("  Error: no se pudo abrir el archivo origen.\n");
+        return 0;
+    }
+    FILE *dst = fopen(ruta_destino, "wb");
+    if (!dst)
+    {
+        fclose(src);
+        ui_printf("  Error: no se pudo crear el archivo destino.\n");
+        return 0;
+    }
+    char buf[8192];
+    size_t leido;
+    while ((leido = fread(buf, 1, sizeof(buf), src)) > 0)
+        fwrite(buf, 1, leido, dst);
+    fclose(src);
+    fclose(dst);
+#endif
+    return 1;
+}
+
+/** Extrae solo el nombre de fichero de una ruta completa */
+static const char *basename_portable(const char *ruta)
+{
+    const char *p = ruta;
+    const char *ultimo = ruta;
+    while (*p)
+    {
+        if (*p == '/' || *p == '\\')
+            ultimo = p + 1;
+        p++;
+    }
+    return ultimo;
+}
+
+/** Submenu: el usuario introduce la ruta de un MP3 y lo copia a Musica/ */
+static void agregar_cancion_menu(void)
+{
+    clear_screen();
+    print_header("Agregar Cancion a la Carpeta de Musica");
+
+    ui_printf("  Introduzca la ruta completa del archivo MP3 que desea agregar.\n");
+    ui_printf("  Ejemplo Windows: C:\\Musica\\MiCancion.mp3\n");
+    ui_printf("  Ejemplo Linux  : /home/user/Musica/MiCancion.mp3\n\n");
+    ui_printf("  (Ingrese 0 para cancelar)\n\n");
+
+    char ruta[1024] = {0};
+    input_string("  Ruta del archivo: ", ruta, (int)sizeof(ruta));
+
+    if (ruta[0] == '0' && ruta[1] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    if (!es_mp3(ruta))
+    {
+        ui_printf("  Error: el archivo no tiene extension .mp3\n");
+        pause_console();
+        return;
+    }
+
+    /* Verificar que el archivo existe */
+    FILE *f = fopen(ruta, "rb");
+    if (!f)
+    {
+        ui_printf("  Error: no se encontro el archivo:\n  %s\n", ruta);
+        pause_console();
+        return;
+    }
+    fclose(f);
+
+    const char *nombre_auto = basename_portable(ruta);
+
+    /* Permitir nombre personalizado */
+    ui_printf("\n  Nombre actual del archivo: %s\n", nombre_auto);
+    ui_printf("  Ingrese un nombre nuevo (con .mp3) o Enter para conservar el actual:\n");
+
+    char nombre_nuevo[MAX_NOMBRE] = {0};
+    input_string("  Nombre: ", nombre_nuevo, (int)sizeof(nombre_nuevo));
+
+    const char *nombre_final;
+    if (nombre_nuevo[0] == '\0')
+        nombre_final = nombre_auto;
+    else
+    {
+        /* Asegurarse de que termina en .mp3 */
+        if (!es_mp3(nombre_nuevo))
+        {
+            size_t ln = strlen_s(nombre_nuevo, sizeof(nombre_nuevo));
+            if (ln + 4 < sizeof(nombre_nuevo))
+                strcat_s(nombre_nuevo, sizeof(nombre_nuevo), ".mp3");
+        }
+        nombre_final = nombre_nuevo;
+    }
+
+    if (copiar_archivo_mp3(ruta, nombre_final))
+    {
+        ui_printf("\n  Cancion agregada correctamente: %s\n", nombre_final);
+        ui_printf("  Use [9] Actualizar Lista para verla en el reproductor.\n");
+        /* Actualizar lista automaticamente */
+        escanear_directorio();
+        ui_printf("  Lista actualizada: %d pista(s) encontradas.\n", g_num_pistas);
+    }
+
+    pause_console();
+}
+
+/** Submenu: lista canciones y permite eliminar una */
+static void eliminar_cancion_menu(void)
+{
+    clear_screen();
+    print_header("Eliminar Cancion de la Carpeta de Musica");
+
+    if (g_num_pistas == 0)
+    {
+        ui_printf("  No hay canciones en la carpeta '%s/'.\n\n", MUSICA_DIR);
+        pause_console();
+        return;
+    }
+
+    ui_printf("  Canciones disponibles:\n\n");
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        const char *marca = (i == g_pista_actual && g_sonido_listo) ? " [EN REPRODUCCION]" : "";
+        ui_printf("  %3d. %s%s\n", i + 1, g_pistas[i].nombre, marca);
+    }
+    ui_printf("\n");
+
+    int sel = input_int("  Seleccione la cancion a eliminar (0 para cancelar): ");
+    if (sel <= 0 || sel > g_num_pistas)
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    int idx = sel - 1;
+
+    /* No borrar pista en reproduccion */
+    if (g_sonido_listo && g_pista_actual == idx)
+    {
+        ui_printf("  No se puede eliminar la pista en reproduccion.\n");
+        ui_printf("  Detengala primero con la opcion [2].\n");
+        pause_console();
+        return;
+    }
+
+    ui_printf("\n  Va a eliminar: %s\n", g_pistas[idx].nombre);
+    ui_printf("  Esta accion es IRREVERSIBLE. Confirmar? [s/n]: ");
+
+    char conf[8] = {0};
+    input_string("", conf, (int)sizeof(conf));
+    if (conf[0] != 's' && conf[0] != 'S')
+    {
+        ui_printf("  Eliminacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    char ruta_borrar[MAX_RUTA];
+    strncpy_s(ruta_borrar, sizeof(ruta_borrar), g_pistas[idx].ruta, _TRUNCATE);
+
+    if (remove(ruta_borrar) == 0)
+    {
+        ui_printf("  Cancion eliminada: %s\n", g_pistas[idx].nombre);
+        /* Si la pista eliminada era posterior a la actual, ajustar indice */
+        if (g_pista_actual > idx)
+            g_pista_actual--;
+        escanear_directorio();
+        ui_printf("  Lista actualizada: %d pista(s) restantes.\n", g_num_pistas);
+    }
+    else
+    {
+        ui_printf("  Error: no se pudo eliminar el archivo.\n");
+        ui_printf("  Verifique permisos de escritura en la carpeta '%s/'.\n", MUSICA_DIR);
+    }
+
+    pause_console();
+}
+
+/* ============================================================
+ * Ecualizador de 3 bandas
+ * ============================================================ */
+
+/** Aplica EQ routing al sonido activo. Si eq_activo, lo enruta por la cadena
+    bass->mid->treble->endpoint; si no, lo conecta directo al endpoint. */
+static void eq_reroute_sonido(void)
+{
+    if (!g_sonido_listo || !g_eq_listo)
+        return;
+    ma_node_detach_output_bus(&g_sonido, 0);
+    if (g_eq_activo)
+        ma_node_attach_output_bus(&g_sonido, 0, &g_eq_bass, 0);
+    else
+        ma_node_attach_output_bus(&g_sonido, 0,
+                                  ma_engine_get_endpoint(&g_engine), 0);
+}
+
+/** Reinicia el nodo de graves con la ganancia actual */
+static void eq_update_bass(void)
+{
+    if (!g_eq_listo) return;
+    ma_loshelf_config cfg = ma_loshelf2_config_init(
+                                ma_format_f32,
+                                ma_engine_get_channels(&g_engine),
+                                ma_engine_get_sample_rate(&g_engine),
+                                (double)g_eq_bass_db, EQ_Q, EQ_BASS_FREQ);
+    ma_loshelf_node_reinit(&cfg, &g_eq_bass);
+}
+
+/** Reinicia el nodo de medios con la ganancia actual */
+static void eq_update_mid(void)
+{
+    if (!g_eq_listo) return;
+    ma_peak_config cfg = ma_peak2_config_init(
+                             ma_format_f32,
+                             ma_engine_get_channels(&g_engine),
+                             ma_engine_get_sample_rate(&g_engine),
+                             (double)g_eq_mid_db, EQ_Q, EQ_MID_FREQ);
+    ma_peak_node_reinit(&cfg, &g_eq_mid);
+}
+
+/** Reinicia el nodo de agudos con la ganancia actual */
+static void eq_update_treble(void)
+{
+    if (!g_eq_listo) return;
+    ma_hishelf_config cfg = ma_hishelf2_config_init(
+                                ma_format_f32,
+                                ma_engine_get_channels(&g_engine),
+                                ma_engine_get_sample_rate(&g_engine),
+                                (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
+    ma_hishelf_node_reinit(&cfg, &g_eq_treble);
+}
+
+/** Menu interactivo del ecualizador */
+static void menu_ecualizador(void)
+{
+    if (!g_eq_listo)
+    {
+        ui_printf("  El ecualizador no pudo inicializarse con este motor de audio.\n");
+        pause_console();
+        return;
+    }
+
+    int salir_eq = 0;
+    while (!salir_eq)
+    {
+        clear_screen();
+        print_header("Ecualizador de 3 Bandas");
+        ui_printf("\n");
+        ui_printf("  Estado : %s\n", g_eq_activo ? "ACTIVO" : "Desactivado");
+        ui_printf("\n");
+        ui_printf("  Banda       Frec.   Ganancia\n");
+        ui_printf("  ------------------------------------\n");
+        ui_printf("  Graves (B)  %4.0f Hz  %+.1f dB\n", EQ_BASS_FREQ,   (double)g_eq_bass_db);
+        ui_printf("  Medios  (M) %4.0f Hz  %+.1f dB\n", EQ_MID_FREQ,    (double)g_eq_mid_db);
+        ui_printf("  Agudos  (A) %4.0f Hz  %+.1f dB\n", EQ_TREBLE_FREQ, (double)g_eq_treble_db);
+        ui_printf("\n");
+        ui_printf("  [1] Activar / Desactivar EQ\n");
+        ui_printf("  [2] Graves  +%.0f dB     [3] Graves  -%.0f dB\n",
+                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
+        ui_printf("  [4] Medios  +%.0f dB     [5] Medios  -%.0f dB\n",
+                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
+        ui_printf("  [6] Agudos  +%.0f dB     [7] Agudos  -%.0f dB\n",
+                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
+        ui_printf("  [8] Restablecer (0 dB en todas las bandas)\n");
+        ui_printf("  [0] Volver\n\n");
+
+        int op = input_int("  Opcion: ");
+        switch (op)
+        {
+        case 1:
+            g_eq_activo = !g_eq_activo;
+            eq_reroute_sonido();
+            break;
+        case 2:
+            g_eq_bass_db += EQ_DB_STEP;
+            if (g_eq_bass_db > EQ_DB_MAX) g_eq_bass_db = EQ_DB_MAX;
+            eq_update_bass();
+            break;
+        case 3:
+            g_eq_bass_db -= EQ_DB_STEP;
+            if (g_eq_bass_db < EQ_DB_MIN) g_eq_bass_db = EQ_DB_MIN;
+            eq_update_bass();
+            break;
+        case 4:
+            g_eq_mid_db += EQ_DB_STEP;
+            if (g_eq_mid_db > EQ_DB_MAX) g_eq_mid_db = EQ_DB_MAX;
+            eq_update_mid();
+            break;
+        case 5:
+            g_eq_mid_db -= EQ_DB_STEP;
+            if (g_eq_mid_db < EQ_DB_MIN) g_eq_mid_db = EQ_DB_MIN;
+            eq_update_mid();
+            break;
+        case 6:
+            g_eq_treble_db += EQ_DB_STEP;
+            if (g_eq_treble_db > EQ_DB_MAX) g_eq_treble_db = EQ_DB_MAX;
+            eq_update_treble();
+            break;
+        case 7:
+            g_eq_treble_db -= EQ_DB_STEP;
+            if (g_eq_treble_db < EQ_DB_MIN) g_eq_treble_db = EQ_DB_MIN;
+            eq_update_treble();
+            break;
+        case 8:
+            g_eq_bass_db = g_eq_mid_db = g_eq_treble_db = 0.0f;
+            eq_update_bass();
+            eq_update_mid();
+            eq_update_treble();
+            break;
+        case 0:
+            salir_eq = 1;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+/* ============================================================
+ * Playlists
+ * ============================================================ */
+
+/** Devuelve 1 si el nombre de archivo tiene extension .txt */
+static int es_txt(const char *nombre)
+{
+    size_t len = strlen_s(nombre, MAX_NOMBRE);
+    if (len < 5) return 0;
+    const char *ext = nombre + len - 4;
+    return (tolower((unsigned char)ext[0]) == '.' &&
+            tolower((unsigned char)ext[1]) == 't' &&
+            tolower((unsigned char)ext[2]) == 'x' &&
+            tolower((unsigned char)ext[3]) == 't');
+}
+
+typedef struct
+{
+    char nombre[MAX_PLAYLIST_NAME];
+} NombrePlaylist;
+
+/** Escanea Musica/ en busca de .txt (playlists).
+    Retorna numero de playlists encontradas (max MAX_PISTAS). */
+static int escanear_playlists(NombrePlaylist *lista, int max)
+{
+    int n = 0;
+    crear_dir_musica();
+
+#ifdef _WIN32
+    char patron[MAX_RUTA];
+    snprintf(patron, sizeof(patron), "%s\\*.txt", MUSICA_DIR);
+    WIN32_FIND_DATAA fd;
+    HANDLE hf = FindFirstFileA(patron, &fd);
+    if (hf == INVALID_HANDLE_VALUE) return 0;
+    do
+    {
+        if (n >= max) break;
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+        snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%s", fd.cFileName);
+        n++;
+    }
+    while (FindNextFileA(hf, &fd));
+    FindClose(hf);
+#else
+    DIR *dir = opendir(MUSICA_DIR);
+    if (!dir) return 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && n < max)
+    {
+        if (!es_txt(entry->d_name)) continue;
+        snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%s", entry->d_name);
+        n++;
+    }
+    closedir(dir);
+#endif
+    return n;
+}
+
+static void construir_ruta_playlist(const char *nombre_txt, char *ruta, size_t ruta_sz)
+{
+#ifdef _WIN32
+    snprintf(ruta, ruta_sz, "%s\\%s", MUSICA_DIR, nombre_txt);
+#else
+    snprintf(ruta, ruta_sz, "%s/%s", MUSICA_DIR, nombre_txt);
+#endif
+}
+
+static int guardar_nombres_playlist(const char *nombre_txt,
+                                    char nombres[][MAX_NOMBRE],
+                                    int cantidad)
+{
+    char ruta[MAX_RUTA * 2];
+    construir_ruta_playlist(nombre_txt, ruta, sizeof(ruta));
+
+    FILE *f = fopen(ruta, "w");
+    if (!f)
+        return 0;
+
+    fprintf(f, "# MiFutbolC Playlist\n");
+    for (int i = 0; i < cantidad; i++)
+        fprintf(f, "%s\n", nombres[i]);
+    fclose(f);
+    return 1;
+}
+
+static int cargar_nombres_playlist(const char *nombre_txt,
+                                   char nombres[][MAX_NOMBRE],
+                                   int max)
+{
+    char ruta[MAX_RUTA * 2];
+    construir_ruta_playlist(nombre_txt, ruta, sizeof(ruta));
+
+    FILE *f = fopen(ruta, "r");
+    if (!f)
+        return -1;
+
+    int n = 0;
+    char linea[MAX_NOMBRE];
+    while (fgets(linea, (int)sizeof(linea), f) != NULL && n < max)
+    {
+        size_t ln = strlen_s(linea, sizeof(linea));
+        while (ln > 0 && (linea[ln - 1] == '\n' || linea[ln - 1] == '\r'))
+            linea[--ln] = '\0';
+
+        if (linea[0] == '\0' || linea[0] == '#')
+            continue;
+        if (!es_mp3(linea))
+            continue;
+
+        strncpy_s(nombres[n], MAX_NOMBRE, linea, _TRUNCATE);
+        n++;
+    }
+    fclose(f);
+    return n;
+}
+
+static int buscar_tema_en_playlist(char nombres[][MAX_NOMBRE], int n, const char *tema)
+{
+    for (int i = 0; i < n; i++)
+    {
+        if (strcmp(nombres[i], tema) == 0)
+            return i;
+    }
+    return -1;
+}
+
+static void mostrar_selector_crear_playlist(const char *nombre,
+        const int seleccionadas[],
+        int total_sel)
+{
+    clear_screen();
+    print_header("Crear Playlist (Seleccion de Temas)");
+    ui_printf("  Playlist: %s\n", nombre);
+    ui_printf("  Seleccionadas: %d\n\n", total_sel);
+
+    for (int i = 0; i < g_num_pistas; i++)
+        ui_printf("  [%c] %3d. %s\n", seleccionadas[i] ? 'x' : ' ',
+                  i + 1, g_pistas[i].nombre);
+
+    ui_printf("\n  Use numero para marcar/desmarcar tema\n");
+    ui_printf("  [0] Guardar playlist   [-1] Cancelar\n\n");
+}
+
+/* Retorna: -1 cancelar, 0 continuar, 1 listo para guardar, 2 sin seleccion */
+static int procesar_opcion_selector_playlist(int op,
+        int seleccionadas[],
+        int *total_sel)
+{
+    if (op == -1)
+        return -1;
+
+    if (op == 0)
+        return (*total_sel > 0) ? 1 : 2;
+
+    if (op < 1 || op > g_num_pistas)
+        return 0;
+
+    int idx = op - 1;
+    if (seleccionadas[idx])
+    {
+        seleccionadas[idx] = 0;
+        (*total_sel)--;
+    }
+    else
+    {
+        seleccionadas[idx] = 1;
+        (*total_sel)++;
+    }
+    return 0;
+}
+
+static int construir_lista_temas_seleccionados(const int seleccionadas[],
+        char temas[][MAX_NOMBRE])
+{
+    int n = 0;
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (n >= MAX_PISTAS)
+            break;
+        if (!seleccionadas[i])
+            continue;
+
+        strncpy_s(temas[n], MAX_NOMBRE, g_pistas[i].nombre, _TRUNCATE);
+        n++;
+    }
+    return n;
+}
+
+static void mostrar_temas_playlist_actual(const char temas[][MAX_NOMBRE], int n)
+{
+    if (n == 0)
+    {
+        ui_printf("  (Sin temas)\n");
+        return;
+    }
+
+    for (int i = 0; i < n; i++)
+        ui_printf("  %3d. %s\n", i + 1, temas[i]);
+}
+
+static void editar_playlist_agregar_tema(char temas[][MAX_NOMBRE], int *n)
+{
+    if (g_num_pistas <= 0)
+    {
+        ui_printf("  No hay temas disponibles en la carpeta Musica/.\n");
+        pause_console();
+        return;
+    }
+    if (*n >= MAX_PISTAS)
+    {
+        ui_printf("  La playlist ya alcanzo el maximo de temas.\n");
+        pause_console();
+        return;
+    }
+
+    clear_screen();
+    print_header("Agregar Tema a Playlist");
+    for (int i = 0; i < g_num_pistas; i++)
+        ui_printf("  %3d. %s\n", i + 1, g_pistas[i].nombre);
+    ui_printf("\n");
+
+    int sel = input_int("  Tema a agregar (0=cancelar): ");
+    if (sel <= 0 || sel > g_num_pistas)
+        return;
+
+    const char *tema = g_pistas[sel - 1].nombre;
+    if (buscar_tema_en_playlist(temas, *n, tema) >= 0)
+    {
+        ui_printf("  Ese tema ya esta en la playlist.\n");
+        pause_console();
+        return;
+    }
+
+    strncpy_s(temas[*n], MAX_NOMBRE, tema, _TRUNCATE);
+    (*n)++;
+    ui_printf("  Tema agregado.\n");
+    pause_console();
+}
+
+static void editar_playlist_quitar_tema(char temas[][MAX_NOMBRE], int *n)
+{
+    if (*n <= 0)
+    {
+        ui_printf("  No hay temas para quitar.\n");
+        pause_console();
+        return;
+    }
+
+    int sel = input_int("  Tema a quitar (0=cancelar): ");
+    if (sel <= 0 || sel > *n)
+        return;
+
+    int idx = sel - 1;
+    for (int i = idx; i < *n - 1; i++)
+        strncpy_s(temas[i], MAX_NOMBRE, temas[i + 1], _TRUNCATE);
+    (*n)--;
+
+    ui_printf("  Tema quitado.\n");
+    pause_console();
+}
+
+static void editar_playlist_guardar(const char *nombre_txt,
+                                    char temas[][MAX_NOMBRE],
+                                    int n)
+{
+    if (guardar_nombres_playlist(nombre_txt, temas, n))
+        ui_printf("  Cambios guardados correctamente.\n");
+    else
+        ui_printf("  Error: no se pudo guardar la playlist.\n");
+    pause_console();
+}
+
+/** Crea una playlist seleccionando canciones concretas del catalogo actual */
+static void guardar_playlist(void)
+{
+    if (g_num_pistas == 0)
+    {
+        ui_printf("  No hay pistas cargadas para guardar.\n");
+        pause_console();
+        return;
+    }
+
+    char nombre[MAX_PLAYLIST_NAME] = {0};
+    input_string("  Nombre de la playlist (sin .txt): ", nombre, (int)sizeof(nombre));
+    if (nombre[0] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+    if (!es_txt(nombre) && strcat_s(nombre, sizeof(nombre), ".txt") != 0)
+    {
+        ui_printf("  Error: nombre de playlist demasiado largo.\n");
+        pause_console();
+        return;
+    }
+
+    int seleccionadas[MAX_PISTAS] = {0};
+    int total_sel = 0;
+    int listo_para_guardar = 0;
+
+    while (!listo_para_guardar)
+    {
+        mostrar_selector_crear_playlist(nombre, seleccionadas, total_sel);
+        int op = input_int("  Opcion: ");
+
+        int estado = procesar_opcion_selector_playlist(op, seleccionadas, &total_sel);
+        if (estado == -1)
+        {
+            ui_printf("  Operacion cancelada.\n");
+            pause_console();
+            return;
+        }
+        if (estado == 2)
+        {
+            ui_printf("\n  Debe seleccionar al menos un tema.\n");
+            pause_console();
+            continue;
+        }
+        if (estado == 1)
+            listo_para_guardar = 1;
+    }
+
+    char temas[MAX_PISTAS][MAX_NOMBRE];
+    int n = construir_lista_temas_seleccionados(seleccionadas, temas);
+
+    if (!guardar_nombres_playlist(nombre, temas, n))
+    {
+        ui_printf("  Error: no se pudo guardar la playlist.\n");
+        pause_console();
+        return;
+    }
+
+    ui_printf("  Playlist guardada: %s (%d pista/s)\n", nombre, n);
+    pause_console();
+}
+
+static void editar_playlist_archivo(const char *nombre_txt)
+{
+    char temas[MAX_PISTAS][MAX_NOMBRE];
+    int n = cargar_nombres_playlist(nombre_txt, temas, MAX_PISTAS);
+    if (n < 0)
+    {
+        ui_printf("  Error: no se pudo abrir '%s'.\n", nombre_txt);
+        pause_console();
+        return;
+    }
+
+    int salir = 0;
+    while (!salir)
+    {
+        clear_screen();
+        print_header("Editar Playlist");
+        ui_printf("  Playlist: %s\n\n", nombre_txt);
+
+        mostrar_temas_playlist_actual(temas, n);
+
+        ui_printf("\n  [1] Agregar tema\n");
+        ui_printf("  [2] Quitar tema\n");
+        ui_printf("  [3] Guardar cambios\n");
+        ui_printf("  [0] Volver (sin guardar)\n\n");
+
+        int op = input_int("  Opcion: ");
+        switch (op)
+        {
+        case 1:
+            editar_playlist_agregar_tema(temas, &n);
+            break;
+        case 2:
+            editar_playlist_quitar_tema(temas, &n);
+            break;
+        case 3:
+            editar_playlist_guardar(nombre_txt, temas, n);
+            salir = 1;
+            break;
+        case 0:
+            salir = 1;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+/** Carga una playlist .txt: sustituye g_pistas con los archivos listados
+    que realmente existan en Musica/ */
+static void cargar_playlist_archivo(const char *nombre_txt)
+{
+    char ruta[MAX_RUTA * 2];
+#ifdef _WIN32
+    snprintf(ruta, sizeof(ruta), "%s\\%s", MUSICA_DIR, nombre_txt);
+#else
+    snprintf(ruta, sizeof(ruta), "%s/%s", MUSICA_DIR, nombre_txt);
+#endif
+
+    FILE *f = fopen(ruta, "r");
+    if (!f)
+    {
+        ui_printf("  Error: no se pudo abrir la playlist '%s'.\n", nombre_txt);
+        pause_console();
+        return;
+    }
+
+    /* Detener reproduccion actual */
+    int estaba = (g_estado == ESTADO_REPRODUCIENDO);
+    if (estaba)
+    {
+        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
+                                          (ma_uint64)FADE_OUT_MS);
+        dormir_ms(FADE_OUT_MS + 30u);
+    }
+    descargar_sonido();
+    g_pista_actual = -1;
+    g_num_pistas   = 0;
+
+    char linea[MAX_NOMBRE];
+    int  cargadas = 0;
+    while (fgets(linea, (int)sizeof(linea), f) != NULL &&
+            cargadas < MAX_PISTAS)
+    {
+        /* Quitar salto de linea */
+        size_t ln = strlen_s(linea, sizeof(linea));
+        while (ln > 0 && (linea[ln - 1] == '\n' || linea[ln - 1] == '\r'))
+            linea[--ln] = '\0';
+
+        if (linea[0] == '#' || linea[0] == '\0')
+            continue; /* Comentarios y lineas vacias */
+
+        if (!es_mp3(linea))
+            continue;
+
+        /* Verificar que el archivo exista */
+        char ruta_mp3[MAX_RUTA];
+#ifdef _WIN32
+        snprintf(ruta_mp3, sizeof(ruta_mp3), "%s\\%s", MUSICA_DIR, linea);
+#else
+        snprintf(ruta_mp3, sizeof(ruta_mp3), "%s/%s", MUSICA_DIR, linea);
+#endif
+        FILE *chk = fopen(ruta_mp3, "rb");
+        if (!chk) continue;
+        fclose(chk);
+
+        snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%s", linea);
+        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%s", ruta_mp3);
+        cargadas++;
+    }
+    fclose(f);
+    g_num_pistas = cargadas;
+
+    ui_printf("  Playlist '%s' cargada: %d pista(s) válidas.\n",
+              nombre_txt, g_num_pistas);
+    pause_console();
+}
+
+static void iniciar_playlist_cargada(int aleatorio)
+{
+    if (g_num_pistas <= 0)
+    {
+        ui_printf("  La playlist no tiene pistas validas para reproducir.\n");
+        pause_console();
+        return;
+    }
+
+    if (aleatorio)
+    {
+        g_modo_rep = REPETIR_ALEATORIO;
+        g_rand_seed ^= (g_num_pistas * 2654435761u);
+        int idx = siguiente_pista_aleatoria();
+        if (!cargar_pista(idx))
+            return;
+        ma_sound_start(&g_sonido);
+        g_estado = ESTADO_REPRODUCIENDO;
+        return;
+    }
+
+    g_modo_rep = REPETIR_LISTA;
+    reproducir();
+}
+
+/** Submenu: seleccionar y cargar una playlist */
+static void pl_accion_cargar(const NombrePlaylist *lista, int n)
+{
+    if (n == 0)
+    {
+        ui_printf("  No hay playlists disponibles.\n");
+        pause_console();
+        return;
+    }
+    int sel = input_int("  Seleccione playlist (0=cancelar): ");
+    if (sel <= 0 || sel > n)
+        return;
+
+    clear_screen();
+    print_header("Cargar Playlist");
+    ui_printf("  Playlist seleccionada: %s\n\n", lista[sel - 1].nombre);
+    ui_printf("  [1] Solo cargar playlist\n");
+    ui_printf("  [2] Cargar y reproducir (orden)\n");
+    ui_printf("  [3] Cargar y reproducir (aleatorio)\n");
+    ui_printf("  [0] Cancelar\n\n");
+
+    int modo = input_int("  Opcion: ");
+    if (modo <= 0 || modo > 3)
+        return;
+
+    cargar_playlist_archivo(lista[sel - 1].nombre);
+
+    if (modo == 2)
+        iniciar_playlist_cargada(0);
+    else if (modo == 3)
+        iniciar_playlist_cargada(1);
+}
+
+/** Submenu: seleccionar y editar una playlist existente */
+static void pl_accion_editar(const NombrePlaylist *lista, int n)
+{
+    if (n == 0)
+    {
+        ui_printf("  No hay playlists disponibles.\n");
+        pause_console();
+        return;
+    }
+
+    int sel = input_int("  Seleccione playlist a editar (0=cancelar): ");
+    if (sel <= 0 || sel > n)
+        return;
+
+    escanear_directorio();
+    editar_playlist_archivo(lista[sel - 1].nombre);
+}
+
+/** Submenu: seleccionar y eliminar una playlist con confirmacion */
+static void pl_accion_eliminar(const NombrePlaylist *lista, int n)
+{
+    if (n == 0)
+    {
+        ui_printf("  No hay playlists para eliminar.\n");
+        pause_console();
+        return;
+    }
+    int sel = input_int("  Seleccione playlist a eliminar (0=cancelar): ");
+    if (sel <= 0 || sel > n)
+        return;
+
+    char r[MAX_RUTA * 2];
+#ifdef _WIN32
+    snprintf(r, sizeof(r), "%s\\%s", MUSICA_DIR, lista[sel - 1].nombre);
+#else
+    snprintf(r, sizeof(r), "%s/%s",  MUSICA_DIR, lista[sel - 1].nombre);
+#endif
+    ui_printf("  Eliminar '%s'? [s/n]: ", lista[sel - 1].nombre);
+    char conf[4] = {0};
+    input_string("", conf, (int)sizeof(conf));
+    if (conf[0] == 's' || conf[0] == 'S')
+    {
+        if (remove(r) == 0)
+            ui_printf("  Playlist eliminada.\n");
+        else
+            ui_printf("  Error al eliminar.\n");
+        pause_console();
+    }
+}
+
+/** Menu de playlists */
+static void menu_playlists(void)
+{
+    int salir_pl = 0;
+    while (!salir_pl)
+    {
+        clear_screen();
+        print_header("Playlists");
+
+        NombrePlaylist lista[MAX_PISTAS];
+        int n = escanear_playlists(lista, MAX_PISTAS);
+
+        if (n > 0)
+        {
+            ui_printf("  Playlists guardadas:\n");
+            for (int i = 0; i < n; i++)
+                ui_printf("    %2d. %s\n", i + 1, lista[i].nombre);
+            ui_printf("\n");
+        }
+        else
+        {
+            ui_printf("  (No hay playlists guardadas en '%s/')\n\n", MUSICA_DIR);
+        }
+
+        ui_printf("  [1] Crear playlist (seleccionar temas)\n");
+        ui_printf("  [2] Cargar playlist\n");
+        ui_printf("  [3] Editar playlist (agregar/quitar temas)\n");
+        ui_printf("  [4] Eliminar playlist\n");
+        ui_printf("  [0] Volver\n\n");
+
+        int op = input_int("  Opcion: ");
+        switch (op)
+        {
+        case 1:
+            guardar_playlist();
+            break;
+        case 2:
+            pl_accion_cargar(lista, n);
+            break;
+        case 3:
+            pl_accion_editar(lista, n);
+            break;
+        case 4:
+            pl_accion_eliminar(lista, n);
+            break;
+        case 0:
+            salir_pl = 1;
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+/* ============================================================
+ * API publica
+ * ============================================================ */
+
+void musica_cleanup(void)
+{
+    if (g_sonido_listo)
+    {
+        ma_sound_stop(&g_sonido);
+        ma_sound_uninit(&g_sonido);
+        g_sonido_listo = 0;
+    }
+
+    /* Uninit EQ nodes antes del engine */
+    if (g_eq_listo)
+    {
+        ma_hishelf_node_uninit(&g_eq_treble, NULL);
+        ma_peak_node_uninit   (&g_eq_mid,    NULL);
+        ma_loshelf_node_uninit(&g_eq_bass,   NULL);
+        g_eq_listo  = 0;
+        g_eq_activo = 0;
+    }
+
+    if (g_engine_listo)
+    {
+        ma_engine_uninit(&g_engine);
+        g_engine_listo = 0;
+    }
+
+    g_estado = ESTADO_DETENIDO;
+    g_pista_actual = -1;
+}
+
+void musica_iniciar_automatica(void)
+{
+    if (g_estado == ESTADO_REPRODUCIENDO)
+        return;
+
+    if (!inicializar_engine())
+        return;
+
+    escanear_directorio();
+    if (g_num_pistas <= 0)
+        return;
+
+    if ((!g_sonido_listo || g_pista_actual < 0) && !cargar_pista(0))
+        return;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
+}
+
+void menu_musica(void)
+{
+    /* Iniciar motor de audio la primera vez */
+    if (!inicializar_engine())
+    {
+        pause_console();
+        return;
+    }
+
+    /* Escanear directorio al entrar */
+    escanear_directorio();
+
+    int salir = 0;
+    while (!salir)
+    {
+        verificar_fin_pista();
+        dibujar_reproductor();
+
+        int opcion = input_int("  Opcion: ");
+        switch (opcion)
+        {
+        case 1: /* Reproducir / Pausar */
+            if (g_estado == ESTADO_REPRODUCIENDO)
+                pausar();
+            else
+                reproducir();
+            break;
+
+        case 2: /* Detener */
+            detener();
+            break;
+
+        case 3: /* Anterior */
+            pista_anterior();
+            break;
+
+        case 4: /* Siguiente */
+            siguiente_pista();
+            break;
+
+        case 5: /* Seleccionar pista */
+            mostrar_lista_pistas();
+            break;
+
+        case 6: /* Subir volumen */
+            subir_volumen();
+            break;
+
+        case 7: /* Bajar volumen */
+            bajar_volumen();
+            break;
+
+        case 8: /* Cambiar modo repeticion / shuffle */
+            g_modo_rep = (ModoRepeticion)((g_modo_rep + 1) % 4);
+            /* Sembrar aleatoriedad al activar shuffle */
+            if (g_modo_rep == REPETIR_ALEATORIO)
+                g_rand_seed ^= (unsigned int)(g_pista_actual + 1) * 2654435761u;
+            break;
+
+        case 10: /* Agregar cancion */
+            agregar_cancion_menu();
+            break;
+
+        case 11: /* Eliminar cancion */
+            eliminar_cancion_menu();
+            break;
+
+        case 12: /* Ecualizador */
+            menu_ecualizador();
+            break;
+
+        case 13: /* Playlists */
+            menu_playlists();
+            break;
+
+        case 14: /* Musica al iniciar */
+            settings_set_music_autoplay(settings_get_music_autoplay() ? 0 : 1);
+            ui_printf("  Musica al iniciar: %s\n",
+                      settings_get_music_autoplay() ? "ACTIVADA" : "DESACTIVADA");
+            pause_console();
+            break;
+
+        case 9: /* Actualizar lista */
+        {
+            int estaba_reproduciendo = (g_estado == ESTADO_REPRODUCIENDO);
+            descargar_sonido();
+            g_pista_actual = -1;
+            escanear_directorio();
+            ui_printf("  Lista actualizada: %d pista(s) encontrada(s).\n", g_num_pistas);
+            if (estaba_reproduciendo)
+                ui_printf("  La pista fue detenida al recargar la lista.\n");
+            pause_console();
+            break;
+        }
+
+        case 0: /* Volver */
+            salir = 1;
+            break;
+
+        default:
+            ui_printf("  Opcion invalida.\n");
+            pause_console();
+            break;
+        }
+    }
+    /* El audio sigue reproduciendose en segundo plano al volver al menu */
+}

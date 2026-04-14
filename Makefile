@@ -19,6 +19,18 @@ CFLAGS += -I. -include compat_port.h
 
 LDFLAGS ?= -lhpdf -lz -lpng -lm
 
+# Platform-specific audio flags required by miniaudio
+ifeq ($(OS),Windows_NT)
+  AUDIO_LDFLAGS :=
+else
+  UNAME_S := $(shell uname -s)
+  ifeq ($(UNAME_S),Darwin)
+    AUDIO_LDFLAGS := -framework CoreAudio -framework AudioToolbox -framework CoreFoundation
+  else
+    AUDIO_LDFLAGS := -lpthread -ldl
+  endif
+endif
+
 SRC = \
   analisis.c \
   bienestar.c \
@@ -65,7 +77,8 @@ SRC = \
   dashboard.c \
   busqueda.c \
   calendario.c \
-  atajos.c
+  atajos.c \
+  musica.c
 
 OUT = MiFutbolC
 
@@ -74,7 +87,7 @@ OUT = MiFutbolC
 all: $(OUT)
 
 $(OUT): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) -o $(OUT)
+	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) $(AUDIO_LDFLAGS) -o $(OUT)
 
 run: $(OUT)
 	./$(OUT)
