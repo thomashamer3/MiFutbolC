@@ -76,6 +76,12 @@
 /* ---- Playlists ---- */
 #define MAX_PLAYLIST_NAME  128
 
+#ifdef MA_HAS_VORBIS
+#define AUDIO_FORMATOS_TEXTO ".mp3, .wav, .flac, .ogg"
+#else
+#define AUDIO_FORMATOS_TEXTO ".mp3, .wav, .flac"
+#endif
+
 /* ---- Tipos ---- */
 typedef enum
 {
@@ -135,17 +141,58 @@ static void dormir_ms(unsigned int ms)
 #endif
 }
 
-/** Verifica si la extension de un nombre de archivo es .mp3 (sin distincion de caso) */
-static int es_mp3(const char *nombre)
+/** Retorna puntero a la extension (incluye '.') o NULL si no hay extension valida */
+static const char *obtener_extension_archivo(const char *nombre)
 {
-    size_t len = strlen_s(nombre, MAX_NOMBRE);
-    if (len < 5)
-        return 0; /* At least "x.mp3" */
-    const char *ext = nombre + len - 4;
-    return (tolower((unsigned char)ext[0]) == '.' &&
-            tolower((unsigned char)ext[1]) == 'm' &&
-            tolower((unsigned char)ext[2]) == 'p' &&
-            tolower((unsigned char)ext[3]) == '3');
+    if (!nombre || nombre[0] == '\0')
+        return NULL;
+
+    const char *p = nombre;
+    const char *ultimo_punto = NULL;
+    while (*p)
+    {
+        if (*p == '/' || *p == '\\')
+            ultimo_punto = NULL; /* Reiniciar al cruzar directorios */
+        else if (*p == '.')
+            ultimo_punto = p;
+        p++;
+    }
+
+    if (!ultimo_punto || ultimo_punto[1] == '\0')
+        return NULL;
+    return ultimo_punto;
+}
+
+static int extension_igual_ci(const char *ext, const char *ref)
+{
+    while (*ext && *ref)
+    {
+        if (tolower((unsigned char)*ext) != tolower((unsigned char)*ref))
+            return 0;
+        ext++;
+        ref++;
+    }
+    return (*ext == '\0' && *ref == '\0');
+}
+
+/** Verifica si la extension del nombre es de un formato soportado por miniaudio */
+static int es_audio_soportado(const char *nombre)
+{
+    const char *ext = obtener_extension_archivo(nombre);
+    if (!ext)
+        return 0;
+
+    if (extension_igual_ci(ext, ".mp3") ||
+            extension_igual_ci(ext, ".wav") ||
+            extension_igual_ci(ext, ".flac"))
+        return 1;
+
+#ifdef MA_HAS_VORBIS
+    if (extension_igual_ci(ext, ".ogg"))
+        return 1;
+#endif
+
+    return 0;
 }
 
 /** Crea la carpeta "Musica" si no existe */
@@ -167,7 +214,7 @@ static void escanear_directorio(void)
 
 #ifdef _WIN32
     char patron[MAX_RUTA];
-    snprintf(patron, sizeof(patron), "%s\\*.mp3", MUSICA_DIR);
+    snprintf(patron, sizeof(patron), "%s\\*", MUSICA_DIR);
 
     WIN32_FIND_DATAA fd;
     HANDLE hFind = FindFirstFileA(patron, &fd);
@@ -180,7 +227,7 @@ static void escanear_directorio(void)
             break;
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             continue;
-        if (!es_mp3(fd.cFileName))
+        if (!es_audio_soportado(fd.cFileName))
             continue;
 
         snprintf(g_pistas[g_num_pistas].nombre,
@@ -200,7 +247,7 @@ static void escanear_directorio(void)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && g_num_pistas < MAX_PISTAS)
     {
-        if (!es_mp3(entry->d_name))
+        if (!es_audio_soportado(entry->d_name))
             continue;
         snprintf(g_pistas[g_num_pistas].nombre,
                  MAX_NOMBRE, "%s", entry->d_name);
@@ -631,7 +678,7 @@ static void dibujar_reproductor(void)
     for (int i = 0; i < 50; i++) ui_printf("%s", linea);
     ui_printf("\n");
     ui_printf("  Carpeta : %s/\n", MUSICA_DIR);
-    ui_printf("  Pistas  : %d archivo(s) MP3\n", g_num_pistas);
+    ui_printf("  Pistas  : %d archivo(s) de audio\n", g_num_pistas);
     ui_printf("\n");
 
     dibujar_pista_actual(unicode, flechaP, pausa, stop);
@@ -647,8 +694,9 @@ static void mostrar_lista_pistas(void)
 
     if (g_num_pistas == 0)
     {
-        ui_printf("  No se encontraron archivos MP3 en '%s/'.\n\n", MUSICA_DIR);
-        ui_printf("  Coloque sus archivos .mp3 dentro de la carpeta '%s/'\n", MUSICA_DIR);
+        ui_printf("  No se encontraron archivos de audio en '%s/'.\n\n", MUSICA_DIR);
+        ui_printf("  Formatos compatibles: %s\n", AUDIO_FORMATOS_TEXTO);
+        ui_printf("  Coloque sus archivos de audio dentro de la carpeta '%s/'\n", MUSICA_DIR);
         ui_printf("  y presione [9] para actualizar la lista.\n\n");
         pause_console();
         return;
@@ -677,10 +725,10 @@ static void mostrar_lista_pistas(void)
  * ============================================================ */
 
 /**
- * Copia un archivo MP3 desde una ruta arbitraria a la carpeta Musica/.
+ * Copia un archivo de audio desde una ruta arbitraria a la carpeta Musica/.
  * Retorna 1 si se copio correctamente, 0 si hubo error.
  */
-static int copiar_archivo_mp3(const char *ruta_origen, const char *nombre_destino)
+static int copiar_archivo_audio(const char *ruta_origen, const char *nombre_destino)
 {
     crear_dir_musica();
 
@@ -746,13 +794,14 @@ static const char *basename_portable(const char *ruta)
     return ultimo;
 }
 
-/** Submenu: el usuario introduce la ruta de un MP3 y lo copia a Musica/ */
+/** Submenu: el usuario introduce la ruta de un audio y lo copia a Musica/ */
 static void agregar_cancion_menu(void)
 {
     clear_screen();
     print_header("Agregar Cancion a la Carpeta de Musica");
 
-    ui_printf("  Introduzca la ruta completa del archivo MP3 que desea agregar.\n");
+    ui_printf("  Introduzca la ruta completa del archivo de audio que desea agregar.\n");
+    ui_printf("  Formatos compatibles: %s\n", AUDIO_FORMATOS_TEXTO);
     ui_printf("  Ejemplo Windows: C:\\Musica\\MiCancion.mp3\n");
     ui_printf("  Ejemplo Linux  : /home/user/Musica/MiCancion.mp3\n\n");
     ui_printf("  (Ingrese 0 para cancelar)\n\n");
@@ -767,9 +816,9 @@ static void agregar_cancion_menu(void)
         return;
     }
 
-    if (!es_mp3(ruta))
+    if (!es_audio_soportado(ruta))
     {
-        ui_printf("  Error: el archivo no tiene extension .mp3\n");
+        ui_printf("  Error: formato no soportado. Use %s\n", AUDIO_FORMATOS_TEXTO);
         pause_console();
         return;
     }
@@ -789,7 +838,7 @@ static void agregar_cancion_menu(void)
 
     /* Permitir nombre personalizado */
     ui_printf("\n  Nombre actual del archivo: %s\n", nombre_auto);
-    ui_printf("  Ingrese un nombre nuevo (con .mp3) o Enter para conservar el actual:\n");
+    ui_printf("  Ingrese un nombre nuevo (mantenga extension) o Enter para conservar el actual:\n");
 
     char nombre_nuevo[MAX_NOMBRE] = {0};
     input_string("  Nombre: ", nombre_nuevo, (int)sizeof(nombre_nuevo));
@@ -799,17 +848,33 @@ static void agregar_cancion_menu(void)
         nombre_final = nombre_auto;
     else
     {
-        /* Asegurarse de que termina en .mp3 */
-        if (!es_mp3(nombre_nuevo))
+        /* Si no tiene extension, reutiliza la extension del archivo origen */
+        const char *ext_nuevo = obtener_extension_archivo(nombre_nuevo);
+        if (!ext_nuevo)
         {
+            const char *ext_auto = obtener_extension_archivo(nombre_auto);
+            size_t ext_len = ext_auto ? strlen_s(ext_auto, MAX_NOMBRE) : 0;
             size_t ln = strlen_s(nombre_nuevo, sizeof(nombre_nuevo));
-            if (ln + 4 < sizeof(nombre_nuevo))
-                strcat_s(nombre_nuevo, sizeof(nombre_nuevo), ".mp3");
+            if (!ext_auto || ext_len == 0 || ln + ext_len >= sizeof(nombre_nuevo))
+            {
+                ui_printf("  Error: nombre demasiado largo o extension invalida.\n");
+                pause_console();
+                return;
+            }
+            strcat_s(nombre_nuevo, sizeof(nombre_nuevo), ext_auto);
         }
+
+        if (!es_audio_soportado(nombre_nuevo))
+        {
+            ui_printf("  Error: formato no soportado. Use %s\n", AUDIO_FORMATOS_TEXTO);
+            pause_console();
+            return;
+        }
+
         nombre_final = nombre_nuevo;
     }
 
-    if (copiar_archivo_mp3(ruta, nombre_final))
+    if (copiar_archivo_audio(ruta, nombre_final))
     {
         ui_printf("\n  Cancion agregada correctamente: %s\n", nombre_final);
         ui_printf("  Use [9] Actualizar Lista para verla en el reproductor.\n");
@@ -1168,7 +1233,7 @@ static int cargar_nombres_playlist(const char *nombre_txt,
 
         if (linea[0] == '\0' || linea[0] == '#')
             continue;
-        if (!es_mp3(linea))
+        if (!es_audio_soportado(linea))
             continue;
 
         strncpy_s(nombres[n], MAX_NOMBRE, linea, _TRUNCATE);
@@ -1491,23 +1556,23 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         if (linea[0] == '#' || linea[0] == '\0')
             continue; /* Comentarios y lineas vacias */
 
-        if (!es_mp3(linea))
+        if (!es_audio_soportado(linea))
             continue;
 
         /* Verificar que el archivo exista */
-        char ruta_mp3[MAX_RUTA];
+        char ruta_audio[MAX_RUTA];
 #ifdef _WIN32
-        snprintf(ruta_mp3, sizeof(ruta_mp3), "%s\\%s", MUSICA_DIR, linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s\\%s", MUSICA_DIR, linea);
 #else
-        snprintf(ruta_mp3, sizeof(ruta_mp3), "%s/%s", MUSICA_DIR, linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s/%s", MUSICA_DIR, linea);
 #endif
         FILE *chk = NULL;
-        FOPEN_PORTABLE(chk, ruta_mp3, "rb");
+        FOPEN_PORTABLE(chk, ruta_audio, "rb");
         if (!chk) continue;
         fclose(chk);
 
         snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%s", linea);
-        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%s", ruta_mp3);
+        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%s", ruta_audio);
         cargadas++;
     }
     fclose(f);
@@ -1711,6 +1776,11 @@ void musica_cleanup(void)
 
     g_estado = ESTADO_DETENIDO;
     g_pista_actual = -1;
+}
+
+void musica_asegurar_directorio(void)
+{
+    crear_dir_musica();
 }
 
 void musica_iniciar_automatica(void)

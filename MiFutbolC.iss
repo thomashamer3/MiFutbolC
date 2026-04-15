@@ -55,6 +55,7 @@ Source: "MiFutbolC.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Musica\*"; DestDir: "{app}\Musica"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; ================================
 ; DIRECTORIOS
@@ -62,6 +63,7 @@ Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 Name: "{localappdata}\MiFutbolC\data"
+Name: "{app}\Musica"
 
 ; ================================
 ; ACCESOS DIRECTOS

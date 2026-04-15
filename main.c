@@ -92,6 +92,8 @@ int main()
     }
 
     initialize_application();
+    musica_asegurar_directorio();
+
     if (settings_get_music_autoplay())
     {
         musica_iniciar_automatica();

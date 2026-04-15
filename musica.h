@@ -2,7 +2,7 @@
  * @file musica.h
  * @brief Reproductor de musica integrado para MiFutbolC
  *
- * Proporciona reproduccion de pistas MP3 mediante miniaudio.
+ * Proporciona reproduccion de pistas de audio mediante miniaudio.
  * Soporta lista de reproduccion, pausa, volumen y modos de repeticion.
  */
 
@@ -10,10 +10,18 @@
 #define MUSICA_H
 
 /**
+ * @brief Garantiza que exista la carpeta "Musica/".
+ *
+ * Si no existe al iniciar la aplicacion, la crea vacia para que el usuario
+ * pueda copiar sus archivos de audio.
+ */
+void musica_asegurar_directorio(void);
+
+/**
  * @brief Abre el menu del reproductor de musica.
  *
  * Inicializa el motor de audio en la primera llamada, escanea la
- * carpeta "Musica/" en busca de archivos .mp3 y presenta la interfaz
+ * carpeta "Musica/" en busca de archivos compatibles y presenta la interfaz
  * interactiva de reproduccion.
  */
 void menu_musica(void);
@@ -21,8 +29,8 @@ void menu_musica(void);
 /**
  * @brief Inicia musica automaticamente al arranque de la aplicacion.
  *
- * Si hay archivos MP3 en "Musica/", inicia reproduccion de la primera pista
- * sin mostrar el menu interactivo.
+ * Si hay archivos de audio en "Musica/", inicia reproduccion de la primera
+ * pista sin mostrar el menu interactivo.
  */
 void musica_iniciar_automatica(void);
 
