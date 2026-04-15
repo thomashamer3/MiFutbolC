@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1776139835 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1776276309 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"menu.h"
 	"utils.h"
 	"settings.h"
@@ -2498,7 +2498,7 @@
 
 1776276309 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1776273655 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1776276309 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
 	"musica.h"
 	"utils.h"
