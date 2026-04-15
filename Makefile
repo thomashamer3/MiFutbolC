@@ -78,7 +78,8 @@ SRC = \
   busqueda.c \
   calendario.c \
   atajos.c \
-  musica.c
+  musica.c \
+  recordatorios.c
 
 OUT = MiFutbolC
 

@@ -6,6 +6,7 @@
 #include "musica.h"
 #include "utils.h"
 #include "settings.h"
+#include "ascii_art.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -603,6 +604,7 @@ static void dibujar_opciones_reproductor(const char *linea)
 static void dibujar_reproductor(void)
 {
     clear_screen();
+    print_header("MUSICA");
 
     int unicode = consola_soporta_unicode();
     const char *linea   = unicode ? "\u2550" : "=";

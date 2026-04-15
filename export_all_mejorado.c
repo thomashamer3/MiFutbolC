@@ -76,10 +76,11 @@ void exportar_todo_mejorado()
 void menu_exportar_mejorado()
 {
     MenuItem items[] =
-        {
-            {1, "Camisetas con Analisis Avanzado", exportar_camisetas_todo_mejorado},
-            {2, "Lesiones con Analisis de Impacto", exportar_lesiones_todo_mejorado},
-            {3, "Todo con Analisis Avanzado", exportar_todo_mejorado},
-            {0, "Volver", NULL}};
+    {
+        {1, "Camisetas con Analisis Avanzado", exportar_camisetas_todo_mejorado},
+        {2, "Lesiones con Analisis de Impacto", exportar_lesiones_todo_mejorado},
+        {3, "Todo con Analisis Avanzado", exportar_todo_mejorado},
+        {0, "Volver", NULL}
+    };
     ejecutar_menu("EXPORTAR DATOS MEJORADOS", items, 4);
 }

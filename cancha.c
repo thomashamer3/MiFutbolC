@@ -19,6 +19,8 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
+static void listar_canchas_simple(void);
+
 static int abrir_imagen_en_sistema(const char *ruta)
 {
     if (!ruta || ruta[0] == '\0')
@@ -109,7 +111,7 @@ void cargar_imagen_cancha()
         return;
     }
 
-    listar_canchas();
+    listar_canchas_simple();
     int id = input_int("\nID de cancha (0 para cancelar): ");
     if (id == 0)
     {
@@ -142,7 +144,7 @@ void ver_imagen_cancha()
         return;
     }
 
-    listar_canchas();
+    listar_canchas_simple();
     int id = input_int("\nID de cancha (0 para cancelar): ");
     if (id == 0)
     {
@@ -219,8 +221,77 @@ void crear_cancha()
 
 void listar_canchas()
 {
+    clear_screen();
+    print_header("LISTADO DE CANCHAS");
     app_log_event("CANCHA", "Listado de canchas consultado");
-    listar_entidades("cancha", "LISTADO DE CANCHAS", "No hay canchas cargadas.");
+
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT c.id, c.nombre, "
+        "COUNT(p.id), "
+        "IFNULL(SUM(p.goles), 0), "
+        "IFNULL(SUM(p.asistencias), 0) "
+        "FROM cancha c "
+        "LEFT JOIN partido p ON c.id = p.cancha_id "
+        "GROUP BY c.id, c.nombre "
+        "ORDER BY c.id;";
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    int usar_unicode = consola_soporta_unicode();
+    const char *sep = usar_unicode ? " \u2502 " : " | ";
+
+    int hay = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id          = sqlite3_column_int(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 1);
+        int partidos    = sqlite3_column_int(stmt, 2);
+        int goles       = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+
+        ui_printf_centered_line("%2d - %-30s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
+                                id, nom, sep,
+                                partidos, sep,
+                                goles, sep,
+                                asistencias);
+        hay = 1;
+    }
+
+    if (!hay)
+        mostrar_no_hay_registros("canchas cargadas");
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void listar_canchas_simple()
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM cancha ORDER BY id"))
+    {
+        printf("Error al consultar la base de datos.\n");
+        return;
+    }
+
+    int hay = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        ui_printf_centered_line("%d - %s",
+                                sqlite3_column_int(stmt, 0),
+                                sqlite3_column_text(stmt, 1));
+        hay = 1;
+    }
+
+    if (!hay)
+        mostrar_no_hay_registros("canchas cargadas");
+
+    sqlite3_finalize(stmt);
 }
 
 void eliminar_cancha()
@@ -234,7 +305,7 @@ void eliminar_cancha()
         return;
     }
 
-    listar_canchas();
+    listar_canchas_simple();
     printf("\n");
 
     int id = input_int("ID Cancha a Eliminar (0 para cancelar): ");
@@ -274,7 +345,7 @@ void modificar_cancha()
         return;
     }
 
-    listar_canchas();
+    listar_canchas_simple();
     printf("\n");
 
     int id = input_int("ID Cancha a Modificar (0 para cancelar): ");

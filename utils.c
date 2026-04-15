@@ -1182,7 +1182,11 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         {ASCII_TEMPORADA, "TEMPORADA", "SEASON"},
         {ASCII_RECORDATORIOS, "RECORDATORIOS", NULL},
         {ASCII_COLECCIONES, "COLECCIONES", NULL},
-        {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL}
+        {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL},
+        {ASCII_CARRERA, "CARRERA", NULL},
+        {ASCII_DASHBOARD, "DASHBOARD", NULL},
+        {ASCII_CALENDARIO, "CALENDARIO", NULL},
+        {ASCII_MUSICA, "MUSICA", NULL}
     };
 
     for (size_t i = 0; i < sizeof(rules) / sizeof(rules[0]); i++)

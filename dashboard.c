@@ -2,6 +2,8 @@
 #include "db.h"
 #include "utils.h"
 #include "settings.h"
+#include "logros.h"
+#include "ascii_art.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -190,48 +192,8 @@ int obtener_balance_mes_actual()
 
 int obtener_progreso_logros(int *total_logros)
 {
-    // Simulación: calcular basado en estadísticas reales
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT COUNT(*) FROM partido;";
-
-    int partidos = 0;
-
-    if (preparar_stmt(sql, &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            partidos = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    // Total de logros definidos (simplificado)
-    *total_logros = 50;
-
-    // Logros completados estimados (basado en partidos jugados)
-    int completados = 0;
-    if (partidos >= 1) completados += 1;   // Primer partido
-    if (partidos >= 10) completados += 1;  // 10 partidos
-    if (partidos >= 25) completados += 1;  // 25 partidos
-    if (partidos >= 50) completados += 1;  // 50 partidos
-    if (partidos >= 100) completados += 1; // 100 partidos
-
-    // Verificar goles
-    const char *sql_goles = "SELECT SUM(goles) FROM partido;";
-    if (preparar_stmt(sql_goles, &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            int goles = sqlite3_column_int(stmt, 0);
-            if (goles >= 10) completados += 1;
-            if (goles >= 50) completados += 1;
-            if (goles >= 100) completados += 1;
-            if (goles >= 200) completados += 1;
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    return completados;
+    *total_logros = logros_get_total();
+    return logros_get_completados_primera_camiseta();
 }
 
 typedef struct dashboard_view_data_t
@@ -366,6 +328,7 @@ static void imprimir_dashboard_ascii(const dashboard_view_data_t *data)
 void mostrar_dashboard()
 {
     clear_screen();
+    print_header("DASHBOARD - MiFutbolC");
 
     int usar_unicode = consola_soporta_unicode();
 

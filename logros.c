@@ -474,3 +474,42 @@ void menu_logros()
 
     ejecutar_menu("LOGROS", items, 5);
 }
+
+int logros_get_total(void)
+{
+    return (int)NUM_LOGROS;
+}
+
+int logros_get_completados_primera_camiseta(void)
+{
+    sqlite3_stmt *stmt;
+    int camiseta_id = -1;
+
+    if (preparar_stmt(
+                "SELECT camiseta_id FROM partido "
+                "GROUP BY camiseta_id ORDER BY COUNT(*) DESC LIMIT 1;",
+                &stmt))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            camiseta_id = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (camiseta_id < 0)
+    {
+        return 0;
+    }
+
+    int completados = 0;
+    for (size_t i = 0; i < NUM_LOGROS; i++)
+    {
+        int progreso = 0;
+        if (obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso) == 2)
+        {
+            completados++;
+        }
+    }
+    return completados;
+}

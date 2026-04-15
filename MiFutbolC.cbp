@@ -14,6 +14,7 @@
 				<Compiler>
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-flto" />
+					<Add option="-O" />
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-std=c23" />
@@ -26,7 +27,6 @@
 					<Add directory="C:/msys64/mingw64/include" />
 				</Compiler>
 				<Linker>
-					<Add option="-O2" />
 					<Add option="-flto" />
 					<Add option="-s" />
 					<Add option="-static-libstdc++" />
@@ -80,22 +80,30 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="analisis.h" />
+		<Unit filename="atajos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="atajos.h" />
 		<Unit filename="bienestar.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="bienestar.h" />
+		<Unit filename="busqueda.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="busqueda.h" />
 		<Unit filename="cJSON.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="cJSON.h" />
+		<Unit filename="calendario.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="calendario.h" />
 		<Unit filename="camiseta.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="camiseta.h" />
-		<Unit filename="colecciones.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="colecciones.h" />
 		<Unit filename="cancha.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -104,24 +112,16 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="carrera.h" />
+		<Unit filename="colecciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="colecciones.h" />
+		<Unit filename="compat_port.h" />
+		<Unit filename="compat_windows.h" />
 		<Unit filename="dashboard.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="dashboard.h" />
-		<Unit filename="busqueda.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="busqueda.h" />
-		<Unit filename="calendario.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="calendario.h" />
-		<Unit filename="atajos.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="atajos.h" />
-		<Unit filename="compat_port.h" />
-		<Unit filename="compat_windows.h" />
 		<Unit filename="db.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -230,11 +230,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="menu.h" />
+		<Unit filename="models.h" />
 		<Unit filename="musica.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="musica.h" />
-		<Unit filename="models.h" />
 		<Unit filename="partido.c">
 			<Option compilerVar="CC" />
 		</Unit>

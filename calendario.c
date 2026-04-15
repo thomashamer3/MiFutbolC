@@ -2,6 +2,7 @@
 #include "db.h"
 #include "utils.h"
 #include "settings.h"
+#include "ascii_art.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -263,7 +264,7 @@ static void imprimir_encabezado_calendario_mes(int usar_unicode,
         printf("╔══════════════════════════════════════════════════════════════╗\n");
         printf("║              %s %d%-35s║\n", nombre_mes, anio, "");
         printf("╠══════════════════════════════════════════════════════════════╣\n");
-        printf("║   L   M   M   J   V   S   D                                  ║\n");
+        printf("║  L    M    M    J    V    S    D                             ║\n");
         printf("╟──────────────────────────────────────────────────────────────╢\n");
         return;
     }
@@ -271,7 +272,7 @@ static void imprimir_encabezado_calendario_mes(int usar_unicode,
     printf("+--------------------------------------------------------------+\n");
     printf("|              %s %d%-35s|\n", nombre_mes, anio, "");
     printf("+--------------------------------------------------------------+\n");
-    printf("|   L   M   M   J   V   S   D                                  |\n");
+    printf("|  L    M    M    J    V    S    D                             |\n");
     printf("|--------------------------------------------------------------|\n");
 }
 
@@ -287,11 +288,11 @@ static void imprimir_celda_dia(int dia, const char *icono, int es_hoy)
 {
     if (es_hoy)
     {
-        printf(" [%2d%s]", dia, icono);
+        printf("[%2d%s]", dia, icono);
     }
     else
     {
-        printf("  %2d%s ", dia, icono);
+        printf(" %2d%s ", dia, icono);
     }
 }
 
@@ -327,6 +328,7 @@ static void imprimir_pie_calendario_mes(int usar_unicode)
 void mostrar_calendario_mes(int mes, int anio)
 {
     clear_screen();
+    print_header("CALENDARIO");
     int usar_unicode = consola_soporta_unicode();
 
     const char *nombres_meses[] =

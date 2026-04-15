@@ -40,4 +40,24 @@ void mostrar_logros_completados();
  */
 void mostrar_logros_en_progreso();
 
+/**
+ * @brief Muestra los logros no completados
+ *
+ * Lista los logros que no han sido completados por ninguna camiseta.
+ */
+void mostrar_logros_no_completados();
+
+/**
+ * @brief Retorna el numero total de logros definidos en el sistema
+ */
+int logros_get_total(void);
+
+/**
+ * @brief Retorna cuantos logros ha completado la camiseta con mas partidos
+ *
+ * Se usa en el dashboard para mostrar un progreso representativo.
+ * Devuelve 0 si no hay partidos registrados.
+ */
+int logros_get_completados_primera_camiseta(void);
+
 #endif

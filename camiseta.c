@@ -527,6 +527,51 @@ static int cargar_imagen_para_camiseta_id(int id)
     return app_cargar_imagen_entidad(id, "camiseta", "mifutbol_imagen_sel.txt");
 }
 
+static void listar_camisetas_con_stats()
+{
+    sqlite3_stmt *stmt;
+    const char *sql =
+        "SELECT c.id, c.nombre, "
+        "COUNT(p.id), "
+        "IFNULL(SUM(p.goles), 0), "
+        "IFNULL(SUM(p.asistencias), 0) "
+        "FROM camiseta c "
+        "LEFT JOIN partido p ON c.id = p.camiseta_id "
+        "GROUP BY c.id, c.nombre "
+        "ORDER BY c.id;";
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        return;
+    }
+
+    int usar_unicode = consola_soporta_unicode();
+    const char *sep = usar_unicode ? " \u2502 " : " | ";
+
+    int hay = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int id          = sqlite3_column_int(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 1);
+        int partidos    = sqlite3_column_int(stmt, 2);
+        int goles       = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+
+        ui_printf_centered_line("%2d - %-30s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
+                                id, nom, sep,
+                                partidos, sep,
+                                goles, sep,
+                                asistencias);
+        hay = 1;
+    }
+
+    if (!hay)
+        mostrar_no_hay_registros("camisetas cargadas");
+
+    sqlite3_finalize(stmt);
+}
+
 void listar_camisetas()
 {
     clear_screen();
@@ -534,7 +579,7 @@ void listar_camisetas()
 
     app_log_event("CAMISETA", "Listado de camisetas consultado");
 
-    listar_camisetas_simple();
+    listar_camisetas_con_stats();
     pause_console();
 }
 
