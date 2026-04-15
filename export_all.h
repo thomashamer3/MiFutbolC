@@ -21,23 +21,6 @@
  * las funciones de exportación del sistema. Este menú permite a los usuarios
  * seleccionar qué categorías de datos exportar y en qué formato.
  *
- * @details La función implementa un sistema de menú jerárquico que organiza las opciones
- *          de exportación en categorías lógicas:
- *          - Datos básicos: camisetas, partidos, lesiones
- *          - Estadísticas: básicas, generales, por periodo
- *          - Análisis: avanzados y específicos
- *          - Exportación completa: todos los datos disponibles
- *
- * @note Los archivos generados se guardan en el directorio 'data/' del proyecto
- * @warning Esta operación puede consumir tiempo y recursos significativos dependiendo
- *          de la cantidad de datos, especialmente al exportar todos los datos disponibles.
- *
- * @see exportar_camisetas_todo()
- * @see exportar_partidos_todo()
- * @see exportar_lesiones_todo()
- * @see exportar_estadisticas_todo()
- * @see exportar_analisis_todo()
- * @see exportar_todo()
  */
 void menu_exportar();
 

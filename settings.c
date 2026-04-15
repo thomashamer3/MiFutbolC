@@ -1751,7 +1751,7 @@ void menu_settings()
         {7, get_text("settings_mode"), menu_mode_settings},
         {8, get_text("menu_exportar"), menu_exportar},
         {9, get_text("menu_importar"), menu_importar},
-        {10, "Busqueda Global", abrir_busqueda_global_desde_settings},
+        {10, "Busqueda Global", &abrir_busqueda_global_desde_settings},
         {11, get_text("menu_update"), menu_update},
         {12, get_text("settings_music_autoplay"), toggle_music_autoplay_setting},
         {0, get_text("menu_back"), NULL}

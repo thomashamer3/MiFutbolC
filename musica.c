@@ -12,6 +12,17 @@
 #include <string.h>
 #include <ctype.h>
 
+/* Wrapper portable de fopen: usa fopen_s en MSVC, fopen en GCC/MinGW */
+#ifdef _MSC_VER
+#  define FOPEN_PORTABLE(fp, path, mode)                    \
+    do {                                                    \
+        if (fopen_s(&(fp), (path), (mode)) != 0) (fp) = NULL; \
+    } while (0)
+#else
+#  define FOPEN_PORTABLE(fp, path, mode) \
+    do { (fp) = fopen((path), (mode)); } while (0)
+#endif
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -696,13 +707,15 @@ static int copiar_archivo_mp3(const char *ruta_origen, const char *nombre_destin
         return 0;
     }
 #else
-    FILE *src = fopen(ruta_origen, "rb");
+    FILE *src = NULL;
+    FOPEN_PORTABLE(src, ruta_origen, "rb");
     if (!src)
     {
         ui_printf("  Error: no se pudo abrir el archivo origen.\n");
         return 0;
     }
-    FILE *dst = fopen(ruta_destino, "wb");
+    FILE *dst = NULL;
+    FOPEN_PORTABLE(dst, ruta_destino, "wb");
     if (!dst)
     {
         fclose(src);
@@ -762,7 +775,8 @@ static void agregar_cancion_menu(void)
     }
 
     /* Verificar que el archivo existe */
-    FILE *f = fopen(ruta, "rb");
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "rb");
     if (!f)
     {
         ui_printf("  Error: no se encontro el archivo:\n  %s\n", ruta);
@@ -1120,7 +1134,8 @@ static int guardar_nombres_playlist(const char *nombre_txt,
     char ruta[MAX_RUTA * 2];
     construir_ruta_playlist(nombre_txt, ruta, sizeof(ruta));
 
-    FILE *f = fopen(ruta, "w");
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "w");
     if (!f)
         return 0;
 
@@ -1138,7 +1153,8 @@ static int cargar_nombres_playlist(const char *nombre_txt,
     char ruta[MAX_RUTA * 2];
     construir_ruta_playlist(nombre_txt, ruta, sizeof(ruta));
 
-    FILE *f = fopen(ruta, "r");
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "r");
     if (!f)
         return -1;
 
@@ -1441,7 +1457,8 @@ static void cargar_playlist_archivo(const char *nombre_txt)
     snprintf(ruta, sizeof(ruta), "%s/%s", MUSICA_DIR, nombre_txt);
 #endif
 
-    FILE *f = fopen(ruta, "r");
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "r");
     if (!f)
     {
         ui_printf("  Error: no se pudo abrir la playlist '%s'.\n", nombre_txt);
@@ -1484,7 +1501,8 @@ static void cargar_playlist_archivo(const char *nombre_txt)
 #else
         snprintf(ruta_mp3, sizeof(ruta_mp3), "%s/%s", MUSICA_DIR, linea);
 #endif
-        FILE *chk = fopen(ruta_mp3, "rb");
+        FILE *chk = NULL;
+        FOPEN_PORTABLE(chk, ruta_mp3, "rb");
         if (!chk) continue;
         fclose(chk);
 

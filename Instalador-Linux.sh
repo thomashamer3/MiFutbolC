@@ -21,6 +21,7 @@ STRIP_BINARY=0
 INSTALL_PATH_MODE="${INSTALL_PATH_MODE:-user}"
 INSTALL_MODE_SYSTEM="system"
 OS_NAME="$(uname -s)"
+OS_DARWIN="Darwin"
 INSTALL_IMAGE_TOOLS="${INSTALL_IMAGE_TOOLS:-1}"
 OPTIONAL_IMAGE_TOOLS_PARTIAL_INSTALL_WARNING="Aviso: no se pudieron instalar todas las herramientas opcionales."
 OPTIONAL_IMAGE_TOOLS_INSTALL_SUCCESS="Herramientas opcionales instaladas correctamente."
@@ -124,7 +125,7 @@ LDFLAGS="${LDFLAGS:-}"
 
 # Platform-specific audio flags required by miniaudio
 AUDIO_LDFLAGS=""
-if [[ "${OS_NAME}" = "Darwin" ]]; then
+if [[ "${OS_NAME}" = "${OS_DARWIN}" ]]; then
   AUDIO_LDFLAGS="-framework CoreAudio -framework AudioToolbox -framework CoreFoundation"
 else
   AUDIO_LDFLAGS="-lpthread -ldl"
@@ -153,7 +154,7 @@ check_deps() {
   printf "\nMissing build dependencies: %s\n" "${missing[*]}"
 
   # Try installing dependencies with the current distro's package manager
-  if [[ "${OS_NAME}" = "Darwin" ]] && command -v brew >/dev/null 2>&1; then
+  if [[ "${OS_NAME}" = "${OS_DARWIN}" ]] && command -v brew >/dev/null 2>&1; then
     echo "Attempting to install dependencies via Homebrew..."
     brew update
     brew install libharu zlib libpng pkg-config
@@ -351,7 +352,7 @@ install_optional_image_tools() {
     return 0
   fi
 
-  if [[ "${OS_NAME}" = "Darwin" ]]; then
+  if [[ "${OS_NAME}" = "${OS_DARWIN}" ]]; then
     if command -v brew >/dev/null 2>&1; then
       echo "Instalando herramientas opcionales en macOS (chafa)..."
       if brew install chafa; then
@@ -532,7 +533,7 @@ fi
 if command -v ldd >/dev/null 2>&1; then
   printf "\nShared library dependencies (ldd):\n"
   ldd "$OUT"
-elif [[ "${OS_NAME}" = "Darwin" ]] && command -v otool >/dev/null 2>&1; then
+elif [[ "${OS_NAME}" = "${OS_DARWIN}" ]] && command -v otool >/dev/null 2>&1; then
   printf "\nShared library dependencies (otool -L):\n"
   otool -L "$OUT"
 fi

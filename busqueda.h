@@ -52,8 +52,6 @@ int buscar_en_canchas(const char *termino);
 /**
  * @brief Busca un término en todas las tablas
  *
- * Realiza búsqueda comprehensiva en todo el sistema.
- *
  * @param termino Término de búsqueda
  */
 void buscar_global(const char *termino);

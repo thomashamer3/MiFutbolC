@@ -21,14 +21,6 @@
  * opciones de exportación mejorada. Este menú sirve como punto de entrada principal
  * para todas las funciones de exportación avanzada del sistema.
  *
- * @details La función implementa un sistema de menú interactivo que presenta opciones
- *          para exportar diferentes categorías de datos con análisis avanzado. No toma
- *          parámetros ni devuelve valores, ya que su propósito es únicamente presentar
- *          opciones y delegar el control a las funciones específicas.
- *
- * @see exportar_camisetas_todo_mejorado()
- * @see exportar_lesiones_todo_mejorado()
- * @see exportar_todo_mejorado()
  */
 void menu_exportar_mejorado();
 
@@ -75,19 +67,7 @@ void exportar_lesiones_todo_mejorado();
  * en todos los formatos disponibles, incluyendo tanto las versiones mejoradas con análisis
  * avanzado como las versiones originales para mantener compatibilidad.
  *
- * @details Esta función maestra:
- * - Exporta datos mejorados con análisis avanzado para toma de decisiones
- * - Exporta datos originales para compatibilidad con versiones anteriores
- * - Genera archivos en múltiples formatos (CSV, TXT, JSON, HTML)
- * - Proporciona una solución integral para migraciones y análisis completos
- *
- * @warning Esta es la función más completa pero también la más lenta, ya que
- *          exporta todos los datos en todos los formatos disponibles. Se recomienda
- *          usarla solo cuando se necesiten todos los datos y formatos.
- *
- * @see exportar_camisetas_todo_mejorado()
- * @see exportar_lesiones_todo_mejorado()
  */
 void exportar_todo_mejorado();
-
-#endif
+    
+#endif /* EXPORT_ALL_MEJORADO_H */
