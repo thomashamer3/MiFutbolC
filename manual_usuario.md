@@ -166,7 +166,7 @@ El menú principal ofrece las siguientes opciones:
 16. **Recordatorios** - Gestionar recordatorios, agenda y exportación/importación del módulo
 17. **Colecciones** - Administrar ítems, colecciones y backups JSON
 18. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
-19. **Música** - Reproductor integrado de MP3 con ecualizador, playlists y control de volumen
+19. **Música** - Reproductor integrado con soporte MP3/WAV/FLAC/OGG, ecualizador 3 bandas, playlists, filtro de búsqueda, sleep timer, seek exacto, información técnica de pista, renombrar pista, exportar catálogo y paso de volumen configurable
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -810,12 +810,12 @@ Selecciona "14" en el menú principal para acceder a las herramientas de bienest
 
 Selecciona "19" en el menú principal para acceder al reproductor de música integrado.
 
-El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente los archivos `.mp3` de la carpeta `Musica/` ubicada junto al ejecutable.
+El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente los archivos de audio de la carpeta `Musica/` ubicada junto al ejecutable. Soporta los formatos `.mp3`, `.wav`, `.flac` y `.ogg`.
 
 ### Configuración Inicial
 
 1. Crea la carpeta `Musica/` junto al ejecutable (el programa la crea automáticamente si no existe).
-2. Copia tus archivos `.mp3` dentro de esa carpeta.
+2. Copia tus archivos de audio (`.mp3`, `.wav`, `.flac`, `.ogg`) dentro de esa carpeta.
 3. Abre el reproductor desde el menú principal (opción **19**).
 4. La lista de pistas se cargará automáticamente.
 
@@ -828,8 +828,8 @@ El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente lo
 | **3** | Pista anterior |
 | **4** | Pista siguiente |
 | **5** | Seleccionar una pista de la lista |
-| **6** | Subir volumen (+10 %) |
-| **7** | Bajar volumen (−10 %) |
+| **6** | Subir volumen (paso configurable, ver [24]) |
+| **7** | Bajar volumen (paso configurable, ver [24]) |
 | **8** | Cambiar modo de repetición / shuffle |
 | **9** | Actualizar lista (reescanear carpeta `Musica/`) |
 | **10** | Agregar canción a la carpeta |
@@ -837,6 +837,16 @@ El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente lo
 | **12** | Ecualizador de 3 bandas |
 | **13** | Playlists |
 | **14** | Música al iniciar (ON/OFF) |
+| **15** | Buscar pista por nombre (activa filtro) |
+| **16** | Retroceder 10 segundos |
+| **17** | Avanzar 10 segundos |
+| **18** | Limpiar filtro de búsqueda |
+| **19** | Temporizador de apagado (sleep timer) |
+| **20** | Saltar a tiempo exacto (formato MM:SS) |
+| **21** | Información técnica de la pista activa |
+| **22** | Renombrar pista |
+| **23** | Exportar catálogo como playlist |
+| **24** | Configurar paso de volumen |
 | **0** | Volver al menú principal |
 
 ### Interfaz Visual
@@ -844,10 +854,11 @@ El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente lo
 El reproductor muestra en pantalla:
 
 - **Pista actual**: nombre del archivo y posición en la lista (ej. `[2/8]`).
-- **Barra de progreso**: tiempo actual y duración total (`mm:ss / mm:ss`).
+- **Barra de progreso**: tiempo actual y duración total (`mm:ss / mm:ss`) con tiempo restante.
 - **Barra de volumen**: nivel visual de 0 % a 100 %.
 - **Estado**: `REPRODUCIENDO`, `PAUSADO` o `DETENIDO`.
 - **Modo de repetición**: Sin repetición, Repetir pista, Repetir lista o Aleatorio.
+- **Filtro activo**: muestra el término de búsqueda si hay un filtro aplicado.
 - **Estado del ecualizador**: activo/desactivado con niveles de cada banda en dB.
 - **Inicio automático**: indica si la música arrancará al abrir la aplicación.
 
@@ -860,7 +871,8 @@ El reproductor muestra en pantalla:
 | **Repetir lista** | Al terminar la última vuelve a la primera |
 | **Aleatorio (shuffle)** | Elige la siguiente pista de forma aleatoria |
 
-Pulsa la opción **8** repetidamente para ciclar entre los cuatro modos.
+Pulsa la opción **8** repetidamente para ciclar entre los cuatro modos.  
+En modo **Aleatorio**, la opción **[3] Pista anterior** retrocede por el historial de pistas ya escuchadas.
 
 ### Ecualizador (3 Bandas)
 
@@ -884,6 +896,73 @@ Accede con la opción **13**.
 - **Cargar playlist**: activa una playlist guardada como lista de reproducción.
 - **Eliminar playlist**: borra una playlist guardada.
 
+### Exportar Catálogo como Playlist (opción 23)
+
+Genera un archivo `.txt` en `Musica/` con la lista de pistas del catálogo actual.
+
+1. Selecciona **23**.
+2. Si hay un filtro de búsqueda activo, solo se exportarán las pistas que coincidan.
+3. Ingresa el nombre de la playlist (sin extensión).
+4. El archivo se guarda en la carpeta `Musica/` y puede cargarse desde **Playlists**.
+
+### Búsqueda y Filtro (opciones 15 y 18)
+
+- **[15] Buscar pista**: ingresa una parte del nombre; el reproductor filtra la lista y solo muestra coincidencias.
+- El filtro permanece activo hasta que lo limpies con **[18]** o dejes el campo vacío al buscar.
+- La lista principal, la selección de pista ([5]) y la exportación de catálogo ([23]) respetan el filtro activo.
+
+### Navegación Temporal (opciones 16, 17 y 20)
+
+- **[16] Retroceder 10 s**: salta 10 segundos hacia atrás dentro de la pista actual.
+- **[17] Avanzar 10 s**: salta 10 segundos hacia adelante.
+- **[20] Saltar a tiempo exacto**: ingresa el momento en formato `MM:SS` (ej. `1:20` para 1 min 20 s) o solo segundos (ej. `80`). El reproductor se posiciona exactamente en ese instante.
+
+### Temporizador de Apagado — Sleep Timer (opción 19)
+
+1. Selecciona **19**.
+2. Ingresa los minutos tras los cuales deseas que se detenga la reproducción.
+3. El countdown corre en segundo plano; cuando se agota, la música se detiene con fade-out suave.
+4. Selecciona **19** de nuevo y pon `0` para cancelar el temporizador.
+
+### Información de Pista Activa (opción 21)
+
+Muestra los datos técnicos de la pista que está cargada:
+
+- Nombre del archivo.
+- Duración total (`MM:SS` y frames PCM).
+- Formato (extensión del archivo).
+- Sample rate en Hz.
+- Número de canales.
+- Ruta completa en disco.
+
+### Renombrar Pista (opción 22)
+
+1. Selecciona **22**.
+2. Elige el número de la pista de la lista (la pista en reproducción no puede renombrarse; pausa primero).
+3. Ingresa el nuevo nombre **incluyendo la extensión** (ej. `Mi Cancion.mp3`).
+4. El archivo se renombra en disco y la lista se actualiza de inmediato.
+
+### Configurar Paso de Volumen (opción 24)
+
+Permite elegir cuánto sube o baja el volumen con las opciones **[6]** y **[7]**.
+
+| Opción | Paso | Descripción |
+|--------|------|-------------|
+| **1** | 1 % | Ajuste fino |
+| **2** | 5 % | Ajuste moderado |
+| **3** | 10 % | Ajuste rápido (valor por defecto) |
+| **4** | 20 % | Ajuste máximo |
+
+El paso elegido se guarda en la base de datos y persiste entre sesiones. Las etiquetas de `[6]` y `[7]` en el menú muestran dinámicamente el porcentaje activo.
+
+### Reanudar Posición Automáticamente
+
+Al salir del reproductor (opción **0**), el programa guarda automáticamente:
+- El nombre de la pista que estaba activa.
+- El instante exacto (frame PCM) donde se encontraba.
+
+La próxima vez que entres al reproductor, la pista se cargará y el cursor se posicionará donde lo dejaste. Esta función se activa una sola vez por sesión.
+
 ### Música al Iniciar
 
 La opción **14** activa o desactiva la reproducción automática al arrancar MiFutbolC.
@@ -897,7 +976,7 @@ La opción **14** activa o desactiva la reproducción automática al arrancar Mi
 #### Agregar una canción (opción 10)
 
 1. Selecciona **10** en el reproductor.
-2. Ingresa la ruta completa del archivo `.mp3` que deseas agregar.
+2. Ingresa la ruta completa del archivo de audio que deseas agregar.
 3. El programa copiará el archivo a la carpeta `Musica/`.
 4. La lista se actualizará automáticamente.
 
@@ -911,21 +990,24 @@ La opción **14** activa o desactiva la reproducción automática al arrancar Mi
 
 #### Actualizar lista (opción 9)
 
-Si agregas o eliminas archivos MP3 manualmente desde el explorador, usa la opción **9** para que el reproductor reescanee la carpeta.
+Si agregas o eliminas archivos de audio manualmente desde el explorador, usa la opción **9** para que el reproductor reescanee la carpeta.
 
 ### Preguntas Frecuentes del Reproductor
 
 **¿Qué formatos de audio soporta?**  
-Solo archivos `.mp3`. Otros formatos no serán detectados aunque se copien en la carpeta.
+`.mp3`, `.wav`, `.flac` y `.ogg` (cuando el compilador incluye soporte Vorbis). Otros formatos no serán detectados aunque se copien en la carpeta.
 
 **¿Dónde se almacenan las canciones?**  
 En la subcarpeta `Musica/` junto al ejecutable del programa.
 
 **¿El volumen se guarda entre sesiones?**  
-El nivel de volumen se mantiene durante la sesión. El inicio automático arranca con volumen al 80 %.
+Sí. El nivel de volumen y el paso de volumen configurado persisten en la base de datos.
 
 **¿La música continúa al navegar por otros menús?**  
 Sí, la reproducción continúa en segundo plano mientras usas el resto de la aplicación.
+
+**¿Cómo retomo la pista donde la dejé?**  
+Automáticamente: al volver al reproductor tras salir con `[0]`, el sistema restaura la pista y el instante exacto de la sesión anterior.
 
 ## Entrenador IA
 

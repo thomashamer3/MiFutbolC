@@ -235,6 +235,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="musica.h" />
+		<Unit filename="musica_helpers.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="musica_helpers.h" />
 		<Unit filename="partido.c">
 			<Option compilerVar="CC" />
 		</Unit>

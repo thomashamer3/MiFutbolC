@@ -163,17 +163,27 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ### 🎵 Reproductor de Música
 
-- **Reproducción MP3**: Reproducción de archivos `.mp3` desde la carpeta `Musica/`
-- **Controles Completos**: Reproducir, pausar, detener, pista anterior y siguiente
-- **Barra de Progreso**: Posición actual y duración total de la pista en tiempo real
-- **Control de Volumen**: Subir y bajar en pasos del 10 % con barra visual
-- **Modos de Repetición**: Sin repetición, repetir pista, repetir lista, shuffle aleatorio
-- **Ecualizador 3 Bandas**: Ajuste de graves (200 Hz), medios (1 kHz) y agudos (8 kHz) de ±12 dB
-- **Playlists**: Crear, cargar y eliminar listas de reproducción personalizadas
-- **Gestión de Archivos**: Agregar y eliminar canciones directamente desde el menú
-- **Inicio Automático**: Opción para reproducir música al arrancar la aplicación
-- **Fade In/Out**: Transiciones suaves entre pistas (400 ms entrada, 250 ms salida)
-- **Multiplataforma**: Windows y Linux/macOS vía miniaudio
+- **Formatos de audio**: `.mp3`, `.wav`, `.flac`, `.ogg` desde la carpeta `Musica/`
+- **Controles completos**: Reproducir, pausar, detener, pista anterior/siguiente, seleccionar pista de la lista
+- **Barra de progreso**: tiempo actual y duración total en tiempo real (`mm:ss / mm:ss`)
+- **Tiempo restante**: visualización del tiempo que queda en la pista
+- **Control de volumen configurable**: paso dinámico ajustable (1 %, 5 %, 10 %, 20 %) con barra visual; persiste entre sesiones
+- **Modos de repetición**: Sin repetición, Repetir pista, Repetir lista, Aleatorio (shuffle)
+- **Historial shuffle**: al retroceder en modo aleatorio, vuelve a la pista anterior del historial
+- **Ecualizador 3 Bandas**: graves (200 Hz), medios (1 kHz) y agudos (8 kHz) de ±12 dB con paso de 3 dB
+- **Playlists**: crear, cargar y eliminar listas de reproducción personalizadas
+- **Exportar catálogo como playlist**: guarda todas las pistas del catálogo (o las filtradas) como un archivo `.txt`
+- **Gestión de archivos**: agregar y eliminar canciones directamente desde el menú
+- **Búsqueda y filtro**: buscar pistas por nombre con filtro activo persistente; limpiar filtro con [18]
+- **Retroceder / Avanzar**: salto de ±10 segundos dentro de la pista ([16]/[17])
+- **Saltar a tiempo exacto**: ir a un momento específico en formato `MM:SS` ([20])
+- **Sleep timer**: apagado automático tras N minutos configurables ([19])
+- **Información de pista**: muestra nombre, duración, formato, sample rate y canales de la pista activa ([21])
+- **Renombrar pista**: cambia el nombre de cualquier pista del catálogo en disco y en memoria ([22])
+- **Inicio automático**: reproducción al arrancar la aplicación, configurable desde el menú o desde Ajustes
+- **Reanudar posición**: al salir y volver al reproductor, retoma la pista y el instante exacto donde se dejó
+- **Fade In/Out**: transiciones suaves entre pistas (400 ms entrada, 250 ms salida)
+- **Multiplataforma**: Windows y Linux/macOS vía miniaudio (header-only, sin dependencias externas)
 
 ### 🤖 Entrenador IA
 

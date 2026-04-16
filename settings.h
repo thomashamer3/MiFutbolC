@@ -51,6 +51,13 @@ typedef struct
     ModeType mode;
     TextSizeType text_size;
     int music_autoplay;
+    float music_volume;
+    int music_repeat_mode;
+    int music_eq_enabled;
+    float music_eq_bass_db;
+    float music_eq_mid_db;
+    float music_eq_treble_db;
+    float music_volume_step;
 } AppSettings;
 
 /**
@@ -114,6 +121,76 @@ void settings_set_music_autoplay(int enabled);
  * @brief Indica si la musica debe reproducirse al iniciar.
  */
 int settings_get_music_autoplay(void);
+
+/**
+ * @brief Establece el volumen del reproductor de musica (0.0 a 1.0).
+ */
+void settings_set_music_volume(float volume);
+
+/**
+ * @brief Obtiene el volumen del reproductor de musica (0.0 a 1.0).
+ */
+float settings_get_music_volume(void);
+
+/**
+ * @brief Establece el modo de repeticion de musica.
+ */
+void settings_set_music_repeat_mode(int mode);
+
+/**
+ * @brief Obtiene el modo de repeticion de musica.
+ */
+int settings_get_music_repeat_mode(void);
+
+/**
+ * @brief Habilita o deshabilita el ecualizador de musica.
+ */
+void settings_set_music_eq_enabled(int enabled);
+
+/**
+ * @brief Indica si el ecualizador de musica esta habilitado.
+ */
+int settings_get_music_eq_enabled(void);
+
+/**
+ * @brief Establece la ganancia de graves del ecualizador (dB).
+ */
+void settings_set_music_eq_bass_db(float db);
+
+/**
+ * @brief Obtiene la ganancia de graves del ecualizador (dB).
+ */
+float settings_get_music_eq_bass_db(void);
+
+/**
+ * @brief Establece la ganancia de medios del ecualizador (dB).
+ */
+void settings_set_music_eq_mid_db(float db);
+
+/**
+ * @brief Obtiene la ganancia de medios del ecualizador (dB).
+ */
+float settings_get_music_eq_mid_db(void);
+
+/**
+ * @brief Establece la ganancia de agudos del ecualizador (dB).
+ */
+void settings_set_music_eq_treble_db(float db);
+
+/**
+ * @brief Obtiene la ganancia de agudos del ecualizador (dB).
+ */
+float settings_get_music_eq_treble_db(void);
+
+/**
+ * @brief Establece el paso de cambio de volumen (fraccion 0.01 a 0.20).
+ */
+void settings_set_music_volume_step(float step);
+
+/**
+ * @brief Obtiene el paso de cambio de volumen (fraccion 0.01 a 0.20).
+ */
+float settings_get_music_volume_step(void);
 
 
 // Funciones wrapper para internacionalización de menús

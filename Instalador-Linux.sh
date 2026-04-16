@@ -483,6 +483,7 @@ SRC=(
   calendario.c
   atajos.c
   musica.c
+  musica_helpers.c
   recordatorios.c
 )
 

@@ -4,6 +4,7 @@
 #include "miniaudio.h"
 
 #include "musica.h"
+#include "musica_helpers.h"
 #include "utils.h"
 #include "settings.h"
 #include "ascii_art.h"
@@ -11,6 +12,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
+#include <time.h>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#endif
+
+/* API interna de settings usada por el modulo de musica para guardar EQ en una sola escritura. */
+void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, float treble_db);
 
 /* Wrapper portable de fopen: usa fopen_s en MSVC, fopen en GCC/MinGW */
 #ifdef _MSC_VER
@@ -23,17 +39,6 @@
     do { (fp) = fopen((path), (mode)); } while (0)
 #endif
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#else
-#include <dirent.h>
-#include <sys/stat.h>
-#include <unistd.h>   /* usleep */
-#endif
-
 /* ---- Constantes ---- */
 #define MUSICA_DIR    "Musica"
 #define MAX_PISTAS    256
@@ -44,30 +49,13 @@
 #define PROG_ANCHO    30    /* ancho de la barra de progreso */
 
 /* ---- Fade ---- */
-#define FADE_IN_MS    400u  /* ms de fade-in al cargar pista */
-#define FADE_OUT_MS   250u  /* ms de fade-out al cambiar pista */
+#define FADE_IN_MS    400U  /* ms de fade-in al cargar pista */
+#define FADE_OUT_MS   250U  /* ms de fade-out al cambiar pista */
 
 /* ---- Ecualizador ---- */
 #define EQ_BASS_FREQ    200.0   /* Hz - graves */
 #define EQ_MID_FREQ    1000.0   /* Hz - medios */
 #define EQ_TREBLE_FREQ 8000.0   /* Hz - agudos */
-#define EQ_Q             0.7    /* Q / pendiente de filtro */
-#define EQ_DB_STEP       3.0f   /* dB por pulsacion */
-#define EQ_DB_MIN       -12.0f
-#define EQ_DB_MAX        12.0f
-
-/* ---- Playlists ---- */
-#define MAX_PLAYLIST_NAME  128
-#define PROG_ANCHO    30    /* ancho de la barra de progreso */
-
-/* ---- Fade ---- */
-#define FADE_IN_MS    400u  /* milisegundos de fade-in al cargar pista */
-#define FADE_OUT_MS   250u  /* milisegundos de fade-out al cambiar pista */
-
-/* ---- Ecualizador ---- */
-#define EQ_BASS_FREQ    200.0   /* Hz - frecuencia de corte graves */
-#define EQ_MID_FREQ    1000.0   /* Hz - frecuencia central medios */
-#define EQ_TREBLE_FREQ 8000.0   /* Hz - frecuencia de corte agudos */
 #define EQ_Q             0.7    /* Q / pendiente de filtro */
 #define EQ_DB_STEP       3.0f   /* dB por pulsacion */
 #define EQ_DB_MIN       -12.0f
@@ -98,6 +86,13 @@ typedef enum
     REPETIR_ALEATORIO
 } ModoRepeticion;
 
+typedef enum
+{
+    FADE_ACCION_NINGUNA = 0,
+    FADE_ACCION_CAMBIAR_PISTA,
+    FADE_ACCION_DETENER
+} FadeAccion;
+
 typedef struct
 {
     char nombre[MAX_NOMBRE];
@@ -127,72 +122,115 @@ static float            g_eq_bass_db   = 0.0f;
 static float            g_eq_mid_db    = 0.0f;
 static float            g_eq_treble_db = 0.0f;
 
+/* Permite buscar por nombre dentro del listado actual */
+static char g_filtro_busqueda[MAX_NOMBRE] = {0};
+
+/* Playlist actualmente activa ("" = catalogo completo) */
+static char g_playlist_activa[MAX_PLAYLIST_NAME] = {0};
+
+/* Historial de pistas en modo shuffle (ring buffer LIFO, max 20 entradas) */
+#define HISTORIAL_SHUFFLE_MAX 20
+static int g_historial_shuffle[HISTORIAL_SHUFFLE_MAX];
+static int g_historial_head  = 0;
+static int g_historial_count = 0;
+
+/* Sleep timer: timestamp en ms en que se detiene la musica (0 = inactivo) */
+static ma_uint64 g_sleep_timer_deadline_ms = 0;
+static int       g_sleep_timer_minutos     = 0;
+
+/* Paso de volumen configurable (fraccion 0-1, se carga desde settings) */
+static float g_paso_volumen = 0.1f;
+
+/* Flag: la posicion guardada ya fue restaurada en esta sesion */
+static int g_resume_restaurado = 0;
+
+/* Estado de acciones pendientes durante fade-out no bloqueante */
+static FadeAccion g_fade_accion = FADE_ACCION_NINGUNA;
+static int g_fade_indice_objetivo = -1;
+static int g_fade_reproducir_objetivo = 0;
+static ma_uint64 g_fade_deadline_ms = 0;
+
 /* ============================================================
  * Utilidades internas
  * ============================================================ */
 
-/** Sleep portable en milisegundos */
-static void dormir_ms(unsigned int ms)
+static float clampf_local(float v, float lo, float hi)
+{
+    if (v < lo)
+        return lo;
+    if (v > hi)
+        return hi;
+    return v;
+}
+
+static ma_uint64 tiempo_ms_actual(void)
 {
 #ifdef _WIN32
-    Sleep((DWORD)ms);
+    return GetTickCount64();
 #else
-    usleep((useconds_t)ms * 1000u);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (ma_uint64)tv.tv_sec * 1000U + (tv.tv_usec / 1000U);
 #endif
 }
 
-/** Retorna puntero a la extension (incluye '.') o NULL si no hay extension valida */
-static const char *obtener_extension_archivo(const char *nombre)
+static void cancelar_fade_pendiente(void)
 {
-    if (!nombre || nombre[0] == '\0')
-        return NULL;
-
-    const char *p = nombre;
-    const char *ultimo_punto = NULL;
-    while (*p)
-    {
-        if (*p == '/' || *p == '\\')
-            ultimo_punto = NULL; /* Reiniciar al cruzar directorios */
-        else if (*p == '.')
-            ultimo_punto = p;
-        p++;
-    }
-
-    if (!ultimo_punto || ultimo_punto[1] == '\0')
-        return NULL;
-    return ultimo_punto;
+    g_fade_accion = FADE_ACCION_NINGUNA;
+    g_fade_indice_objetivo = -1;
+    g_fade_reproducir_objetivo = 0;
+    g_fade_deadline_ms = 0;
 }
 
-static int extension_igual_ci(const char *ext, const char *ref)
+static int hay_fade_pendiente(void)
 {
-    while (*ext && *ref)
-    {
-        if (tolower((unsigned char)*ext) != tolower((unsigned char)*ref))
-            return 0;
-        ext++;
-        ref++;
-    }
-    return (*ext == '\0' && *ref == '\0');
+    return g_fade_accion != FADE_ACCION_NINGUNA;
 }
 
-/** Verifica si la extension del nombre es de un formato soportado por miniaudio */
-static int es_audio_soportado(const char *nombre)
+static void programar_fade(FadeAccion accion, int indice_objetivo, int reproducir_objetivo)
 {
-    const char *ext = obtener_extension_archivo(nombre);
-    if (!ext)
-        return 0;
+    if (!g_sonido_listo || g_estado != ESTADO_REPRODUCIENDO)
+        return;
 
-    if (extension_igual_ci(ext, ".mp3") ||
-            extension_igual_ci(ext, ".wav") ||
-            extension_igual_ci(ext, ".flac"))
-        return 1;
+    ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0F,
+                                      (ma_uint64)FADE_OUT_MS);
+    g_fade_accion = accion;
+    g_fade_indice_objetivo = indice_objetivo;
+    g_fade_reproducir_objetivo = reproducir_objetivo ? 1 : 0;
+    g_fade_deadline_ms = tiempo_ms_actual() + (ma_uint64)FADE_OUT_MS + (ma_uint64)20;
+}
 
-#ifdef MA_HAS_VORBIS
-    if (extension_igual_ci(ext, ".ogg"))
-        return 1;
-#endif
+static void inicializar_shuffle_seed(void)
+{
+    unsigned int seed = (unsigned int)time(NULL);
+    seed ^= (unsigned int)(uintptr_t)&g_engine;
+    seed ^= (unsigned int)(uintptr_t)&g_pistas;
+    if (seed == 0u)
+        seed = 12345u;
+    g_rand_seed = seed;
+}
 
-    return 0;
+static void historial_shuffle_push(int indice)
+{
+    g_historial_shuffle[g_historial_head] = indice;
+    g_historial_head = (g_historial_head + 1) % HISTORIAL_SHUFFLE_MAX;
+    if (g_historial_count < HISTORIAL_SHUFFLE_MAX)
+        g_historial_count++;
+}
+
+static int historial_shuffle_pop(void)
+{
+    if (g_historial_count == 0)
+        return -1;
+    g_historial_count--;
+    g_historial_head = (g_historial_head + HISTORIAL_SHUFFLE_MAX - 1) % HISTORIAL_SHUFFLE_MAX;
+    return g_historial_shuffle[g_historial_head];
+}
+
+static void historial_shuffle_limpiar(void)
+{
+    g_historial_head  = 0;
+    g_historial_count = 0;
 }
 
 /** Crea la carpeta "Musica" si no existe */
@@ -203,6 +241,22 @@ static void crear_dir_musica(void)
 #else
     mkdir(MUSICA_DIR, 0755); /* No error si ya existe */
 #endif
+}
+
+static int comparar_pistas_por_nombre(const void *a, const void *b)
+{
+    const Pista *pa = (const Pista *)a;
+    const Pista *pb = (const Pista *)b;
+    return musica_compare_ci(pa->nombre, pb->nombre);
+}
+
+static void ordenar_pistas_catalogo(void)
+{
+    if (g_num_pistas > 1)
+    {
+        qsort(g_pistas, (size_t)g_num_pistas, sizeof(g_pistas[0]),
+              comparar_pistas_por_nombre);
+    }
 }
 
 /** Escanea MUSICA_DIR y llena g_pistas / g_num_pistas */
@@ -227,7 +281,7 @@ static void escanear_directorio(void)
             break;
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             continue;
-        if (!es_audio_soportado(fd.cFileName))
+        if (!musica_es_audio_soportado(fd.cFileName))
             continue;
 
         snprintf(g_pistas[g_num_pistas].nombre,
@@ -247,7 +301,7 @@ static void escanear_directorio(void)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && g_num_pistas < MAX_PISTAS)
     {
-        if (!es_audio_soportado(entry->d_name))
+        if (!musica_es_audio_soportado(entry->d_name))
             continue;
         snprintf(g_pistas[g_num_pistas].nombre,
                  MAX_NOMBRE, "%s", entry->d_name);
@@ -257,6 +311,10 @@ static void escanear_directorio(void)
     }
     closedir(dir);
 #endif
+
+    g_playlist_activa[0] = '\0';
+    historial_shuffle_limpiar();
+    ordenar_pistas_catalogo();
 }
 
 /* ============================================================
@@ -276,6 +334,15 @@ static int inicializar_engine(void)
     }
     g_engine_listo = 1;
     atexit(musica_cleanup);
+    inicializar_shuffle_seed();
+
+    g_volumen = clampf_local(settings_get_music_volume(), 0.0f, 1.0f);
+    g_modo_rep = (ModoRepeticion)settings_get_music_repeat_mode();
+    g_eq_activo = settings_get_music_eq_enabled() ? 1 : 0;
+    g_eq_bass_db = clampf_local(settings_get_music_eq_bass_db(), EQ_DB_MIN, EQ_DB_MAX);
+    g_eq_mid_db = clampf_local(settings_get_music_eq_mid_db(), EQ_DB_MIN, EQ_DB_MAX);
+    g_eq_treble_db = clampf_local(settings_get_music_eq_treble_db(), EQ_DB_MIN, EQ_DB_MAX);
+    g_paso_volumen  = clampf_local(settings_get_music_volume_step(), 0.01f, 0.20f);
 
     /* Inicializar nodos del ecualizador en el grafo del engine */
     {
@@ -309,6 +376,8 @@ static int inicializar_engine(void)
 
 static void descargar_sonido(void)
 {
+    cancelar_fade_pendiente();
+
     if (g_sonido_listo)
     {
         ma_sound_stop(&g_sonido);
@@ -322,14 +391,6 @@ static int cargar_pista(int indice)
 {
     if (indice < 0 || indice >= g_num_pistas)
         return 0;
-
-    /* Fade-out suave si habia algo reproduciendose */
-    if (g_sonido_listo && g_estado == ESTADO_REPRODUCIENDO)
-    {
-        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
-                                          (ma_uint64)FADE_OUT_MS);
-        dormir_ms(FADE_OUT_MS + 30u);
-    }
 
     descargar_sonido();
 
@@ -361,6 +422,61 @@ static int cargar_pista(int indice)
 
     g_pista_actual = indice;
     g_sonido_listo = 1;
+    return 1;
+}
+
+static void procesar_fade_pendiente(void)
+{
+    if (!hay_fade_pendiente())
+        return;
+    if (tiempo_ms_actual() < g_fade_deadline_ms)
+        return;
+
+    FadeAccion accion = g_fade_accion;
+    int indice = g_fade_indice_objetivo;
+    int reproducir_objetivo = g_fade_reproducir_objetivo;
+    cancelar_fade_pendiente();
+
+    if (accion == FADE_ACCION_DETENER)
+    {
+        if (g_sonido_listo)
+        {
+            ma_sound_stop(&g_sonido);
+            ma_sound_seek_to_pcm_frame(&g_sonido, 0);
+        }
+        g_estado = ESTADO_DETENIDO;
+        return;
+    }
+
+    if (accion == FADE_ACCION_CAMBIAR_PISTA)
+    {
+        if (!cargar_pista(indice))
+            return;
+
+        if (reproducir_objetivo)
+        {
+            ma_sound_start(&g_sonido);
+            g_estado = ESTADO_REPRODUCIENDO;
+        }
+    }
+}
+
+static int cambiar_pista_con_fade(int indice)
+{
+    if (indice < 0 || indice >= g_num_pistas)
+        return 0;
+
+    if (g_sonido_listo && g_estado == ESTADO_REPRODUCIENDO)
+    {
+        programar_fade(FADE_ACCION_CAMBIAR_PISTA, indice, 1);
+        return 1;
+    }
+
+    if (!cargar_pista(indice))
+        return 0;
+
+    ma_sound_start(&g_sonido);
+    g_estado = ESTADO_REPRODUCIENDO;
     return 1;
 }
 
@@ -412,10 +528,9 @@ static void detener(void)
 
     if (g_estado == ESTADO_REPRODUCIENDO)
     {
-        /* Fade-out antes de detener */
-        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
-                                          (ma_uint64)FADE_OUT_MS);
-        dormir_ms(FADE_OUT_MS + 30u);
+        /* Fade-out no bloqueante: se completa en el loop principal. */
+        programar_fade(FADE_ACCION_DETENER, -1, 0);
+        return;
     }
 
     ma_sound_stop(&g_sonido);
@@ -445,15 +560,19 @@ static void siguiente_pista(void)
     if (g_pista_actual < 0)
         sig = 0;
     else if (g_modo_rep == REPETIR_ALEATORIO)
+    {
+        historial_shuffle_push(g_pista_actual);
         sig = siguiente_pista_aleatoria();
+    }
     else
         sig = (g_pista_actual + 1) % g_num_pistas;
 
-    if (!cargar_pista(sig))
-        return;
-
-    ma_sound_start(&g_sonido);
-    g_estado = ESTADO_REPRODUCIENDO;
+    /* Cambio sincrono: cargar_pista llama descargar_sonido internamente */
+    if (cargar_pista(sig))
+    {
+        ma_sound_start(&g_sonido);
+        g_estado = ESTADO_REPRODUCIENDO;
+    }
 }
 
 static void pista_anterior(void)
@@ -462,34 +581,77 @@ static void pista_anterior(void)
         return;
 
     int ant;
-    if (g_pista_actual <= 0)
+    if (g_modo_rep == REPETIR_ALEATORIO)
+    {
+        ant = historial_shuffle_pop();
+        if (ant < 0 || ant >= g_num_pistas)
+            ant = (g_pista_actual > 0) ? g_pista_actual - 1 : g_num_pistas - 1;
+    }
+    else if (g_pista_actual <= 0)
         ant = g_num_pistas - 1;
     else
         ant = g_pista_actual - 1;
 
-    if (!cargar_pista(ant))
-        return;
-
-    ma_sound_start(&g_sonido);
-    g_estado = ESTADO_REPRODUCIENDO;
+    /* Cambio sincrono: cargar_pista llama descargar_sonido internamente */
+    if (cargar_pista(ant))
+    {
+        ma_sound_start(&g_sonido);
+        g_estado = ESTADO_REPRODUCIENDO;
+    }
 }
 
 static void subir_volumen(void)
 {
-    g_volumen += PASO_VOLUMEN;
+    g_volumen += g_paso_volumen;
     if (g_volumen > 1.0f)
         g_volumen = 1.0f;
     if (g_sonido_listo)
         ma_sound_set_volume(&g_sonido, g_volumen);
+    settings_set_music_volume(g_volumen);
 }
 
 static void bajar_volumen(void)
 {
-    g_volumen -= PASO_VOLUMEN;
+    g_volumen -= g_paso_volumen;
     if (g_volumen < 0.0f)
         g_volumen = 0.0f;
     if (g_sonido_listo)
         ma_sound_set_volume(&g_sonido, g_volumen);
+    settings_set_music_volume(g_volumen);
+}
+
+static void mover_cursor_segundos(int delta_segundos)
+{
+    if (!g_engine_listo || !g_sonido_listo)
+        return;
+
+    ma_uint64 cur = 0;
+    ma_uint64 len = 0;
+    ma_sound_get_cursor_in_pcm_frames(&g_sonido, &cur);
+    ma_sound_get_length_in_pcm_frames(&g_sonido, &len);
+    ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+
+    if (sr == 0)
+        return;
+
+    ma_int64 delta_frames = (ma_int64)delta_segundos * (ma_int64)sr;
+    ma_int64 nuevo = (ma_int64)cur + delta_frames;
+    if (nuevo < 0)
+        nuevo = 0;
+    if (len > 0 && (ma_uint64)nuevo > len)
+        nuevo = (ma_int64)len;
+
+    ma_sound_seek_to_pcm_frame(&g_sonido, (ma_uint64)nuevo);
+}
+
+static void retroceder_10s(void)
+{
+    mover_cursor_segundos(-10);
+}
+
+static void avanzar_10s(void)
+{
+    mover_cursor_segundos(10);
 }
 
 /**
@@ -497,6 +659,9 @@ static void bajar_volumen(void)
  */
 static void verificar_fin_pista(void)
 {
+    if (hay_fade_pendiente())
+        return;
+
     if (!g_sonido_listo || g_estado != ESTADO_REPRODUCIENDO)
         return;
 
@@ -576,9 +741,14 @@ static void dibujar_barra_progreso(int unicode)
     for (int i = 0; i < rellenos; i++) ui_printf("%s", unicode ? "\u2580" : "#");
     for (int i = 0; i < vacios;   i++) ui_printf("%s", unicode ? "\u2591" : "-");
     if (tot_s > 0.0f)
-        ui_printf("] %02d:%02d / %02d:%02d\n",
+    {
+        float rem_s = tot_s - pos_s;
+        if (rem_s < 0.0f) rem_s = 0.0f;
+        ui_printf("] %02d:%02d / %02d:%02d (-%02d:%02d)\n",
                   (int)pos_s / 60, (int)pos_s % 60,
-                  (int)tot_s / 60, (int)tot_s % 60);
+                  (int)tot_s / 60, (int)tot_s % 60,
+                  (int)rem_s / 60, (int)rem_s % 60);
+    }
     else
         ui_printf("] %02d:%02d / --:--\n", (int)pos_s / 60, (int)pos_s % 60);
 }
@@ -631,6 +801,24 @@ static void dibujar_info_estado(void)
     else
         ui_printf("  EQ      : Desactivado\n");
 
+    if (g_filtro_busqueda[0] != '\0')
+        ui_printf("  Filtro  : \"%s\"\n", g_filtro_busqueda);
+    else
+        ui_printf("  Filtro  : (sin filtro)\n");
+
+    if (g_playlist_activa[0] != '\0')
+        ui_printf("  Playlist: %s\n", g_playlist_activa);
+    else
+        ui_printf("  Playlist: (catalogo completo)\n");
+
+    if (g_sleep_timer_deadline_ms != 0)
+    {
+        ma_uint64 ahora = tiempo_ms_actual();
+        int restante_s = (g_sleep_timer_deadline_ms > ahora)
+                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U) : 0;
+        ui_printf("  Timer   : apagado en %02d:%02d\n", restante_s / 60, restante_s % 60);
+    }
+
     ui_printf("  AutoIni : %s\n", settings_get_music_autoplay() ? "Activada" : "Desactivada");
 }
 
@@ -644,8 +832,8 @@ static void dibujar_opciones_reproductor(const char *linea)
     ui_printf("  [3] Pista anterior\n");
     ui_printf("  [4] Pista siguiente\n");
     ui_printf("  [5] Seleccionar pista de la lista\n");
-    ui_printf("  [6] Subir volumen (+10%%)\n");
-    ui_printf("  [7] Bajar volumen (-10%%)\n");
+    ui_printf("  [6] Subir volumen (+%.0f%%)\n", (double)(g_paso_volumen * 100.0f));
+    ui_printf("  [7] Bajar volumen (-%.0f%%)\n", (double)(g_paso_volumen * 100.0f));
     ui_printf("  [8] Cambiar modo repeticion / shuffle\n");
     ui_printf("  [9] Actualizar lista\n");
     ui_printf("  [10] Agregar cancion a la carpeta\n");
@@ -653,6 +841,16 @@ static void dibujar_opciones_reproductor(const char *linea)
     ui_printf("  [12] Ecualizador (3 bandas)\n");
     ui_printf("  [13] Playlists\n");
     ui_printf("  [14] Musica al iniciar (ON/OFF)\n");
+    ui_printf("  [15] Buscar pista por nombre\n");
+    ui_printf("  [16] Retroceder 10 segundos\n");
+    ui_printf("  [17] Avanzar 10 segundos\n");
+    ui_printf("  [18] Limpiar filtro de busqueda\n");
+    ui_printf("  [19] Temporizador de apagado\n");
+    ui_printf("  [20] Saltar a tiempo (MM:SS)\n");
+    ui_printf("  [21] Informacion de pista activa\n");
+    ui_printf("  [22] Renombrar pista\n");
+    ui_printf("  [23] Exportar catalogo como playlist\n");
+    ui_printf("  [24] Configurar paso de volumen\n");
     for (int i = 0; i < 50; i++) ui_printf("%s", linea);
     ui_printf("\n");
     ui_printf("  [0] Volver al menu principal\n\n");
@@ -702,22 +900,186 @@ static void mostrar_lista_pistas(void)
         return;
     }
 
+    int indices[MAX_PISTAS];
+    int visibles = 0;
     for (int i = 0; i < g_num_pistas; i++)
     {
+        if (g_filtro_busqueda[0] != '\0' &&
+                !musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
+            continue;
+
         const char *marca = (i == g_pista_actual) ? " [*]" : "    ";
-        ui_printf("  %s %3d. %s\n", marca, i + 1, g_pistas[i].nombre);
+        ui_printf("  %s %3d. %s\n", marca, visibles + 1, g_pistas[i].nombre);
+        indices[visibles] = i;
+        visibles++;
     }
     ui_printf("\n");
 
+    if (visibles == 0)
+    {
+        ui_printf("  No hay pistas que coincidan con el filtro actual.\n");
+        pause_console();
+        return;
+    }
+
     int seleccion = input_int("  Seleccione pista (0 para cancelar): ");
-    if (seleccion <= 0 || seleccion > g_num_pistas)
+    if (seleccion <= 0 || seleccion > visibles)
         return;
 
-    if (!cargar_pista(seleccion - 1))
+    cambiar_pista_con_fade(indices[seleccion - 1]);
+}
+
+static void buscar_pista_por_nombre_menu(void)
+{
+    clear_screen();
+    print_header("Buscar Pista");
+
+    ui_printf("  Ingrese parte del nombre para filtrar el catalogo.\n");
+    ui_printf("  Deje vacio y presione Enter para limpiar el filtro.\n\n");
+
+    input_string("  Buscar: ", g_filtro_busqueda, (int)sizeof(g_filtro_busqueda));
+
+    if (g_filtro_busqueda[0] == '\0')
+    {
+        ui_printf("\n  Filtro limpiado.\n");
+        pause_console();
+        return;
+    }
+
+    int coincidencias = 0;
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
+            coincidencias++;
+    }
+
+    ui_printf("\n  Coincidencias encontradas: %d\n", coincidencias);
+    pause_console();
+}
+
+static void limpiar_filtro_busqueda(void)
+{
+    if (g_filtro_busqueda[0] == '\0')
+    {
+        ui_printf("  El filtro ya estaba vacio.\n");
+        pause_console();
+        return;
+    }
+
+    g_filtro_busqueda[0] = '\0';
+    ui_printf("  Filtro limpiado correctamente.\n");
+    pause_console();
+}
+
+static void procesar_sleep_timer(void)
+{
+    if (g_sleep_timer_deadline_ms == 0)
+        return;
+    if (tiempo_ms_actual() < g_sleep_timer_deadline_ms)
         return;
 
-    ma_sound_start(&g_sonido);
-    g_estado = ESTADO_REPRODUCIENDO;
+    g_sleep_timer_deadline_ms = 0;
+    g_sleep_timer_minutos = 0;
+
+    if (g_sonido_listo && g_estado == ESTADO_REPRODUCIENDO)
+        programar_fade(FADE_ACCION_DETENER, -1, 0);
+}
+
+static void accion_sleep_timer(void)
+{
+    clear_screen();
+    print_header("Temporizador de Apagado");
+
+    if (g_sleep_timer_deadline_ms != 0)
+    {
+        ma_uint64 ahora = tiempo_ms_actual();
+        int restante_s = (g_sleep_timer_deadline_ms > ahora)
+                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U) : 0;
+        ui_printf("  Temporizador activo: se detendra en %02d:%02d\n",
+                  restante_s / 60, restante_s % 60);
+        ui_printf("  Ingrese 0 para cancelarlo o un nuevo tiempo en minutos.\n\n");
+    }
+    else
+    {
+        ui_printf("  No hay temporizador activo.\n\n");
+    }
+
+    int minutos = input_int("  Minutos hasta apagado (0 = cancelar/desactivar): ");
+    if (minutos <= 0)
+    {
+        if (g_sleep_timer_deadline_ms != 0)
+        {
+            g_sleep_timer_deadline_ms = 0;
+            g_sleep_timer_minutos = 0;
+            ui_printf("  Temporizador cancelado.\n");
+        }
+        else
+        {
+            ui_printf("  Sin cambios.\n");
+        }
+        pause_console();
+        return;
+    }
+
+    g_sleep_timer_minutos = minutos;
+    g_sleep_timer_deadline_ms = tiempo_ms_actual() + (ma_uint64)minutos * 60000U;
+    ui_printf("  El audio se detendra en %d minuto(s).\n", minutos);
+    pause_console();
+}
+
+static void seek_a_tiempo_exacto_menu(void)
+{
+    if (!g_engine_listo || !g_sonido_listo)
+    {
+        ui_printf("  No hay pista cargada.\n");
+        pause_console();
+        return;
+    }
+
+    ma_uint64 len = 0;
+    ma_sound_get_length_in_pcm_frames(&g_sonido, &len);
+    ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+    float tot_s = (sr > 0 && len > 0) ? (float)len / (float)sr : 0.0f;
+
+    ui_printf("  Duracion total: %02d:%02d\n",
+              (int)tot_s / 60, (int)tot_s % 60);
+    ui_printf("  Formato: MM:SS (ej: 1:30) o solo segundos (ej: 90)\n\n");
+
+    char entrada[16] = {0};
+    input_string_extended("  Ir a: ", entrada, (int)sizeof(entrada));
+
+    int min_seek = 0;
+    int seg_seek = 0;
+    char *sep = strchr(entrada, ':');
+    if (sep)
+    {
+        *sep = '\0';
+        min_seek = atoi(entrada);
+        seg_seek = atoi(sep + 1);
+    }
+    else
+    {
+        seg_seek = atoi(entrada);
+    }
+
+    int tiempo_s = min_seek * 60 + seg_seek;
+    if (tiempo_s < 0)
+        tiempo_s = 0;
+
+    if (sr == 0)
+    {
+        ui_printf("  Error: sample rate desconocido.\n");
+        pause_console();
+        return;
+    }
+
+    ma_uint64 frame = (ma_uint64)tiempo_s * (ma_uint64)sr;
+    if (len > 0 && frame > len)
+        frame = len;
+
+    ma_sound_seek_to_pcm_frame(&g_sonido, frame);
+    ui_printf("  Reproduccion saltada a %02d:%02d.\n", tiempo_s / 60, tiempo_s % 60);
+    pause_console();
 }
 
 /* ============================================================
@@ -748,6 +1110,20 @@ static int copiar_archivo_audio(const char *ruta_origen, const char *nombre_dest
     }
 
 #ifdef _WIN32
+    DWORD attrs = GetFileAttributesA(ruta_destino);
+    if (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        ui_printf("  Ya existe un archivo con ese nombre.\n");
+        ui_printf("  Desea sobreescribirlo? [s/n]: ");
+        char conf[8] = {0};
+        input_string("", conf, (int)sizeof(conf));
+        if (conf[0] != 's' && conf[0] != 'S')
+        {
+            ui_printf("  Copia cancelada por el usuario.\n");
+            return 0;
+        }
+    }
+
     if (!CopyFileA(ruta_origen, ruta_destino, FALSE))
     {
         ui_printf("  Error al copiar el archivo (codigo Windows %lu).\n",
@@ -772,26 +1148,32 @@ static int copiar_archivo_audio(const char *ruta_origen, const char *nombre_dest
     }
     char buf[8192];
     size_t leido;
+    int ok = 1;
     while ((leido = fread(buf, 1, sizeof(buf), src)) > 0)
-        fwrite(buf, 1, leido, dst);
+    {
+        size_t escrito = fwrite(buf, 1, leido, dst);
+        if (escrito != leido)
+        {
+            ok = 0;
+            break;
+        }
+    }
+    if (ferror(src))
+        ok = 0;
+    if (fflush(dst) != 0)
+        ok = 0;
     fclose(src);
-    fclose(dst);
+    if (fclose(dst) != 0)
+        ok = 0;
+
+    if (!ok)
+    {
+        remove(ruta_destino); /* Evitar dejar archivos parciales */
+        ui_printf("  Error: fallo de E/S durante la copia del archivo.\n");
+        return 0;
+    }
 #endif
     return 1;
-}
-
-/** Extrae solo el nombre de fichero de una ruta completa */
-static const char *basename_portable(const char *ruta)
-{
-    const char *p = ruta;
-    const char *ultimo = ruta;
-    while (*p)
-    {
-        if (*p == '/' || *p == '\\')
-            ultimo = p + 1;
-        p++;
-    }
-    return ultimo;
 }
 
 /** Submenu: el usuario introduce la ruta de un audio y lo copia a Musica/ */
@@ -816,7 +1198,7 @@ static void agregar_cancion_menu(void)
         return;
     }
 
-    if (!es_audio_soportado(ruta))
+    if (!musica_es_audio_soportado(ruta))
     {
         ui_printf("  Error: formato no soportado. Use %s\n", AUDIO_FORMATOS_TEXTO);
         pause_console();
@@ -834,7 +1216,7 @@ static void agregar_cancion_menu(void)
     }
     fclose(f);
 
-    const char *nombre_auto = basename_portable(ruta);
+    const char *nombre_auto = musica_basename_portable(ruta);
 
     /* Permitir nombre personalizado */
     ui_printf("\n  Nombre actual del archivo: %s\n", nombre_auto);
@@ -849,10 +1231,10 @@ static void agregar_cancion_menu(void)
     else
     {
         /* Si no tiene extension, reutiliza la extension del archivo origen */
-        const char *ext_nuevo = obtener_extension_archivo(nombre_nuevo);
+        const char *ext_nuevo = musica_obtener_extension_archivo(nombre_nuevo);
         if (!ext_nuevo)
         {
-            const char *ext_auto = obtener_extension_archivo(nombre_auto);
+            const char *ext_auto = musica_obtener_extension_archivo(nombre_auto);
             size_t ext_len = ext_auto ? strlen_s(ext_auto, MAX_NOMBRE) : 0;
             size_t ln = strlen_s(nombre_nuevo, sizeof(nombre_nuevo));
             if (!ext_auto || ext_len == 0 || ln + ext_len >= sizeof(nombre_nuevo))
@@ -864,7 +1246,7 @@ static void agregar_cancion_menu(void)
             strcat_s(nombre_nuevo, sizeof(nombre_nuevo), ext_auto);
         }
 
-        if (!es_audio_soportado(nombre_nuevo))
+        if (!musica_es_audio_soportado(nombre_nuevo))
         {
             ui_printf("  Error: formato no soportado. Use %s\n", AUDIO_FORMATOS_TEXTO);
             pause_console();
@@ -1038,6 +1420,14 @@ static void eq_restablecer_bandas(void)
     eq_update_treble();
 }
 
+static void eq_guardar_preferencias(void)
+{
+    settings_set_music_eq_profile(g_eq_activo ? 1 : 0,
+                                  g_eq_bass_db,
+                                  g_eq_mid_db,
+                                  g_eq_treble_db);
+}
+
 static int procesar_opcion_ecualizador(int op)
 {
     if (op == 0)
@@ -1047,12 +1437,14 @@ static int procesar_opcion_ecualizador(int op)
     {
         g_eq_activo = !g_eq_activo;
         eq_reroute_sonido();
+        eq_guardar_preferencias();
         return 0;
     }
 
     if (op == 8)
     {
         eq_restablecer_bandas();
+        eq_guardar_preferencias();
         return 0;
     }
 
@@ -1079,6 +1471,7 @@ static int procesar_opcion_ecualizador(int op)
         if (ajustes[i].opcion == op)
         {
             eq_ajustar_banda(ajustes[i].valor_db, ajustes[i].delta, ajustes[i].update_fn);
+            eq_guardar_preferencias();
             return 0;
         }
     }
@@ -1129,22 +1522,26 @@ static void menu_ecualizador(void)
  * Playlists
  * ============================================================ */
 
-/** Devuelve 1 si el nombre de archivo tiene extension .txt */
-static int es_txt(const char *nombre)
-{
-    size_t len = strlen_s(nombre, MAX_NOMBRE);
-    if (len < 5) return 0;
-    const char *ext = nombre + len - 4;
-    return (tolower((unsigned char)ext[0]) == '.' &&
-            tolower((unsigned char)ext[1]) == 't' &&
-            tolower((unsigned char)ext[2]) == 'x' &&
-            tolower((unsigned char)ext[3]) == 't');
-}
-
 typedef struct
 {
     char nombre[MAX_PLAYLIST_NAME];
 } NombrePlaylist;
+
+static int comparar_playlists_por_nombre(const void *a, const void *b)
+{
+    const NombrePlaylist *pa = (const NombrePlaylist *)a;
+    const NombrePlaylist *pb = (const NombrePlaylist *)b;
+    return musica_compare_ci(pa->nombre, pb->nombre);
+}
+
+static void ordenar_playlists(NombrePlaylist *lista, int cantidad)
+{
+    if (lista && cantidad > 1)
+    {
+        qsort(lista, (size_t)cantidad, sizeof(lista[0]),
+              comparar_playlists_por_nombre);
+    }
+}
 
 /** Escanea Musica/ en busca de .txt (playlists).
     Retorna numero de playlists encontradas (max MAX_PISTAS). */
@@ -1174,12 +1571,14 @@ static int escanear_playlists(NombrePlaylist *lista, int max)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && n < max)
     {
-        if (!es_txt(entry->d_name)) continue;
+        if (!musica_es_txt_playlist(entry->d_name)) continue;
         snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%s", entry->d_name);
         n++;
     }
     closedir(dir);
 #endif
+
+    ordenar_playlists(lista, n);
     return n;
 }
 
@@ -1233,7 +1632,7 @@ static int cargar_nombres_playlist(const char *nombre_txt,
 
         if (linea[0] == '\0' || linea[0] == '#')
             continue;
-        if (!es_audio_soportado(linea))
+        if (!musica_es_audio_soportado(linea))
             continue;
 
         strncpy_s(nombres[n], MAX_NOMBRE, linea, _TRUNCATE);
@@ -1417,7 +1816,7 @@ static void guardar_playlist(void)
         pause_console();
         return;
     }
-    if (!es_txt(nombre) && strcat_s(nombre, sizeof(nombre), ".txt") != 0)
+    if (!musica_es_txt_playlist(nombre) && strcat_s(nombre, sizeof(nombre), ".txt") != 0)
     {
         ui_printf("  Error: nombre de playlist demasiado largo.\n");
         pause_console();
@@ -1531,14 +1930,7 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         return;
     }
 
-    /* Detener reproduccion actual */
-    int estaba = (g_estado == ESTADO_REPRODUCIENDO);
-    if (estaba)
-    {
-        ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0f,
-                                          (ma_uint64)FADE_OUT_MS);
-        dormir_ms(FADE_OUT_MS + 30u);
-    }
+    /* Detener reproduccion actual para reemplazar el catalogo con la playlist. */
     descargar_sonido();
     g_pista_actual = -1;
     g_num_pistas   = 0;
@@ -1556,7 +1948,7 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         if (linea[0] == '#' || linea[0] == '\0')
             continue; /* Comentarios y lineas vacias */
 
-        if (!es_audio_soportado(linea))
+        if (!musica_es_audio_soportado(linea))
             continue;
 
         /* Verificar que el archivo exista */
@@ -1578,6 +1970,7 @@ static void cargar_playlist_archivo(const char *nombre_txt)
     fclose(f);
     g_num_pistas = cargadas;
 
+    snprintf(g_playlist_activa, sizeof(g_playlist_activa), "%s", nombre_txt);
     ui_printf("  Playlist '%s' cargada: %d pista(s) válidas.\n",
               nombre_txt, g_num_pistas);
     pause_console();
@@ -1595,6 +1988,7 @@ static void iniciar_playlist_cargada(int aleatorio)
     if (aleatorio)
     {
         g_modo_rep = REPETIR_ALEATORIO;
+        settings_set_music_repeat_mode((int)g_modo_rep);
         g_rand_seed ^= (g_num_pistas * 2654435761u);
         int idx = siguiente_pista_aleatoria();
         if (!cargar_pista(idx))
@@ -1605,6 +1999,7 @@ static void iniciar_playlist_cargada(int aleatorio)
     }
 
     g_modo_rep = REPETIR_LISTA;
+    settings_set_music_repeat_mode((int)g_modo_rep);
     reproducir();
 }
 
@@ -1746,11 +2141,102 @@ static void menu_playlists(void)
 }
 
 /* ============================================================
+ * Posicion de reanudacion (resume)
+ * ============================================================ */
+
+static void construir_ruta_resume(char *buf, size_t sz)
+{
+#ifdef _WIN32
+    snprintf(buf, sz, "%s\\.resume", MUSICA_DIR);
+#else
+    snprintf(buf, sz, "%s/.resume", MUSICA_DIR);
+#endif
+}
+
+static void guardar_posicion_resume(void)
+{
+    if (!g_sonido_listo || g_pista_actual < 0 || g_pista_actual >= g_num_pistas)
+        return;
+    if (g_estado == ESTADO_DETENIDO)
+        return;
+
+    ma_uint64 cur = 0;
+    ma_sound_get_cursor_in_pcm_frames(&g_sonido, &cur);
+
+    char ruta[MAX_RUTA];
+    construir_ruta_resume(ruta, sizeof(ruta));
+
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "w");
+    if (!f)
+        return;
+    fprintf(f, "%s\n%llu\n", g_pistas[g_pista_actual].nombre,
+            (unsigned long long)cur);
+    fclose(f);
+}
+
+static void restaurar_posicion_resume(void)
+{
+    char ruta[MAX_RUTA];
+    construir_ruta_resume(ruta, sizeof(ruta));
+
+    FILE *f = NULL;
+    FOPEN_PORTABLE(f, ruta, "r");
+    if (!f)
+        return;
+
+    char nombre_guardado[MAX_NOMBRE] = {0};
+    if (!fgets(nombre_guardado, (int)sizeof(nombre_guardado), f))
+    {
+        fclose(f);
+        return;
+    }
+    size_t ln = strnlen_s(nombre_guardado, sizeof(nombre_guardado));
+    while (ln > 0 && (nombre_guardado[ln - 1] == '\n' || nombre_guardado[ln - 1] == '\r'))
+        nombre_guardado[--ln] = '\0';
+
+    char frame_str[32] = {0};
+    unsigned long long frame_guardado = 0;
+    if (fgets(frame_str, (int)sizeof(frame_str), f))
+        frame_guardado = strtoull(frame_str, NULL, 10);
+
+    fclose(f);
+    remove(ruta); /* Consumir el archivo una sola vez */
+
+    int indice = -1;
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (strcmp(g_pistas[i].nombre, nombre_guardado) == 0)
+        {
+            indice = i;
+            break;
+        }
+    }
+    if (indice < 0)
+        return;
+
+    if (!cargar_pista(indice))
+        return;
+
+    if (frame_guardado > 0)
+    {
+        ma_uint64 len = 0;
+        ma_sound_get_length_in_pcm_frames(&g_sonido, &len);
+        if (len > 0 && frame_guardado > len)
+            frame_guardado = 0;
+        ma_sound_seek_to_pcm_frame(&g_sonido, (ma_uint64)frame_guardado);
+    }
+    /* Pista cargada y posicionada; el usuario decide si reproducir */
+}
+
+/* ============================================================
  * API publica
  * ============================================================ */
 
 void musica_cleanup(void)
 {
+    guardar_posicion_resume();
+
     if (g_sonido_listo)
     {
         ma_sound_stop(&g_sonido);
@@ -1802,6 +2288,203 @@ void musica_iniciar_automatica(void)
     g_estado = ESTADO_REPRODUCIENDO;
 }
 
+static void info_pista_menu(void)
+{
+    clear_screen();
+    print_header("Informacion de Pista");
+
+    if (!g_sonido_listo || g_pista_actual < 0)
+    {
+        ui_printf("  No hay ninguna pista cargada.\n");
+        pause_console();
+        return;
+    }
+
+    ma_uint64 len = 0;
+    ma_sound_get_length_in_pcm_frames(&g_sonido, &len);
+    ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+    ma_uint32 ch = ma_engine_get_channels(&g_engine);
+
+    float dur_s = (sr > 0 && len > 0) ? (float)len / (float)sr : 0.0f;
+    const char *ext = musica_obtener_extension_archivo(g_pistas[g_pista_actual].nombre);
+
+    ui_printf("  Nombre     : %s\n", g_pistas[g_pista_actual].nombre);
+    ui_printf("  Duracion   : %02d:%02d (%llu frames)\n",
+              (int)dur_s / 60, (int)dur_s % 60, (unsigned long long)len);
+    ui_printf("  Formato    : %s\n", ext ? ext + 1 : "desconocido");
+    ui_printf("  Sample Rate: %u Hz\n", (unsigned)sr);
+    ui_printf("  Canales    : %u\n", (unsigned)ch);
+    ui_printf("  Ruta       : %s\n", g_pistas[g_pista_actual].ruta);
+    pause_console();
+}
+
+static void renombrar_pista_menu(void)
+{
+    clear_screen();
+    print_header("Renombrar Pista");
+
+    if (g_num_pistas == 0)
+    {
+        ui_printf("  No hay pistas disponibles.\n");
+        pause_console();
+        return;
+    }
+
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        const char *marca = (i == g_pista_actual && g_sonido_listo) ? " [CARGADA]" : "";
+        ui_printf("  %3d. %s%s\n", i + 1, g_pistas[i].nombre, marca);
+    }
+    ui_printf("\n");
+
+    int sel = input_int("  Pista a renombrar (0=cancelar): ");
+    if (sel <= 0 || sel > g_num_pistas)
+        return;
+    int idx = sel - 1;
+
+    if (g_sonido_listo && g_pista_actual == idx && g_estado == ESTADO_REPRODUCIENDO)
+    {
+        ui_printf("  No se puede renombrar la pista en reproduccion. Pausela primero.\n");
+        pause_console();
+        return;
+    }
+
+    ui_printf("  Nombre actual: %s\n", g_pistas[idx].nombre);
+    char nombre_nuevo[MAX_NOMBRE] = {0};
+    input_string("  Nuevo nombre (con extension): ", nombre_nuevo, (int)sizeof(nombre_nuevo));
+    if (nombre_nuevo[0] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+
+    if (!musica_es_audio_soportado(nombre_nuevo))
+    {
+        ui_printf("  Error: extension no soportada. Use %s\n", AUDIO_FORMATOS_TEXTO);
+        pause_console();
+        return;
+    }
+
+    char ruta_nueva[MAX_RUTA];
+#ifdef _WIN32
+    snprintf(ruta_nueva, sizeof(ruta_nueva), "%s\\%s", MUSICA_DIR, nombre_nuevo);
+#else
+    snprintf(ruta_nueva, sizeof(ruta_nueva), "%s/%s", MUSICA_DIR, nombre_nuevo);
+#endif
+
+    if (rename(g_pistas[idx].ruta, ruta_nueva) != 0)
+    {
+        ui_printf("  Error al renombrar el archivo.\n");
+        pause_console();
+        return;
+    }
+
+    strncpy_s(g_pistas[idx].nombre, MAX_NOMBRE, nombre_nuevo, _TRUNCATE);
+    strncpy_s(g_pistas[idx].ruta,   MAX_RUTA,   ruta_nueva,  _TRUNCATE);
+    ui_printf("  Pista renombrada correctamente: %s\n", nombre_nuevo);
+    pause_console();
+}
+
+static void exportar_catalogo_playlist_menu(void)
+{
+    clear_screen();
+    print_header("Exportar Catalogo como Playlist");
+
+    if (g_num_pistas == 0)
+    {
+        ui_printf("  No hay pistas en el catalogo.\n");
+        pause_console();
+        return;
+    }
+
+    int usar_filtro = (g_filtro_busqueda[0] != '\0');
+    int total = 0;
+    for (int i = 0; i < g_num_pistas; i++)
+        if (!usar_filtro || musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
+            total++;
+
+    if (usar_filtro)
+        ui_printf("  Se exportaran %d pistas (filtro: \"%s\")\n\n", total, g_filtro_busqueda);
+    else
+        ui_printf("  Se exportaran %d pistas (catalogo completo)\n\n", total);
+
+    char nombre[MAX_PLAYLIST_NAME] = {0};
+    input_string("  Nombre de la playlist (sin .txt): ", nombre, (int)sizeof(nombre));
+    if (nombre[0] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return;
+    }
+    if (!musica_es_txt_playlist(nombre) && strcat_s(nombre, sizeof(nombre), ".txt") != 0)
+    {
+        ui_printf("  Error: nombre demasiado largo.\n");
+        pause_console();
+        return;
+    }
+
+    static char temas_exp[MAX_PISTAS][MAX_NOMBRE];
+    int n = 0;
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (n >= MAX_PISTAS)
+            break;
+        if (!usar_filtro || musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
+        {
+            strncpy_s(temas_exp[n], MAX_NOMBRE, g_pistas[i].nombre, _TRUNCATE);
+            n++;
+        }
+    }
+
+    if (guardar_nombres_playlist(nombre, temas_exp, n))
+        ui_printf("  Playlist exportada: %s (%d pista/s)\n", nombre, n);
+    else
+        ui_printf("  Error: no se pudo guardar la playlist.\n");
+    pause_console();
+}
+
+static void accion_paso_volumen_menu(void)
+{
+    clear_screen();
+    print_header("Paso de Volumen");
+
+    ui_printf("  Paso actual : %.0f%%\n\n", (double)(g_paso_volumen * 100.0f));
+    ui_printf("  [1]  1%% (ajuste fino)\n");
+    ui_printf("  [2]  5%% (ajuste moderado)\n");
+    ui_printf("  [3] 10%% (ajuste rapido) [default]\n");
+    ui_printf("  [4] 20%% (ajuste maximo)\n");
+    ui_printf("  [0] Cancelar\n\n");
+
+    int op = input_int("  Opcion: ");
+    float nuevo_paso;
+    switch (op)
+    {
+    case 1:
+        nuevo_paso = 0.01f;
+        break;
+    case 2:
+        nuevo_paso = 0.05f;
+        break;
+    case 3:
+        nuevo_paso = 0.10f;
+        break;
+    case 4:
+        nuevo_paso = 0.20f;
+        break;
+    case 0:
+        return;
+    default:
+        ui_printf("  Opcion invalida.\n");
+        pause_console();
+        return;
+    }
+    g_paso_volumen = nuevo_paso;
+    settings_set_music_volume_step(g_paso_volumen);
+    ui_printf("  Paso de volumen: %.0f%%\n", (double)(g_paso_volumen * 100.0f));
+    pause_console();
+}
+
 static void accion_reproducir_pausar(void)
 {
     if (g_estado == ESTADO_REPRODUCIENDO)
@@ -1813,6 +2496,7 @@ static void accion_reproducir_pausar(void)
 static void accion_cambiar_modo_repeticion(void)
 {
     g_modo_rep = (ModoRepeticion)((g_modo_rep + 1) % 4);
+    settings_set_music_repeat_mode((int)g_modo_rep);
     if (g_modo_rep == REPETIR_ALEATORIO)
         g_rand_seed ^= (unsigned int)(g_pista_actual + 1) * 2654435761u;
 }
@@ -1877,7 +2561,17 @@ static int procesar_opcion_menu_musica(int opcion)
         {10, agregar_cancion_menu},
         {11, eliminar_cancion_menu},
         {12, menu_ecualizador},
-        {13, menu_playlists}
+        {13, menu_playlists},
+        {15, buscar_pista_por_nombre_menu},
+        {16, retroceder_10s},
+        {17, avanzar_10s},
+        {18, limpiar_filtro_busqueda},
+        {19, accion_sleep_timer},
+        {20, seek_a_tiempo_exacto_menu},
+        {21, info_pista_menu},
+        {22, renombrar_pista_menu},
+        {23, exportar_catalogo_playlist_menu},
+        {24, accion_paso_volumen_menu}
     };
 
     for (int i = 0; i < (int)(sizeof(opciones) / sizeof(opciones[0])); i++)
@@ -1906,14 +2600,24 @@ void menu_musica(void)
     /* Escanear directorio al entrar */
     escanear_directorio();
 
+    /* Restaurar posicion guardada (solo la primera vez en esta sesion) */
+    if (!g_resume_restaurado)
+    {
+        restaurar_posicion_resume();
+        g_resume_restaurado = 1;
+    }
+
     int salir = 0;
     while (!salir)
     {
+        procesar_fade_pendiente();
+        procesar_sleep_timer();
         verificar_fin_pista();
         dibujar_reproductor();
 
         int opcion = input_int("  Opcion: ");
         salir = procesar_opcion_menu_musica(opcion);
     }
+    guardar_posicion_resume();
     /* El audio sigue reproduciendose en segundo plano al volver al menu */
 }

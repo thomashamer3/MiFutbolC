@@ -2055,7 +2055,7 @@
 
 1762402188 c:\msys64\mingw64\include\curl\typecheck-gcc.h
 
-1776139835 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
+1776366561 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
@@ -2075,7 +2075,7 @@
 	<string.h>
 	<time.h>
 
-1776275264 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1776366718 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2498,9 +2498,10 @@
 
 1776276309 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1776276309 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1776367810 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
 	"musica.h"
+	"musica_helpers.h"
 	"utils.h"
 	"settings.h"
 	"ascii_art.h"
@@ -2508,10 +2509,12 @@
 	<stdlib.h>
 	<string.h>
 	<ctype.h>
+	<stdint.h>
+	<time.h>
 	<windows.h>
 	<dirent.h>
 	<sys/stat.h>
-	<unistd.h>
+	<sys/time.h>
 
 1776135506 d:\anime\libros\lenguaje c\proyectos\mifutbolc\miniaudio.h
 	<stddef.h>
@@ -2661,4 +2664,13 @@
 1765442468 c:\msys64\mingw64\include\dirent.h
 	<crtdefs.h>
 	<io.h>
+
+1776365037 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica_helpers.h
+
+1776365037 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica_helpers.c
+	"musica_helpers.h"
+	"miniaudio.h"
+	"utils.h"
+	<ctype.h>
+	<stddef.h>
 
