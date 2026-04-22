@@ -83,6 +83,17 @@ int ui_putchar(int c);
  */
 int ui_printf_centered_line(const char *fmt, ...);
 
+/**
+ * @brief Imprime una fila de estadisticas desde una sentencia SQLite con columnas fijas.
+ *
+ * Se espera el siguiente orden de columnas: id, nombre, activa, partidos, goles, asistencias.
+ *
+ * @param stmt Sentencia SQLite posicionada en una fila valida.
+ * @param sep Separador visual entre columnas (por ejemplo " | " o " │ ").
+ * @return 1 si se imprimio la fila correctamente; 0 si los parametros son invalidos.
+ */
+int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep);
+
 
 /**
  * @brief Obtiene la fecha y hora actual en formato legible.

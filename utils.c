@@ -656,6 +656,30 @@ int ui_printf_centered_line(const char *fmt, ...) // NOSONAR
     return fprintf(stdout, "%s\n", buffer);
 }
 
+int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
+{
+    if (!stmt || !sep)
+    {
+        return 0;
+    }
+
+    int id = sqlite3_column_int(stmt, 0);
+    const char *nom = (const char *)sqlite3_column_text(stmt, 1);
+    int activa = sqlite3_column_int(stmt, 2);
+    int partidos = sqlite3_column_int(stmt, 3);
+    int goles = sqlite3_column_int(stmt, 4);
+    int asistencias = sqlite3_column_int(stmt, 5);
+    const char *estado = activa ? "ACTIVA" : "INACTIVA";
+
+    ui_printf_centered_line("%2d - %-24s%sEstado: %-8s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
+                            id, nom ? nom : "(sin nombre)", sep,
+                            estado, sep,
+                            partidos, sep,
+                            goles, sep,
+                            asistencias);
+    return 1;
+}
+
 static int ui_readline(char *buffer, int size)
 {
     if (!buffer || size <= 0)

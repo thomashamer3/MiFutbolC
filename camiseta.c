@@ -1129,21 +1129,7 @@ static void listar_camisetas_con_stats()
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id          = sqlite3_column_int(stmt, 0);
-        const char *nom = (const char *)sqlite3_column_text(stmt, 1);
-        int activa      = sqlite3_column_int(stmt, 2);
-        int partidos    = sqlite3_column_int(stmt, 3);
-        int goles       = sqlite3_column_int(stmt, 4);
-        int asistencias = sqlite3_column_int(stmt, 5);
-        const char *estado = activa ? "ACTIVA" : "INACTIVA";
-
-        ui_printf_centered_line("%2d - %-24s%sEstado: %-8s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
-                                id, nom, sep,
-                                estado, sep,
-                                partidos, sep,
-                                goles, sep,
-                                asistencias);
-        hay = 1;
+        hay |= ui_print_stats_row_from_stmt(stmt, sep);
     }
 
     if (!hay)

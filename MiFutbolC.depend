@@ -108,7 +108,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1776806600 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1776898997 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -136,13 +136,13 @@
 	<termios.h>
 	<unistd.h>
 
-1776133901 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1776898997 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	"cJSON.h"
 	"sqlite3.h"
 	<stddef.h>
 	<stdio.h>
 
-1776898277 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1776898997 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -327,7 +327,7 @@
 	<stdio.h>
 	<string.h>
 
-1776897793 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1776899118 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -2499,7 +2499,7 @@
 
 1776276309 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1776367810 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1776899046 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
 	"musica.h"
 	"musica_helpers.h"

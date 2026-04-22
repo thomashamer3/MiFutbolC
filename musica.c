@@ -2318,6 +2318,89 @@ static void info_pista_menu(void)
     pause_console();
 }
 
+static int mostrar_selector_pista_renombrar(void)
+{
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        const char *marca = (i == g_pista_actual && g_sonido_listo) ? " [CARGADA]" : "";
+        ui_printf("  %3d. %s%s\n", i + 1, g_pistas[i].nombre, marca);
+    }
+    ui_printf("\n");
+
+    int sel = input_int("  Pista a renombrar (0=cancelar): ");
+    if (sel <= 0 || sel > g_num_pistas)
+    {
+        return -1;
+    }
+
+    return sel - 1;
+}
+
+static int puede_renombrar_pista(int idx)
+{
+    if (g_sonido_listo && g_pista_actual == idx && g_estado == ESTADO_REPRODUCIENDO)
+    {
+        ui_printf("  No se puede renombrar la pista en reproduccion. Pausela primero.\n");
+        pause_console();
+        return 0;
+    }
+
+    return 1;
+}
+
+static int solicitar_nombre_nuevo_pista(char *nombre_nuevo, size_t size)
+{
+    if (!nombre_nuevo || size == 0)
+    {
+        return 0;
+    }
+
+    input_string("  Nuevo nombre (con extension): ", nombre_nuevo, (int)size);
+    if (nombre_nuevo[0] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (!musica_es_audio_soportado(nombre_nuevo))
+    {
+        ui_printf("  Error: extension no soportada. Use %s\n", AUDIO_FORMATOS_TEXTO);
+        pause_console();
+        return 0;
+    }
+
+    return 1;
+}
+
+static void construir_ruta_musica_archivo(const char *nombre_archivo, char *ruta, size_t size)
+{
+#ifdef _WIN32
+    snprintf(ruta, size, "%s\\%s", MUSICA_DIR, nombre_archivo);
+#else
+    snprintf(ruta, size, "%s/%s", MUSICA_DIR, nombre_archivo);
+#endif
+}
+
+static int ejecutar_renombrado_pista(int idx, const char *nombre_nuevo)
+{
+    char ruta_nueva[MAX_RUTA];
+    construir_ruta_musica_archivo(nombre_nuevo, ruta_nueva, sizeof(ruta_nueva));
+
+    if (rename(g_pistas[idx].ruta, ruta_nueva) != 0)
+    {
+        ui_printf("  Error al renombrar el archivo.\n");
+        pause_console();
+        return 0;
+    }
+
+    strncpy_s(g_pistas[idx].nombre, MAX_NOMBRE, nombre_nuevo, _TRUNCATE);
+    strncpy_s(g_pistas[idx].ruta,   MAX_RUTA,   ruta_nueva,  _TRUNCATE);
+    ui_printf("  Pista renombrada correctamente: %s\n", nombre_nuevo);
+    pause_console();
+    return 1;
+}
+
 static void renombrar_pista_menu(void)
 {
     clear_screen();
@@ -2330,60 +2413,25 @@ static void renombrar_pista_menu(void)
         return;
     }
 
-    for (int i = 0; i < g_num_pistas; i++)
+    int idx = mostrar_selector_pista_renombrar();
+    if (idx < 0)
     {
-        const char *marca = (i == g_pista_actual && g_sonido_listo) ? " [CARGADA]" : "";
-        ui_printf("  %3d. %s%s\n", i + 1, g_pistas[i].nombre, marca);
-    }
-    ui_printf("\n");
-
-    int sel = input_int("  Pista a renombrar (0=cancelar): ");
-    if (sel <= 0 || sel > g_num_pistas)
         return;
-    int idx = sel - 1;
+    }
 
-    if (g_sonido_listo && g_pista_actual == idx && g_estado == ESTADO_REPRODUCIENDO)
+    if (!puede_renombrar_pista(idx))
     {
-        ui_printf("  No se puede renombrar la pista en reproduccion. Pausela primero.\n");
-        pause_console();
         return;
     }
 
     ui_printf("  Nombre actual: %s\n", g_pistas[idx].nombre);
     char nombre_nuevo[MAX_NOMBRE] = {0};
-    input_string("  Nuevo nombre (con extension): ", nombre_nuevo, (int)sizeof(nombre_nuevo));
-    if (nombre_nuevo[0] == '\0')
+    if (!solicitar_nombre_nuevo_pista(nombre_nuevo, sizeof(nombre_nuevo)))
     {
-        ui_printf("  Operacion cancelada.\n");
-        pause_console();
         return;
     }
 
-    if (!musica_es_audio_soportado(nombre_nuevo))
-    {
-        ui_printf("  Error: extension no soportada. Use %s\n", AUDIO_FORMATOS_TEXTO);
-        pause_console();
-        return;
-    }
-
-    char ruta_nueva[MAX_RUTA];
-#ifdef _WIN32
-    snprintf(ruta_nueva, sizeof(ruta_nueva), "%s\\%s", MUSICA_DIR, nombre_nuevo);
-#else
-    snprintf(ruta_nueva, sizeof(ruta_nueva), "%s/%s", MUSICA_DIR, nombre_nuevo);
-#endif
-
-    if (rename(g_pistas[idx].ruta, ruta_nueva) != 0)
-    {
-        ui_printf("  Error al renombrar el archivo.\n");
-        pause_console();
-        return;
-    }
-
-    strncpy_s(g_pistas[idx].nombre, MAX_NOMBRE, nombre_nuevo, _TRUNCATE);
-    strncpy_s(g_pistas[idx].ruta,   MAX_RUTA,   ruta_nueva,  _TRUNCATE);
-    ui_printf("  Pista renombrada correctamente: %s\n", nombre_nuevo);
-    pause_console();
+    (void)ejecutar_renombrado_pista(idx, nombre_nuevo);
 }
 
 static void exportar_catalogo_playlist_menu(void)
