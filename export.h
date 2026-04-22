@@ -10,6 +10,14 @@
 #ifndef EXPORT_H
 #define EXPORT_H
 
+#include <stdio.h>
+
+struct cJSON;
+typedef struct cJSON cJSON;
+typedef struct sqlite3_stmt sqlite3_stmt;
+
+typedef void (*ExportWriterFn)(FILE *file);
+
 /** @name Funciones utilitarias */
 /** @{ */
 
@@ -123,5 +131,27 @@ void exportar_estado_animo_cansancio_txt();
  * @return Cadena de caracteres con la ruta completa del archivo
  */
 char *get_export_path(const char *filename);
+
+/**
+ * @brief Exporta a archivo si la tabla indicada tiene registros.
+ *
+ * Aplica un flujo comun: validar registros, abrir archivo, escribir cabecera opcional,
+ * ejecutar writer y reportar ruta final.
+ *
+ * @return 1 si se exporto correctamente, 0 en caso contrario.
+ */
+int exportar_archivo_si_hay_registros(const char *tabla,
+                                      const char *mensaje_sin_registros,
+                                      const char *filename,
+                                      const char *error_al_abrir,
+                                      const char *cabecera_opcional,
+                                      ExportWriterFn writer);
+
+/**
+ * @brief Agrega los campos base de una lesion a un objeto JSON.
+ *
+ * Campos agregados: id, jugador, tipo, descripcion, fecha.
+ */
+void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt);
 /** @} */
 #endif

@@ -284,12 +284,22 @@ static void listar_camisetas_con_nueva()
     ui_printf_centered_line("-1 | [+ Nueva Camiseta]");
 }
 
-/* Crea una cancha nueva de forma rapida durante la creacion de un partido.
-   Devuelve el nuevo ID, o 0 si fallo. */
-static int crear_cancha_inline(void)
+static int crear_entidad_inline(const char *tabla,
+                                const char *prompt_nombre,
+                                int tam_nombre,
+                                const char *error_creacion,
+                                const char *error_guardado,
+                                const char *etiqueta_entidad)
 {
     char nombre[100];
-    input_string("Nombre de la nueva cancha: ", nombre, sizeof(nombre));
+    int tam_efectivo = tam_nombre;
+
+    if (tam_efectivo <= 0 || tam_efectivo > (int)sizeof(nombre))
+    {
+        tam_efectivo = (int)sizeof(nombre);
+    }
+
+    input_string(prompt_nombre, nombre, tam_efectivo);
     trim_whitespace(nombre);
     if (nombre[0] == '\0')
     {
@@ -297,13 +307,17 @@ static int crear_cancha_inline(void)
         return 0;
     }
 
-    long long id = obtener_siguiente_id("cancha");
+    long long id = obtener_siguiente_id(tabla);
+    char sql[96];
+    snprintf(sql, sizeof(sql), "INSERT INTO %s(id, nombre) VALUES(?, ?)", tabla);
+
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO cancha(id, nombre) VALUES(?, ?)", &stmt))
+    if (!preparar_stmt(sql, &stmt))
     {
-        printf("Error al crear la cancha.\n");
+        printf("%s\n", error_creacion);
         return 0;
     }
+
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
     int rc = sqlite3_step(stmt);
@@ -311,45 +325,36 @@ static int crear_cancha_inline(void)
 
     if (rc == SQLITE_DONE)
     {
-        printf("Cancha \"%s\" creada con ID %lld.\n", nombre, id);
+        printf("%s \"%s\" creada con ID %lld.\n", etiqueta_entidad, nombre, id);
         return (int)id;
     }
-    printf("Error al guardar la cancha.\n");
+
+    printf("%s\n", error_guardado);
     return 0;
+}
+
+/* Crea una cancha nueva de forma rapida durante la creacion de un partido.
+   Devuelve el nuevo ID, o 0 si fallo. */
+static int crear_cancha_inline(void)
+{
+    return crear_entidad_inline("cancha",
+                                "Nombre de la nueva cancha: ",
+                                100,
+                                "Error al crear la cancha.",
+                                "Error al guardar la cancha.",
+                                "Cancha");
 }
 
 /* Crea una camiseta nueva de forma rapida durante la creacion de un partido.
    Devuelve el nuevo ID, o 0 si fallo. */
 static int crear_camiseta_inline(void)
 {
-    char nombre[50];
-    input_string("Nombre y Numero de la nueva camiseta: ", nombre, sizeof(nombre));
-    trim_whitespace(nombre);
-    if (nombre[0] == '\0')
-    {
-        printf("El nombre no puede estar vacio.\n");
-        return 0;
-    }
-
-    long long id = obtener_siguiente_id("camiseta");
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO camiseta(id, nombre) VALUES(?, ?)", &stmt))
-    {
-        printf("Error al crear la camiseta.\n");
-        return 0;
-    }
-    sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    int rc = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    if (rc == SQLITE_DONE)
-    {
-        printf("Camiseta \"%s\" creada con ID %lld.\n", nombre, id);
-        return (int)id;
-    }
-    printf("Error al guardar la camiseta.\n");
-    return 0;
+    return crear_entidad_inline("camiseta",
+                                "Nombre y Numero de la nueva camiseta: ",
+                                50,
+                                "Error al crear la camiseta.",
+                                "Error al guardar la camiseta.",
+                                "Camiseta");
 }
 
 /* Pide un ID de cancha; si el usuario ingresa -1 ofrece crear una nueva.
@@ -1477,23 +1482,9 @@ static void mostrar_alineacion(Equipo const *equipo_local, Equipo const *equipo_
     mostrar_cancha_animada(0, 0);
 
     // Mostrar equipos alineados
-    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
-    for (int i = 0; i < equipo_local->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_local->jugadores[i].numero, equipo_local->jugadores[i].nombre);
-        if (equipo_local->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
-    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_visitante->jugadores[i].numero, equipo_visitante->jugadores[i].nombre);
-        if (equipo_visitante->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
+    imprimir_alineacion_equipo("EQUIPO LOCAL", equipo_local);
+    printf("\n");
+    imprimir_alineacion_equipo("EQUIPO VISITANTE", equipo_visitante);
 
     printf("\n*** INICIO DEL PARTIDO ***\n");
     printf("La simulacion comenzara automaticamente en 3 segundos...\n");

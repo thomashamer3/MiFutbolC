@@ -2212,6 +2212,23 @@ void inicializar_estadisticas_partido(PartidoStats *stats)
     }
 }
 
+void imprimir_alineacion_equipo(const char *titulo, const Equipo *equipo)
+{
+    if (!titulo || !equipo)
+    {
+        return;
+    }
+
+    printf("%s (%s):\n", titulo, equipo->nombre);
+    for (int i = 0; i < equipo->num_jugadores; i++)
+    {
+        printf("  %d. %s", equipo->jugadores[i].numero, equipo->jugadores[i].nombre);
+        if (equipo->jugadores[i].es_capitan)
+            printf(" (C)");
+        printf("\n");
+    }
+}
+
 void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equipo_visitante)
 {
     printf("=== PARTIDO ENTRE %s VS %s ===\n\n", equipo_local->nombre, equipo_visitante->nombre);
@@ -2220,23 +2237,9 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
     mostrar_cancha_animada(0, 0);
 
     // Mostrar equipos alineados
-    printf("EQUIPO LOCAL (%s):\n", equipo_local->nombre);
-    for (int i = 0; i < equipo_local->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_local->jugadores[i].numero, equipo_local->jugadores[i].nombre);
-        if (equipo_local->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
-
-    printf("\nEQUIPO VISITANTE (%s):\n", equipo_visitante->nombre);
-    for (int i = 0; i < equipo_visitante->num_jugadores; i++)
-    {
-        printf("  %d. %s", equipo_visitante->jugadores[i].numero, equipo_visitante->jugadores[i].nombre);
-        if (equipo_visitante->jugadores[i].es_capitan)
-            printf(" (C)");
-        printf("\n");
-    }
+    imprimir_alineacion_equipo("EQUIPO LOCAL", equipo_local);
+    printf("\n");
+    imprimir_alineacion_equipo("EQUIPO VISITANTE", equipo_visitante);
 
     printf("\n*** INICIO DEL PARTIDO ***\n");
     printf("La simulacion comenzara automaticamente en 3 segundos...\n");

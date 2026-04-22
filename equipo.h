@@ -160,4 +160,12 @@ const char *get_nombre_posicion(Posicion posicion);
  */
 const char *get_nombre_tipo_futbol(TipoFutbol tipo);
 
+/**
+ * @brief Imprime la alineacion de un equipo en formato de lista.
+ *
+ * @param titulo Prefijo para el titulo (por ejemplo "EQUIPO LOCAL").
+ * @param equipo Equipo a mostrar.
+ */
+void imprimir_alineacion_equipo(const char *titulo, const Equipo *equipo);
+
 #endif

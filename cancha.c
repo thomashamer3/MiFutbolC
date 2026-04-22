@@ -619,6 +619,32 @@ static int parsear_dos_digitos(const char *texto, int *out_valor)
     return 1;
 }
 
+static int parsear_hora_formato_corto(const char *texto, int *out_hh, int *out_mm)
+{
+    if (!isdigit((unsigned char)texto[0]) || !parsear_dos_digitos(&texto[2], out_mm))
+    {
+        return 0;
+    }
+
+    *out_hh = (texto[0] - '0');
+    return 1;
+}
+
+static int parsear_hora_formato_largo(const char *texto, int *out_hh, int *out_mm)
+{
+    if (!parsear_dos_digitos(texto, out_hh) || !parsear_dos_digitos(&texto[3], out_mm))
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int hora_hhmm_en_rango(int hh, int mm)
+{
+    return (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59);
+}
+
 static int parsear_hora_hhmm(const char *texto, int *out_minutos)
 {
     if (!texto || !out_minutos)
@@ -637,15 +663,14 @@ static int parsear_hora_hhmm(const char *texto, int *out_minutos)
 
     if (len == 4 && texto[1] == ':')
     {
-        if (!isdigit((unsigned char)texto[0]) || !parsear_dos_digitos(&texto[2], &mm))
+        if (!parsear_hora_formato_corto(texto, &hh, &mm))
         {
             return 0;
         }
-        hh = (texto[0] - '0');
     }
     else if (len == 5 && texto[2] == ':')
     {
-        if (!parsear_dos_digitos(texto, &hh) || !parsear_dos_digitos(&texto[3], &mm))
+        if (!parsear_hora_formato_largo(texto, &hh, &mm))
         {
             return 0;
         }
@@ -655,7 +680,7 @@ static int parsear_hora_hhmm(const char *texto, int *out_minutos)
         return 0;
     }
 
-    if (hh < 0 || hh > 23 || mm < 0 || mm > 59)
+    if (!hora_hhmm_en_rango(hh, mm))
     {
         return 0;
     }
@@ -1796,68 +1821,82 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info, int mo
     printf("0) Volver\n\n");
 }
 
-static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+enum
+{
+    TAM_VALOR_OPCION_CANCHA = 200
+};
+
+static int solicitar_texto_y_campo_cancha(int opcion, char *valor, const char **campo)
+{
+    if (!valor || !campo)
+    {
+        return 0;
+    }
+
+    switch (opcion)
+    {
+    case 1:
+        solicitar_nombre_cancha("Nuevo nombre: ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "nombre";
+        return 1;
+    case 2:
+        solicitar_telefono_no_vacio("Nuevo numero de telefono: ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "telefono";
+        return 1;
+    case 3:
+        solicitar_campo_no_vacio("Nueva direccion: ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "direccion";
+        return 1;
+    case 4:
+        solicitar_campo_no_vacio("Nueva localidad/zona: ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "localidad";
+        return 1;
+    case 18:
+        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "estado";
+        return 1;
+    case 19:
+        input_string("Descripcion breve: ", valor, TAM_VALOR_OPCION_CANCHA);
+        trim_whitespace(valor);
+        *campo = "descripcion";
+        return 1;
+    case 20:
+        solicitar_campo_no_vacio("Nuevo contacto alternativo: ", valor, TAM_VALOR_OPCION_CANCHA);
+        *campo = "contacto_alt";
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int procesar_opcion_texto_cancha(int id, int opcion, int *actualizado)
+{
+    char valor[TAM_VALOR_OPCION_CANCHA] = {0};
+    const char *campo = NULL;
+
+    if (!actualizado)
+    {
+        return 0;
+    }
+
+    if (!solicitar_texto_y_campo_cancha(opcion, valor, &campo))
+    {
+        return 0;
+    }
+
+    *actualizado = actualizar_campo_texto_cancha(id, campo, valor);
+    return 1;
+}
+
+static int procesar_opcion_entero_cancha(int id, int opcion, int *actualizado)
 {
     if (!actualizado)
     {
         return 0;
     }
 
-    *actualizado = 0;
-
     switch (opcion)
     {
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 18:
-    case 19:
-    case 20:
-    {
-        char valor[200] = {0};
-        const char *campo = NULL;
-
-        if (opcion == 1)
-        {
-            solicitar_nombre_cancha("Nuevo nombre: ", valor, sizeof(valor));
-            campo = "nombre";
-        }
-        else if (opcion == 2)
-        {
-            solicitar_telefono_no_vacio("Nuevo numero de telefono: ", valor, sizeof(valor));
-            campo = "telefono";
-        }
-        else if (opcion == 3)
-        {
-            solicitar_campo_no_vacio("Nueva direccion: ", valor, sizeof(valor));
-            campo = "direccion";
-        }
-        else if (opcion == 4)
-        {
-            solicitar_campo_no_vacio("Nueva localidad/zona: ", valor, sizeof(valor));
-            campo = "localidad";
-        }
-        else if (opcion == 18)
-        {
-            solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", valor, sizeof(valor));
-            campo = "estado";
-        }
-        else if (opcion == 19)
-        {
-            input_string("Descripcion breve: ", valor, sizeof(valor));
-            trim_whitespace(valor);
-            campo = "descripcion";
-        }
-        else
-        {
-            solicitar_campo_no_vacio("Nuevo contacto alternativo: ", valor, sizeof(valor));
-            campo = "contacto_alt";
-        }
-
-        *actualizado = actualizar_campo_texto_cancha(id, campo, valor);
-        return 1;
-    }
     case 5:
         *actualizado = actualizar_campo_entero_cancha(id, "tipo_cancha_codigo", solicitar_tipo_cancha_codigo());
         return 1;
@@ -1894,33 +1933,80 @@ static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_comp
     case 16:
         *actualizado = actualizar_campo_entero_cancha(id, "tiene_estacionamiento", solicitar_si_no("Tiene estacionamiento?"));
         return 1;
-    case 17:
+    default:
+        return 0;
+    }
+}
+
+static int procesar_opcion_cantidad_cancha(int id, int opcion, int *actualizado)
+{
+    if (!actualizado || opcion != 17)
     {
-        int cantidad = input_int("Cantidad de canchas del complejo: ");
-        if (cantidad <= 0)
-        {
-            cantidad = 1;
-        }
-        *actualizado = actualizar_campo_entero_cancha(id, "cantidad_canchas", cantidad);
+        return 0;
+    }
+
+    int cantidad = input_int("Cantidad de canchas del complejo: ");
+    if (cantidad <= 0)
+    {
+        cantidad = 1;
+    }
+
+    *actualizado = actualizar_campo_entero_cancha(id, "cantidad_canchas", cantidad);
+    return 1;
+}
+
+static int procesar_opcion_completar_info_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+{
+    if (!actualizado || opcion != 21)
+    {
+        return 0;
+    }
+
+    if (mostrar_completar_info)
+    {
+        *actualizado = completar_informacion_cancha(id);
         return 1;
     }
-    case 21:
-        if (mostrar_completar_info)
-        {
-            *actualizado = completar_informacion_cancha(id);
-            return 1;
-        }
 
-        printf("La cancha ya tiene informacion suficiente para editar campo por campo.\n");
-        pause_console();
-        return 0;
-    default:
-        printf("Opcion invalida.\n");
-        pause_console();
+    printf("La cancha ya tiene informacion suficiente para editar campo por campo.\n");
+    pause_console();
+    return 0;
+}
+
+static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+{
+    if (!actualizado)
+    {
         return 0;
     }
 
+    *actualizado = 0;
+
+    if (procesar_opcion_texto_cancha(id, opcion, actualizado))
+    {
+        return 1;
+    }
+
+    if (procesar_opcion_entero_cancha(id, opcion, actualizado))
+    {
+        return 1;
+    }
+
+    if (procesar_opcion_cantidad_cancha(id, opcion, actualizado))
+    {
+        return 1;
+    }
+
+    if (opcion == 21)
+    {
+        return procesar_opcion_completar_info_cancha(id, opcion, mostrar_completar_info, actualizado);
+    }
+
+    printf("Opcion invalida.\n");
+    pause_console();
+    return 0;
 }
+
 void modificar_cancha()
 {
     mostrar_pantalla("MODIFICAR CANCHA");

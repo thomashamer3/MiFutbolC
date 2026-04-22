@@ -36,6 +36,56 @@ char *get_export_path(const char *filename)
     return path;
 }
 
+int exportar_archivo_si_hay_registros(const char *tabla,
+                                      const char *mensaje_sin_registros,
+                                      const char *filename,
+                                      const char *error_al_abrir,
+                                      const char *cabecera_opcional,
+                                      ExportWriterFn writer)
+{
+    if (!tabla || !mensaje_sin_registros || !filename || !error_al_abrir || !writer)
+    {
+        return 0;
+    }
+
+    if (!has_records(tabla))
+    {
+        mostrar_no_hay_registros(mensaje_sin_registros);
+        return 0;
+    }
+
+    FILE *f = abrir_archivo_exportacion(filename, error_al_abrir);
+    if (!f)
+    {
+        return 0;
+    }
+
+    if (cabecera_opcional)
+    {
+        fprintf(f, "%s", cabecera_opcional);
+    }
+
+    writer(f);
+
+    fclose(f);
+    printf("Archivo exportado a: %s\n", get_export_path(filename));
+    return 1;
+}
+
+void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
+{
+    if (!item || !stmt)
+    {
+        return;
+    }
+
+    cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
+    cJSON_AddStringToObject(item, "jugador", (const char *)sqlite3_column_text(stmt, 1));
+    cJSON_AddStringToObject(item, "tipo", (const char *)sqlite3_column_text(stmt, 2));
+    cJSON_AddStringToObject(item, "descripcion", (const char *)sqlite3_column_text(stmt, 3));
+    cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 4));
+}
+
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 
 /* Forward declarations of static functions */

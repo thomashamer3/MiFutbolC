@@ -98,11 +98,7 @@ static void write_lesiones_json(FILE *file)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
-        cJSON_AddStringToObject(item, "jugador", (const char *)sqlite3_column_text(stmt, 1));
-        cJSON_AddStringToObject(item, "tipo", (const char *)sqlite3_column_text(stmt, 2));
-        cJSON_AddStringToObject(item, "descripcion", (const char *)sqlite3_column_text(stmt, 3));
-        cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 4));
+        export_json_add_lesion_base_fields(item, stmt);
         cJSON_AddItemToArray(root, item);
     }
 
@@ -120,64 +116,32 @@ static void write_lesiones_json(FILE *file)
 
 void exportar_lesiones_csv()
 {
-    if (!has_records("lesion"))
-    {
-        mostrar_no_hay_registros("lesiones para exportar");
-        return;
-    }
-
-    FILE *f = abrir_archivo_exportacion("lesiones.csv", "Error al crear el archivo CSV");
-    if (!f)
-    {
-        return;
-    }
-
-    fprintf(f, "id,jugador,tipo,descripcion,fecha\n");
-    write_lesiones_csv(f);
-
-    fclose(f);
-    printf("Archivo exportado a: %s\n", get_export_path("lesiones.csv"));
+    exportar_archivo_si_hay_registros("lesion",
+                                      "lesiones para exportar",
+                                      "lesiones.csv",
+                                      "Error al crear el archivo CSV",
+                                      "id,jugador,tipo,descripcion,fecha\n",
+                                      write_lesiones_csv);
 }
 
 void exportar_lesiones_txt()
 {
-    if (!has_records("lesion"))
-    {
-        mostrar_no_hay_registros("lesiones para exportar");
-        return;
-    }
-
-    FILE *f = abrir_archivo_exportacion("lesiones.txt", "Error al crear el archivo TXT");
-    if (!f)
-    {
-        return;
-    }
-
-    fprintf(f, "LISTADO DE LESIONES\n\n");
-    write_lesiones_txt(f);
-
-    fclose(f);
-    printf("Archivo exportado a: %s\n", get_export_path("lesiones.txt"));
+    exportar_archivo_si_hay_registros("lesion",
+                                      "lesiones para exportar",
+                                      "lesiones.txt",
+                                      "Error al crear el archivo TXT",
+                                      "LISTADO DE LESIONES\n\n",
+                                      write_lesiones_txt);
 }
 
 void exportar_lesiones_json()
 {
-    if (!has_records("lesion"))
-    {
-        mostrar_no_hay_registros("lesiones para exportar");
-        return;
-    }
-
-    FILE *f = abrir_archivo_exportacion("lesiones.json", "Error al crear el archivo JSON");
-    if (!f)
-    {
-        return;
-    }
-
-    write_lesiones_json(f);
-
-    fclose(f);
-    printf("Archivo exportado a: %s\n", get_export_path("lesiones.json"));
+    exportar_archivo_si_hay_registros("lesion",
+                                      "lesiones para exportar",
+                                      "lesiones.json",
+                                      "Error al crear el archivo JSON",
+                                      NULL,
+                                      write_lesiones_json);
 }
 
 void exportar_lesiones_html()

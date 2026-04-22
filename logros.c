@@ -273,54 +273,85 @@ static const Logro LOGROS[] =
 
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
-static int obtener_progreso_logro(int camiseta_id, const char *tipo)
+static const char *buscar_sql_logro(const char *tipo)
 {
-    // Buscar la consulta correspondiente en el array
     for (size_t i = 0; i < NUM_QUERIES; i++)
     {
-        if (strcmp(tipo, LOGRO_QUERIES[i].tipo) != 0)
+        if (strcmp(tipo, LOGRO_QUERIES[i].tipo) == 0)
         {
-            continue;
+            return LOGRO_QUERIES[i].sql;
         }
-
-        sqlite3_stmt *stmt;
-        int progreso = 0;
-
-        if (!preparar_stmt(LOGRO_QUERIES[i].sql, &stmt))
-        {
-            return 0;
-        }
-
-        sqlite3_bind_int(stmt, 1, camiseta_id);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            progreso = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-
-        return progreso;
     }
 
-    // Tipo no encontrado
-    return 0;
+    return NULL;
+}
+
+static int ejecutar_consulta_progreso(const char *sql, int camiseta_id)
+{
+    sqlite3_stmt *stmt;
+    int progreso = 0;
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, camiseta_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        progreso = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+
+    return progreso;
+}
+
+static int calcular_estado_logro(int progreso, int objetivo)
+{
+    if (progreso >= objetivo)
+    {
+        return 2; // Completado
+    }
+    if (progreso > 0)
+    {
+        return 1; // En progreso
+    }
+    return 0; // No iniciado
+}
+
+static int filtro_permite_estado(int filtro, int estado)
+{
+    if (filtro == 1)
+    {
+        return estado == 2; // Solo completados
+    }
+    if (filtro == 2)
+    {
+        return estado == 1; // Solo en progreso
+    }
+    if (filtro == 3)
+    {
+        return estado != 2; // Solo no completados
+    }
+
+    return 1; // Sin filtro
+}
+
+static int obtener_progreso_logro(int camiseta_id, const char *tipo)
+{
+    const char *sql = buscar_sql_logro(tipo);
+    if (!sql)
+    {
+        return 0; // Tipo no encontrado
+    }
+
+    return ejecutar_consulta_progreso(sql, camiseta_id);
 }
 
 static int obtener_estado_logro(int camiseta_id, const Logro *logro, int *progreso)
 {
     *progreso = obtener_progreso_logro(camiseta_id, logro->tipo);
-
-    if (*progreso >= logro->objetivo)
-    {
-        return 2; // Completado
-    }
-    else if (*progreso > 0)
-    {
-        return 1; // En progreso
-    }
-    else
-    {
-        return 0; // No iniciado
-    }
+    return calcular_estado_logro(*progreso, logro->objetivo);
 }
 
 static void obtener_nombre_camiseta(int camiseta_id, char *nombre)
@@ -377,13 +408,8 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
         int progreso = 0;
         int estado = obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso);
 
-        // Aplicar filtro
-        if (filtro == 1 && estado != 2)
-            continue; // Solo completados
-        if (filtro == 2 && estado != 1)
-            continue; // Solo en progreso
-        if (filtro == 3 && estado == 2)
-            continue; // Solo no completados
+        if (!filtro_permite_estado(filtro, estado))
+            continue;
 
         mostrados++;
         mostrar_logro_individual(&LOGROS[i], estado, progreso);

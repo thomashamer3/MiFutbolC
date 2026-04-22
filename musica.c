@@ -2434,6 +2434,84 @@ static void renombrar_pista_menu(void)
     (void)ejecutar_renombrado_pista(idx, nombre_nuevo);
 }
 
+static int pista_aplica_filtro_exportacion(int indice, int usar_filtro)
+{
+    if (!usar_filtro)
+    {
+        return 1;
+    }
+
+    return musica_contiene_subcadena_ci(g_pistas[indice].nombre, g_filtro_busqueda);
+}
+
+static int contar_pistas_exportacion(int usar_filtro)
+{
+    int total = 0;
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (pista_aplica_filtro_exportacion(i, usar_filtro))
+        {
+            total++;
+        }
+    }
+
+    return total;
+}
+
+static void mostrar_resumen_exportacion_playlist(int usar_filtro, int total)
+{
+    if (usar_filtro)
+    {
+        ui_printf("  Se exportaran %d pistas (filtro: \"%s\")\n\n", total, g_filtro_busqueda);
+        return;
+    }
+
+    ui_printf("  Se exportaran %d pistas (catalogo completo)\n\n", total);
+}
+
+static int solicitar_nombre_playlist_exportacion(char *nombre, size_t size)
+{
+    input_string("  Nombre de la playlist (sin .txt): ", nombre, (int)size);
+    if (nombre[0] == '\0')
+    {
+        ui_printf("  Operacion cancelada.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (!musica_es_txt_playlist(nombre) && strcat_s(nombre, size, ".txt") != 0)
+    {
+        ui_printf("  Error: nombre demasiado largo.\n");
+        pause_console();
+        return 0;
+    }
+
+    return 1;
+}
+
+static int recolectar_temas_exportacion(int usar_filtro, char temas_exp[][MAX_NOMBRE], int max_temas)
+{
+    int n = 0;
+
+    for (int i = 0; i < g_num_pistas; i++)
+    {
+        if (n >= max_temas)
+        {
+            break;
+        }
+
+        if (!pista_aplica_filtro_exportacion(i, usar_filtro))
+        {
+            continue;
+        }
+
+        strncpy_s(temas_exp[n], MAX_NOMBRE, g_pistas[i].nombre, _TRUNCATE);
+        n++;
+    }
+
+    return n;
+}
+
 static void exportar_catalogo_playlist_menu(void)
 {
     clear_screen();
@@ -2447,43 +2525,17 @@ static void exportar_catalogo_playlist_menu(void)
     }
 
     int usar_filtro = (g_filtro_busqueda[0] != '\0');
-    int total = 0;
-    for (int i = 0; i < g_num_pistas; i++)
-        if (!usar_filtro || musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
-            total++;
-
-    if (usar_filtro)
-        ui_printf("  Se exportaran %d pistas (filtro: \"%s\")\n\n", total, g_filtro_busqueda);
-    else
-        ui_printf("  Se exportaran %d pistas (catalogo completo)\n\n", total);
+    int total = contar_pistas_exportacion(usar_filtro);
+    mostrar_resumen_exportacion_playlist(usar_filtro, total);
 
     char nombre[MAX_PLAYLIST_NAME] = {0};
-    input_string("  Nombre de la playlist (sin .txt): ", nombre, (int)sizeof(nombre));
-    if (nombre[0] == '\0')
+    if (!solicitar_nombre_playlist_exportacion(nombre, sizeof(nombre)))
     {
-        ui_printf("  Operacion cancelada.\n");
-        pause_console();
-        return;
-    }
-    if (!musica_es_txt_playlist(nombre) && strcat_s(nombre, sizeof(nombre), ".txt") != 0)
-    {
-        ui_printf("  Error: nombre demasiado largo.\n");
-        pause_console();
         return;
     }
 
     static char temas_exp[MAX_PISTAS][MAX_NOMBRE];
-    int n = 0;
-    for (int i = 0; i < g_num_pistas; i++)
-    {
-        if (n >= MAX_PISTAS)
-            break;
-        if (!usar_filtro || musica_contiene_subcadena_ci(g_pistas[i].nombre, g_filtro_busqueda))
-        {
-            strncpy_s(temas_exp[n], MAX_NOMBRE, g_pistas[i].nombre, _TRUNCATE);
-            n++;
-        }
-    }
+    int n = recolectar_temas_exportacion(usar_filtro, temas_exp, MAX_PISTAS);
 
     if (guardar_nombres_playlist(nombre, temas_exp, n))
         ui_printf("  Playlist exportada: %s (%d pista/s)\n", nombre, n);
