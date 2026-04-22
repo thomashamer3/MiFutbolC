@@ -555,8 +555,21 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
+        " color_principal TEXT DEFAULT '',"
+        " color_secundario TEXT DEFAULT '',"
+        " marca TEXT DEFAULT '',"
+        " modelo TEXT DEFAULT '',"
+        " temporada TEXT DEFAULT '',"
+        " estado_fisico TEXT DEFAULT '',"
+        " fecha_compra TEXT DEFAULT '',"
+        " costo_centavos INTEGER DEFAULT 0,"
+        " observaciones TEXT DEFAULT '',"
+        " proveedor TEXT DEFAULT '',"
+        " fue_regalo INTEGER DEFAULT 0,"
+        " regalo_de TEXT DEFAULT '',"
         " imagen_ruta TEXT DEFAULT '',"
-        " sorteada INTEGER DEFAULT 0);"
+        " sorteada INTEGER DEFAULT 0,"
+        " activa INTEGER DEFAULT 1);"
 
         "CREATE TABLE IF NOT EXISTS coleccion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -595,7 +608,34 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS cancha ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
-        " imagen_ruta TEXT DEFAULT '');"
+        " telefono TEXT DEFAULT '',"
+        " direccion TEXT DEFAULT '',"
+        " localidad TEXT DEFAULT '',"
+        " tipo_cancha_codigo INTEGER DEFAULT 0,"
+        " superficie_codigo INTEGER DEFAULT 0,"
+        " techada_estado_codigo INTEGER DEFAULT 2,"
+        " tiene_iluminacion INTEGER DEFAULT 0,"
+        " horario_apertura_min INTEGER DEFAULT -1,"
+        " horario_cierre_min INTEGER DEFAULT -1,"
+        " precio_hora_dia_centavos INTEGER DEFAULT 0,"
+        " precio_hora_noche_centavos INTEGER DEFAULT 0,"
+        " tiene_vestuarios INTEGER DEFAULT 0,"
+        " tiene_duchas INTEGER DEFAULT 0,"
+        " tiene_buffet INTEGER DEFAULT 0,"
+        " tiene_estacionamiento INTEGER DEFAULT 0,"
+        " cantidad_canchas INTEGER DEFAULT 1,"
+        " estado TEXT DEFAULT '',"
+        " descripcion TEXT DEFAULT '',"
+        " direccion_calle TEXT DEFAULT '',"
+        " direccion_zona TEXT DEFAULT '',"
+        " tipo_cancha TEXT DEFAULT '',"
+        " precio_hora REAL DEFAULT 0,"
+        " superficie TEXT DEFAULT '',"
+        " techada_estado TEXT DEFAULT 'NO SE',"
+        " horario TEXT DEFAULT '',"
+        " contacto_alt TEXT DEFAULT '',"
+        " imagen_ruta TEXT DEFAULT '',"
+        " activa INTEGER DEFAULT 1);"
 
         "CREATE TABLE IF NOT EXISTS partido ("
         " id INTEGER PRIMARY KEY,"
@@ -612,6 +652,19 @@ static int create_database_schema()
         " clima INTEGER DEFAULT 0,"
         " dia INTEGER DEFAULT 0,"
         " precio INTEGER DEFAULT 0,"
+        " tipo_partido INTEGER DEFAULT 1,"
+        " rival_nombre TEXT DEFAULT '',"
+        " tipo_rival TEXT DEFAULT '',"
+        " posicion_jugada TEXT DEFAULT '',"
+        " minutos_jugados INTEGER DEFAULT 0,"
+        " intensidad INTEGER DEFAULT 0,"
+        " esfuerzo_percibido INTEGER DEFAULT 0,"
+        " condicion_cancha TEXT DEFAULT '',"
+        " arbitraje TEXT DEFAULT '',"
+        " eventos_clave TEXT DEFAULT '',"
+        " rating_tecnico INTEGER DEFAULT 0,"
+        " rating_fisico INTEGER DEFAULT 0,"
+        " rating_mental INTEGER DEFAULT 0,"
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
 
@@ -1036,7 +1089,47 @@ static void add_missing_columns()
     {
         "ALTER TABLE camiseta ADD COLUMN sorteada INTEGER DEFAULT 0;",
         "ALTER TABLE camiseta ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN activa INTEGER DEFAULT 1;",
+        "ALTER TABLE camiseta ADD COLUMN color_principal TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN color_secundario TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN marca TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN modelo TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN temporada TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN estado_fisico TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN fecha_compra TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN costo_centavos INTEGER DEFAULT 0;",
+        "ALTER TABLE camiseta ADD COLUMN observaciones TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN proveedor TEXT DEFAULT '';",
+        "ALTER TABLE camiseta ADD COLUMN fue_regalo INTEGER DEFAULT 0;",
+        "ALTER TABLE camiseta ADD COLUMN regalo_de TEXT DEFAULT '';",
         "ALTER TABLE cancha ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN activa INTEGER DEFAULT 1;",
+        "ALTER TABLE cancha ADD COLUMN telefono TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN direccion TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN localidad TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN tipo_cancha_codigo INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN superficie_codigo INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN techada_estado_codigo INTEGER DEFAULT 2;",
+        "ALTER TABLE cancha ADD COLUMN tiene_iluminacion INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN horario_apertura_min INTEGER DEFAULT -1;",
+        "ALTER TABLE cancha ADD COLUMN horario_cierre_min INTEGER DEFAULT -1;",
+        "ALTER TABLE cancha ADD COLUMN precio_hora_dia_centavos INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN precio_hora_noche_centavos INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN tiene_vestuarios INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN tiene_duchas INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN tiene_buffet INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN tiene_estacionamiento INTEGER DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN cantidad_canchas INTEGER DEFAULT 1;",
+        "ALTER TABLE cancha ADD COLUMN estado TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN descripcion TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN direccion_calle TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN direccion_zona TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN tipo_cancha TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN precio_hora REAL DEFAULT 0;",
+        "ALTER TABLE cancha ADD COLUMN superficie TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN techada_estado TEXT DEFAULT 'NO SE';",
+        "ALTER TABLE cancha ADD COLUMN horario TEXT DEFAULT '';",
+        "ALTER TABLE cancha ADD COLUMN contacto_alt TEXT DEFAULT '';",
         "ALTER TABLE equipo ADD COLUMN imagen_ruta TEXT DEFAULT '';",
         "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
@@ -1046,6 +1139,19 @@ static void add_missing_columns()
         "ALTER TABLE partido ADD COLUMN clima INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN dia INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN precio INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN tipo_partido INTEGER DEFAULT 1;",
+        "ALTER TABLE partido ADD COLUMN rival_nombre TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN tipo_rival TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN posicion_jugada TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN minutos_jugados INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN intensidad INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN esfuerzo_percibido INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN condicion_cancha TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN arbitraje TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN eventos_clave TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN rating_tecnico INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN rating_fisico INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN rating_mental INTEGER DEFAULT 0;",
         "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
         "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';",
         "ALTER TABLE usuario ADD COLUMN password_salt TEXT DEFAULT '';",

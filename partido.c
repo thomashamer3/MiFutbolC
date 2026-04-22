@@ -39,6 +39,8 @@ static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
 static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo);
 static UNUSED void guardar_estadisticas_equipo(const Equipo *equipo, int const *estadisticas, int const *asistencias,
         int resultado, int cancha_id, char const *fecha_simulacion);
+static int crear_cancha_inline(void);
+static int crear_camiseta_inline(void);
 
 // Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
@@ -76,12 +78,52 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
         ui_printf_centered_line("Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
         ui_printf_centered_line("Dia: %s", dia_to_text(sqlite3_column_int(stmt, 12)));
         ui_printf_centered_line("Precio: %d", sqlite3_column_int(stmt, 13));
+
+        int tipo_partido = sqlite3_column_int(stmt, 14);
+        ui_printf_centered_line("Tipo Partido: %s", tipo_partido == 2 ? "FORMAL" : "AMISTOSO");
+        if (tipo_partido == 2)
+        {
+            ui_printf_centered_line("Rival: %s (%s)",
+                                    sqlite3_column_text(stmt, 15) ? (const char *)sqlite3_column_text(stmt, 15) : "N/A",
+                                    sqlite3_column_text(stmt, 16) ? (const char *)sqlite3_column_text(stmt, 16) : "N/A");
+            ui_printf_centered_line("Posicion: %s | Minutos: %d",
+                                    sqlite3_column_text(stmt, 17) ? (const char *)sqlite3_column_text(stmt, 17) : "N/A",
+                                    sqlite3_column_int(stmt, 18));
+            ui_printf_centered_line("Intensidad: %d | Esfuerzo: %d",
+                                    sqlite3_column_int(stmt, 19),
+                                    sqlite3_column_int(stmt, 20));
+            ui_printf_centered_line("Condicion Cancha: %s | Arbitraje: %s",
+                                    sqlite3_column_text(stmt, 21) ? (const char *)sqlite3_column_text(stmt, 21) : "N/A",
+                                    sqlite3_column_text(stmt, 22) ? (const char *)sqlite3_column_text(stmt, 22) : "N/A");
+            ui_printf_centered_line("Eventos Clave: %s",
+                                    sqlite3_column_text(stmt, 23) ? (const char *)sqlite3_column_text(stmt, 23) : "N/A");
+            ui_printf_centered_line("Ratings T/F/M: %d/%d/%d",
+                                    sqlite3_column_int(stmt, 24),
+                                    sqlite3_column_int(stmt, 25),
+                                    sqlite3_column_int(stmt, 26));
+        }
         ui_printf_centered_line("----------------------------------------");
         hay = 1;
     }
 
     return hay;
 }
+
+typedef struct
+{
+    char rival_nombre[100];
+    char tipo_rival[40];
+    char posicion_jugada[40];
+    int minutos_jugados;
+    int intensidad;
+    int esfuerzo_percibido;
+    char condicion_cancha[60];
+    char arbitraje[60];
+    char eventos_clave[300];
+    int rating_tecnico;
+    int rating_fisico;
+    int rating_mental;
+} DatosPartidoFormal;
 
 typedef struct
 {
@@ -97,6 +139,8 @@ typedef struct
     int clima;
     int dia;
     int precio;
+    int tipo_partido;
+    DatosPartidoFormal formal;
 } DatosPartido;
 
 typedef struct
@@ -128,10 +172,44 @@ static int secure_rand(int max)
     return (unsigned int)rand() % max;
 }
 
+static int cancha_esta_activa(int cancha_id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("SELECT IFNULL(activa, 1) FROM cancha WHERE id = ?", &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, cancha_id);
+    int activa = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        activa = sqlite3_column_int(stmt, 0) == 1;
+    }
+    sqlite3_finalize(stmt);
+    return activa;
+}
+
+static int camiseta_esta_activa(int camiseta_id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("SELECT IFNULL(activa, 1) FROM camiseta WHERE id = ?", &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, camiseta_id);
+    int activa = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        activa = sqlite3_column_int(stmt, 0) == 1;
+    }
+    sqlite3_finalize(stmt);
+    return activa;
+}
+
 static int verificar_prerrequisitos_partido()
 {
     sqlite3_stmt *stmt_count_canchas;
-    if (!preparar_stmt("SELECT COUNT(*) FROM cancha", &stmt_count_canchas))
+    if (!preparar_stmt("SELECT COUNT(*) FROM cancha WHERE IFNULL(activa, 1) = 1", &stmt_count_canchas))
     {
         return 0;
     }
@@ -140,7 +218,7 @@ static int verificar_prerrequisitos_partido()
     sqlite3_finalize(stmt_count_canchas);
 
     sqlite3_stmt *stmt_count_camisetas;
-    if (!preparar_stmt("SELECT COUNT(*) FROM camiseta", &stmt_count_camisetas))
+    if (!preparar_stmt("SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1", &stmt_count_camisetas))
     {
         return 0;
     }
@@ -148,9 +226,14 @@ static int verificar_prerrequisitos_partido()
     int count_camisetas = sqlite3_column_int(stmt_count_camisetas, 0);
     sqlite3_finalize(stmt_count_camisetas);
 
-    if (count_canchas == 0 && count_camisetas == 0)
+    if (count_canchas == 0 || count_camisetas == 0)
     {
-        printf("No se puede crear un partido porque no hay canchas ni camisetas registradas.\n");
+        if (count_canchas == 0 && count_camisetas == 0)
+            printf("No se puede crear un partido porque no hay canchas ni camisetas activas registradas.\n");
+        else if (count_canchas == 0)
+            printf("No se puede crear un partido porque no hay canchas activas registradas.\n");
+        else
+            printf("No se puede crear un partido porque no hay camisetas activas registradas.\n");
         pause_console();
         return 0;
     }
@@ -161,7 +244,7 @@ static void listar_canchas_disponibles()
 {
     ui_printf_centered_line("Canchas disponibles:");
     sqlite3_stmt *stmt_canchas;
-    if (!preparar_stmt("SELECT id, nombre FROM cancha ORDER BY id", &stmt_canchas))
+    if (!preparar_stmt("SELECT id, nombre FROM cancha WHERE IFNULL(activa, 1) = 1 ORDER BY id", &stmt_canchas))
     {
         return;
     }
@@ -172,14 +255,180 @@ static void listar_canchas_disponibles()
     sqlite3_finalize(stmt_canchas);
 }
 
+static void listar_camisetas_disponibles()
+{
+    ui_printf_centered_line("Camisetas disponibles:");
+    sqlite3_stmt *stmt_camisetas;
+    if (!preparar_stmt("SELECT id, nombre FROM camiseta WHERE IFNULL(activa, 1) = 1 ORDER BY id", &stmt_camisetas))
+    {
+        return;
+    }
+    while (sqlite3_step(stmt_camisetas) == SQLITE_ROW)
+    {
+        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt_camisetas, 0), sqlite3_column_text(stmt_camisetas, 1));
+    }
+    sqlite3_finalize(stmt_camisetas);
+}
+
+/* Muestra el listado de canchas con la opcion "Nueva Cancha" al final */
+static void listar_canchas_con_nueva()
+{
+    listar_canchas_disponibles();
+    ui_printf_centered_line("-1 | [+ Nueva Cancha]");
+}
+
+/* Muestra el listado de camisetas con la opcion "Nueva Camiseta" al final */
+static void listar_camisetas_con_nueva()
+{
+    listar_camisetas_disponibles();
+    ui_printf_centered_line("-1 | [+ Nueva Camiseta]");
+}
+
+/* Crea una cancha nueva de forma rapida durante la creacion de un partido.
+   Devuelve el nuevo ID, o 0 si fallo. */
+static int crear_cancha_inline(void)
+{
+    char nombre[100];
+    input_string("Nombre de la nueva cancha: ", nombre, sizeof(nombre));
+    trim_whitespace(nombre);
+    if (nombre[0] == '\0')
+    {
+        printf("El nombre no puede estar vacio.\n");
+        return 0;
+    }
+
+    long long id = obtener_siguiente_id("cancha");
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("INSERT INTO cancha(id, nombre) VALUES(?, ?)", &stmt))
+    {
+        printf("Error al crear la cancha.\n");
+        return 0;
+    }
+    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc == SQLITE_DONE)
+    {
+        printf("Cancha \"%s\" creada con ID %lld.\n", nombre, id);
+        return (int)id;
+    }
+    printf("Error al guardar la cancha.\n");
+    return 0;
+}
+
+/* Crea una camiseta nueva de forma rapida durante la creacion de un partido.
+   Devuelve el nuevo ID, o 0 si fallo. */
+static int crear_camiseta_inline(void)
+{
+    char nombre[50];
+    input_string("Nombre y Numero de la nueva camiseta: ", nombre, sizeof(nombre));
+    trim_whitespace(nombre);
+    if (nombre[0] == '\0')
+    {
+        printf("El nombre no puede estar vacio.\n");
+        return 0;
+    }
+
+    long long id = obtener_siguiente_id("camiseta");
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("INSERT INTO camiseta(id, nombre) VALUES(?, ?)", &stmt))
+    {
+        printf("Error al crear la camiseta.\n");
+        return 0;
+    }
+    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc == SQLITE_DONE)
+    {
+        printf("Camiseta \"%s\" creada con ID %lld.\n", nombre, id);
+        return (int)id;
+    }
+    printf("Error al guardar la camiseta.\n");
+    return 0;
+}
+
+/* Pide un ID de cancha; si el usuario ingresa -1 ofrece crear una nueva.
+   Devuelve 0 si el usuario cancela. */
+static int pedir_cancha_o_nueva(int permite_cancelar)
+{
+    while (1)
+    {
+        int id = input_int("ID Cancha, (-1 Nueva Cancha, 0 para Cancelar): ");
+        if (permite_cancelar && id == 0)
+            return 0;
+        if (id == -1)
+        {
+            int nuevo_id = crear_cancha_inline();
+            if (nuevo_id > 0)
+                return nuevo_id;
+            /* Si fallo volver a mostrar lista */
+            listar_canchas_con_nueva();
+            continue;
+        }
+        if (existe_id("cancha", id))
+        {
+            if (cancha_esta_activa(id))
+                return id;
+
+            printf("La cancha esta inactiva. Seleccione una cancha activa o cree una nueva.\n");
+            continue;
+        }
+        printf("La cancha no existe. Intente nuevamente.\n");
+    }
+}
+
+/* Pide un ID de camiseta; si el usuario ingresa -1 ofrece crear una nueva. */
+static int pedir_camiseta_o_nueva(void)
+{
+    while (1)
+    {
+        int id = input_int("ID Camiseta, (-1 Nueva Camiseta): ");
+        if (id == -1)
+        {
+            int nuevo_id = crear_camiseta_inline();
+            if (nuevo_id > 0)
+                return nuevo_id;
+            listar_camisetas_con_nueva();
+            continue;
+        }
+        if (existe_id("camiseta", id))
+        {
+            if (camiseta_esta_activa(id))
+                return id;
+
+            printf("La camiseta esta inactiva. Seleccione una camiseta activa o cree una nueva.\n");
+            continue;
+        }
+        printf("La camiseta no existe. Intente nuevamente.\n");
+    }
+}
+
 static void inicializar_datos_partido(DatosPartido *datos)
 {
     memset(datos, 0, sizeof(*datos));
     strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
+    datos->tipo_partido = 1;
+    strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
+    strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "");
+    strcpy_s(datos->formal.posicion_jugada, sizeof(datos->formal.posicion_jugada), "");
+    datos->formal.minutos_jugados = 0;
+    datos->formal.intensidad = 0;
+    datos->formal.esfuerzo_percibido = 0;
+    strcpy_s(datos->formal.condicion_cancha, sizeof(datos->formal.condicion_cancha), "");
+    strcpy_s(datos->formal.arbitraje, sizeof(datos->formal.arbitraje), "");
+    strcpy_s(datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave), "");
+    datos->formal.rating_tecnico = 0;
+    datos->formal.rating_fisico = 0;
+    datos->formal.rating_mental = 0;
 }
 
-static int pedir_id_existente(const char *prompt, const char *tabla,
-                              const char *mensaje_error, int permite_cancelar)
+static UNUSED int pedir_id_existente(const char *prompt, const char *tabla,
+                                     const char *mensaje_error, int permite_cancelar)
 {
     while (1)
     {
@@ -218,6 +467,103 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max, c
     return valor;
 }
 
+static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
+{
+    while (1)
+    {
+        input_string_extended(prompt, buffer, size);
+        trim_whitespace(buffer);
+        if (buffer[0] != '\0')
+        {
+            return;
+        }
+        printf("El campo no puede estar vacio.\n");
+    }
+}
+
+static int seleccionar_modalidad_partido(void)
+{
+    while (1)
+    {
+        print_header("TIPO DE PARTIDO");
+        printf("1) Partido Amistoso (carga clasica)\n");
+        printf("2) Partido Formal (carga clasica + detalle ampliado)\n");
+        printf("0) Cancelar\n");
+
+        int opcion = input_int("Opcion: ");
+        if (opcion == 0 || opcion == 1 || opcion == 2)
+        {
+            return opcion;
+        }
+        printf("Opcion invalida.\n");
+    }
+}
+
+static void solicitar_tipo_rival(char *buffer, int size)
+{
+    while (1)
+    {
+        printf("Tipo de rival:\n");
+        printf("1) Amistoso\n");
+        printf("2) Torneo\n");
+        printf("3) Entrenamiento\n");
+        printf("4) Otro\n");
+
+        int opcion = input_int("Opcion: ");
+        switch (opcion)
+        {
+        case 1:
+            snprintf(buffer, size, "Amistoso");
+            return;
+        case 2:
+            snprintf(buffer, size, "Torneo");
+            return;
+        case 3:
+            snprintf(buffer, size, "Entrenamiento");
+            return;
+        case 4:
+            solicitar_texto_no_vacio("Tipo de rival (texto): ", buffer, size);
+            return;
+        default:
+            printf("Opcion invalida.\n");
+            break;
+        }
+    }
+}
+
+static void recopilar_datos_formales(DatosPartido *datos)
+{
+    solicitar_texto_no_vacio("Rival: ", datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre));
+    solicitar_tipo_rival(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival));
+    solicitar_texto_no_vacio("Posicion jugada: ", datos->formal.posicion_jugada, sizeof(datos->formal.posicion_jugada));
+    datos->formal.minutos_jugados = pedir_entero_en_rango("Minutos jugados (0-180): ",
+                                    0, 180,
+                                    "Valor invalido. Ingrese entre 0 y 180: ");
+    datos->formal.intensidad = pedir_entero_en_rango("Intensidad del partido (1-10): ",
+                               1, 10,
+                               "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.esfuerzo_percibido = pedir_entero_en_rango("Esfuerzo percibido (1-10): ",
+                                       1, 10,
+                                       "Valor invalido. Ingrese entre 1 y 10: ");
+    solicitar_texto_no_vacio("Condicion de cancha: ", datos->formal.condicion_cancha, sizeof(datos->formal.condicion_cancha));
+    solicitar_texto_no_vacio("Arbitraje: ", datos->formal.arbitraje, sizeof(datos->formal.arbitraje));
+    input_string_extended("Eventos clave: ", datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave));
+    trim_whitespace(datos->formal.eventos_clave);
+    if (datos->formal.eventos_clave[0] == '\0')
+    {
+        snprintf(datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave), "(sin eventos)");
+    }
+    datos->formal.rating_tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
+                                   1, 10,
+                                   "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating_fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating_mental = pedir_entero_en_rango("Rating mental (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
+}
+
 static size_t longitud_segura(const char *texto, size_t max_len)
 {
     if (!texto)
@@ -248,10 +594,8 @@ static int recopilar_datos_partido(DatosPartido *datos)
 
     inicializar_datos_partido(datos);
 
-    datos->cancha_id = pedir_id_existente("ID Cancha, (0 para Cancelar): ",
-                                          "cancha",
-                                          "La cancha no existe. Intente nuevamente.",
-                                          1);
+    listar_canchas_con_nueva();
+    datos->cancha_id = pedir_cancha_o_nueva(1);
     if (datos->cancha_id == 0)
     {
         return 0;
@@ -265,11 +609,8 @@ static int recopilar_datos_partido(DatosPartido *datos)
                        1, 3,
                        "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
 
-    listar_camisetas();
-    datos->camiseta = pedir_id_existente("ID Camiseta: ",
-                                         "camiseta",
-                                         "La camiseta no existe. Intente nuevamente.",
-                                         0);
+    listar_camisetas_con_nueva();
+    datos->camiseta = pedir_camiseta_o_nueva();
     datos->rendimiento_general = pedir_entero_en_rango("Rendimiento general (1-10): ",
                                  1, 10,
                                  "Rendimiento invalido. Ingrese entre 1 y 10: ");
@@ -288,7 +629,20 @@ static int recopilar_datos_partido(DatosPartido *datos)
                                        "Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
     datos->precio = pedir_entero_minimo("Precio del partido: ", 0,
                                         "Precio invalido. Ingrese 0 o mas: ");
+    datos->tipo_partido = 1;
 
+    return 1;
+}
+
+static int recopilar_datos_partido_formal(DatosPartido *datos)
+{
+    if (!recopilar_datos_partido(datos))
+    {
+        return 0;
+    }
+
+    datos->tipo_partido = 2;
+    recopilar_datos_formales(datos);
     return 1;
 }
 
@@ -296,8 +650,9 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio)"
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio,"
+                "tipo_partido,rival_nombre,tipo_rival,posicion_jugada,minutos_jugados,intensidad,esfuerzo_percibido,condicion_cancha,arbitraje,eventos_clave,rating_tecnico,rating_fisico,rating_mental)"
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 &stmt))
     {
         return;
@@ -319,6 +674,19 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_bind_int(stmt, 12, datos->clima);
     sqlite3_bind_int(stmt, 13, datos->dia);
     sqlite3_bind_int(stmt, 14, datos->precio);
+    sqlite3_bind_int(stmt, 15, datos->tipo_partido);
+    sqlite3_bind_text(stmt, 16, datos->formal.rival_nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 17, datos->formal.tipo_rival, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 18, datos->formal.posicion_jugada, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 19, datos->formal.minutos_jugados);
+    sqlite3_bind_int(stmt, 20, datos->formal.intensidad);
+    sqlite3_bind_int(stmt, 21, datos->formal.esfuerzo_percibido);
+    sqlite3_bind_text(stmt, 22, datos->formal.condicion_cancha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 23, datos->formal.arbitraje, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 24, datos->formal.eventos_clave, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 25, datos->formal.rating_tecnico);
+    sqlite3_bind_int(stmt, 26, datos->formal.rating_fisico);
+    sqlite3_bind_int(stmt, 27, datos->formal.rating_mental);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -442,9 +810,17 @@ void crear_partido()
     if (!verificar_prerrequisitos_partido())
         return;
 
+    int modalidad = seleccionar_modalidad_partido();
+    if (modalidad == 0)
+    {
+        return;
+    }
+
     DatosPartido datos;
-    listar_canchas_disponibles();
-    if (!recopilar_datos_partido(&datos))
+    int datos_ok = (modalidad == 1)
+                   ? recopilar_datos_partido(&datos)
+                   : recopilar_datos_partido_formal(&datos);
+    if (!datos_ok)
         return;
 
     char fecha[20];
@@ -488,7 +864,10 @@ void listar_partidos()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
+                "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
+                "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
+                "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
+                "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0) "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                 "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
                 &stmt))
@@ -662,9 +1041,9 @@ static void modificar_cancha_partido()
         cancha = input_int("Nuevo ID Cancha (0 para cancelar): ");
         if (cancha == 0)
             return;
-        if (existe_id("cancha", cancha))
+        if (existe_id("cancha", cancha) && cancha_esta_activa(cancha))
             break;
-        printf("La cancha no existe. Intente nuevamente.\n");
+        printf("La cancha no existe o esta inactiva. Intente nuevamente.\n");
     }
 
     sqlite3_stmt *stmt;
@@ -725,11 +1104,11 @@ static void modificar_resultado_partido()
 
 static void modificar_camiseta_partido()
 {
-    listar_camisetas();
+    listar_camisetas_disponibles();
     int camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", camiseta))
+    if (!existe_id("camiseta", camiseta) || !camiseta_esta_activa(camiseta))
     {
-        printf("La camiseta no existe\n");
+        printf("La camiseta no existe o esta inactiva\n");
         return;
     }
     sqlite3_stmt *stmt;
@@ -774,9 +1153,9 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
 
     listar_canchas_disponibles();
     datos->cancha_id = input_int("Nuevo ID Cancha: ");
-    if (!existe_id("cancha", datos->cancha_id))
+    if (!existe_id("cancha", datos->cancha_id) || !cancha_esta_activa(datos->cancha_id))
     {
-        printf("La cancha no existe\n");
+        printf("La cancha no existe o esta inactiva\n");
         return 0;
     }
     char fecha[20];
@@ -791,11 +1170,11 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     {
         datos->resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
     }
-    listar_camisetas();
+    listar_camisetas_disponibles();
     datos->camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", datos->camiseta))
+    if (!existe_id("camiseta", datos->camiseta) || !camiseta_esta_activa(datos->camiseta))
     {
-        printf("La camiseta no existe\n");
+        printf("La camiseta no existe o esta inactiva\n");
         return 0;
     }
     datos->clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");

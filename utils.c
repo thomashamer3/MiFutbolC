@@ -3679,7 +3679,7 @@ void mostrar_alerta_operacion(const char *entidad, const char *operacion, const 
 
     printf("\n");
     printf("========================================\n");
-    printf("  \xE2\x9C\x93 OPERACION EXITOSA\n");
+    printf("   OPERACION EXITOSA\n");
     printf("========================================\n\n");
 
     printf("  Entidad  : %s\n", entidad_safe);

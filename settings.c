@@ -59,9 +59,6 @@ static AppSettings current_settings =
     SETTINGS_MUSIC_VOLUME_STEP_DEFAULT
 };
 
-// Flag para rastrear cambios en menu personalizado
-static int custom_menu_changed = 0;
-
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
@@ -74,7 +71,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 static void settings_apply_text_size();
 static void habilitar_menus_basicos_custom(void);
-static void confirmar_guardado_si_cambios(void);
 
 static float clampf(float value, float minv, float maxv)
 {
@@ -217,10 +213,8 @@ static void mode_set_advanced()
 }
 static void mode_set_custom()
 {
-    current_settings.mode = MODE_CUSTOM;
-    habilitar_menus_basicos_custom();
+    settings_set_mode(MODE_CUSTOM);
     menu_custom_menus();
-    confirmar_guardado_si_cambios();
     pause_console();
 }
 
@@ -244,7 +238,6 @@ static void habilitar_menus_basicos_custom()
     set_custom_menu_enabled("lesiones", 1);
     set_custom_menu_enabled("equipos", 1);
     set_custom_menu_enabled("estadisticas", 1);
-    custom_menu_changed = 0; // Reset flag after setting defaults
 }
 
 struct MenuOption
@@ -273,38 +266,6 @@ static int extraer_primer_caracter(const char *input, char *out)
     }
 
     return 0;
-}
-
-static int confirmar_guardado_configuracion(int default_on_fail)
-{
-    printf("Guardar configuracion? (S/N): ");
-    char confirm;
-    char input[16];
-    if (!fgets(input, sizeof(input), stdin)
-            || !extraer_primer_caracter(input, &confirm))
-    {
-        confirm = default_on_fail ? 'S' : 'N';
-    }
-
-    if (confirm == '\n' || confirm == 's' || confirm == 'S')
-    {
-        settings_save();
-        printf("%s\n", get_text("settings_saved"));
-        return 1;
-    }
-
-    printf("Configuracion no guardada.\n");
-    return 0;
-}
-
-static void confirmar_guardado_si_cambios()
-{
-    if (!custom_menu_changed)
-    {
-        return;
-    }
-
-    confirmar_guardado_configuracion(0);
 }
 
 static const struct MenuOption* buscar_opcion_menu(const struct MenuOption *options, int opcion)
@@ -590,13 +551,9 @@ void settings_init()
             printf("%s\n", get_text("settings_saved"));
             break;
         case 3:
-            current_settings.mode = MODE_CUSTOM;
-            // Habilitar menus basicos por defecto en modo personalizado
-            habilitar_menus_basicos_custom();
+            settings_set_mode(MODE_CUSTOM);
             // Mostrar menu para configurar menus
             menu_custom_menus();
-            // Ask for confirmation only if changes were made
-            confirmar_guardado_si_cambios();
             break;
         case 0:
             // Exit the program
@@ -1839,7 +1796,6 @@ void set_custom_menu_enabled(const char* menu_name, int enabled)
         sqlite3_bind_int(stmt, 2, enabled);
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
-        custom_menu_changed = 1; // Marcar que se hizo un cambio
     }
 }
 
@@ -1861,7 +1817,6 @@ void menu_custom_menus()
 #if defined(UNIT_TEST)
     return;
 #else
-    custom_menu_changed = 0; // Reset flag at the beginning
     clear_screen();
     print_header(get_text("menu_settings"));
 
@@ -1914,7 +1869,6 @@ void menu_custom_menus()
     int current_state = is_custom_menu_enabled(option->name);
     set_custom_menu_enabled(option->name, !current_state);
     printf("Menu %s %s.\n", option->display_name, !current_state ? "habilitado" : "deshabilitado");
-    confirmar_guardado_configuracion(1);
     pause_console();
     menu_custom_menus(); // Recargar menu
 #endif
