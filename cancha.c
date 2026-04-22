@@ -118,11 +118,16 @@ static void agregar_texto_tipo_en_buffer(char *buffer, size_t size, const char *
         return;
     }
 
-    if (buffer[0] != '\0')
+    size_t buffer_len = strlen_s(buffer, size);
+    if (buffer_len >= size)
     {
-        strncat(buffer, ", ", size - strlen(buffer) - 1);
+        buffer[size - 1] = '\0';
+        return;
     }
-    strncat(buffer, texto, size - strlen(buffer) - 1);
+
+    const char *separador = (buffer_len > 0) ? ", " : "";
+    (void)strncat_s(buffer, size, separador, _TRUNCATE);
+    (void)strncat_s(buffer, size, texto, _TRUNCATE);
 }
 
 static int es_separador_lista(int c)
@@ -564,7 +569,7 @@ static int parsear_hora_hhmm(const char *texto, int *out_minutos)
         return 0;
     }
 
-    size_t len = strlen(texto);
+    size_t len = strlen_s(texto, 6);
     if (!((len == 4 && texto[1] == ':') || (len == 5 && texto[2] == ':')))
     {
         return 0;
@@ -1555,6 +1560,145 @@ static int listar_canchas_con_info_pendiente(void)
     return pendientes;
 }
 
+static void procesar_eliminacion_reasignando_partidos_cancha(int id, int partidos_asociados)
+{
+    int total_canchas = contar_total_canchas_activas();
+    if (total_canchas <= 1)
+    {
+        printf("No hay otra cancha disponible para reasignar partidos.\n");
+        pause_console();
+        return;
+    }
+
+    printf("\nCanchas disponibles para reasignar:\n");
+    listar_canchas_excluyendo(id);
+    printf("\n");
+
+    int cancha_destino = input_int("ID cancha destino (0 para cancelar): ");
+    if (cancha_destino == 0)
+    {
+        return;
+    }
+
+    if (cancha_destino == id || !existe_id("cancha", cancha_destino) || !cancha_esta_activa(cancha_destino))
+    {
+        printf("Cancha destino invalida.\n");
+        pause_console();
+        return;
+    }
+
+    char detalle[160] = {0};
+    snprintf(detalle, sizeof(detalle),
+             "Se reasignaran %d partido(s) a la cancha %d y se eliminara la cancha %d.",
+             partidos_asociados, cancha_destino, id);
+    if (!confirmar_borrado_irreversible_cancha(id, detalle))
+    {
+        return;
+    }
+
+    if (!reasignar_partidos_y_eliminar_cancha(id, cancha_destino))
+    {
+        printf("No se pudo completar la reasignacion y eliminacion.\n");
+        pause_console();
+        return;
+    }
+
+    mostrar_alerta_operacion("Cancha", "Reasignada y Eliminada", NULL);
+}
+
+static void procesar_eliminacion_con_partidos_asociados_cancha(int id, int partidos_asociados)
+{
+    char detalle[160] = {0};
+    snprintf(detalle, sizeof(detalle),
+             "Se eliminara la cancha %d y TODOS sus %d partido(s) asociados.",
+             id, partidos_asociados);
+    if (!confirmar_borrado_irreversible_cancha(id, detalle))
+    {
+        return;
+    }
+
+    if (!eliminar_cancha_y_partidos_asociados(id))
+    {
+        printf("No se pudo eliminar la cancha y sus partidos asociados.\n");
+        pause_console();
+        return;
+    }
+
+    mostrar_alerta_operacion("Cancha", "Eliminada con Partidos Asociados", NULL);
+}
+
+static void procesar_retiro_cancha(int id)
+{
+    if (!confirmar("Se retirara la cancha: no aparecera para partidos nuevos, pero conservara historial. Continuar?"))
+    {
+        return;
+    }
+
+    if (!actualizar_estado_cancha(id, 0))
+    {
+        printf("No se pudo marcar la cancha como inactiva.\n");
+        pause_console();
+        return;
+    }
+
+    mostrar_alerta_operacion("Cancha", "Retirada (Inactiva)", NULL);
+}
+
+static void procesar_cancha_con_partidos_asociados(int id, int partidos_asociados)
+{
+    printf("La cancha esta asociada a %d partido(s).\n", partidos_asociados);
+    printf("Elija una opcion:\n");
+    printf("1) Reasignar esos partidos a otra cancha y eliminar esta cancha\n");
+    printf("2) Eliminar esta cancha y TODOS los partidos asociados\n");
+    printf("3) Retirar cancha (marcar INACTIVA y conservar historial)\n");
+    printf("0) Cancelar\n");
+
+    int opcion = input_int("Opcion: ");
+    if (opcion == 0)
+    {
+        return;
+    }
+
+    switch (opcion)
+    {
+    case 1:
+        procesar_eliminacion_reasignando_partidos_cancha(id, partidos_asociados);
+        return;
+    case 2:
+        procesar_eliminacion_con_partidos_asociados_cancha(id, partidos_asociados);
+        return;
+    case 3:
+        procesar_retiro_cancha(id);
+        return;
+    default:
+        printf("Opcion invalida.\n");
+        pause_console();
+        return;
+    }
+}
+
+static void eliminar_cancha_sin_partidos_asociados(int id)
+{
+    if (!confirmar_borrado_irreversible_cancha(id, "Se eliminara la cancha seleccionada."))
+    {
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "DELETE FROM cancha WHERE id = ?"))
+    {
+        printf("Error al eliminar la cancha.\n");
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
+}
+
 void eliminar_cancha()
 {
     mostrar_pantalla("ELIMINAR CANCHA");
@@ -1594,126 +1738,172 @@ void eliminar_cancha()
 
     if (partidos_asociados > 0)
     {
-        printf("La cancha esta asociada a %d partido(s).\n", partidos_asociados);
-        printf("Elija una opcion:\n");
-        printf("1) Reasignar esos partidos a otra cancha y eliminar esta cancha\n");
-        printf("2) Eliminar esta cancha y TODOS los partidos asociados\n");
-        printf("3) Retirar cancha (marcar INACTIVA y conservar historial)\n");
-        printf("0) Cancelar\n");
+        procesar_cancha_con_partidos_asociados(id, partidos_asociados);
+        return;
+    }
 
-        int opcion = input_int("Opcion: ");
-        if (opcion == 0)
+    eliminar_cancha_sin_partidos_asociados(id);
+}
+
+static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info, int mostrar_completar_info)
+{
+    char hora_apertura[16];
+    char hora_cierre[16];
+    formatear_hora_minutos(info->horario_apertura_min, hora_apertura, sizeof(hora_apertura));
+    formatear_hora_minutos(info->horario_cierre_min, hora_cierre, sizeof(hora_cierre));
+
+    clear_screen();
+    print_header("MODIFICAR CANCHA");
+    printf("Cancha seleccionada: %s\n\n", info->nombre);
+    printf("1) Nombre: %s\n", texto_o_defecto(info->nombre, "(sin dato)"));
+    printf("2) Numero de telefono: %s\n", texto_o_defecto(info->telefono, "(sin dato)"));
+    printf("3) Direccion: %s\n", texto_o_defecto(info->direccion, "(sin dato)"));
+    printf("4) Localidad/Zona: %s\n", texto_o_defecto(info->localidad, "(sin dato)"));
+    printf("5) Tipo de cancha: %s\n", texto_tipo_cancha(info->tipo_cancha_codigo));
+    printf("6) Superficie: %s\n", texto_superficie(info->superficie_codigo));
+    printf("7) Estado Techada: %s\n", texto_estado_techada(info->techada_estado));
+    printf("8) Iluminacion: %s\n", info->tiene_iluminacion ? "SI" : "NO");
+    printf("9) Horario apertura: %s\n", hora_apertura);
+    printf("10) Horario cierre: %s\n", hora_cierre);
+    printf("11) Precio hora (Dia): %.2f\n", (double)info->precio_hora_dia_centavos / 100.0);
+    printf("12) Precio hora (Noche): %.2f\n", (double)info->precio_hora_noche_centavos / 100.0);
+    printf("13) Tiene vestuarios: %s\n", info->servicios.vestuarios ? "SI" : "NO");
+    printf("14) Tiene duchas: %s\n", info->servicios.duchas ? "SI" : "NO");
+    printf("15) Tiene buffet: %s\n", info->servicios.buffet ? "SI" : "NO");
+    printf("16) Tiene estacionamiento: %s\n", info->servicios.estacionamiento ? "SI" : "NO");
+    printf("17) Cantidad de canchas: %d\n", info->cantidad_canchas);
+    printf("18) Estado: %s\n", texto_o_defecto(info->estado, "(sin dato)"));
+    printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
+    printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    if (mostrar_completar_info)
+    {
+        printf("21) Completar Informacion\n");
+    }
+    printf("0) Volver\n\n");
+}
+
+static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+{
+    if (!actualizado)
+    {
+        return 0;
+    }
+
+    *actualizado = 0;
+
+    switch (opcion)
+    {
+    case 1:
+    {
+        char valor[100];
+        solicitar_nombre_cancha("Nuevo nombre: ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "nombre", valor);
+        return 1;
+    }
+    case 2:
+    {
+        char valor[40];
+        solicitar_telefono_no_vacio("Nuevo numero de telefono: ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "telefono", valor);
+        return 1;
+    }
+    case 3:
+    {
+        char valor[200];
+        solicitar_campo_no_vacio("Nueva direccion: ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "direccion", valor);
+        return 1;
+    }
+    case 4:
+    {
+        char valor[100];
+        solicitar_campo_no_vacio("Nueva localidad/zona: ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "localidad", valor);
+        return 1;
+    }
+    case 5:
+        *actualizado = actualizar_campo_entero_cancha(id, "tipo_cancha_codigo", solicitar_tipo_cancha_codigo());
+        return 1;
+    case 6:
+        *actualizado = actualizar_campo_entero_cancha(id, "superficie_codigo", solicitar_superficie_codigo());
+        return 1;
+    case 7:
+        *actualizado = actualizar_campo_entero_cancha(id, "techada_estado_codigo", solicitar_estado_techada_codigo());
+        return 1;
+    case 8:
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_iluminacion", solicitar_si_no("Tiene iluminacion?"));
+        return 1;
+    case 9:
+        *actualizado = actualizar_campo_entero_cancha(id, "horario_apertura_min", solicitar_hora_minutos("Horario de apertura (HH:MM): "));
+        return 1;
+    case 10:
+        *actualizado = actualizar_campo_entero_cancha(id, "horario_cierre_min", solicitar_hora_minutos("Horario de cierre (HH:MM): "));
+        return 1;
+    case 11:
+        *actualizado = actualizar_campo_entero_cancha(id, "precio_hora_dia_centavos", solicitar_precio_centavos("Precio por hora (Dia): "));
+        return 1;
+    case 12:
+        *actualizado = actualizar_campo_entero_cancha(id, "precio_hora_noche_centavos", solicitar_precio_centavos("Precio por hora (Noche): "));
+        return 1;
+    case 13:
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_vestuarios", solicitar_si_no("Tiene vestuarios?"));
+        return 1;
+    case 14:
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_duchas", solicitar_si_no("Tiene duchas?"));
+        return 1;
+    case 15:
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_buffet", solicitar_si_no("Tiene buffet?"));
+        return 1;
+    case 16:
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_estacionamiento", solicitar_si_no("Tiene estacionamiento?"));
+        return 1;
+    case 17:
+    {
+        int cantidad = input_int("Cantidad de canchas del complejo: ");
+        if (cantidad <= 0)
         {
-            return;
+            cantidad = 1;
+        }
+        *actualizado = actualizar_campo_entero_cancha(id, "cantidad_canchas", cantidad);
+        return 1;
+    }
+    case 18:
+    {
+        char valor[50];
+        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "estado", valor);
+        return 1;
+    }
+    case 19:
+    {
+        char valor[200];
+        input_string("Descripcion breve: ", valor, sizeof(valor));
+        trim_whitespace(valor);
+        *actualizado = actualizar_campo_texto_cancha(id, "descripcion", valor);
+        return 1;
+    }
+    case 20:
+    {
+        char valor[120];
+        solicitar_campo_no_vacio("Nuevo contacto alternativo: ", valor, sizeof(valor));
+        *actualizado = actualizar_campo_texto_cancha(id, "contacto_alt", valor);
+        return 1;
+    }
+    case 21:
+        if (mostrar_completar_info)
+        {
+            *actualizado = completar_informacion_cancha(id);
+            return 1;
         }
 
-        if (opcion == 1)
-        {
-            int total_canchas = contar_total_canchas_activas();
-            if (total_canchas <= 1)
-            {
-                printf("No hay otra cancha disponible para reasignar partidos.\n");
-                pause_console();
-                return;
-            }
-
-            printf("\nCanchas disponibles para reasignar:\n");
-            listar_canchas_excluyendo(id);
-            printf("\n");
-
-            int cancha_destino = input_int("ID cancha destino (0 para cancelar): ");
-            if (cancha_destino == 0)
-            {
-                return;
-            }
-            if (cancha_destino == id || !existe_id("cancha", cancha_destino) || !cancha_esta_activa(cancha_destino))
-            {
-                printf("Cancha destino invalida.\n");
-                pause_console();
-                return;
-            }
-
-            char detalle[160] = {0};
-            snprintf(detalle, sizeof(detalle),
-                     "Se reasignaran %d partido(s) a la cancha %d y se eliminara la cancha %d.",
-                     partidos_asociados, cancha_destino, id);
-            if (!confirmar_borrado_irreversible_cancha(id, detalle))
-            {
-                return;
-            }
-
-            if (!reasignar_partidos_y_eliminar_cancha(id, cancha_destino))
-            {
-                printf("No se pudo completar la reasignacion y eliminacion.\n");
-                pause_console();
-                return;
-            }
-
-            mostrar_alerta_operacion("Cancha", "Reasignada y Eliminada", NULL);
-            return;
-        }
-
-        if (opcion == 2)
-        {
-            char detalle[160] = {0};
-            snprintf(detalle, sizeof(detalle),
-                     "Se eliminara la cancha %d y TODOS sus %d partido(s) asociados.",
-                     id, partidos_asociados);
-            if (!confirmar_borrado_irreversible_cancha(id, detalle))
-            {
-                return;
-            }
-
-            if (!eliminar_cancha_y_partidos_asociados(id))
-            {
-                printf("No se pudo eliminar la cancha y sus partidos asociados.\n");
-                pause_console();
-                return;
-            }
-
-            mostrar_alerta_operacion("Cancha", "Eliminada con Partidos Asociados", NULL);
-            return;
-        }
-
-        if (opcion == 3)
-        {
-            if (!confirmar("Se retirara la cancha: no aparecera para partidos nuevos, pero conservara historial. Continuar?"))
-            {
-                return;
-            }
-
-            if (!actualizar_estado_cancha(id, 0))
-            {
-                printf("No se pudo marcar la cancha como inactiva.\n");
-                pause_console();
-                return;
-            }
-
-            mostrar_alerta_operacion("Cancha", "Retirada (Inactiva)", NULL);
-            return;
-        }
-
+        printf("La cancha ya tiene informacion suficiente para editar campo por campo.\n");
+        pause_console();
+        return 0;
+    default:
         printf("Opcion invalida.\n");
         pause_console();
-        return;
+        return 0;
     }
-
-    if (!confirmar_borrado_irreversible_cancha(id, "Se eliminara la cancha seleccionada."))
-        return;
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "DELETE FROM cancha WHERE id = ?"))
-    {
-        printf("Error al eliminar la cancha.\n");
-        pause_console();
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
 }
 
 void modificar_cancha()
@@ -1751,39 +1941,7 @@ void modificar_cancha()
         }
 
         int mostrar_completar_info = cancha_necesita_completar_info(&info);
-        char hora_apertura[16];
-        char hora_cierre[16];
-        formatear_hora_minutos(info.horario_apertura_min, hora_apertura, sizeof(hora_apertura));
-        formatear_hora_minutos(info.horario_cierre_min, hora_cierre, sizeof(hora_cierre));
-
-        clear_screen();
-        print_header("MODIFICAR CANCHA");
-        printf("Cancha seleccionada: %s\n\n", info.nombre);
-        printf("1) Nombre: %s\n", texto_o_defecto(info.nombre, "(sin dato)"));
-        printf("2) Numero de telefono: %s\n", texto_o_defecto(info.telefono, "(sin dato)"));
-        printf("3) Direccion: %s\n", texto_o_defecto(info.direccion, "(sin dato)"));
-        printf("4) Localidad/Zona: %s\n", texto_o_defecto(info.localidad, "(sin dato)"));
-        printf("5) Tipo de cancha: %s\n", texto_tipo_cancha(info.tipo_cancha_codigo));
-        printf("6) Superficie: %s\n", texto_superficie(info.superficie_codigo));
-        printf("7) Estado Techada: %s\n", texto_estado_techada(info.techada_estado));
-        printf("8) Iluminacion: %s\n", info.tiene_iluminacion ? "SI" : "NO");
-        printf("9) Horario apertura: %s\n", hora_apertura);
-        printf("10) Horario cierre: %s\n", hora_cierre);
-        printf("11) Precio hora (Dia): %.2f\n", (double)info.precio_hora_dia_centavos / 100.0);
-        printf("12) Precio hora (Noche): %.2f\n", (double)info.precio_hora_noche_centavos / 100.0);
-        printf("13) Tiene vestuarios: %s\n", info.servicios.vestuarios ? "SI" : "NO");
-        printf("14) Tiene duchas: %s\n", info.servicios.duchas ? "SI" : "NO");
-        printf("15) Tiene buffet: %s\n", info.servicios.buffet ? "SI" : "NO");
-        printf("16) Tiene estacionamiento: %s\n", info.servicios.estacionamiento ? "SI" : "NO");
-        printf("17) Cantidad de canchas: %d\n", info.cantidad_canchas);
-        printf("18) Estado: %s\n", texto_o_defecto(info.estado, "(sin dato)"));
-        printf("19) Descripcion: %s\n", texto_o_defecto(info.descripcion, "(sin dato)"));
-        printf("20) Contacto alternativo: %s\n", texto_o_defecto(info.contacto_alt, "(sin dato)"));
-        if (mostrar_completar_info)
-        {
-            printf("21) Completar Informacion\n");
-        }
-        printf("0) Volver\n\n");
+        imprimir_menu_modificar_cancha(&info, mostrar_completar_info);
 
         int opcion = input_int("Opcion: ");
         if (opcion == 0)
@@ -1792,119 +1950,8 @@ void modificar_cancha()
         }
 
         int actualizado = 0;
-        switch (opcion)
+        if (!procesar_opcion_modificar_cancha(id, opcion, mostrar_completar_info, &actualizado))
         {
-        case 1:
-        {
-            char valor[100];
-            solicitar_nombre_cancha("Nuevo nombre: ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "nombre", valor);
-            break;
-        }
-        case 2:
-        {
-            char valor[40];
-            solicitar_telefono_no_vacio("Nuevo numero de telefono: ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "telefono", valor);
-            break;
-        }
-        case 3:
-        {
-            char valor[200];
-            solicitar_campo_no_vacio("Nueva direccion: ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "direccion", valor);
-            break;
-        }
-        case 4:
-        {
-            char valor[100];
-            solicitar_campo_no_vacio("Nueva localidad/zona: ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "localidad", valor);
-            break;
-        }
-        case 5:
-            actualizado = actualizar_campo_entero_cancha(id, "tipo_cancha_codigo", solicitar_tipo_cancha_codigo());
-            break;
-        case 6:
-            actualizado = actualizar_campo_entero_cancha(id, "superficie_codigo", solicitar_superficie_codigo());
-            break;
-        case 7:
-            actualizado = actualizar_campo_entero_cancha(id, "techada_estado_codigo", solicitar_estado_techada_codigo());
-            break;
-        case 8:
-            actualizado = actualizar_campo_entero_cancha(id, "tiene_iluminacion", solicitar_si_no("Tiene iluminacion?"));
-            break;
-        case 9:
-            actualizado = actualizar_campo_entero_cancha(id, "horario_apertura_min", solicitar_hora_minutos("Horario de apertura (HH:MM): "));
-            break;
-        case 10:
-            actualizado = actualizar_campo_entero_cancha(id, "horario_cierre_min", solicitar_hora_minutos("Horario de cierre (HH:MM): "));
-            break;
-        case 11:
-            actualizado = actualizar_campo_entero_cancha(id, "precio_hora_dia_centavos", solicitar_precio_centavos("Precio por hora (Dia): "));
-            break;
-        case 12:
-            actualizado = actualizar_campo_entero_cancha(id, "precio_hora_noche_centavos", solicitar_precio_centavos("Precio por hora (Noche): "));
-            break;
-        case 13:
-            actualizado = actualizar_campo_entero_cancha(id, "tiene_vestuarios", solicitar_si_no("Tiene vestuarios?"));
-            break;
-        case 14:
-            actualizado = actualizar_campo_entero_cancha(id, "tiene_duchas", solicitar_si_no("Tiene duchas?"));
-            break;
-        case 15:
-            actualizado = actualizar_campo_entero_cancha(id, "tiene_buffet", solicitar_si_no("Tiene buffet?"));
-            break;
-        case 16:
-            actualizado = actualizar_campo_entero_cancha(id, "tiene_estacionamiento", solicitar_si_no("Tiene estacionamiento?"));
-            break;
-        case 17:
-        {
-            int cantidad = input_int("Cantidad de canchas del complejo: ");
-            if (cantidad <= 0)
-            {
-                cantidad = 1;
-            }
-            actualizado = actualizar_campo_entero_cancha(id, "cantidad_canchas", cantidad);
-            break;
-        }
-        case 18:
-        {
-            char valor[50];
-            solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "estado", valor);
-            break;
-        }
-        case 19:
-        {
-            char valor[200];
-            input_string("Descripcion breve: ", valor, sizeof(valor));
-            trim_whitespace(valor);
-            actualizado = actualizar_campo_texto_cancha(id, "descripcion", valor);
-            break;
-        }
-        case 20:
-        {
-            char valor[120];
-            solicitar_campo_no_vacio("Nuevo contacto alternativo: ", valor, sizeof(valor));
-            actualizado = actualizar_campo_texto_cancha(id, "contacto_alt", valor);
-            break;
-        }
-        case 21:
-            if (mostrar_completar_info)
-            {
-                actualizado = completar_informacion_cancha(id);
-            }
-            else
-            {
-                printf("La cancha ya tiene informacion suficiente para editar campo por campo.\n");
-                pause_console();
-                continue;
-            }
-            break;
-        default:
-            printf("Opcion invalida.\n");
-            pause_console();
             continue;
         }
 

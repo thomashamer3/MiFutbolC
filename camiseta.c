@@ -1271,6 +1271,161 @@ void ver_imagen_camiseta()
     pause_console();
 }
 
+static void procesar_eliminacion_reasignando_partidos(int id, int partidos_asociados)
+{
+    int total_camisetas = contar_total_camisetas_activas();
+    if (total_camisetas <= 1)
+    {
+        printf("No hay otra camiseta activa disponible para reasignar partidos.\n");
+        pause_console();
+        return;
+    }
+
+    printf("\nCamisetas activas disponibles para reasignar:\n");
+    listar_camisetas_excluyendo(id);
+    printf("\n");
+
+    int camiseta_destino = input_int("ID camiseta destino (0 para cancelar): ");
+    if (camiseta_destino == 0)
+    {
+        return;
+    }
+
+    if (camiseta_destino == id || !existe_id("camiseta", camiseta_destino) || !camiseta_esta_activa(camiseta_destino))
+    {
+        printf("Camiseta destino invalida.\n");
+        pause_console();
+        return;
+    }
+
+    char detalle[180] = {0};
+    snprintf(detalle, sizeof(detalle),
+             "Se reasignaran %d partido(s) a la camiseta %d y se eliminara la camiseta %d.",
+             partidos_asociados, camiseta_destino, id);
+    if (!confirmar_borrado_irreversible_camiseta(id, detalle))
+    {
+        return;
+    }
+
+    if (!reasignar_partidos_y_eliminar_camiseta(id, camiseta_destino))
+    {
+        printf("No se pudo completar la reasignacion y eliminacion.\n");
+        pause_console();
+        return;
+    }
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d con reasignacion a id=%d", id, camiseta_destino);
+    app_log_event("CAMISETA", log_msg);
+
+    mostrar_alerta_operacion("Camiseta", "Reasignada y Eliminada", NULL);
+}
+
+static void procesar_eliminacion_con_partidos_asociados(int id, int partidos_asociados)
+{
+    char detalle[180] = {0};
+    snprintf(detalle, sizeof(detalle),
+             "Se eliminara la camiseta %d y TODOS sus %d partido(s) asociados.",
+             id, partidos_asociados);
+    if (!confirmar_borrado_irreversible_camiseta(id, detalle))
+    {
+        return;
+    }
+
+    if (!eliminar_camiseta_y_partidos_asociados(id))
+    {
+        printf("No se pudo eliminar la camiseta y sus partidos asociados.\n");
+        pause_console();
+        return;
+    }
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d junto a partidos asociados", id);
+    app_log_event("CAMISETA", log_msg);
+
+    mostrar_alerta_operacion("Camiseta", "Eliminada con Partidos Asociados", NULL);
+}
+
+static void procesar_retiro_camiseta(int id)
+{
+    if (!confirmar("Se retirara la camiseta: no aparecera para partidos nuevos, pero conservara historial. Continuar?"))
+    {
+        return;
+    }
+
+    if (!actualizar_estado_camiseta(id, 0))
+    {
+        printf("No se pudo marcar la camiseta como inactiva.\n");
+        pause_console();
+        return;
+    }
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Retirada camiseta id=%d (inactiva)", id);
+    app_log_event("CAMISETA", log_msg);
+
+    mostrar_alerta_operacion("Camiseta", "Retirada (Inactiva)", NULL);
+}
+
+static void procesar_camiseta_con_partidos(int id, int partidos_asociados)
+{
+    printf("La camiseta esta asociada a %d partido(s).\n", partidos_asociados);
+    printf("Elija una opcion:\n");
+    printf("1) Reasignar esos partidos a otra camiseta y eliminar esta camiseta\n");
+    printf("2) Eliminar esta camiseta y TODOS los partidos asociados\n");
+    printf("3) Retirar camiseta (marcar INACTIVA y conservar historial)\n");
+    printf("0) Cancelar\n");
+
+    int opcion = input_int("Opcion: ");
+    if (opcion == 0)
+    {
+        return;
+    }
+
+    switch (opcion)
+    {
+    case 1:
+        procesar_eliminacion_reasignando_partidos(id, partidos_asociados);
+        return;
+    case 2:
+        procesar_eliminacion_con_partidos_asociados(id, partidos_asociados);
+        return;
+    case 3:
+        procesar_retiro_camiseta(id);
+        return;
+    default:
+        printf("Opcion invalida.\n");
+        pause_console();
+        return;
+    }
+}
+
+static void eliminar_camiseta_sin_partidos(int id)
+{
+    if (!confirmar_borrado_irreversible_camiseta(id, "Se eliminara la camiseta seleccionada."))
+    {
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "DELETE FROM camiseta WHERE id=?"))
+    {
+        printf("Error al eliminar la camiseta.\n");
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d", id);
+    app_log_event("CAMISETA", log_msg);
+
+    mostrar_alerta_operacion("Camiseta", "Eliminada", NULL);
+}
+
 void eliminar_camiseta()
 {
     clear_screen();
@@ -1315,142 +1470,11 @@ void eliminar_camiseta()
 
     if (partidos_asociados > 0)
     {
-        printf("La camiseta esta asociada a %d partido(s).\n", partidos_asociados);
-        printf("Elija una opcion:\n");
-        printf("1) Reasignar esos partidos a otra camiseta y eliminar esta camiseta\n");
-        printf("2) Eliminar esta camiseta y TODOS los partidos asociados\n");
-        printf("3) Retirar camiseta (marcar INACTIVA y conservar historial)\n");
-        printf("0) Cancelar\n");
-
-        int opcion = input_int("Opcion: ");
-        if (opcion == 0)
-        {
-            return;
-        }
-
-        if (opcion == 1)
-        {
-            int total_camisetas = contar_total_camisetas_activas();
-            if (total_camisetas <= 1)
-            {
-                printf("No hay otra camiseta activa disponible para reasignar partidos.\n");
-                pause_console();
-                return;
-            }
-
-            printf("\nCamisetas activas disponibles para reasignar:\n");
-            listar_camisetas_excluyendo(id);
-            printf("\n");
-
-            int camiseta_destino = input_int("ID camiseta destino (0 para cancelar): ");
-            if (camiseta_destino == 0)
-            {
-                return;
-            }
-            if (camiseta_destino == id || !existe_id("camiseta", camiseta_destino) || !camiseta_esta_activa(camiseta_destino))
-            {
-                printf("Camiseta destino invalida.\n");
-                pause_console();
-                return;
-            }
-
-            char detalle[180] = {0};
-            snprintf(detalle, sizeof(detalle),
-                     "Se reasignaran %d partido(s) a la camiseta %d y se eliminara la camiseta %d.",
-                     partidos_asociados, camiseta_destino, id);
-            if (!confirmar_borrado_irreversible_camiseta(id, detalle))
-            {
-                return;
-            }
-
-            if (!reasignar_partidos_y_eliminar_camiseta(id, camiseta_destino))
-            {
-                printf("No se pudo completar la reasignacion y eliminacion.\n");
-                pause_console();
-                return;
-            }
-
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d con reasignacion a id=%d", id, camiseta_destino);
-            app_log_event("CAMISETA", log_msg);
-
-            mostrar_alerta_operacion("Camiseta", "Reasignada y Eliminada", NULL);
-            return;
-        }
-
-        if (opcion == 2)
-        {
-            char detalle[180] = {0};
-            snprintf(detalle, sizeof(detalle),
-                     "Se eliminara la camiseta %d y TODOS sus %d partido(s) asociados.",
-                     id, partidos_asociados);
-            if (!confirmar_borrado_irreversible_camiseta(id, detalle))
-            {
-                return;
-            }
-
-            if (!eliminar_camiseta_y_partidos_asociados(id))
-            {
-                printf("No se pudo eliminar la camiseta y sus partidos asociados.\n");
-                pause_console();
-                return;
-            }
-
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d junto a partidos asociados", id);
-            app_log_event("CAMISETA", log_msg);
-
-            mostrar_alerta_operacion("Camiseta", "Eliminada con Partidos Asociados", NULL);
-            return;
-        }
-
-        if (opcion == 3)
-        {
-            if (!confirmar("Se retirara la camiseta: no aparecera para partidos nuevos, pero conservara historial. Continuar?"))
-            {
-                return;
-            }
-
-            if (!actualizar_estado_camiseta(id, 0))
-            {
-                printf("No se pudo marcar la camiseta como inactiva.\n");
-                pause_console();
-                return;
-            }
-
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "Retirada camiseta id=%d (inactiva)", id);
-            app_log_event("CAMISETA", log_msg);
-
-            mostrar_alerta_operacion("Camiseta", "Retirada (Inactiva)", NULL);
-            return;
-        }
-
-        printf("Opcion invalida.\n");
-        pause_console();
+        procesar_camiseta_con_partidos(id, partidos_asociados);
         return;
     }
 
-    if (!confirmar_borrado_irreversible_camiseta(id, "Se eliminara la camiseta seleccionada."))
-        return;
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "DELETE FROM camiseta WHERE id=?"))
-    {
-        printf("Error al eliminar la camiseta.\n");
-        pause_console();
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d", id);
-    app_log_event("CAMISETA", log_msg);
-
-    mostrar_alerta_operacion("Camiseta", "Eliminada", NULL);
+    eliminar_camiseta_sin_partidos(id);
 }
 
 static void reactivar_camiseta()

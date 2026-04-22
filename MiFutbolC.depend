@@ -142,7 +142,7 @@
 	<stddef.h>
 	<stdio.h>
 
-1776895787 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1776898277 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -327,7 +327,7 @@
 	<stdio.h>
 	<string.h>
 
-1776895501 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1776897793 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"menu.h"
 	"db.h"
 	"utils.h"
