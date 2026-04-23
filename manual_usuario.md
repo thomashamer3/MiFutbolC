@@ -119,6 +119,21 @@ mingw32-make
 mingw32-make BUILD_TYPE=Debug
 ```
 
+#### Windows (instalación por consola)
+
+```powershell
+# Instalación estándar (compila + instala)
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+
+# Debug
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -BuildType Debug
+
+# Instalar usando un .exe ya compilado
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -SkipBuild
+```
+
+`install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea un launcher de consola (`MiFutbolC.cmd`) y puede agregar la ruta de instalación al `PATH` del usuario.
+
 En Linux/macOS, `Instalador-Linux.sh` también puede validar dependencias e instalar un launcher en `PATH`.
 
 ## Primer Uso
@@ -225,7 +240,27 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 1. Selecciona "3" en el menú principal
 2. Elige "4" para eliminar una camiseta
 3. Ingresa el ID de la camiseta a eliminar
-4. Confirma la eliminación
+4. Si la camiseta tiene partidos asociados, el sistema ofrece:
+   - Reasignar partidos a otra camiseta activa y eliminar la original
+   - Eliminar la camiseta junto con todos sus partidos asociados
+   - Retirar camiseta (marcar inactiva y conservar historial)
+5. Confirma la operación escribiendo la frase de validación solicitada
+
+### Ajustes de Imagen de Camiseta
+
+1. Selecciona "3" en el menú principal
+2. Elige "8" (**Ajustes Imagen**)
+3. Opciones disponibles:
+   - Configurar visor preferido
+   - Probar visor actual
+   - Previsualizar imagen en consola
+
+### Reactivar Camiseta
+
+1. Selecciona "3" en el menú principal
+2. Elige "11" (**Reactivar**)
+3. Ingresa el ID de la camiseta inactiva
+4. Confirma para volver a marcarla como activa
 
 ### Sortear Camiseta
 
@@ -271,7 +306,18 @@ Cuando uses la opción de cargar imagen para una camiseta:
 1. Selecciona "4" en el menú principal
 2. Elige "4" para eliminar una cancha
 3. Ingresa el ID de la cancha a eliminar
-4. Confirma la eliminación
+4. Si la cancha tiene partidos asociados, podrás:
+   - Reasignar partidos a otra cancha activa y eliminar la original
+   - Eliminar la cancha junto con todos sus partidos asociados
+   - Retirar cancha (marcar inactiva y conservar historial)
+5. Confirma la operación escribiendo la frase de validación solicitada
+
+### Reactivar una Cancha
+
+1. Selecciona "4" en el menú principal
+2. Elige "9" (**Reactivar Cancha**)
+3. Ingresa el ID de la cancha inactiva
+4. Confirma para volver a marcarla como activa
 
 ![Gestión de canchas](images/menucanchas.png)
 

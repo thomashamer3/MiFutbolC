@@ -3321,20 +3321,176 @@ static void app_escape_single_quotes_ps(const char *src, char *dst, size_t dst_s
     dst[j] = '\0';
 }
 
-int app_command_exists(const char *cmd)
+static int app_command_has_safe_chars(const char *cmd)
 {
     if (!cmd || cmd[0] == '\0')
     {
         return 0;
     }
 
-    char check_cmd[256];
+    const unsigned char *p = (const unsigned char *)cmd;
+    while (*p != '\0')
+    {
+        if (!(isalnum(*p) || *p == '_' || *p == '-' || *p == '.' || *p == '/' || *p == '\\' || *p == ':'))
+        {
+            return 0;
+        }
+        p++;
+    }
+    return 1;
+}
+
+static int app_command_has_path_separator(const char *cmd)
+{
+    if (!cmd)
+    {
+        return 0;
+    }
+
+    while (*cmd != '\0')
+    {
+        if (*cmd == '/' || *cmd == '\\')
+        {
+            return 1;
+        }
+        cmd++;
+    }
+    return 0;
+}
+
+static int app_path_is_executable_file(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
 #ifdef _WIN32
-    snprintf(check_cmd, sizeof(check_cmd), "where %s >nul 2>nul", cmd);
+    DWORD attrs = GetFileAttributesA(path);
+    if (attrs == INVALID_FILE_ATTRIBUTES)
+    {
+        return 0;
+    }
+    return (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #else
-    snprintf(check_cmd, sizeof(check_cmd), "command -v %s >/dev/null 2>&1", cmd);
+    return access(path, X_OK) == 0;
 #endif
-    return system(check_cmd) == 0;
+}
+
+#ifdef _WIN32
+static int app_search_in_windows_path(const char *name)
+{
+    char resolved[MAX_PATH];
+    DWORD found = SearchPathA(NULL, name, NULL, (DWORD)sizeof(resolved), resolved, NULL);
+    return found > 0 && found < (DWORD)sizeof(resolved);
+}
+
+static int app_command_exists_windows(const char *cmd)
+{
+    if (app_command_has_path_separator(cmd))
+    {
+        return app_path_is_executable_file(cmd);
+    }
+
+    if (app_search_in_windows_path(cmd))
+    {
+        return 1;
+    }
+
+    if (strchr(cmd, '.') != NULL)
+    {
+        return 0;
+    }
+
+    const char *extensions[] = {".exe", ".cmd", ".bat", ".com", NULL};
+    for (int i = 0; extensions[i] != NULL; i++)
+    {
+        char candidate[MAX_PATH];
+        int n = snprintf(candidate, sizeof(candidate), "%s%s", cmd, extensions[i]);
+        if (n <= 0 || (size_t)n >= sizeof(candidate))
+        {
+            continue;
+        }
+
+        if (app_search_in_windows_path(candidate))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+#else
+static int app_command_exists_posix(const char *cmd)
+{
+    if (app_command_has_path_separator(cmd))
+    {
+        return app_path_is_executable_file(cmd);
+    }
+
+    const char *path_env = getenv("PATH");
+    if (!path_env || path_env[0] == '\0')
+    {
+        return 0;
+    }
+
+    size_t path_len = strlen_s(path_env, SIZE_MAX);
+    char *path_copy = (char *)malloc(path_len + 1);
+    if (!path_copy)
+    {
+        return 0;
+    }
+
+    memcpy(path_copy, path_env, path_len + 1);
+
+    char *segment = path_copy;
+    while (segment)
+    {
+        char *sep = strchr(segment, ':');
+        if (sep)
+        {
+            *sep = '\0';
+        }
+
+        const char *dir = (segment[0] == '\0') ? "." : segment;
+        size_t needed = strlen_s(dir, SIZE_MAX) + 1 + strlen_s(cmd, SIZE_MAX) + 1;
+        char *candidate = (char *)malloc(needed);
+        if (candidate)
+        {
+            snprintf(candidate, needed, "%s/%s", dir, cmd);
+            if (app_path_is_executable_file(candidate))
+            {
+                free(candidate);
+                free(path_copy);
+                return 1;
+            }
+            free(candidate);
+        }
+
+        if (!sep)
+        {
+            break;
+        }
+        segment = sep + 1;
+    }
+
+    free(path_copy);
+    return 0;
+}
+#endif
+
+int app_command_exists(const char *cmd)
+{
+    if (!app_command_has_safe_chars(cmd))
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    return app_command_exists_windows(cmd);
+#else
+    return app_command_exists_posix(cmd);
+#endif
 }
 
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name)

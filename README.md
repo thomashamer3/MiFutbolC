@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.1-blue.svg)
+![Version](https://img.shields.io/badge/version-4.2-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -49,14 +49,18 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Manejo de imágenes reforzado**: mejoras en selección de imágenes de camisetas y utilidades para actualizar rutas/imágenes en base de datos.
 - **Flujo de herramientas de imagen más claro**: nuevos mensajes de éxito y advertencia durante instalación/configuración de herramientas opcionales.
 - **Resolución de rutas de imagen desde BD**: soporte ampliado para recuperar y resolver rutas guardadas en base de datos de forma más confiable.
+- **Camisetas y canchas con ciclo activo/inactivo**: retiro y reactivación para conservar historial sin perder datos.
+- **Eliminación protegida con historial**: opciones para reasignar partidos, eliminar junto con partidos o retirar entidad conservando historial.
+- **Instalación por consola en Windows**: nuevo script `install.ps1` para compilar/instalar sin Inno Setup.
 
 ## ✨ Características Principales
 
 ### 🎽 Gestión de Equipamiento y Recursos
 
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
-- **Imágenes de Camisetas**: Carga de imágenes con optimización automática (redimensionado y compresión) cuando hay herramientas disponibles
-- **Gestión de Canchas**: Administrar infraestructura deportiva (crear, listar, modificar y eliminar)
+- **Ciclo Activa/Inactiva en Camisetas**: retirar y reactivar camisetas para preservar historial
+- **Imágenes de Camisetas**: carga, apertura y ajustes de visor (incluye prueba de visor y previsualización en consola)
+- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar y eliminar con opciones seguras)
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
 ### 👥 Administración de Equipos y Jugadores
@@ -347,30 +351,37 @@ gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c e
 .\MiFutbolC.exe
 ```
 
-### Método 4: Script de Compilación Automática (Linux/macOS)
+### Método 4: Script del Proyecto para Linux/macOS
 
-El proyecto incluye un script bash que automatiza la compilación:
-
-```bash
-# 1. Dar permisos de ejecución al script
-chmod +x build.sh
-
-# 2. Ejecutar el script
-./build.sh
-```
-
-El script `build.sh`:
-- Compila automáticamente todos los archivos fuente
-- Habilita advertencias del compilador (`-Wall`)
-- Incluye símbolos de depuración (`-g`)
-- Ejecuta el programa si la compilación es exitosa
-
-### Método 5: Script de Compilación para Windows
+El proyecto incluye un instalador/compilador para terminal:
 
 ```bash
-# Ejecutar el script batch
-.\build.bat
+chmod +x Instalador-Linux.sh
+./Instalador-Linux.sh
+
+# Debug
+./Instalador-Linux.sh --debug
+
+# Compilar y ejecutar
+./Instalador-Linux.sh run
 ```
+
+`Instalador-Linux.sh` puede verificar dependencias, compilar y opcionalmente agregar launcher a `PATH`.
+
+### Método 5: Instalación por Consola en Windows (PowerShell)
+
+```powershell
+# Instalación estándar (compila + instala)
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+
+# Instalación Debug
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -BuildType Debug
+
+# Usar un .exe ya compilado
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -SkipBuild
+```
+
+El script `install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea launcher de consola (`MiFutbolC.cmd`) y puede agregar el directorio al `PATH` de usuario.
 
 ### 📝 Notas Importantes
 
@@ -826,8 +837,8 @@ MiFutbolC/
 │   ├── MiFutbolC.depend                         # Dependencias del proyecto
 │   ├── MiFutbolC.cscope_file_list               # Lista de archivos cscope
 │   ├── MiFutbolC.iss                            # Script instalador Inno Setup
-│   ├── build.sh                                 # Script compilación Linux/macOS
-│   ├── build.bat                                # Script compilación Windows
+│   ├── Instalador-Linux.sh                      # Script instalación/compilación Linux/macOS
+│   ├── install.ps1                              # Script instalación por consola (Windows)
 │   ├── recurso.rc                               # Recursos de Windows
 │   └── sonar-project.properties                 # Configuración SonarQube
 │
@@ -1229,7 +1240,7 @@ void eliminar_elemento(int id);
 
 #### Paso 3: Integración
 1. Actualizar `MiFutbolC.cbp` (CodeBlocks)
-2. Actualizar scripts de compilación (`build.sh`, `build.bat`)
+2. Actualizar flujo de build/instalación (`Makefile`, `Instalador-Linux.sh`, `install.ps1`)
 3. Agregar funciones de exportación si aplica
 
 #### Paso 4: Documentación

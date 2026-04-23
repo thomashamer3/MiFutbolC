@@ -731,20 +731,77 @@ static const char *determinar_ganador(double diff, const char *nombre1, const ch
     return "Empate";
 }
 
-static void calcular_metricas_por_condicion(MetricasComparacion *metricas, const char *condicion_sql)
+typedef enum
 {
-    sqlite3_stmt *stmt;
-    char sql[512];
+    METRICAS_PARAM_INT = 1,
+    METRICAS_PARAM_TEXT = 2
+} TipoParametroMetricas;
+
+typedef struct
+{
+    TipoParametroMetricas tipo;
+    int valor_int;
+    const char *valor_texto;
+} ParametroMetricas;
+
+typedef struct
+{
+    const char *sql;
+    const ParametroMetricas *params;
+    int cantidad_params;
+    const char *nombre;
+} ConsultaMetricas;
+
+static int enlazar_parametro_metricas(sqlite3_stmt *stmt, int indice, const ParametroMetricas *param)
+{
+    if (!stmt || !param)
+    {
+        return SQLITE_MISUSE;
+    }
+
+    if (param->tipo == METRICAS_PARAM_INT)
+    {
+        return sqlite3_bind_int(stmt, indice, param->valor_int);
+    }
+
+    if (param->tipo == METRICAS_PARAM_TEXT)
+    {
+        return sqlite3_bind_text(stmt,
+                                 indice,
+                                 param->valor_texto ? param->valor_texto : "",
+                                 -1,
+                                 SQLITE_TRANSIENT);
+    }
+
+    return SQLITE_MISUSE;
+}
+
+static void calcular_metricas_preparadas(MetricasComparacion *metricas,
+        const char *sql,
+        const ParametroMetricas *params,
+        int cantidad_params)
+{
+    sqlite3_stmt *stmt = NULL;
 
     memset(metricas, 0, sizeof(*metricas));
 
-    snprintf(sql, sizeof(sql),
-             "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
-             "FROM partido WHERE %s", condicion_sql);
+    if (!metricas || !sql || cantidad_params < 0)
+    {
+        return;
+    }
 
     if (!preparar_stmt(&stmt, sql))
     {
         return;
+    }
+
+    for (int i = 0; i < cantidad_params; i++)
+    {
+        if (enlazar_parametro_metricas(stmt, i + 1, &params[i]) != SQLITE_OK)
+        {
+            sqlite3_finalize(stmt);
+            return;
+        }
     }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -797,57 +854,71 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
     printf("  Rendimiento: %s\n", determinar_ganador(diff_rend, nombre1, nombre2));
 }
 
-static void comparar_y_mostrar_metricas(const char *condicion_sql_1,
-                                        const char *condicion_sql_2,
-                                        const char *nombre1,
-                                        const char *nombre2)
+static void comparar_y_mostrar_metricas_preparadas(const ConsultaMetricas *consulta_1,
+        const ConsultaMetricas *consulta_2)
 {
     MetricasComparacion m1 = {0};
     MetricasComparacion m2 = {0};
 
-    calcular_metricas_por_condicion(&m1, condicion_sql_1);
-    calcular_metricas_por_condicion(&m2, condicion_sql_2);
+    if (!consulta_1 || !consulta_2)
+    {
+        return;
+    }
 
-    mostrar_comparacion_dos_metricas(&m1, &m2, nombre1, nombre2);
+    calcular_metricas_preparadas(&m1,
+                                 consulta_1->sql,
+                                 consulta_1->params,
+                                 consulta_1->cantidad_params);
+    calcular_metricas_preparadas(&m2,
+                                 consulta_2->sql,
+                                 consulta_2->params,
+                                 consulta_2->cantidad_params);
+
+    mostrar_comparacion_dos_metricas(&m1, &m2, consulta_1->nombre, consulta_2->nombre);
     pause_console();
-}
-
-static void construir_condicion_sql_id(char *destino,
-                                       size_t destino_size,
-                                       const char *condicion_prefijo,
-                                       int id,
-                                       const char *condicion_sufijo)
-{
-    char id_txt[32];
-    sprintf_s(id_txt, sizeof(id_txt), "%d", id);
-
-    strcpy_s(destino, destino_size, condicion_prefijo);
-    strcat_s(destino, destino_size, id_txt);
-    strcat_s(destino, destino_size, condicion_sufijo);
 }
 
 static void comparar_entidades_por_tabla(const char *titulo_pantalla,
         const char *tabla,
         const char *titulo_lista,
-        const char *condicion_prefijo,
-        const char *condicion_sufijo,
         const char *nombre_default_1,
         const char *nombre_default_2)
 {
     int id1;
     int id2;
-    char sql1[256];
-    char sql2[256];
     char nombre1[256];
     char nombre2[256];
+    const char *sql = NULL;
+    ParametroMetricas p1[1];
+    ParametroMetricas p2[1];
 
     iniciar_pantalla_analisis(titulo_pantalla);
 
     if (!listar_y_seleccionar_dos_entidades(tabla, titulo_lista, &id1, &id2))
         return;
 
-    construir_condicion_sql_id(sql1, sizeof(sql1), condicion_prefijo, id1, condicion_sufijo);
-    construir_condicion_sql_id(sql2, sizeof(sql2), condicion_prefijo, id2, condicion_sufijo);
+    if (strcmp(tabla, "camiseta") == 0)
+    {
+        sql = "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
+              "FROM partido WHERE camiseta_id = ?";
+    }
+    else if (strcmp(tabla, "torneo") == 0)
+    {
+        sql = "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
+              "FROM partido WHERE id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = ?)";
+    }
+    else
+    {
+        return;
+    }
+
+    p1[0].tipo = METRICAS_PARAM_INT;
+    p1[0].valor_int = id1;
+    p1[0].valor_texto = NULL;
+
+    p2[0].tipo = METRICAS_PARAM_INT;
+    p2[0].valor_int = id2;
+    p2[0].valor_texto = NULL;
 
     strcpy_s(nombre1, sizeof(nombre1), nombre_default_1);
     strcpy_s(nombre2, sizeof(nombre2), nombre_default_2);
@@ -855,7 +926,9 @@ static void comparar_entidades_por_tabla(const char *titulo_pantalla,
     obtener_nombre_entidad(tabla, id1, nombre1, sizeof(nombre1));
     obtener_nombre_entidad(tabla, id2, nombre2, sizeof(nombre2));
 
-    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
+    ConsultaMetricas c1 = {sql, p1, 1, nombre1};
+    ConsultaMetricas c2 = {sql, p2, 1, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
 }
 
 static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
@@ -924,8 +997,6 @@ static void comparar_camisetas()
     comparar_entidades_por_tabla("COMPARADOR: CAMISETAS",
                                  "camiseta",
                                  "Camiseta",
-                                 "camiseta_id = ",
-                                 "",
                                  "Camiseta A",
                                  "Camiseta B");
 }
@@ -935,8 +1006,6 @@ static void comparar_torneos()
     comparar_entidades_por_tabla("COMPARADOR: TORNEOS",
                                  "torneo",
                                  "Torneo",
-                                 "id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = ",
-                                 ")",
                                  "Torneo A",
                                  "Torneo B");
 }
@@ -971,17 +1040,34 @@ static void comparar_periodos()
         solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin, sizeof(fecha2_fin));
     }
 
-    char sql1[256];
-    char sql2[256];
-    snprintf(sql1, sizeof(sql1), "fecha_hora BETWEEN '%s' AND '%s'", fecha1_inicio, fecha1_fin);
-    snprintf(sql2, sizeof(sql2), "fecha_hora BETWEEN '%s' AND '%s'", fecha2_inicio, fecha2_fin);
+    const char *sql_periodo =
+        "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
+        "FROM partido WHERE fecha_hora BETWEEN ? AND ?";
+
+    ParametroMetricas p1[2];
+    p1[0].tipo = METRICAS_PARAM_TEXT;
+    p1[0].valor_int = 0;
+    p1[0].valor_texto = fecha1_inicio;
+    p1[1].tipo = METRICAS_PARAM_TEXT;
+    p1[1].valor_int = 0;
+    p1[1].valor_texto = fecha1_fin;
+
+    ParametroMetricas p2[2];
+    p2[0].tipo = METRICAS_PARAM_TEXT;
+    p2[0].valor_int = 0;
+    p2[0].valor_texto = fecha2_inicio;
+    p2[1].tipo = METRICAS_PARAM_TEXT;
+    p2[1].valor_int = 0;
+    p2[1].valor_texto = fecha2_fin;
 
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "Periodo %s a %s", fecha1_inicio, fecha1_fin);
     snprintf(nombre2, sizeof(nombre2), "Periodo %s a %s", fecha2_inicio, fecha2_fin);
 
-    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
+    ConsultaMetricas c1 = {sql_periodo, p1, 2, nombre1};
+    ConsultaMetricas c2 = {sql_periodo, p2, 2, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
 }
 
 static void comparar_condiciones()
@@ -1002,7 +1088,6 @@ static void comparar_condiciones()
 
     int valor1;
     int valor2;
-    const char *campo = (tipo_condicion == 1) ? "clima" : "dia";
     const char *tipo_texto = (tipo_condicion == 1) ? "Clima" : "Dia";
 
     int min_val = 0;
@@ -1026,17 +1111,28 @@ static void comparar_condiciones()
         break;
     }
 
-    char sql1[128];
-    char sql2[128];
-    snprintf(sql1, sizeof(sql1), "%s = %d", campo, valor1);
-    snprintf(sql2, sizeof(sql2), "%s = %d", campo, valor2);
+    const char *sql_condicion = (tipo_condicion == 1)
+                                ? "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) FROM partido WHERE clima = ?"
+                                : "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) FROM partido WHERE dia = ?";
+
+    ParametroMetricas p1[1];
+    p1[0].tipo = METRICAS_PARAM_INT;
+    p1[0].valor_int = valor1;
+    p1[0].valor_texto = NULL;
+
+    ParametroMetricas p2[1];
+    p2[0].tipo = METRICAS_PARAM_INT;
+    p2[0].valor_int = valor2;
+    p2[0].valor_texto = NULL;
 
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "%s %d", tipo_texto, valor1);
     snprintf(nombre2, sizeof(nombre2), "%s %d", tipo_texto, valor2);
 
-    comparar_y_mostrar_metricas(sql1, sql2, nombre1, nombre2);
+    ConsultaMetricas c1 = {sql_condicion, p1, 1, nombre1};
+    ConsultaMetricas c2 = {sql_condicion, p2, 1, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
 }
 
 static void mostrar_comparador_avanzado()

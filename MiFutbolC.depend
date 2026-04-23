@@ -108,7 +108,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1776898997 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1776903796 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"export.h"
 	"ascii_art.h"
@@ -309,7 +309,7 @@
 
 1776267347 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.h
 
-1776203261 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
+1776904293 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -602,7 +602,7 @@
 	<string.h>
 	"sqlite3.h"
 
-1776274354 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1776903570 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 	<stdio.h>
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
