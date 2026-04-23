@@ -3422,11 +3422,31 @@ static int app_command_exists_windows(const char *cmd)
     return 0;
 }
 #else
-static int app_command_exists_posix(const char *cmd)
+static int app_resolve_command_path_posix(const char *cmd,
+        char *resolved_path,
+        size_t resolved_size)
 {
+    if (!cmd || !resolved_path || resolved_size == 0)
+    {
+        return 0;
+    }
+
+    resolved_path[0] = '\0';
+
+    if (!app_command_has_safe_chars(cmd))
+    {
+        return 0;
+    }
+
     if (app_command_has_path_separator(cmd))
     {
-        return app_path_is_executable_file(cmd);
+        if (!app_path_is_executable_file(cmd))
+        {
+            return 0;
+        }
+
+        int n = snprintf(resolved_path, resolved_size, "%s", cmd);
+        return n > 0 && (size_t)n < resolved_size;
     }
 
     const char *path_env = getenv("PATH");
@@ -3461,9 +3481,10 @@ static int app_command_exists_posix(const char *cmd)
             snprintf(candidate, needed, "%s/%s", dir, cmd);
             if (app_path_is_executable_file(candidate))
             {
+                int n = snprintf(resolved_path, resolved_size, "%s", candidate);
                 free(candidate);
                 free(path_copy);
-                return 1;
+                return n > 0 && (size_t)n < resolved_size;
             }
             free(candidate);
         }
@@ -3477,6 +3498,12 @@ static int app_command_exists_posix(const char *cmd)
 
     free(path_copy);
     return 0;
+}
+
+static int app_command_exists_posix(const char *cmd)
+{
+    char resolved[4096];
+    return app_resolve_command_path_posix(cmd, resolved, sizeof(resolved));
 }
 #endif
 
@@ -3562,6 +3589,12 @@ static int app_run_image_tool_posix(const char *tool,
         return 0;
     }
 
+    char tool_path[4096];
+    if (!app_resolve_command_path_posix(tool, tool_path, sizeof(tool_path)))
+    {
+        return 0;
+    }
+
     pid_t pid = fork();
     if (pid < 0)
     {
@@ -3570,17 +3603,21 @@ static int app_run_image_tool_posix(const char *tool,
 
     if (pid == 0)
     {
-        execlp(tool,
-               tool,
-               src,
-               "-auto-orient",
-               "-resize",
-               "1280x1280>",
-               "-strip",
-               "-quality",
-               "92",
-               dst,
-               (char *)NULL);
+        char *const args[] =
+        {
+            tool_path,
+            (char *)src,
+            "-auto-orient",
+            "-resize",
+            "1280x1280>",
+            "-strip",
+            "-quality",
+            "92",
+            (char *)dst,
+            NULL
+        };
+
+        execv(tool_path, args);
         _exit(127);
     }
 
