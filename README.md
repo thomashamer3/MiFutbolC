@@ -16,7 +16,8 @@
 [Instalación](#-instalación-y-compilación) •
 [Uso](#-uso) •
 [Documentación](#-documentación) •
-[Arquitectura](#-arquitectura-y-diseño)
+[Arquitectura](#-arquitectura-y-diseño) •
+[DeepWiki](https://deepwiki.com/thomashamer3/MiFutbolC/1.1-getting-started-installation-and-build)
 
 </div>
 
