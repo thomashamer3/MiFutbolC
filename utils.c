@@ -32,6 +32,7 @@
 #endif
 #else
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir(path, 0755)
@@ -3550,6 +3551,49 @@ int app_copy_binary_file(const char *source_path, const char *dest_path)
     return 1;
 }
 
+#ifndef _WIN32
+/* Ejecutar sin shell evita inyeccion de comandos con rutas de archivo. */
+static int app_run_image_tool_posix(const char *tool,
+                                    const char *src,
+                                    const char *dst)
+{
+    if (!tool || !src || !dst)
+    {
+        return 0;
+    }
+
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+        return 0;
+    }
+
+    if (pid == 0)
+    {
+        execlp(tool,
+               tool,
+               src,
+               "-auto-orient",
+               "-resize",
+               "1280x1280>",
+               "-strip",
+               "-quality",
+               "92",
+               dst,
+               (char *)NULL);
+        _exit(127);
+    }
+
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0)
+    {
+        return 0;
+    }
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+#endif
+
 int app_optimize_image_file(const char *source_path, const char *dest_path)
 {
     if (!source_path || !dest_path)
@@ -3605,25 +3649,14 @@ int app_optimize_image_file(const char *source_path, const char *dest_path)
 
     return system(cmd_ps) == 0;
 #else
-    char cmd[2600];
     if (app_command_exists("magick"))
     {
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        return system(cmd) == 0;
+        return app_run_image_tool_posix("magick", source_path, dest_path);
     }
 
     if (app_command_exists("convert"))
     {
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "convert \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        return system(cmd) == 0;
+        return app_run_image_tool_posix("convert", source_path, dest_path);
     }
 
     return 0;
