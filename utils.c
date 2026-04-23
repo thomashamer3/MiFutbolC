@@ -32,10 +32,15 @@
 #endif
 #else
 #include <sys/stat.h>
+#include <spawn.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir(path, 0755)
+#endif
+
+#ifndef _WIN32
+extern char **environ;
 #endif
 
 #ifdef _WIN32
@@ -3595,30 +3600,24 @@ static int app_run_image_tool_posix(const char *tool,
         return 0;
     }
 
-    pid_t pid = fork();
-    if (pid < 0)
+    char *const args[] =
+    {
+        (char *)tool,
+        (char *)src,
+        "-auto-orient",
+        "-resize",
+        "1280x1280>",
+        "-strip",
+        "-quality",
+        "92",
+        (char *)dst,
+        NULL
+    };
+
+    pid_t pid = 0;
+    if (posix_spawn(&pid, tool_path, NULL, NULL, args, environ) != 0)
     {
         return 0;
-    }
-
-    if (pid == 0)
-    {
-        char *const args[] =
-        {
-            (char *)tool,
-            (char *)src,
-            "-auto-orient",
-            "-resize",
-            "1280x1280>",
-            "-strip",
-            "-quality",
-            "92",
-            (char *)dst,
-            NULL
-        };
-
-        execv(tool_path, args);
-        _exit(127);
     }
 
     int status = 0;
