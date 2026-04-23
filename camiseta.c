@@ -1114,6 +1114,7 @@ static void listar_camisetas_con_stats()
         "IFNULL(SUM(p.asistencias), 0) "
         "FROM camiseta c "
         "LEFT JOIN partido p ON c.id = p.camiseta_id "
+        "WHERE IFNULL(c.activa, 1) = 1 "
         "GROUP BY c.id, c.nombre "
         "ORDER BY c.id;";
 
@@ -1466,7 +1467,7 @@ void eliminar_camiseta()
 static void reactivar_camiseta()
 {
     clear_screen();
-    print_header("REACTIVAR CAMISETA");
+    print_header("REACTIVAR / DESACTIVAR CAMISETA");
 
     if (!hay_registros("camiseta"))
     {
@@ -1478,7 +1479,7 @@ static void reactivar_camiseta()
     listar_camisetas_simple();
     printf("\n");
 
-    int id = input_int("ID a reactivar (0 para cancelar): ");
+    int id = input_int("ID de camiseta (0 para cancelar): ");
     if (id == 0)
         return;
 
@@ -1489,28 +1490,40 @@ static void reactivar_camiseta()
         return;
     }
 
-    if (camiseta_esta_activa(id))
+    int esta_activa = camiseta_esta_activa(id);
+    int nuevo_estado = esta_activa ? 0 : 1;
+
+    if (esta_activa)
     {
-        printf("La camiseta seleccionada ya esta activa.\n");
-        pause_console();
-        return;
+        if (!confirmar("Desea desactivar esta camiseta?"))
+            return;
+    }
+    else
+    {
+        if (!confirmar("Desea reactivar esta camiseta?"))
+            return;
     }
 
-    if (!confirmar("Desea reactivar esta camiseta?"))
-        return;
-
-    if (!actualizar_estado_camiseta(id, 1))
+    if (!actualizar_estado_camiseta(id, nuevo_estado))
     {
-        printf("No se pudo reactivar la camiseta.\n");
+        printf("No se pudo actualizar el estado de la camiseta.\n");
         pause_console();
         return;
     }
 
     char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg), "Reactivada camiseta id=%d", id);
-    app_log_event("CAMISETA", log_msg);
-
-    mostrar_alerta_operacion("Camiseta", "Reactivada", NULL);
+    if (nuevo_estado == 1)
+    {
+        snprintf(log_msg, sizeof(log_msg), "Reactivada camiseta id=%d", id);
+        app_log_event("CAMISETA", log_msg);
+        mostrar_alerta_operacion("Camiseta", "Reactivada", NULL);
+    }
+    else
+    {
+        snprintf(log_msg, sizeof(log_msg), "Desactivada camiseta id=%d", id);
+        app_log_event("CAMISETA", log_msg);
+        mostrar_alerta_operacion("Camiseta", "Desactivada (Inactiva)", NULL);
+    }
 }
 
 static void ver_informacion_camiseta()
@@ -1740,7 +1753,7 @@ void menu_camisetas()
         {8, "Ajustes Imagen", menu_ajustes_imagen_camiseta},
         {9, "Ver Informacion", ver_informacion_camiseta},
         {10, "Cargar Informacion", cargar_informacion_camiseta},
-        {11, "Reactivar", reactivar_camiseta},
+        {11, "Reactivar/Desactivar", reactivar_camiseta},
         {0, "Volver", NULL}
     };
     ejecutar_menu("CAMISETAS", items, 12);

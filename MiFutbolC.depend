@@ -80,7 +80,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1776896435 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1776966658 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"utils.h"
 	"settings.h"
@@ -144,7 +144,7 @@
 	<stddef.h>
 	<stdio.h>
 
-1776898997 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1776965501 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -330,7 +330,7 @@
 	<stdio.h>
 	<string.h>
 
-1776900308 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1776966308 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -571,7 +571,7 @@
 
 1776900931 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1776900931 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1776966658 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"equipo.h"
 	"db.h"
 	"utils.h"
@@ -2473,7 +2473,7 @@
 
 1776275100 d:\anime\libros\lenguaje c\proyectos\mifutbolc\busqueda.h
 
-1776273654 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\dashboard.c
+1776957287 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\dashboard.c
 	"dashboard.h"
 	"db.h"
 	"utils.h"

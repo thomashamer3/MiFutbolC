@@ -691,6 +691,7 @@ static int create_database_schema()
         " tipo_futbol INTEGER NOT NULL,"
         " num_jugadores INTEGER NOT NULL,"
         " partido_id INTEGER DEFAULT -1,"
+        " activa INTEGER DEFAULT 1,"
         " imagen_ruta TEXT DEFAULT '');"
 
         "CREATE TABLE IF NOT EXISTS jugador ("
@@ -1131,6 +1132,7 @@ static void add_missing_columns()
         "ALTER TABLE cancha ADD COLUMN horario TEXT DEFAULT '';",
         "ALTER TABLE cancha ADD COLUMN contacto_alt TEXT DEFAULT '';",
         "ALTER TABLE equipo ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE equipo ADD COLUMN activa INTEGER DEFAULT 1;",
         "ALTER TABLE partido ADD COLUMN resultado INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rendimiento_general INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN cansancio INTEGER DEFAULT 0;",

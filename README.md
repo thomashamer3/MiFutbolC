@@ -447,6 +447,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 16. Recordatorios
 17. Colecciones
 18. Ajustes
+19. Música
 0. Salir
 >
 ```
@@ -560,7 +561,7 @@ Menú Principal → Colecciones (17)
 Menú Principal → Ajustes (18) → Exportar
   ├── Seleccionar módulo (camisetas, partidos, etc.)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
-   └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#️-base-de-datos))
+  └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#-base-de-datos))
 ```
 
 El informe PDF total incluye secciones adicionales con resúmenes financieros, ranking de canchas,
@@ -795,6 +796,20 @@ MiFutbolC/
 │   ├── 🤖 Inteligencia Artificial
 │   │   └── entrenador_ia.c / entrenador_ia.h    # Entrenador IA
 │   │
+│   ├── 🧘 Bienestar y Productividad
+│   │   ├── bienestar.c / bienestar.h            # Módulo de bienestar integral
+│   │   ├── carrera.c / carrera.h                # Carrera futbolística
+│   │   ├── recordatorios.c / recordatorios.h    # Agenda y recordatorios
+│   │   └── colecciones.c / colecciones.h        # Inventario y colecciones
+│   │
+│   ├── 🖥️ Interfaz de Soporte
+│   │   ├── dashboard.c / dashboard.h            # Dashboard del sistema
+│   │   └── calendario.c / calendario.h          # Calendario y eventos
+│   │
+│   ├── 🎵 Audio
+│   │   ├── musica.c / musica.h                  # Reproductor de música
+│   │   └── musica_helpers.c / musica_helpers.h  # Helpers de audio
+│   │
 │   ├── ⚙️ Configuración
 │   │   └── settings.c / settings.h              # Sistema de configuración
 │   │
@@ -830,7 +845,8 @@ MiFutbolC/
 ├── 📚 BIBLIOTECAS INCLUIDAS
 │   ├── sqlite3.c / sqlite3.h                    # SQLite embebido
 │   ├── cJSON.c / cJSON.h                        # Biblioteca cJSON (MIT License)
-│   └── pdfgen.c / pdfgen.h                      # Motor PDF interno
+│   ├── pdfgen.c / pdfgen.h                      # Motor PDF interno
+│   └── miniaudio.h                              # Motor de audio (header-only)
 │
 ├── 🔧 ARCHIVOS DE CONFIGURACIÓN Y BUILD
 │   ├── MiFutbolC.cbp                            # Proyecto CodeBlocks
@@ -900,11 +916,13 @@ Conteo referencial (puede variar según cambios y scripts de build).
 
 | Módulo | Archivos | Descripción |
 |--------|----------|-------------|
-| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c` | Núcleo del sistema |
-| **Gestión** | `camiseta.c`, `cancha.c`, `equipo.c`, `partido.c`, `torneo.c`, `lesion.c` | Gestión de recursos |
+| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c`, `dashboard.c`, `calendario.c` | Núcleo del sistema e interfaz base |
+| **Gestión** | `camiseta.c`, `cancha.c`, `equipo.c`, `partido.c`, `torneo.c`, `temporada.c`, `lesion.c` | Gestión deportiva principal |
 | **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c` | Análisis y estadísticas |
 | **I/O** | `export*.c`, `import.c` | Importación/Exportación |
-| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c` | Funcionalidades adicionales |
+| **Bienestar y Productividad** | `bienestar.c`, `carrera.c`, `recordatorios.c`, `colecciones.c` | Bienestar, agenda y colecciones |
+| **Audio** | `musica.c`, `musica_helpers.c`, `miniaudio.h` | Reproductor y procesamiento de audio |
+| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c`, `settings.c` | Funcionalidades transversales |
 
 ## 🗄️ Base de Datos
 
@@ -1144,7 +1162,7 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Dashboard, Calendario, Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Salir).
+- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Dashboard, Calendario, Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Música, Salir).
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
@@ -1319,7 +1337,7 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 - ✅ **Manejo de Errores**: El programa valida entradas y solicita confirmaciones para operaciones destructivas
 - ✅ **Compatibilidad**: Probado en Windows 11, Ubuntu 22.04, macOS 12+
 - ✅ **Interfaz Textual**: No requiere GUI, funciona en cualquier terminal con soporte UTF-8
-- ✅ **Dependencias incluidas**: SQLite3, cJSON y pdfgen están incluidos en el repositorio
+- ✅ **Dependencias incluidas**: SQLite3, cJSON, pdfgen y miniaudio están incluidos en el repositorio
 - ✅ **Sin DLLs**: No utiliza DLLs externas para ejecución
 
 ### Limitaciones Conocidas

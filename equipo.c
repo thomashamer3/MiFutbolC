@@ -579,7 +579,7 @@ void handle_toggle_player_captain(int player_id);
 void show_available_teams_for_modification()
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
+    const char *sql = "SELECT id, nombre, IFNULL(activa, 1) FROM equipo ORDER BY id;";
 
     if (preparar_stmt(&stmt, sql))
     {
@@ -591,7 +591,8 @@ void show_available_teams_for_modification()
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
             const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
-            printf("%d. %s\n", id, nombre);
+            int activa = sqlite3_column_int(stmt, 2);
+            printf("%d. %s [%s]\n", id, nombre, activa ? "ACTIVO" : "INACTIVO");
         }
 
         if (!found)
@@ -603,6 +604,34 @@ void show_available_teams_for_modification()
         }
         sqlite3_finalize(stmt);
     }
+}
+
+static int equipo_esta_activo(int equipo_id)
+{
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT IFNULL(activa, 1) FROM equipo WHERE id = ?;";
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, equipo_id);
+
+    int activa = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        activa = sqlite3_column_int(stmt, 0) == 1;
+    }
+
+    sqlite3_finalize(stmt);
+    return activa;
+}
+
+static int actualizar_estado_equipo(int equipo_id, int activa)
+{
+    const char *sql = "UPDATE equipo SET activa = ? WHERE id = ?;";
+    return ejecutar_update_int(sql, activa ? 1 : 0, equipo_id);
 }
 
 void handle_modify_team_name(int equipo_id)
@@ -2058,7 +2087,10 @@ void listar_equipos()
     print_header("LISTAR EQUIPOS");
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre, tipo, tipo_futbol, num_jugadores, partido_id FROM equipo ORDER BY id;";
+    const char *sql = "SELECT e.id, e.nombre, e.tipo, e.tipo_futbol, e.num_jugadores, e.partido_id "
+                      "FROM equipo e "
+                      "WHERE IFNULL(e.activa, 1) = 1 "
+                      "ORDER BY e.id;";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
     {
@@ -2193,6 +2225,73 @@ void eliminar_equipo()
     else
     {
         printf("Eliminacion cancelada.\n");
+    }
+
+    pause_console();
+}
+
+static void reactivar_equipo()
+{
+    clear_screen();
+    print_header("REACTIVAR / DESACTIVAR EQUIPO");
+
+    if (!hay_registros("equipo"))
+    {
+        mostrar_no_hay_registros("equipos");
+        pause_console();
+        return;
+    }
+
+    show_available_teams_for_modification();
+    int equipo_id = input_int("\nID de equipo (0 para cancelar): ");
+    if (equipo_id == 0)
+    {
+        return;
+    }
+
+    if (!existe_id("equipo", equipo_id))
+    {
+        printf("ID de equipo invalido.\n");
+        pause_console();
+        return;
+    }
+
+    int esta_activo = equipo_esta_activo(equipo_id);
+    int nuevo_estado = esta_activo ? 0 : 1;
+
+    if (esta_activo)
+    {
+        if (!confirmar("El equipo esta activo. Desea desactivarlo?"))
+        {
+            printf("Operacion cancelada.\n");
+            pause_console();
+            return;
+        }
+    }
+    else
+    {
+        if (!confirmar("El equipo esta inactivo. Desea reactivarlo?"))
+        {
+            printf("Operacion cancelada.\n");
+            pause_console();
+            return;
+        }
+    }
+
+    if (actualizar_estado_equipo(equipo_id, nuevo_estado))
+    {
+        if (nuevo_estado)
+        {
+            mostrar_alerta_operacion("Equipo", "Reactivado", NULL);
+        }
+        else
+        {
+            mostrar_alerta_operacion("Equipo", "Desactivado", NULL);
+        }
+    }
+    else
+    {
+        printf("Error al actualizar estado del equipo: %s\n", sqlite3_errmsg(db));
     }
 
     pause_console();
@@ -2521,8 +2620,9 @@ void menu_equipos()
         {4, "Eliminar", eliminar_equipo},
         {5, "Cargar Imagen", cargar_imagen_equipo},
         {6, "Ver Imagen", ver_imagen_equipo},
+        {7, "Reactivar/Desactivar Equipo", reactivar_equipo},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("EQUIPOS", items, 7);
+    ejecutar_menu("EQUIPOS", items, 8);
 }

@@ -1513,6 +1513,7 @@ void listar_canchas()
         "IFNULL(SUM(p.asistencias), 0) "
         "FROM cancha c "
         "LEFT JOIN partido p ON c.id = p.cancha_id "
+        "WHERE IFNULL(c.activa, 1) = 1 "
         "GROUP BY c.id, c.nombre "
         "ORDER BY c.id;";
 
@@ -2172,7 +2173,7 @@ static void cargar_informacion_cancha()
 
 static void reactivar_cancha()
 {
-    mostrar_pantalla("REACTIVAR CANCHA");
+    mostrar_pantalla("REACTIVAR / DESACTIVAR CANCHA");
 
     if (!hay_registros("cancha"))
     {
@@ -2184,7 +2185,7 @@ static void reactivar_cancha()
     listar_canchas_simple();
     printf("\n");
 
-    int id = input_int("ID Cancha a Reactivar (0 para cancelar): ");
+    int id = input_int("ID Cancha (0 para cancelar): ");
     if (id == 0)
         return;
 
@@ -2194,24 +2195,35 @@ static void reactivar_cancha()
         return;
     }
 
-    if (cancha_esta_activa(id))
+    int esta_activa = cancha_esta_activa(id);
+    int nuevo_estado = esta_activa ? 0 : 1;
+
+    if (esta_activa)
     {
-        printf("La cancha seleccionada ya esta activa.\n");
+        if (!confirmar("Desea desactivar esta cancha?"))
+            return;
+    }
+    else
+    {
+        if (!confirmar("Desea reactivar esta cancha?"))
+            return;
+    }
+
+    if (!actualizar_estado_cancha(id, nuevo_estado))
+    {
+        printf("No se pudo actualizar el estado de la cancha.\n");
         pause_console();
         return;
     }
 
-    if (!confirmar("Desea reactivar esta cancha?"))
-        return;
-
-    if (!actualizar_estado_cancha(id, 1))
+    if (nuevo_estado == 1)
     {
-        printf("No se pudo reactivar la cancha.\n");
-        pause_console();
-        return;
+        mostrar_alerta_operacion("Cancha", "Reactivada", NULL);
     }
-
-    mostrar_alerta_operacion("Cancha", "Reactivada", NULL);
+    else
+    {
+        mostrar_alerta_operacion("Cancha", "Desactivada (Inactiva)", NULL);
+    }
 }
 
 void menu_canchas()
@@ -2226,7 +2238,7 @@ void menu_canchas()
         {6, "Ver Imagen", ver_imagen_cancha},
         {7, "Ver Informacion", ver_informacion_cancha},
         {8, "Cargar Informacion", cargar_informacion_cancha},
-        {9, "Reactivar Cancha", reactivar_cancha},
+        {9, "Reactivar/Desactivar Cancha", reactivar_cancha},
         {0, "Volver", NULL}
     };
 

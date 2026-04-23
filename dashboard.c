@@ -286,7 +286,7 @@ static void imprimir_balance_ascii(const dashboard_view_data_t *data)
 static void imprimir_dashboard_unicode(const dashboard_view_data_t *data)
 {
     printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║              DASHBOARD - MiFutbolC 4.1                      ║\n");
+    printf("║              DASHBOARD - MiFutbolC 4.2                      ║\n");
     printf("╠══════════════════════════════════════════════════════════════╣\n");
     printf("║                                                              ║\n");
 
@@ -307,7 +307,7 @@ static void imprimir_dashboard_unicode(const dashboard_view_data_t *data)
 static void imprimir_dashboard_ascii(const dashboard_view_data_t *data)
 {
     printf("+--------------------------------------------------------------+\n");
-    printf("|              DASHBOARD - MiFutbolC 4.1                      |\n");
+    printf("|              DASHBOARD - MiFutbolC 4.2                      |\n");
     printf("+--------------------------------------------------------------+\n");
     printf("|                                                              |\n");
 
