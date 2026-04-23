@@ -3605,7 +3605,7 @@ static int app_run_image_tool_posix(const char *tool,
     {
         char *const args[] =
         {
-            tool_path,
+            (char *)tool,
             (char *)src,
             "-auto-orient",
             "-resize",
