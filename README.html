@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <title>README.md</title>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
@@ -530,7 +530,7 @@ img {
 }
 
 /* Portada inicial centrada del README */
-div[align="center"] {
+.doc-center {
 	background: var(--card-bg);
 	border: 1px solid var(--card-border);
 	border-radius: 16px;
@@ -538,9 +538,9 @@ div[align="center"] {
 	box-shadow: var(--shadow);
 }
 
-div[align="center"] img {
+.doc-center img {
 	display: inline-block;
-	margin: 4px 4px;
+	margin: 4px;
 	border-radius: 8px;
 	box-shadow: none;
 }
@@ -643,7 +643,7 @@ code {
 		white-space: nowrap;
 	}
 
-	div[align="center"] {
+	.doc-center {
 		padding: 12px;
 	}
 
@@ -656,7 +656,7 @@ code {
 }
 </style>
 
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+<script src="https://unpkg.com/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
 </head>
 <body>
 	<button id="theme-toggle" class="theme-toggle" type="button" aria-live="polite">Modo claro: activo</button>
@@ -664,11 +664,22 @@ code {
 		(function () {
 			var root = document.documentElement;
 			var themeKey = 'mifutbolc-doc-theme';
+			var storageWarningShown = false;
+
+			function reportStorageError(action, error) {
+				if (storageWarningShown) {
+					return;
+				}
+
+				storageWarningShown = true;
+				console.warn('No se pudo ' + action + ' la preferencia de tema.', error);
+			}
 
 			function readTheme() {
 				try {
 					return localStorage.getItem(themeKey);
-				} catch (e) {
+				} catch (error) {
+					reportStorageError('leer', error);
 					return null;
 				}
 			}
@@ -676,13 +687,13 @@ code {
 			function saveTheme(theme) {
 				try {
 					localStorage.setItem(themeKey, theme);
-				} catch (e) {
-					/* Ignorar si el navegador bloquea storage */
+				} catch (error) {
+					reportStorageError('guardar', error);
 				}
 			}
 
 			function getPreferredTheme() {
-				return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+				return globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches
 					? 'dark'
 					: 'light';
 			}
@@ -704,15 +715,15 @@ code {
 				? storedTheme
 				: getPreferredTheme();
 
-			root.setAttribute('data-theme', initialTheme);
+			root.dataset.theme = initialTheme;
 			updateButton(initialTheme);
 
 			var toggleButton = document.getElementById('theme-toggle');
 			if (toggleButton) {
 				toggleButton.addEventListener('click', function () {
-					var currentTheme = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+					var currentTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
 					var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-					root.setAttribute('data-theme', nextTheme);
+					root.dataset.theme = nextTheme;
 					saveTheme(nextTheme);
 					updateButton(nextTheme);
 				});
@@ -725,7 +736,7 @@ code {
 		})();
   </script>
 <h1 id="-mifutbolc---sistema-integral-de-gestión-de-fútbol">⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol</h1>
-<div align="center">
+<div class="doc-center">
 <p><img src="https://img.shields.io/badge/version-4.2-blue.svg" alt="Version">
 <img src="https://img.shields.io/badge/language-C-orange.svg" alt="Language">
 <img src="https://img.shields.io/badge/database-SQLite3-green.svg" alt="Database">
@@ -2109,7 +2120,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Estado</strong>: proyecto educativo en evolución.</li>
 </ul>
 <hr>
-<div align="center">
+<div class="doc-center">
 <p><strong>⚽ MiFutbolC - Gestión Profesional de Fútbol en C ⚽</strong></p>
 <p>Desarrollado por Thomas Hamer.</p>
 <p><a href="#-mifutbolc---sistema-integral-de-gesti%C3%B3n-de-f%C3%BAtbol">⬆ Volver arriba</a></p>

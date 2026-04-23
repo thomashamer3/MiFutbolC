@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <title>manual_usuario.md</title>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
@@ -632,7 +632,7 @@ code {
 }
 </style>
 
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+<script src="https://unpkg.com/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
 </head>
 <body>
 	<button id="theme-toggle" class="theme-toggle" type="button" aria-live="polite">Modo claro: activo</button>
@@ -640,11 +640,22 @@ code {
 		(function () {
 			var root = document.documentElement;
 			var themeKey = 'mifutbolc-doc-theme';
+			var storageWarningShown = false;
+
+			function reportStorageError(action, error) {
+				if (storageWarningShown) {
+					return;
+				}
+
+				storageWarningShown = true;
+				console.warn('No se pudo ' + action + ' la preferencia de tema.', error);
+			}
 
 			function readTheme() {
 				try {
 					return localStorage.getItem(themeKey);
-				} catch (e) {
+				} catch (error) {
+					reportStorageError('leer', error);
 					return null;
 				}
 			}
@@ -652,13 +663,13 @@ code {
 			function saveTheme(theme) {
 				try {
 					localStorage.setItem(themeKey, theme);
-				} catch (e) {
-					/* Ignorar si el navegador bloquea storage */
+				} catch (error) {
+					reportStorageError('guardar', error);
 				}
 			}
 
 			function getPreferredTheme() {
-				return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+				return globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches
 					? 'dark'
 					: 'light';
 			}
@@ -680,15 +691,15 @@ code {
 				? storedTheme
 				: getPreferredTheme();
 
-			root.setAttribute('data-theme', initialTheme);
+			root.dataset.theme = initialTheme;
 			updateButton(initialTheme);
 
 			var toggleButton = document.getElementById('theme-toggle');
 			if (toggleButton) {
 				toggleButton.addEventListener('click', function () {
-					var currentTheme = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+					var currentTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
 					var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-					root.setAttribute('data-theme', nextTheme);
+					root.dataset.theme = nextTheme;
 					saveTheme(nextTheme);
 					updateButton(nextTheme);
 				});

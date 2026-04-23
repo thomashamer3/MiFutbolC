@@ -261,7 +261,7 @@
 <body>
   <div class="page">
     <div class="topbar">
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar tema">Modo claro</button>
+      <button id="theme-toggle" class="theme-toggle" type="button">Modo claro</button>
     </div>
 
     <main class="hero">
@@ -319,11 +319,22 @@
       var root = document.documentElement;
       var button = document.getElementById("theme-toggle");
       var key = "mifutbolc-index-theme";
+      var storageWarningShown = false;
+
+      function reportStorageError(action, error) {
+        if (storageWarningShown) {
+          return;
+        }
+
+        storageWarningShown = true;
+        console.warn("No se pudo " + action + " la preferencia de tema.", error);
+      }
 
       function readTheme() {
         try {
           return localStorage.getItem(key);
-        } catch (e) {
+        } catch (error) {
+          reportStorageError("leer", error);
           return null;
         }
       }
@@ -331,13 +342,13 @@
       function saveTheme(theme) {
         try {
           localStorage.setItem(key, theme);
-        } catch (e) {
-          /* storage no disponible */
+        } catch (error) {
+          reportStorageError("guardar", error);
         }
       }
 
       function systemTheme() {
-        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        return globalThis.matchMedia && globalThis.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light";
       }
@@ -355,14 +366,14 @@
         theme = systemTheme();
       }
 
-      root.setAttribute("data-theme", theme);
+      root.dataset.theme = theme;
       setButton(theme);
 
       if (button) {
         button.addEventListener("click", function () {
-          var current = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+          var current = root.dataset.theme === "dark" ? "dark" : "light";
           var next = current === "dark" ? "light" : "dark";
-          root.setAttribute("data-theme", next);
+          root.dataset.theme = next;
           saveTheme(next);
           setButton(next);
         });
