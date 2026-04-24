@@ -6,258 +6,9 @@
   <title>MiFutbolC | Inicio</title>
   <meta name="description" content="Portada de documentacion para MiFutbolC en GitHub Pages" />
   <link rel="icon" href="MiFutbolC.ico" type="image/x-icon" />
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Bitter:wght@500;700&display=swap");
-
-    :root {
-      color-scheme: light;
-      --bg: #f3f6ef;
-      --bg-shape-1: #d9ecdd;
-      --bg-shape-2: #f3dfc5;
-      --surface: #ffffff;
-      --surface-soft: #f8faf5;
-      --text: #16212a;
-      --text-muted: #51606d;
-      --brand: #0f6f4f;
-      --brand-strong: #0a5139;
-      --line: #d6e1d7;
-      --shadow: 0 20px 48px rgba(15, 49, 37, 0.14);
-      --btn-bg: #0f6f4f;
-      --btn-text: #f6fffa;
-      --chip-bg: #e7f3eb;
-      --chip-text: #0b5a3f;
-    }
-
-    html[data-theme="dark"] {
-      color-scheme: dark;
-      --bg: #0e151b;
-      --bg-shape-1: #17322a;
-      --bg-shape-2: #443425;
-      --surface: #151f27;
-      --surface-soft: #1a2530;
-      --text: #eaf0f4;
-      --text-muted: #afbcc7;
-      --brand: #61c8a7;
-      --brand-strong: #8ce0c5;
-      --line: #2e3f4a;
-      --shadow: 0 20px 48px rgba(0, 0, 0, 0.42);
-      --btn-bg: #2d8f70;
-      --btn-text: #eafbf4;
-      --chip-bg: #1d342e;
-      --chip-text: #9de5cc;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 10% 12%, var(--bg-shape-1), transparent 40%),
-        radial-gradient(circle at 90% 2%, var(--bg-shape-2), transparent 36%),
-        var(--bg);
-      line-height: 1.55;
-      transition: background-color 0.25s ease, color 0.25s ease;
-    }
-
-    .page {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 30px 18px 42px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 18px;
-    }
-
-    .theme-toggle {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--surface);
-      color: var(--text);
-      padding: 8px 12px;
-      font: 700 13px/1 "Manrope", "Segoe UI", Tahoma, sans-serif;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .theme-toggle:hover {
-      transform: translateY(-1px);
-      border-color: var(--brand);
-    }
-
-    .hero {
-      background: linear-gradient(130deg, var(--surface), var(--surface-soft));
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      padding: 30px 26px;
-      animation: fadeUp 0.65s ease both;
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 11px;
-      border-radius: 999px;
-      background: var(--chip-bg);
-      color: var(--chip-text);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0;
-      font-family: "Bitter", Georgia, serif;
-      font-size: clamp(1.8rem, 3.2vw, 2.8rem);
-      line-height: 1.2;
-      color: var(--brand-strong);
-    }
-
-    .hero p {
-      margin: 14px 0 0;
-      color: var(--text-muted);
-      max-width: 68ch;
-      font-size: 1.03rem;
-    }
-
-    .menu-grid {
-      margin-top: 22px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .menu-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.07);
-      transform: translateY(8px);
-      opacity: 0;
-      animation: fadeUp 0.55s ease forwards;
-    }
-
-    .menu-card:nth-child(2) {
-      animation-delay: 0.1s;
-    }
-
-    .menu-card:nth-child(3) {
-      animation-delay: 0.2s;
-    }
-
-    .menu-card:nth-child(4) {
-      animation-delay: 0.3s;
-    }
-
-    .menu-card:hover {
-      border-color: var(--brand);
-      transform: translateY(-3px);
-    }
-
-    .menu-card h2 {
-      margin: 0;
-      font-size: 1.14rem;
-      color: var(--brand-strong);
-    }
-
-    .menu-card p {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-
-    .menu-card .action {
-      margin-top: 2px;
-      font-size: 0.88rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      color: var(--brand);
-    }
-
-    .cta-wrap {
-      margin-top: 22px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 12px;
-      padding: 11px 15px;
-      text-decoration: none;
-      font-size: 0.92rem;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      border: 1px solid var(--line);
-    }
-
-    .btn.primary {
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      border-color: transparent;
-    }
-
-    .btn.secondary {
-      background: var(--surface);
-      color: var(--text);
-    }
-
-    footer {
-      margin-top: 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @media (max-width: 860px) {
-      .menu-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        padding: 24px 18px;
-      }
-    }
-  </style>
+  <meta http-equiv="Cache-control" content="public">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/theme.js" defer></script>
 </head>
 <body>
   <div class="page">
@@ -273,6 +24,7 @@
       </div>
 
       <h1>Centro de Documentacion de MiFutbolC</h1>
+      <div class="version">MiFutbolC v4.2</div>
       <p>
         Esta portada funciona como menu inicial para navegar rapido por la documentacion del proyecto.
         Elige una ruta y entra directo al contenido que necesitas.
@@ -280,13 +32,13 @@
 
       <section class="menu-grid" aria-label="Menu principal de documentacion">
         <a class="menu-card" href="README.html">
-          <h2>README completo</h2>
+          <h2>README Completo</h2>
           <p>Vista general del sistema, modulos, instalacion y arquitectura.</p>
           <span class="action">Abrir README</span>
         </a>
 
         <a class="menu-card" href="manual_usuario.html">
-          <h2>Manual de usuario</h2>
+          <h2>Manual de Usuario</h2>
           <p>Guia paso a paso orientada a uso cotidiano y flujos operativos.</p>
           <span class="action">Abrir manual</span>
         </a>
@@ -315,76 +67,6 @@
     </footer>
   </div>
 
-  <script>
-    (function () {
-      var root = document.documentElement;
-      var button = document.getElementById("theme-toggle");
-      var key = "mifutbolc-index-theme";
-      var storageWarningShown = false;
-
-      function reportStorageError(action, error) {
-        if (storageWarningShown) {
-          return;
-        }
-
-        storageWarningShown = true;
-        console.warn("No se pudo " + action + " la preferencia de tema.", error);
-      }
-
-      function readTheme() {
-        try {
-          return localStorage.getItem(key);
-        } catch (error) {
-          reportStorageError("leer", error);
-          return null;
-        }
-      }
-
-      function saveTheme(theme) {
-        try {
-          localStorage.setItem(key, theme);
-        } catch (error) {
-          reportStorageError("guardar", error);
-        }
-      }
-
-      function systemTheme() {
-        return globalThis.matchMedia && globalThis.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-      }
-
-      function setButton(theme) {
-        if (!button) {
-          return;
-        }
-        button.textContent = theme === "dark" ? "Modo oscuro" : "Modo claro";
-        button.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-      }
-
-      var theme = readTheme();
-      if (theme !== "light" && theme !== "dark") {
-        theme = systemTheme();
-      }
-
-      root.dataset.theme = theme;
-      setButton(theme);
-
-      if (button) {
-        button.addEventListener("click", function () {
-          var current = root.dataset.theme === "dark" ? "dark" : "light";
-          var next = current === "dark" ? "light" : "dark";
-          root.dataset.theme = next;
-          saveTheme(next);
-          setButton(next);
-        });
-      }
-
-      var y = document.getElementById("foot-year");
-      if (y) {
-        y.textContent = new Date().getFullYear();
-      }
-    })();
-  </script>
+  
 </body>
 </html>

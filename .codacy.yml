@@ -1,0 +1,16 @@
+# Codacy configuration: exclude large/generated folders and disable slow tools
+exclude-paths:
+  - 'bin/**'
+  - 'obj/**'
+  - 'Exportaciones/**'
+  - 'Importaciones/**'
+  - 'build-wrapper-dump.json'
+  - '**/node_modules'
+  - '**/vendor'
+  - '**/dist'
+
+tool-config:
+  cppcheck:
+    enabled: false
+  clang-tidy:
+    enabled: false

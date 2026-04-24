@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<title>README.md</title>
+<title>MiFutbolC - Sistema Integral de Gestión de Fútbol</title>
 <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+	<meta http-equiv="Cache-control" content="public">
+	<link rel="icon" href="MiFutbolC.ico" type="image/x-icon" />
 
 <style>
 /* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
@@ -19,150 +22,6 @@ body {
 	word-wrap: break-word;
 }
 
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
-
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
-
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
-
-body.showEditorSelection .code-line {
-	position: relative;
-}
-
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
-
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
-
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
-
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
-
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
-
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
-
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-a {
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
-
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
-	font-weight: normal;
-}
-
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
-
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
 
 code {
 	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
@@ -656,85 +515,12 @@ code {
 }
 </style>
 
-<script src="https://unpkg.com/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
+  <script src="assets/theme.js" defer></script>
 </head>
 <body>
 	<button id="theme-toggle" class="theme-toggle" type="button" aria-live="polite">Modo claro: activo</button>
-  <script>
-		(function () {
-			var root = document.documentElement;
-			var themeKey = 'mifutbolc-doc-theme';
-			var storageWarningShown = false;
-
-			function reportStorageError(action, error) {
-				if (storageWarningShown) {
-					return;
-				}
-
-				storageWarningShown = true;
-				console.warn('No se pudo ' + action + ' la preferencia de tema.', error);
-			}
-
-			function readTheme() {
-				try {
-					return localStorage.getItem(themeKey);
-				} catch (error) {
-					reportStorageError('leer', error);
-					return null;
-				}
-			}
-
-			function saveTheme(theme) {
-				try {
-					localStorage.setItem(themeKey, theme);
-				} catch (error) {
-					reportStorageError('guardar', error);
-				}
-			}
-
-			function getPreferredTheme() {
-				return globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches
-					? 'dark'
-					: 'light';
-			}
-
-			function updateButton(theme) {
-				var button = document.getElementById('theme-toggle');
-				if (!button) {
-					return;
-				}
-
-				var darkMode = theme === 'dark';
-				button.textContent = darkMode ? 'Modo oscuro: activo' : 'Modo claro: activo';
-				button.setAttribute('aria-label', darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
-				button.setAttribute('aria-pressed', darkMode ? 'true' : 'false');
-			}
-
-			var storedTheme = readTheme();
-			var initialTheme = (storedTheme === 'dark' || storedTheme === 'light')
-				? storedTheme
-				: getPreferredTheme();
-
-			root.dataset.theme = initialTheme;
-			updateButton(initialTheme);
-
-			var toggleButton = document.getElementById('theme-toggle');
-			if (toggleButton) {
-				toggleButton.addEventListener('click', function () {
-					var currentTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
-					var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-					root.dataset.theme = nextTheme;
-					saveTheme(nextTheme);
-					updateButton(nextTheme);
-				});
-			}
-
-			mermaid.initialize({
-				startOnLoad: true,
-				theme: initialTheme === 'dark' ? 'dark' : 'default'
-			});
-		})();
-  </script>
 <h1 id="-mifutbolc---sistema-integral-de-gestión-de-fútbol">⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol</h1>
 <div class="doc-center">
 <p><img src="https://img.shields.io/badge/version-4.2-blue.svg" alt="Version">
