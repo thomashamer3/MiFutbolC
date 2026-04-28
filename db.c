@@ -14,6 +14,7 @@
 #include <direct.h>
 #include <windows.h>
 #include <ShlObj.h>
+#include <bcrypt.h>
 #else
 #include "direct.h"
 #include "compat_windows.h"
@@ -109,13 +110,46 @@ static void bytes_to_hex(const unsigned char *bytes, size_t bytes_len, char *hex
     hex_out[bytes_len * 2] = '\0';
 }
 
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+#ifdef _WIN32
+    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        return -1;
+    }
+    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
+    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+    return BCRYPT_SUCCESS(status) ? 0 : -1;
+#else
+    FILE *f = fopen("/dev/urandom", "rb");
+    if (!f)
+    {
+        return -1;
+    }
+    size_t read_total = 0;
+    while (read_total < size)
+    {
+        size_t r = fread(buffer + read_total, 1, size - read_total, f);
+        if (r == 0)
+        {
+            fclose(f);
+            return -1;
+        }
+        read_total += r;
+    }
+    fclose(f);
+    return 0;
+#endif
+}
+
 static void generate_salt_hex(char *salt_out, size_t out_size)
 {
     enum
     {
         SALT_BYTES = 16
     };
-    static int seeded = 0;
     unsigned char salt_bytes[SALT_BYTES];
 
     if (!salt_out || out_size < (SALT_BYTES * 2 + 1))
@@ -123,16 +157,16 @@ static void generate_salt_hex(char *salt_out, size_t out_size)
         return;
     }
 
-    if (!seeded)
+    if (secure_random_bytes(salt_bytes, SALT_BYTES) != 0)
     {
-        unsigned int seed = (unsigned int)time(NULL) ^ (unsigned int)clock();
-        srand(seed);
-        seeded = 1;
-    }
-
-    for (int i = 0; i < SALT_BYTES; i++)
-    {
-        salt_bytes[i] = (unsigned char)(rand() % 256);
+        for (int i = 0; i < SALT_BYTES; i++)
+        {
+            salt_bytes[i] = (unsigned char)(clock() ^ (i * 12345 + time(NULL)));
+        }
+        for (int i = 0; i < SALT_BYTES; i++)
+        {
+            salt_bytes[i] ^= (salt_bytes[(i + 7) % SALT_BYTES] << 3);
+        }
     }
 
     bytes_to_hex(salt_bytes, SALT_BYTES, salt_out, out_size);

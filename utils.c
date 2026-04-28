@@ -27,6 +27,7 @@
 #define MKDIR(path) _mkdir(path)
 #ifdef _WIN32
 #include <windows.h>
+#include <bcrypt.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -41,6 +42,43 @@
 
 #ifndef _WIN32
 extern char **environ;
+#endif
+
+#ifdef _WIN32
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        return -1;
+    }
+    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
+    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+    return BCRYPT_SUCCESS(status) ? 0 : -1;
+}
+#else
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    FILE *f = fopen("/dev/urandom", "rb");
+    if (!f)
+    {
+        return -1;
+    }
+    size_t read_total = 0;
+    while (read_total < size)
+    {
+        size_t r = fread(buffer + read_total, 1, size - read_total, f);
+        if (r == 0)
+        {
+            fclose(f);
+            return -1;
+        }
+        read_total += r;
+    }
+    fclose(f);
+    return 0;
+}
 #endif
 
 #ifdef _WIN32
@@ -91,7 +129,6 @@ static uint64_t auth_fnv1a64_string(const char *text)
 static void auth_generate_salt_hex(char *salt_out, size_t out_size)
 {
     static const char hex[] = "0123456789abcdef";
-    static int seeded = 0;
     unsigned char salt[16];
 
     if (!salt_out || out_size < 33)
@@ -99,15 +136,16 @@ static void auth_generate_salt_hex(char *salt_out, size_t out_size)
         return;
     }
 
-    if (!seeded)
+    if (secure_random_bytes(salt, 16) != 0)
     {
-        srand((unsigned int)time(NULL) ^ (unsigned int)clock());
-        seeded = 1;
+        for (int i = 0; i < 16; i++)
+        {
+            salt[i] = (unsigned char)((clock() ^ (time(NULL) + i * 12345)) & 0xFF;
+        }
     }
 
     for (int i = 0; i < 16; i++)
     {
-        salt[i] = (unsigned char)(rand() % 256);
         salt_out[i * 2] = hex[(salt[i] >> 4) & 0x0F];
         salt_out[i * 2 + 1] = hex[salt[i] & 0x0F];
     }

@@ -11,12 +11,64 @@
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <bcrypt.h>
 #else
 #include "compat_windows.h"
+#include <unistd.h>
 #endif
 #include "sqlite3.h"
 #include <ctype.h>
 #include <limits.h>
+
+#ifdef _WIN32
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        return -1;
+    }
+    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
+    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+    return BCRYPT_SUCCESS(status) ? 0 : -1;
+}
+#else
+#include <sys/stat.h>
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    FILE *f = fopen("/dev/urandom", "rb");
+    if (!f)
+    {
+        return -1;
+    }
+    size_t read_total = 0;
+    while (read_total < size)
+    {
+        size_t r = fread(buffer + read_total, 1, size - read_total, f);
+        if (r == 0)
+        {
+            fclose(f);
+            return -1;
+        }
+        read_total += r;
+    }
+    fclose(f);
+    return 0;
+}
+#endif
+
+static unsigned int secure_rand_range(unsigned int max)
+{
+    unsigned char rand_bytes[4];
+    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
+    {
+        unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
+                        (rand_bytes[2] << 8) | rand_bytes[3];
+        return r % max;
+    }
+    return ((unsigned int)(time(NULL) ^ clock())) % max;
+}
 #ifdef _WIN32
 #include <process.h>
 #include <io.h>
@@ -2347,8 +2399,7 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
 
 int generar_evento_aleatorio()
 {
-    unsigned int random_value;
-    random_value = (unsigned int)rand();
+    unsigned int random_value = secure_rand_range(100);
     int evento_aleatorio = random_value % 100;
     if (evento_aleatorio < 25) return 1; // gol local
     if (evento_aleatorio < 50) return 2; // gol visitante
@@ -2360,17 +2411,12 @@ int generar_evento_aleatorio()
 int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_local,
                       int goles_jugadores_local[], int asistencias_jugadores_local[])
 {
-    unsigned int random_value;
-    random_value = (unsigned int)rand();
-    int jugador_gol = random_value % equipo_local->num_jugadores;
-    random_value = (unsigned int)rand();
-    int jugador_asistencia = random_value % equipo_local->num_jugadores;
+    int jugador_gol = secure_rand_range(equipo_local->num_jugadores);
+    int jugador_asistencia = secure_rand_range(equipo_local->num_jugadores);
 
-    // Evitar que un jugador se asista a si mismo
     while (jugador_asistencia == jugador_gol && equipo_local->num_jugadores > 1)
     {
-        random_value = (unsigned int)rand();
-        jugador_asistencia = random_value % equipo_local->num_jugadores;
+        jugador_asistencia = secure_rand_range(equipo_local->num_jugadores);
     }
 
     (*goles_local)++;
@@ -2396,17 +2442,12 @@ int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_
 int manejar_gol_visitante(const Equipo *equipo_visitante, int minuto_actual, int *goles_visitante,
                           int goles_jugadores_visitante[], int asistencias_jugadores_visitante[])
 {
-    unsigned int random_value;
-    random_value = (unsigned int)rand();
-    int jugador_gol = random_value % equipo_visitante->num_jugadores;
-    random_value = (unsigned int)rand();
-    int jugador_asistencia = random_value % equipo_visitante->num_jugadores;
+    int jugador_gol = secure_rand_range(equipo_visitante->num_jugadores);
+    int jugador_asistencia = secure_rand_range(equipo_visitante->num_jugadores);
 
-    // Evitar que un jugador se asista a si mismo
     while (jugador_asistencia == jugador_gol && equipo_visitante->num_jugadores > 1)
     {
-        random_value = (unsigned int)rand();
-        jugador_asistencia = random_value % equipo_visitante->num_jugadores;
+        jugador_asistencia = secure_rand_range(equipo_visitante->num_jugadores);
     }
 
     (*goles_visitante)++;
@@ -2431,8 +2472,7 @@ int manejar_gol_visitante(const Equipo *equipo_visitante, int minuto_actual, int
 
 int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual)
 {
-    unsigned int random_value;
-    random_value = (unsigned int)rand();
+    unsigned int random_value = secure_rand_range(100);
     if (random_value % 2 == 0)
     {
         printf("*** Oportunidad de gol para %s (Minuto %d) ***\n", equipo_local->nombre, minuto_actual);
@@ -2446,8 +2486,7 @@ int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_vis
 
 int manejar_falta(const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual)
 {
-    unsigned int random_value;
-    random_value = (unsigned int)rand();
+    unsigned int random_value = secure_rand_range(100);
     if (random_value % 2 == 0)
     {
         printf("*** Falta cometida por %s (Minuto %d) ***\n", equipo_local->nombre, minuto_actual);

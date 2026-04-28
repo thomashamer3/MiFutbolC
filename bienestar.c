@@ -1831,9 +1831,12 @@ static void pedir_mes_anio(char *salida, int size)
 #ifdef _WIN32
                 strncpy_s(salida, (rsize_t)size, tmp, _TRUNCATE);
 #else
-                strncpy(salida, tmp, (size_t)size);
-                if (size > 0)
-                    salida[size - 1] = '\0';
+                if (tmp[0] != '\0')
+                {
+                    size_t copy_len = strlen(tmp) < size - 1 ? strlen(tmp) : size - 1;
+                    memcpy(salida, tmp, copy_len);
+                    salida[copy_len] = '\0';
+                }
 #endif
             }
             return;

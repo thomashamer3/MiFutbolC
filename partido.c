@@ -12,6 +12,7 @@
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <bcrypt.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -165,11 +166,55 @@ typedef struct
     int goles_visitante;
 } DatosSimulacion;
 
+#ifdef _WIN32
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        return -1;
+    }
+    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
+    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+    return BCRYPT_SUCCESS(status) ? 0 : -1;
+}
+#else
+static int secure_random_bytes(unsigned char *buffer, size_t size)
+{
+    FILE *f = fopen("/dev/urandom", "rb");
+    if (!f)
+    {
+        return -1;
+    }
+    size_t read_total = 0;
+    while (read_total < size)
+    {
+        size_t r = fread(buffer + read_total, 1, size - read_total, f);
+        if (r == 0)
+        {
+            fclose(f);
+            return -1;
+        }
+        read_total += r;
+    }
+    fclose(f);
+    return 0;
+}
+#endif
+
 static int secure_rand(int max)
 {
     if (max <= 0)
         return 0;
-    return (unsigned int)rand() % max;
+    unsigned char rand_bytes[4];
+    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
+    {
+        unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
+                        (rand_bytes[2] << 8) | rand_bytes[3];
+        return (int)(r % max);
+    }
+    return (int)(((unsigned int)(time(NULL) ^ clock())) % max);
 }
 
 static int cancha_esta_activa(int cancha_id)

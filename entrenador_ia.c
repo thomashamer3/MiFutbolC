@@ -672,8 +672,17 @@ void evaluar_decision_pasada()
         strncpy_s(consejos_lista[count].consejo, sizeof(consejos_lista[count].consejo),
                   consejo, _TRUNCATE);
 #else
-        strncpy(consejos_lista[count].consejo, consejo, sizeof(consejos_lista[count].consejo) - 1);
-        consejos_lista[count].consejo[sizeof(consejos_lista[count].consejo) - 1] = '\0';
+        if (consejo)
+        {
+            size_t len = strlen(consejo);
+            size_t copy_len = len < sizeof(consejos_lista[count].consejo) - 1 ? len : sizeof(consejos_lista[count].consejo) - 1;
+            memcpy(consejos_lista[count].consejo, consejo, copy_len);
+            consejos_lista[count].consejo[copy_len] = '\0';
+        }
+        else
+        {
+            consejos_lista[count].consejo[0] = '\0';
+        }
 #endif
         consejos_lista[count].seguido = sqlite3_column_int(stmt, 3);
 

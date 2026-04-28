@@ -533,8 +533,9 @@ static void force_locale(char *buf, int len)
     }
     else
     {
-        strncpy(buf, saved_locale, len - 1);
-        buf[len - 1] = '\0';
+        size_t copy_len = strlen(saved_locale) < len - 1 ? strlen(saved_locale) : len - 1;
+        memcpy(buf, saved_locale, copy_len);
+        buf[copy_len] = '\0';
     }
 
     // En Windows "POSIX" puede no estar disponible; "C" garantiza punto decimal.
@@ -574,7 +575,7 @@ static int dstr_printf(struct dstr *str, const char *fmt, ...)
         restore_locale(saved_locale);
         return -ENOMEM;
     }
-    vsprintf(dstr_data(str) + str->used_len, fmt, aq);
+    vsnprintf(dstr_data(str) + str->used_len, len + 1, fmt, aq);
     str->used_len += len;
     va_end(ap);
     va_end(aq);
@@ -931,8 +932,9 @@ int pdf_set_font(struct pdf_doc *pdf, const char *font)
         obj = pdf_add_object(pdf, OBJ_font);
         if (!obj)
             return pdf->errval;
-        strncpy(obj->font.name, font, sizeof(obj->font.name) - 1);
-        obj->font.name[sizeof(obj->font.name) - 1] = '\0';
+        size_t copy_len = strlen(font) < sizeof(obj->font.name) - 1 ? strlen(font) : sizeof(obj->font.name) - 1;
+        memcpy(obj->font.name, font, copy_len);
+        obj->font.name[copy_len] = '\0';
         obj->font.index = last_index + 1;
     }
 
@@ -1419,8 +1421,9 @@ int pdf_add_bookmark(struct pdf_doc *pdf, struct pdf_object *page, int parent,
         return pdf->errval;
     }
 
-    strncpy(obj->bookmark.name, name, sizeof(obj->bookmark.name) - 1);
-    obj->bookmark.name[sizeof(obj->bookmark.name) - 1] = '\0';
+    size_t copy_len = strlen(name) < sizeof(obj->bookmark.name) - 1 ? strlen(name) : sizeof(obj->bookmark.name) - 1;
+    memcpy(obj->bookmark.name, name, copy_len);
+    obj->bookmark.name[copy_len] = '\0';
     obj->bookmark.page = page;
     if (parent >= 0)
     {
@@ -2147,7 +2150,7 @@ int pdf_add_text_wrap(struct pdf_doc *pdf, struct pdf_object *page,
             float char_spacing = 0;
             if (len >= (int)sizeof(line))
                 len = (int)sizeof(line) - 1;
-            strncpy(line, start, len);
+            memcpy(line, start, len);
             line[len] = '\0';
 
             e = pdf_text_point_width(pdf, start, len, size, widths,
@@ -4227,10 +4230,10 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
 
     // Write image information to PDF
     written =
-        sprintf((char *)final_data,
+        snprintf((char *)final_data, 512,
                 "<<\r\n"
                 "  /Type /XObject\r\n"
-                "  /Name /Image%d\r\n"
+                "  /Name /Image%zu\r\n"
                 "  /Subtype /Image\r\n"
                 "  /ColorSpace %s\r\n"
                 "  /Width %u\r\n"
@@ -4249,7 +4252,7 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
 
     memcpy(&final_data[written], png_data_temp, png_data_total_length);
     written += png_data_total_length;
-    written += sprintf((char *)&final_data[written], "\r\nendstream\r\n");
+    written += snprintf((char *)&final_data[written], 512 - written, "\r\nendstream\r\n");
 
     obj = pdf_add_object(pdf, OBJ_image);
     if (!obj)
