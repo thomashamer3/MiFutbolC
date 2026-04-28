@@ -1710,7 +1710,7 @@ static int seleccionar_id_aleatorio(const int ids[], int count)
         return ids[r % count];
     }
 
-    return ids[((unsigned int)(time(NULL) ^ clock()) % count)];
+    return ids[(unsigned int)(time(NULL) ^ clock()) % count];
 }
 
 static void marcar_camiseta_sorteada(int id)

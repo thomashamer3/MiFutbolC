@@ -12,9 +12,13 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <bcrypt.h>
+#include <process.h>
+#include <io.h>
 #else
 #include "compat_windows.h"
 #include <unistd.h>
+#include "process.h"
+#include <strings.h>
 #endif
 #include "sqlite3.h"
 #include <ctype.h>
@@ -69,13 +73,6 @@ static unsigned int secure_rand_range(unsigned int max)
     }
     return ((unsigned int)(time(NULL) ^ clock())) % max;
 }
-#ifdef _WIN32
-#include <process.h>
-#include <io.h>
-#else
-#include "process.h"
-#include <strings.h>
-#endif
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {

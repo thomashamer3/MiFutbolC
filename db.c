@@ -1750,18 +1750,18 @@ void importar_base_datos()
 
     // Verificar que exista el archivo a importar
     CopyResult result = copiar_archivo(source_path, dest_path);
-    if (result == COPY_SRC_ERROR)
+    if (result != COPY_OK)
     {
-        printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
-        snprintf(log_buf_, sizeof(log_buf_), "No se encontro archivo de importacion: %.983s", source_path);
-        app_log_write("ERROR", "IMPORT", log_buf_);
-        return;
-    }
-
-    if (result == COPY_DST_ERROR)
-    {
-        printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para importar: %.977s", dest_path);
+        if (result == COPY_SRC_ERROR)
+        {
+            printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
+            snprintf(log_buf_, sizeof(log_buf_), "No se encontro archivo de importacion: %.983s", source_path);
+        }
+        else
+        {
+            printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
+            snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para importar: %.977s", dest_path);
+        }
         app_log_write("ERROR", "IMPORT", log_buf_);
         return;
     }
