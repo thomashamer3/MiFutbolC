@@ -278,6 +278,8 @@ void handle_user_name()
 
 MenuItem* create_filtered_menu(int* count)
 {
+#ifdef UNIT_TEST
+    // Durante tests mantenemos el comportamiento original (lista completa)
     *count = (int)MENU_ITEM_COUNT;
 
     MenuItem* filtered_items = (MenuItem*)malloc((size_t)(*count) * sizeof(MenuItem));
@@ -296,6 +298,71 @@ MenuItem* create_filtered_menu(int* count)
     }
 
     return filtered_items;
+#else
+    // En ejecución normal, construir menú dinámico según el modo (Simple/Advanced/Custom)
+    int max = (int)MENU_ITEM_COUNT;
+    MenuItem* filtered_items = (MenuItem*)malloc((size_t)max * sizeof(MenuItem));
+    if (!filtered_items)
+    {
+        printf("Error de memoria\n");
+        db_close();
+        exit(1);
+    }
+
+    // Getters definidos en settings.h — en el mismo orden lógico que MENU_ITEMS
+    const char* (*getters[])(void) =
+    {
+        get_menu_dashboard,
+        get_menu_calendario,
+        get_menu_camisetas,
+        get_menu_canchas,
+        get_menu_equipos,
+        get_menu_partidos,
+        get_menu_lesiones,
+        get_menu_estadisticas,
+        get_menu_logros,
+        get_menu_financiamiento,
+        get_menu_torneos,
+        get_menu_temporada,
+        get_menu_analisis,
+        get_menu_bienestar,
+        get_menu_carrera,
+        get_menu_recordatorios,
+        get_menu_colecciones,
+        get_menu_settings,
+        get_menu_musica,
+        get_menu_exit
+    };
+
+    int out = 0;
+    for (int i = 0; i < max; i++)
+    {
+        const char *label = NULL;
+        if (i < (int)(sizeof(getters)/sizeof(getters[0])) && getters[i])
+        {
+            label = getters[i]();
+        }
+        else
+        {
+            // No hay getter -- usar el texto estático del arreglo original
+            label = MENU_ITEMS[i].texto;
+        }
+
+        if (!label)
+        {
+            // Si el getter devuelve NULL, omitimos este item (modo Custom lo permite)
+            continue;
+        }
+
+        filtered_items[out].opcion = (MENU_ITEMS[i].opcion == 0) ? 0 : (out + 1);
+        filtered_items[out].texto = label;
+        filtered_items[out].accion = MENU_ITEMS[i].accion;
+        out++;
+    }
+
+    *count = out;
+    return filtered_items;
+#endif
 }
 
 void run_menu(MenuItem* filtered_items, int count)

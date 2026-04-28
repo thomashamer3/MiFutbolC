@@ -291,6 +291,8 @@ typedef struct
 static const TextEntry text_entries[] =
 {
     {"menu_title", "MI FUTBOL C", "MI FUTBOL C"},
+    {"menu_dashboard", "Dashboard", "Dashboard"},
+    {"menu_calendario", "Calendario", "Calendar"},
     {"menu_camisetas", "Camisetas", "Shirts"},
     {"menu_canchas", "Canchas", "Fields"},
     {"menu_partidos", "Partidos", "Matches"},
@@ -399,6 +401,10 @@ static const TextEntry text_entries[] =
     {"reset_defaults", "Restablecer a Valores por Defecto", "Reset to Default Values"},
     {"welcome_message", "Bienvenido De Vuelta", "Welcome Back"},
     {"menu_update", "Actualizar", "Update"},
+    {"menu_carrera", "Carrera Futbolistica", "Career"},
+    {"menu_recordatorios", "Recordatorios", "Reminders"},
+    {"menu_colecciones", "Colecciones", "Collections"},
+    {"menu_musica", "Musica", "Music"},
     {NULL, NULL, NULL} // Terminador
 };
 
@@ -1132,6 +1138,36 @@ const char* get_menu_back()
     return get_text("menu_back");
 }
 
+const char* get_menu_dashboard()
+{
+    return get_text("menu_dashboard");
+}
+
+const char* get_menu_calendario()
+{
+    return get_text("menu_calendario");
+}
+
+const char* get_menu_carrera()
+{
+    return get_text("menu_carrera");
+}
+
+const char* get_menu_recordatorios()
+{
+    return get_text("menu_recordatorios");
+}
+
+const char* get_menu_colecciones()
+{
+    return get_text("menu_colecciones");
+}
+
+const char* get_menu_musica()
+{
+    return get_text("menu_musica");
+}
+
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)
 {
@@ -1475,14 +1511,76 @@ static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_
         printf("Error cargando modulo de descarga (urlmon.dll).\n");
         return 0;
     }
+    // Use GitHub API to obtain the actual executable asset for the latest release
+    char api_url[1024];
+    char json_path[1024];
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases/latest", owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path, repo_name);
 
-    char download_url[1024];
+    printf("Obteniendo informacion de la ultima release...\n");
+    if (!descargar_archivo(downloader, api_url, json_path))
+    {
+        printf("Error obteniendo informacion de la release.\n");
+        liberar_descargador(module);
+        return 0;
+    }
+
+    char *json_data = NULL;
+    if (!leer_archivo_completo(json_path, &json_data))
+    {
+        printf("Error leyendo informacion de la release.\n");
+        liberar_descargador(module);
+        return 0;
+    }
+
+    cJSON *root = cJSON_Parse(json_data);
+    free(json_data);
+    if (!root || !cJSON_IsObject(root))
+    {
+        printf("Respuesta invalida de GitHub API para latest.\n");
+        if (root) cJSON_Delete(root);
+        liberar_descargador(module);
+        return 0;
+    }
+
+    const cJSON *assets = cJSON_GetObjectItem(root, "assets");
+    const char *asset_url = NULL;
+    if (!extraer_asset_exe(assets, &asset_url))
+    {
+        printf("No se encontro ningun asset .exe en la ultima release.\n");
+        cJSON_Delete(root);
+        liberar_descargador(module);
+        return 0;
+    }
+
+    // Try to obtain the asset filename so we can save it locally with a meaningful name
+    const cJSON *asset_item = NULL;
+    const char *asset_name = NULL;
+    cJSON_ArrayForEach(asset_item, assets)
+    {
+        const cJSON *asset_name_item = cJSON_GetObjectItem(asset_item, "name");
+        const cJSON *url_item = cJSON_GetObjectItem(asset_item, "browser_download_url");
+        if (asset_name_item && cJSON_IsString(asset_name_item) && url_item && cJSON_IsString(url_item) && strcmp(url_item->valuestring, asset_url) == 0)
+        {
+            asset_name = asset_name_item->valuestring;
+            break;
+        }
+    }
+
     char dest[1024];
-    snprintf(download_url, sizeof(download_url), "https://github.com/%s/releases/latest/download/%s.exe", owner_repo, repo_name);
-    snprintf(dest, sizeof(dest), "%s%s_latest.exe", temp_path, repo_name);
+    if (asset_name && asset_name[0] != '\0')
+    {
+        snprintf(dest, sizeof(dest), "%s%s", temp_path, asset_name);
+    }
+    else
+    {
+        snprintf(dest, sizeof(dest), "%s%s_latest.exe", temp_path, repo_name);
+    }
 
-    printf("Descargando %s -> %s\n", download_url, dest);
-    int ok = descargar_archivo(downloader, download_url, dest);
+    printf("Descargando %s -> %s\n", asset_url, dest);
+    int ok = descargar_archivo(downloader, asset_url, dest);
+
+    cJSON_Delete(root);
     liberar_descargador(module);
 
     if (!ok)
