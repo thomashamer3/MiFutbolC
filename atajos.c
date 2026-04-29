@@ -13,6 +13,8 @@
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #endif
 
 static int atajos_activos = 0;

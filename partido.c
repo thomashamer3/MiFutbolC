@@ -978,15 +978,35 @@ static void modificar_campo_partido(const char *campo, const char *prompt, const
 
 static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, int buffer_size)
 {
-    char valor[buffer_size];
-    printf("%s", prompt);
-    size_t valor_size = sizeof(valor);
-    if (valor_size > INT_MAX)
+    if (buffer_size <= 0)
     {
+        printf("Tamaño de buffer invalido\n");
         return;
     }
-    fgets(valor, (int)valor_size, stdin);
-    valor[strcspn(valor, "\n")] = 0;
+
+    char *valor = (char *)malloc((size_t)buffer_size);
+    if (!valor)
+    {
+        printf("Error de memoria\n");
+        return;
+    }
+
+    printf("%s", prompt);
+    size_t valor_size = (size_t)buffer_size;
+    if (valor_size > (size_t)INT_MAX)
+    {
+        free(valor);
+        return;
+    }
+
+    if (fgets(valor, (int)valor_size, stdin) == NULL)
+    {
+        valor[0] = '\0';
+    }
+    else
+    {
+        valor[strcspn(valor, "\n")] = '\0';
+    }
 
     char sql[256];
     snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
@@ -994,6 +1014,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
     sqlite3_stmt *stmt;
     if (!preparar_stmt(sql, &stmt))
     {
+        free(valor);
         pause_console();
         return;
     }
@@ -1002,6 +1023,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     printf("%s\n", mensaje_exito);
+    free(valor);
     pause_console();
 }
 

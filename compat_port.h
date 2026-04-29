@@ -219,6 +219,33 @@ static inline size_t strlen_s(const char *s, size_t maxlen)
     return len;
 }
 
+static inline int is_length_modifier(char c)
+{
+    return c == 'h' || c == 'l' || c == 'L' || c == 'j' || c == 'z' || c == 't';
+}
+
+static inline int insert_width_limit(char **dst, size_t *dst_left, va_list args)
+{
+    rsize_t bufsize = (rsize_t)va_arg(args, unsigned int);
+    unsigned int limit = (bufsize > 0 && bufsize < 1000) ? (unsigned int)(bufsize - 1) : 255;
+    *dst += snprintf(*dst, *dst_left, "%u", limit);
+    *dst_left = (*dst_left > strlen(*dst)) ? *dst_left - (size_t)strlen(*dst) : 0;
+    return 1;
+}
+
+static inline void copy_format_specifier(const char **src, char **dst, size_t *dst_left)
+{
+    if (**src == 's' || **src == 'c')
+    {
+        return;
+    }
+    if (**src)
+    {
+        *(*dst)++ = *(*src)++;
+        (*dst_left)--;
+    }
+}
+
 static inline int sscanf_s(const char *s, const char *format, ...)
 {
     va_list args;
@@ -250,25 +277,18 @@ static inline int sscanf_s(const char *s, const char *format, ...)
             continue;
         }
 
-        while (*src == 'h' || *src == 'l' || *src == 'L' || *src == 'j' || *src == 'z' || *src == 't')
-        {
-            *dst++ = *src++;
-            dst_left--;
-        }
-
         if (*src == 's' || *src == 'c')
         {
-            rsize_t bufsize = (rsize_t)va_arg(args, unsigned int);
-            unsigned int limit = (bufsize > 0 && bufsize < 1000) ? (unsigned int)(bufsize - 1) : 255;
-            dst += snprintf(dst, dst_left, "%u", limit);
-            dst_left = (dst_left > strlen(dst)) ? dst_left - (size_t)strlen(dst) : 0;
+            insert_width_limit(&dst, &dst_left, args);
         }
 
-        if (*src)
+        while (is_length_modifier(*src))
         {
             *dst++ = *src++;
             dst_left--;
         }
+
+        copy_format_specifier(&src, &dst, &dst_left);
     }
 
     int result = vsscanf(s, fmt_buf, args);

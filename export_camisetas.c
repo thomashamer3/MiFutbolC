@@ -92,13 +92,15 @@ static void export_camisetas_generic(ExportConfig *config)
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
-static void write_csv_header(FILE *f, void *)
+static void write_csv_header(FILE *f, void *context)
 {
+    (void)context;
     fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio\n");
 }
 
-static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *)
+static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
 {
+    (void)context;
     fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f\n",
             sqlite3_column_int(stmt, 0),
             sqlite3_column_text(stmt, 1),
@@ -114,13 +116,15 @@ static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-static void write_txt_header(FILE *f, void *)
+static void write_txt_header(FILE *f, void *context)
 {
+    (void)context;
     fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS\n\n");
 }
 
-static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *)
+static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
 {
+    (void)context;
     fprintf(f, "ID: %d - Nombre: %s\n"
             "  Goles Totales: %d\n"
             "  Asistencias Totales: %d\n"
@@ -146,8 +150,9 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-static void write_json_row(FILE *, sqlite3_stmt *stmt, void *context)
+static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONAR */
 {
+    (void)f;
     cJSON *root = (cJSON *)context;
     cJSON *item = cJSON_CreateObject();
     cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
@@ -174,15 +179,17 @@ static void write_json_footer(FILE *f, void *context)
     cJSON_Delete(root);
 }
 
-static void write_html_header(FILE *f, void *)
+static void write_html_header(FILE *f, void *context)
 {
+    (void)context;
     fprintf(f,
             "<html><body><h1>Camisetas con Estadisticas</h1><table border='1'>"
             "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th></tr>");
 }
 
-static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *)
+static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
 {
+    (void)context;
     fprintf(f,
             "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
             sqlite3_column_int(stmt, 0),
@@ -199,8 +206,9 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *)
             sqlite3_column_double(stmt, 11));
 }
 
-static void write_html_footer(FILE *f, void *)
+static void write_html_footer(FILE *f, void *context)
 {
+    (void)context;
     fprintf(f, "</table></body></html>");
 }
 

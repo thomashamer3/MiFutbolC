@@ -668,10 +668,11 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes)
     return fatiga;
 }
 
-void actualizar_fatiga_equipo(int equipo_id, int temporada_id, [[maybe_unused]] int partido_id)
+void actualizar_fatiga_equipo(int equipo_id, int temporada_id, int partido_id)
 {
     // Calcular nueva fatiga
     float fatiga_actual = calcular_fatiga_equipo(equipo_id, 7); // ultima semana
+    (void)partido_id;
 
     // Obtener rendimiento promedio del equipo
     float rendimiento = 5.0f; // Valor por defecto, se podria calcular basado en resultados
@@ -696,10 +697,11 @@ void actualizar_fatiga_equipo(int equipo_id, int temporada_id, [[maybe_unused]] 
     }
 }
 
-void actualizar_fatiga_jugador(int jugador_id, int temporada_id, [[maybe_unused]] int minutos_jugados, int lesion_ocurrida)
+void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jugados, int lesion_ocurrida)
 {
     // Calcular nueva fatiga
     float fatiga_actual = calcular_fatiga_jugador(jugador_id, 7); // ultima semana
+    (void)minutos_jugados;
 
     // Aumentar fatiga si hubo lesion
     if (lesion_ocurrida)

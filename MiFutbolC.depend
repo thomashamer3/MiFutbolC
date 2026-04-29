@@ -170,7 +170,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1777437056 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1777501706 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -450,7 +450,7 @@
 
 1776199744 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_estadisticas_generales.h
 
-1776203260 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_camisetas.c
+1777502160 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_camisetas.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2142,7 +2142,7 @@
 	<stdlib.h>
 	<string.h>
 
-1776203260 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
+1777501706 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\temporada.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -2385,7 +2385,7 @@
 1765442468 c:\msys64\mingw64\include\strings.h
 	<string.h>
 
-1777489507 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
+1777501780 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
 	<errno.h>
 	<stdarg.h>
 	<stddef.h>
@@ -2464,7 +2464,7 @@
 
 1775069198 d:\anime\libros\lenguaje c\proyectos\mifutbolc\colecciones.h
 
-1777426197 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.c
+1777501474 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.c
 	"atajos.h"
 	"utils.h"
 	"settings.h"
@@ -2476,6 +2476,8 @@
 	<termios.h>
 	<unistd.h>
 	<fcntl.h>
+	<sys/select.h>
+	<sys/time.h>
 
 1776111115 d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.h
 
