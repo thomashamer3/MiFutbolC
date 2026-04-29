@@ -9,7 +9,7 @@
 #include <ctype.h>
 #ifdef _WIN32
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -312,26 +312,26 @@ MenuItem* create_filtered_menu(int* count)
     // Getters definidos en settings.h — en el mismo orden lógico que MENU_ITEMS
     const char* (*getters[])(void) =
     {
-        get_menu_dashboard,
-        get_menu_calendario,
-        get_menu_camisetas,
-        get_menu_canchas,
-        get_menu_equipos,
-        get_menu_partidos,
-        get_menu_lesiones,
-        get_menu_estadisticas,
-        get_menu_logros,
-        get_menu_financiamiento,
-        get_menu_torneos,
-        get_menu_temporada,
-        get_menu_analisis,
-        get_menu_bienestar,
-        get_menu_carrera,
-        get_menu_recordatorios,
-        get_menu_colecciones,
-        get_menu_settings,
-        get_menu_musica,
-        get_menu_exit
+        &get_menu_dashboard,
+        &get_menu_calendario,
+        &get_menu_camisetas,
+        &get_menu_canchas,
+        &get_menu_equipos,
+        &get_menu_partidos,
+        &get_menu_lesiones,
+        &get_menu_estadisticas,
+        &get_menu_logros,
+        &get_menu_financiamiento,
+        &get_menu_torneos,
+        &get_menu_temporada,
+        &get_menu_analisis,
+        &get_menu_bienestar,
+        &get_menu_carrera,
+        &get_menu_recordatorios,
+        &get_menu_colecciones,
+        &get_menu_settings,
+        &get_menu_musica,
+        &get_menu_exit
     };
 
     int out = 0;

@@ -44,42 +44,7 @@
 extern char **environ;
 #endif
 
-#ifdef _WIN32
-static int secure_random_bytes(unsigned char *buffer, size_t size)
-{
-    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
-    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
-    if (!BCRYPT_SUCCESS(status))
-    {
-        return -1;
-    }
-    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
-    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-    return BCRYPT_SUCCESS(status) ? 0 : -1;
-}
-#else
-static int secure_random_bytes(unsigned char *buffer, size_t size)
-{
-    FILE *f = fopen("/dev/urandom", "rb");
-    if (!f)
-    {
-        return -1;
-    }
-    size_t read_total = 0;
-    while (read_total < size)
-    {
-        size_t r = fread(buffer + read_total, 1, size - read_total, f);
-        if (r == 0)
-        {
-            fclose(f);
-            return -1;
-        }
-        read_total += r;
-    }
-    fclose(f);
-    return 0;
-}
-#endif
+#include "random_utils.h"
 
 #ifdef _WIN32
 /* Funcion deshabilitada: evitar maximizar la consola automaticamente
@@ -804,7 +769,7 @@ size_t safe_strnlen(const char *s, size_t maxlen)
 }
 
 #if !defined(__STDC_LIB_EXT1__)
-size_t strlen_s(const char *s, size_t maxlen)
+static size_t strlen_s(const char *s, size_t maxlen)
 {
     return safe_strnlen(s, maxlen);
 }

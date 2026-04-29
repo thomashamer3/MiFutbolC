@@ -10,7 +10,7 @@
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -490,6 +490,41 @@ static void ensure_settings_schema()
     err = NULL;
 }
 
+static void settings_prompt_mode_selection(void)
+{
+    clear_screen();
+    print_header(get_text("settings_mode"));
+
+    printf("1. %s\n", get_text("mode_simple"));
+    printf("2. %s\n", get_text("mode_advanced"));
+    printf("3. %s\n", get_text("mode_custom"));
+    printf("0. %s\n", get_text("menu_exit"));
+
+    int opcion = input_int("> ");
+
+    switch (opcion)
+    {
+    case 1:
+        settings_set_mode(MODE_SIMPLE);
+        printf("%s\n", get_text("settings_saved"));
+        break;
+    case 2:
+        settings_set_mode(MODE_ADVANCED);
+        printf("%s\n", get_text("settings_saved"));
+        break;
+    case 3:
+        settings_set_mode(MODE_CUSTOM);
+        menu_custom_menus();
+        break;
+    case 0:
+        db_close();
+        exit(0);
+    default:
+        settings_set_mode(MODE_SIMPLE);
+        settings_save();
+    }
+}
+
 void settings_init()
 {
     sqlite3_stmt *stmt;
@@ -533,46 +568,11 @@ void settings_init()
         sqlite3_finalize(stmt);
     }
 
-    // Si no hay configuracion guardada, pedir al usuario que elija el modo
     if (!has_settings)
     {
-        clear_screen();
-        print_header(get_text("settings_mode"));
-
-        printf("1. %s\n", get_text("mode_simple"));
-        printf("2. %s\n", get_text("mode_advanced"));
-        printf("3. %s\n", get_text("mode_custom"));
-        printf("0. %s\n", get_text("menu_exit"));
-
-        int opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            settings_set_mode(MODE_SIMPLE);
-            printf("%s\n", get_text("settings_saved"));
-            break;
-        case 2:
-            settings_set_mode(MODE_ADVANCED);
-            printf("%s\n", get_text("settings_saved"));
-            break;
-        case 3:
-            settings_set_mode(MODE_CUSTOM);
-            // Mostrar menu para configurar menus
-            menu_custom_menus();
-            break;
-        case 0:
-            // Exit the program
-            db_close();
-            exit(0);
-        default:
-            current_settings.mode = MODE_SIMPLE;
-            settings_save();
-            break;
-        }
+        settings_prompt_mode_selection();
     }
 
-    // Aplicar tema al iniciar
     settings_apply_theme();
     settings_apply_text_size();
 }
@@ -774,6 +774,37 @@ float settings_get_music_volume_step(void)
     return clampf(current_settings.music_volume_step, 0.01f, 0.20f);
 }
 
+static WORD get_theme_color(ThemeType theme)
+{
+    switch (theme)
+    {
+    case THEME_LIGHT:
+        return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_DARK:
+        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_BLUE:
+        return BACKGROUND_BLUE |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_GREEN:
+        return BACKGROUND_GREEN |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_RED:
+        return BACKGROUND_RED |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_PURPLE:
+        return BACKGROUND_RED | BACKGROUND_BLUE |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_CLASSIC:
+        return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    case THEME_HIGH_CONTRAST:
+        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE |
+               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+    default:
+        return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    }
+}
+
 void settings_apply_theme()
 {
 #ifdef _WIN32
@@ -781,61 +812,7 @@ void settings_apply_theme()
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(hConsole, &csbi);
 
-    WORD color = 0;
-
-    switch (current_settings.theme)
-    {
-    case THEME_LIGHT:
-        // Tema claro: fondo blanco, texto negro
-        color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto negro
-        break;
-
-    case THEME_DARK:
-        // Tema oscuro: fondo negro, texto blanco
-        color = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; // Fondo negro
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto blanco
-        break;
-
-    case THEME_BLUE:
-        // Tema azul: fondo azul oscuro, texto blanco
-        color = BACKGROUND_BLUE; // Fondo azul
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto blanco
-        break;
-
-    case THEME_GREEN:
-        // Tema verde: fondo verde oscuro, texto negro
-        color = BACKGROUND_GREEN; // Fondo verde
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto negro
-        break;
-
-    case THEME_RED:
-        // Tema rojo: fondo rojo oscuro, texto blanco
-        color = BACKGROUND_RED; // Fondo rojo
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto blanco
-        break;
-
-    case THEME_PURPLE:
-        // Tema morado: fondo magenta, texto blanco
-        color = BACKGROUND_RED | BACKGROUND_BLUE; // Fondo magenta
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Texto blanco
-        break;
-
-    case THEME_CLASSIC:
-        // Tema clasico: colores por defecto de Windows
-        color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // Gris por defecto
-        break;
-
-    case THEME_HIGH_CONTRAST:
-        // Alto contraste: fondo negro, texto amarillo brillante
-        color = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; // Fondo negro
-        color |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; // Texto amarillo brillante
-        break;
-
-    default:
-        // Por defecto, tema claro
-        color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-        break;
-    }
+    WORD color = get_theme_color(current_settings.theme);
 
     SetConsoleTextAttribute(hConsole, color);
 #endif

@@ -1729,30 +1729,6 @@ static const uint16_t helvetica_bold_oblique_widths[256] =
     615,  560, 615,  560,
 };
 
-static const uint16_t helvetica_oblique_widths[256] =
-{
-    280, 280, 280, 280,  280, 280, 280, 280,  280,  280, 280,  280, 280,
-    280, 280, 280, 280,  280, 280, 280, 280,  280,  280, 280,  280, 280,
-    280, 280, 280, 280,  280, 280, 280, 280,  357,  560, 560,  896, 672,
-    192, 335, 335, 392,  588, 280, 335, 280,  280,  560, 560,  560, 560,
-    560, 560, 560, 560,  560, 560, 280, 280,  588,  588, 588,  560, 1023,
-    672, 672, 727, 727,  672, 615, 784, 727,  280,  504, 672,  560, 839,
-    727, 784, 672, 784,  727, 672, 615, 727,  672,  951, 672,  672, 615,
-    280, 280, 280, 472,  560, 335, 560, 560,  504,  560, 560,  280, 560,
-    560, 223, 223, 504,  223, 839, 560, 560,  560,  560, 335,  504, 280,
-    560, 504, 727, 504,  504, 504, 336, 262,  336,  588, 352,  560, 352,
-    223, 560, 335, 1008, 560, 560, 335, 1008, 672,  335, 1008, 352, 615,
-    352, 352, 223, 223,  335, 335, 352, 560,  1008, 335, 1008, 504, 335,
-    951, 352, 504, 672,  280, 335, 560, 560,  560,  560, 262,  560, 335,
-    742, 372, 560, 588,  335, 742, 335, 403,  588,  335, 335,  335, 560,
-    541, 280, 335, 335,  367, 560, 840, 840,  840,  615, 672,  672, 672,
-    672, 672, 672, 1008, 727, 672, 672, 672,  672,  280, 280,  280, 280,
-    727, 727, 784, 784,  784, 784, 784, 588,  784,  727, 727,  727, 727,
-    672, 672, 615, 560,  560, 560, 560, 560,  560,  896, 504,  560, 560,
-    560, 560, 280, 280,  280, 280, 560, 560,  560,  560, 560,  560, 560,
-    588, 615, 560, 560,  560, 560, 504, 560,  504,
-};
-
 static const uint16_t symbol_widths[256] =
 {
     252, 252, 252, 252,  252, 252, 252,  252, 252,  252,  252, 252, 252, 252,
@@ -1954,7 +1930,7 @@ static const uint16_t *find_font_widths(const char *font_name)
     if (strcasecmp(font_name, "Helvetica-BoldOblique") == 0)
         return helvetica_bold_oblique_widths;
     if (strcasecmp(font_name, "Helvetica-Oblique") == 0)
-        return helvetica_oblique_widths;
+        return helvetica_widths;
     if (strcasecmp(font_name, "Courier") == 0 ||
             strcasecmp(font_name, "Courier-Bold") == 0 ||
             strcasecmp(font_name, "Courier-BoldOblique") == 0 ||
@@ -2824,6 +2800,36 @@ static int pdf_barcode_eanupc_aux(struct pdf_doc *pdf,
     return 0;
 }
 
+static int pdf_add_barcode_eanupc_right_guard(struct pdf_doc *pdf,
+                                           struct pdf_object *page,
+                                           float x, float y, float x_width,
+                                           float bar_height, float bar_ext,
+                                           float font, uint32_t colour,
+                                           const char *save_font)
+{
+    int e;
+    e = pdf_barcode_eanupc_aux(pdf, page, x, y - bar_ext, x_width,
+                              bar_height + bar_ext, colour, GUARD_NORMAL,
+                              &x);
+    if (e < 0)
+    {
+        pdf_set_font(pdf, save_font);
+        return e;
+    }
+
+    char text[2] = ">";
+    x += eanupc_dimensions[0].quiet_right * x_width -
+         604.0f * font / (14.0f * 72.0f);
+    e = pdf_add_text(pdf, page, text, font, x, y, colour);
+    if (e < 0)
+    {
+        pdf_set_font(pdf, save_font);
+        return e;
+    }
+    pdf_set_font(pdf, save_font);
+    return 0;
+}
+
 static int pdf_add_barcode_ean13(struct pdf_doc *pdf, struct pdf_object *page,
                                  float x, float y, float width, float height,
                                  const char *string, uint32_t colour)
@@ -2936,26 +2942,9 @@ static int pdf_add_barcode_ean13(struct pdf_doc *pdf, struct pdf_object *page,
         string++;
     }
 
-    e = pdf_barcode_eanupc_aux(pdf, page, x, bar_y - bar_ext, x_width,
-                               bar_height + bar_ext, colour, GUARD_NORMAL,
-                               &x);
-    if (e < 0)
-    {
-        pdf_set_font(pdf, save_font);
-        return e;
-    }
-
-    text[0] = '>';
-    x += eanupc_dimensions[0].quiet_right * x_width -
-         604.0f * font / (14.0f * 72.0f);
-    e = pdf_add_text(pdf, page, text, font, x, y, colour);
-    if (e < 0)
-    {
-        pdf_set_font(pdf, save_font);
-        return e;
-    }
-    pdf_set_font(pdf, save_font);
-    return 0;
+    return pdf_add_barcode_eanupc_right_guard(pdf, page, x, bar_y, x_width,
+                                      bar_height, bar_ext, font,
+                                      colour, save_font);
 }
 
 static int pdf_add_barcode_upca(struct pdf_doc *pdf, struct pdf_object *page,
@@ -3191,26 +3180,9 @@ static int pdf_add_barcode_ean8(struct pdf_doc *pdf, struct pdf_object *page,
         string++;
     }
 
-    e = pdf_barcode_eanupc_aux(pdf, page, x, bar_y - bar_ext, x_width,
-                               bar_height + bar_ext, colour, GUARD_NORMAL,
-                               &x);
-    if (e < 0)
-    {
-        pdf_set_font(pdf, save_font);
-        return e;
-    }
-
-    text[0] = '>';
-    x += eanupc_dimensions[0].quiet_right * x_width -
-         604.0f * font / (14.0f * 72.0f);
-    e = pdf_add_text(pdf, page, text, font, x, y, colour);
-    if (e < 0)
-    {
-        pdf_set_font(pdf, save_font);
-        return e;
-    }
-    pdf_set_font(pdf, save_font);
-    return 0;
+    return pdf_add_barcode_eanupc_right_guard(pdf, page, x, bar_y, x_width,
+                                      bar_height, bar_ext, font,
+                                      colour, save_font);
 }
 
 static int pdf_add_barcode_upce(struct pdf_doc *pdf, struct pdf_object *page,

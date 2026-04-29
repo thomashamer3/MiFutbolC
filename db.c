@@ -1,6 +1,6 @@
 ﻿#include "export.h"
+#include "random_utils.h"
 #include "db.h"
-#include "utils.h"
 #include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include <inttypes.h>
 #ifdef _WIN32
 #include <direct.h>
-#include <windows.h>
+#include <Windows.h>
 #include <ShlObj.h>
 #include <bcrypt.h>
 #else
@@ -108,40 +108,6 @@ static void bytes_to_hex(const unsigned char *bytes, size_t bytes_len, char *hex
         hex_out[i * 2 + 1] = hex[bytes[i] & 0x0F];
     }
     hex_out[bytes_len * 2] = '\0';
-}
-
-static int secure_random_bytes(unsigned char *buffer, size_t size)
-{
-#ifdef _WIN32
-    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
-    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
-    if (!BCRYPT_SUCCESS(status))
-    {
-        return -1;
-    }
-    status = BCryptGenRandom(hAlgorithm, buffer, (ULONG)size, 0);
-    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-    return BCRYPT_SUCCESS(status) ? 0 : -1;
-#else
-    FILE *f = fopen("/dev/urandom", "rb");
-    if (!f)
-    {
-        return -1;
-    }
-    size_t read_total = 0;
-    while (read_total < size)
-    {
-        size_t r = fread(buffer + read_total, 1, size - read_total, f);
-        if (r == 0)
-        {
-            fclose(f);
-            return -1;
-        }
-        read_total += r;
-    }
-    fclose(f);
-    return 0;
-#endif
 }
 
 static void generate_salt_hex(char *salt_out, size_t out_size)

@@ -8,7 +8,7 @@
 
 #ifdef _WIN32
 #include <conio.h>
-#include <windows.h>
+#include <Windows.h>
 #else
 #include <termios.h>
 #include <unistd.h>
