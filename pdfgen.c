@@ -142,6 +142,7 @@ typedef SSIZE_T ssize_t;
 #include <time.h>
 
 #include "pdfgen.h"
+#include "compat_port.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -455,14 +456,15 @@ static void force_locale(char *buf, int len)
 {
     char const *saved_locale = setlocale(LC_NUMERIC, NULL);
 
-    if (!saved_locale)
+    if (!saved_locale || len <= 0)
     {
-        *buf = '\0';
+        if (buf && len > 0)
+            buf[0] = '\0';
     }
     else
     {
-        size_t saved_len = strlen(saved_locale);
-        size_t copy_len = (saved_len >= len) ? len - 1 : saved_len;
+        size_t saved_len = strlen_s(saved_locale, (size_t)-1);
+        size_t copy_len = (saved_len >= (size_t)len) ? (size_t)len - 1 : saved_len;
         memcpy(buf, saved_locale, copy_len);
         buf[copy_len] = '\0';
     }
@@ -513,6 +515,8 @@ static int dstr_printf(struct dstr *str, const char *fmt, ...)
 static ssize_t dstr_append_data(struct dstr *str, const void *extend,
                                 size_t len)
 {
+    if (!extend || len == 0)
+        return 0;
     if (dstr_ensure(str, str->used_len + len + 1) < 0)
         return -ENOMEM;
     memcpy(dstr_data(str) + str->used_len, extend, len);
@@ -523,7 +527,7 @@ static ssize_t dstr_append_data(struct dstr *str, const void *extend,
 
 static ssize_t dstr_append(struct dstr *str, const char *extend)
 {
-    return dstr_append_data(str, extend, extend ? strlen(extend) : 0);
+    return dstr_append_data(str, extend, extend ? strlen_s(extend, (size_t)-1) : 0);
 }
 
 static void dstr_free(struct dstr *str)
@@ -858,7 +862,7 @@ int pdf_set_font(struct pdf_doc *pdf, const char *font)
         obj = pdf_add_object(pdf, OBJ_font);
         if (!obj)
             return pdf->errval;
-        size_t font_len = strlen(font);
+        size_t font_len = strlen_s(font, (size_t)-1);
         size_t copy_len = font_len < sizeof(obj->font.name) - 1 ? font_len : sizeof(obj->font.name) - 1;
         memcpy(obj->font.name, font, copy_len);
         obj->font.name[copy_len] = '\0';
@@ -1305,7 +1309,7 @@ static int pdf_add_stream(struct pdf_doc *pdf, struct pdf_object *page,
     if (!page)
         return pdf_set_err(pdf, -EINVAL, "Invalid pdf page");
 
-    len = buffer ? strlen(buffer) : 0;
+    len = buffer ? strlen_s(buffer, (size_t)-1) : 0;
     /* We don't want any trailing whitespace in the stream */
     while (len >= 1 && (buffer[len - 1] == '\r' || buffer[len - 1] == '\n'))
         len--;
@@ -1348,7 +1352,7 @@ int pdf_add_bookmark(struct pdf_doc *pdf, struct pdf_object *page, int parent,
         return pdf->errval;
     }
 
-    size_t name_len = strlen(name);
+    size_t name_len = strlen_s(name, (size_t)-1);
     size_t copy_len = name_len < sizeof(obj->bookmark.name) - 1 ? name_len : sizeof(obj->bookmark.name) - 1;
     memcpy(obj->bookmark.name, name, copy_len);
     obj->bookmark.name[copy_len] = '\0';
@@ -1572,7 +1576,7 @@ static int pdf_add_text_spacing(struct pdf_doc *pdf, struct pdf_object *page,
                                 float angle)
 {
     int ret;
-    size_t len = text ? strlen(text) : 0;
+    size_t len = text ? strlen_s(text, (size_t)-1) : 0;
     struct dstr str = INIT_DSTR;
     int alpha = (colour >> 24) >> 4;
 
@@ -1916,7 +1920,7 @@ static int pdf_text_point_width(struct pdf_doc *pdf, const char *text,
 {
     uint32_t len = 0;
     if (text_len < 0)
-        text_len = text ? strlen(text) : 0;
+        text_len = text ? strlen_s(text, (size_t)-1) : 0;
     *point_width = 0.0f;
 
     for (int i = 0; i < (int)text_len;)
@@ -2463,12 +2467,12 @@ static int pdf_add_barcode_128a(struct pdf_doc *pdf, struct pdf_object *page,
                                 const char *string, uint32_t colour)
 {
     const char *s;
-    size_t str_len = string ? strlen(string) : 0;
+    size_t str_len = string ? strlen_s(string, (size_t)-1) : 0;
     size_t len = str_len + 3;
     float char_width = width / len;
     int checksum, i;
 
-    if (char_width / 11.0f <= 0)
+    if (char_width / 11.0f <= 0 || !string)
         return pdf_set_err(pdf, -EINVAL,
                            "Insufficient width to draw barcode");
 
@@ -2582,7 +2586,7 @@ static int pdf_add_barcode_39(struct pdf_doc *pdf, struct pdf_object *page,
                               float x, float y, float width, float height,
                               const char *string, uint32_t colour)
 {
-    size_t len = string ? strlen(string) : 0;
+    size_t len = string ? strlen_s(string, (size_t)-1) : 0;
     float char_width = width / (len + 2);
     int e;
 
@@ -2827,7 +2831,7 @@ static int pdf_add_barcode_ean13(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strlen_s(string, (size_t)-1);
     int lead = 0;
     if (len == 13)
     {
@@ -2961,7 +2965,7 @@ static int pdf_add_barcode_upca(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strlen_s(string, (size_t)-1);
     if (len != 12)
         return pdf_set_err(pdf, -EINVAL, "Invalid UPCA string length %lu",
                            len);
@@ -3093,7 +3097,7 @@ static int pdf_add_barcode_ean8(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strlen_s(string, (size_t)-1);
     if (len != 8)
         return pdf_set_err(pdf, -EINVAL, "Invalid EAN8 string length %lu",
                            len);
@@ -3216,7 +3220,7 @@ static int pdf_add_barcode_upce(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strlen_s(string, (size_t)-1);
     if (len != 12)
         return pdf_set_err(pdf, -EINVAL, "Invalid UPCE string length %lu",
                            len);
@@ -3404,7 +3408,7 @@ static pdf_object *pdf_add_raw_grayscale8(struct pdf_doc *pdf,
                 "stream\r\n",
                 flexarray_size(&pdf->objects), height, width, data_len + 1);
 
-    len = dstr_len(&str) + data_len + strlen(endstream) + 1;
+    len = dstr_len(&str) + data_len + strlen_s(endstream, 10) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);
@@ -3450,7 +3454,7 @@ static struct pdf_object *pdf_add_raw_rgb24(struct pdf_doc *pdf,
                 "stream\r\n",
                 flexarray_size(&pdf->objects), height, width, data_len + 1);
 
-    len = dstr_len(&str) + data_len + strlen(endstream) + 1;
+    len = dstr_len(&str) + data_len + strlen_s(endstream, 10) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);

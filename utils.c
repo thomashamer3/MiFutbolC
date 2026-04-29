@@ -26,7 +26,7 @@
 #endif
 #define MKDIR(path) _mkdir(path)
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #include <bcrypt.h>
 #else
 #include "compat_windows.h"

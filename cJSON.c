@@ -57,15 +57,22 @@
 #endif
 
 #include "cJSON.h"
+#include "compat_port.h"
 
 /* define our own boolean type */
+#ifdef true
 #undef true
+#endif
+#ifndef true
 #define true ((cJSON_bool)1)
+#endif
 
 #ifdef false
 #undef false
 #endif
+#ifndef false
 #define false ((cJSON_bool)0)
+#endif
 
 /* define isnan and isinf for ANSI C, if in C99 or above, isnan and isinf has been defined in math.h */
 #ifndef isinf
@@ -161,28 +168,28 @@ typedef struct internal_hooks
 
 #if defined(_MSC_VER)
 /* work around MSVC error C2322: '...' address of dllimport '...' is not static */
-static void * CJSON_CDECL internal_malloc(size_t size)
+static void * CJSON_CDECL cjson_internal_malloc(size_t size)
 {
     return malloc(size);
 }
-static void CJSON_CDECL internal_free(void *pointer)
+static void CJSON_CDECL cjson_internal_free(void *pointer)
 {
     free(pointer);
 }
-static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)
+static void * CJSON_CDECL cjson_internal_realloc(void *pointer, size_t size)
 {
     return realloc(pointer, size);
 }
 #else
-#define internal_malloc malloc
-#define internal_free free
-#define internal_realloc realloc
+#define cjson_internal_malloc malloc
+#define cjson_internal_free free
+#define cjson_internal_realloc realloc
 #endif
 
 /* strlen of character literals resolved at compile time */
-#define static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
+#define cjson_cjson_static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
 
-static internal_hooks global_hooks = { internal_malloc, internal_free, internal_realloc };
+static internal_hooks global_hooks = { cjson_internal_malloc, cjson_internal_free, cjson_internal_realloc };
 
 static unsigned char* cJSON_strdup(const unsigned char* string, const internal_hooks * const hooks)
 {
@@ -194,7 +201,7 @@ static unsigned char* cJSON_strdup(const unsigned char* string, const internal_h
         return NULL;
     }
 
-    length = strlen((const char*)string) + sizeof("");
+    length = strlen_s((const char*)string, (size_t)-1) + sizeof("");
     copy = (unsigned char*)hooks->allocate(length);
     if (copy == NULL)
     {
@@ -231,7 +238,7 @@ CJSON_PUBLIC(void) cJSON_InitHooks(cJSON_Hooks* hooks)
     /* use realloc only if both free and malloc are used */
     global_hooks.reallocate = NULL;
     if ((global_hooks.allocate != NULL && global_hooks.deallocate != NULL) &&
-        (global_hooks.allocate == malloc && global_hooks.deallocate == free))
+        (global_hooks.allocate == &malloc && global_hooks.deallocate == &free))
     {
         global_hooks.reallocate = realloc;
     }
@@ -443,8 +450,8 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
         return NULL;
     }
 
-    v1_len = strlen(valuestring);
-    v2_len = strlen(object->valuestring);
+    v1_len = strlen_s(valuestring, (size_t)-1);
+    v2_len = strlen_s(object->valuestring, (size_t)-1);
 
     if (v1_len <= v2_len)
     {
@@ -578,7 +585,7 @@ static void update_offset(printbuffer * const buffer)
     }
     buffer_pointer = buffer->buffer + buffer->offset;
 
-    buffer->offset += strlen((const char*)buffer_pointer);
+    buffer->offset += strlen_s((const char*)buffer_pointer, (size_t)-1);
 }
 
 /* securely comparison of floating-point variables */
@@ -1133,7 +1140,7 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseWithOpts(const char *value, const char **return
     }
 
     /* Adding null character size due to require_null_terminated. */
-    buffer_length = strlen(value) + sizeof("");
+    buffer_length = strlen_s(value, (size_t)-1) + sizeof("");
 
     return cJSON_ParseWithLengthOpts(value, buffer_length, return_parse_end, require_null_terminated);
 }
@@ -1465,7 +1472,7 @@ static cJSON_bool print_value(const cJSON * const item, printbuffer * const outp
             return false;
         }
 
-        raw_length = strlen(item->valuestring) + sizeof("");
+        raw_length = strlen_s(item->valuestring, (size_t)-1) + sizeof("");
         output = ensure(output_buffer, raw_length);
         if (output == NULL)
         {
@@ -2118,7 +2125,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_AddItemToObjectCS(cJSON *object, const char *stri
 
 CJSON_PUBLIC(cJSON_bool) cJSON_AddItemReferenceToArray(cJSON *array, cJSON *item)
 {
-    if (array == NULL)
+    if (array == NULL || item == NULL)
     {
         return false;
     }
@@ -2128,7 +2135,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_AddItemReferenceToArray(cJSON *array, cJSON *item
 
 CJSON_PUBLIC(cJSON_bool) cJSON_AddItemReferenceToObject(cJSON *object, const char *string, cJSON *item)
 {
-    if ((object == NULL) || (string == NULL))
+    if (object == NULL || string == NULL || item == NULL)
     {
         return false;
     }
@@ -2869,13 +2876,13 @@ fail:
 
 static void skip_oneline_comment(char **input)
 {
-    *input += static_strlen("//");
+    *input += cjson_static_strlen("//");
 
     for (; (*input)[0] != '\0'; ++(*input))
     {
         if ((*input)[0] == '\n')
         {
-            *input += static_strlen("\n");
+            *input += cjson_static_strlen("\n");
             return;
         }
     }
@@ -2883,13 +2890,13 @@ static void skip_oneline_comment(char **input)
 
 static void skip_multiline_comment(char **input)
 {
-    *input += static_strlen("/*");
+    *input += cjson_static_strlen("/*");
 
     while ((*input)[0] != '\0')
     {
         if (((*input)[0] == '*') && ((*input)[1] == '/'))
         {
-            *input += static_strlen("*/");
+            *input += cjson_static_strlen("*/");
             return;
         }
         ++(*input);

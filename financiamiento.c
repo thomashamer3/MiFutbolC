@@ -481,21 +481,21 @@ static void truncar_resultado_partido(char const *item_especifico)
     char *pos = strstr(item_especifico, "VICTORIA");
     if (pos)
     {
-        *(pos + strlen("VICTORIA")) = '\0';
+        *(pos + strlen_s("VICTORIA", 8)) = '\0';
         return;
     }
 
     pos = strstr(item_especifico, "EMPATE");
     if (pos)
     {
-        *(pos + strlen("EMPATE")) = '\0';
+        *(pos + strlen_s("EMPATE", 7)) = '\0';
         return;
     }
 
     pos = strstr(item_especifico, "DERROTA");
     if (pos)
     {
-        *(pos + strlen("DERROTA")) = '\0';
+        *(pos + strlen_s("DERROTA", 8)) = '\0';
     }
 }
 

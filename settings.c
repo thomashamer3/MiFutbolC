@@ -1203,6 +1203,31 @@ static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *o
 
 static int leer_archivo_completo(const char *path, char **out_data);
 static const char *obtener_release_label(const cJSON *tag, const cJSON *name);
+static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url, const char *dest);
+
+static cJSON *descargar_y_parsear_release_json(URLDownloadToFileAFunc downloader, const char *api_url, const char *json_path)
+{
+    if (!descargar_archivo(downloader, api_url, json_path))
+    {
+        return NULL;
+    }
+
+    char *json_data = NULL;
+    if (!leer_archivo_completo(json_path, &json_data))
+    {
+        return NULL;
+    }
+
+    cJSON *root = cJSON_Parse(json_data);
+    free(json_data);
+    if (!root || !cJSON_IsObject(root))
+    {
+        if (root) cJSON_Delete(root);
+        return NULL;
+    }
+
+    return root;
+}
 
 static void liberar_descargador(HMODULE module)
 {
@@ -1465,6 +1490,28 @@ static int extraer_asset_exe(const cJSON *assets, const char **asset_url)
     return 0;
 }
 
+static const char *buscar_nombre_asset(const cJSON *assets, const char *target_url)
+{
+    if (!assets || !cJSON_IsArray(assets) || !target_url)
+    {
+        return NULL;
+    }
+
+    const cJSON *asset = NULL;
+    cJSON_ArrayForEach(asset, assets)
+    {
+        const cJSON *name_item = cJSON_GetObjectItem(asset, "name");
+        const cJSON *url_item = cJSON_GetObjectItem(asset, "browser_download_url");
+        if (name_item && cJSON_IsString(name_item) && url_item && cJSON_IsString(url_item) &&
+            strcmp(url_item->valuestring, target_url) == 0)
+        {
+            return name_item->valuestring;
+        }
+    }
+
+    return NULL;
+}
+
 static int cargar_releases_ejecutables(cJSON *root, char *release_names[], char *asset_urls[], int max_releases)
 {
     int count = 0;
@@ -1505,42 +1552,28 @@ static int cargar_releases_ejecutables(cJSON *root, char *release_names[], char 
 static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_name, const char *temp_path)
 {
     URLDownloadToFileAFunc downloader;
-    HMODULE module;
+    HMODULE module = NULL;
+    cJSON *root = NULL;
+    char dest[1024];
+    char api_url[1024];
+    char json_path[1024];
+    int success = 0;
+
     if (!cargar_descargador(&downloader, &module))
     {
         printf("Error cargando modulo de descarga (urlmon.dll).\n");
         return 0;
     }
-    // Use GitHub API to obtain the actual executable asset for the latest release
-    char api_url[1024];
-    char json_path[1024];
+
     snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases/latest", owner_repo);
     snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path, repo_name);
 
     printf("Obteniendo informacion de la ultima release...\n");
-    if (!descargar_archivo(downloader, api_url, json_path))
+    root = descargar_y_parsear_release_json(downloader, api_url, json_path);
+    if (!root)
     {
         printf("Error obteniendo informacion de la release.\n");
-        liberar_descargador(module);
-        return 0;
-    }
-
-    char *json_data = NULL;
-    if (!leer_archivo_completo(json_path, &json_data))
-    {
-        printf("Error leyendo informacion de la release.\n");
-        liberar_descargador(module);
-        return 0;
-    }
-
-    cJSON *root = cJSON_Parse(json_data);
-    free(json_data);
-    if (!root || !cJSON_IsObject(root))
-    {
-        printf("Respuesta invalida de GitHub API para latest.\n");
-        if (root) cJSON_Delete(root);
-        liberar_descargador(module);
-        return 0;
+        goto cleanup;
     }
 
     const cJSON *assets = cJSON_GetObjectItem(root, "assets");
@@ -1548,26 +1581,10 @@ static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_
     if (!extraer_asset_exe(assets, &asset_url))
     {
         printf("No se encontro ningun asset .exe en la ultima release.\n");
-        cJSON_Delete(root);
-        liberar_descargador(module);
-        return 0;
+        goto cleanup;
     }
 
-    // Try to obtain the asset filename so we can save it locally with a meaningful name
-    const cJSON *asset_item = NULL;
-    const char *asset_name = NULL;
-    cJSON_ArrayForEach(asset_item, assets)
-    {
-        const cJSON *asset_name_item = cJSON_GetObjectItem(asset_item, "name");
-        const cJSON *url_item = cJSON_GetObjectItem(asset_item, "browser_download_url");
-        if (asset_name_item && cJSON_IsString(asset_name_item) && url_item && cJSON_IsString(url_item) && strcmp(url_item->valuestring, asset_url) == 0)
-        {
-            asset_name = asset_name_item->valuestring;
-            break;
-        }
-    }
-
-    char dest[1024];
+    const char *asset_name = buscar_nombre_asset(assets, asset_url);
     if (asset_name && asset_name[0] != '\0')
     {
         snprintf(dest, sizeof(dest), "%s%s", temp_path, asset_name);
@@ -1578,20 +1595,20 @@ static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_
     }
 
     printf("Descargando %s -> %s\n", asset_url, dest);
-    int ok = descargar_archivo(downloader, asset_url, dest);
-
-    cJSON_Delete(root);
-    liberar_descargador(module);
-
-    if (!ok)
+    if (!descargar_archivo(downloader, asset_url, dest))
     {
         printf("Error descargando la release.\n");
-        return 0;
+        goto cleanup;
     }
 
-    printf("Descarga completada: %s\n", dest);
+printf("Descarga completada: %s\n", dest);
     ejecutar_instalador(dest);
-    return 1;
+    success = 1;
+
+cleanup:
+    if (root) cJSON_Delete(root);
+    liberar_descargador(module);
+    return success;
 }
 
 static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, const char *repo_name, const char *temp_path)

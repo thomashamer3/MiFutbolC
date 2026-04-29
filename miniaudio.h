@@ -3772,6 +3772,16 @@ extern "C" {
 
 #include <stddef.h> /* For size_t. */
 
+#ifndef strlen_s
+static inline size_t strlen_s(const char *s, size_t maxlen)
+{
+    if (!s || maxlen == 0) return 0;
+    size_t len = 0;
+    while (s[len] != '\0' && len < maxlen) len++;
+    return len;
+}
+#endif
+
 /* Sized types. */
 #if defined(MA_USE_STDINT)
     #include <stdint.h>
@@ -12835,7 +12845,7 @@ MA_API MA_NO_INLINE char* ma_copy_string(const char* src, const ma_allocation_ca
         return NULL;
     }
 
-    sz = strlen(src)+1;
+    sz = strlen_s(src, (size_t)-1)+1;
     dst = (char*)ma_malloc(sz, pAllocationCallbacks);
     if (dst == NULL) {
         return NULL;
@@ -31714,7 +31724,7 @@ static ma_pa_stream* ma_device__pa_stream_new__pulse(ma_device* pDevice, const c
         ma_strncpy_s(actualStreamName, sizeof(actualStreamName), pStreamName, (size_t)-1);
     } else {
         const char* pBaseName = "miniaudio:";
-        size_t baseNameLen = strlen(pBaseName);
+        size_t baseNameLen = strlen_s(pBaseName, (size_t)-1);
         ma_strcpy_s(actualStreamName, sizeof(actualStreamName), pBaseName);
         ma_itoa_s((int)ma_atomic_uint32_get(&g_StreamCounter), actualStreamName + baseNameLen, sizeof(actualStreamName)-baseNameLen, 10);
     }
@@ -37268,7 +37278,7 @@ static ma_result ma_device_init_handle__sndio(ma_device* pDevice, const ma_devic
         }
 
         if (channels == 0) {
-            if (strlen(pDeviceName) > strlen("rsnd/") && strncmp(pDeviceName, "rsnd/", strlen("rsnd/")) == 0) {
+            if (strlen_s(pDeviceName, (size_t)-1) > strlen_s("rsnd/", 6) && strncmp(pDeviceName, "rsnd/", strlen_s("rsnd/", 6)) == 0) {
                 channels = ma_find_best_channels_from_sio_cap__sndio(&caps, deviceType, format);
             } else {
                 channels = MA_DEFAULT_CHANNELS;
@@ -37280,7 +37290,7 @@ static ma_result ma_device_init_handle__sndio(ma_device* pDevice, const ma_devic
         }
 
         if (channels == 0) {
-            if (strlen(pDeviceName) > strlen("rsnd/") && strncmp(pDeviceName, "rsnd/", strlen("rsnd/")) == 0) {
+            if (strlen_s(pDeviceName, (size_t)-1) > strlen_s("rsnd/", 6) && strncmp(pDeviceName, "rsnd/", strlen_s("rsnd/", 6)) == 0) {
                 channels = ma_find_best_channels_from_sio_cap__sndio(&caps, deviceType, format);
             } else {
                 channels = MA_DEFAULT_CHANNELS;
@@ -37589,7 +37599,7 @@ static void ma_construct_device_id__audio4(char* id, size_t idSize, const char* 
     MA_ASSERT(idSize > 0);
     MA_ASSERT(deviceIndex >= 0);
 
-    baseLen = strlen(base);
+    baseLen = ma_strlen_s(base, idSize);
     MA_ASSERT(idSize > baseLen);
 
     ma_strcpy_s(id, idSize, base);
@@ -37606,8 +37616,8 @@ static ma_result ma_extract_device_index_from_id__audio4(const char* id, const c
     MA_ASSERT(base != NULL);
     MA_ASSERT(pIndexOut != NULL);
 
-    idLen = strlen(id);
-    baseLen = strlen(base);
+    idLen = strlen_s(id, (size_t)-1);
+    baseLen = ma_strlen_s(base, idSize);
     if (idLen <= baseLen) {
         return MA_ERROR;   /* Doesn't look like the id starts with the base. */
     }
@@ -37882,7 +37892,7 @@ static ma_result ma_context_enumerate_devices__audio4(ma_context* pContext, ma_e
         ma_bool32 isTerminating = MA_FALSE;
 
         ma_strcpy_s(devpath, sizeof(devpath), "/dev/audioctl");
-        ma_itoa_s(iDevice, devpath+strlen(devpath), sizeof(devpath)-strlen(devpath), 10);
+        ma_itoa_s(iDevice, devpath+strlen_s(devpath, sizeof(devpath)), sizeof(devpath)-strlen_s(devpath, sizeof(devpath)), 10);
 
         if (stat(devpath, &st) < 0) {
             break;
@@ -44255,12 +44265,12 @@ MA_API ma_result ma_device_get_name(ma_device* pDevice, ma_device_type type, cha
         actually does.
         */
         if (pLengthNotIncludingNullTerminator != NULL) {
-            *pLengthNotIncludingNullTerminator = strlen(pName);
+            *pLengthNotIncludingNullTerminator = strlen_s(pName, (size_t)-1);
         }
     } else {
         /* Name not specified. Just report the length of the source string. */
         if (pLengthNotIncludingNullTerminator != NULL) {
-            *pLengthNotIncludingNullTerminator = strlen(deviceInfo.name);
+            *pLengthNotIncludingNullTerminator = strlen_s(deviceInfo.name, (size_t)-1);
         }
     }
 
@@ -57938,7 +57948,7 @@ MA_API size_t ma_channel_map_to_string(const ma_channel* pChannelMap, ma_uint32 
 
     for (iChannel = 0; iChannel < channels; iChannel += 1) {
         const char* pChannelStr = ma_channel_position_to_string(ma_channel_map_get_channel(pChannelMap, channels, iChannel));
-        size_t channelStrLen = strlen(pChannelStr);
+        size_t channelStrLen = strlen_s(pChannelStr, (size_t)-1);
 
         /* Append the string if necessary. */
         if (pBufferOut != NULL && bufferCap > len + channelStrLen) {
@@ -69452,7 +69462,7 @@ static ma_uint32 ma_hash_32(const void* key, int len, ma_uint32 seed)
 
 static ma_uint32 ma_hash_string_32(const char* str)
 {
-    return ma_hash_32(str, (int)strlen(str), MA_DEFAULT_HASH_SEED);
+    return ma_hash_32(str, (int)strlen_s(str, (size_t)-1), MA_DEFAULT_HASH_SEED);
 }
 
 static ma_uint32 ma_hash_string_w_32(const wchar_t* str)

@@ -1833,7 +1833,7 @@ static void pedir_mes_anio(char *salida, int size)
 #else
                 if (tmp[0] != '\0')
                 {
-                    size_t tmp_len = strlen(tmp);
+                    size_t tmp_len = strlen_s(tmp, size);
                     size_t copy_len = tmp_len < size - 1 ? tmp_len : size - 1;
                     memcpy(salida, tmp, copy_len);
                     salida[copy_len] = '\0';

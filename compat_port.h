@@ -203,6 +203,21 @@ static inline int localtime_s(struct tm *tm_out, const time_t *time_in)
     return (localtime_r(time_in, tm_out) != NULL) ? 0 : errno;
 }
 
+static inline size_t strlen_s(const char *s, size_t maxlen)
+{
+    if (!s || maxlen == 0)
+    {
+        return 0;
+    }
+
+    size_t len = 0;
+    while (s[len] != '\0' && len < maxlen)
+    {
+        len++;
+    }
+    return len;
+}
+
 #define sscanf_s sscanf
 
 #endif /* !_WIN32 */
