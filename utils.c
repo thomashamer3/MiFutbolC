@@ -1,5 +1,4 @@
-﻿
-#include "utils.h"
+﻿#include "utils.h"
 #include "export.h"
 #include "ascii_art.h"
 #include "db.h"
@@ -1159,11 +1158,8 @@ int existe_id(const char *tabla, int id)
  */
 void clear_screen()
 {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+    printf("\033[2J\033[H");
+    fflush(stdout);
 }
 
 typedef struct
@@ -3515,7 +3511,7 @@ static int app_command_exists_posix(const char *cmd)
 }
 #endif
 
-static int app_command_exists(const char *cmd)
+int app_command_exists(const char *cmd)
 {
     if (!app_command_has_safe_chars(cmd))
     {
@@ -3527,6 +3523,11 @@ static int app_command_exists(const char *cmd)
 #else
     return app_command_exists_posix(cmd);
 #endif
+}
+
+int app_command_exists_public(const char *cmd)
+{
+return app_command_exists(cmd);
 }
 
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name)
@@ -3553,7 +3554,7 @@ void app_build_path(char *dest, size_t size, const char *dir, const char *file_n
 #endif
 }
 
-static int app_copy_binary_file(const char *source_path, const char *dest_path)
+int app_copy_binary_file(const char *source_path, const char *dest_path)
 {
     FILE *src = NULL;
     FILE *dst = NULL;
@@ -3586,220 +3587,6 @@ static int app_copy_binary_file(const char *source_path, const char *dest_path)
     return 1;
 }
 
-#ifndef _WIN32
-/* Ejecutar sin shell evita inyeccion de comandos con rutas de archivo. */
-static int app_run_image_tool_posix(const char *tool,
-                                    const char *src,
-                                    const char *dst)
-{
-    if (!tool || !src || !dst)
-    {
-        return 0;
-    }
-
-    char tool_path[4096];
-    if (!app_resolve_command_path_posix(tool, tool_path, sizeof(tool_path)))
-    {
-        return 0;
-    }
-
-    char *const args[] =
-    {
-        (char *)tool,
-        (char *)src,
-        "-auto-orient",
-        "-resize",
-        "1280x1280>",
-        "-strip",
-        "-quality",
-        "92",
-        (char *)dst,
-        NULL
-    };
-
-    pid_t pid = 0;
-    if (posix_spawn(&pid, tool_path, NULL, NULL, args, environ) != 0)
-    {
-        return 0;
-    }
-
-    int status = 0;
-    if (waitpid(pid, &status, 0) < 0)
-    {
-        return 0;
-    }
-
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-}
-#endif
-
-static int app_optimize_image_file(const char *source_path, const char *dest_path)
-{
-    if (!source_path || !dest_path)
-    {
-        return 0;
-    }
-
-    if (!app_is_path_safe_for_shell(source_path) || !app_validate_file_exists(source_path))
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    if (app_command_exists("magick"))
-    {
-        char cmd_magick[2600];
-        snprintf(cmd_magick,
-                 sizeof(cmd_magick),
-                 "magick \"%s\" -auto-orient -resize \"1280x1280>\" -strip -quality 92 \"%s\"",
-                 source_path,
-                 dest_path);
-        if (system(cmd_magick) == 0)
-        {
-            return 1;
-        }
-    }
-
-    char src_ps[2200] = {0};
-    char dst_ps[2200] = {0};
-    app_escape_single_quotes_ps(source_path, src_ps, sizeof(src_ps));
-    app_escape_single_quotes_ps(dest_path, dst_ps, sizeof(dst_ps));
-
-    char cmd_ps[9000];
-    snprintf(cmd_ps,
-             sizeof(cmd_ps),
-             "powershell -NoProfile -Command \"$ErrorActionPreference='Stop';"
-             "Add-Type -AssemblyName System.Drawing;"
-             "$src='%s';$dst='%s';"
-             "$img=[System.Drawing.Image]::FromFile($src);"
-             "try{"
-             "$max=1280;$w=$img.Width;$h=$img.Height;"
-             "if($w -gt $h){$nw=[Math]::Min($w,$max);$nh=[int]($h*$nw/$w)}"
-             "else{$nh=[Math]::Min($h,$max);$nw=[int]($w*$nh/$h)};"
-             "$bmp=New-Object System.Drawing.Bitmap $nw,$nh;"
-             "$g=[System.Drawing.Graphics]::FromImage($bmp);"
-             "$g.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic;"
-             "$g.SmoothingMode=[System.Drawing.Drawing2D.SmoothingMode]::HighQuality;"
-             "$g.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality;"
-             "$g.DrawImage($img,0,0,$nw,$nh);"
-             "$enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|Where-Object{$_.MimeType -eq 'image/jpeg'}|Select-Object -First 1;"
-             "$ep=New-Object System.Drawing.Imaging.EncoderParameters 1;"
-             "$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality,92L);"
-             "$bmp.Save($dst,$enc,$ep);"
-             "$g.Dispose();$bmp.Dispose();"
-             "}finally{$img.Dispose()}\"",
-             src_ps,
-             dst_ps);
-
-    return system(cmd_ps) == 0;
-#else
-    if (app_command_exists("magick"))
-    {
-        return app_run_image_tool_posix("magick", source_path, dest_path);
-    }
-
-    if (app_command_exists("convert"))
-    {
-        return app_run_image_tool_posix("convert", source_path, dest_path);
-    }
-
-    return 0;
-#endif
-}
-
-static const char *app_get_file_extension(const char *path)
-{
-    if (!path)
-    {
-        return NULL;
-    }
-
-    const char *dot = strrchr(path, '.');
-    if (!dot || dot == path)
-    {
-        return NULL;
-    }
-    return dot;
-}
-
-static int app_is_supported_image_extension(const char *ext)
-{
-    if (!ext)
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    return _stricmp(ext, ".jpg") == 0 ||
-           _stricmp(ext, ".jpeg") == 0 ||
-           _stricmp(ext, ".png") == 0 ||
-           _stricmp(ext, ".bmp") == 0 ||
-           _stricmp(ext, ".webp") == 0;
-#else
-    return strcasecmp(ext, ".jpg") == 0 ||
-           strcasecmp(ext, ".jpeg") == 0 ||
-           strcasecmp(ext, ".png") == 0 ||
-           strcasecmp(ext, ".bmp") == 0 ||
-           strcasecmp(ext, ".webp") == 0;
-#endif
-}
-
-static int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename)
-{
-    if (!ruta_origen || size == 0)
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    const char *archivo_temp = temp_filename ? temp_filename : "mifutbol_imagen_sel.txt";
-    remove(archivo_temp);
-
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; "
-             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
-             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
-             "$dlg.Filter = 'Imagenes|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
-             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
-             archivo_temp);
-
-    int rc = system(cmd);
-    (void)rc;
-
-    FILE *f = NULL;
-    if (fopen_s(&f, archivo_temp, "r") != 0 || !f)
-    {
-        return 0;
-    }
-
-    if (!fgets(ruta_origen, (int)size, f))
-    {
-        fclose(f);
-        remove(archivo_temp);
-        return 0;
-    }
-
-    fclose(f);
-    remove(archivo_temp);
-    trim_whitespace(ruta_origen);
-    if (!app_is_path_safe_for_shell(ruta_origen) || !app_validate_file_exists(ruta_origen))
-    {
-        return 0;
-    }
-    return ruta_origen[0] != '\0';
-#else
-    (void)temp_filename;
-    input_string("Ruta de imagen: ", ruta_origen, (int)size);
-    trim_whitespace(ruta_origen);
-    if (!app_is_path_safe_for_shell(ruta_origen) || !app_validate_file_exists(ruta_origen))
-    {
-        return 0;
-    }
-    return ruta_origen[0] != '\0';
-#endif
-}
-
 int app_get_file_name_from_path(const char *path, char *nombre, size_t size)
 {
     if (!path || !nombre || size == 0)
@@ -3825,115 +3612,6 @@ int app_get_file_name_from_path(const char *path, char *nombre, size_t size)
     }
 
     return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
-}
-
-int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *prefijo_base,
-                                    char *ruta_relativa_db, size_t ruta_size)
-{
-    if (!selector_filename || !prefijo_base || !ruta_relativa_db || ruta_size == 0)
-    {
-        return 0;
-    }
-
-    char ruta_origen[1024] = {0};
-    printf("\nSe abrira el selector de archivos en Descargas.\n");
-    if (!app_select_image_from_user(ruta_origen, sizeof(ruta_origen), selector_filename))
-    {
-        printf("No se selecciono ninguna imagen.\n");
-        return 0;
-    }
-
-    const char *ext = app_get_file_extension(ruta_origen);
-    if (!app_is_supported_image_extension(ext))
-    {
-        printf("Formato no soportado. Usa: JPG, JPEG, PNG, BMP o WEBP.\n");
-        return 0;
-    }
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
-    {
-        printf("No se pudo preparar la carpeta Imagenes.\n");
-        return 0;
-    }
-
-    char ts[32] = {0};
-    get_timestamp(ts, (int)sizeof(ts));
-
-    char base_destino[220] = {0};
-    snprintf(base_destino, sizeof(base_destino), "%s_%s", prefijo_base, ts);
-
-    char nombre_destino_opt[256] = {0};
-    snprintf(nombre_destino_opt, sizeof(nombre_destino_opt), "%s.jpg", base_destino);
-
-    char nombre_destino_original[256] = {0};
-    snprintf(nombre_destino_original, sizeof(nombre_destino_original), "%s%s", base_destino, ext);
-
-    char ruta_destino_opt[1200] = {0};
-    char ruta_destino_original[1200] = {0};
-    app_build_path(ruta_destino_opt, sizeof(ruta_destino_opt), images_dir, nombre_destino_opt);
-    app_build_path(ruta_destino_original, sizeof(ruta_destino_original), images_dir, nombre_destino_original);
-
-    int optimizada = app_optimize_image_file(ruta_origen, ruta_destino_opt);
-    const char *nombre_final = NULL;
-
-    if (optimizada)
-    {
-        nombre_final = nombre_destino_opt;
-    }
-    else
-    {
-        if (!app_copy_binary_file(ruta_origen, ruta_destino_original))
-        {
-            printf("No se pudo mover/copiar la imagen a la carpeta Imagenes.\n");
-            return 0;
-        }
-        nombre_final = nombre_destino_original;
-    }
-
-    snprintf(ruta_relativa_db, ruta_size, "Imagenes/%s", nombre_final);
-    return 1;
-}
-
-int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_filename)
-{
-    if (id <= 0 || !tabla)
-    {
-        return 0;
-    }
-
-    char prefijo[220] = {0};
-    snprintf(prefijo, sizeof(prefijo), "%s_%d", tabla, id);
-
-    char ruta_relativa_db[300] = {0};
-    if (!app_seleccionar_y_copiar_imagen(selector_filename, prefijo, ruta_relativa_db, sizeof(ruta_relativa_db)))
-    {
-        return 0;
-    }
-
-    char sql[200] = {0};
-    snprintf(sql, sizeof(sql), "UPDATE %s SET imagen_ruta=? WHERE id=?", tabla);
-
-    sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        printf("Error al guardar ruta de imagen en DB.\n");
-        return 0;
-    }
-
-    sqlite3_bind_text(stmt, 1, ruta_relativa_db, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-    int rc = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    if (rc != SQLITE_DONE)
-    {
-        printf("Error al guardar ruta de imagen en DB.\n");
-        return 0;
-    }
-
-    printf("\nImagen cargada correctamente.\n");
-    return 1;
 }
 
 void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item)
@@ -3970,4 +3648,265 @@ void mostrar_alerta_operacion(const char *entidad, const char *operacion, const 
 
     app_log_event("OPERACION", log_msg);
     pause_console();
+}
+
+int app_is_path_safe_for_shell(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
+    size_t len = strlen(path);
+    if (len > 4096)
+    {
+        return 0;
+    }
+
+    const char *forbidden = "`$|;&><`";
+    for (size_t i = 0; i < strlen(forbidden); i++)
+    {
+        if (strchr(path, forbidden[i]) != NULL)
+        {
+            return 0;
+        }
+    }
+
+    if (strstr(path, "..") != NULL)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int app_validate_file_exists(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    return _access_s(path, 0) == 0;
+#else
+    return access(path, F_OK) == 0;
+#endif
+}
+
+const char *app_get_file_extension_simple(const char *filename)
+{
+    if (!filename)
+    {
+        return NULL;
+    }
+
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+    {
+        return "";
+    }
+
+    return dot;
+}
+
+int app_get_file_extension(const char *filename, char *ext, size_t size)
+{
+    if (!filename || !ext || size == 0)
+    {
+        return 0;
+    }
+
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+    {
+        return 0;
+    }
+
+    strncpy_s(ext, size, dot + 1, _TRUNCATE);
+    return 1;
+}
+
+int app_optimize_image_file(const char *input_path, const char *output_path)
+{
+    if (!input_path || !output_path)
+    {
+        return 0;
+    }
+
+    return app_copy_binary_file(input_path, output_path);
+}
+
+int app_copy_file_binary(const char *source_path, const char *dest_path)
+{
+    if (!source_path || !dest_path)
+    {
+        return 0;
+    }
+
+    return app_copy_binary_file(source_path, dest_path);
+}
+
+static int appSeleccionarArchivoImagen(char *ruta, size_t size)
+{
+    if (!ruta || size == 0)
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    const char *arch_temp = "mifutbol_imagen_sel_temp.txt";
+    remove(arch_temp);
+
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd),
+             "powershell -NoProfile -Command \""
+             "Add-Type -AssemblyName System.Windows.Forms; "
+             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
+             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Pictures'); "
+             "$dlg.Filter = 'Images|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
+             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) "
+             "{ [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
+             arch_temp);
+
+    system(cmd);
+
+    FILE *f = NULL;
+    if (fopen_s(&f, arch_temp, "r") != 0 || !f)
+    {
+        return 0;
+    }
+
+    if (!fgets(ruta, (int)size, f))
+    {
+        fclose(f);
+        remove(arch_temp);
+        return 0;
+    }
+
+    fclose(f);
+    remove(arch_temp);
+    trim_whitespace(ruta);
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
+    return ruta[0] != '\0';
+#else
+    input_string("Ruta de la imagen: ", ruta, (int)size);
+    trim_whitespace(ruta);
+    return app_is_path_safe_for_shell(ruta) && app_validate_file_exists(ruta);
+#endif
+}
+
+int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo,
+                              char *ruta_out, size_t ruta_size)
+{
+    if (!config_file || !ruta_out || ruta_size == 0)
+    {
+        return 0;
+    }
+
+    char origen[1024] = {0};
+    if (!appSeleccionarArchivoImagen(origen, sizeof(origen)))
+    {
+        return 0;
+    }
+
+    char nombre_archivo[256] = {0};
+    if (!app_get_file_extension(origen, nombre_archivo, sizeof(nombre_archivo)))
+    {
+        snprintf(nombre_archivo, sizeof(nombre_archivo), "img");
+    }
+
+    char timestamp_str[64];
+    get_timestamp(timestamp_str, sizeof(timestamp_str));
+
+    char dest_nombre[300];
+    const char *pref = prefijo ? prefijo : "imagen";
+    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%s.%s",
+             pref, timestamp_str, nombre_archivo);
+
+    char app_dir[512] = {0};
+    app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
+    MKDIR(app_dir);
+
+    char dest_ruta[600];
+    app_build_path(dest_ruta, sizeof(dest_ruta), app_dir, dest_nombre);
+
+    if (!app_copy_binary_file(origen, dest_ruta))
+    {
+        return 0;
+    }
+
+    snprintf(ruta_out, ruta_size, "imagenes/%s", dest_nombre);
+
+    FILE *f = NULL;
+    if (fopen_s(&f, config_file, "w") == 0 && f)
+    {
+        fprintf(f, "%s", dest_nombre);
+        fclose(f);
+    }
+
+    return 1;
+}
+
+int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file)
+{
+    if (!tabla || !config_file)
+    {
+        return 0;
+    }
+
+    char origen[1024] = {0};
+    if (!appSeleccionarArchivoImagen(origen, sizeof(origen)))
+    {
+        return 0;
+    }
+
+    char nombre_archivo[256] = {0};
+    if (!app_get_file_extension(origen, nombre_archivo, sizeof(nombre_archivo)))
+    {
+        snprintf(nombre_archivo, sizeof(nombre_archivo), "png");
+    }
+
+    char timestamp_str[64];
+    get_timestamp(timestamp_str, sizeof(timestamp_str));
+
+    char dest_nombre[300];
+    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%d_%s.%s",
+             tabla, id, timestamp_str, nombre_archivo);
+
+    char app_dir[512] = {0};
+    app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
+    MKDIR(app_dir);
+
+    char dest_ruta[600];
+    app_build_path(dest_ruta, sizeof(dest_ruta), app_dir, dest_nombre);
+
+    if (!app_copy_binary_file(origen, dest_ruta))
+    {
+        return 0;
+    }
+
+    char rel_path[400];
+    snprintf(rel_path, sizeof(rel_path), "imagenes/%s", dest_nombre);
+
+    char sql[512];
+    snprintf(sql, sizeof(sql),
+            "UPDATE %s SET imagen_ruta = ? WHERE id = ?",
+            tabla);
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, rel_path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    int result = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+
+    return result;
 }

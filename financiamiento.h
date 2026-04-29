@@ -45,7 +45,7 @@ typedef struct
     char fecha[11];                     /**< Fecha en formato YYYY-MM-DD */
     TipoTransaccion tipo;               /**< Tipo de transacción (ingreso/gasto) */
     CategoriaFinanciera categoria;      /**< Categoría específica */
-    char descripcion[200];              /**< Descripción detallada de la transacción */
+    char descripcion[256];              /**< Descripción detallada de la transacción */
     int monto;                       /**< Monto de la transacción */
     char item_especifico[256];          /**< Item específico (ej: "Botines Nike", "Cuota enero") */
 } TransaccionFinanciera;
@@ -58,8 +58,8 @@ typedef struct
     int id;                             /**< Identificador único del presupuesto */
     char mes_anio[8];                   /**< Mes y año en formato YYYY-MM */
     int presupuesto_total;              /**< Presupuesto total mensual */
-    int limite_gasto;                   /**< Límite máximo de gasto mensual */
-    int alertas_habilitadas;            /**< Si las alertas están habilitadas (1) o no (0) */
+    int limite_gasto;                    /**< Límite máximo de gasto mensual */
+    int alertas_habilitadas;             /**< Si las alertas están habilitadas (1) o no (0) */
     char fecha_creacion[11];            /**< Fecha de creación del presupuesto */
     char fecha_modificacion[11];        /**< Fecha de última modificación */
 } PresupuestoMensual;

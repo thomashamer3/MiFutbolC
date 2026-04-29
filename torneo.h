@@ -54,7 +54,7 @@ typedef enum
 typedef struct
 {
     int id;                        /**< Identificador único del torneo en base de datos */
-    char nombre[50];               /**< Nombre del torneo */
+    char nombre[128];              /**< Nombre del torneo */
     int tiene_equipo_fijo;         /**< Indicador si el torneo tiene un equipo fijo (1) o no (0) */
     int equipo_fijo_id;            /**< ID del equipo fijo asignado al torneo (-1 si no tiene) */
     int cantidad_equipos;          /**< Número total de equipos participantes */

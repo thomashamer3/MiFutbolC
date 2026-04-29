@@ -55,7 +55,7 @@ typedef enum
  */
 typedef struct
 {
-    char nombre[50];    /**< Nombre completo del jugador */
+    char nombre[128];    /**< Nombre completo del jugador */
     int numero;         /**< Número de camiseta del jugador */
     Posicion posicion;  /**< Posición en la que juega el jugador */
     int es_capitan;     /**< Indicador si el jugador es capitán (1) o no (0) */
@@ -70,7 +70,7 @@ typedef struct
 typedef struct
 {
     int id;                        /**< Identificador único del equipo en base de datos */
-    char nombre[50];               /**< Nombre del equipo */
+    char nombre[128];               /**< Nombre del equipo */
     TipoEquipo tipo;               /**< Tipo de equipo (fijo o momentáneo) */
     TipoFutbol tipo_futbol;        /**< Modalidad de fútbol que juega */
     Jugador jugadores[11];         /**< Array de jugadores (máximo 11 para fútbol 11) */

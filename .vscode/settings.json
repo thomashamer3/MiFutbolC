@@ -14,5 +14,6 @@
     "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
     "codeQL.createQuery.qlPackLocation": "d:\\ANIME\\Libros\\Lenguaje C\\Proyectos\\MiFutbolC",
     "codeQL.githubDatabase.download": "never",
-    "livePreview.defaultPreviewPath": "/manual_usuario.html"
+    "livePreview.defaultPreviewPath": "/manual_usuario.html",
+    "sarif-viewer.connectToGithubCodeScanning": "on"
 }

@@ -112,7 +112,7 @@ static int menuimg_cargar_para_menu_key(const char *menu_key)
 
     char ruta_relativa_db[300] = {0};
     if (!app_seleccionar_y_copiar_imagen("mifutbol_imagen_sel_bienestar.txt", prefijo,
-                                         ruta_relativa_db, sizeof(ruta_relativa_db)))
+                                       ruta_relativa_db, sizeof(ruta_relativa_db)))
     {
         return 0;
     }
@@ -2923,30 +2923,15 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
     }
     return ruta[0] != '\0';
 #else
-    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
-    remove(arch_temp);
-
-    if (app_command_exists("zenity"))
+    input_string("Ruta del archivo: ", ruta, (int)size);
+    trim_whitespace(ruta);
+    if (ruta[0] == '\0')
     {
-        char cmd[2200];
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "zenity --file-selection --title=\"Seleccionar archivo de estudio\" > \"%s\" 2>/dev/null",
-                 arch_temp);
-        system(cmd);
-    }
-    else if (app_command_exists("kdialog"))
-    {
-        char cmd[2200];
-        snprintf(cmd,
-                 sizeof(cmd),
-                 "kdialog --getopenfilename ~ > \"%s\" 2>/dev/null",
-                 arch_temp);
-        system(cmd);
+        return 0;
     }
 
     FILE *f = NULL;
-    if (fopen_s(&f, arch_temp, "r") == 0 && f)
+    if (fopen_s(&f, ruta, "r") == 0 && f)
     {
         if (fgets(ruta, (int)size, f))
         {
@@ -3055,7 +3040,8 @@ static void adjuntar_archivo_control(void)
         return;
     }
 
-    const char *ext = app_get_file_extension(ruta_origen);
+    char ext[16] = {0};
+    app_get_file_extension(ruta_origen, ext, sizeof(ext));
     if (!estudio_arch_extension_soportada(ext))
     {
         printf("Formato no soportado. Usa: JPG, PNG, BMP, WEBP, PDF, DOCX, DOC, TXT, XLSX o CSV.\n");
@@ -3079,7 +3065,7 @@ static void adjuntar_archivo_control(void)
 
     char nombre_destino[300] = {0};
     snprintf(nombre_destino, sizeof(nombre_destino), "estudio_%d_%s%s",
-             control_id, ts, ext ? ext : "");
+             control_id, ts, ext[0] ? ext : "");
 
     char ruta_destino[1200] = {0};
     app_build_path(ruta_destino, sizeof(ruta_destino), images_dir, nombre_destino);

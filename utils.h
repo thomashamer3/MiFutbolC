@@ -587,4 +587,18 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
  */
 void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item);
 
+int app_is_path_safe_for_shell(const char *path);
+int app_validate_file_exists(const char *path);
+const char *app_get_file_extension_simple(const char *filename);
+int app_get_file_extension(const char *filename, char *ext, size_t size);
+int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo, char *ruta_out, size_t ruta_size);
+int app_get_file_name_from_path(const char *path, char *nombre, size_t size);
+void app_build_path(char *dest, size_t size, const char *dir, const char *file_name);
+int app_optimize_image_file(const char *input_path, const char *output_path);
+int app_copiar_archivo_binario(const char *source_path, const char *dest_path);
+int app_copy_file_binary(const char *source_path, const char *dest_path);
+int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file);
+int app_command_exists(const char *cmd);
+int app_command_exists_public(const char *cmd);
+
 #endif

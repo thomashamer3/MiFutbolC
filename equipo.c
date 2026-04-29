@@ -1,5 +1,4 @@
-﻿
-#include "equipo.h"
+﻿#include "equipo.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -43,13 +42,8 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
-    char cmd[1400];
-#ifdef _WIN32
-    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
-#else
-    snprintf(cmd, sizeof(cmd), "xdg-open \"%s\" >/dev/null 2>&1", ruta);
-#endif
-    return system(cmd) == 0;
+    printf("Abra la imagen manualmente en: %s\n", ruta);
+    return 1;
 }
 
 static int construir_ruta_absoluta_imagen_equipo_por_id(int id, char *ruta_absoluta, size_t size)

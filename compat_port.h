@@ -224,67 +224,52 @@ static inline int sscanf_s(const char *s, const char *format, ...)
     va_list args;
     va_start(args, format);
 
-    char fmt_buf[256];
-    const char *p = format;
-    char *fb = fmt_buf;
-    size_t fb_left = sizeof(fmt_buf) - 1;
+    char fmt_buf[256] = {0};
+    const char *src = format;
+    char *dst = fmt_buf;
+    size_t dst_left = 255;
 
-    while (*p && fb_left > 1)
+    while (*src && dst_left > 1)
     {
-        if (*p == '%')
+        if (*src != '%')
         {
-            *fb++ = '%';
-            fb_left--;
-            p++;
-
-            while (*p == 'h' || *p == 'l' || *p == 'L' || *p == 'j' || *p == 'z' || *p == 't')
-            {
-                *fb++ = *p++;
-                fb_left--;
-            }
-
-            if (*p == 's' || *p == 'c' || *p == '[')
-            {
-                char type = *p;
-                p++;
-
-                if (type == 's' || type == 'c')
-                {
-                    size_t bufsize = va_arg(args, size_t);
-                    char numbuf[16];
-                    int numsz = snprintf(numbuf, sizeof(numbuf), "%zu", bufsize - 1);
-                    if (numsz > 0 && fb_left > (size_t)numsz)
-                    {
-                        memcpy(fb, numbuf, numsz);
-                        fb += numsz;
-                        fb_left -= numsz;
-                    }
-                }
-
-                *fb++ = type;
-                fb_left--;
-            }
-            else if (*p >= '0' && *p <= '9')
-            {
-                while (*p >= '0' && *p <= '9')
-                {
-                    *fb++ = *p++;
-                    fb_left--;
-                }
-            }
-            else if (*p)
-            {
-                *fb++ = *p++;
-                fb_left--;
-            }
+            *dst++ = *src++;
+            dst_left--;
+            continue;
         }
-        else
+
+        *dst++ = '%';
+        dst_left--;
+
+        src++;
+        if (*src == '%')
         {
-            *fb++ = *p++;
-            fb_left--;
+            *dst++ = '%';
+            dst_left--;
+            src++;
+            continue;
+        }
+
+        while (*src == 'h' || *src == 'l' || *src == 'L' || *src == 'j' || *src == 'z' || *src == 't')
+        {
+            *dst++ = *src++;
+            dst_left--;
+        }
+
+        if (*src == 's' || *src == 'c')
+        {
+            rsize_t bufsize = (rsize_t)va_arg(args, unsigned int);
+            unsigned int limit = (bufsize > 0 && bufsize < 1000) ? (unsigned int)(bufsize - 1) : 255;
+            dst += snprintf(dst, dst_left, "%u", limit);
+            dst_left = (dst_left > strlen(dst)) ? dst_left - (size_t)strlen(dst) : 0;
+        }
+
+        if (*src)
+        {
+            *dst++ = *src++;
+            dst_left--;
         }
     }
-    *fb = '\0';
 
     int result = vsscanf(s, fmt_buf, args);
     va_end(args);
