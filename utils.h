@@ -570,20 +570,6 @@ typedef struct
  */
 void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
 
-static int app_command_exists(const char *cmd);
-static int app_is_path_safe_for_shell(const char *path);
-static int app_validate_file_exists(const char *path);
-static int app_copy_binary_file(const char *source_path, const char *dest_path);
-static int app_optimize_image_file(const char *source_path, const char *dest_path);
-static const char *app_get_file_extension(const char *path);
-static int app_is_supported_image_extension(const char *ext);
-static int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename);
-static int app_get_file_name_from_path(const char *path, char *nombre, size_t size);
-static void app_build_path(char *dest, size_t size, const char *dir, const char *file_name);
-static int app_seleccionar_y_copiar_imagen(const char *selector_filename, const char *prefijo_base,
-                                     char *ruta_relativa_db, size_t ruta_size);
-static int app_cargar_imagen_entidad(int id, const char *tabla, const char *selector_filename);
-
 /**
  * @brief Muestra una alerta visual de operacion exitosa
  *

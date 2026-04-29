@@ -41,6 +41,14 @@
 #include <limits.h>
 #endif
 
+#ifndef UNITY_EXCLUDE_STDIO_H
+#include <stdio.h>
+#endif
+
+#ifndef UNITY_EXCLUDE_TIME_H
+#include <time.h>
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
   #define UNITY_FUNCTION_ATTR(a)    __attribute__((a))
 #else
@@ -326,7 +334,6 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
  *-------------------------------------------------------*/
 #ifndef UNITY_OUTPUT_CHAR
   /* Default to using putchar, which is defined in stdio.h */
-  #include <stdio.h>
   #define UNITY_OUTPUT_CHAR(a) (void)putchar(a)
 #else
   /* If defined as something else, make sure we declare it here so it's ready for use */
@@ -338,7 +345,6 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
 #ifndef UNITY_OUTPUT_FLUSH
   #ifdef UNITY_USE_FLUSH_STDOUT
     /* We want to use the stdout flush utility */
-    #include <stdio.h>
     #define UNITY_OUTPUT_FLUSH()    (void)fflush(stdout)
   #else
     /* We've specified nothing, therefore flush should just be ignored */
@@ -388,8 +394,7 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
         UnityPrint(" ms)"); \
         }
     #elif defined(_WIN32)
-      #include <time.h>
-      #define UNITY_TIME_TYPE clock_t
+      typedef clock_t UNITY_TIME_TYPE;
       #define UNITY_GET_TIME(t) t = (clock_t)((clock() * 1000) / CLOCKS_PER_SEC)
       #define UNITY_EXEC_TIME_START() UNITY_GET_TIME(Unity.CurrentTestStartTime)
       #define UNITY_EXEC_TIME_STOP() UNITY_GET_TIME(Unity.CurrentTestStopTime)
@@ -400,8 +405,7 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
         UnityPrint(" ms)"); \
         }
     #elif defined(__unix__) || defined(__APPLE__)
-      #include <time.h>
-      #define UNITY_TIME_TYPE struct timespec
+      typedef struct timespec UNITY_TIME_TYPE;
       #define UNITY_GET_TIME(t) clock_gettime(CLOCK_MONOTONIC, &t)
       #define UNITY_EXEC_TIME_START() UNITY_GET_TIME(Unity.CurrentTestStartTime)
       #define UNITY_EXEC_TIME_STOP() UNITY_GET_TIME(Unity.CurrentTestStopTime)

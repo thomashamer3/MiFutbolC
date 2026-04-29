@@ -8,6 +8,7 @@
 #endif
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -218,7 +219,77 @@ static inline size_t strlen_s(const char *s, size_t maxlen)
     return len;
 }
 
-#define sscanf_s sscanf
+static inline int sscanf_s(const char *s, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    char fmt_buf[256];
+    const char *p = format;
+    char *fb = fmt_buf;
+    size_t fb_left = sizeof(fmt_buf) - 1;
+
+    while (*p && fb_left > 1)
+    {
+        if (*p == '%')
+        {
+            *fb++ = '%';
+            fb_left--;
+            p++;
+
+            while (*p == 'h' || *p == 'l' || *p == 'L' || *p == 'j' || *p == 'z' || *p == 't')
+            {
+                *fb++ = *p++;
+                fb_left--;
+            }
+
+            if (*p == 's' || *p == 'c' || *p == '[')
+            {
+                char type = *p;
+                p++;
+
+                if (type == 's' || type == 'c')
+                {
+                    size_t bufsize = va_arg(args, size_t);
+                    char numbuf[16];
+                    int numsz = snprintf(numbuf, sizeof(numbuf), "%zu", bufsize - 1);
+                    if (numsz > 0 && fb_left > (size_t)numsz)
+                    {
+                        memcpy(fb, numbuf, numsz);
+                        fb += numsz;
+                        fb_left -= numsz;
+                    }
+                }
+
+                *fb++ = type;
+                fb_left--;
+            }
+            else if (*p >= '0' && *p <= '9')
+            {
+                while (*p >= '0' && *p <= '9')
+                {
+                    *fb++ = *p++;
+                    fb_left--;
+                }
+            }
+            else if (*p)
+            {
+                *fb++ = *p++;
+                fb_left--;
+            }
+        }
+        else
+        {
+            *fb++ = *p++;
+            fb_left--;
+        }
+    }
+    *fb = '\0';
+
+    int result = vsscanf(s, fmt_buf, args);
+    va_end(args);
+    return result;
+}
 
 #endif /* !_WIN32 */
 

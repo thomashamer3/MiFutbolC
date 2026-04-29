@@ -3349,53 +3349,6 @@ static int app_command_has_safe_chars(const char *cmd)
     return 1;
 }
 
-int app_is_path_safe_for_shell(const char *path)
-{
-    if (!path || path[0] == '\0')
-    {
-        return 0;
-    }
-
-    const char *dangerous = ";&|`$(){}<>[]!\"\n\r\t*?~#";
-    while (*path != '\0')
-    {
-        if (strchr(dangerous, *path) != NULL)
-        {
-            return 0;
-        }
-        if (*path == '\\' && *(path + 1) == 'x')
-        {
-            return 0;
-        }
-        path++;
-    }
-    return 1;
-}
-
-int app_validate_file_exists(const char *path)
-{
-    if (!path || path[0] == '\0')
-    {
-        return 0;
-    }
-
-#ifdef _WIN32
-    DWORD attrs = GetFileAttributesA(path);
-    if (attrs == INVALID_FILE_ATTRIBUTES)
-    {
-        return 0;
-    }
-    return (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
-#else
-    struct stat st;
-    if (stat(path, &st) != 0)
-    {
-        return 0;
-    }
-    return S_ISREG(st.st_mode);
-#endif
-}
-
 static int app_command_has_path_separator(const char *cmd)
 {
     if (!cmd)
@@ -3562,7 +3515,7 @@ static int app_command_exists_posix(const char *cmd)
 }
 #endif
 
-int app_command_exists(const char *cmd)
+static int app_command_exists(const char *cmd)
 {
     if (!app_command_has_safe_chars(cmd))
     {
@@ -3600,7 +3553,7 @@ void app_build_path(char *dest, size_t size, const char *dir, const char *file_n
 #endif
 }
 
-int app_copy_binary_file(const char *source_path, const char *dest_path)
+static int app_copy_binary_file(const char *source_path, const char *dest_path)
 {
     FILE *src = NULL;
     FILE *dst = NULL;
@@ -3680,7 +3633,7 @@ static int app_run_image_tool_posix(const char *tool,
 }
 #endif
 
-int app_optimize_image_file(const char *source_path, const char *dest_path)
+static int app_optimize_image_file(const char *source_path, const char *dest_path)
 {
     if (!source_path || !dest_path)
     {
@@ -3754,7 +3707,7 @@ int app_optimize_image_file(const char *source_path, const char *dest_path)
 #endif
 }
 
-const char *app_get_file_extension(const char *path)
+static const char *app_get_file_extension(const char *path)
 {
     if (!path)
     {
@@ -3769,7 +3722,7 @@ const char *app_get_file_extension(const char *path)
     return dot;
 }
 
-int app_is_supported_image_extension(const char *ext)
+static int app_is_supported_image_extension(const char *ext)
 {
     if (!ext)
     {
@@ -3791,7 +3744,7 @@ int app_is_supported_image_extension(const char *ext)
 #endif
 }
 
-int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename)
+static int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_filename)
 {
     if (!ruta_origen || size == 0)
     {
