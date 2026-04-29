@@ -25908,8 +25908,8 @@ static int toLocaltime(
     memset(&sLocal, 0, sizeof(sLocal));
 
     computeJD(p);
-    if( p->iJD<2108667600*(i64)100000 /* 1970-01-01 */
-            || p->iJD>2130141456*(i64)100000 /* 2038-01-18 */
+    if( p->iJD < (i64)2108667600*100000 /* 1970-01-01 */
+            || p->iJD > (i64)2130141456*100000 /* 2038-01-18 */
       )
     {
         /* EVIDENCE-OF: R-55269-29598 The localtime_r() C function normally only

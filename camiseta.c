@@ -2,6 +2,7 @@
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
+#include "random_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1658,7 +1659,7 @@ static int obtener_ids_disponibles(int ids[], int max)
     return i;
 }
 
-#include "random_utils.h"
+
 
 static int seleccionar_id_aleatorio(const int ids[], int count)
 {
