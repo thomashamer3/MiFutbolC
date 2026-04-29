@@ -50,15 +50,15 @@ int secure_rand_range(int max)
 {
     if (max <= 0)
     {
-        return 0;
+        return -1;
     }
 
     unsigned char rand_bytes[4];
-    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
+    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) != 0)
     {
-        unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
-                         (rand_bytes[2] << 8) | rand_bytes[3];
-        return r % max;
+        return -1;
     }
-    return rand() % max;
+    unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
+                     (rand_bytes[2] << 8) | rand_bytes[3];
+    return r % max;
 }

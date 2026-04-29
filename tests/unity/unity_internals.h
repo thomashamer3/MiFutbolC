@@ -215,13 +215,13 @@
  *-------------------------------------------------------*/
 
 #if (UNITY_POINTER_WIDTH == 32)
-  #define UNITY_PTR_TO_INT UNITY_INT32
+  typedef UNITY_INT32 UNITY_PTR_TO_INT;
   #define UNITY_DISPLAY_STYLE_POINTER UNITY_DISPLAY_STYLE_HEX32
 #elif (UNITY_POINTER_WIDTH == 64)
-  #define UNITY_PTR_TO_INT UNITY_INT64
+  typedef UNITY_INT64 UNITY_PTR_TO_INT;
   #define UNITY_DISPLAY_STYLE_POINTER UNITY_DISPLAY_STYLE_HEX64
 #elif (UNITY_POINTER_WIDTH == 16)
-  #define UNITY_PTR_TO_INT UNITY_INT16
+  typedef UNITY_INT16 UNITY_PTR_TO_INT;
   #define UNITY_DISPLAY_STYLE_POINTER UNITY_DISPLAY_STYLE_HEX16
 #else
   #error Invalid UNITY_POINTER_WIDTH specified! (16, 32 or 64 are supported)
@@ -232,7 +232,7 @@
 #endif
 
 #ifndef UNITY_INTERNAL_PTR
-  #define UNITY_INTERNAL_PTR UNITY_PTR_ATTRIBUTE const void*
+  typedef UNITY_PTR_ATTRIBUTE const void* UNITY_INTERNAL_PTR;
 #endif
 
 /* optionally define UNITY_COMPARE_PTRS_ON_ZERO_ARRAY */
@@ -258,7 +258,7 @@
 #define UNITY_FLOAT_PRECISION (0.00001f)
 #endif
 #ifndef UNITY_FLOAT_TYPE
-#define UNITY_FLOAT_TYPE float
+  typedef float UNITY_FLOAT_TYPE;
 #endif
 typedef UNITY_FLOAT_TYPE UNITY_FLOAT;
 
@@ -314,10 +314,10 @@ typedef UNITY_FLOAT_TYPE UNITY_FLOAT;
   #define UNITY_DOUBLE_PRECISION (1e-12)
   #endif
 
-  #ifndef UNITY_DOUBLE_TYPE
-  #define UNITY_DOUBLE_TYPE double
-  #endif
-  typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
+#ifndef UNITY_DOUBLE_TYPE
+  typedef double UNITY_DOUBLE_TYPE;
+#endif
+typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
 
 #endif
 
@@ -437,11 +437,11 @@ typedef UNITY_FLOAT_TYPE UNITY_FLOAT;
  *-------------------------------------------------------*/
 
 #ifndef UNITY_LINE_TYPE
-#define UNITY_LINE_TYPE UNITY_UINT
+  typedef UNITY_UINT UNITY_LINE_TYPE;
 #endif
 
 #ifndef UNITY_COUNTER_TYPE
-#define UNITY_COUNTER_TYPE UNITY_UINT
+  typedef UNITY_UINT UNITY_COUNTER_TYPE;
 #endif
 
 /*-------------------------------------------------------
