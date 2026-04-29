@@ -19,8 +19,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Debug workspace
+      shell: bash
+      run: |
+        echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+        pwd
+        ls -la
+        echo "Listing GITHUB_WORKSPACE contents:"
+        ls -la "$GITHUB_WORKSPACE"
+        if [ -f "$GITHUB_WORKSPACE/CMakeLists.txt" ]; then echo "CMakeLists.txt: FOUND"; else echo "CMakeLists.txt: MISSING"; fi
+
+    - name: Show CMake version
+      run: cmake --version
+
     - name: Configure CMake
-      run: cmake -B build -S .
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}

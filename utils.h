@@ -595,7 +595,7 @@ int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo
 int app_get_file_name_from_path(const char *path, char *nombre, size_t size);
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name);
 int app_optimize_image_file(const char *input_path, const char *output_path);
-int app_copiar_archivo_binario(const char *source_path, const char *dest_path);
+int app_copy_binary_file(const char *source_path, const char *dest_path);
 int app_copy_file_binary(const char *source_path, const char *dest_path);
 int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file);
 int app_command_exists(const char *cmd);

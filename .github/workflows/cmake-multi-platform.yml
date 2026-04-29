@@ -54,22 +54,33 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Debug workspace
+      shell: bash
+      run: |
+        echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+        pwd
+        ls -la
+        echo "Listing GITHUB_WORKSPACE contents:"
+        ls -la "$GITHUB_WORKSPACE"
+        if [ -f "$GITHUB_WORKSPACE/CMakeLists.txt" ]; then echo "CMakeLists.txt: FOUND"; else echo "CMakeLists.txt: MISSING"; fi
+
+    - name: Show CMake version
+      run: cmake --version
+
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      # Configure CMake in a 'build' subdirectory. Use the repository root as source (avoid absolute runner paths).
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -S .
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
 
     - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # Build your program with the given configuration. Note that --config is needed on multi-config generators (Visual Studio).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --build-config ${{ matrix.build_type }}
+      # Run ctest explicitly with configuration and show output on failure
+      run: ctest -C ${{ matrix.build_type }} --output-on-failure

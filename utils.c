@@ -3297,6 +3297,9 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats)
     stats->avg_asistencias = sqlite3_column_double(stmt, 6);
 }
 
+#if defined(_WIN32)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 static void app_escape_single_quotes_ps(const char *src, char *dst, size_t dst_size)
 {
     if (!src || !dst || dst_size == 0)
@@ -3325,6 +3328,9 @@ static void app_escape_single_quotes_ps(const char *src, char *dst, size_t dst_s
     }
     dst[j] = '\0';
 }
+
+#pragma GCC diagnostic pop
+#endif
 
 static int app_command_has_safe_chars(const char *cmd)
 {
@@ -3527,7 +3533,7 @@ int app_command_exists(const char *cmd)
 
 int app_command_exists_public(const char *cmd)
 {
-return app_command_exists(cmd);
+    return app_command_exists(cmd);
 }
 
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name)
@@ -3657,14 +3663,15 @@ int app_is_path_safe_for_shell(const char *path)
         return 0;
     }
 
-    size_t len = strlen(path);
+    size_t len = safe_strnlen(path, 4096);
     if (len > 4096)
     {
         return 0;
     }
 
     const char *forbidden = "`$|;&><`";
-    for (size_t i = 0; i < strlen(forbidden); i++)
+    size_t forbidden_len = safe_strnlen(forbidden, 16);
+    for (size_t i = 0; i < forbidden_len; i++)
     {
         if (strchr(path, forbidden[i]) != NULL)
         {
@@ -3800,7 +3807,7 @@ static int appSeleccionarArchivoImagen(char *ruta, size_t size)
 }
 
 int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo,
-                              char *ruta_out, size_t ruta_size)
+                                    char *ruta_out, size_t ruta_size)
 {
     if (!config_file || !ruta_out || ruta_size == 0)
     {
@@ -3822,7 +3829,7 @@ int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo
     char timestamp_str[64];
     get_timestamp(timestamp_str, sizeof(timestamp_str));
 
-    char dest_nombre[300];
+    char dest_nombre[350];
     const char *pref = prefijo ? prefijo : "imagen";
     snprintf(dest_nombre, sizeof(dest_nombre), "%s_%s.%s",
              pref, timestamp_str, nombre_archivo);
@@ -3873,7 +3880,7 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file
     char timestamp_str[64];
     get_timestamp(timestamp_str, sizeof(timestamp_str));
 
-    char dest_nombre[300];
+    char dest_nombre[350];
     snprintf(dest_nombre, sizeof(dest_nombre), "%s_%d_%s.%s",
              tabla, id, timestamp_str, nombre_archivo);
 
@@ -3894,8 +3901,8 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file
 
     char sql[512];
     snprintf(sql, sizeof(sql),
-            "UPDATE %s SET imagen_ruta = ? WHERE id = ?",
-            tabla);
+             "UPDATE %s SET imagen_ruta = ? WHERE id = ?",
+             tabla);
 
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)

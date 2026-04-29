@@ -112,8 +112,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1777438556 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
-	"utils.h"
+1777501210 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"export.h"
 	"ascii_art.h"
 	"db.h"
@@ -144,7 +143,7 @@
 	<unistd.h>
 	"random_utils.h"
 
-1777434981 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1777501210 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	"cJSON.h"
 	"sqlite3.h"
 	<stddef.h>
@@ -583,10 +582,9 @@
 	"direct.h"
 	<string.h>
 
-1776900931 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
+1777490511 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1777437454 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
-	"equipo.h"
+1777490734 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -609,7 +607,7 @@
 	<limits.h>
 	"random_utils.h"
 
-1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
+1777490503 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
 
 1776203260 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
 	"db.h"
@@ -2079,7 +2077,7 @@
 1777267178 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
-1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
+1777499252 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
 	<time.h>
 
 1777407859 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.c
@@ -2287,7 +2285,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1777436454 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1777501210 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"menu.h"
 	"utils.h"
 	"db.h"
@@ -2387,8 +2385,9 @@
 1765442468 c:\msys64\mingw64\include\strings.h
 	<string.h>
 
-1777407990 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
+1777489507 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
 	<errno.h>
+	<stdarg.h>
 	<stddef.h>
 	<stdint.h>
 	<stdio.h>
@@ -2701,7 +2700,7 @@
 	<stddef.h>
 	<stdint.h>
 
-1777438788 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\random_utils.c
+1777486180 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\random_utils.c
 	"random_utils.h"
 	<stdio.h>
 	<stdlib.h>

@@ -112,7 +112,7 @@ static int menuimg_cargar_para_menu_key(const char *menu_key)
 
     char ruta_relativa_db[300] = {0};
     if (!app_seleccionar_y_copiar_imagen("mifutbol_imagen_sel_bienestar.txt", prefijo,
-                                       ruta_relativa_db, sizeof(ruta_relativa_db)))
+                                         ruta_relativa_db, sizeof(ruta_relativa_db)))
     {
         return 0;
     }
