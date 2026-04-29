@@ -28,6 +28,7 @@
 #ifndef SQLITE_PRIVATE
 # define SQLITE_PRIVATE static
 #endif
+#include "utils.h"
 /************** Begin file sqliteInt.h ***************************************/
 /*
 ** 2001 September 15

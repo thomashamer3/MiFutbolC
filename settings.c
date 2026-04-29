@@ -1480,7 +1480,7 @@ static const char *buscar_nombre_asset(const cJSON *assets, const char *target_u
         const cJSON *name_item = cJSON_GetObjectItem(asset, "name");
         const cJSON *url_item = cJSON_GetObjectItem(asset, "browser_download_url");
         if (name_item && cJSON_IsString(name_item) && url_item && cJSON_IsString(url_item) &&
-            strcmp(url_item->valuestring, target_url) == 0)
+                strcmp(url_item->valuestring, target_url) == 0)
         {
             return name_item->valuestring;
         }
@@ -1578,7 +1578,7 @@ static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_
         goto cleanup;
     }
 
-printf("Descarga completada: %s\n", dest);
+    printf("Descarga completada: %s\n", dest);
     ejecutar_instalador(dest);
     success = 1;
 

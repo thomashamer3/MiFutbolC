@@ -8,6 +8,7 @@
 #include "entrenador_ia.h"
 #include "financiamiento.h"
 #include "settings.h"
+#include "random_utils.h"
 #include <stdio.h>
 #include <string.h>
 #ifdef _WIN32
@@ -166,9 +167,6 @@ typedef struct
     int goles_visitante;
 } DatosSimulacion;
 
-#include "random_utils.h"
-
-#ifdef _WIN32
 
 static int secure_rand(int max)
 {
@@ -178,7 +176,7 @@ static int secure_rand(int max)
     if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
     {
         unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
-                        (rand_bytes[2] << 8) | rand_bytes[3];
+                         (rand_bytes[2] << 8) | rand_bytes[3];
         return (int)(r % max);
     }
     return (int)(((unsigned int)(time(NULL) ^ clock())) % max);

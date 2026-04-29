@@ -29,6 +29,11 @@ static int menuimg_abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
+
     char cmd[1400];
 #ifdef _WIN32
     snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
@@ -972,7 +977,7 @@ static void actualizar_habito_aspecto(int id)
     printf("Modificar aspecto:\n");
     printf("1) Fecha\n");
     printf("2) Dormi bien\n");
-    printf("3) Hidratacion\n");
+    printf("3) Hidratacion\n"); // DevSkim: ignore DS154189
     printf("4) Alcohol\n");
     printf("5) Estado animico\n");
     printf("6) Nervios\n");
@@ -2912,6 +2917,10 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
     fclose(f);
     remove(arch_temp);
     trim_whitespace(ruta);
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
     return ruta[0] != '\0';
 #else
     const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
@@ -2944,7 +2953,7 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
             fclose(f);
             remove(arch_temp);
             trim_whitespace(ruta);
-            if (ruta[0] != '\0')
+            if (ruta[0] != '\0' && app_is_path_safe_for_shell(ruta) && app_validate_file_exists(ruta))
             {
                 return 1;
             }
@@ -2958,6 +2967,10 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
 
     input_string("Ruta del archivo: ", ruta, (int)size);
     trim_whitespace(ruta);
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
     return ruta[0] != '\0';
 #endif
 }

@@ -58,6 +58,7 @@
 
 #include "cJSON.h"
 #include "compat_port.h"
+#include "utils.h"
 
 /* define our own boolean type */
 #ifdef true
@@ -188,6 +189,7 @@ static void * CJSON_CDECL cjson_internal_realloc(void *pointer, size_t size)
 
 /* strlen of character literals resolved at compile time */
 #define cjson_cjson_static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
+#define cjson_static_strlen(string_literal) cjson_cjson_static_strlen(string_literal)
 
 static internal_hooks global_hooks = { cjson_internal_malloc, cjson_internal_free, cjson_internal_realloc };
 
@@ -238,7 +240,7 @@ CJSON_PUBLIC(void) cJSON_InitHooks(cJSON_Hooks* hooks)
     /* use realloc only if both free and malloc are used */
     global_hooks.reallocate = NULL;
     if ((global_hooks.allocate != NULL && global_hooks.deallocate != NULL) &&
-        (global_hooks.allocate == &malloc && global_hooks.deallocate == &free))
+            (global_hooks.allocate == &malloc && global_hooks.deallocate == &free))
     {
         global_hooks.reallocate = realloc;
     }
@@ -2933,7 +2935,7 @@ static void minify_string(char **input, char **output)
         }
     }
 
-*input = in_ptr;
+    *input = in_ptr;
     *output = out_ptr;
 }
 

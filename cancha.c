@@ -1283,6 +1283,11 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
+
     char cmd[1400];
 #ifdef _WIN32
     snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);

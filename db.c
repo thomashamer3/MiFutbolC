@@ -2,6 +2,7 @@
 #include "random_utils.h"
 #include "db.h"
 #include "settings.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

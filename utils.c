@@ -105,7 +105,7 @@ static void auth_generate_salt_hex(char *salt_out, size_t out_size)
     {
         for (int i = 0; i < 16; i++)
         {
-            salt[i] = (unsigned char)((clock() ^ (time(NULL) + i * 12345)) & 0xFF;
+            salt[i] = (unsigned char)((clock() ^ ((time(NULL)) + i * 12345)) & 0xFF);
         }
     }
 
@@ -769,7 +769,7 @@ size_t safe_strnlen(const char *s, size_t maxlen)
 }
 
 #if !defined(__STDC_LIB_EXT1__)
-static size_t strlen_s(const char *s, size_t maxlen)
+size_t strlen_s(const char *s, size_t maxlen)
 {
     return safe_strnlen(s, maxlen);
 }
@@ -3349,6 +3349,53 @@ static int app_command_has_safe_chars(const char *cmd)
     return 1;
 }
 
+int app_is_path_safe_for_shell(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
+    const char *dangerous = ";&|`$(){}<>[]!\"\n\r\t*?~#";
+    while (*path != '\0')
+    {
+        if (strchr(dangerous, *path) != NULL)
+        {
+            return 0;
+        }
+        if (*path == '\\' && *(path + 1) == 'x')
+        {
+            return 0;
+        }
+        path++;
+    }
+    return 1;
+}
+
+int app_validate_file_exists(const char *path)
+{
+    if (!path || path[0] == '\0')
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    DWORD attrs = GetFileAttributesA(path);
+    if (attrs == INVALID_FILE_ATTRIBUTES)
+    {
+        return 0;
+    }
+    return (attrs & FILE_ATTRIBUTE_DIRECTORY) == 0;
+#else
+    struct stat st;
+    if (stat(path, &st) != 0)
+    {
+        return 0;
+    }
+    return S_ISREG(st.st_mode);
+#endif
+}
+
 static int app_command_has_path_separator(const char *cmd)
 {
     if (!cmd)
@@ -3640,6 +3687,11 @@ int app_optimize_image_file(const char *source_path, const char *dest_path)
         return 0;
     }
 
+    if (!app_is_path_safe_for_shell(source_path) || !app_validate_file_exists(source_path))
+    {
+        return 0;
+    }
+
 #ifdef _WIN32
     if (app_command_exists("magick"))
     {
@@ -3778,11 +3830,19 @@ int app_select_image_from_user(char *ruta_origen, size_t size, const char *temp_
     fclose(f);
     remove(archivo_temp);
     trim_whitespace(ruta_origen);
+    if (!app_is_path_safe_for_shell(ruta_origen) || !app_validate_file_exists(ruta_origen))
+    {
+        return 0;
+    }
     return ruta_origen[0] != '\0';
 #else
     (void)temp_filename;
     input_string("Ruta de imagen: ", ruta_origen, (int)size);
     trim_whitespace(ruta_origen);
+    if (!app_is_path_safe_for_shell(ruta_origen) || !app_validate_file_exists(ruta_origen))
+    {
+        return 0;
+    }
     return ruta_origen[0] != '\0';
 #endif
 }

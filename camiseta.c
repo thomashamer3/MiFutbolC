@@ -142,6 +142,11 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    {
+        return 0;
+    }
+
 #ifdef _WIN32
     char viewer[64] = {0};
     obtener_visor_preferido(viewer, sizeof(viewer));
@@ -159,7 +164,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
         else
         {
-            printf("Visor preferido no soportado en Windows: %s\n", viewer);
+            printf("Visor preferido no soportado en Windows: %s\n", viewer); // DevSkim: ignore DS154189
         }
     }
 
@@ -339,6 +344,13 @@ static void previsualizar_imagen_camiseta_consola()
     char ruta_absoluta[1200] = {0};
     if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
     {
+        pause_console();
+        return;
+    }
+
+    if (!app_is_path_safe_for_shell(ruta_absoluta) || !app_validate_file_exists(ruta_absoluta))
+    {
+        printf("Ruta de imagen invalida o no existe.\n");
         pause_console();
         return;
     }
@@ -1672,7 +1684,7 @@ static int seleccionar_id_aleatorio(const int ids[], int count)
     if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
     {
         unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
-                        (rand_bytes[2] << 8) | rand_bytes[3];
+                         (rand_bytes[2] << 8) | rand_bytes[3];
         return ids[r % count];
     }
 

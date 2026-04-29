@@ -26,20 +26,6 @@
 
 #include "random_utils.h"
 
-#ifdef _WIN32
-
-static unsigned int secure_rand_range(unsigned int max)
-{
-    unsigned char rand_bytes[4];
-    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
-    {
-        unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
-                        (rand_bytes[2] << 8) | rand_bytes[3];
-        return r % max;
-    }
-    return ((unsigned int)(time(NULL) ^ clock())) % max;
-}
-
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
@@ -48,6 +34,11 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 static int abrir_imagen_en_sistema(const char *ruta)
 {
     if (!ruta || ruta[0] == '\0')
+    {
+        return 0;
+    }
+
+    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
     {
         return 0;
     }
