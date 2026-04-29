@@ -626,7 +626,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
         length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.15g", d);
 
         /* Check whether the original double can be recovered */
-        if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || !compare_double((double)test, d))
+        if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || !compare_double(test, d))
         {
             /* If not, print with 17 decimal places of precision */
             length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.17g", d);
@@ -723,7 +723,7 @@ static unsigned char utf16_literal_to_utf8(const unsigned char * const input_poi
     first_code = parse_hex4(first_sequence + 2);
 
     /* check that the code is valid */
-    if (((first_code >= 0xDC00) && (first_code <= 0xDFFF)))
+    if ((first_code >= 0xDC00) && (first_code <= 0xDFFF))
     {
         goto fail;
     }
@@ -2973,7 +2973,7 @@ CJSON_PUBLIC(void) cJSON_Minify(char *json)
             break;
 
         case '\"':
-            minify_string(&json, (char**)&into);
+            minify_string(&json, &into);
             break;
 
         default:
