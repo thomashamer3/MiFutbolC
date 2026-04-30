@@ -1,10 +1,17 @@
 #ifndef COMPAT_PORT_H
 #define COMPAT_PORT_H
 
+#ifndef SQLITE_THREADSAFE
+#define SQLITE_THREADSAFE 0
+#endif
+
 #ifndef _WIN32
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+#ifndef __STDC_WANT_LIB_EXT1__
+#define __STDC_WANT_LIB_EXT1__ 1
 #endif
 
 #include <errno.h>
@@ -15,10 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifndef __STDC_WANT_LIB_EXT1__
-#define __STDC_WANT_LIB_EXT1__ 1
-#endif
 
 typedef int errno_t;
 typedef size_t rsize_t;
@@ -55,6 +58,7 @@ static inline char *compat_strdup_impl(const char *s)
 #define _countof(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif
 
+#ifndef __STDC_LIB_EXT1__
 static inline int fopen_s(FILE **fp, const char *filename, const char *mode)
 {
     if (!fp || !filename || !mode)
@@ -218,6 +222,7 @@ static inline size_t strlen_s(const char *s, size_t maxlen)
     }
     return len;
 }
+#endif
 
 static inline int is_length_modifier(char c)
 {

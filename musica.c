@@ -1560,7 +1560,7 @@ static int escanear_playlists(NombrePlaylist *lista, int max)
     {
         if (n >= max) break;
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
-        snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%s", fd.cFileName);
+        snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%.*s", MAX_PLAYLIST_NAME - 1, fd.cFileName);
         n++;
     }
     while (FindNextFileA(hf, &fd));
@@ -1954,17 +1954,19 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         /* Verificar que el archivo exista */
         char ruta_audio[MAX_RUTA];
 #ifdef _WIN32
-        snprintf(ruta_audio, sizeof(ruta_audio), "%s\\%s", MUSICA_DIR, linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s\\%.*s", MUSICA_DIR,
+                 (int)(sizeof(ruta_audio) - (sizeof(MUSICA_DIR) - 1) - 2), linea);
 #else
-        snprintf(ruta_audio, sizeof(ruta_audio), "%s/%s", MUSICA_DIR, linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s/%.*s", MUSICA_DIR,
+                 (int)(sizeof(ruta_audio) - (sizeof(MUSICA_DIR) - 1) - 2), linea);
 #endif
         FILE *chk = NULL;
         FOPEN_PORTABLE(chk, ruta_audio, "rb");
         if (!chk) continue;
         fclose(chk);
 
-        snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%s", linea);
-        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%s", ruta_audio);
+        snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%.*s", MAX_NOMBRE - 1, linea);
+        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%.*s", MAX_RUTA - 1, ruta_audio);
         cargadas++;
     }
     fclose(f);

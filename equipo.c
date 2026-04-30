@@ -1188,7 +1188,7 @@ void save_equipo_to_db(const Equipo *equipo)
     {
         insert_jugadores_for_equipo(equipo_id, equipo);
         char info[100];
-        snprintf(info, sizeof(info), "%s - ID: %d", equipo->nombre, equipo_id);
+        snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), equipo->nombre, equipo_id);
         if (confirmar("Desea cargar imagen para este equipo ahora?") &&
                 !cargar_imagen_para_equipo_id(equipo_id))
         {

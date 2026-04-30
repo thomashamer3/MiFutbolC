@@ -17,7 +17,7 @@ endif
 
 CFLAGS += -I. -include compat_port.h
 
-LDFLAGS ?= -lhpdf -lz -lpng -lm -lbcrypt
+LDFLAGS ?= -LC:/msys64/mingw64/lib -lhpdf -lz -lpng -lm -lbcrypt -lucrt -Wl,--allow-multiple-definition
 
 # Platform-specific audio flags required by miniaudio
 ifeq ($(OS),Windows_NT)
@@ -66,6 +66,7 @@ SRC = \
   records_rankings.c \
   pdfgen.c \
   sqlite3.c \
+  sqlite3_exports.c \
   utils.c \
   equipo.c \
   torneo.c \
@@ -80,7 +81,8 @@ SRC = \
   atajos.c \
   musica.c \
   musica_helpers.c \
-  recordatorios.c
+  recordatorios.c \
+  random_utils.c
 
 OUT = MiFutbolC
 

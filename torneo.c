@@ -589,7 +589,7 @@ void crear_torneo()
         return;
 
     char info[100];
-    snprintf(info, sizeof(info), "%s - ID: %d", torneo.nombre, torneo_id);
+    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), torneo.nombre, torneo_id);
     mostrar_alerta_operacion("Torneo", "Guardado", info);
 
     printf("\nAgregar equipos al torneo:\n");

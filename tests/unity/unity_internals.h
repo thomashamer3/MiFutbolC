@@ -384,7 +384,7 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
 
     #if defined(UNITY_CLOCK_MS)
       /* This is a simple way to get a default implementation on platforms that support getting a millisecond counter */
-      #define UNITY_TIME_TYPE UNITY_UINT
+      typedef UNITY_UINT UNITY_TIME_TYPE;
       #define UNITY_EXEC_TIME_START() Unity.CurrentTestStartTime = UNITY_CLOCK_MS()
       #define UNITY_EXEC_TIME_STOP() Unity.CurrentTestStopTime = UNITY_CLOCK_MS()
       #define UNITY_PRINT_EXEC_TIME() { \
@@ -429,7 +429,7 @@ typedef UNITY_DOUBLE_TYPE UNITY_DOUBLE;
 #endif
 
 #ifndef UNITY_TIME_TYPE
-#define UNITY_TIME_TYPE         UNITY_UINT
+typedef UNITY_UINT UNITY_TIME_TYPE;
 #endif
 
 #ifndef UNITY_PRINT_EXEC_TIME

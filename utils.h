@@ -14,6 +14,12 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#ifdef _WIN32
+/* Provide CRT/Process declarations for MinGW/MSVC builds that rely on them */
+#include <io.h>
+#include <process.h>
+#endif
+
 /**
  * @brief Solicita al usuario un número entero.
  *
@@ -252,15 +258,13 @@ char* remover_tildes(const char *str);
  */
 size_t safe_strnlen(const char *s, size_t maxlen);
 
+/* Declare strlen_s only when Annex K is not present. On non-Windows builds
+ * compat_port.h provides a static inline implementation; on Windows we may
+ * need a regular prototype so code that expects a non-static symbol links. */
 #if !defined(__STDC_LIB_EXT1__)
-/**
- * @brief Implementación compatible de strlen_s cuando Annex K no está disponible.
- *
- * @param s Cadena a medir
- * @param maxlen Máximo número de caracteres a examinar
- * @return Longitud de la cadena (máximo `maxlen`)
- */
+#ifdef _WIN32
 size_t strlen_s(const char *s, size_t maxlen);
+#endif
 #endif
 
 /**

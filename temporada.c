@@ -248,7 +248,7 @@ void crear_temporada()
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             char info[100];
-            snprintf(info, sizeof(info), "%s - ID: %d", temporada.nombre, nuevo_id);
+            snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), temporada.nombre, nuevo_id);
             mostrar_alerta_operacion("Temporada", "Creada", info);
 
             // Crear fases por defecto

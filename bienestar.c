@@ -2923,6 +2923,7 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
     }
     return ruta[0] != '\0';
 #else
+    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
     input_string("Ruta del archivo: ", ruta, (int)size);
     trim_whitespace(ruta);
     if (ruta[0] == '\0')

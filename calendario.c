@@ -67,7 +67,7 @@ static int primer_dia_semana(int mes, int anio)
 
 static void obtener_icono_dia(int dia, int mes, int anio, char *icono, size_t tam)
 {
-    char fecha[11];
+    char fecha[20];
     snprintf(fecha, sizeof(fecha), "%04d-%02d-%02d", anio, mes, dia);
 
     sqlite3_stmt *stmt;

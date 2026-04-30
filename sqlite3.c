@@ -36923,6 +36923,10 @@ SQLITE_PRIVATE int sqlite3ThreadJoin(SQLiteThread *p, void **ppOut)
 #if SQLITE_OS_WIN_THREADS
 
 #define SQLITE_THREADS_IMPLEMENTED 1  /* Prevent the single-thread code below */
+#ifndef _MT
+#define _MT
+#endif
+#include "windows.h"
 #include <process.h>
 
 /* A running thread */

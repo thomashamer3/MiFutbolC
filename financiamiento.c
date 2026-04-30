@@ -455,7 +455,7 @@ static void guardar_transaccion_db(const TransaccionFinanciera *transaccion)
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             char desc[200];
-            snprintf(desc, sizeof(desc), "%s - $%d", transaccion->descripcion, transaccion->monto);
+            snprintf(desc, sizeof(desc), "%.*s - $%d", (int)(sizeof(desc) - 20), transaccion->descripcion, transaccion->monto);
             mostrar_alerta_operacion("Transacción", "Guardada", desc);
         }
         else
