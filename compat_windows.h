@@ -6,11 +6,23 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <Windows.h>
+#include <string.h>
+
+#ifndef strcasecmp
+#define strcasecmp _stricmp
+#endif
 #else
 
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <time.h>
 #include <wchar.h>
+
+#ifndef __USECONDS_T_DEFINED
+typedef unsigned int useconds_t;
+#define __USECONDS_T_DEFINED
+#endif
 
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
@@ -94,7 +106,10 @@ static inline BOOL SetConsoleCP(unsigned int wCodePageID)
 
 static inline void Sleep(DWORD dwMilliseconds)
 {
-    usleep((useconds_t)dwMilliseconds * 1000U);
+    struct timespec ts;
+    ts.tv_sec = dwMilliseconds / 1000;
+    ts.tv_nsec = (dwMilliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
 }
 
 #endif /* !_WIN32 */

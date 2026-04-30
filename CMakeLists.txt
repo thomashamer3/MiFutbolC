@@ -10,25 +10,79 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # Collect all C sources under the project root (reconfigure on file changes)
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE ALL_C_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_SOURCE_DIR}/*.c"
 )
 
-add_executable(MiFutbolC ${SOURCE_FILES})
+# Partition sources into: core (no main), main, and tests. This prevents
+# accidental linking of multiple `main` definitions into the same target.
+set(CORE_SOURCES "")
+set(MAIN_SOURCE "")
+set(TEST_SOURCES "")
 
-target_include_directories(MiFutbolC PRIVATE ${CMAKE_SOURCE_DIR})
+foreach(_f ${ALL_C_SOURCES})
+  # Normalize path for matching
+  file(TO_CMAKE_PATH "${_f}" _f_norm)
+  get_filename_component(_name "${_f_norm}" NAME)
+
+  if(_f_norm MATCHES "(/|\\\\)tests(/|\\\\|$)" OR _name MATCHES "^test_.*")
+    list(APPEND TEST_SOURCES "${_f_norm}")
+  elseif(_name STREQUAL "main.c")
+    set(MAIN_SOURCE "${_f_norm}")
+  else()
+    list(APPEND CORE_SOURCES "${_f_norm}")
+  endif()
+endforeach()
+
+# Core static library (everything except main and tests)
+add_library(mifutbolc_core STATIC ${CORE_SOURCES})
+target_include_directories(mifutbolc_core PUBLIC ${CMAKE_SOURCE_DIR})
 
 if(MSVC)
-  target_compile_options(MiFutbolC PRIVATE /W3)
+  target_compile_options(mifutbolc_core PRIVATE /W3)
 else()
-  target_compile_options(MiFutbolC PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(mifutbolc_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-if(WIN32)
-  target_link_libraries(MiFutbolC PRIVATE comdlg32)
-else()
+# Ensure threads are available on non-Windows platforms before linking
+if(NOT WIN32)
   find_package(Threads REQUIRED)
-  target_link_libraries(MiFutbolC PRIVATE Threads::Threads)
+endif()
+
+# Main executable: link the core library plus the single main.c
+if(MAIN_SOURCE)
+  add_executable(MiFutbolC ${MAIN_SOURCE})
+  target_link_libraries(MiFutbolC PRIVATE mifutbolc_core)
+  target_include_directories(MiFutbolC PRIVATE ${CMAKE_SOURCE_DIR})
+  if(MSVC)
+    target_compile_options(MiFutbolC PRIVATE /W3)
+  else()
+    target_compile_options(MiFutbolC PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+  if(WIN32)
+    target_link_libraries(MiFutbolC PRIVATE comdlg32 bcrypt)
+  else()
+    target_link_libraries(MiFutbolC PRIVATE Threads::Threads)
+  endif()
+else()
+  message(FATAL_ERROR "No main.c found to build MiFutbolC executable.")
+endif()
+
+# Optional tests executable (built only if test sources are present)
+if(TEST_SOURCES)
+  add_executable(MiFutbolC_tests ${TEST_SOURCES})
+  target_link_libraries(MiFutbolC_tests PRIVATE mifutbolc_core)
+  target_include_directories(MiFutbolC_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  if(MSVC)
+    target_compile_options(MiFutbolC_tests PRIVATE /W3)
+  else()
+    target_compile_options(MiFutbolC_tests PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+  if(WIN32)
+    target_link_libraries(MiFutbolC_tests PRIVATE comdlg32 bcrypt)
+  else()
+    target_link_libraries(MiFutbolC_tests PRIVATE Threads::Threads)
+  endif()
 endif()
 
 install(TARGETS MiFutbolC RUNTIME DESTINATION bin)

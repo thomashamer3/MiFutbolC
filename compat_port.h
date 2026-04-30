@@ -23,6 +23,15 @@
 #include <string.h>
 #include <time.h>
 
+/* Provide a portable strnlen if the platform header doesn't declare one. */
+#ifndef HAVE_STRNLEN
+static inline size_t strnlen(const char *s, size_t maxlen)
+{
+    const char *end = memchr(s, '\0', maxlen);
+    return end ? (size_t)(end - s) : maxlen;
+}
+#endif
+
 typedef int errno_t;
 typedef size_t rsize_t;
 
@@ -179,7 +188,21 @@ static inline int strerror_s(char *buffer, size_t numberOfElements, int errnum)
         return EINVAL;
     }
 
-#if (_POSIX_C_SOURCE >= 200112L) && !defined(_GNU_SOURCE)
+    /* Use the most portable strerror_r handling possible:
+     * - glibc with _GNU_SOURCE: strerror_r returns char * (GNU variant)
+     * - POSIX: strerror_r returns int
+     * - fallback: use strerror() (not thread-safe) if strerror_r is unavailable
+     */
+#if defined(__GLIBC__) && defined(_GNU_SOURCE)
+    char *msg = strerror_r(errnum, buffer, numberOfElements);
+    if (msg != buffer && msg != NULL)
+    {
+        size_t len = strnlen(msg, numberOfElements - 1);
+        memcpy(buffer, msg, len);
+        buffer[len] = '\0';
+    }
+    return 0;
+#elif defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
     int rc = strerror_r(errnum, buffer, numberOfElements);
     if (rc != 0)
     {
@@ -187,13 +210,15 @@ static inline int strerror_s(char *buffer, size_t numberOfElements, int errnum)
     }
     return rc;
 #else
-    char *msg = strerror_r(errnum, buffer, numberOfElements);
-    if (msg != buffer)
+    const char *msg = strerror(errnum);
+    if (!msg)
     {
-        size_t len = strnlen(msg, numberOfElements - 1);
-        memcpy(buffer, msg, len);
-        buffer[len] = '\0';
+        buffer[0] = '\0';
+        return EINVAL;
     }
+    size_t len = strnlen(msg, numberOfElements - 1);
+    memcpy(buffer, msg, len);
+    buffer[len] = '\0';
     return 0;
 #endif
 }

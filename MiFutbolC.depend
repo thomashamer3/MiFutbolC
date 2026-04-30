@@ -2388,7 +2388,7 @@
 1765442468 c:\msys64\mingw64\include\strings.h
 	<string.h>
 
-1777503733 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
+1777511471 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
 	<errno.h>
 	<stdarg.h>
 	<stddef.h>
@@ -2412,10 +2412,13 @@
 
 1777503346 d:\anime\libros\lenguaje c\proyectos\mifutbolc\shlobj.h
 
-1777426291 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_windows.h
+1777510756 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_windows.h
 	<Windows.h>
+	<string.h>
 	<stdint.h>
 	<unistd.h>
+	<sys/types.h>
+	<time.h>
 	<wchar.h>
 
 1776202631 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
@@ -2525,7 +2528,7 @@
 
 1776276309 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1777510214 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1777511471 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
 	"musica.h"
 	"musica_helpers.h"
