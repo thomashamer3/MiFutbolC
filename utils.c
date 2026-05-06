@@ -740,7 +740,7 @@ int input_int(const char *msg)
 
         char extra = '\0';
 #if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
+        if (sscanf(buffer, "%d %c", &v, &extra) == 1)
 #else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
 #endif
@@ -899,7 +899,7 @@ double input_double(const char *msg)
 
         process_numeric_input(buffer, processed, sizeof(processed));
 
-        if (sscanf_s(processed, "%lf", &v) == 1)
+        if (sscanf(processed, "%lf", &v) == 1)
             return v;
         ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
                   "12.500, 250.000): ");
@@ -2419,7 +2419,7 @@ void format_date_with_weekday_for_display(const char *input_date, char *output_b
         int dia = 0;
         int mes = 0;
         int anio = 0;
-        if (sscanf_s(fecha_formateada, "%2d/%2d/%4d", &dia, &mes, &anio) == 3)
+        if (sscanf(fecha_formateada, "%2d/%2d/%4d", &dia, &mes, &anio) == 3)
         {
             struct tm tm_fecha = {0};
             tm_fecha.tm_mday = dia;

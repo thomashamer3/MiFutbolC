@@ -113,7 +113,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1778106311 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1778109289 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"export.h"
 	"ascii_art.h"
 	"db.h"
@@ -311,7 +311,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.h
 
-1778106324 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
+1778109289 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lesion.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -393,7 +393,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1776203260 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1778109283 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2086,7 +2086,7 @@
 1777499252 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
 	<time.h>
 
-1778106333 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.c
+1778109289 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.c
 	"financiamiento.h"
 	"db.h"
 	"utils.h"
@@ -2393,7 +2393,7 @@
 1765442468 c:\msys64\mingw64\include\strings.h
 	<string.h>
 
-1777511471 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
+1778109274 d:\anime\libros\lenguaje c\proyectos\mifutbolc\compat_port.h
 	<errno.h>
 	<stdarg.h>
 	<stddef.h>

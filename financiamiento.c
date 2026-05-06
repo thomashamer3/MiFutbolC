@@ -197,7 +197,7 @@ int convertir_fecha_ddmmyyyy_a_yyyymmdd(const char *fecha_ddmmyyyy, char *fecha_
     int anio = 0;
 
     // Intentar parsear la fecha en formato DD/MM/YYYY
-    if (sscanf_s(fecha_ddmmyyyy, "%d/%d/%d", &dia, &mes, &anio) != 3)
+    if (sscanf(fecha_ddmmyyyy, "%d/%d/%d", &dia, &mes, &anio) != 3)
     {
         return 0; // Error en el formato
     }

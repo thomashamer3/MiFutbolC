@@ -455,7 +455,7 @@ static int parse_camiseta_line_format(const char *line, CamisetaData *out,
     int id;
     char nombre[256];
 
-    if (sscanf_s(line, format, &id, nombre, (unsigned)_countof(nombre)) != 2)
+    if (sscanf(line, format, &id, nombre) != 2)
         return 0;
 
     trim_trailing_spaces(nombre);
@@ -466,12 +466,12 @@ static int parse_camiseta_line_format(const char *line, CamisetaData *out,
 
 static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
 {
-    return parse_camiseta_line_format(line, out, "%d - %s");
+    return parse_camiseta_line_format(line, out, "%d - %255s");
 }
 
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
 {
-    return parse_camiseta_line_format(line, out, "%d,%s");
+    return parse_camiseta_line_format(line, out, "%d,%255s");
 }
 
 static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
@@ -523,10 +523,7 @@ static int parse_lesion_line_format(const char *line, LesionData *out,
     char descripcion[512];
     char fecha[256];
 
-    if (sscanf_s(line, format, &id, jugador, (unsigned)_countof(jugador), tipo,
-                 (unsigned)_countof(tipo), descripcion,
-                 (unsigned)_countof(descripcion), fecha,
-                 (unsigned)_countof(fecha)) != 5)
+    if (sscanf(line, format, &id, jugador, tipo, descripcion, fecha) != 5)
     {
         return 0;
     }
@@ -542,12 +539,12 @@ static int parse_lesion_line_format(const char *line, LesionData *out,
 static int parse_lesion_txt_line(const char *line, LesionData *out)
 {
     return parse_lesion_line_format(line, out,
-                                    "%d - %[^|] | %[^|] | %[^|] | %[^\n]");
+                                    "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]");
 }
 
 static int parse_lesion_csv_line(const char *line, LesionData *out)
 {
-    return parse_lesion_line_format(line, out, "%d,%[^,],%[^,],%[^,],%s");
+    return parse_lesion_line_format(line, out, "%d,%255[^,],%255[^,],%511[^,],%255s");
 }
 
 static void importar_lesiones_desde_archivo(const char *filename, const char *formato,
@@ -613,9 +610,8 @@ static int parse_estadistica_line_format(const char *line, EstadisticaData *out,
     int empates;
     int derrotas;
 
-    if (sscanf_s(line, format, camiseta, (unsigned)_countof(camiseta), &goles,
-                 &asistencias, &partidos, &victorias, &empates,
-                 &derrotas) != 7)
+    if (sscanf(line, format, camiseta, &goles, &asistencias, &partidos,
+               &victorias, &empates, &derrotas) != 7)
     {
         return 0;
     }
@@ -633,12 +629,12 @@ static int parse_estadistica_line_format(const char *line, EstadisticaData *out,
 static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
 {
     return parse_estadistica_line_format(line, out,
-                                         "%[^|] | G:%d A:%d P:%d V:%d E:%d D:%d");
+                                         "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d");
 }
 
 static int parse_estadistica_csv_line(const char *line, EstadisticaData *out)
 {
-    return parse_estadistica_line_format(line, out, "%[^,],%d,%d,%d,%d,%d,%d");
+    return parse_estadistica_line_format(line, out, "%255[^,],%d,%d,%d,%d,%d,%d");
 }
 
 static void importar_estadisticas_desde_archivo(const char *filename, const char *formato,
