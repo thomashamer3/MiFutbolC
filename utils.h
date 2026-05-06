@@ -70,6 +70,36 @@ void input_string_extended(const char *msg, char *buffer, int size);
 void input_date(const char *msg, char *buffer, int size);
 
 /**
+ * @brief Prepara una sentencia SQLite usando la conexion global.
+ *
+ * @param stmt Recibe la sentencia preparada si la operacion tiene exito.
+ * @param sql Consulta SQL a preparar.
+ * @return 1 si la sentencia se preparo correctamente; 0 en caso contrario.
+ */
+int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql);
+
+/**
+ * @brief Prepara una sentencia SQLite e imprime un mensaje descriptivo si falla.
+ *
+ * @param stmt Recibe la sentencia preparada si la operacion tiene exito.
+ * @param sql Consulta SQL a preparar.
+ * @param error_message Mensaje base a mostrar junto al error de SQLite.
+ * @return 1 si la sentencia se preparo correctamente; 0 en caso contrario.
+ */
+int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
+                               const char *error_message);
+
+/**
+ * @brief Limita un valor flotante a un rango.
+ */
+float utils_clamp_float(float value, float minv, float maxv);
+
+/**
+ * @brief Limita un valor entero a un rango.
+ */
+int utils_clamp_int(int value, int minv, int maxv);
+
+/**
  * @brief Imprime texto en la UI (stdout).
  */
 int ui_printf(const char *fmt, ...);

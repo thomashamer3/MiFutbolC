@@ -15,60 +15,63 @@
 #include <strings.h>
 #endif
 
-static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
-}
-
 static void listar_canchas_simple(void);
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size);
+typedef void (*CanchaInputReader)(const char *prompt, char *buffer, int size);
+typedef int (*CanchaInputValidator)(const char *buffer);
 
-static void solicitar_campo_no_vacio(const char *prompt, char *buffer, int size)
+static int cancha_valor_no_vacio(const char *buffer)
+{
+    return buffer && buffer[0] != '\0';
+}
+
+static int cancha_telefono_valido(const char *buffer)
+{
+    if (!cancha_valor_no_vacio(buffer))
+    {
+        return 0;
+    }
+
+    for (int i = 0; buffer[i] != '\0'; i++)
+    {
+        if (isdigit((unsigned char)buffer[i]))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void solicitar_texto_validado(const char *prompt, char *buffer, int size,
+                                     CanchaInputReader reader,
+                                     CanchaInputValidator validator,
+                                     const char *error_message)
 {
     while (1)
     {
-        input_string_extended(prompt, buffer, size);
+        reader(prompt, buffer, size);
         trim_whitespace(buffer);
 
-        if (buffer[0] != '\0')
+        if (validator(buffer))
         {
             return;
         }
 
-        printf("El campo no puede estar vacio.\n");
+        printf("%s\n", error_message);
     }
+}
+
+static void solicitar_campo_no_vacio(const char *prompt, char *buffer, int size)
+{
+    solicitar_texto_validado(prompt, buffer, size, input_string_extended,
+                             cancha_valor_no_vacio, "El campo no puede estar vacio.");
 }
 
 static void solicitar_telefono_no_vacio(const char *prompt, char *buffer, int size)
 {
-    while (1)
-    {
-        input_string_extended(prompt, buffer, size);
-        trim_whitespace(buffer);
-
-        if (buffer[0] == '\0')
-        {
-            printf("El telefono no puede estar vacio.\n");
-            continue;
-        }
-
-        int tiene_digito = 0;
-        for (int i = 0; buffer[i] != '\0'; i++)
-        {
-            if (isdigit((unsigned char)buffer[i]))
-            {
-                tiene_digito = 1;
-                break;
-            }
-        }
-
-        if (tiene_digito)
-        {
-            return;
-        }
-
-        printf("El telefono debe contener al menos un numero.\n");
-    }
+    solicitar_texto_validado(prompt, buffer, size, input_string_extended,
+                             cancha_telefono_valido,
+                             "El telefono debe contener al menos un numero.");
 }
 
 #define TIPO_CANCHA_MULTI_BASE 1000
@@ -824,7 +827,7 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!db_prepare_stmt(&stmt,
                        "SELECT nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
                        "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
                        "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
@@ -965,7 +968,7 @@ static int actualizar_campo_texto_cancha(int id, const char *campo, const char *
     sqlite3_stmt *stmt;
 
     snprintf(sql, sizeof(sql), "UPDATE cancha SET %s = ? WHERE id = ?", campo);
-    if (!preparar_stmt(&stmt, sql))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -983,7 +986,7 @@ static int actualizar_campo_entero_cancha(int id, const char *campo, int valor)
     sqlite3_stmt *stmt;
 
     snprintf(sql, sizeof(sql), "UPDATE cancha SET %s = ? WHERE id = ?", campo);
-    if (!preparar_stmt(&stmt, sql))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -1001,7 +1004,7 @@ static int completar_informacion_cancha(int id)
     solicitar_datos_comunes_cancha(&info, 0);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!db_prepare_stmt(&stmt,
                        "UPDATE cancha "
                        "SET telefono = ?, direccion = ?, localidad = ?, tipo_cancha_codigo = ?, "
                        "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
@@ -1042,7 +1045,7 @@ static int completar_informacion_cancha(int id)
 static int contar_partidos_por_cancha(int cancha_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM partido WHERE cancha_id = ?"))
+    if (!db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM partido WHERE cancha_id = ?"))
     {
         return -1;
     }
@@ -1060,7 +1063,7 @@ static int contar_partidos_por_cancha(int cancha_id)
 static int contar_total_canchas_activas(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM cancha WHERE IFNULL(activa, 1) = 1"))
+    if (!db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM cancha WHERE IFNULL(activa, 1) = 1"))
     {
         return -1;
     }
@@ -1077,7 +1080,7 @@ static int contar_total_canchas_activas(void)
 static int cancha_esta_activa(int cancha_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT IFNULL(activa, 1) FROM cancha WHERE id = ?"))
+    if (!db_prepare_stmt(&stmt, "SELECT IFNULL(activa, 1) FROM cancha WHERE id = ?"))
     {
         return 0;
     }
@@ -1095,7 +1098,7 @@ static int cancha_esta_activa(int cancha_id)
 static int actualizar_estado_cancha(int cancha_id, int activa)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "UPDATE cancha SET activa = ? WHERE id = ?"))
+    if (!db_prepare_stmt(&stmt, "UPDATE cancha SET activa = ? WHERE id = ?"))
     {
         return 0;
     }
@@ -1110,7 +1113,7 @@ static int actualizar_estado_cancha(int cancha_id, int activa)
 static void listar_canchas_excluyendo(int cancha_excluida)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM cancha WHERE id <> ? AND IFNULL(activa, 1) = 1 ORDER BY id"))
+    if (!db_prepare_stmt(&stmt, "SELECT id, nombre FROM cancha WHERE id <> ? AND IFNULL(activa, 1) = 1 ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -1191,7 +1194,7 @@ static int reasignar_partidos_y_eliminar_cancha(int cancha_origen, int cancha_de
     sqlite3_stmt *stmt_update = NULL;
     sqlite3_stmt *stmt_delete = NULL;
 
-    if (!preparar_stmt(&stmt_update, "UPDATE partido SET cancha_id = ? WHERE cancha_id = ?"))
+    if (!db_prepare_stmt(&stmt_update, "UPDATE partido SET cancha_id = ? WHERE cancha_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -1206,7 +1209,7 @@ static int reasignar_partidos_y_eliminar_cancha(int cancha_origen, int cancha_de
     }
     sqlite3_finalize(stmt_update);
 
-    if (!preparar_stmt(&stmt_delete, "DELETE FROM cancha WHERE id = ?"))
+    if (!db_prepare_stmt(&stmt_delete, "DELETE FROM cancha WHERE id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -1239,7 +1242,7 @@ static int eliminar_cancha_y_partidos_asociados(int cancha_id)
     sqlite3_stmt *stmt_delete_partidos = NULL;
     sqlite3_stmt *stmt_delete_cancha = NULL;
 
-    if (!preparar_stmt(&stmt_delete_partidos, "DELETE FROM partido WHERE cancha_id = ?"))
+    if (!db_prepare_stmt(&stmt_delete_partidos, "DELETE FROM partido WHERE cancha_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -1253,7 +1256,7 @@ static int eliminar_cancha_y_partidos_asociados(int cancha_id)
     }
     sqlite3_finalize(stmt_delete_partidos);
 
-    if (!preparar_stmt(&stmt_delete_cancha, "DELETE FROM cancha WHERE id = ?"))
+    if (!db_prepare_stmt(&stmt_delete_cancha, "DELETE FROM cancha WHERE id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -1299,7 +1302,7 @@ static int obtener_ruta_imagen_cancha_db(int id, char *ruta, size_t size)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT imagen_ruta FROM cancha WHERE id=?"))
+    if (!db_prepare_stmt(&stmt, "SELECT imagen_ruta FROM cancha WHERE id=?"))
     {
         return 0;
     }
@@ -1337,16 +1340,8 @@ static int construir_ruta_absoluta_imagen_cancha_por_id(int id, char *ruta_absol
 
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
 {
-    while (1)
-    {
-        input_string(prompt, buffer, size);
-        trim_whitespace(buffer);
-
-        if (buffer[0] != '\0')
-            return;
-
-        printf("El nombre no puede estar vacio.\n");
-    }
+    solicitar_texto_validado(prompt, buffer, size, input_string,
+                             cancha_valor_no_vacio, "El nombre no puede estar vacio.");
 }
 
 static int cargar_imagen_para_cancha_id(int id)
@@ -1439,7 +1434,7 @@ void crear_cancha()
     long long id = obtener_siguiente_id("cancha");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
+    if (!db_prepare_stmt(&stmt,
                        "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
                        "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
                        "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
@@ -1516,7 +1511,7 @@ void listar_canchas()
         "GROUP BY c.id, c.nombre "
         "ORDER BY c.id;";
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -1557,7 +1552,7 @@ void listar_canchas()
 static void listar_canchas_simple()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1), IFNULL(tipo_cancha_codigo, 0) FROM cancha ORDER BY id"))
+    if (!db_prepare_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1), IFNULL(tipo_cancha_codigo, 0) FROM cancha ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -1585,7 +1580,7 @@ static void listar_canchas_simple()
 static int listar_canchas_con_info_pendiente(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM cancha ORDER BY id"))
+    if (!db_prepare_stmt(&stmt, "SELECT id, nombre FROM cancha ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return -1;
@@ -1739,7 +1734,7 @@ static void eliminar_cancha_sin_partidos_asociados(int id)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "DELETE FROM cancha WHERE id = ?"))
+    if (!db_prepare_stmt(&stmt, "DELETE FROM cancha WHERE id = ?"))
     {
         printf("Error al eliminar la cancha.\n");
         pause_console();

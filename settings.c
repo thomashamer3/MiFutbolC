@@ -59,44 +59,8 @@ static AppSettings current_settings =
     SETTINGS_MUSIC_VOLUME_STEP_DEFAULT
 };
 
-static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
-{
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
-}
-
 static void settings_apply_text_size();
 static void habilitar_menus_basicos_custom(void);
-
-static float clampf(float value, float minv, float maxv)
-{
-    if (value < minv)
-    {
-        return minv;
-    }
-    if (value > maxv)
-    {
-        return maxv;
-    }
-    return value;
-}
-
-static int clampi(int value, int minv, int maxv)
-{
-    if (value < minv)
-    {
-        return minv;
-    }
-    if (value > maxv)
-    {
-        return maxv;
-    }
-    return value;
-}
 
 static void set_theme_int(int value)
 {
@@ -138,79 +102,36 @@ static void aplicar_tema_texto_y_pausar(ThemeType theme, TextSizeType text_size)
     pause_console();
 }
 
+#define DEFINE_SETTING_ACTION(name, setter, value) \
+    static void name(void) \
+    { \
+        aplicar_config_y_pausar(setter, value); \
+    }
+
+#define DEFINE_THEME_TEXT_ACTION(name, theme, text_size) \
+    static void name(void) \
+    { \
+        aplicar_tema_texto_y_pausar(theme, text_size); \
+    }
+
 /* Wrappers para usar como acciones en MenuItem (sin argumentos) */
-static void theme_set_light()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_LIGHT);
-}
-static void theme_set_dark()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_DARK);
-}
-static void theme_set_blue()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_BLUE);
-}
-static void theme_set_green()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_GREEN);
-}
-static void theme_set_red()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_RED);
-}
-static void theme_set_purple()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_PURPLE);
-}
-static void theme_set_classic()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_CLASSIC);
-}
-static void theme_set_high_contrast()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
-}
-
-static void lang_set_spanish()
-{
-    aplicar_config_y_pausar(set_language_int, LANGUAGE_SPANISH);
-}
-static void lang_set_english()
-{
-    aplicar_config_y_pausar(set_language_int, LANGUAGE_ENGLISH);
-}
-
-static void text_size_small()
-{
-    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_SMALL);
-}
-static void text_size_medium()
-{
-    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_MEDIUM);
-}
-static void text_size_large()
-{
-    aplicar_config_y_pausar(set_text_size_int, TEXT_SIZE_LARGE);
-}
-
-static void accessibility_high_contrast()
-{
-    aplicar_config_y_pausar(set_theme_int, THEME_HIGH_CONTRAST);
-}
-static void accessibility_normal_theme_text()
-{
-    aplicar_tema_texto_y_pausar(THEME_LIGHT, TEXT_SIZE_MEDIUM);
-}
-
-static void mode_set_simple()
-{
-    aplicar_config_y_pausar(set_mode_int, MODE_SIMPLE);
-}
-static void mode_set_advanced()
-{
-    aplicar_config_y_pausar(set_mode_int, MODE_ADVANCED);
-}
+DEFINE_SETTING_ACTION(theme_set_light, set_theme_int, THEME_LIGHT)
+DEFINE_SETTING_ACTION(theme_set_dark, set_theme_int, THEME_DARK)
+DEFINE_SETTING_ACTION(theme_set_blue, set_theme_int, THEME_BLUE)
+DEFINE_SETTING_ACTION(theme_set_green, set_theme_int, THEME_GREEN)
+DEFINE_SETTING_ACTION(theme_set_red, set_theme_int, THEME_RED)
+DEFINE_SETTING_ACTION(theme_set_purple, set_theme_int, THEME_PURPLE)
+DEFINE_SETTING_ACTION(theme_set_classic, set_theme_int, THEME_CLASSIC)
+DEFINE_SETTING_ACTION(theme_set_high_contrast, set_theme_int, THEME_HIGH_CONTRAST)
+DEFINE_SETTING_ACTION(lang_set_spanish, set_language_int, LANGUAGE_SPANISH)
+DEFINE_SETTING_ACTION(lang_set_english, set_language_int, LANGUAGE_ENGLISH)
+DEFINE_SETTING_ACTION(text_size_small, set_text_size_int, TEXT_SIZE_SMALL)
+DEFINE_SETTING_ACTION(text_size_medium, set_text_size_int, TEXT_SIZE_MEDIUM)
+DEFINE_SETTING_ACTION(text_size_large, set_text_size_int, TEXT_SIZE_LARGE)
+DEFINE_SETTING_ACTION(accessibility_high_contrast, set_theme_int, THEME_HIGH_CONTRAST)
+DEFINE_THEME_TEXT_ACTION(accessibility_normal_theme_text, THEME_LIGHT, TEXT_SIZE_MEDIUM)
+DEFINE_SETTING_ACTION(mode_set_simple, set_mode_int, MODE_SIMPLE)
+DEFINE_SETTING_ACTION(mode_set_advanced, set_mode_int, MODE_ADVANCED)
 static void mode_set_custom()
 {
     settings_set_mode(MODE_CUSTOM);
@@ -538,7 +459,7 @@ void settings_init()
 
     ensure_settings_schema();
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -548,21 +469,21 @@ void settings_init()
             current_settings.text_size = sqlite3_column_int(stmt, 3);
             current_settings.music_autoplay = sqlite3_column_int(stmt, 4) ? 1 : 0;
             current_settings.music_volume =
-                clampf((float)sqlite3_column_double(stmt, 5), 0.0f, 1.0f);
+                utils_clamp_float((float)sqlite3_column_double(stmt, 5), 0.0f, 1.0f);
             current_settings.music_repeat_mode =
-                clampi(sqlite3_column_int(stmt, 6), 0, 3);
+                utils_clamp_int(sqlite3_column_int(stmt, 6), 0, 3);
             current_settings.music_eq_enabled = sqlite3_column_int(stmt, 7) ? 1 : 0;
             current_settings.music_eq_bass_db =
-                clampf((float)sqlite3_column_double(stmt, 8),
+                utils_clamp_float((float)sqlite3_column_double(stmt, 8),
                        SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_mid_db =
-                clampf((float)sqlite3_column_double(stmt, 9),
+                utils_clamp_float((float)sqlite3_column_double(stmt, 9),
                        SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_treble_db =
-                clampf((float)sqlite3_column_double(stmt, 10),
+                utils_clamp_float((float)sqlite3_column_double(stmt, 10),
                        SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_volume_step =
-                clampf((float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
+                utils_clamp_float((float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -588,30 +509,30 @@ void settings_save()
         ") VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
         sqlite3_bind_int(stmt, 1, current_settings.theme);
         sqlite3_bind_int(stmt, 2, current_settings.language);
         sqlite3_bind_int(stmt, 3, current_settings.mode);
         sqlite3_bind_int(stmt, 4, current_settings.text_size);
         sqlite3_bind_int(stmt, 5, current_settings.music_autoplay ? 1 : 0);
-        sqlite3_bind_double(stmt, 6, (double)clampf(current_settings.music_volume, 0.0f, 1.0f));
-        sqlite3_bind_int(stmt, 7, clampi(current_settings.music_repeat_mode, 0, 3));
+        sqlite3_bind_double(stmt, 6, (double)utils_clamp_float(current_settings.music_volume, 0.0f, 1.0f));
+        sqlite3_bind_int(stmt, 7, utils_clamp_int(current_settings.music_repeat_mode, 0, 3));
         sqlite3_bind_int(stmt, 8, current_settings.music_eq_enabled ? 1 : 0);
         sqlite3_bind_double(stmt, 9,
-                            (double)clampf(current_settings.music_eq_bass_db,
+                            (double)utils_clamp_float(current_settings.music_eq_bass_db,
                                            SETTINGS_MUSIC_EQ_DB_MIN,
                                            SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 10,
-                            (double)clampf(current_settings.music_eq_mid_db,
+                            (double)utils_clamp_float(current_settings.music_eq_mid_db,
                                            SETTINGS_MUSIC_EQ_DB_MIN,
                                            SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 11,
-                            (double)clampf(current_settings.music_eq_treble_db,
+                            (double)utils_clamp_float(current_settings.music_eq_treble_db,
                                            SETTINGS_MUSIC_EQ_DB_MIN,
                                            SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 12,
-                            (double)clampf(current_settings.music_volume_step, 0.01f, 0.20f));
+                            (double)utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f));
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -678,24 +599,24 @@ int settings_get_music_autoplay(void)
 
 void settings_set_music_volume(float volume)
 {
-    current_settings.music_volume = clampf(volume, 0.0f, 1.0f);
+    current_settings.music_volume = utils_clamp_float(volume, 0.0f, 1.0f);
     settings_save();
 }
 
 float settings_get_music_volume(void)
 {
-    return clampf(current_settings.music_volume, 0.0f, 1.0f);
+    return utils_clamp_float(current_settings.music_volume, 0.0f, 1.0f);
 }
 
 void settings_set_music_repeat_mode(int mode)
 {
-    current_settings.music_repeat_mode = clampi(mode, 0, 3);
+    current_settings.music_repeat_mode = utils_clamp_int(mode, 0, 3);
     settings_save();
 }
 
 int settings_get_music_repeat_mode(void)
 {
-    return clampi(current_settings.music_repeat_mode, 0, 3);
+    return utils_clamp_int(current_settings.music_repeat_mode, 0, 3);
 }
 
 void settings_set_music_eq_enabled(int enabled)
@@ -712,13 +633,13 @@ int settings_get_music_eq_enabled(void)
 void settings_set_music_eq_bass_db(float gain_value)
 {
     current_settings.music_eq_bass_db =
-        clampf(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     settings_save();
 }
 
 float settings_get_music_eq_bass_db(void)
 {
-    return clampf(current_settings.music_eq_bass_db,
+    return utils_clamp_float(current_settings.music_eq_bass_db,
                   SETTINGS_MUSIC_EQ_DB_MIN,
                   SETTINGS_MUSIC_EQ_DB_MAX);
 }
@@ -726,13 +647,13 @@ float settings_get_music_eq_bass_db(void)
 void settings_set_music_eq_mid_db(float gain_value)
 {
     current_settings.music_eq_mid_db =
-        clampf(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     settings_save();
 }
 
 float settings_get_music_eq_mid_db(void)
 {
-    return clampf(current_settings.music_eq_mid_db,
+    return utils_clamp_float(current_settings.music_eq_mid_db,
                   SETTINGS_MUSIC_EQ_DB_MIN,
                   SETTINGS_MUSIC_EQ_DB_MAX);
 }
@@ -740,13 +661,13 @@ float settings_get_music_eq_mid_db(void)
 void settings_set_music_eq_treble_db(float gain_value)
 {
     current_settings.music_eq_treble_db =
-        clampf(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     settings_save();
 }
 
 float settings_get_music_eq_treble_db(void)
 {
-    return clampf(current_settings.music_eq_treble_db,
+    return utils_clamp_float(current_settings.music_eq_treble_db,
                   SETTINGS_MUSIC_EQ_DB_MIN,
                   SETTINGS_MUSIC_EQ_DB_MAX);
 }
@@ -755,23 +676,23 @@ void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, flo
 {
     current_settings.music_eq_enabled = enabled ? 1 : 0;
     current_settings.music_eq_bass_db =
-        clampf(bass_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(bass_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     current_settings.music_eq_mid_db =
-        clampf(mid_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(mid_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     current_settings.music_eq_treble_db =
-        clampf(treble_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+        utils_clamp_float(treble_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     settings_save();
 }
 
 void settings_set_music_volume_step(float step)
 {
-    current_settings.music_volume_step = clampf(step, 0.01f, 0.20f);
+    current_settings.music_volume_step = utils_clamp_float(step, 0.01f, 0.20f);
     settings_save();
 }
 
 float settings_get_music_volume_step(void)
 {
-    return clampf(current_settings.music_volume_step, 0.01f, 0.20f);
+    return utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f);
 }
 
 static WORD get_theme_color(ThemeType theme)
@@ -1842,7 +1763,7 @@ static void reset_settings_to_defaults()
         // Limpiar nombre de usuario tambien
         sqlite3_stmt *stmt;
         const char *sql = "DELETE FROM usuario;";
-        if (preparar_stmt(sql, &stmt))
+        if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
         {
             sqlite3_step(stmt);
             sqlite3_finalize(stmt);
@@ -1864,7 +1785,7 @@ int is_custom_menu_enabled(const char* menu_name)
     const char *sql = "SELECT enabled FROM custom_menus WHERE menu_name = ?;";
     int enabled = 0;
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
         sqlite3_bind_text(stmt, 1, menu_name, -1, SQLITE_STATIC);
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1882,7 +1803,7 @@ void set_custom_menu_enabled(const char* menu_name, int enabled)
     sqlite3_stmt *stmt;
     const char *sql = "INSERT OR REPLACE INTO custom_menus (menu_name, enabled) VALUES (?, ?);";
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
         sqlite3_bind_text(stmt, 1, menu_name, -1, SQLITE_STATIC);
         sqlite3_bind_int(stmt, 2, enabled);

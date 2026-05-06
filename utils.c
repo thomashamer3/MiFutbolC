@@ -61,13 +61,54 @@ void ensure_console_maximized_windows(void)
 }
 #endif
 
-static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
+int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
     {
         return 0;
     }
     return 1;
+}
+
+int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
+                               const char *error_message)
+{
+    if (db_prepare_stmt(stmt, sql))
+    {
+        return 1;
+    }
+
+    if (error_message)
+    {
+        printf("%s: %s\n", error_message, sqlite3_errmsg(db));
+    }
+    return 0;
+}
+
+float utils_clamp_float(float value, float minv, float maxv)
+{
+    if (value < minv)
+    {
+        return minv;
+    }
+    if (value > maxv)
+    {
+        return maxv;
+    }
+    return value;
+}
+
+int utils_clamp_int(int value, int minv, int maxv)
+{
+    if (value < minv)
+    {
+        return minv;
+    }
+    if (value > maxv)
+    {
+        return maxv;
+    }
+    return value;
 }
 
 static uint64_t auth_fnv1a64_update(uint64_t hash, const unsigned char *data, size_t len)
@@ -1139,7 +1180,7 @@ int existe_id(const char *tabla, int id)
     char sql[128];
 
     snprintf(sql, sizeof(sql), "SELECT 1 FROM %s WHERE id=?", tabla);
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -2610,7 +2651,7 @@ int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
 
     snprintf(sql, sizeof(sql), "SELECT nombre FROM %s WHERE id = ?", tabla);
 
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -2649,7 +2690,7 @@ long long obtener_siguiente_id(const char *tabla)
              "SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM %s)",
              tabla, tabla);
 
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 1;
     }
@@ -2671,7 +2712,7 @@ int hay_registros(const char *tabla)
     if (!tabla) return 0;
 
     snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", tabla);
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return 0;
     }
@@ -2692,7 +2733,7 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
     if (!tabla || !nombre) return -1;
 
     snprintf(sql, sizeof(sql), "SELECT id FROM %s WHERE nombre = ?", tabla);
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return -1;
     }
@@ -2716,7 +2757,7 @@ void listar_entidades(const char *tabla, const char *titulo, const char *mensaje
     sqlite3_stmt *stmt;
     char sql[256];
     snprintf(sql, sizeof(sql), "SELECT id, nombre FROM %s ORDER BY id", tabla);
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         pause_console();
         return;
@@ -2792,7 +2833,7 @@ char* trim_trailing_spaces(char *str)
 sqlite3_stmt* execute_query(const char *sql)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt(&stmt, sql))
     {
         return NULL;
     }
@@ -2804,7 +2845,7 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre FROM equipo ORDER BY id;";
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt(&stmt, sql))
     {
         ui_printf_centered_line("=== EQUIPOS DISPONIBLES ===");
         ui_printf("\n");
@@ -3079,7 +3120,7 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
              "JOIN cancha can ON p.cancha_id = can.id %s",
              order_by);
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -3114,7 +3155,7 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
              "JOIN cancha can ON p.cancha_id = can.id %s",
              order_by);
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -3149,7 +3190,7 @@ void exportar_partido_especifico_json(const char *order_by, const char *filename
              "JOIN cancha can ON p.cancha_id = can.id %s",
              order_by);
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -3191,7 +3232,7 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
              "JOIN cancha can ON p.cancha_id = can.id %s",
              order_by);
 
-    if (preparar_stmt(sql, &stmt))
+    if (db_prepare_stmt(&stmt, sql))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {

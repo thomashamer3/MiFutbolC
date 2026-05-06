@@ -6,16 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
-{
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
-}
-
 typedef struct
 {
     const char *nombre;
@@ -291,7 +281,7 @@ static int ejecutar_consulta_progreso(const char *sql, int camiseta_id)
     sqlite3_stmt *stmt;
     int progreso = 0;
 
-    if (!preparar_stmt(sql, &stmt))
+    if (!db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
         return 0;
     }
@@ -425,7 +415,9 @@ static void listar_camisetas_con_partidos()
 {
     ui_printf_centered_line("Camisetas disponibles:");
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id", &stmt))
+    if (!db_prepare_stmt_with_error(&stmt,
+                                    "SELECT DISTINCT c.id, c.nombre FROM camiseta c INNER JOIN partido p ON c.id = p.camiseta_id ORDER BY c.id",
+                                    "Error al preparar la consulta"))
     {
         pause_console();
         return;
@@ -511,10 +503,10 @@ int logros_get_completados_primera_camiseta(void)
     sqlite3_stmt *stmt;
     int camiseta_id = -1;
 
-    if (preparar_stmt(
-                "SELECT camiseta_id FROM partido "
-                "GROUP BY camiseta_id ORDER BY COUNT(*) DESC LIMIT 1;",
-                &stmt))
+    if (db_prepare_stmt_with_error(&stmt,
+                                   "SELECT camiseta_id FROM partido "
+                                   "GROUP BY camiseta_id ORDER BY COUNT(*) DESC LIMIT 1;",
+                                   "Error al preparar la consulta"))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
