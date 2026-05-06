@@ -462,7 +462,13 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
     int id;
     char nombre[256];
 
-    if (!line || sscanf(line, "%d - %255s", &id, nombre) != 2)
+    if (!line)
+        return 0;
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%d - %255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+#else
+    if (sscanf(line, "%d - %255s", &id, nombre) != 2)
+#endif
         return 0;
 
     return parse_camiseta_data(id, nombre, out);
@@ -473,7 +479,13 @@ static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
     int id;
     char nombre[256];
 
-    if (!line || sscanf(line, "%d,%255s", &id, nombre) != 2)
+    if (!line)
+        return 0;
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%d,%255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+#else
+    if (sscanf(line, "%d,%255s", &id, nombre) != 2)
+#endif
         return 0;
 
     return parse_camiseta_data(id, nombre, out);
@@ -538,9 +550,20 @@ static int parse_lesion_txt_line(const char *line, LesionData *out)
     char descripcion[512];
     char fecha[256];
 
-    if (!line ||
-        sscanf(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
+    if (!line)
+    {
+        return 0;
+    }
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
+                 &id, jugador, (unsigned)_countof(jugador),
+                 tipo, (unsigned)_countof(tipo),
+                 descripcion, (unsigned)_countof(descripcion),
+                 fecha, (unsigned)_countof(fecha)) != 5)
+#else
+    if (sscanf(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
                &id, jugador, tipo, descripcion, fecha) != 5)
+#endif
     {
         return 0;
     }
@@ -556,8 +579,20 @@ static int parse_lesion_csv_line(const char *line, LesionData *out)
     char descripcion[512];
     char fecha[256];
 
-    if (!line || sscanf(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
-                         &id, jugador, tipo, descripcion, fecha) != 5)
+    if (!line)
+    {
+        return 0;
+    }
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
+                 &id, jugador, (unsigned)_countof(jugador),
+                 tipo, (unsigned)_countof(tipo),
+                 descripcion, (unsigned)_countof(descripcion),
+                 fecha, (unsigned)_countof(fecha)) != 5)
+#else
+    if (sscanf(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
+               &id, jugador, tipo, descripcion, fecha) != 5)
+#endif
     {
         return 0;
     }
@@ -633,10 +668,20 @@ static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
 {
     EstadisticaData parsed;
 
-    if (!line ||
-        sscanf(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d",
+    if (!line)
+    {
+        return 0;
+    }
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d",
+                 parsed.camiseta, (unsigned)_countof(parsed.camiseta),
+                 &parsed.goles, &parsed.asistencias, &parsed.partidos,
+                 &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
+#else
+    if (sscanf(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d",
                parsed.camiseta, &parsed.goles, &parsed.asistencias, &parsed.partidos,
                &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
+#endif
     {
         return 0;
     }
@@ -648,10 +693,21 @@ static int parse_estadistica_csv_line(const char *line, EstadisticaData *out)
 {
     EstadisticaData parsed;
 
-    if (!line || sscanf(line, "%255[^,],%d,%d,%d,%d,%d,%d",
-                         parsed.camiseta, &parsed.goles, &parsed.asistencias,
-                         &parsed.partidos, &parsed.victorias, &parsed.empates,
-                         &parsed.derrotas) != 7)
+    if (!line)
+    {
+        return 0;
+    }
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(line, "%255[^,],%d,%d,%d,%d,%d,%d",
+                 parsed.camiseta, (unsigned)_countof(parsed.camiseta),
+                 &parsed.goles, &parsed.asistencias, &parsed.partidos,
+                 &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
+#else
+    if (sscanf(line, "%255[^,],%d,%d,%d,%d,%d,%d",
+               parsed.camiseta, &parsed.goles, &parsed.asistencias,
+               &parsed.partidos, &parsed.victorias, &parsed.empates,
+               &parsed.derrotas) != 7)
+#endif
     {
         return 0;
     }

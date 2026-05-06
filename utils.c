@@ -25,7 +25,7 @@
 #endif
 #define MKDIR(path) _mkdir(path)
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #include <commdlg.h>
 #include <bcrypt.h>
 #else
@@ -740,7 +740,7 @@ int input_int(const char *msg)
 
         char extra = '\0';
 #if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf(buffer, "%d %c", &v, &extra) == 1)
+        if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
 #else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
 #endif
@@ -767,13 +767,6 @@ size_t safe_strnlen(const char *s, size_t maxlen)
     }
     return i;
 }
-
-#if !defined(__STDC_LIB_EXT1__)
-size_t strlen_s(const char *s, size_t maxlen)
-{
-    return safe_strnlen(s, maxlen);
-}
-#endif
 
 /**
  * Determina si un punto en la posicion dada es un separador de miles o decimal.
@@ -899,7 +892,11 @@ double input_double(const char *msg)
 
         process_numeric_input(buffer, processed, sizeof(processed));
 
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(processed, "%lf", &v) == 1)
+#else
         if (sscanf(processed, "%lf", &v) == 1)
+#endif
             return v;
         ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
                   "12.500, 250.000): ");
@@ -2419,7 +2416,11 @@ void format_date_with_weekday_for_display(const char *input_date, char *output_b
         int dia = 0;
         int mes = 0;
         int anio = 0;
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(fecha_formateada, "%2d/%2d/%4d", &dia, &mes, &anio) == 3)
+#else
         if (sscanf(fecha_formateada, "%2d/%2d/%4d", &dia, &mes, &anio) == 3)
+#endif
         {
             struct tm tm_fecha = {0};
             tm_fecha.tm_mday = dia;

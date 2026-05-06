@@ -271,13 +271,10 @@ char* remover_tildes(const char *str);
  */
 size_t safe_strnlen(const char *s, size_t maxlen);
 
-/* Declare strlen_s only when Annex K is not present. On non-Windows builds
- * compat_port.h provides a static inline implementation; on Windows we may
- * need a regular prototype so code that expects a non-static symbol links. */
-#if !defined(__STDC_LIB_EXT1__)
-#ifdef _WIN32
-size_t strlen_s(const char *s, size_t maxlen);
-#endif
+/* On Windows builds without Annex K, use the local bounded-length helper
+ * instead of declaring another global strlen_s symbol. */
+#if !defined(__STDC_LIB_EXT1__) && defined(_WIN32)
+#define strlen_s safe_strnlen
 #endif
 
 /**
