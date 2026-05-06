@@ -5,6 +5,7 @@
 
 #include "musica.h"
 #include "musica_helpers.h"
+#include "db.h"
 #include "utils.h"
 #include "settings.h"
 #include "ascii_art.h"
@@ -40,7 +41,7 @@ void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, flo
 #endif
 
 /* ---- Constantes ---- */
-#define MUSICA_DIR    "Musica"
+#define MUSICA_DIR_FALLBACK "Musica"
 #define MAX_PISTAS    256
 #define MAX_NOMBRE    512
 #define MAX_RUTA      512
@@ -149,6 +150,18 @@ static FadeAccion g_fade_accion = FADE_ACCION_NINGUNA;
 static int g_fade_indice_objetivo = -1;
 static int g_fade_reproducir_objetivo = 0;
 static ma_uint64 g_fade_deadline_ms = 0;
+
+static const char *musica_get_dir(void)
+{
+    const char *dir = get_music_dir();
+    if (dir && dir[0] != '\0')
+    {
+        return dir;
+    }
+    return MUSICA_DIR_FALLBACK;
+}
+
+#define MUSICA_DIR musica_get_dir()
 
 /* ============================================================
  * Utilidades internas
@@ -1952,13 +1965,22 @@ static void cargar_playlist_archivo(const char *nombre_txt)
             continue;
 
         /* Verificar que el archivo exista */
+        const char *music_dir = MUSICA_DIR;
         char ruta_audio[MAX_RUTA];
+        size_t max_nombre_len = 0;
+        size_t dir_len = strlen_s(music_dir, MAX_RUTA * 4);
+        if (sizeof(ruta_audio) > dir_len + 2)
+        {
+            max_nombre_len = sizeof(ruta_audio) - dir_len - 2;
+        }
+        if (max_nombre_len == 0)
+        {
+            continue;
+        }
 #ifdef _WIN32
-        snprintf(ruta_audio, sizeof(ruta_audio), "%s\\%.*s", MUSICA_DIR,
-                 (int)(sizeof(ruta_audio) - (sizeof(MUSICA_DIR) - 1) - 2), linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s\\%.*s", music_dir, (int)max_nombre_len, linea);
 #else
-        snprintf(ruta_audio, sizeof(ruta_audio), "%s/%.*s", MUSICA_DIR,
-                 (int)(sizeof(ruta_audio) - (sizeof(MUSICA_DIR) - 1) - 2), linea);
+        snprintf(ruta_audio, sizeof(ruta_audio), "%s/%.*s", music_dir, (int)max_nombre_len, linea);
 #endif
         FILE *chk = NULL;
         FOPEN_PORTABLE(chk, ruta_audio, "rb");

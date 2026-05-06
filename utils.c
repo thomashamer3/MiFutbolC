@@ -25,7 +25,8 @@
 #endif
 #define MKDIR(path) _mkdir(path)
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
+#include <commdlg.h>
 #include <bcrypt.h>
 #else
 #include "compat_windows.h"
@@ -1158,7 +1159,25 @@ int existe_id(const char *tabla, int id)
  */
 void clear_screen()
 {
-    printf("\033[2J\033[H");
+#ifdef _WIN32
+    HANDLE h_out = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (h_out != INVALID_HANDLE_VALUE)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (GetConsoleScreenBufferInfo(h_out, &csbi))
+        {
+            DWORD total_cells = (DWORD)csbi.dwSize.X * (DWORD)csbi.dwSize.Y;
+            COORD origin = {0, 0};
+            DWORD written = 0;
+
+            FillConsoleOutputCharacterA(h_out, ' ', total_cells, origin, &written);
+            FillConsoleOutputAttribute(h_out, csbi.wAttributes, total_cells, origin, &written);
+            SetConsoleCursorPosition(h_out, origin);
+            return;
+        }
+    }
+#endif
+    printf("\033[2J\033[3J\033[H");
     fflush(stdout);
 }
 
@@ -2368,6 +2387,59 @@ void format_date_for_display(const char *input_date, char *output_buffer,
     strncpy_s(output_buffer, buffer_size, input_date, buffer_size - 1);
 }
 
+void format_date_with_weekday_for_display(const char *input_date, char *output_buffer,
+        int buffer_size)
+{
+    static const char *dias_semana[] =
+    {
+        "Domingo", "Lunes", "Martes", "Miercoles",
+        "Jueves", "Viernes", "Sabado"
+    };
+
+    if (!output_buffer || buffer_size <= 0)
+    {
+        return;
+    }
+
+    output_buffer[0] = '\0';
+    if (!input_date)
+    {
+        return;
+    }
+
+    char fecha_formateada[32] = {0};
+    format_date_for_display(input_date, fecha_formateada, sizeof(fecha_formateada));
+    if (fecha_formateada[0] == '\0')
+    {
+        return;
+    }
+
+    if (safe_strnlen(fecha_formateada, sizeof(fecha_formateada)) >= 10)
+    {
+        int dia = 0;
+        int mes = 0;
+        int anio = 0;
+        if (sscanf_s(fecha_formateada, "%2d/%2d/%4d", &dia, &mes, &anio) == 3)
+        {
+            struct tm tm_fecha = {0};
+            tm_fecha.tm_mday = dia;
+            tm_fecha.tm_mon = mes - 1;
+            tm_fecha.tm_year = anio - 1900;
+
+            if (mktime(&tm_fecha) != (time_t)-1 &&
+                    tm_fecha.tm_wday >= 0 &&
+                    tm_fecha.tm_wday <= 6)
+            {
+                snprintf(output_buffer, (size_t)buffer_size, "%s %s",
+                         dias_semana[tm_fecha.tm_wday], fecha_formateada);
+                return;
+            }
+        }
+    }
+
+    strncpy_s(output_buffer, buffer_size, fecha_formateada, _TRUNCATE);
+}
+
 /**
  * Convierte fechas ingresadas por el usuario a un formato interno consistente,
  * facilitando el almacenamiento y procesamiento uniforme.
@@ -3536,6 +3608,112 @@ int app_command_exists_public(const char *cmd)
     return app_command_exists(cmd);
 }
 
+#ifndef _WIN32
+static int app_spawn_command_posix(const char *command, const char *arg1, const char *arg2)
+{
+    if (!command || command[0] == '\0')
+    {
+        return 0;
+    }
+
+    char *argv[4] = {0};
+    int argc = 0;
+    argv[argc++] = (char *)command;
+    if (arg1 && arg1[0] != '\0')
+    {
+        argv[argc++] = (char *)arg1;
+    }
+    if (arg2 && arg2[0] != '\0')
+    {
+        argv[argc++] = (char *)arg2;
+    }
+
+    pid_t pid = (pid_t)0;
+    if (posix_spawnp(&pid, command, NULL, NULL, argv, environ) != 0)
+    {
+        return 0;
+    }
+
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0)
+    {
+        return 0;
+    }
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+#endif
+
+int app_open_with_command(const char *command, const char *path)
+{
+    if (!path || path[0] == '\0' || !app_validate_file_exists(path))
+    {
+        return 0;
+    }
+
+    if (!command || command[0] == '\0')
+    {
+        return app_open_with_default_app(path);
+    }
+
+    if (!app_command_has_safe_chars(command))
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    if (!app_command_exists_windows(command))
+    {
+        return 0;
+    }
+
+    char parameters[2048];
+    int n = snprintf(parameters, sizeof(parameters), "\"%s\"", path);
+    if (n <= 0 || (size_t)n >= sizeof(parameters))
+    {
+        return 0;
+    }
+
+    HINSTANCE h = ShellExecuteA(NULL, "open", command, parameters, NULL, SW_SHOWNORMAL);
+    return (INT_PTR)h > 32;
+#else
+    if (!app_command_exists_posix(command))
+    {
+        return 0;
+    }
+
+    if (strcmp(command, "gio") == 0)
+    {
+        return app_spawn_command_posix(command, "open", path);
+    }
+
+    return app_spawn_command_posix(command, path, NULL);
+#endif
+}
+
+int app_open_with_default_app(const char *path)
+{
+    if (!path || path[0] == '\0' || !app_validate_file_exists(path))
+    {
+        return 0;
+    }
+
+#ifdef _WIN32
+    HINSTANCE h = ShellExecuteA(NULL, "open", path, NULL, NULL, SW_SHOWNORMAL);
+    return (INT_PTR)h > 32;
+#else
+    const char *commands[] = {"xdg-open", "gio", NULL};
+    for (int i = 0; commands[i] != NULL; i++)
+    {
+        if (app_open_with_command(commands[i], path))
+        {
+            return 1;
+        }
+    }
+    return 0;
+#endif
+}
+
 void app_build_path(char *dest, size_t size, const char *dir, const char *file_name)
 {
     if (!dest || size == 0)
@@ -3762,39 +3940,40 @@ static int appSeleccionarArchivoImagen(char *ruta, size_t size)
     }
 
 #ifdef _WIN32
-    const char *arch_temp = "mifutbol_imagen_sel_temp.txt";
-    remove(arch_temp);
+    char file_buffer[MAX_PATH] = {0};
+    char initial_dir[MAX_PATH] = {0};
 
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "powershell -NoProfile -Command \""
-             "Add-Type -AssemblyName System.Windows.Forms; "
-             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
-             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Pictures'); "
-             "$dlg.Filter = 'Images|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Todos|*.*'; "
-             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) "
-             "{ [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
-             arch_temp);
+    if (app_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
+    {
+        strcat_s(initial_dir, sizeof(initial_dir), "\\Pictures");
+    }
 
-    system(cmd);
+    static const char filter[] =
+        "Imagenes (*.jpg;*.jpeg;*.png;*.bmp;*.webp)\0*.jpg;*.jpeg;*.png;*.bmp;*.webp\0"
+        "Todos los archivos (*.*)\0*.*\0";
 
-    FILE *f = NULL;
-    if (fopen_s(&f, arch_temp, "r") != 0 || !f)
+    OPENFILENAMEA ofn;
+    memset(&ofn, 0, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = file_buffer;
+    ofn.nMaxFile = (DWORD)sizeof(file_buffer);
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrInitialDir = initial_dir[0] ? initial_dir : NULL;
+
+    if (!GetOpenFileNameA(&ofn))
     {
         return 0;
     }
 
-    if (!fgets(ruta, (int)size, f))
+    if (strncpy_s(ruta, size, file_buffer, _TRUNCATE) != 0)
     {
-        fclose(f);
-        remove(arch_temp);
         return 0;
     }
 
-    fclose(f);
-    remove(arch_temp);
     trim_whitespace(ruta);
-    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    if (!app_validate_file_exists(ruta))
     {
         return 0;
     }

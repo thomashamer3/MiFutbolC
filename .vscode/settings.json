@@ -15,5 +15,9 @@
     "codeQL.createQuery.qlPackLocation": "d:\\ANIME\\Libros\\Lenguaje C\\Proyectos\\MiFutbolC",
     "codeQL.githubDatabase.download": "never",
     "livePreview.defaultPreviewPath": "/manual_usuario.html",
-    "sarif-viewer.connectToGithubCodeScanning": "on"
+    "sarif-viewer.connectToGithubCodeScanning": "on",
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": true,
+    "cmake.configurePreset": "mingw-ninja-debug",
+    "cmake.buildPreset": "build-debug"
 }

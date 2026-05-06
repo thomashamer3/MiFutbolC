@@ -189,6 +189,9 @@ static char IMPORT_DIR[1024];
 /** Directorio de imagenes */
 static char IMAGES_DIR[1024];
 
+/** Directorio de musica */
+static char MUSIC_DIR[1024];
+
 /** Usuario local activo para enrutar la base por perfil */
 static char ACTIVE_USER[128];
 
@@ -547,6 +550,36 @@ static int create_database_connection()
     }
     snprintf(log_buf_, sizeof(log_buf_), "Conexion SQLite abierta en %.996s", DB_PATH);
     app_log_write("INFO", "DB", log_buf_);
+    return 1;
+}
+
+static int apply_database_tuning()
+{
+    if (sqlite3_busy_timeout(db, 5000) != SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo configurar busy timeout: %s", sqlite3_errmsg(db));
+        app_log_write("ERROR", "DB", log_buf_);
+        return 0;
+    }
+
+    const char *pragma_statements[] =
+    {
+        "PRAGMA temp_store = MEMORY;",
+        "PRAGMA cache_size = -8192;",
+        "PRAGMA automatic_index = ON;",
+        NULL
+    };
+
+    for (int i = 0; pragma_statements[i] != NULL; i++)
+    {
+        if (sqlite3_exec(db, pragma_statements[i], NULL, NULL, NULL) != SQLITE_OK)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA '%s': %s", pragma_statements[i], sqlite3_errmsg(db));
+            app_log_write("ERROR", "DB", log_buf_);
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -1168,6 +1201,44 @@ static void add_missing_columns()
     }
 }
 
+static int create_performance_indexes()
+{
+    const char *index_statements[] =
+    {
+        "CREATE INDEX IF NOT EXISTS idx_partido_fecha_hora ON partido(fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_cancha_fecha ON partido(cancha_id, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta_fecha ON partido(camiseta_id, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_lesion_camiseta_fecha ON lesion(camiseta_id, fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_lesion_partido_id ON lesion(partido_id);",
+        "CREATE INDEX IF NOT EXISTS idx_jugador_equipo_numero ON jugador(equipo_id, numero);",
+        "CREATE INDEX IF NOT EXISTS idx_equipo_torneo_equipo_id ON equipo_torneo(equipo_id);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_torneo_torneo_fase ON partido_torneo(torneo_id, fase);",
+        "CREATE INDEX IF NOT EXISTS idx_jugador_estadisticas_jugador_torneo ON jugador_estadisticas(jugador_id, torneo_id);",
+        "CREATE INDEX IF NOT EXISTS idx_torneo_temporada_temporada_orden ON torneo_temporada(temporada_id, orden_en_temporada);",
+        NULL
+    };
+
+    for (int i = 0; index_statements[i] != NULL; i++)
+    {
+        if (sqlite3_exec(db, index_statements[i], NULL, NULL, NULL) != SQLITE_OK)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Fallo creando indice '%s': %s", index_statements[i], sqlite3_errmsg(db));
+            app_log_write("ERROR", "DB", log_buf_);
+            return 0;
+        }
+    }
+
+    if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s", sqlite3_errmsg(db));
+        app_log_write("ERROR", "DB", log_buf_);
+        return 0;
+    }
+
+    app_log_write("INFO", "DB", "Indices de rendimiento validados/creados");
+    return 1;
+}
+
 int db_init()
 {
     app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
@@ -1184,6 +1255,12 @@ int db_init()
         return 0;
     }
 
+    if (!apply_database_tuning())
+    {
+        app_log_write("ERROR", "APP", "Fallo apply_database_tuning");
+        return 0;
+    }
+
     if (!create_database_schema())
     {
         app_log_write("ERROR", "APP", "Fallo create_database_schema");
@@ -1193,10 +1270,17 @@ int db_init()
     add_missing_columns();
     app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
 
+    if (!create_performance_indexes())
+    {
+        app_log_write("ERROR", "APP", "Fallo create_performance_indexes");
+        return 0;
+    }
+
     // Crear directorios de importacion y exportacion al iniciar
     get_import_dir();
     get_export_dir();
     get_images_dir();
+    get_music_dir();
 
     app_log_write("INFO", "APP", "Inicializacion de base de datos completada");
 
@@ -1408,12 +1492,21 @@ const char *get_data_dir()
 
 const char *get_export_dir()
 {
+#ifdef _WIN32
+    if (!configurar_directorio_usuario(NULL,
+                                       NULL,
+                                       "Exportaciones",
+                                       EXPORT_DIR,
+                                       sizeof(EXPORT_DIR),
+                                       "Exportaciones"))
+#else
     if (!configurar_directorio_usuario("./Exportaciones",
                                        NULL,
                                        "Exportaciones",
                                        EXPORT_DIR,
                                        sizeof(EXPORT_DIR),
                                        "Exportaciones"))
+#endif
     {
         return NULL;
     }
@@ -1423,12 +1516,21 @@ const char *get_export_dir()
 
 const char *get_import_dir()
 {
+#ifdef _WIN32
+    if (!configurar_directorio_usuario(NULL,
+                                       NULL,
+                                       "Importaciones",
+                                       IMPORT_DIR,
+                                       sizeof(IMPORT_DIR),
+                                       "Importaciones"))
+#else
     if (!configurar_directorio_usuario("./Importaciones",
                                        "./importaciones",
                                        "Importaciones",
                                        IMPORT_DIR,
                                        sizeof(IMPORT_DIR),
                                        "Importaciones"))
+#endif
     {
         return NULL;
     }
@@ -1449,6 +1551,30 @@ const char *get_images_dir()
     }
 
     return IMAGES_DIR;
+}
+
+const char *get_music_dir()
+{
+#ifdef _WIN32
+    if (!configurar_directorio_usuario(NULL,
+                                       NULL,
+                                       "Musica",
+                                       MUSIC_DIR,
+                                       sizeof(MUSIC_DIR),
+                                       "Musica"))
+#else
+    if (!configurar_directorio_usuario("./Musica",
+                                       NULL,
+                                       "Musica",
+                                       MUSIC_DIR,
+                                       sizeof(MUSIC_DIR),
+                                       "Musica"))
+#endif
+    {
+        return NULL;
+    }
+
+    return MUSIC_DIR;
 }
 
 int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)

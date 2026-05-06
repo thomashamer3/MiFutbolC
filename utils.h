@@ -227,6 +227,19 @@ void menu_usuario();
 void format_date_for_display(const char *input_date, char *output_buffer, int buffer_size);
 
 /**
+ * @brief Formatea fecha para mostrar incluyendo dia de la semana
+ *
+ * Toma una fecha en formato de almacenamiento o visualizacion y produce
+ * una salida tipo "Domingo dd/mm/yyyy hh:mm" cuando puede resolver el dia.
+ * Si no puede resolverlo, conserva solo la fecha formateada.
+ *
+ * @param input_date Fecha de entrada
+ * @param output_buffer Buffer de salida
+ * @param buffer_size Tamaño maximo del buffer
+ */
+void format_date_with_weekday_for_display(const char *input_date, char *output_buffer, int buffer_size);
+
+/**
  * @brief Convierte una fecha en formato de visualización a formato de almacenamiento
  *
  * Convierte una fecha en formato dd/mm/yyyy hh:mm a formato de almacenamiento.
@@ -604,5 +617,7 @@ int app_copy_file_binary(const char *source_path, const char *dest_path);
 int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file);
 int app_command_exists(const char *cmd);
 int app_command_exists_public(const char *cmd);
+int app_open_with_default_app(const char *path);
+int app_open_with_command(const char *command, const char *path);
 
 #endif

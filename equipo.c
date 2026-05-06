@@ -42,8 +42,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
-    printf("Abra la imagen manualmente en: %s\n", ruta);
-    return 1;
+    return app_open_with_default_app(ruta);
 }
 
 static int construir_ruta_absoluta_imagen_equipo_por_id(int id, char *ruta_absoluta, size_t size)

@@ -1,0 +1,8 @@
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/mifutbolc_core.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/MiFutbolC.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/edit_cache.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/rebuild_cache.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/list_install_components.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/install.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/install/local.dir
+D:/ANIME/Libros/Lenguaje C/Proyectos/MiFutbolC/build/CMakeFiles/install/strip.dir

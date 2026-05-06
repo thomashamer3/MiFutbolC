@@ -345,10 +345,13 @@ gcc -o MiFutbolC \
 # 1. Abrir terminal (PowerShell o CMD)
 cd D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
 
-# 2. Compilar (comando en una sola línea)
-gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
+# 2. Definir librerias de Windows (MinGW/Git Bash)
+WIN_LIBS="-lcomdlg32 -lshell32 -lbcrypt"
 
-# 3. Ejecutar
+# 3. Compilar
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I. $WIN_LIBS
+
+# 4. Ejecutar
 .\MiFutbolC.exe
 ```
 
@@ -393,6 +396,11 @@ El script `install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea lau
 
 - **Permisos**: En Linux/macOS, asegúrate de tener permisos de escritura en el directorio
 
+#### Cambios recientes UI/Consola (Windows)
+- **Limpieza de consola completa**: evita que al hacer scroll aparezcan menús anteriores.
+- **Listados con fecha + día**: Partidos, Lesiones y Transacciones muestran fecha con día de semana.
+- **Compilación MinGW**: usa `WIN_LIBS="-lcomdlg32 -lshell32 -lbcrypt"` para prevenir errores de linkeo.
+
 ### 🔧 Solución de Problemas Comunes
 
 #### Error: "sqlite3.h: No such file or directory"
@@ -400,6 +408,7 @@ El script `install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea lau
 
 #### Error: "undefined reference to..."
 - **Solución**: Verifica que todos los archivos `.c` estén incluidos en el comando de compilación.
+- En Windows (MinGW), usa las librerías del bloque `WIN_LIBS` de la sección de compilación.
 
 #### Caracteres extraños en la consola (Windows)
 - **Solución**: El programa configura automáticamente UTF-8. Si persiste, ejecuta:
@@ -1319,7 +1328,7 @@ Ver sección [Tecnologías Utilizadas](#️-tecnologías-utilizadas) para detall
 
 Proyecto desarrollado como ejemplo educativo y de uso personal de programación en C con SQLite.
 
-- 📧 Email: [Contacto disponible en el perfil de GitHub]
+- 📧 Email: [thomashamerutn@gmail.com]
 - 🌐 GitHub: [thomashamer3/MiFutbolC](https://github.com/thomashamer3/MiFutbolC)
 
 ## 🙏 Agradecimientos

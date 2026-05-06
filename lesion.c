@@ -241,12 +241,15 @@ void listar_lesiones()
         const char *cancha_nombre = (const char *)sqlite3_column_text(stmt, 10);
         const char *camiseta_display = camiseta_nombre ? camiseta_nombre : "Sin camiseta";
         const char *cancha_display = cancha_nombre ? cancha_nombre : "Sin cancha";
+        char fecha_con_dia[48];
+        format_date_with_weekday_for_display((const char *)sqlite3_column_text(stmt, 4),
+                                             fecha_con_dia, sizeof(fecha_con_dia));
 
         ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
         ui_printf_centered_line("Jugador: %s", sqlite3_column_text(stmt, 1));
         ui_printf_centered_line("Tipo: %s", sqlite3_column_text(stmt, 2));
         ui_printf_centered_line("Descripcion: %s", sqlite3_column_text(stmt, 3));
-        ui_printf_centered_line("Fecha: %s", sqlite3_column_text(stmt, 4));
+        ui_printf_centered_line("Fecha: %s", fecha_con_dia);
         ui_printf_centered_line("Camiseta: %s", camiseta_display);
         ui_printf_centered_line("Estado: %s", estado_display);
         ui_printf_centered_line("Cancha: %s", cancha_display);

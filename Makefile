@@ -17,7 +17,7 @@ endif
 
 CFLAGS += -I. -include compat_port.h
 
-LDFLAGS ?= -LC:/msys64/mingw64/lib -lhpdf -lz -lpng -lm -lbcrypt -lucrt -Wl,--allow-multiple-definition
+LDFLAGS ?= -LC:/msys64/mingw64/lib -lhpdf -lz -lpng -lm -lbcrypt -lcomdlg32 -lshell32 -lucrt -Wl,--allow-multiple-definition
 
 # Platform-specific audio flags required by miniaudio
 ifeq ($(OS),Windows_NT)

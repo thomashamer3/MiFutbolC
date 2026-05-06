@@ -34,6 +34,8 @@
 					<Add option="-static" />
 					<Add option="-Wl,--gc-sections" />
 					<Add library="bcrypt" />
+					<Add library="comdlg32" />
+					<Add library="shell32" />
 					<Add library="sqlite3" />
 					<Add directory="C:/msys64/mingw64/lib" />
 				</Linker>
@@ -50,6 +52,8 @@
 				<Linker>
 					<Add option="-s" />
 					<Add library="bcrypt" />
+					<Add library="comdlg32" />
+					<Add library="shell32" />
 					<Add library="sqlite3" />
 					<Add directory="C:/msys64/mingw64/lib" />
 				</Linker>
@@ -78,6 +82,8 @@
 			<Add option="-static" />
 			<Add option="-Wl,--gc-sections" />
 			<Add library="bcrypt" />
+			<Add library="comdlg32" />
+			<Add library="shell32" />
 			<Add library="sqlite3" />
 			<Add directory="C:/msys64/mingw64/lib" />
 		</Linker>

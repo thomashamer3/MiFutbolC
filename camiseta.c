@@ -15,6 +15,8 @@
 #else
 #include <process.h>
 #include <strings.h>
+#include <spawn.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 #include <ctype.h>
@@ -25,6 +27,52 @@
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
 static void listar_camisetas_simple(void);
 static int cargar_imagen_para_camiseta_id(int id);
+
+#ifndef _WIN32
+extern char **environ;
+
+static int run_command_posix_argv(const char *const argv[])
+{
+    if (!argv || !argv[0] || argv[0][0] == '\0')
+    {
+        return 0;
+    }
+
+    pid_t pid = (pid_t)0;
+    if (posix_spawnp(&pid, argv[0], NULL, NULL, (char *const *)argv, environ) != 0)
+    {
+        return 0;
+    }
+
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0)
+    {
+        return 0;
+    }
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+
+static int is_safe_package_name(const char *package_name)
+{
+    if (!package_name || package_name[0] == '\0')
+    {
+        return 0;
+    }
+
+    const unsigned char *p = (const unsigned char *)package_name;
+    while (*p != '\0')
+    {
+        if (!(isalnum(*p) || *p == '_' || *p == '-' || *p == '+' || *p == '.'))
+        {
+            return 0;
+        }
+        p++;
+    }
+
+    return 1;
+}
+#endif
 
 static void asegurar_fila_settings()
 {
@@ -82,42 +130,42 @@ static int guardar_visor_preferido(const char *viewer)
     return rc == SQLITE_DONE;
 }
 
+#ifndef _WIN32
 static int instalar_paquete_linux(const char *package_name)
 {
-#ifdef _WIN32
-    (void)package_name;
-    return 0;
-#else
-    if (!package_name || package_name[0] == '\0')
+    if (!is_safe_package_name(package_name))
     {
         return 0;
     }
 
-    char install_cmd[512] = {0};
     if (app_command_exists("apt-get"))
     {
-        snprintf(install_cmd, sizeof(install_cmd), "sudo apt-get update && sudo apt-get install -y %s", package_name);
-    }
-    else if (app_command_exists("dnf"))
-    {
-        snprintf(install_cmd, sizeof(install_cmd), "sudo dnf install -y %s", package_name);
-    }
-    else if (app_command_exists("pacman"))
-    {
-        snprintf(install_cmd, sizeof(install_cmd), "sudo pacman -Sy --noconfirm %s", package_name);
-    }
-    else if (app_command_exists("zypper"))
-    {
-        snprintf(install_cmd, sizeof(install_cmd), "sudo zypper --non-interactive install %s", package_name);
-    }
-    else
-    {
-        return 0;
+        const char *update_argv[] = {"sudo", "apt-get", "update", NULL};
+        const char *install_argv[] = {"sudo", "apt-get", "install", "-y", package_name, NULL};
+        return run_command_posix_argv(update_argv) && run_command_posix_argv(install_argv);
     }
 
-    return system(install_cmd) == 0;
-#endif
+    if (app_command_exists("dnf"))
+    {
+        const char *argv[] = {"sudo", "dnf", "install", "-y", package_name, NULL};
+        return run_command_posix_argv(argv);
+    }
+
+    if (app_command_exists("pacman"))
+    {
+        const char *argv[] = {"sudo", "pacman", "-Sy", "--noconfirm", package_name, NULL};
+        return run_command_posix_argv(argv);
+    }
+
+    if (app_command_exists("zypper"))
+    {
+        const char *argv[] = {"sudo", "zypper", "--non-interactive", "install", package_name, NULL};
+        return run_command_posix_argv(argv);
+    }
+
+    return 0;
 }
+#endif
 
 static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, size_t size)
 {
@@ -142,7 +190,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
-    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    if (!app_validate_file_exists(ruta))
     {
         return 0;
     }
@@ -151,13 +199,11 @@ static int abrir_imagen_en_sistema(const char *ruta)
     char viewer[64] = {0};
     obtener_visor_preferido(viewer, sizeof(viewer));
 
-    char cmd[1200];
     if (viewer[0] != '\0' && _stricmp(viewer, "auto") != 0)
     {
         if (_stricmp(viewer, "mspaint") == 0)
         {
-            snprintf(cmd, sizeof(cmd), "mspaint \"%s\"", ruta);
-            if (system(cmd) == 0)
+            if (app_open_with_command("mspaint", ruta))
             {
                 return 1;
             }
@@ -168,19 +214,15 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
     }
 
-    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
-    if (system(cmd) == 0)
+    if (app_open_with_default_app(ruta))
     {
         return 1;
     }
 
-    snprintf(cmd, sizeof(cmd), "mspaint \"%s\"", ruta);
-    return system(cmd) == 0;
+    return app_open_with_command("mspaint", ruta);
 #else
     char viewer[64] = {0};
     obtener_visor_preferido(viewer, sizeof(viewer));
-
-    char cmd_open[1400];
 
     const char *visores[] = {"xdg-open", "gio", "feh", "eog", "gwenview", NULL};
     const char *visor = NULL;
@@ -232,16 +274,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
     }
 
-    if (strcmp(visor, "gio") == 0)
-    {
-        snprintf(cmd_open, sizeof(cmd_open), "gio open \"%s\" >/dev/null 2>&1", ruta);
-    }
-    else
-    {
-        snprintf(cmd_open, sizeof(cmd_open), "%s \"%s\" >/dev/null 2>&1", visor, ruta);
-    }
-
-    return system(cmd_open) == 0;
+    return app_open_with_command(visor, ruta);
 #endif
 }
 
@@ -348,13 +381,17 @@ static void previsualizar_imagen_camiseta_consola()
         return;
     }
 
-    if (!app_is_path_safe_for_shell(ruta_absoluta) || !app_validate_file_exists(ruta_absoluta))
+    if (!app_validate_file_exists(ruta_absoluta))
     {
         printf("Ruta de imagen invalida o no existe.\n");
         pause_console();
         return;
     }
 
+#ifdef _WIN32
+    (void)ruta_absoluta;
+    printf("La previsualizacion en consola con 'chafa' solo esta disponible en Linux/macOS.\n");
+#else
     if (!app_command_exists("chafa"))
     {
         if (!confirmar("No se detecto 'chafa'. Desea instalarlo automaticamente?"))
@@ -372,15 +409,14 @@ static void previsualizar_imagen_camiseta_consola()
         }
     }
 
-    char cmd[1400];
-    snprintf(cmd, sizeof(cmd), "chafa --size 80x40 \"%s\"", ruta_absoluta);
-
-    if (system(cmd) != 0)
+    const char *chafa_argv[] = {"chafa", "--size", "80x40", ruta_absoluta, NULL};
+    if (!run_command_posix_argv(chafa_argv))
     {
         printf("No se pudo previsualizar con chafa.\n");
         pause_console();
         return;
     }
+#endif
 
     pause_console();
 }

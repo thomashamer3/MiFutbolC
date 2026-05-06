@@ -60,16 +60,16 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 {
     int hay = 0;
-    char fecha_formateada[20];
+    char fecha_con_dia[48];
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        // Formatear la fecha para visualizacion
-        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_formateada, sizeof(fecha_formateada));
+        format_date_with_weekday_for_display((const char *)sqlite3_column_text(stmt, 2),
+                                             fecha_con_dia, sizeof(fecha_con_dia));
 
         ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
         ui_printf_centered_line("Cancha: %s", sqlite3_column_text(stmt, 1));
-        ui_printf_centered_line("Fecha: %s", fecha_formateada);
+        ui_printf_centered_line("Fecha: %s", fecha_con_dia);
         ui_printf_centered_line("Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
         ui_printf_centered_line("Camiseta: %s", sqlite3_column_text(stmt, 5));
         ui_printf_centered_line("Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));

@@ -12,10 +12,48 @@
 #ifdef _WIN32
 #include <process.h>
 #include <io.h>
+#include <windows.h>
+#include <commdlg.h>
 #else
 #include "process.h"
 #include <strings.h>
 #endif
+
+static int bienestar_get_env_var_copy(const char *name, char *buffer, size_t size)
+{
+    if (!name || !buffer || size == 0)
+    {
+        return 0;
+    }
+
+#if defined(_WIN32) && defined(_MSC_VER)
+    char *value = NULL;
+    size_t value_len = 0;
+    if (_dupenv_s(&value, &value_len, name) != 0 || !value || value_len == 0)
+    {
+        if (value)
+        {
+            free(value);
+        }
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    strncpy_s(buffer, size, value, _TRUNCATE);
+    free(value);
+    return buffer[0] != '\0';
+#else
+    const char *value = getenv(name);
+    if (!value || value[0] == '\0')
+    {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    strncpy_s(buffer, size, value, _TRUNCATE);
+    return buffer[0] != '\0';
+#endif
+}
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -34,13 +72,7 @@ static int menuimg_abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
-    char cmd[1400];
-#ifdef _WIN32
-    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
-#else
-    snprintf(cmd, sizeof(cmd), "xdg-open \"%s\" >/dev/null 2>&1", ruta);
-#endif
-    return system(cmd) == 0;
+    return app_open_with_default_app(ruta);
 }
 
 static int menuimg_guardar_ruta_menu(const char *menu_key, const char *ruta_relativa)
@@ -2885,39 +2917,40 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
         return 0;
     }
 #ifdef _WIN32
-    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
-    remove(arch_temp);
+    char file_buffer[MAX_PATH] = {0};
+    char initial_dir[MAX_PATH] = {0};
 
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "powershell -NoProfile -Command \""
-             "Add-Type -AssemblyName System.Windows.Forms; "
-             "$dlg = New-Object System.Windows.Forms.OpenFileDialog; "
-             "$dlg.InitialDirectory = [System.IO.Path]::Combine($env:USERPROFILE, 'Downloads'); "
-             "$dlg.Filter = 'Archivos de estudio|*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.pdf;*.docx;*.doc;*.txt;*.xlsx;*.csv|Todos|*.*'; "
-             "if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) "
-             "{ [System.IO.File]::WriteAllText('%s', $dlg.FileName) }\"",
-             arch_temp);
+    if (bienestar_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
+    {
+        strcat_s(initial_dir, sizeof(initial_dir), "\\Downloads");
+    }
 
-    system(cmd);
+    static const char filter[] =
+        "Archivos de estudio\0*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.pdf;*.docx;*.doc;*.txt;*.xlsx;*.csv\0"
+        "Todos los archivos (*.*)\0*.*\0";
 
-    FILE *f = NULL;
-    if (fopen_s(&f, arch_temp, "r") != 0 || !f)
+    OPENFILENAMEA ofn;
+    memset(&ofn, 0, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = file_buffer;
+    ofn.nMaxFile = (DWORD)sizeof(file_buffer);
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrInitialDir = initial_dir[0] ? initial_dir : NULL;
+
+    if (!GetOpenFileNameA(&ofn))
     {
         return 0;
     }
 
-    if (!fgets(ruta, (int)size, f))
+    if (strncpy_s(ruta, size, file_buffer, _TRUNCATE) != 0)
     {
-        fclose(f);
-        remove(arch_temp);
         return 0;
     }
 
-    fclose(f);
-    remove(arch_temp);
     trim_whitespace(ruta);
-    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
+    if (!app_validate_file_exists(ruta))
     {
         return 0;
     }

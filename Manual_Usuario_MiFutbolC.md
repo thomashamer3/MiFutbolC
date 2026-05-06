@@ -92,7 +92,8 @@ gcc -o MiFutbolC \
 #### Windows (con MinGW)
 
 ```bash
-gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I.
+WIN_LIBS="-lcomdlg32 -lshell32 -lbcrypt"
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I. $WIN_LIBS
 ```
 
 ### Opción 4: Usando scripts del proyecto
@@ -344,7 +345,7 @@ Cuando uses la opción de cargar imagen para una camiseta:
 
 1. Selecciona "4" en el menú principal
 2. Elige "2" para listar todas las canchas
-3. Se mostrarán con estadísticas de uso
+3. Se mostrarán solo canchas activas con estadísticas de uso
 
 ### Editar una Cancha
 
@@ -464,7 +465,8 @@ Selecciona "5" en el menú principal para acceder al menú de gestión de equipo
 
 1. Selecciona "6" en el menú principal
 2. Elige "2" para listar todos los partidos
-3. Se mostrarán con todas las estadísticas
+3. Se mostrarán con todas las estadísticas y fecha con día de semana
+4. Ejemplo: `Fecha: Domingo 03/05/2026 19:00`
 
 ### Modificar un Partido
 
@@ -522,7 +524,8 @@ Selecciona "5" en el menú principal para acceder al menú de gestión de equipo
 
 1. Selecciona "7" en el menú principal
 2. Elige "2" para listar todas las lesiones
-3. Se mostrarán con detalles completos y estado
+3. Se mostrarán con detalles completos, estado y fecha con día de semana
+4. Ejemplo: `Fecha: Domingo 01/02/2026 21:40`
 
 ### Editar una Lesión
 
@@ -723,7 +726,8 @@ Selecciona "10" en el menú principal para acceder al módulo de gestión financ
 
 1. Selecciona "10" en el menú principal
 2. Elige "2" para ver todas las transacciones financieras
-3. Se mostrarán ordenadas por fecha
+3. Se mostrarán ordenadas por fecha y con día de semana en la fecha
+4. Ejemplo: `Fecha: Martes 06/05/2026`
 
 ### Modificar Transacción
 
@@ -1653,6 +1657,7 @@ Selecciona "18" en el menú principal para acceder al menú de configuración de
 - El programa configura automáticamente UTF-8
 - Si persiste, ejecuta manualmente: `chcp 65001` en la consola antes de ejecutar el programa
 - Verifica que tu terminal soporta UTF-8
+- Si ves menús anteriores al hacer scroll con el mouse, reinicia la terminal para limpiar el buffer previo
 
 ### Error al exportar datos
 
@@ -1787,7 +1792,7 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 
 **Desarrollado por**: Thomas Hamer  
 **Versión**: 4.2  
-**Última actualización**: 23/04/2026  
+**Última actualización**: 06/05/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

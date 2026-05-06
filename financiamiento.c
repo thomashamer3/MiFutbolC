@@ -98,22 +98,6 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-static void mostrar_fecha_display(const char *fecha_db, char *fecha_display, size_t size)
-{
-    int year = 0;
-    int month = 0;
-    int day = 0;
-
-    if (sscanf_s(fecha_db, "%4d-%2d-%2d", &year, &month, &day) == 3)
-    {
-        snprintf(fecha_display, size, "%02d/%02d/%04d", day, month, year);
-    }
-    else
-    {
-        strncpy_s(fecha_display, size, fecha_db, size - 1);
-    }
-}
-
 static void obtener_mes_anio_actual(char *mes_anio)
 {
     time_t t = time(NULL);
@@ -183,9 +167,8 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion)
 
     ui_printf_centered_line("ID: %d", transaccion->id);
 
-    // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para mostrar
-    char fecha_display[11] = {0};
-    mostrar_fecha_display(transaccion->fecha, fecha_display, sizeof(fecha_display));
+    char fecha_display[48] = {0};
+    format_date_with_weekday_for_display(transaccion->fecha, fecha_display, sizeof(fecha_display));
     ui_printf_centered_line("Fecha: %s", fecha_display);
 
     ui_printf_centered_line("Tipo: %s", get_nombre_tipo_transaccion(transaccion->tipo));
@@ -1787,9 +1770,8 @@ void modificar_transaccion()
             const char *descripcion = (const char *)sqlite3_column_text(stmt, 4);
             int monto = sqlite3_column_int(stmt, 5);
 
-            // Convertir fecha de YYYY-MM-DD a DD/MM/YYYY para mostrar
-            char fecha_display[11] = "";
-            mostrar_fecha_display(fecha_db, fecha_display, sizeof(fecha_display));
+            char fecha_display[48] = "";
+            format_date_with_weekday_for_display(fecha_db, fecha_display, sizeof(fecha_display));
 
             printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
             mostrar_monto(monto);
@@ -1891,12 +1873,14 @@ void eliminar_transaccion()
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
             const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+            char fecha_display[48] = "";
             int tipo = sqlite3_column_int(stmt, 2);
             int categoria = sqlite3_column_int(stmt, 3);
             const char *descripcion = (const char *)sqlite3_column_text(stmt, 4);
             int monto = sqlite3_column_int(stmt, 5);
 
-            printf("ID: %d | %s | %s | %s | %s | $", id, fecha, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
+            format_date_with_weekday_for_display(fecha, fecha_display, sizeof(fecha_display));
+            printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
             mostrar_monto(monto);
             printf("\n");
         }

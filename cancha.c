@@ -1288,13 +1288,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         return 0;
     }
 
-    char cmd[1400];
-#ifdef _WIN32
-    snprintf(cmd, sizeof(cmd), "start \"\" \"%s\"", ruta);
-#else
-    snprintf(cmd, sizeof(cmd), "xdg-open \"%s\" >/dev/null 2>&1", ruta);
-#endif
-    return system(cmd) == 0;
+    return app_open_with_default_app(ruta);
 }
 
 static int obtener_ruta_imagen_cancha_db(int id, char *ruta, size_t size)
@@ -1512,7 +1506,7 @@ void listar_canchas()
 
     sqlite3_stmt *stmt;
     const char *sql =
-        "SELECT c.id, c.nombre, c.activa, "
+        "SELECT c.id, c.nombre, "
         "COUNT(p.id), "
         "IFNULL(SUM(p.goles), 0), "
         "IFNULL(SUM(p.asistencias), 0) "
@@ -1535,7 +1529,22 @@ void listar_canchas()
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        hay |= ui_print_stats_row_from_stmt(stmt, sep);
+        int id = sqlite3_column_int(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        int partidos = sqlite3_column_int(stmt, 2);
+        int goles = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+
+        ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
+                                id,
+                                nombre ? nombre : "(sin nombre)",
+                                sep,
+                                partidos,
+                                sep,
+                                goles,
+                                sep,
+                                asistencias);
+        hay = 1;
     }
 
     if (!hay)
