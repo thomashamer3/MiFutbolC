@@ -152,6 +152,8 @@ ol li::marker {
 img {
   display: block;
   margin: 18px auto;
+  max-width: 100%;
+  height: auto;
   border-radius: 12px;
   box-shadow: var(--shadow);
 }
@@ -203,6 +205,7 @@ pre.hljs code > div {
 }
 pre {
   padding: 14px !important;
+  overflow-x: auto;
 }
 code {
   font-family:
