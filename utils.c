@@ -1759,8 +1759,8 @@ static int auth_open_for_active_user(sqlite3 **auth_db, const char **username_ou
 }
 
 static int auth_confirm_current_password(sqlite3 *auth_db, const char *username,
-                                         const char *prompt,
-                                         const char *error_message)
+        const char *prompt,
+        const char *error_message)
 {
     char actual[128];
 
@@ -1770,7 +1770,7 @@ static int auth_confirm_current_password(sqlite3 *auth_db, const char *username,
     }
 
     if (!leer_contrasena_no_vacia(prompt, actual, (int)sizeof(actual)) ||
-        !auth_verify_user_password(auth_db, username, actual))
+            !auth_verify_user_password(auth_db, username, actual))
     {
         ui_printf("%s\n", error_message);
         sqlite3_close(auth_db);
@@ -2113,9 +2113,9 @@ static void configurar_o_cambiar_password_usuario()
     char hash[17];
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
-        !auth_confirm_current_password(auth_db, username,
-                                       "Ingresa tu contrasena actual: ",
-                                       "Contrasena actual incorrecta."))
+            !auth_confirm_current_password(auth_db, username,
+                                           "Ingresa tu contrasena actual: ",
+                                           "Contrasena actual incorrecta."))
     {
         return;
     }
@@ -2175,9 +2175,9 @@ static void quitar_password_usuario()
     const char *username = NULL;
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
-        !auth_confirm_current_password(auth_db, username,
-                                       "Para quitarla, ingresa tu contrasena actual: ",
-                                       "Contrasena incorrecta."))
+            !auth_confirm_current_password(auth_db, username,
+                                           "Para quitarla, ingresa tu contrasena actual: ",
+                                           "Contrasena incorrecta."))
     {
         return;
     }
@@ -2306,9 +2306,9 @@ static void eliminar_mi_cuenta_local()
     }
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
-        !auth_confirm_current_password(auth_db, username,
-                                       "Confirma tu contrasena actual: ",
-                                       "Contrasena incorrecta."))
+            !auth_confirm_current_password(auth_db, username,
+                                           "Confirma tu contrasena actual: ",
+                                           "Contrasena incorrecta."))
     {
         return;
     }
@@ -3963,7 +3963,7 @@ int app_select_existing_file(char *ruta, size_t size, const char *prompt,
     char initial_dir[MAX_PATH] = {0};
 
     if (windows_userprofile_subdir &&
-        utils_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
+            utils_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
     {
         strcat_s(initial_dir, sizeof(initial_dir), windows_userprofile_subdir);
     }

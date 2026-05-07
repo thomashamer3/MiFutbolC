@@ -828,14 +828,14 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
 
     sqlite3_stmt *stmt;
     if (!db_prepare_stmt(&stmt,
-                       "SELECT nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
-                       "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
-                       "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
-                       "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
-                       "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
-                       "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
-                       "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1) "
-                       "FROM cancha WHERE id = ?"))
+                         "SELECT nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
+                         "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
+                         "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
+                         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
+                         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
+                         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
+                         "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1) "
+                         "FROM cancha WHERE id = ?"))
     {
         return 0;
     }
@@ -1005,13 +1005,13 @@ static int completar_informacion_cancha(int id)
 
     sqlite3_stmt *stmt;
     if (!db_prepare_stmt(&stmt,
-                       "UPDATE cancha "
-                       "SET telefono = ?, direccion = ?, localidad = ?, tipo_cancha_codigo = ?, "
-                       "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
-                       "horario_apertura_min = ?, horario_cierre_min = ?, precio_hora_dia_centavos = ?, "
-                       "precio_hora_noche_centavos = ?, tiene_vestuarios = ?, tiene_duchas = ?, tiene_buffet = ?, "
-                       "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, contacto_alt = ? "
-                       "WHERE id = ?"))
+                         "UPDATE cancha "
+                         "SET telefono = ?, direccion = ?, localidad = ?, tipo_cancha_codigo = ?, "
+                         "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
+                         "horario_apertura_min = ?, horario_cierre_min = ?, precio_hora_dia_centavos = ?, "
+                         "precio_hora_noche_centavos = ?, tiene_vestuarios = ?, tiene_duchas = ?, tiene_buffet = ?, "
+                         "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, contacto_alt = ? "
+                         "WHERE id = ?"))
     {
         return 0;
     }
@@ -1435,12 +1435,12 @@ void crear_cancha()
 
     sqlite3_stmt *stmt;
     if (!db_prepare_stmt(&stmt,
-                       "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
-                       "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
-                       "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
-                       "tiene_vestuarios, tiene_duchas, tiene_buffet, tiene_estacionamiento, cantidad_canchas, "
-                       "estado, descripcion, contacto_alt) "
-                       "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
+                         "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
+                         "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
+                         "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
+                         "tiene_vestuarios, tiene_duchas, tiene_buffet, tiene_estacionamiento, cantidad_canchas, "
+                         "estado, descripcion, contacto_alt) "
+                         "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
     {
         printf("Error al crear la cancha.\n");
         pause_console();

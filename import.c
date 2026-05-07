@@ -542,7 +542,41 @@ static int parse_lesion_data(int id, const char *jugador, const char *tipo,
     return 1;
 }
 
-static int parse_lesion_txt_line(const char *line, LesionData *out)
+typedef int (*LesionFieldScanner)(const char *line, int *id, char *jugador,
+                                  char *tipo, char *descripcion, char *fecha);
+
+static int scan_lesion_txt_fields(const char *line, int *id, char *jugador,
+                                  char *tipo, char *descripcion, char *fecha)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+    return sscanf_s(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
+                    id, jugador, (unsigned)_countof(jugador),
+                    tipo, (unsigned)_countof(tipo),
+                    descripcion, (unsigned)_countof(descripcion),
+                    fecha, (unsigned)_countof(fecha)) == 5;
+#else
+    return sscanf(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
+                  id, jugador, tipo, descripcion, fecha) == 5;
+#endif
+}
+
+static int scan_lesion_csv_fields(const char *line, int *id, char *jugador,
+                                  char *tipo, char *descripcion, char *fecha)
+{
+#if defined(_WIN32) && defined(_MSC_VER)
+    return sscanf_s(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
+                    id, jugador, (unsigned)_countof(jugador),
+                    tipo, (unsigned)_countof(tipo),
+                    descripcion, (unsigned)_countof(descripcion),
+                    fecha, (unsigned)_countof(fecha)) == 5;
+#else
+    return sscanf(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
+                  id, jugador, tipo, descripcion, fecha) == 5;
+#endif
+}
+
+static int parse_lesion_line(const char *line, LesionData *out,
+                             LesionFieldScanner scanner)
 {
     int id;
     char jugador[256];
@@ -550,20 +584,12 @@ static int parse_lesion_txt_line(const char *line, LesionData *out)
     char descripcion[512];
     char fecha[256];
 
-    if (!line)
+    if (!line || !scanner)
     {
         return 0;
     }
-#if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
-                 &id, jugador, (unsigned)_countof(jugador),
-                 tipo, (unsigned)_countof(tipo),
-                 descripcion, (unsigned)_countof(descripcion),
-                 fecha, (unsigned)_countof(fecha)) != 5)
-#else
-    if (sscanf(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
-               &id, jugador, tipo, descripcion, fecha) != 5)
-#endif
+
+    if (!scanner(line, &id, jugador, tipo, descripcion, fecha))
     {
         return 0;
     }
@@ -571,33 +597,14 @@ static int parse_lesion_txt_line(const char *line, LesionData *out)
     return parse_lesion_data(id, jugador, tipo, descripcion, fecha, out);
 }
 
+static int parse_lesion_txt_line(const char *line, LesionData *out)
+{
+    return parse_lesion_line(line, out, scan_lesion_txt_fields);
+}
+
 static int parse_lesion_csv_line(const char *line, LesionData *out)
 {
-    int id;
-    char jugador[256];
-    char tipo[256];
-    char descripcion[512];
-    char fecha[256];
-
-    if (!line)
-    {
-        return 0;
-    }
-#if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
-                 &id, jugador, (unsigned)_countof(jugador),
-                 tipo, (unsigned)_countof(tipo),
-                 descripcion, (unsigned)_countof(descripcion),
-                 fecha, (unsigned)_countof(fecha)) != 5)
-#else
-    if (sscanf(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
-               &id, jugador, tipo, descripcion, fecha) != 5)
-#endif
-    {
-        return 0;
-    }
-
-    return parse_lesion_data(id, jugador, tipo, descripcion, fecha, out);
+    return parse_lesion_line(line, out, scan_lesion_csv_fields);
 }
 
 static void importar_lesiones_desde_archivo(const char *filename, const char *formato,

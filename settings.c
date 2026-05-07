@@ -475,13 +475,13 @@ void settings_init()
             current_settings.music_eq_enabled = sqlite3_column_int(stmt, 7) ? 1 : 0;
             current_settings.music_eq_bass_db =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 8),
-                       SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_mid_db =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 9),
-                       SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_treble_db =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 10),
-                       SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_volume_step =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
             has_settings = 1;
@@ -521,16 +521,16 @@ void settings_save()
         sqlite3_bind_int(stmt, 8, current_settings.music_eq_enabled ? 1 : 0);
         sqlite3_bind_double(stmt, 9,
                             (double)utils_clamp_float(current_settings.music_eq_bass_db,
-                                           SETTINGS_MUSIC_EQ_DB_MIN,
-                                           SETTINGS_MUSIC_EQ_DB_MAX));
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 10,
                             (double)utils_clamp_float(current_settings.music_eq_mid_db,
-                                           SETTINGS_MUSIC_EQ_DB_MIN,
-                                           SETTINGS_MUSIC_EQ_DB_MAX));
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 11,
                             (double)utils_clamp_float(current_settings.music_eq_treble_db,
-                                           SETTINGS_MUSIC_EQ_DB_MIN,
-                                           SETTINGS_MUSIC_EQ_DB_MAX));
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 12,
                             (double)utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f));
         int result = sqlite3_step(stmt);
@@ -640,8 +640,8 @@ void settings_set_music_eq_bass_db(float gain_value)
 float settings_get_music_eq_bass_db(void)
 {
     return utils_clamp_float(current_settings.music_eq_bass_db,
-                  SETTINGS_MUSIC_EQ_DB_MIN,
-                  SETTINGS_MUSIC_EQ_DB_MAX);
+                             SETTINGS_MUSIC_EQ_DB_MIN,
+                             SETTINGS_MUSIC_EQ_DB_MAX);
 }
 
 void settings_set_music_eq_mid_db(float gain_value)
@@ -654,8 +654,8 @@ void settings_set_music_eq_mid_db(float gain_value)
 float settings_get_music_eq_mid_db(void)
 {
     return utils_clamp_float(current_settings.music_eq_mid_db,
-                  SETTINGS_MUSIC_EQ_DB_MIN,
-                  SETTINGS_MUSIC_EQ_DB_MAX);
+                             SETTINGS_MUSIC_EQ_DB_MIN,
+                             SETTINGS_MUSIC_EQ_DB_MAX);
 }
 
 void settings_set_music_eq_treble_db(float gain_value)
@@ -668,8 +668,8 @@ void settings_set_music_eq_treble_db(float gain_value)
 float settings_get_music_eq_treble_db(void)
 {
     return utils_clamp_float(current_settings.music_eq_treble_db,
-                  SETTINGS_MUSIC_EQ_DB_MIN,
-                  SETTINGS_MUSIC_EQ_DB_MAX);
+                             SETTINGS_MUSIC_EQ_DB_MIN,
+                             SETTINGS_MUSIC_EQ_DB_MAX);
 }
 
 void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, float treble_db)
