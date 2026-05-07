@@ -19,42 +19,6 @@
 #include <strings.h>
 #endif
 
-static int bienestar_get_env_var_copy(const char *name, char *buffer, size_t size)
-{
-    if (!name || !buffer || size == 0)
-    {
-        return 0;
-    }
-
-#if defined(_WIN32) && defined(_MSC_VER)
-    char *value = NULL;
-    size_t value_len = 0;
-    if (_dupenv_s(&value, &value_len, name) != 0 || !value || value_len == 0)
-    {
-        if (value)
-        {
-            free(value);
-        }
-        buffer[0] = '\0';
-        return 0;
-    }
-
-    strncpy_s(buffer, size, value, _TRUNCATE);
-    free(value);
-    return buffer[0] != '\0';
-#else
-    const char *value = getenv(name);
-    if (!value || value[0] == '\0')
-    {
-        buffer[0] = '\0';
-        return 0;
-    }
-
-    strncpy_s(buffer, size, value, _TRUNCATE);
-    return buffer[0] != '\0';
-#endif
-}
-
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
@@ -2912,86 +2876,12 @@ static int estudio_arch_extension_soportada(const char *ext)
 
 static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
 {
-    if (!ruta || size == 0)
-    {
-        return 0;
-    }
-#ifdef _WIN32
-    char file_buffer[MAX_PATH] = {0};
-    char initial_dir[MAX_PATH] = {0};
-
-    if (bienestar_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
-    {
-        strcat_s(initial_dir, sizeof(initial_dir), "\\Downloads");
-    }
-
     static const char filter[] =
         "Archivos de estudio\0*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.pdf;*.docx;*.doc;*.txt;*.xlsx;*.csv\0"
         "Todos los archivos (*.*)\0*.*\0";
 
-    OPENFILENAMEA ofn;
-    memset(&ofn, 0, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.lpstrFile = file_buffer;
-    ofn.nMaxFile = (DWORD)sizeof(file_buffer);
-    ofn.lpstrFilter = filter;
-    ofn.nFilterIndex = 1;
-    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-    ofn.lpstrInitialDir = initial_dir[0] ? initial_dir : NULL;
-
-    if (!GetOpenFileNameA(&ofn))
-    {
-        return 0;
-    }
-
-    if (strncpy_s(ruta, size, file_buffer, _TRUNCATE) != 0)
-    {
-        return 0;
-    }
-
-    trim_whitespace(ruta);
-    if (!app_validate_file_exists(ruta))
-    {
-        return 0;
-    }
-    return ruta[0] != '\0';
-#else
-    const char *arch_temp = "mifutbol_estudio_arch_sel.txt";
-    input_string("Ruta del archivo: ", ruta, (int)size);
-    trim_whitespace(ruta);
-    if (ruta[0] == '\0')
-    {
-        return 0;
-    }
-
-    FILE *f = NULL;
-    if (fopen_s(&f, ruta, "r") == 0 && f)
-    {
-        if (fgets(ruta, (int)size, f))
-        {
-            fclose(f);
-            remove(arch_temp);
-            trim_whitespace(ruta);
-            if (ruta[0] != '\0' && app_is_path_safe_for_shell(ruta) && app_validate_file_exists(ruta))
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            fclose(f);
-            remove(arch_temp);
-        }
-    }
-
-    input_string("Ruta del archivo: ", ruta, (int)size);
-    trim_whitespace(ruta);
-    if (!app_is_path_safe_for_shell(ruta) || !app_validate_file_exists(ruta))
-    {
-        return 0;
-    }
-    return ruta[0] != '\0';
-#endif
+    return app_select_existing_file(ruta, size, "Ruta del archivo: ",
+                                    filter, "\\Downloads");
 }
 
 static void listar_controles_medicos_ids(void)

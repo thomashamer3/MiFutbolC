@@ -1609,14 +1609,14 @@ static void menu_theme_settings()
 {
     MenuItem items[] =
     {
-        {1, get_text("theme_light"), theme_set_light},
-        {2, get_text("theme_dark"), theme_set_dark},
-        {3, get_text("theme_blue"), theme_set_blue},
-        {4, get_text("theme_green"), theme_set_green},
-        {5, get_text("theme_red"), theme_set_red},
-        {6, get_text("theme_purple"), theme_set_purple},
-        {7, get_text("theme_classic"), theme_set_classic},
-        {8, get_text("theme_high_contrast"), theme_set_high_contrast},
+        {1, get_text("theme_light"), &theme_set_light},
+        {2, get_text("theme_dark"), &theme_set_dark},
+        {3, get_text("theme_blue"), &theme_set_blue},
+        {4, get_text("theme_green"), &theme_set_green},
+        {5, get_text("theme_red"), &theme_set_red},
+        {6, get_text("theme_purple"), &theme_set_purple},
+        {7, get_text("theme_classic"), &theme_set_classic},
+        {8, get_text("theme_high_contrast"), &theme_set_high_contrast},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1627,8 +1627,8 @@ static void menu_language_settings()
 {
     MenuItem items[] =
     {
-        {1, get_text("lang_spanish"), lang_set_spanish},
-        {2, get_text("lang_english"), lang_set_english},
+        {1, get_text("lang_spanish"), &lang_set_spanish},
+        {2, get_text("lang_english"), &lang_set_english},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1704,9 +1704,9 @@ static void menu_text_size_settings()
 {
     MenuItem items[] =
     {
-        {1, get_text("text_size_small"), text_size_small},
-        {2, get_text("text_size_medium"), text_size_medium},
-        {3, get_text("text_size_large"), text_size_large},
+        {1, get_text("text_size_small"), &text_size_small},
+        {2, get_text("text_size_medium"), &text_size_medium},
+        {3, get_text("text_size_large"), &text_size_large},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1717,9 +1717,9 @@ static void menu_accessibility_settings()
 {
     MenuItem items[] =
     {
-        {1, get_text("settings_text_size"), menu_text_size_settings},
-        {2, get_text("settings_high_contrast"), accessibility_high_contrast},
-        {3, get_text("settings_accessibility_normal"), accessibility_normal_theme_text},
+        {1, get_text("settings_text_size"), &menu_text_size_settings},
+        {2, get_text("settings_high_contrast"), &accessibility_high_contrast},
+        {3, get_text("settings_accessibility_normal"), &accessibility_normal_theme_text},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1816,9 +1816,9 @@ static void menu_mode_settings()
 {
     MenuItem items[] =
     {
-        {1, get_text("mode_simple"), mode_set_simple},
-        {2, get_text("mode_advanced"), mode_set_advanced},
-        {3, get_text("mode_custom"), mode_set_custom},
+        {1, get_text("mode_simple"), &mode_set_simple},
+        {2, get_text("mode_advanced"), &mode_set_advanced},
+        {3, get_text("mode_custom"), &mode_set_custom},
         {0, get_text("menu_back"), NULL}
     };
 

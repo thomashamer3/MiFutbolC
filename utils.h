@@ -90,6 +90,16 @@ int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
                                const char *error_message);
 
 /**
+ * @brief Copia una variable de entorno al buffer de salida si existe.
+ *
+ * @param name Nombre de la variable de entorno.
+ * @param buffer Buffer de destino.
+ * @param size Tamano del buffer de destino.
+ * @return 1 si la variable existe y se copio; 0 en caso contrario.
+ */
+int utils_get_env_var_copy(const char *name, char *buffer, size_t size);
+
+/**
  * @brief Limita un valor flotante a un rango.
  */
 float utils_clamp_float(float value, float minv, float maxv);
@@ -642,6 +652,9 @@ int app_optimize_image_file(const char *input_path, const char *output_path);
 int app_copy_binary_file(const char *source_path, const char *dest_path);
 int app_copy_file_binary(const char *source_path, const char *dest_path);
 int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file);
+int app_select_existing_file(char *ruta, size_t size, const char *prompt,
+                             const char *windows_filter,
+                             const char *windows_userprofile_subdir);
 int app_command_exists(const char *cmd);
 int app_command_exists_public(const char *cmd);
 int app_open_with_default_app(const char *path);

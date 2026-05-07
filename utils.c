@@ -184,7 +184,7 @@ static void auth_build_password_hash(const char *plain_password, const char *sal
 static int auth_username_exists(sqlite3 *auth_db, const char *username);
 static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password);
 
-static int app_get_env_var_copy(const char *name, char *buffer, size_t size)
+int utils_get_env_var_copy(const char *name, char *buffer, size_t size)
 {
     if (!name || !buffer || size == 0)
     {
@@ -229,7 +229,7 @@ static int app_build_local_appdata_path(char *dest, size_t size, const char *suf
         return 0;
     }
 
-    if (!app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    if (!utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         return 0;
     }
@@ -267,7 +267,7 @@ static void auth_get_db_path(char *path, size_t size)
 {
 #ifdef _WIN32
     char local_app_data[1024] = {0};
-    if (app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         snprintf(path, size, "%s\\MiFutbolC\\data\\users.db", local_app_data);
         return;
@@ -282,7 +282,7 @@ static void auth_get_user_data_paths(const char *username,
 {
 #ifdef _WIN32
     char local_app_data[1024] = {0};
-    if (app_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         snprintf(db_path, db_size, "%s\\MiFutbolC\\data\\mifutbol_%s.db", local_app_data, username);
         snprintf(log_path, log_size, "%s\\MiFutbolC\\data\\mifutbol_%s.log", local_app_data, username);
@@ -1736,6 +1736,51 @@ static int auth_prompt_password_login(sqlite3 *auth_db, const char *username)
     return 0;
 }
 
+static int auth_open_for_active_user(sqlite3 **auth_db, const char **username_out)
+{
+    const char *username = db_get_active_user();
+
+    if (!username || username[0] == '\0')
+    {
+        ui_printf("No hay sesion activa.\n");
+        pause_console();
+        return 0;
+    }
+
+    if (!auth_open(auth_db))
+    {
+        ui_printf("No se pudo abrir el registro de usuarios.\n");
+        pause_console();
+        return 0;
+    }
+
+    *username_out = username;
+    return 1;
+}
+
+static int auth_confirm_current_password(sqlite3 *auth_db, const char *username,
+                                         const char *prompt,
+                                         const char *error_message)
+{
+    char actual[128];
+
+    if (!auth_user_requires_password(auth_db, username))
+    {
+        return 1;
+    }
+
+    if (!leer_contrasena_no_vacia(prompt, actual, (int)sizeof(actual)) ||
+        !auth_verify_user_password(auth_db, username, actual))
+    {
+        ui_printf("%s\n", error_message);
+        sqlite3_close(auth_db);
+        pause_console();
+        return 0;
+    }
+
+    return 1;
+}
+
 static int auth_registrar_usuario_interactivo(sqlite3 *auth_db)
 {
     char username[64];
@@ -2060,45 +2105,19 @@ int autenticar_usuario_si_tiene_password()
 static void configurar_o_cambiar_password_usuario()
 {
     sqlite3 *auth_db = NULL;
-    char actual[128];
     char nueva[128];
     char confirmar_pwd[128];
     sqlite3_stmt *stmt = NULL;
-    const char *username = db_get_active_user();
+    const char *username = NULL;
     char salt[33];
     char hash[17];
 
-    if (!username || username[0] == '\0')
+    if (!auth_open_for_active_user(&auth_db, &username) ||
+        !auth_confirm_current_password(auth_db, username,
+                                       "Ingresa tu contrasena actual: ",
+                                       "Contrasena actual incorrecta."))
     {
-        ui_printf("No hay sesion activa.\n");
-        pause_console();
         return;
-    }
-
-    if (!auth_open(&auth_db))
-    {
-        ui_printf("No se pudo abrir el registro de usuarios.\n");
-        pause_console();
-        return;
-    }
-
-    if (auth_user_requires_password(auth_db, username))
-    {
-        if (!leer_contrasena_no_vacia("Ingresa tu contrasena actual: ", actual, (int)sizeof(actual)))
-        {
-            ui_printf("Contrasena actual incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
-
-        if (!auth_verify_user_password(auth_db, username, actual))
-        {
-            ui_printf("Contrasena actual incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
     }
 
     if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva, (int)sizeof(nueva)))
@@ -2153,40 +2172,14 @@ static void quitar_password_usuario()
 {
     sqlite3 *auth_db = NULL;
     sqlite3_stmt *stmt = NULL;
-    const char *username = db_get_active_user();
-    char actual[128];
+    const char *username = NULL;
 
-    if (!username || username[0] == '\0')
+    if (!auth_open_for_active_user(&auth_db, &username) ||
+        !auth_confirm_current_password(auth_db, username,
+                                       "Para quitarla, ingresa tu contrasena actual: ",
+                                       "Contrasena incorrecta."))
     {
-        ui_printf("No hay sesion activa.\n");
-        pause_console();
         return;
-    }
-
-    if (!auth_open(&auth_db))
-    {
-        ui_printf("No se pudo abrir el registro de usuarios.\n");
-        pause_console();
-        return;
-    }
-
-    if (auth_user_requires_password(auth_db, username))
-    {
-        if (!leer_contrasena_no_vacia("Para quitarla, ingresa tu contrasena actual: ", actual, (int)sizeof(actual)))
-        {
-            ui_printf("Contrasena incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
-
-        if (!auth_verify_user_password(auth_db, username, actual))
-        {
-            ui_printf("Contrasena incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
     }
 
     if (sqlite3_prepare_v2(auth_db,
@@ -2293,12 +2286,11 @@ static void eliminar_mi_cuenta_local()
 {
     sqlite3 *auth_db = NULL;
     sqlite3_stmt *stmt = NULL;
-    const char *username = db_get_active_user();
-    char actual[128];
+    const char *username = NULL;
     char user_db_path[1024];
     char user_log_path[1024];
 
-    if (!username || username[0] == '\0')
+    if (!db_get_active_user() || db_get_active_user()[0] == '\0')
     {
         ui_printf("No hay sesion activa.\n");
         pause_console();
@@ -2313,30 +2305,12 @@ static void eliminar_mi_cuenta_local()
         return;
     }
 
-    if (!auth_open(&auth_db))
+    if (!auth_open_for_active_user(&auth_db, &username) ||
+        !auth_confirm_current_password(auth_db, username,
+                                       "Confirma tu contrasena actual: ",
+                                       "Contrasena incorrecta."))
     {
-        ui_printf("No se pudo abrir el registro de usuarios.\n");
-        pause_console();
         return;
-    }
-
-    if (auth_user_requires_password(auth_db, username))
-    {
-        if (!leer_contrasena_no_vacia("Confirma tu contrasena actual: ", actual, (int)sizeof(actual)))
-        {
-            ui_printf("Contrasena incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
-
-        if (!auth_verify_user_password(auth_db, username, actual))
-        {
-            ui_printf("Contrasena incorrecta.\n");
-            sqlite3_close(auth_db);
-            pause_console();
-            return;
-        }
     }
 
     if (sqlite3_prepare_v2(auth_db, "DELETE FROM local_users WHERE username = ?;", -1, &stmt, NULL) == SQLITE_OK)
@@ -3974,7 +3948,9 @@ int app_copy_file_binary(const char *source_path, const char *dest_path)
     return app_copy_binary_file(source_path, dest_path);
 }
 
-static int appSeleccionarArchivoImagen(char *ruta, size_t size)
+int app_select_existing_file(char *ruta, size_t size, const char *prompt,
+                             const char *windows_filter,
+                             const char *windows_userprofile_subdir)
 {
     if (!ruta || size == 0)
     {
@@ -3982,24 +3958,22 @@ static int appSeleccionarArchivoImagen(char *ruta, size_t size)
     }
 
 #ifdef _WIN32
+    (void)prompt;
     char file_buffer[MAX_PATH] = {0};
     char initial_dir[MAX_PATH] = {0};
 
-    if (app_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
+    if (windows_userprofile_subdir &&
+        utils_get_env_var_copy("USERPROFILE", initial_dir, sizeof(initial_dir)))
     {
-        strcat_s(initial_dir, sizeof(initial_dir), "\\Pictures");
+        strcat_s(initial_dir, sizeof(initial_dir), windows_userprofile_subdir);
     }
-
-    static const char filter[] =
-        "Imagenes (*.jpg;*.jpeg;*.png;*.bmp;*.webp)\0*.jpg;*.jpeg;*.png;*.bmp;*.webp\0"
-        "Todos los archivos (*.*)\0*.*\0";
 
     OPENFILENAMEA ofn;
     memset(&ofn, 0, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.lpstrFile = file_buffer;
     ofn.nMaxFile = (DWORD)sizeof(file_buffer);
-    ofn.lpstrFilter = filter;
+    ofn.lpstrFilter = windows_filter;
     ofn.nFilterIndex = 1;
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
     ofn.lpstrInitialDir = initial_dir[0] ? initial_dir : NULL;
@@ -4021,10 +3995,20 @@ static int appSeleccionarArchivoImagen(char *ruta, size_t size)
     }
     return ruta[0] != '\0';
 #else
-    input_string("Ruta de la imagen: ", ruta, (int)size);
+    input_string(prompt, ruta, (int)size);
     trim_whitespace(ruta);
     return app_is_path_safe_for_shell(ruta) && app_validate_file_exists(ruta);
 #endif
+}
+
+static int appSeleccionarArchivoImagen(char *ruta, size_t size)
+{
+    static const char filter[] =
+        "Imagenes (*.jpg;*.jpeg;*.png;*.bmp;*.webp)\0*.jpg;*.jpeg;*.png;*.bmp;*.webp\0"
+        "Todos los archivos (*.*)\0*.*\0";
+
+    return app_select_existing_file(ruta, size, "Ruta de la imagen: ",
+                                    filter, "\\Pictures");
 }
 
 int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo,
