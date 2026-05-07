@@ -7,6 +7,8 @@
 #include "sqlite3.h"
 #include "utils.h"
 #include <stdbool.h>
+#include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -545,33 +547,133 @@ static int parse_lesion_data(int id, const char *jugador, const char *tipo,
 typedef int (*LesionFieldScanner)(const char *line, int *id, char *jugador,
                                   char *tipo, char *descripcion, char *fecha);
 
-#if defined(_WIN32) && defined(_MSC_VER)
-#define SCAN_LESION_FIELDS(line, format_literal, id, jugador, tipo, descripcion, fecha) \
-    (sscanf_s((line), (format_literal),                                              \
-              (id), (jugador), (unsigned)_countof(jugador),                         \
-              (tipo), (unsigned)_countof(tipo),                                      \
-              (descripcion), (unsigned)_countof(descripcion),                        \
-              (fecha), (unsigned)_countof(fecha)) == 5)
-#else
-#define SCAN_LESION_FIELDS(line, format_literal, id, jugador, tipo, descripcion, fecha) \
-    (sscanf((line), (format_literal), (id), (jugador), (tipo), (descripcion), (fecha)) == 5)
-#endif
+static int copy_trimmed_span(const char *start, const char *end, char *dest,
+                             size_t dest_size)
+{
+    if (!start || !end || !dest || dest_size == 0 || end < start)
+    {
+        return 0;
+    }
+
+    while (start < end && isspace((unsigned char)*start))
+    {
+        start++;
+    }
+    while (end > start && isspace((unsigned char)*(end - 1)))
+    {
+        end--;
+    }
+
+    size_t len = (size_t)(end - start);
+    if (len == 0 || len >= dest_size)
+    {
+        return 0;
+    }
+
+    memcpy(dest, start, len);
+    dest[len] = '\0';
+    return 1;
+}
+
+static int parse_id_prefix(const char *line, char separator, int *id, const char **rest)
+{
+    const char *sep = strchr(line, separator);
+    char id_text[32];
+    char *end_ptr = NULL;
+    long value;
+
+    if (!line || !id || !rest || !sep)
+    {
+        return 0;
+    }
+
+    if (!copy_trimmed_span(line, sep, id_text, sizeof(id_text)))
+    {
+        return 0;
+    }
+
+    value = strtol(id_text, &end_ptr, 10);
+    if (end_ptr == NULL || *end_ptr != '\0' || value < INT_MIN || value > INT_MAX)
+    {
+        return 0;
+    }
+
+    *id = (int)value;
+    *rest = sep + 1;
+    return 1;
+}
+
+static int parse_delimited_field(const char **cursor, char delimiter, char *dest,
+                                 size_t dest_size)
+{
+    const char *start;
+    const char *end;
+
+    if (!cursor || !*cursor)
+    {
+        return 0;
+    }
+
+    start = *cursor;
+    end = strchr(start, delimiter);
+    if (!end)
+    {
+        return 0;
+    }
+
+    if (!copy_trimmed_span(start, end, dest, dest_size))
+    {
+        return 0;
+    }
+
+    *cursor = end + 1;
+    return 1;
+}
+
+static int parse_tail_field(const char *cursor, char *dest, size_t dest_size)
+{
+    const char *line_end;
+
+    if (!cursor || !dest || dest_size == 0)
+    {
+        return 0;
+    }
+
+    line_end = cursor + strcspn(cursor, "\r\n");
+    return copy_trimmed_span(cursor, line_end, dest, dest_size);
+}
 
 static int scan_lesion_txt_fields(const char *line, int *id, char *jugador,
                                   char *tipo, char *descripcion, char *fecha)
 {
-    return SCAN_LESION_FIELDS(line, "%d - %255[^|] | %255[^|] | %511[^|] | %255[^\n]",
-                              id, jugador, tipo, descripcion, fecha);
+    const char *cursor = NULL;
+
+    if (!parse_id_prefix(line, '-', id, &cursor))
+    {
+        return 0;
+    }
+
+    return parse_delimited_field(&cursor, '|', jugador, 256) &&
+           parse_delimited_field(&cursor, '|', tipo, 256) &&
+           parse_delimited_field(&cursor, '|', descripcion, 512) &&
+           parse_tail_field(cursor, fecha, 256);
 }
 
 static int scan_lesion_csv_fields(const char *line, int *id, char *jugador,
                                   char *tipo, char *descripcion, char *fecha)
 {
-    return SCAN_LESION_FIELDS(line, "%d,%255[^,],%255[^,],%511[^,],%255s",
-                              id, jugador, tipo, descripcion, fecha);
-}
+    const char *cursor = NULL;
 
-#undef SCAN_LESION_FIELDS
+    if (!parse_id_prefix(line, ',', id, &cursor))
+    {
+        return 0;
+    }
+
+    return parse_delimited_field(&cursor, ',', jugador, 256) &&
+           parse_delimited_field(&cursor, ',', tipo, 256) &&
+           parse_delimited_field(&cursor, ',', descripcion, 512) &&
+           parse_tail_field(cursor, fecha, 256);
+}
 
 static int parse_lesion_line(const char *line, LesionData *out,
                              LesionFieldScanner scanner)

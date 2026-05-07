@@ -393,7 +393,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1778114551 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1778125810 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -402,6 +402,8 @@
 	"sqlite3.h"
 	"utils.h"
 	<stdbool.h>
+	<ctype.h>
+	<limits.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -2359,7 +2361,7 @@
 	<wchar.h>
 	<ncursesw/unctrl.h>
 
-1777438788 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
+1778126358 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
 	<BaseTsd.h>
 	<sys/types.h>
 	<ctype.h>

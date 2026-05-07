@@ -539,7 +539,10 @@ static void force_locale(char *buf, int len)
         buf[len - 1] = '\0';
     }
 
-    setlocale(LC_NUMERIC, "POSIX");
+    if (!setlocale(LC_NUMERIC, "C"))
+    {
+        setlocale(LC_NUMERIC, "POSIX");
+    }
 }
 
 static void restore_locale(char *buf)
@@ -1380,7 +1383,8 @@ static int pdf_add_stream(struct pdf_doc *pdf, struct pdf_object *page,
     if (!obj)
         return pdf->errval;
 
-    dstr_printf(&obj->stream.stream, "<< /Length %zu >>stream\r\n", len);
+    dstr_printf(&obj->stream.stream, "<< /Length %" PRIuMAX " >>stream\r\n",
+                (uintmax_t)len);
     dstr_append_data(&obj->stream.stream, buffer, len);
     dstr_append(&obj->stream.stream, "\r\nendstream\r\n");
 
@@ -3279,8 +3283,9 @@ static int pdf_add_barcode_upce(struct pdf_doc *pdf, struct pdf_object *page,
 
     size_t len = strlen(string);
     if (len != 12)
-        return pdf_set_err(pdf, -EINVAL, "Invalid UPCE string length %lu",
-                           len);
+        return pdf_set_err(pdf, -EINVAL,
+                           "Invalid UPCE string length %" PRIuMAX,
+                           (uintmax_t)len);
 
     if (*string != '0')
         return pdf_set_err(pdf, -EINVAL, "Invalid UPCE char %c at start",
@@ -3289,8 +3294,9 @@ static int pdf_add_barcode_upce(struct pdf_doc *pdf, struct pdf_object *page,
     for (size_t i = 0; i < len; i++)
     {
         if (!isdigit(string[i]))
-            return pdf_set_err(pdf, -EINVAL, "Invalid UPCE char 0x%x at %zd",
-                               string[i], i);
+            return pdf_set_err(pdf, -EINVAL,
+                               "Invalid UPCE char 0x%x at %" PRIdMAX,
+                               string[i], (intmax_t)i);
     }
 
     /* Scale and calculate dimensions */
@@ -3460,16 +3466,18 @@ static pdf_object *pdf_add_raw_grayscale8(struct pdf_doc *pdf,
                 "  /Height %d\r\n"
                 "  /Width %d\r\n"
                 "  /BitsPerComponent 8\r\n"
-                "  /Length %zu\r\n"
+                "  /Length %" PRIuMAX "\r\n"
                 ">>stream\r\n",
-                flexarray_size(&pdf->objects), height, width, data_len + 1);
+                flexarray_size(&pdf->objects), height, width,
+                (uintmax_t)(data_len + 1));
 
     len = dstr_len(&str) + data_len + strlen(endstream) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);
         pdf_set_err(pdf, -ENOMEM,
-                    "Unable to allocate %zu bytes memory for image", len);
+                    "Unable to allocate %" PRIuMAX " bytes memory for image",
+                    (uintmax_t)len);
         return NULL;
     }
     dstr_append_data(&str, data, data_len);
@@ -3505,16 +3513,18 @@ static struct pdf_object *pdf_add_raw_rgb24(struct pdf_doc *pdf,
                 "  /Height %d\r\n"
                 "  /Width %d\r\n"
                 "  /BitsPerComponent 8\r\n"
-                "  /Length %zu\r\n"
+                "  /Length %" PRIuMAX "\r\n"
                 ">>stream\r\n",
-                flexarray_size(&pdf->objects), height, width, data_len + 1);
+                flexarray_size(&pdf->objects), height, width,
+                (uintmax_t)(data_len + 1));
 
     len = dstr_len(&str) + data_len + strlen(endstream) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);
         pdf_set_err(pdf, -ENOMEM,
-                    "Unable to allocate %zu bytes memory for image", len);
+                    "Unable to allocate %" PRIuMAX " bytes memory for image",
+                    (uintmax_t)len);
         return NULL;
     }
     dstr_append_data(&str, data, data_len);
@@ -3597,11 +3607,11 @@ pdf_add_raw_jpeg_data(struct pdf_doc *pdf, const struct pdf_img_info *info,
                 "  /Height %d\r\n"
                 "  /BitsPerComponent 8\r\n"
                 "  /Filter /DCTDecode\r\n"
-                "  /Length %zu\r\n"
+                "  /Length %" PRIuMAX "\r\n"
                 ">>stream\r\n",
                 flexarray_size(&pdf->objects),
                 (info->jpeg.ncolours == 1) ? "/DeviceGray" : "/DeviceRGB",
-                info->width, info->height, len);
+                info->width, info->height, (uintmax_t)len);
     dstr_append_data(&obj->stream.stream, jpeg_data, len);
 
     dstr_printf(&obj->stream.stream, "\r\nendstream\r\n");
@@ -4057,8 +4067,10 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
         // chunk length + 4-bytes of CRC
         if (chunk_length > png_data_length - pos - 4)
         {
-            pdf_set_err(pdf, -EINVAL, "PNG chunk exceeds file: %d vs %ld",
-                        chunk_length, png_data_length - pos - 4);
+            pdf_set_err(pdf, -EINVAL,
+                        "PNG chunk exceeds file: %u vs %" PRIuMAX,
+                        chunk_length,
+                        (uintmax_t)(png_data_length - pos - 4));
             goto free_buffers;
         }
         if (strncmp(chunk->type, png_chunk_header, 4) == 0)
@@ -4090,8 +4102,8 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
                         palette_buffer_length == 0)
                 {
                     pdf_set_err(pdf, -EINVAL,
-                                "PNG palette length invalid: %zd",
-                                palette_buffer_length);
+                                "PNG palette length invalid: %" PRIdMAX,
+                                (intmax_t)palette_buffer_length);
                     goto free_buffers;
                 }
                 palette_buffer = (struct rgb_value *)malloc(
@@ -4100,9 +4112,9 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
                 {
                     pdf_set_err(pdf, -ENOMEM,
                                 "Could not allocate memory for indexed color "
-                                "palette (%zu bytes)",
-                                palette_buffer_length *
-                                sizeof(struct rgb_value));
+                                "palette (%" PRIuMAX " bytes)",
+                                (uintmax_t)(palette_buffer_length *
+                                            sizeof(struct rgb_value)));
                     goto free_buffers;
                 }
                 for (size_t i = 0; i < palette_buffer_length; i++)
@@ -4186,9 +4198,9 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
         dstr_printf(&colour_space,
                     "[ /Indexed\r\n"
                     "  /DeviceRGB\r\n"
-                    "  %zu\r\n"
+                    "  %" PRIuMAX "\r\n"
                     "  <",
-                    palette_buffer_length - 1);
+                    (uintmax_t)(palette_buffer_length - 1));
         // write individual paletter values
         // the index value for every RGB value is determined by its position
         // (0, 1, 2, ...)
@@ -4212,8 +4224,10 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
                                    dstr_len(&colour_space));
     if (!final_data)
     {
-        pdf_set_err(pdf, -ENOMEM, "Unable to allocate PNG data %zu",
-                    png_data_total_length + 1024 + dstr_len(&colour_space));
+        pdf_set_err(pdf, -ENOMEM,
+                    "Unable to allocate PNG data %" PRIuMAX,
+                    (uintmax_t)(png_data_total_length + 1024 +
+                                dstr_len(&colour_space)));
         goto free_buffers;
     }
 
@@ -4232,11 +4246,12 @@ static int pdf_add_png_data(struct pdf_doc *pdf, struct pdf_object *page,
                 "  /Filter /FlateDecode\r\n"
                 "  /DecodeParms << /Predictor 15 /Colors %d "
                 "/BitsPerComponent %u /Columns %u >>\r\n"
-                "  /Length %zu\r\n"
+                "  /Length %" PRIuMAX "\r\n"
                 ">>stream\r\n",
                 flexarray_size(&pdf->objects), dstr_data(&colour_space),
                 header->width, header->height, header->bitDepth, ncolours,
-                header->bitDepth, header->width, png_data_total_length);
+                header->bitDepth, header->width,
+                (uintmax_t)png_data_total_length);
 
     memcpy(&final_data[written], png_data_temp, png_data_total_length);
     written += png_data_total_length;
