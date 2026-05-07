@@ -1195,28 +1195,84 @@ int existe_id(const char *tabla, int id)
  * Limpia la pantalla de la consola para proporcionar una interfaz limpia y
  * organizada, mejorando la legibilidad de la informacion mostrada.
  */
+static void clear_screen_with_ansi(void)
+{
+#ifdef _WIN32
+    HANDLE h_out = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0;
+    if (h_out != INVALID_HANDLE_VALUE && GetConsoleMode(h_out, &mode))
+    {
+        SetConsoleMode(h_out, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+#endif
+
+    printf("\033[2J\033[3J\033[H");
+    fflush(stdout);
+}
+
+#ifdef _WIN32
+static int clear_windows_console_buffer(HANDLE h_out)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    COORD origin = {0, 0};
+    DWORD written = 0;
+
+    if (h_out == INVALID_HANDLE_VALUE || !GetConsoleScreenBufferInfo(h_out, &csbi))
+    {
+        return 0;
+    }
+
+    SHORT window_width = (SHORT)(csbi.srWindow.Right - csbi.srWindow.Left + 1);
+    SHORT window_height = (SHORT)(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+
+    if (window_width <= 0 || window_height <= 0)
+    {
+        return 0;
+    }
+
+    SMALL_RECT reset_window = {0, 0, (SHORT)(window_width - 1), (SHORT)(window_height - 1)};
+    COORD resized_buffer = csbi.dwSize;
+
+    if (resized_buffer.X < window_width)
+    {
+        resized_buffer.X = window_width;
+    }
+    resized_buffer.Y = window_height;
+
+    SetConsoleCursorPosition(h_out, origin);
+    SetConsoleWindowInfo(h_out, TRUE, &reset_window);
+    SetConsoleScreenBufferSize(h_out, resized_buffer);
+
+    if (!GetConsoleScreenBufferInfo(h_out, &csbi))
+    {
+        return 0;
+    }
+
+    DWORD total_cells = (DWORD)csbi.dwSize.X * (DWORD)csbi.dwSize.Y;
+    if (!FillConsoleOutputCharacterA(h_out, ' ', total_cells, origin, &written))
+    {
+        return 0;
+    }
+    if (!FillConsoleOutputAttribute(h_out, csbi.wAttributes, total_cells, origin, &written))
+    {
+        return 0;
+    }
+
+    return SetConsoleCursorPosition(h_out, origin) != 0;
+}
+#endif
+
 void clear_screen()
 {
 #ifdef _WIN32
     HANDLE h_out = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (h_out != INVALID_HANDLE_VALUE)
+    if (clear_windows_console_buffer(h_out))
     {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        if (GetConsoleScreenBufferInfo(h_out, &csbi))
-        {
-            DWORD total_cells = (DWORD)csbi.dwSize.X * (DWORD)csbi.dwSize.Y;
-            COORD origin = {0, 0};
-            DWORD written = 0;
-
-            FillConsoleOutputCharacterA(h_out, ' ', total_cells, origin, &written);
-            FillConsoleOutputAttribute(h_out, csbi.wAttributes, total_cells, origin, &written);
-            SetConsoleCursorPosition(h_out, origin);
-            return;
-        }
+        clear_screen_with_ansi();
+        return;
     }
 #endif
-    printf("\033[2J\033[3J\033[H");
-    fflush(stdout);
+    clear_screen_with_ansi();
 }
 
 typedef struct

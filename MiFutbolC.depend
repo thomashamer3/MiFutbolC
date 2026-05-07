@@ -113,7 +113,7 @@
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1778113805 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1778124667 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"export.h"
 	"ascii_art.h"
 	"db.h"
@@ -2475,12 +2475,10 @@
 
 1775069198 d:\anime\libros\lenguaje c\proyectos\mifutbolc\colecciones.h
 
-1777501474 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.c
+1778124895 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.c
 	"atajos.h"
 	"utils.h"
-	"settings.h"
 	<stdio.h>
-	<stdlib.h>
 	<ctype.h>
 	<conio.h>
 	<Windows.h>

@@ -1,9 +1,6 @@
-
 #include "atajos.h"
 #include "utils.h"
-#include "settings.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 
 #ifdef _WIN32
