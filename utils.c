@@ -946,8 +946,8 @@ double input_double(const char *msg)
 
 /**
  * Valida la entrada de texto para asegurar la integridad de los datos y
- * prevenir errores en el procesamiento posterior, aceptando solo caracteres
- * alfanumericos y espacios.
+ * prevenir errores en el procesamiento posterior, aceptando caracteres
+ * alfanumericos, espacios, guiones, puntos y parentesis.
  */
 void input_string(const char *msg, char *buffer, int size)
 {
@@ -962,7 +962,13 @@ void input_string(const char *msg, char *buffer, int size)
         int valid = 1;
         for (int i = 0; buffer[i] != '\0'; i++)
         {
-            if (!isalpha(buffer[i]) && !isspace(buffer[i]) && !isdigit(buffer[i]))
+            if (!isalpha((unsigned char)buffer[i]) &&
+                    !isspace((unsigned char)buffer[i]) &&
+                    !isdigit((unsigned char)buffer[i]) &&
+                    buffer[i] != '-' &&
+                    buffer[i] != '.' &&
+                    buffer[i] != '(' &&
+                    buffer[i] != ')')
             {
                 valid = 0;
                 break;
@@ -971,7 +977,7 @@ void input_string(const char *msg, char *buffer, int size)
 
         if (valid)
             return;
-        ui_printf("Entrada invalida. Solo se permiten letras, espacios y numeros.\n");
+        ui_printf("Entrada invalida. Solo se permiten letras, espacios, numeros, guiones, puntos y parentesis.\n");
     }
 }
 

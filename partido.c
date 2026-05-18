@@ -500,6 +500,7 @@ static int seleccionar_modalidad_partido(void)
 {
     while (1)
     {
+        clear_screen();
         print_header("TIPO DE PARTIDO");
         printf("1) Partido Amistoso (carga clasica)\n");
         printf("2) Partido Formal (carga clasica + detalle ampliado)\n");
@@ -635,7 +636,7 @@ static int recopilar_datos_partido(DatosPartido *datos)
     datos->estado_animo = pedir_entero_en_rango("Estado de Animo (1-10): ",
                           1, 10,
                           "Estado de Animo invalido. Ingrese entre 1 y 10: ");
-    input_string("Comentario personal: ", datos->comentario_personal, 256);
+    input_string_extended("Comentario personal: ", datos->comentario_personal, 256);
     datos->clima = pedir_entero_en_rango("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):",
                                          1, 6,
                                          "Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
