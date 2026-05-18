@@ -20,10 +20,10 @@ $ErrorActionPreference = "Stop"
 
 function Write-Step {
     param([string]$Message)
-    Write-Host "`n==> $Message" -ForegroundColor Cyan
+    Write-Output "`n==> $Message"
 }
 
-function Ensure-Directory {
+function New-DirectoryIfMissing {
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) {
         New-Item -ItemType Directory -Path $Path -Force | Out-Null
@@ -90,7 +90,7 @@ function Resolve-ExePath {
     throw "No se encontro MiFutbolC.exe. Compile primero o indique -SourceExePath."
 }
 
-function Ensure-UserPathContains {
+function Add-UserPathEntry {
     param([string]$Directory)
 
     $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -147,8 +147,8 @@ $installExePath = Join-Path $resolvedInstallDir "MiFutbolC.exe"
 $installCmdPath = Join-Path $resolvedInstallDir "MiFutbolC.cmd"
 
 Write-Step "Copiando archivos a $resolvedInstallDir"
-Ensure-Directory -Path $resolvedInstallDir
-Ensure-Directory -Path (Join-Path $resolvedInstallDir "Musica")
+New-DirectoryIfMissing -Path $resolvedInstallDir
+New-DirectoryIfMissing -Path (Join-Path $resolvedInstallDir "Musica")
 
 Copy-Item -LiteralPath $exePath -Destination $installExePath -Force
 
@@ -174,25 +174,25 @@ $launcherContent = @(
 Set-Content -LiteralPath $installCmdPath -Value $launcherContent -Encoding Ascii
 
 $dataDir = Join-Path $env:LOCALAPPDATA "MiFutbolC\data"
-Ensure-Directory -Path $dataDir
+New-DirectoryIfMissing -Path $dataDir
 
 if ($PathMode -eq "user") {
-    $pathUpdated = Ensure-UserPathContains -Directory $resolvedInstallDir
+    $pathUpdated = Add-UserPathEntry -Directory $resolvedInstallDir
     if ($pathUpdated) {
-        Write-Host "Se agrego al PATH de usuario: $resolvedInstallDir" -ForegroundColor Green
-        Write-Host "Abra una nueva consola para usar el comando: MiFutbolC" -ForegroundColor Yellow
+        Write-Output "Se agrego al PATH de usuario: $resolvedInstallDir"
+        Write-Output "Abra una nueva consola para usar el comando: MiFutbolC"
     }
     else {
-        Write-Host "El PATH de usuario ya contiene: $resolvedInstallDir" -ForegroundColor DarkYellow
+        Write-Output "El PATH de usuario ya contiene: $resolvedInstallDir"
     }
 }
 else {
-    Write-Host "No se modifico PATH (PathMode=none)." -ForegroundColor DarkYellow
+    Write-Output "No se modifico PATH (PathMode=none)."
 }
 
-Write-Host "`nInstalacion completada." -ForegroundColor Green
-Write-Host "Ejecutable: $installExePath"
-Write-Host "Launcher consola: $installCmdPath"
+Write-Output "`nInstalacion completada."
+Write-Output "Ejecutable: $installExePath"
+Write-Output "Launcher consola: $installCmdPath"
 
 if ($RunAfterInstall) {
     Write-Step "Iniciando MiFutbolC"
