@@ -486,6 +486,7 @@ SRC=(
   musica_helpers.c
   random_utils.c
   recordatorios.c
+  sqlite3_exports.c
 )
 
 OUT="MiFutbolC"
@@ -510,7 +511,13 @@ fi
 
 # Always link libm explicitly (required on Linux even when pkg-config provides other libs)
 LDFLAGS+=" -lm"
-
+# sqlite3 amalgamation defines SQLITE_AMALGAMATION internally, which skips the
+# sqlite3_version[] definition guarded by #ifndef SQLITE_AMALGAMATION.
+# sqlite3_exports.c provides the symbol; --allow-multiple-definition tolerates
+# the rare case where the embedded header also emits a definition.
+if [[ "${OS_NAME}" != "${OS_DARWIN}" ]]; then
+  LDFLAGS+=" -Wl,--allow-multiple-definition"
+fi
 # Build
 # -----
 # This script is intended for Unix-like environments (Linux/macOS).
