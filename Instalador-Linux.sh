@@ -484,6 +484,7 @@ SRC=(
   atajos.c
   musica.c
   musica_helpers.c
+  random_utils.c
   recordatorios.c
 )
 
@@ -506,6 +507,9 @@ fi
 if [[ -z "${LDFLAGS// }" ]]; then
   LDFLAGS="-lhpdf -lz -lpng -lm"
 fi
+
+# Always link libm explicitly (required on Linux even when pkg-config provides other libs)
+LDFLAGS+=" -lm"
 
 # Build
 # -----

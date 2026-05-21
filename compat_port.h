@@ -23,8 +23,10 @@
 #include <string.h>
 #include <time.h>
 
-/* Provide a portable strnlen if the platform header doesn't declare one. */
-#ifndef HAVE_STRNLEN
+/* Provide a portable strnlen if the platform header doesn't declare one.
+ * On glibc (_GNU_SOURCE), string.h already exposes strnlen as extern;
+ * defining a static version after that causes a linkage conflict. */
+#if !defined(__GLIBC__) && !defined(HAVE_STRNLEN)
 static inline size_t strnlen(const char *s, size_t maxlen)
 {
     const char *end = memchr(s, '\0', maxlen);
@@ -247,6 +249,14 @@ static inline size_t strlen_s(const char *s, size_t maxlen)
     }
     return len;
 }
+/* Self-referential macro so miniaudio.h's #ifndef strlen_s guard fires. */
+#ifndef strlen_s
+#define strlen_s strlen_s
+#endif
+/* strnlen_s (C11 Annex K) behaves identically to strlen_s here. */
+#ifndef strnlen_s
+#define strnlen_s strlen_s
+#endif
 #endif
 
 #endif /* !_WIN32 */
