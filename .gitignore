@@ -1,0 +1,35 @@
+# Sensitive analysis artifacts
+bw-output/
+build-wrapper-dump.json
+sonar_issues.json
+
+# Local/runtime data
+*.db
+*.log
+data/
+Exportaciones/
+Importaciones/
+
+# Build outputs and binaries
+*.exe
+*.o
+*.obj
+*.out
+bin/
+obj/
+build/
+cmake-build-*/
+
+# Coverage and profiler outputs
+*.gcda
+*.gcno
+*.prof
+*.profraw
+*.profdata
+
+# Temporary/editor files
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db

@@ -362,6 +362,21 @@ static int inicializar_engine(void)
         ma_uint32 ch = ma_engine_get_channels(&g_engine);
         ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
 
+        /* Sanear valores: en Linux sin dispositivo de audio real (backend null
+         * o dispositivo virtual) el engine puede inicializarse correctamente
+         * pero devolver 0 o un valor >= 256 para los canales, lo que dispara
+         * el assert interno de miniaudio.  Usamos stereo/44100 como fallback. */
+        if (ch == 0 || ch >= 256)
+        {
+            fprintf(stderr, "Aviso: canales de audio no validos (%u), usando fallback stereo.\n", (unsigned)ch);
+            ch = 2;
+        }
+        if (sr == 0)
+        {
+            fprintf(stderr, "Aviso: sample rate no valido, usando fallback 44100 Hz.\n");
+            sr = 44100;
+        }
+
         ma_loshelf_node_config bassCfg =
             ma_loshelf_node_config_init(ch, sr, (double)g_eq_bass_db,   EQ_Q, EQ_BASS_FREQ);
         ma_peak_node_config    midCfg  =
