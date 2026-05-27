@@ -3032,6 +3032,68 @@ static int cancha_export_solicitar_formato_especifico(void)
     }
 }
 
+static int cancha_export_ejecutar_formato(int formato, int exportar_todas, int cancha_id)
+{
+    switch (formato)
+    {
+    case 1:
+        return cancha_export_info_txt(exportar_todas, cancha_id);
+    case 2:
+        return cancha_export_info_csv(exportar_todas, cancha_id);
+    case 3:
+        return cancha_export_info_json(exportar_todas, cancha_id);
+    case 4:
+        return cancha_export_info_html(exportar_todas, cancha_id);
+    case 5:
+        return cancha_export_info_pdf(exportar_todas, cancha_id);
+    default:
+        return -1;
+    }
+}
+
+static int cancha_export_ejecutar_todos(int exportar_todas, int cancha_id)
+{
+    int exitos = 0;
+    exitos += cancha_export_info_txt(exportar_todas, cancha_id);
+    exitos += cancha_export_info_csv(exportar_todas, cancha_id);
+    exitos += cancha_export_info_json(exportar_todas, cancha_id);
+    exitos += cancha_export_info_html(exportar_todas, cancha_id);
+    exitos += cancha_export_info_pdf(exportar_todas, cancha_id);
+    return exitos;
+}
+
+static int cancha_export_ejecutar_por_modo(int modo, int exportar_todas, int cancha_id)
+{
+    if (modo == 1)
+    {
+        int formato = cancha_export_solicitar_formato_especifico();
+        if (formato == 0)
+        {
+            return -2;
+        }
+
+        return cancha_export_ejecutar_formato(formato, exportar_todas, cancha_id);
+    }
+
+    if (modo == 2)
+    {
+        return cancha_export_ejecutar_todos(exportar_todas, cancha_id);
+    }
+
+    return -1;
+}
+
+static void cancha_export_construir_detalle(int exportar_todas, int cancha_id, char *detalle, size_t detalle_size)
+{
+    if (exportar_todas)
+    {
+        snprintf(detalle, detalle_size, "Todas las canchas");
+        return;
+    }
+
+    snprintf(detalle, detalle_size, "Cancha ID %d", cancha_id);
+}
+
 static void exportar_informacion_canchas()
 {
     mostrar_pantalla("EXPORTAR INFORMACION DE CANCHAS");
@@ -3061,47 +3123,13 @@ static void exportar_informacion_canchas()
         return;
     }
 
-    int exitos = 0;
-    if (modo == 1)
+    int exitos = cancha_export_ejecutar_por_modo(modo, exportar_todas, cancha_id);
+    if (exitos == -2)
     {
-        int formato = cancha_export_solicitar_formato_especifico();
-        if (formato == 0)
-        {
-            return;
-        }
+        return;
+    }
 
-        switch (formato)
-        {
-        case 1:
-            exitos += cancha_export_info_txt(exportar_todas, cancha_id);
-            break;
-        case 2:
-            exitos += cancha_export_info_csv(exportar_todas, cancha_id);
-            break;
-        case 3:
-            exitos += cancha_export_info_json(exportar_todas, cancha_id);
-            break;
-        case 4:
-            exitos += cancha_export_info_html(exportar_todas, cancha_id);
-            break;
-        case 5:
-            exitos += cancha_export_info_pdf(exportar_todas, cancha_id);
-            break;
-        default:
-            printf("Formato invalido.\n");
-            pause_console();
-            return;
-        }
-    }
-    else if (modo == 2)
-    {
-        exitos += cancha_export_info_txt(exportar_todas, cancha_id);
-        exitos += cancha_export_info_csv(exportar_todas, cancha_id);
-        exitos += cancha_export_info_json(exportar_todas, cancha_id);
-        exitos += cancha_export_info_html(exportar_todas, cancha_id);
-        exitos += cancha_export_info_pdf(exportar_todas, cancha_id);
-    }
-    else
+    if (exitos == -1)
     {
         printf("Opcion invalida.\n");
         pause_console();
@@ -3111,14 +3139,7 @@ static void exportar_informacion_canchas()
     if (exitos > 0)
     {
         char detalle[64];
-        if (exportar_todas)
-        {
-            snprintf(detalle, sizeof(detalle), "Todas las canchas");
-        }
-        else
-        {
-            snprintf(detalle, sizeof(detalle), "Cancha ID %d", cancha_id);
-        }
+        cancha_export_construir_detalle(exportar_todas, cancha_id, detalle, sizeof(detalle));
         mostrar_alerta_operacion("Cancha", "Informacion Exportada", detalle);
     }
     else

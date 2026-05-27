@@ -631,6 +631,65 @@ static void mostrar_ficha_identidad(void)
     pause_console();
 }
 
+static void identidad_editar_texto_campo(const char *label_actual,
+        const char *prompt,
+        int usar_input_extendido,
+        char *destino,
+        size_t destino_size)
+{
+    char buffer[512];
+
+    printf("%s: %s\n", label_actual, destino[0] ? destino : "N/A");
+    if (usar_input_extendido)
+    {
+        input_string_extended(prompt, buffer, (int)sizeof(buffer));
+    }
+    else
+    {
+        input_string(prompt, buffer, (int)sizeof(buffer));
+    }
+
+    if (buffer[0] != '\0')
+    {
+        copiar_texto_limited(destino, destino_size, buffer);
+    }
+}
+
+static void identidad_editar_entero_campo(const char *label_actual, const char *prompt, int *valor)
+{
+    char buffer[128];
+
+    printf("%s: %d\n", label_actual, *valor);
+    input_string_extended(prompt, buffer, (int)sizeof(buffer));
+    if (buffer[0] != '\0')
+    {
+        *valor = atoi(buffer);
+    }
+}
+
+static void identidad_editar_decimal_campo(const char *label_actual,
+        const char *unidad,
+        const char *prompt,
+        double *valor)
+{
+    char buffer[128];
+
+    if (*valor > 0.0)
+    {
+        printf("%s: %.1f %s\n", label_actual, *valor, unidad);
+    }
+    else
+    {
+        printf("%s: N/A\n", label_actual);
+    }
+
+    input_string_extended(prompt, buffer, (int)sizeof(buffer));
+    if (buffer[0] != '\0')
+    {
+        *valor = atof(buffer);
+    }
+}
+
 static void editar_ficha_identidad(void)
 {
     clear_screen();
@@ -639,63 +698,24 @@ static void editar_ficha_identidad(void)
     CarreraIdentidad identidad;
     cargar_identidad(&identidad);
 
-    char buffer[512];
+    identidad_editar_texto_campo("Nombre actual", "Nombre (Enter mantiene): ", 0,
+                                 identidad.nombre, sizeof(identidad.nombre));
+    identidad_editar_entero_campo("Edad actual", "Edad (Enter mantiene): ", &identidad.edad);
+    identidad_editar_texto_campo("Pie habil actual", "Pie habil (Enter mantiene): ", 0,
+                                 identidad.pie_habil, sizeof(identidad.pie_habil));
+    identidad_editar_texto_campo("Posiciones actuales", "Posiciones (Enter mantiene): ", 0,
+                                 identidad.posiciones, sizeof(identidad.posiciones));
 
-    printf("Nombre actual: %s\n", identidad.nombre[0] ? identidad.nombre : "N/A");
-    input_string("Nombre (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.nombre, sizeof(identidad.nombre), buffer);
+    identidad_editar_decimal_campo("Altura actual", "cm", "Altura cm (Enter mantiene): ", &identidad.altura_cm);
+    identidad_editar_decimal_campo("Peso actual", "kg", "Peso kg (Enter mantiene): ", &identidad.peso_kg);
 
-    printf("Edad actual: %d\n", identidad.edad);
-    input_string_extended("Edad (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        identidad.edad = atoi(buffer);
-
-    printf("Pie habil actual: %s\n", identidad.pie_habil[0] ? identidad.pie_habil : "N/A");
-    input_string("Pie habil (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.pie_habil, sizeof(identidad.pie_habil), buffer);
-
-    printf("Posiciones actuales: %s\n", identidad.posiciones[0] ? identidad.posiciones : "N/A");
-    input_string("Posiciones (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.posiciones, sizeof(identidad.posiciones), buffer);
-
-    if (identidad.altura_cm > 0.0)
-        printf("Altura actual: %.1f cm\n", identidad.altura_cm);
-    else
-        printf("Altura actual: N/A\n");
-    input_string_extended("Altura cm (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        identidad.altura_cm = atof(buffer);
-
-    if (identidad.peso_kg > 0.0)
-        printf("Peso actual: %.1f kg\n", identidad.peso_kg);
-    else
-        printf("Peso actual: N/A\n");
-    input_string_extended("Peso kg (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        identidad.peso_kg = atof(buffer);
-
-    printf("Estilo actual: %s\n", identidad.estilo[0] ? identidad.estilo : "N/A");
-    input_string("Estilo (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.estilo, sizeof(identidad.estilo), buffer);
-
-    printf("Dorsal favorito actual: %d\n", identidad.dorsal_favorito);
-    input_string_extended("Dorsal favorito (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        identidad.dorsal_favorito = atoi(buffer);
-
-    printf("Objetivos actuales: %s\n", identidad.objetivos[0] ? identidad.objetivos : "N/A");
-    input_string_extended("Objetivos (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.objetivos, sizeof(identidad.objetivos), buffer);
-
-    printf("Historia actual: %s\n", identidad.historia[0] ? identidad.historia : "N/A");
-    input_string_extended("Historia (Enter mantiene): ", buffer, (int)sizeof(buffer));
-    if (buffer[0] != '\0')
-        copiar_texto_limited(identidad.historia, sizeof(identidad.historia), buffer);
+    identidad_editar_texto_campo("Estilo actual", "Estilo (Enter mantiene): ", 0,
+                                 identidad.estilo, sizeof(identidad.estilo));
+    identidad_editar_entero_campo("Dorsal favorito actual", "Dorsal favorito (Enter mantiene): ", &identidad.dorsal_favorito);
+    identidad_editar_texto_campo("Objetivos actuales", "Objetivos (Enter mantiene): ", 1,
+                                 identidad.objetivos, sizeof(identidad.objetivos));
+    identidad_editar_texto_campo("Historia actual", "Historia (Enter mantiene): ", 1,
+                                 identidad.historia, sizeof(identidad.historia));
 
     if (guardar_identidad(&identidad))
         printf("Ficha de identidad actualizada.\n");
@@ -749,13 +769,8 @@ static int calcular_momentum_delta(double *delta)
     return 1;
 }
 
-static int calcular_perfil_dinamico(PerfilDinamico *perfil)
+static int perfil_dinamico_cargar_totales(PerfilDinamico *perfil)
 {
-    if (!perfil)
-        return 0;
-
-    memset(perfil, 0, sizeof(*perfil));
-
     sqlite3_stmt *stmt;
     const char *sql =
         "SELECT COUNT(*), "
@@ -781,11 +796,18 @@ static int calcular_perfil_dinamico(PerfilDinamico *perfil)
         perfil->avg_rendimiento = sqlite3_column_double(stmt, 6);
         perfil->avg_animo = sqlite3_column_double(stmt, 7);
     }
-    sqlite3_finalize(stmt);
 
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static void perfil_dinamico_cargar_dispersion(PerfilDinamico *perfil)
+{
+    sqlite3_stmt *stmt;
     const char *sql_dispersion =
         "SELECT COALESCE(AVG(ABS(rendimiento_general - (SELECT AVG(rendimiento_general) FROM partido))), 0) "
         "FROM partido";
+
     if (preparar_stmt(&stmt, sql_dispersion))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -794,9 +816,10 @@ static int calcular_perfil_dinamico(PerfilDinamico *perfil)
         }
         sqlite3_finalize(stmt);
     }
+}
 
-    calcular_momentum_delta(&perfil->momentum_delta);
-
+static void perfil_dinamico_definir_etiqueta(PerfilDinamico *perfil)
+{
     double contrib_por_partido = perfil->avg_goles + perfil->avg_asistencias;
     double ratio_victorias = (perfil->partidos > 0)
                              ? (double)perfil->victorias * 100.0 / (double)perfil->partidos
@@ -806,37 +829,64 @@ static int calcular_perfil_dinamico(PerfilDinamico *perfil)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Goleador");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Tu impacto principal llega por el gol.");
+        return;
     }
-    else if (perfil->avg_asistencias >= 1.00 && perfil->avg_goles < 0.90)
+
+    if (perfil->avg_asistencias >= 1.00 && perfil->avg_goles < 0.90)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Asistidor");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Generas juego y habilitas mucho a tus companeros.");
+        return;
     }
-    else if (perfil->avg_asistencias >= 0.80 && perfil->avg_goles >= 0.60)
+
+    if (perfil->avg_asistencias >= 0.80 && perfil->avg_goles >= 0.60)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Playmaker");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Combinas creacion y definicion con buen equilibrio ofensivo.");
+        return;
     }
-    else if (perfil->avg_rendimiento >= 7.50 && perfil->avg_animo >= 7.00)
+
+    if (perfil->avg_rendimiento >= 7.50 && perfil->avg_animo >= 7.00)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Equilibrado");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Sostienes un rendimiento parejo en distintos contextos.");
+        return;
     }
-    else if (contrib_por_partido >= 0.70 && ratio_victorias < 45.0)
+
+    if (contrib_por_partido >= 0.70 && ratio_victorias < 45.0)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Guerrero");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Aunque no siempre gane el equipo, mantienes aporte competitivo.");
+        return;
     }
-    else if (perfil->partidos >= 15 && perfil->dispersion_rendimiento <= 1.20)
+
+    if (perfil->partidos >= 15 && perfil->dispersion_rendimiento <= 1.20)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Regular");
         snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Tu curva de rendimiento es estable partido a partido.");
+        return;
     }
-    else
+
+    snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Inconsistente");
+    snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Hay picos altos y bajos marcados en tu rendimiento reciente.");
+}
+
+static int calcular_perfil_dinamico(PerfilDinamico *perfil)
+{
+    if (!perfil)
+        return 0;
+
+    memset(perfil, 0, sizeof(*perfil));
+
+    if (!perfil_dinamico_cargar_totales(perfil))
     {
-        snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Inconsistente");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Hay picos altos y bajos marcados en tu rendimiento reciente.");
+        return 0;
     }
+
+    perfil_dinamico_cargar_dispersion(perfil);
+
+    calcular_momentum_delta(&perfil->momentum_delta);
+    perfil_dinamico_definir_etiqueta(perfil);
 
     return 1;
 }
@@ -1369,6 +1419,112 @@ static void mostrar_hall_of_fame_personal(void)
     pause_console();
 }
 
+typedef struct
+{
+    char fecha_inicio[64];
+    char fecha_fin[64];
+    int partidos;
+    int goles;
+    int asistencias;
+    int victorias;
+} ResumenNarrativoPeriodo;
+
+static void resumen_narrativo_cargar_periodo(ResumenNarrativoPeriodo *periodo)
+{
+    sqlite3_stmt *stmt;
+    const char *sql_periodo =
+        "SELECT MIN(fecha_hora), MAX(fecha_hora), COUNT(*), "
+        "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
+        "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0) "
+        "FROM partido";
+
+    if (!periodo)
+    {
+        return;
+    }
+
+    snprintf(periodo->fecha_inicio, sizeof(periodo->fecha_inicio), "N/A");
+    snprintf(periodo->fecha_fin, sizeof(periodo->fecha_fin), "N/A");
+    periodo->partidos = 0;
+    periodo->goles = 0;
+    periodo->asistencias = 0;
+    periodo->victorias = 0;
+
+    if (preparar_stmt(&stmt, sql_periodo))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const char *f_inicio = (const char *)sqlite3_column_text(stmt, 0);
+            const char *f_fin = (const char *)sqlite3_column_text(stmt, 1);
+            periodo->partidos = sqlite3_column_int(stmt, 2);
+            periodo->goles = sqlite3_column_int(stmt, 3);
+            periodo->asistencias = sqlite3_column_int(stmt, 4);
+            periodo->victorias = sqlite3_column_int(stmt, 5);
+
+            if (f_inicio)
+            {
+                snprintf(periodo->fecha_inicio, sizeof(periodo->fecha_inicio), "%s", f_inicio);
+            }
+            if (f_fin)
+            {
+                snprintf(periodo->fecha_fin, sizeof(periodo->fecha_fin), "%s", f_fin);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static int resumen_narrativo_consultar_count(const char *sql)
+{
+    int valor = 0;
+    sqlite3_stmt *stmt;
+
+    if (preparar_stmt(&stmt, sql))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            valor = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return valor;
+}
+
+static const char *resumen_narrativo_texto_momentum(double momentum_delta)
+{
+    if (momentum_delta > 0.40)
+    {
+        return "ascendente";
+    }
+    if (momentum_delta < -0.40)
+    {
+        return "descendente";
+    }
+    return "estable";
+}
+
+static void resumen_narrativo_guardar(const char *fecha_inicio,
+                                      const char *fecha_fin,
+                                      const char *perfil,
+                                      const char *resumen)
+{
+    sqlite3_stmt *stmt;
+    const char *sql_insert =
+        "INSERT INTO carrera_resumen_narrativo (fecha, periodo_inicio, periodo_fin, perfil_dinamico, resumen) "
+        "VALUES (date('now'), ?, ?, ?, ?)";
+
+    if (preparar_stmt(&stmt, sql_insert))
+    {
+        sqlite3_bind_text(stmt, 1, fecha_inicio, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, fecha_fin, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 3, perfil, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 4, resumen, -1, SQLITE_TRANSIENT);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
+
 static void generar_resumen_narrativo_automatico(void)
 {
     if (!iniciar_vista_carrera("RESUMEN NARRATIVO AUTOMATICO"))
@@ -1377,61 +1533,18 @@ static void generar_resumen_narrativo_automatico(void)
     PerfilDinamico perfil;
     calcular_perfil_dinamico(&perfil);
 
-    sqlite3_stmt *stmt;
-    const char *sql_periodo =
-        "SELECT MIN(fecha_hora), MAX(fecha_hora), COUNT(*), "
-        "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
-        "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0) "
-        "FROM partido";
+    ResumenNarrativoPeriodo periodo;
+    resumen_narrativo_cargar_periodo(&periodo);
 
-    char fecha_inicio[64] = "N/A";
-    char fecha_fin[64] = "N/A";
-    int partidos = 0;
-    int goles = 0;
-    int asistencias = 0;
-    int victorias = 0;
+    int hitos = resumen_narrativo_consultar_count("SELECT COUNT(*) FROM carrera_partido_hito");
+    int lesiones = resumen_narrativo_consultar_count("SELECT COUNT(*) FROM lesion");
 
-    if (preparar_stmt(&stmt, sql_periodo))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const char *f_inicio = (const char *)sqlite3_column_text(stmt, 0);
-            const char *f_fin = (const char *)sqlite3_column_text(stmt, 1);
-            partidos = sqlite3_column_int(stmt, 2);
-            goles = sqlite3_column_int(stmt, 3);
-            asistencias = sqlite3_column_int(stmt, 4);
-            victorias = sqlite3_column_int(stmt, 5);
+    const char *momentum_texto = resumen_narrativo_texto_momentum(perfil.momentum_delta);
+    const char *perfil_dinamico = perfil.etiqueta[0] ? perfil.etiqueta : "Equilibrado";
 
-            if (f_inicio)
-                snprintf(fecha_inicio, sizeof(fecha_inicio), "%s", f_inicio);
-            if (f_fin)
-                snprintf(fecha_fin, sizeof(fecha_fin), "%s", f_fin);
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    int hitos = 0;
-    int lesiones = 0;
-    if (preparar_stmt(&stmt, "SELECT COUNT(*) FROM carrera_partido_hito"))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-            hitos = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
-    }
-    if (preparar_stmt(&stmt, "SELECT COUNT(*) FROM lesion"))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-            lesiones = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
-    }
-
-    const char *momentum_texto = "estable";
-    if (perfil.momentum_delta > 0.40)
-        momentum_texto = "ascendente";
-    else if (perfil.momentum_delta < -0.40)
-        momentum_texto = "descendente";
-
-    double winrate = (partidos > 0) ? (double)victorias * 100.0 / (double)partidos : 0.0;
+    double winrate = (periodo.partidos > 0)
+                     ? (double)periodo.victorias * 100.0 / (double)periodo.partidos
+                     : 0.0;
 
     char resumen[1200];
     int resumen_len = snprintf(resumen, sizeof(resumen),
@@ -1439,12 +1552,12 @@ static void generar_resumen_narrativo_automatico(void)
                                "Tu perfil dinamico actual es %s, con rendimiento promedio %.2f y un momentum %s. "
                                "Acumulas %d hitos personales registrados y %d lesiones historicas. "
                                "Tu porcentaje de victorias es %.1f%%, lo que refleja una etapa de construccion continua en tu carrera.",
-                               fecha_inicio,
-                               fecha_fin,
-                               partidos,
-                               goles,
-                               asistencias,
-                               perfil.etiqueta[0] ? perfil.etiqueta : "Equilibrado",
+                               periodo.fecha_inicio,
+                               periodo.fecha_fin,
+                               periodo.partidos,
+                               periodo.goles,
+                               periodo.asistencias,
+                               perfil_dinamico,
                                perfil.avg_rendimiento,
                                momentum_texto,
                                hitos,
@@ -1464,18 +1577,7 @@ static void generar_resumen_narrativo_automatico(void)
     printf("%s", SEP_MENOR);
     printf("%s\n", resumen);
 
-    const char *sql_insert =
-        "INSERT INTO carrera_resumen_narrativo (fecha, periodo_inicio, periodo_fin, perfil_dinamico, resumen) "
-        "VALUES (date('now'), ?, ?, ?, ?)";
-    if (preparar_stmt(&stmt, sql_insert))
-    {
-        sqlite3_bind_text(stmt, 1, fecha_inicio, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, fecha_fin, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 3, perfil.etiqueta[0] ? perfil.etiqueta : "Equilibrado", -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 4, resumen, -1, SQLITE_TRANSIENT);
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-    }
+    resumen_narrativo_guardar(periodo.fecha_inicio, periodo.fecha_fin, perfil_dinamico, resumen);
 
     pause_console();
 }
@@ -1642,6 +1744,47 @@ static int retro_parse_4d(const char *src)
     return v;
 }
 
+static int retro_fecha_valida(int dia, int mes, int anio)
+{
+    return !(anio < 0 || mes < 1 || mes > 12 || dia < 1 || dia > 31);
+}
+
+static void retro_fecha_asignar(int d, int m, int y, int *dia, int *mes, int *anio)
+{
+    if (dia)
+        *dia = d;
+    if (mes)
+        *mes = m;
+    if (anio)
+        *anio = y;
+}
+
+static int retro_parse_fecha_iso(const char *fecha_hora, int *dia, int *mes, int *anio)
+{
+    int y = retro_parse_4d(fecha_hora + 0);
+    int m = retro_parse_2d(fecha_hora + 5);
+    int d = retro_parse_2d(fecha_hora + 8);
+
+    if (!retro_fecha_valida(d, m, y))
+        return 0;
+
+    retro_fecha_asignar(d, m, y, dia, mes, anio);
+    return 1;
+}
+
+static int retro_parse_fecha_latam(const char *fecha_hora, int *dia, int *mes, int *anio)
+{
+    int d = retro_parse_2d(fecha_hora + 0);
+    int m = retro_parse_2d(fecha_hora + 3);
+    int y = retro_parse_4d(fecha_hora + 6);
+
+    if (!retro_fecha_valida(d, m, y))
+        return 0;
+
+    retro_fecha_asignar(d, m, y, dia, mes, anio);
+    return 1;
+}
+
 static int retro_parse_fecha(const char *fecha_hora, int *dia, int *mes, int *anio)
 {
     if (!fecha_hora || safe_strnlen(fecha_hora, 32) < 10)
@@ -1649,36 +1792,12 @@ static int retro_parse_fecha(const char *fecha_hora, int *dia, int *mes, int *an
 
     if (fecha_hora[4] == '-' && fecha_hora[7] == '-')
     {
-        int y = retro_parse_4d(fecha_hora + 0);
-        int m = retro_parse_2d(fecha_hora + 5);
-        int d = retro_parse_2d(fecha_hora + 8);
-        if (y < 0 || m < 1 || m > 12 || d < 1 || d > 31)
-            return 0;
-
-        if (dia)
-            *dia = d;
-        if (mes)
-            *mes = m;
-        if (anio)
-            *anio = y;
-        return 1;
+        return retro_parse_fecha_iso(fecha_hora, dia, mes, anio);
     }
 
     if (fecha_hora[2] == '/' && fecha_hora[5] == '/')
     {
-        int d = retro_parse_2d(fecha_hora + 0);
-        int m = retro_parse_2d(fecha_hora + 3);
-        int y = retro_parse_4d(fecha_hora + 6);
-        if (y < 0 || m < 1 || m > 12 || d < 1 || d > 31)
-            return 0;
-
-        if (dia)
-            *dia = d;
-        if (mes)
-            *mes = m;
-        if (anio)
-            *anio = y;
-        return 1;
+        return retro_parse_fecha_latam(fecha_hora, dia, mes, anio);
     }
 
     return 0;

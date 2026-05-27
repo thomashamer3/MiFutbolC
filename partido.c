@@ -463,6 +463,28 @@ static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
     filtros->solo_favoritos = 0;
 }
 
+static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
+{
+    size_t len = 0;
+
+    if (!texto)
+    {
+        return 0;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strnlen_s(texto, max_len);
+#elif defined(_MSC_VER)
+    return strnlen_s(texto, max_len);
+#else
+    while (len < max_len && texto[len] != '\0')
+    {
+        ++len;
+    }
+    return len;
+#endif
+}
+
 static void partido_listado_append_clause(char *destino, size_t destino_size, const char *clausula)
 {
     size_t usados;
@@ -472,7 +494,7 @@ static void partido_listado_append_clause(char *destino, size_t destino_size, co
         return;
     }
 
-    usados = strlen(destino);
+    usados = partido_listado_strnlen_seguro(destino, destino_size);
     if (usados >= destino_size - 1)
     {
         return;
@@ -481,15 +503,8 @@ static void partido_listado_append_clause(char *destino, size_t destino_size, co
     snprintf(destino + usados, destino_size - usados, "%s", clausula);
 }
 
-static void partido_listado_construir_where_clause(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+static void partido_listado_append_filtros_identidad(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
 {
-    if (!filtros || !where_clause || where_size == 0)
-    {
-        return;
-    }
-
-    snprintf(where_clause, where_size, "WHERE 1=1");
-
     if (filtros->cancha_id > 0)
     {
         partido_listado_append_clause(where_clause, where_size, " AND p.cancha_id = ?");
@@ -504,7 +519,10 @@ static void partido_listado_construir_where_clause(const PartidoListadoFiltros *
     {
         partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.tipo_partido, 1) = ?");
     }
+}
 
+static void partido_listado_append_filtros_rendimiento(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+{
     if (filtros->goles_min >= 0)
     {
         partido_listado_append_clause(where_clause, where_size, " AND p.goles >= ?");
@@ -564,7 +582,10 @@ static void partido_listado_construir_where_clause(const PartidoListadoFiltros *
     {
         partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.estado_animo, 0) <= ?");
     }
+}
 
+static void partido_listado_append_filtros_contexto(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+{
     if (filtros->clima >= 1)
     {
         partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.clima, 0) = ?");
@@ -585,7 +606,10 @@ static void partido_listado_construir_where_clause(const PartidoListadoFiltros *
                                       "ELSE 6 END "
                                       "ELSE IFNULL(p.dia, 0) END) = ?");
     }
+}
 
+static void partido_listado_append_filtros_opcionales(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+{
     if (filtros->tag[0] != '\0')
     {
         partido_listado_append_clause(where_clause, where_size, " AND LOWER(IFNULL(p.tags, '')) LIKE LOWER(?)");
@@ -597,124 +621,75 @@ static void partido_listado_construir_where_clause(const PartidoListadoFiltros *
     }
 }
 
+static void partido_listado_construir_where_clause(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+{
+    if (!filtros || !where_clause || where_size == 0)
+    {
+        return;
+    }
+
+    snprintf(where_clause, where_size, "WHERE 1=1");
+
+    partido_listado_append_filtros_identidad(filtros, where_clause, where_size);
+    partido_listado_append_filtros_rendimiento(filtros, where_clause, where_size);
+    partido_listado_append_filtros_contexto(filtros, where_clause, where_size);
+    partido_listado_append_filtros_opcionales(filtros, where_clause, where_size);
+}
+
+static int partido_listado_bind_int_si(sqlite3_stmt *stmt, int indice, int condicion, int valor)
+{
+    if (condicion)
+    {
+        sqlite3_bind_int(stmt, indice, valor);
+        return indice + 1;
+    }
+
+    return indice;
+}
+
+static int partido_listado_bind_tag_si(sqlite3_stmt *stmt, int indice, const char *tag)
+{
+    char tag_pattern[96];
+
+    if (!tag || tag[0] == '\0')
+    {
+        return indice;
+    }
+
+    snprintf(tag_pattern, sizeof(tag_pattern), "%%%s%%", tag);
+    sqlite3_bind_text(stmt, indice, tag_pattern, -1, SQLITE_TRANSIENT);
+    return indice + 1;
+}
+
 static int partido_listado_bind_filtros(sqlite3_stmt *stmt, const PartidoListadoFiltros *filtros, int indice_inicial)
 {
     int indice = indice_inicial;
-    char tag_pattern[96];
 
     if (!stmt || !filtros)
     {
         return indice;
     }
 
-    if (filtros->cancha_id > 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->cancha_id);
-        indice++;
-    }
-
-    if (filtros->camiseta_id > 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->camiseta_id);
-        indice++;
-    }
-
-    if (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->tipo_partido);
-        indice++;
-    }
-
-    if (filtros->goles_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->goles_min);
-        indice++;
-    }
-
-    if (filtros->goles_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->goles_max);
-        indice++;
-    }
-
-    if (filtros->asistencias_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->asistencias_min);
-        indice++;
-    }
-
-    if (filtros->asistencias_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->asistencias_max);
-        indice++;
-    }
-
-    if (filtros->precio_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->precio_min);
-        indice++;
-    }
-
-    if (filtros->precio_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->precio_max);
-        indice++;
-    }
-
-    if (filtros->rendimiento_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->rendimiento_min);
-        indice++;
-    }
-
-    if (filtros->rendimiento_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->rendimiento_max);
-        indice++;
-    }
-
-    if (filtros->cansancio_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->cansancio_min);
-        indice++;
-    }
-
-    if (filtros->cansancio_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->cansancio_max);
-        indice++;
-    }
-
-    if (filtros->estado_animo_min >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->estado_animo_min);
-        indice++;
-    }
-
-    if (filtros->estado_animo_max >= 0)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->estado_animo_max);
-        indice++;
-    }
-
-    if (filtros->clima >= 1)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->clima);
-        indice++;
-    }
-
-    if (filtros->dia >= 1)
-    {
-        sqlite3_bind_int(stmt, indice, filtros->dia);
-        indice++;
-    }
-
-    if (filtros->tag[0] != '\0')
-    {
-        snprintf(tag_pattern, sizeof(tag_pattern), "%%%s%%", filtros->tag);
-        sqlite3_bind_text(stmt, indice, tag_pattern, -1, SQLITE_TRANSIENT);
-        indice++;
-    }
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->cancha_id > 0, filtros->cancha_id);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->camiseta_id > 0, filtros->camiseta_id);
+    indice = partido_listado_bind_int_si(stmt, indice,
+                                         filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3,
+                                         filtros->tipo_partido);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->goles_min >= 0, filtros->goles_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->goles_max >= 0, filtros->goles_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->asistencias_min >= 0, filtros->asistencias_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->asistencias_max >= 0, filtros->asistencias_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->precio_min >= 0, filtros->precio_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->precio_max >= 0, filtros->precio_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->rendimiento_min >= 0, filtros->rendimiento_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->rendimiento_max >= 0, filtros->rendimiento_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->cansancio_min >= 0, filtros->cansancio_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->cansancio_max >= 0, filtros->cansancio_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->estado_animo_min >= 0, filtros->estado_animo_min);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->estado_animo_max >= 0, filtros->estado_animo_max);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->clima >= 1, filtros->clima);
+    indice = partido_listado_bind_int_si(stmt, indice, filtros->dia >= 1, filtros->dia);
+    indice = partido_listado_bind_tag_si(stmt, indice, filtros->tag);
 
     return indice;
 }
@@ -832,79 +807,24 @@ static const char *partido_listado_texto_tipo(int tipo_partido)
 
 static int partido_listado_contar_filtros_activos(const PartidoListadoFiltros *filtros)
 {
-    int cantidad = 0;
-
     if (!filtros)
     {
         return 0;
     }
 
-    if (filtros->cancha_id > 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->camiseta_id > 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3)
-    {
-        cantidad++;
-    }
-
-    if (filtros->goles_min >= 0 || filtros->goles_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->asistencias_min >= 0 || filtros->asistencias_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->precio_min >= 0 || filtros->precio_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->rendimiento_min >= 0 || filtros->rendimiento_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->cansancio_min >= 0 || filtros->cansancio_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->estado_animo_min >= 0 || filtros->estado_animo_max >= 0)
-    {
-        cantidad++;
-    }
-
-    if (filtros->clima >= 1)
-    {
-        cantidad++;
-    }
-
-    if (filtros->dia >= 1)
-    {
-        cantidad++;
-    }
-
-    if (filtros->tag[0] != '\0')
-    {
-        cantidad++;
-    }
-
-    if (filtros->solo_favoritos)
-    {
-        cantidad++;
-    }
-
-    return cantidad;
+    return (filtros->cancha_id > 0) +
+           (filtros->camiseta_id > 0) +
+           (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3) +
+           (filtros->goles_min >= 0 || filtros->goles_max >= 0) +
+           (filtros->asistencias_min >= 0 || filtros->asistencias_max >= 0) +
+           (filtros->precio_min >= 0 || filtros->precio_max >= 0) +
+           (filtros->rendimiento_min >= 0 || filtros->rendimiento_max >= 0) +
+           (filtros->cansancio_min >= 0 || filtros->cansancio_max >= 0) +
+           (filtros->estado_animo_min >= 0 || filtros->estado_animo_max >= 0) +
+           (filtros->clima >= 1) +
+           (filtros->dia >= 1) +
+           (filtros->tag[0] != '\0') +
+           (filtros->solo_favoritos ? 1 : 0);
 }
 
 static int partido_listado_menu_paginacion(int valor_actual)
@@ -1203,7 +1123,7 @@ static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros
     ui_printf_centered_line("14) Limpiar filtros");
 }
 
-static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros, int opcion)
+static int partido_listado_aplicar_opcion_filtro_identidad(PartidoListadoFiltros *filtros, int opcion)
 {
     if (!filtros)
     {
@@ -1224,6 +1144,15 @@ static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros,
         partido_listado_mostrar_opciones_tipo_partido();
         filtros->tipo_partido = partido_listado_pedir_opcional_0_todos("Tipo (0=todos, 1=Amistoso, 2=Torneo, 3=Entrenamiento): ", 1, 3);
         return 1;
+    default:
+        return 0;
+    }
+}
+
+static int partido_listado_aplicar_opcion_filtro_rango(PartidoListadoFiltros *filtros, int opcion)
+{
+    switch (opcion)
+    {
     case 4:
         partido_listado_mostrar_ayuda_rango("Goles", 0, 200);
         partido_listado_configurar_rango("Goles", 0, 200, &filtros->goles_min, &filtros->goles_max);
@@ -1248,6 +1177,15 @@ static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros,
         partido_listado_mostrar_ayuda_rango("Estado de animo", 0, 10);
         partido_listado_configurar_rango("Estado de animo", 0, 10, &filtros->estado_animo_min, &filtros->estado_animo_max);
         return 1;
+    default:
+        return 0;
+    }
+}
+
+static int partido_listado_aplicar_opcion_filtro_extra(PartidoListadoFiltros *filtros, int opcion)
+{
+    switch (opcion)
+    {
     case 10:
         partido_listado_mostrar_opciones_clima();
         filtros->clima = partido_listado_pedir_opcional_0_todos("Clima (0=todos, 1..12): ", 1, 12);
@@ -1271,6 +1209,26 @@ static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros,
     default:
         return 0;
     }
+}
+
+static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros, int opcion)
+{
+    if (!filtros)
+    {
+        return 0;
+    }
+
+    if (partido_listado_aplicar_opcion_filtro_identidad(filtros, opcion))
+    {
+        return 1;
+    }
+
+    if (partido_listado_aplicar_opcion_filtro_rango(filtros, opcion))
+    {
+        return 1;
+    }
+
+    return partido_listado_aplicar_opcion_filtro_extra(filtros, opcion);
 }
 
 static void partido_listado_menu_filtros(PartidoListadoFiltros *filtros)
@@ -2100,6 +2058,48 @@ static void solicitar_tipo_rival(char *buffer, int size)
     }
 }
 
+static void recopilar_notas_y_ratings_formales(DatosPartido *datos, const char *prompt_lo_mejor)
+{
+    if (!datos || !prompt_lo_mejor)
+    {
+        return;
+    }
+
+    input_string_extended(prompt_lo_mejor, datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor));
+    trim_whitespace(datos->formal.notas.lo_mejor);
+    if (datos->formal.notas.lo_mejor[0] == '\0')
+    {
+        snprintf(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "(sin registro)");
+    }
+
+    input_string_extended("Que mejorar: ", datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar));
+    trim_whitespace(datos->formal.notas.que_mejorar);
+    if (datos->formal.notas.que_mejorar[0] == '\0')
+    {
+        snprintf(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "(sin registro)");
+    }
+
+    input_string_extended("Tags (separados por coma, opcional): ", datos->formal.notas.tags, sizeof(datos->formal.notas.tags));
+    trim_whitespace(datos->formal.notas.tags);
+
+    input_string_extended("Eventos clave: ", datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave));
+    trim_whitespace(datos->formal.notas.eventos_clave);
+    if (datos->formal.notas.eventos_clave[0] == '\0')
+    {
+        snprintf(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "(sin eventos)");
+    }
+
+    datos->formal.rating.tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
+                                   1, 10,
+                                   "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating.fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating.mental = pedir_entero_en_rango("Rating mental (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
+}
+
 static void recopilar_datos_formales(DatosPartido *datos)
 {
     solicitar_texto_no_vacio("Rival: ", datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre));
@@ -2135,38 +2135,7 @@ static void recopilar_datos_formales(DatosPartido *datos)
     snprintf(datos->formal.contexto.arbitraje, sizeof(datos->formal.contexto.arbitraje), "%s",
              arbitraje_score_to_text(datos->formal.contexto.arbitraje_score));
 
-    input_string_extended("Lo mejor del partido: ", datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor));
-    trim_whitespace(datos->formal.notas.lo_mejor);
-    if (datos->formal.notas.lo_mejor[0] == '\0')
-    {
-        snprintf(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "(sin registro)");
-    }
-
-    input_string_extended("Que mejorar: ", datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar));
-    trim_whitespace(datos->formal.notas.que_mejorar);
-    if (datos->formal.notas.que_mejorar[0] == '\0')
-    {
-        snprintf(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "(sin registro)");
-    }
-
-    input_string_extended("Tags (separados por coma, opcional): ", datos->formal.notas.tags, sizeof(datos->formal.notas.tags));
-    trim_whitespace(datos->formal.notas.tags);
-
-    input_string_extended("Eventos clave: ", datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave));
-    trim_whitespace(datos->formal.notas.eventos_clave);
-    if (datos->formal.notas.eventos_clave[0] == '\0')
-    {
-        snprintf(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "(sin eventos)");
-    }
-    datos->formal.rating.tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
-                                   1, 10,
-                                   "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating.fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
-                                  1, 10,
-                                  "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating.mental = pedir_entero_en_rango("Rating mental (1-10): ",
-                                  1, 10,
-                                  "Valor invalido. Ingrese entre 1 y 10: ");
+    recopilar_notas_y_ratings_formales(datos, "Lo mejor del partido: ");
 }
 
 static void recopilar_datos_entrenamiento(DatosPartido *datos)
@@ -2196,38 +2165,7 @@ static void recopilar_datos_entrenamiento(DatosPartido *datos)
     datos->formal.contexto.arbitraje_score = 0;
     snprintf(datos->formal.contexto.arbitraje, sizeof(datos->formal.contexto.arbitraje), "Sin arbitro");
 
-    input_string_extended("Lo mejor del entrenamiento: ", datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor));
-    trim_whitespace(datos->formal.notas.lo_mejor);
-    if (datos->formal.notas.lo_mejor[0] == '\0')
-    {
-        snprintf(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "(sin registro)");
-    }
-
-    input_string_extended("Que mejorar: ", datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar));
-    trim_whitespace(datos->formal.notas.que_mejorar);
-    if (datos->formal.notas.que_mejorar[0] == '\0')
-    {
-        snprintf(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "(sin registro)");
-    }
-
-    input_string_extended("Tags (separados por coma, opcional): ", datos->formal.notas.tags, sizeof(datos->formal.notas.tags));
-    trim_whitespace(datos->formal.notas.tags);
-
-    input_string_extended("Eventos clave: ", datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave));
-    trim_whitespace(datos->formal.notas.eventos_clave);
-    if (datos->formal.notas.eventos_clave[0] == '\0')
-    {
-        snprintf(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "(sin eventos)");
-    }
-    datos->formal.rating.tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
-                                   1, 10,
-                                   "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating.fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
-                                  1, 10,
-                                  "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating.mental = pedir_entero_en_rango("Rating mental (1-10): ",
-                                  1, 10,
-                                  "Valor invalido. Ingrese entre 1 y 10: ");
+    recopilar_notas_y_ratings_formales(datos, "Lo mejor del entrenamiento: ");
 }
 
 static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_resultado, int tipo_partido)
