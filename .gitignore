@@ -9,7 +9,7 @@ sonar_issues.json
 data/
 Exportaciones/
 Importaciones/
-
+Ideas.md
 # Build outputs and binaries
 *.exe
 *.o

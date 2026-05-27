@@ -12,9 +12,10 @@
 				<Option type="1" />
 				<Option compiler="gcc-msys2-mingw64" />
 				<Compiler>
+					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-flto" />
-					<Add option="-O" />
+					<Add option="-O2" />
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-std=c23" />
@@ -46,10 +47,14 @@
 				<Option type="1" />
 				<Option compiler="gcc-msys2-mingw64" />
 				<Compiler>
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-flto" />
 					<Add option="-O2" />
 					<Add directory="C:/msys64/mingw64/include" />
 				</Compiler>
 				<Linker>
+					<Add option="-flto" />
 					<Add option="-s" />
 					<Add library="bcrypt" />
 					<Add library="comdlg32" />
@@ -60,8 +65,10 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-fomit-frame-pointer" />
 			<Add option="-fexpensive-optimizations" />
 			<Add option="-flto" />
+			<Add option="-O2" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-std=gnu23" />
@@ -74,7 +81,6 @@
 			<Add directory="C:/msys64/mingw64/include" />
 		</Compiler>
 		<Linker>
-			<Add option="-O2" />
 			<Add option="-flto" />
 			<Add option="-s" />
 			<Add option="-static-libstdc++" />

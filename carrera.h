@@ -14,4 +14,12 @@
  */
 void menu_carrera_futbolistica(void);
 
+/**
+ * @brief Muestra aviso de recuerdos del dia al iniciar la app
+ *
+ * Si encuentra recuerdos asociados a la fecha actual, ofrece abrir
+ * el Modo Retro de forma opcional.
+ */
+void carrera_notificar_modo_retro_inicio(void);
+
 #endif

@@ -575,7 +575,7 @@
         <div class="doc-center">
             <p>
                 <img
-                    src="https://img.shields.io/badge/version-4.2-blue.svg"
+                    src="https://img.shields.io/badge/version-4.3-blue.svg"
                     alt="Version"
                 />
                 <img
@@ -664,6 +664,10 @@
                 salud y reportes personales)
             </li>
             <li>
+                📈 <strong>Carrera futbolística avanzada</strong> (identidad,
+                timeline, hitos, Hall of Fame y modo retro)
+            </li>
+            <li>
                 ⏰ <strong>Gestión de recordatorios</strong> (agenda personal,
                 filtros y seguimiento)
             </li>
@@ -698,45 +702,45 @@
             manejo de datos JSON, y ofrece una interfaz de consola intuitiva con
             menús jerárquicos y arte ASCII.
         </p>
+        <h2 id="-últimos-cambios-v4.3">🆕 Últimos Cambios (v4.3)</h2>
         <ul>
             <li>
-                <strong>Rutas de base de datos más seguras</strong>: refactor de
-                construcción de rutas con <code>snprintf</code> para mejorar
-                robustez y legibilidad.
+                <strong>Carrera Futbolística ampliada</strong>: nueva ficha de
+                identidad, perfil dinámico, partidos que marcaron, timeline,
+                Hall of Fame, resumen narrativo y <strong>Modo Retro: Hoy en tu Historia</strong>.
             </li>
             <li>
-                <strong>Sistema de logs mejorado</strong>: formateo de mensajes
-                de log más consistente y seguro, reduciendo riesgos de errores
-                en cadenas largas.
+                <strong>Canchas con exportación avanzada</strong>: exportación
+                de información de canchas en <strong>TXT, CSV, JSON, HTML y PDF</strong>
+                desde el propio módulo.
             </li>
             <li>
-                <strong>Manejo de imágenes reforzado</strong>: mejoras en
-                selección de imágenes de camisetas y utilidades para actualizar
-                rutas/imágenes en base de datos.
+                <strong>Partidos más completos</strong>: nuevos modos de carga
+                (<strong>Amistoso, Torneo y Entrenamiento</strong>) y más contexto
+                del partido (estado de cancha, marcador global, formato
+                F5/F7/F8/F11, tarjeta, goles en contra, dolor físico,
+                temperatura, arbitraje score, tags, lo mejor/qué mejorar).
             </li>
             <li>
-                <strong>Flujo de herramientas de imagen más claro</strong>:
-                nuevos mensajes de éxito y advertencia durante
-                instalación/configuración de herramientas opcionales.
+                <strong>Estadísticas de rendimiento extendidas</strong>:
+                métricas nuevas por <strong>intensidad, dolor físico, arbitraje y temperatura</strong>.
             </li>
             <li>
-                <strong>Resolución de rutas de imagen desde BD</strong>: soporte
-                ampliado para recuperar y resolver rutas guardadas en base de
-                datos de forma más confiable.
+                <strong>Catálogo climático ampliado</strong>: nuevos climas
+                (frío, calor, llovizna, lluvia moderada/fuerte, cancha
+                inundada) en carga, análisis y exportación.
             </li>
             <li>
-                <strong>Camisetas y canchas con ciclo activo/inactivo</strong>:
-                retiro y reactivación para conservar historial sin perder datos.
+                <strong>Esquema de BD evolucionado</strong>: nuevas columnas en
+                <code>partido</code> y nuevas tablas para carrera
+                (<code>carrera_identidad</code>, <code>carrera_partido_hito</code>,
+                <code>carrera_resumen_narrativo</code>).
             </li>
             <li>
-                <strong>Eliminación protegida con historial</strong>: opciones
-                para reasignar partidos, eliminar junto con partidos o retirar
-                entidad conservando historial.
-            </li>
-            <li>
-                <strong>Instalación por consola en Windows</strong>: nuevo
-                script <code>install.ps1</code> para compilar/instalar sin Inno
-                Setup.
+                <strong>Mejoras de robustez previas mantenidas</strong>: rutas
+                de BD con <code>snprintf</code>, logs más consistentes, flujo de
+                imágenes reforzado y script <code>install.ps1</code> para instalación
+                por consola en Windows.
             </li>
         </ul>
         <h2 id="-características-principales">
@@ -763,7 +767,7 @@
             <li>
                 <strong>Gestión de Canchas</strong>: administrar infraestructura
                 deportiva (crear, listar, modificar, retirar/reactivar y
-                eliminar con opciones seguras)
+                eliminar con opciones seguras y exportar información detallada)
             </li>
             <li>
                 <strong>Análisis de Uso</strong>: Estadísticas de rendimiento
@@ -800,12 +804,22 @@
         </h3>
         <ul>
             <li>
+                <strong>Modos de carga</strong>: Amistoso, Torneo y
+                Entrenamiento
+            </li>
+            <li>
                 <strong>Partidos Detallados</strong>: Registro completo con
-                fecha, hora, cancha, equipos y resultados
+                fecha/hora, cancha, camisetas, resultados y franja horaria
             </li>
             <li>
                 <strong>Métricas Avanzadas</strong>: Goles, asistencias,
-                rendimiento, estado físico y mental
+                rendimiento, estado físico y mental, dolor físico, temperatura
+                y arbitraje
+            </li>
+            <li>
+                <strong>Contexto ampliado</strong>: estado de cancha, marcador
+                global, formato de fútbol, tarjeta, goles en contra, eventos
+                clave y tags
             </li>
             <li>
                 <strong>Simulación de Partidos</strong>: Simulador con cancha
@@ -813,7 +827,7 @@
             </li>
             <li>
                 <strong>Historial Completo</strong>: Consulta de partidos
-                pasados con filtros avanzados
+                pasados con filtros avanzados (incluye búsqueda por tag)
             </li>
         </ul>
         <h3 id="-sistema-de-torneos">🏆 Sistema de Torneos</h3>
@@ -884,6 +898,22 @@
             <li>
                 <strong>Análisis de Eficiencia</strong>: Relación entre esfuerzo
                 y resultados
+            </li>
+            <li>
+                <strong>Rendimiento por Intensidad</strong>: Relación entre
+                exigencia del partido y rendimiento
+            </li>
+            <li>
+                <strong>Rendimiento por Dolor Físico</strong>: Impacto de
+                molestias físicas sobre el desempeño
+            </li>
+            <li>
+                <strong>Rendimiento por Arbitraje</strong>: Comportamiento del
+                rendimiento según calidad arbitral
+            </li>
+            <li>
+                <strong>Rendimiento por Temperatura</strong>: Correlación del
+                rendimiento con la temperatura registrada
             </li>
         </ul>
         <h4 id="récords-y-rankings">Récords y Rankings</h4>
@@ -1010,6 +1040,37 @@
             <li>
                 <strong>Informe Personal Mensual (PDF)</strong>: Resumen
                 automático con métricas clave
+            </li>
+        </ul>
+        <h3 id="-carrera-futbolística-avanzada">📈 Carrera Futbolística Avanzada</h3>
+        <ul>
+            <li>
+                <strong>Ficha de Identidad del Jugador</strong>: perfil personal
+                editable para contextualizar tu evolución
+            </li>
+            <li>
+                <strong>Perfil Dinámico</strong>: clasificación automática del
+                estilo de juego según datos reales
+            </li>
+            <li>
+                <strong>Partidos que Marcaron</strong>: marcado y gestión de
+                hitos relevantes por partido
+            </li>
+            <li>
+                <strong>Timeline de Carrera</strong>: línea temporal de eventos
+                deportivos importantes
+            </li>
+            <li>
+                <strong>Hall of Fame Personal</strong>: mejores momentos y
+                récords destacados
+            </li>
+            <li>
+                <strong>Resumen Narrativo Automático</strong>: síntesis textual
+                automática basada en métricas
+            </li>
+            <li>
+                <strong>Modo Retro</strong>: recuerdos del mismo día en años
+                anteriores (opcional al iniciar)
             </li>
         </ul>
         <h3 id="-recordatorios">⏰ Recordatorios</h3>
@@ -1807,6 +1868,7 @@ Menú Principal → Bienestar (14)
             <li><code>Ctrl+S</code>: Ver estadísticas rápidas</li>
             <li><code>Ctrl+H</code>: Ayuda contextual</li>
         </ul>
+        <span id="-arquitectura-y-diseño"></span>
         <h2 id="️-arquitectura-y-diseño">🏗️ Arquitectura y Diseño</h2>
         <h3 id="diagrama-de-arquitectura">Diagrama de Arquitectura</h3>
         <pre
@@ -2433,6 +2495,11 @@ Menú Principal → Bienestar (14)
                 <code>financiamiento</code>, <code>presupuesto_mensual</code>,
                 <code>comparacion_historial</code>
             </li>
+            <li>
+                <strong>Carrera avanzada</strong>: <code>carrera_identidad</code>,
+                <code>carrera_partido_hito</code>,
+                <code>carrera_resumen_narrativo</code>
+            </li>
         </ul>
         <p>Campos clave (selección, no exhaustivo):</p>
         <ul>
@@ -2448,7 +2515,13 @@ Menú Principal → Bienestar (14)
                 <code>resultado</code>, <code>rendimiento_general</code>,
                 <code>cansancio</code>, <code>estado_animo</code>,
                 <code>comentario_personal</code>, <code>clima</code>,
-                <code>dia</code>, <code>precio</code>
+                <code>dia</code>, <code>precio</code>,
+                <code>estado_cancha</code>, <code>goles_equipo</code>,
+                <code>goles_rival</code>, <code>formato_partido</code>,
+                <code>tarjeta</code>, <code>goles_en_contra</code>,
+                <code>dolor_fisico</code>, <code>temperatura_c</code>,
+                <code>arbitraje_score</code>, <code>lo_mejor</code>,
+                <code>que_mejorar</code>, <code>tags</code>
             </li>
             <li>
                 <code>lesion</code>: <code>id</code>, <code>jugador</code>,
@@ -2869,8 +2942,20 @@ Menú Principal → Bienestar (14)
                 producción (goles vs rendimiento, asistencias vs cansancio).
             </li>
             <li>
-                <strong>Rendimiento por Esfuerzo</strong>: Evaluación de la
-                relación entre el esfuerzo invertido y los resultados obtenidos.
+                <strong>Rendimiento por Intensidad</strong>: Evaluación de la
+                relación entre intensidad y resultados obtenidos.
+            </li>
+            <li>
+                <strong>Rendimiento por Dolor Físico</strong>: Impacto de la
+                molestia física sobre rendimiento y contribución.
+            </li>
+            <li>
+                <strong>Rendimiento por Arbitraje</strong>: Relación entre
+                calidad arbitral percibida y desempeño.
+            </li>
+            <li>
+                <strong>Rendimiento por Temperatura</strong>: Correlación entre
+                temperatura ambiente y rendimiento.
             </li>
             <li>
                 <strong>Análisis de Situaciones</strong>: Partidos exigentes
@@ -3028,6 +3113,7 @@ Menú Principal → Bienestar (14)
             >
             para detalles completos sobre la funcionalidad de importación.
         </p>
+        <span id="-documentación"></span>
         <h2 id="documentación">Documentación</h2>
         <h3 id="documentación-disponible">Documentación Disponible</h3>
         <p>

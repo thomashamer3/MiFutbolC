@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.2-blue.svg)
+![Version](https://img.shields.io/badge/version-4.3-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -35,6 +35,7 @@
 - 📊 **Análisis avanzado** (rendimiento, tendencias, química entre jugadores, meta-análisis)
 - 🏥 **Gestión de salud** (lesiones y recuperación)
 - 🧘 **Bienestar integral** (hábitos, planificación, salud y reportes personales)
+- 📈 **Carrera futbolística avanzada** (identidad, timeline, hitos, Hall of Fame y modo retro)
 - ⏰ **Gestión de recordatorios** (agenda personal, filtros y seguimiento)
 - 🗂️ **Colecciones e inventario** (items, colecciones y sincronización con camisetas)
 - 💰 **Control financiero** (ingresos, gastos, balances)
@@ -45,14 +46,16 @@
 - 📥 **Importación de datos** (restauración desde JSON/TXT/CSV/HTML)
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
-- **Rutas de base de datos más seguras**: refactor de construcción de rutas con `snprintf` para mejorar robustez y legibilidad.
-- **Sistema de logs mejorado**: formateo de mensajes de log más consistente y seguro, reduciendo riesgos de errores en cadenas largas.
-- **Manejo de imágenes reforzado**: mejoras en selección de imágenes de camisetas y utilidades para actualizar rutas/imágenes en base de datos.
-- **Flujo de herramientas de imagen más claro**: nuevos mensajes de éxito y advertencia durante instalación/configuración de herramientas opcionales.
-- **Resolución de rutas de imagen desde BD**: soporte ampliado para recuperar y resolver rutas guardadas en base de datos de forma más confiable.
-- **Camisetas y canchas con ciclo activo/inactivo**: retiro y reactivación para conservar historial sin perder datos.
-- **Eliminación protegida con historial**: opciones para reasignar partidos, eliminar junto con partidos o retirar entidad conservando historial.
-- **Instalación por consola en Windows**: nuevo script `install.ps1` para compilar/instalar sin Inno Setup.
+
+## 🆕 Últimos Cambios (v4.3)
+
+- **Carrera Futbolística ampliada**: nueva ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y **Modo Retro: Hoy en tu Historia**.
+- **Canchas con exportación avanzada**: exportación de información de canchas en **TXT, CSV, JSON, HTML y PDF** desde el propio módulo.
+- **Partidos más completos**: nuevos modos de carga (**Amistoso, Torneo y Entrenamiento**) y más contexto del partido (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).
+- **Estadísticas de rendimiento extendidas**: métricas nuevas por **intensidad, dolor físico, arbitraje y temperatura**.
+- **Catálogo climático ampliado**: nuevos climas (frío, calor, llovizna, lluvia moderada/fuerte, cancha inundada) en carga, análisis y exportación.
+- **Esquema de BD evolucionado**: nuevas columnas en `partido` y nuevas tablas para carrera (`carrera_identidad`, `carrera_partido_hito`, `carrera_resumen_narrativo`).
+- **Mejoras de robustez previas mantenidas**: rutas de BD con `snprintf`, logs más consistentes, flujo de imágenes reforzado y script `install.ps1` para instalación por consola en Windows.
 
 ## ✨ Características Principales
 
@@ -61,7 +64,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
 - **Ciclo Activa/Inactiva en Camisetas**: retirar y reactivar camisetas para preservar historial
 - **Imágenes de Camisetas**: carga, apertura y ajustes de visor (incluye prueba de visor y previsualización en consola)
-- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar y eliminar con opciones seguras)
+- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada)
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
 ### 👥 Administración de Equipos y Jugadores
@@ -74,10 +77,12 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ### ⚽ Registro y Gestión de Partidos
 
-- **Partidos Detallados**: Registro completo con fecha, hora, cancha, equipos y resultados
-- **Métricas Avanzadas**: Goles, asistencias, rendimiento, estado físico y mental
+- **Modos de carga**: Amistoso, Torneo y Entrenamiento
+- **Partidos Detallados**: Registro completo con fecha/hora, cancha, camisetas, resultados y franja horaria
+- **Métricas Avanzadas**: Goles, asistencias, rendimiento, estado físico y mental, dolor físico, temperatura y arbitraje
+- **Contexto ampliado**: estado de cancha, marcador global, formato de fútbol, tarjeta, goles en contra, eventos clave y tags
 - **Simulación de Partidos**: Simulador con cancha ASCII animada y eventos aleatorios
-- **Historial Completo**: Consulta de partidos pasados con filtros avanzados
+- **Historial Completo**: Consulta de partidos pasados con filtros avanzados (incluye búsqueda por tag)
 
 ### 🏆 Sistema de Torneos
 
@@ -105,6 +110,10 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Impacto del Cansancio**: Evaluación real de la fatiga en el desempeño
 - **Impacto del Estado de Ánimo**: Influencia emocional en resultados
 - **Análisis de Eficiencia**: Relación entre esfuerzo y resultados
+- **Rendimiento por Intensidad**: Relación entre exigencia del partido y rendimiento
+- **Rendimiento por Dolor Físico**: Impacto de molestias físicas sobre el desempeño
+- **Rendimiento por Arbitraje**: Comportamiento del rendimiento según calidad arbitral
+- **Rendimiento por Temperatura**: Correlación del rendimiento con la temperatura registrada
 
 #### Récords y Rankings
 - Récords históricos de partidos (máximo de goles, asistencias, rendimiento)
@@ -151,6 +160,16 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Entrenamiento y Alimentación**: Registro y control de prácticas saludables
 - **Mental y Salud**: Evaluación de bienestar mental, controles médicos y reportes
 - **Informe Personal Mensual (PDF)**: Resumen automático con métricas clave
+
+### 📈 Carrera Futbolística Avanzada
+
+- **Ficha de Identidad del Jugador**: perfil personal editable para contextualizar tu evolución
+- **Perfil Dinámico**: clasificación automática del estilo de juego según datos reales
+- **Partidos que Marcaron**: marcado y gestión de hitos relevantes por partido
+- **Timeline de Carrera**: línea temporal de eventos deportivos importantes
+- **Hall of Fame Personal**: mejores momentos y récords destacados
+- **Resumen Narrativo Automático**: síntesis textual automática basada en métricas
+- **Modo Retro**: recuerdos del mismo día en años anteriores (opcional al iniciar)
 
 ### ⏰ Recordatorios
 
@@ -965,12 +984,13 @@ El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos.
 - **Equipos/Torneos**: `equipo`, `jugador`, `torneo`, `equipo_torneo`, `partido_torneo`, `equipo_torneo_estadisticas`, `jugador_estadisticas`, `equipo_historial`, `torneo_fases`, `equipo_fase`
 - **Temporadas**: `temporada`, `temporada_fase`, `torneo_temporada`, `equipo_temporada_fatiga`, `jugador_temporada_fatiga`, `equipo_temporada_evolucion`, `temporada_resumen`, `mensual_resumen`
 - **Configuración/Finanzas**: `settings`, `financiamiento`, `presupuesto_mensual`, `comparacion_historial`
+- **Carrera avanzada**: `carrera_identidad`, `carrera_partido_hito`, `carrera_resumen_narrativo`
 
 Campos clave (selección, no exhaustivo):
 
 - `camiseta`: `id`, `nombre`, `sorteada`
 - `cancha`: `id`, `nombre`
-- `partido`: `id`, `cancha_id`, `fecha_hora`, `goles`, `asistencias`, `camiseta_id`, `resultado`, `rendimiento_general`, `cansancio`, `estado_animo`, `comentario_personal`, `clima`, `dia`, `precio`
+- `partido`: `id`, `cancha_id`, `fecha_hora`, `goles`, `asistencias`, `camiseta_id`, `resultado`, `rendimiento_general`, `cansancio`, `estado_animo`, `comentario_personal`, `clima`, `dia`, `precio`, `estado_cancha`, `goles_equipo`, `goles_rival`, `formato_partido`, `tarjeta`, `goles_en_contra`, `dolor_fisico`, `temperatura_c`, `arbitraje_score`, `lo_mejor`, `que_mejorar`, `tags`
 - `lesion`: `id`, `jugador`, `tipo`, `descripcion`, `fecha`, `camiseta_id`, `estado`, `partido_id`
 - `equipo`: `id`, `nombre`, `tipo`, `tipo_futbol`, `num_jugadores`, `partido_id`
 - `torneo`: `id`, `nombre`, `tiene_equipo_fijo`, `equipo_fijo_id`, `cantidad_equipos`, `tipo_torneo`, `formato_torneo`, `fase_actual`
@@ -1149,7 +1169,10 @@ El módulo de meta-análisis (`estadisticas_meta.c / estadisticas_meta.h`) reali
 - **Impacto del Cansancio**: Evaluación del efecto real de la fatiga en el desempeño.
 - **Impacto del Estado de Ánimo**: Análisis de la influencia emocional en los resultados.
 - **Eficiencia**: Comparación entre rendimiento y producción (goles vs rendimiento, asistencias vs cansancio).
-- **Rendimiento por Esfuerzo**: Evaluación de la relación entre el esfuerzo invertido y los resultados obtenidos.
+- **Rendimiento por Intensidad**: Evaluación de la relación entre intensidad y resultados obtenidos.
+- **Rendimiento por Dolor Físico**: Impacto de la molestia física sobre rendimiento y contribución.
+- **Rendimiento por Arbitraje**: Relación entre calidad arbitral percibida y desempeño.
+- **Rendimiento por Temperatura**: Correlación entre temperatura ambiente y rendimiento.
 - **Análisis de Situaciones**: Partidos exigentes bien jugados y partidos fáciles mal jugados.
 
 Este módulo proporciona insights profundos para la optimización del rendimiento y la toma de decisiones tácticas.

@@ -2596,6 +2596,41 @@ char *remover_tildes(const char *str)
     return buffer;
 }
 
+void sanitizar_ascii_basico(const char *src, char *dst, size_t dst_size)
+{
+    if (!dst || dst_size == 0)
+    {
+        return;
+    }
+
+    dst[0] = '\0';
+    if (!src)
+    {
+        return;
+    }
+
+    size_t limit = safe_strnlen(src, dst_size - 1);
+    for (size_t i = 0; i < limit; i++)
+    {
+        unsigned char c = (unsigned char)src[i];
+
+        if (c >= 32 && c <= 126)
+        {
+            dst[i] = (char)c;
+        }
+        else if (c == '\n' || c == '\r' || c == '\t')
+        {
+            dst[i] = ' ';
+        }
+        else
+        {
+            dst[i] = '?';
+        }
+    }
+
+    dst[limit] = '\0';
+}
+
 /**
  * Convierte un valor de resultado a texto
  *
@@ -2639,6 +2674,18 @@ const char *clima_to_text(int clima)
         return "Mucho Calor";
     case 6:
         return "Mucho Frio";
+    case 7:
+        return "Frio";
+    case 8:
+        return "Calor";
+    case 9:
+        return "Llovizna leve";
+    case 10:
+        return "Lluvia Moderada";
+    case 11:
+        return "Lluvia fuerte";
+    case 12:
+        return "Cancha inundada";
     default:
         return "DESCONOCIDO";
     }
@@ -2655,10 +2702,16 @@ const char *dia_to_text(int dia)
     switch (dia)
     {
     case 1:
-        return "Dia";
+        return "Madrugada";
     case 2:
-        return "Tarde";
+        return "Manana";
     case 3:
+        return "Mediodia";
+    case 4:
+        return "Tarde";
+    case 5:
+        return "Atardecer";
+    case 6:
         return "Noche";
     default:
         return "DESCONOCIDO";

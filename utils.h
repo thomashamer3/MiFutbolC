@@ -303,6 +303,14 @@ void convert_display_date_to_storage(const char *display_date, char *storage_buf
 char* remover_tildes(const char *str);
 
 /**
+ * @brief Sanitiza texto a ASCII imprimible para exportaciones.
+ *
+ * Conserva caracteres ASCII 32..126, convierte tab/nueva linea a espacio
+ * y reemplaza el resto por '?'.
+ */
+void sanitizar_ascii_basico(const char *src, char *dst, size_t dst_size);
+
+/**
  * @brief Versión segura y portátil de strnlen que limita la longitud máxima.
  *
  * @param s Cadena a medir

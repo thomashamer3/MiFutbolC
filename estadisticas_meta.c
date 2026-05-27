@@ -375,21 +375,110 @@ void mostrar_eficiencia_asistencias_vs_cansancio()
 void mostrar_rendimiento_por_esfuerzo()
 {
     clear_screen();
-    print_header("RENDIMIENTO OBTENIDO POR ESFUERZO");
+    print_header("RENDIMIENTO POR INTENSIDAD");
 
-    // Rendimiento por unidad de cansancio
-    query("Rendimiento por Unidad de Cansancio",
-          "SELECT ROUND(AVG(rendimiento_general) / NULLIF(AVG(cansancio), 0), 2) AS rendimiento_por_cansancio "
-          "FROM partido WHERE cansancio > 0");
+    query("Correlacion Intensidad-Rendimiento",
+          "SELECT ROUND((COUNT(*) * SUM(intensidad * rendimiento_general) - SUM(intensidad) * SUM(rendimiento_general)) / "
+          "(SQRT((COUNT(*) * SUM(intensidad * intensidad) - SUM(intensidad) * SUM(intensidad)) * "
+          "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
+          "FROM partido WHERE intensidad > 0");
 
-    // Eficiencia por nivel de esfuerzo
-    query("Eficiencia por Nivel de Esfuerzo",
-          "SELECT CASE WHEN cansancio <= 3 THEN 'Bajo esfuerzo (1-3)' WHEN cansancio <= 7 THEN 'Esfuerzo medio (4-7)' ELSE 'Alto esfuerzo (8-10)' END AS nivel_esfuerzo, "
-          "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio, "
-          "ROUND(AVG(rendimiento_general) / NULLIF(AVG(cansancio), 0), 2) AS rendimiento_por_unidad_esfuerzo, "
+    query("Rendimiento por Nivel de Intensidad",
+          "SELECT CASE WHEN intensidad <= 3 THEN 'Baja (1-3)' WHEN intensidad <= 7 THEN 'Media (4-7)' ELSE 'Alta (8-10)' END AS nivel_intensidad, "
+          "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio "
+          "FROM partido WHERE intensidad > 0 "
+          "GROUP BY CASE WHEN intensidad <= 3 THEN 'Baja (1-3)' WHEN intensidad <= 7 THEN 'Media (4-7)' ELSE 'Alta (8-10)' END "
+          "ORDER BY rendimiento_promedio DESC");
+
+    query("Contribucion por Nivel de Intensidad",
+          "SELECT CASE WHEN intensidad <= 3 THEN 'Baja (1-3)' WHEN intensidad <= 7 THEN 'Media (4-7)' ELSE 'Alta (8-10)' END AS nivel_intensidad, "
+          "ROUND(AVG(goles + asistencias), 2) AS contribucion_promedio "
+          "FROM partido WHERE intensidad > 0 "
+          "GROUP BY CASE WHEN intensidad <= 3 THEN 'Baja (1-3)' WHEN intensidad <= 7 THEN 'Media (4-7)' ELSE 'Alta (8-10)' END "
+          "ORDER BY contribucion_promedio DESC");
+
+    pause_console();
+}
+
+void mostrar_rendimiento_por_dolor_fisico()
+{
+    clear_screen();
+    print_header("RENDIMIENTO POR DOLOR FISICO");
+
+    query("Rendimiento por Nivel de Dolor",
+          "SELECT CASE dolor_fisico WHEN 0 THEN '0 Ninguna' WHEN 1 THEN '1 Leve' WHEN 2 THEN '2 Moderada' WHEN 3 THEN '3 Fuerte' ELSE 'Sin dato' END AS nivel_dolor, "
+          "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio "
+          "FROM partido "
+          "GROUP BY dolor_fisico "
+          "ORDER BY dolor_fisico ASC");
+
+    query("Contribucion por Nivel de Dolor",
+          "SELECT CASE dolor_fisico WHEN 0 THEN '0 Ninguna' WHEN 1 THEN '1 Leve' WHEN 2 THEN '2 Moderada' WHEN 3 THEN '3 Fuerte' ELSE 'Sin dato' END AS nivel_dolor, "
+          "ROUND(AVG(goles + asistencias), 2) AS contribucion_promedio "
+          "FROM partido "
+          "GROUP BY dolor_fisico "
+          "ORDER BY dolor_fisico ASC");
+
+    query("Partidos por Nivel de Dolor",
+          "SELECT CASE dolor_fisico WHEN 0 THEN '0 Ninguna' WHEN 1 THEN '1 Leve' WHEN 2 THEN '2 Moderada' WHEN 3 THEN '3 Fuerte' ELSE 'Sin dato' END AS nivel_dolor, "
           "COUNT(*) AS partidos "
-          "FROM partido GROUP BY CASE WHEN cansancio <= 3 THEN 'Bajo esfuerzo (1-3)' WHEN cansancio <= 7 THEN 'Esfuerzo medio (4-7)' ELSE 'Alto esfuerzo (8-10)' END "
-          "ORDER BY rendimiento_por_unidad_esfuerzo DESC");
+          "FROM partido "
+          "GROUP BY dolor_fisico "
+          "ORDER BY dolor_fisico ASC");
+
+    pause_console();
+}
+
+void mostrar_rendimiento_por_arbitraje()
+{
+    clear_screen();
+    print_header("RENDIMIENTO POR ARBITRAJE");
+
+    query("Rendimiento por Calidad de Arbitraje",
+          "SELECT CASE arbitraje_score WHEN 1 THEN '1 Muy malo' WHEN 2 THEN '2 Regular' WHEN 3 THEN '3 Normal' WHEN 4 THEN '4 Bueno' WHEN 5 THEN '5 Excelente' ELSE 'Sin dato' END AS arbitraje, "
+          "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio "
+          "FROM partido WHERE arbitraje_score BETWEEN 1 AND 5 "
+          "GROUP BY arbitraje_score "
+          "ORDER BY arbitraje_score ASC");
+
+    query("Victorias por Calidad de Arbitraje (%)",
+          "SELECT CASE arbitraje_score WHEN 1 THEN '1 Muy malo' WHEN 2 THEN '2 Regular' WHEN 3 THEN '3 Normal' WHEN 4 THEN '4 Bueno' WHEN 5 THEN '5 Excelente' ELSE 'Sin dato' END AS arbitraje, "
+          "ROUND(100.0 * AVG(CASE WHEN resultado = 1 THEN 1.0 ELSE 0.0 END), 2) AS victorias_pct "
+          "FROM partido WHERE arbitraje_score BETWEEN 1 AND 5 "
+          "GROUP BY arbitraje_score "
+          "ORDER BY arbitraje_score ASC");
+
+    query("Partidos por Calidad de Arbitraje",
+          "SELECT CASE arbitraje_score WHEN 1 THEN '1 Muy malo' WHEN 2 THEN '2 Regular' WHEN 3 THEN '3 Normal' WHEN 4 THEN '4 Bueno' WHEN 5 THEN '5 Excelente' ELSE 'Sin dato' END AS arbitraje, "
+          "COUNT(*) AS partidos "
+          "FROM partido WHERE arbitraje_score BETWEEN 1 AND 5 "
+          "GROUP BY arbitraje_score "
+          "ORDER BY arbitraje_score ASC");
+
+    pause_console();
+}
+
+void mostrar_rendimiento_por_temperatura()
+{
+    clear_screen();
+    print_header("RENDIMIENTO POR TEMPERATURA");
+
+    query("Cobertura de Temperatura Registrada (%)",
+          "SELECT ROUND(100.0 * SUM(CASE WHEN temperatura_c IS NOT NULL THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 2) "
+          "FROM partido");
+
+    query("Rendimiento por Rango de Temperatura",
+          "SELECT CASE WHEN temperatura_c < 10 THEN '<10 C' WHEN temperatura_c < 20 THEN '10-19 C' WHEN temperatura_c < 30 THEN '20-29 C' ELSE '30+ C' END AS rango_temp, "
+          "ROUND(AVG(rendimiento_general), 2) AS rendimiento_promedio "
+          "FROM partido WHERE temperatura_c IS NOT NULL "
+          "GROUP BY CASE WHEN temperatura_c < 10 THEN '<10 C' WHEN temperatura_c < 20 THEN '10-19 C' WHEN temperatura_c < 30 THEN '20-29 C' ELSE '30+ C' END "
+          "ORDER BY rendimiento_promedio DESC");
+
+    query("Correlacion Temperatura-Rendimiento",
+          "SELECT ROUND((COUNT(*) * SUM(temperatura_c * rendimiento_general) - SUM(temperatura_c) * SUM(rendimiento_general)) / "
+          "(SQRT((COUNT(*) * SUM(temperatura_c * temperatura_c) - SUM(temperatura_c) * SUM(temperatura_c)) * "
+          "(COUNT(*) * SUM(rendimiento_general * rendimiento_general) - SUM(rendimiento_general) * SUM(rendimiento_general)))), 4) "
+          "FROM partido WHERE temperatura_c IS NOT NULL");
 
     pause_console();
 }

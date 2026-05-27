@@ -40,7 +40,9 @@ const char *resultado_to_text(int resultado);
 /**
  * @brief Convierte el número de clima a texto
  *
- * @param clima Número del clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio)
+ * @param clima Número del clima
+ * (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio,
+ * 7=Frio, 8=Calor, 9=Llovizna leve, 10=Lluvia Moderada, 11=Lluvia fuerte, 12=Cancha inundada)
  * @return Cadena de texto correspondiente al clima
  */
 const char *clima_to_text(int clima);

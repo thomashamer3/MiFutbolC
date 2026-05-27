@@ -29,11 +29,11 @@
 #include <limits.h>
 
 #ifndef UNUSED
-#  if defined(__GNUC__) || defined(__clang__)
-#    define UNUSED __attribute__((unused))
-#  else
-#    define UNUSED
-#  endif
+#if defined(__GNUC__) || defined(__clang__)
+#define UNUSED __attribute__((unused))
+#else
+#define UNUSED
+#endif
 #endif
 
 // Prototipos de funciones estaticas usadas antes de su definicion
@@ -43,6 +43,10 @@ static UNUSED void guardar_estadisticas_equipo(const Equipo *equipo, int const *
         int resultado, int cancha_id, char const *fecha_simulacion);
 static int crear_cancha_inline(void);
 static int crear_camiseta_inline(void);
+static const char *estado_cancha_to_text(int estado_cancha);
+static const char *dolor_fisico_to_text(int dolor_fisico);
+static const char *arbitraje_score_to_text(int arbitraje_score);
+static const char *tarjeta_to_text(int tarjeta);
 
 // Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
@@ -57,6 +61,262 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
+static const char *stmt_text_or_default(sqlite3_stmt *stmt, int columna, const char *fallback)
+{
+    const unsigned char *valor = sqlite3_column_text(stmt, columna);
+    return valor ? (const char *)valor : fallback;
+}
+
+static const char *tipo_partido_to_text(int tipo_partido)
+{
+    switch (tipo_partido)
+    {
+    case 1:
+        return "Amistoso";
+    case 2:
+        return "Torneo";
+    case 3:
+        return "Entrenamiento";
+    default:
+        return "Amistoso o Torneo";
+    }
+}
+
+static const char *dia_to_text_por_hora(int hora)
+{
+    if (hora < 6)
+    {
+        return "Madrugada";
+    }
+    if (hora < 12)
+    {
+        return "Manana";
+    }
+    if (hora < 15)
+    {
+        return "Mediodia";
+    }
+    if (hora < 19)
+    {
+        return "Tarde";
+    }
+    if (hora < 21)
+    {
+        return "Atardecer";
+    }
+    return "Noche";
+}
+
+static int dia_codigo_por_hora(int hora)
+{
+    if (hora < 6)
+    {
+        return 1;
+    }
+    if (hora < 12)
+    {
+        return 2;
+    }
+    if (hora < 15)
+    {
+        return 3;
+    }
+    if (hora < 19)
+    {
+        return 4;
+    }
+    if (hora < 21)
+    {
+        return 5;
+    }
+    return 6;
+}
+
+static int obtener_hora_desde_fecha_hora(const char *fecha_hora, int *hora_out)
+{
+    int hora = -1;
+    int minuto = -1;
+    const char *inicio_hora;
+    const char *separador;
+
+    if (!fecha_hora || !hora_out)
+    {
+        return 0;
+    }
+
+    separador = strrchr(fecha_hora, ' ');
+    if (!separador)
+    {
+        separador = strrchr(fecha_hora, 'T');
+    }
+    inicio_hora = separador ? (separador + 1) : fecha_hora;
+
+    if (sscanf(inicio_hora, "%d:%d", &hora, &minuto) != 2)
+    {
+        return 0;
+    }
+
+    if (hora < 0 || hora > 23 || minuto < 0 || minuto > 59)
+    {
+        return 0;
+    }
+
+    *hora_out = hora;
+    return 1;
+}
+
+static int calcular_dia_desde_fecha_hora(const char *fecha_hora, int *dia_out)
+{
+    int hora = 0;
+
+    if (!dia_out || !obtener_hora_desde_fecha_hora(fecha_hora, &hora))
+    {
+        return 0;
+    }
+
+    *dia_out = dia_codigo_por_hora(hora);
+    return 1;
+}
+
+static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
+{
+    while (1)
+    {
+        int hora_ingresada = 0;
+
+        printf("\nFecha y Hora del partido (dd/mm/yyyy hh:mm):\n");
+        printf("(Presione Enter para usar fecha/hora actual): ");
+        fgets(fecha, (int)fecha_size, stdin);
+        fecha[strcspn(fecha, "\n")] = 0;
+
+        if (fecha[0] == '\0' || (fecha[0] == ' ' && fecha[1] == '\0'))
+        {
+            get_datetime(fecha, (int)fecha_size);
+            printf("Usando fecha/hora actual: %s\n", fecha);
+            return;
+        }
+
+        trim_whitespace(fecha);
+        if (obtener_hora_desde_fecha_hora(fecha, &hora_ingresada))
+        {
+            printf("Fecha/hora ingresada: %s\n", fecha);
+            return;
+        }
+
+        printf("Formato invalido. Debe incluir hora (ejemplo: 25/05/2026 22:20).\n");
+    }
+}
+
+static const char *dia_partido_para_listado(const char *fecha_hora, int dia_codigo)
+{
+    int hora = 0;
+
+    if (obtener_hora_desde_fecha_hora(fecha_hora, &hora))
+    {
+        return dia_to_text_por_hora(hora);
+    }
+
+    return dia_to_text(dia_codigo);
+}
+
+static void imprimir_marcador_global_si_disponible(sqlite3_stmt *stmt)
+{
+    int goles_equipo = sqlite3_column_int(stmt, 28);
+    int goles_rival = sqlite3_column_int(stmt, 29);
+    if (goles_equipo >= 0 && goles_rival >= 0)
+    {
+        ui_printf_centered_line("Marcador global: %d-%d", goles_equipo, goles_rival);
+    }
+}
+
+static void imprimir_temperatura_partido(sqlite3_stmt *stmt)
+{
+    if (sqlite3_column_type(stmt, 34) == SQLITE_NULL)
+    {
+        ui_printf_centered_line("Temperatura: N/A");
+    }
+    else
+    {
+        ui_printf_centered_line("Temperatura: %.1f C", sqlite3_column_double(stmt, 34));
+    }
+}
+
+static void imprimir_bloque_base_partido(sqlite3_stmt *stmt, const char *fecha_con_dia, int tipo_partido)
+{
+    const char *fecha_hora = stmt_text_or_default(stmt, 2, "");
+    const char *formato_partido = stmt_text_or_default(stmt, 30, "");
+    const char *dia_texto = dia_partido_para_listado(fecha_hora, sqlite3_column_int(stmt, 12));
+
+    if (formato_partido[0] == '\0')
+    {
+        formato_partido = "No especificado";
+    }
+
+    ui_printf_centered_line("Partido: %d", sqlite3_column_int(stmt, 0));
+    ui_printf_centered_line("Tipo: %s", tipo_partido_to_text(tipo_partido));
+    ui_printf_centered_line("Cancha: %s", stmt_text_or_default(stmt, 1, "N/A"));
+    ui_printf_centered_line("Fecha: %s", fecha_con_dia);
+    ui_printf_centered_line("Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
+    ui_printf_centered_line("Camiseta: %s", stmt_text_or_default(stmt, 5, "N/A"));
+
+    if (tipo_partido == 3)
+    {
+        ui_printf_centered_line("Resultado: N/A (Entrenamiento)");
+    }
+    else
+    {
+        ui_printf_centered_line("Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
+    }
+
+    ui_printf_centered_line("Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
+    ui_printf_centered_line("Cansancio: %d/10", sqlite3_column_int(stmt, 8));
+    ui_printf_centered_line("Estado de Animo: %d/10", sqlite3_column_int(stmt, 9));
+    ui_printf_centered_line("Comentario Personal: %s", stmt_text_or_default(stmt, 10, "N/A"));
+    ui_printf_centered_line("Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
+    ui_printf_centered_line("Dia: %s", dia_texto);
+    ui_printf_centered_line("Precio: %d", sqlite3_column_int(stmt, 13));
+    ui_printf_centered_line("Estado de cancha: %s", estado_cancha_to_text(sqlite3_column_int(stmt, 27)));
+    imprimir_marcador_global_si_disponible(stmt);
+    ui_printf_centered_line("Formato: %s", formato_partido);
+    ui_printf_centered_line("Tarjeta: %s", tarjeta_to_text(sqlite3_column_int(stmt, 31)));
+    ui_printf_centered_line("Goles en contra: %d", sqlite3_column_int(stmt, 32));
+}
+
+static void imprimir_bloque_detallado_partido(sqlite3_stmt *stmt, int tipo_partido)
+{
+    if (tipo_partido != 2 && tipo_partido != 3)
+    {
+        return;
+    }
+
+    if (tipo_partido == 2)
+    {
+        ui_printf_centered_line("Rival: %s (%s)",
+                                stmt_text_or_default(stmt, 15, "N/A"),
+                                stmt_text_or_default(stmt, 16, "N/A"));
+    }
+
+    ui_printf_centered_line("Posicion: %s | Minutos: %d",
+                            stmt_text_or_default(stmt, 17, "N/A"),
+                            sqlite3_column_int(stmt, 18));
+    ui_printf_centered_line("Intensidad del partido (objetiva): %d",
+                            sqlite3_column_int(stmt, 19));
+    ui_printf_centered_line("Dolor/molestia fisica: %s",
+                            dolor_fisico_to_text(sqlite3_column_int(stmt, 33)));
+    imprimir_temperatura_partido(stmt);
+    ui_printf_centered_line("Condicion Cancha: %s | Arbitraje: %s",
+                            stmt_text_or_default(stmt, 21, "N/A"),
+                            arbitraje_score_to_text(sqlite3_column_int(stmt, 35)));
+    ui_printf_centered_line("Eventos Clave: %s", stmt_text_or_default(stmt, 23, "N/A"));
+    ui_printf_centered_line("Lo mejor: %s", stmt_text_or_default(stmt, 36, "N/A"));
+    ui_printf_centered_line("Que mejorar: %s", stmt_text_or_default(stmt, 37, "N/A"));
+    ui_printf_centered_line("Tags: %s", stmt_text_or_default(stmt, 38, "N/A"));
+    ui_printf_centered_line("Ratings T/F/M: %d/%d/%d",
+                            sqlite3_column_int(stmt, 24),
+                            sqlite3_column_int(stmt, 25),
+                            sqlite3_column_int(stmt, 26));
+}
+
 static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 {
     int hay = 0;
@@ -66,44 +326,10 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
     {
         format_date_with_weekday_for_display((const char *)sqlite3_column_text(stmt, 2),
                                              fecha_con_dia, sizeof(fecha_con_dia));
-
-        ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
-        ui_printf_centered_line("Cancha: %s", sqlite3_column_text(stmt, 1));
-        ui_printf_centered_line("Fecha: %s", fecha_con_dia);
-        ui_printf_centered_line("Goles: %d, Asistencias: %d", sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
-        ui_printf_centered_line("Camiseta: %s", sqlite3_column_text(stmt, 5));
-        ui_printf_centered_line("Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
-        ui_printf_centered_line("Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
-        ui_printf_centered_line("Cansancio: %d/10", sqlite3_column_int(stmt, 8));
-        ui_printf_centered_line("Estado de Animo: %d/10", sqlite3_column_int(stmt, 9));
-        ui_printf_centered_line("Comentario Personal: %s", sqlite3_column_text(stmt, 10) ? (const char *)sqlite3_column_text(stmt, 10) : "N/A");
-        ui_printf_centered_line("Clima: %s", clima_to_text(sqlite3_column_int(stmt, 11)));
-        ui_printf_centered_line("Dia: %s", dia_to_text(sqlite3_column_int(stmt, 12)));
-        ui_printf_centered_line("Precio: %d", sqlite3_column_int(stmt, 13));
-
         int tipo_partido = sqlite3_column_int(stmt, 14);
-        ui_printf_centered_line("Tipo Partido: %s", tipo_partido == 2 ? "FORMAL" : "AMISTOSO");
-        if (tipo_partido == 2)
-        {
-            ui_printf_centered_line("Rival: %s (%s)",
-                                    sqlite3_column_text(stmt, 15) ? (const char *)sqlite3_column_text(stmt, 15) : "N/A",
-                                    sqlite3_column_text(stmt, 16) ? (const char *)sqlite3_column_text(stmt, 16) : "N/A");
-            ui_printf_centered_line("Posicion: %s | Minutos: %d",
-                                    sqlite3_column_text(stmt, 17) ? (const char *)sqlite3_column_text(stmt, 17) : "N/A",
-                                    sqlite3_column_int(stmt, 18));
-            ui_printf_centered_line("Intensidad: %d | Esfuerzo: %d",
-                                    sqlite3_column_int(stmt, 19),
-                                    sqlite3_column_int(stmt, 20));
-            ui_printf_centered_line("Condicion Cancha: %s | Arbitraje: %s",
-                                    sqlite3_column_text(stmt, 21) ? (const char *)sqlite3_column_text(stmt, 21) : "N/A",
-                                    sqlite3_column_text(stmt, 22) ? (const char *)sqlite3_column_text(stmt, 22) : "N/A");
-            ui_printf_centered_line("Eventos Clave: %s",
-                                    sqlite3_column_text(stmt, 23) ? (const char *)sqlite3_column_text(stmt, 23) : "N/A");
-            ui_printf_centered_line("Ratings T/F/M: %d/%d/%d",
-                                    sqlite3_column_int(stmt, 24),
-                                    sqlite3_column_int(stmt, 25),
-                                    sqlite3_column_int(stmt, 26));
-        }
+
+        imprimir_bloque_base_partido(stmt, fecha_con_dia, tipo_partido);
+        imprimir_bloque_detallado_partido(stmt, tipo_partido);
         ui_printf_centered_line("----------------------------------------");
         hay = 1;
     }
@@ -113,18 +339,50 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 
 typedef struct
 {
+    int goles_equipo;
+    int goles_rival;
+    int tarjeta;
+    int goles_en_contra;
+} DatosPartidoFormalMarcador;
+
+typedef struct
+{
+    int dolor_fisico;
+    int arbitraje_score;
+    int estado_cancha;
+    int temperatura_registrada;
+    double temperatura_c;
+    char condicion_cancha[60];
+    char arbitraje[60];
+} DatosPartidoFormalContexto;
+
+typedef struct
+{
+    char lo_mejor[300];
+    char que_mejorar[300];
+    char tags[300];
+    char eventos_clave[300];
+} DatosPartidoFormalNotas;
+
+typedef struct
+{
+    int tecnico;
+    int fisico;
+    int mental;
+} DatosPartidoFormalRating;
+
+typedef struct
+{
     char rival_nombre[100];
     char tipo_rival[40];
+    char formato_partido[24];
     char posicion_jugada[40];
     int minutos_jugados;
     int intensidad;
-    int esfuerzo_percibido;
-    char condicion_cancha[60];
-    char arbitraje[60];
-    char eventos_clave[300];
-    int rating_tecnico;
-    int rating_fisico;
-    int rating_mental;
+    DatosPartidoFormalMarcador marcador;
+    DatosPartidoFormalContexto contexto;
+    DatosPartidoFormalNotas notas;
+    DatosPartidoFormalRating rating;
 } DatosPartidoFormal;
 
 typedef struct
@@ -166,7 +424,6 @@ typedef struct
     int goles_local;
     int goles_visitante;
 } DatosSimulacion;
-
 
 static int secure_rand(int max)
 {
@@ -430,16 +687,28 @@ static void inicializar_datos_partido(DatosPartido *datos)
     datos->tipo_partido = 1;
     strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
     strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "");
+    strcpy_s(datos->formal.formato_partido, sizeof(datos->formal.formato_partido), "");
     strcpy_s(datos->formal.posicion_jugada, sizeof(datos->formal.posicion_jugada), "");
     datos->formal.minutos_jugados = 0;
     datos->formal.intensidad = 0;
-    datos->formal.esfuerzo_percibido = 0;
-    strcpy_s(datos->formal.condicion_cancha, sizeof(datos->formal.condicion_cancha), "");
-    strcpy_s(datos->formal.arbitraje, sizeof(datos->formal.arbitraje), "");
-    strcpy_s(datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave), "");
-    datos->formal.rating_tecnico = 0;
-    datos->formal.rating_fisico = 0;
-    datos->formal.rating_mental = 0;
+    datos->formal.contexto.dolor_fisico = 0;
+    datos->formal.contexto.arbitraje_score = 0;
+    datos->formal.contexto.estado_cancha = 0;
+    datos->formal.marcador.goles_equipo = -1;
+    datos->formal.marcador.goles_rival = -1;
+    datos->formal.marcador.tarjeta = 1;
+    datos->formal.marcador.goles_en_contra = 0;
+    datos->formal.contexto.temperatura_registrada = 0;
+    datos->formal.contexto.temperatura_c = 0.0;
+    strcpy_s(datos->formal.contexto.condicion_cancha, sizeof(datos->formal.contexto.condicion_cancha), "");
+    strcpy_s(datos->formal.contexto.arbitraje, sizeof(datos->formal.contexto.arbitraje), "");
+    strcpy_s(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "");
+    strcpy_s(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "");
+    strcpy_s(datos->formal.notas.tags, sizeof(datos->formal.notas.tags), "");
+    strcpy_s(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "");
+    datos->formal.rating.tecnico = 0;
+    datos->formal.rating.fisico = 0;
+    datos->formal.rating.mental = 0;
 }
 
 static UNUSED int pedir_id_existente(const char *prompt, const char *tabla,
@@ -482,6 +751,149 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max, c
     return valor;
 }
 
+static const char *estado_cancha_to_text(int estado_cancha)
+{
+    switch (estado_cancha)
+    {
+    case 1:
+        return "Excelente";
+    case 2:
+        return "Buena";
+    case 3:
+        return "Regular";
+    case 4:
+        return "Mala";
+    case 5:
+        return "Pesima";
+    default:
+        return "No definido";
+    }
+}
+
+static const char *dolor_fisico_to_text(int dolor_fisico)
+{
+    switch (dolor_fisico)
+    {
+    case 1:
+        return "Leve";
+    case 2:
+        return "Moderada";
+    case 3:
+        return "Fuerte";
+    case 0:
+    default:
+        return "Ninguna";
+    }
+}
+
+static const char *arbitraje_score_to_text(int arbitraje_score)
+{
+    switch (arbitraje_score)
+    {
+    case 1:
+        return "Muy malo";
+    case 2:
+        return "Regular";
+    case 3:
+        return "Normal";
+    case 4:
+        return "Bueno";
+    case 5:
+        return "Excelente";
+    default:
+        return "N/A";
+    }
+}
+
+static const char *tarjeta_to_text(int tarjeta)
+{
+    switch (tarjeta)
+    {
+    case 2:
+        return "Amarilla";
+    case 3:
+        return "Roja";
+    case 1:
+    default:
+        return "No";
+    }
+}
+
+static void mostrar_opciones_clima_partido(void)
+{
+    ui_printf_centered_line("Opciones de clima:");
+    ui_printf_centered_line("1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio");
+    ui_printf_centered_line("7=Frio, 8=Calor, 9=Llovizna leve, 10=Lluvia Moderada, 11=Lluvia fuerte, 12=Cancha inundada");
+}
+
+static void mostrar_opciones_estado_cancha_partido(void)
+{
+    ui_printf_centered_line("Estado de cancha:");
+    ui_printf_centered_line("1=Excelente, 2=Buena, 3=Regular, 4=Mala, 5=Pesima");
+}
+
+static void mostrar_opciones_tarjeta_partido(void)
+{
+    ui_printf_centered_line("Tarjeta:");
+    ui_printf_centered_line("1=No, 2=Amarilla, 3=Roja");
+}
+
+static void mostrar_opciones_dolor_fisico_partido(void)
+{
+    ui_printf_centered_line("Dolor / molestia fisica:");
+    ui_printf_centered_line("0=Ninguna, 1=Leve, 2=Moderada, 3=Fuerte");
+}
+
+static void mostrar_opciones_arbitraje_partido(void)
+{
+    ui_printf_centered_line("Arbitraje:");
+    ui_printf_centered_line("1=Muy malo, 2=Regular, 3=Normal, 4=Bueno, 5=Excelente");
+}
+
+static void mostrar_opciones_dia_partido(void)
+{
+    ui_printf_centered_line("Franja horaria del partido:");
+    ui_printf_centered_line("1=Madrugada (00:00-06:00)");
+    ui_printf_centered_line("2=Manana (06:00-12:00)");
+    ui_printf_centered_line("3=Mediodia (12:00-15:00)");
+    ui_printf_centered_line("4=Tarde (15:00-19:00)");
+    ui_printf_centered_line("5=Atardecer (19:00-21:00)");
+    ui_printf_centered_line("6=Noche (21:00-00:00)");
+}
+
+static void solicitar_temperatura_opcional(double *temperatura_c, int *registrada)
+{
+    char buffer[64];
+
+    while (1)
+    {
+        input_string_extended("Temperatura en C (opcional, Enter para omitir): ", buffer, (int)sizeof(buffer));
+        trim_whitespace(buffer);
+        if (buffer[0] == '\0')
+        {
+            *temperatura_c = 0.0;
+            *registrada = 0;
+            return;
+        }
+
+        char *endptr = NULL;
+        double valor = strtod(buffer, &endptr);
+        while (endptr && *endptr && isspace((unsigned char)*endptr))
+        {
+            endptr++;
+        }
+
+        if (endptr && *endptr == '\0' && valor >= -30.0 && valor <= 60.0)
+        {
+            *temperatura_c = valor;
+            *registrada = 1;
+            return;
+        }
+
+        printf("Temperatura invalida. Ingrese un numero entre -30 y 60, o Enter para omitir.\n");
+    }
+}
+
 static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
 {
     while (1)
@@ -502,16 +914,59 @@ static int seleccionar_modalidad_partido(void)
     {
         clear_screen();
         print_header("TIPO DE PARTIDO");
-        printf("1) Partido Amistoso (carga clasica)\n");
-        printf("2) Partido Formal (carga clasica + detalle ampliado)\n");
+        printf("1) Amistoso\n");
+        printf("2) Torneo\n");
+        printf("3) Modo entrenamiento (sin rival ni resultado)\n");
         printf("0) Cancelar\n");
 
         int opcion = input_int("Opcion: ");
-        if (opcion == 0 || opcion == 1 || opcion == 2)
+        if (opcion == 0 || opcion == 1 || opcion == 2 || opcion == 3)
         {
             return opcion;
         }
         printf("Opcion invalida.\n");
+    }
+}
+
+static int solicitar_futbol_partido(char *buffer, int size, int permitir_cancelar)
+{
+    while (1)
+    {
+        printf("Futbol:\n");
+        printf("1) Futbol 5\n");
+        printf("2) Futbol 7\n");
+        printf("3) Futbol 8\n");
+        printf("4) Futbol 11\n");
+        if (permitir_cancelar)
+        {
+            printf("5) Cancelar\n");
+        }
+
+        switch (input_int("Opcion: "))
+        {
+        case 1:
+            snprintf(buffer, size, "Futbol 5");
+            return 1;
+        case 2:
+            snprintf(buffer, size, "Futbol 7");
+            return 1;
+        case 3:
+            snprintf(buffer, size, "Futbol 8");
+            return 1;
+        case 4:
+            snprintf(buffer, size, "Futbol 11");
+            return 1;
+        case 5:
+            if (permitir_cancelar)
+            {
+                return 0;
+            }
+            printf("Opcion invalida.\n");
+            break;
+        default:
+            printf("Opcion invalida.\n");
+            break;
+        }
     }
 }
 
@@ -551,6 +1006,10 @@ static void recopilar_datos_formales(DatosPartido *datos)
 {
     solicitar_texto_no_vacio("Rival: ", datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre));
     solicitar_tipo_rival(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival));
+    datos->formal.marcador.goles_equipo = pedir_entero_minimo("Marcador global - goles de tu equipo: ", 0,
+                                          "Valor invalido. Ingrese 0 o mas: ");
+    datos->formal.marcador.goles_rival = pedir_entero_minimo("Marcador global - goles rival: ", 0,
+                                         "Valor invalido. Ingrese 0 o mas: ");
     solicitar_texto_no_vacio("Posicion jugada: ", datos->formal.posicion_jugada, sizeof(datos->formal.posicion_jugada));
     datos->formal.minutos_jugados = pedir_entero_en_rango("Minutos jugados (0-180): ",
                                     0, 180,
@@ -558,50 +1017,122 @@ static void recopilar_datos_formales(DatosPartido *datos)
     datos->formal.intensidad = pedir_entero_en_rango("Intensidad del partido (1-10): ",
                                1, 10,
                                "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.esfuerzo_percibido = pedir_entero_en_rango("Esfuerzo percibido (1-10): ",
-                                       1, 10,
-                                       "Valor invalido. Ingrese entre 1 y 10: ");
-    solicitar_texto_no_vacio("Condicion de cancha: ", datos->formal.condicion_cancha, sizeof(datos->formal.condicion_cancha));
-    solicitar_texto_no_vacio("Arbitraje: ", datos->formal.arbitraje, sizeof(datos->formal.arbitraje));
-    input_string_extended("Eventos clave: ", datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave));
-    trim_whitespace(datos->formal.eventos_clave);
-    if (datos->formal.eventos_clave[0] == '\0')
+    mostrar_opciones_dolor_fisico_partido();
+    datos->formal.contexto.dolor_fisico = pedir_entero_en_rango("Dolor/molestia fisica (0-3): ",
+                                          0, 3,
+                                          "Valor invalido. Ingrese entre 0 y 3: ");
+    solicitar_temperatura_opcional(&datos->formal.contexto.temperatura_c, &datos->formal.contexto.temperatura_registrada);
+    snprintf(datos->formal.contexto.condicion_cancha, sizeof(datos->formal.contexto.condicion_cancha), "%s",
+             estado_cancha_to_text(datos->formal.contexto.estado_cancha));
+    mostrar_opciones_tarjeta_partido();
+    datos->formal.marcador.tarjeta = pedir_entero_en_rango("Tarjeta (1-3): ",
+                                     1, 3,
+                                     "Valor invalido. Ingrese 1, 2 o 3: ");
+    datos->formal.marcador.goles_en_contra = pedir_entero_minimo("Goles en contra: ", 0,
+            "Valor invalido. Ingrese 0 o mas: ");
+    mostrar_opciones_arbitraje_partido();
+    datos->formal.contexto.arbitraje_score = pedir_entero_en_rango("Arbitraje (1-5): ",
+            1, 5,
+            "Valor invalido. Ingrese entre 1 y 5: ");
+    snprintf(datos->formal.contexto.arbitraje, sizeof(datos->formal.contexto.arbitraje), "%s",
+             arbitraje_score_to_text(datos->formal.contexto.arbitraje_score));
+
+    input_string_extended("Lo mejor del partido: ", datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor));
+    trim_whitespace(datos->formal.notas.lo_mejor);
+    if (datos->formal.notas.lo_mejor[0] == '\0')
     {
-        snprintf(datos->formal.eventos_clave, sizeof(datos->formal.eventos_clave), "(sin eventos)");
+        snprintf(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "(sin registro)");
     }
-    datos->formal.rating_tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
+
+    input_string_extended("Que mejorar: ", datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar));
+    trim_whitespace(datos->formal.notas.que_mejorar);
+    if (datos->formal.notas.que_mejorar[0] == '\0')
+    {
+        snprintf(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "(sin registro)");
+    }
+
+    input_string_extended("Tags (separados por coma, opcional): ", datos->formal.notas.tags, sizeof(datos->formal.notas.tags));
+    trim_whitespace(datos->formal.notas.tags);
+
+    input_string_extended("Eventos clave: ", datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave));
+    trim_whitespace(datos->formal.notas.eventos_clave);
+    if (datos->formal.notas.eventos_clave[0] == '\0')
+    {
+        snprintf(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "(sin eventos)");
+    }
+    datos->formal.rating.tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
                                    1, 10,
                                    "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating_fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
+    datos->formal.rating.fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
                                   1, 10,
                                   "Valor invalido. Ingrese entre 1 y 10: ");
-    datos->formal.rating_mental = pedir_entero_en_rango("Rating mental (1-10): ",
+    datos->formal.rating.mental = pedir_entero_en_rango("Rating mental (1-10): ",
                                   1, 10,
                                   "Valor invalido. Ingrese entre 1 y 10: ");
 }
 
-static size_t longitud_segura(const char *texto, size_t max_len)
+static void recopilar_datos_entrenamiento(DatosPartido *datos)
 {
-    if (!texto)
+    strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
+    strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "Entrenamiento");
+    solicitar_texto_no_vacio("Posicion jugada: ", datos->formal.posicion_jugada, sizeof(datos->formal.posicion_jugada));
+    datos->formal.minutos_jugados = pedir_entero_en_rango("Minutos entrenados (0-180): ",
+                                    0, 180,
+                                    "Valor invalido. Ingrese entre 0 y 180: ");
+    datos->formal.intensidad = pedir_entero_en_rango("Intensidad del entrenamiento (1-10): ",
+                               1, 10,
+                               "Valor invalido. Ingrese entre 1 y 10: ");
+    mostrar_opciones_dolor_fisico_partido();
+    datos->formal.contexto.dolor_fisico = pedir_entero_en_rango("Dolor/molestia fisica (0-3): ",
+                                          0, 3,
+                                          "Valor invalido. Ingrese entre 0 y 3: ");
+    solicitar_temperatura_opcional(&datos->formal.contexto.temperatura_c, &datos->formal.contexto.temperatura_registrada);
+    mostrar_opciones_tarjeta_partido();
+    datos->formal.marcador.tarjeta = pedir_entero_en_rango("Tarjeta (1-3): ",
+                                     1, 3,
+                                     "Valor invalido. Ingrese 1, 2 o 3: ");
+    datos->formal.marcador.goles_en_contra = pedir_entero_minimo("Goles en contra: ", 0,
+            "Valor invalido. Ingrese 0 o mas: ");
+    snprintf(datos->formal.contexto.condicion_cancha, sizeof(datos->formal.contexto.condicion_cancha), "%s",
+             estado_cancha_to_text(datos->formal.contexto.estado_cancha));
+    datos->formal.contexto.arbitraje_score = 0;
+    snprintf(datos->formal.contexto.arbitraje, sizeof(datos->formal.contexto.arbitraje), "Sin arbitro");
+
+    input_string_extended("Lo mejor del entrenamiento: ", datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor));
+    trim_whitespace(datos->formal.notas.lo_mejor);
+    if (datos->formal.notas.lo_mejor[0] == '\0')
     {
-        return 0;
+        snprintf(datos->formal.notas.lo_mejor, sizeof(datos->formal.notas.lo_mejor), "(sin registro)");
     }
 
-#if defined(__STDC_LIB_EXT1__)
-    return strlen_s(texto, max_len);
-#elif defined(_MSC_VER)
-    return strnlen_s(texto, max_len);
-#else
-    size_t i = 0;
-    while (i < max_len && texto[i] != '\0')
+    input_string_extended("Que mejorar: ", datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar));
+    trim_whitespace(datos->formal.notas.que_mejorar);
+    if (datos->formal.notas.que_mejorar[0] == '\0')
     {
-        i++;
+        snprintf(datos->formal.notas.que_mejorar, sizeof(datos->formal.notas.que_mejorar), "(sin registro)");
     }
-    return i;
-#endif
+
+    input_string_extended("Tags (separados por coma, opcional): ", datos->formal.notas.tags, sizeof(datos->formal.notas.tags));
+    trim_whitespace(datos->formal.notas.tags);
+
+    input_string_extended("Eventos clave: ", datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave));
+    trim_whitespace(datos->formal.notas.eventos_clave);
+    if (datos->formal.notas.eventos_clave[0] == '\0')
+    {
+        snprintf(datos->formal.notas.eventos_clave, sizeof(datos->formal.notas.eventos_clave), "(sin eventos)");
+    }
+    datos->formal.rating.tecnico = pedir_entero_en_rango("Rating tecnico (1-10): ",
+                                   1, 10,
+                                   "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating.fisico = pedir_entero_en_rango("Rating fisico (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
+    datos->formal.rating.mental = pedir_entero_en_rango("Rating mental (1-10): ",
+                                  1, 10,
+                                  "Valor invalido. Ingrese entre 1 y 10: ");
 }
 
-static int recopilar_datos_partido(DatosPartido *datos)
+static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_resultado, int tipo_partido)
 {
     if (!datos)
     {
@@ -617,13 +1148,39 @@ static int recopilar_datos_partido(DatosPartido *datos)
         return 0;
     }
 
+    mostrar_opciones_estado_cancha_partido();
+    datos->formal.contexto.estado_cancha = pedir_entero_en_rango("Estado de cancha (1-5): ",
+                                           1, 5,
+                                           "Valor invalido. Ingrese entre 1 y 5: ");
+    snprintf(datos->formal.contexto.condicion_cancha, sizeof(datos->formal.contexto.condicion_cancha), "%s",
+             estado_cancha_to_text(datos->formal.contexto.estado_cancha));
+
+    if (!solicitar_futbol_partido(datos->formal.formato_partido,
+                                  (int)sizeof(datos->formal.formato_partido),
+                                  1))
+    {
+        return 0;
+    }
+
     datos->goles = pedir_entero_minimo("Goles: ", 0,
                                        "Goles invalidos. Ingrese 0 o mas: ");
     datos->asistencias = pedir_entero_minimo("Asistencias: ", 0,
                          "Asistencias invalidas. Ingrese 0 o mas: ");
-    datos->resultado = pedir_entero_en_rango("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
-                       1, 3,
-                       "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+    if (tipo_partido == 1)
+    {
+        datos->formal.marcador.goles_en_contra = pedir_entero_minimo("Goles en contra: ", 0,
+                "Valor invalido. Ingrese 0 o mas: ");
+    }
+    if (solicita_resultado)
+    {
+        datos->resultado = pedir_entero_en_rango("Resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
+                           1, 3,
+                           "Resultado invalido. (1=VICTORIA, 2=EMPATE, 3=DERROTA):");
+    }
+    else
+    {
+        datos->resultado = 0;
+    }
 
     listar_camisetas_con_nueva();
     datos->camiseta = pedir_camiseta_o_nueva();
@@ -637,28 +1194,42 @@ static int recopilar_datos_partido(DatosPartido *datos)
                           1, 10,
                           "Estado de Animo invalido. Ingrese entre 1 y 10: ");
     input_string_extended("Comentario personal: ", datos->comentario_personal, 256);
-    datos->clima = pedir_entero_en_rango("Clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio):",
-                                         1, 6,
-                                         "Clima invalido (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    datos->dia = pedir_entero_en_rango("Dia (1=Dia, 2=Tarde, 3=Noche): ",
-                                       1, 3,
-                                       "Dia invalido (1=Dia, 2=Tarde, 3=Noche): ");
+    mostrar_opciones_clima_partido();
+    datos->clima = pedir_entero_en_rango("Clima (1-12): ",
+                                         1, 12,
+                                         "Clima invalido. Ingrese entre 1 y 12: ");
+    datos->dia = 0;
     datos->precio = pedir_entero_minimo("Precio del partido: ", 0,
                                         "Precio invalido. Ingrese 0 o mas: ");
-    datos->tipo_partido = 1;
+    datos->tipo_partido = tipo_partido;
 
     return 1;
 }
 
+static int recopilar_datos_partido(DatosPartido *datos)
+{
+    return recopilar_datos_partido_base(datos, 1, 1);
+}
+
 static int recopilar_datos_partido_formal(DatosPartido *datos)
 {
-    if (!recopilar_datos_partido(datos))
+    if (!recopilar_datos_partido_base(datos, 1, 2))
     {
         return 0;
     }
 
-    datos->tipo_partido = 2;
     recopilar_datos_formales(datos);
+    return 1;
+}
+
+static int recopilar_datos_partido_entrenamiento(DatosPartido *datos)
+{
+    if (!recopilar_datos_partido_base(datos, 0, 3))
+    {
+        return 0;
+    }
+
+    recopilar_datos_entrenamiento(datos);
     return 1;
 }
 
@@ -667,8 +1238,9 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
                 "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio,"
-                "tipo_partido,rival_nombre,tipo_rival,posicion_jugada,minutos_jugados,intensidad,esfuerzo_percibido,condicion_cancha,arbitraje,eventos_clave,rating_tecnico,rating_fisico,rating_mental)"
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "tipo_partido,rival_nombre,tipo_rival,posicion_jugada,minutos_jugados,intensidad,esfuerzo_percibido,condicion_cancha,arbitraje,eventos_clave,rating_tecnico,rating_fisico,rating_mental,"
+                "estado_cancha,goles_equipo,goles_rival,formato_partido,tarjeta,goles_en_contra,dolor_fisico,temperatura_c,arbitraje_score,lo_mejor,que_mejorar,tags)"
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 &stmt))
     {
         return;
@@ -696,13 +1268,32 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_bind_text(stmt, 18, datos->formal.posicion_jugada, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 19, datos->formal.minutos_jugados);
     sqlite3_bind_int(stmt, 20, datos->formal.intensidad);
-    sqlite3_bind_int(stmt, 21, datos->formal.esfuerzo_percibido);
-    sqlite3_bind_text(stmt, 22, datos->formal.condicion_cancha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 23, datos->formal.arbitraje, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 24, datos->formal.eventos_clave, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 25, datos->formal.rating_tecnico);
-    sqlite3_bind_int(stmt, 26, datos->formal.rating_fisico);
-    sqlite3_bind_int(stmt, 27, datos->formal.rating_mental);
+    sqlite3_bind_int(stmt, 21, 0);
+    sqlite3_bind_text(stmt, 22, datos->formal.contexto.condicion_cancha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 23, datos->formal.contexto.arbitraje, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 24, datos->formal.notas.eventos_clave, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 25, datos->formal.rating.tecnico);
+    sqlite3_bind_int(stmt, 26, datos->formal.rating.fisico);
+    sqlite3_bind_int(stmt, 27, datos->formal.rating.mental);
+    sqlite3_bind_int(stmt, 28, datos->formal.contexto.estado_cancha);
+    sqlite3_bind_int(stmt, 29, datos->formal.marcador.goles_equipo);
+    sqlite3_bind_int(stmt, 30, datos->formal.marcador.goles_rival);
+    sqlite3_bind_text(stmt, 31, datos->formal.formato_partido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 32, datos->formal.marcador.tarjeta);
+    sqlite3_bind_int(stmt, 33, datos->formal.marcador.goles_en_contra);
+    sqlite3_bind_int(stmt, 34, datos->formal.contexto.dolor_fisico);
+    if (datos->formal.contexto.temperatura_registrada)
+    {
+        sqlite3_bind_double(stmt, 35, datos->formal.contexto.temperatura_c);
+    }
+    else
+    {
+        sqlite3_bind_null(stmt, 35);
+    }
+    sqlite3_bind_int(stmt, 36, datos->formal.contexto.arbitraje_score);
+    sqlite3_bind_text(stmt, 37, datos->formal.notas.lo_mejor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 38, datos->formal.notas.que_mejorar, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 39, datos->formal.notas.tags, -1, SQLITE_TRANSIENT);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -833,35 +1424,39 @@ void crear_partido()
     }
 
     DatosPartido datos;
-    int datos_ok = (modalidad == 1)
-                   ? recopilar_datos_partido(&datos)
-                   : recopilar_datos_partido_formal(&datos);
-    if (!datos_ok)
-        return;
-
-    char fecha[20];
-    printf("\nFecha y Hora del partido (dd/mm/yyyy hh:mm):\n");
-    printf("(Presione Enter para usar fecha/hora actual): ");
-    fgets(fecha, sizeof(fecha), stdin);
-    fecha[strcspn(fecha, "\n")] = 0;
-
-    // Si el usuario presiona Enter (string vacío), usar fecha/hora actual
-    if (fecha[0] == '\0' || (fecha[0] == ' ' && fecha[1] == '\0'))
+    int datos_ok = 0;
+    if (modalidad == 1)
     {
-        get_datetime(fecha, sizeof(fecha));
-        printf("Usando fecha/hora actual: %s\n", fecha);
+        datos_ok = recopilar_datos_partido(&datos);
+    }
+    else if (modalidad == 2)
+    {
+        datos_ok = recopilar_datos_partido_formal(&datos);
     }
     else
     {
-        // Validar que tenga al menos un formato básico
-        trim_whitespace(fecha);
-        if (longitud_segura(fecha, sizeof(fecha)) < 10)
-        {
-            printf("Formato de fecha invalido. Usando fecha/hora actual.\n");
-            get_datetime(fecha, sizeof(fecha));
-        }
-        printf("Fecha/hora ingresada: %s\n", fecha);
+        datos_ok = recopilar_datos_partido_entrenamiento(&datos);
     }
+
+    if (!datos_ok)
+        return;
+
+    char fecha[32];
+    solicitar_fecha_hora_partido(fecha, sizeof(fecha));
+
+    if (!calcular_dia_desde_fecha_hora(fecha, &datos.dia))
+    {
+        char fecha_actual[32];
+        get_datetime(fecha_actual, sizeof(fecha_actual));
+        snprintf(fecha, sizeof(fecha), "%s", fecha_actual);
+        if (!calcular_dia_desde_fecha_hora(fecha, &datos.dia))
+        {
+            datos.dia = 6;
+        }
+        printf("No se pudo interpretar la hora ingresada. Se uso fecha/hora actual: %s\n", fecha);
+    }
+
+    printf("Franja horaria calculada automaticamente: %s\n", dia_to_text(datos.dia));
 
     long long id = obtener_siguiente_id("partido");
     insertar_partido(id, &datos, fecha);
@@ -883,7 +1478,9 @@ void listar_partidos()
                 "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
                 "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
                 "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
-                "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0) "
+                "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
+                "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
+                "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                 "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
                 &stmt))
@@ -1045,9 +1642,14 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
         return;
     }
 
-    char sql[512];
+    char sql[1700];
     snprintf(sql, sizeof(sql),
-             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio "
+             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
+             "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
+             "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
+             "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
+             "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
+             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
              "JOIN cancha can ON p.cancha_id = can.id "
              "WHERE p.%s = ?",
@@ -1164,12 +1766,13 @@ static void modificar_camiseta_partido()
 
 static void modificar_clima_partido()
 {
-    modificar_campo_partido("clima", "Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ", "Clima modificado correctamente", 1, 6, NULL);
+    modificar_campo_partido("clima", "Nuevo clima (1-12): ", "Clima modificado correctamente", 1, 12, mostrar_opciones_clima_partido);
 }
 
 static void modificar_dia_partido()
 {
-    modificar_campo_partido("dia", "Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ", "Dia modificado correctamente", 1, 3, NULL);
+    mostrar_opciones_dia_partido();
+    modificar_campo_partido("dia", "Nuevo dia (1-6): ", "Dia modificado correctamente", 1, 6, NULL);
 }
 
 static void modificar_comentario_partido()
@@ -1180,6 +1783,341 @@ static void modificar_comentario_partido()
 static void modificar_precio_partido()
 {
     modificar_campo_partido("precio", "Nuevo precio del partido: ", "Precio modificado correctamente", 0, 0, NULL);
+}
+
+static void modificar_rendimiento_general_partido()
+{
+    modificar_campo_partido("rendimiento_general", "Nuevo rendimiento general (1-10): ",
+                            "Rendimiento general modificado correctamente", 1, 10, NULL);
+}
+
+static void modificar_cansancio_partido()
+{
+    modificar_campo_partido("cansancio", "Nuevo cansancio (0-10): ",
+                            "Cansancio modificado correctamente", 0, 10, NULL);
+}
+
+static void modificar_estado_animo_partido()
+{
+    modificar_campo_partido("estado_animo", "Nuevo estado de animo (0-10): ",
+                            "Estado de animo modificado correctamente", 0, 10, NULL);
+}
+
+static void modificar_minutos_jugados_partido()
+{
+    modificar_campo_partido("minutos_jugados", "Nuevos minutos jugados (0-180): ",
+                            "Minutos jugados modificados correctamente", 0, 180, NULL);
+}
+
+static void modificar_intensidad_partido()
+{
+    modificar_campo_partido("intensidad", "Nueva intensidad (1-10): ",
+                            "Intensidad modificada correctamente", 1, 10, NULL);
+}
+
+static void modificar_dolor_fisico_partido()
+{
+    mostrar_opciones_dolor_fisico_partido();
+    modificar_campo_partido("dolor_fisico", "Nuevo dolor/molestia fisica (0-3): ",
+                            "Dolor fisico modificado correctamente", 0, 3, NULL);
+}
+
+static void modificar_rating_tecnico_partido()
+{
+    modificar_campo_partido("rating_tecnico", "Nuevo rating tecnico (1-10): ",
+                            "Rating tecnico modificado correctamente", 1, 10, NULL);
+}
+
+static void modificar_rating_fisico_partido()
+{
+    modificar_campo_partido("rating_fisico", "Nuevo rating fisico (1-10): ",
+                            "Rating fisico modificado correctamente", 1, 10, NULL);
+}
+
+static void modificar_rating_mental_partido()
+{
+    modificar_campo_partido("rating_mental", "Nuevo rating mental (1-10): ",
+                            "Rating mental modificado correctamente", 1, 10, NULL);
+}
+
+static void modificar_tipo_partido_partido()
+{
+    printf("Modo de carga:\n");
+    printf("1) Carga rapida\n");
+    printf("2) Carga completa\n");
+    printf("3) Entrenamiento\n");
+    modificar_campo_partido("tipo_partido", "Nuevo modo de carga (1-3): ",
+                            "Modo de carga modificado correctamente", 1, 3, NULL);
+}
+
+static void modificar_rival_nombre_partido()
+{
+    modificar_campo_texto_partido("rival_nombre", "Nuevo rival: ", "Rival modificado correctamente", 100);
+}
+
+static void modificar_tipo_rival_partido()
+{
+    modificar_campo_texto_partido("tipo_rival", "Nuevo tipo de rival: ", "Tipo de rival modificado correctamente", 40);
+}
+
+static void modificar_posicion_jugada_partido()
+{
+    modificar_campo_texto_partido("posicion_jugada", "Nueva posicion jugada: ", "Posicion modificada correctamente", 40);
+}
+
+static void modificar_estado_cancha_partido()
+{
+    mostrar_opciones_estado_cancha_partido();
+    int estado_cancha = pedir_entero_en_rango("Nuevo estado de cancha (1-5): ",
+                        1, 5,
+                        "Valor invalido. Ingrese entre 1 y 5: ");
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET estado_cancha=?, condicion_cancha=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, estado_cancha);
+    sqlite3_bind_text(stmt, 2, estado_cancha_to_text(estado_cancha), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Estado de Cancha Modificado", NULL);
+}
+
+static void modificar_condicion_cancha_partido()
+{
+    modificar_campo_texto_partido("condicion_cancha", "Nueva condicion de cancha: ",
+                                  "Condicion de cancha modificada correctamente", 60);
+}
+
+static void modificar_marcador_global_partido()
+{
+    int goles_equipo = input_int("Nuevos goles de tu equipo (-1 sin dato): ");
+    while (goles_equipo < -1)
+    {
+        goles_equipo = input_int("Valor invalido. Ingrese -1 o un numero mayor: ");
+    }
+
+    int goles_rival = input_int("Nuevos goles del rival (-1 sin dato): ");
+    while (goles_rival < -1)
+    {
+        goles_rival = input_int("Valor invalido. Ingrese -1 o un numero mayor: ");
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET goles_equipo=?, goles_rival=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, goles_equipo);
+    sqlite3_bind_int(stmt, 2, goles_rival);
+    sqlite3_bind_int(stmt, 3, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Marcador Global Modificado", NULL);
+}
+
+static void modificar_formato_partido_partido()
+{
+    char futbol[24];
+    if (!solicitar_futbol_partido(futbol, (int)sizeof(futbol), 1))
+    {
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET formato_partido=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, futbol, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Futbol Modificado", NULL);
+}
+
+static void modificar_tarjeta_partido()
+{
+    mostrar_opciones_tarjeta_partido();
+    modificar_campo_partido("tarjeta", "Nueva tarjeta (1-3): ",
+                            "Tarjeta modificada correctamente", 1, 3, NULL);
+}
+
+static void modificar_goles_en_contra_partido()
+{
+    int goles_en_contra = input_int("Nuevos goles en contra: ");
+    while (goles_en_contra < 0)
+    {
+        goles_en_contra = input_int("Valor invalido. Ingrese 0 o mas: ");
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET goles_en_contra=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, goles_en_contra);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Goles en Contra Modificados", NULL);
+}
+
+static void modificar_temperatura_partido()
+{
+    char buffer[64];
+    input_string_extended("Nueva temperatura C (Enter para dejar vacio): ", buffer, (int)sizeof(buffer));
+    trim_whitespace(buffer);
+
+    sqlite3_stmt *stmt;
+    if (buffer[0] == '\0')
+    {
+        if (!preparar_stmt("UPDATE partido SET temperatura_c=NULL WHERE id=?", &stmt))
+        {
+            pause_console();
+            return;
+        }
+
+        sqlite3_bind_int(stmt, 1, current_partido_id);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        mostrar_alerta_operacion("Partido", "Temperatura Limpiada", NULL);
+        return;
+    }
+
+    char *endptr = NULL;
+    double temperatura = strtod(buffer, &endptr);
+    while (endptr && *endptr && isspace((unsigned char)*endptr))
+    {
+        endptr++;
+    }
+
+    if (!endptr || *endptr != '\0' || temperatura < -30.0 || temperatura > 60.0)
+    {
+        printf("Temperatura invalida. Ingrese un valor numerico entre -30 y 60, o Enter para vaciar.\n");
+        pause_console();
+        return;
+    }
+
+    if (!preparar_stmt("UPDATE partido SET temperatura_c=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_double(stmt, 1, temperatura);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Temperatura Modificada", NULL);
+}
+
+static void modificar_arbitraje_score_partido()
+{
+    mostrar_opciones_arbitraje_partido();
+    int arbitraje_score = pedir_entero_en_rango("Nuevo arbitraje (1-5): ",
+                          1, 5,
+                          "Valor invalido. Ingrese entre 1 y 5: ");
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET arbitraje_score=?, arbitraje=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, arbitraje_score);
+    sqlite3_bind_text(stmt, 2, arbitraje_score_to_text(arbitraje_score), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Arbitraje Modificado", NULL);
+}
+
+static void modificar_arbitraje_texto_partido()
+{
+    modificar_campo_texto_partido("arbitraje", "Nuevo texto de arbitraje: ",
+                                  "Texto de arbitraje modificado correctamente", 60);
+}
+
+static void modificar_eventos_clave_partido()
+{
+    modificar_campo_texto_partido("eventos_clave", "Nuevos eventos clave: ",
+                                  "Eventos clave modificados correctamente", 300);
+}
+
+static void modificar_lo_mejor_partido()
+{
+    modificar_campo_texto_partido("lo_mejor", "Nuevo 'Lo mejor': ",
+                                  "Campo 'Lo mejor' modificado correctamente", 300);
+}
+
+static void modificar_que_mejorar_partido()
+{
+    modificar_campo_texto_partido("que_mejorar", "Nuevo 'Que mejorar': ",
+                                  "Campo 'Que mejorar' modificado correctamente", 300);
+}
+
+static void modificar_tags_partido()
+{
+    modificar_campo_texto_partido("tags", "Nuevos tags (separados por coma): ",
+                                  "Tags modificados correctamente", 300);
+}
+
+static void menu_modificar_rendimiento_y_estado_partido()
+{
+    MenuItem items[] =
+    {
+        {1, "Rendimiento General", modificar_rendimiento_general_partido},
+        {2, "Cansancio", modificar_cansancio_partido},
+        {3, "Estado de Animo", modificar_estado_animo_partido},
+        {4, "Minutos Jugados", modificar_minutos_jugados_partido},
+        {5, "Intensidad", modificar_intensidad_partido},
+        {6, "Dolor Fisico", modificar_dolor_fisico_partido},
+        {7, "Rating Tecnico", modificar_rating_tecnico_partido},
+        {8, "Rating Fisico", modificar_rating_fisico_partido},
+        {9, "Rating Mental", modificar_rating_mental_partido},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("MODIFICAR RENDIMIENTO/ESTADO", items, 10);
+}
+
+static void menu_modificar_detalle_ampliado_partido()
+{
+    MenuItem items[] =
+    {
+        {1, "Tipo de Carga", modificar_tipo_partido_partido},
+        {2, "Rival", modificar_rival_nombre_partido},
+        {3, "Tipo de Rival", modificar_tipo_rival_partido},
+        {4, "Posicion Jugada", modificar_posicion_jugada_partido},
+        {5, "Estado de Cancha", modificar_estado_cancha_partido},
+        {6, "Condicion de Cancha (Texto)", modificar_condicion_cancha_partido},
+        {7, "Marcador Global", modificar_marcador_global_partido},
+        {8, "Futbol", modificar_formato_partido_partido},
+        {9, "Tarjeta", modificar_tarjeta_partido},
+        {10, "Goles en Contra", modificar_goles_en_contra_partido},
+        {11, "Temperatura", modificar_temperatura_partido},
+        {12, "Arbitraje (Escala 1-5)", modificar_arbitraje_score_partido},
+        {13, "Arbitraje (Texto)", modificar_arbitraje_texto_partido},
+        {14, "Eventos Clave", modificar_eventos_clave_partido},
+        {15, "Lo Mejor", modificar_lo_mejor_partido},
+        {16, "Que Mejorar", modificar_que_mejorar_partido},
+        {17, "Tags", modificar_tags_partido},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("MODIFICAR DETALLE AMPLIADO", items, 18);
 }
 
 static int recopilar_datos_completos_partido(DatosPartido *datos)
@@ -1215,15 +2153,17 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         printf("La camiseta no existe o esta inactiva\n");
         return 0;
     }
-    datos->clima = input_int("Nuevo clima (1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso, 5=Mucho Calor, 6=Mucho Frio): ");
-    while (datos->clima < 1 || datos->clima > 6)
+    mostrar_opciones_clima_partido();
+    datos->clima = input_int("Nuevo clima (1-12): ");
+    while (datos->clima < 1 || datos->clima > 12)
     {
-        datos->clima = input_int("Clima invalido. Ingrese entre 1 y 6: ");
+        datos->clima = input_int("Clima invalido. Ingrese entre 1 y 12: ");
     }
-    datos->dia = input_int("Nuevo dia (1=Dia, 2=Tarde, 3=Noche): ");
-    while (datos->dia < 1 || datos->dia > 3)
+    mostrar_opciones_dia_partido();
+    datos->dia = input_int("Nuevo dia (1-6): ");
+    while (datos->dia < 1 || datos->dia > 6)
     {
-        datos->dia = input_int("Dia invalido. Ingrese 1, 2 o 3: ");
+        datos->dia = input_int("Dia invalido. Ingrese entre 1 y 6: ");
     }
     datos->precio = input_int("Nuevo precio del partido: ");
 
@@ -1311,11 +2251,13 @@ void modificar_partido()
         {8, "Dia", modificar_dia_partido},
         {9, "Comentario", modificar_comentario_partido},
         {10, "Precio", modificar_precio_partido},
-        {11, "Modificar Todo", modificar_todo_partido},
+        {11, "Rendimiento y Estado", menu_modificar_rendimiento_y_estado_partido},
+        {12, "Detalle Ampliado", menu_modificar_detalle_ampliado_partido},
+        {13, "Modificar Todo", modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR PARTIDO", items, 12);
+    ejecutar_menu("MODIFICAR PARTIDO", items, 14);
 }
 
 static void buscar_por_camiseta()
@@ -1338,6 +2280,52 @@ static void buscar_por_cancha()
     buscar_partidos_generico("BUSCAR PARTIDOS POR CANCHA", "cancha_id", "ID de la cancha: ", &listar_canchas_disponibles, 1);
 }
 
+static void buscar_por_tag()
+{
+    print_header("BUSCAR PARTIDOS POR TAG");
+
+    char tag[128];
+    input_string_extended("Tag a buscar: ", tag, (int)sizeof(tag));
+    trim_whitespace(tag);
+    if (tag[0] == '\0')
+    {
+        printf("Debe ingresar un tag.\n");
+        pause_console();
+        return;
+    }
+
+    char patron[160];
+    snprintf(patron, sizeof(patron), "%%%s%%", tag);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(
+                "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
+                "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
+                "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
+                "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
+                "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
+                "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
+                "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+                "JOIN cancha can ON p.cancha_id = can.id "
+                "WHERE LOWER(IFNULL(p.tags, '')) LIKE LOWER(?) "
+                "ORDER BY p.id ASC",
+                &stmt))
+    {
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, patron, -1, SQLITE_TRANSIENT);
+    int hay = mostrar_partidos_desde_stmt(stmt);
+    if (!hay)
+    {
+        printf("No se encontraron partidos para ese tag.\n");
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 void buscar_partidos()
 {
     MenuItem items[] =
@@ -1346,10 +2334,11 @@ void buscar_partidos()
         {2, "Por Goles", buscar_por_goles},
         {3, "Por Asistencias", buscar_por_asistencias},
         {4, "Por Cancha", buscar_por_cancha},
+        {5, "Por Tag", buscar_por_tag},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("BUSQUEDA DE PARTIDOS", items, 5);
+    ejecutar_menu("BUSQUEDA DE PARTIDOS", items, 6);
 }
 
 static void manejar_gol_local(Equipo const *equipo_local, int minuto, int jugador_idx, int asistente_idx,
@@ -1994,7 +2983,8 @@ static void tactica_mostrar_partidos_disponibles(void)
     const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
                       "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
 
     ui_printf_centered_line("--- Partidos disponibles ---");
     ui_printf_centered_line("ID | Cancha | Fecha");
@@ -2358,7 +3348,8 @@ static void partido_marcar_favorito(int partido_id, int favorito)
 
 static int partido_agregar_tag(int partido_id, const char *tag)
 {
-    if (!tag || tag[0] == '\0') return 0;
+    if (!tag || tag[0] == '\0')
+        return 0;
     partido_init_meta_tables();
     sqlite3_stmt *stmt = NULL;
     const char *sql = "INSERT OR IGNORE INTO partido_tag (partido_id, tag) VALUES (?, ?)";
@@ -2374,7 +3365,8 @@ static int partido_agregar_tag(int partido_id, const char *tag)
 
 static int partido_quitar_tag(int partido_id, const char *tag)
 {
-    if (!tag || tag[0] == '\0') return 0;
+    if (!tag || tag[0] == '\0')
+        return 0;
     partido_init_meta_tables();
     sqlite3_stmt *stmt = NULL;
     const char *sql = "DELETE FROM partido_tag WHERE partido_id = ? AND tag = ?";
@@ -2405,7 +3397,8 @@ static int partido_listar_tags_print(int partido_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *t = (const char *)sqlite3_column_text(stmt, 0);
-        if (count) ui_printf(", ");
+        if (count)
+            ui_printf(", ");
         ui_printf("%s", t ? t : "");
         count++;
     }
@@ -2416,11 +3409,13 @@ static int partido_listar_tags_print(int partido_id)
 
 static int partido_prompt_tag_input(const char *prompt, char *out, size_t size)
 {
-    if (!prompt || !out || size == 0) return 0;
+    if (!prompt || !out || size == 0)
+        return 0;
     ui_printf("%s", prompt);
     /* fgets expects an int for size; cast explicitly to avoid implicit
        conversion warnings when passing size_t (e.g. sizeof buffers). */
-    if (!fgets(out, (int)size, stdin)) return 0;
+    if (!fgets(out, (int)size, stdin))
+        return 0;
     tactica_trim_newline(out);
     trim_whitespace(out);
     return out[0] != '\0';
@@ -2435,8 +3430,10 @@ static void partido_ui_agregar_tag(int partido_id)
         pause_console();
         return;
     }
-    if (partido_agregar_tag(partido_id, tag)) ui_printf("Etiqueta añadida.\n");
-    else ui_printf("No se pudo agregar etiqueta o ya existe.\n");
+    if (partido_agregar_tag(partido_id, tag))
+        ui_printf("Etiqueta añadida.\n");
+    else
+        ui_printf("No se pudo agregar etiqueta o ya existe.\n");
     pause_console();
 }
 
@@ -2449,8 +3446,10 @@ static void partido_ui_quitar_tag(int partido_id)
         pause_console();
         return;
     }
-    if (partido_quitar_tag(partido_id, tag)) ui_printf("Etiqueta eliminada.\n");
-    else ui_printf("Etiqueta no encontrada.\n");
+    if (partido_quitar_tag(partido_id, tag))
+        ui_printf("Etiqueta eliminada.\n");
+    else
+        ui_printf("Etiqueta no encontrada.\n");
     pause_console();
 }
 
@@ -2469,7 +3468,8 @@ static void partido_manage_tags_for_id(int id)
         ui_printf("2) Quitar etiqueta\n");
         ui_printf("0) Volver\n");
         int opt2 = input_int("Opcion: ");
-        if (opt2 == 0) break;
+        if (opt2 == 0)
+            break;
 
         switch (opt2)
         {
@@ -2494,15 +3494,18 @@ static void partido_list_tags_ui(void)
 {
     char tag[PARTIDO_TAG_MAX_LEN] = {0};
     ui_printf("Etiqueta (dejar vacia para listar todos con tags): ");
-    if (!fgets(tag, (int)sizeof(tag), stdin)) tag[0] = '\0';
+    if (!fgets(tag, (int)sizeof(tag), stdin))
+        tag[0] = '\0';
     tactica_trim_newline(tag);
     trim_whitespace(tag);
 
     int res = partido_mostrar_partidos_con_tag(tag[0] ? tag : NULL);
     if (res == 0)
     {
-        if (tag[0]) ui_printf("No hay partidos con la etiqueta '%s'.\n", tag);
-        else ui_printf("No hay partidos con etiquetas.\n");
+        if (tag[0])
+            ui_printf("No hay partidos con la etiqueta '%s'.\n", tag);
+        else
+            ui_printf("No hay partidos con etiquetas.\n");
     }
     pause_console();
 }
@@ -2556,7 +3559,8 @@ static void menu_marcar_favorito_partido()
         ui_printf("2) Listar solo favoritos\n");
         ui_printf("0) Volver\n");
         int opt = input_int("Opcion: ");
-        if (opt == 0) return;
+        if (opt == 0)
+            return;
 
         switch (opt)
         {
@@ -2564,7 +3568,8 @@ static void menu_marcar_favorito_partido()
         {
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
-            if (id == 0) break;
+            if (id == 0)
+                break;
             if (!existe_id("partido", id))
             {
                 printf("Partido no encontrado.\n");
@@ -2677,7 +3682,8 @@ static void menu_gestion_tags_partido()
         ui_printf("2) Listar partidos con etiquetas\n");
         ui_printf("0) Volver\n");
         int opt = input_int("Opcion: ");
-        if (opt == 0) return;
+        if (opt == 0)
+            return;
 
         switch (opt)
         {
@@ -2685,7 +3691,8 @@ static void menu_gestion_tags_partido()
         {
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
-            if (id == 0) break;
+            if (id == 0)
+                break;
             if (!existe_id("partido", id))
             {
                 printf("Partido no encontrado.\n");

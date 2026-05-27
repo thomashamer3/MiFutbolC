@@ -564,15 +564,21 @@ static int copy_trimmed_span(const char *start, const char *end, char *dest,
         end--;
     }
 
-    size_t len = (size_t)(end - start);
-    if (len == 0 || len >= dest_size)
+    size_t i = 0;
+    while (start < end && i < (dest_size - 1))
+    {
+        dest[i] = *start;
+        i++;
+        start++;
+    }
+
+    if (start < end)
     {
         return 0;
     }
 
-    memcpy(dest, start, len);
-    dest[len] = '\0';
-    return 1;
+    dest[i] = '\0';
+    return i != 0;
 }
 
 static int parse_id_prefix(const char *line, char separator, int *id, const char **rest)
@@ -1305,6 +1311,9 @@ static int convertir_resultado(const char *resultado_str)
 
 static int convertir_clima(const char *clima_str)
 {
+    if (!clima_str)
+        return 0;
+
     if (strcmp(clima_str, "Despejado") == 0)
         return 1;
     else if (strcmp(clima_str, "Nublado") == 0)
@@ -1313,10 +1322,22 @@ static int convertir_clima(const char *clima_str)
         return 3;
     else if (strcmp(clima_str, "Ventoso") == 0)
         return 4;
-    else if (strcmp(clima_str, "Mucho") == 0)
-        return 5; // Mucho Calor o Mucho Frio
-    else if (strcmp(clima_str, "Frio") == 0)
+    else if (strcmp(clima_str, "Mucho Calor") == 0 || strcmp(clima_str, "Mucho") == 0)
+        return 5;
+    else if (strcmp(clima_str, "Mucho Frio") == 0)
         return 6;
+    else if (strcmp(clima_str, "Frio") == 0)
+        return 7;
+    else if (strcmp(clima_str, "Calor") == 0)
+        return 8;
+    else if (strcmp(clima_str, "Llovizna leve") == 0)
+        return 9;
+    else if (strcmp(clima_str, "Lluvia Moderada") == 0)
+        return 10;
+    else if (strcmp(clima_str, "Lluvia fuerte") == 0)
+        return 11;
+    else if (strcmp(clima_str, "Cancha inundada") == 0 || strcmp(clima_str, "Inundada") == 0)
+        return 12;
     return 0;
 }
 
@@ -1347,45 +1368,101 @@ static int procesar_partido_desde_raw(const PartidoRawInput *raw)
     return procesar_e_insertar_partido(&input);
 }
 
+static int parsear_campo_meta_partido(const char *meta, const char *inicio_tag, const char *fin_tag,
+                                      char *dest, size_t dest_size)
+{
+    if (!meta || !inicio_tag || !dest || dest_size == 0)
+        return 0;
+
+    const char *inicio = strstr(meta, inicio_tag);
+    if (!inicio)
+        return 0;
+
+    inicio += strlen_s(inicio_tag, (size_t)-1);
+    const char *fin = fin_tag ? strstr(inicio, fin_tag) : NULL;
+    if (!fin)
+    {
+        fin = meta + strlen_s(meta, (size_t)-1);
+    }
+
+    if (fin < inicio)
+        return 0;
+
+    size_t i = 0;
+    while (inicio < fin && i < (dest_size - 1))
+    {
+        dest[i] = *inicio;
+        i++;
+        inicio++;
+    }
+
+    dest[i] = '\0';
+
+    if (i == 0)
+    {
+        return 0;
+    }
+
+    trim_whitespace(dest);
+    return dest[0] != '\0';
+}
+
 static int procesar_partido_txt_line(const char *line)
 {
     char cancha[256];
     char fecha[256];
     char camiseta[256];
+    char meta[512];
     char resultado_str[32];
-    char clima_str[32];
+    char clima_str[64];
     char dia_str[32];
+    char rg_str[16];
+    char can_str[16];
+    char ea_str[16];
     char comentario[512];
     int goles;
     int asistencias;
-    int rendimiento_general;
-    int cansancio;
-    int estado_animo;
+    int rendimiento_general = 0;
+    int cansancio = 0;
+    int estado_animo = 0;
 
-    // Formato: CANCHA | FECHA | G:Goles A:Asistencias | CAMISETA | Res:Resultado
-    // Cli:Clima Dia:Dia RG:Rendimiento Can:Cansancio EA:EstadoAnimo | Comentario
+    // Formato: CANCHA | FECHA | G:Goles A:Asistencias | CAMISETA |
+    // Res:Resultado Cli:Clima Dia:Dia RG:Rendimiento Can:Cansancio EA:EstadoAnimo | Comentario
 #if defined(_WIN32) && defined(_MSC_VER)
     if (sscanf_s(line,
-                 " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | Res:%31[^ ] Cli:%31[^ ] "
-                 "Dia:%31[^ ] RG:%d Can:%d EA:%d | %511[^\n]",
+                 " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | %511[^|] | %511[^\n]",
                  cancha, (unsigned)sizeof(cancha),
                  fecha, (unsigned)sizeof(fecha),
                  &goles, &asistencias,
                  camiseta, (unsigned)sizeof(camiseta),
-                 resultado_str, (unsigned)sizeof(resultado_str),
-                 clima_str, (unsigned)sizeof(clima_str),
-                 dia_str, (unsigned)sizeof(dia_str),
-                 &rendimiento_general, &cansancio, &estado_animo,
-                 comentario, (unsigned)sizeof(comentario)) != 12)
+                 meta, (unsigned)sizeof(meta),
+                 comentario, (unsigned)sizeof(comentario)) != 7)
 #else
     if (sscanf(line,
-               " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | Res:%31[^ ] Cli:%31[^ ] "
-               "Dia:%31[^ ] RG:%d Can:%d EA:%d | %511[^\n]",
-               cancha, fecha, &goles, &asistencias, camiseta, resultado_str,
-               clima_str, dia_str, &rendimiento_general, &cansancio,
-               &estado_animo, comentario) != 12)
+               " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | %511[^|] | %511[^\n]",
+               cancha, fecha, &goles, &asistencias, camiseta, meta, comentario) != 7)
 #endif
         return 0;
+
+    trim_whitespace(cancha);
+    trim_whitespace(fecha);
+    trim_whitespace(camiseta);
+    trim_whitespace(meta);
+    trim_whitespace(comentario);
+
+    if (!parsear_campo_meta_partido(meta, "Res:", " Cli:", resultado_str, sizeof(resultado_str)) ||
+            !parsear_campo_meta_partido(meta, "Cli:", " Dia:", clima_str, sizeof(clima_str)) ||
+            !parsear_campo_meta_partido(meta, "Dia:", " RG:", dia_str, sizeof(dia_str)) ||
+            !parsear_campo_meta_partido(meta, "RG:", " Can:", rg_str, sizeof(rg_str)) ||
+            !parsear_campo_meta_partido(meta, "Can:", " EA:", can_str, sizeof(can_str)) ||
+            !parsear_campo_meta_partido(meta, "EA:", NULL, ea_str, sizeof(ea_str)))
+    {
+        return 0;
+    }
+
+    rendimiento_general = atoi(rg_str);
+    cansancio = atoi(can_str);
+    estado_animo = atoi(ea_str);
 
     PartidoRawInput raw =
     {

@@ -4,6 +4,7 @@
 #include "dashboard.h"
 #include "atajos.h"
 #include "musica.h"
+#include "carrera.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -105,6 +106,9 @@ int main()
     
     // Mostrar Dashboard inicial con resumen de actividades
     mostrar_dashboard();
+
+    // Aviso opcional de recuerdos historicos para abrir Modo Retro
+    carrera_notificar_modo_retro_inicio();
     
     // Inicializar sistema de atajos de teclado
     inicializar_atajos();

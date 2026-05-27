@@ -50,6 +50,21 @@ void mostrar_eficiencia_asistencias_vs_cansancio();
 void mostrar_rendimiento_por_esfuerzo();
 
 /**
+ * @brief Muestra el rendimiento agrupado por dolor/molestia física
+ */
+void mostrar_rendimiento_por_dolor_fisico();
+
+/**
+ * @brief Muestra el rendimiento agrupado por calidad de arbitraje
+ */
+void mostrar_rendimiento_por_arbitraje();
+
+/**
+ * @brief Muestra el rendimiento agrupado por temperatura registrada
+ */
+void mostrar_rendimiento_por_temperatura();
+
+/**
  * @brief Muestra partidos exigentes bien rendidos
  */
 void mostrar_partidos_exigentes_bien_rendidos();

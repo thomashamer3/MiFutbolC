@@ -39,6 +39,14 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Gestión de imágenes optimizada**: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
 - **Mejor feedback en herramientas opcionales**: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.
 
+### Novedades recientes (v4.3)
+
+- **Carrera Futbolística ampliada**: ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y Modo Retro.
+- **Partidos más completos**: nuevos modos (Amistoso, Torneo, Entrenamiento) y nuevas métricas contextuales (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).
+- **Canchas con exportación dedicada**: ahora puedes exportar información de canchas en TXT, CSV, JSON, HTML y PDF desde el módulo.
+- **Estadísticas de rendimiento extendidas**: nuevos análisis por intensidad, dolor físico, arbitraje y temperatura.
+- **Catálogo climático ampliado**: se agregaron nuevos climas para carga, análisis e importación/exportación.
+
 ## Requisitos del Sistema
 
 - **Sistema Operativo**: Windows, Linux o macOS
@@ -192,18 +200,18 @@ El menú principal ofrece las siguientes opciones:
 - **1. Dashboard**: ver resumen general de actividad, logros, balance y alertas rápidas.
 - **2. Calendario**: navegar por meses, revisar eventos de un día y volver al día actual.
 - **3. Camisetas**: crear, listar, editar, eliminar, sortear, gestionar imágenes e información de camisetas.
-- **4. Canchas**: crear, listar, editar, eliminar, asociar imagen y activar/desactivar canchas.
+- **4. Canchas**: crear, listar, editar, eliminar, asociar imagen, activar/desactivar y exportar información.
 - **5. Equipos**: crear, listar, editar, eliminar, cargar/ver imagen y activar/desactivar equipos.
-- **6. Partidos**: crear, listar, editar, eliminar, simular con equipos guardados y usar análisis táctico.
+- **6. Partidos**: crear (amistoso/torneo/entrenamiento), listar, editar, eliminar, simular, usar análisis táctico y trabajar con tags.
 - **7. Lesiones**: crear, listar, editar, eliminar, consultar estadísticas y actualizar estados.
-- **8. Estadísticas**: revisar generales, partidos, goles, asistencias y rendimiento.
+- **8. Estadísticas**: revisar generales, partidos, goles, asistencias y rendimiento (incluye intensidad, dolor físico, arbitraje y temperatura).
 - **9. Logros**: ver logros totales, completados, en progreso y no completados.
 - **10. Financiamiento**: registrar transacciones, ver resúmenes, balance, exportar y gestionar presupuestos.
 - **11. Torneos**: crear, listar, modificar y eliminar torneos.
 - **12. Temporada**: crear, listar, modificar, eliminar, administrar y comparar temporadas.
 - **13. Análisis**: usar análisis básico, comparador avanzado, diagramas tácticos, Entrenador IA y química.
 - **14. Bienestar**: registrar planificación, hábitos, entrenamiento, alimentación, mental y salud.
-- **15. Carrera Futbolística**: gestionar trayectoria, historial y resumen de carrera.
+- **15. Carrera Futbolística**: gestionar trayectoria, identidad, hitos, timeline, Hall of Fame, narrativa y modo retro.
 - **16. Recordatorios**: listar, agregar, editar, eliminar, filtrar, exportar/importar y abrir agenda.
 - **17. Colecciones**: administrar inventario, colecciones, sincronización y backups JSON.
 - **18. Ajustes**: personalizar tema, idioma, accesibilidad, usuario, modo, exportación/importación y actualización.
@@ -334,6 +342,7 @@ Cuando uses la opción de cargar imagen para una camiseta:
 - **7. Ver Información**: consultar ficha de la cancha.
 - **8. Cargar Información**: ampliar o actualizar datos.
 - **9. Reactivar/Desactivar Cancha**: cambiar estado sin perder historial.
+- **10. Exportar Información**: exportar ficha de canchas en TXT/CSV/JSON/HTML/PDF.
 
 ### Crear una Cancha
 
@@ -371,6 +380,16 @@ Cuando uses la opción de cargar imagen para una camiseta:
 2. Elige "9" (**Reactivar Cancha**)
 3. Ingresa el ID de la cancha inactiva
 4. Confirma para volver a marcarla como activa
+
+### Exportar Información de Canchas
+
+1. Selecciona "4" en el menú principal
+2. Elige "10" (**Exportar Información**)
+3. Define el alcance:
+   - Todas las canchas
+   - Una cancha específica
+4. Elige formato único o exportación completa en todos los formatos
+5. Los archivos se guardan en el directorio de exportaciones configurado
 
 ![Gestión de canchas](images/menucanchas.png)
 
@@ -447,19 +466,29 @@ Selecciona "5" en el menú principal para acceder al menú de gestión de equipo
 
 1. Selecciona "6" en el menú principal
 2. Elige "1" para crear un nuevo partido
-3. Selecciona la cancha donde se jugó
-4. Ingresa la fecha y hora del partido
-5. Ingresa las estadísticas:
+3. Elige el modo de carga:
+   - **Amistoso**
+   - **Torneo**
+   - **Entrenamiento**
+4. Selecciona la cancha donde se jugó
+5. Ingresa la fecha y hora del partido
+6. Ingresa las estadísticas base:
    - Goles marcados
    - Asistencias realizadas
    - Rendimiento general (1-10)
    - Nivel de cansancio (1-10)
    - Estado de ánimo (1-10)
-   - Resultado (Victoria, Empate, Derrota)
-   - Clima (Soleado, Nublado, Lluvioso, etc.)
+   - Clima (catálogo ampliado)
    - Comentario personal (opcional)
-6. Selecciona la camiseta utilizada
-7. El partido se guardará con todos los datos
+7. Para Torneo/Entrenamiento también podrás registrar contexto ampliado:
+   - Estado de cancha
+   - Marcador global (en torneo)
+   - Formato de fútbol (Fútbol 5/7/8/11)
+   - Tarjeta y goles en contra
+   - Dolor físico y temperatura (opcional)
+   - Arbitraje score, eventos clave, lo mejor, qué mejorar y tags
+8. Selecciona la camiseta utilizada
+9. El partido se guardará con todos los datos
 
 ### Listar Partidos
 
@@ -595,7 +624,10 @@ Análisis profundo del rendimiento:
 - **Impacto Real del Estado de Ánimo**: Correlación entre estado de ánimo y rendimiento, con análisis por niveles
 - **Eficiencia: Goles por Partido vs Rendimiento**: Relación entre producción de goles y rendimiento general
 - **Eficiencia: Asistencias vs Cansancio**: Cómo el cansancio afecta la capacidad de asistir
-- **Rendimiento por Esfuerzo**: Análisis de rendimiento obtenido por unidad de cansancio
+- **Rendimiento por Intensidad**: Relación entre exigencia del partido y rendimiento
+- **Rendimiento por Dolor Físico**: Impacto de molestias físicas sobre rendimiento y contribución
+- **Rendimiento por Arbitraje**: Comportamiento del rendimiento según calidad arbitral
+- **Rendimiento por Temperatura**: Correlación del rendimiento con la temperatura registrada
 - **Partidos Exigentes Bien Rendidos**: Partidos difíciles con buen rendimiento
 - **Partidos Fáciles Mal Rendidos**: Partidos fáciles con bajo rendimiento
 
@@ -1011,11 +1043,19 @@ Selecciona "15" en el menú principal para acceder al módulo de carrera futbol�
 
 ### Qué puedes hacer en Carrera Futbolística
 
-- **1. Carrera Futbolística**: gestionar objetivos, hitos y progreso.
+- **1. Carrera Futbolística**: ver resumen base de trayectoria.
 - **2. Tu Historia Futbolística**: consultar narrativa/historial personal.
-- **3. Resumen General de Carrera**: ver consolidado de tu evolución.
+- **3. Resumen General de Carrera**: ver consolidado global de evolución.
+- **4. Ficha de Identidad del Jugador**: crear/editar perfil personal.
+- **5. Perfil Dinámico de Jugador**: analizar estilo de juego automáticamente.
+- **6. Partidos que Marcaron**: marcar y gestionar hitos.
+- **7. Timeline de Carrera**: línea temporal de eventos clave.
+- **8. Hall of Fame Personal**: ver mejores hitos y récords.
+- **9. Resumen Narrativo Automático**: generar y consultar resúmenes de carrera.
+- **10. Modo Retro: Hoy en tu Historia**: revivir recuerdos de la fecha actual en años anteriores.
 
 Este módulo te ayuda a llevar seguimiento longitudinal de tu desarrollo deportivo con foco en trayectoria y metas personales.
+Además, al iniciar la aplicación puede aparecer una sugerencia opcional para abrir Modo Retro si hay recuerdos del día.
 
 ![Carrera futbolística](images/menucarrerafutbolistica.png)
 
@@ -1791,8 +1831,8 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 4.2  
-**Última actualización**: 06/05/2026  
+**Versión**: 4.3  
+**Última actualización**: 26/05/2026  
 **Licencia**: Open Source  
 
 *Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*

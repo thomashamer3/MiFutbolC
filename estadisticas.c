@@ -108,9 +108,12 @@ void menu_estadisticas_rendimiento()
         {13, "Dependencia del Contexto", mostrar_dependencia_contexto},
         {14, "Impacto Real del Cansancio", mostrar_impacto_real_cansancio},
         {15, "Impacto Real del Estado de Animo", mostrar_impacto_real_estado_animo},
-        {16, "Rendimiento por Esfuerzo", mostrar_rendimiento_por_esfuerzo},
+        {16, "Rendimiento por Intensidad", mostrar_rendimiento_por_esfuerzo},
+        {17, "Rendimiento por Dolor Fisico", mostrar_rendimiento_por_dolor_fisico},
+        {18, "Rendimiento por Arbitraje", mostrar_rendimiento_por_arbitraje},
+        {19, "Rendimiento por Temperatura", mostrar_rendimiento_por_temperatura},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 17);
+    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 20);
 }

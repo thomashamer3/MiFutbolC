@@ -13,8 +13,8 @@
 #include <inttypes.h>
 #ifdef _WIN32
 #include <direct.h>
-#include <Windows.h>
-#include <ShlObj.h>
+#include <windows.h>
+#include <shlobj.h>
 #include <bcrypt.h>
 #else
 #include "direct.h"
@@ -585,7 +585,8 @@ static int apply_database_tuning()
 
 static int create_database_schema()
 {
-    const char *sql_create =
+    const char *schema_statements[] =
+    {
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
@@ -603,13 +604,13 @@ static int create_database_schema()
         " regalo_de TEXT DEFAULT '',"
         " imagen_ruta TEXT DEFAULT '',"
         " sorteada INTEGER DEFAULT 0,"
-        " activa INTEGER DEFAULT 1);"
+        " activa INTEGER DEFAULT 1);",
 
         "CREATE TABLE IF NOT EXISTS coleccion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL UNIQUE,"
         " descripcion TEXT DEFAULT '',"
-        " fecha_creacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);"
+        " fecha_creacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);",
 
         "CREATE TABLE IF NOT EXISTS inventario_item ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -621,7 +622,7 @@ static int create_database_schema()
         " camiseta_id INTEGER UNIQUE,"
         " CHECK(tipo IN (1, 2, 3)),"
         " CHECK(estado IN (0, 1)),"
-        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id) ON DELETE SET NULL);"
+        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id) ON DELETE SET NULL);",
 
         "CREATE TABLE IF NOT EXISTS coleccion_inventario ("
         " coleccion_id INTEGER NOT NULL,"
@@ -629,15 +630,15 @@ static int create_database_schema()
         " fecha_asociacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         " PRIMARY KEY(coleccion_id, inventario_id),"
         " FOREIGN KEY(coleccion_id) REFERENCES coleccion(id) ON DELETE CASCADE,"
-        " FOREIGN KEY(inventario_id) REFERENCES inventario_item(id) ON DELETE CASCADE);"
+        " FOREIGN KEY(inventario_id) REFERENCES inventario_item(id) ON DELETE CASCADE);",
 
-        "CREATE INDEX IF NOT EXISTS idx_inventario_tipo ON inventario_item(tipo);"
-        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_item ON coleccion_inventario(inventario_id);"
+        "CREATE INDEX IF NOT EXISTS idx_inventario_tipo ON inventario_item(tipo);",
+        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_item ON coleccion_inventario(inventario_id);",
 
         "INSERT OR IGNORE INTO coleccion(nombre, descripcion) VALUES"
         " ('Equipamiento actual', 'Items que usas actualmente.'),"
         " ('Historico', 'Coleccion de items de temporadas anteriores.'),"
-        " ('Vendidos', 'Items vendidos o fuera del inventario activo.');"
+        " ('Vendidos', 'Items vendidos o fuera del inventario activo.');",
 
         "CREATE TABLE IF NOT EXISTS cancha ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -669,7 +670,7 @@ static int create_database_schema()
         " horario TEXT DEFAULT '',"
         " contacto_alt TEXT DEFAULT '',"
         " imagen_ruta TEXT DEFAULT '',"
-        " activa INTEGER DEFAULT 1);"
+        " activa INTEGER DEFAULT 1);",
 
         "CREATE TABLE IF NOT EXISTS partido ("
         " id INTEGER PRIMARY KEY,"
@@ -699,8 +700,20 @@ static int create_database_schema()
         " rating_tecnico INTEGER DEFAULT 0,"
         " rating_fisico INTEGER DEFAULT 0,"
         " rating_mental INTEGER DEFAULT 0,"
+        " estado_cancha INTEGER DEFAULT 0,"
+        " goles_equipo INTEGER DEFAULT -1,"
+        " goles_rival INTEGER DEFAULT -1,"
+        " formato_partido TEXT DEFAULT '',"
+        " tarjeta INTEGER DEFAULT 1,"
+        " goles_en_contra INTEGER DEFAULT 0,"
+        " dolor_fisico INTEGER DEFAULT 0,"
+        " temperatura_c REAL DEFAULT NULL,"
+        " arbitraje_score INTEGER DEFAULT 0,"
+        " lo_mejor TEXT DEFAULT '',"
+        " que_mejorar TEXT DEFAULT '',"
+        " tags TEXT DEFAULT '',"
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
-        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
+        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
         "CREATE TABLE IF NOT EXISTS lesion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -710,13 +723,13 @@ static int create_database_schema()
         " fecha TEXT NOT NULL,"
         " camiseta_id INTEGER NOT NULL,"
         " estado TEXT DEFAULT 'Activa',"
-        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));"
+        " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
         "CREATE TABLE IF NOT EXISTS usuario ("
         " id INTEGER PRIMARY KEY,"
         " nombre TEXT NOT NULL,"
         " password_salt TEXT DEFAULT '',"
-        " password_hash TEXT DEFAULT '');"
+        " password_hash TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS equipo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -726,7 +739,7 @@ static int create_database_schema()
         " num_jugadores INTEGER NOT NULL,"
         " partido_id INTEGER DEFAULT -1,"
         " activa INTEGER DEFAULT 1,"
-        " imagen_ruta TEXT DEFAULT '');"
+        " imagen_ruta TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS jugador ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -735,7 +748,7 @@ static int create_database_schema()
         " numero INTEGER NOT NULL,"
         " posicion INTEGER NOT NULL,"
         " es_capitan INTEGER NOT NULL,"
-        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));",
 
         "CREATE TABLE IF NOT EXISTS torneo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -745,20 +758,20 @@ static int create_database_schema()
         " cantidad_equipos INTEGER NOT NULL,"
         " tipo_torneo INTEGER NOT NULL,"
         " formato_torneo INTEGER NOT NULL,"
-        " fase_actual TEXT DEFAULT 'Fase de Grupos');"
+        " fase_actual TEXT DEFAULT 'Fase de Grupos');",
 
         "CREATE TABLE IF NOT EXISTS equipo_torneo ("
         " torneo_id INTEGER NOT NULL,"
         " equipo_id INTEGER NOT NULL,"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " PRIMARY KEY(torneo_id, equipo_id));"
+        " PRIMARY KEY(torneo_id, equipo_id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_torneo_nombre ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " torneo_id INTEGER NOT NULL,"
         " nombre TEXT NOT NULL,"
-        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));",
 
         "CREATE TABLE IF NOT EXISTS partido_torneo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -772,7 +785,7 @@ static int create_database_schema()
         " fase TEXT DEFAULT 'Fase de Grupos',"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(equipo1_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(equipo2_id) REFERENCES equipo(id));"
+        " FOREIGN KEY(equipo2_id) REFERENCES equipo(id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_torneo_estadisticas ("
         " torneo_id INTEGER NOT NULL,"
@@ -787,7 +800,7 @@ static int create_database_schema()
         " estado TEXT DEFAULT 'Activo',"
         " PRIMARY KEY(torneo_id, equipo_id),"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
-        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));",
 
         "CREATE TABLE IF NOT EXISTS jugador_estadisticas ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -801,7 +814,7 @@ static int create_database_schema()
         " minutos_jugados INTEGER DEFAULT 0,"
         " FOREIGN KEY(jugador_id) REFERENCES jugador(id),"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
-        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));"
+        " FOREIGN KEY(equipo_id) REFERENCES equipo(id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_historial ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -819,7 +832,7 @@ static int create_database_schema()
         " fecha_inicio TEXT,"
         " fecha_fin TEXT,"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));",
 
         "CREATE TABLE IF NOT EXISTS torneo_fases ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -827,7 +840,7 @@ static int create_database_schema()
         " nombre_fase TEXT NOT NULL,"
         " descripcion TEXT,"
         " orden INTEGER NOT NULL,"
-        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));"
+        " FOREIGN KEY(torneo_id) REFERENCES torneo(id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_fase ("
         " torneo_id INTEGER NOT NULL,"
@@ -840,7 +853,7 @@ static int create_database_schema()
         " PRIMARY KEY(torneo_id, equipo_id, fase_id),"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(fase_id) REFERENCES torneo_fases(id));"
+        " FOREIGN KEY(fase_id) REFERENCES torneo_fases(id));",
 
         "CREATE TABLE IF NOT EXISTS settings ("
         " id INTEGER PRIMARY KEY,"
@@ -848,7 +861,7 @@ static int create_database_schema()
         " language INTEGER DEFAULT 0,"
         " mode INTEGER DEFAULT 0,"
         " text_size INTEGER DEFAULT 1,"
-        " image_viewer TEXT DEFAULT '');"
+        " image_viewer TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -857,16 +870,16 @@ static int create_database_schema()
         " categoria INTEGER NOT NULL,"
         " descripcion TEXT NOT NULL,"
         " monto REAL NOT NULL,"
-        " item_especifico TEXT);"
+        " item_especifico TEXT);",
 
         "CREATE TABLE IF NOT EXISTS presupuesto_mensual ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " mes_anio TEXT NOT NULL UNIQUE," // formato YYYY-MM
+        " mes_anio TEXT NOT NULL UNIQUE,"
         " presupuesto_total INTEGER NOT NULL,"
         " limite_gasto INTEGER NOT NULL,"
         " alertas_habilitadas INTEGER DEFAULT 1,"
         " fecha_creacion TEXT NOT NULL,"
-        " fecha_modificacion TEXT NOT NULL);"
+        " fecha_modificacion TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS comparacion_historial ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -876,7 +889,7 @@ static int create_database_schema()
         " score_a REAL,"
         " score_b REAL,"
         " ganador INTEGER,"
-        " fecha TEXT NOT NULL);"
+        " fecha TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS temporada ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -885,7 +898,7 @@ static int create_database_schema()
         " fecha_inicio TEXT NOT NULL,"
         " fecha_fin TEXT NOT NULL,"
         " estado TEXT DEFAULT 'Planificada',"
-        " descripcion TEXT);"
+        " descripcion TEXT);",
 
         "CREATE TABLE IF NOT EXISTS temporada_fase ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -895,7 +908,7 @@ static int create_database_schema()
         " fecha_inicio TEXT NOT NULL,"
         " fecha_fin TEXT NOT NULL,"
         " descripcion TEXT,"
-        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));",
 
         "CREATE TABLE IF NOT EXISTS torneo_temporada ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -905,7 +918,7 @@ static int create_database_schema()
         " orden_en_temporada INTEGER,"
         " FOREIGN KEY(torneo_id) REFERENCES torneo(id),"
         " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
-        " FOREIGN KEY(fase_id) REFERENCES temporada_fase(id));"
+        " FOREIGN KEY(fase_id) REFERENCES temporada_fase(id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_temporada_fatiga ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -916,7 +929,7 @@ static int create_database_schema()
         " partidos_jugados INTEGER DEFAULT 0,"
         " rendimiento_promedio REAL DEFAULT 0,"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));",
 
         "CREATE TABLE IF NOT EXISTS jugador_temporada_fatiga ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -928,7 +941,7 @@ static int create_database_schema()
         " rendimiento_promedio REAL DEFAULT 0,"
         " lesiones_acumuladas INTEGER DEFAULT 0,"
         " FOREIGN KEY(jugador_id) REFERENCES jugador(id),"
-        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));",
 
         "CREATE TABLE IF NOT EXISTS equipo_temporada_evolucion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -940,7 +953,7 @@ static int create_database_schema()
         " partidos_ganados INTEGER DEFAULT 0,"
         " partidos_totales INTEGER DEFAULT 0,"
         " FOREIGN KEY(equipo_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));"
+        " FOREIGN KEY(temporada_id) REFERENCES temporada(id));",
 
         "CREATE TABLE IF NOT EXISTS temporada_resumen ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -955,7 +968,7 @@ static int create_database_schema()
         " fecha_generacion TEXT NOT NULL,"
         " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
         " FOREIGN KEY(equipo_campeon_id) REFERENCES equipo(id),"
-        " FOREIGN KEY(mejor_goleador_jugador_id) REFERENCES jugador(id));"
+        " FOREIGN KEY(mejor_goleador_jugador_id) REFERENCES jugador(id));",
 
         "CREATE TABLE IF NOT EXISTS mensual_resumen ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -975,7 +988,7 @@ static int create_database_schema()
         " fecha_generacion TEXT NOT NULL,"
         " FOREIGN KEY(temporada_id) REFERENCES temporada(id),"
         " FOREIGN KEY(mejor_equipo_mes) REFERENCES equipo(id),"
-        " FOREIGN KEY(peor_equipo_mes) REFERENCES equipo(id));"
+        " FOREIGN KEY(peor_equipo_mes) REFERENCES equipo(id));",
 
         "CREATE TABLE IF NOT EXISTS bienestar_objetivo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -983,7 +996,7 @@ static int create_database_schema()
         " fecha_inicio TEXT NOT NULL,"
         " fecha_fin TEXT NOT NULL,"
         " estado TEXT NOT NULL DEFAULT 'Activo',"
-        " notas TEXT DEFAULT '');"
+        " notas TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_plan_entrenamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -991,7 +1004,7 @@ static int create_database_schema()
         " frecuencia_semanal INTEGER NOT NULL,"
         " rutina_semanal TEXT NOT NULL,"
         " notas TEXT DEFAULT '',"
-        " FOREIGN KEY(objetivo_id) REFERENCES bienestar_objetivo(id));"
+        " FOREIGN KEY(objetivo_id) REFERENCES bienestar_objetivo(id));",
 
         "CREATE TABLE IF NOT EXISTS bienestar_entrenamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1000,12 +1013,12 @@ static int create_database_schema()
         " duracion_min INTEGER NOT NULL,"
         " intensidad INTEGER NOT NULL,"
         " omitido INTEGER DEFAULT 0,"
-        " notas TEXT DEFAULT '');"
+        " notas TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_ejercicio ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
-        " grupo_muscular TEXT NOT NULL);"
+        " grupo_muscular TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS bienestar_entrenamiento_ejercicio ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1015,7 +1028,7 @@ static int create_database_schema()
         " repeticiones INTEGER DEFAULT 0,"
         " tiempo_min INTEGER DEFAULT 0,"
         " FOREIGN KEY(entrenamiento_id) REFERENCES bienestar_entrenamiento(id),"
-        " FOREIGN KEY(ejercicio_id) REFERENCES bienestar_ejercicio(id));"
+        " FOREIGN KEY(ejercicio_id) REFERENCES bienestar_ejercicio(id));",
 
         "CREATE TABLE IF NOT EXISTS bienestar_habito ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1028,14 +1041,14 @@ static int create_database_schema()
         " confianza INTEGER DEFAULT 0,"
         " motivacion INTEGER DEFAULT 0,"
         " notas TEXT DEFAULT '',"
-        " tipo_diario TEXT DEFAULT '');"
+        " tipo_diario TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_comida ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " fecha TEXT NOT NULL,"
         " tipo TEXT NOT NULL,"
         " calidad TEXT NOT NULL,"
-        " descripcion TEXT DEFAULT '');"
+        " descripcion TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_dia_nutricional ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1043,7 +1056,7 @@ static int create_database_schema()
         " hidratacion TEXT NOT NULL,"
         " alcohol INTEGER DEFAULT 0,"
         " peso_corporal REAL DEFAULT NULL,"
-        " notas TEXT DEFAULT '');"
+        " notas TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_sesion_mental ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1059,7 +1072,7 @@ static int create_database_schema()
         " concentracion INTEGER DEFAULT 0,"
         " pensamientos_clave TEXT DEFAULT '',"
         " texto_libre TEXT DEFAULT '',"
-        " FOREIGN KEY(partido_id) REFERENCES partido(id));"
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));",
 
         "CREATE TABLE IF NOT EXISTS bienestar_salud ("
         " id INTEGER PRIMARY KEY CHECK (id = 1),"
@@ -1068,7 +1081,7 @@ static int create_database_schema()
         " tipo_sangre TEXT DEFAULT '',"
         " ultima_revision TEXT DEFAULT '',"
         " medidas TEXT DEFAULT '',"
-        " notas TEXT DEFAULT '');"
+        " notas TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_control_medico ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1076,7 +1089,7 @@ static int create_database_schema()
         " tipo TEXT NOT NULL,"
         " profesional TEXT DEFAULT '',"
         " resultado TEXT DEFAULT '',"
-        " notas TEXT DEFAULT '');"
+        " notas TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_estudio_archivo ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1085,7 +1098,7 @@ static int create_database_schema()
         " ruta_archivo TEXT NOT NULL,"
         " tipo_archivo TEXT DEFAULT '',"
         " fecha_subida TEXT NOT NULL,"
-        " FOREIGN KEY(control_id) REFERENCES bienestar_control_medico(id));"
+        " FOREIGN KEY(control_id) REFERENCES bienestar_control_medico(id));",
 
         "CREATE TABLE IF NOT EXISTS bienestar_recomendacion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1093,11 +1106,41 @@ static int create_database_schema()
         " score_preparacion INTEGER DEFAULT 0,"
         " riesgo_lesion INTEGER DEFAULT 0,"
         " resumen TEXT DEFAULT '',"
-        " rutina TEXT DEFAULT '');"
+        " rutina TEXT DEFAULT '');",
 
         "CREATE TABLE IF NOT EXISTS bienestar_menu_imagen ("
         " menu_key TEXT PRIMARY KEY,"
-        " imagen_ruta TEXT DEFAULT '');"
+        " imagen_ruta TEXT DEFAULT '');",
+
+        "CREATE TABLE IF NOT EXISTS carrera_identidad ("
+        " id INTEGER PRIMARY KEY CHECK (id = 1),"
+        " nombre TEXT DEFAULT '',"
+        " edad INTEGER DEFAULT 0,"
+        " pie_habil TEXT DEFAULT '',"
+        " posiciones TEXT DEFAULT '',"
+        " altura_cm REAL DEFAULT NULL,"
+        " peso_kg REAL DEFAULT NULL,"
+        " estilo TEXT DEFAULT '',"
+        " dorsal_favorito INTEGER DEFAULT 0,"
+        " objetivos TEXT DEFAULT '',"
+        " historia TEXT DEFAULT '',"
+        " updated_at TEXT DEFAULT '');",
+
+        "CREATE TABLE IF NOT EXISTS carrera_partido_hito ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " partido_id INTEGER NOT NULL UNIQUE,"
+        " tipo_hito TEXT NOT NULL,"
+        " nota TEXT DEFAULT '',"
+        " created_at TEXT DEFAULT CURRENT_TIMESTAMP,"
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));",
+
+        "CREATE TABLE IF NOT EXISTS carrera_resumen_narrativo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " fecha TEXT NOT NULL,"
+        " periodo_inicio TEXT DEFAULT '',"
+        " periodo_fin TEXT DEFAULT '',"
+        " perfil_dinamico TEXT DEFAULT '',"
+        " resumen TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS tactica_diagrama ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1105,15 +1148,22 @@ static int create_database_schema()
         " nombre TEXT NOT NULL,"
         " fecha TEXT NOT NULL,"
         " grid TEXT NOT NULL,"
-        " FOREIGN KEY(partido_id) REFERENCES partido(id));";
+        " FOREIGN KEY(partido_id) REFERENCES partido(id));",
 
-    if (sqlite3_exec(db, sql_create, 0, 0, 0) != SQLITE_OK)
+        NULL
+    };
+
+    for (int i = 0; schema_statements[i] != NULL; i++)
     {
-        printf("Error creando tablas\n");
-        snprintf(log_buf_, sizeof(log_buf_), "Error creando esquema: %s", sqlite3_errmsg(db));
-        app_log_write("ERROR", "DB", log_buf_);
-        return 0;
+        if (sqlite3_exec(db, schema_statements[i], 0, 0, 0) != SQLITE_OK)
+        {
+            printf("Error creando tablas\n");
+            snprintf(log_buf_, sizeof(log_buf_), "Error creando esquema (stmt %d): %s", i, sqlite3_errmsg(db));
+            app_log_write("ERROR", "DB", log_buf_);
+            return 0;
+        }
     }
+
     app_log_write("INFO", "DB", "Esquema validado/creado");
     return 1;
 }
@@ -1188,6 +1238,18 @@ static void add_missing_columns()
         "ALTER TABLE partido ADD COLUMN rating_tecnico INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rating_fisico INTEGER DEFAULT 0;",
         "ALTER TABLE partido ADD COLUMN rating_mental INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN estado_cancha INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN goles_equipo INTEGER DEFAULT -1;",
+        "ALTER TABLE partido ADD COLUMN goles_rival INTEGER DEFAULT -1;",
+        "ALTER TABLE partido ADD COLUMN formato_partido TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN tarjeta INTEGER DEFAULT 1;",
+        "ALTER TABLE partido ADD COLUMN goles_en_contra INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN dolor_fisico INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN temperatura_c REAL DEFAULT NULL;",
+        "ALTER TABLE partido ADD COLUMN arbitraje_score INTEGER DEFAULT 0;",
+        "ALTER TABLE partido ADD COLUMN lo_mejor TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN que_mejorar TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN tags TEXT DEFAULT '';",
         "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
         "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';",
         "ALTER TABLE usuario ADD COLUMN password_salt TEXT DEFAULT '';",
@@ -1215,6 +1277,9 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_partido_torneo_torneo_fase ON partido_torneo(torneo_id, fase);",
         "CREATE INDEX IF NOT EXISTS idx_jugador_estadisticas_jugador_torneo ON jugador_estadisticas(jugador_id, torneo_id);",
         "CREATE INDEX IF NOT EXISTS idx_torneo_temporada_temporada_orden ON torneo_temporada(temporada_id, orden_en_temporada);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_partido ON carrera_partido_hito(partido_id);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_tipo ON carrera_partido_hito(tipo_hito);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_resumen_fecha ON carrera_resumen_narrativo(fecha);",
         NULL
     };
 
