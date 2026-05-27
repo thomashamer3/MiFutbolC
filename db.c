@@ -263,6 +263,38 @@ void app_log_event(const char *component, const char *message)
 
 static char log_buf_[1024];
 
+#define LOG_ERROR_FMT(component, fmt, ...) \
+    do \
+    { \
+        printf(fmt "\n", __VA_ARGS__); \
+        snprintf(log_buf_, sizeof(log_buf_), fmt, __VA_ARGS__); \
+        app_log_write("ERROR", component, log_buf_); \
+    } while (0)
+
+#define LOG_ERROR_CONSOLE_LOG_FMT(component, console_fmt, log_fmt, ...) \
+    do \
+    { \
+        printf(console_fmt "\n", __VA_ARGS__); \
+        snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__); \
+        app_log_write("ERROR", component, log_buf_); \
+    } while (0)
+
+#define LOG_ERROR_MSG(component, console_msg, log_msg) \
+    do \
+    { \
+        printf("%s\n", console_msg); \
+        snprintf(log_buf_, sizeof(log_buf_), "%s", log_msg); \
+        app_log_write("ERROR", component, log_buf_); \
+    } while (0)
+
+#define LOG_ERROR_CONSOLE_MSG_LOG_FMT(component, console_msg, log_fmt, ...) \
+    do \
+    { \
+        printf("%s\n", console_msg); \
+        snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__); \
+        app_log_write("ERROR", component, log_buf_); \
+    } while (0)
+
 static int asegurar_directorio(const char *path, const char *nombre)
 {
     errno = 0;
@@ -481,6 +513,46 @@ static int ejecutar_stmt_texto(const char *sql,
     return ok;
 }
 
+static int db_query_single_text(const char *sql, char *out, size_t out_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int ok = 0;
+
+    if (!sql || !db)
+    {
+        return 0;
+    }
+
+    if (out && out_size > 0)
+    {
+        out[0] = '\0';
+    }
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *valor = (const char *)sqlite3_column_text(stmt, 0);
+        if (valor)
+        {
+            if (out && out_size > 0)
+            {
+                ok = (strncpy_s(out, out_size, valor, _TRUNCATE) == 0);
+            }
+            else
+            {
+                ok = 1;
+            }
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
 int db_set_active_user(const char *username)
 {
     size_t len;
@@ -644,6 +716,86 @@ static int execute_sql_statements(const char *const *statements, int *failed_ind
     return 1;
 }
 
+/* Definiciones compartidas para evitar duplicar columnas entre CREATE TABLE y ALTER TABLE. */
+#define COL_CAMISETA_COLOR_PRINCIPAL "color_principal TEXT DEFAULT ''"
+#define COL_CAMISETA_COLOR_SECUNDARIO "color_secundario TEXT DEFAULT ''"
+#define COL_CAMISETA_MARCA "marca TEXT DEFAULT ''"
+#define COL_CAMISETA_MODELO "modelo TEXT DEFAULT ''"
+#define COL_CAMISETA_TEMPORADA "temporada TEXT DEFAULT ''"
+#define COL_CAMISETA_ESTADO_FISICO "estado_fisico TEXT DEFAULT ''"
+#define COL_CAMISETA_FECHA_COMPRA "fecha_compra TEXT DEFAULT ''"
+#define COL_CAMISETA_COSTO_CENTAVOS "costo_centavos INTEGER DEFAULT 0"
+#define COL_CAMISETA_OBSERVACIONES "observaciones TEXT DEFAULT ''"
+#define COL_CAMISETA_PROVEEDOR "proveedor TEXT DEFAULT ''"
+#define COL_CAMISETA_FUE_REGALO "fue_regalo INTEGER DEFAULT 0"
+#define COL_CAMISETA_REGALO_DE "regalo_de TEXT DEFAULT ''"
+#define COL_CAMISETA_IMAGEN_RUTA "imagen_ruta TEXT DEFAULT ''"
+#define COL_CAMISETA_SORTEADA "sorteada INTEGER DEFAULT 0"
+#define COL_CAMISETA_ACTIVA "activa INTEGER DEFAULT 1"
+
+#define COL_CANCHA_TELEFONO "telefono TEXT DEFAULT ''"
+#define COL_CANCHA_DIRECCION "direccion TEXT DEFAULT ''"
+#define COL_CANCHA_LOCALIDAD "localidad TEXT DEFAULT ''"
+#define COL_CANCHA_TIPO_CANCHA_CODIGO "tipo_cancha_codigo INTEGER DEFAULT 0"
+#define COL_CANCHA_SUPERFICIE_CODIGO "superficie_codigo INTEGER DEFAULT 0"
+#define COL_CANCHA_TECHADA_ESTADO_CODIGO "techada_estado_codigo INTEGER DEFAULT 2"
+#define COL_CANCHA_TIENE_ILUMINACION "tiene_iluminacion INTEGER DEFAULT 0"
+#define COL_CANCHA_HORARIO_APERTURA_MIN "horario_apertura_min INTEGER DEFAULT -1"
+#define COL_CANCHA_HORARIO_CIERRE_MIN "horario_cierre_min INTEGER DEFAULT -1"
+#define COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS "precio_hora_dia_centavos INTEGER DEFAULT 0"
+#define COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS "precio_hora_noche_centavos INTEGER DEFAULT 0"
+#define COL_CANCHA_TIENE_VESTUARIOS "tiene_vestuarios INTEGER DEFAULT 0"
+#define COL_CANCHA_TIENE_DUCHAS "tiene_duchas INTEGER DEFAULT 0"
+#define COL_CANCHA_TIENE_BUFFET "tiene_buffet INTEGER DEFAULT 0"
+#define COL_CANCHA_TIENE_ESTACIONAMIENTO "tiene_estacionamiento INTEGER DEFAULT 0"
+#define COL_CANCHA_CANTIDAD_CANCHAS "cantidad_canchas INTEGER DEFAULT 1"
+#define COL_CANCHA_ESTADO "estado TEXT DEFAULT ''"
+#define COL_CANCHA_DESCRIPCION "descripcion TEXT DEFAULT ''"
+#define COL_CANCHA_DIRECCION_CALLE "direccion_calle TEXT DEFAULT ''"
+#define COL_CANCHA_DIRECCION_ZONA "direccion_zona TEXT DEFAULT ''"
+#define COL_CANCHA_TIPO_CANCHA "tipo_cancha TEXT DEFAULT ''"
+#define COL_CANCHA_PRECIO_HORA "precio_hora REAL DEFAULT 0"
+#define COL_CANCHA_SUPERFICIE "superficie TEXT DEFAULT ''"
+#define COL_CANCHA_TECHADA_ESTADO "techada_estado TEXT DEFAULT 'NO SE'"
+#define COL_CANCHA_HORARIO "horario TEXT DEFAULT ''"
+#define COL_CANCHA_CONTACTO_ALT "contacto_alt TEXT DEFAULT ''"
+#define COL_CANCHA_IMAGEN_RUTA "imagen_ruta TEXT DEFAULT ''"
+#define COL_CANCHA_ACTIVA "activa INTEGER DEFAULT 1"
+
+#define COL_PARTIDO_RESULTADO "resultado INTEGER DEFAULT 0"
+#define COL_PARTIDO_RENDIMIENTO_GENERAL "rendimiento_general INTEGER DEFAULT 0"
+#define COL_PARTIDO_CANSANCIO "cansancio INTEGER DEFAULT 0"
+#define COL_PARTIDO_ESTADO_ANIMO "estado_animo INTEGER DEFAULT 0"
+#define COL_PARTIDO_COMENTARIO_PERSONAL "comentario_personal TEXT DEFAULT ''"
+#define COL_PARTIDO_CLIMA "clima INTEGER DEFAULT 0"
+#define COL_PARTIDO_DIA "dia INTEGER DEFAULT 0"
+#define COL_PARTIDO_PRECIO "precio INTEGER DEFAULT 0"
+#define COL_PARTIDO_TIPO_PARTIDO "tipo_partido INTEGER DEFAULT 1"
+#define COL_PARTIDO_RIVAL_NOMBRE "rival_nombre TEXT DEFAULT ''"
+#define COL_PARTIDO_TIPO_RIVAL "tipo_rival TEXT DEFAULT ''"
+#define COL_PARTIDO_POSICION_JUGADA "posicion_jugada TEXT DEFAULT ''"
+#define COL_PARTIDO_MINUTOS_JUGADOS "minutos_jugados INTEGER DEFAULT 0"
+#define COL_PARTIDO_INTENSIDAD "intensidad INTEGER DEFAULT 0"
+#define COL_PARTIDO_ESFUERZO_PERCIBIDO "esfuerzo_percibido INTEGER DEFAULT 0"
+#define COL_PARTIDO_CONDICION_CANCHA "condicion_cancha TEXT DEFAULT ''"
+#define COL_PARTIDO_ARBITRAJE "arbitraje TEXT DEFAULT ''"
+#define COL_PARTIDO_EVENTOS_CLAVE "eventos_clave TEXT DEFAULT ''"
+#define COL_PARTIDO_RATING_TECNICO "rating_tecnico INTEGER DEFAULT 0"
+#define COL_PARTIDO_RATING_FISICO "rating_fisico INTEGER DEFAULT 0"
+#define COL_PARTIDO_RATING_MENTAL "rating_mental INTEGER DEFAULT 0"
+#define COL_PARTIDO_ESTADO_CANCHA "estado_cancha INTEGER DEFAULT 0"
+#define COL_PARTIDO_GOLES_EQUIPO "goles_equipo INTEGER DEFAULT -1"
+#define COL_PARTIDO_GOLES_RIVAL "goles_rival INTEGER DEFAULT -1"
+#define COL_PARTIDO_FORMATO "formato_partido TEXT DEFAULT ''"
+#define COL_PARTIDO_TARJETA "tarjeta INTEGER DEFAULT 1"
+#define COL_PARTIDO_GOLES_EN_CONTRA "goles_en_contra INTEGER DEFAULT 0"
+#define COL_PARTIDO_DOLOR_FISICO "dolor_fisico INTEGER DEFAULT 0"
+#define COL_PARTIDO_TEMPERATURA_C "temperatura_c REAL DEFAULT NULL"
+#define COL_PARTIDO_ARBITRAJE_SCORE "arbitraje_score INTEGER DEFAULT 0"
+#define COL_PARTIDO_LO_MEJOR "lo_mejor TEXT DEFAULT ''"
+#define COL_PARTIDO_QUE_MEJORAR "que_mejorar TEXT DEFAULT ''"
+#define COL_PARTIDO_TAGS "tags TEXT DEFAULT ''"
+
 static int create_database_schema()
 {
     const char *schema_statements[] =
@@ -651,21 +803,21 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS camiseta ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
-        " color_principal TEXT DEFAULT '',"
-        " color_secundario TEXT DEFAULT '',"
-        " marca TEXT DEFAULT '',"
-        " modelo TEXT DEFAULT '',"
-        " temporada TEXT DEFAULT '',"
-        " estado_fisico TEXT DEFAULT '',"
-        " fecha_compra TEXT DEFAULT '',"
-        " costo_centavos INTEGER DEFAULT 0,"
-        " observaciones TEXT DEFAULT '',"
-        " proveedor TEXT DEFAULT '',"
-        " fue_regalo INTEGER DEFAULT 0,"
-        " regalo_de TEXT DEFAULT '',"
-        " imagen_ruta TEXT DEFAULT '',"
-        " sorteada INTEGER DEFAULT 0,"
-        " activa INTEGER DEFAULT 1);",
+        " " COL_CAMISETA_COLOR_PRINCIPAL ","
+        " " COL_CAMISETA_COLOR_SECUNDARIO ","
+        " " COL_CAMISETA_MARCA ","
+        " " COL_CAMISETA_MODELO ","
+        " " COL_CAMISETA_TEMPORADA ","
+        " " COL_CAMISETA_ESTADO_FISICO ","
+        " " COL_CAMISETA_FECHA_COMPRA ","
+        " " COL_CAMISETA_COSTO_CENTAVOS ","
+        " " COL_CAMISETA_OBSERVACIONES ","
+        " " COL_CAMISETA_PROVEEDOR ","
+        " " COL_CAMISETA_FUE_REGALO ","
+        " " COL_CAMISETA_REGALO_DE ","
+        " " COL_CAMISETA_IMAGEN_RUTA ","
+        " " COL_CAMISETA_SORTEADA ","
+        " " COL_CAMISETA_ACTIVA ");",
 
         "CREATE TABLE IF NOT EXISTS coleccion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -704,34 +856,34 @@ static int create_database_schema()
         "CREATE TABLE IF NOT EXISTS cancha ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
-        " telefono TEXT DEFAULT '',"
-        " direccion TEXT DEFAULT '',"
-        " localidad TEXT DEFAULT '',"
-        " tipo_cancha_codigo INTEGER DEFAULT 0,"
-        " superficie_codigo INTEGER DEFAULT 0,"
-        " techada_estado_codigo INTEGER DEFAULT 2,"
-        " tiene_iluminacion INTEGER DEFAULT 0,"
-        " horario_apertura_min INTEGER DEFAULT -1,"
-        " horario_cierre_min INTEGER DEFAULT -1,"
-        " precio_hora_dia_centavos INTEGER DEFAULT 0,"
-        " precio_hora_noche_centavos INTEGER DEFAULT 0,"
-        " tiene_vestuarios INTEGER DEFAULT 0,"
-        " tiene_duchas INTEGER DEFAULT 0,"
-        " tiene_buffet INTEGER DEFAULT 0,"
-        " tiene_estacionamiento INTEGER DEFAULT 0,"
-        " cantidad_canchas INTEGER DEFAULT 1,"
-        " estado TEXT DEFAULT '',"
-        " descripcion TEXT DEFAULT '',"
-        " direccion_calle TEXT DEFAULT '',"
-        " direccion_zona TEXT DEFAULT '',"
-        " tipo_cancha TEXT DEFAULT '',"
-        " precio_hora REAL DEFAULT 0,"
-        " superficie TEXT DEFAULT '',"
-        " techada_estado TEXT DEFAULT 'NO SE',"
-        " horario TEXT DEFAULT '',"
-        " contacto_alt TEXT DEFAULT '',"
-        " imagen_ruta TEXT DEFAULT '',"
-        " activa INTEGER DEFAULT 1);",
+        " " COL_CANCHA_TELEFONO ","
+        " " COL_CANCHA_DIRECCION ","
+        " " COL_CANCHA_LOCALIDAD ","
+        " " COL_CANCHA_TIPO_CANCHA_CODIGO ","
+        " " COL_CANCHA_SUPERFICIE_CODIGO ","
+        " " COL_CANCHA_TECHADA_ESTADO_CODIGO ","
+        " " COL_CANCHA_TIENE_ILUMINACION ","
+        " " COL_CANCHA_HORARIO_APERTURA_MIN ","
+        " " COL_CANCHA_HORARIO_CIERRE_MIN ","
+        " " COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS ","
+        " " COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS ","
+        " " COL_CANCHA_TIENE_VESTUARIOS ","
+        " " COL_CANCHA_TIENE_DUCHAS ","
+        " " COL_CANCHA_TIENE_BUFFET ","
+        " " COL_CANCHA_TIENE_ESTACIONAMIENTO ","
+        " " COL_CANCHA_CANTIDAD_CANCHAS ","
+        " " COL_CANCHA_ESTADO ","
+        " " COL_CANCHA_DESCRIPCION ","
+        " " COL_CANCHA_DIRECCION_CALLE ","
+        " " COL_CANCHA_DIRECCION_ZONA ","
+        " " COL_CANCHA_TIPO_CANCHA ","
+        " " COL_CANCHA_PRECIO_HORA ","
+        " " COL_CANCHA_SUPERFICIE ","
+        " " COL_CANCHA_TECHADA_ESTADO ","
+        " " COL_CANCHA_HORARIO ","
+        " " COL_CANCHA_CONTACTO_ALT ","
+        " " COL_CANCHA_IMAGEN_RUTA ","
+        " " COL_CANCHA_ACTIVA ");",
 
         "CREATE TABLE IF NOT EXISTS partido ("
         " id INTEGER PRIMARY KEY,"
@@ -740,39 +892,39 @@ static int create_database_schema()
         " goles INTEGER NOT NULL,"
         " asistencias INTEGER NOT NULL,"
         " camiseta_id INTEGER NOT NULL,"
-        " resultado INTEGER DEFAULT 0,"
-        " rendimiento_general INTEGER DEFAULT 0,"
-        " cansancio INTEGER DEFAULT 0,"
-        " estado_animo INTEGER DEFAULT 0,"
-        " comentario_personal TEXT DEFAULT '',"
-        " clima INTEGER DEFAULT 0,"
-        " dia INTEGER DEFAULT 0,"
-        " precio INTEGER DEFAULT 0,"
-        " tipo_partido INTEGER DEFAULT 1,"
-        " rival_nombre TEXT DEFAULT '',"
-        " tipo_rival TEXT DEFAULT '',"
-        " posicion_jugada TEXT DEFAULT '',"
-        " minutos_jugados INTEGER DEFAULT 0,"
-        " intensidad INTEGER DEFAULT 0,"
-        " esfuerzo_percibido INTEGER DEFAULT 0,"
-        " condicion_cancha TEXT DEFAULT '',"
-        " arbitraje TEXT DEFAULT '',"
-        " eventos_clave TEXT DEFAULT '',"
-        " rating_tecnico INTEGER DEFAULT 0,"
-        " rating_fisico INTEGER DEFAULT 0,"
-        " rating_mental INTEGER DEFAULT 0,"
-        " estado_cancha INTEGER DEFAULT 0,"
-        " goles_equipo INTEGER DEFAULT -1,"
-        " goles_rival INTEGER DEFAULT -1,"
-        " formato_partido TEXT DEFAULT '',"
-        " tarjeta INTEGER DEFAULT 1,"
-        " goles_en_contra INTEGER DEFAULT 0,"
-        " dolor_fisico INTEGER DEFAULT 0,"
-        " temperatura_c REAL DEFAULT NULL,"
-        " arbitraje_score INTEGER DEFAULT 0,"
-        " lo_mejor TEXT DEFAULT '',"
-        " que_mejorar TEXT DEFAULT '',"
-        " tags TEXT DEFAULT '',"
+        " " COL_PARTIDO_RESULTADO ","
+        " " COL_PARTIDO_RENDIMIENTO_GENERAL ","
+        " " COL_PARTIDO_CANSANCIO ","
+        " " COL_PARTIDO_ESTADO_ANIMO ","
+        " " COL_PARTIDO_COMENTARIO_PERSONAL ","
+        " " COL_PARTIDO_CLIMA ","
+        " " COL_PARTIDO_DIA ","
+        " " COL_PARTIDO_PRECIO ","
+        " " COL_PARTIDO_TIPO_PARTIDO ","
+        " " COL_PARTIDO_RIVAL_NOMBRE ","
+        " " COL_PARTIDO_TIPO_RIVAL ","
+        " " COL_PARTIDO_POSICION_JUGADA ","
+        " " COL_PARTIDO_MINUTOS_JUGADOS ","
+        " " COL_PARTIDO_INTENSIDAD ","
+        " " COL_PARTIDO_ESFUERZO_PERCIBIDO ","
+        " " COL_PARTIDO_CONDICION_CANCHA ","
+        " " COL_PARTIDO_ARBITRAJE ","
+        " " COL_PARTIDO_EVENTOS_CLAVE ","
+        " " COL_PARTIDO_RATING_TECNICO ","
+        " " COL_PARTIDO_RATING_FISICO ","
+        " " COL_PARTIDO_RATING_MENTAL ","
+        " " COL_PARTIDO_ESTADO_CANCHA ","
+        " " COL_PARTIDO_GOLES_EQUIPO ","
+        " " COL_PARTIDO_GOLES_RIVAL ","
+        " " COL_PARTIDO_FORMATO ","
+        " " COL_PARTIDO_TARJETA ","
+        " " COL_PARTIDO_GOLES_EN_CONTRA ","
+        " " COL_PARTIDO_DOLOR_FISICO ","
+        " " COL_PARTIDO_TEMPERATURA_C ","
+        " " COL_PARTIDO_ARBITRAJE_SCORE ","
+        " " COL_PARTIDO_LO_MEJOR ","
+        " " COL_PARTIDO_QUE_MEJORAR ","
+        " " COL_PARTIDO_TAGS ","
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
@@ -1232,84 +1384,84 @@ static void add_missing_columns()
 #define ALTER_ADD_COLUMN(table_name, column_def) "ALTER TABLE " table_name " ADD COLUMN " column_def ";"
     const char *alter_statements[] =
     {
-        ALTER_ADD_COLUMN("camiseta", "sorteada INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("camiseta", "imagen_ruta TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "activa INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("camiseta", "color_principal TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "color_secundario TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "marca TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "modelo TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "temporada TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "estado_fisico TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "fecha_compra TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "costo_centavos INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("camiseta", "observaciones TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "proveedor TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("camiseta", "fue_regalo INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("camiseta", "regalo_de TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "imagen_ruta TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "activa INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("cancha", "telefono TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "direccion TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "localidad TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "tipo_cancha_codigo INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "superficie_codigo INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "techada_estado_codigo INTEGER DEFAULT 2"),
-        ALTER_ADD_COLUMN("cancha", "tiene_iluminacion INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "horario_apertura_min INTEGER DEFAULT -1"),
-        ALTER_ADD_COLUMN("cancha", "horario_cierre_min INTEGER DEFAULT -1"),
-        ALTER_ADD_COLUMN("cancha", "precio_hora_dia_centavos INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "precio_hora_noche_centavos INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "tiene_vestuarios INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "tiene_duchas INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "tiene_buffet INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "tiene_estacionamiento INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "cantidad_canchas INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("cancha", "estado TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "descripcion TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "direccion_calle TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "direccion_zona TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "tipo_cancha TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "precio_hora REAL DEFAULT 0"),
-        ALTER_ADD_COLUMN("cancha", "superficie TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "techada_estado TEXT DEFAULT 'NO SE'"),
-        ALTER_ADD_COLUMN("cancha", "horario TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("cancha", "contacto_alt TEXT DEFAULT ''"),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_SORTEADA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_IMAGEN_RUTA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_ACTIVA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COLOR_PRINCIPAL),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COLOR_SECUNDARIO),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_MARCA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_MODELO),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_TEMPORADA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_ESTADO_FISICO),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_FECHA_COMPRA),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COSTO_CENTAVOS),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_OBSERVACIONES),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_PROVEEDOR),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_FUE_REGALO),
+        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_REGALO_DE),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_IMAGEN_RUTA),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_ACTIVA),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TELEFONO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_LOCALIDAD),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIPO_CANCHA_CODIGO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_SUPERFICIE_CODIGO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TECHADA_ESTADO_CODIGO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_ILUMINACION),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO_APERTURA_MIN),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO_CIERRE_MIN),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_VESTUARIOS),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_DUCHAS),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_BUFFET),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_ESTACIONAMIENTO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_CANTIDAD_CANCHAS),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_ESTADO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DESCRIPCION),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION_CALLE),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION_ZONA),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIPO_CANCHA),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_SUPERFICIE),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TECHADA_ESTADO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO),
+        ALTER_ADD_COLUMN("cancha", COL_CANCHA_CONTACTO_ALT),
         ALTER_ADD_COLUMN("equipo", "imagen_ruta TEXT DEFAULT ''"),
         ALTER_ADD_COLUMN("equipo", "activa INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("partido", "resultado INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "rendimiento_general INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "cansancio INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "estado_animo INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "comentario_personal TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "clima INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "dia INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "precio INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "tipo_partido INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("partido", "rival_nombre TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "tipo_rival TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "posicion_jugada TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "minutos_jugados INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "intensidad INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "esfuerzo_percibido INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "condicion_cancha TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "arbitraje TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "eventos_clave TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "rating_tecnico INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "rating_fisico INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "rating_mental INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "estado_cancha INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "goles_equipo INTEGER DEFAULT -1"),
-        ALTER_ADD_COLUMN("partido", "goles_rival INTEGER DEFAULT -1"),
-        ALTER_ADD_COLUMN("partido", "formato_partido TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "tarjeta INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("partido", "goles_en_contra INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "dolor_fisico INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "temperatura_c REAL DEFAULT NULL"),
-        ALTER_ADD_COLUMN("partido", "arbitraje_score INTEGER DEFAULT 0"),
-        ALTER_ADD_COLUMN("partido", "lo_mejor TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "que_mejorar TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "tags TEXT DEFAULT ''"),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RESULTADO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RENDIMIENTO_GENERAL),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CANSANCIO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESTADO_ANIMO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_COMENTARIO_PERSONAL),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CLIMA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_DIA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_PRECIO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TIPO_PARTIDO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RIVAL_NOMBRE),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TIPO_RIVAL),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_POSICION_JUGADA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_MINUTOS_JUGADOS),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_INTENSIDAD),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESFUERZO_PERCIBIDO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CONDICION_CANCHA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ARBITRAJE),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_EVENTOS_CLAVE),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_TECNICO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_FISICO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_MENTAL),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESTADO_CANCHA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_EQUIPO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_RIVAL),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_FORMATO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TARJETA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_EN_CONTRA),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_DOLOR_FISICO),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TEMPERATURA_C),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ARBITRAJE_SCORE),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_LO_MEJOR),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_QUE_MEJORAR),
+        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TAGS),
         ALTER_ADD_COLUMN("lesion", "partido_id INTEGER DEFAULT NULL"),
         ALTER_ADD_COLUMN("settings", "image_viewer TEXT DEFAULT ''"),
         ALTER_ADD_COLUMN("usuario", "password_salt TEXT DEFAULT ''"),
@@ -1421,21 +1573,13 @@ void db_close()
 
 char *get_user_name()
 {
-    sqlite3_stmt *stmt;
     const char *sql = "SELECT nombre FROM usuario LIMIT 1;";
+    char nombre_tmp[256] = {0};
     char *nombre = NULL;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (db_query_single_text(sql, nombre_tmp, sizeof(nombre_tmp)))
     {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const char *temp = (const char *)sqlite3_column_text(stmt, 0);
-            if (temp)
-            {
-                nombre = STRDUP(temp);
-            }
-        }
-        sqlite3_finalize(stmt);
+        nombre = STRDUP(nombre_tmp);
     }
 
     return nombre;
@@ -1460,21 +1604,10 @@ int set_user_name(const char *nombre)
 
 int user_has_password(void)
 {
-    sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT password_hash FROM usuario WHERE id = 1;";
-    int has_password = 0;
+    char hash_tmp[128] = {0};
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const unsigned char *hash = sqlite3_column_text(stmt, 0);
-            has_password = (hash && hash[0] != '\0');
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    return has_password;
+    return db_query_single_text(sql, hash_tmp, sizeof(hash_tmp)) && hash_tmp[0] != '\0';
 }
 
 int set_user_password(const char *plain_password)
@@ -1521,33 +1654,30 @@ int set_user_password(const char *plain_password)
 
 int verify_user_password(const char *plain_password)
 {
-    sqlite3_stmt *stmt = NULL;
-    const char *sql = "SELECT password_salt, password_hash FROM usuario WHERE id = 1;";
-    int verified = 0;
+    const char *sql_salt = "SELECT password_salt FROM usuario WHERE id = 1;";
+    const char *sql_hash = "SELECT password_hash FROM usuario WHERE id = 1;";
+    char salt[128] = {0};
+    char stored_hash[128] = {0};
 
     if (!plain_password || plain_password[0] == '\0')
     {
         return 0;
     }
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK)
+    if (!db_query_single_text(sql_salt, salt, sizeof(salt)) ||
+            !db_query_single_text(sql_hash, stored_hash, sizeof(stored_hash)))
     {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const char *salt = (const char *)sqlite3_column_text(stmt, 0);
-            const char *stored_hash = (const char *)sqlite3_column_text(stmt, 1);
-
-            if (salt && stored_hash && salt[0] != '\0' && stored_hash[0] != '\0')
-            {
-                char computed_hash[17];
-                build_password_hash(plain_password, salt, computed_hash, sizeof(computed_hash));
-                verified = (strcmp(computed_hash, stored_hash) == 0);
-            }
-        }
-        sqlite3_finalize(stmt);
+        return 0;
     }
 
-    return verified;
+    if (salt[0] == '\0' || stored_hash[0] == '\0')
+    {
+        return 0;
+    }
+
+    char computed_hash[17];
+    build_password_hash(plain_password, salt, computed_hash, sizeof(computed_hash));
+    return strcmp(computed_hash, stored_hash) == 0;
 }
 
 int clear_user_password(void)
@@ -1580,58 +1710,113 @@ static const char *obtener_directorio_publico(const char *dir_preferido_local,
     return out_dir;
 }
 
+typedef struct
+{
+    const char *preferred_local;
+    const char *legacy_local;
+    const char *preferred_linux;
+    const char *legacy_linux;
+    const char *subdir_documentos;
+    const char *nombre_subdir;
+    char *out_dir;
+    size_t out_size;
+} DirCfg;
+
+static const char *resolver_directorio_config(const DirCfg *cfg)
+{
+    if (!cfg)
+    {
+        return NULL;
+    }
+
+    const char *dir_preferido_local = cfg->preferred_local;
+    const char *dir_legado_local = cfg->legacy_local;
+
+#ifndef _WIN32
+    if (cfg->preferred_linux)
+    {
+        dir_preferido_local = cfg->preferred_linux;
+    }
+    if (cfg->legacy_linux)
+    {
+        dir_legado_local = cfg->legacy_linux;
+    }
+#endif
+
+    return obtener_directorio_publico(dir_preferido_local,
+                                      dir_legado_local,
+                                      cfg->subdir_documentos,
+                                      cfg->out_dir,
+                                      cfg->out_size,
+                                      cfg->nombre_subdir);
+}
+
+static const DirCfg DIR_CFG_EXPORT =
+{
+    NULL,
+    NULL,
+    "./Exportaciones",
+    NULL,
+    "Exportaciones",
+    "Exportaciones",
+    EXPORT_DIR,
+    sizeof(EXPORT_DIR)
+};
+
+static const DirCfg DIR_CFG_IMPORT =
+{
+    NULL,
+    NULL,
+    "./Importaciones",
+    "./importaciones",
+    "Importaciones",
+    "Importaciones",
+    IMPORT_DIR,
+    sizeof(IMPORT_DIR)
+};
+
+static const DirCfg DIR_CFG_IMAGES =
+{
+    "./Imagenes",
+    NULL,
+    NULL,
+    NULL,
+    "Imagenes",
+    "Imagenes",
+    IMAGES_DIR,
+    sizeof(IMAGES_DIR)
+};
+
+static const DirCfg DIR_CFG_MUSIC =
+{
+    NULL,
+    NULL,
+    "./Musica",
+    NULL,
+    "Musica",
+    "Musica",
+    MUSIC_DIR,
+    sizeof(MUSIC_DIR)
+};
+
 const char *get_export_dir()
 {
-    const char *dir_preferido_local = NULL;
-#ifndef _WIN32
-    dir_preferido_local = "./Exportaciones";
-#endif
-    return obtener_directorio_publico(dir_preferido_local,
-                                      NULL,
-                                      "Exportaciones",
-                                      EXPORT_DIR,
-                                      sizeof(EXPORT_DIR),
-                                      "Exportaciones");
+    return resolver_directorio_config(&DIR_CFG_EXPORT);
 }
 
 const char *get_import_dir()
 {
-    const char *dir_preferido_local = NULL;
-    const char *dir_legado_local = NULL;
-#ifndef _WIN32
-    dir_preferido_local = "./Importaciones";
-    dir_legado_local = "./importaciones";
-#endif
-    return obtener_directorio_publico(dir_preferido_local,
-                                      dir_legado_local,
-                                      "Importaciones",
-                                      IMPORT_DIR,
-                                      sizeof(IMPORT_DIR),
-                                      "Importaciones");
+    return resolver_directorio_config(&DIR_CFG_IMPORT);
 }
 
 const char *get_images_dir()
 {
-    return obtener_directorio_publico("./Imagenes",
-                                      NULL,
-                                      "Imagenes",
-                                      IMAGES_DIR,
-                                      sizeof(IMAGES_DIR),
-                                      "Imagenes");
+    return resolver_directorio_config(&DIR_CFG_IMAGES);
 }
 
 const char *get_music_dir()
 {
-    const char *dir_preferido_local = NULL;
-#ifndef _WIN32
-    dir_preferido_local = "./Musica";
-#endif
-    return obtener_directorio_publico(dir_preferido_local,
-                                      NULL,
-                                      "Musica",
-                                      MUSIC_DIR,
-                                      sizeof(MUSIC_DIR),
-                                      "Musica");
+    return resolver_directorio_config(&DIR_CFG_MUSIC);
 }
 
 int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)
@@ -1713,8 +1898,9 @@ void exportar_base_datos()
     const char *dest_path = get_export_path("mifutbol.db");
     if (!dest_path)
     {
-        printf("Error: No se pudo obtener la ruta de destino para exportar la base de datos.\n");
-        app_log_write("ERROR", "EXPORT", "No se pudo obtener ruta de destino para exportacion");
+        LOG_ERROR_MSG("EXPORT",
+                      "Error: No se pudo obtener la ruta de destino para exportar la base de datos.",
+                      "No se pudo obtener ruta de destino para exportacion");
         pause_console();
         return;
     }
@@ -1726,18 +1912,20 @@ void exportar_base_datos()
         CopyResult result = copiar_archivo(source_path, dest_path);
         if (result == COPY_SRC_ERROR)
         {
-            printf("Error: No se encontro la base de datos en:\n%s\n", source_path);
-            snprintf(log_buf_, sizeof(log_buf_), "No se encontro DB origen para exportar: %.980s", source_path);
-            app_log_write("ERROR", "EXPORT", log_buf_);
+            LOG_ERROR_CONSOLE_LOG_FMT("EXPORT",
+                                      "Error: No se encontro la base de datos en:\n%s",
+                                      "No se encontro DB origen para exportar: %.980s",
+                                      source_path);
             pause_console();
             return;
         }
 
         if (result == COPY_DST_ERROR)
         {
-            printf("Error creando archivo destino:\n%s\n", dest_path);
-            snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para exportar: %.977s", dest_path);
-            app_log_write("ERROR", "EXPORT", log_buf_);
+            LOG_ERROR_CONSOLE_LOG_FMT("EXPORT",
+                                      "Error creando archivo destino:\n%s",
+                                      "No se pudo abrir DB destino para exportar: %.977s",
+                                      dest_path);
             pause_console();
             return;
         }
@@ -1767,9 +1955,9 @@ void exportar_base_datos()
     sqlite3_backup *backup = sqlite3_backup_init(dest_db, "main", db, "main");
     if (!backup)
     {
-        printf("Error iniciando backup SQLite: %s\n", sqlite3_errmsg(dest_db));
-        snprintf(log_buf_, sizeof(log_buf_), "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
-        app_log_write("ERROR", "EXPORT", log_buf_);
+        LOG_ERROR_FMT("EXPORT",
+                      "Error iniciando backup SQLite: %s",
+                      sqlite3_errmsg(dest_db));
         sqlite3_close(dest_db);
         pause_console();
         return;
@@ -1805,8 +1993,9 @@ int backup_base_datos_automatico(const char *motivo)
     const char *export_dir = get_export_dir();
     if (!export_dir)
     {
-        printf("%s\n", get_text("backup_failed"));
-        app_log_write("ERROR", "BACKUP", "No se pudo resolver directorio de exportacion");
+        LOG_ERROR_MSG("BACKUP",
+                      get_text("backup_failed"),
+                      "No se pudo resolver directorio de exportacion");
         return 0;
     }
 
@@ -1816,9 +2005,10 @@ int backup_base_datos_automatico(const char *motivo)
 
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
-        printf("%s\n", get_text("backup_failed"));
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
-        app_log_write("ERROR", "BACKUP", log_buf_);
+        LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP",
+                                      get_text("backup_failed"),
+                                      "No se pudo crear/acceder a directorio de backups: %.972s",
+                                      backup_dir);
         return 0;
     }
 
@@ -1843,8 +2033,9 @@ int backup_base_datos_automatico(const char *motivo)
             !append_str(dest_path, &used, sizeof(dest_path), DB_PATH_SEP) ||
             !append_str(dest_path, &used, sizeof(dest_path), prefix))
     {
-        printf("%s\n", get_text("backup_failed"));
-        app_log_write("ERROR", "BACKUP", "No se pudo construir ruta base de backup");
+        LOG_ERROR_MSG("BACKUP",
+                      get_text("backup_failed"),
+                      "No se pudo construir ruta base de backup");
         return 0;
     }
 
@@ -1852,25 +2043,29 @@ int backup_base_datos_automatico(const char *motivo)
             (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
              !append_str(dest_path, &used, sizeof(dest_path), "_")))
     {
-        printf("%s\n", get_text("backup_failed"));
-        app_log_write("ERROR", "BACKUP", "No se pudo agregar motivo a ruta de backup");
+        LOG_ERROR_MSG("BACKUP",
+                      get_text("backup_failed"),
+                      "No se pudo agregar motivo a ruta de backup");
         return 0;
     }
 
     if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
             !append_str(dest_path, &used, sizeof(dest_path), ext))
     {
-        printf("%s\n", get_text("backup_failed"));
-        app_log_write("ERROR", "BACKUP", "No se pudo completar nombre de archivo backup");
+        LOG_ERROR_MSG("BACKUP",
+                      get_text("backup_failed"),
+                      "No se pudo completar nombre de archivo backup");
         return 0;
     }
 
     CopyResult result = copiar_archivo(source_path, dest_path);
     if (result != COPY_OK)
     {
-        printf("%s\n", get_text("backup_failed"));
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo copia de backup desde %.470s hacia %.470s", source_path, dest_path);
-        app_log_write("ERROR", "BACKUP", log_buf_);
+        LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP",
+                                      get_text("backup_failed"),
+                                      "Fallo copia de backup desde %.470s hacia %.470s",
+                                      source_path,
+                                      dest_path);
         return 0;
     }
 
@@ -1887,8 +2082,9 @@ void importar_base_datos()
     const char *import_dir = get_import_dir();
     if (!import_dir)
     {
-        printf("Error obteniendo directorio de importaciones\n");
-        app_log_write("ERROR", "IMPORT", "No se pudo obtener directorio de importaciones");
+        LOG_ERROR_MSG("IMPORT",
+                      "Error obteniendo directorio de importaciones",
+                      "No se pudo obtener directorio de importaciones");
         return;
     }
 
@@ -1904,15 +2100,18 @@ void importar_base_datos()
     {
         if (result == COPY_SRC_ERROR)
         {
-            printf("Error: No se encontro el archivo a importar en:\n%s\n", source_path);
-            snprintf(log_buf_, sizeof(log_buf_), "No se encontro archivo de importacion: %.983s", source_path);
+            LOG_ERROR_CONSOLE_LOG_FMT("IMPORT",
+                                      "Error: No se encontro el archivo a importar en:\n%s",
+                                      "No se encontro archivo de importacion: %.983s",
+                                      source_path);
         }
         else
         {
-            printf("Error: No se pudo abrir la base de datos destino:\n%s\n", dest_path);
-            snprintf(log_buf_, sizeof(log_buf_), "No se pudo abrir DB destino para importar: %.977s", dest_path);
+            LOG_ERROR_CONSOLE_LOG_FMT("IMPORT",
+                                      "Error: No se pudo abrir la base de datos destino:\n%s",
+                                      "No se pudo abrir DB destino para importar: %.977s",
+                                      dest_path);
         }
-        app_log_write("ERROR", "IMPORT", log_buf_);
         return;
     }
 

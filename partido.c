@@ -342,6 +342,1101 @@ static int mostrar_partidos_desde_stmt(sqlite3_stmt *stmt)
 
 typedef struct
 {
+    int cancha_id;
+    int camiseta_id;
+    int tipo_partido;
+    int goles_min;
+    int goles_max;
+    int asistencias_min;
+    int asistencias_max;
+    int precio_min;
+    int precio_max;
+    int rendimiento_min;
+    int rendimiento_max;
+    int cansancio_min;
+    int cansancio_max;
+    int estado_animo_min;
+    int estado_animo_max;
+    int clima;
+    int dia;
+    char tag[64];
+    int solo_favoritos;
+} PartidoListadoFiltros;
+
+static int partido_listado_paginacion_es_valida(int valor)
+{
+    return valor >= 5 && valor <= 50 && (valor % 5) == 0;
+}
+
+static void partido_listado_init_config_table(void)
+{
+    sqlite3_stmt *stmt;
+
+    if (preparar_stmt("CREATE TABLE IF NOT EXISTS partido_listado_config ("
+                      "id INTEGER PRIMARY KEY CHECK(id = 1), "
+                      "partidos_por_pagina INTEGER NOT NULL DEFAULT 5)",
+                      &stmt))
+    {
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+
+    if (preparar_stmt("INSERT OR IGNORE INTO partido_listado_config(id, partidos_por_pagina) VALUES(1, 5)", &stmt))
+    {
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
+
+static int partido_listado_cargar_paginacion(void)
+{
+    sqlite3_stmt *stmt;
+    int valor = 5;
+
+    partido_listado_init_config_table();
+
+    if (!preparar_stmt("SELECT IFNULL(partidos_por_pagina, 5) FROM partido_listado_config WHERE id = 1", &stmt))
+    {
+        return valor;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        valor = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+
+    if (!partido_listado_paginacion_es_valida(valor))
+    {
+        return 5;
+    }
+
+    return valor;
+}
+
+static void partido_listado_guardar_paginacion(int valor)
+{
+    sqlite3_stmt *stmt;
+
+    if (!partido_listado_paginacion_es_valida(valor))
+    {
+        return;
+    }
+
+    partido_listado_init_config_table();
+
+    if (!preparar_stmt("INSERT OR REPLACE INTO partido_listado_config(id, partidos_por_pagina) VALUES(1, ?)", &stmt))
+    {
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+}
+
+static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
+{
+    if (!filtros)
+    {
+        return;
+    }
+
+    filtros->cancha_id = -1;
+    filtros->camiseta_id = -1;
+    filtros->tipo_partido = -1;
+    filtros->goles_min = -1;
+    filtros->goles_max = -1;
+    filtros->asistencias_min = -1;
+    filtros->asistencias_max = -1;
+    filtros->precio_min = -1;
+    filtros->precio_max = -1;
+    filtros->rendimiento_min = -1;
+    filtros->rendimiento_max = -1;
+    filtros->cansancio_min = -1;
+    filtros->cansancio_max = -1;
+    filtros->estado_animo_min = -1;
+    filtros->estado_animo_max = -1;
+    filtros->clima = -1;
+    filtros->dia = -1;
+    filtros->tag[0] = '\0';
+    filtros->solo_favoritos = 0;
+}
+
+static void partido_listado_append_clause(char *destino, size_t destino_size, const char *clausula)
+{
+    size_t usados;
+
+    if (!destino || !clausula || destino_size == 0)
+    {
+        return;
+    }
+
+    usados = strlen(destino);
+    if (usados >= destino_size - 1)
+    {
+        return;
+    }
+
+    snprintf(destino + usados, destino_size - usados, "%s", clausula);
+}
+
+static void partido_listado_construir_where_clause(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
+{
+    if (!filtros || !where_clause || where_size == 0)
+    {
+        return;
+    }
+
+    snprintf(where_clause, where_size, "WHERE 1=1");
+
+    if (filtros->cancha_id > 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.cancha_id = ?");
+    }
+
+    if (filtros->camiseta_id > 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.camiseta_id = ?");
+    }
+
+    if (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.tipo_partido, 1) = ?");
+    }
+
+    if (filtros->goles_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.goles >= ?");
+    }
+
+    if (filtros->goles_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.goles <= ?");
+    }
+
+    if (filtros->asistencias_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.asistencias >= ?");
+    }
+
+    if (filtros->asistencias_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.asistencias <= ?");
+    }
+
+    if (filtros->precio_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.precio, 0) >= ?");
+    }
+
+    if (filtros->precio_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.precio, 0) <= ?");
+    }
+
+    if (filtros->rendimiento_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.rendimiento_general, 0) >= ?");
+    }
+
+    if (filtros->rendimiento_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.rendimiento_general, 0) <= ?");
+    }
+
+    if (filtros->cansancio_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.cansancio, 0) >= ?");
+    }
+
+    if (filtros->cansancio_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.cansancio, 0) <= ?");
+    }
+
+    if (filtros->estado_animo_min >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.estado_animo, 0) >= ?");
+    }
+
+    if (filtros->estado_animo_max >= 0)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.estado_animo, 0) <= ?");
+    }
+
+    if (filtros->clima >= 1)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.clima, 0) = ?");
+    }
+
+    if (filtros->dia >= 1)
+    {
+        partido_listado_append_clause(where_clause, where_size,
+                                      " AND (CASE "
+                                      "WHEN substr(IFNULL(p.fecha_hora, ''), 12, 2) GLOB '[0-9][0-9]' "
+                                      "AND CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) BETWEEN 0 AND 23 "
+                                      "THEN CASE "
+                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 6 THEN 1 "
+                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 12 THEN 2 "
+                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 15 THEN 3 "
+                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 19 THEN 4 "
+                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 21 THEN 5 "
+                                      "ELSE 6 END "
+                                      "ELSE IFNULL(p.dia, 0) END) = ?");
+    }
+
+    if (filtros->tag[0] != '\0')
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND LOWER(IFNULL(p.tags, '')) LIKE LOWER(?)");
+    }
+
+    if (filtros->solo_favoritos)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND EXISTS (SELECT 1 FROM partido_meta pm WHERE pm.partido_id = p.id AND pm.favorito = 1)");
+    }
+}
+
+static int partido_listado_bind_filtros(sqlite3_stmt *stmt, const PartidoListadoFiltros *filtros, int indice_inicial)
+{
+    int indice = indice_inicial;
+    char tag_pattern[96];
+
+    if (!stmt || !filtros)
+    {
+        return indice;
+    }
+
+    if (filtros->cancha_id > 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->cancha_id);
+        indice++;
+    }
+
+    if (filtros->camiseta_id > 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->camiseta_id);
+        indice++;
+    }
+
+    if (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->tipo_partido);
+        indice++;
+    }
+
+    if (filtros->goles_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->goles_min);
+        indice++;
+    }
+
+    if (filtros->goles_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->goles_max);
+        indice++;
+    }
+
+    if (filtros->asistencias_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->asistencias_min);
+        indice++;
+    }
+
+    if (filtros->asistencias_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->asistencias_max);
+        indice++;
+    }
+
+    if (filtros->precio_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->precio_min);
+        indice++;
+    }
+
+    if (filtros->precio_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->precio_max);
+        indice++;
+    }
+
+    if (filtros->rendimiento_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->rendimiento_min);
+        indice++;
+    }
+
+    if (filtros->rendimiento_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->rendimiento_max);
+        indice++;
+    }
+
+    if (filtros->cansancio_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->cansancio_min);
+        indice++;
+    }
+
+    if (filtros->cansancio_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->cansancio_max);
+        indice++;
+    }
+
+    if (filtros->estado_animo_min >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->estado_animo_min);
+        indice++;
+    }
+
+    if (filtros->estado_animo_max >= 0)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->estado_animo_max);
+        indice++;
+    }
+
+    if (filtros->clima >= 1)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->clima);
+        indice++;
+    }
+
+    if (filtros->dia >= 1)
+    {
+        sqlite3_bind_int(stmt, indice, filtros->dia);
+        indice++;
+    }
+
+    if (filtros->tag[0] != '\0')
+    {
+        snprintf(tag_pattern, sizeof(tag_pattern), "%%%s%%", filtros->tag);
+        sqlite3_bind_text(stmt, indice, tag_pattern, -1, SQLITE_TRANSIENT);
+        indice++;
+    }
+
+    return indice;
+}
+
+static int partido_listado_contar_total(const PartidoListadoFiltros *filtros)
+{
+    char where_clause[1024];
+    char sql[2048];
+    int total = 0;
+    sqlite3_stmt *stmt;
+
+    partido_listado_construir_where_clause(filtros, where_clause, sizeof(where_clause));
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*) "
+             "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+             "JOIN cancha can ON p.cancha_id = can.id "
+             "%s",
+             where_clause);
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return 0;
+    }
+
+    (void)partido_listado_bind_filtros(stmt, filtros, 1);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static int partido_listado_mostrar_pagina_actual(int pagina_actual,
+        int partidos_por_pagina,
+        int total_partidos,
+        int orden_desc,
+        const PartidoListadoFiltros *filtros)
+{
+    char where_clause[1024];
+    char sql[4096];
+    const char *orden_sql = orden_desc ? "DESC" : "ASC";
+    int indice_bind;
+    int offset = 0;
+    int limite = partidos_por_pagina;
+    int hay = 0;
+    sqlite3_stmt *stmt;
+
+    partido_listado_construir_where_clause(filtros, where_clause, sizeof(where_clause));
+
+    snprintf(sql, sizeof(sql),
+             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
+             "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
+             "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
+             "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
+             "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
+             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
+             "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+             "JOIN cancha can ON p.cancha_id = can.id "
+             "%s "
+             "ORDER BY p.id %s LIMIT ? OFFSET ?",
+             where_clause,
+             orden_sql);
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return 0;
+    }
+
+    if (orden_desc)
+    {
+        offset = (pagina_actual - 1) * partidos_por_pagina;
+    }
+    else
+    {
+        /* En ASC se muestran primero los bloques mas recientes, manteniendo ASC dentro de la pagina. */
+        offset = total_partidos - (pagina_actual * partidos_por_pagina);
+        if (offset < 0)
+        {
+            limite = partidos_por_pagina + offset;
+            offset = 0;
+        }
+        if (limite < 0)
+        {
+            limite = 0;
+        }
+    }
+
+    indice_bind = partido_listado_bind_filtros(stmt, filtros, 1);
+    sqlite3_bind_int(stmt, indice_bind, limite);
+    sqlite3_bind_int(stmt, indice_bind + 1, offset);
+
+    hay = mostrar_partidos_desde_stmt(stmt);
+    sqlite3_finalize(stmt);
+
+    return hay;
+}
+
+static const char *partido_listado_texto_tipo(int tipo_partido)
+{
+    switch (tipo_partido)
+    {
+    case 1:
+        return "Amistoso";
+    case 2:
+        return "Torneo";
+    case 3:
+        return "Entrenamiento";
+    default:
+        return "Todos";
+    }
+}
+
+static int partido_listado_contar_filtros_activos(const PartidoListadoFiltros *filtros)
+{
+    int cantidad = 0;
+
+    if (!filtros)
+    {
+        return 0;
+    }
+
+    if (filtros->cancha_id > 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->camiseta_id > 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3)
+    {
+        cantidad++;
+    }
+
+    if (filtros->goles_min >= 0 || filtros->goles_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->asistencias_min >= 0 || filtros->asistencias_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->precio_min >= 0 || filtros->precio_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->rendimiento_min >= 0 || filtros->rendimiento_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->cansancio_min >= 0 || filtros->cansancio_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->estado_animo_min >= 0 || filtros->estado_animo_max >= 0)
+    {
+        cantidad++;
+    }
+
+    if (filtros->clima >= 1)
+    {
+        cantidad++;
+    }
+
+    if (filtros->dia >= 1)
+    {
+        cantidad++;
+    }
+
+    if (filtros->tag[0] != '\0')
+    {
+        cantidad++;
+    }
+
+    if (filtros->solo_favoritos)
+    {
+        cantidad++;
+    }
+
+    return cantidad;
+}
+
+static int partido_listado_menu_paginacion(int valor_actual)
+{
+    const int opciones[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50};
+    const int cantidad_opciones = (int)(sizeof(opciones) / sizeof(opciones[0]));
+
+    while (1)
+    {
+        clear_screen();
+        print_header("PAGINACION");
+        ui_printf_centered_line("Actual: %d partidos por pagina", valor_actual);
+        ui_printf_centered_line("Seleccione un nuevo valor:");
+
+        for (int i = 0; i < cantidad_opciones; i++)
+        {
+            ui_printf_centered_line("%d) %d partidos", i + 1, opciones[i]);
+        }
+        ui_printf_centered_line("0) Volver");
+
+        int opcion = input_int("Opcion: ");
+        if (opcion == 0)
+        {
+            return valor_actual;
+        }
+
+        if (opcion >= 1 && opcion <= cantidad_opciones)
+        {
+            return opciones[opcion - 1];
+        }
+
+        ui_printf_centered_line("Opcion invalida.");
+        pause_console();
+    }
+}
+
+static const char *partido_listado_texto_orden(int orden_desc)
+{
+    return orden_desc ? "Del Mas Reciente Primero" : "Del Mas Antiguo Primero";
+}
+
+static int partido_listado_menu_orden(int orden_actual_desc)
+{
+    while (1)
+    {
+        clear_screen();
+        print_header("ORDEN DE LISTADO");
+        ui_printf_centered_line("Actual: %s", partido_listado_texto_orden(orden_actual_desc));
+        ui_printf_centered_line("1)Mas Antiguo Primero");
+        ui_printf_centered_line("2)Mas Reciente Primero");
+        ui_printf_centered_line("0) Volver");
+
+        int opcion = input_int("Opcion: ");
+        if (opcion == 0)
+        {
+            return orden_actual_desc;
+        }
+        if (opcion == 1)
+        {
+            return 1;
+        }
+        if (opcion == 2)
+        {
+            return 0;
+        }
+
+        ui_printf_centered_line("Opcion invalida.");
+        pause_console();
+    }
+}
+
+static int partido_listado_pedir_opcional_0_todos(const char *prompt, int min, int max)
+{
+    int valor = input_int(prompt);
+
+    while (valor != 0 && (valor < min || valor > max))
+    {
+        char prompt_error[128];
+        snprintf(prompt_error, sizeof(prompt_error), "Valor invalido. Ingrese 0 o un valor entre %d y %d: ", min, max);
+        valor = input_int(prompt_error);
+    }
+
+    return (valor == 0) ? -1 : valor;
+}
+
+static int partido_listado_pedir_opcional_menos1_todos(const char *prompt, int min, int max)
+{
+    int valor = input_int(prompt);
+
+    while (valor != -1 && (valor < min || valor > max))
+    {
+        char prompt_error[128];
+        snprintf(prompt_error, sizeof(prompt_error), "Valor invalido. Ingrese -1 o un valor entre %d y %d: ", min, max);
+        valor = input_int(prompt_error);
+    }
+
+    return valor;
+}
+
+static void partido_listado_configurar_rango(const char *nombre, int min, int max, int *min_out, int *max_out)
+{
+    char prompt_min[128];
+    char prompt_max[128];
+    int min_val;
+    int max_val;
+
+    if (!min_out || !max_out)
+    {
+        return;
+    }
+
+    snprintf(prompt_min, sizeof(prompt_min), "%s minimo (-1 sin filtro): ", nombre);
+    snprintf(prompt_max, sizeof(prompt_max), "%s maximo (-1 sin filtro): ", nombre);
+
+    min_val = partido_listado_pedir_opcional_menos1_todos(prompt_min, min, max);
+    max_val = partido_listado_pedir_opcional_menos1_todos(prompt_max, min, max);
+
+    if (min_val >= 0 && max_val >= 0 && max_val < min_val)
+    {
+        int tmp = min_val;
+        min_val = max_val;
+        max_val = tmp;
+    }
+
+    *min_out = min_val;
+    *max_out = max_val;
+}
+
+static void partido_listado_mostrar_opciones_cancha(void)
+{
+    sqlite3_stmt *stmt;
+
+    ui_printf_centered_line("Opciones de cancha:");
+    ui_printf_centered_line("0) Todas");
+
+    if (!preparar_stmt("SELECT id, nombre FROM cancha WHERE IFNULL(activa, 1) = 1 ORDER BY id", &stmt))
+    {
+        ui_printf_centered_line("(No se pudieron cargar canchas)");
+        return;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        ui_printf_centered_line("%d) %s",
+                                sqlite3_column_int(stmt, 0),
+                                stmt_text_or_default(stmt, 1, "N/A"));
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void partido_listado_mostrar_opciones_camiseta(void)
+{
+    sqlite3_stmt *stmt;
+
+    ui_printf_centered_line("Opciones de camiseta:");
+    ui_printf_centered_line("0) Todas");
+
+    if (!preparar_stmt("SELECT id, nombre FROM camiseta WHERE IFNULL(activa, 1) = 1 ORDER BY id", &stmt))
+    {
+        ui_printf_centered_line("(No se pudieron cargar camisetas)");
+        return;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        ui_printf_centered_line("%d) %s",
+                                sqlite3_column_int(stmt, 0),
+                                stmt_text_or_default(stmt, 1, "N/A"));
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void partido_listado_mostrar_opciones_tipo_partido(void)
+{
+    ui_printf_centered_line("Opciones de tipo:");
+    ui_printf_centered_line("0) Todos");
+    ui_printf_centered_line("1) Amistoso");
+    ui_printf_centered_line("2) Torneo");
+    ui_printf_centered_line("3) Entrenamiento");
+}
+
+static void partido_listado_mostrar_opciones_clima(void)
+{
+    ui_printf_centered_line("Opciones de clima:");
+    ui_printf_centered_line("0) Todos");
+    ui_printf_centered_line("1=Despejado, 2=Nublado, 3=Lluvia, 4=Ventoso");
+    ui_printf_centered_line("5=Mucho Calor, 6=Mucho Frio, 7=Frio, 8=Calor");
+    ui_printf_centered_line("9=Llovizna leve, 10=Lluvia Moderada, 11=Lluvia fuerte, 12=Cancha inundada");
+}
+
+static void partido_listado_mostrar_opciones_franja(void)
+{
+    ui_printf_centered_line("Opciones de franja horaria:");
+    ui_printf_centered_line("0) Todas");
+    ui_printf_centered_line("1=Madrugada, 2=Manana, 3=Mediodia");
+    ui_printf_centered_line("4=Tarde, 5=Atardecer, 6=Noche");
+}
+
+static void partido_listado_mostrar_ayuda_rango(const char *nombre, int min, int max)
+{
+    ui_printf_centered_line("%s: ingrese MIN y MAX", nombre);
+    ui_printf_centered_line("Use -1 para dejar sin filtro");
+    ui_printf_centered_line("Rango permitido: %d a %d", min, max);
+}
+
+static void partido_listado_mostrar_ayuda_tag(void)
+{
+    ui_printf_centered_line("Filtro por tag (busqueda parcial)");
+    ui_printf_centered_line("Ejemplos: final, torneo, importante");
+    ui_printf_centered_line("Enter vacio para limpiar el filtro");
+}
+
+static void partido_listado_mostrar_ayuda_favoritos(void)
+{
+    ui_printf_centered_line("Solo favoritos:");
+    ui_printf_centered_line("Si = muestra solo partidos marcados como favorito");
+    ui_printf_centered_line("No = no aplica ese filtro");
+}
+
+static void partido_listado_imprimir_resumen_rango(const char *label, int min_val, int max_val)
+{
+    if (min_val < 0 && max_val < 0)
+    {
+        ui_printf_centered_line("%s: Todos", label);
+        return;
+    }
+
+    if (min_val >= 0 && max_val >= 0)
+    {
+        ui_printf_centered_line("%s: %d a %d", label, min_val, max_val);
+        return;
+    }
+
+    if (min_val >= 0)
+    {
+        ui_printf_centered_line("%s: >= %d", label, min_val);
+        return;
+    }
+
+    ui_printf_centered_line("%s: <= %d", label, max_val);
+}
+
+static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros *filtros)
+{
+    char tag_mostrar[64];
+
+    if (filtros->cancha_id > 0)
+    {
+        ui_printf_centered_line("1) Cancha ID: %d", filtros->cancha_id);
+    }
+    else
+    {
+        ui_printf_centered_line("1) Cancha ID: Todas");
+    }
+
+    if (filtros->camiseta_id > 0)
+    {
+        ui_printf_centered_line("2) Camiseta ID: %d", filtros->camiseta_id);
+    }
+    else
+    {
+        ui_printf_centered_line("2) Camiseta ID: Todas");
+    }
+
+    ui_printf_centered_line("3) Tipo de partido: %s", partido_listado_texto_tipo(filtros->tipo_partido));
+    partido_listado_imprimir_resumen_rango("4) Goles", filtros->goles_min, filtros->goles_max);
+    partido_listado_imprimir_resumen_rango("5) Asistencias", filtros->asistencias_min, filtros->asistencias_max);
+    partido_listado_imprimir_resumen_rango("6) Precio", filtros->precio_min, filtros->precio_max);
+    partido_listado_imprimir_resumen_rango("7) Rendimiento", filtros->rendimiento_min, filtros->rendimiento_max);
+    partido_listado_imprimir_resumen_rango("8) Cansancio", filtros->cansancio_min, filtros->cansancio_max);
+    partido_listado_imprimir_resumen_rango("9) Estado de animo", filtros->estado_animo_min, filtros->estado_animo_max);
+
+    if (filtros->clima >= 1)
+    {
+        ui_printf_centered_line("10) Clima: %d", filtros->clima);
+    }
+    else
+    {
+        ui_printf_centered_line("10) Clima: Todos");
+    }
+
+    if (filtros->dia >= 1)
+    {
+        ui_printf_centered_line("11) Franja horaria: %s", dia_to_text(filtros->dia));
+    }
+    else
+    {
+        ui_printf_centered_line("11) Franja horaria: Todas");
+    }
+
+    snprintf(tag_mostrar, sizeof(tag_mostrar), "%s", filtros->tag[0] ? filtros->tag : "(sin filtro)");
+    ui_printf_centered_line("12) Tag contiene: %s", tag_mostrar);
+    ui_printf_centered_line("13) Solo favoritos: %s", filtros->solo_favoritos ? "Si" : "No");
+    ui_printf_centered_line("14) Limpiar filtros");
+}
+
+static int partido_listado_aplicar_opcion_filtro(PartidoListadoFiltros *filtros, int opcion)
+{
+    if (!filtros)
+    {
+        return 0;
+    }
+
+    switch (opcion)
+    {
+    case 1:
+        partido_listado_mostrar_opciones_cancha();
+        filtros->cancha_id = partido_listado_pedir_opcional_0_todos("ID de cancha (0=todas): ", 1, 1000000);
+        return 1;
+    case 2:
+        partido_listado_mostrar_opciones_camiseta();
+        filtros->camiseta_id = partido_listado_pedir_opcional_0_todos("ID de camiseta (0=todas): ", 1, 1000000);
+        return 1;
+    case 3:
+        partido_listado_mostrar_opciones_tipo_partido();
+        filtros->tipo_partido = partido_listado_pedir_opcional_0_todos("Tipo (0=todos, 1=Amistoso, 2=Torneo, 3=Entrenamiento): ", 1, 3);
+        return 1;
+    case 4:
+        partido_listado_mostrar_ayuda_rango("Goles", 0, 200);
+        partido_listado_configurar_rango("Goles", 0, 200, &filtros->goles_min, &filtros->goles_max);
+        return 1;
+    case 5:
+        partido_listado_mostrar_ayuda_rango("Asistencias", 0, 200);
+        partido_listado_configurar_rango("Asistencias", 0, 200, &filtros->asistencias_min, &filtros->asistencias_max);
+        return 1;
+    case 6:
+        partido_listado_mostrar_ayuda_rango("Precio", 0, 100000000);
+        partido_listado_configurar_rango("Precio", 0, 100000000, &filtros->precio_min, &filtros->precio_max);
+        return 1;
+    case 7:
+        partido_listado_mostrar_ayuda_rango("Rendimiento", 0, 10);
+        partido_listado_configurar_rango("Rendimiento", 0, 10, &filtros->rendimiento_min, &filtros->rendimiento_max);
+        return 1;
+    case 8:
+        partido_listado_mostrar_ayuda_rango("Cansancio", 0, 10);
+        partido_listado_configurar_rango("Cansancio", 0, 10, &filtros->cansancio_min, &filtros->cansancio_max);
+        return 1;
+    case 9:
+        partido_listado_mostrar_ayuda_rango("Estado de animo", 0, 10);
+        partido_listado_configurar_rango("Estado de animo", 0, 10, &filtros->estado_animo_min, &filtros->estado_animo_max);
+        return 1;
+    case 10:
+        partido_listado_mostrar_opciones_clima();
+        filtros->clima = partido_listado_pedir_opcional_0_todos("Clima (0=todos, 1..12): ", 1, 12);
+        return 1;
+    case 11:
+        partido_listado_mostrar_opciones_franja();
+        filtros->dia = partido_listado_pedir_opcional_0_todos("Franja horaria (0=todas, 1..6): ", 1, 6);
+        return 1;
+    case 12:
+        partido_listado_mostrar_ayuda_tag();
+        input_string_extended("Tag (texto, Enter para limpiar): ", filtros->tag, (int)sizeof(filtros->tag));
+        trim_whitespace(filtros->tag);
+        return 1;
+    case 13:
+        partido_listado_mostrar_ayuda_favoritos();
+        filtros->solo_favoritos = !filtros->solo_favoritos;
+        return 1;
+    case 14:
+        partido_listado_limpiar_filtros(filtros);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static void partido_listado_menu_filtros(PartidoListadoFiltros *filtros)
+{
+    if (!filtros)
+    {
+        return;
+    }
+
+    while (1)
+    {
+        clear_screen();
+        print_header("FILTROS DE PARTIDOS");
+        partido_listado_imprimir_resumen_filtros(filtros);
+        ui_printf_centered_line("0) Volver");
+
+        int opcion = input_int("Opcion: ");
+        if (opcion == 0)
+        {
+            return;
+        }
+
+        if (!partido_listado_aplicar_opcion_filtro(filtros, opcion))
+        {
+            ui_printf_centered_line("Opcion invalida.");
+            pause_console();
+        }
+    }
+}
+
+static void partido_listado_ir_pagina_anterior(int *pagina_actual)
+{
+    if (!pagina_actual)
+    {
+        return;
+    }
+
+    if (*pagina_actual > 1)
+    {
+        (*pagina_actual)--;
+        return;
+    }
+
+    ui_printf_centered_line("Ya esta en la primera pagina.");
+    pause_console();
+}
+
+static void partido_listado_ir_pagina_siguiente(int total_partidos, int total_paginas, int *pagina_actual)
+{
+    if (!pagina_actual)
+    {
+        return;
+    }
+
+    if (total_partidos <= 0 || *pagina_actual >= total_paginas)
+    {
+        ui_printf_centered_line("Ya esta en la ultima pagina.");
+        pause_console();
+        return;
+    }
+
+    (*pagina_actual)++;
+}
+
+static void partido_listado_ir_a_pagina(int total_partidos, int total_paginas, int *pagina_actual)
+{
+    if (!pagina_actual)
+    {
+        return;
+    }
+
+    if (total_partidos <= 0)
+    {
+        ui_printf_centered_line("No hay paginas disponibles con los filtros actuales.");
+        pause_console();
+        return;
+    }
+
+    int destino = input_int("Numero de pagina: ");
+    if (destino >= 1 && destino <= total_paginas)
+    {
+        *pagina_actual = destino;
+        return;
+    }
+
+    ui_printf_centered_line("Pagina invalida (1 a %d).", total_paginas);
+    pause_console();
+}
+
+static void partido_listado_cambiar_paginacion(int *partidos_por_pagina, int *pagina_actual)
+{
+    if (!partidos_por_pagina || !pagina_actual)
+    {
+        return;
+    }
+
+    int nuevo_valor = partido_listado_menu_paginacion(*partidos_por_pagina);
+    if (nuevo_valor != *partidos_por_pagina)
+    {
+        *partidos_por_pagina = nuevo_valor;
+        partido_listado_guardar_paginacion(*partidos_por_pagina);
+        *pagina_actual = 1;
+    }
+}
+
+static void partido_listado_cambiar_orden(int *orden_desc, int *pagina_actual)
+{
+    if (!orden_desc || !pagina_actual)
+    {
+        return;
+    }
+
+    *orden_desc = partido_listado_menu_orden(*orden_desc);
+    *pagina_actual = 1;
+}
+
+static void partido_listado_abrir_filtros(PartidoListadoFiltros *filtros, int *pagina_actual)
+{
+    if (!filtros || !pagina_actual)
+    {
+        return;
+    }
+
+    partido_listado_menu_filtros(filtros);
+    *pagina_actual = 1;
+}
+
+static int partido_listado_manejar_opcion(int opcion,
+        int total_partidos,
+        int total_paginas,
+        int *pagina_actual,
+        int *partidos_por_pagina,
+        int *orden_desc,
+        PartidoListadoFiltros *filtros)
+{
+    switch (opcion)
+    {
+    case 0:
+        return 0;
+    case 1:
+        partido_listado_ir_pagina_anterior(pagina_actual);
+        return 1;
+    case 2:
+        partido_listado_ir_pagina_siguiente(total_partidos, total_paginas, pagina_actual);
+        return 1;
+    case 3:
+        partido_listado_ir_a_pagina(total_partidos, total_paginas, pagina_actual);
+        return 1;
+    case 4:
+        partido_listado_cambiar_paginacion(partidos_por_pagina, pagina_actual);
+        return 1;
+    case 5:
+        partido_listado_abrir_filtros(filtros, pagina_actual);
+        return 1;
+    case 6:
+        partido_listado_cambiar_orden(orden_desc, pagina_actual);
+        return 1;
+    default:
+        ui_printf_centered_line("Opcion invalida.");
+        pause_console();
+        return 1;
+    }
+}
+
+typedef struct
+{
     int goles_equipo;
     int goles_rival;
     int tarjeta;
@@ -1473,32 +2568,74 @@ void crear_partido()
 
 void listar_partidos()
 {
-    clear_screen();
-    print_header("LISTADO DE PARTIDOS");
+    int partidos_por_pagina = partido_listado_cargar_paginacion();
+    int orden_desc = 0;
+    int pagina_actual = 1;
+    PartidoListadoFiltros filtros;
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
-                "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
-                "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
-                "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
-                "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-                "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
-                "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC",
-                &stmt))
+    partido_listado_limpiar_filtros(&filtros);
+
+    while (1)
     {
-        pause_console();
-        return;
+        int total_partidos = partido_listado_contar_total(&filtros);
+        int total_paginas = (total_partidos > 0)
+                            ? ((total_partidos + partidos_por_pagina - 1) / partidos_por_pagina)
+                            : 1;
+        int hay = 0;
+
+        if (pagina_actual > total_paginas)
+        {
+            pagina_actual = total_paginas;
+        }
+        if (pagina_actual < 1)
+        {
+            pagina_actual = 1;
+        }
+
+        clear_screen();
+        print_header("LISTADO DE PARTIDOS");
+        ui_printf_centered_line("Pagina %d de %d | Total: %d partidos", pagina_actual, total_paginas, total_partidos);
+        ui_printf_centered_line("Paginacion: %d por pagina", partidos_por_pagina);
+        ui_printf_centered_line("Orden: %s", partido_listado_texto_orden(orden_desc));
+        ui_printf_centered_line("Filtros activos: %d", partido_listado_contar_filtros_activos(&filtros));
+        ui_printf_centered_line("----------------------------------------");
+
+        if (total_partidos > 0)
+        {
+            hay = partido_listado_mostrar_pagina_actual(pagina_actual,
+                    partidos_por_pagina,
+                    total_partidos,
+                    orden_desc,
+                    &filtros);
+        }
+
+        if (total_partidos <= 0 || !hay)
+        {
+            ui_printf_centered_line("No hay partidos para los filtros seleccionados.");
+        }
+
+        ui_printf_centered_line("----------------------------------------");
+        ui_printf_centered_line("1) Pagina anterior");
+        ui_printf_centered_line("2) Pagina siguiente");
+        ui_printf_centered_line("3) Ir a pagina");
+        ui_printf_centered_line("4) Paginacion");
+        ui_printf_centered_line("5) Filtros");
+        ui_printf_centered_line("6) Orden");
+        ui_printf_centered_line("0) Volver");
+
+        int opcion = input_int("Opcion: ");
+
+        if (!partido_listado_manejar_opcion(opcion,
+                                            total_partidos,
+                                            total_paginas,
+                                            &pagina_actual,
+                                            &partidos_por_pagina,
+                                            &orden_desc,
+                                            &filtros))
+        {
+            return;
+        }
     }
-
-    int hay = mostrar_partidos_desde_stmt(stmt);
-
-    if (!hay)
-        ui_printf_centered_line("No hay partidos cargados.");
-
-    sqlite3_finalize(stmt);
-    pause_console();
 }
 
 void eliminar_partido()

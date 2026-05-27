@@ -715,18 +715,21 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
 
     int id = sqlite3_column_int(stmt, 0);
     const char *nom = (const char *)sqlite3_column_text(stmt, 1);
-    int activa = sqlite3_column_int(stmt, 2);
     int partidos = sqlite3_column_int(stmt, 3);
     int goles = sqlite3_column_int(stmt, 4);
     int asistencias = sqlite3_column_int(stmt, 5);
-    const char *estado = activa ? "ACTIVA" : "INACTIVA";
+    int victorias = sqlite3_column_int(stmt, 6);
+    int empates = sqlite3_column_int(stmt, 7);
+    int derrotas = sqlite3_column_int(stmt, 8);
 
-    ui_printf_centered_line("%2d - %-24s%sEstado: %-8s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
+    ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d%sVictorias: %2d%sEmpates: %2d%sDerrotas: %2d",
                             id, nom ? nom : "(sin nombre)", sep,
-                            estado, sep,
                             partidos, sep,
                             goles, sep,
-                            asistencias);
+                            asistencias, sep,
+                            victorias, sep,
+                            empates, sep,
+                            derrotas);
     return 1;
 }
 

@@ -132,7 +132,8 @@ int ui_printf_centered_line(const char *fmt, ...);
 /**
  * @brief Imprime una fila de estadisticas desde una sentencia SQLite con columnas fijas.
  *
- * Se espera el siguiente orden de columnas: id, nombre, activa, partidos, goles, asistencias.
+ * Se espera el siguiente orden de columnas: id, nombre, activa, partidos, goles, asistencias,
+ * victorias, empates, derrotas.
  *
  * @param stmt Sentencia SQLite posicionada en una fila valida.
  * @param sep Separador visual entre columnas (por ejemplo " | " o " │ ").
