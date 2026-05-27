@@ -465,8 +465,6 @@ static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
 
 static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
 {
-    size_t len = 0;
-
     if (!texto)
     {
         return 0;
@@ -477,6 +475,8 @@ static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
 #elif defined(_MSC_VER)
     return strnlen_s(texto, max_len);
 #else
+    size_t len = 0;
+
     while (len < max_len && texto[len] != '\0')
     {
         ++len;

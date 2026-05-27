@@ -1311,33 +1311,37 @@ static int convertir_resultado(const char *resultado_str)
 
 static int convertir_clima(const char *clima_str)
 {
+    static const struct
+    {
+        const char *nombre;
+        int valor;
+    } mapa_clima[] =
+    {
+        { "Despejado", 1 },
+        { "Nublado", 2 },
+        { "Lluvia", 3 },
+        { "Ventoso", 4 },
+        { "Mucho Calor", 5 },
+        { "Mucho", 5 },
+        { "Mucho Frio", 6 },
+        { "Frio", 7 },
+        { "Calor", 8 },
+        { "Llovizna leve", 9 },
+        { "Lluvia Moderada", 10 },
+        { "Lluvia fuerte", 11 },
+        { "Cancha inundada", 12 },
+        { "Inundada", 12 }
+    };
+
     if (!clima_str)
         return 0;
 
-    if (strcmp(clima_str, "Despejado") == 0)
-        return 1;
-    else if (strcmp(clima_str, "Nublado") == 0)
-        return 2;
-    else if (strcmp(clima_str, "Lluvia") == 0)
-        return 3;
-    else if (strcmp(clima_str, "Ventoso") == 0)
-        return 4;
-    else if (strcmp(clima_str, "Mucho Calor") == 0 || strcmp(clima_str, "Mucho") == 0)
-        return 5;
-    else if (strcmp(clima_str, "Mucho Frio") == 0)
-        return 6;
-    else if (strcmp(clima_str, "Frio") == 0)
-        return 7;
-    else if (strcmp(clima_str, "Calor") == 0)
-        return 8;
-    else if (strcmp(clima_str, "Llovizna leve") == 0)
-        return 9;
-    else if (strcmp(clima_str, "Lluvia Moderada") == 0)
-        return 10;
-    else if (strcmp(clima_str, "Lluvia fuerte") == 0)
-        return 11;
-    else if (strcmp(clima_str, "Cancha inundada") == 0 || strcmp(clima_str, "Inundada") == 0)
-        return 12;
+    for (size_t i = 0; i < (sizeof(mapa_clima) / sizeof(mapa_clima[0])); ++i)
+    {
+        if (strcmp(clima_str, mapa_clima[i].nombre) == 0)
+            return mapa_clima[i].valor;
+    }
+
     return 0;
 }
 
