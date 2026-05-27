@@ -1,6 +1,4 @@
-﻿
-#include "logros.h"
-#include "db.h"
+﻿#include "logros.h"
 #include "utils.h"
 #include "menu.h"
 #include <stdio.h>
@@ -20,246 +18,293 @@ typedef struct
     const char *sql;
 } LogroQuery;
 
+typedef enum
+{
+    LOGRO_ESTADO_NO_INICIADO = 0,
+    LOGRO_ESTADO_EN_PROGRESO = 1,
+    LOGRO_ESTADO_COMPLETADO = 2
+} LogroEstado;
+
+typedef enum
+{
+    LOGRO_FILTRO_TODOS = 0,
+    LOGRO_FILTRO_COMPLETADOS = 1,
+    LOGRO_FILTRO_EN_PROGRESO = 2,
+    LOGRO_FILTRO_NO_COMPLETADOS = 3
+} LogroFiltro;
+
+#define SQL_FROM_PARTIDO " FROM partido WHERE camiseta_id = ?"
+#define SQL_SUM_EXPR(expr) "SELECT IFNULL(SUM(" expr "), 0)" SQL_FROM_PARTIDO
+#define SQL_SUM(col) SQL_SUM_EXPR(col)
+#define SQL_SUM_RESULTADO(col, resultado) SQL_SUM(col) " AND resultado = " #resultado
+#define SQL_COUNT "SELECT COUNT(*)" SQL_FROM_PARTIDO
+#define SQL_COUNT_WHERE(condicion) SQL_COUNT " AND " condicion
+#define SQL_COUNT_DISTINCT(col) "SELECT COUNT(DISTINCT " col ")" SQL_FROM_PARTIDO
+#define SQL_AVG_X10(col) "SELECT ROUND(IFNULL(AVG(" col "), 0) * 10)" SQL_FROM_PARTIDO
+#define SQL_LAST(col) "SELECT IFNULL(" col ", 0)" SQL_FROM_PARTIDO " ORDER BY id DESC LIMIT 1"
+#define SQL_RACHA_MAX(resultado) "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY id) - ROW_NUMBER() OVER (PARTITION BY resultado ORDER BY id) as grp" SQL_FROM_PARTIDO ") WHERE resultado = " #resultado " GROUP BY grp ORDER BY COUNT(*) DESC LIMIT 1"
+
+#define LOGRO_QUERY(tipo, sql) {tipo, sql}
+
 static const LogroQuery LOGRO_QUERIES[] =
 {
-    {"goles", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ?"},
-    {"asistencias", "SELECT IFNULL(SUM(asistencias), 0) FROM partido WHERE camiseta_id = ?"},
-    {"partidos", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ?"},
-    {"goles+asistencias", "SELECT IFNULL(SUM(goles + asistencias), 0) FROM partido WHERE camiseta_id = ?"},
-    {"victorias", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND resultado = 1"},
-    {"empates", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND resultado = 2"},
-    {"derrotas", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND resultado = 3"},
-    {"rendimiento_general", "SELECT IFNULL(SUM(rendimiento_general), 0) FROM partido WHERE camiseta_id = ?"},
-    {"estado_animo", "SELECT IFNULL(SUM(estado_animo), 0) FROM partido WHERE camiseta_id = ?"},
-    {"canchas_distintas", "SELECT COUNT(DISTINCT cancha_id) FROM partido WHERE camiseta_id = ?"},
-    {"hat_tricks", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND goles >= 3"},
-    {"poker_asistencias", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND asistencias >= 4"},
-    {"rendimiento_perfecto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND rendimiento_general = 10"},
-    {"animo_perfecto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND estado_animo = 10"},
-    {"goles_victorias", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ? AND resultado = 1"},
-    {"asistencias_victorias", "SELECT IFNULL(SUM(asistencias), 0) FROM partido WHERE camiseta_id = ? AND resultado = 1"},
-    {"rendimiento_victorias", "SELECT IFNULL(SUM(rendimiento_general), 0) FROM partido WHERE camiseta_id = ? AND resultado = 1"},
-    {"animo_victorias", "SELECT IFNULL(SUM(estado_animo), 0) FROM partido WHERE camiseta_id = ? AND resultado = 1"},
-    {"goles_derrotas", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ? AND resultado = 3"},
-    {"asistencias_derrotas", "SELECT IFNULL(SUM(asistencias), 0) FROM partido WHERE camiseta_id = ? AND resultado = 3"},
-    {"rendimiento_empates", "SELECT IFNULL(SUM(rendimiento_general), 0) FROM partido WHERE camiseta_id = ? AND resultado = 2"},
-    {"animo_empates", "SELECT IFNULL(SUM(estado_animo), 0) FROM partido WHERE camiseta_id = ? AND resultado = 2"},
+    LOGRO_QUERY("goles", SQL_SUM("goles")),
+    LOGRO_QUERY("asistencias", SQL_SUM("asistencias")),
+    LOGRO_QUERY("partidos", SQL_COUNT),
+    LOGRO_QUERY("goles+asistencias", SQL_SUM_EXPR("goles + asistencias")),
+    LOGRO_QUERY("victorias", SQL_COUNT_WHERE("resultado = 1")),
+    LOGRO_QUERY("empates", SQL_COUNT_WHERE("resultado = 2")),
+    LOGRO_QUERY("derrotas", SQL_COUNT_WHERE("resultado = 3")),
+    LOGRO_QUERY("rendimiento_general", SQL_SUM("rendimiento_general")),
+    LOGRO_QUERY("estado_animo", SQL_SUM("estado_animo")),
+    LOGRO_QUERY("canchas_distintas", SQL_COUNT_DISTINCT("cancha_id")),
+    LOGRO_QUERY("hat_tricks", SQL_COUNT_WHERE("goles >= 3")),
+    LOGRO_QUERY("poker_asistencias", SQL_COUNT_WHERE("asistencias >= 4")),
+    LOGRO_QUERY("rendimiento_perfecto", SQL_COUNT_WHERE("rendimiento_general = 10")),
+    LOGRO_QUERY("animo_perfecto", SQL_COUNT_WHERE("estado_animo = 10")),
+    LOGRO_QUERY("goles_victorias", SQL_SUM_RESULTADO("goles", 1)),
+    LOGRO_QUERY("asistencias_victorias", SQL_SUM_RESULTADO("asistencias", 1)),
+    LOGRO_QUERY("rendimiento_victorias", SQL_SUM_RESULTADO("rendimiento_general", 1)),
+    LOGRO_QUERY("animo_victorias", SQL_SUM_RESULTADO("estado_animo", 1)),
+    LOGRO_QUERY("goles_derrotas", SQL_SUM_RESULTADO("goles", 3)),
+    LOGRO_QUERY("asistencias_derrotas", SQL_SUM_RESULTADO("asistencias", 3)),
+    LOGRO_QUERY("rendimiento_empates", SQL_SUM_RESULTADO("rendimiento_general", 2)),
+    LOGRO_QUERY("animo_empates", SQL_SUM_RESULTADO("estado_animo", 2)),
     // Nuevos tipos de logros
-    {"goles_empates", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ? AND resultado = 2"},
-    {"asistencias_empates", "SELECT IFNULL(SUM(asistencias), 0) FROM partido WHERE camiseta_id = ? AND resultado = 2"},
-    {"rendimiento_derrotas", "SELECT IFNULL(SUM(rendimiento_general), 0) FROM partido WHERE camiseta_id = ? AND resultado = 3"},
-    {"animo_derrotas", "SELECT IFNULL(SUM(estado_animo), 0) FROM partido WHERE camiseta_id = ? AND resultado = 3"},
-    {"partidos_sin_goles", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND goles = 0"},
-    {"partidos_sin_asistencias", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND asistencias = 0"},
-    {"partidos_con_goles", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND goles > 0"},
-    {"partidos_con_asistencias", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND asistencias > 0"},
-    {"partidos_con_contribucion", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND (goles > 0 OR asistencias > 0)"},
-    {"hat_tricks_dobles", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND goles >= 4"},
-    {"asistencias_dobles", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND asistencias >= 5"},
-    {"rendimiento_alto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND rendimiento_general >= 8"},
-    {"animo_alto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND estado_animo >= 8"},
-    {"rendimiento_bajo", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND rendimiento_general <= 3"},
-    {"animo_bajo", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND estado_animo <= 3"},
-    {"goles_por_partido_promedio", "SELECT ROUND(IFNULL(AVG(goles), 0) * 10) FROM partido WHERE camiseta_id = ?"},
-    {"asistencias_por_partido_promedio", "SELECT ROUND(IFNULL(AVG(asistencias), 0) * 10) FROM partido WHERE camiseta_id = ?"},
-    {"rendimiento_promedio", "SELECT ROUND(IFNULL(AVG(rendimiento_general), 0) * 10) FROM partido WHERE camiseta_id = ?"},
-    {"animo_promedio", "SELECT ROUND(IFNULL(AVG(estado_animo), 0) * 10) FROM partido WHERE camiseta_id = ?"},
-    {"partidos_con_rendimiento_alto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND rendimiento_general >= 9"},
-    {"partidos_con_animo_alto", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND estado_animo >= 9"},
-    {"partidos_con_rendimiento_perfecto_y_animo", "SELECT COUNT(*) FROM partido WHERE camiseta_id = ? AND rendimiento_general = 10 AND estado_animo = 10"},
-    {"goles_en_primer_tiempo", "SELECT IFNULL(SUM(goles), 0) FROM partido WHERE camiseta_id = ?"},
-    {"asistencias_en_segundo_tiempo", "SELECT IFNULL(SUM(asistencias), 0) FROM partido WHERE camiseta_id = ?"},
-    {"victorias_consecutivas_max", "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY id) - ROW_NUMBER() OVER (PARTITION BY resultado ORDER BY id) as grp FROM partido WHERE camiseta_id = ?) WHERE resultado = 1 GROUP BY grp ORDER BY COUNT(*) DESC LIMIT 1"},
-    {"derrotas_consecutivas_max", "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY id) - ROW_NUMBER() OVER (PARTITION BY resultado ORDER BY id) as grp FROM partido WHERE camiseta_id = ?) WHERE resultado = 3 GROUP BY grp ORDER BY COUNT(*) DESC LIMIT 1"},
-    {"empates_consecutivos_max", "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY id) - ROW_NUMBER() OVER (PARTITION BY resultado ORDER BY id) as grp FROM partido WHERE camiseta_id = ?) WHERE resultado = 2 GROUP BY grp ORDER BY COUNT(*) DESC LIMIT 1"},
-    {"goles_en_ultimo_partido", "SELECT IFNULL(goles, 0) FROM partido WHERE camiseta_id = ? ORDER BY id DESC LIMIT 1"},
-    {"asistencias_en_ultimo_partido", "SELECT IFNULL(asistencias, 0) FROM partido WHERE camiseta_id = ? ORDER BY id DESC LIMIT 1"},
-    {"rendimiento_en_ultimo_partido", "SELECT IFNULL(rendimiento_general, 0) FROM partido WHERE camiseta_id = ? ORDER BY id DESC LIMIT 1"},
-    {"animo_en_ultimo_partido", "SELECT IFNULL(estado_animo, 0) FROM partido WHERE camiseta_id = ? ORDER BY id DESC LIMIT 1"}
+    LOGRO_QUERY("goles_empates", SQL_SUM_RESULTADO("goles", 2)),
+    LOGRO_QUERY("asistencias_empates", SQL_SUM_RESULTADO("asistencias", 2)),
+    LOGRO_QUERY("rendimiento_derrotas", SQL_SUM_RESULTADO("rendimiento_general", 3)),
+    LOGRO_QUERY("animo_derrotas", SQL_SUM_RESULTADO("estado_animo", 3)),
+    LOGRO_QUERY("partidos_sin_goles", SQL_COUNT_WHERE("goles = 0")),
+    LOGRO_QUERY("partidos_sin_asistencias", SQL_COUNT_WHERE("asistencias = 0")),
+    LOGRO_QUERY("partidos_con_goles", SQL_COUNT_WHERE("goles > 0")),
+    LOGRO_QUERY("partidos_con_asistencias", SQL_COUNT_WHERE("asistencias > 0")),
+    LOGRO_QUERY("partidos_con_contribucion", SQL_COUNT_WHERE("(goles > 0 OR asistencias > 0)")),
+    LOGRO_QUERY("hat_tricks_dobles", SQL_COUNT_WHERE("goles >= 4")),
+    LOGRO_QUERY("asistencias_dobles", SQL_COUNT_WHERE("asistencias >= 5")),
+    LOGRO_QUERY("rendimiento_alto", SQL_COUNT_WHERE("rendimiento_general >= 8")),
+    LOGRO_QUERY("animo_alto", SQL_COUNT_WHERE("estado_animo >= 8")),
+    LOGRO_QUERY("rendimiento_bajo", SQL_COUNT_WHERE("rendimiento_general <= 3")),
+    LOGRO_QUERY("animo_bajo", SQL_COUNT_WHERE("estado_animo <= 3")),
+    LOGRO_QUERY("goles_por_partido_promedio", SQL_AVG_X10("goles")),
+    LOGRO_QUERY("asistencias_por_partido_promedio", SQL_AVG_X10("asistencias")),
+    LOGRO_QUERY("rendimiento_promedio", SQL_AVG_X10("rendimiento_general")),
+    LOGRO_QUERY("animo_promedio", SQL_AVG_X10("estado_animo")),
+    LOGRO_QUERY("partidos_con_rendimiento_alto", SQL_COUNT_WHERE("rendimiento_general >= 9")),
+    LOGRO_QUERY("partidos_con_animo_alto", SQL_COUNT_WHERE("estado_animo >= 9")),
+    LOGRO_QUERY("partidos_con_rendimiento_perfecto_y_animo", SQL_COUNT_WHERE("rendimiento_general = 10 AND estado_animo = 10")),
+    LOGRO_QUERY("goles_en_primer_tiempo", SQL_SUM("goles")),
+    LOGRO_QUERY("asistencias_en_segundo_tiempo", SQL_SUM("asistencias")),
+    LOGRO_QUERY("victorias_consecutivas_max", SQL_RACHA_MAX(1)),
+    LOGRO_QUERY("derrotas_consecutivas_max", SQL_RACHA_MAX(3)),
+    LOGRO_QUERY("empates_consecutivos_max", SQL_RACHA_MAX(2)),
+    LOGRO_QUERY("goles_en_ultimo_partido", SQL_LAST("goles")),
+    LOGRO_QUERY("asistencias_en_ultimo_partido", SQL_LAST("asistencias")),
+    LOGRO_QUERY("rendimiento_en_ultimo_partido", SQL_LAST("rendimiento_general")),
+    LOGRO_QUERY("animo_en_ultimo_partido", SQL_LAST("estado_animo"))
 };
+
+#undef LOGRO_QUERY
+#undef SQL_RACHA_MAX
+#undef SQL_LAST
+#undef SQL_AVG_X10
+#undef SQL_COUNT_DISTINCT
+#undef SQL_COUNT_WHERE
+#undef SQL_COUNT
+#undef SQL_SUM_RESULTADO
+#undef SQL_SUM
+#undef SQL_SUM_EXPR
+#undef SQL_FROM_PARTIDO
 
 #define NUM_QUERIES (sizeof(LOGRO_QUERIES) / sizeof(LogroQuery))
 
+#define LOGRO_ITEM(nombre, descripcion, objetivo, tipo) {nombre, descripcion, objetivo, tipo}
+
+#define LOGRO_SERIE_NIVELES_5(prefijo, accion, objeto, tipo, v1, v2, v3, v4, v5) \
+    LOGRO_ITEM(prefijo " Novato", accion " " #v1 " " objeto, v1, tipo),         \
+    LOGRO_ITEM(prefijo " Promedio", accion " " #v2 " " objeto, v2, tipo),        \
+    LOGRO_ITEM(prefijo " Experto", accion " " #v3 " " objeto, v3, tipo),         \
+    LOGRO_ITEM(prefijo " Maestro", accion " " #v4 " " objeto, v4, tipo),         \
+    LOGRO_ITEM(prefijo " Leyenda", accion " " #v5 " " objeto, v5, tipo)
+
+#define LOGRO_SERIE_NIVELES_4(prefijo, accion, objeto, tipo, v1, v2, v3, v4) \
+    LOGRO_ITEM(prefijo " Novato", accion " " #v1 " " objeto, v1, tipo),      \
+    LOGRO_ITEM(prefijo " Promedio", accion " " #v2 " " objeto, v2, tipo),     \
+    LOGRO_ITEM(prefijo " Experto", accion " " #v3 " " objeto, v3, tipo),      \
+    LOGRO_ITEM(prefijo " Maestro", accion " " #v4 " " objeto, v4, tipo)
+
+#define LOGRO_SERIE_NIVELES_3(prefijo, accion, objeto, tipo, v1, v2, v3) \
+    LOGRO_ITEM(prefijo " Novato", accion " " #v1 " " objeto, v1, tipo),    \
+    LOGRO_ITEM(prefijo " Promedio", accion " " #v2 " " objeto, v2, tipo),   \
+    LOGRO_ITEM(prefijo " Experto", accion " " #v3 " " objeto, v3, tipo)
+
+#define LOGRO_SERIE_NIVELES_2(prefijo, accion, objeto, tipo, v1, v2) \
+    LOGRO_ITEM(prefijo " Novato", accion " " #v1 " " objeto, v1, tipo), \
+    LOGRO_ITEM(prefijo " Promedio", accion " " #v2 " " objeto, v2, tipo)
+
+#define LOGRO_EXPERTO(nombre_base, descripcion, objetivo, tipo) LOGRO_ITEM(nombre_base " Experto", descripcion, objetivo, tipo)
+#define LOGRO_EXPERTA(nombre_base, descripcion, objetivo, tipo) LOGRO_ITEM(nombre_base " Experta", descripcion, objetivo, tipo)
+#define LOGRO_PAR(nombre1, desc1, obj1, nombre2, desc2, obj2, tipo) \
+    LOGRO_ITEM(nombre1, desc1, obj1, tipo),                         \
+    LOGRO_ITEM(nombre2, desc2, obj2, tipo)
+#define LOGRO_RACHAS(sufijo, objetivo)                                                                     \
+    LOGRO_ITEM("Racha de Victorias" sufijo, "Ganar " #objetivo " partidos consecutivos", objetivo, "victorias_consecutivas_max"), \
+    LOGRO_ITEM("Racha de Derrotas" sufijo, "Perder " #objetivo " partidos consecutivos", objetivo, "derrotas_consecutivas_max"),   \
+    LOGRO_ITEM("Racha de Empates" sufijo, "Empatar " #objetivo " partidos consecutivos", objetivo, "empates_consecutivos_max")
+
 static const Logro LOGROS[] =
 {
-    {"Primer Gol", "Anotar tu primer gol", 1, "goles"},
-    {"Goleador Novato", "Anotar 5 goles", 5, "goles"},
-    {"Goleador Promedio", "Anotar 10 goles", 10, "goles"},
-    {"Goleador Experto", "Anotar 25 goles", 25, "goles"},
-    {"Goleador Maestro", "Anotar 50 goles", 50, "goles"},
-    {"Goleador Leyenda", "Anotar 100 goles", 100, "goles"},
-    {"Primera Asistencia", "Dar tu primera asistencia", 1, "asistencias"},
-    {"Asistente Novato", "Dar 5 asistencias", 5, "asistencias"},
-    {"Asistente Promedio", "Dar 10 asistencias", 10, "asistencias"},
-    {"Asistente Experto", "Dar 25 asistencias", 25, "asistencias"},
-    {"Asistente Maestro", "Dar 50 asistencias", 50, "asistencias"},
-    {"Asistente Leyenda", "Dar 100 asistencias", 100, "asistencias"},
-    {"Debutante", "Jugar tu primer partido", 1, "partidos"},
-    {"Jugador Regular", "Jugar 5 partidos", 5, "partidos"},
-    {"Jugador Estrella", "Jugar 10 partidos", 10, "partidos"},
-    {"Jugador Veterano", "Jugar 25 partidos", 25, "partidos"},
-    {"Jugador Maestro", "Jugar 50 partidos", 50, "partidos"},
-    {"Jugador Leyenda", "Jugar 100 partidos", 100, "partidos"},
-    {"Contribuidor Novato", "Acumular 10 puntos (goles + asistencias)", 10, "goles+asistencias"},
-    {"Contribuidor Promedio", "Acumular 25 puntos (goles + asistencias)", 25, "goles+asistencias"},
-    {"Contribuidor Experto", "Acumular 50 puntos (goles + asistencias)", 50, "goles+asistencias"},
-    {"Contribuidor Maestro", "Acumular 100 puntos (goles + asistencias)", 100, "goles+asistencias"},
-    {"Contribuidor Leyenda", "Acumular 250 puntos (goles + asistencias)", 250, "goles+asistencias"},
+    LOGRO_ITEM("Primer Gol", "Anotar tu primer gol", 1, "goles"),
+    LOGRO_SERIE_NIVELES_5("Goleador", "Anotar", "goles", "goles", 5, 10, 25, 50, 100),
+    LOGRO_ITEM("Primera Asistencia", "Dar tu primera asistencia", 1, "asistencias"),
+    LOGRO_SERIE_NIVELES_5("Asistente", "Dar", "asistencias", "asistencias", 5, 10, 25, 50, 100),
+    LOGRO_ITEM("Debutante", "Jugar tu primer partido", 1, "partidos"),
+    LOGRO_ITEM("Jugador Regular", "Jugar 5 partidos", 5, "partidos"),
+    LOGRO_ITEM("Jugador Estrella", "Jugar 10 partidos", 10, "partidos"),
+    LOGRO_ITEM("Jugador Veterano", "Jugar 25 partidos", 25, "partidos"),
+    LOGRO_ITEM("Jugador Maestro", "Jugar 50 partidos", 50, "partidos"),
+    LOGRO_ITEM("Jugador Leyenda", "Jugar 100 partidos", 100, "partidos"),
+    LOGRO_SERIE_NIVELES_5("Contribuidor", "Acumular", "puntos (goles + asistencias)", "goles+asistencias", 10, 25, 50, 100, 250),
     // Victories
-    {"Primera Victoria", "Ganar tu primer partido", 1, "victorias"},
-    {"Ganador Novato", "Ganar 5 partidos", 5, "victorias"},
-    {"Ganador Promedio", "Ganar 10 partidos", 10, "victorias"},
-    {"Ganador Experto", "Ganar 25 partidos", 25, "victorias"},
-    {"Ganador Maestro", "Ganar 50 partidos", 50, "victorias"},
-    {"Ganador Leyenda", "Ganar 100 partidos", 100, "victorias"},
+    LOGRO_ITEM("Primera Victoria", "Ganar tu primer partido", 1, "victorias"),
+    LOGRO_SERIE_NIVELES_5("Ganador", "Ganar", "partidos", "victorias", 5, 10, 25, 50, 100),
     // Draws
-    {"Primer Empate", "Empatar tu primer partido", 1, "empates"},
-    {"Empatador Novato", "Empatar 5 partidos", 5, "empates"},
-    {"Empatador Promedio", "Empatar 10 partidos", 10, "empates"},
-    {"Empatador Experto", "Empatar 25 partidos", 25, "empates"},
-    {"Empatador Maestro", "Empatar 50 partidos", 50, "empates"},
-    {"Empatador Leyenda", "Empatar 100 partidos", 100, "empates"},
+    LOGRO_ITEM("Primer Empate", "Empatar tu primer partido", 1, "empates"),
+    LOGRO_SERIE_NIVELES_5("Empatador", "Empatar", "partidos", "empates", 5, 10, 25, 50, 100),
     // Losses
-    {"Primera Derrota", "Perder tu primer partido", 1, "derrotas"},
-    {"Perdedor Novato", "Perder 5 partidos", 5, "derrotas"},
-    {"Perdedor Promedio", "Perder 10 partidos", 10, "derrotas"},
-    {"Perdedor Experto", "Perder 25 partidos", 25, "derrotas"},
-    {"Perdedor Maestro", "Perder 50 partidos", 50, "derrotas"},
-    {"Perdedor Leyenda", "Perder 100 partidos", 100, "derrotas"},
+    LOGRO_ITEM("Primera Derrota", "Perder tu primer partido", 1, "derrotas"),
+    LOGRO_SERIE_NIVELES_5("Perdedor", "Perder", "partidos", "derrotas", 5, 10, 25, 50, 100),
     // General Performance
-    {"Rendimiento Inicial", "Acumular 10 puntos de rendimiento general", 10, "rendimiento_general"},
-    {"Rendimiento Novato", "Acumular 50 puntos de rendimiento general", 50, "rendimiento_general"},
-    {"Rendimiento Promedio", "Acumular 100 puntos de rendimiento general", 100, "rendimiento_general"},
-    {"Rendimiento Experto", "Acumular 250 puntos de rendimiento general", 250, "rendimiento_general"},
-    {"Rendimiento Maestro", "Acumular 500 puntos de rendimiento general", 500, "rendimiento_general"},
-    {"Rendimiento Leyenda", "Acumular 1000 puntos de rendimiento general", 1000, "rendimiento_general"},
+    LOGRO_ITEM("Rendimiento Inicial", "Acumular 10 puntos de rendimiento general", 10, "rendimiento_general"),
+    LOGRO_SERIE_NIVELES_5("Rendimiento", "Acumular", "puntos de rendimiento general", "rendimiento_general", 50, 100, 250, 500, 1000),
     // Mood
-    {"Animo Inicial", "Acumular 10 puntos de estado de Animo", 10, "estado_animo"},
-    {"Animo Novato", "Acumular 50 puntos de estado de Animo", 50, "estado_animo"},
-    {"Animo Promedio", "Acumular 100 puntos de estado de Animo", 100, "estado_animo"},
-    {"Animo Experto", "Acumular 250 puntos de estado de Animo", 250, "estado_animo"},
-    {"Animo Maestro", "Acumular 500 puntos de estado de Animo", 500, "estado_animo"},
-    {"Animo Leyenda", "Acumular 1000 puntos de estado de Animo", 1000, "estado_animo"},
+    LOGRO_ITEM("Animo Inicial", "Acumular 10 puntos de estado de Animo", 10, "estado_animo"),
+    LOGRO_SERIE_NIVELES_5("Animo", "Acumular", "puntos de estado de Animo", "estado_animo", 50, 100, 250, 500, 1000),
     // Distinct Pitches
-    {"Explorador de Canchas", "Jugar en 1 cancha distinta", 1, "canchas_distintas"},
-    {"Viajero Novato", "Jugar en 5 canchas distintas", 5, "canchas_distintas"},
-    {"Viajero Promedio", "Jugar en 10 canchas distintas", 10, "canchas_distintas"},
-    {"Viajero Experto", "Jugar en 25 canchas distintas", 25, "canchas_distintas"},
-    {"Viajero Maestro", "Jugar en 50 canchas distintas", 50, "canchas_distintas"},
+    LOGRO_ITEM("Explorador de Canchas", "Jugar en 1 cancha distinta", 1, "canchas_distintas"),
+    LOGRO_SERIE_NIVELES_4("Viajero", "Jugar en", "canchas distintas", "canchas_distintas", 5, 10, 25, 50),
     // Hat-Tricks
-    {"Primer Hat-Trick", "Anotar 3 o mas goles en un partido", 1, "hat_tricks"},
-    {"Hat-Tricker Novato", "Anotar 3 o mas goles en 5 partidos", 5, "hat_tricks"},
-    {"Hat-Tricker Promedio", "Anotar 3 o mas goles en 10 partidos", 10, "hat_tricks"},
-    {"Hat-Tricker Experto", "Anotar 3 o mas goles en 25 partidos", 25, "hat_tricks"},
+    LOGRO_ITEM("Primer Hat-Trick", "Anotar 3 o mas goles en un partido", 1, "hat_tricks"),
+    LOGRO_SERIE_NIVELES_3("Hat-Tricker", "Anotar 3 o mas goles en", "partidos", "hat_tricks", 5, 10, 25),
     // Poker Assists
-    {"Primer Poker de Asistencias", "Dar 4 o mas asistencias en un partido", 1, "poker_asistencias"},
-    {"Poker Asistente Novato", "Dar 4 o mas asistencias en 5 partidos", 5, "poker_asistencias"},
-    {"Poker Asistente Promedio", "Dar 4 o mas asistencias en 10 partidos", 10, "poker_asistencias"},
+    LOGRO_ITEM("Primer Poker de Asistencias", "Dar 4 o mas asistencias en un partido", 1, "poker_asistencias"),
+    LOGRO_SERIE_NIVELES_2("Poker Asistente", "Dar 4 o mas asistencias en", "partidos", "poker_asistencias", 5, 10),
     // Perfect Performance
-    {"Primer Rendimiento Perfecto", "Obtener rendimiento perfecto (10) en un partido", 1, "rendimiento_perfecto"},
-    {"Rendimiento Perfecto Novato", "Obtener rendimiento perfecto en 5 partidos", 5, "rendimiento_perfecto"},
-    {"Rendimiento Perfecto Promedio", "Obtener rendimiento perfecto en 10 partidos", 10, "rendimiento_perfecto"},
-    {"Rendimiento Perfecto Experto", "Obtener rendimiento perfecto en 25 partidos", 25, "rendimiento_perfecto"},
+    LOGRO_ITEM("Primer Rendimiento Perfecto", "Obtener rendimiento perfecto (10) en un partido", 1, "rendimiento_perfecto"),
+    LOGRO_SERIE_NIVELES_3("Rendimiento Perfecto", "Obtener rendimiento perfecto en", "partidos", "rendimiento_perfecto", 5, 10, 25),
     // Perfect Mood
-    {"Primer Animo Perfecto", "Obtener animo perfecto (10) en un partido", 1, "animo_perfecto"},
-    {"Animo Perfecto Novato", "Obtener animo perfecto en 5 partidos", 5, "animo_perfecto"},
-    {"Animo Perfecto Promedio", "Obtener animo perfecto en 10 partidos", 10, "animo_perfecto"},
-    {"Animo Perfecto Experto", "Obtener animo perfecto en 25 partidos", 25, "animo_perfecto"},
+    LOGRO_ITEM("Primer Animo Perfecto", "Obtener animo perfecto (10) en un partido", 1, "animo_perfecto"),
+    LOGRO_SERIE_NIVELES_3("Animo Perfecto", "Obtener animo perfecto en", "partidos", "animo_perfecto", 5, 10, 25),
     // Victory Achievements
-    {"Goleador Victorioso", "Anotar 10 goles en partidos ganados", 10, "goles_victorias"},
-    {"Asistente Victorioso", "Dar 10 asistencias en partidos ganados", 10, "asistencias_victorias"},
-    {"Rendimiento Victorioso", "Acumular 50 puntos de rendimiento en victorias", 50, "rendimiento_victorias"},
-    {"Animo Victorioso", "Acumular 50 puntos de animo en victorias", 50, "animo_victorias"},
+    LOGRO_ITEM("Goleador Victorioso", "Anotar 10 goles en partidos ganados", 10, "goles_victorias"),
+    LOGRO_ITEM("Asistente Victorioso", "Dar 10 asistencias en partidos ganados", 10, "asistencias_victorias"),
+    LOGRO_ITEM("Rendimiento Victorioso", "Acumular 50 puntos de rendimiento en victorias", 50, "rendimiento_victorias"),
+    LOGRO_ITEM("Animo Victorioso", "Acumular 50 puntos de animo en victorias", 50, "animo_victorias"),
     // Loss Achievements
-    {"Goleador en Derrotas", "Anotar 5 goles en partidos perdidos", 5, "goles_derrotas"},
-    {"Asistente en Derrotas", "Dar 5 asistencias en partidos perdidos", 5, "asistencias_derrotas"},
+    LOGRO_ITEM("Goleador en Derrotas", "Anotar 5 goles en partidos perdidos", 5, "goles_derrotas"),
+    LOGRO_ITEM("Asistente en Derrotas", "Dar 5 asistencias en partidos perdidos", 5, "asistencias_derrotas"),
     // Draw Achievements
-    {"Rendimiento en Empates", "Acumular 25 puntos de rendimiento en empates", 25, "rendimiento_empates"},
-    {"Animo en Empates", "Acumular 25 puntos de animo en empates", 25, "animo_empates"},
+    LOGRO_ITEM("Rendimiento en Empates", "Acumular 25 puntos de rendimiento en empates", 25, "rendimiento_empates"),
+    LOGRO_ITEM("Animo en Empates", "Acumular 25 puntos de animo en empates", 25, "animo_empates"),
     // Additional Achievements
-    {"Gol en Victoria", "Anotar en 5 partidos ganados", 5, "goles_victorias"},
-    {"Asistencia Clave", "Asistir en 5 partidos ganados", 5, "asistencias_victorias"},
-    {"Presente en la Derrota", "Anotar en 5 partidos perdidos", 5, "goles_derrotas"},
-    {"Asistencia en Derrota", "Asistir en 5 partidos perdidos", 5, "asistencias_derrotas"},
+    LOGRO_ITEM("Gol en Victoria", "Anotar en 5 partidos ganados", 5, "goles_victorias"),
+    LOGRO_ITEM("Asistencia Clave", "Asistir en 5 partidos ganados", 5, "asistencias_victorias"),
+    LOGRO_ITEM("Presente en la Derrota", "Anotar en 5 partidos perdidos", 5, "goles_derrotas"),
+    LOGRO_ITEM("Asistencia en Derrota", "Asistir en 5 partidos perdidos", 5, "asistencias_derrotas"),
     // New Achievements for Draws
-    {"Primer Gol en Empate", "Anotar tu primer gol en un empate", 1, "goles_empates"},
-    {"Goleador en Empates", "Anotar 5 goles en empates", 5, "goles_empates"},
-    {"Asistente en Empates", "Dar 5 asistencias en empates", 5, "asistencias_empates"},
-    {"Contribuidor en Empates", "Acumular 10 puntos en empates", 10, "goles_empates"},
+    LOGRO_ITEM("Primer Gol en Empate", "Anotar tu primer gol en un empate", 1, "goles_empates"),
+    LOGRO_ITEM("Goleador en Empates", "Anotar 5 goles en empates", 5, "goles_empates"),
+    LOGRO_ITEM("Asistente en Empates", "Dar 5 asistencias en empates", 5, "asistencias_empates"),
+    LOGRO_ITEM("Contribuidor en Empates", "Acumular 10 puntos en empates", 10, "goles_empates"),
     // New Achievements for Losses
-    {"Rendimiento en Derrotas", "Acumular 50 puntos de rendimiento en derrotas", 50, "rendimiento_derrotas"},
-    {"Animo en Derrotas", "Acumular 50 puntos de animo en derrotas", 50, "animo_derrotas"},
+    LOGRO_ITEM("Rendimiento en Derrotas", "Acumular 50 puntos de rendimiento en derrotas", 50, "rendimiento_derrotas"),
+    LOGRO_ITEM("Animo en Derrotas", "Acumular 50 puntos de animo en derrotas", 50, "animo_derrotas"),
     // No Contribution Achievements
-    {"Primer Partido Sin Goles", "Jugar un partido sin anotar", 1, "partidos_sin_goles"},
-    {"5 Partidos Sin Goles", "Jugar 5 partidos sin anotar", 5, "partidos_sin_goles"},
-    {"Primer Partido Sin Asistencias", "Jugar un partido sin asistir", 1, "partidos_sin_asistencias"},
-    {"5 Partidos Sin Asistencias", "Jugar 5 partidos sin asistir", 5, "partidos_sin_asistencias"},
+    LOGRO_PAR("Primer Partido Sin Goles", "Jugar un partido sin anotar", 1,
+              "5 Partidos Sin Goles", "Jugar 5 partidos sin anotar", 5,
+              "partidos_sin_goles"),
+    LOGRO_PAR("Primer Partido Sin Asistencias", "Jugar un partido sin asistir", 1,
+              "5 Partidos Sin Asistencias", "Jugar 5 partidos sin asistir", 5,
+              "partidos_sin_asistencias"),
     // Contribution Achievements
-    {"Primer Gol Anotado", "Anotar en un partido", 1, "partidos_con_goles"},
-    {"5 Partidos con Goles", "Anotar en 5 partidos", 5, "partidos_con_goles"},
-    {"Primer Asistencia Dada", "Asistir en un partido", 1, "partidos_con_asistencias"},
-    {"5 Partidos con Asistencias", "Asistir en 5 partidos", 5, "partidos_con_asistencias"},
-    {"Contribuidor Inicial", "Contribuir en un partido", 1, "partidos_con_contribucion"},
-    {"Contribuidor Regular", "Contribuir en 10 partidos", 10, "partidos_con_contribucion"},
+    LOGRO_PAR("Primer Gol Anotado", "Anotar en un partido", 1,
+              "5 Partidos con Goles", "Anotar en 5 partidos", 5,
+              "partidos_con_goles"),
+    LOGRO_PAR("Primer Asistencia Dada", "Asistir en un partido", 1,
+              "5 Partidos con Asistencias", "Asistir en 5 partidos", 5,
+              "partidos_con_asistencias"),
+    LOGRO_PAR("Contribuidor Inicial", "Contribuir en un partido", 1,
+              "Contribuidor Regular", "Contribuir en 10 partidos", 10,
+              "partidos_con_contribucion"),
     // Advanced Scoring
-    {"Primer Hat-Trick Doble", "Anotar 4 o mas goles en un partido", 1, "hat_tricks_dobles"},
-    {"Hat-Tricker Doble Novato", "Anotar 4 o mas goles en 3 partidos", 3, "hat_tricks_dobles"},
-    {"Primer Poker de Asistencias Doble", "Dar 5 o mas asistencias en un partido", 1, "asistencias_dobles"},
-    {"Poker Asistente Doble Novato", "Dar 5 o mas asistencias en 3 partidos", 3, "asistencias_dobles"},
+    LOGRO_PAR("Primer Hat-Trick Doble", "Anotar 4 o mas goles en un partido", 1,
+              "Hat-Tricker Doble Novato", "Anotar 4 o mas goles en 3 partidos", 3,
+              "hat_tricks_dobles"),
+    LOGRO_PAR("Primer Poker de Asistencias Doble", "Dar 5 o mas asistencias en un partido", 1,
+              "Poker Asistente Doble Novato", "Dar 5 o mas asistencias en 3 partidos", 3,
+              "asistencias_dobles"),
     // High Performance
-    {"Rendimiento Alto Inicial", "Obtener rendimiento >=8 en un partido", 1, "rendimiento_alto"},
-    {"Rendimiento Alto Regular", "Obtener rendimiento >=8 en 10 partidos", 10, "rendimiento_alto"},
-    {"Animo Alto Inicial", "Obtener animo >=8 en un partido", 1, "animo_alto"},
-    {"Animo Alto Regular", "Obtener animo >=8 en 10 partidos", 10, "animo_alto"},
+    LOGRO_PAR("Rendimiento Alto Inicial", "Obtener rendimiento >=8 en un partido", 1,
+              "Rendimiento Alto Regular", "Obtener rendimiento >=8 en 10 partidos", 10,
+              "rendimiento_alto"),
+    LOGRO_PAR("Animo Alto Inicial", "Obtener animo >=8 en un partido", 1,
+              "Animo Alto Regular", "Obtener animo >=8 en 10 partidos", 10,
+              "animo_alto"),
     // Low Performance
-    {"Rendimiento Bajo", "Obtener rendimiento <=3 en un partido", 1, "rendimiento_bajo"},
-    {"Animo Bajo", "Obtener animo <=3 en un partido", 1, "animo_bajo"},
+    LOGRO_ITEM("Rendimiento Bajo", "Obtener rendimiento <=3 en un partido", 1, "rendimiento_bajo"),
+    LOGRO_ITEM("Animo Bajo", "Obtener animo <=3 en un partido", 1, "animo_bajo"),
     // Average Achievements (Note: These use multiplied values, so objectives are *10)
-    {"Promedio Goleador", "Mantener promedio de 0.5 goles por partido", 5, "goles_por_partido_promedio"},
-    {"Promedio Asistente", "Mantener promedio de 0.5 asistencias por partido", 5, "asistencias_por_partido_promedio"},
-    {"Promedio Rendimiento Alto", "Mantener promedio de rendimiento >=7", 70, "rendimiento_promedio"},
-    {"Promedio Animo Alto", "Mantener promedio de animo >=7", 70, "animo_promedio"},
+    LOGRO_ITEM("Promedio Goleador", "Mantener promedio de 0.5 goles por partido", 5, "goles_por_partido_promedio"),
+    LOGRO_ITEM("Promedio Asistente", "Mantener promedio de 0.5 asistencias por partido", 5, "asistencias_por_partido_promedio"),
+    LOGRO_ITEM("Promedio Rendimiento Alto", "Mantener promedio de rendimiento >=7", 70, "rendimiento_promedio"),
+    LOGRO_ITEM("Promedio Animo Alto", "Mantener promedio de animo >=7", 70, "animo_promedio"),
     // Near Perfect
-    {"Rendimiento Cercano a Perfecto", "Obtener rendimiento >=9 en un partido", 1, "partidos_con_rendimiento_alto"},
-    {"Animo Cercano a Perfecto", "Obtener animo >=9 en un partido", 1, "partidos_con_animo_alto"},
-    {"Dia Perfecto", "Obtener rendimiento y animo perfectos en un partido", 1, "partidos_con_rendimiento_perfecto_y_animo"},
+    LOGRO_ITEM("Rendimiento Cercano a Perfecto", "Obtener rendimiento >=9 en un partido", 1, "partidos_con_rendimiento_alto"),
+    LOGRO_ITEM("Animo Cercano a Perfecto", "Obtener animo >=9 en un partido", 1, "partidos_con_animo_alto"),
+    LOGRO_ITEM("Dia Perfecto", "Obtener rendimiento y animo perfectos en un partido", 1, "partidos_con_rendimiento_perfecto_y_animo"),
     // Placeholder for time-based (since no time columns)
-    {"Goleador en Primer Tiempo", "Anotar 10 goles (simulado)", 10, "goles_en_primer_tiempo"},
-    {"Asistente en Segundo Tiempo", "Dar 10 asistencias (simulado)", 10, "asistencias_en_segundo_tiempo"},
+    LOGRO_ITEM("Goleador en Primer Tiempo", "Anotar 10 goles (simulado)", 10, "goles_en_primer_tiempo"),
+    LOGRO_ITEM("Asistente en Segundo Tiempo", "Dar 10 asistencias (simulado)", 10, "asistencias_en_segundo_tiempo"),
     // Streak Achievements (May not work with standard SQLite)
-    {"Racha de Victorias", "Ganar 3 partidos consecutivos", 3, "victorias_consecutivas_max"},
-    {"Racha de Derrotas", "Perder 3 partidos consecutivos", 3, "derrotas_consecutivas_max"},
-    {"Racha de Empates", "Empatar 3 partidos consecutivos", 3, "empates_consecutivos_max"},
+    LOGRO_RACHAS("", 3),
     // Last Match Achievements
-    {"Ultimo Gol", "Anotar en el ultimo partido", 1, "goles_en_ultimo_partido"},
-    {"ultima Asistencia", "Asistir en el ultimo partido", 1, "asistencias_en_ultimo_partido"},
-    {"Ultimo Rendimiento Perfecto", "Rendimiento perfecto en el ultimo partido", 10, "rendimiento_en_ultimo_partido"},
-    {"Ultimo Animo Perfecto", "Animo perfecto en el ultimo partido", 10, "animo_en_ultimo_partido"},
+    LOGRO_ITEM("Ultimo Gol", "Anotar en el ultimo partido", 1, "goles_en_ultimo_partido"),
+    LOGRO_ITEM("ultima Asistencia", "Asistir en el ultimo partido", 1, "asistencias_en_ultimo_partido"),
+    LOGRO_ITEM("Ultimo Rendimiento Perfecto", "Rendimiento perfecto en el ultimo partido", 10, "rendimiento_en_ultimo_partido"),
+    LOGRO_ITEM("Ultimo Animo Perfecto", "Animo perfecto en el ultimo partido", 10, "animo_en_ultimo_partido"),
     // More Tiered Achievements
-    {"Goleador en Empates Experto", "Anotar 10 goles en empates", 10, "goles_empates"},
-    {"Asistente en Empates Experto", "Dar 10 asistencias en empates", 10, "asistencias_empates"},
-    {"Rendimiento en Derrotas Experto", "Acumular 100 puntos de rendimiento en derrotas", 100, "rendimiento_derrotas"},
-    {"Animo en Derrotas Experto", "Acumular 100 puntos de animo en derrotas", 100, "animo_derrotas"},
-    {"10 Partidos Sin Goles", "Jugar 10 partidos sin anotar", 10, "partidos_sin_goles"},
-    {"10 Partidos Sin Asistencias", "Jugar 10 partidos sin asistir", 10, "partidos_sin_asistencias"},
-    {"10 Partidos con Goles", "Anotar en 10 partidos", 10, "partidos_con_goles"},
-    {"10 Partidos con Asistencias", "Asistir en 10 partidos", 10, "partidos_con_asistencias"},
-    {"Contribuidor Avanzado", "Contribuir en 25 partidos", 25, "partidos_con_contribucion"},
-    {"Hat-Tricker Doble Experto", "Anotar 4 o mas goles en 10 partidos", 10, "hat_tricks_dobles"},
-    {"Poker Asistente Doble Experto", "Dar 5 o mas asistencias en 10 partidos", 10, "asistencias_dobles"},
-    {"Rendimiento Alto Experto", "Obtener rendimiento >=8 en 25 partidos", 25, "rendimiento_alto"},
-    {"Animo Alto Experto", "Obtener animo >=8 en 25 partidos", 25, "animo_alto"},
-    {"Rendimiento Bajo Experto", "Obtener rendimiento <=3 en 5 partidos", 5, "rendimiento_bajo"},
-    {"Animo Bajo Experto", "Obtener animo <=3 en 5 partidos", 5, "animo_bajo"},
-    {"Promedio Goleador Experto", "Mantener promedio de 1 gol por partido", 10, "goles_por_partido_promedio"},
-    {"Promedio Asistente Experto", "Mantener promedio de 1 asistencia por partido", 10, "asistencias_por_partido_promedio"},
-    {"Rendimiento Cercano a Perfecto Experto", "Obtener rendimiento >=9 en 10 partidos", 10, "partidos_con_rendimiento_alto"},
-    {"Animo Cercano a Perfecto Experto", "Obtener animo >=9 en 10 partidos", 10, "partidos_con_animo_alto"},
-    {"Dia Perfecto Experto", "Obtener rendimiento y animo perfectos en 5 partidos", 5, "partidos_con_rendimiento_perfecto_y_animo"},
-    {"Racha de Victorias Experta", "Ganar 5 partidos consecutivos", 5, "victorias_consecutivas_max"},
-    {"Racha de Derrotas Experta", "Perder 5 partidos consecutivos", 5, "derrotas_consecutivas_max"},
-    {"Racha de Empates Experta", "Empatar 5 partidos consecutivos", 5, "empates_consecutivos_max"}
+    LOGRO_EXPERTO("Goleador en Empates", "Anotar 10 goles en empates", 10, "goles_empates"),
+    LOGRO_EXPERTO("Asistente en Empates", "Dar 10 asistencias en empates", 10, "asistencias_empates"),
+    LOGRO_EXPERTO("Rendimiento en Derrotas", "Acumular 100 puntos de rendimiento en derrotas", 100, "rendimiento_derrotas"),
+    LOGRO_EXPERTO("Animo en Derrotas", "Acumular 100 puntos de animo en derrotas", 100, "animo_derrotas"),
+    LOGRO_ITEM("10 Partidos Sin Goles", "Jugar 10 partidos sin anotar", 10, "partidos_sin_goles"),
+    LOGRO_ITEM("10 Partidos Sin Asistencias", "Jugar 10 partidos sin asistir", 10, "partidos_sin_asistencias"),
+    LOGRO_ITEM("10 Partidos con Goles", "Anotar en 10 partidos", 10, "partidos_con_goles"),
+    LOGRO_ITEM("10 Partidos con Asistencias", "Asistir en 10 partidos", 10, "partidos_con_asistencias"),
+    LOGRO_ITEM("Contribuidor Avanzado", "Contribuir en 25 partidos", 25, "partidos_con_contribucion"),
+    LOGRO_EXPERTO("Hat-Tricker Doble", "Anotar 4 o mas goles en 10 partidos", 10, "hat_tricks_dobles"),
+    LOGRO_EXPERTO("Poker Asistente Doble", "Dar 5 o mas asistencias en 10 partidos", 10, "asistencias_dobles"),
+    LOGRO_EXPERTO("Rendimiento Alto", "Obtener rendimiento >=8 en 25 partidos", 25, "rendimiento_alto"),
+    LOGRO_EXPERTO("Animo Alto", "Obtener animo >=8 en 25 partidos", 25, "animo_alto"),
+    LOGRO_EXPERTO("Rendimiento Bajo", "Obtener rendimiento <=3 en 5 partidos", 5, "rendimiento_bajo"),
+    LOGRO_EXPERTO("Animo Bajo", "Obtener animo <=3 en 5 partidos", 5, "animo_bajo"),
+    LOGRO_EXPERTO("Promedio Goleador", "Mantener promedio de 1 gol por partido", 10, "goles_por_partido_promedio"),
+    LOGRO_EXPERTO("Promedio Asistente", "Mantener promedio de 1 asistencia por partido", 10, "asistencias_por_partido_promedio"),
+    LOGRO_EXPERTO("Rendimiento Cercano a Perfecto", "Obtener rendimiento >=9 en 10 partidos", 10, "partidos_con_rendimiento_alto"),
+    LOGRO_EXPERTO("Animo Cercano a Perfecto", "Obtener animo >=9 en 10 partidos", 10, "partidos_con_animo_alto"),
+    LOGRO_EXPERTO("Dia Perfecto", "Obtener rendimiento y animo perfectos en 5 partidos", 5, "partidos_con_rendimiento_perfecto_y_animo"),
+    LOGRO_RACHAS(" Experta", 5)
 };
+
+#undef LOGRO_RACHAS
+#undef LOGRO_PAR
+#undef LOGRO_EXPERTA
+#undef LOGRO_EXPERTO
+#undef LOGRO_SERIE_NIVELES_2
+#undef LOGRO_SERIE_NIVELES_3
+#undef LOGRO_SERIE_NIVELES_4
+#undef LOGRO_SERIE_NIVELES_5
+#undef LOGRO_ITEM
 
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
@@ -300,31 +345,29 @@ static int calcular_estado_logro(int progreso, int objetivo)
 {
     if (progreso >= objetivo)
     {
-        return 2; // Completado
+        return LOGRO_ESTADO_COMPLETADO;
     }
     if (progreso > 0)
     {
-        return 1; // En progreso
+        return LOGRO_ESTADO_EN_PROGRESO;
     }
-    return 0; // No iniciado
+    return LOGRO_ESTADO_NO_INICIADO;
 }
 
 static int filtro_permite_estado(int filtro, int estado)
 {
-    if (filtro == 1)
+    switch ((LogroFiltro)filtro)
     {
-        return estado == 2; // Solo completados
+    case LOGRO_FILTRO_COMPLETADOS:
+        return estado == LOGRO_ESTADO_COMPLETADO;
+    case LOGRO_FILTRO_EN_PROGRESO:
+        return estado == LOGRO_ESTADO_EN_PROGRESO;
+    case LOGRO_FILTRO_NO_COMPLETADOS:
+        return estado != LOGRO_ESTADO_COMPLETADO;
+    case LOGRO_FILTRO_TODOS:
+    default:
+        return 1;
     }
-    if (filtro == 2)
-    {
-        return estado == 1; // Solo en progreso
-    }
-    if (filtro == 3)
-    {
-        return estado != 2; // Solo no completados
-    }
-
-    return 1; // Sin filtro
 }
 
 static int obtener_progreso_logro(int camiseta_id, const char *tipo)
@@ -354,17 +397,17 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
     const char *estado_texto;
     const char *color;
 
-    switch (estado)
+    switch ((LogroEstado)estado)
     {
-    case 0:
+    case LOGRO_ESTADO_NO_INICIADO:
         estado_texto = "[NO INICIADO]";
         color = "\x1b[31m"; // rojo
         break;
-    case 1:
+    case LOGRO_ESTADO_EN_PROGRESO:
         estado_texto = "[EN PROGRESO]";
         color = "\x1b[33m"; // amarillo
         break;
-    case 2:
+    case LOGRO_ESTADO_COMPLETADO:
         estado_texto = "[COMPLETADO]";
         color = "\x1b[32m"; // Verde
         break;
@@ -459,38 +502,45 @@ static void mostrar_logros_con_filtro(const char *titulo, int filtro)
     pause_console();
 }
 
+#define LOGROS_FILTROS(X)                                                                                         \
+    X(1, mostrar_todos_logros, "TODOS LOS LOGROS", LOGRO_FILTRO_TODOS, "Ver Todos los Logros")               \
+    X(2, mostrar_logros_completados, "LOGROS COMPLETADOS", LOGRO_FILTRO_COMPLETADOS, "Logros Completados")   \
+    X(3, mostrar_logros_en_progreso, "LOGROS EN PROGRESO", LOGRO_FILTRO_EN_PROGRESO, "Logros en Progreso")   \
+    X(4, mostrar_logros_no_completados, "LOGROS NO COMPLETADOS", LOGRO_FILTRO_NO_COMPLETADOS, "Logros No Completados")
+
 void mostrar_todos_logros()
 {
-    mostrar_logros_con_filtro("TODOS LOS LOGROS", 0);
+    mostrar_logros_con_filtro("TODOS LOS LOGROS", LOGRO_FILTRO_TODOS);
 }
 
 void mostrar_logros_completados()
 {
-    mostrar_logros_con_filtro("LOGROS COMPLETADOS", 1);
+    mostrar_logros_con_filtro("LOGROS COMPLETADOS", LOGRO_FILTRO_COMPLETADOS);
 }
 
 void mostrar_logros_en_progreso()
 {
-    mostrar_logros_con_filtro("LOGROS EN PROGRESO", 2);
+    mostrar_logros_con_filtro("LOGROS EN PROGRESO", LOGRO_FILTRO_EN_PROGRESO);
 }
 
 void mostrar_logros_no_completados()
 {
-    mostrar_logros_con_filtro("LOGROS NO COMPLETADOS", 3);
+    mostrar_logros_con_filtro("LOGROS NO COMPLETADOS", LOGRO_FILTRO_NO_COMPLETADOS);
 }
 
 void menu_logros()
 {
     MenuItem items[] =
     {
-        {1, "Ver Todos los Logros", mostrar_todos_logros},
-        {2, "Logros Completados", mostrar_logros_completados},
-        {3, "Logros en Progreso", mostrar_logros_en_progreso},
-        {4, "Logros No Completados", mostrar_logros_no_completados},
-        {0, "Volver", NULL}
+#define MENU_ITEM_LOGROS(id, fn, titulo, filtro, etiqueta) {id, etiqueta, fn},
+        LOGROS_FILTROS(MENU_ITEM_LOGROS)
+#undef MENU_ITEM_LOGROS
+        {
+            0, "Volver", NULL
+        }
     };
 
-    ejecutar_menu("LOGROS", items, 5);
+    ejecutar_menu("LOGROS", items, (int)(sizeof(items) / sizeof(items[0])));
 }
 
 int logros_get_total(void)
@@ -524,7 +574,7 @@ int logros_get_completados_primera_camiseta(void)
     for (size_t i = 0; i < NUM_LOGROS; i++)
     {
         int progreso = 0;
-        if (obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso) == 2)
+        if (obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso) == LOGRO_ESTADO_COMPLETADO)
         {
             completados++;
         }

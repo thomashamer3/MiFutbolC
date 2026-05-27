@@ -10,7 +10,7 @@
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -329,86 +329,41 @@ static const TextEntry text_entries[] =
     {NULL, NULL, NULL} // Terminador
 };
 
-static void ensure_settings_schema()
+static void settings_exec_ignore_error(const char *sql)
 {
     char *err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN mode INTEGER DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-        err = NULL;
-    }
-
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN text_size INTEGER DEFAULT 1;", NULL, NULL, &err);
+    sqlite3_exec(db, sql, NULL, NULL, &err);
     if (err)
     {
         sqlite3_free(err);
     }
+}
 
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';", NULL, NULL, &err);
-    if (err)
+static void ensure_settings_schema()
+{
+#define ALTER_SETTINGS_COLUMN(column_def) "ALTER TABLE settings ADD COLUMN " column_def ";"
+    const char *alter_statements[] =
     {
-        sqlite3_free(err);
-    }
+        ALTER_SETTINGS_COLUMN("mode INTEGER DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("text_size INTEGER DEFAULT 1"),
+        ALTER_SETTINGS_COLUMN("image_viewer TEXT DEFAULT ''"),
+        ALTER_SETTINGS_COLUMN("music_autoplay INTEGER DEFAULT 1"),
+        ALTER_SETTINGS_COLUMN("music_volume REAL DEFAULT 0.8"),
+        ALTER_SETTINGS_COLUMN("music_repeat_mode INTEGER DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("music_eq_enabled INTEGER DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("music_eq_bass_db REAL DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("music_eq_mid_db REAL DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("music_eq_treble_db REAL DEFAULT 0"),
+        ALTER_SETTINGS_COLUMN("music_volume_step REAL DEFAULT 0.1"),
+        NULL
+    };
 
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_autoplay INTEGER DEFAULT 1;", NULL, NULL, &err);
-    if (err)
+#undef ALTER_SETTINGS_COLUMN
+
+    for (int i = 0; alter_statements[i] != NULL; i++)
     {
-        sqlite3_free(err);
+        settings_exec_ignore_error(alter_statements[i]);
     }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_volume REAL DEFAULT 0.8;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_repeat_mode INTEGER DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_eq_enabled INTEGER DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_eq_bass_db REAL DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_eq_mid_db REAL DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_eq_treble_db REAL DEFAULT 0;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
-    sqlite3_exec(db, "ALTER TABLE settings ADD COLUMN music_volume_step REAL DEFAULT 0.1;", NULL, NULL, &err);
-    if (err)
-    {
-        sqlite3_free(err);
-    }
-
-    err = NULL;
 }
 
 static void settings_prompt_mode_selection(void)
@@ -785,210 +740,102 @@ const char* get_text(const char* key)
 }
 
 // Funciones wrapper para menu dinamico
-const char* get_menu_camisetas()
+static const char* get_menu_text_by_mode(const char *text_key,
+        const char *custom_menu_name,
+        int visible_simple,
+        int visible_advanced,
+        int visible_custom)
 {
     ModeType mode = settings_get_mode();
-    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
+
+    if ((visible_simple && mode == MODE_SIMPLE) ||
+            (visible_advanced && mode == MODE_ADVANCED))
     {
-        return get_text("menu_camisetas");
+        return get_text(text_key);
     }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("camisetas"))
+
+    if (visible_custom && mode == MODE_CUSTOM &&
+            custom_menu_name && is_custom_menu_enabled(custom_menu_name))
     {
-        return get_text("menu_camisetas");
+        return get_text(text_key);
     }
-    return NULL; // No mostrar en modo personalizado si no esta habilitado
+
+    return NULL;
+}
+
+const char* get_menu_camisetas()
+{
+    return get_menu_text_by_mode("menu_camisetas", "camisetas", 1, 1, 1);
 }
 
 const char* get_menu_canchas()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
-    {
-        return get_text("menu_canchas");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("canchas"))
-    {
-        return get_text("menu_canchas");
-    }
-    return NULL; // No mostrar en modo personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_canchas", "canchas", 1, 1, 1);
 }
 
 const char* get_menu_partidos()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
-    {
-        return get_text("menu_partidos");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("partidos"))
-    {
-        return get_text("menu_partidos");
-    }
-    return NULL; // No mostrar en modo personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_partidos", "partidos", 1, 1, 1);
 }
 
 const char* get_menu_equipos()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_equipos");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("equipos"))
-    {
-        return get_text("menu_equipos");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_equipos", "equipos", 0, 1, 1);
 }
 
 const char* get_menu_estadisticas()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_estadisticas");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("estadisticas"))
-    {
-        return get_text("menu_estadisticas");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_estadisticas", "estadisticas", 0, 1, 1);
 }
 
 const char* get_menu_logros()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_logros");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("logros"))
-    {
-        return get_text("menu_logros");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_logros", "logros", 0, 1, 1);
 }
 
 const char* get_menu_analisis()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_analisis");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("analisis"))
-    {
-        return get_text("menu_analisis");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_analisis", "analisis", 0, 1, 1);
 }
 
 const char* get_menu_bienestar()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_bienestar");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("bienestar"))
-    {
-        return get_text("menu_bienestar");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_bienestar", "bienestar", 0, 1, 1);
 }
 
 const char* get_menu_lesiones()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_SIMPLE || mode == MODE_ADVANCED)
-    {
-        return get_text("menu_lesiones");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("lesiones"))
-    {
-        return get_text("menu_lesiones");
-    }
-    return NULL; // No mostrar en modo personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_lesiones", "lesiones", 1, 1, 1);
 }
 
 const char* get_menu_financiamiento()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_financiamiento");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("financiamiento"))
-    {
-        return get_text("menu_financiamiento");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_financiamiento", "financiamiento", 0, 1, 1);
 }
 
 const char* get_menu_exportar()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_exportar");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("exportar"))
-    {
-        return get_text("menu_exportar");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_exportar", "exportar", 0, 1, 1);
 }
 
 const char* get_menu_importar()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_importar");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("importar"))
-    {
-        return get_text("menu_importar");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_importar", "importar", 0, 1, 1);
 }
 
 const char* get_menu_torneos()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_torneos");
-    }
-    return NULL; // No mostrar en modos simple y personalizado
+    return get_menu_text_by_mode("menu_torneos", NULL, 0, 1, 0);
 }
 
 const char* get_menu_temporada()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_temporada");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("temporada"))
-    {
-        return get_text("menu_temporada");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_temporada", "temporada", 0, 1, 1);
 }
 
 const char* get_menu_entrenador_ia()
 {
-    ModeType mode = settings_get_mode();
-    if (mode == MODE_ADVANCED)
-    {
-        return get_text("menu_entrenador_ia");
-    }
-    else if (mode == MODE_CUSTOM && is_custom_menu_enabled("entrenador_ia"))
-    {
-        return get_text("menu_entrenador_ia");
-    }
-    return NULL; // No mostrar en modo simple o personalizado si no esta habilitado
+    return get_menu_text_by_mode("menu_entrenador_ia", "entrenador_ia", 0, 1, 1);
 }
 
 const char* get_menu_settings()

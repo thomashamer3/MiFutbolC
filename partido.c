@@ -7,7 +7,6 @@
 #include "ascii_art.h"
 #include "entrenador_ia.h"
 #include "financiamiento.h"
-#include "settings.h"
 #include "random_utils.h"
 #include <stdio.h>
 #include <string.h>
@@ -151,7 +150,11 @@ static int obtener_hora_desde_fecha_hora(const char *fecha_hora, int *hora_out)
     }
     inicio_hora = separador ? (separador + 1) : fecha_hora;
 
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(inicio_hora, "%d:%d", &hora, &minuto) != 2)
+#else
     if (sscanf(inicio_hora, "%d:%d", &hora, &minuto) != 2)
+#endif
     {
         return 0;
     }

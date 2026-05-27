@@ -2,7 +2,6 @@
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
-#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -477,8 +476,7 @@ static void copiar_texto_limited(char *dest, size_t dest_size, const char *src)
         return;
     }
 
-    strncpy(dest, src, dest_size - 1);
-    dest[dest_size - 1] = '\0';
+    snprintf(dest, dest_size, "%s", src);
 }
 
 static void identidad_cargar_fila(sqlite3_stmt *stmt, CarreraIdentidad *identidad)
