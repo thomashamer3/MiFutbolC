@@ -673,7 +673,8 @@ static int apply_database_tuning()
     const char *pragma_statements[] =
     {
         "PRAGMA temp_store = MEMORY;",
-        "PRAGMA cache_size = -8192;",
+        "PRAGMA cache_size = -16384;",
+        "PRAGMA mmap_size = 67108864;",
         "PRAGMA automatic_index = ON;",
         NULL
     };
@@ -1491,6 +1492,9 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_carrera_hito_partido ON carrera_partido_hito(partido_id);",
         "CREATE INDEX IF NOT EXISTS idx_carrera_hito_tipo ON carrera_partido_hito(tipo_hito);",
         "CREATE INDEX IF NOT EXISTS idx_carrera_resumen_fecha ON carrera_resumen_narrativo(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_resultado ON partido(resultado);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON partido(camiseta_id);",
         NULL
     };
 

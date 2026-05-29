@@ -22,8 +22,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-#define MAX_CAMISETAS_SORTEO 150
-
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
 static void listar_camisetas_simple(void);
 static int cargar_imagen_para_camiseta_id(int id);
@@ -1693,43 +1691,6 @@ static void reiniciar_sorteo()
     printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
 }
 
-static int obtener_ids_disponibles(int ids[], int max)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id FROM camiseta WHERE sorteada = 0 AND IFNULL(activa, 1) = 1"))
-    {
-        return 0;
-    }
-
-    int i = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW && i < max)
-    {
-        ids[i++] = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return i;
-}
-
-
-
-static int seleccionar_id_aleatorio(const int ids[], int count)
-{
-    if (count <= 0)
-    {
-        return -1;
-    }
-
-    unsigned char rand_bytes[4];
-    if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
-    {
-        unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
-                         (rand_bytes[2] << 8) | rand_bytes[3];
-        return ids[r % count];
-    }
-
-    return ids[(unsigned int)(time(NULL) ^ clock()) % count];
-}
-
 static void marcar_camiseta_sorteada(int id)
 {
     sqlite3_stmt *stmt;
@@ -1774,11 +1735,19 @@ void sortear_camiseta()
         return;
     }
 
-    int ids[MAX_CAMISETAS_SORTEO];
-    int count = obtener_ids_disponibles(ids, MAX_CAMISETAS_SORTEO);
-    int seleccionado = seleccionar_id_aleatorio(ids, count);
+    sqlite3_stmt *stmt_sel;
+    if (!preparar_stmt(&stmt_sel,
+                       "SELECT id FROM camiseta WHERE sorteada = 0 AND IFNULL(activa, 1) = 1 ORDER BY RANDOM() LIMIT 1"))
+    {
+        printf("Error al seleccionar camiseta aleatoria.\n");
+        pause_console();
+        return;
+    }
+    int seleccionado = -1;
+    if (sqlite3_step(stmt_sel) == SQLITE_ROW)
+        seleccionado = sqlite3_column_int(stmt_sel, 0);
+    sqlite3_finalize(stmt_sel);
 
-    // Check if random selection failed
     if (seleccionado == -1)
     {
         printf("Error al seleccionar camiseta aleatoria.\n");

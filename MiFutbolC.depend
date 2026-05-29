@@ -84,7 +84,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1779923121 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1780079730 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"random_utils.h"
 	"db.h"
 	"settings.h"
@@ -106,7 +106,7 @@
 	"ShlObj.h"
 	<sys/stat.h>
 
-1778107703 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
+1779992363 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
 	<stddef.h>
 	"compat_port.h"
 	"sqlite3.h"
@@ -154,7 +154,7 @@
 	<io.h>
 	<process.h>
 
-1779922759 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1780081264 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -177,7 +177,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1779924796 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780081419 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -289,7 +289,7 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1776203261 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1779992365 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
 	"export_all_mejorado.h"
 	"export.h"
@@ -433,7 +433,7 @@
 	<stdio.h>
 	<string.h>
 
-1779772725 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
+1780081419 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
 	"estadisticas_generales.h"
 	"db.h"
 	"utils.h"
@@ -498,7 +498,7 @@
 	"direct.h"
 	<string.h>
 
-1776203261 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos.c
+1780081264 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos.c
 	"db.h"
 	"utils.h"
 	"cJSON.h"
@@ -542,7 +542,7 @@
 
 1779775737 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.h
 
-1779778301 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.c
+1780081264 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.c
 	"estadisticas_meta.h"
 	"db.h"
 	"utils.h"
@@ -2532,7 +2532,7 @@
 
 1778107725 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1779392177 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1780081419 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
 	"musica.h"
 	"musica_helpers.h"

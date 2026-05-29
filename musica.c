@@ -105,7 +105,8 @@ static ma_engine g_engine;
 static ma_sound g_sonido;
 static int g_engine_listo = 0;
 static int g_sonido_listo = 0;
-static Pista g_pistas[MAX_PISTAS];
+static Pista *g_pistas    = NULL;
+static int    g_cap_pistas = 0;
 static int g_num_pistas = 0;
 static int g_pista_actual = -1;
 static EstadoReproductor g_estado = ESTADO_DETENIDO;
@@ -150,6 +151,16 @@ static FadeAccion g_fade_accion = FADE_ACCION_NINGUNA;
 static int g_fade_indice_objetivo = -1;
 static int g_fade_reproducir_objetivo = 0;
 static ma_uint64 g_fade_deadline_ms = 0;
+
+static int pistas_grow(void)
+{
+    int new_cap = g_cap_pistas ? g_cap_pistas * 2 : 64;
+    Pista *p = realloc(g_pistas, (size_t)new_cap * sizeof(Pista));
+    if (!p) return 0;
+    g_pistas    = p;
+    g_cap_pistas = new_cap;
+    return 1;
+}
 
 static const char *musica_get_dir(void)
 {
@@ -290,12 +301,12 @@ static void escanear_directorio(void)
 
     do
     {
-        if (g_num_pistas >= MAX_PISTAS)
-            break;
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             continue;
         if (!musica_es_audio_soportado(fd.cFileName))
             continue;
+        if (g_num_pistas >= g_cap_pistas && !pistas_grow())
+            break;
 
         snprintf(g_pistas[g_num_pistas].nombre,
                  MAX_NOMBRE, "%s", fd.cFileName);
@@ -312,10 +323,12 @@ static void escanear_directorio(void)
         return;
 
     struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL && g_num_pistas < MAX_PISTAS)
+    while ((entry = readdir(dir)) != NULL)
     {
         if (!musica_es_audio_soportado(entry->d_name))
             continue;
+        if (g_num_pistas >= g_cap_pistas && !pistas_grow())
+            break;
         snprintf(g_pistas[g_num_pistas].nombre,
                  MAX_NOMBRE, "%s", entry->d_name);
         snprintf(g_pistas[g_num_pistas].ruta,
@@ -928,7 +941,12 @@ static void mostrar_lista_pistas(void)
         return;
     }
 
-    int indices[MAX_PISTAS];
+    int *indices = malloc((size_t)g_num_pistas * sizeof(int));
+    if (!indices)
+    {
+        pause_console();
+        return;
+    }
     int visibles = 0;
     for (int i = 0; i < g_num_pistas; i++)
     {
@@ -946,15 +964,20 @@ static void mostrar_lista_pistas(void)
     if (visibles == 0)
     {
         ui_printf("  No hay pistas que coincidan con el filtro actual.\n");
+        free(indices);
         pause_console();
         return;
     }
 
     int seleccion = input_int("  Seleccione pista (0 para cancelar): ");
     if (seleccion <= 0 || seleccion > visibles)
+    {
+        free(indices);
         return;
+    }
 
     cambiar_pista_con_fade(indices[seleccion - 1]);
+    free(indices);
 }
 
 static void buscar_pista_por_nombre_menu(void)
@@ -1731,7 +1754,7 @@ static int construir_lista_temas_seleccionados(const int seleccionadas[],
     int n = 0;
     for (int i = 0; i < g_num_pistas; i++)
     {
-        if (n >= MAX_PISTAS)
+        if (n >= g_num_pistas)
             break;
         if (!seleccionadas[i])
             continue;
@@ -1762,7 +1785,7 @@ static void editar_playlist_agregar_tema(char temas[][MAX_NOMBRE], int *n)
         pause_console();
         return;
     }
-    if (*n >= MAX_PISTAS)
+    if (*n >= g_num_pistas)
     {
         ui_printf("  La playlist ya alcanzo el maximo de temas.\n");
         pause_console();
@@ -1851,7 +1874,12 @@ static void guardar_playlist(void)
         return;
     }
 
-    int seleccionadas[MAX_PISTAS] = {0};
+    int *seleccionadas = calloc((size_t)g_num_pistas, sizeof(int));
+    if (!seleccionadas)
+    {
+        pause_console();
+        return;
+    }
     int total_sel = 0;
     int listo_para_guardar = 0;
 
@@ -1864,6 +1892,7 @@ static void guardar_playlist(void)
         if (estado == -1)
         {
             ui_printf("  Operacion cancelada.\n");
+            free(seleccionadas);
             pause_console();
             return;
         }
@@ -1877,27 +1906,48 @@ static void guardar_playlist(void)
             listo_para_guardar = 1;
     }
 
-    char temas[MAX_PISTAS][MAX_NOMBRE];
+    char (*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
+    if (!temas)
+    {
+        free(seleccionadas);
+        pause_console();
+        return;
+    }
     int n = construir_lista_temas_seleccionados(seleccionadas, temas);
+    free(seleccionadas);
 
     if (!guardar_nombres_playlist(nombre, temas, n))
     {
         ui_printf("  Error: no se pudo guardar la playlist.\n");
+        free(temas);
         pause_console();
         return;
     }
 
     ui_printf("  Playlist guardada: %s (%d pista/s)\n", nombre, n);
+    free(temas);
     pause_console();
 }
 
 static void editar_playlist_archivo(const char *nombre_txt)
 {
-    char temas[MAX_PISTAS][MAX_NOMBRE];
-    int n = cargar_nombres_playlist(nombre_txt, temas, MAX_PISTAS);
+    if (g_num_pistas <= 0)
+    {
+        pause_console();
+        return;
+    }
+    char (*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
+    if (!temas)
+    {
+        pause_console();
+        return;
+    }
+
+    int n = cargar_nombres_playlist(nombre_txt, temas, g_num_pistas);
     if (n < 0)
     {
         ui_printf("  Error: no se pudo abrir '%s'.\n", nombre_txt);
+        free(temas);
         pause_console();
         return;
     }
@@ -1936,6 +1986,7 @@ static void editar_playlist_archivo(const char *nombre_txt)
             break;
         }
     }
+    free(temas);
 }
 
 /** Carga una playlist .txt: sustituye g_pistas con los archivos listados
@@ -1965,8 +2016,7 @@ static void cargar_playlist_archivo(const char *nombre_txt)
 
     char linea[MAX_NOMBRE];
     int  cargadas = 0;
-    while (fgets(linea, (int)sizeof(linea), f) != NULL &&
-            cargadas < MAX_PISTAS)
+    while (fgets(linea, (int)sizeof(linea), f) != NULL)
     {
         /* Quitar salto de linea */
         size_t ln = strlen_s(linea, sizeof(linea));
@@ -2002,6 +2052,8 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         if (!chk) continue;
         fclose(chk);
 
+        if (cargadas >= g_cap_pistas && !pistas_grow())
+            break;
         snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%.*s", MAX_NOMBRE - 1, linea);
         snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%.*s", MAX_RUTA - 1, ruta_audio);
         cargadas++;

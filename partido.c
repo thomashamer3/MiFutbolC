@@ -361,11 +361,81 @@ typedef struct
     int dia;
     char tag[64];
     int solo_favoritos;
+    int presencia_flags;
 } PartidoListadoFiltros;
+
+#define PARTIDO_PRESENCIA_TODOS      0
+#define PARTIDO_PRESENCIA_CON_DATOS  1
+#define PARTIDO_PRESENCIA_SIN_DATOS  2
+#define PARTIDO_PRESENCIA_GOLES_MASK 0x03
+#define PARTIDO_PRESENCIA_ASIST_MASK 0x0C
+
+static int partido_listado_get_modo_presencia_goles(const PartidoListadoFiltros *filtros)
+{
+    return filtros ? (filtros->presencia_flags & PARTIDO_PRESENCIA_GOLES_MASK) : PARTIDO_PRESENCIA_TODOS;
+}
+
+static int partido_listado_get_modo_presencia_asistencias(const PartidoListadoFiltros *filtros)
+{
+    return filtros ? ((filtros->presencia_flags & PARTIDO_PRESENCIA_ASIST_MASK) >> 2) : PARTIDO_PRESENCIA_TODOS;
+}
+
+static void partido_listado_set_modo_presencia_goles(PartidoListadoFiltros *filtros, int modo)
+{
+    if (!filtros)
+    {
+        return;
+    }
+
+    filtros->presencia_flags &= ~PARTIDO_PRESENCIA_GOLES_MASK;
+    filtros->presencia_flags |= (modo & PARTIDO_PRESENCIA_GOLES_MASK);
+}
+
+static void partido_listado_set_modo_presencia_asistencias(PartidoListadoFiltros *filtros, int modo)
+{
+    if (!filtros)
+    {
+        return;
+    }
+
+    filtros->presencia_flags &= ~PARTIDO_PRESENCIA_ASIST_MASK;
+    filtros->presencia_flags |= ((modo & PARTIDO_PRESENCIA_GOLES_MASK) << 2);
+}
+
+static const char *partido_listado_texto_presencia_goles(int modo)
+{
+    switch (modo)
+    {
+    case PARTIDO_PRESENCIA_CON_DATOS:
+        return "Con goles";
+    case PARTIDO_PRESENCIA_SIN_DATOS:
+        return "Sin goles";
+    default:
+        return "Todos";
+    }
+}
+
+static const char *partido_listado_texto_presencia_asistencias(int modo)
+{
+    switch (modo)
+    {
+    case PARTIDO_PRESENCIA_CON_DATOS:
+        return "Con asistencias";
+    case PARTIDO_PRESENCIA_SIN_DATOS:
+        return "Sin asistencias";
+    default:
+        return "Todos";
+    }
+}
 
 static int partido_listado_paginacion_es_valida(int valor)
 {
-    return valor >= 5 && valor <= 50 && (valor % 5) == 0;
+    return valor == 0 || (valor >= 5 && valor <= 50 && (valor % 5) == 0);
+}
+
+static const char *partido_listado_texto_paginacion(int valor)
+{
+    return (valor == 0) ? "Todos" : "Por paginas";
 }
 
 static void partido_listado_init_config_table(void)
@@ -461,6 +531,7 @@ static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
     filtros->dia = -1;
     filtros->tag[0] = '\0';
     filtros->solo_favoritos = 0;
+    filtros->presencia_flags = 0;
 }
 
 static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
@@ -523,6 +594,9 @@ static void partido_listado_append_filtros_identidad(const PartidoListadoFiltros
 
 static void partido_listado_append_filtros_rendimiento(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
 {
+    int modo_goles = partido_listado_get_modo_presencia_goles(filtros);
+    int modo_asistencias = partido_listado_get_modo_presencia_asistencias(filtros);
+
     if (filtros->goles_min >= 0)
     {
         partido_listado_append_clause(where_clause, where_size, " AND p.goles >= ?");
@@ -541,6 +615,24 @@ static void partido_listado_append_filtros_rendimiento(const PartidoListadoFiltr
     if (filtros->asistencias_max >= 0)
     {
         partido_listado_append_clause(where_clause, where_size, " AND p.asistencias <= ?");
+    }
+
+    if (modo_goles == PARTIDO_PRESENCIA_CON_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.goles, 0) > 0");
+    }
+    else if (modo_goles == PARTIDO_PRESENCIA_SIN_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.goles, 0) = 0");
+    }
+
+    if (modo_asistencias == PARTIDO_PRESENCIA_CON_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.asistencias, 0) > 0");
+    }
+    else if (modo_asistencias == PARTIDO_PRESENCIA_SIN_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.asistencias, 0) = 0");
     }
 
     if (filtros->precio_min >= 0)
@@ -761,7 +853,12 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual,
         return 0;
     }
 
-    if (orden_desc)
+    if (partidos_por_pagina == 0)
+    {
+        limite = total_partidos;
+        offset = 0;
+    }
+    else if (orden_desc)
     {
         offset = (pagina_actual - 1) * partidos_por_pagina;
     }
@@ -807,16 +904,24 @@ static const char *partido_listado_texto_tipo(int tipo_partido)
 
 static int partido_listado_contar_filtros_activos(const PartidoListadoFiltros *filtros)
 {
+    int modo_goles;
+    int modo_asistencias;
+
     if (!filtros)
     {
         return 0;
     }
+
+    modo_goles = partido_listado_get_modo_presencia_goles(filtros);
+    modo_asistencias = partido_listado_get_modo_presencia_asistencias(filtros);
 
     return (filtros->cancha_id > 0) +
            (filtros->camiseta_id > 0) +
            (filtros->tipo_partido >= 1 && filtros->tipo_partido <= 3) +
            (filtros->goles_min >= 0 || filtros->goles_max >= 0) +
            (filtros->asistencias_min >= 0 || filtros->asistencias_max >= 0) +
+           (modo_goles != PARTIDO_PRESENCIA_TODOS) +
+           (modo_asistencias != PARTIDO_PRESENCIA_TODOS) +
            (filtros->precio_min >= 0 || filtros->precio_max >= 0) +
            (filtros->rendimiento_min >= 0 || filtros->rendimiento_max >= 0) +
            (filtros->cansancio_min >= 0 || filtros->cansancio_max >= 0) +
@@ -836,13 +941,21 @@ static int partido_listado_menu_paginacion(int valor_actual)
     {
         clear_screen();
         print_header("PAGINACION");
-        ui_printf_centered_line("Actual: %d partidos por pagina", valor_actual);
+        if (valor_actual == 0)
+        {
+            ui_printf_centered_line("Actual: Todos los partidos");
+        }
+        else
+        {
+            ui_printf_centered_line("Actual: %d partidos por pagina", valor_actual);
+        }
         ui_printf_centered_line("Seleccione un nuevo valor:");
 
         for (int i = 0; i < cantidad_opciones; i++)
         {
             ui_printf_centered_line("%d) %d partidos", i + 1, opciones[i]);
         }
+        ui_printf_centered_line("%d) Todos", cantidad_opciones + 1);
         ui_printf_centered_line("0) Volver");
 
         int opcion = input_int("Opcion: ");
@@ -854,6 +967,11 @@ static int partido_listado_menu_paginacion(int valor_actual)
         if (opcion >= 1 && opcion <= cantidad_opciones)
         {
             return opciones[opcion - 1];
+        }
+
+        if (opcion == cantidad_opciones + 1)
+        {
+            return 0;
         }
 
         ui_printf_centered_line("Opcion invalida.");
@@ -924,7 +1042,12 @@ static int partido_listado_pedir_opcional_menos1_todos(const char *prompt, int m
     return valor;
 }
 
-static void partido_listado_configurar_rango(const char *nombre, int min, int max, int *min_out, int *max_out)
+static void partido_listado_configurar_rango(const char *nombre,
+        int min,
+        int max,
+        int max_span,
+        int *min_out,
+        int *max_out)
 {
     char prompt_min[128];
     char prompt_max[128];
@@ -939,14 +1062,26 @@ static void partido_listado_configurar_rango(const char *nombre, int min, int ma
     snprintf(prompt_min, sizeof(prompt_min), "%s minimo (-1 sin filtro): ", nombre);
     snprintf(prompt_max, sizeof(prompt_max), "%s maximo (-1 sin filtro): ", nombre);
 
-    min_val = partido_listado_pedir_opcional_menos1_todos(prompt_min, min, max);
-    max_val = partido_listado_pedir_opcional_menos1_todos(prompt_max, min, max);
-
-    if (min_val >= 0 && max_val >= 0 && max_val < min_val)
+    while (1)
     {
-        int tmp = min_val;
-        min_val = max_val;
-        max_val = tmp;
+        min_val = partido_listado_pedir_opcional_menos1_todos(prompt_min, min, max);
+        max_val = partido_listado_pedir_opcional_menos1_todos(prompt_max, min, max);
+
+        if (min_val >= 0 && max_val >= 0 && max_val < min_val)
+        {
+            int tmp = min_val;
+            min_val = max_val;
+            max_val = tmp;
+        }
+
+        if (max_span > 0 && min_val >= 0 && max_val >= 0 && (max_val - min_val) > max_span)
+        {
+            ui_printf_centered_line("El rango de %s no puede superar %d.", nombre, max_span);
+            pause_console();
+            continue;
+        }
+
+        break;
     }
 
     *min_out = min_val;
@@ -1025,11 +1160,16 @@ static void partido_listado_mostrar_opciones_franja(void)
     ui_printf_centered_line("4=Tarde, 5=Atardecer, 6=Noche");
 }
 
-static void partido_listado_mostrar_ayuda_rango(const char *nombre, int min, int max)
+static void partido_listado_mostrar_ayuda_rango(const char *nombre, int min, int max, int max_span)
 {
     ui_printf_centered_line("%s: ingrese MIN y MAX", nombre);
     ui_printf_centered_line("Use -1 para dejar sin filtro");
     ui_printf_centered_line("Rango permitido: %d a %d", min, max);
+
+    if (max_span > 0)
+    {
+        ui_printf_centered_line("Diferencia maxima entre MIN y MAX: %d", max_span);
+    }
 }
 
 static void partido_listado_mostrar_ayuda_tag(void)
@@ -1072,6 +1212,8 @@ static void partido_listado_imprimir_resumen_rango(const char *label, int min_va
 static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros *filtros)
 {
     char tag_mostrar[64];
+    int modo_goles = partido_listado_get_modo_presencia_goles(filtros);
+    int modo_asistencias = partido_listado_get_modo_presencia_asistencias(filtros);
 
     if (filtros->cancha_id > 0)
     {
@@ -1121,6 +1263,8 @@ static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros
     ui_printf_centered_line("12) Tag contiene: %s", tag_mostrar);
     ui_printf_centered_line("13) Solo favoritos: %s", filtros->solo_favoritos ? "Si" : "No");
     ui_printf_centered_line("14) Limpiar filtros");
+    ui_printf_centered_line("15) Presencia de goles: %s", partido_listado_texto_presencia_goles(modo_goles));
+    ui_printf_centered_line("16) Presencia de asistencias: %s", partido_listado_texto_presencia_asistencias(modo_asistencias));
 }
 
 static int partido_listado_aplicar_opcion_filtro_identidad(PartidoListadoFiltros *filtros, int opcion)
@@ -1154,28 +1298,28 @@ static int partido_listado_aplicar_opcion_filtro_rango(PartidoListadoFiltros *fi
     switch (opcion)
     {
     case 4:
-        partido_listado_mostrar_ayuda_rango("Goles", 0, 200);
-        partido_listado_configurar_rango("Goles", 0, 200, &filtros->goles_min, &filtros->goles_max);
+        partido_listado_mostrar_ayuda_rango("Goles", 0, 10, 0);
+        partido_listado_configurar_rango("Goles", 0, 10, 0, &filtros->goles_min, &filtros->goles_max);
         return 1;
     case 5:
-        partido_listado_mostrar_ayuda_rango("Asistencias", 0, 200);
-        partido_listado_configurar_rango("Asistencias", 0, 200, &filtros->asistencias_min, &filtros->asistencias_max);
+        partido_listado_mostrar_ayuda_rango("Asistencias", 0, 10, 0);
+        partido_listado_configurar_rango("Asistencias", 0, 10, 0, &filtros->asistencias_min, &filtros->asistencias_max);
         return 1;
     case 6:
-        partido_listado_mostrar_ayuda_rango("Precio", 0, 100000000);
-        partido_listado_configurar_rango("Precio", 0, 100000000, &filtros->precio_min, &filtros->precio_max);
+        partido_listado_mostrar_ayuda_rango("Precio", 0, 1000000, 0);
+        partido_listado_configurar_rango("Precio", 0, 1000000, 0, &filtros->precio_min, &filtros->precio_max);
         return 1;
     case 7:
-        partido_listado_mostrar_ayuda_rango("Rendimiento", 0, 10);
-        partido_listado_configurar_rango("Rendimiento", 0, 10, &filtros->rendimiento_min, &filtros->rendimiento_max);
+        partido_listado_mostrar_ayuda_rango("Rendimiento", 0, 10, 0);
+        partido_listado_configurar_rango("Rendimiento", 0, 10, 0, &filtros->rendimiento_min, &filtros->rendimiento_max);
         return 1;
     case 8:
-        partido_listado_mostrar_ayuda_rango("Cansancio", 0, 10);
-        partido_listado_configurar_rango("Cansancio", 0, 10, &filtros->cansancio_min, &filtros->cansancio_max);
+        partido_listado_mostrar_ayuda_rango("Cansancio", 0, 10, 0);
+        partido_listado_configurar_rango("Cansancio", 0, 10, 0, &filtros->cansancio_min, &filtros->cansancio_max);
         return 1;
     case 9:
-        partido_listado_mostrar_ayuda_rango("Estado de animo", 0, 10);
-        partido_listado_configurar_rango("Estado de animo", 0, 10, &filtros->estado_animo_min, &filtros->estado_animo_max);
+        partido_listado_mostrar_ayuda_rango("Estado de animo", 0, 10, 0);
+        partido_listado_configurar_rango("Estado de animo", 0, 10, 0, &filtros->estado_animo_min, &filtros->estado_animo_max);
         return 1;
     default:
         return 0;
@@ -1184,6 +1328,8 @@ static int partido_listado_aplicar_opcion_filtro_rango(PartidoListadoFiltros *fi
 
 static int partido_listado_aplicar_opcion_filtro_extra(PartidoListadoFiltros *filtros, int opcion)
 {
+    int modo;
+
     switch (opcion)
     {
     case 10:
@@ -1205,6 +1351,14 @@ static int partido_listado_aplicar_opcion_filtro_extra(PartidoListadoFiltros *fi
         return 1;
     case 14:
         partido_listado_limpiar_filtros(filtros);
+        return 1;
+    case 15:
+        modo = (partido_listado_get_modo_presencia_goles(filtros) + 1) % 3;
+        partido_listado_set_modo_presencia_goles(filtros, modo);
+        return 1;
+    case 16:
+        modo = (partido_listado_get_modo_presencia_asistencias(filtros) + 1) % 3;
+        partido_listado_set_modo_presencia_asistencias(filtros, modo);
         return 1;
     default:
         return 0;
@@ -2516,10 +2670,14 @@ void listar_partidos()
     while (1)
     {
         int total_partidos = partido_listado_contar_total(&filtros);
-        int total_paginas = (total_partidos > 0)
-                            ? ((total_partidos + partidos_por_pagina - 1) / partidos_por_pagina)
-                            : 1;
+        int total_paginas = 1;
         int hay = 0;
+        int paginacion_todos = (partidos_por_pagina == 0);
+
+        if (partidos_por_pagina > 0 && total_partidos > 0)
+        {
+            total_paginas = (total_partidos + partidos_por_pagina - 1) / partidos_por_pagina;
+        }
 
         if (pagina_actual > total_paginas)
         {
@@ -2533,7 +2691,14 @@ void listar_partidos()
         clear_screen();
         print_header("LISTADO DE PARTIDOS");
         ui_printf_centered_line("Pagina %d de %d | Total: %d partidos", pagina_actual, total_paginas, total_partidos);
-        ui_printf_centered_line("Paginacion: %d por pagina", partidos_por_pagina);
+        if (partidos_por_pagina == 0)
+        {
+            ui_printf_centered_line("Paginacion: %s", partido_listado_texto_paginacion(partidos_por_pagina));
+        }
+        else
+        {
+            ui_printf_centered_line("Paginacion: %d por pagina", partidos_por_pagina);
+        }
         ui_printf_centered_line("Orden: %s", partido_listado_texto_orden(orden_desc));
         ui_printf_centered_line("Filtros activos: %d", partido_listado_contar_filtros_activos(&filtros));
         ui_printf_centered_line("----------------------------------------");
@@ -2553,15 +2718,25 @@ void listar_partidos()
         }
 
         ui_printf_centered_line("----------------------------------------");
-        ui_printf_centered_line("1) Pagina anterior");
-        ui_printf_centered_line("2) Pagina siguiente");
-        ui_printf_centered_line("3) Ir a pagina");
+        if (!paginacion_todos)
+        {
+            ui_printf_centered_line("1) Pagina anterior");
+            ui_printf_centered_line("2) Pagina siguiente");
+            ui_printf_centered_line("3) Ir a pagina");
+        }
         ui_printf_centered_line("4) Paginacion");
         ui_printf_centered_line("5) Filtros");
         ui_printf_centered_line("6) Orden");
         ui_printf_centered_line("0) Volver");
 
         int opcion = input_int("Opcion: ");
+
+        if (paginacion_todos && (opcion == 1 || opcion == 2 || opcion == 3))
+        {
+            ui_printf_centered_line("Navegacion por pagina deshabilitada en modo Todos.");
+            pause_console();
+            continue;
+        }
 
         if (!partido_listado_manejar_opcion(opcion,
                                             total_partidos,

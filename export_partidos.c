@@ -67,19 +67,24 @@ static void write_partido_txt(FILE *f, sqlite3_stmt *stmt)
  */
 static void write_partido_json(FILE *f, sqlite3_stmt *stmt)
 {
-    cJSON *root = cJSON_CreateArray();
+    fprintf(f, "[\n");
+    int first = 1;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        if (!first)
+            fprintf(f, ",\n");
+        first = 0;
+
         cJSON *item = cJSON_CreateObject();
         write_partido_json_object(item, stmt);
-        cJSON_AddItemToArray(root, item);
+        char *s = cJSON_PrintUnformatted(item);
+        fprintf(f, "  %s", s);
+        free(s);
+        cJSON_Delete(item);
     }
 
-    char *json_string = cJSON_Print(root);
-    fprintf(f, "%s", json_string);
-    free(json_string);
-    cJSON_Delete(root);
+    fprintf(f, "\n]\n");
 }
 
 /**

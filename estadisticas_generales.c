@@ -6,6 +6,18 @@
 #include <string.h>
 #include <time.h>
 
+#define STATS_GEN_COUNT      11
+#define STATS_GEN_OUTPUT_LEN 512
+
+typedef struct
+{
+    char buf[STATS_GEN_OUTPUT_LEN];
+} StatsGenItem;
+
+static StatsGenItem s_stats_cache[STATS_GEN_COUNT];
+static int          s_stats_valid   = 0;
+static int          s_stats_changes = -1;
+
 static const char* get_clima_case_sql()
 {
     return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' WHEN clima = 7 THEN 'Frio' WHEN clima = 8 THEN 'Calor' WHEN clima = 9 THEN 'Llovizna leve' WHEN clima = 10 THEN 'Lluvia Moderada' WHEN clima = 11 THEN 'Lluvia fuerte' WHEN clima = 12 THEN 'Cancha inundada' END";
@@ -143,6 +155,55 @@ static void query(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
+static void query_to_buf(const char *sql, char *out, size_t out_size)
+{
+    sqlite3_stmt *stmt;
+    char nombre[200];
+    int num_cols;
+    size_t pos = 0;
+    out[0] = '\0';
+
+    if (!preparar_stmt_export(&stmt, sql))
+    {
+        snprintf(out, out_size, "Error al consultar la base de datos.\n");
+        return;
+    }
+    num_cols = sqlite3_column_count(stmt);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char line[256];
+        if (num_cols == 1)
+        {
+            if (sqlite3_column_type(stmt, 0) == SQLITE_INTEGER)
+                snprintf(line, sizeof(line), "%d\n", sqlite3_column_int(stmt, 0));
+            else if (sqlite3_column_type(stmt, 0) == SQLITE_FLOAT)
+                snprintf(line, sizeof(line), "%.2f\n", sqlite3_column_double(stmt, 0));
+            else
+                snprintf(line, sizeof(line), "%s\n", (const char *)sqlite3_column_text(stmt, 0));
+        }
+        else
+        {
+            snprintf(nombre, sizeof(nombre), "%s", (const char *)sqlite3_column_text(stmt, 0));
+            if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
+                snprintf(line, sizeof(line), "%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
+            else if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
+                snprintf(line, sizeof(line), "%-30s : %.2f\n", nombre, sqlite3_column_double(stmt, 1));
+            else
+                snprintf(line, sizeof(line), "%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
+        }
+        size_t line_len = strlen(line);
+        if (pos + line_len + 1 < out_size)
+        {
+            memcpy(out + pos, line, line_len);
+            pos += line_len;
+            out[pos] = '\0';
+        }
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 static void mostrar_query_simple(const char *header, const char *titulo, const char *sql)
 {
     clear_screen();
@@ -227,9 +288,23 @@ void mostrar_estadisticas_generales()
     };
 
     size_t total = sizeof(queries) / sizeof(queries[0]);
+
+    int current_changes = sqlite3_total_changes(db);
+    int cache_hit = s_stats_valid && (current_changes == s_stats_changes);
+
     for (size_t i = 0; i < total; i++)
     {
-        query(queries[i].titulo, queries[i].sql);
+        printf("\n%s\n", queries[i].titulo);
+        printf("----------------------------------------\n");
+        if (!cache_hit)
+            query_to_buf(queries[i].sql, s_stats_cache[i].buf, STATS_GEN_OUTPUT_LEN);
+        printf("%s", s_stats_cache[i].buf);
+    }
+
+    if (!cache_hit)
+    {
+        s_stats_valid   = 1;
+        s_stats_changes = current_changes;
     }
 
     pause_console();
