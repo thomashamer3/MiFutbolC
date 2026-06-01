@@ -182,7 +182,8 @@ void mostrar_partidos_outliers()
         return;
     }
 
-    int hay_alto = 0, hay_bajo = 0;
+    int hay_alto = 0;
+    int hay_bajo = 0;
     printf("\nPartidos con rendimiento excepcionalmente alto:\n");
     printf("----------------------------------------\n");
 

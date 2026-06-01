@@ -672,6 +672,7 @@ static int apply_database_tuning()
 
     const char *pragma_statements[] =
     {
+        "PRAGMA journal_mode = WAL;",
         "PRAGMA temp_store = MEMORY;",
         "PRAGMA cache_size = -16384;",
         "PRAGMA mmap_size = 67108864;",
@@ -1467,6 +1468,7 @@ static void add_missing_columns()
         ALTER_ADD_COLUMN("settings", "image_viewer TEXT DEFAULT ''"),
         ALTER_ADD_COLUMN("usuario", "password_salt TEXT DEFAULT ''"),
         ALTER_ADD_COLUMN("usuario", "password_hash TEXT DEFAULT ''"),
+        ALTER_ADD_COLUMN("partido", "mes_anio TEXT DEFAULT ''"),
         NULL
     };
 
@@ -1495,6 +1497,15 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_partido_resultado ON partido(resultado);",
         "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
         "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON partido(camiseta_id);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_mes_anio ON partido(mes_anio);",
+        "CREATE TRIGGER IF NOT EXISTS trg_partido_mes_anio_insert "
+        "AFTER INSERT ON partido FOR EACH ROW BEGIN "
+        "UPDATE partido SET mes_anio = substr(NEW.fecha_hora, 7, 4) || '-' || substr(NEW.fecha_hora, 4, 2) "
+        "WHERE id = NEW.id; END;",
+        "CREATE TRIGGER IF NOT EXISTS trg_partido_mes_anio_update "
+        "AFTER UPDATE OF fecha_hora ON partido FOR EACH ROW BEGIN "
+        "UPDATE partido SET mes_anio = substr(NEW.fecha_hora, 7, 4) || '-' || substr(NEW.fecha_hora, 4, 2) "
+        "WHERE id = NEW.id; END;",
         NULL
     };
 
@@ -1547,6 +1558,11 @@ int db_init()
 
     add_missing_columns();
     app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
+
+    sqlite3_exec(db,
+                 "UPDATE partido SET mes_anio = substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) "
+                 "WHERE mes_anio = '' OR mes_anio IS NULL;",
+                 NULL, NULL, NULL);
 
     if (!create_performance_indexes())
     {

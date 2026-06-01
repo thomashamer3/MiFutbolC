@@ -788,7 +788,7 @@ static int partido_listado_bind_filtros(sqlite3_stmt *stmt, const PartidoListado
 
 static int partido_listado_contar_total(const PartidoListadoFiltros *filtros)
 {
-    char where_clause[1024];
+    char where_clause[2048];
     char sql[2048];
     int total = 0;
     sqlite3_stmt *stmt;
@@ -823,7 +823,7 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual,
         int orden_desc,
         const PartidoListadoFiltros *filtros)
 {
-    char where_clause[1024];
+    char where_clause[2048];
     char sql[4096];
     const char *orden_sql = orden_desc ? "DESC" : "ASC";
     int indice_bind;

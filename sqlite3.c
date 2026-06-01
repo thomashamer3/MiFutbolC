@@ -37028,6 +37028,7 @@ SQLITE_PRIVATE int sqlite3ThreadJoin(SQLiteThread *p, void **ppOut)
         assert( rc!=WAIT_IO_COMPLETION );
         bRc = CloseHandle((HANDLE)p->tid);
         assert( bRc );
+        UNUSED_PARAMETER(bRc);
     }
     if( rc==WAIT_OBJECT_0 ) *ppOut = p->pResult;
     sqlite3_free(p);
@@ -54042,6 +54043,7 @@ static BOOL winLockFile(
 ** some other process holds the lock, SQLITE_BUSY is returned if nMs==0, or
 ** SQLITE_BUSY_TIMEOUT otherwise. Or, if an error occurs, SQLITE_IOERR.
 */
+
 static int winHandleLockTimeout(
     HANDLE hFile,
     DWORD offset,
@@ -54053,6 +54055,10 @@ static int winHandleLockTimeout(
     DWORD flags = LOCKFILE_FAIL_IMMEDIATELY | (bExcl?LOCKFILE_EXCLUSIVE_LOCK:0);
     int rc = SQLITE_OK;
     BOOL ret;
+
+#ifndef SQLITE_ENABLE_SETLK_TIMEOUT
+    UNUSED_PARAMETER(nMs);
+#endif
 
     if( !osIsNT() )
     {
@@ -56827,6 +56833,8 @@ static int winUnfetch(sqlite3_file *fd, i64 iOff, void *p)
 
     assert( pFd->nFetchOut>=0 );
 #endif
+
+    UNUSED_PARAMETER(iOff);
 
     OSTRACE(("UNFETCH pid=%lu, pFile=%p, rc=SQLITE_OK\n",
              osGetCurrentProcessId(), fd));

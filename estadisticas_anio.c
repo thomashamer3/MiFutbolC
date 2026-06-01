@@ -5,10 +5,24 @@
 #include <stdio.h>
 #include <string.h>
 
+#define STATS_ANIO_BUF_LEN 32768
+static char s_anio_cache[STATS_ANIO_BUF_LEN];
+static int  s_anio_valid   = 0;
+static int  s_anio_changes = -1;
+
 void mostrar_estadisticas_por_anio()
 {
     clear_screen();
     print_header("ESTADISTICAS POR ANIO");
+
+    int current_changes = sqlite3_total_changes(db);
+    if (s_anio_valid && current_changes == s_anio_changes)
+    {
+        printf("%s", s_anio_cache);
+        pause_console();
+        return;
+    }
+
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt,
                               "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
@@ -22,6 +36,7 @@ void mostrar_estadisticas_por_anio()
         return;
     }
 
+    size_t pos = 0;
     char current_anio[5] = "";
     int hay = 0;
 
@@ -32,20 +47,27 @@ void mostrar_estadisticas_por_anio()
 
         if (strcmp(current_anio, stats.anio) != 0)
         {
-            if (hay) printf("\n");
-            printf("Anio: %s\n", stats.anio);
-            printf("----------------------------------------\n");
+            if (hay) pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "\n");
+            pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "Anio: %s\n", stats.anio);
+            pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "----------------------------------------\n");
             strcpy_s(current_anio, sizeof(current_anio), stats.anio);
         }
 
-        printf("%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-               stats.camiseta, stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
+        pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
+                                "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
+                                stats.camiseta, stats.partidos, stats.total_goles,
+                                stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
         hay = 1;
     }
 
     if (!hay)
-        mostrar_no_hay_registros("estadisticas");
+        pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
 
     sqlite3_finalize(stmt);
+
+    s_anio_valid   = 1;
+    s_anio_changes = current_changes;
+
+    printf("%s", s_anio_cache);
     pause_console();
 }

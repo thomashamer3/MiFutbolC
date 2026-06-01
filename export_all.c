@@ -15,6 +15,7 @@
 #include "db.h"
 #include "settings.h"
 #include <stdio.h>
+#include <sqlite3.h>
 
 static void exportar_camisetas_all()
 {
@@ -99,6 +100,8 @@ static void exportar_todo_json()
 {
     printf("Exportando todo (JSON)...\n");
 
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
     exportar_camisetas_json();
     exportar_partidos_json();
     exportar_lesiones_json();
@@ -114,6 +117,8 @@ static void exportar_todo_json()
     exportar_partido_menos_goles_reciente_json();
     exportar_partido_menos_asistencias_reciente_json();
 
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
+
     printf("Exportacion JSON completada.\n");
     pause_console();
 }
@@ -121,6 +126,8 @@ static void exportar_todo_json()
 static void exportar_todo_csv()
 {
     printf("Exportando todo (CSV)...\n");
+
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
     exportar_camisetas_csv();
     exportar_partidos_csv();
@@ -141,6 +148,8 @@ static void exportar_todo_csv()
     exportar_partido_mas_asistencias_csv();
     exportar_partido_menos_goles_reciente_csv();
     exportar_partido_menos_asistencias_reciente_csv();
+
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 
     printf("Exportacion CSV completada.\n");
     pause_console();

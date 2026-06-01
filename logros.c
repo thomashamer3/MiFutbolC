@@ -1,6 +1,7 @@
 ﻿#include "logros.h"
 #include "utils.h"
 #include "menu.h"
+#include "db.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -308,6 +309,10 @@ static const Logro LOGROS[] =
 
 #define NUM_LOGROS (sizeof(LOGROS) / sizeof(Logro))
 
+static int s_logros_progreso[NUM_LOGROS];
+static int s_logros_camiseta_id = -1;
+static int s_logros_changes     = -1;
+
 static const char *buscar_sql_logro(const char *tipo)
 {
     for (size_t i = 0; i < NUM_QUERIES; i++)
@@ -434,12 +439,23 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     ui_printf_centered_line("========================================");
     ui_printf("\n");
 
+    int current_changes = sqlite3_total_changes(db);
+    int cache_hit = (s_logros_camiseta_id == camiseta_id && s_logros_changes == current_changes);
+
+    if (!cache_hit)
+    {
+        for (size_t i = 0; i < NUM_LOGROS; i++)
+            s_logros_progreso[i] = obtener_progreso_logro(camiseta_id, LOGROS[i].tipo);
+        s_logros_camiseta_id = camiseta_id;
+        s_logros_changes     = current_changes;
+    }
+
     int mostrados = 0;
 
     for (size_t i = 0; i < NUM_LOGROS; i++)
     {
-        int progreso = 0;
-        int estado = obtener_estado_logro(camiseta_id, &LOGROS[i], &progreso);
+        int progreso = s_logros_progreso[i];
+        int estado   = calcular_estado_logro(progreso, LOGROS[i].objetivo);
 
         if (!filtro_permite_estado(filtro, estado))
             continue;
