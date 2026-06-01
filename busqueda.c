@@ -215,7 +215,8 @@ static int ejecutar_busqueda_generica(const char *sql_count,
     int paginas = (total + BUSQUEDA_POR_PAGINA - 1) / BUSQUEDA_POR_PAGINA;
     int pagina  = 1;
 
-    for (;;)
+    int continuar = 1;
+    while (continuar)
     {
         int movimiento;
 
@@ -232,7 +233,8 @@ static int ejecutar_busqueda_generica(const char *sql_count,
 
         if (paginas <= 1)
         {
-            break;
+            continuar = 0;
+            continue;
         }
 
         movimiento = busqueda_leer_movimiento(pagina, paginas);
@@ -241,16 +243,17 @@ static int ejecutar_busqueda_generica(const char *sql_count,
         {
             pagina++;
             busqueda_imprimir_titulo(titulo_unicode, titulo_ascii);
+            continue;
         }
-        else if (movimiento < 0)
+
+        if (movimiento < 0)
         {
             pagina--;
             busqueda_imprimir_titulo(titulo_unicode, titulo_ascii);
+            continue;
         }
-        else
-        {
-            break;
-        }
+
+        continuar = 0;
     }
 
     return total;

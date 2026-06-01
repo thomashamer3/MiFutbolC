@@ -61,7 +61,7 @@ void mostrar_estadisticas_por_anio()
     }
 
     if (!hay)
-        pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
+        (void)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
 
     sqlite3_finalize(stmt);
 

@@ -10,7 +10,7 @@
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #else
 #include "compat_windows.h"
 #endif

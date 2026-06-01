@@ -31482,7 +31482,7 @@ SQLITE_PRIVATE sqlite3_mutex_methods const *sqlite3DefaultMutex(void)
 /*
 ** Include the primary Windows SDK header file.
 */
-#include "windows.h"
+#include "Windows.h"
 
 #ifdef __CYGWIN__
 # include <sys/cygwin.h>
@@ -36926,7 +36926,7 @@ SQLITE_PRIVATE int sqlite3ThreadJoin(SQLiteThread *p, void **ppOut)
 #ifndef _MT
 #define _MT
 #endif
-#include "windows.h"
+#include "Windows.h"
 #include <process.h>
 
 /* A running thread */
@@ -249676,7 +249676,7 @@ extern "C" {
 /************** Continuing where we left off in sqlite3rbu.c *****************/
 
 #if defined(_WIN32_WCE)
-/* #include "windows.h" */
+/* #include "Windows.h" */
 #endif
 
 /* Maximum number of prepared UPDATE statements held by this module */

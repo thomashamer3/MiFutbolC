@@ -13,8 +13,8 @@
 #include <inttypes.h>
 #ifdef _WIN32
 #include <direct.h>
-#include <windows.h>
-#include <shlobj.h>
+#include <Windows.h>
+#include <ShlObj.h>
 #include <bcrypt.h>
 #else
 #include "direct.h"

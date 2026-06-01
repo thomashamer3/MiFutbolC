@@ -16,7 +16,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780287366 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780327401 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	"utils.h"
 	<vxWorks.h>
 	<pthread.h>
@@ -42,12 +42,12 @@
 	<libkern/OSAtomic.h>
 	<malloc.h>
 	<pthread.h>
-	"windows.h"
+	"Windows.h"
 	<sys/cygwin.h>
 	<sys/stat.h>
 	<unistd.h>
 	<errno.h>
-	"windows.h"
+	"Windows.h"
 	<process.h>
 	<math.h>
 	<sys/types.h>
@@ -84,7 +84,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1780326645 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1780327272 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"random_utils.h"
 	"db.h"
 	"settings.h"
@@ -98,8 +98,8 @@
 	<stdint.h>
 	<inttypes.h>
 	<direct.h>
-	<windows.h>
-	<shlobj.h>
+	<Windows.h>
+	<ShlObj.h>
 	<bcrypt.h>
 	"direct.h"
 	"compat_windows.h"
@@ -428,7 +428,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.h
 
-1780286227 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
+1780327104 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
 	"estadisticas_anio.h"
 	"db.h"
 	"utils.h"
@@ -2104,7 +2104,7 @@
 	<string.h>
 	<time.h>
 
-1779854144 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1780327274 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2115,7 +2115,7 @@
 	"busqueda.h"
 	"ascii_art.h"
 	"cJSON.h"
-	<windows.h>
+	<Windows.h>
 	"compat_windows.h"
 	<shellapi.h>
 	<stdlib.h>
@@ -2493,7 +2493,7 @@
 
 1776111115 d:\anime\libros\lenguaje c\proyectos\mifutbolc\atajos.h
 
-1780323528 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\busqueda.c
+1780327153 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\busqueda.c
 	"busqueda.h"
 	"db.h"
 	"utils.h"
@@ -2553,7 +2553,7 @@
 	<sys/stat.h>
 	<sys/time.h>
 
-1777430909 d:\anime\libros\lenguaje c\proyectos\mifutbolc\miniaudio.h
+1780327323 d:\anime\libros\lenguaje c\proyectos\mifutbolc\miniaudio.h
 	<stddef.h>
 	<stdint.h>
 	<pthread.h>
@@ -2569,7 +2569,7 @@
 	<strings.h>
 	<wchar.h>
 	<float.h>
-	<windows.h>
+	<Windows.h>
 	<sched.h>
 	<pthread.h>
 	<sys/time.h>
