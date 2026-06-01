@@ -1474,7 +1474,27 @@ static void add_missing_columns()
 
 #undef ALTER_ADD_COLUMN
 
-    (void)execute_sql_statements(alter_statements, NULL); // Ignore errors if column already exists
+    const char *dup_col_msg = "duplicate column name";
+    const char *no_table_msg = "no such table";
+
+    for (int i = 0; alter_statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
+
+        int error_esperado =
+            (errmsg != NULL) &&
+            ((strstr(errmsg, dup_col_msg) != NULL) || //NOSONAR
+             (strstr(errmsg, no_table_msg) != NULL));
+
+        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion de columna con error: %.320s | %.520s", alter_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_); //NOSONAR
+        }
+
+        sqlite3_free(errmsg);
+    }
 }
 
 static int create_performance_indexes()
@@ -1498,6 +1518,12 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
         "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON partido(camiseta_id);",
         "CREATE INDEX IF NOT EXISTS idx_partido_mes_anio ON partido(mes_anio);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_fecha ON financiamiento(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_tipo_fecha ON financiamiento(tipo, fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_substr_fecha ON financiamiento(substr(fecha, 1, 7));",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_sesion_fecha ON bienestar_sesion_mental(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_entrenamiento_fecha ON bienestar_entrenamiento(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_comida_fecha_calidad ON bienestar_comida(fecha, calidad);",
         "CREATE TRIGGER IF NOT EXISTS trg_partido_mes_anio_insert "
         "AFTER INSERT ON partido FOR EACH ROW BEGIN "
         "UPDATE partido SET mes_anio = substr(NEW.fecha_hora, 7, 4) || '-' || substr(NEW.fecha_hora, 4, 2) "

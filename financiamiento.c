@@ -712,7 +712,7 @@ void ver_estado_presupuesto()
 
     // Obtener ingresos del mes
     sqlite3_stmt *stmt;
-    const char *sql_ingresos = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 0 AND strftime('%Y-%m', fecha) = ?;";
+    const char *sql_ingresos = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 0 AND substr(fecha, 1, 7) = ?;";
 
     if (preparar_stmt(sql_ingresos, &stmt))
     {
@@ -830,7 +830,7 @@ int obtener_gastos_mes_actual()
     obtener_mes_anio_actual(mes_anio);
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 1 AND strftime('%Y-%m', fecha) = ?;";
+    const char *sql = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 1 AND substr(fecha, 1, 7) = ?;";
     int gastos = 0;
 
     if (preparar_stmt(sql, &stmt))

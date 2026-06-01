@@ -1765,7 +1765,7 @@ static int construir_lista_temas_seleccionados(const int seleccionadas[],
     return n;
 }
 
-static void mostrar_temas_playlist_actual(const char temas[][MAX_NOMBRE], int n)
+static void mostrar_temas_playlist_actual(char temas[][MAX_NOMBRE], int n)
 {
     if (n == 0)
     {

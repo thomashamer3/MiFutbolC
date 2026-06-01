@@ -91,6 +91,109 @@ typedef void (*imprimir_fila_fn)(sqlite3_stmt *stmt);
 
 #define BUSQUEDA_POR_PAGINA 20
 
+static void busqueda_imprimir_titulo(const char *titulo_unicode, const char *titulo_ascii)
+{
+    printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
+    printf("  %s\n", linea_separadora_busqueda());
+}
+
+static int busqueda_contar_total(const char *sql_count, const char *patron, int cantidad_binds)
+{
+    int total = 0;
+    sqlite3_stmt *stmt_count;
+
+    if (!preparar_stmt(sql_count, &stmt_count))
+    {
+        return 0;
+    }
+
+    for (int i = 1; i <= cantidad_binds; i++)
+    {
+        sqlite3_bind_text(stmt_count, i, patron, -1, SQLITE_TRANSIENT);
+    }
+
+    if (sqlite3_step(stmt_count) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt_count, 0);
+    }
+
+    sqlite3_finalize(stmt_count);
+    return total;
+}
+
+static int busqueda_mostrar_pagina(const char *sql_data,
+                                   const char *patron,
+                                   int cantidad_binds,
+                                   int pagina,
+                                   int paginas,
+                                   int total,
+                                   imprimir_fila_fn imprimir_fila)
+{
+    int offset = (pagina - 1) * BUSQUEDA_POR_PAGINA;
+    int hasta = offset + BUSQUEDA_POR_PAGINA;
+    sqlite3_stmt *stmt;
+
+    if (!preparar_stmt(sql_data, &stmt))
+    {
+        return 0;
+    }
+
+    for (int i = 1; i <= cantidad_binds; i++)
+    {
+        sqlite3_bind_text(stmt, i, patron, -1, SQLITE_TRANSIENT);
+    }
+    sqlite3_bind_int(stmt, cantidad_binds + 1, BUSQUEDA_POR_PAGINA);
+    sqlite3_bind_int(stmt, cantidad_binds + 2, offset);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        imprimir_fila(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+
+    if (hasta > total)
+    {
+        hasta = total;
+    }
+
+    printf("\n  Pagina %d/%d  (%d-%d de %d)\n", pagina, paginas, offset + 1, hasta, total);
+    return 1;
+}
+
+static int busqueda_leer_movimiento(int pagina, int paginas)
+{
+    char op[8] = "";
+
+    printf("  [");
+    if (pagina < paginas)
+    {
+        printf("N=siguiente  ");
+    }
+    if (pagina > 1)
+    {
+        printf("A=anterior  ");
+    }
+    printf("0=salir]: ");
+
+    if (!fgets(op, sizeof(op), stdin))
+    {
+        return 0;
+    }
+
+    to_lowercase(op);
+
+    if (op[0] == 'n' && pagina < paginas)
+    {
+        return 1;
+    }
+    if (op[0] == 'a' && pagina > 1)
+    {
+        return -1;
+    }
+    return 0;
+}
+
 static int ejecutar_busqueda_generica(const char *sql_count,
                                       const char *sql_data,
                                       const char *titulo_unicode,
@@ -99,20 +202,9 @@ static int ejecutar_busqueda_generica(const char *sql_count,
                                       int cantidad_binds,
                                       imprimir_fila_fn imprimir_fila)
 {
-    int total = 0;
-    sqlite3_stmt *stmt_count;
+    int total = busqueda_contar_total(sql_count, patron, cantidad_binds);
 
-    if (preparar_stmt(sql_count, &stmt_count))
-    {
-        for (int i = 1; i <= cantidad_binds; i++)
-            sqlite3_bind_text(stmt_count, i, patron, -1, SQLITE_TRANSIENT);
-        if (sqlite3_step(stmt_count) == SQLITE_ROW)
-            total = sqlite3_column_int(stmt_count, 0);
-        sqlite3_finalize(stmt_count);
-    }
-
-    printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
-    printf("  %s\n", linea_separadora_busqueda());
+    busqueda_imprimir_titulo(titulo_unicode, titulo_ascii);
 
     if (total == 0)
     {
@@ -125,52 +217,40 @@ static int ejecutar_busqueda_generica(const char *sql_count,
 
     for (;;)
     {
-        int offset = (pagina - 1) * BUSQUEDA_POR_PAGINA;
-        sqlite3_stmt *stmt;
+        int movimiento;
 
-        if (!preparar_stmt(sql_data, &stmt))
+        if (!busqueda_mostrar_pagina(sql_data,
+                                     patron,
+                                     cantidad_binds,
+                                     pagina,
+                                     paginas,
+                                     total,
+                                     imprimir_fila))
+        {
             return total;
-
-        for (int i = 1; i <= cantidad_binds; i++)
-            sqlite3_bind_text(stmt, i, patron, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_int(stmt, cantidad_binds + 1, BUSQUEDA_POR_PAGINA);
-        sqlite3_bind_int(stmt, cantidad_binds + 2, offset);
-
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-            imprimir_fila(stmt);
-
-        sqlite3_finalize(stmt);
-
-        int hasta = offset + BUSQUEDA_POR_PAGINA;
-        if (hasta > total) hasta = total;
-        printf("\n  Pagina %d/%d  (%d-%d de %d)\n", pagina, paginas, offset + 1, hasta, total);
+        }
 
         if (paginas <= 1)
+        {
             break;
+        }
 
-        printf("  [");
-        if (pagina < paginas) printf("N=siguiente  ");
-        if (pagina > 1) printf("A=anterior  ");
-        printf("0=salir]: ");
+        movimiento = busqueda_leer_movimiento(pagina, paginas);
 
-        char op[8] = "";
-        if (!fgets(op, sizeof(op), stdin)) break;
-        to_lowercase(op);
-
-        if (op[0] == 'n' && pagina < paginas)
+        if (movimiento > 0)
         {
             pagina++;
-            printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
-            printf("  %s\n", linea_separadora_busqueda());
+            busqueda_imprimir_titulo(titulo_unicode, titulo_ascii);
         }
-        else if (op[0] == 'a' && pagina > 1)
+        else if (movimiento < 0)
         {
             pagina--;
-            printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
-            printf("  %s\n", linea_separadora_busqueda());
+            busqueda_imprimir_titulo(titulo_unicode, titulo_ascii);
         }
         else
+        {
             break;
+        }
     }
 
     return total;

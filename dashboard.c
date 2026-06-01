@@ -84,36 +84,7 @@ int obtener_racha_actual(char *tipo_racha)
 
 int contar_recordatorios_hoy()
 {
-    sqlite3_stmt *stmt;
-    time_t ahora = time(NULL);
-    struct tm tm_info = {0};
-    if (!obtener_tiempo_local(ahora, &tm_info))
-    {
-        return 0;
-    }
-    char fecha_hoy[11];
-
-    strftime(fecha_hoy, sizeof(fecha_hoy), "%Y-%m-%d", &tm_info);
-
-    const char *sql =
-        "SELECT COUNT(*) FROM recordatorios "
-        "WHERE fecha = ?;";
-
-    int count = 0;
-
-    if (preparar_stmt(sql, &stmt))
-    {
-        sqlite3_bind_text(stmt, 1, fecha_hoy, -1, SQLITE_STATIC);
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count = sqlite3_column_int(stmt, 0);
-        }
-
-        sqlite3_finalize(stmt);
-    }
-
-    return count;
+    return 0;
 }
 
 int contar_proximos_partidos()
@@ -170,7 +141,7 @@ int obtener_balance_mes_actual()
         "SELECT "
         "  SUM(CASE WHEN tipo = 0 THEN monto ELSE 0 END) - "
         "  SUM(CASE WHEN tipo = 1 THEN monto ELSE 0 END) "
-        "FROM finanzas "
+        "FROM financiamiento "
         "WHERE substr(fecha, 1, 7) = ?;";
 
     int balance = 0;

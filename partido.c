@@ -574,6 +574,41 @@ static void partido_listado_append_clause(char *destino, size_t destino_size, co
     snprintf(destino + usados, destino_size - usados, "%s", clausula);
 }
 
+static void partido_listado_append_si_activo(int condicion, char *where_clause, size_t where_size, const char *clausula)
+{
+    if (condicion)
+    {
+        partido_listado_append_clause(where_clause, where_size, clausula);
+    }
+}
+
+static void partido_listado_append_rango_min_max(char *where_clause,
+        size_t where_size,
+        int minimo,
+        const char *clausula_minimo,
+        int maximo,
+        const char *clausula_maximo)
+{
+    partido_listado_append_si_activo(minimo >= 0, where_clause, where_size, clausula_minimo);
+    partido_listado_append_si_activo(maximo >= 0, where_clause, where_size, clausula_maximo);
+}
+
+static void partido_listado_append_por_presencia(int modo,
+        char *where_clause,
+        size_t where_size,
+        const char *clausula_con_datos,
+        const char *clausula_sin_datos)
+{
+    if (modo == PARTIDO_PRESENCIA_CON_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, clausula_con_datos);
+    }
+    else if (modo == PARTIDO_PRESENCIA_SIN_DATOS)
+    {
+        partido_listado_append_clause(where_clause, where_size, clausula_sin_datos);
+    }
+}
+
 static void partido_listado_append_filtros_identidad(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
 {
     if (filtros->cancha_id > 0)
@@ -597,83 +632,59 @@ static void partido_listado_append_filtros_rendimiento(const PartidoListadoFiltr
     int modo_goles = partido_listado_get_modo_presencia_goles(filtros);
     int modo_asistencias = partido_listado_get_modo_presencia_asistencias(filtros);
 
-    if (filtros->goles_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND p.goles >= ?");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->goles_min,
+                                         " AND p.goles >= ?",
+                                         filtros->goles_max,
+                                         " AND p.goles <= ?");
 
-    if (filtros->goles_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND p.goles <= ?");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->asistencias_min,
+                                         " AND p.asistencias >= ?",
+                                         filtros->asistencias_max,
+                                         " AND p.asistencias <= ?");
 
-    if (filtros->asistencias_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND p.asistencias >= ?");
-    }
+    partido_listado_append_por_presencia(modo_goles,
+                                         where_clause,
+                                         where_size,
+                                         " AND IFNULL(p.goles, 0) > 0",
+                                         " AND IFNULL(p.goles, 0) = 0");
 
-    if (filtros->asistencias_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND p.asistencias <= ?");
-    }
+    partido_listado_append_por_presencia(modo_asistencias,
+                                         where_clause,
+                                         where_size,
+                                         " AND IFNULL(p.asistencias, 0) > 0",
+                                         " AND IFNULL(p.asistencias, 0) = 0");
 
-    if (modo_goles == PARTIDO_PRESENCIA_CON_DATOS)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.goles, 0) > 0");
-    }
-    else if (modo_goles == PARTIDO_PRESENCIA_SIN_DATOS)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.goles, 0) = 0");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->precio_min,
+                                         " AND IFNULL(p.precio, 0) >= ?",
+                                         filtros->precio_max,
+                                         " AND IFNULL(p.precio, 0) <= ?");
 
-    if (modo_asistencias == PARTIDO_PRESENCIA_CON_DATOS)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.asistencias, 0) > 0");
-    }
-    else if (modo_asistencias == PARTIDO_PRESENCIA_SIN_DATOS)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.asistencias, 0) = 0");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->rendimiento_min,
+                                         " AND IFNULL(p.rendimiento_general, 0) >= ?",
+                                         filtros->rendimiento_max,
+                                         " AND IFNULL(p.rendimiento_general, 0) <= ?");
 
-    if (filtros->precio_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.precio, 0) >= ?");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->cansancio_min,
+                                         " AND IFNULL(p.cansancio, 0) >= ?",
+                                         filtros->cansancio_max,
+                                         " AND IFNULL(p.cansancio, 0) <= ?");
 
-    if (filtros->precio_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.precio, 0) <= ?");
-    }
-
-    if (filtros->rendimiento_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.rendimiento_general, 0) >= ?");
-    }
-
-    if (filtros->rendimiento_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.rendimiento_general, 0) <= ?");
-    }
-
-    if (filtros->cansancio_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.cansancio, 0) >= ?");
-    }
-
-    if (filtros->cansancio_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.cansancio, 0) <= ?");
-    }
-
-    if (filtros->estado_animo_min >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.estado_animo, 0) >= ?");
-    }
-
-    if (filtros->estado_animo_max >= 0)
-    {
-        partido_listado_append_clause(where_clause, where_size, " AND IFNULL(p.estado_animo, 0) <= ?");
-    }
+    partido_listado_append_rango_min_max(where_clause,
+                                         where_size,
+                                         filtros->estado_animo_min,
+                                         " AND IFNULL(p.estado_animo, 0) >= ?",
+                                         filtros->estado_animo_max,
+                                         " AND IFNULL(p.estado_animo, 0) <= ?");
 }
 
 static void partido_listado_append_filtros_contexto(const PartidoListadoFiltros *filtros, char *where_clause, size_t where_size)
@@ -789,7 +800,7 @@ static int partido_listado_bind_filtros(sqlite3_stmt *stmt, const PartidoListado
 static int partido_listado_contar_total(const PartidoListadoFiltros *filtros)
 {
     char where_clause[2048];
-    char sql[2048];
+    char sql[4096];
     int total = 0;
     sqlite3_stmt *stmt;
 
@@ -2658,6 +2669,109 @@ void crear_partido()
     }
 }
 
+static int partido_listado_calcular_total_paginas(int total_partidos, int partidos_por_pagina)
+{
+    if (partidos_por_pagina > 0 && total_partidos > 0)
+    {
+        return (total_partidos + partidos_por_pagina - 1) / partidos_por_pagina;
+    }
+    return 1;
+}
+
+static void partido_listado_normalizar_pagina_actual(int *pagina_actual, int total_paginas)
+{
+    if (!pagina_actual)
+    {
+        return;
+    }
+
+    if (*pagina_actual > total_paginas)
+    {
+        *pagina_actual = total_paginas;
+    }
+    if (*pagina_actual < 1)
+    {
+        *pagina_actual = 1;
+    }
+}
+
+static void partido_listado_imprimir_estado(int pagina_actual,
+        int total_paginas,
+        int total_partidos,
+        int partidos_por_pagina,
+        int orden_desc,
+        const PartidoListadoFiltros *filtros)
+{
+    clear_screen();
+    print_header("LISTADO DE PARTIDOS");
+    ui_printf_centered_line("Pagina %d de %d | Total: %d partidos", pagina_actual, total_paginas, total_partidos);
+
+    if (partidos_por_pagina == 0)
+    {
+        ui_printf_centered_line("Paginacion: %s", partido_listado_texto_paginacion(partidos_por_pagina));
+    }
+    else
+    {
+        ui_printf_centered_line("Paginacion: %d por pagina", partidos_por_pagina);
+    }
+
+    ui_printf_centered_line("Orden: %s", partido_listado_texto_orden(orden_desc));
+    ui_printf_centered_line("Filtros activos: %d", partido_listado_contar_filtros_activos(filtros));
+    ui_printf_centered_line("----------------------------------------");
+}
+
+static void partido_listado_mostrar_resultados(int pagina_actual,
+        int partidos_por_pagina,
+        int total_partidos,
+        int orden_desc,
+        const PartidoListadoFiltros *filtros)
+{
+    int hay = 0;
+
+    if (total_partidos > 0)
+    {
+        hay = partido_listado_mostrar_pagina_actual(pagina_actual,
+                partidos_por_pagina,
+                total_partidos,
+                orden_desc,
+                filtros);
+    }
+
+    if (total_partidos <= 0 || !hay)
+    {
+        ui_printf_centered_line("No hay partidos para los filtros seleccionados.");
+    }
+}
+
+static void partido_listado_imprimir_menu(int paginacion_todos)
+{
+    ui_printf_centered_line("----------------------------------------");
+
+    if (!paginacion_todos)
+    {
+        ui_printf_centered_line("1) Pagina anterior");
+        ui_printf_centered_line("2) Pagina siguiente");
+        ui_printf_centered_line("3) Ir a pagina");
+    }
+
+    ui_printf_centered_line("4) Paginacion");
+    ui_printf_centered_line("5) Filtros");
+    ui_printf_centered_line("6) Orden");
+    ui_printf_centered_line("0) Volver");
+}
+
+static int partido_listado_navegacion_deshabilitada(int paginacion_todos, int opcion)
+{
+    if (paginacion_todos && (opcion == 1 || opcion == 2 || opcion == 3))
+    {
+        ui_printf_centered_line("Navegacion por pagina deshabilitada en modo Todos.");
+        pause_console();
+        return 1;
+    }
+
+    return 0;
+}
+
 void listar_partidos()
 {
     int partidos_por_pagina = partido_listado_cargar_paginacion();
@@ -2670,71 +2784,27 @@ void listar_partidos()
     while (1)
     {
         int total_partidos = partido_listado_contar_total(&filtros);
-        int total_paginas = 1;
-        int hay = 0;
+        int total_paginas = partido_listado_calcular_total_paginas(total_partidos, partidos_por_pagina);
         int paginacion_todos = (partidos_por_pagina == 0);
 
-        if (partidos_por_pagina > 0 && total_partidos > 0)
-        {
-            total_paginas = (total_partidos + partidos_por_pagina - 1) / partidos_por_pagina;
-        }
-
-        if (pagina_actual > total_paginas)
-        {
-            pagina_actual = total_paginas;
-        }
-        if (pagina_actual < 1)
-        {
-            pagina_actual = 1;
-        }
-
-        clear_screen();
-        print_header("LISTADO DE PARTIDOS");
-        ui_printf_centered_line("Pagina %d de %d | Total: %d partidos", pagina_actual, total_paginas, total_partidos);
-        if (partidos_por_pagina == 0)
-        {
-            ui_printf_centered_line("Paginacion: %s", partido_listado_texto_paginacion(partidos_por_pagina));
-        }
-        else
-        {
-            ui_printf_centered_line("Paginacion: %d por pagina", partidos_por_pagina);
-        }
-        ui_printf_centered_line("Orden: %s", partido_listado_texto_orden(orden_desc));
-        ui_printf_centered_line("Filtros activos: %d", partido_listado_contar_filtros_activos(&filtros));
-        ui_printf_centered_line("----------------------------------------");
-
-        if (total_partidos > 0)
-        {
-            hay = partido_listado_mostrar_pagina_actual(pagina_actual,
-                    partidos_por_pagina,
-                    total_partidos,
-                    orden_desc,
-                    &filtros);
-        }
-
-        if (total_partidos <= 0 || !hay)
-        {
-            ui_printf_centered_line("No hay partidos para los filtros seleccionados.");
-        }
-
-        ui_printf_centered_line("----------------------------------------");
-        if (!paginacion_todos)
-        {
-            ui_printf_centered_line("1) Pagina anterior");
-            ui_printf_centered_line("2) Pagina siguiente");
-            ui_printf_centered_line("3) Ir a pagina");
-        }
-        ui_printf_centered_line("4) Paginacion");
-        ui_printf_centered_line("5) Filtros");
-        ui_printf_centered_line("6) Orden");
-        ui_printf_centered_line("0) Volver");
+        partido_listado_normalizar_pagina_actual(&pagina_actual, total_paginas);
+        partido_listado_imprimir_estado(pagina_actual,
+                                        total_paginas,
+                                        total_partidos,
+                                        partidos_por_pagina,
+                                        orden_desc,
+                                        &filtros);
+        partido_listado_mostrar_resultados(pagina_actual,
+                                           partidos_por_pagina,
+                                           total_partidos,
+                                           orden_desc,
+                                           &filtros);
+        partido_listado_imprimir_menu(paginacion_todos);
 
         int opcion = input_int("Opcion: ");
 
-        if (paginacion_todos && (opcion == 1 || opcion == 2 || opcion == 3))
+        if (partido_listado_navegacion_deshabilitada(paginacion_todos, opcion))
         {
-            ui_printf_centered_line("Navegacion por pagina deshabilitada en modo Todos.");
-            pause_console();
             continue;
         }
 

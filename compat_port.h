@@ -37,6 +37,20 @@ static inline size_t strnlen(const char *s, size_t maxlen)
 typedef int errno_t;
 typedef size_t rsize_t;
 
+static inline size_t compat_strnlen_s(const char *s, size_t maxlen)
+{
+    if (!s)
+    {
+        return 0;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strnlen_s(s, maxlen);
+#else
+    return strnlen(s, maxlen);
+#endif
+}
+
 /* Some strict C environments hide POSIX prototypes unless feature macros are set. */
 struct tm *localtime_r(const time_t *timep, struct tm *result);
 
@@ -47,7 +61,7 @@ static inline char *compat_strdup_impl(const char *s)
         return NULL;
     }
 
-    size_t n = strlen(s) + 1;
+    size_t n = compat_strnlen_s(s, (size_t)-1) + 1;
     char *p = (char *)malloc(n);
     if (!p)
     {
@@ -87,7 +101,7 @@ static inline int strcpy_s(char *dest, size_t destsz, const char *src)
         return EINVAL;
     }
 
-    size_t len = strlen(src);
+    size_t len = compat_strnlen_s(src, destsz);
     if (len >= destsz)
     {
         dest[0] = '\0';
@@ -112,7 +126,7 @@ static inline int strcat_s(char *dest, size_t destsz, const char *src)
     }
 
     size_t remaining = destsz - dlen;
-    size_t slen = strlen(src);
+    size_t slen = compat_strnlen_s(src, remaining);
     if (slen >= remaining)
     {
         dest[0] = '\0';

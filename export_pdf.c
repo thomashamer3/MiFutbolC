@@ -248,7 +248,7 @@ static void escribir_resumen_partidos(PdfCtx *ctx, const char *mes_yyyy_mm)
 
     const char *sql_partidos =
         "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
-        "FROM partido WHERE strftime('%Y-%m', fecha_hora) = ?";
+        "FROM partido WHERE substr(fecha, 1, 7) = ?";
 
     ejecutar_consulta_una_fila(ctx, sql_partidos, mes_yyyy_mm, 1, manejar_fila_resumen_partidos);
 }
@@ -374,10 +374,10 @@ static void escribir_resumen_mental(PdfCtx *ctx, const char *mes_yyyy_mm)
     const char *sql_tendencia =
         "SELECT "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE strftime('%Y-%m', p.fecha_hora) = ? AND strftime('%Y-%m-%d', p.fecha_hora) IN "
+        " WHERE substr(p.fecha, 1, 7) = ? AND p.fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza >= 8 AND substr(fecha, 1, 7) = ?)) AS avg_alta, "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE strftime('%Y-%m', p.fecha_hora) = ? AND strftime('%Y-%m-%d', p.fecha_hora) IN "
+        " WHERE substr(p.fecha, 1, 7) = ? AND p.fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4 AND substr(fecha, 1, 7) = ?)) AS avg_baja";
 
     ejecutar_consulta_una_fila(ctx, sql_tendencia, mes_yyyy_mm, 4, manejar_fila_resumen_tendencia);

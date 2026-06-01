@@ -1736,14 +1736,16 @@ void sortear_camiseta()
     }
 
     sqlite3_stmt *stmt_sel;
+    int offset = secure_rand_range(disponibles);
     if (!preparar_stmt(&stmt_sel,
-                       "SELECT id FROM camiseta WHERE sorteada = 0 AND IFNULL(activa, 1) = 1 ORDER BY RANDOM() LIMIT 1"))
+                       "SELECT id FROM camiseta WHERE sorteada = 0 AND IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
     {
         printf("Error al seleccionar camiseta aleatoria.\n");
         pause_console();
         return;
     }
     int seleccionado = -1;
+    sqlite3_bind_int(stmt_sel, 1, offset);
     if (sqlite3_step(stmt_sel) == SQLITE_ROW)
         seleccionado = sqlite3_column_int(stmt_sel, 0);
     sqlite3_finalize(stmt_sel);

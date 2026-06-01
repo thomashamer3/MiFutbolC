@@ -65,69 +65,62 @@ static int primer_dia_semana(int mes, int anio)
     return fecha.tm_wday;
 }
 
-static void obtener_icono_dia(int dia, int mes, int anio, char *icono, size_t tam)
+typedef struct
 {
-    char fecha[20];
-    snprintf(fecha, sizeof(fecha), "%04d-%02d-%02d", anio, mes, dia);
+    int dias_partido;
+    int dias_finanza;
+} EventosMes;
+
+static EventosMes cargar_eventos_mes(int mes, int anio)
+{
+    EventosMes eventos = {0, 0};
+    char mes_str[8];
+    snprintf(mes_str, sizeof(mes_str), "%04d-%02d", anio, mes);
 
     sqlite3_stmt *stmt;
-    int tiene_partido = 0;
-    int tiene_recordatorio = 0;
-    int tiene_finanza = 0;
 
-    // Verificar partidos
-    const char *sql_partido = "SELECT COUNT(*) FROM partido WHERE fecha = ?;";
-    if (preparar_stmt(sql_partido, &stmt))
+    const char *sql_partidos =
+        "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM partido "
+        "WHERE substr(fecha, 1, 7) = ?;";
+    if (preparar_stmt(sql_partidos, &stmt))
     {
-        sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
+        sqlite3_bind_text(stmt, 1, mes_str, -1, SQLITE_STATIC);
+        while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            tiene_partido = sqlite3_column_int(stmt, 0) > 0;
+            int dia = sqlite3_column_int(stmt, 0);
+            if (dia >= 1 && dia <= 31)
+                eventos.dias_partido |= (1 << (dia - 1));
         }
         sqlite3_finalize(stmt);
     }
 
-    // Verificar recordatorios
-    const char *sql_recordatorio = "SELECT COUNT(*) FROM recordatorios WHERE fecha = ?;";
-    if (preparar_stmt(sql_recordatorio, &stmt))
-    {
-        sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            tiene_recordatorio = sqlite3_column_int(stmt, 0) > 0;
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    // Verificar finanzas
-    const char *sql_finanza = "SELECT COUNT(*) FROM finanzas WHERE fecha = ?;";
+    const char *sql_finanza =
+        "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM financiamiento "
+        "WHERE substr(fecha, 1, 7) = ?;";
     if (preparar_stmt(sql_finanza, &stmt))
     {
-        sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_STATIC);
-        if (sqlite3_step(stmt) == SQLITE_ROW)
+        sqlite3_bind_text(stmt, 1, mes_str, -1, SQLITE_STATIC);
+        while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            tiene_finanza = sqlite3_column_int(stmt, 0) > 0;
+            int dia = sqlite3_column_int(stmt, 0);
+            if (dia >= 1 && dia <= 31)
+                eventos.dias_finanza |= (1 << (dia - 1));
         }
         sqlite3_finalize(stmt);
     }
 
-    // Asignar icono según prioridad
-    if (tiene_partido)
-    {
+    return eventos;
+}
+
+static void obtener_icono_dia(int dia, const EventosMes *eventos, char *icono, size_t tam)
+{
+    int mask = 1 << (dia - 1);
+    if (eventos->dias_partido & mask)
         snprintf(icono, tam, "%s", simbolo_partido_calendario());
-    }
-    else if (tiene_recordatorio)
-    {
-        snprintf(icono, tam, "!");
-    }
-    else if (tiene_finanza)
-    {
+    else if (eventos->dias_finanza & mask)
         snprintf(icono, tam, "$");
-    }
     else
-    {
         snprintf(icono, tam, " ");
-    }
 }
 
 static int mostrar_eventos_partidos(const char *fecha)
@@ -173,51 +166,11 @@ static int mostrar_eventos_partidos(const char *fecha)
     return eventos;
 }
 
-static int mostrar_eventos_recordatorios(const char *fecha)
-{
-    sqlite3_stmt *stmt = NULL;
-    const char *sql_recordatorios =
-        "SELECT hora, descripcion FROM recordatorios WHERE fecha = ?;";
-    int eventos = 0;
-
-    if (!preparar_stmt(sql_recordatorios, &stmt))
-    {
-        return 0;
-    }
-
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_STATIC);
-
-    int tiene_recordatorios = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        if (!tiene_recordatorios)
-        {
-            printf("%s RECORDATORIOS:\n", consola_soporta_unicode() ? "⏰" : "R");
-            printf("%s\n", linea_division_eventos());
-            tiene_recordatorios = 1;
-        }
-
-        const unsigned char *hora = sqlite3_column_text(stmt, 0);
-        const unsigned char *desc = sqlite3_column_text(stmt, 1);
-
-        printf("  %s - %s\n", hora, desc);
-        eventos++;
-    }
-
-    if (tiene_recordatorios)
-    {
-        printf("\n");
-    }
-
-    sqlite3_finalize(stmt);
-    return eventos;
-}
-
 static int mostrar_eventos_finanzas(const char *fecha)
 {
     sqlite3_stmt *stmt = NULL;
     const char *sql_finanzas =
-        "SELECT tipo, monto, descripcion FROM finanzas WHERE fecha = ?;";
+        "SELECT tipo, monto, descripcion FROM financiamiento WHERE fecha = ?;";
     int eventos = 0;
 
     if (!preparar_stmt(sql_finanzas, &stmt))
@@ -346,6 +299,8 @@ void mostrar_calendario_mes(int mes, int anio)
     // Ajustar para que Lunes sea primer día (en lugar de Domingo)
     int dia_inicio = (primer_dia == 0) ? 6 : primer_dia - 1;
 
+    EventosMes eventos = cargar_eventos_mes(mes, anio);
+
     int dia_actual = 1;
     int pos = 0;
     time_t ahora = time(NULL);
@@ -365,7 +320,7 @@ void mostrar_calendario_mes(int mes, int anio)
     while (dia_actual <= dias)
     {
         char icono[4] = " ";
-        obtener_icono_dia(dia_actual, mes, anio, icono, sizeof(icono));
+        obtener_icono_dia(dia_actual, &eventos, icono, sizeof(icono));
 
         int hoy = es_dia_hoy(dia_actual, mes, anio, hay_hoy, &tm_hoy);
         imprimir_celda_dia(dia_actual, icono, hoy);
@@ -382,7 +337,7 @@ void mostrar_calendario_mes(int mes, int anio)
 
     printf(" %s\n", usar_unicode ? "║" : "|");
     imprimir_pie_calendario_mes(usar_unicode);
-    printf("\nLeyenda: [Hoy]  %s=Partido  !=Recordatorio  $=Finanza\n", simbolo_partido_calendario());
+    printf("\nLeyenda: [Hoy]  %s=Partido  $=Finanza\n", simbolo_partido_calendario());
     printf("\n");
 }
 
@@ -410,7 +365,6 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
 
     int eventos_totales = 0;
     eventos_totales += mostrar_eventos_partidos(fecha);
-    eventos_totales += mostrar_eventos_recordatorios(fecha);
     eventos_totales += mostrar_eventos_finanzas(fecha);
 
     if (eventos_totales == 0)

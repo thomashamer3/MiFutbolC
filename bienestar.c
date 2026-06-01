@@ -1712,10 +1712,10 @@ static void tendencias_mentales(void)
     const char *sql =
         "SELECT "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE (substr(p.fecha_hora,7,4)||'-'||substr(p.fecha_hora,4,2)||'-'||substr(p.fecha_hora,1,2)) IN "
+        " WHERE p.fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza >= 8)) AS avg_alta, "
         "(SELECT AVG(p.rendimiento_general) FROM partido p "
-        " WHERE (substr(p.fecha_hora,7,4)||'-'||substr(p.fecha_hora,4,2)||'-'||substr(p.fecha_hora,1,2)) IN "
+        " WHERE p.fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_sesion_mental WHERE confianza <= 4)) AS avg_baja";
 
     sqlite3_stmt *stmt;
@@ -2119,10 +2119,10 @@ static void comparar_entrenamiento_vs_rendimiento(void)
         "(SELECT COUNT(DISTINCT fecha) FROM bienestar_entrenamiento WHERE omitido = 0) AS dias_entrenamiento, "
         "(SELECT COUNT(*) FROM partido) AS total_partidos, "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE (substr(fecha_hora,7,4)||'-'||substr(fecha_hora,4,2)||'-'||substr(fecha_hora,1,2)) IN "
+        " WHERE fecha IN "
         " (SELECT fecha FROM bienestar_entrenamiento WHERE omitido = 0)) AS avg_con_entrenamiento, "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE (substr(fecha_hora,7,4)||'-'||substr(fecha_hora,4,2)||'-'||substr(fecha_hora,1,2)) NOT IN "
+        " WHERE fecha NOT IN "
         " (SELECT fecha FROM bienestar_entrenamiento WHERE omitido = 0)) AS avg_sin_entrenamiento";
 
     sqlite3_stmt *stmt;
@@ -2476,10 +2476,10 @@ static void comparacion_alimentacion_vs_rendimiento(void)
     const char *sql =
         "SELECT "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE strftime('%%Y-%%m-%%d', fecha_hora) IN "
+        " WHERE fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_comida WHERE calidad = 'Buena')) AS avg_buena, "
         "(SELECT AVG(rendimiento_general) FROM partido "
-        " WHERE strftime('%%Y-%%m-%%d', fecha_hora) IN "
+        " WHERE fecha IN "
         " (SELECT DISTINCT fecha FROM bienestar_comida WHERE calidad = 'Mala')) AS avg_mala";
 
     sqlite3_stmt *stmt;

@@ -18,6 +18,27 @@ static StatsGenItem s_stats_cache[STATS_GEN_COUNT];
 static int          s_stats_valid   = 0;
 static int          s_stats_changes = -1;
 
+static size_t estadisticas_generales_strnlen_seguro(const char *texto, size_t max_len)
+{
+    if (!texto)
+    {
+        return 0;
+    }
+
+#if defined(__STDC_LIB_EXT1__)
+    return strnlen_s(texto, max_len);
+#elif defined(_MSC_VER)
+    return strnlen_s(texto, max_len);
+#else
+    size_t i = 0;
+    while (i < max_len && texto[i] != '\0')
+    {
+        i++;
+    }
+    return i;
+#endif
+}
+
 static const char* get_clima_case_sql()
 {
     return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' WHEN clima = 7 THEN 'Frio' WHEN clima = 8 THEN 'Calor' WHEN clima = 9 THEN 'Llovizna leve' WHEN clima = 10 THEN 'Lluvia Moderada' WHEN clima = 11 THEN 'Lluvia fuerte' WHEN clima = 12 THEN 'Cancha inundada' END";
@@ -192,7 +213,7 @@ static void query_to_buf(const char *sql, char *out, size_t out_size)
             else
                 snprintf(line, sizeof(line), "%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
         }
-        size_t line_len = strlen(line);
+        size_t line_len = estadisticas_generales_strnlen_seguro(line, sizeof(line));
         if (pos + line_len + 1 < out_size)
         {
             memcpy(out + pos, line, line_len);

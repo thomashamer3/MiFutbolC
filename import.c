@@ -424,11 +424,13 @@ static void importar_partidos_desde_archivo(const char *filename, const char *fo
     char line[2048];
     int count = 0;
 
+    sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
     while (fgets(line, sizeof(line), file))
     {
         if (parser(line))
             count++;
     }
+    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
 
     fclose(file);
     printf("Importacion de partidos desde %s completada. %d partidos importados\n",
@@ -504,12 +506,14 @@ static void importar_camisetas_desde_archivo(const char *filename, const char *f
     char line[1024];
     int count = 0;
 
+    sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
     while (fgets(line, sizeof(line), file))
     {
         CamisetaData data;
         if (parser(line, &data))
             count += procesar_camiseta_importada(&data);
     }
+    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
 
     fclose(file);
     printf("Importacion de camisetas desde %s completada. %d camisetas importadas\n",
@@ -724,12 +728,14 @@ static void importar_lesiones_desde_archivo(const char *filename, const char *fo
     char line[1024];
     int count = 0;
 
+    sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
     while (fgets(line, sizeof(line), file))
     {
         LesionData data;
         if (parser(line, &data) && procesar_lesion_importada(&data))
             count++;
     }
+    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
 
     fclose(file);
     printf("Importacion de lesiones desde %s completada. %d lesiones importadas\n",
