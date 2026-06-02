@@ -16,7 +16,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780376335 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780424956 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -112,7 +112,7 @@
 1780376153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1780378641 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1780424954 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"export.h"
 	"ascii_art.h"
 	"db.h"
@@ -174,7 +174,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1780379058 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780424399 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -2102,7 +2102,7 @@
 	<string.h>
 	<time.h>
 
-1780376153 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1780423795 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"db.h"
 	"utils.h"
@@ -2113,7 +2113,7 @@
 	"busqueda.h"
 	"ascii_art.h"
 	"cJSON.h"
-	<Windows.h>
+	<windows.h>
 	"compat_windows.h"
 	<shellapi.h>
 	<stdlib.h>
@@ -2361,7 +2361,7 @@
 	<wchar.h>
 	<ncursesw/unctrl.h>
 
-1780287640 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
+1780423708 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\pdfgen.c
 	<BaseTsd.h>
 	<sys/types.h>
 	<ctype.h>

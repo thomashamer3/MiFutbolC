@@ -2104,8 +2104,8 @@ static void pedir_detalle_evento(int cantidad_objetivo,
         }
         else
         {
-            size_t usados = strlen(buffer);
-            if (usados + 1 + strlen(tipo) + 1 < buffer_size)
+            size_t usados = strlen_s(buffer, buffer_size);
+            if (usados + 1 + strlen_s(tipo, 32) + 1 < buffer_size)
             {
                 snprintf(buffer + usados, buffer_size - usados, ",%s", tipo);
             }
@@ -2613,7 +2613,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     convert_display_date_to_storage(fecha, fecha_storage, sizeof(fecha_storage));
     sqlite3_bind_text(stmt, 3, fecha_storage, -1, SQLITE_TRANSIENT);
     char mes_anio[8] = {0};
-    if (strlen(fecha_storage) >= 7 && fecha_storage[4] == '-')
+    if (strlen_s(fecha_storage, sizeof(fecha_storage)) >= 7 && fecha_storage[4] == '-')
     {
         snprintf(mes_anio, sizeof(mes_anio), "%.7s", fecha_storage);
     }
@@ -3571,8 +3571,7 @@ static void modificar_detalle_evento_partido(const char *campo,
         const char *det = (const char *)sqlite3_column_text(stmt, es_asistencia ? 3 : 2);
         if (det)
         {
-            strncpy(detalle_actual, det, sizeof(detalle_actual) - 1);
-            detalle_actual[sizeof(detalle_actual) - 1] = '\0';
+            strncpy_s(detalle_actual, sizeof(detalle_actual), det, sizeof(detalle_actual) - 1);
         }
     }
     sqlite3_finalize(stmt);
@@ -3719,13 +3718,11 @@ static void cargar_detalle_partido_actual(char *goles_detalle, size_t goles_size
         const char *a = (const char *)sqlite3_column_text(stmt, 1);
         if (goles_detalle && goles_size > 0)
         {
-            strncpy(goles_detalle, g ? g : "", goles_size - 1);
-            goles_detalle[goles_size - 1] = '\0';
+            strncpy_s(goles_detalle, goles_size, g ? g : "", goles_size - 1);
         }
         if (asist_detalle && asist_size > 0)
         {
-            strncpy(asist_detalle, a ? a : "", asist_size - 1);
-            asist_detalle[asist_size - 1] = '\0';
+            strncpy_s(asist_detalle, asist_size, a ? a : "", asist_size - 1);
         }
     }
     sqlite3_finalize(stmt);

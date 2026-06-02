@@ -10,7 +10,7 @@
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include "compat_windows.h"
 #endif
@@ -1885,7 +1885,7 @@ void menu_settings()
     snprintf(label_busqueda, sizeof(label_busqueda), "Busqueda Global");
     snprintf(label_actualizar, sizeof(label_actualizar), "%s", get_text("menu_update"));
 
-    AppSettings *cfg = settings_get();
+    AppSettings const *cfg = settings_get();
     settings_actualizar_label_toggle("settings_music_autoplay",
                                      cfg->music_autoplay,
                                      label_music_autoplay,

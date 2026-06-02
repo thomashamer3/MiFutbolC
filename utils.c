@@ -362,13 +362,11 @@ static void auth_get_db_path(char *path, size_t size)
 {
 #ifdef _WIN32
     char local_app_data[1024] = {0};
-    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)) &&
+            strcpy_s(path, size, local_app_data) == 0 &&
+            strcat_s(path, size, "\\MiFutbolC\\data\\users.db") == 0)
     {
-        if (strcpy_s(path, size, local_app_data) == 0 &&
-                strcat_s(path, size, "\\MiFutbolC\\data\\users.db") == 0)
-        {
-            return;
-        }
+        return;
     }
 #endif
     strcpy_s(path, size, "./data/users.db");
@@ -382,34 +380,28 @@ static void auth_get_user_data_paths(const char *username,
 
 #ifdef _WIN32
     char local_app_data[1024] = {0};
-    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
+    /* Avoid unbounded %s expansion for username in fixed-size path buffers. */
+    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)) &&
+            strcpy_s(db_path, db_size, local_app_data) == 0 &&
+            strcat_s(db_path, db_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
+            strncat_s(db_path, db_size, safe_username, _TRUNCATE) == 0 &&
+            strcat_s(db_path, db_size, ".db") == 0 &&
+            strcpy_s(log_path, log_size, local_app_data) == 0 &&
+            strcat_s(log_path, log_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
+            strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
+            strcat_s(log_path, log_size, ".log") == 0)
     {
-        /* Avoid unbounded %s expansion for username in fixed-size path buffers. */
-        if (strcpy_s(db_path, db_size, local_app_data) == 0 &&
-                strcat_s(db_path, db_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
-                strncat_s(db_path, db_size, safe_username, _TRUNCATE) == 0 &&
-                strcat_s(db_path, db_size, ".db") == 0)
-        {
-            if (strcpy_s(log_path, log_size, local_app_data) == 0 &&
-                    strcat_s(log_path, log_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
-                    strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
-                    strcat_s(log_path, log_size, ".log") == 0)
-            {
-                return;
-            }
-        }
+        return;
     }
 #endif
     if (strcpy_s(db_path, db_size, "./data/mifutbol_") == 0 &&
             strncat_s(db_path, db_size, safe_username, _TRUNCATE) == 0 &&
-            strcat_s(db_path, db_size, ".db") == 0)
+            strcat_s(db_path, db_size, ".db") == 0 &&
+            strcpy_s(log_path, log_size, "./data/mifutbol_") == 0 &&
+            strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
+            strcat_s(log_path, log_size, ".log") == 0)
     {
-        if (strcpy_s(log_path, log_size, "./data/mifutbol_") == 0 &&
-                strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
-                strcat_s(log_path, log_size, ".log") == 0)
-        {
-            return;
-        }
+        return;
     }
     /* Fallback in case of errors */
     db_path[0] = '\0';
@@ -1556,7 +1548,7 @@ int confirmar(const char *msg)
     ui_printf("%s (S/N): ", msg);
     if (!fgets(linea, sizeof(linea), stdin))
         return 0;
-    size_t len = strlen(linea);
+    size_t len = strlen_s(linea, sizeof(linea));
     if (len > 0 && linea[len - 1] == '\n')
         linea[len - 1] = '\0';
     if (linea[0] == '\0')
@@ -4007,8 +3999,7 @@ void app_build_path(char *dest, size_t size, const char *dir, const char *file_n
     snprintf(full, sizeof(full), "%s/%s", dir, file_name);
 #endif
     full[sizeof(full) - 1] = '\0';
-    strncpy(dest, full, size);
-    dest[size - 1] = '\0';
+    strncpy_s(dest, size, full, size - 1);
 }
 
 int app_copy_binary_file(const char *source_path, const char *dest_path)

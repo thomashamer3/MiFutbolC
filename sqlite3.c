@@ -97972,7 +97972,7 @@ SQLITE_PRIVATE char *sqlite3VdbeDisplayP4(sqlite3 *db, Op *pOp)
         u32 i;
         u32 *ai = pOp->p4.ai;
         u32 n = ai[0];   /* The first element of an INTARRAY is always the
-       ** count of the number of elements to follow */
+   ** count of the number of elements to follow */
         for(i=1; i<=n; i++)
         {
             sqlite3_str_appendf(&x, "%c%u", (i==1 ? '[' : ','), ai[i]);
@@ -112228,7 +112228,7 @@ notExistsWithKey:
                     ** engine starts picking positive candidate ROWIDs at random until
                     ** it finds one that is not previously used. */
                     assert( pOp->p3==0 );  /* We cannot be in random rowid mode if this is
-             ** an AUTOINCREMENT table. */
+         ** an AUTOINCREMENT table. */
                     cnt = 0;
                     do
                     {
