@@ -107,10 +107,22 @@ static int dias_desde_fecha(const char *fecha_str, time_t ahora)
     return (int)((ahora - fecha_partido) / (60 * 60 * 24));
 }
 
-static void agregar_consejo(Consejo **consejos, int *num_consejos, const char *mensaje,
-                            NivelConsejo nivel, CategoriaConsejo categoria)
+static void agregar_consejo(Consejo **consejos, int *num_consejos, int *capacidad,
+                            const char *mensaje, NivelConsejo nivel,
+                            CategoriaConsejo categoria)
 {
-    *consejos = realloc(*consejos, (*num_consejos + 1) * sizeof(Consejo));
+    if (*num_consejos >= *capacidad)
+    {
+        int nueva_capacidad = (*capacidad == 0) ? 8 : (*capacidad * 2);
+        Consejo *tmp = realloc(*consejos, (size_t)nueva_capacidad * sizeof(Consejo));
+        if (!tmp)
+        {
+            return;
+        }
+        *consejos = tmp;
+        *capacidad = nueva_capacidad;
+    }
+
     (*consejos)[*num_consejos].mensaje = strdup(mensaje);
     (*consejos)[*num_consejos].nivel = nivel;
     (*consejos)[*num_consejos].categoria = categoria;
@@ -268,11 +280,12 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
 {
     *consejos = NULL;
     *num_consejos = 0;
+    int capacidad = 0;
 
     // Regla 1: Cansancio alto + partidos consecutivos
     if (estado.cansancio_promedio > 8 && estado.partidos_consecutivos >= 3)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Se recomienda descanso para reducir riesgo de lesion",
                         CONSEJO_ADVERTENCIA, CATEGORIA_FISICO);
     }
@@ -280,7 +293,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Regla 2: Rendimiento bajo
     if (estado.rendimiento_promedio < 3)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Rendimiento bajo detectado. Considerar rotacion de jugadores",
                         CONSEJO_ADVERTENCIA, CATEGORIA_DEPORTIVO);
     }
@@ -288,7 +301,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Regla 3: Estado de animo bajo + racha negativa
     if (estado.estado_animo_promedio < 3 && estado.derrotas_consecutivas >= 2)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Confianza baja por racha negativa. Motivar al equipo",
                         CONSEJO_ADVERTENCIA, CATEGORIA_MENTAL);
     }
@@ -296,7 +309,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Regla 4: Riesgo de lesion critico
     if (estado.riesgo_lesion > 3.0)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Riesgo de lesion muy elevado. Descanso obligatorio",
                         CONSEJO_CRITICO, CATEGORIA_SALUD);
     }
@@ -304,7 +317,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Regla 5: Demasiado descanso
     if (estado.dias_descanso > 14)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Demasiado tiempo sin jugar. Considerar partido amistoso",
                         CONSEJO_INFO, CATEGORIA_DEPORTIVO);
     }
@@ -312,7 +325,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
     // Si no hay consejos especificos, dar consejo general positivo
     if (*num_consejos == 0)
     {
-        agregar_consejo(consejos, num_consejos,
+        agregar_consejo(consejos, num_consejos, &capacidad,
                         "Estado general bueno. Mantener rutina actual",
                         CONSEJO_INFO, CATEGORIA_FISICO);
     }

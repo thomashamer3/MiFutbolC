@@ -12,7 +12,7 @@
 #ifdef _WIN32
 #include <process.h>
 #include <io.h>
-#include <Windows.h>
+#include <windows.h>
 #include <commdlg.h>
 #else
 #include "process.h"

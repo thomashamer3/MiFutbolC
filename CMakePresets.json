@@ -5,42 +5,80 @@
     "minor": 20,
     "patch": 0
   },
+
   "configurePresets": [
     {
-      "name": "mingw-ninja-debug",
-      "displayName": "MinGW Ninja Debug",
-      "description": "Debug con GCC MinGW y Ninja",
+      "name": "base",
+      "hidden": true,
       "generator": "Ninja",
+      "cacheVariables": {
+        "MIFUTBOLC_BUILD_TESTS": "OFF"
+      }
+    },
+
+    {
+      "name": "mingw-debug",
+      "displayName": "MinGW Debug",
+      "description": "Debug GCC + Ninja + Sanitizers",
+      "inherits": "base",
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/ProgramData/mingw64/mingw64/bin/gcc.exe",
-        "MIFUTBOLC_BUILD_TESTS": "OFF"
+        "CMAKE_C_COMPILER": "C:/ProgramData/mingw64/mingw64/bin/gcc.exe"
       }
     },
+
     {
-      "name": "mingw-ninja-release",
-      "displayName": "MinGW Ninja Release",
-      "description": "Release con GCC MinGW y Ninja",
-      "generator": "Ninja",
+      "name": "mingw-release",
+      "displayName": "MinGW Release",
+      "description": "Release GCC + Ninja",
+      "inherits": "base",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_COMPILER": "C:/ProgramData/mingw64/mingw64/bin/gcc.exe",
-        "MIFUTBOLC_BUILD_TESTS": "OFF"
+        "CMAKE_C_COMPILER": "C:/ProgramData/mingw64/mingw64/bin/gcc.exe"
+      }
+    },
+
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "description": "Linux GCC/Clang Debug",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/linux-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "description": "Linux GCC/Clang Release",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/linux-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
+
   "buildPresets": [
     {
       "name": "build-debug",
-      "displayName": "Build Debug",
-      "configurePreset": "mingw-ninja-debug"
+      "configurePreset": "mingw-debug"
     },
     {
       "name": "build-release",
-      "displayName": "Build Release",
-      "configurePreset": "mingw-ninja-release"
+      "configurePreset": "mingw-release"
+    },
+    {
+      "name": "build-linux-debug",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "build-linux-release",
+      "configurePreset": "linux-release"
     }
   ]
 }

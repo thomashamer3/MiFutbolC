@@ -347,6 +347,24 @@ static void escanear_directorio(void)
  * Motor de audio
  * ============================================================ */
 
+/** Devuelve la cantidad de canales del engine garantizando que sea un valor
+ *  utilizable por miniaudio (los buses almacenan los canales en ma_uint8, por
+ *  lo que el limite es 255).  En entornos sin dispositivo de audio real
+ *  (backend null de Linux, dispositivo virtual, etc.) ma_engine_get_channels
+ *  puede devolver 0 o un valor fuera de rango, lo que hace fallar el assert
+ *  interno de ma_node_input_bus_init (miniaudio.h:73954).  En ese caso se
+ *  hace fallback a stereo. */
+static ma_uint32 canales_engine_validos(void)
+{
+    ma_uint32 ch = ma_engine_get_channels(&g_engine);
+    if (ch == 0 || ch >= 256)
+    {
+        fprintf(stderr, "Aviso: canales de audio no validos (%u), usando fallback stereo.\n", (unsigned)ch);
+        ch = 2;
+    }
+    return ch;
+}
+
 static int inicializar_engine(void)
 {
     if (g_engine_listo)
@@ -372,18 +390,9 @@ static int inicializar_engine(void)
 
     /* Inicializar nodos del ecualizador en el grafo del engine */
     {
-        ma_uint32 ch = ma_engine_get_channels(&g_engine);
+        ma_uint32 ch = canales_engine_validos();
         ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
 
-        /* Sanear valores: en Linux sin dispositivo de audio real (backend null
-         * o dispositivo virtual) el engine puede inicializarse correctamente
-         * pero devolver 0 o un valor >= 256 para los canales, lo que dispara
-         * el assert interno de miniaudio.  Usamos stereo/44100 como fallback. */
-        if (ch == 0 || ch >= 256)
-        {
-            fprintf(stderr, "Aviso: canales de audio no validos (%u), usando fallback stereo.\n", (unsigned)ch);
-            ch = 2;
-        }
         if (sr == 0)
         {
             fprintf(stderr, "Aviso: sample rate no valido, usando fallback 44100 Hz.\n");
@@ -1416,7 +1425,7 @@ static void eq_update_bass(void)
     if (!g_eq_listo) return;
     ma_loshelf_config cfg = ma_loshelf2_config_init(
                                 ma_format_f32,
-                                ma_engine_get_channels(&g_engine),
+                                canales_engine_validos(),
                                 ma_engine_get_sample_rate(&g_engine),
                                 (double)g_eq_bass_db, EQ_Q, EQ_BASS_FREQ);
     ma_loshelf_node_reinit(&cfg, &g_eq_bass);
@@ -1428,7 +1437,7 @@ static void eq_update_mid(void)
     if (!g_eq_listo) return;
     ma_peak_config cfg = ma_peak2_config_init(
                              ma_format_f32,
-                             ma_engine_get_channels(&g_engine),
+                             canales_engine_validos(),
                              ma_engine_get_sample_rate(&g_engine),
                              (double)g_eq_mid_db, EQ_Q, EQ_MID_FREQ);
     ma_peak_node_reinit(&cfg, &g_eq_mid);
@@ -1440,7 +1449,7 @@ static void eq_update_treble(void)
     if (!g_eq_listo) return;
     ma_hishelf_config cfg = ma_hishelf2_config_init(
                                 ma_format_f32,
-                                ma_engine_get_channels(&g_engine),
+                                canales_engine_validos(),
                                 ma_engine_get_sample_rate(&g_engine),
                                 (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
     ma_hishelf_node_reinit(&cfg, &g_eq_treble);

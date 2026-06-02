@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <bcrypt.h>
 #else
 #include "compat_windows.h"
@@ -46,6 +46,10 @@ static const char *estado_cancha_to_text(int estado_cancha);
 static const char *dolor_fisico_to_text(int dolor_fisico);
 static const char *arbitraje_score_to_text(int arbitraje_score);
 static const char *tarjeta_to_text(int tarjeta);
+static void modificar_campo_texto_partido(const char *campo, const char *prompt, const char *mensaje_exito, int buffer_size);
+static void menu_modificar_rendimiento_y_estado_partido(void);
+static void menu_modificar_detalle_ampliado_partido(void);
+static void modificar_detalle_evento_partido(const char *campo, const char *etiqueta, int es_asistencia, const char *mensaje_exito);
 
 // Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
@@ -283,6 +287,8 @@ static void imprimir_bloque_base_partido(sqlite3_stmt *stmt, const char *fecha_c
     ui_printf_centered_line("Formato: %s", formato_partido);
     ui_printf_centered_line("Tarjeta: %s", tarjeta_to_text(sqlite3_column_int(stmt, 31)));
     ui_printf_centered_line("Goles en contra: %d", sqlite3_column_int(stmt, 32));
+    ui_printf_centered_line("Detalle Goles: %s", stmt_text_or_default(stmt, 39, "N/A"));
+    ui_printf_centered_line("Detalle Asistencias: %s", stmt_text_or_default(stmt, 40, "N/A"));
 }
 
 static void imprimir_bloque_detallado_partido(sqlite3_stmt *stmt, int tipo_partido)
@@ -697,17 +703,7 @@ static void partido_listado_append_filtros_contexto(const PartidoListadoFiltros 
     if (filtros->dia >= 1)
     {
         partido_listado_append_clause(where_clause, where_size,
-                                      " AND (CASE "
-                                      "WHEN substr(IFNULL(p.fecha_hora, ''), 12, 2) GLOB '[0-9][0-9]' "
-                                      "AND CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) BETWEEN 0 AND 23 "
-                                      "THEN CASE "
-                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 6 THEN 1 "
-                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 12 THEN 2 "
-                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 15 THEN 3 "
-                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 19 THEN 4 "
-                                      "WHEN CAST(substr(IFNULL(p.fecha_hora, ''), 12, 2) AS INTEGER) < 21 THEN 5 "
-                                      "ELSE 6 END "
-                                      "ELSE IFNULL(p.dia, 0) END) = ?");
+                                      " AND IFNULL(p.dia, 0) = ?");
     }
 }
 
@@ -851,7 +847,8 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual,
              "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
              "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
              "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
+             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
+             "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
              "JOIN cancha can ON p.cancha_id = can.id "
              "%s "
@@ -1621,6 +1618,8 @@ typedef struct
     int dia;
     int precio;
     int tipo_partido;
+    char goles_detalle[512];
+    char asistencias_detalle[512];
     DatosPartidoFormal formal;
 } DatosPartido;
 
@@ -1906,6 +1905,8 @@ static void inicializar_datos_partido(DatosPartido *datos)
     memset(datos, 0, sizeof(*datos));
     strcpy_s(datos->comentario_personal, sizeof(datos->comentario_personal), "");
     datos->tipo_partido = 1;
+    strcpy_s(datos->goles_detalle, sizeof(datos->goles_detalle), "");
+    strcpy_s(datos->asistencias_detalle, sizeof(datos->asistencias_detalle), "");
     strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
     strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "");
     strcpy_s(datos->formal.formato_partido, sizeof(datos->formal.formato_partido), "");
@@ -1970,6 +1971,153 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max, c
         valor = input_int(prompt_error);
     }
     return valor;
+}
+
+static const char *const TIPOS_GOL[] =
+{
+    "Derecha",
+    "Izquierda",
+    "Cabeza",
+    "Pecho",
+    "Rodilla",
+    "Rebote raro",
+    "Vaselina",
+    "Tiro libre",
+    "Penal",
+    "Gol olimpico",
+    "Jugada"
+};
+
+static const char *const TIPOS_ASISTENCIA[] =
+{
+    "Pase corto",
+    "Pase filtrado",
+    "Centro",
+    "Pelota parada",
+    "Pared (1-2)",
+    "Pase largo"
+};
+
+static const char *detalle_tipo_to_text(int indice, int es_asistencia)
+{
+    const char *const *lista = es_asistencia ? TIPOS_ASISTENCIA : TIPOS_GOL;
+    int cantidad = es_asistencia
+                   ? (int)(sizeof(TIPOS_ASISTENCIA) / sizeof(TIPOS_ASISTENCIA[0]))
+                   : (int)(sizeof(TIPOS_GOL) / sizeof(TIPOS_GOL[0]));
+
+    if (indice < 0 || indice >= cantidad)
+    {
+        return "N/A";
+    }
+    return lista[indice];
+}
+
+static int detalle_tipo_cantidad(int es_asistencia)
+{
+    return es_asistencia
+           ? (int)(sizeof(TIPOS_ASISTENCIA) / sizeof(TIPOS_ASISTENCIA[0]))
+           : (int)(sizeof(TIPOS_GOL) / sizeof(TIPOS_GOL[0]));
+}
+
+static void detalle_tipo_imprimir_lista(int es_asistencia, const char *etiqueta_tipo)
+{
+    int cantidad = detalle_tipo_cantidad(es_asistencia);
+    const char *const *lista = es_asistencia ? TIPOS_ASISTENCIA : TIPOS_GOL;
+
+    printf("\nTipos de %s disponibles:\n", etiqueta_tipo);
+    for (int i = 0; i < cantidad; i++)
+    {
+        printf("  %2d) %s\n", i + 1, lista[i]);
+    }
+    printf("   0) Finalizar (dejar lo cargado hasta ahora)\n");
+}
+
+static void detalle_tipo_mostrar_cargados(const char *etiqueta_tipo, const char *buffer)
+{
+    if (!buffer || buffer[0] == '\0')
+    {
+        printf("%s cargados: (ninguno)\n", etiqueta_tipo);
+        return;
+    }
+    printf("%s cargados: %s\n", etiqueta_tipo, buffer);
+}
+
+/**
+ * @brief Pide al usuario el detalle de varios eventos (goles o asistencias).
+ *
+ * Muestra una lista numerada de tipos. El usuario elige uno y se agrega
+ * al buffer. Se repite hasta que el usuario haya alcanzado la cantidad
+ * objetivo de eventos o elija "Finalizar".
+ *
+ * @param cantidad_objetivo Cantidad de eventos que pidio el usuario (goles/asistencias)
+ * @param es_asistencia 0 = goles, !=0 = asistencias
+ * @param buffer Buffer destino donde se concatenan los tipos separados por coma
+ * @param buffer_size Tamano del buffer
+ */
+static void pedir_detalle_evento(int cantidad_objetivo,
+                                 int es_asistencia,
+                                 char *buffer,
+                                 size_t buffer_size)
+{
+    if (!buffer || buffer_size == 0 || cantidad_objetivo <= 0)
+    {
+        return;
+    }
+
+    buffer[0] = '\0';
+    const char *etiqueta_tipo = es_asistencia ? "asistencia" : "gol";
+    int cantidad_tipos = detalle_tipo_cantidad(es_asistencia);
+    int cargados = 0;
+
+    while (cargados < cantidad_objetivo)
+    {
+        printf("\n--- Detalle de %s (%d de %d) ---\n",
+               etiqueta_tipo, cargados, cantidad_objetivo);
+        detalle_tipo_mostrar_cargados(
+            es_asistencia ? "Asistencias" : "Goles", buffer);
+        detalle_tipo_imprimir_lista(es_asistencia, etiqueta_tipo);
+
+        char prompt[64];
+        snprintf(prompt, sizeof(prompt),
+                 "Tipo de %s #%d (0 para finalizar): ",
+                 etiqueta_tipo, cargados + 1);
+        int opcion = input_int(prompt);
+
+        if (opcion == 0)
+        {
+            break;
+        }
+
+        if (opcion < 1 || opcion > cantidad_tipos)
+        {
+            printf("Opcion invalida. Ingrese un numero entre 1 y %d, o 0 para finalizar.\n",
+                   cantidad_tipos);
+            pause_console();
+            continue;
+        }
+
+        const char *tipo = detalle_tipo_to_text(opcion - 1, es_asistencia);
+
+        if (buffer[0] == '\0')
+        {
+            snprintf(buffer, buffer_size, "%s", tipo);
+        }
+        else
+        {
+            size_t usados = strlen(buffer);
+            if (usados + 1 + strlen(tipo) + 1 < buffer_size)
+            {
+                snprintf(buffer + usados, buffer_size - usados, ",%s", tipo);
+            }
+            else
+            {
+                printf("No hay mas espacio para agregar tipos. Se finaliza el detalle.\n");
+                pause_console();
+                break;
+            }
+        }
+        cargados++;
+    }
 }
 
 static const char *estado_cancha_to_text(int estado_cancha)
@@ -2365,8 +2513,18 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
 
     datos->goles = pedir_entero_minimo("Goles: ", 0,
                                        "Goles invalidos. Ingrese 0 o mas: ");
+    if (datos->goles > 0 && confirmar("Desea agregar el detalle de los goles?"))
+    {
+        pedir_detalle_evento(datos->goles, 0,
+                             datos->goles_detalle, sizeof(datos->goles_detalle));
+    }
     datos->asistencias = pedir_entero_minimo("Asistencias: ", 0,
                          "Asistencias invalidas. Ingrese 0 o mas: ");
+    if (datos->asistencias > 0 && confirmar("Desea agregar el detalle de las asistencias?"))
+    {
+        pedir_detalle_evento(datos->asistencias, 1,
+                             datos->asistencias_detalle, sizeof(datos->asistencias_detalle));
+    }
     if (tipo_partido == 1)
     {
         datos->formal.marcador.goles_en_contra = pedir_entero_minimo("Goles en contra: ", 0,
@@ -2438,12 +2596,14 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO partido(id, cancha_id,fecha_hora,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio,"
+                "INSERT INTO partido(id, cancha_id,fecha_hora,mes_anio,goles,asistencias,camiseta_id,resultado,rendimiento_general,cansancio,estado_animo,comentario_personal,clima,dia,precio,"
                 "tipo_partido,rival_nombre,tipo_rival,posicion_jugada,minutos_jugados,intensidad,esfuerzo_percibido,condicion_cancha,arbitraje,eventos_clave,rating_tecnico,rating_fisico,rating_mental,"
-                "estado_cancha,goles_equipo,goles_rival,formato_partido,tarjeta,goles_en_contra,dolor_fisico,temperatura_c,arbitraje_score,lo_mejor,que_mejorar,tags)"
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "estado_cancha,goles_equipo,goles_rival,formato_partido,tarjeta,goles_en_contra,dolor_fisico,temperatura_c,arbitraje_score,lo_mejor,que_mejorar,tags,goles_detalle,asistencias_detalle)"
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 &stmt))
     {
+        printf("Error al preparar insercion de partido: %s\n", sqlite3_errmsg(db));
+        pause_console();
         return;
     }
     sqlite3_bind_int64(stmt, 1, id);
@@ -2452,49 +2612,57 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     char fecha_storage[64] = {0};
     convert_display_date_to_storage(fecha, fecha_storage, sizeof(fecha_storage));
     sqlite3_bind_text(stmt, 3, fecha_storage, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 4, datos->goles);
-    sqlite3_bind_int(stmt, 5, datos->asistencias);
-    sqlite3_bind_int(stmt, 6, datos->camiseta);
-    sqlite3_bind_int(stmt, 7, datos->resultado);
-    sqlite3_bind_int(stmt, 8, datos->rendimiento_general);
-    sqlite3_bind_int(stmt, 9, datos->cansancio);
-    sqlite3_bind_int(stmt, 10, datos->estado_animo);
-    sqlite3_bind_text(stmt, 11, datos->comentario_personal, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 12, datos->clima);
-    sqlite3_bind_int(stmt, 13, datos->dia);
-    sqlite3_bind_int(stmt, 14, datos->precio);
-    sqlite3_bind_int(stmt, 15, datos->tipo_partido);
-    sqlite3_bind_text(stmt, 16, datos->formal.rival_nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 17, datos->formal.tipo_rival, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 18, datos->formal.posicion_jugada, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 19, datos->formal.minutos_jugados);
-    sqlite3_bind_int(stmt, 20, datos->formal.intensidad);
-    sqlite3_bind_int(stmt, 21, 0);
-    sqlite3_bind_text(stmt, 22, datos->formal.contexto.condicion_cancha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 23, datos->formal.contexto.arbitraje, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 24, datos->formal.notas.eventos_clave, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 25, datos->formal.rating.tecnico);
-    sqlite3_bind_int(stmt, 26, datos->formal.rating.fisico);
-    sqlite3_bind_int(stmt, 27, datos->formal.rating.mental);
-    sqlite3_bind_int(stmt, 28, datos->formal.contexto.estado_cancha);
-    sqlite3_bind_int(stmt, 29, datos->formal.marcador.goles_equipo);
-    sqlite3_bind_int(stmt, 30, datos->formal.marcador.goles_rival);
-    sqlite3_bind_text(stmt, 31, datos->formal.formato_partido, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 32, datos->formal.marcador.tarjeta);
-    sqlite3_bind_int(stmt, 33, datos->formal.marcador.goles_en_contra);
-    sqlite3_bind_int(stmt, 34, datos->formal.contexto.dolor_fisico);
+    char mes_anio[8] = {0};
+    if (strlen(fecha_storage) >= 7 && fecha_storage[4] == '-')
+    {
+        snprintf(mes_anio, sizeof(mes_anio), "%.7s", fecha_storage);
+    }
+    sqlite3_bind_text(stmt, 4, mes_anio, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, datos->goles);
+    sqlite3_bind_int(stmt, 6, datos->asistencias);
+    sqlite3_bind_int(stmt, 7, datos->camiseta);
+    sqlite3_bind_int(stmt, 8, datos->resultado);
+    sqlite3_bind_int(stmt, 9, datos->rendimiento_general);
+    sqlite3_bind_int(stmt, 10, datos->cansancio);
+    sqlite3_bind_int(stmt, 11, datos->estado_animo);
+    sqlite3_bind_text(stmt, 12, datos->comentario_personal, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 13, datos->clima);
+    sqlite3_bind_int(stmt, 14, datos->dia);
+    sqlite3_bind_int(stmt, 15, datos->precio);
+    sqlite3_bind_int(stmt, 16, datos->tipo_partido);
+    sqlite3_bind_text(stmt, 17, datos->formal.rival_nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 18, datos->formal.tipo_rival, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 19, datos->formal.posicion_jugada, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 20, datos->formal.minutos_jugados);
+    sqlite3_bind_int(stmt, 21, datos->formal.intensidad);
+    sqlite3_bind_int(stmt, 22, 0);
+    sqlite3_bind_text(stmt, 23, datos->formal.contexto.condicion_cancha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 24, datos->formal.contexto.arbitraje, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 25, datos->formal.notas.eventos_clave, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 26, datos->formal.rating.tecnico);
+    sqlite3_bind_int(stmt, 27, datos->formal.rating.fisico);
+    sqlite3_bind_int(stmt, 28, datos->formal.rating.mental);
+    sqlite3_bind_int(stmt, 29, datos->formal.contexto.estado_cancha);
+    sqlite3_bind_int(stmt, 30, datos->formal.marcador.goles_equipo);
+    sqlite3_bind_int(stmt, 31, datos->formal.marcador.goles_rival);
+    sqlite3_bind_text(stmt, 32, datos->formal.formato_partido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 33, datos->formal.marcador.tarjeta);
+    sqlite3_bind_int(stmt, 34, datos->formal.marcador.goles_en_contra);
+    sqlite3_bind_int(stmt, 35, datos->formal.contexto.dolor_fisico);
     if (datos->formal.contexto.temperatura_registrada)
     {
-        sqlite3_bind_double(stmt, 35, datos->formal.contexto.temperatura_c);
+        sqlite3_bind_double(stmt, 36, datos->formal.contexto.temperatura_c);
     }
     else
     {
-        sqlite3_bind_null(stmt, 35);
+        sqlite3_bind_null(stmt, 36);
     }
-    sqlite3_bind_int(stmt, 36, datos->formal.contexto.arbitraje_score);
-    sqlite3_bind_text(stmt, 37, datos->formal.notas.lo_mejor, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 38, datos->formal.notas.que_mejorar, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 39, datos->formal.notas.tags, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 37, datos->formal.contexto.arbitraje_score);
+    sqlite3_bind_text(stmt, 38, datos->formal.notas.lo_mejor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 39, datos->formal.notas.que_mejorar, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 40, datos->formal.notas.tags, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 41, datos->goles_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 42, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -2862,6 +3030,7 @@ void eliminar_partido()
 
 static int current_partido_id;
 
+
 static void modificar_campo_partido(const char *campo, const char *prompt, const char *mensaje_exito,
                                     int min_val, int max_val, void (*mostrar_lista)(void))
 {
@@ -2965,14 +3134,15 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
         return;
     }
 
-    char sql[1700];
+    char sql[1900];
     snprintf(sql, sizeof(sql),
              "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, rendimiento_general, cansancio, estado_animo, comentario_personal, clima, dia, precio, "
              "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
              "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
              "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
              "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
+             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
+             "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
              "JOIN cancha can ON p.cancha_id = can.id "
              "WHERE p.%s = ?",
@@ -3379,6 +3549,86 @@ static void modificar_eventos_clave_partido()
                                   "Eventos clave modificados correctamente", 300);
 }
 
+static void modificar_detalle_evento_partido(const char *campo,
+        const char *etiqueta,
+        int es_asistencia,
+        const char *mensaje_exito)
+{
+    sqlite3_stmt *stmt;
+    int cantidad = 0;
+    char detalle_actual[512] = {0};
+
+    if (!preparar_stmt("SELECT goles, asistencias, IFNULL(goles_detalle, ''), IFNULL(asistencias_detalle, '') "
+                       "FROM partido WHERE id = ?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, current_partido_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        cantidad = sqlite3_column_int(stmt, es_asistencia ? 1 : 0);
+        const char *det = (const char *)sqlite3_column_text(stmt, es_asistencia ? 3 : 2);
+        if (det)
+        {
+            strncpy(detalle_actual, det, sizeof(detalle_actual) - 1);
+            detalle_actual[sizeof(detalle_actual) - 1] = '\0';
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    printf("Detalle actual de %s: %s\n", etiqueta,
+           detalle_actual[0] ? detalle_actual : "(sin detalle)");
+
+    if (cantidad <= 0)
+    {
+        printf("No se puede modificar el detalle: el partido no tiene %s registrados.\n",
+               es_asistencia ? "asistencias" : "goles");
+        printf("Modifique primero el numero de %s.\n",
+               es_asistencia ? "asistencias" : "goles");
+        pause_console();
+        return;
+    }
+
+    char nuevo_detalle[512] = {0};
+    pedir_detalle_evento(cantidad, es_asistencia, nuevo_detalle, sizeof(nuevo_detalle));
+
+    if (nuevo_detalle[0] == '\0' && detalle_actual[0] == '\0')
+    {
+        printf("No se realizo ningun cambio.\n");
+        pause_console();
+        return;
+    }
+
+    char sql[256];
+    snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        pause_console();
+        return;
+    }
+    sqlite3_bind_text(stmt, 1, nuevo_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    printf("%s\n", mensaje_exito);
+    pause_console();
+}
+
+static void modificar_goles_detalle_partido()
+{
+    modificar_detalle_evento_partido("goles_detalle", "goles", 0,
+                                     "Detalle de goles modificado correctamente");
+}
+
+static void modificar_asistencias_detalle_partido()
+{
+    modificar_detalle_evento_partido("asistencias_detalle", "asistencias", 1,
+                                     "Detalle de asistencias modificado correctamente");
+}
+
 static void modificar_lo_mejor_partido()
 {
     modificar_campo_texto_partido("lo_mejor", "Nuevo 'Lo mejor': ",
@@ -3437,10 +3687,48 @@ static void menu_modificar_detalle_ampliado_partido()
         {15, "Lo Mejor", modificar_lo_mejor_partido},
         {16, "Que Mejorar", modificar_que_mejorar_partido},
         {17, "Tags", modificar_tags_partido},
+        {18, "Detalle Goles", modificar_goles_detalle_partido},
+        {19, "Detalle Asistencias", modificar_asistencias_detalle_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR DETALLE AMPLIADO", items, 18);
+    ejecutar_menu("MODIFICAR DETALLE AMPLIADO", items, 20);
+}
+
+static void cargar_detalle_partido_actual(char *goles_detalle, size_t goles_size,
+        char *asist_detalle, size_t asist_size)
+{
+    sqlite3_stmt *stmt;
+    if (goles_detalle && goles_size > 0)
+    {
+        goles_detalle[0] = '\0';
+    }
+    if (asist_detalle && asist_size > 0)
+    {
+        asist_detalle[0] = '\0';
+    }
+    if (!preparar_stmt("SELECT IFNULL(goles_detalle, ''), IFNULL(asistencias_detalle, '') "
+                       "FROM partido WHERE id = ?", &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, current_partido_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *g = (const char *)sqlite3_column_text(stmt, 0);
+        const char *a = (const char *)sqlite3_column_text(stmt, 1);
+        if (goles_detalle && goles_size > 0)
+        {
+            strncpy(goles_detalle, g ? g : "", goles_size - 1);
+            goles_detalle[goles_size - 1] = '\0';
+        }
+        if (asist_detalle && asist_size > 0)
+        {
+            strncpy(asist_detalle, a ? a : "", asist_size - 1);
+            asist_detalle[asist_size - 1] = '\0';
+        }
+    }
+    sqlite3_finalize(stmt);
 }
 
 static int recopilar_datos_completos_partido(DatosPartido *datos)
@@ -3464,6 +3752,31 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     snprintf(datos->comentario_personal, sizeof(datos->comentario_personal), "%s %s", fecha, hora);
     datos->goles = input_int("Nuevos goles: ");
     datos->asistencias = input_int("Nuevas asistencias: ");
+
+    cargar_detalle_partido_actual(datos->goles_detalle, sizeof(datos->goles_detalle),
+                                  datos->asistencias_detalle, sizeof(datos->asistencias_detalle));
+
+    if (datos->goles > 0)
+    {
+        printf("Detalle actual de goles: %s\n",
+               datos->goles_detalle[0] ? datos->goles_detalle : "(sin detalle)");
+        if (confirmar("Desea modificar el detalle de los goles?"))
+        {
+            pedir_detalle_evento(datos->goles, 0,
+                                 datos->goles_detalle, sizeof(datos->goles_detalle));
+        }
+    }
+    if (datos->asistencias > 0)
+    {
+        printf("Detalle actual de asistencias: %s\n",
+               datos->asistencias_detalle[0] ? datos->asistencias_detalle : "(sin detalle)");
+        if (confirmar("Desea modificar el detalle de las asistencias?"))
+        {
+            pedir_detalle_evento(datos->asistencias, 1,
+                                 datos->asistencias_detalle, sizeof(datos->asistencias_detalle));
+        }
+    }
+
     datos->resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
     while (datos->resultado < 1 || datos->resultado > 3)
     {
@@ -3498,7 +3811,8 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
                 "UPDATE partido "
-                "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, camiseta_id=?, resultado=?, clima=?, dia=?, precio=? "
+                "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, camiseta_id=?, resultado=?, clima=?, dia=?, precio=?, "
+                "goles_detalle=?, asistencias_detalle=? "
                 "WHERE id=?",
                 &stmt))
     {
@@ -3517,7 +3831,9 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_int(stmt, 7, datos->clima);
     sqlite3_bind_int(stmt, 8, datos->dia);
     sqlite3_bind_int(stmt, 9, datos->precio);
-    sqlite3_bind_int(stmt, 10, current_partido_id);
+    sqlite3_bind_text(stmt, 10, datos->goles_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 11, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 12, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     mostrar_alerta_operacion("Partido", "Modificado", NULL);
@@ -3627,7 +3943,8 @@ static void buscar_por_tag()
                 "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
                 "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), IFNULL(p.rating_mental, 0), "
                 "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-                "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, '') "
+                "IFNULL(p.dolor_fisico, 0), p.temperatura_c, IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
+                "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                 "JOIN cancha can ON p.cancha_id = can.id "
                 "WHERE LOWER(IFNULL(p.tags, '')) LIKE LOWER(?) "

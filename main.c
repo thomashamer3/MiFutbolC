@@ -103,9 +103,12 @@ int main()
 
     // Verificar actualizaciones al inicio (modo silencioso - solo muestra si hay actualización)
     verificar_actualizacion_disponible(0);
-    
-    // Mostrar Dashboard inicial con resumen de actividades
-    mostrar_dashboard();
+
+    // Mostrar Dashboard inicial con resumen de actividades (si esta habilitado en ajustes)
+    if (settings_get_dashboard_enabled())
+    {
+        mostrar_dashboard();
+    }
 
     // Aviso opcional de recuerdos historicos para abrir Modo Retro
     carrera_notificar_modo_retro_inicio();

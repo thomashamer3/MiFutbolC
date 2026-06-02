@@ -9,7 +9,7 @@
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <bcrypt.h>
 #include <process.h>
 #include <io.h>
@@ -321,7 +321,7 @@ void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visi
 void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo);
 void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante);
 
-void insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo);
+int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo);
 
 // Prototipo anadido para evitar declaracion implicita
 void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombres[][50],
@@ -981,27 +981,40 @@ int insert_equipo_record(const Equipo *equipo)
     }
 }
 
-void insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
+int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
 {
-    sqlite3_stmt *stmt_jugador;
+    sqlite3_stmt *stmt_jugador = NULL;
     const char *sql_jugador = "INSERT INTO jugador (equipo_id, nombre, numero, posicion, es_capitan) VALUES (?, ?, ?, ?, ?);";
+
+    if (sqlite3_prepare_v2(db, sql_jugador, -1, &stmt_jugador, 0) != SQLITE_OK)
+    {
+        printf("Error al preparar insercion de jugadores: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
 
     for (int i = 0; i < equipo->num_jugadores; i++)
     {
         Jugador const *jugador = &equipo->jugadores[i];
 
-        if (sqlite3_prepare_v2(db, sql_jugador, -1, &stmt_jugador, 0) == SQLITE_OK)
-        {
-            sqlite3_bind_int(stmt_jugador, 1, equipo_id);
-            sqlite3_bind_text(stmt_jugador, 2, jugador->nombre, -1, SQLITE_STATIC);
-            sqlite3_bind_int(stmt_jugador, 3, jugador->numero);
-            sqlite3_bind_int(stmt_jugador, 4, jugador->posicion);
-            sqlite3_bind_int(stmt_jugador, 5, jugador->es_capitan);
+        sqlite3_bind_int(stmt_jugador, 1, equipo_id);
+        sqlite3_bind_text(stmt_jugador, 2, jugador->nombre, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt_jugador, 3, jugador->numero);
+        sqlite3_bind_int(stmt_jugador, 4, jugador->posicion);
+        sqlite3_bind_int(stmt_jugador, 5, jugador->es_capitan);
 
-            sqlite3_step(stmt_jugador);
+        if (sqlite3_step(stmt_jugador) != SQLITE_DONE)
+        {
             sqlite3_finalize(stmt_jugador);
+            printf("Error al insertar jugador '%s': %s\n", jugador->nombre, sqlite3_errmsg(db));
+            return 0;
         }
+
+        sqlite3_reset(stmt_jugador);
+        sqlite3_clear_bindings(stmt_jugador);
     }
+
+    sqlite3_finalize(stmt_jugador);
+    return 1;
 }
 
 void handle_party_assignment(int equipo_id)
@@ -1181,21 +1194,45 @@ int select_capitan(Equipo *equipo)
 
 void save_equipo_to_db(const Equipo *equipo)
 {
+    char *err = NULL;
+    if (sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("No se pudo iniciar transaccion de equipo: %s\n", err ? err : sqlite3_errmsg(db));
+        sqlite3_free(err);
+        return;
+    }
+
     int equipo_id = insert_equipo_record(equipo);
 
-    if (equipo_id != -1)
+    if (equipo_id == -1)
     {
-        insert_jugadores_for_equipo(equipo_id, equipo);
-        char info[100];
-        snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), equipo->nombre, equipo_id);
-        if (confirmar("Desea cargar imagen para este equipo ahora?") &&
-                !cargar_imagen_para_equipo_id(equipo_id))
-        {
-            printf("No se pudo cargar la imagen en este momento.\n");
-        }
-        handle_party_assignment(equipo_id);
-        mostrar_alerta_operacion("Equipo", "Guardado", info);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
     }
+
+    if (!insert_jugadores_for_equipo(equipo_id, equipo))
+    {
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
+    }
+
+    if (sqlite3_exec(db, "COMMIT", NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("No se pudo confirmar guardado de equipo: %s\n", err ? err : sqlite3_errmsg(db));
+        sqlite3_free(err);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
+    }
+
+    char info[100];
+    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), equipo->nombre, equipo_id);
+    if (confirmar("Desea cargar imagen para este equipo ahora?") &&
+            !cargar_imagen_para_equipo_id(equipo_id))
+    {
+        printf("No se pudo cargar la imagen en este momento.\n");
+    }
+    handle_party_assignment(equipo_id);
+    mostrar_alerta_operacion("Equipo", "Guardado", info);
 }
 
 void input_equipo_basico(Equipo *equipo, TipoFutbol tipo_futbol, int num_jugadores)

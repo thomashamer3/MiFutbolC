@@ -1,91 +1,164 @@
-cmake_minimum_required(VERSION 3.15)
-project(MiFutbolC C)
+cmake_minimum_required(VERSION 3.20)
+
+project(MiFutbolC LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-option(MIFUTBOLC_BUILD_TESTS "Build MiFutbolC_tests target" OFF)
+option(MIFUTBOLC_BUILD_TESTS "Build tests" OFF)
 
-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-  message(WARNING "In-source build detected. It's recommended to use an out-of-source build.")
+# ---- Prevent in-source builds ----
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR
+        "In-source builds are not allowed.\n"
+        "Use:\n"
+        "cmake --preset mingw-debug"
+    )
 endif()
 
-# Collect all C sources under the project root (reconfigure on file changes)
+# ---- Sources ----
 file(GLOB_RECURSE ALL_C_SOURCES CONFIGURE_DEPENDS
-  "${CMAKE_SOURCE_DIR}/*.c"
+    "${CMAKE_SOURCE_DIR}/*.c"
+    "${CMAKE_SOURCE_DIR}/sqlite/*.c"
 )
 
-# Partition sources into: core (no main), main, and tests. This prevents
-# accidental linking of multiple `main` definitions into the same target.
 set(CORE_SOURCES "")
 set(MAIN_SOURCE "")
 set(TEST_SOURCES "")
 
 foreach(_f ${ALL_C_SOURCES})
-  # Normalize path for matching
-  file(TO_CMAKE_PATH "${_f}" _f_norm)
-  get_filename_component(_name "${_f_norm}" NAME)
+    get_filename_component(_name "${_f}" NAME)
 
-  if(_f_norm MATCHES "(/|\\\\)tests(/|\\\\|$)" OR _name MATCHES "^test_.*")
-    list(APPEND TEST_SOURCES "${_f_norm}")
-  elseif(_name STREQUAL "main.c")
-    set(MAIN_SOURCE "${_f_norm}")
-  else()
-    list(APPEND CORE_SOURCES "${_f_norm}")
-  endif()
+    if(_f MATCHES "/tests/" OR _name MATCHES "^test_.*")
+        list(APPEND TEST_SOURCES "${_f}")
+    elseif(_name STREQUAL "main.c")
+        set(MAIN_SOURCE "${_f}")
+    else()
+        list(APPEND CORE_SOURCES "${_f}")
+    endif()
 endforeach()
 
-# Core static library (everything except main and tests)
+if(NOT MAIN_SOURCE)
+    message(FATAL_ERROR "/main.c not found")
+endif()
+
+# ---- Core library ----
 add_library(mifutbolc_core STATIC ${CORE_SOURCES})
-target_include_directories(mifutbolc_core PUBLIC ${CMAKE_SOURCE_DIR})
-target_compile_definitions(mifutbolc_core PRIVATE SQLITE_THREADSAFE=0)
 
+target_include_directories(mifutbolc_core
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/sqlite
+)
+
+target_compile_definitions(mifutbolc_core PRIVATE
+    SQLITE_THREADSAFE=0
+    SQLITE_OMIT_LOAD_EXTENSION
+    SQLITE_OMIT_JSON1
+    SQLITE_OMIT_PROGRESS_CALLBACK
+    SQLITE_OMIT_DEPRECATED
+    SQLITE_DEFAULT_MEMSTATUS=0
+)
+
+# ---- Warnings ----
 if(MSVC)
-  target_compile_options(mifutbolc_core PRIVATE /W3)
+    target_compile_options(mifutbolc_core PRIVATE /W4)
 else()
-  target_compile_options(mifutbolc_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(mifutbolc_core PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
 endif()
 
-# Ensure threads are available on non-Windows platforms before linking
+# ---- Debug / Release ----
+if(NOT MSVC)
+
+    target_compile_options(mifutbolc_core PRIVATE
+
+        # DEBUG
+        $<$<CONFIG:Debug>:
+            -O0
+            -g3
+            -fstack-protector
+            -fsanitize=address
+            -fsanitize=undefined
+        >
+
+        # RELEASE
+        $<$<CONFIG:Release>:
+            -O2
+            -DNDEBUG
+            -fomit-frame-pointer
+        >
+    )
+endif()
+
+# ---- Threads ----
 if(NOT WIN32)
-  find_package(Threads REQUIRED)
+    find_package(Threads REQUIRED)
 endif()
 
-# Main executable: link the core library plus the single main.c
-if(MAIN_SOURCE)
-  add_executable(MiFutbolC ${MAIN_SOURCE})
-  target_link_libraries(MiFutbolC PRIVATE mifutbolc_core)
-  target_include_directories(MiFutbolC PRIVATE ${CMAKE_SOURCE_DIR})
-  if(MSVC)
-    target_compile_options(MiFutbolC PRIVATE /W3)
-  else()
-    target_compile_options(MiFutbolC PRIVATE -Wall -Wextra -Wpedantic)
-  endif()
-  if(WIN32)
-    target_link_libraries(MiFutbolC PRIVATE comdlg32 shell32 bcrypt)
-  else()
-    target_link_libraries(MiFutbolC PRIVATE Threads::Threads)
-  endif()
+# ---- Main executable ----
+add_executable(MiFutbolC ${MAIN_SOURCE})
+
+target_link_libraries(MiFutbolC PRIVATE
+    mifutbolc_core
+)
+
+if(WIN32)
+    target_link_libraries(MiFutbolC PRIVATE
+        comdlg32
+        shell32
+        bcrypt
+    )
 else()
-  message(FATAL_ERROR "No main.c found to build MiFutbolC executable.")
+    target_link_libraries(MiFutbolC PRIVATE
+        Threads::Threads
+    )
 endif()
 
-# Optional tests executable (built only if test sources are present)
-if(TEST_SOURCES AND MIFUTBOLC_BUILD_TESTS)
-  add_executable(MiFutbolC_tests ${TEST_SOURCES})
-  target_link_libraries(MiFutbolC_tests PRIVATE mifutbolc_core)
-  target_include_directories(MiFutbolC_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  if(MSVC)
-    target_compile_options(MiFutbolC_tests PRIVATE /W3)
-  else()
-    target_compile_options(MiFutbolC_tests PRIVATE -Wall -Wextra -Wpedantic)
-  endif()
-  if(WIN32)
-    target_link_libraries(MiFutbolC_tests PRIVATE comdlg32 shell32 bcrypt)
-  else()
-    target_link_libraries(MiFutbolC_tests PRIVATE Threads::Threads)
-  endif()
+# ---- Link optimization ----
+if(NOT MSVC)
+    target_link_options(MiFutbolC PRIVATE
+
+        # Debug sanitizers
+        $<$<CONFIG:Debug>:
+            -fsanitize=address
+            -fsanitize=undefined
+        >
+
+        # Release size/speed
+        $<$<CONFIG:Release>:
+            -Wl,--gc-sections
+            -s
+        >
+    )
 endif()
 
-install(TARGETS MiFutbolC RUNTIME DESTINATION bin)
+# ---- Tests ----
+if(MIFUTBOLC_BUILD_TESTS AND TEST_SOURCES)
+
+    enable_testing()
+
+    add_executable(MiFutbolC_tests
+        ${TEST_SOURCES}
+    )
+
+    target_link_libraries(MiFutbolC_tests PRIVATE
+        mifutbolc_core
+    )
+
+    add_test(NAME MiFutbolCTests
+        COMMAND MiFutbolC_tests
+    )
+endif()
+
+# ---- Install ----
+include(GNUInstallDirs)
+
+install(TARGETS MiFutbolC
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

@@ -216,6 +216,8 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
  * @param message Mensaje del evento
  */
 void app_log_event(const char *component, const char *message);
+void app_log_init(void);
+void app_log_close(void);
 
 /**
  * @brief Copia la base de datos SQLite a la carpeta de documentos

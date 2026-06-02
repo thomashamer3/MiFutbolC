@@ -9,15 +9,29 @@
 
 #ifndef UTILS_H
 #define UTILS_H
-#include "cJSON.h"
-#include "sqlite3.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifdef _WIN32
 /* Provide CRT/Process declarations for MinGW/MSVC builds that rely on them */
 #include <io.h>
 #include <process.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct cJSON;
+typedef struct cJSON cJSON;
+struct sqlite3;
+struct sqlite3_stmt;
+typedef struct sqlite3 sqlite3;
+typedef struct sqlite3_stmt sqlite3_stmt;
+
+#ifdef __cplusplus
+}
 #endif
 
 /**
@@ -77,6 +91,9 @@ void input_date(const char *msg, char *buffer, int size);
  * @return 1 si la sentencia se preparo correctamente; 0 en caso contrario.
  */
 int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql);
+
+sqlite3_stmt *db_prepare_cached(const char *sql);
+void db_clear_stmt_cache(void);
 
 /**
  * @brief Prepara una sentencia SQLite e imprime un mensaje descriptivo si falla.
@@ -651,6 +668,10 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
 void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item);
 
 int app_is_path_safe_for_shell(const char *path);
+
+void auth_generate_salt_hex(char *salt_out, size_t out_size);
+void auth_build_password_hash(const char *plain_password, const char *salt_hex,
+                              char *hash_out, size_t out_size);
 int app_validate_file_exists(const char *path);
 const char *app_get_file_extension_simple(const char *filename);
 int app_get_file_extension(const char *filename, char *ext, size_t size);

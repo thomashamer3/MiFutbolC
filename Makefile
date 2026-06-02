@@ -16,6 +16,7 @@ else
 endif
 
 CFLAGS += -I. -include compat_port.h
+CFLAGS += -fomit-frame-pointer
 
 LDFLAGS ?= -LC:/msys64/mingw64/lib -lhpdf -lz -lpng -lm -lbcrypt -lcomdlg32 -lshell32 -lucrt -Wl,--allow-multiple-definition
 

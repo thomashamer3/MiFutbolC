@@ -58,6 +58,7 @@ typedef struct
     float music_eq_mid_db;
     float music_eq_treble_db;
     float music_volume_step;
+    int dashboard_enabled;
 } AppSettings;
 
 /**
@@ -191,6 +192,16 @@ void settings_set_music_volume_step(float step);
  * @brief Obtiene el paso de cambio de volumen (fraccion 0.01 a 0.20).
  */
 float settings_get_music_volume_step(void);
+
+/**
+ * @brief Habilita o deshabilita la muestra del Dashboard al iniciar la aplicacion.
+ */
+void settings_set_dashboard_enabled(int enabled);
+
+/**
+ * @brief Indica si el Dashboard debe mostrarse al iniciar la aplicacion.
+ */
+int settings_get_dashboard_enabled(void);
 
 
 // Funciones wrapper para internacionalización de menús

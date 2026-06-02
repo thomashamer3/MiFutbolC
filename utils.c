@@ -25,7 +25,7 @@
 #endif
 #define MKDIR(path) _mkdir(path)
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <commdlg.h>
 #include <bcrypt.h>
 #else
@@ -68,6 +68,101 @@ int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
         return 0;
     }
     return 1;
+}
+
+#define STMT_CACHE_SIZE 32
+
+typedef struct stmt_cache_entry
+{
+    char *sql;
+    sqlite3_stmt *stmt;
+    int in_use;
+} stmt_cache_entry;
+
+static stmt_cache_entry g_stmt_cache[STMT_CACHE_SIZE];
+static int g_stmt_cache_initialized = 0;
+
+static uint64_t cache_hash_sql(const char *sql)
+{
+    uint64_t h = 14695981039346656037ULL;
+    if (!sql) return h;
+    while (*sql)
+    {
+        h ^= (unsigned char)*sql++;
+        h *= 1099511628211ULL;
+    }
+    return h;
+}
+
+sqlite3_stmt *db_prepare_cached(const char *sql)
+{
+    if (!sql) return NULL;
+
+    if (!g_stmt_cache_initialized)
+    {
+        for (int i = 0; i < STMT_CACHE_SIZE; i++)
+        {
+            g_stmt_cache[i].sql = NULL;
+            g_stmt_cache[i].stmt = NULL;
+            g_stmt_cache[i].in_use = 0;
+        }
+        g_stmt_cache_initialized = 1;
+    }
+
+    uint64_t h = cache_hash_sql(sql);
+    int slot = (int)(h % (uint64_t)STMT_CACHE_SIZE);
+    int start = slot;
+
+    do
+    {
+        if (g_stmt_cache[slot].sql == NULL)
+        {
+            sqlite3_stmt *stmt = NULL;
+            if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+            {
+                return NULL;
+            }
+            g_stmt_cache[slot].sql = sqlite3_mprintf("%s", sql);
+            g_stmt_cache[slot].stmt = stmt;
+            g_stmt_cache[slot].in_use = 1;
+            return stmt;
+        }
+        if (strcmp(g_stmt_cache[slot].sql, sql) == 0)
+        {
+            sqlite3_reset(g_stmt_cache[slot].stmt);
+            sqlite3_clear_bindings(g_stmt_cache[slot].stmt);
+            g_stmt_cache[slot].in_use = 1;
+            return g_stmt_cache[slot].stmt;
+        }
+        slot = (slot + 1) % STMT_CACHE_SIZE;
+    }
+    while (slot != start);
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return NULL;
+    }
+    return stmt;
+}
+
+void db_clear_stmt_cache(void)
+{
+    for (int i = 0; i < STMT_CACHE_SIZE; i++)
+    {
+        if (g_stmt_cache[i].stmt)
+        {
+            sqlite3_finalize(g_stmt_cache[i].stmt);
+            g_stmt_cache[i].stmt = NULL;
+        }
+        if (g_stmt_cache[i].sql)
+        {
+            sqlite3_free(g_stmt_cache[i].sql);
+            g_stmt_cache[i].sql = NULL;
+        }
+        g_stmt_cache[i].in_use = 0;
+    }
+    g_stmt_cache_initialized = 0;
 }
 
 int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
@@ -132,7 +227,7 @@ static uint64_t auth_fnv1a64_string(const char *text)
     return auth_fnv1a64_update(offset_basis, (const unsigned char *)text, strlen_s(text, SIZE_MAX));
 }
 
-static void auth_generate_salt_hex(char *salt_out, size_t out_size)
+void auth_generate_salt_hex(char *salt_out, size_t out_size)
 {
     static const char hex[] = "0123456789abcdef";
     unsigned char salt[16];
@@ -158,8 +253,8 @@ static void auth_generate_salt_hex(char *salt_out, size_t out_size)
     salt_out[32] = '\0';
 }
 
-static void auth_build_password_hash(const char *plain_password, const char *salt_hex,
-                                     char *hash_out, size_t out_size)
+void auth_build_password_hash(const char *plain_password, const char *salt_hex,
+                              char *hash_out, size_t out_size)
 {
     char round_input[512];
     uint64_t h1;
@@ -269,28 +364,56 @@ static void auth_get_db_path(char *path, size_t size)
     char local_app_data[1024] = {0};
     if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
-        snprintf(path, size, "%s\\MiFutbolC\\data\\users.db", local_app_data);
-        return;
+        if (strcpy_s(path, size, local_app_data) == 0 &&
+                strcat_s(path, size, "\\MiFutbolC\\data\\users.db") == 0)
+        {
+            return;
+        }
     }
 #endif
-    snprintf(path, size, "./data/users.db");
+    strcpy_s(path, size, "./data/users.db");
 }
 
 static void auth_get_user_data_paths(const char *username,
                                      char *db_path, size_t db_size,
                                      char *log_path, size_t log_size)
 {
+    const char *safe_username = username ? username : "";
+
 #ifdef _WIN32
     char local_app_data[1024] = {0};
     if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
-        snprintf(db_path, db_size, "%s\\MiFutbolC\\data\\mifutbol_%s.db", local_app_data, username);
-        snprintf(log_path, log_size, "%s\\MiFutbolC\\data\\mifutbol_%s.log", local_app_data, username);
-        return;
+        /* Avoid unbounded %s expansion for username in fixed-size path buffers. */
+        if (strcpy_s(db_path, db_size, local_app_data) == 0 &&
+                strcat_s(db_path, db_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
+                strncat_s(db_path, db_size, safe_username, _TRUNCATE) == 0 &&
+                strcat_s(db_path, db_size, ".db") == 0)
+        {
+            if (strcpy_s(log_path, log_size, local_app_data) == 0 &&
+                    strcat_s(log_path, log_size, "\\MiFutbolC\\data\\mifutbol_") == 0 &&
+                    strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
+                    strcat_s(log_path, log_size, ".log") == 0)
+            {
+                return;
+            }
+        }
     }
 #endif
-    snprintf(db_path, db_size, "./data/mifutbol_%s.db", username);
-    snprintf(log_path, log_size, "./data/mifutbol_%s.log", username);
+    if (strcpy_s(db_path, db_size, "./data/mifutbol_") == 0 &&
+            strncat_s(db_path, db_size, safe_username, _TRUNCATE) == 0 &&
+            strcat_s(db_path, db_size, ".db") == 0)
+    {
+        if (strcpy_s(log_path, log_size, "./data/mifutbol_") == 0 &&
+                strncat_s(log_path, log_size, safe_username, _TRUNCATE) == 0 &&
+                strcat_s(log_path, log_size, ".log") == 0)
+        {
+            return;
+        }
+    }
+    /* Fallback in case of errors */
+    db_path[0] = '\0';
+    log_path[0] = '\0';
 }
 
 static int auth_ensure_parent_dirs(void)
@@ -1429,12 +1552,16 @@ void pause_console()
  */
 int confirmar(const char *msg)
 {
-    int c;
+    char linea[16];
     ui_printf("%s (S/N): ", msg);
-    c = getchar();
-    getchar();
-
-    return (c == 's' || c == 'S');
+    if (!fgets(linea, sizeof(linea), stdin))
+        return 0;
+    size_t len = strlen(linea);
+    if (len > 0 && linea[len - 1] == '\n')
+        linea[len - 1] = '\0';
+    if (linea[0] == '\0')
+        return 0;
+    return (linea[0] == 's' || linea[0] == 'S');
 }
 
 static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
@@ -2772,14 +2899,21 @@ long long obtener_siguiente_id(const char *tabla)
 
     if (!tabla) return 1;
 
-    /*
-     * Esta consulta utiliza una CTE (Common Table Expression) recursiva para generar
-     * una secuencia de numeros y encontrar el primer "hueco" (ID faltante) en la tabla.
-     * Esto permite reutilizar IDs de registros eliminados manteniendo la secuencia compacta.
-     */
+    for (size_t i = 0; tabla[i] != '\0'; i++)
+    {
+        unsigned char ch = (unsigned char)tabla[i];
+        if (!(isalnum(ch) || ch == '_'))
+        {
+            return 1;
+        }
+    }
+
     snprintf(sql, sizeof(sql),
-             "WITH RECURSIVE seq(id) AS (VALUES(1) UNION ALL SELECT id+1 FROM seq WHERE id < (SELECT COALESCE(MAX(id),0)+1 FROM %s)) "
-             "SELECT MIN(id) FROM seq WHERE id NOT IN (SELECT id FROM %s)",
+             "SELECT COALESCE(MIN(t1.id + 1), 1) "
+             "FROM (SELECT 0 AS id UNION ALL SELECT id FROM %s) t1 "
+             "LEFT JOIN (SELECT id FROM %s) t2 ON t1.id + 1 = t2.id "
+             "WHERE t2.id IS NULL "
+             "ORDER BY t1.id LIMIT 1",
              tabla, tabla);
 
     if (!db_prepare_stmt(&stmt, sql))
@@ -2787,10 +2921,11 @@ long long obtener_siguiente_id(const char *tabla)
         return 1;
     }
 
-    int id = 1;
+    long long id = 1;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        id = sqlite3_column_int(stmt, 0);
+        id = sqlite3_column_int64(stmt, 0);
+        if (id <= 0) id = 1;
     }
     sqlite3_finalize(stmt);
     return id;
@@ -3865,11 +4000,15 @@ void app_build_path(char *dest, size_t size, const char *dir, const char *file_n
         file_name = "";
     }
 
+    char full[2048];
 #ifdef _WIN32
-    snprintf(dest, size, "%s\\%s", dir, file_name);
+    snprintf(full, sizeof(full), "%s\\%s", dir, file_name);
 #else
-    snprintf(dest, size, "%s/%s", dir, file_name);
+    snprintf(full, sizeof(full), "%s/%s", dir, file_name);
 #endif
+    full[sizeof(full) - 1] = '\0';
+    strncpy(dest, full, size);
+    dest[size - 1] = '\0';
 }
 
 int app_copy_binary_file(const char *source_path, const char *dest_path)

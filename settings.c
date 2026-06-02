@@ -56,11 +56,25 @@ static AppSettings current_settings =
     SETTINGS_MUSIC_EQ_DB_DEFAULT,
     SETTINGS_MUSIC_EQ_DB_DEFAULT,
     SETTINGS_MUSIC_EQ_DB_DEFAULT,
-    SETTINGS_MUSIC_VOLUME_STEP_DEFAULT
+    SETTINGS_MUSIC_VOLUME_STEP_DEFAULT,
+    1
 };
 
 static void settings_apply_text_size();
 static void habilitar_menus_basicos_custom(void);
+
+static char label_music_autoplay[96];
+static char label_dashboard_enabled[96];
+
+static void settings_actualizar_label_toggle(const char *clave_base,
+        int habilitado,
+        char *destino,
+        size_t destino_size)
+{
+    const char *base = get_text(clave_base);
+    const char *estado = habilitado ? get_text("state_on") : get_text("state_off");
+    snprintf(destino, destino_size, "%s: %s", base, estado);
+}
 
 static void set_theme_int(int value)
 {
@@ -85,6 +99,11 @@ static void set_text_size_int(int value)
 static void set_music_autoplay_int(int value)
 {
     settings_set_music_autoplay(value);
+}
+
+static void set_dashboard_enabled_int(int value)
+{
+    settings_set_dashboard_enabled(value);
 }
 
 static void aplicar_config_y_pausar(void (*setter)(int), int value)
@@ -143,6 +162,28 @@ static void toggle_music_autoplay_setting()
 {
     aplicar_config_y_pausar(set_music_autoplay_int,
                             current_settings.music_autoplay ? 0 : 1);
+    settings_actualizar_label_toggle("settings_music_autoplay",
+                                     current_settings.music_autoplay,
+                                     label_music_autoplay,
+                                     sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled",
+                                     current_settings.dashboard_enabled,
+                                     label_dashboard_enabled,
+                                     sizeof(label_dashboard_enabled));
+}
+
+static void toggle_dashboard_enabled_setting()
+{
+    aplicar_config_y_pausar(set_dashboard_enabled_int,
+                            current_settings.dashboard_enabled ? 0 : 1);
+    settings_actualizar_label_toggle("settings_music_autoplay",
+                                     current_settings.music_autoplay,
+                                     label_music_autoplay,
+                                     sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled",
+                                     current_settings.dashboard_enabled,
+                                     label_dashboard_enabled,
+                                     sizeof(label_dashboard_enabled));
 }
 
 static void abrir_busqueda_global_desde_settings(void)
@@ -240,8 +281,11 @@ static const TextEntry text_entries[] =
     {"settings_language", "Idioma", "Language"},
     {"settings_mode", "Modo", "Mode"},
     {"settings_music_autoplay", "Musica al iniciar", "Music on startup"},
+    {"settings_dashboard_enabled", "Dashboard al iniciar", "Dashboard on startup"},
     {"state_enabled", "Habilitada", "Enabled"},
     {"state_disabled", "Deshabilitada", "Disabled"},
+    {"state_on", "Activado", "On"},
+    {"state_off", "Desactivado", "Off"},
     {"settings_accessibility", "Accesibilidad", "Accessibility"},
     {"settings_visual_mode", "Modo Visual", "Visual Mode"},
     {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
@@ -355,6 +399,7 @@ static void ensure_settings_schema()
         ALTER_SETTINGS_COLUMN("music_eq_mid_db REAL DEFAULT 0"),
         ALTER_SETTINGS_COLUMN("music_eq_treble_db REAL DEFAULT 0"),
         ALTER_SETTINGS_COLUMN("music_volume_step REAL DEFAULT 0.1"),
+        ALTER_SETTINGS_COLUMN("dashboard_enabled INTEGER DEFAULT 1"),
         NULL
     };
 
@@ -408,7 +453,7 @@ void settings_init()
         "SELECT theme, language, mode, text_size, music_autoplay, "
         "music_volume, music_repeat_mode, music_eq_enabled, "
         "music_eq_bass_db, music_eq_mid_db, music_eq_treble_db, "
-        "music_volume_step "
+        "music_volume_step, dashboard_enabled "
         "FROM settings WHERE id = 1;";
     int has_settings = 0;
 
@@ -439,6 +484,7 @@ void settings_init()
                                   SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_volume_step =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
+            current_settings.dashboard_enabled = sqlite3_column_int(stmt, 12) ? 1 : 0;
             has_settings = 1;
         }
         sqlite3_finalize(stmt);
@@ -460,8 +506,8 @@ void settings_save()
         "INSERT OR REPLACE INTO settings ("
         "id, theme, language, mode, text_size, music_autoplay, music_volume, "
         "music_repeat_mode, music_eq_enabled, music_eq_bass_db, music_eq_mid_db, "
-        "music_eq_treble_db, music_volume_step"
-        ") VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        "music_eq_treble_db, music_volume_step, dashboard_enabled"
+        ") VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
 
     if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
@@ -488,6 +534,7 @@ void settings_save()
                                     SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(stmt, 12,
                             (double)utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f));
+        sqlite3_bind_int(stmt, 13, current_settings.dashboard_enabled ? 1 : 0);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
         {
@@ -648,6 +695,17 @@ void settings_set_music_volume_step(float step)
 float settings_get_music_volume_step(void)
 {
     return utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f);
+}
+
+void settings_set_dashboard_enabled(int enabled)
+{
+    current_settings.dashboard_enabled = enabled ? 1 : 0;
+    settings_save();
+}
+
+int settings_get_dashboard_enabled(void)
+{
+    return current_settings.dashboard_enabled ? 1 : 0;
 }
 
 static WORD get_theme_color(ThemeType theme)
@@ -1531,6 +1589,8 @@ static void show_current_settings()
     printf("Tamanio de texto: %s\n", get_current_text_size_name());
     printf("Musica al iniciar: %s\n",
            current_settings.music_autoplay ? get_text("state_enabled") : get_text("state_disabled"));
+    printf("Dashboard al iniciar: %s\n",
+           current_settings.dashboard_enabled ? get_text("state_enabled") : get_text("state_disabled"));
 
     char *usuario = get_user_name();
     if (usuario)
@@ -1603,6 +1663,7 @@ static void reset_settings_to_defaults()
         current_settings.music_eq_mid_db = SETTINGS_MUSIC_EQ_DB_DEFAULT;
         current_settings.music_eq_treble_db = SETTINGS_MUSIC_EQ_DB_DEFAULT;
         current_settings.music_volume_step = SETTINGS_MUSIC_VOLUME_STEP_DEFAULT;
+        current_settings.dashboard_enabled = 1;
         settings_apply_theme();
         settings_apply_text_size();
         settings_save();
@@ -1800,20 +1861,55 @@ void menu_update()
 
 void menu_settings()
 {
+    char label_tema[96];
+    char label_idioma[96];
+    char label_accesibilidad[96];
+    char label_usuario[96];
+    char label_actual[96];
+    char label_reset[96];
+    char label_modo[96];
+    char label_exportar[96];
+    char label_importar[96];
+    char label_busqueda[96];
+    char label_actualizar[96];
+
+    snprintf(label_tema, sizeof(label_tema), "%s", get_text("settings_theme"));
+    snprintf(label_idioma, sizeof(label_idioma), "%s", get_text("settings_language"));
+    snprintf(label_accesibilidad, sizeof(label_accesibilidad), "%s", get_text("settings_accessibility"));
+    snprintf(label_usuario, sizeof(label_usuario), "%s", get_text("menu_usuario"));
+    snprintf(label_actual, sizeof(label_actual), "%s", get_text("show_current"));
+    snprintf(label_reset, sizeof(label_reset), "%s", get_text("reset_defaults"));
+    snprintf(label_modo, sizeof(label_modo), "%s", get_text("settings_mode"));
+    snprintf(label_exportar, sizeof(label_exportar), "%s", get_text("menu_exportar"));
+    snprintf(label_importar, sizeof(label_importar), "%s", get_text("menu_importar"));
+    snprintf(label_busqueda, sizeof(label_busqueda), "Busqueda Global");
+    snprintf(label_actualizar, sizeof(label_actualizar), "%s", get_text("menu_update"));
+
+    AppSettings *cfg = settings_get();
+    settings_actualizar_label_toggle("settings_music_autoplay",
+                                     cfg->music_autoplay,
+                                     label_music_autoplay,
+                                     sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled",
+                                     cfg->dashboard_enabled,
+                                     label_dashboard_enabled,
+                                     sizeof(label_dashboard_enabled));
+
     MenuItem items[] =
     {
-        {1, get_text("settings_theme"), menu_theme_settings},
-        {2, get_text("settings_language"), menu_language_settings},
-        {3, get_text("settings_accessibility"), menu_accessibility_settings},
-        {4, get_text("menu_usuario"), menu_usuario},
-        {5, get_text("show_current"), show_current_settings},
-        {6, get_text("reset_defaults"), reset_settings_to_defaults},
-        {7, get_text("settings_mode"), menu_mode_settings},
-        {8, get_text("menu_exportar"), menu_exportar},
-        {9, get_text("menu_importar"), menu_importar},
-        {10, "Busqueda Global", &abrir_busqueda_global_desde_settings},
-        {11, get_text("menu_update"), menu_update},
-        {12, get_text("settings_music_autoplay"), toggle_music_autoplay_setting},
+        {1, label_tema, menu_theme_settings},
+        {2, label_idioma, menu_language_settings},
+        {3, label_accesibilidad, menu_accessibility_settings},
+        {4, label_usuario, menu_usuario},
+        {5, label_actual, show_current_settings},
+        {6, label_reset, reset_settings_to_defaults},
+        {7, label_modo, menu_mode_settings},
+        {8, label_exportar, menu_exportar},
+        {9, label_importar, menu_importar},
+        {10, label_busqueda, &abrir_busqueda_global_desde_settings},
+        {11, label_actualizar, menu_update},
+        {12, label_music_autoplay, toggle_music_autoplay_setting},
+        {13, label_dashboard_enabled, toggle_dashboard_enabled_setting},
         {0, get_text("menu_back"), NULL}
     };
 

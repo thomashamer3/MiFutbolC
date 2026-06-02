@@ -13,13 +13,13 @@
 #include <inttypes.h>
 #ifdef _WIN32
 #include <direct.h>
-#include <Windows.h>
-#include <ShlObj.h>
+#include <windows.h>
+#include <shlobj.h>
 #include <bcrypt.h>
 #else
 #include "direct.h"
 #include "compat_windows.h"
-#include "ShlObj.h"
+#include "shlobj.h"
 #endif
 
 #ifdef _WIN32
@@ -67,101 +67,24 @@ static void sanitize_filename_token(char *token)
     }
 }
 
-static uint64_t fnv1a64_update(uint64_t hash, const unsigned char *data, size_t len)
-{
-    const uint64_t prime = 1099511628211ULL;
-    for (size_t i = 0; i < len; i++)
-    {
-        hash ^= (uint64_t)data[i];
-        hash *= prime;
-    }
-    return hash;
-}
-
-static uint64_t fnv1a64_string(const char *text)
-{
-    const uint64_t offset_basis = 14695981039346656037ULL;
-    if (!text)
-    {
-        return offset_basis;
-    }
-    return fnv1a64_update(offset_basis, (const unsigned char *)text, strlen_s(text, SIZE_MAX));
-}
-
-static void bytes_to_hex(const unsigned char *bytes, size_t bytes_len, char *hex_out, size_t out_size)
-{
-    static const char hex[] = "0123456789abcdef";
-    if (!bytes || !hex_out || out_size == 0)
-    {
-        return;
-    }
-
-    size_t required = bytes_len * 2 + 1;
-    if (out_size < required)
-    {
-        hex_out[0] = '\0';
-        return;
-    }
-
-    for (size_t i = 0; i < bytes_len; i++)
-    {
-        hex_out[i * 2] = hex[(bytes[i] >> 4) & 0x0F];
-        hex_out[i * 2 + 1] = hex[bytes[i] & 0x0F];
-    }
-    hex_out[bytes_len * 2] = '\0';
-}
-
 static void generate_salt_hex(char *salt_out, size_t out_size)
 {
     enum
     {
         SALT_BYTES = 16
     };
-    unsigned char salt_bytes[SALT_BYTES];
-
-    if (!salt_out || out_size < (SALT_BYTES * 2 + 1))
+    char hex_buf[33];
+    auth_generate_salt_hex(hex_buf, sizeof(hex_buf));
+    if (!salt_out || out_size == 0)
     {
         return;
     }
-
-    if (secure_random_bytes(salt_bytes, SALT_BYTES) != 0)
-    {
-        for (int i = 0; i < SALT_BYTES; i++)
-        {
-            salt_bytes[i] = (unsigned char)(clock() ^ (i * 12345 + time(NULL)));
-        }
-        for (int i = 0; i < SALT_BYTES; i++)
-        {
-            salt_bytes[i] ^= (salt_bytes[(i + 7) % SALT_BYTES] << 3);
-        }
-    }
-
-    bytes_to_hex(salt_bytes, SALT_BYTES, salt_out, out_size);
+    strncpy_s(salt_out, out_size, hex_buf, _TRUNCATE);
 }
 
 static void build_password_hash(const char *plain_password, const char *salt_hex, char *hash_out, size_t out_size)
 {
-    char round_input[512];
-    uint64_t h1;
-    uint64_t h2;
-
-    if (!plain_password || !salt_hex || !hash_out || out_size < 17)
-    {
-        if (hash_out && out_size > 0)
-        {
-            hash_out[0] = '\0';
-        }
-        return;
-    }
-
-    snprintf(round_input, sizeof(round_input), "%s:%s", salt_hex, plain_password);
-    h1 = fnv1a64_string(round_input);
-
-    snprintf(round_input, sizeof(round_input), "%s:%016" PRIx64 ":%s", plain_password,
-             h1, salt_hex);
-    h2 = fnv1a64_string(round_input);
-
-    snprintf(hash_out, out_size, "%016" PRIx64, h2);
+    auth_build_password_hash(plain_password, salt_hex, hash_out, out_size);
 }
 
 #ifdef _WIN32
@@ -237,23 +160,57 @@ static void build_timestamp(char *buffer, size_t size)
 static FILE *app_fopen(const char *path, const char *mode);
 static int execute_sql_statements(const char *const *statements, int *failed_index);
 
+static FILE *g_log_fp = NULL;
+static int g_log_initialized = 0;
+
+void app_log_init(void)
+{
+    if (g_log_initialized)
+    {
+        return;
+    }
+    g_log_initialized = 1;
+    if (LOG_PATH[0] == '\0')
+    {
+        return;
+    }
+    g_log_fp = app_fopen(LOG_PATH, "a");
+    if (g_log_fp)
+    {
+        setvbuf(g_log_fp, NULL, _IOLBF, 256);
+    }
+}
+
+void app_log_close(void)
+{
+    if (g_log_fp)
+    {
+        fclose(g_log_fp);
+        g_log_fp = NULL;
+    }
+    g_log_initialized = 0;
+}
+
 static void app_log_write(const char *level, const char *component, const char *message)
 {
-    if (!level || !component || !message || LOG_PATH[0] == '\0')
+    if (!level || !component || !message)
     {
         return;
     }
 
-    FILE *log_file = app_fopen(LOG_PATH, "a");
-    if (!log_file)
+    if (!g_log_initialized)
+    {
+        app_log_init();
+    }
+
+    if (!g_log_fp)
     {
         return;
     }
 
     char timestamp[32] = {0};
     build_timestamp(timestamp, sizeof(timestamp));
-    fprintf(log_file, "[%s] [%s] [%s] %s\n", timestamp, level, component, message);
-    fclose(log_file);
+    fprintf(g_log_fp, "[%s] [%s] [%s] %s\n", timestamp, level, component, message);
 }
 
 void app_log_event(const char *component, const char *message)
@@ -718,6 +675,86 @@ static int execute_sql_statements(const char *const *statements, int *failed_ind
     return 1;
 }
 
+enum
+{
+    DB_VERSION_SCHEMA = 1,
+    DB_VERSION_CAMISETA_COLS = 2,
+    DB_VERSION_CANCHA_COLS = 3,
+    DB_VERSION_PARTIDO_COLS = 4,
+    DB_VERSION_INDEXES = 5,
+    DB_VERSION_CURRENT = 5
+};
+
+static int get_user_version(int *out_version)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!out_version)
+    {
+        return 0;
+    }
+
+    *out_version = 0;
+    if (sqlite3_prepare_v2(db, "PRAGMA user_version;", -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        *out_version = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+static int set_user_version(int version)
+{
+    char sql[64];
+    snprintf(sql, sizeof(sql), "PRAGMA user_version = %d;", version);
+    return sqlite3_exec(db, sql, NULL, NULL, NULL) == SQLITE_OK;
+}
+
+static void backfill_mes_anio_once(void)
+{
+    int current_version = 0;
+    if (!get_user_version(&current_version))
+    {
+        app_log_write("WARN", "DB", "No se pudo leer PRAGMA user_version; se omite backfill de mes_anio");
+        return;
+    }
+
+    if (current_version >= DB_VERSION_SCHEMA)
+    {
+        return;
+    }
+
+    if (sqlite3_exec(db,
+                     "UPDATE partido SET mes_anio = "
+                     "CASE "
+                     "WHEN length(fecha_hora) >= 10 AND substr(fecha_hora, 5, 1) = '-' "
+                     "THEN substr(fecha_hora, 1, 7) "
+                     "ELSE substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) "
+                     "END "
+                     "WHERE (mes_anio = '' OR mes_anio IS NULL) AND length(fecha_hora) >= 7;",
+                     NULL,
+                     NULL,
+                     NULL) != SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo backfill mes_anio: %s", sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+        return;
+    }
+
+    if (!set_user_version(DB_VERSION_SCHEMA))
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras backfill mes_anio: %s", sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+        return;
+    }
+
+    app_log_write("INFO", "DB", "Backfill mes_anio aplicado una sola vez");
+}
+
 /* Definiciones compartidas para evitar duplicar columnas entre CREATE TABLE y ALTER TABLE. */
 #define COL_CAMISETA_COLOR_PRINCIPAL "color_principal TEXT DEFAULT ''"
 #define COL_CAMISETA_COLOR_SECUNDARIO "color_secundario TEXT DEFAULT ''"
@@ -797,6 +834,8 @@ static int execute_sql_statements(const char *const *statements, int *failed_ind
 #define COL_PARTIDO_LO_MEJOR "lo_mejor TEXT DEFAULT ''"
 #define COL_PARTIDO_QUE_MEJORAR "que_mejorar TEXT DEFAULT ''"
 #define COL_PARTIDO_TAGS "tags TEXT DEFAULT ''"
+#define COL_PARTIDO_GOLES_DETALLE "goles_detalle TEXT DEFAULT ''"
+#define COL_PARTIDO_ASISTENCIAS_DETALLE "asistencias_detalle TEXT DEFAULT ''"
 
 static int create_database_schema()
 {
@@ -927,6 +966,8 @@ static int create_database_schema()
         " " COL_PARTIDO_LO_MEJOR ","
         " " COL_PARTIDO_QUE_MEJORAR ","
         " " COL_PARTIDO_TAGS ","
+        " " COL_PARTIDO_GOLES_DETALLE ","
+        " " COL_PARTIDO_ASISTENCIAS_DETALLE ","
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
@@ -1381,124 +1422,234 @@ static int create_database_schema()
     return 1;
 }
 
-static void add_missing_columns()
+static void add_camiseta_columns(void)
 {
-#define ALTER_ADD_COLUMN(table_name, column_def) "ALTER TABLE " table_name " ADD COLUMN " column_def ";"
     const char *alter_statements[] =
     {
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_SORTEADA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_IMAGEN_RUTA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_ACTIVA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COLOR_PRINCIPAL),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COLOR_SECUNDARIO),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_MARCA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_MODELO),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_TEMPORADA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_ESTADO_FISICO),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_FECHA_COMPRA),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_COSTO_CENTAVOS),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_OBSERVACIONES),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_PROVEEDOR),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_FUE_REGALO),
-        ALTER_ADD_COLUMN("camiseta", COL_CAMISETA_REGALO_DE),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_IMAGEN_RUTA),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_ACTIVA),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TELEFONO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_LOCALIDAD),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIPO_CANCHA_CODIGO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_SUPERFICIE_CODIGO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TECHADA_ESTADO_CODIGO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_ILUMINACION),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO_APERTURA_MIN),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO_CIERRE_MIN),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_VESTUARIOS),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_DUCHAS),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_BUFFET),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIENE_ESTACIONAMIENTO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_CANTIDAD_CANCHAS),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_ESTADO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DESCRIPCION),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION_CALLE),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_DIRECCION_ZONA),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TIPO_CANCHA),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_PRECIO_HORA),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_SUPERFICIE),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_TECHADA_ESTADO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_HORARIO),
-        ALTER_ADD_COLUMN("cancha", COL_CANCHA_CONTACTO_ALT),
-        ALTER_ADD_COLUMN("equipo", "imagen_ruta TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("equipo", "activa INTEGER DEFAULT 1"),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RESULTADO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RENDIMIENTO_GENERAL),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CANSANCIO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESTADO_ANIMO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_COMENTARIO_PERSONAL),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CLIMA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_DIA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_PRECIO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TIPO_PARTIDO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RIVAL_NOMBRE),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TIPO_RIVAL),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_POSICION_JUGADA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_MINUTOS_JUGADOS),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_INTENSIDAD),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESFUERZO_PERCIBIDO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_CONDICION_CANCHA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ARBITRAJE),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_EVENTOS_CLAVE),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_TECNICO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_FISICO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_RATING_MENTAL),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ESTADO_CANCHA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_EQUIPO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_RIVAL),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_FORMATO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TARJETA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_GOLES_EN_CONTRA),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_DOLOR_FISICO),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TEMPERATURA_C),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_ARBITRAJE_SCORE),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_LO_MEJOR),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_QUE_MEJORAR),
-        ALTER_ADD_COLUMN("partido", COL_PARTIDO_TAGS),
-        ALTER_ADD_COLUMN("lesion", "partido_id INTEGER DEFAULT NULL"),
-        ALTER_ADD_COLUMN("settings", "image_viewer TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("usuario", "password_salt TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("usuario", "password_hash TEXT DEFAULT ''"),
-        ALTER_ADD_COLUMN("partido", "mes_anio TEXT DEFAULT ''"),
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_SORTEADA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_IMAGEN_RUTA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_ACTIVA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_COLOR_PRINCIPAL ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_COLOR_SECUNDARIO ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_MARCA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_MODELO ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_TEMPORADA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_ESTADO_FISICO ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_FECHA_COMPRA ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_COSTO_CENTAVOS ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_OBSERVACIONES ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_PROVEEDOR ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_FUE_REGALO ";",
+        "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_REGALO_DE ";",
         NULL
     };
-
-#undef ALTER_ADD_COLUMN
-
     const char *dup_col_msg = "duplicate column name";
     const char *no_table_msg = "no such table";
-
     for (int i = 0; alter_statements[i] != NULL; i++)
     {
         char *errmsg = NULL;
         int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
-
         int error_esperado =
             (errmsg != NULL) &&
-            ((strstr(errmsg, dup_col_msg) != NULL) || //NOSONAR
+            ((strstr(errmsg, dup_col_msg) != NULL) ||
              (strstr(errmsg, no_table_msg) != NULL));
-
         if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
         {
-            snprintf(log_buf_, sizeof(log_buf_), "Migracion de columna con error: %.320s | %.520s", alter_statements[i], errmsg);
-            app_log_write("WARN", "DB", log_buf_); //NOSONAR
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion camiseta con error: %.320s | %.520s", alter_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
         }
-
         sqlite3_free(errmsg);
     }
 }
 
+static void add_cancha_columns(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_IMAGEN_RUTA ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_ACTIVA ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TELEFONO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_DIRECCION ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_LOCALIDAD ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIPO_CANCHA_CODIGO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_SUPERFICIE_CODIGO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TECHADA_ESTADO_CODIGO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_ILUMINACION ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO_APERTURA_MIN ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO_CIERRE_MIN ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_VESTUARIOS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_DUCHAS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_BUFFET ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_ESTACIONAMIENTO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_CANTIDAD_CANCHAS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_ESTADO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_DESCRIPCION ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_DIRECCION_CALLE ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_DIRECCION_ZONA ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIPO_CANCHA ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_SUPERFICIE ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TECHADA_ESTADO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_CONTACTO_ALT ";",
+        "ALTER TABLE equipo ADD COLUMN imagen_ruta TEXT DEFAULT '';",
+        "ALTER TABLE equipo ADD COLUMN activa INTEGER DEFAULT 1;",
+        NULL
+    };
+    const char *dup_col_msg = "duplicate column name";
+    const char *no_table_msg = "no such table";
+    for (int i = 0; alter_statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
+        int error_esperado =
+            (errmsg != NULL) &&
+            ((strstr(errmsg, dup_col_msg) != NULL) ||
+             (strstr(errmsg, no_table_msg) != NULL));
+        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion cancha con error: %.320s | %.520s", alter_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
+        }
+        sqlite3_free(errmsg);
+    }
+}
+
+static void add_partido_columns(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RESULTADO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RENDIMIENTO_GENERAL ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_CANSANCIO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ESTADO_ANIMO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_COMENTARIO_PERSONAL ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_CLIMA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_DIA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_PRECIO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_TIPO_PARTIDO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RIVAL_NOMBRE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_TIPO_RIVAL ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_POSICION_JUGADA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_MINUTOS_JUGADOS ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_INTENSIDAD ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ESFUERZO_PERCIBIDO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_CONDICION_CANCHA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ARBITRAJE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_EVENTOS_CLAVE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RATING_TECNICO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RATING_FISICO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_RATING_MENTAL ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ESTADO_CANCHA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_GOLES_EQUIPO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_GOLES_RIVAL ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_FORMATO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_TARJETA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_GOLES_EN_CONTRA ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_DOLOR_FISICO ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_TEMPERATURA_C ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ARBITRAJE_SCORE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_LO_MEJOR ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_QUE_MEJORAR ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_TAGS ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_GOLES_DETALLE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ASISTENCIAS_DETALLE ";",
+        "ALTER TABLE lesion ADD COLUMN partido_id INTEGER DEFAULT NULL;",
+        "ALTER TABLE settings ADD COLUMN image_viewer TEXT DEFAULT '';",
+        "ALTER TABLE usuario ADD COLUMN password_salt TEXT DEFAULT '';",
+        "ALTER TABLE usuario ADD COLUMN password_hash TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN mes_anio TEXT DEFAULT '';",
+        NULL
+    };
+    const char *dup_col_msg = "duplicate column name";
+    const char *no_table_msg = "no such table";
+    for (int i = 0; alter_statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
+        int error_esperado =
+            (errmsg != NULL) &&
+            ((strstr(errmsg, dup_col_msg) != NULL) ||
+             (strstr(errmsg, no_table_msg) != NULL));
+        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion partido con error: %.320s | %.520s", alter_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
+        }
+        sqlite3_free(errmsg);
+    }
+}
+
+static void add_missing_columns_legacy(void)
+{
+    add_camiseta_columns();
+    add_cancha_columns();
+    add_partido_columns();
+}
+
+static void add_missing_columns()
+{
+    int current_version = 0;
+    if (!get_user_version(&current_version))
+    {
+        add_missing_columns_legacy();
+        return;
+    }
+
+    if (current_version >= DB_VERSION_CURRENT)
+    {
+        add_camiseta_columns();
+        add_cancha_columns();
+        add_partido_columns();
+        return;
+    }
+
+    if (current_version < DB_VERSION_CAMISETA_COLS) add_camiseta_columns();
+    if (current_version < DB_VERSION_CANCHA_COLS)   add_cancha_columns();
+    if (current_version < DB_VERSION_PARTIDO_COLS)  add_partido_columns();
+}
+
+static int drop_legacy_mes_anio_triggers(void)
+{
+    const char *drop_statements[] =
+    {
+        "DROP TRIGGER IF EXISTS trg_partido_mes_anio_insert;",
+        "DROP TRIGGER IF EXISTS trg_partido_mes_anio_update;",
+        NULL
+    };
+    int failed = -1;
+    if (!execute_sql_statements(drop_statements, &failed))
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo eliminando trigger obsoleto: %s", sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+        return 0;
+    }
+    return 1;
+}
+
 static int create_performance_indexes()
 {
+    int current_version = 0;
+    if (!get_user_version(&current_version))
+    {
+        current_version = 0;
+    }
+
+    if (current_version >= DB_VERSION_INDEXES)
+    {
+        if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s", sqlite3_errmsg(db));
+            app_log_write("ERROR", "DB", log_buf_);
+            return 0;
+        }
+        return 1;
+    }
+
+    drop_legacy_mes_anio_triggers();
+
     const char *index_statements[] =
     {
         "CREATE INDEX IF NOT EXISTS idx_partido_fecha_hora ON partido(fecha_hora);",
@@ -1518,20 +1669,14 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
         "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON partido(camiseta_id);",
         "CREATE INDEX IF NOT EXISTS idx_partido_mes_anio ON partido(mes_anio);",
+        "CREATE INDEX IF NOT EXISTS idx_equipo_partido_id ON equipo(partido_id);",
+        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_coleccion ON coleccion_inventario(coleccion_id);",
         "CREATE INDEX IF NOT EXISTS idx_financiamiento_fecha ON financiamiento(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_financiamiento_tipo_fecha ON financiamiento(tipo, fecha);",
         "CREATE INDEX IF NOT EXISTS idx_financiamiento_substr_fecha ON financiamiento(substr(fecha, 1, 7));",
         "CREATE INDEX IF NOT EXISTS idx_bienestar_sesion_fecha ON bienestar_sesion_mental(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_bienestar_entrenamiento_fecha ON bienestar_entrenamiento(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_bienestar_comida_fecha_calidad ON bienestar_comida(fecha, calidad);",
-        "CREATE TRIGGER IF NOT EXISTS trg_partido_mes_anio_insert "
-        "AFTER INSERT ON partido FOR EACH ROW BEGIN "
-        "UPDATE partido SET mes_anio = substr(NEW.fecha_hora, 7, 4) || '-' || substr(NEW.fecha_hora, 4, 2) "
-        "WHERE id = NEW.id; END;",
-        "CREATE TRIGGER IF NOT EXISTS trg_partido_mes_anio_update "
-        "AFTER UPDATE OF fecha_hora ON partido FOR EACH ROW BEGIN "
-        "UPDATE partido SET mes_anio = substr(NEW.fecha_hora, 7, 4) || '-' || substr(NEW.fecha_hora, 4, 2) "
-        "WHERE id = NEW.id; END;",
         NULL
     };
 
@@ -1541,6 +1686,12 @@ static int create_performance_indexes()
         snprintf(log_buf_, sizeof(log_buf_), "Fallo creando indice '%s': %s", index_statements[failed_index], sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
+    }
+
+    if (!set_user_version(DB_VERSION_CURRENT))
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras crear indices: %s", sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
     }
 
     if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
@@ -1556,6 +1707,7 @@ static int create_performance_indexes()
 
 int db_init()
 {
+    app_log_init();
     app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
 
     if (!setup_database_paths())
@@ -1585,10 +1737,7 @@ int db_init()
     add_missing_columns();
     app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
 
-    sqlite3_exec(db,
-                 "UPDATE partido SET mes_anio = substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) "
-                 "WHERE mes_anio = '' OR mes_anio IS NULL;",
-                 NULL, NULL, NULL);
+    backfill_mes_anio_once();
 
     if (!create_performance_indexes())
     {
@@ -1612,8 +1761,10 @@ void db_close()
     if (db)
     {
         app_log_write("INFO", "DB", "Cerrando conexion SQLite");
+        db_clear_stmt_cache();
         sqlite3_close(db);
         app_log_write("INFO", "DB", "Conexion SQLite cerrada");
+        app_log_close();
     }
 }
 

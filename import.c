@@ -22,9 +22,9 @@
 // Forward declaration - Estructura para agrupar datos de un partido
 typedef struct
 {
-    int partido_id;
     sqlite3_int64 cancha_id;
     const char *fecha;
+    const char *mes_anio;
     int goles;
     int asistencias;
     int camiseta_id;
@@ -85,10 +85,9 @@ typedef int (*EstadisticaLineParser)(const char *line, EstadisticaData *out);
 // Forward declaration
 static char *read_file_content(const char *filename);
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt);
-static int id_existe_en_tabla(const char *tabla, int id);
-static void insertar_camiseta(int id, const char *nombre);
-static void insertar_lesion(int id, const char *jugador, const char *tipo,
-                            const char *descripcion, const char *fecha);
+static int insertar_camiseta(int id, const char *nombre);
+static int insertar_lesion(int id, const char *jugador, const char *tipo,
+                           const char *descripcion, const char *fecha);
 static void importar_con_pausa(const char *inicio, const char *fin,
                                void (*func)());
 static int procesar_camiseta_importada(const CamisetaData *camiseta);
@@ -104,8 +103,7 @@ static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
                                  int derrotas);
 static sqlite3_int64 obtener_o_crear_cancha_id(const char *cancha_nombre);
 static int partido_existe(sqlite3_int64 cancha_id, const char *fecha, int camiseta_id);
-static int obtener_siguiente_partido_id(void);
-static void insertar_partido(PartidoData data);
+static int insertar_partido(PartidoData data);
 static int procesar_e_insertar_partido(const PartidoInput *input);
 static void importar_partidos_desde_archivo(const char *filename, const char *formato,
         PartidoLineParser parser);
@@ -267,6 +265,38 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
     return file;
 }
 
+static int obtener_mes_anio_desde_fecha(const char *fecha, char *mes_anio, size_t size)
+{
+    if (!fecha || !mes_anio || size < 8)
+    {
+        return 0;
+    }
+
+    mes_anio[0] = '\0';
+
+    if (strlen(fecha) >= 10 && fecha[4] == '-' && fecha[7] == '-')
+    {
+        snprintf(mes_anio, size, "%.7s", fecha);
+        return 1;
+    }
+
+    if (strlen(fecha) >= 10 && fecha[2] == '/' && fecha[5] == '/')
+    {
+        snprintf(mes_anio,
+                 size,
+                 "%c%c%c%c-%c%c",
+                 fecha[6],
+                 fecha[7],
+                 fecha[8],
+                 fecha[9],
+                 fecha[3],
+                 fecha[4]);
+        return 1;
+    }
+
+    return 0;
+}
+
 static int procesar_e_insertar_partido(const PartidoInput *input)
 {
     // Obtener ID de cancha
@@ -294,66 +324,54 @@ static int procesar_e_insertar_partido(const PartidoInput *input)
         return 0;
     }
 
-    // Obtener siguiente ID para partido
-    int partido_id = obtener_siguiente_partido_id();
+    char mes_anio[8] = {0};
+    obtener_mes_anio_desde_fecha(input->fecha, mes_anio, sizeof(mes_anio));
 
     // Insertar partido
     PartidoData partido_data =
     {
-        partido_id, cancha_id, input->fecha, input->goles, input->asistencias,
+        cancha_id, input->fecha, mes_anio, input->goles, input->asistencias,
         camiseta_id, input->resultado, input->clima, input->dia, input->rendimiento_general,
         input->cansancio, input->estado_animo, input->comentario
     };
-    insertar_partido(partido_data);
+    if (!insertar_partido(partido_data))
+    {
+        printf("No se pudo importar el partido en '%s'.\n", input->cancha);
+        return 0;
+    }
 
     printf("Partido en '%s' importado correctamente\n", input->cancha);
     return 1;
 }
 
-static int id_existe_en_tabla(const char *tabla, int id)
-{
-    sqlite3_stmt *stmt;
-    char sql[128];
-    snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s WHERE id = ?", tabla);
-    if (!preparar_stmt(sql, &stmt))
-        return 0;
-
-    sqlite3_bind_int(stmt, 1, id);
-    int exists = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        exists = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return exists;
-}
-
-static void insertar_camiseta(int id, const char *nombre)
+static int insertar_camiseta(int id, const char *nombre)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)",
+                "INSERT OR IGNORE INTO camiseta(id, nombre, sorteada) VALUES(?, ?, 0)",
                 &stmt))
     {
-        return;
+        return 0;
     }
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
+    int inserted = (rc == SQLITE_DONE) ? (sqlite3_changes(db) > 0) : 0;
     sqlite3_finalize(stmt);
+    return inserted;
 }
 
-static void insertar_lesion(int id, const char *jugador, const char *tipo,
-                            const char *descripcion, const char *fecha)
+static int insertar_lesion(int id, const char *jugador, const char *tipo,
+                           const char *descripcion, const char *fecha)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha) "
+                "INSERT OR IGNORE INTO lesion(id, jugador, tipo, descripcion, fecha) "
                 "VALUES(?, ?, ?, ?, ?)",
                 &stmt))
     {
-        return;
+        return 0;
     }
 
     sqlite3_bind_int(stmt, 1, id);
@@ -361,8 +379,10 @@ static void insertar_lesion(int id, const char *jugador, const char *tipo,
     sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
+    int inserted = (rc == SQLITE_DONE) ? (sqlite3_changes(db) > 0) : 0;
     sqlite3_finalize(stmt);
+    return inserted;
 }
 
 static void importar_con_pausa(const char *inicio, const char *fin,
@@ -439,13 +459,12 @@ static void importar_partidos_desde_archivo(const char *filename, const char *fo
 
 static int procesar_camiseta_importada(const CamisetaData *camiseta)
 {
-    if (id_existe_en_tabla("camiseta", camiseta->id))
+    if (!insertar_camiseta(camiseta->id, camiseta->nombre))
     {
         printf("Camiseta ID %d ya existe, omitiendo...\n", camiseta->id);
         return 0;
     }
 
-    insertar_camiseta(camiseta->id, camiseta->nombre);
     printf("Camiseta '%s' importada correctamente\n", camiseta->nombre);
     return 1;
 }
@@ -522,14 +541,13 @@ static void importar_camisetas_desde_archivo(const char *filename, const char *f
 
 static int procesar_lesion_importada(const LesionData *lesion)
 {
-    if (id_existe_en_tabla("lesion", lesion->id))
+    if (!insertar_lesion(lesion->id, lesion->jugador, lesion->tipo, lesion->descripcion,
+                         lesion->fecha))
     {
         printf("Lesion ID %d ya existe, omitiendo...\n", lesion->id);
         return 0;
     }
 
-    insertar_lesion(lesion->id, lesion->jugador, lesion->tipo, lesion->descripcion,
-                    lesion->fecha);
     printf("Lesion de '%s' importada correctamente\n", lesion->jugador);
     return 1;
 }
@@ -878,15 +896,11 @@ static int parse_camiseta_json(cJSON const *item)
     int id = id_json->valueint;
     const char *nombre = nombre_json->valuestring;
 
-    // Verificar si ya existe
-    if (id_existe_en_tabla("camiseta", id))
+    if (!insertar_camiseta(id, nombre))
     {
         printf("Camiseta ID %d ya existe, omitiendo...\n", id);
         return 0;
     }
-
-    // Insertar
-    insertar_camiseta(id, nombre);
 
     printf("Camiseta '%s' importada correctamente\n", nombre);
     return 1;
@@ -994,40 +1008,23 @@ static int partido_existe(sqlite3_int64 cancha_id, const char *fecha,
     return exists;
 }
 
-static int obtener_siguiente_partido_id()
-{
-    int partido_id = 1;
-    sqlite3_stmt *max_stmt;
-    if (!preparar_stmt("SELECT COALESCE(MAX(id), 0) + 1 FROM partido", &max_stmt))
-    {
-        return partido_id;
-    }
-    if (sqlite3_step(max_stmt) == SQLITE_ROW)
-    {
-        partido_id = sqlite3_column_int(max_stmt, 0);
-    }
-    sqlite3_finalize(max_stmt);
-
-    return partido_id;
-}
-
 // Estructura PartidoData ya definida en forward declarations
 
-static void insertar_partido(PartidoData data)
+static int insertar_partido(PartidoData data)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(
-                "INSERT INTO partido(id, cancha_id, fecha_hora, goles, asistencias, "
+                "INSERT INTO partido(cancha_id, fecha_hora, mes_anio, goles, asistencias, "
                 "camiseta_id, resultado, clima, dia, rendimiento_general, cansancio, "
                 "estado_animo, comentario_personal) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
                 "?, ?, ?)",
                 &stmt))
     {
-        return;
+        return 0;
     }
-    sqlite3_bind_int(stmt, 1, data.partido_id);
-    sqlite3_bind_int64(stmt, 2, data.cancha_id);
-    sqlite3_bind_text(stmt, 3, data.fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 1, data.cancha_id);
+    sqlite3_bind_text(stmt, 2, data.fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, data.mes_anio ? data.mes_anio : "", -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 4, data.goles);
     sqlite3_bind_int(stmt, 5, data.asistencias);
     sqlite3_bind_int(stmt, 6, data.camiseta_id);
@@ -1038,8 +1035,9 @@ static void insertar_partido(PartidoData data)
     sqlite3_bind_int(stmt, 11, data.cansancio);
     sqlite3_bind_int(stmt, 12, data.estado_animo);
     sqlite3_bind_text(stmt, 13, data.comentario_personal, -1, SQLITE_TRANSIENT);
-    sqlite3_step(stmt);
+    int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
+    return result == SQLITE_DONE;
 }
 
 static int procesar_partido_json_item(cJSON const *item)
@@ -1141,15 +1139,11 @@ void importar_lesiones_json()
         const char *descripcion = descripcion_json->valuestring;
         const char *fecha = fecha_json->valuestring;
 
-        // Verificar si ya existe
-        if (id_existe_en_tabla("lesion", id))
+        if (!insertar_lesion(id, jugador, tipo, descripcion, fecha))
         {
             printf("Lesion ID %d ya existe, omitiendo...\n", id);
             continue;
         }
-
-        // Insertar lesion
-        insertar_lesion(id, jugador, tipo, descripcion, fecha);
 
         printf("Lesion de '%s' importada correctamente\n", jugador);
     }
@@ -1625,16 +1619,12 @@ void importar_camisetas_html()
         char nombre[256];
         strcpy_s(nombre, sizeof(nombre), ptr);
 
-        // Verificar si ya existe
-        if (id_existe_en_tabla("camiseta", id))
+        if (!insertar_camiseta(id, nombre))
         {
             printf("Camiseta ID %d ya existe, omitiendo...\n", id);
             ptr = end + 5;
             continue;
         }
-
-        // Insertar
-        insertar_camiseta(id, nombre);
 
         printf("Camiseta '%s' importada correctamente\n", nombre);
         count++;
@@ -1863,15 +1853,11 @@ void importar_lesiones_html()
         strcpy_s(fecha, sizeof(fecha), td);
         ptr = end + 5;
 
-        // Verificar si ya existe
-        if (id_existe_en_tabla("lesion", id))
+        if (!insertar_lesion(id, jugador, tipo, descripcion, fecha))
         {
             printf("Lesion ID %d ya existe, omitiendo...\n", id);
             continue;
         }
-
-        // Insertar lesion
-        insertar_lesion(id, jugador, tipo, descripcion, fecha);
 
         printf("Lesion de '%s' importada correctamente\n", jugador);
         count++;
