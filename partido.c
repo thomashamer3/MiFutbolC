@@ -3778,8 +3778,8 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     }
 
     datos->resultado = pedir_entero_en_rango("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
-                         1, 3,
-                         "Resultado invalido. Ingrese 1, 2 o 3: ");
+                       1, 3,
+                       "Resultado invalido. Ingrese 1, 2 o 3: ");
     listar_camisetas_disponibles();
     datos->camiseta = input_int("Nuevo ID camiseta: ");
     if (!existe_id("camiseta", datos->camiseta) || !camiseta_esta_activa(datos->camiseta))
@@ -3789,12 +3789,12 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     }
     mostrar_opciones_clima_partido();
     datos->clima = pedir_entero_en_rango("Nuevo clima (1-12): ",
-                         1, 12,
-                         "Clima invalido. Ingrese entre 1 y 12: ");
+                                         1, 12,
+                                         "Clima invalido. Ingrese entre 1 y 12: ");
     mostrar_opciones_dia_partido();
     datos->dia = pedir_entero_en_rango("Nuevo dia (1-6): ",
-                         1, 6,
-                         "Dia invalido. Ingrese entre 1 y 6: ");
+                                       1, 6,
+                                       "Dia invalido. Ingrese entre 1 y 6: ");
     datos->precio = input_int("Nuevo precio del partido: ");
 
     return 1;
