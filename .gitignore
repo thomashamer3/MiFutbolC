@@ -19,6 +19,8 @@ bin/
 obj/
 build/
 cmake-build-*/
+.zed
+.opencode/
 
 # Coverage and profiler outputs
 *.gcda

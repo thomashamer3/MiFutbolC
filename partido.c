@@ -2104,8 +2104,8 @@ static void pedir_detalle_evento(int cantidad_objetivo,
         }
         else
         {
-            size_t usados = strlen_s(buffer, buffer_size);
-            if (usados + 1 + strlen_s(tipo, 32) + 1 < buffer_size)
+            size_t usados = strlen(buffer);
+            if (usados + 1 + strlen(tipo) + 1 < buffer_size)
             {
                 snprintf(buffer + usados, buffer_size - usados, ",%s", tipo);
             }
@@ -2613,7 +2613,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     convert_display_date_to_storage(fecha, fecha_storage, sizeof(fecha_storage));
     sqlite3_bind_text(stmt, 3, fecha_storage, -1, SQLITE_TRANSIENT);
     char mes_anio[8] = {0};
-    if (strlen_s(fecha_storage, sizeof(fecha_storage)) >= 7 && fecha_storage[4] == '-')
+    if (strlen(fecha_storage) >= 7 && fecha_storage[4] == '-')
     {
         snprintf(mes_anio, sizeof(mes_anio), "%.7s", fecha_storage);
     }
@@ -3571,7 +3571,8 @@ static void modificar_detalle_evento_partido(const char *campo,
         const char *det = (const char *)sqlite3_column_text(stmt, es_asistencia ? 3 : 2);
         if (det)
         {
-            strncpy_s(detalle_actual, sizeof(detalle_actual), det, sizeof(detalle_actual) - 1);
+            strncpy(detalle_actual, det, sizeof(detalle_actual) - 1);
+            detalle_actual[sizeof(detalle_actual) - 1] = '\0';
         }
     }
     sqlite3_finalize(stmt);
@@ -3718,11 +3719,13 @@ static void cargar_detalle_partido_actual(char *goles_detalle, size_t goles_size
         const char *a = (const char *)sqlite3_column_text(stmt, 1);
         if (goles_detalle && goles_size > 0)
         {
-            strncpy_s(goles_detalle, goles_size, g ? g : "", goles_size - 1);
+            strncpy(goles_detalle, g ? g : "", goles_size - 1);
+            goles_detalle[goles_size - 1] = '\0';
         }
         if (asist_detalle && asist_size > 0)
         {
-            strncpy_s(asist_detalle, asist_size, a ? a : "", asist_size - 1);
+            strncpy(asist_detalle, a ? a : "", asist_size - 1);
+            asist_detalle[asist_size - 1] = '\0';
         }
     }
     sqlite3_finalize(stmt);
@@ -3774,11 +3777,9 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         }
     }
 
-    datos->resultado = input_int("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ");
-    while (datos->resultado < 1 || datos->resultado > 3)
-    {
-        datos->resultado = input_int("Resultado invalido. Ingrese 1, 2 o 3: ");
-    }
+    datos->resultado = pedir_entero_en_rango("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
+                         1, 3,
+                         "Resultado invalido. Ingrese 1, 2 o 3: ");
     listar_camisetas_disponibles();
     datos->camiseta = input_int("Nuevo ID camiseta: ");
     if (!existe_id("camiseta", datos->camiseta) || !camiseta_esta_activa(datos->camiseta))
@@ -3787,17 +3788,13 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         return 0;
     }
     mostrar_opciones_clima_partido();
-    datos->clima = input_int("Nuevo clima (1-12): ");
-    while (datos->clima < 1 || datos->clima > 12)
-    {
-        datos->clima = input_int("Clima invalido. Ingrese entre 1 y 12: ");
-    }
+    datos->clima = pedir_entero_en_rango("Nuevo clima (1-12): ",
+                         1, 12,
+                         "Clima invalido. Ingrese entre 1 y 12: ");
     mostrar_opciones_dia_partido();
-    datos->dia = input_int("Nuevo dia (1-6): ");
-    while (datos->dia < 1 || datos->dia > 6)
-    {
-        datos->dia = input_int("Dia invalido. Ingrese entre 1 y 6: ");
-    }
+    datos->dia = pedir_entero_en_rango("Nuevo dia (1-6): ",
+                         1, 6,
+                         "Dia invalido. Ingrese entre 1 y 6: ");
     datos->precio = input_int("Nuevo precio del partido: ");
 
     return 1;
@@ -3887,8 +3884,8 @@ void modificar_partido()
         {8, "Dia", modificar_dia_partido},
         {9, "Comentario", modificar_comentario_partido},
         {10, "Precio", modificar_precio_partido},
-        {11, "Rendimiento y Estado", menu_modificar_rendimiento_y_estado_partido},
-        {12, "Detalle Ampliado", menu_modificar_detalle_ampliado_partido},
+        {11, "Rendimiento y Estado", &menu_modificar_rendimiento_y_estado_partido},
+        {12, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
         {13, "Modificar Todo", modificar_todo_partido},
         {0, "Volver", NULL}
     };

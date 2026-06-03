@@ -112,33 +112,31 @@
 1780376153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1780424954 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
-	"export.h"
+1780529150 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"ascii_art.h"
-	"db.h"
-	"menu.h"
-	"settings.h"
 	"cJSON.h"
+	"db.h"
+	"export.h"
+	"menu.h"
 	<ctype.h>
+	<inttypes.h>
+	<limits.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdint.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
-	<limits.h>
 	<time.h>
-	<stddef.h>
-	<errno.h>
-	<stdarg.h>
-	<stdint.h>
-	<inttypes.h>
 	<conio.h>
 	<direct.h>
 	"direct.h"
 	<windows.h>
-	<commdlg.h>
 	<bcrypt.h>
+	<commdlg.h>
 	"compat_windows.h"
-	<sys/stat.h>
 	<spawn.h>
+	<sys/stat.h>
 	<sys/wait.h>
 	<termios.h>
 	<unistd.h>
@@ -151,30 +149,29 @@
 	<io.h>
 	<process.h>
 
-1780325786 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
-	"menu.h"
+1780528066 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"db.h"
-	"utils.h"
+	"menu.h"
 	"random_utils.h"
+	"utils.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<time.h>
-	<process.h>
-	<io.h>
 	<Windows.h>
 	<bcrypt.h>
+	<io.h>
 	<process.h>
-	<strings.h>
+	<process.h>
 	<spawn.h>
+	<strings.h>
 	<sys/wait.h>
 	<unistd.h>
-	<ctype.h>
 	<limits.h>
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1780424399 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780528882 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -233,43 +230,36 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1777427195 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
-	"utils.h"
+1780528066 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"settings.h"
+	"utils.h"
+	<locale.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
-	<locale.h>
 	<time.h>
-	<ctype.h>
 	<Windows.h>
 	"compat_windows.h"
-	"db.h"
+	"analisis.h"
+	"bienestar.h"
+	"calendario.h"
 	"camiseta.h"
 	"cancha.h"
-	"partido.h"
-	"lesion.h"
-	"estadisticas.h"
-	"analisis.h"
-	"logros.h"
-	"export.h"
-	"export_all.h"
-	"import.h"
-	"equipo.h"
-	"torneo.h"
-	"temporada.h"
-	"ascii_art.h"
-	"settings.h"
-	"financiamiento.h"
-	"bienestar.h"
 	"carrera.h"
-	"recordatorios.h"
 	"colecciones.h"
 	"dashboard.h"
-	"busqueda.h"
-	"calendario.h"
-	"atajos.h"
+	"db.h"
+	"equipo.h"
+	"estadisticas.h"
+	"financiamiento.h"
+	"lesion.h"
+	"logros.h"
 	"musica.h"
+	"partido.h"
+	"recordatorios.h"
+	"settings.h"
+	"temporada.h"
+	"torneo.h"
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.h
 
