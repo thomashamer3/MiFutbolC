@@ -30,7 +30,7 @@ set(TEST_SOURCES "")
 foreach(_f ${ALL_C_SOURCES})
     get_filename_component(_name "${_f}" NAME)
 
-    if(_f MATCHES "/tests/" OR _name MATCHES "^test_.*")
+    if((_f MATCHES "/tests/" OR _name MATCHES "^test_.*") AND NOT _name STREQUAL "unity.c")
         list(APPEND TEST_SOURCES "${_f}")
     elseif(_name STREQUAL "main.c")
         set(MAIN_SOURCE "${_f}")
@@ -143,17 +143,26 @@ if(MIFUTBOLC_BUILD_TESTS AND TEST_SOURCES)
 
     enable_testing()
 
-    add_executable(MiFutbolC_tests
-        ${TEST_SOURCES}
-    )
+    # Rebuild mifutbolc_core with UNIT_TEST for test-only code paths
+    target_compile_definitions(mifutbolc_core PRIVATE UNIT_TEST)
 
-    target_link_libraries(MiFutbolC_tests PRIVATE
-        mifutbolc_core
-    )
-
-    add_test(NAME MiFutbolCTests
-        COMMAND MiFutbolC_tests
-    )
+    # Build each test file as a separate executable
+    foreach(_test_file ${TEST_SOURCES})
+        get_filename_component(_test_name ${_test_file} NAME_WE)
+        add_executable(${_test_name}
+            ${_test_file}
+            ${CMAKE_SOURCE_DIR}/tests/unity/unity.c
+        )
+        target_compile_definitions(${_test_name} PRIVATE UNIT_TEST)
+        target_link_libraries(${_test_name} PRIVATE
+            mifutbolc_core
+            bcrypt
+        )
+        add_test(NAME ${_test_name}
+            COMMAND ${_test_name}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+    endforeach()
 endif()
 
 # ---- Install ----

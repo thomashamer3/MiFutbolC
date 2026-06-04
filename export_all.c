@@ -9,6 +9,16 @@
 #include "export_estadisticas_generales.h"
 #include "export_records_rankings.h"
 #include "export_pdf.h"
+#include "export_equipo.h"
+#include "export_temporada.h"
+#include "export_torneo.h"
+#include "export_bienestar.h"
+#include "export_carrera.h"
+#include "export_colecciones.h"
+#include "export_recordatorios.h"
+#include "export_dashboard.h"
+#include "export_calendario.h"
+#include "export_ods.h"
 #include "utils.h"
 #include "menu.h"
 #include "ascii_art.h"
@@ -94,6 +104,151 @@ static void exportar_records_rankings_all()
     exportar_records_rankings_txt();
     exportar_records_rankings_json();
     exportar_records_rankings_html();
+}
+
+static void exportar_equipos_all()
+{
+    exportar_equipos_csv();
+    exportar_equipos_txt();
+    exportar_equipos_json();
+    exportar_equipos_html();
+}
+
+static void exportar_temporadas_all()
+{
+    exportar_temporadas_csv();
+    exportar_temporadas_txt();
+    exportar_temporadas_json();
+    exportar_temporadas_html();
+}
+
+static void exportar_torneos_all()
+{
+    exportar_torneos_csv();
+    exportar_torneos_txt();
+    exportar_torneos_json();
+    exportar_torneos_html();
+}
+
+static void exportar_bienestar_all()
+{
+    exportar_bienestar_csv();
+    exportar_bienestar_txt();
+    exportar_bienestar_json();
+    exportar_bienestar_html();
+}
+
+static void exportar_carrera_all()
+{
+    exportar_carrera_csv();
+    exportar_carrera_txt();
+    exportar_carrera_json();
+    exportar_carrera_html();
+    exportar_carrera_pdf();
+}
+
+static void exportar_colecciones_all()
+{
+    exportar_colecciones_csv();
+    exportar_colecciones_txt();
+    exportar_colecciones_json();
+    exportar_colecciones_html();
+}
+
+static void exportar_recordatorios_all()
+{
+    exportar_recordatorios_csv();
+    exportar_recordatorios_txt();
+    exportar_recordatorios_json();
+    exportar_recordatorios_html();
+}
+
+static void exportar_dashboard_all()
+{
+    exportar_dashboard_csv();
+    exportar_dashboard_txt();
+    exportar_dashboard_json();
+    exportar_dashboard_html();
+}
+
+static void exportar_calendario_all()
+{
+    exportar_calendario_csv();
+    exportar_calendario_txt();
+    exportar_calendario_json();
+    exportar_calendario_html();
+}
+
+static void exportar_equipos_todo()
+{
+    printf("Exportando equipos...\n");
+    exportar_equipos_all();
+    printf("Exportacion de equipos completada.\n");
+    pause_console();
+}
+
+static void exportar_temporadas_todo()
+{
+    printf("Exportando temporadas...\n");
+    exportar_temporadas_all();
+    printf("Exportacion de temporadas completada.\n");
+    pause_console();
+}
+
+static void exportar_torneos_todo()
+{
+    printf("Exportando torneos...\n");
+    exportar_torneos_all();
+    printf("Exportacion de torneos completada.\n");
+    pause_console();
+}
+
+static void exportar_bienestar_todo()
+{
+    printf("Exportando bienestar...\n");
+    exportar_bienestar_all();
+    printf("Exportacion de bienestar completada.\n");
+    pause_console();
+}
+
+static void exportar_carrera_todo()
+{
+    printf("Exportando carrera...\n");
+    exportar_carrera_all();
+    printf("Exportacion de carrera completada.\n");
+    pause_console();
+}
+
+static void exportar_colecciones_todo()
+{
+    printf("Exportando colecciones...\n");
+    exportar_colecciones_all();
+    printf("Exportacion de colecciones completada.\n");
+    pause_console();
+}
+
+static void exportar_recordatorios_todo()
+{
+    printf("Exportando recordatorios...\n");
+    exportar_recordatorios_all();
+    printf("Exportacion de recordatorios completada.\n");
+    pause_console();
+}
+
+static void exportar_dashboard_todo()
+{
+    printf("Exportando dashboard...\n");
+    exportar_dashboard_all();
+    printf("Exportacion de dashboard completada.\n");
+    pause_console();
+}
+
+static void exportar_calendario_todo()
+{
+    printf("Exportando calendario...\n");
+    exportar_calendario_all();
+    printf("Exportacion de calendario completada.\n");
+    pause_console();
 }
 
 static void exportar_todo_json()
@@ -323,6 +478,17 @@ static void exportar_todo()
     // Exportar records y rankings
     exportar_records_rankings_all();
 
+    // Exportar nuevos modulos
+    exportar_equipos_all();
+    exportar_temporadas_all();
+    exportar_torneos_all();
+    exportar_bienestar_all();
+    exportar_carrera_all();
+    exportar_colecciones_all();
+    exportar_recordatorios_all();
+    exportar_dashboard_all();
+    exportar_calendario_all();
+
     printf("Exportacion de todo completada.\n");
     pause_console();
 }
@@ -331,6 +497,143 @@ static void exportar_informe_total_pdf()
 {
     printf("Generando informe total en PDF...\n");
     generar_informe_total_pdf();
+    pause_console();
+}
+
+static void md_exportar_tabla(FILE *f, const char *titulo, const char *sql,
+                              const char *encabezados[], int num_cols)
+{
+    fprintf(f, "\n## %s\n\n", titulo);
+    fprintf(f, "|");
+    for (int i = 0; i < num_cols; i++)
+        fprintf(f, " %s |", encabezados[i]);
+    fprintf(f, "\n|");
+    for (int i = 0; i < num_cols; i++)
+        fprintf(f, "---|");
+    fprintf(f, "\n");
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        fprintf(f, "_Sin datos._\n\n");
+        return;
+    }
+
+    int rows = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        fprintf(f, "|");
+        for (int i = 0; i < num_cols; i++)
+        {
+            if (sqlite3_column_type(stmt, i) == SQLITE_NULL)
+                fprintf(f, " |");
+            else if (sqlite3_column_type(stmt, i) == SQLITE_INTEGER)
+                fprintf(f, " %d |", sqlite3_column_int(stmt, i));
+            else if (sqlite3_column_type(stmt, i) == SQLITE_FLOAT)
+                fprintf(f, " %.2f |", sqlite3_column_double(stmt, i));
+            else
+            {
+                const char *txt = (const char *)sqlite3_column_text(stmt, i);
+                fprintf(f, " %s |", txt ? txt : "");
+            }
+        }
+        fprintf(f, "\n");
+        rows++;
+    }
+    sqlite3_finalize(stmt);
+    if (rows == 0)
+        fprintf(f, "_Sin datos._\n");
+    fprintf(f, "\n");
+}
+
+static void exportar_todo_md()
+{
+    printf("Exportando todo a Markdown...\n");
+
+    FILE *f = abrir_archivo_exportacion("exportacion_completa.md",
+                                        "Error al crear el archivo Markdown");
+    if (!f) return;
+
+    fprintf(f, "# Exportacion Completa - MiFutbolC\n\n");
+    fprintf(f, "*Generado el %s*\n\n", __DATE__);
+
+    md_exportar_tabla(f, "Partidos",
+                      "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, p.resultado, "
+                      "COALESCE(ca.nombre,''), COALESCE(cam.nombre,'') "
+                      "FROM partido p LEFT JOIN cancha ca ON p.cancha_id=ca.id "
+                      "LEFT JOIN camiseta cam ON p.camiseta_id=cam.id ORDER BY p.fecha_hora DESC LIMIT 100",
+                      (const char *[])
+    {"ID", "Fecha", "Goles", "Asist", "Result", "Cancha", "Camiseta"
+    }, 7);
+
+    md_exportar_tabla(f, "Equipos",
+                      "SELECT id, nombre, tipo, num_jugadores FROM equipo ORDER BY nombre",
+                      (const char *[])
+    {"ID", "Nombre", "Tipo", "Jugadores"
+    }, 4);
+
+    md_exportar_tabla(f, "Camisetas",
+                      "SELECT id, nombre, club, temporada FROM camisetas ORDER BY nombre",
+                      (const char *[])
+    {"ID", "Nombre", "Club", "Temp"
+    }, 4);
+
+    md_exportar_tabla(f, "Canchas",
+                      "SELECT id, nombre, ciudad, capacidad FROM cancha ORDER BY nombre",
+                      (const char *[])
+    {"ID", "Nombre", "Ciudad", "Capacidad"
+    }, 4);
+
+    md_exportar_tabla(f, "Jugadores",
+                      "SELECT id, nombre, numero, posicion FROM jugador ORDER BY nombre",
+                      (const char *[])
+    {"ID", "Nombre", "#", "Pos"
+    }, 4);
+
+    md_exportar_tabla(f, "Lesiones",
+                      "SELECT id, jugador, tipo, fecha FROM lesion ORDER BY fecha DESC LIMIT 50",
+                      (const char *[])
+    {"ID", "Jugador", "Tipo", "Fecha"
+    }, 4);
+
+    md_exportar_tabla(f, "Torneos",
+                      "SELECT id, nombre, tipo_torneo, formato_torneo FROM torneo ORDER BY nombre",
+                      (const char *[])
+    {"ID", "Nombre", "Tipo", "Formato"
+    }, 4);
+
+    md_exportar_tabla(f, "Temporadas",
+                      "SELECT id, nombre, anio, estado FROM temporada ORDER BY anio DESC",
+                      (const char *[])
+    {"ID", "Nombre", "Anio", "Estado"
+    }, 4);
+
+    md_exportar_tabla(f, "Financiamiento",
+                      "SELECT id, descripcion, monto, fecha FROM financiamiento ORDER BY fecha DESC LIMIT 50",
+                      (const char *[])
+    {"ID", "Descripcion", "Monto", "Fecha"
+    }, 4);
+
+    md_exportar_tabla(f, "Carrera - Identidad",
+                      "SELECT id, nombre, posiciones, club_inicios FROM carrera_identidad",
+                      (const char *[])
+    {"ID", "Nombre", "Posicion", "Club"
+    }, 4);
+
+    md_exportar_tabla(f, "Carrera - Hitos",
+                      "SELECT id, tipo_hito, nota FROM carrera_partido_hito ORDER BY id LIMIT 50",
+                      (const char *[])
+    {"ID", "Tipo", "Nota"
+    }, 3);
+
+    md_exportar_tabla(f, "Bienestar - Objetivos",
+                      "SELECT id, descripcion FROM bienestar_objetivo ORDER BY id",
+                      (const char *[])
+    {"ID", "Descripcion"
+    }, 2);
+
+    fclose(f);
+    printf("Exportado a: %s\n", get_export_path("exportacion_completa.md"));
     pause_console();
 }
 
@@ -365,19 +668,30 @@ void menu_exportar()
 {
     MenuItem items[] =
     {
-        {1, get_text("export_camisetas"), exportar_camisetas_todo},
-        {2, get_text("export_partidos"), menu_exportar_partidos},
-        {3, get_text("export_lesiones"), exportar_lesiones_todo},
-        {4, get_text("export_estadisticas"), exportar_estadisticas_todo},
-        {5, get_text("export_analisis"), exportar_analisis_todo},
-        {6, get_text("export_estadisticas_generales"), menu_exportar_estadisticas_generales},
-        {7, get_text("export_analisis_avanzado"), menu_exportar_mejorado},
-        {8, get_text("export_base_datos"), exportar_base_datos},
-        {9, get_text("export_todo"), exportar_todo},
-        {10, get_text("export_todo_json"), exportar_todo_json},
-        {11, get_text("export_todo_csv"), exportar_todo_csv},
-        {12, get_text("export_informe_total_pdf"), exportar_informe_total_pdf},
-        {0, get_text("menu_back"), NULL}
+        {1, "Camisetas", exportar_camisetas_todo},
+        {2, "Partidos", menu_exportar_partidos},
+        {3, "Lesiones", exportar_lesiones_todo},
+        {4, "Estadisticas", exportar_estadisticas_todo},
+        {5, "Analisis", exportar_analisis_todo},
+        {6, "Estadisticas Generales", menu_exportar_estadisticas_generales},
+        {7, "Analisis Avanzado", menu_exportar_mejorado},
+        {8, "Equipos", exportar_equipos_todo},
+        {9, "Temporadas", exportar_temporadas_todo},
+        {10, "Torneos", exportar_torneos_todo},
+        {11, "Bienestar", exportar_bienestar_todo},
+        {12, "Carrera", exportar_carrera_todo},
+        {13, "Colecciones", exportar_colecciones_todo},
+        {14, "Recordatorios", exportar_recordatorios_todo},
+        {15, "Dashboard", exportar_dashboard_todo},
+        {16, "Calendario", exportar_calendario_todo},
+        {17, "Base de Datos", exportar_base_datos},
+        {18, "Exportar Todo", exportar_todo},
+        {19, "Exportar Todo (JSON)", exportar_todo_json},
+        {20, "Exportar Todo (CSV)", exportar_todo_csv},
+        {21, "Informe Total PDF", exportar_informe_total_pdf},
+        {22, "Exportar Todo (Markdown)", exportar_todo_md},
+        {23, "Exportar a XLSX", menu_exportar_xlsx},
+        {0, "Volver", NULL}
     };
-    ejecutar_menu(get_text("export_menu_title"), items, 13);
+    ejecutar_menu("EXPORTAR DATOS", items, 24);
 }

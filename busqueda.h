@@ -50,6 +50,36 @@ int buscar_en_camisetas(const char *termino);
 int buscar_en_canchas(const char *termino);
 
 /**
+ * @brief Busca un término en la tabla de jugadores
+ */
+int buscar_en_jugadores(const char *termino);
+
+/**
+ * @brief Busca un término en la tabla de lesiones
+ */
+int buscar_en_lesiones(const char *termino);
+
+/**
+ * @brief Busca un término en la tabla de torneos
+ */
+int buscar_en_torneos(const char *termino);
+
+/**
+ * @brief Busca un término en la tabla de temporadas
+ */
+int buscar_en_temporadas(const char *termino);
+
+/**
+ * @brief Busca un término en la tabla de financiamiento
+ */
+int buscar_en_financiamiento(const char *termino);
+
+/**
+ * @brief Busca un término en la tabla de bienestar
+ */
+int buscar_en_bienestar(const char *termino);
+
+/**
  * @brief Busca un término en todas las tablas
  *
  * @param termino Término de búsqueda

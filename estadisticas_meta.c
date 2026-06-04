@@ -2,6 +2,7 @@
 #include "estadisticas_meta.h"
 #include "db.h"
 #include "utils.h"
+#include "ascii_charts.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -498,4 +499,119 @@ void mostrar_partidos_faciles_mal_rendidos()
         "WHERE cansancio <= 3 AND rendimiento_general < (SELECT AVG(rendimiento_general) FROM partido) "
         "ORDER BY rendimiento_general ASC, cansancio ASC"
     );
+}
+
+void mostrar_tendencia_rendimiento_sparkline()
+{
+    clear_screen();
+    print_header("TENDENCIA DE RENDIMIENTO (SPARKLINE)");
+
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT id, fecha_hora, rendimiento_general, goles, asistencias, resultado "
+                      "FROM partido WHERE resultado > 0 ORDER BY fecha_hora DESC LIMIT 30";
+
+    if (!preparar_stmt_export(&stmt, sql))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    double valores[30];
+    int ids[30];
+    char fechas[30][12];
+    int goles_arr[30];
+    int asis_arr[30];
+    int resultados[30];
+    int count = 0;
+
+    while (sqlite3_step(stmt) == SQLITE_ROW && count < 30)
+    {
+        ids[count] = sqlite3_column_int(stmt, 0);
+        const char *f = (const char *)sqlite3_column_text(stmt, 1);
+        snprintf(fechas[count], sizeof(fechas[count]), "%s", f ? f : "");
+        fechas[count][10] = '\0';
+        valores[count] = (double)sqlite3_column_int(stmt, 2);
+        goles_arr[count] = sqlite3_column_int(stmt, 3);
+        asis_arr[count] = sqlite3_column_int(stmt, 4);
+        resultados[count] = sqlite3_column_int(stmt, 5);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        printf("No hay partidos registrados.\n");
+        pause_console();
+        return;
+    }
+
+    // Mostrar datos en orden cronologico (el mas antiguo primero)
+    printf("\nUltimos %d partidos - Tendencia de Rendimiento:\n\n", count);
+    for (int i = count - 1; i >= 0; i--)
+    {
+        const char *res = "?";
+        if (resultados[i] == 1) res = "V";
+        else if (resultados[i] == 2) res = "E";
+        else if (resultados[i] == 3) res = "D";
+        printf("  #%d %s | G:%d A:%d | R:%d %s\n",
+               ids[i], fechas[i], goles_arr[i], asis_arr[i],
+               (int)valores[i], res);
+    }
+
+    double suma = 0;
+    for (int i = 0; i < count; i++) suma += valores[i];
+
+    // Sparkline
+    printf("\n  Tendencia: ");
+    dibujar_minigrafico(valores, count, count > 20 ? 20 : count);
+    printf("\n\n  ▁ Min: %.0f  █ Max: %.0f  Promedio: %.1f\n",
+           chart_min(valores, count), chart_max(valores, count),
+           count > 0 ? suma / count : 0.0);
+
+    pause_console();
+}
+
+void mostrar_efectividad_general()
+{
+    clear_screen();
+    print_header("CALCULADORA DE EFECTIVIDAD");
+
+    query("Promedio de Goles por Partido",
+          "SELECT ROUND(AVG(goles), 2) FROM partido WHERE resultado > 0");
+
+    query("Promedio de Asistencias por Partido",
+          "SELECT ROUND(AVG(asistencias), 2) FROM partido WHERE resultado > 0");
+
+    query("Promedio de Goles + Asistencias por Partido",
+          "SELECT ROUND(AVG(goles + asistencias), 2) FROM partido WHERE resultado > 0");
+
+    query("Efectividad de Conversion (Goles por Oportunidad)",
+          "SELECT ROUND(CAST(SUM(goles) AS REAL) / NULLIF(SUM(goles + asistencias), 0), 4) "
+          "FROM partido WHERE resultado > 0 AND (goles + asistencias) > 0");
+
+    query("Tasa de Victoria General (%)",
+          "SELECT ROUND(100.0 * SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 2) "
+          "FROM partido WHERE resultado > 0");
+
+    query("Efectividad Ofensiva (Goles + Asistencias por Rendimiento)",
+          "SELECT ROUND(AVG(goles + asistencias) / NULLIF(AVG(rendimiento_general), 0), 4) "
+          "FROM partido WHERE resultado > 0 AND rendimiento_general > 0");
+
+    query("Efectividad por Rango de Rendimiento",
+          "SELECT CASE WHEN rendimiento_general <= 3 THEN 'Bajo (1-3)' "
+          "WHEN rendimiento_general <= 6 THEN 'Medio (4-6)' ELSE 'Alto (7-10)' END, "
+          "ROUND(AVG(goles), 2), ROUND(AVG(asistencias), 2), "
+          "ROUND(100.0 * AVG(CASE WHEN resultado = 1 THEN 1.0 ELSE 0.0 END), 2) "
+          "FROM partido WHERE resultado > 0 "
+          "GROUP BY CASE WHEN rendimiento_general <= 3 THEN 'Bajo (1-3)' "
+          "WHEN rendimiento_general <= 6 THEN 'Medio (4-6)' ELSE 'Alto (7-10)' END "
+          "ORDER BY rendimiento_general ASC");
+
+    query("Partidos con Mayor Efectividad Ofensiva (Top 5)",
+          "SELECT p.fecha_hora, p.goles, p.asistencias, (p.goles + p.asistencias) "
+          "FROM partido p WHERE p.resultado > 0 "
+          "ORDER BY (p.goles + p.asistencias) DESC LIMIT 5");
+
+    pause_console();
 }

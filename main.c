@@ -5,6 +5,7 @@
 #include "atajos.h"
 #include "musica.h"
 #include "carrera.h"
+#include "undo.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -115,6 +116,9 @@ int main()
     
     // Inicializar sistema de atajos de teclado
     inicializar_atajos();
+
+    // Inicializar sistema de deshacer
+    undo_init();
 
     int count;
     MenuItem* filtered_items = create_filtered_menu(&count);

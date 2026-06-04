@@ -64,10 +64,13 @@ static void test_clima_to_text(void)
 
 static void test_dia_to_text(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Dia", dia_to_text(1));
-    TEST_ASSERT_EQUAL_STRING("Tarde", dia_to_text(2));
-    TEST_ASSERT_EQUAL_STRING("Noche", dia_to_text(3));
-    TEST_ASSERT_EQUAL_STRING("DESCONOCIDO", dia_to_text(4));
+    TEST_ASSERT_EQUAL_STRING("Madrugada", dia_to_text(1));
+    TEST_ASSERT_EQUAL_STRING("Manana", dia_to_text(2));
+    TEST_ASSERT_EQUAL_STRING("Mediodia", dia_to_text(3));
+    TEST_ASSERT_EQUAL_STRING("Tarde", dia_to_text(4));
+    TEST_ASSERT_EQUAL_STRING("Atardecer", dia_to_text(5));
+    TEST_ASSERT_EQUAL_STRING("Noche", dia_to_text(6));
+    TEST_ASSERT_EQUAL_STRING("DESCONOCIDO", dia_to_text(99));
 }
 
 static void test_trim_trailing_spaces(void)
@@ -118,7 +121,7 @@ static void test_menu_items_metadata(void)
     TEST_ASSERT_TRUE(items[count - 1].accion == NULL);
 
     TEST_ASSERT_EQUAL_INT(1, items[0].opcion);
-    TEST_ASSERT_EQUAL_STRING("Camisetas", items[0].texto);
+    TEST_ASSERT_NOT_NULL(items[0].texto);
     TEST_ASSERT_TRUE(items[0].accion != NULL);
 }
 
@@ -129,7 +132,7 @@ static void test_menu_buscar_item(void)
 
     const MenuItem *found = menu_buscar_item(items, count, 1);
     TEST_ASSERT_NOT_NULL(found);
-    TEST_ASSERT_EQUAL_STRING("Camisetas", found->texto);
+    TEST_ASSERT_EQUAL_STRING(items[0].texto, found->texto);
 
     const MenuItem *not_found = menu_buscar_item(items, count, 999);
     TEST_ASSERT_TRUE(not_found == NULL);

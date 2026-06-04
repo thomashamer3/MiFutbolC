@@ -341,6 +341,71 @@ static void imprimir_fila_cancha(sqlite3_stmt *stmt)
     printf("  ID %d: %s\n", id, texto_sqlite_o_default(nombre, "Sin nombre"));
 }
 
+static void imprimir_fila_jugador(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    int num = sqlite3_column_int(stmt, 2);
+    int pos = sqlite3_column_int(stmt, 3);
+
+    printf("  ID %d: %s (#%d, Pos: %d)\n", id,
+           texto_sqlite_o_default(nombre, "Sin nombre"), num, pos);
+}
+
+static void imprimir_fila_lesion(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *jugador = sqlite3_column_text(stmt, 1);
+    const unsigned char *tipo = sqlite3_column_text(stmt, 2);
+    const unsigned char *desc = sqlite3_column_text(stmt, 3);
+
+    printf("  ID %d: %s - %s (%s)\n", id,
+           texto_sqlite_o_default(jugador, "?"),
+           texto_sqlite_o_default(tipo, "?"),
+           texto_sqlite_o_default(desc, "?"));
+}
+
+static void imprimir_fila_torneo(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    int tipo = sqlite3_column_int(stmt, 2);
+
+    printf("  ID %d: %s (Tipo: %d)\n", id,
+           texto_sqlite_o_default(nombre, "Sin nombre"), tipo);
+}
+
+static void imprimir_fila_temporada(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    int anio = sqlite3_column_int(stmt, 2);
+
+    printf("  ID %d: %s (%d)\n", id,
+           texto_sqlite_o_default(nombre, "Sin nombre"), anio);
+}
+
+static void imprimir_fila_financiamiento(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *desc = sqlite3_column_text(stmt, 1);
+    double monto = sqlite3_column_double(stmt, 2);
+
+    printf("  ID %d: %s ($%.2f)\n", id,
+           texto_sqlite_o_default(desc, "Sin descripcion"), monto);
+}
+
+static void imprimir_fila_bienestar(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char *nombre = sqlite3_column_text(stmt, 1);
+    const unsigned char *desc = sqlite3_column_text(stmt, 2);
+
+    printf("  ID %d: %s - %s\n", id,
+           texto_sqlite_o_default(nombre, "Sin nombre"),
+           texto_sqlite_o_default(desc, ""));
+}
+
 int buscar_en_partidos(const char *termino)
 {
     const char *sql_count =
@@ -432,6 +497,132 @@ int buscar_en_canchas(const char *termino)
                                       patron_lower, 1, imprimir_fila_cancha);
 }
 
+int buscar_en_jugadores(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM jugador "
+        "WHERE nombre COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, nombre, numero, posicion FROM jugador "
+        "WHERE nombre COLLATE NOCASE LIKE ? "
+        "ORDER BY nombre LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "👤 Jugadores encontrados:",
+                                      "Jugadores encontrados:",
+                                      patron_lower, 1, imprimir_fila_jugador);
+}
+
+int buscar_en_lesiones(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM lesion "
+        "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, jugador, tipo, descripcion FROM lesion "
+        "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ? "
+        "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "🩹 Lesiones encontradas:",
+                                      "Lesiones encontradas:",
+                                      patron_lower, 3, imprimir_fila_lesion);
+}
+
+int buscar_en_torneos(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM torneo "
+        "WHERE nombre COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, nombre, tipo_torneo FROM torneo "
+        "WHERE nombre COLLATE NOCASE LIKE ? "
+        "ORDER BY nombre LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "🏆 Torneos encontrados:",
+                                      "Torneos encontrados:",
+                                      patron_lower, 1, imprimir_fila_torneo);
+}
+
+int buscar_en_temporadas(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM temporada "
+        "WHERE nombre COLLATE NOCASE LIKE ? OR COALESCE(descripcion, '') COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, nombre, anio FROM temporada "
+        "WHERE nombre COLLATE NOCASE LIKE ? OR COALESCE(descripcion, '') COLLATE NOCASE LIKE ? "
+        "ORDER BY anio DESC LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "📅 Temporadas encontradas:",
+                                      "Temporadas encontradas:",
+                                      patron_lower, 2, imprimir_fila_temporada);
+}
+
+int buscar_en_financiamiento(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM financiamiento "
+        "WHERE descripcion COLLATE NOCASE LIKE ? OR COALESCE(item_especifico, '') COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, descripcion, monto FROM financiamiento "
+        "WHERE descripcion COLLATE NOCASE LIKE ? OR COALESCE(item_especifico, '') COLLATE NOCASE LIKE ? "
+        "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "💰 Financiamiento encontrado:",
+                                      "Financiamiento encontrado:",
+                                      patron_lower, 2, imprimir_fila_financiamiento);
+}
+
+int buscar_en_bienestar(const char *termino)
+{
+    const char *sql_count =
+        "SELECT COUNT(*) FROM bienestar_objetivo "
+        "WHERE descripcion COLLATE NOCASE LIKE ?;";
+
+    const char *sql_data =
+        "SELECT id, descripcion, '' FROM bienestar_objetivo "
+        "WHERE descripcion COLLATE NOCASE LIKE ? "
+        "ORDER BY id LIMIT ? OFFSET ?;";
+
+    char patron_lower[256];
+    if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
+        return 0;
+
+    return ejecutar_busqueda_generica(sql_count, sql_data,
+                                      "💪 Bienestar encontrado:",
+                                      "Bienestar encontrado:",
+                                      patron_lower, 1, imprimir_fila_bienestar);
+}
+
 void buscar_global(const char *termino)
 {
     clear_screen();
@@ -450,6 +641,12 @@ void buscar_global(const char *termino)
     total += buscar_en_equipos(termino);
     total += buscar_en_camisetas(termino);
     total += buscar_en_canchas(termino);
+    total += buscar_en_jugadores(termino);
+    total += buscar_en_lesiones(termino);
+    total += buscar_en_torneos(termino);
+    total += buscar_en_temporadas(termino);
+    total += buscar_en_financiamiento(termino);
+    total += buscar_en_bienestar(termino);
 
     printf("\n%s\n", linea);
     printf("Total de resultados: %d\n\n", total);

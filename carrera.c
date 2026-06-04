@@ -476,7 +476,7 @@ static void copiar_texto_limited(char *dest, size_t dest_size, const char *src)
         return;
     }
 
-    snprintf(dest, dest_size, "%s", src);
+    snprintf(dest, dest_size, "%.*s", (int)(dest_size - 1), src);
 }
 
 static void identidad_cargar_fila(sqlite3_stmt *stmt, CarreraIdentidad *identidad)
@@ -2600,6 +2600,142 @@ void carrera_notificar_modo_retro_inicio(void)
 }
 
 /* ========================================================
+ * VISOR DE TRAYECTORIA
+ * ======================================================== */
+
+static void mostrar_mejor_once_historico(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, p.rendimiento_general "
+                       "FROM partido p WHERE p.resultado > 0 "
+                       "ORDER BY p.rendimiento_general DESC LIMIT 11"))
+    {
+        mostrar_no_hay_registros("partidos");
+        return;
+    }
+
+    mostrar_pantalla("MEJOR ONCE HISTORICO (Top 11 mejores rendimientos)");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  %d. %s | G:%d A:%d | Rend: %d\n",
+               sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1),
+               sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3),
+               sqlite3_column_int(stmt, 4));
+    }
+    sqlite3_finalize(stmt);
+    if (count == 0) mostrar_no_hay_registros("partidos con rendimiento");
+    pause_console();
+}
+
+static void mostrar_vitrina_trofeos(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT nombre, tipo, fecha_fin, estado FROM torneo "
+                       "WHERE estado = 'Finalizado' ORDER BY fecha_fin DESC"))
+    {
+        mostrar_no_hay_registros("torneos finalizados");
+        return;
+    }
+
+    mostrar_pantalla("VITRINA DE TROFEOS");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  Trofeo %d: %s\n", count, sqlite3_column_text(stmt, 0));
+        printf("    Tipo: %s\n", sqlite3_column_text(stmt, 1));
+        printf("    Fecha: %s\n", sqlite3_column_text(stmt, 2));
+    }
+    sqlite3_finalize(stmt);
+    if (count == 0) mostrar_no_hay_registros("trofeos ganados");
+    pause_console();
+}
+
+static void mostrar_estadisticas_temporada_visual(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT id, nombre, anio, goles, asistencias, rendimiento_promedio "
+                       "FROM temporada ORDER BY anio DESC"))
+    {
+        mostrar_no_hay_registros("temporadas");
+        return;
+    }
+
+    mostrar_pantalla("ESTADISTICAS POR TEMPORADA");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  %d. %s (%s)\n", sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1),
+               sqlite3_column_text(stmt, 2));
+        printf("     Goles: %d | Asistencias: %d | Rend: %s\n",
+               sqlite3_column_int(stmt, 3),
+               sqlite3_column_int(stmt, 4),
+               sqlite3_column_text(stmt, 5) ? (const char*)sqlite3_column_text(stmt, 5) : "N/A");
+    }
+    sqlite3_finalize(stmt);
+    if (count == 0) mostrar_no_hay_registros("temporadas");
+    pause_console();
+}
+
+static void mostrar_timeline_hitos(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT cph.id, cph.fecha, cph.titulo, p.rendimiento_general "
+                       "FROM carrera_partido_hito cph "
+                       "LEFT JOIN partido p ON cph.partido_id = p.id "
+                       "ORDER BY cph.fecha DESC LIMIT 50"))
+    {
+        mostrar_no_hay_registros("hitos");
+        return;
+    }
+
+    mostrar_pantalla("TIMELINE DE HITOS");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  %d. [%s] %s", count, sqlite3_column_text(stmt, 1),
+               sqlite3_column_text(stmt, 2));
+        if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
+            printf(" (Rend: %d)", sqlite3_column_int(stmt, 3));
+        printf("\n");
+    }
+    sqlite3_finalize(stmt);
+    if (count == 0) mostrar_no_hay_registros("hitos en la carrera");
+    pause_console();
+}
+
+static void mostrar_logros_carrera(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT nombre, descripcion, fecha_logro FROM logro "
+                       "ORDER BY fecha_logro DESC"))
+    {
+        mostrar_no_hay_registros("logros");
+        return;
+    }
+
+    mostrar_pantalla("LOGROS DE CARRERA");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  %d. %s\n", count, sqlite3_column_text(stmt, 0));
+        printf("     %s (%s)\n", sqlite3_column_text(stmt, 1),
+               sqlite3_column_text(stmt, 2) ? (const char*)sqlite3_column_text(stmt, 2) : "?");
+    }
+    sqlite3_finalize(stmt);
+    if (count == 0) mostrar_no_hay_registros("logros");
+    pause_console();
+}
+
+/* ========================================================
  * MENU PRINCIPAL DE CARRERA FUTBOLISTICA
  * ======================================================== */
 void menu_carrera_futbolistica(void)
@@ -2616,8 +2752,13 @@ void menu_carrera_futbolistica(void)
         {8, "Hall of Fame Personal", &mostrar_hall_of_fame_personal},
         {9, "Resumen Narrativo Automatico", &menu_resumen_narrativo},
         {10, "Modo Retro: Hoy en tu Historia", &mostrar_modo_retro_hoy},
+        {11, "Mejor Once Historico", &mostrar_mejor_once_historico},
+        {12, "Vitrina de Trofeos", &mostrar_vitrina_trofeos},
+        {13, "Estadisticas por Temporada", &mostrar_estadisticas_temporada_visual},
+        {14, "Timeline de Hitos", &mostrar_timeline_hitos},
+        {15, "Logros de Carrera", &mostrar_logros_carrera},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("CARRERA FUTBOLISTICA", items, 11);
+    ejecutar_menu("CARRERA FUTBOLISTICA", items, 16);
 }

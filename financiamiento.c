@@ -553,7 +553,7 @@ void menu_presupuestos_mensuales()
 
     ejecutar_menu("PRESUPUESTOS MENSUALES", items, 4);
     return;
-#endif
+#else
     clear_screen();
     print_header("PRESUPUESTOS MENSUALES");
 
@@ -569,6 +569,7 @@ void menu_presupuestos_mensuales()
     };
 
     ejecutar_menu("PRESUPUESTOS MENSUALES", items, 4);
+#endif
 }
 
 static void recopilar_datos_presupuesto(PresupuestoMensual *presupuesto)

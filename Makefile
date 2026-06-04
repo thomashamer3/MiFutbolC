@@ -58,6 +58,7 @@ SRC = \
   export_partidos.c \
   export_records_rankings.c \
   export_pdf.c \
+  formaciones.c \
   import.c \
   lesion.c \
   logros.c \

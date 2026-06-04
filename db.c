@@ -1406,6 +1406,52 @@ static int create_database_schema()
         " grid TEXT NOT NULL,"
         " FOREIGN KEY(partido_id) REFERENCES partido(id));",
 
+        "CREATE TABLE IF NOT EXISTS entrenamiento_plan ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " descripcion TEXT NOT NULL,"
+        " duracion_semanas INTEGER DEFAULT 4,"
+        " sesiones_por_semana INTEGER DEFAULT 3);",
+
+        "CREATE TABLE IF NOT EXISTS progresion_jugador ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " jugador_id INTEGER NOT NULL,"
+        " plan_id INTEGER,"
+        " semana INTEGER NOT NULL,"
+        " ataque INTEGER DEFAULT 0,"
+        " defensa INTEGER DEFAULT 0,"
+        " resistencia INTEGER DEFAULT 0,"
+        " velocidad INTEGER DEFAULT 0,"
+        " tecnica INTEGER DEFAULT 0,"
+        " FOREIGN KEY(jugador_id) REFERENCES jugador(id),"
+        " FOREIGN KEY(plan_id) REFERENCES entrenamiento_plan(id));",
+
+        "CREATE TABLE IF NOT EXISTS reporte_config ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " descripcion TEXT NOT NULL,"
+        " periodicidad TEXT NOT NULL DEFAULT 'semanal',"
+        " habilitado INTEGER DEFAULT 1);",
+
+        "CREATE TABLE IF NOT EXISTS reporte_generado ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " archivo TEXT NOT NULL,"
+        " fecha_generacion TEXT DEFAULT (datetime('now','localtime')));",
+
+        "CREATE TABLE IF NOT EXISTS notificacion ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " tipo TEXT NOT NULL,"
+        " mensaje TEXT NOT NULL,"
+        " leida INTEGER DEFAULT 0,"
+        " fecha TEXT DEFAULT (datetime('now','localtime')));",
+
+        "CREATE TABLE IF NOT EXISTS backup_config ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " intervalo_horas INTEGER NOT NULL DEFAULT 24,"
+        " proximo_backup TEXT,"
+        " activo INTEGER DEFAULT 0);",
+
         NULL
     };
 

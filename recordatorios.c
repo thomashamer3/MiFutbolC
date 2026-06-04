@@ -4,6 +4,7 @@
 #include "db.h"
 #include "cJSON.h"
 #include "export_partidos_helpers.h"
+#include "backup.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,13 +15,35 @@
 #define MAX_TEMATICA 64
 #define MAX_FECHA 64
 
+#define PERIODICIDAD_UNA_VEZ   0
+#define PERIODICIDAD_DIARIO    1
+#define PERIODICIDAD_SEMANAL   2
+#define PERIODICIDAD_MENSUAL   3
+
 typedef struct
 {
     long long id;
     char fecha[MAX_FECHA];
     char nota[MAX_NOTA];
     char tematica[MAX_TEMATICA];
+    int periodicidad;
+    char fecha_fin[MAX_FECHA];
 } Reminder;
+
+static const char *periodicidad_str(int p)
+{
+    switch (p)
+    {
+    case PERIODICIDAD_DIARIO:
+        return "Diario";
+    case PERIODICIDAD_SEMANAL:
+        return "Semanal";
+    case PERIODICIDAD_MENSUAL:
+        return "Mensual";
+    default:
+        return "Una vez";
+    }
+}
 
 static FILE *open_file_portable(const char *path, const char *mode)
 {
@@ -83,6 +106,8 @@ static void reminder_from_json(Reminder *dst, cJSON const *it, int fallback_id)
     cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
     cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
     cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
+    cJSON const *jper = cJSON_GetObjectItemCaseSensitive(it, "periodicidad");
+    cJSON const *jfin = cJSON_GetObjectItemCaseSensitive(it, "fecha_fin");
 
     dst->id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : fallback_id;
     strncpy_s(dst->fecha, MAX_FECHA, jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", MAX_FECHA - 1);
@@ -91,6 +116,9 @@ static void reminder_from_json(Reminder *dst, cJSON const *it, int fallback_id)
     dst->nota[MAX_NOTA - 1] = '\0';
     strncpy_s(dst->tematica, MAX_TEMATICA, jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", MAX_TEMATICA - 1);
     dst->tematica[MAX_TEMATICA - 1] = '\0';
+    dst->periodicidad = jper && cJSON_IsNumber(jper) ? (int)jper->valuedouble : PERIODICIDAD_UNA_VEZ;
+    strncpy_s(dst->fecha_fin, MAX_FECHA, jfin && cJSON_IsString(jfin) ? jfin->valuestring : "", MAX_FECHA - 1);
+    dst->fecha_fin[MAX_FECHA - 1] = '\0';
 }
 
 static Reminder *parse_reminders_array(const cJSON *root, int *out_count)
@@ -115,6 +143,8 @@ static Reminder *parse_reminders_array(const cJSON *root, int *out_count)
             arr[i].fecha[0] = '\0';
             arr[i].nota[0] = '\0';
             arr[i].tematica[0] = '\0';
+            arr[i].periodicidad = PERIODICIDAD_UNA_VEZ;
+            arr[i].fecha_fin[0] = '\0';
         }
     }
 
@@ -167,16 +197,17 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
         const char *fecha = "";
         const char *nota = "";
         const char *tematica = "";
+        int periodicidad = PERIODICIDAD_UNA_VEZ;
+        const char *fecha_fin = "";
 
         if (arr)
         {
-            Reminder current;
-            memset(&current, 0, sizeof(current));
-            memcpy(&current, &arr[i], sizeof(current));
-            id_value = current.id;
-            fecha = current.fecha;
-            nota = current.nota;
-            tematica = current.tematica;
+            id_value = arr[i].id;
+            fecha = arr[i].fecha;
+            nota = arr[i].nota;
+            tematica = arr[i].tematica;
+            periodicidad = arr[i].periodicidad;
+            fecha_fin = arr[i].fecha_fin;
         }
 
         cJSON *obj = cJSON_CreateObject();
@@ -185,6 +216,8 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
         cJSON_AddStringToObject(obj, "fecha", fecha);
         cJSON_AddStringToObject(obj, "nota", nota);
         cJSON_AddStringToObject(obj, "tematica", tematica);
+        cJSON_AddNumberToObject(obj, "periodicidad", (double)periodicidad);
+        cJSON_AddStringToObject(obj, "fecha_fin", fecha_fin);
         cJSON_AddItemToArray(root, obj);
     }
 
@@ -234,7 +267,21 @@ static void listar_recordatorios(const Reminder *arr, int count)
 
     for (int i = 0; i < count; i++)
     {
-        printf("[%lld] %s - %s\n", arr[i].id, arr[i].tematica, arr[i].fecha);
+        char tematica_mostrar[MAX_TEMATICA + 32];
+        const char *sufijo = periodicidad_str(arr[i].periodicidad);
+        if (arr[i].periodicidad == PERIODICIDAD_UNA_VEZ)
+        {
+            strncpy_s(tematica_mostrar, sizeof(tematica_mostrar), arr[i].tematica, sizeof(tematica_mostrar) - 1);
+        }
+        else
+        {
+            snprintf(tematica_mostrar, sizeof(tematica_mostrar), "%s (%s)", arr[i].tematica, sufijo);
+        }
+        tematica_mostrar[sizeof(tematica_mostrar) - 1] = '\0';
+
+        printf("[%lld] %s - %s\n", arr[i].id, tematica_mostrar, arr[i].fecha);
+        if (arr[i].fecha_fin[0] != '\0')
+            printf("    Hasta: %s\n", arr[i].fecha_fin);
         printf("    %s\n", arr[i].nota);
         printf("----------------------------------------\n");
     }
@@ -266,6 +313,18 @@ static void elegir_tematica(char *out, int size)
     }
 }
 
+static void elegir_periodicidad(char *out, int size)
+{
+    printf("Elija periodicidad:\n");
+    printf("0. Una vez\n");
+    printf("1. Diario\n");
+    printf("2. Semanal\n");
+    printf("3. Mensual\n");
+    int sel = input_int_rango(">", 0, 3);
+    snprintf(out, (size_t)size, "%d", sel);
+    out[size - 1] = '\0';
+}
+
 static void agregar_recordatorio()
 {
     int count = 0;
@@ -279,6 +338,22 @@ static void agregar_recordatorio()
     input_date("Fecha (dd/mm/yyyy hh:mm):", nuevo.fecha, MAX_FECHA);
     input_string_extended("Nota:", nuevo.nota, MAX_NOTA);
     elegir_tematica(nuevo.tematica, MAX_TEMATICA);
+
+    char per_buf[16];
+    elegir_periodicidad(per_buf, sizeof(per_buf));
+    nuevo.periodicidad = atoi(per_buf);
+    if (nuevo.periodicidad != PERIODICIDAD_UNA_VEZ)
+    {
+        input_date("Fecha fin (dd/mm/yyyy hh:mm) - opcional, dejar vacío si no aplica:", nuevo.fecha_fin, MAX_FECHA);
+        if (strlen(nuevo.fecha_fin) == 0)
+        {
+            nuevo.fecha_fin[0] = '\0';
+        }
+    }
+    else
+    {
+        nuevo.fecha_fin[0] = '\0';
+    }
 
     size_t new_count = (size_t)count + 1;
     Reminder *newarr = (Reminder*)realloc(arr, sizeof(Reminder) * new_count);
@@ -460,7 +535,18 @@ static void filtrar_por_tematica()
         if (strcasecmp(arr[i].tematica, tema) == 0)
         {
             if (!found) ui_printf("Recordatorios con temática: %s\n", tema);
-            ui_printf("[%lld] %s - %s\n    %s\n", arr[i].id, arr[i].tematica, arr[i].fecha, arr[i].nota);
+            char tematica_mostrar[MAX_TEMATICA + 32];
+            const char *sufijo = periodicidad_str(arr[i].periodicidad);
+            if (arr[i].periodicidad == PERIODICIDAD_UNA_VEZ)
+            {
+                strncpy_s(tematica_mostrar, sizeof(tematica_mostrar), arr[i].tematica, sizeof(tematica_mostrar) - 1);
+            }
+            else
+            {
+                snprintf(tematica_mostrar, sizeof(tematica_mostrar), "%s (%s)", arr[i].tematica, sufijo);
+            }
+            tematica_mostrar[sizeof(tematica_mostrar) - 1] = '\0';
+            ui_printf("[%lld] %s - %s\n    %s\n", arr[i].id, tematica_mostrar, arr[i].fecha, arr[i].nota);
             found = 1;
         }
     }
@@ -576,6 +662,216 @@ static void import_recordatorios()
     free(newarr);
 }
 
+static int fecha_coincide_con_hoy(struct tm *tm_fecha)
+{
+    time_t now = time(NULL);
+    struct tm tm_hoy;
+    if (localtime_s(&tm_hoy, &now) != 0) return 0;
+    return (tm_fecha->tm_year == tm_hoy.tm_year &&
+            tm_fecha->tm_mon == tm_hoy.tm_mon &&
+            tm_fecha->tm_mday == tm_hoy.tm_mday);
+}
+
+/* Forward declaration for parse_storage_datetime_to_tm (defined in AGENDA section) */
+static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm);
+
+static int fecha_previo_o_hoy(struct tm *tm_fecha)
+{
+    time_t now = time(NULL);
+    struct tm tm_hoy;
+    if (localtime_s(&tm_hoy, &now) != 0) return 0;
+    time_t t_fecha = mktime(tm_fecha);
+    time_t t_hoy = mktime(&tm_hoy);
+    return (t_fecha <= t_hoy);
+}
+
+static int agregar_dias_a_fecha(const char *fecha_orig, int dias, char *out, int size)
+{
+    struct tm tm;
+    if (!parse_storage_datetime_to_tm(fecha_orig, &tm)) return 0;
+    time_t t = mktime(&tm);
+    if (t == (time_t)-1) return 0;
+    t += (time_t)dias * 86400;
+    if (localtime_s(&tm, &t) != 0) return 0;
+    snprintf(out, (size_t)size, "%04d-%02d-%02d %02d:%02d",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+             tm.tm_hour, tm.tm_min);
+    out[size - 1] = '\0';
+    return 1;
+}
+
+static int agregar_mes_a_fecha(const char *fecha_orig, char *out, int size)
+{
+    struct tm tm;
+    if (!parse_storage_datetime_to_tm(fecha_orig, &tm)) return 0;
+    tm.tm_mon++;
+    if (tm.tm_mon > 11)
+    {
+        tm.tm_mon = 0;
+        tm.tm_year++;
+    }
+    snprintf(out, (size_t)size, "%04d-%02d-%02d %02d:%02d",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+             tm.tm_hour, tm.tm_min);
+    out[size - 1] = '\0';
+    return 1;
+}
+
+static int fecha_str_vacia_o_nula(const char *s)
+{
+    return !s || s[0] == '\0';
+}
+
+static int fecha_pasada_o_hoy(const char *fecha_str)
+{
+    struct tm tm;
+    if (!parse_storage_datetime_to_tm(fecha_str, &tm)) return 0;
+    return fecha_previo_o_hoy(&tm);
+}
+
+static void verificar_recordatorios_recurrentes()
+{
+    int count = 0;
+    Reminder *arr = load_reminders(&count);
+    if (!arr || count == 0)
+    {
+        mostrar_no_hay_registros("recordatorios");
+        free(arr);
+        return;
+    }
+
+    int nuevos = 0;
+    int capacidad = count + 16;
+    Reminder *expandido = (Reminder*)malloc(sizeof(Reminder) * (size_t)capacidad);
+    if (!expandido)
+    {
+        mostrar_error_operacion("recordatorios", "memoria");
+        free(arr);
+        return;
+    }
+    memcpy(expandido, arr, sizeof(Reminder) * (size_t)count);
+    int actual = count;
+
+    for (int i = 0; i < actual; i++)
+    {
+        if (expandido[i].periodicidad == PERIODICIDAD_UNA_VEZ) continue;
+
+        if (!fecha_pasada_o_hoy(expandido[i].fecha)) continue;
+
+        if (!fecha_str_vacia_o_nula(expandido[i].fecha_fin))
+        {
+            struct tm tm_fin;
+            if (parse_storage_datetime_to_tm(expandido[i].fecha_fin, &tm_fin))
+            {
+                struct tm tm_actual;
+                if (parse_storage_datetime_to_tm(expandido[i].fecha, &tm_actual))
+                {
+                    if (mktime(&tm_actual) > mktime(&tm_fin)) continue;
+                }
+            }
+        }
+
+        struct tm tm_fecha;
+        if (!parse_storage_datetime_to_tm(expandido[i].fecha, &tm_fecha)) continue;
+
+        if (!fecha_coincide_con_hoy(&tm_fecha))
+        {
+            int avanzar = 0;
+            switch (expandido[i].periodicidad)
+            {
+            case PERIODICIDAD_DIARIO:
+                avanzar = 1;
+                break;
+            case PERIODICIDAD_SEMANAL:
+                avanzar = 7;
+                break;
+            case PERIODICIDAD_MENSUAL:
+                avanzar = 30;
+                break;
+            }
+            if (avanzar == 0) continue;
+
+            char nueva_fecha[MAX_FECHA];
+            int ok = 0;
+            for (int intento = 0; intento < 31; intento++)
+            {
+                char temp[MAX_FECHA];
+                if (expandido[i].periodicidad == PERIODICIDAD_MENSUAL)
+                    ok = agregar_mes_a_fecha(expandido[i].fecha, temp, MAX_FECHA);
+                else
+                    ok = agregar_dias_a_fecha(expandido[i].fecha, avanzar * (intento + 1), temp, MAX_FECHA);
+                if (!ok) break;
+
+                struct tm tm_temp;
+                if (!parse_storage_datetime_to_tm(temp, &tm_temp))
+                {
+                    ok = 0;
+                    break;
+                }
+
+                if (fecha_coincide_con_hoy(&tm_temp))
+                {
+                    strncpy_s(nueva_fecha, MAX_FECHA, temp, MAX_FECHA - 1);
+                    nueva_fecha[MAX_FECHA - 1] = '\0';
+                    ok = 1;
+                    break;
+                }
+
+                if (fecha_previo_o_hoy(&tm_temp))
+                {
+                    strncpy_s(expandido[i].fecha, MAX_FECHA, temp, MAX_FECHA - 1);
+                    expandido[i].fecha[MAX_FECHA - 1] = '\0';
+                    continue;
+                }
+
+                break;
+            }
+
+            if (ok)
+            {
+                if (actual >= capacidad)
+                {
+                    capacidad *= 2;
+                    Reminder *tmp = (Reminder*)realloc(expandido, sizeof(Reminder) * (size_t)capacidad);
+                    if (!tmp) break;
+                    expandido = tmp;
+                }
+
+                Reminder dup;
+                memset(&dup, 0, sizeof(dup));
+                dup.id = obtener_siguiente_id_local(expandido, actual);
+                strncpy_s(dup.fecha, MAX_FECHA, nueva_fecha, MAX_FECHA - 1);
+                dup.fecha[MAX_FECHA - 1] = '\0';
+                strncpy_s(dup.nota, MAX_NOTA, expandido[i].nota, MAX_NOTA - 1);
+                dup.nota[MAX_NOTA - 1] = '\0';
+                strncpy_s(dup.tematica, MAX_TEMATICA, expandido[i].tematica, MAX_TEMATICA - 1);
+                dup.tematica[MAX_TEMATICA - 1] = '\0';
+                dup.periodicidad = expandido[i].periodicidad;
+                strncpy_s(dup.fecha_fin, MAX_FECHA, expandido[i].fecha_fin, MAX_FECHA - 1);
+                dup.fecha_fin[MAX_FECHA - 1] = '\0';
+
+                expandido[actual++] = dup;
+                nuevos++;
+            }
+        }
+    }
+
+    if (nuevos > 0)
+    {
+        ui_printf("Se generaron %d recordatorio(s) recurrente(s) para hoy.\n", nuevos);
+        if (!save_reminders(expandido, actual))
+            mostrar_error_operacion("recordatorios", "guardar");
+    }
+    else
+    {
+        ui_puts("No hay recordatorios recurrentes pendientes para hoy.");
+    }
+
+    free(expandido);
+
+    verificar_backup_programado();
+}
+
 /* ===================== AGENDA (Partidos + Recordatorios) ===================== */
 typedef struct
 {
@@ -683,7 +979,18 @@ static int add_reminders_to_items(AgendaItem **items, size_t *cap, size_t *nitem
         it.ts = parse_datetime_ts(rarr[i].fecha);
         strncpy_s(it.tipo, sizeof(it.tipo), "Recordatorio", sizeof(it.tipo)-1);
         strncpy_s(it.fechastr, sizeof(it.fechastr), rarr[i].fecha, sizeof(it.fechastr)-1);
-        strncpy_s(it.titulo, sizeof(it.titulo), rarr[i].tematica, sizeof(it.titulo)-1);
+
+        char titulo_tmp[128];
+        const char *sufijo = periodicidad_str(rarr[i].periodicidad);
+        if (rarr[i].periodicidad == PERIODICIDAD_UNA_VEZ)
+        {
+            strncpy_s(titulo_tmp, sizeof(titulo_tmp), rarr[i].tematica, sizeof(titulo_tmp)-1);
+        }
+        else
+        {
+            snprintf(titulo_tmp, sizeof(titulo_tmp), "%s (%s)", rarr[i].tematica, sufijo);
+        }
+        strncpy_s(it.titulo, sizeof(it.titulo), titulo_tmp, sizeof(it.titulo)-1);
         strncpy_s(it.detalle, sizeof(it.detalle), rarr[i].nota, sizeof(it.detalle)-1);
 
         if (!append_agenda_item(items, cap, nitems, &it))
@@ -865,6 +1172,13 @@ static void accion_mostrar_agenda(void)
     pause_console();
 }
 
+static void accion_verificar_recurrentes(void)
+{
+    app_log_event("RECORDATORIOS", "Opcion seleccionada: Verificar recordatorios recurrentes");
+    verificar_recordatorios_recurrentes();
+    pause_console();
+}
+
 void menu_recordatorios(void)
 {
     MenuItem items[] =
@@ -877,8 +1191,9 @@ void menu_recordatorios(void)
         {6, "Exportar recordatorios", &accion_exportar_recordatorios},
         {7, "Importar recordatorios", &accion_importar_recordatorios},
         {8, "Agenda", &accion_mostrar_agenda},
+        {9, "Verificar recordatorios recurrentes", &accion_verificar_recurrentes},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("RECORDATORIOS", items, 9);
+    ejecutar_menu("RECORDATORIOS", items, 10);
 }

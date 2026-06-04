@@ -89,10 +89,18 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="analisis.h" />
+		<Unit filename="ascii_charts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ascii_charts.h" />
 		<Unit filename="atajos.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="atajos.h" />
+		<Unit filename="backup.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="backup.h" />
 		<Unit filename="bienestar.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -135,6 +143,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="db.h" />
+		<Unit filename="db_integridad.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="db_integridad.h" />
 		<Unit filename="direct.h" />
 		<Unit filename="entrenador_ia.c">
 			<Option compilerVar="CC" />
@@ -180,6 +192,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_all_mejorado.h" />
+		<Unit filename="export_bienestar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_bienestar.h" />
+		<Unit filename="export_calendario.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_calendario.h" />
 		<Unit filename="export_camisetas.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -188,6 +208,22 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_camisetas_mejorado.h" />
+		<Unit filename="export_carrera.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_carrera.h" />
+		<Unit filename="export_colecciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_colecciones.h" />
+		<Unit filename="export_dashboard.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_dashboard.h" />
+		<Unit filename="export_equipo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_equipo.h" />
 		<Unit filename="export_estadisticas.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -204,6 +240,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_lesiones_mejorado.h" />
+		<Unit filename="export_ods.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_ods.h" />
 		<Unit filename="export_partidos.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -212,18 +252,42 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_pdf.h" />
+		<Unit filename="export_recordatorios.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_recordatorios.h" />
 		<Unit filename="export_records_rankings.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_records_rankings.h" />
+		<Unit filename="export_temporada.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_temporada.h" />
+		<Unit filename="export_torneo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="export_torneo.h" />
+		<Unit filename="filtros.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="filtros.h" />
 		<Unit filename="financiamiento.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="financiamiento.h" />
+		<Unit filename="formaciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="formaciones.h" />
 		<Unit filename="import.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="import.h" />
+		<Unit filename="jugador_perfil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="jugador_perfil.h" />
 		<Unit filename="lesion.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -248,6 +312,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="musica_helpers.h" />
+		<Unit filename="notificaciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="notificaciones.h" />
 		<Unit filename="partido.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -256,7 +324,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="pdfgen.h" />
+		<Unit filename="posiciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="posiciones.h" />
 		<Unit filename="process.h" />
+		<Unit filename="progresion.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="progresion.h" />
 		<Unit filename="random_utils.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -272,6 +348,10 @@
 		<Unit filename="recurso.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="reportes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="reportes.h" />
 		<Unit filename="settings.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -288,6 +368,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="torneo.h" />
+		<Unit filename="undo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="undo.h" />
 		<Unit filename="utils.c">
 			<Option compilerVar="CC" />
 		</Unit>

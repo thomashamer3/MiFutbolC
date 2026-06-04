@@ -5,6 +5,7 @@
 #include "estadisticas_anio.h"
 #include "records_rankings.h"
 #include "estadisticas_meta.h"
+#include "posiciones.h"
 #include "menu.h"
 #include "entrenador_ia.h"
 #include "utils.h"
@@ -37,10 +38,11 @@ void menu_estadisticas_generales()
         {2, "Por Mes", mostrar_estadisticas_por_mes},
         {3, "Por Anio", mostrar_estadisticas_por_anio},
         {4, "Records & Rankings", menu_records_rankings},
+        {5, "Tabla de Posiciones Global", mostrar_tabla_posiciones_global},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS GENERALES", items, 5);
+    ejecutar_menu("ESTADISTICAS GENERALES", items, 6);
 }
 
 void menu_estadisticas_partidos()
@@ -68,10 +70,11 @@ void menu_estadisticas_goles()
         {4, "Goles con Cansancio Alto vs Bajo", mostrar_goles_cansancio_alto_vs_bajo},
         {5, "Goles por Estado de Animo", mostrar_goles_por_estado_animo},
         {6, "Eficiencia: Goles vs Rendimiento", mostrar_eficiencia_goles_vs_rendimiento},
+        {7, "Efectividad General", mostrar_efectividad_general},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS DE GOLES", items, 7);
+    ejecutar_menu("ESTADISTICAS DE GOLES", items, 8);
 }
 
 void menu_estadisticas_asistencias()
@@ -112,8 +115,9 @@ void menu_estadisticas_rendimiento()
         {17, "Rendimiento por Dolor Fisico", mostrar_rendimiento_por_dolor_fisico},
         {18, "Rendimiento por Arbitraje", mostrar_rendimiento_por_arbitraje},
         {19, "Rendimiento por Temperatura", mostrar_rendimiento_por_temperatura},
+        {20, "Tendencia (Sparkline)", mostrar_tendencia_rendimiento_sparkline},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 20);
+    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 21);
 }

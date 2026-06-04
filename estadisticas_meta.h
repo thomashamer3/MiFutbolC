@@ -74,4 +74,14 @@ void mostrar_partidos_exigentes_bien_rendidos();
  */
 void mostrar_partidos_faciles_mal_rendidos();
 
+/**
+ * @brief Calculadora de efectividad general: goles/partido, asistencias/partido, efectividad pase, conversion
+ */
+void mostrar_efectividad_general();
+
+/**
+ * @brief Muestra tendencia de rendimiento con sparklines en los ultimos 30 partidos
+ */
+void mostrar_tendencia_rendimiento_sparkline();
+
 #endif
