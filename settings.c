@@ -7,6 +7,11 @@
 #include "export_all.h"
 #include "import.h"
 #include "busqueda.h"
+#include "backup.h"
+#include "db_integridad.h"
+#include "undo.h"
+#include "notificaciones.h"
+#include "export_ods.h"
 #include "ascii_art.h"
 #include "cJSON.h"
 #ifdef _WIN32
@@ -190,6 +195,37 @@ static void abrir_busqueda_global_desde_settings(void)
 {
     app_log_event("BUSQUEDA", "Ingreso a Busqueda Global desde Ajustes");
     menu_busqueda_global();
+}
+
+static void abrir_backup_desde_settings(void)
+{
+    app_log_event("BACKUP", "Ingreso a Backup & Restore desde Ajustes");
+    menu_backup_restore();
+}
+
+static void abrir_integridad_desde_settings(void)
+{
+    app_log_event("INTEGRIDAD", "Ingreso a Integridad BD desde Ajustes");
+    menu_integridad_bd();
+}
+
+static void abrir_undo_desde_settings(void)
+{
+    app_log_event("UNDO", "Ingreso a Deshacer desde Ajustes");
+    undo_mostrar_historial();
+    pause_console();
+}
+
+static void abrir_notificaciones_desde_settings(void)
+{
+    app_log_event("NOTIFICACIONES", "Ingreso a Notificaciones desde Ajustes");
+    menu_notificaciones();
+}
+
+static void abrir_export_ods_desde_settings(void)
+{
+    app_log_event("EXPORT_ODS", "Ingreso a Exportacion ODS desde Ajustes");
+    menu_exportar_ods();
 }
 
 static void habilitar_menus_basicos_custom()
@@ -1906,10 +1942,15 @@ void menu_settings()
         {7, label_modo, menu_mode_settings},
         {8, label_exportar, menu_exportar},
         {9, label_importar, menu_importar},
-        {10, label_busqueda, &abrir_busqueda_global_desde_settings},
-        {11, label_actualizar, menu_update},
-        {12, label_music_autoplay, toggle_music_autoplay_setting},
-        {13, label_dashboard_enabled, toggle_dashboard_enabled_setting},
+        {10, "Exportar a ODS", &abrir_export_ods_desde_settings},
+        {11, label_busqueda, &abrir_busqueda_global_desde_settings},
+        {12, label_actualizar, menu_update},
+        {13, label_music_autoplay, toggle_music_autoplay_setting},
+        {14, label_dashboard_enabled, toggle_dashboard_enabled_setting},
+        {15, "Backup & Restore", &abrir_backup_desde_settings},
+        {16, "Integridad BD", &abrir_integridad_desde_settings},
+        {17, "Deshacer (Undo)", &abrir_undo_desde_settings},
+        {18, "Notificaciones", &abrir_notificaciones_desde_settings},
         {0, get_text("menu_back"), NULL}
     };
 

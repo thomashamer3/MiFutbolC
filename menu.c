@@ -14,9 +14,7 @@
 #endif
 #endif
 #include "analisis.h"
-#include "backup.h"
 #include "bienestar.h"
-#include "busqueda.h"
 #include "calendario.h"
 #include "camiseta.h"
 #include "cancha.h"
@@ -24,14 +22,9 @@
 #include "colecciones.h"
 #include "dashboard.h"
 #include "db.h"
-#include "db_integridad.h"
-#include "entrenador_ia.h"
 #include "equipo.h"
 #include "estadisticas.h"
-#include "export_all.h"
 #include "financiamiento.h"
-#include "formaciones.h"
-#include "import.h"
 #include "lesion.h"
 #include "logros.h"
 #include "musica.h"
@@ -41,13 +34,6 @@
 #include "settings.h"
 #include "temporada.h"
 #include "torneo.h"
-#include "undo.h"
-#include "progresion.h"
-#include "reportes.h"
-#include "filtros.h"
-#include "notificaciones.h"
-#include "jugador_perfil.h"
-#include "export_ods.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -177,91 +163,6 @@ static void abrir_menu_records_rankings(void)
     menu_records_rankings();
 }
 
-static void abrir_menu_entrenador_ia(void)
-{
-    app_log_event("ENTRENADOR_IA", "Ingreso al modulo Entrenador IA");
-    menu_entrenador_ia();
-}
-
-static void abrir_menu_busqueda(void)
-{
-    app_log_event("BUSQUEDA", "Ingreso al modulo Busqueda Global");
-    menu_busqueda_global();
-}
-
-static void abrir_menu_exportar(void)
-{
-    app_log_event("EXPORTAR", "Ingreso al modulo Exportar");
-    menu_exportar();
-}
-
-static void abrir_menu_importar(void)
-{
-    app_log_event("IMPORTAR", "Ingreso al modulo Importar");
-    menu_importar();
-}
-
-static void abrir_menu_backup(void)
-{
-    app_log_event("BACKUP", "Ingreso al modulo Backup & Restore");
-    menu_backup_restore();
-}
-
-static void abrir_menu_formaciones(void)
-{
-    app_log_event("FORMACIONES", "Ingreso al modulo Analisis de Formaciones");
-    menu_analisis_formaciones();
-}
-
-static void abrir_menu_integridad(void)
-{
-    app_log_event("INTEGRIDAD", "Ingreso al modulo Integridad de BD");
-    menu_integridad_bd();
-}
-
-static void abrir_menu_undo(void)
-{
-    app_log_event("UNDO", "Ingreso al modulo Deshacer");
-    undo_mostrar_historial();
-    pause_console();
-}
-
-static void abrir_menu_progresion(void)
-{
-    app_log_event("PROGRESION", "Ingreso a Entrenamiento y Progresion");
-    menu_progresion();
-}
-
-static void abrir_menu_reportes(void)
-{
-    app_log_event("REPORTES", "Ingreso a Reportes Automaticos");
-    menu_reportes();
-}
-
-static void abrir_menu_filtros(void)
-{
-    app_log_event("FILTROS", "Ingreso a Filtros Avanzados");
-    menu_filtros_avanzados();
-}
-
-static void abrir_menu_notificaciones(void)
-{
-    app_log_event("NOTIFICACIONES", "Ingreso a Notificaciones");
-    menu_notificaciones();
-}
-
-static void abrir_menu_jugador_perfil(void)
-{
-    app_log_event("PERFIL", "Ingreso a Perfil de Jugador");
-    menu_perfil_jugador();
-}
-
-static void abrir_menu_export_ods(void)
-{
-    app_log_event("EXPORT_ODS", "Ingreso a Exportacion ODS");
-    menu_exportar_ods();
-}
-
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Dashboard", &abrir_dashboard},
@@ -284,20 +185,6 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {18, "Ajustes", &abrir_menu_settings},
     {19, "Musica", &abrir_menu_musica},
     {20, "Records & Rankings", &abrir_menu_records_rankings},
-    {21, "Entrenador IA", &abrir_menu_entrenador_ia},
-    {22, "Busqueda Global", &abrir_menu_busqueda},
-    {23, "Exportar Datos", &abrir_menu_exportar},
-    {24, "Importar Datos", &abrir_menu_importar},
-    {25, "Analisis Formaciones", &abrir_menu_formaciones},
-    {26, "Backup & Restore", &abrir_menu_backup},
-    {27, "Integridad BD", &abrir_menu_integridad},
-    {28, "Deshacer (Undo)", &abrir_menu_undo},
-    {29, "Entrenamiento y Progresion", &abrir_menu_progresion},
-    {30, "Reportes Automaticos", &abrir_menu_reportes},
-    {31, "Filtros Avanzados", &abrir_menu_filtros},
-    {32, "Notificaciones", &abrir_menu_notificaciones},
-    {33, "Perfil de Jugador", &abrir_menu_jugador_perfil},
-    {34, "Exportar a ODS", &abrir_menu_export_ods},
     {0, "Salir", NULL}
 };
 

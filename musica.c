@@ -370,11 +370,24 @@ static int inicializar_engine(void)
     if (g_engine_listo)
         return 1;
 
-    ma_result res = ma_engine_init(NULL, &g_engine);
+    ma_engine_config cfg = ma_engine_config_init();
+    cfg.channels = 2;
+    fprintf(stderr, "DEBUG: inicializar_engine: cfg.channels=%u\n", (unsigned)cfg.channels);
+    ma_result res = ma_engine_init(&cfg, &g_engine);
     if (res != MA_SUCCESS)
     {
         ui_printf("Error: No se pudo inicializar el motor de audio (codigo %d).\n", res);
         return 0;
+    }
+    {
+        ma_uint32 ch = ma_engine_get_channels(&g_engine);
+        fprintf(stderr, "DEBUG: inicializar_engine: engine channels=%u\n", (unsigned)ch);
+        if (ch == 0 || ch >= 256)
+        {
+            fprintf(stderr, "FATAL: engine has %u channels, cannot continue\n", (unsigned)ch);
+            musica_cleanup();
+            return 0;
+        }
     }
     g_engine_listo = 1;
     atexit(musica_cleanup);

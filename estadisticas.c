@@ -8,6 +8,8 @@
 #include "posiciones.h"
 #include "menu.h"
 #include "entrenador_ia.h"
+#include "reportes.h"
+#include "filtros.h"
 #include "utils.h"
 
 void menu_estadisticas()
@@ -24,10 +26,12 @@ void menu_estadisticas()
         {3, "Goles", menu_estadisticas_goles},
         {4, "Asistencias", menu_estadisticas_asistencias},
         {5, "Rendimiento", menu_estadisticas_rendimiento},
+        {6, "Reportes Automaticos", menu_reportes},
+        {7, "Filtros Avanzados", menu_filtros_avanzados},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS", items, 6);
+    ejecutar_menu("ESTADISTICAS", items, 8);
 }
 
 void menu_estadisticas_generales()

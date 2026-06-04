@@ -8,7 +8,7 @@
     // SonarLint en modo conectado
     "sonarlint.connectedMode.project": {
         "connectionId": "thomashamer3",
-        "projectKey": "thomashamer3-MiFutbolC"
+        "projectKey": "thomashamer3_MiFutbolC",
     },
     "sonarlint.pathToCompileCommands": "${workspaceFolder}\\bw-output\\compile_commands.json",
     "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
@@ -19,5 +19,5 @@
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": true,
     "cmake.configurePreset": "mingw-ninja-debug",
-    "cmake.buildPreset": "build-debug"
+    "cmake.buildPreset": "build-debug",
 }
