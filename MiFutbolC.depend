@@ -16,7 +16,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780424956 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -112,7 +112,7 @@
 1780376153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1780529150 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"ascii_art.h"
 	"cJSON.h"
 	"db.h"
@@ -149,7 +149,7 @@
 	<io.h>
 	<process.h>
 
-1780528066 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"db.h"
 	"menu.h"
 	"random_utils.h"
@@ -171,7 +171,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1780528882 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -230,7 +230,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1780528066 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"settings.h"
 	"utils.h"
 	<locale.h>
