@@ -16,7 +16,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780532644 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -112,11 +112,12 @@
 1780376153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1780531863 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"ascii_art.h"
 	"cJSON.h"
 	"db.h"
 	"export.h"
+	"export_partidos_helpers.h"
 	"menu.h"
 	<ctype.h>
 	<inttypes.h>
@@ -171,7 +172,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1780531147 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780531782 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -416,7 +417,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.h
 
-1780327104 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
+1780532814 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
 	"estadisticas_anio.h"
 	"db.h"
 	"utils.h"
@@ -431,7 +432,7 @@
 	<string.h>
 	<time.h>
 
-1780287157 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_mes.c
+1780532821 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_mes.c
 	"estadisticas_mes.h"
 	"db.h"
 	"utils.h"
@@ -488,16 +489,14 @@
 	"direct.h"
 	<string.h>
 
-1780081264 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos.c
-	"db.h"
-	"utils.h"
-	"cJSON.h"
+1780532623 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_partidos.c
+	"export.h"
 	"export_partidos_helpers.h"
+	"utils.h"
 	<stdio.h>
 	<stdlib.h>
 	<direct.h>
 	"direct.h"
-	<string.h>
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\records_rankings.h
 

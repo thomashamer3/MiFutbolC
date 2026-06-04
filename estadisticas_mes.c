@@ -37,20 +37,30 @@ static void procesar_resultados_a_buf(sqlite3_stmt *stmt, char *buf, size_t buf_
 
         if (strcmp(current_mes, mes_anio) != 0)
         {
-            if (hay) *pos += (size_t)snprintf(buf + *pos, buf_size - *pos, "\n");
-            *pos += (size_t)snprintf(buf + *pos, buf_size - *pos, "Mes: %s\n", mes_anio);
-            *pos += (size_t)snprintf(buf + *pos, buf_size - *pos, "----------------------------------------\n");
+            if (hay)
+            {
+                snprintf(buf + *pos, buf_size - *pos, "\n");
+                *pos += strnlen_s(buf + *pos, buf_size - *pos);
+            }
+            snprintf(buf + *pos, buf_size - *pos, "Mes: %s\n", mes_anio);
+            *pos += strnlen_s(buf + *pos, buf_size - *pos);
+            snprintf(buf + *pos, buf_size - *pos, "----------------------------------------\n");
+            *pos += strnlen_s(buf + *pos, buf_size - *pos);
             snprintf(current_mes, sizeof(current_mes), "%s", mes_anio);
         }
 
-        *pos += (size_t)snprintf(buf + *pos, buf_size - *pos,
-                                 "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-                                 camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias);
+        snprintf(buf + *pos, buf_size - *pos,
+                 "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
+                 camiseta, partidos, total_goles, total_asistencias, avg_goles, avg_asistencias);
+        *pos += strnlen_s(buf + *pos, buf_size - *pos);
         hay = 1;
     }
 
     if (!hay)
-        *pos += (size_t)snprintf(buf + *pos, buf_size - *pos, "No hay estadisticas registradas.\n");
+    {
+        snprintf(buf + *pos, buf_size - *pos, "No hay estadisticas registradas.\n");
+        *pos += strnlen_s(buf + *pos, buf_size - *pos);
+    }
 }
 
 /**

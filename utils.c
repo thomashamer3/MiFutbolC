@@ -3,6 +3,7 @@
 #include "cJSON.h"
 #include "db.h"
 #include "export.h"
+#include "export_partidos_helpers.h"
 #include "menu.h"
 #include <ctype.h>
 #include <inttypes.h>
@@ -3404,36 +3405,19 @@ void exportar_partido_especifico_csv(const char *order_by,
         mostrar_no_hay_registros("partidos para exportar");
         return;
     }
-
     FILE *f = NULL;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || !f)
+    if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
         return;
-
     write_csv_header(
         f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
         "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal");
-
-    sqlite3_stmt *stmt;
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT "
-             "can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,"
-             "p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p."
-             "comentario_personal "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-             "JOIN cancha can ON p.cancha_id = can.id %s",
-             order_by);
-
-    if (db_prepare_stmt(&stmt, sql))
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
+    if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
             write_partido_csv_row(f, stmt);
-        }
         sqlite3_finalize(stmt);
     }
-
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
 }
@@ -3446,34 +3430,17 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
         mostrar_no_hay_registros("partidos para exportar");
         return;
     }
-
     FILE *f = NULL;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || !f)
+    if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
         return;
-
     fprintf(f, "%s\n\n", title);
-
-    sqlite3_stmt *stmt;
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT "
-             "can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,"
-             "p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p."
-             "comentario_personal "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-             "JOIN cancha can ON p.cancha_id = can.id %s",
-             order_by);
-
-    if (db_prepare_stmt(&stmt, sql))
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
+    if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
             write_partido_txt_row(f, stmt);
-        }
         sqlite3_finalize(stmt);
     }
-
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
 }
@@ -3486,39 +3453,21 @@ void exportar_partido_especifico_json(const char *order_by,
         mostrar_no_hay_registros("partidos para exportar");
         return;
     }
-
     FILE *f = NULL;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || !f)
+    if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
         return;
-
     cJSON *root = cJSON_CreateObject();
-
-    sqlite3_stmt *stmt;
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT "
-             "can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,"
-             "p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p."
-             "comentario_personal "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-             "JOIN cancha can ON p.cancha_id = can.id %s",
-             order_by);
-
-    if (db_prepare_stmt(&stmt, sql))
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
+    if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
             write_partido_json_object(root, stmt);
-        }
         sqlite3_finalize(stmt);
     }
-
     char *json_string = cJSON_Print(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
-
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
 }
@@ -3531,12 +3480,9 @@ void exportar_partido_especifico_html(const char *order_by,
         mostrar_no_hay_registros("partidos para exportar");
         return;
     }
-
     FILE *f = NULL;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || !f)
+    if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
         return;
-
     fprintf(f,
             "<html><body><h1>%s</h1><table border='1'>"
             "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
@@ -3544,27 +3490,13 @@ void exportar_partido_especifico_html(const char *order_by,
             "th><th>Rendimiento General</th><th>Cansancio</th><th>Estado "
             "Animo</th><th>Comentario Personal</th></tr>",
             title);
-
-    sqlite3_stmt *stmt;
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-             "SELECT "
-             "can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,"
-             "p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p."
-             "comentario_personal "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
-             "JOIN cancha can ON p.cancha_id = can.id %s",
-             order_by);
-
-    if (db_prepare_stmt(&stmt, sql))
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
+    if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
             write_partido_html_row(f, stmt);
-        }
         sqlite3_finalize(stmt);
     }
-
     fprintf(f, "</table></body></html>");
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);

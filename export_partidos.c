@@ -1,8 +1,7 @@
-﻿#include "export.h"
-#include "db.h"
-#include "utils.h"
-#include "cJSON.h"
+﻿#include "cJSON.h"
+#include "export.h"
 #include "export_partidos_helpers.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef _WIN32
@@ -10,8 +9,6 @@
 #else
 #include "direct.h"
 #endif
-#include <string.h>
-
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 
 /**
@@ -28,7 +25,7 @@ int has_partido_records()
  * Executes the standard partido query and returns the statement.
  * This centralizes the common SQL query used by most export functions.
  */
-sqlite3_stmt* execute_partido_query(const char* order_by_clause)
+sqlite3_stmt *execute_partido_query(const char *order_by_clause)
 {
     return prepare_partido_query(order_by_clause);
 }
@@ -39,7 +36,9 @@ sqlite3_stmt* execute_partido_query(const char* order_by_clause)
  */
 static void write_partido_csv(FILE *f, sqlite3_stmt *stmt)
 {
-    fprintf(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
+    fprintf(f,
+            "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
+            "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -93,9 +92,11 @@ static void write_partido_json(FILE *f, sqlite3_stmt *stmt)
  */
 static void write_partido_html(FILE *f, sqlite3_stmt *stmt)
 {
-    fprintf(f,
-            "<html><body><h1>PARTIDOS</h1><table border='1'>"
-            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</th><th>Rendimiento General</th><th>Cansancio</th><th>Estado Animo</th><th>Comentario Personal</th></tr>");
+    fprintf(f, "<html><body><h1>PARTIDOS</h1><table border='1'>"
+            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
+            "th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</"
+            "th><th>Rendimiento General</th><th>Cansancio</th><th>Estado "
+            "Animo</th><th>Comentario Personal</th></tr>");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -147,80 +148,114 @@ void exportar_partidos_html()
 
 void exportar_partido_mas_goles_csv()
 {
-    exportar_partido_especifico_csv("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.csv");
+    exportar_partido_especifico_csv(
+        "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_goles.csv");
 }
 
 void exportar_partido_mas_goles_txt()
 {
-    exportar_partido_especifico_txt("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.txt", "PARTIDO CON MAS GOLES");
+    exportar_partido_especifico_txt(
+        "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_goles.txt", "PARTIDO CON MAS GOLES");
 }
 
 void exportar_partido_mas_goles_json()
 {
-    export_partido_especifico_generic("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.json", write_partido_json);
+    export_partido_especifico_generic(
+        "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_goles.json", write_partido_json);
 }
 
 void exportar_partido_mas_goles_html()
 {
-    export_partido_especifico_generic("ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_goles.html", write_partido_html);
+    export_partido_especifico_generic(
+        "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_goles.html", write_partido_html);
 }
 
 void exportar_partido_mas_asistencias_csv()
 {
-    exportar_partido_especifico_csv("ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_asistencias.csv");
+    exportar_partido_especifico_csv(
+        "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_asistencias.csv");
 }
 
 void exportar_partido_mas_asistencias_txt()
 {
-    exportar_partido_especifico_txt("ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_asistencias.txt", "PARTIDO CON MAS ASISTENCIAS");
+    exportar_partido_especifico_txt(
+        "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_asistencias.txt", "PARTIDO CON MAS ASISTENCIAS");
 }
 
 void exportar_partido_mas_asistencias_json()
 {
-    export_partido_especifico_generic("ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_asistencias.json", write_partido_json);
+    export_partido_especifico_generic(
+        "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_asistencias.json", write_partido_json);
 }
 
 void exportar_partido_mas_asistencias_html()
 {
-    export_partido_especifico_generic("ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1", "partido_mas_asistencias.html", write_partido_html);
+    export_partido_especifico_generic(
+        "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
+        "partido_mas_asistencias.html", write_partido_html);
 }
 
 void exportar_partido_menos_goles_reciente_csv()
 {
-    exportar_partido_especifico_csv("ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_goles_reciente.csv");
+    exportar_partido_especifico_csv(
+        "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_goles_reciente.csv");
 }
 
 void exportar_partido_menos_goles_reciente_txt()
 {
-    exportar_partido_especifico_txt("ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_goles_reciente.txt", "PARTIDO MAS RECIENTE CON MENOS GOLES");
+    exportar_partido_especifico_txt(
+        "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_goles_reciente.txt",
+        "PARTIDO MAS RECIENTE CON MENOS GOLES");
 }
 
 void exportar_partido_menos_goles_reciente_json()
 {
-    export_partido_especifico_generic("ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_goles_reciente.json", write_partido_json);
+    export_partido_especifico_generic(
+        "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_goles_reciente.json", write_partido_json);
 }
 
 void exportar_partido_menos_goles_reciente_html()
 {
-    export_partido_especifico_generic("ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_goles_reciente.html", write_partido_html);
+    export_partido_especifico_generic(
+        "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_goles_reciente.html", write_partido_html);
 }
 
 void exportar_partido_menos_asistencias_reciente_csv()
 {
-    exportar_partido_especifico_csv("ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_asistencias_reciente.csv");
+    exportar_partido_especifico_csv(
+        "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_asistencias_reciente.csv");
 }
 
 void exportar_partido_menos_asistencias_reciente_txt()
 {
-    exportar_partido_especifico_txt("ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_asistencias_reciente.txt", "PARTIDO MAS RECIENTE CON MENOS ASISTENCIAS");
+    exportar_partido_especifico_txt(
+        "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_asistencias_reciente.txt",
+        "PARTIDO MAS RECIENTE CON MENOS ASISTENCIAS");
 }
 
 void exportar_partido_menos_asistencias_reciente_json()
 {
-    export_partido_especifico_generic("ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_asistencias_reciente.json", write_partido_json);
+    export_partido_especifico_generic(
+        "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_asistencias_reciente.json", write_partido_json);
 }
 
 void exportar_partido_menos_asistencias_reciente_html()
 {
-    export_partido_especifico_generic("ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1", "partido_menos_asistencias_reciente.html", write_partido_html);
+    export_partido_especifico_generic(
+        "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
+        "partido_menos_asistencias_reciente.html", write_partido_html);
 }

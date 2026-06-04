@@ -47,21 +47,28 @@ void mostrar_estadisticas_por_anio()
 
         if (strcmp(current_anio, stats.anio) != 0)
         {
-            if (hay) pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "\n");
-            pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "Anio: %s\n", stats.anio);
-            pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "----------------------------------------\n");
+            if (hay)
+            {
+                snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "\n");
+                pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
+            }
+            snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "Anio: %s\n", stats.anio);
+            pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
+            snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "----------------------------------------\n");
+            pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
             strcpy_s(current_anio, sizeof(current_anio), stats.anio);
         }
 
-        pos += (size_t)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
-                                "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-                                stats.camiseta, stats.partidos, stats.total_goles,
-                                stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
+        snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
+                 "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
+                 stats.camiseta, stats.partidos, stats.total_goles,
+                 stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
+        pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
         hay = 1;
     }
 
     if (!hay)
-        (void)snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
+        snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
 
     sqlite3_finalize(stmt);
 
