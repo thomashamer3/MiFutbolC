@@ -6,6 +6,8 @@ on:
     branches: [master]
 jobs:
   sonarcloud:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     env:
       SONAR_SCANNER_HOME: ${{ runner.temp }}/sonar-scanner
