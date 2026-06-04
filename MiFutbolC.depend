@@ -17,7 +17,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780608920 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780610097 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -70,6 +70,7 @@
 	<sys/statvfs.h>
 	<dlfcn.h>
 	<Windows.h>
+	<profileapi.h>
 	"tclsqlite.h"
 	"sqlite3rtree.h"
 	<ctype.h>
@@ -109,7 +110,7 @@
 	"compat_port.h"
 	"sqlite3.h"
 
-1780608918 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
+1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
 1780531863 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
