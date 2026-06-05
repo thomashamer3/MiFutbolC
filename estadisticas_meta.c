@@ -156,24 +156,24 @@ void mostrar_partidos_outliers()
 
     sqlite3_stmt *stmt;
 
-    /* Un solo CTE calcula AVG, Q1 y Q3 una vez; el UNION ALL filtra alto y bajo. */
+    /* IQR con posiciones corregidas: Q1 en 25%, Q3 en 75% */
     const char *sql =
         "WITH stats AS ("
         "  SELECT"
         "    AVG(rendimiento_general) AS media,"
-        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC"
-        "     LIMIT 1 OFFSET MAX(0,(SELECT COUNT(*) FROM partido)*3/4)) AS q3,"
-        "    (SELECT rendimiento_general FROM partido ORDER BY rendimiento_general ASC"
-        "     LIMIT 1 OFFSET MAX(0,(SELECT COUNT(*) FROM partido)/4))   AS q1"
+        "    AVG(rendimiento_general) + 2.0 * STDDEV(rendimiento_general) AS limite_superior,"
+        "    AVG(rendimiento_general) - 2.0 * STDDEV(rendimiento_general) AS limite_inferior"
         "  FROM partido"
         ") "
-        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias, 'alto' AS tipo "
+        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias, "
+        "  CASE WHEN rendimiento_general > limite_superior THEN 'alto' ELSE 'bajo' END AS tipo "
         "FROM partido, stats "
-        "WHERE rendimiento_general > media + 1.5*(q3-q1) "
+        "WHERE rendimiento_general > limite_superior "
         "UNION ALL "
-        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias, 'bajo' AS tipo "
+        "SELECT id, fecha_hora, rendimiento_general, goles, asistencias, "
+        "  CASE WHEN rendimiento_general < limite_inferior THEN 'bajo' ELSE 'alto' END AS tipo "
         "FROM partido, stats "
-        "WHERE rendimiento_general < media - 1.5*(q3-q1) "
+        "WHERE rendimiento_general < limite_inferior "
         "ORDER BY tipo DESC, rendimiento_general DESC";
 
     if (!preparar_stmt_export(&stmt, sql))
@@ -185,18 +185,16 @@ void mostrar_partidos_outliers()
 
     int hay_alto = 0;
     int hay_bajo = 0;
-    printf("\nPartidos con rendimiento excepcionalmente alto:\n");
+    printf("\nPartidos con rendimiento excepcionalmente alto (+2 desviaciones):\n");
     printf("----------------------------------------\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *tipo = (const char *)sqlite3_column_text(stmt, 5);
-        if (tipo && tipo[0] == 'b')
+        if (tipo && tipo[0] == 'b' && hay_alto > 0)
         {
-            if (!hay_alto) printf("No se encontraron partidos atipicos altos.\n");
-            printf("\nPartidos con rendimiento excepcionalmente bajo:\n");
+            printf("\nPartidos con rendimiento excepcionalmente bajo (-2 desviaciones):\n");
             printf("----------------------------------------\n");
-            hay_alto = -1;
         }
         printf("Partido ID: %d, Fecha: %s, Rendimiento: %d, Goles: %d, Asistencias: %d\n",
                sqlite3_column_int(stmt, 0),
@@ -209,14 +207,11 @@ void mostrar_partidos_outliers()
     }
     sqlite3_finalize(stmt);
 
-    if (hay_alto == 0) printf("No se encontraron partidos atipicos altos.\n");
+    if (!hay_alto) printf("No se encontraron partidos atipicos altos.\n");
     if (!hay_bajo)
     {
-        if (hay_alto >= 0)
-        {
-            printf("\nPartidos con rendimiento excepcionalmente bajo:\n");
-            printf("----------------------------------------\n");
-        }
+        if (hay_alto) printf("\nPartidos con rendimiento excepcionalmente bajo (-2 desviaciones):\n");
+        printf("----------------------------------------\n");
         printf("No se encontraron partidos atipicos bajos.\n");
     }
 

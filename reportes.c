@@ -86,13 +86,27 @@ static void toggle_reporte(int id, int habilitado)
 
 static void habilitar_reporte(void)
 {
-    int id = input_int("ID del reporte: ");
+    if (!hay_registros("reporte_config"))
+    {
+        mostrar_no_hay_registros("reportes configurados");
+        return;
+    }
+    listar_reportes_config();
+    int id = input_int("\nID del reporte a habilitar (0 para cancelar): ");
+    if (id <= 0) return;
     toggle_reporte(id, 1);
 }
 
 static void deshabilitar_reporte(void)
 {
-    int id = input_int("ID del reporte: ");
+    if (!hay_registros("reporte_config"))
+    {
+        mostrar_no_hay_registros("reportes configurados");
+        return;
+    }
+    listar_reportes_config();
+    int id = input_int("\nID del reporte a deshabilitar (0 para cancelar): ");
+    if (id <= 0) return;
     toggle_reporte(id, 0);
 }
 
@@ -270,6 +284,7 @@ static void listar_reportes_generados(void)
         count++;
         printf("  %d. %s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
         printf("     Archivo: %s\n", sqlite3_column_text(stmt, 2));
+        printf("     Ruta: %s\n", get_export_path((const char*)sqlite3_column_text(stmt, 2)));
         printf("     Fecha: %s\n", sqlite3_column_text(stmt, 3));
         printf("     ------------------------------\n");
     }

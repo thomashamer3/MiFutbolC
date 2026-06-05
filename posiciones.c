@@ -73,20 +73,19 @@ void mostrar_tabla_posiciones_global()
     // Desglose por anio
     printf("\n\n  %s\n", "DESGLOSE POR ANIO");
     printf("  %s\n", "----------------------------------------");
-    printf("  %4s | %3s | %3s | %3s | %3s | %3s | %3s | %4s | %3s | %s\n",
-           "Anio", "PJ", "PG", "PE", "PP", "GF", "GC", "DG", "Pts", "V%");
-    printf("  %s\n", "-----+-----+-----+-----+-----+-----+-----+------+-----+------");
+    printf("  %4s | %3s | %3s | %3s | %3s | %3s | %3s | %4s | %s\n",
+           "Anio", "PJ", "PG", "PE", "PP", "GF", "GC", "DG", "V%");
+    printf("  %s\n", "-----+-----+-----+-----+-----+-----+-----+------+------");
 
     const char *sql_anio =
-        "SELECT CAST(strftime('%%Y', fecha_hora) AS INTEGER) AS anio,"
+        "SELECT CAST(SUBSTR(fecha_hora, 7, 4) AS INTEGER) AS anio,"
         " COUNT(*) AS total,"
         " SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS pg,"
         " SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS pe,"
         " SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS pp,"
         " SUM(goles) AS gf,"
         " SUM(COALESCE(goles_en_contra, 0)) AS gc,"
-        " SUM(goles) - SUM(COALESCE(goles_en_contra, 0)) AS dg,"
-        " SUM(CASE WHEN resultado = 1 THEN 3 WHEN resultado = 2 THEN 1 ELSE 0 END) AS pts"
+        " SUM(goles) - SUM(COALESCE(goles_en_contra, 0)) AS dg"
         " FROM partido WHERE resultado > 0"
         " GROUP BY anio ORDER BY anio DESC";
 
@@ -107,10 +106,9 @@ void mostrar_tabla_posiciones_global()
         int gf2  = sqlite3_column_int(stmt, 5);
         int gc2  = sqlite3_column_int(stmt, 6);
         int dg2  = sqlite3_column_int(stmt, 7);
-        int pts2 = sqlite3_column_int(stmt, 8);
         float vp = t > 0 ? (100.0f * pg2 / t) : 0.0f;
-        printf("  %4d | %3d | %3d | %3d | %3d | %3d | %3d | %+4d | %3d | %4.0f%%\n",
-               anio, t, pg2, pe2, pp2, gf2, gc2, dg2, pts2, vp);
+        printf("  %4d | %3d | %3d | %3d | %3d | %3d | %3d | %+4d | %4.0f%%\n",
+               anio, t, pg2, pe2, pp2, gf2, gc2, dg2, vp);
     }
     sqlite3_finalize(stmt);
 

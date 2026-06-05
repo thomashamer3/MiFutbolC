@@ -25,9 +25,9 @@ void mostrar_estadisticas_por_anio()
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt,
-                              "SELECT substr(fecha_hora, 7, 4) AS anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
+                              "SELECT substr(fecha_hora, 7, 4) AS anio, COALESCE(c.nombre, 'Sin Camiseta'), COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
                               "FROM partido p "
-                              "JOIN camiseta c ON p.camiseta_id = c.id "
+                              "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
                               "GROUP BY anio, c.id "
                               "ORDER BY anio DESC, total_goles DESC"))
     {

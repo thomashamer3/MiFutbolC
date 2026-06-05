@@ -682,7 +682,8 @@ enum
     DB_VERSION_CANCHA_COLS = 3,
     DB_VERSION_PARTIDO_COLS = 4,
     DB_VERSION_INDEXES = 5,
-    DB_VERSION_CURRENT = 5
+    DB_VERSION_CANCHA_GRABACION = 6,
+    DB_VERSION_CURRENT = 6
 };
 
 static int get_user_version(int *out_version)
@@ -800,6 +801,7 @@ static void backfill_mes_anio_once(void)
 #define COL_CANCHA_CONTACTO_ALT "contacto_alt TEXT DEFAULT ''"
 #define COL_CANCHA_IMAGEN_RUTA "imagen_ruta TEXT DEFAULT ''"
 #define COL_CANCHA_ACTIVA "activa INTEGER DEFAULT 1"
+#define COL_CANCHA_TIENE_GRABACION "tiene_grabacion INTEGER DEFAULT 0"
 
 #define COL_PARTIDO_RESULTADO "resultado INTEGER DEFAULT 0"
 #define COL_PARTIDO_RENDIMIENTO_GENERAL "rendimiento_general INTEGER DEFAULT 0"
@@ -924,6 +926,7 @@ static int create_database_schema()
         " " COL_CANCHA_HORARIO ","
         " " COL_CANCHA_CONTACTO_ALT ","
         " " COL_CANCHA_IMAGEN_RUTA ","
+        " " COL_CANCHA_TIENE_GRABACION ","
         " " COL_CANCHA_ACTIVA ");",
 
         "CREATE TABLE IF NOT EXISTS partido ("
@@ -1540,6 +1543,7 @@ static void add_cancha_columns(void)
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TECHADA_ESTADO ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_CONTACTO_ALT ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_GRABACION ";",
         "ALTER TABLE equipo ADD COLUMN imagen_ruta TEXT DEFAULT '';",
         "ALTER TABLE equipo ADD COLUMN activa INTEGER DEFAULT 1;",
         NULL
@@ -1652,9 +1656,10 @@ static void add_missing_columns()
         return;
     }
 
-    if (current_version < DB_VERSION_CAMISETA_COLS) add_camiseta_columns();
-    if (current_version < DB_VERSION_CANCHA_COLS)   add_cancha_columns();
-    if (current_version < DB_VERSION_PARTIDO_COLS)  add_partido_columns();
+    if (current_version < DB_VERSION_CAMISETA_COLS)       add_camiseta_columns();
+    if (current_version < DB_VERSION_CANCHA_COLS)         add_cancha_columns();
+    if (current_version < DB_VERSION_PARTIDO_COLS)        add_partido_columns();
+    if (current_version < DB_VERSION_CANCHA_GRABACION)    add_cancha_columns();
 }
 
 static int drop_legacy_mes_anio_triggers(void)

@@ -360,6 +360,15 @@ void menu_analisis_formaciones()
             break;
         case 2:
         {
+            if (!hay_registros("cancha"))
+            {
+                mostrar_no_hay_registros("canchas");
+                pause_console();
+                break;
+            }
+            printf("\nCanchas disponibles:\n");
+            listar_entidades("cancha", "ID - Nombre", "ninguna");
+            printf("\n");
             int cancha_id = input_int("Ingrese el ID de la cancha: ");
             if (existe_id("cancha", cancha_id))
                 mostrar_mejor_formacion_por_cancha(cancha_id);

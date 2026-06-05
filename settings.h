@@ -227,6 +227,7 @@ const char* get_menu_recordatorios();
 const char* get_menu_colecciones();
 const char* get_menu_musica();
 const char* get_menu_settings();
+const char* get_menu_records_rankings();
 const char* get_menu_exit();
 const char* get_menu_title();
 const char* get_settings_theme();

@@ -17,7 +17,7 @@
 	<fcntl.h>
 	<unistd.h>
 
-1780610097 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
+1780688120 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.c
 	<vxWorks.h>
 	<pthread.h>
 	"mingw.h"
@@ -83,7 +83,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1780553662 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1780687576 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"random_utils.h"
 	"db.h"
 	"settings.h"
@@ -235,7 +235,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1780598502 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1780688115 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"settings.h"
 	"utils.h"
 	<locale.h>
@@ -350,7 +350,7 @@
 	<stdio.h>
 	<string.h>
 
-1780376153 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1780688118 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"menu.h"
 	"db.h"
 	"export.h"
@@ -432,14 +432,14 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.h
 
-1780532814 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
+1780687473 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_anio.c
 	"estadisticas_anio.h"
 	"db.h"
 	"utils.h"
 	<stdio.h>
 	<string.h>
 
-1780339613 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
+1780688119 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_generales.c
 	"estadisticas_generales.h"
 	"db.h"
 	"utils.h"
@@ -447,7 +447,7 @@
 	<string.h>
 	<time.h>
 
-1780532821 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_mes.c
+1780687467 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_mes.c
 	"estadisticas_mes.h"
 	"db.h"
 	"utils.h"
@@ -546,7 +546,7 @@
 
 1780555644 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.h
 
-1780555639 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.c
+1780687486 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas_meta.c
 	"estadisticas_meta.h"
 	"db.h"
 	"utils.h"
@@ -2089,7 +2089,7 @@
 
 1762402188 c:\msys64\mingw64\include\curl\typecheck-gcc.h
 
-1780376153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
+1780684378 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
 1777499252 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
@@ -2109,22 +2109,21 @@
 	<string.h>
 	<time.h>
 
-1780598549 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1780688116 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
+	"backup.h"
+	"busqueda.h"
+	"cJSON.h"
 	"db.h"
-	"utils.h"
-	"menu.h"
+	"db_integridad.h"
 	"export.h"
 	"export_all.h"
-	"import.h"
-	"busqueda.h"
-	"backup.h"
-	"db_integridad.h"
-	"undo.h"
-	"notificaciones.h"
 	"export_ods.h"
-	"ascii_art.h"
-	"cJSON.h"
+	"import.h"
+	"menu.h"
+	"notificaciones.h"
+	"undo.h"
+	"utils.h"
 	<windows.h>
 	"compat_windows.h"
 	<shellapi.h>
@@ -2896,7 +2895,7 @@
 	"direct.h"
 	<string.h>
 
-1780553070 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\formaciones.c
+1780687492 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\formaciones.c
 	"formaciones.h"
 	"db.h"
 	"utils.h"
@@ -2953,7 +2952,7 @@
 
 1780555176 d:\anime\libros\lenguaje c\proyectos\mifutbolc\filtros.h
 
-1780555176 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\jugador_perfil.c
+1780687504 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\jugador_perfil.c
 	"jugador_perfil.h"
 	"menu.h"
 	"db.h"
@@ -2996,7 +2995,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1780555176 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\reportes.c
+1780687530 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\reportes.c
 	"reportes.h"
 	"menu.h"
 	"db.h"
@@ -3012,7 +3011,7 @@
 
 1780556516 d:\anime\libros\lenguaje c\proyectos\mifutbolc\posiciones.h
 
-1780556516 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\posiciones.c
+1780687460 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\posiciones.c
 	"posiciones.h"
 	"db.h"
 	"utils.h"

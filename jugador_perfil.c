@@ -212,12 +212,50 @@ static void mostrar_grafico_radar(int jugador_id)
     sqlite3_finalize(stmt);
 }
 
+static void listar_jugadores(void)
+{
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, "SELECT id, nombre, posicion, equipo_id FROM jugador ORDER BY id", -1, &stmt, NULL) != SQLITE_OK)
+        return;
+
+    printf("\nJugadores disponibles:\n");
+    printf("----------------------------------------\n");
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        count++;
+        printf("  %d - %s (Pos: %d, Equipo ID: %d)\n",
+               sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1),
+               sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3));
+    }
+    sqlite3_finalize(stmt);
+    if (!count) printf("  No hay jugadores registrados.\n");
+    printf("\n");
+}
+
 void menu_perfil_jugador(void)
 {
-    int jugador_id = input_int("ID del jugador: ");
+    if (!hay_registros("jugador"))
+    {
+        mostrar_no_hay_registros("jugadores");
+        pause_console();
+        return;
+    }
+
+    listar_jugadores();
+    int jugador_id = input_int("ID del jugador (0 para cancelar): ");
     if (jugador_id <= 0)
     {
         printf("ID invalido.\n");
+        return;
+    }
+
+    if (!existe_id("jugador", jugador_id))
+    {
+        mostrar_no_existe("jugador");
+        pause_console();
         return;
     }
 

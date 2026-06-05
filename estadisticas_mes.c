@@ -13,9 +13,9 @@ static int  s_mes_changes = -1;
 static void preparar_consulta(sqlite3_stmt **stmt)
 {
     preparar_stmt_export(stmt,
-                         "SELECT substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) AS mes_anio, c.nombre, COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
+                         "SELECT substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) AS mes_anio, COALESCE(c.nombre, 'Sin Camiseta'), COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
                          "FROM partido p "
-                         "JOIN camiseta c ON p.camiseta_id = c.id "
+                         "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
                          "GROUP BY mes_anio, c.id "
                          "ORDER BY mes_anio DESC, total_goles DESC");
 }

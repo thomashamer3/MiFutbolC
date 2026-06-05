@@ -771,6 +771,7 @@ typedef struct
     char descripcion[200];
     char contacto_alt[120];
     int activa;
+    int tiene_grabacion;
 } CanchaInfoDetalle;
 
 static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_nombre)
@@ -811,6 +812,7 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
     input_string("Descripcion breve: ", info->descripcion, sizeof(info->descripcion));
     trim_whitespace(info->descripcion);
     solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt, sizeof(info->contacto_alt));
+    info->tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
 }
 
 static const char *texto_o_defecto(const char *valor, const char *defecto)
@@ -837,7 +839,8 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
                          "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
                          "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
                          "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
-                         "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1) "
+                         "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
+                         "IFNULL(tiene_grabacion, 0) "
                          "FROM cancha WHERE id = ?"))
     {
         return 0;
@@ -875,6 +878,7 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     snprintf(info->descripcion, sizeof(info->descripcion), "%s", (const char *)sqlite3_column_text(stmt, 18));
     snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s", (const char *)sqlite3_column_text(stmt, 19));
     info->activa = sqlite3_column_int(stmt, 20) == 1;
+    info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
 
     sqlite3_finalize(stmt);
     return 1;
@@ -908,6 +912,7 @@ static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
     printf("Estado Pasto       : %s\n", texto_o_defecto(info->estado, "(sin dato)"));
     printf("Descripcion        : %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("Contacto Alterno   : %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    printf("Grabacion Partido  : %s\n", info->tiene_grabacion ? "SI" : "NO");
     printf("Estado             : %s\n", info->activa ? "ACTIVA" : "INACTIVA");
     printf("========================================\n");
 }
@@ -1013,7 +1018,8 @@ static int completar_informacion_cancha(int id)
                          "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
                          "horario_apertura_min = ?, horario_cierre_min = ?, precio_hora_dia_centavos = ?, "
                          "precio_hora_noche_centavos = ?, tiene_vestuarios = ?, tiene_duchas = ?, tiene_buffet = ?, "
-                         "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, contacto_alt = ? "
+                         "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, contacto_alt = ?, "
+                         "tiene_grabacion = ? "
                          "WHERE id = ?"))
     {
         return 0;
@@ -1038,7 +1044,8 @@ static int completar_informacion_cancha(int id)
     sqlite3_bind_text(stmt, 17, info.estado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 18, info.descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 19, info.contacto_alt, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 20, id);
+    sqlite3_bind_int(stmt, 20, info.tiene_grabacion);
+    sqlite3_bind_int(stmt, 21, id);
 
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
@@ -1827,9 +1834,10 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info, int mo
     printf("18) Estado: %s\n", texto_o_defecto(info->estado, "(sin dato)"));
     printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    printf("21) Grabacion Partido: %s\n", info->tiene_grabacion ? "SI" : "NO");
     if (mostrar_completar_info)
     {
-        printf("21) Completar Informacion\n");
+        printf("22) Completar Informacion\n");
     }
     printf("0) Volver\n\n");
 }
@@ -2253,7 +2261,8 @@ static int cancha_export_preparar_stmt(sqlite3_stmt **stmt, int exportar_todas, 
         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
-        "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1) "
+        "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
+        "IFNULL(tiene_grabacion, 0) "
         "FROM cancha ORDER BY id";
 
     const char *sql_una =
@@ -2263,7 +2272,8 @@ static int cancha_export_preparar_stmt(sqlite3_stmt **stmt, int exportar_todas, 
         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
-        "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1) "
+        "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
+        "IFNULL(tiene_grabacion, 0) "
         "FROM cancha WHERE id = ? ORDER BY id";
 
     if (!db_prepare_stmt(stmt, exportar_todas ? sql_todas : sql_una))
@@ -2315,6 +2325,7 @@ static void cancha_export_cargar_desde_stmt(sqlite3_stmt *stmt, int *out_id, Can
     snprintf(info->descripcion, sizeof(info->descripcion), "%s", cancha_export_col_text(stmt, 19));
     snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s", cancha_export_col_text(stmt, 20));
     info->activa = sqlite3_column_int(stmt, 21) == 1;
+    info->tiene_grabacion = sqlite3_column_int(stmt, 22) ? 1 : 0;
 }
 
 static void cancha_export_generar_nombre_archivo(char *dest, size_t size, const char *ext,
@@ -2440,6 +2451,7 @@ static int cancha_export_info_txt(int exportar_todas, int cancha_id)
         fprintf(f, "Estado Pasto       : %s\n", texto_o_defecto(info.estado, "(sin dato)"));
         fprintf(f, "Descripcion        : %s\n", texto_o_defecto(info.descripcion, "(sin dato)"));
         fprintf(f, "Contacto Alterno   : %s\n", texto_o_defecto(info.contacto_alt, "(sin dato)"));
+        fprintf(f, "Grabacion Partido  : %s\n", info.tiene_grabacion ? "SI" : "NO");
         fprintf(f, "Estado             : %s\n", cancha_export_estado_texto(info.activa));
         fprintf(f, "========================================\n\n");
         total++;
@@ -2477,7 +2489,7 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         return 0;
     }
 
-    fprintf(f, "id,nombre,telefono,direccion,localidad,tipo_cancha,superficie,techada,iluminacion,horario_apertura,horario_cierre,precio_hora_dia,precio_hora_noche,vestuarios,duchas,buffet,estacionamiento,cantidad_canchas,estado_pasto,descripcion,contacto_alterno,estado\n");
+    fprintf(f, "id,nombre,telefono,direccion,localidad,tipo_cancha,superficie,techada,iluminacion,horario_apertura,horario_cierre,precio_hora_dia,precio_hora_noche,vestuarios,duchas,buffet,estacionamiento,cantidad_canchas,estado_pasto,descripcion,contacto_alterno,grabacion_partido,estado\n");
 
     int total = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2524,6 +2536,8 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         cancha_export_write_csv_field(f, texto_o_defecto(info.descripcion, ""));
         fprintf(f, ",");
         cancha_export_write_csv_field(f, texto_o_defecto(info.contacto_alt, ""));
+        fprintf(f, ",");
+        cancha_export_write_csv_field(f, info.tiene_grabacion ? "SI" : "NO");
         fprintf(f, ",");
         cancha_export_write_csv_field(f, cancha_export_estado_texto(info.activa));
         fprintf(f, "\n");
@@ -2582,6 +2596,7 @@ static cJSON *cancha_export_json_build_item(sqlite3_stmt *stmt)
     cJSON_AddStringToObject(item, "estado_pasto", texto_o_defecto(info.estado, ""));
     cJSON_AddStringToObject(item, "descripcion", texto_o_defecto(info.descripcion, ""));
     cJSON_AddStringToObject(item, "contacto_alterno", texto_o_defecto(info.contacto_alt, ""));
+    cJSON_AddBoolToObject(item, "tiene_grabacion", info.tiene_grabacion);
     cJSON_AddStringToObject(item, "estado", cancha_export_estado_texto(info.activa));
 
     return item;
@@ -2699,7 +2714,7 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
     fprintf(f, "</head><body>\n");
     fprintf(f, "<h1>Informacion de Canchas</h1>\n");
     fprintf(f, "<table><thead><tr>");
-    fprintf(f, "<th>ID</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th>Localidad</th><th>Tipo</th><th>Superficie</th><th>Techada</th><th>Iluminacion</th><th>Apertura</th><th>Cierre</th><th>Precio Dia</th><th>Precio Noche</th><th>Vestuarios</th><th>Duchas</th><th>Buffet</th><th>Estacionamiento</th><th>Cantidad</th><th>Estado Pasto</th><th>Descripcion</th><th>Contacto Alterno</th><th>Estado</th>");
+    fprintf(f, "<th>ID</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th>Localidad</th><th>Tipo</th><th>Superficie</th><th>Techada</th><th>Iluminacion</th><th>Apertura</th><th>Cierre</th><th>Precio Dia</th><th>Precio Noche</th><th>Vestuarios</th><th>Duchas</th><th>Buffet</th><th>Estacionamiento</th><th>Cantidad</th><th>Estado Pasto</th><th>Descripcion</th><th>Contacto Alterno</th><th>Grabacion</th><th>Estado</th>");
     fprintf(f, "</tr></thead><tbody>\n");
 
     int total = 0;
@@ -2744,7 +2759,8 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         cancha_export_write_html_text(f, texto_o_defecto(info.descripcion, ""));
         fprintf(f, "</td><td>");
         cancha_export_write_html_text(f, texto_o_defecto(info.contacto_alt, ""));
-        fprintf(f, "</td><td>%s</td></tr>\n", cancha_export_estado_texto(info.activa));
+        fprintf(f, "</td><td>%s</td>", info.tiene_grabacion ? "SI" : "NO");
+        fprintf(f, "<td>%s</td></tr>\n", cancha_export_estado_texto(info.activa));
 
         total++;
     }
@@ -2929,6 +2945,8 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
         snprintf(line, sizeof(line), "Descripcion: %s", texto_o_defecto(detalle.descripcion, "(sin dato)"));
         pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
         snprintf(line, sizeof(line), "Contacto Alterno: %s", texto_o_defecto(detalle.contacto_alt, "(sin dato)"));
+        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
+        snprintf(line, sizeof(line), "Grabacion Partido: %s", detalle.tiene_grabacion ? "SI" : "NO");
         pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
         snprintf(line, sizeof(line), "Estado: %s", cancha_export_estado_texto(detalle.activa));
         pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 14.0f);
