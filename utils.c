@@ -1,4 +1,4 @@
-﻿#include "utils.h"
+#include "utils.h"
 #include "ascii_art.h"
 #include "cJSON.h"
 #include "db.h"
@@ -54,16 +54,7 @@ void ensure_console_maximized_windows(void) { /* Intencionalmente vacio */ }
 void ensure_console_maximized_windows(void) { /* No-op en otros sistemas */ }
 #endif
 
-int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
-{
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
-    {
-        return 0;
-    }
-    return 1;
-}
-
-#define STMT_CACHE_SIZE 32
+#define STMT_CACHE_SIZE 128
 
 typedef struct stmt_cache_entry
 {
@@ -86,6 +77,12 @@ static uint64_t cache_hash_sql(const char *sql)
         h *= 1099511628211ULL;
     }
     return h;
+}
+
+int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
+{
+    *stmt = db_prepare_cached(sql);
+    return *stmt != NULL ? 1 : 0;
 }
 
 sqlite3_stmt *db_prepare_cached(const char *sql)
@@ -133,12 +130,22 @@ sqlite3_stmt *db_prepare_cached(const char *sql)
     }
     while (slot != start);
 
-    sqlite3_stmt *stmt = NULL;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    return NULL;
+}
+
+void db_stmt_release(sqlite3_stmt *stmt)
+{
+    if (!stmt)
+        return;
+    for (int i = 0; i < STMT_CACHE_SIZE; i++)
     {
-        return NULL;
+        if (g_stmt_cache[i].stmt == stmt && g_stmt_cache[i].sql != NULL)
+        {
+            g_stmt_cache[i].in_use = 0;
+            return;
+        }
     }
-    return stmt;
+    sqlite3_finalize(stmt);
 }
 
 void db_clear_stmt_cache(void)
@@ -505,7 +512,7 @@ static int auth_user_count(sqlite3 *auth_db)
         {
             count = sqlite3_column_int(stmt, 0);
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     return count;
 }
@@ -617,7 +624,7 @@ static int auth_legacy_load_user_with_password(sqlite3 *legacy_db,
             strncpy_s(hash, hash_size, hash_db ? hash_db : "", hash_size - 1);
             found = 1;
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     return found;
@@ -640,7 +647,7 @@ static int auth_legacy_load_fallback_user(sqlite3 *legacy_db,
                       username_size - 1);
             found = 1;
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     return found;
@@ -663,7 +670,7 @@ static int auth_insert_legacy_user(sqlite3 *auth_db, const char *username_norm,
             sqlite3_bind_text(ins, 2, salt, -1, SQLITE_STATIC);
             sqlite3_bind_text(ins, 3, hash, -1, SQLITE_STATIC);
             inserted = (sqlite3_step(ins) == SQLITE_DONE);
-            sqlite3_finalize(ins);
+            db_stmt_release(ins);
         }
     }
     else
@@ -1326,7 +1333,7 @@ int existe_id(const char *tabla, int id)
     sqlite3_bind_int(stmt, 1, id);
 
     int existe = (sqlite3_step(stmt) == SQLITE_ROW);
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return existe;
 }
 
@@ -1820,7 +1827,7 @@ static int auth_username_exists(sqlite3 *auth_db, const char *username)
     {
         sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
         exists = (sqlite3_step(stmt) == SQLITE_ROW);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     return exists;
 }
@@ -1851,11 +1858,11 @@ static int auth_upsert_user(sqlite3 *auth_db, const char *username,
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         return 0;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return 1;
 }
 
@@ -1890,7 +1897,7 @@ static int auth_get_password_fields(sqlite3 *auth_db, const char *username,
         ok = 1;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -2093,7 +2100,7 @@ static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out,
                   sizeof(users[count]) - 1);
         count++;
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     if (count == 0)
     {
@@ -2143,7 +2150,7 @@ static int auth_get_single_username(sqlite3 *auth_db, char *username_out,
         ok = (username_out[0] != '\0');
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -2406,7 +2413,7 @@ static void configurar_o_cambiar_password_usuario()
         {
             ui_printf("No se pudo actualizar la contrasena.\n");
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     sqlite3_close(auth_db);
@@ -2441,7 +2448,7 @@ static void quitar_password_usuario()
         {
             ui_printf("No se pudo eliminar la contrasena.\n");
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     sqlite3_close(auth_db);
@@ -2572,12 +2579,12 @@ static void eliminar_mi_cuenta_local()
         else
         {
             ui_printf("No se pudo eliminar la cuenta.\n");
-            sqlite3_finalize(stmt);
+            db_stmt_release(stmt);
             sqlite3_close(auth_db);
             pause_console();
             return;
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     sqlite3_close(auth_db);
@@ -2948,7 +2955,7 @@ int obtener_nombre_entidad(const char *tabla, int id, char *buffer,
         }
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return found;
 }
 
@@ -2989,7 +2996,7 @@ long long obtener_siguiente_id(const char *tabla)
         if (id <= 0)
             id = 1;
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return id;
 }
 
@@ -3010,7 +3017,7 @@ int hay_registros(const char *tabla)
     int count = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
         count = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     return count > 0;
 }
@@ -3033,7 +3040,7 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
     int id = -1;
     if (sqlite3_step(stmt) == SQLITE_ROW)
         id = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     return id;
 }
@@ -3067,7 +3074,7 @@ void listar_entidades(const char *tabla, const char *titulo,
     if (!hay)
         ui_printf_centered_line("%s", mensaje_vacio);
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     pause_console();
 }
 
@@ -3159,14 +3166,14 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
         if (!found)
         {
             mostrar_no_hay_registros(no_records_msg);
-            sqlite3_finalize(stmt);
+            db_stmt_release(stmt);
             if (pause_on_empty)
             {
                 pause_console();
             }
             return 0;
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         return 1;
     }
 
@@ -3314,7 +3321,7 @@ void mostrar_record_simple(const char *titulo, const char *sql)
     {
         mostrar_no_hay_registros("datos disponibles");
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 void mostrar_combinacion_simple(const char *titulo, const char *sql)
@@ -3337,7 +3344,7 @@ void mostrar_combinacion_simple(const char *titulo, const char *sql)
     {
         mostrar_no_hay_registros("datos disponibles");
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 void mostrar_temporada_simple(const char *titulo, const char *sql)
@@ -3367,7 +3374,7 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
     {
         mostrar_no_hay_registros("datos disponibles");
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 void exportar_record_simple_csv(const char *titulo, const char *sql,
@@ -3392,7 +3399,7 @@ void exportar_record_simple_csv(const char *titulo, const char *sql,
     }
 
     if (stmt)
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     printf("Exportado a %s\n", get_export_path(filename));
     fclose(file);
 }
@@ -3416,7 +3423,7 @@ void exportar_partido_especifico_csv(const char *order_by,
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
             write_partido_csv_row(f, stmt);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
@@ -3439,7 +3446,7 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
             write_partido_txt_row(f, stmt);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
@@ -3462,7 +3469,7 @@ void exportar_partido_especifico_json(const char *order_by,
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
             write_partido_json_object(root, stmt);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     char *json_string = cJSON_Print(root);
     fprintf(f, "%s", json_string);
@@ -3495,7 +3502,7 @@ void exportar_partido_especifico_html(const char *order_by,
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
             write_partido_html_row(f, stmt);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
     fprintf(f, "</table></body></html>");
     printf("Archivo exportado a: %s\n", get_export_path(filename));
@@ -3528,7 +3535,7 @@ void calcular_estadisticas(Estadisticas *stats, const char *sql)
         stats->avg_cansancio = sqlite3_column_double(stmt, 4);
         stats->avg_animo = sqlite3_column_double(stmt, 5);
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
@@ -3582,7 +3589,7 @@ int preparar_consulta_con_verificacion(sqlite3_stmt **stmt, const char *tabla,
     {
         *count = sqlite3_column_int(check_stmt, 0);
     }
-    sqlite3_finalize(check_stmt);
+    db_stmt_release(check_stmt);
 
     if (*count == 0)
     {
@@ -3627,7 +3634,7 @@ int has_records(const char *table_name)
         {
             count = sqlite3_column_int(stmt, 0);
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         result = count > 0;
     }
 
@@ -4413,7 +4420,7 @@ int app_cargar_imagen_entidad(int id, const char *tabla,
     sqlite3_bind_text(stmt, 1, rel_path, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
     int result = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     return result;
 }

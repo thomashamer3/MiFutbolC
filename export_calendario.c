@@ -145,11 +145,17 @@ static int cargar_eventos(EventoCalendario *eventos, int max)
 
 void exportar_calendario_csv()
 {
-    EventoCalendario eventos[MAX_EVENTOS];
+    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
+    if (!eventos)
+    {
+        printf("Error de memoria.\n");
+        return;
+    }
     int total = cargar_eventos(eventos, MAX_EVENTOS);
     if (total == 0)
     {
         printf("No hay eventos para exportar.\n");
+        free(eventos);
         return;
     }
 
@@ -158,6 +164,7 @@ void exportar_calendario_csv()
     if (err != 0 || f == NULL)
     {
         printf("Error al crear el archivo CSV.\n");
+        free(eventos);
         return;
     }
 
@@ -173,16 +180,23 @@ void exportar_calendario_csv()
     }
 
     fclose(f);
+    free(eventos);
     printf("Archivo exportado a: %s\n", get_export_path("calendario.csv"));
 }
 
 void exportar_calendario_txt()
 {
-    EventoCalendario eventos[MAX_EVENTOS];
+    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
+    if (!eventos)
+    {
+        printf("Error de memoria.\n");
+        return;
+    }
     int total = cargar_eventos(eventos, MAX_EVENTOS);
     if (total == 0)
     {
         printf("No hay eventos para exportar.\n");
+        free(eventos);
         return;
     }
 
@@ -191,6 +205,7 @@ void exportar_calendario_txt()
     if (err != 0 || f == NULL)
     {
         printf("Error al crear el archivo TXT.\n");
+        free(eventos);
         return;
     }
 
@@ -203,16 +218,23 @@ void exportar_calendario_txt()
     }
 
     fclose(f);
+    free(eventos);
     printf("Archivo exportado a: %s\n", get_export_path("calendario.txt"));
 }
 
 void exportar_calendario_json()
 {
-    EventoCalendario eventos[MAX_EVENTOS];
+    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
+    if (!eventos)
+    {
+        printf("Error de memoria.\n");
+        return;
+    }
     int total = cargar_eventos(eventos, MAX_EVENTOS);
     if (total == 0)
     {
         printf("No hay eventos para exportar.\n");
+        free(eventos);
         return;
     }
 
@@ -234,6 +256,7 @@ void exportar_calendario_json()
     {
         printf("Error al crear el archivo JSON.\n");
         cJSON_Delete(root);
+        free(eventos);
         return;
     }
 
@@ -242,16 +265,23 @@ void exportar_calendario_json()
     free(json_string);
     cJSON_Delete(root);
     fclose(f);
+    free(eventos);
     printf("Archivo exportado a: %s\n", get_export_path("calendario.json"));
 }
 
 void exportar_calendario_html()
 {
-    EventoCalendario eventos[MAX_EVENTOS];
+    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
+    if (!eventos)
+    {
+        printf("Error de memoria.\n");
+        return;
+    }
     int total = cargar_eventos(eventos, MAX_EVENTOS);
     if (total == 0)
     {
         printf("No hay eventos para exportar.\n");
+        free(eventos);
         return;
     }
 
@@ -260,6 +290,7 @@ void exportar_calendario_html()
     if (err != 0 || f == NULL)
     {
         printf("Error al crear el archivo HTML.\n");
+        free(eventos);
         return;
     }
 
@@ -275,5 +306,6 @@ void exportar_calendario_html()
 
     fprintf(f, "</table></body></html>");
     fclose(f);
+    free(eventos);
     printf("Archivo exportado a: %s\n", get_export_path("calendario.html"));
 }

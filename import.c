@@ -274,13 +274,13 @@ static int obtener_mes_anio_desde_fecha(const char *fecha, char *mes_anio, size_
 
     mes_anio[0] = '\0';
 
-    if (strlen(fecha) >= 10 && fecha[4] == '-' && fecha[7] == '-')
+    if (strnlen_s(fecha, (size_t)-1) >= 10 && fecha[4] == '-' && fecha[7] == '-')
     {
         snprintf(mes_anio, size, "%.7s", fecha);
         return 1;
     }
 
-    if (strlen(fecha) >= 10 && fecha[2] == '/' && fecha[5] == '/')
+    if (strnlen_s(fecha, (size_t)-1) >= 10 && fecha[2] == '/' && fecha[5] == '/')
     {
         snprintf(mes_anio,
                  size,

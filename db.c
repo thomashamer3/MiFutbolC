@@ -683,7 +683,8 @@ enum
     DB_VERSION_PARTIDO_COLS = 4,
     DB_VERSION_INDEXES = 5,
     DB_VERSION_CANCHA_GRABACION = 6,
-    DB_VERSION_CURRENT = 6
+    DB_VERSION_ADDITIONAL_INDEXES = 7,
+    DB_VERSION_CURRENT = 7
 };
 
 static int get_user_version(int *out_version)
@@ -1690,6 +1691,30 @@ static int create_performance_indexes()
 
     if (current_version >= DB_VERSION_INDEXES)
     {
+        if (current_version < DB_VERSION_ADDITIONAL_INDEXES)
+        {
+            const char *extra_indexes[] =
+            {
+                "CREATE INDEX IF NOT EXISTS idx_camiseta_nombre ON camiseta(nombre);",
+                "CREATE INDEX IF NOT EXISTS idx_cancha_nombre ON cancha(nombre);",
+                "CREATE INDEX IF NOT EXISTS idx_equipo_nombre ON equipo(nombre);",
+                "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
+                "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON notificacion(leida, fecha_hora);",
+                NULL
+            };
+            int failed = -1;
+            if (!execute_sql_statements(extra_indexes, &failed))
+            {
+                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice extra '%s': %s", extra_indexes[failed], sqlite3_errmsg(db));
+                app_log_write("ERROR", "DB", log_buf_);
+            }
+            if (!set_user_version(DB_VERSION_CURRENT))
+            {
+                snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras indices extra: %s", sqlite3_errmsg(db));
+                app_log_write("WARN", "DB", log_buf_);
+            }
+        }
+
         if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
         {
             snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s", sqlite3_errmsg(db));
@@ -1728,6 +1753,11 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_bienestar_sesion_fecha ON bienestar_sesion_mental(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_bienestar_entrenamiento_fecha ON bienestar_entrenamiento(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_bienestar_comida_fecha_calidad ON bienestar_comida(fecha, calidad);",
+        "CREATE INDEX IF NOT EXISTS idx_camiseta_nombre ON camiseta(nombre);",
+        "CREATE INDEX IF NOT EXISTS idx_cancha_nombre ON cancha(nombre);",
+        "CREATE INDEX IF NOT EXISTS idx_equipo_nombre ON equipo(nombre);",
+        "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
+        "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON notificacion(leida, fecha_hora);",
         NULL
     };
 

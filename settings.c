@@ -1,4 +1,4 @@
-﻿
+
 #include "settings.h"
 #include "backup.h"
 #include "busqueda.h"
@@ -593,7 +593,7 @@ void settings_init()
             current_settings.dashboard_enabled = sqlite3_column_int(stmt, 12) ? 1 : 0;
             has_settings = 1;
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     if (!has_settings)
@@ -652,7 +652,7 @@ void settings_save()
         {
             printf("Error guardando configuracion: %s\n", sqlite3_errmsg(db));
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 }
 
@@ -1832,7 +1832,7 @@ static void reset_settings_to_defaults()
                                        "Error al preparar la consulta"))
         {
             sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
+            db_stmt_release(stmt);
         }
 
         printf("%s\n", get_text("reset_success"));
@@ -1858,7 +1858,7 @@ int is_custom_menu_enabled(const char *menu_name)
         {
             enabled = sqlite3_column_int(stmt, 0);
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     return enabled;
@@ -1875,7 +1875,7 @@ void set_custom_menu_enabled(const char *menu_name, int enabled)
         sqlite3_bind_text(stmt, 1, menu_name, -1, SQLITE_STATIC);
         sqlite3_bind_int(stmt, 2, enabled);
         sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 }
 

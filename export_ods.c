@@ -38,7 +38,7 @@ static void zip_write_local_header(FILE *f, const char *name, uint32_t crc32val,
                                    uint32_t size, uint16_t dos_time, uint16_t dos_date,
                                    uint32_t *offset_out)
 {
-    uint16_t name_len = (uint16_t)strlen(name);
+    uint16_t name_len = (uint16_t)strnlen_s(name, (size_t)-1);
     uint32_t offset = (uint32_t)ftell(f);
     if (offset_out) *offset_out = offset;
 
@@ -80,7 +80,7 @@ static void zip_write_central_dir(FILE *f, const char *name, uint32_t crc32val,
                                   uint32_t size, uint16_t dos_time, uint16_t dos_date,
                                   uint32_t local_offset)
 {
-    uint16_t name_len = (uint16_t)strlen(name);
+    uint16_t name_len = (uint16_t)strnlen_s(name, (size_t)-1);
     uint8_t cd[46] = {0};
     cd[0] = 'P';
     cd[1] = 'K';
@@ -402,7 +402,7 @@ static void dynbuf_init(DynBuf *b)
 
 static int dynbuf_write(DynBuf *b, const void *src, size_t n)
 {
-    if (b->len + n > b->cap)
+    if (b->len + n >= b->cap)
     {
         size_t newcap = b->cap ? b->cap * 2 : 65536;
         while (newcap < b->len + n) newcap *= 2;
@@ -511,13 +511,13 @@ static int xlsx_generar_xml(const char *nombre_hoja, const char *sql,
                 {
                     char num[32];
                     snprintf(num, sizeof(num), "%d", sqlite3_column_int(stmt, i));
-                    dynbuf_write(buf, num, strlen(num));
+                    dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
                 }
                 else if (col_type == SQLITE_FLOAT)
                 {
                     char num[64];
                     snprintf(num, sizeof(num), "%.2f", sqlite3_column_double(stmt, i));
-                    dynbuf_write(buf, num, strlen(num));
+                    dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
                 }
                 else
                 {
@@ -586,19 +586,19 @@ static int xlsx_exportar_tabla(const char *nombre_hoja, const char *sql,
              "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
              "<Override PartName=\"/xl/content.xml\" ContentType=\"application/vnd.ms-excel.sheet.macroEnabled.main+xml\"/>"
              "</Types>");
-    uint32_t types_crc = crc32_buf((const uint8_t*)types_xml, strlen(types_xml));
+    uint32_t types_crc = crc32_buf((const uint8_t*)types_xml, strnlen_s(types_xml, (size_t)-1));
     uint32_t types_offset;
-    zip_write_local_header(f, types_name, types_crc, (uint32_t)strlen(types_xml), dtime, ddate, &types_offset);
-    fwrite(types_xml, 1, strlen(types_xml), f);
+    zip_write_local_header(f, types_name, types_crc, (uint32_t)strnlen_s(types_xml, (size_t)-1), dtime, ddate, &types_offset);
+    fwrite(types_xml, 1, strnlen_s(types_xml, (size_t)-1), f);
 
     // Central directory
     uint32_t cd_offset = (uint32_t)ftell(f);
     uint32_t cd_size = 0;
 
     zip_write_central_dir(f, entry_name, crc, (uint32_t)buf.len, dtime, ddate, local_offset);
-    cd_size += 46 + (uint16_t)strlen(entry_name);
-    zip_write_central_dir(f, types_name, types_crc, (uint32_t)strlen(types_xml), dtime, ddate, types_offset);
-    cd_size += 46 + (uint16_t)strlen(types_name);
+    cd_size += 46 + (uint16_t)strnlen_s(entry_name, (size_t)-1);
+    zip_write_central_dir(f, types_name, types_crc, (uint32_t)strnlen_s(types_xml, (size_t)-1), dtime, ddate, types_offset);
+    cd_size += 46 + (uint16_t)strnlen_s(types_name, (size_t)-1);
 
     zip_write_end(f, cd_offset, cd_size, 2);
 

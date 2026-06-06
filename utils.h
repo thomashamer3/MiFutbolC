@@ -93,6 +93,7 @@ void input_date(const char *msg, char *buffer, int size);
 int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql);
 
 sqlite3_stmt *db_prepare_cached(const char *sql);
+void db_stmt_release(sqlite3_stmt *stmt);
 void db_clear_stmt_cache(void);
 
 /**

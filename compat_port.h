@@ -5,13 +5,14 @@
 #define SQLITE_THREADSAFE 0
 #endif
 
+#ifndef __STDC_WANT_LIB_EXT1__
+#define __STDC_WANT_LIB_EXT1__ 1
+#endif
+
 #ifndef _WIN32
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif
-#ifndef __STDC_WANT_LIB_EXT1__
-#define __STDC_WANT_LIB_EXT1__ 1
 #endif
 
 #include <errno.h>
@@ -249,30 +250,20 @@ static inline int localtime_s(struct tm *tm_out, const time_t *time_in)
     return (localtime_r(time_in, tm_out) != NULL) ? 0 : errno;
 }
 
-static inline size_t strlen_s(const char *s, size_t maxlen)
-{
-    if (!s || maxlen == 0)
-    {
-        return 0;
-    }
-
-    size_t len = 0;
-    while (s[len] != '\0' && len < maxlen)
-    {
-        len++;
-    }
-    return len;
-}
-/* Self-referential macro so miniaudio.h's #ifndef strlen_s guard fires. */
-#ifndef strlen_s
-#define strlen_s strlen_s
-#endif
-/* strnlen_s (C11 Annex K) behaves identically to strlen_s here. */
+/* strnlen_s / strlen_s fallback for platforms without __STDC_LIB_EXT1__. */
 #ifndef strnlen_s
-#define strnlen_s strlen_s
+static inline size_t strnlen_s(const char *s, size_t maxlen)
+{
+    if (!s) return 0;
+    size_t n = 0;
+    while (n < maxlen && s[n]) n++;
+    return n;
+}
 #endif
+#ifndef strlen_s
+#define strlen_s strnlen_s
 #endif
-
+#endif /* __STDC_LIB_EXT1__ */
 #endif /* !_WIN32 */
 
 #endif /* COMPAT_PORT_H */

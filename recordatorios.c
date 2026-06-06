@@ -345,7 +345,7 @@ static void agregar_recordatorio()
     if (nuevo.periodicidad != PERIODICIDAD_UNA_VEZ)
     {
         input_date("Fecha fin (dd/mm/yyyy hh:mm) - opcional, dejar vacío si no aplica:", nuevo.fecha_fin, MAX_FECHA);
-        if (strlen(nuevo.fecha_fin) == 0)
+        if (strnlen_s(nuevo.fecha_fin, (size_t)-1) == 0)
         {
             nuevo.fecha_fin[0] = '\0';
         }
@@ -750,6 +750,7 @@ static void verificar_recordatorios_recurrentes()
         return;
     }
     memcpy(expandido, arr, sizeof(Reminder) * (size_t)count);
+    free(arr);
     int actual = count;
 
     for (int i = 0; i < actual; i++)

@@ -1,4 +1,4 @@
-﻿#include "logros.h"
+#include "logros.h"
 #include "utils.h"
 #include "menu.h"
 #include "db.h"
@@ -341,7 +341,7 @@ static int ejecutar_consulta_progreso(const char *sql, int camiseta_id)
     {
         progreso = sqlite3_column_int(stmt, 0);
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     return progreso;
 }
@@ -487,7 +487,7 @@ static void listar_camisetas_con_partidos()
         ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1));
         count++;
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     if (count == 0)
     {
@@ -578,7 +578,7 @@ int logros_get_completados_primera_camiseta(void)
         {
             camiseta_id = sqlite3_column_int(stmt, 0);
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
     }
 
     if (camiseta_id < 0)

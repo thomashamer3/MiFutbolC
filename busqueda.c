@@ -1,11 +1,10 @@
 #include "busqueda.h"
 #include "db.h"
 #include "utils.h"
-#include "settings.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
@@ -67,7 +66,8 @@ static const char *linea_separadora_busqueda(void)
     return "--------------------------------------------------------";
 }
 
-static int construir_patron_busqueda(const char *termino, char *patron_lower, size_t patron_size)
+static int construir_patron_busqueda(const char *termino, char *patron_lower,
+                                     size_t patron_size)
 {
     char patron[256];
     snprintf(patron, sizeof(patron), "%%%s%%", termino);
@@ -82,7 +82,8 @@ static int construir_patron_busqueda(const char *termino, char *patron_lower, si
     return 1;
 }
 
-static const char *texto_sqlite_o_default(const unsigned char *texto, const char *defecto)
+static const char *texto_sqlite_o_default(const unsigned char *texto,
+        const char *defecto)
 {
     return texto ? (const char *)texto : defecto;
 }
@@ -91,13 +92,15 @@ typedef void (*imprimir_fila_fn)(sqlite3_stmt *stmt);
 
 #define BUSQUEDA_POR_PAGINA 20
 
-static void busqueda_imprimir_titulo(const char *titulo_unicode, const char *titulo_ascii)
+static void busqueda_imprimir_titulo(const char *titulo_unicode,
+                                     const char *titulo_ascii)
 {
     printf("\n  %s\n", consola_soporta_unicode() ? titulo_unicode : titulo_ascii);
     printf("  %s\n", linea_separadora_busqueda());
 }
 
-static int busqueda_contar_total(const char *sql_count, const char *patron, int cantidad_binds)
+static int busqueda_contar_total(const char *sql_count, const char *patron,
+                                 int cantidad_binds)
 {
     int total = 0;
     sqlite3_stmt *stmt_count;
@@ -121,13 +124,9 @@ static int busqueda_contar_total(const char *sql_count, const char *patron, int 
     return total;
 }
 
-static int busqueda_mostrar_pagina(const char *sql_data,
-                                   const char *patron,
-                                   int cantidad_binds,
-                                   int pagina,
-                                   int paginas,
-                                   int total,
-                                   imprimir_fila_fn imprimir_fila)
+static int busqueda_mostrar_pagina(const char *sql_data, const char *patron,
+                                   int cantidad_binds, int pagina, int paginas,
+                                   int total, imprimir_fila_fn imprimir_fila)
 {
     int offset = (pagina - 1) * BUSQUEDA_POR_PAGINA;
     int hasta = offset + BUSQUEDA_POR_PAGINA;
@@ -157,7 +156,8 @@ static int busqueda_mostrar_pagina(const char *sql_data,
         hasta = total;
     }
 
-    printf("\n  Pagina %d/%d  (%d-%d de %d)\n", pagina, paginas, offset + 1, hasta, total);
+    printf("\n  Pagina %d/%d  (%d-%d de %d)\n", pagina, paginas, offset + 1,
+           hasta, total);
     return 1;
 }
 
@@ -198,8 +198,7 @@ static int ejecutar_busqueda_generica(const char *sql_count,
                                       const char *sql_data,
                                       const char *titulo_unicode,
                                       const char *titulo_ascii,
-                                      const char *patron,
-                                      int cantidad_binds,
+                                      const char *patron, int cantidad_binds,
                                       imprimir_fila_fn imprimir_fila)
 {
     int total = busqueda_contar_total(sql_count, patron, cantidad_binds);
@@ -213,20 +212,15 @@ static int ejecutar_busqueda_generica(const char *sql_count,
     }
 
     int paginas = (total + BUSQUEDA_POR_PAGINA - 1) / BUSQUEDA_POR_PAGINA;
-    int pagina  = 1;
+    int pagina = 1;
 
     int continuar = 1;
     while (continuar)
     {
         int movimiento;
 
-        if (!busqueda_mostrar_pagina(sql_data,
-                                     patron,
-                                     cantidad_binds,
-                                     pagina,
-                                     paginas,
-                                     total,
-                                     imprimir_fila))
+        if (!busqueda_mostrar_pagina(sql_data, patron, cantidad_binds, pagina,
+                                     paginas, total, imprimir_fila))
         {
             return total;
         }
@@ -288,24 +282,18 @@ static void imprimir_fila_partido(sqlite3_stmt *stmt)
 
     if (consola_soporta_unicode())
     {
-        printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n",
-               id,
+        printf("  ID %d: %s | %s %s | ⚽%d 🎯%d | 👕%s\n", id,
                texto_sqlite_o_default(cancha, "Sin cancha"),
                texto_sqlite_o_default(fecha, "Sin fecha"),
-               texto_sqlite_o_default(hora, "Sin hora"),
-               goles,
-               asistencias,
+               texto_sqlite_o_default(hora, "Sin hora"), goles, asistencias,
                texto_sqlite_o_default(camiseta, "Sin camiseta"));
         return;
     }
 
-    printf("  ID %d: %s | %s %s | G:%d A:%d | Camiseta:%s\n",
-           id,
+    printf("  ID %d: %s | %s %s | G:%d A:%d | Camiseta:%s\n", id,
            texto_sqlite_o_default(cancha, "Sin cancha"),
            texto_sqlite_o_default(fecha, "Sin fecha"),
-           texto_sqlite_o_default(hora, "Sin hora"),
-           goles,
-           asistencias,
+           texto_sqlite_o_default(hora, "Sin hora"), goles, asistencias,
            texto_sqlite_o_default(camiseta, "Sin camiseta"));
 }
 
@@ -315,9 +303,7 @@ static void imprimir_fila_equipo(sqlite3_stmt *stmt)
     const unsigned char *nombre = sqlite3_column_text(stmt, 1);
     int modalidad = sqlite3_column_int(stmt, 2);
 
-    printf("  ID %d: %s (%s)\n",
-           id,
-           texto_sqlite_o_default(nombre, "Sin nombre"),
+    printf("  ID %d: %s (%s)\n", id, texto_sqlite_o_default(nombre, "Sin nombre"),
            modalidad_to_texto(modalidad));
 }
 
@@ -327,9 +313,7 @@ static void imprimir_fila_camiseta(sqlite3_stmt *stmt)
     const unsigned char *nombre = sqlite3_column_text(stmt, 1);
     const unsigned char *color = sqlite3_column_text(stmt, 2);
 
-    printf("  ID %d: %s (%s)\n",
-           id,
-           texto_sqlite_o_default(nombre, "Sin nombre"),
+    printf("  ID %d: %s (%s)\n", id, texto_sqlite_o_default(nombre, "Sin nombre"),
            texto_sqlite_o_default(color, "Sin color"));
 }
 
@@ -359,10 +343,8 @@ static void imprimir_fila_lesion(sqlite3_stmt *stmt)
     const unsigned char *tipo = sqlite3_column_text(stmt, 2);
     const unsigned char *desc = sqlite3_column_text(stmt, 3);
 
-    printf("  ID %d: %s - %s (%s)\n", id,
-           texto_sqlite_o_default(jugador, "?"),
-           texto_sqlite_o_default(tipo, "?"),
-           texto_sqlite_o_default(desc, "?"));
+    printf("  ID %d: %s - %s (%s)\n", id, texto_sqlite_o_default(jugador, "?"),
+           texto_sqlite_o_default(tipo, "?"), texto_sqlite_o_default(desc, "?"));
 }
 
 static void imprimir_fila_torneo(sqlite3_stmt *stmt)
@@ -381,8 +363,8 @@ static void imprimir_fila_temporada(sqlite3_stmt *stmt)
     const unsigned char *nombre = sqlite3_column_text(stmt, 1);
     int anio = sqlite3_column_int(stmt, 2);
 
-    printf("  ID %d: %s (%d)\n", id,
-           texto_sqlite_o_default(nombre, "Sin nombre"), anio);
+    printf("  ID %d: %s (%d)\n", id, texto_sqlite_o_default(nombre, "Sin nombre"),
+           anio);
 }
 
 static void imprimir_fila_financiamiento(sqlite3_stmt *stmt)
@@ -401,58 +383,56 @@ static void imprimir_fila_bienestar(sqlite3_stmt *stmt)
     const unsigned char *nombre = sqlite3_column_text(stmt, 1);
     const unsigned char *desc = sqlite3_column_text(stmt, 2);
 
-    printf("  ID %d: %s - %s\n", id,
-           texto_sqlite_o_default(nombre, "Sin nombre"),
+    printf("  ID %d: %s - %s\n", id, texto_sqlite_o_default(nombre, "Sin nombre"),
            texto_sqlite_o_default(desc, ""));
 }
 
 int buscar_en_partidos(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM partido p "
-        "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
-        "LEFT JOIN cancha can ON p.cancha_id = can.id "
-        "WHERE can.nombre COLLATE NOCASE LIKE ? OR c.nombre COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM partido p "
+                            "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
+                            "LEFT JOIN cancha can ON p.cancha_id = can.id "
+                            "WHERE can.nombre COLLATE NOCASE LIKE ? OR c.nombre "
+                            "COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT p.id, can.nombre, substr(p.fecha_hora, 1, 10), substr(p.fecha_hora, 12), "
-        "       p.goles, p.asistencias, c.nombre "
-        "FROM partido p "
-        "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
-        "LEFT JOIN cancha can ON p.cancha_id = can.id "
-        "WHERE can.nombre COLLATE NOCASE LIKE ? OR c.nombre COLLATE NOCASE LIKE ? "
-        "ORDER BY p.fecha_hora DESC "
-        "LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT p.id, can.nombre, substr(p.fecha_hora, 1, "
+                           "10), substr(p.fecha_hora, 12), "
+                           "       p.goles, p.asistencias, c.nombre "
+                           "FROM partido p "
+                           "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
+                           "LEFT JOIN cancha can ON p.cancha_id = can.id "
+                           "WHERE can.nombre COLLATE NOCASE LIKE ? OR c.nombre "
+                           "COLLATE NOCASE LIKE ? "
+                           "ORDER BY p.fecha_hora DESC "
+                           "LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "🎯 Partidos encontrados:",
-                                      "Partidos encontrados:",
-                                      patron_lower, 2, imprimir_fila_partido);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "🎯 Partidos encontrados:", "Partidos encontrados:", patron_lower, 2,
+               imprimir_fila_partido);
 }
 
 int buscar_en_equipos(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM equipo "
-        "WHERE nombre COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM equipo "
+                            "WHERE nombre COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, nombre, modalidad FROM equipo "
-        "WHERE nombre COLLATE NOCASE LIKE ? "
-        "ORDER BY nombre LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, nombre, modalidad FROM equipo "
+                           "WHERE nombre COLLATE NOCASE LIKE ? "
+                           "ORDER BY nombre LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "👥 Equipos encontrados:",
-                                      "Equipos encontrados:",
-                                      patron_lower, 1, imprimir_fila_equipo);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "👥 Equipos encontrados:", "Equipos encontrados:", patron_lower, 1,
+               imprimir_fila_equipo);
 }
 
 int buscar_en_camisetas(const char *termino)
@@ -470,127 +450,122 @@ int buscar_en_camisetas(const char *termino)
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "👕 Camisetas encontradas:",
-                                      "Camisetas encontradas:",
-                                      patron_lower, 2, imprimir_fila_camiseta);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "👕 Camisetas encontradas:", "Camisetas encontradas:", patron_lower, 2,
+               imprimir_fila_camiseta);
 }
 
 int buscar_en_canchas(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM cancha "
-        "WHERE nombre COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM cancha "
+                            "WHERE nombre COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, nombre FROM cancha "
-        "WHERE nombre COLLATE NOCASE LIKE ? "
-        "ORDER BY nombre LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, nombre FROM cancha "
+                           "WHERE nombre COLLATE NOCASE LIKE ? "
+                           "ORDER BY nombre LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "🏟️  Canchas encontradas:",
-                                      "Canchas encontradas:",
-                                      patron_lower, 1, imprimir_fila_cancha);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "🏟️  Canchas encontradas:", "Canchas encontradas:", patron_lower, 1,
+               imprimir_fila_cancha);
 }
 
 int buscar_en_jugadores(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM jugador "
-        "WHERE nombre COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM jugador "
+                            "WHERE nombre COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, nombre, numero, posicion FROM jugador "
-        "WHERE nombre COLLATE NOCASE LIKE ? "
-        "ORDER BY nombre LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, nombre, numero, posicion FROM jugador "
+                           "WHERE nombre COLLATE NOCASE LIKE ? "
+                           "ORDER BY nombre LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "👤 Jugadores encontrados:",
-                                      "Jugadores encontrados:",
-                                      patron_lower, 1, imprimir_fila_jugador);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "👤 Jugadores encontrados:", "Jugadores encontrados:", patron_lower, 1,
+               imprimir_fila_jugador);
 }
 
 int buscar_en_lesiones(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM lesion "
-        "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM lesion "
+                            "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE "
+                            "NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, jugador, tipo, descripcion FROM lesion "
-        "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ? "
-        "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, jugador, tipo, descripcion FROM lesion "
+                           "WHERE jugador COLLATE NOCASE LIKE ? OR tipo COLLATE "
+                           "NOCASE LIKE ? OR descripcion COLLATE NOCASE LIKE ? "
+                           "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "🩹 Lesiones encontradas:",
-                                      "Lesiones encontradas:",
-                                      patron_lower, 3, imprimir_fila_lesion);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "🩹 Lesiones encontradas:", "Lesiones encontradas:", patron_lower, 3,
+               imprimir_fila_lesion);
 }
 
 int buscar_en_torneos(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM torneo "
-        "WHERE nombre COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM torneo "
+                            "WHERE nombre COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, nombre, tipo_torneo FROM torneo "
-        "WHERE nombre COLLATE NOCASE LIKE ? "
-        "ORDER BY nombre LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, nombre, tipo_torneo FROM torneo "
+                           "WHERE nombre COLLATE NOCASE LIKE ? "
+                           "ORDER BY nombre LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "🏆 Torneos encontrados:",
-                                      "Torneos encontrados:",
-                                      patron_lower, 1, imprimir_fila_torneo);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "🏆 Torneos encontrados:", "Torneos encontrados:", patron_lower, 1,
+               imprimir_fila_torneo);
 }
 
 int buscar_en_temporadas(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM temporada "
-        "WHERE nombre COLLATE NOCASE LIKE ? OR COALESCE(descripcion, '') COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM temporada "
+                            "WHERE nombre COLLATE NOCASE LIKE ? OR "
+                            "COALESCE(descripcion, '') COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, nombre, anio FROM temporada "
-        "WHERE nombre COLLATE NOCASE LIKE ? OR COALESCE(descripcion, '') COLLATE NOCASE LIKE ? "
-        "ORDER BY anio DESC LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, nombre, anio FROM temporada "
+                           "WHERE nombre COLLATE NOCASE LIKE ? OR "
+                           "COALESCE(descripcion, '') COLLATE NOCASE LIKE ? "
+                           "ORDER BY anio DESC LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "📅 Temporadas encontradas:",
-                                      "Temporadas encontradas:",
-                                      patron_lower, 2, imprimir_fila_temporada);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "📅 Temporadas encontradas:", "Temporadas encontradas:", patron_lower, 2,
+               imprimir_fila_temporada);
 }
 
 int buscar_en_financiamiento(const char *termino)
 {
     const char *sql_count =
         "SELECT COUNT(*) FROM financiamiento "
-        "WHERE descripcion COLLATE NOCASE LIKE ? OR COALESCE(item_especifico, '') COLLATE NOCASE LIKE ?;";
+        "WHERE descripcion COLLATE NOCASE LIKE ? OR COALESCE(item_especifico, "
+        "'') COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, descripcion, monto FROM financiamiento "
-        "WHERE descripcion COLLATE NOCASE LIKE ? OR COALESCE(item_especifico, '') COLLATE NOCASE LIKE ? "
-        "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, descripcion, monto FROM financiamiento "
+                           "WHERE descripcion COLLATE NOCASE LIKE ? OR "
+                           "COALESCE(item_especifico, '') COLLATE NOCASE LIKE ? "
+                           "ORDER BY fecha DESC LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
@@ -598,38 +573,37 @@ int buscar_en_financiamiento(const char *termino)
 
     return ejecutar_busqueda_generica(sql_count, sql_data,
                                       "💰 Financiamiento encontrado:",
-                                      "Financiamiento encontrado:",
-                                      patron_lower, 2, imprimir_fila_financiamiento);
+                                      "Financiamiento encontrado:", patron_lower,
+                                      2, imprimir_fila_financiamiento);
 }
 
 int buscar_en_bienestar(const char *termino)
 {
-    const char *sql_count =
-        "SELECT COUNT(*) FROM bienestar_objetivo "
-        "WHERE descripcion COLLATE NOCASE LIKE ?;";
+    const char *sql_count = "SELECT COUNT(*) FROM bienestar_objetivo "
+                            "WHERE descripcion COLLATE NOCASE LIKE ?;";
 
-    const char *sql_data =
-        "SELECT id, descripcion, '' FROM bienestar_objetivo "
-        "WHERE descripcion COLLATE NOCASE LIKE ? "
-        "ORDER BY id LIMIT ? OFFSET ?;";
+    const char *sql_data = "SELECT id, descripcion, '' FROM bienestar_objetivo "
+                           "WHERE descripcion COLLATE NOCASE LIKE ? "
+                           "ORDER BY id LIMIT ? OFFSET ?;";
 
     char patron_lower[256];
     if (!construir_patron_busqueda(termino, patron_lower, sizeof(patron_lower)))
         return 0;
 
-    return ejecutar_busqueda_generica(sql_count, sql_data,
-                                      "💪 Bienestar encontrado:",
-                                      "Bienestar encontrado:",
-                                      patron_lower, 1, imprimir_fila_bienestar);
+    return ejecutar_busqueda_generica(
+               sql_count, sql_data,
+               "💪 Bienestar encontrado:", "Bienestar encontrado:", patron_lower, 1,
+               imprimir_fila_bienestar);
 }
 
 void buscar_global(const char *termino)
 {
     clear_screen();
     print_header("BUSQUEDA GLOBAL");
-    const char *linea = consola_soporta_unicode() ?
-                        "════════════════════════════════════════════════════════════════" :
-                        "================================================================";
+    const char *linea =
+        consola_soporta_unicode()
+        ? "════════════════════════════════════════════════════════════════"
+        : "================================================================";
 
     printf("Buscando: \"%s\"\n", termino);
     printf("%s\n\n", linea);

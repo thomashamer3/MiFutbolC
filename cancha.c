@@ -1,4 +1,4 @@
-﻿#include "cancha.h"
+#include "cancha.h"
 #include "menu.h"
 #include "db.h"
 #include "export.h"
@@ -849,7 +849,7 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     sqlite3_bind_int(stmt, 1, id);
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         return 0;
     }
 
@@ -880,7 +880,7 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     info->activa = sqlite3_column_int(stmt, 20) == 1;
     info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return 1;
 }
 
@@ -984,7 +984,7 @@ static int actualizar_campo_texto_cancha(int id, const char *campo, const char *
     sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -1002,7 +1002,7 @@ static int actualizar_campo_entero_cancha(int id, const char *campo, int valor)
     sqlite3_bind_int(stmt, 1, valor);
     sqlite3_bind_int(stmt, 2, id);
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -1048,7 +1048,7 @@ static int completar_informacion_cancha(int id)
     sqlite3_bind_int(stmt, 21, id);
 
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -1066,7 +1066,7 @@ static int contar_partidos_por_cancha(int cancha_id)
     {
         count = sqlite3_column_int(stmt, 0);
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return count;
 }
 
@@ -1083,7 +1083,7 @@ static int contar_total_canchas_activas(void)
     {
         total = sqlite3_column_int(stmt, 0);
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return total;
 }
 
@@ -1101,7 +1101,7 @@ static int cancha_esta_activa(int cancha_id)
     {
         activa = sqlite3_column_int(stmt, 0) == 1;
     }
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return activa;
 }
 
@@ -1116,7 +1116,7 @@ static int actualizar_estado_cancha(int cancha_id, int activa)
     sqlite3_bind_int(stmt, 1, activa ? 1 : 0);
     sqlite3_bind_int(stmt, 2, cancha_id);
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -1143,7 +1143,7 @@ static void listar_canchas_excluyendo(int cancha_excluida)
     if (!hay)
         mostrar_no_hay_registros("canchas destino");
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 static int ejecutar_sql_simple(const char *sql)
@@ -1213,11 +1213,11 @@ static int reasignar_partidos_y_eliminar_cancha(int cancha_origen, int cancha_de
     sqlite3_bind_int(stmt_update, 2, cancha_origen);
     if (sqlite3_step(stmt_update) != SQLITE_DONE)
     {
-        sqlite3_finalize(stmt_update);
+        db_stmt_release(stmt_update);
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
     }
-    sqlite3_finalize(stmt_update);
+    db_stmt_release(stmt_update);
 
     if (!db_prepare_stmt(&stmt_delete, "DELETE FROM cancha WHERE id = ?"))
     {
@@ -1227,11 +1227,11 @@ static int reasignar_partidos_y_eliminar_cancha(int cancha_origen, int cancha_de
     sqlite3_bind_int(stmt_delete, 1, cancha_origen);
     if (sqlite3_step(stmt_delete) != SQLITE_DONE)
     {
-        sqlite3_finalize(stmt_delete);
+        db_stmt_release(stmt_delete);
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
     }
-    sqlite3_finalize(stmt_delete);
+    db_stmt_release(stmt_delete);
 
     if (!ejecutar_sql_simple("COMMIT;"))
     {
@@ -1260,11 +1260,11 @@ static int eliminar_cancha_y_partidos_asociados(int cancha_id)
     sqlite3_bind_int(stmt_delete_partidos, 1, cancha_id);
     if (sqlite3_step(stmt_delete_partidos) != SQLITE_DONE)
     {
-        sqlite3_finalize(stmt_delete_partidos);
+        db_stmt_release(stmt_delete_partidos);
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
     }
-    sqlite3_finalize(stmt_delete_partidos);
+    db_stmt_release(stmt_delete_partidos);
 
     if (!db_prepare_stmt(&stmt_delete_cancha, "DELETE FROM cancha WHERE id = ?"))
     {
@@ -1274,11 +1274,11 @@ static int eliminar_cancha_y_partidos_asociados(int cancha_id)
     sqlite3_bind_int(stmt_delete_cancha, 1, cancha_id);
     if (sqlite3_step(stmt_delete_cancha) != SQLITE_DONE)
     {
-        sqlite3_finalize(stmt_delete_cancha);
+        db_stmt_release(stmt_delete_cancha);
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
     }
-    sqlite3_finalize(stmt_delete_cancha);
+    db_stmt_release(stmt_delete_cancha);
 
     if (!ejecutar_sql_simple("COMMIT;"))
     {
@@ -1328,7 +1328,7 @@ static int obtener_ruta_imagen_cancha_db(int id, char *ruta, size_t size)
         }
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return ok;
 }
 
@@ -1479,7 +1479,7 @@ void crear_cancha()
     sqlite3_bind_text(stmt, 20, info.descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 21, info.contacto_alt, -1, SQLITE_TRANSIENT);
     int rc = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     if (rc == SQLITE_DONE)
     {
@@ -1555,7 +1555,7 @@ void listar_canchas()
     if (!hay)
         mostrar_no_hay_registros("canchas cargadas");
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     pause_console();
 }
 
@@ -1584,7 +1584,7 @@ static void listar_canchas_simple()
     if (!hay)
         mostrar_no_hay_registros("canchas cargadas");
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 }
 
 static int listar_canchas_con_info_pendiente(void)
@@ -1615,7 +1615,7 @@ static int listar_canchas_con_info_pendiente(void)
         }
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     return pendientes;
 }
 
@@ -1753,7 +1753,7 @@ static void eliminar_cancha_sin_partidos_asociados(int id)
 
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
 }
@@ -2457,7 +2457,7 @@ static int cancha_export_info_txt(int exportar_todas, int cancha_id)
         total++;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     fclose(f);
 
     if (total == 0)
@@ -2545,7 +2545,7 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         total++;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
     fclose(f);
 
     if (total == 0)
@@ -2633,7 +2633,7 @@ static int cancha_export_info_json(int exportar_todas, int cancha_id)
         {
             cJSON_Delete(array);
         }
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         fclose(f);
         printf("Error al construir el JSON de canchas.\n");
         return 0;
@@ -2660,7 +2660,7 @@ static int cancha_export_info_json(int exportar_todas, int cancha_id)
         total++;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     if (total == 0)
     {
@@ -2765,7 +2765,7 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         total++;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     fprintf(f, "</tbody></table></body></html>\n");
     fclose(f);
@@ -2859,7 +2859,7 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
     struct pdf_doc *pdf = pdf_create(PDF_A4_WIDTH, PDF_A4_HEIGHT, &info);
     if (!pdf)
     {
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         printf("Error al crear documento PDF.\n");
         return 0;
     }
@@ -2867,7 +2867,7 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
     struct pdf_object *page = pdf_append_page(pdf);
     if (!page)
     {
-        sqlite3_finalize(stmt);
+        db_stmt_release(stmt);
         pdf_destroy(pdf);
         printf("Error al crear pagina PDF.\n");
         return 0;
@@ -2954,7 +2954,7 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
         total++;
     }
 
-    sqlite3_finalize(stmt);
+    db_stmt_release(stmt);
 
     if (total == 0)
     {

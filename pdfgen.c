@@ -593,7 +593,7 @@ static ssize_t dstr_append_data(struct dstr *str, const void *extend,
 
 static ssize_t dstr_append(struct dstr *str, const char *extend)
 {
-    return dstr_append_data(str, extend, strlen(extend));
+    return dstr_append_data(str, extend, strnlen_s(extend, (size_t)-1));
 }
 
 static void dstr_free(struct dstr *str)
@@ -1372,7 +1372,7 @@ static int pdf_add_stream(struct pdf_doc *pdf, struct pdf_object *page,
     if (!page)
         return pdf_set_err(pdf, -EINVAL, "Invalid pdf page");
 
-    len = strlen(buffer);
+    len = strnlen_s(buffer, (size_t)-1);
     /* We don't want any trailing whitespace in the stream */
     while (len >= 1 && (buffer[len - 1] == '\r' || buffer[len - 1] == '\n'))
         len--;
@@ -1637,7 +1637,7 @@ static int pdf_add_text_spacing(struct pdf_doc *pdf, struct pdf_object *page,
                                 float angle)
 {
     int ret;
-    size_t len = text ? strlen(text) : 0;
+    size_t len = text ? strnlen_s(text, (size_t)-1) : 0;
     struct dstr str = INIT_DSTR;
     int alpha = (colour >> 24) >> 4;
 
@@ -1981,7 +1981,7 @@ static int pdf_text_point_width(struct pdf_doc *pdf, const char *text,
 {
     uint32_t len = 0;
     if (text_len < 0)
-        text_len = strlen(text);
+        text_len = strnlen_s(text, (size_t)-1);
     *point_width = 0.0f;
 
     for (int i = 0; i < (int)text_len;)
@@ -2527,7 +2527,7 @@ static int pdf_add_barcode_128a(struct pdf_doc *pdf, struct pdf_object *page,
                                 const char *string, uint32_t colour)
 {
     const char *s;
-    size_t len = strlen(string) + 3;
+    size_t len = strnlen_s(string, (size_t)-1) + 3;
     float char_width = width / len;
     int checksum, i;
 
@@ -2645,7 +2645,7 @@ static int pdf_add_barcode_39(struct pdf_doc *pdf, struct pdf_object *page,
                               float x, float y, float width, float height,
                               const char *string, uint32_t colour)
 {
-    size_t len = strlen(string);
+    size_t len = strnlen_s(string, (size_t)-1);
     float char_width = width / (len + 2);
     int e;
 
@@ -2888,7 +2888,7 @@ static int pdf_add_barcode_ean13(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strnlen_s(string, (size_t)-1);
     int lead = 0;
     if (len == 13)
     {
@@ -3022,7 +3022,7 @@ static int pdf_add_barcode_upca(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strnlen_s(string, (size_t)-1);
     if (len != 12)
         return pdf_set_err(pdf, -EINVAL, "Invalid UPCA string length %llu",
                            (unsigned long long)len);
@@ -3154,7 +3154,7 @@ static int pdf_add_barcode_ean8(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strnlen_s(string, (size_t)-1);
     if (len != 8)
         return pdf_set_err(pdf, -EINVAL, "Invalid EAN8 string length %llu",
                            (unsigned long long)len);
@@ -3277,7 +3277,7 @@ static int pdf_add_barcode_upce(struct pdf_doc *pdf, struct pdf_object *page,
     if (!string)
         return 0;
 
-    size_t len = strlen(string);
+    size_t len = strnlen_s(string, (size_t)-1);
     if (len != 12)
         return pdf_set_err(pdf, -EINVAL,
                            "Invalid UPCE string length %" PRIuMAX,
@@ -3467,7 +3467,7 @@ static pdf_object *pdf_add_raw_grayscale8(struct pdf_doc *pdf,
                 flexarray_size(&pdf->objects), height, width,
                 (uintmax_t)(data_len + 1));
 
-    len = dstr_len(&str) + data_len + strlen(endstream) + 1;
+    len = dstr_len(&str) + data_len + strnlen_s(endstream, (size_t)-1) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);
@@ -3514,7 +3514,7 @@ static struct pdf_object *pdf_add_raw_rgb24(struct pdf_doc *pdf,
                 flexarray_size(&pdf->objects), height, width,
                 (uintmax_t)(data_len + 1));
 
-    len = dstr_len(&str) + data_len + strlen(endstream) + 1;
+    len = dstr_len(&str) + data_len + strnlen_s(endstream, (size_t)-1) + 1;
     if (dstr_ensure(&str, len) < 0)
     {
         dstr_free(&str);
