@@ -1,140 +1,19 @@
 {
-  "exportedAt": "2026-06-07T00:30:27Z",
+  "exportedAt": "2026-06-07T01:37:41Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
-  "total": 38,
+  "total": 27,
   "issues": [
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "partido.c",
-      "line": 5564,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "partido.c",
-      "line": 5686,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S1659",
-      "severity": "MINOR",
-      "message": "Define each identifier in a dedicated statement.",
-      "file": "recordatorios.c",
-      "line": 757,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "based-on-misra, cert, convention"
-    },
-    {
-      "rule": "c:S995",
-      "severity": "MINOR",
-      "message": "Make the type of this parameter a pointer-to-const. The current type of \"equipos\" is \"int *\".",
-      "file": "torneo.c",
-      "line": 1075,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "2min",
-      "tags": "bad-practice, misra-c++2008, misra-c2004, misra-c2012"
-    },
-    {
-      "rule": "c:S3358",
-      "severity": "MAJOR",
-      "message": "Extract this nested conditional operator into an independent statement.",
-      "file": "torneo.c",
-      "line": 1145,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "confusing"
-    },
-    {
-      "rule": "c:S3358",
-      "severity": "MAJOR",
-      "message": "Extract this nested conditional operator into an independent statement.",
-      "file": "torneo.c",
-      "line": 1145,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "confusing"
-    },
-    {
-      "rule": "c:S1659",
-      "severity": "MINOR",
-      "message": "Define each identifier in a dedicated statement.",
-      "file": "torneo.c",
-      "line": 1239,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "based-on-misra, cert, convention"
-    },
-    {
-      "rule": "c:S1659",
-      "severity": "MINOR",
-      "message": "Define each identifier in a dedicated statement.",
-      "file": "torneo.c",
-      "line": 1272,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "based-on-misra, cert, convention"
-    },
-    {
-      "rule": "c:S107",
-      "severity": "MAJOR",
-      "message": "This function has 9 parameters, which is greater than the 7 authorized.",
-      "file": "torneo.c",
-      "line": 1787,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "20min",
-      "tags": "brain-overload"
-    },
     {
       "rule": "c:S886",
       "severity": "MINOR",
       "message": "Refactor this loop so that it is less error-prone.",
       "file": "export_calendario.c",
-      "line": 103,
+      "line": 104,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "based-on-misra"
-    },
-    {
-      "rule": "c:S886",
-      "severity": "MINOR",
-      "message": "Refactor this loop so that it is less error-prone.",
-      "file": "recordatorios.c",
-      "line": 858,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "based-on-misra"
-    },
-    {
-      "rule": "c:S924",
-      "severity": "MAJOR",
-      "message": "Reduce the number of nested \"break\" statements from 2 to 1 authorized.",
-      "file": "partido.c",
-      "line": 2220,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "20min",
-      "tags": "based-on-misra, confusing"
     },
     {
       "rule": "c:S1905",

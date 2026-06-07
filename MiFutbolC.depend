@@ -2803,7 +2803,7 @@
 	"direct.h"
 	<string.h>
 
-1780803457 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_calendario.c
+1780806429 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_calendario.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2924,7 +2924,7 @@
 	<windows.h>
 	<sys/stat.h>
 
-1780801865 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_ods.c
+1780806434 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_ods.c
 	"export_ods.h"
 	"menu.h"
 	"db.h"

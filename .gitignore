@@ -5,7 +5,8 @@ sonar_issues.json
 sonar.ps1
 reliability-open.json
 security-open.json
-maintainability-open.json
+maintainability-open.
+sonardupli.ps1
 # Local/runtime data
 *.db
 *.log
