@@ -2647,7 +2647,7 @@ void menu_equipos()
         {6, "Ver Imagen", ver_imagen_equipo},
         {7, "Reactivar/Desactivar Equipo", reactivar_equipo},
         {8, "Analisis Formaciones", menu_analisis_formaciones},
-        {9, "Perfil de Jugador", menu_perfil_jugador},
+        {9, "Perfil de Jugador", &menu_perfil_jugador},
         {0, "Volver", NULL}
     };
 

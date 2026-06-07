@@ -189,7 +189,7 @@ static cJSON *leer_manifest(const char *backup_dir)
     return manifest;
 }
 
-static int guardar_manifest(const char *backup_dir, cJSON *manifest)
+static int guardar_manifest(const char *backup_dir, cJSON const *manifest)
 {
     char manifest_path[MAX_BUFFER];
     snprintf(manifest_path, sizeof(manifest_path), "%.*s%s%.*s",
@@ -216,7 +216,7 @@ static int guardar_manifest(const char *backup_dir, cJSON *manifest)
     return 1;
 }
 
-static int backup_existe_en_manifest(cJSON *manifest, const char *filename)
+static int backup_existe_en_manifest(cJSON const *manifest, const char *filename)
 {
     if (!manifest || !filename)
     {
@@ -226,8 +226,8 @@ static int backup_existe_en_manifest(cJSON *manifest, const char *filename)
     int count = cJSON_GetArraySize(manifest);
     for (int i = 0; i < count; i++)
     {
-        cJSON *entry = cJSON_GetArrayItem(manifest, i);
-        cJSON *fname = cJSON_GetObjectItem(entry, "filename");
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
         if (fname && cJSON_IsString(fname) && strcmp(fname->valuestring, filename) == 0)
         {
             return 1;
@@ -425,11 +425,11 @@ int listar_backups(void)
     int validos = 0;
     for (int i = 0; i < count; i++)
     {
-        cJSON *entry = cJSON_GetArrayItem(manifest, i);
-        cJSON *fname = cJSON_GetObjectItem(entry, "filename");
-        cJSON *desc = cJSON_GetObjectItem(entry, "descripcion");
-        cJSON *fecha = cJSON_GetObjectItem(entry, "fecha");
-        cJSON *size = cJSON_GetObjectItem(entry, "size_bytes");
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
+        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
+        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
+        cJSON const *size = cJSON_GetObjectItem(entry, "size_bytes");
 
         const char *fn = (fname && cJSON_IsString(fname)) ? fname->valuestring : "?";
         const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
@@ -635,8 +635,8 @@ int eliminar_backup(const char *filename)
     int old_count = cJSON_GetArraySize(manifest);
     for (int i = old_count - 1; i >= 0; i--)
     {
-        cJSON *entry = cJSON_GetArrayItem(manifest, i);
-        cJSON *fname = cJSON_GetObjectItem(entry, "filename");
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
         if (fname && cJSON_IsString(fname) && strcmp(fname->valuestring, filename) == 0)
         {
             cJSON_DeleteItemFromArray(manifest, i);
@@ -713,10 +713,10 @@ static void pedir_y_restaurar_backup(void)
 
     for (int i = 0; i < count && validos < MAX_BUFFER; i++)
     {
-        cJSON *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON *fname = cJSON_GetObjectItem(entry, "filename");
-        cJSON *desc = cJSON_GetObjectItem(entry, "descripcion");
-        cJSON *fecha = cJSON_GetObjectItem(entry, "fecha");
+        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
+        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
 
         if (!fname || !cJSON_IsString(fname))
         {
@@ -809,10 +809,10 @@ static void pedir_y_eliminar_backup(void)
 
     for (int i = 0; i < count && validos < MAX_BUFFER; i++)
     {
-        cJSON *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON *fname = cJSON_GetObjectItem(entry, "filename");
-        cJSON *desc = cJSON_GetObjectItem(entry, "descripcion");
-        cJSON *fecha = cJSON_GetObjectItem(entry, "fecha");
+        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
+        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
 
         if (!fname || !cJSON_IsString(fname))
         {
@@ -939,9 +939,9 @@ static void menu_auto_backup(void)
 {
     MenuItem items[] =
     {
-        {1, "Configurar Auto-Backup", configurar_auto_backup},
-        {2, "Estado Auto-Backup", mostrar_estado_auto_backup},
-        {3, "Desactivar Auto-Backup", desactivar_auto_backup},
+        {1, "Configurar Auto-Backup", &configurar_auto_backup},
+        {2, "Estado Auto-Backup", &mostrar_estado_auto_backup},
+        {3, "Desactivar Auto-Backup", &desactivar_auto_backup},
         {0, "Volver", NULL}
     };
     ejecutar_menu("AUTO-BACKUP", items, 4);
@@ -1012,11 +1012,11 @@ void menu_backup_restore(void)
 {
     MenuItem items[] =
     {
-        {1, "Crear backup", pedir_y_crear_backup},
-        {2, "Listar backups", mostrar_lista_backups},
-        {3, "Restaurar backup", pedir_y_restaurar_backup},
-        {4, "Eliminar backup", pedir_y_eliminar_backup},
-        {5, "Auto-Backup", menu_auto_backup},
+        {1, "Crear backup", &pedir_y_crear_backup},
+        {2, "Listar backups", &mostrar_lista_backups},
+        {3, "Restaurar backup", &pedir_y_restaurar_backup},
+        {4, "Eliminar backup", &pedir_y_eliminar_backup},
+        {5, "Auto-Backup", &menu_auto_backup},
         {0, "Volver", NULL}
     };
     ejecutar_menu("BACKUP Y RESTAURACION", items, 6);

@@ -59,7 +59,7 @@ static void menu_configurar_filtros(FiltrosBusqueda *f)
     while (opcion != 0);
 }
 
-int aplicar_filtros_partidos(FiltrosBusqueda *f)
+int aplicar_filtros_partidos(FiltrosBusqueda const *f)
 {
     char sql[2048];
     char condiciones[8][256];
@@ -181,8 +181,8 @@ void menu_filtros_avanzados(void)
 {
     MenuItem items[] =
     {
-        {1, "Busqueda por Filtros", buscar_con_filtros},
-        {2, "Estadisticas Filtradas", buscar_por_estadisticas},
+        {1, "Busqueda por Filtros", &buscar_con_filtros},
+        {2, "Estadisticas Filtradas", &buscar_por_estadisticas},
         {0, "Volver", NULL}
     };
     ejecutar_menu("FILTROS AVANZADOS", items, 3);

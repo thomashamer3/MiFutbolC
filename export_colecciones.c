@@ -87,7 +87,8 @@ static void escribir_seccion_html(FILE *f, const char *titulo, const char *sql,
 
 static void escribir_fila_coleccion_csv(FILE *f, sqlite3_stmt *stmt)
 {
-    char nombre_limpio[256], desc_limpio[256];
+    char nombre_limpio[256];
+    char desc_limpio[256];
     sanitizar_ascii_basico((const char*)sqlite3_column_text(stmt, 1), nombre_limpio, sizeof(nombre_limpio));
     sanitizar_ascii_basico((const char*)sqlite3_column_text(stmt, 2), desc_limpio, sizeof(desc_limpio));
     fprintf(f, "%d,%s,%s\n",

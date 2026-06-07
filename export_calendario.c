@@ -70,13 +70,13 @@ static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
     int total = 0;
     for (int i = 0; i < count && (offset + total) < max; i++)
     {
-        cJSON *it = cJSON_GetArrayItem(root, i);
+        cJSON const *it = cJSON_GetArrayItem(root, i);
         if (!it || !cJSON_IsObject(it)) continue;
 
-        cJSON *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-        cJSON *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-        cJSON *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
-        cJSON *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
+        cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
+        cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
+        cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
+        cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
 
         int idx = offset + total;
         strncpy_s(eventos[idx].fecha, sizeof(eventos[idx].fecha),
@@ -171,7 +171,10 @@ void exportar_calendario_csv()
     fprintf(f, "fecha,tipo,titulo,detalle\n");
     for (int i = 0; i < total; i++)
     {
-        char fecha_limpio[64], tipo_limpio[32], titulo_limpio[512], detalle_limpio[512];
+        char fecha_limpio[64];
+        char tipo_limpio[32];
+        char titulo_limpio[512];
+        char detalle_limpio[512];
         sanitizar_ascii_basico(eventos[i].fecha, fecha_limpio, sizeof(fecha_limpio));
         sanitizar_ascii_basico(eventos[i].tipo, tipo_limpio, sizeof(tipo_limpio));
         sanitizar_ascii_basico(eventos[i].titulo, titulo_limpio, sizeof(titulo_limpio));

@@ -21,7 +21,9 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 static void configurar_reporte_automatico(void)
 {
-    char nombre[256], desc[1024], periodicidad[64];
+    char nombre[256];
+    char desc[1024];
+    char periodicidad[64];
     int habilitado;
 
     input_string("Nombre del reporte: ", nombre, sizeof(nombre));
@@ -117,7 +119,7 @@ static void generar_reporte_general_html(void)
     sqlite3_stmt *stmt;
 
     snprintf(filename, sizeof(filename), "reporte_general_%ld.html", (long)time(NULL));
-    char *base_path = get_export_path(filename);
+    char const *base_path = get_export_path(filename);
     strcpy_s(path, sizeof(path), base_path);
 
     FILE *f = NULL;
@@ -210,7 +212,7 @@ static void generar_reporte_rendimiento_txt(void)
     sqlite3_stmt *stmt;
 
     snprintf(filename, sizeof(filename), "rendimiento_%ld.txt", (long)time(NULL));
-    char *base_path = get_export_path(filename);
+    char const *base_path = get_export_path(filename);
     strcpy_s(path, sizeof(path), base_path);
 
     FILE *f = NULL;
@@ -297,10 +299,10 @@ static void menu_config_reportes(void)
 {
     MenuItem items[] =
     {
-        {1, "Configurar Reporte Automatico", configurar_reporte_automatico},
-        {2, "Listar Reportes Configurados", listar_reportes_config},
-        {3, "Habilitar Reporte", habilitar_reporte},
-        {4, "Deshabilitar Reporte", deshabilitar_reporte},
+        {1, "Configurar Reporte Automatico", &configurar_reporte_automatico},
+        {2, "Listar Reportes Configurados", &listar_reportes_config},
+        {3, "Habilitar Reporte", &habilitar_reporte},
+        {4, "Deshabilitar Reporte", &deshabilitar_reporte},
         {0, "Volver", NULL}
     };
     ejecutar_menu("CONFIGURACION DE REPORTES", items, 5);
@@ -310,8 +312,8 @@ static void menu_generar_reportes(void)
 {
     MenuItem items[] =
     {
-        {1, "Reporte General HTML", generar_reporte_general_html},
-        {2, "Reporte de Rendimiento TXT", generar_reporte_rendimiento_txt},
+        {1, "Reporte General HTML", &generar_reporte_general_html},
+        {2, "Reporte de Rendimiento TXT", &generar_reporte_rendimiento_txt},
         {0, "Volver", NULL}
     };
     ejecutar_menu("GENERAR REPORTES", items, 3);
@@ -321,9 +323,9 @@ void menu_reportes(void)
 {
     MenuItem items[] =
     {
-        {1, "Configurar Reportes", menu_config_reportes},
-        {2, "Generar Reportes", menu_generar_reportes},
-        {3, "Reportes Generados", listar_reportes_generados},
+        {1, "Configurar Reportes", &menu_config_reportes},
+        {2, "Generar Reportes", &menu_generar_reportes},
+        {3, "Reportes Generados", &listar_reportes_generados},
         {0, "Volver", NULL}
     };
     ejecutar_menu("REPORTES AUTOMATICOS", items, 4);

@@ -74,13 +74,13 @@ static int cargar_recordatorios(Reminder **out_arr, int *out_count)
 
     for (int i = 0; i < count; i++)
     {
-        cJSON *it = cJSON_GetArrayItem(root, i);
+        cJSON const *it = cJSON_GetArrayItem(root, i);
         if (it && cJSON_IsObject(it))
         {
-            cJSON *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
-            cJSON *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-            cJSON *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-            cJSON *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
+            cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
+            cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
+            cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
+            cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
 
             arr[i].id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : (long long)(i + 1);
             strncpy_s(arr[i].fecha, sizeof(arr[i].fecha),
@@ -127,7 +127,9 @@ void exportar_recordatorios_csv()
     fprintf(f, "id,fecha,tematica,nota\n");
     for (int i = 0; i < count; i++)
     {
-        char fecha_limpio[64], tema_limpio[64], nota_limpio[512];
+        char fecha_limpio[64];
+        char tema_limpio[64];
+        char nota_limpio[512];
         sanitizar_ascii_basico(arr[i].fecha, fecha_limpio, sizeof(fecha_limpio));
         sanitizar_ascii_basico(arr[i].tematica, tema_limpio, sizeof(tema_limpio));
         sanitizar_ascii_basico(arr[i].nota, nota_limpio, sizeof(nota_limpio));

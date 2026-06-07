@@ -155,14 +155,14 @@ static void zip_write_end(FILE *f, uint32_t cd_offset, uint32_t cd_size, uint16_
 static uint16_t dos_time_now(void)
 {
     time_t t = time(NULL);
-    struct tm *tm = localtime(&t);
+    struct tm const *tm = localtime(&t);
     return (uint16_t)((tm->tm_sec / 2) | (tm->tm_min << 5) | (tm->tm_hour << 11));
 }
 
 static uint16_t dos_date_now(void)
 {
     time_t t = time(NULL);
-    struct tm *tm = localtime(&t);
+    struct tm const *tm = localtime(&t);
     return (uint16_t)(tm->tm_mday | ((tm->tm_mon + 1) << 5) | ((tm->tm_year - 80) << 9));
 }
 
@@ -371,12 +371,12 @@ void menu_exportar_ods(void)
 {
     MenuItem items[] =
     {
-        {1, "Exportar Partidos a ODS", menu_exportar_partidos_ods_fn},
-        {2, "Exportar Equipos a ODS", menu_exportar_equipos_ods_fn},
-        {3, "Exportar Canchas a ODS", menu_exportar_canchas_ods_fn},
-        {4, "Exportar Camisetas a ODS", menu_exportar_camisetas_ods_fn},
-        {5, "Exportar Lesiones a ODS", menu_exportar_lesiones_ods_fn},
-        {6, "Exportar Torneos a ODS", menu_exportar_torneo_ods_fn},
+        {1, "Exportar Partidos a ODS", &menu_exportar_partidos_ods_fn},
+        {2, "Exportar Equipos a ODS", &menu_exportar_equipos_ods_fn},
+        {3, "Exportar Canchas a ODS", &menu_exportar_canchas_ods_fn},
+        {4, "Exportar Camisetas a ODS", &menu_exportar_camisetas_ods_fn},
+        {5, "Exportar Lesiones a ODS", &menu_exportar_lesiones_ods_fn},
+        {6, "Exportar Torneos a ODS", &menu_exportar_torneo_ods_fn},
         {0, "Volver", NULL}
     };
     ejecutar_menu("EXPORTAR A ODS", items, 7);
@@ -709,12 +709,12 @@ void menu_exportar_xlsx(void)
 {
     MenuItem items[] =
     {
-        {1, "Exportar Partidos a XLSX", menu_exportar_partidos_xlsx_fn},
-        {2, "Exportar Equipos a XLSX", menu_exportar_equipos_xlsx_fn},
-        {3, "Exportar Canchas a XLSX", menu_exportar_canchas_xlsx_fn},
-        {4, "Exportar Camisetas a XLSX", menu_exportar_camisetas_xlsx_fn},
-        {5, "Exportar Lesiones a XLSX", menu_exportar_lesiones_xlsx_fn},
-        {6, "Exportar Torneos a XLSX", menu_exportar_torneo_xlsx_fn},
+        {1, "Exportar Partidos a XLSX", &menu_exportar_partidos_xlsx_fn},
+        {2, "Exportar Equipos a XLSX", &menu_exportar_equipos_xlsx_fn},
+        {3, "Exportar Canchas a XLSX", &menu_exportar_canchas_xlsx_fn},
+        {4, "Exportar Camisetas a XLSX", &menu_exportar_camisetas_xlsx_fn},
+        {5, "Exportar Lesiones a XLSX", &menu_exportar_lesiones_xlsx_fn},
+        {6, "Exportar Torneos a XLSX", &menu_exportar_torneo_xlsx_fn},
         {0, "Volver", NULL}
     };
     ejecutar_menu("EXPORTAR A XLSX", items, 7);

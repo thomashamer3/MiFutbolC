@@ -662,7 +662,7 @@ static void import_recordatorios()
     free(newarr);
 }
 
-static int fecha_coincide_con_hoy(struct tm *tm_fecha)
+static int fecha_coincide_con_hoy(struct tm const *tm_fecha)
 {
     time_t now = time(NULL);
     struct tm tm_hoy;

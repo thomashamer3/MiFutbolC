@@ -99,7 +99,7 @@ void verificar_integridad_bd(void)
     pause_console();
 }
 
-void verificar_integrdiad_rapida(void)
+void verificar_integridad_rapida(void)
 {
     int errores = 0;
     app_log_event("INTEGRIDAD", "Iniciando quick_check");
@@ -303,12 +303,12 @@ void menu_integridad_bd(void)
 {
     MenuItem items[] =
     {
-        {1, "Verificar integridad", verificar_integridad_bd},
-        {2, "Verificacion rapida", verificar_integrdiad_rapida},
-        {3, "Reconstruir base de datos (VACUUM)", reconstruir_bd},
-        {4, "Analizar tablas (ANALYZE)", analizar_bd},
-        {5, "Reparar base de datos", reparar_bd},
-        {6, "Mostrar informacion de la BD", mostrar_info_bd},
+        {1, "Verificar integridad", &verificar_integridad_bd},
+        {2, "Verificacion rapida", &verificar_integridad_rapida},
+        {3, "Reconstruir base de datos (VACUUM)", &reconstruir_bd},
+        {4, "Analizar tablas (ANALYZE)", &analizar_bd},
+        {5, "Reparar base de datos", &reparar_bd},
+        {6, "Mostrar informacion de la BD", &mostrar_info_bd},
         {0, "Volver", NULL}
     };
     ejecutar_menu("INTEGRIDAD DE BASE DE DATOS", items, 7);

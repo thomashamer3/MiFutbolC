@@ -2758,7 +2758,7 @@ void menu_carrera_futbolistica(void)
         {13, "Estadisticas por Temporada", &mostrar_estadisticas_temporada_visual},
         {14, "Timeline de Hitos", &mostrar_timeline_hitos},
         {15, "Logros de Carrera", &mostrar_logros_carrera},
-        {16, "Entrenamiento y Progresion", menu_progresion},
+        {16, "Entrenamiento y Progresion", &menu_progresion},
         {0, "Volver", NULL}
     };
 

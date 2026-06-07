@@ -112,7 +112,11 @@ static void mostrar_progresion_atributos(int jugador_id)
 
     printf("\n=== PROGRESION DE ATRIBUTOS ===\n");
     int count = 0;
-    double prom_ataque = 0, prom_defensa = 0, prom_resistencia = 0, prom_velocidad = 0, prom_tecnica = 0;
+    double prom_ataque = 0;
+    double prom_defensa = 0;
+    double prom_resistencia = 0;
+    double prom_velocidad = 0;
+    double prom_tecnica = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW && count < 100)
     {

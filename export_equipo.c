@@ -127,7 +127,7 @@ static const char* posicion_to_text(int pos)
 static void posiciones_to_text(const char *posiciones_csv, char *out, size_t out_size)
 {
     char buffer[256];
-    char *token;
+    char const *token;
     int first = 1;
 
     strncpy_s(buffer, sizeof(buffer), posiciones_csv, _TRUNCATE);

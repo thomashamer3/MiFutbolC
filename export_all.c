@@ -690,7 +690,7 @@ void menu_exportar()
         {20, "Exportar Todo (CSV)", exportar_todo_csv},
         {21, "Informe Total PDF", exportar_informe_total_pdf},
         {22, "Exportar Todo (Markdown)", exportar_todo_md},
-        {23, "Exportar a XLSX", menu_exportar_xlsx},
+        {23, "Exportar a XLSX", &menu_exportar_xlsx},
         {0, "Volver", NULL}
     };
     ejecutar_menu("EXPORTAR DATOS", items, 24);

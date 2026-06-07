@@ -20,8 +20,10 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 static void crear_plan_entrenamiento(void)
 {
-    char nombre[256], desc[1024];
-    int duracion_semanas, sesiones_por_semana;
+    char nombre[256];
+    char desc[1024];
+    int duracion_semanas;
+    int sesiones_por_semana;
 
     input_string("Nombre del plan: ", nombre, sizeof(nombre));
     input_string("Descripcion: ", desc, sizeof(desc));
@@ -87,9 +89,9 @@ void menu_entrenamiento_plan(void)
 {
     MenuItem items[] =
     {
-        {1, "Crear Plan", crear_plan_entrenamiento},
-        {2, "Listar Planes", listar_planes_entrenamiento},
-        {3, "Eliminar Plan", eliminar_plan_entrenamiento},
+        {1, "Crear Plan", &crear_plan_entrenamiento},
+        {2, "Listar Planes", &listar_planes_entrenamiento},
+        {3, "Eliminar Plan", &eliminar_plan_entrenamiento},
         {0, "Volver", NULL}
     };
     ejecutar_menu("PLANES DE ENTRENAMIENTO", items, 4);
@@ -97,8 +99,14 @@ void menu_entrenamiento_plan(void)
 
 static void registrar_progresion(void)
 {
-    int jugador_id, plan_id, semana;
-    int ataque, defensa, resistencia, velocidad, tecnica;
+    int jugador_id;
+    int plan_id;
+    int semana;
+    int ataque;
+    int defensa;
+    int resistencia;
+    int velocidad;
+    int tecnica;
 
     jugador_id = input_int("ID del jugador: ");
     plan_id = input_int("ID del plan: ");
@@ -141,8 +149,11 @@ static void ver_progresion_jugador(void)
     mostrar_pantalla("PROGRESION DEL JUGADOR");
 
     int count = 0;
-    double valores_ataque[256], valores_defensa[256], valores_resistencia[256];
-    double valores_velocidad[256], valores_tecnica[256];
+    double valores_ataque[256];
+    double valores_defensa[256];
+    double valores_resistencia[256];
+    double valores_velocidad[256];
+    double valores_tecnica[256];
     int semanas_vals[256];
 
     while (sqlite3_step(stmt) == SQLITE_ROW && count < 256)
@@ -233,9 +244,9 @@ void menu_progresion_jugador(void)
 {
     MenuItem items[] =
     {
-        {1, "Registrar Progresion", registrar_progresion},
-        {2, "Ver Progresion de Jugador", ver_progresion_jugador},
-        {3, "Listar Progresiones", listar_progresiones},
+        {1, "Registrar Progresion", &registrar_progresion},
+        {2, "Ver Progresion de Jugador", &ver_progresion_jugador},
+        {3, "Listar Progresiones", &listar_progresiones},
         {0, "Volver", NULL}
     };
     ejecutar_menu("PROGRESION DE JUGADOR", items, 4);
@@ -245,8 +256,8 @@ void menu_progresion(void)
 {
     MenuItem items[] =
     {
-        {1, "Planes de Entrenamiento", menu_entrenamiento_plan},
-        {2, "Progresion de Jugador", menu_progresion_jugador},
+        {1, "Planes de Entrenamiento", &menu_entrenamiento_plan},
+        {2, "Progresion de Jugador", &menu_progresion_jugador},
         {0, "Volver", NULL}
     };
     ejecutar_menu("ENTRENAMIENTO Y PROGRESION", items, 3);

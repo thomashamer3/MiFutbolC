@@ -26,7 +26,8 @@ static void agregar_notificacion(const char *tipo, const char *mensaje)
 
 static void crear_notificacion(void)
 {
-    char tipo[64], mensaje[1024];
+    char tipo[64];
+    char mensaje[1024];
     input_string("Tipo (lesion/finanza/torneo/cumpleanos/general): ", tipo, sizeof(tipo));
     input_string("Mensaje: ", mensaje, sizeof(mensaje));
     agregar_notificacion(tipo, mensaje);
@@ -225,7 +226,9 @@ static void cumpleanos_jugadores(void)
     {
         const char *fnac = (const char*)sqlite3_column_text(stmt, 1);
         if (!fnac) continue;
-        int anio, mes, dia;
+        int anio;
+        int mes;
+        int dia;
         if (sscanf_s(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2)
         {
             if (mes == mes_actual)
@@ -247,16 +250,16 @@ void menu_notificaciones(void)
 {
     MenuItem items[] =
     {
-        {1, "Todas las Notificaciones", listar_todas},
-        {2, "No Leidas", listar_no_leidas},
-        {3, "Crear Notificacion", crear_notificacion},
-        {4, "Marcar como Leida", marcar_leida},
-        {5, "Marcar Todas como Leidas", marcar_todas_leidas},
-        {6, "Eliminar Notificacion", eliminar_notificacion},
-        {7, "Alertas de Lesiones", alertas_lesiones},
-        {8, "Alertas Financieras", alertas_financieras},
-        {9, "Torneos por Vencer", torneos_por_vencer},
-        {10, "Cumpleanos de Jugadores", cumpleanos_jugadores},
+        {1, "Todas las Notificaciones", &listar_todas},
+        {2, "No Leidas", &listar_no_leidas},
+        {3, "Crear Notificacion", &crear_notificacion},
+        {4, "Marcar como Leida", &marcar_leida},
+        {5, "Marcar Todas como Leidas", &marcar_todas_leidas},
+        {6, "Eliminar Notificacion", &eliminar_notificacion},
+        {7, "Alertas de Lesiones", &alertas_lesiones},
+        {8, "Alertas Financieras", &alertas_financieras},
+        {9, "Torneos por Vencer", &torneos_por_vencer},
+        {10, "Cumpleanos de Jugadores", &cumpleanos_jugadores},
         {0, "Volver", NULL}
     };
     ejecutar_menu("NOTIFICACIONES", items, 11);

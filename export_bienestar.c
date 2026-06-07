@@ -136,8 +136,11 @@ static void write_csv_header(FILE *f, void *context)
 static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
-    char tipo_limpio[64], nombre_limpio[256], desc_limpio[256];
-    char fecha_limpio[64], valor_limpio[64];
+    char tipo_limpio[64];
+    char nombre_limpio[256];
+    char desc_limpio[256];
+    char fecha_limpio[64];
+    char valor_limpio[64];
     sanitizar_ascii_basico((const char*)sqlite3_column_text(stmt, 0), tipo_limpio, sizeof(tipo_limpio));
     sanitizar_ascii_basico((const char*)sqlite3_column_text(stmt, 1), nombre_limpio, sizeof(nombre_limpio));
     sanitizar_ascii_basico((const char*)sqlite3_column_text(stmt, 2), desc_limpio, sizeof(desc_limpio));
@@ -167,7 +170,7 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
             sqlite3_column_text(stmt, 4));
 }
 
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_json_row(FILE const *f, sqlite3_stmt *stmt, void *context)
 {
     (void)f;
     cJSON *root = (cJSON *)context;

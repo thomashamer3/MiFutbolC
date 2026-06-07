@@ -1188,7 +1188,8 @@ void ingresar_resultado(int torneo_id)
     int goles2 = input_int("Goles del equipo visitante: ");
 
     // Get equipo IDs for the match
-    int equipo1_id = 0, equipo2_id = 0;
+    int equipo1_id = 0;
+    int equipo2_id = 0;
     const char *sql_get = "SELECT equipo1_id, equipo2_id FROM partido_torneo WHERE id = ? AND torneo_id = ?;";
     if (preparar_stmt(sql_get, &stmt))
     {
@@ -1243,7 +1244,10 @@ void actualizar_tabla_posiciones(int torneo_id, int equipo1_id, int equipo2_id, 
         int eid = ids[i];
         int gf = goles[i];
         int gc = goles[1 - i];
-        int pg = 0, pe = 0, pp = 0, pts = 0;
+        int pg = 0;
+        int pe = 0;
+        int pp = 0;
+        int pts = 0;
 
         if (gf > gc)
         {
@@ -1722,7 +1726,8 @@ void actualizar_fase_torneo(int torneo_id, int equipo1_id, int equipo2_id, int g
     if (tipo_torneo != ELIMINACION_DIRECTA) return;
 
     // Determine winner
-    int winner_id = 0, loser_id = 0;
+    int winner_id = 0;
+    int loser_id = 0;
     if (goles1 > goles2)
     {
         winner_id = equipo1_id;

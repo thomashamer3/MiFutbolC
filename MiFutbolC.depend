@@ -199,7 +199,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
 
-1780598585 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.c
+1780794133 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.c
 	"estadisticas.h"
 	"estadisticas_generales.h"
 	"estadisticas_mes.h"
@@ -283,7 +283,7 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1780556516 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1780794160 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
 	"export_all_mejorado.h"
 	"export.h"
@@ -600,7 +600,7 @@
 
 1777490511 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.h
 
-1780598568 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
+1780794050 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipo.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -2442,7 +2442,7 @@
 	<time.h>
 	<wchar.h>
 
-1780598602 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
+1780793952 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
 	"carrera.h"
 	"db.h"
 	"utils.h"
@@ -2736,9 +2736,8 @@
 	<bcrypt.h>
 	<unistd.h>
 
-1780788093 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.c
+1780795418 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.c
 	"ascii_charts.h"
-	"compat_port.h"
 	"utils.h"
 	<stddef.h>
 	<stdio.h>
@@ -2746,7 +2745,7 @@
 
 1780553070 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.h
 
-1780555176 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
+1780793715 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
 	"backup.h"
 	"db.h"
 	"utils.h"
@@ -2765,7 +2764,7 @@
 
 1780553743 d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.h
 
-1780553069 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db_integridad.c
+1780795558 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db_integridad.c
 	"db_integridad.h"
 	"menu.h"
 	"db.h"
@@ -2805,7 +2804,7 @@
 	"direct.h"
 	<string.h>
 
-1780690567 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_calendario.c
+1780793821 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_calendario.c
 	"export.h"
 	"db.h"
 	"utils.h"

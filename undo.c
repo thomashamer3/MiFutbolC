@@ -194,7 +194,7 @@ static int restaurar_desde_snapshot(const UndoEntry *entry)
         return 0;
     }
 
-    cJSON *id_item = cJSON_GetObjectItem(json, "id");
+    cJSON const *id_item = cJSON_GetObjectItem(json, "id");
     int record_id = (id_item && cJSON_IsNumber(id_item)) ? (int)id_item->valuedouble : entry->registro_id;
 
     if (entry->tipo == UNDO_CREATE)
@@ -271,7 +271,7 @@ static int restaurar_desde_snapshot(const UndoEntry *entry)
         }
         else
         {
-            cJSON *val = cJSON_GetObjectItem(json, columnas[i]);
+            cJSON const *val = cJSON_GetObjectItem(json, columnas[i]);
             col_tiene_valor[i] = (val != NULL) ? 1 : 0;
             if (col_tiene_valor[i])
             {
@@ -360,7 +360,7 @@ static int restaurar_desde_snapshot(const UndoEntry *entry)
             continue;
         }
 
-        cJSON *val = cJSON_GetObjectItem(json, columnas[i]);
+        cJSON const *val = cJSON_GetObjectItem(json, columnas[i]);
         if (!val)
         {
             continue;
@@ -705,7 +705,7 @@ void undo_guardar(void)
 
     for (int i = 0; i < undo_count; i++)
     {
-        UndoEntry *entry = &undo_history[i];
+        UndoEntry const *entry = &undo_history[i];
 
         cJSON *obj = cJSON_CreateObject();
         cJSON_AddNumberToObject(obj, "id", entry->id);
@@ -794,7 +794,7 @@ void undo_cargar(void)
     int count = cJSON_GetArraySize(array);
     for (int i = 0; i < count && undo_count < MAX_UNDO_HISTORY; i++)
     {
-        cJSON *obj = cJSON_GetArrayItem(array, i);
+        cJSON const *obj = cJSON_GetArrayItem(array, i);
         if (!obj)
         {
             continue;
@@ -803,41 +803,41 @@ void undo_cargar(void)
         UndoEntry *entry = &undo_history[undo_count];
         memset(entry, 0, sizeof(UndoEntry));
 
-        cJSON *id_val = cJSON_GetObjectItem(obj, "id");
+        cJSON const *id_val = cJSON_GetObjectItem(obj, "id");
         entry->id = (id_val && cJSON_IsNumber(id_val)) ? (int)id_val->valuedouble : undo_next_id;
 
-        cJSON *tipo_val = cJSON_GetObjectItem(obj, "tipo");
+        cJSON const *tipo_val = cJSON_GetObjectItem(obj, "tipo");
         entry->tipo = (tipo_val && cJSON_IsNumber(tipo_val)) ?
                       (UndoOperationType)(int)tipo_val->valuedouble : UNDO_CREATE;
 
-        cJSON *tabla_val = cJSON_GetObjectItem(obj, "tabla");
+        cJSON const *tabla_val = cJSON_GetObjectItem(obj, "tabla");
         if (tabla_val && cJSON_IsString(tabla_val))
         {
             strncpy_s(entry->tabla, sizeof(entry->tabla), tabla_val->valuestring, _TRUNCATE);
         }
 
-        cJSON *rid_val = cJSON_GetObjectItem(obj, "registro_id");
+        cJSON const *rid_val = cJSON_GetObjectItem(obj, "registro_id");
         entry->registro_id = (rid_val && cJSON_IsNumber(rid_val)) ? (int)rid_val->valuedouble : 0;
 
-        cJSON *desc_val = cJSON_GetObjectItem(obj, "descripcion");
+        cJSON const *desc_val = cJSON_GetObjectItem(obj, "descripcion");
         if (desc_val && cJSON_IsString(desc_val))
         {
             strncpy_s(entry->descripcion, sizeof(entry->descripcion), desc_val->valuestring, _TRUNCATE);
         }
 
-        cJSON *sb_val = cJSON_GetObjectItem(obj, "snapshot_before");
+        cJSON const *sb_val = cJSON_GetObjectItem(obj, "snapshot_before");
         if (sb_val && cJSON_IsString(sb_val))
         {
             strncpy_s(entry->snapshot_before, sizeof(entry->snapshot_before), sb_val->valuestring, _TRUNCATE);
         }
 
-        cJSON *sa_val = cJSON_GetObjectItem(obj, "snapshot_after");
+        cJSON const *sa_val = cJSON_GetObjectItem(obj, "snapshot_after");
         if (sa_val && cJSON_IsString(sa_val))
         {
             strncpy_s(entry->snapshot_after, sizeof(entry->snapshot_after), sa_val->valuestring, _TRUNCATE);
         }
 
-        cJSON *ts_val = cJSON_GetObjectItem(obj, "timestamp");
+        cJSON const *ts_val = cJSON_GetObjectItem(obj, "timestamp");
         if (ts_val && cJSON_IsString(ts_val))
         {
             strncpy_s(entry->timestamp, sizeof(entry->timestamp), ts_val->valuestring, _TRUNCATE);
