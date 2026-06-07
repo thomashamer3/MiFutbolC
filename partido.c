@@ -1799,33 +1799,17 @@ static int secure_rand(int max)
     return (int)(((unsigned int)(time(NULL) ^ clock())) % max);
 }
 
-static int cancha_esta_activa(int cancha_id)
+static int entidad_esta_activa(const char *tabla, int id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT IFNULL(activa, 1) FROM cancha WHERE id = ?",
-                       &stmt))
+    char sql[128];
+    snprintf(sql, sizeof(sql),
+             "SELECT IFNULL(activa, 1) FROM %s WHERE id = ?", tabla);
+    if (!preparar_stmt(sql, &stmt))
     {
         return 0;
     }
-    sqlite3_bind_int(stmt, 1, cancha_id);
-    int activa = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        activa = sqlite3_column_int(stmt, 0) == 1;
-    }
-    sqlite3_finalize(stmt);
-    return activa;
-}
-
-static int camiseta_esta_activa(int camiseta_id)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT IFNULL(activa, 1) FROM camiseta WHERE id = ?",
-                       &stmt))
-    {
-        return 0;
-    }
-    sqlite3_bind_int(stmt, 1, camiseta_id);
+    sqlite3_bind_int(stmt, 1, id);
     int activa = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -1875,54 +1859,42 @@ static int verificar_prerrequisitos_partido()
     return 1;
 }
 
-static void listar_canchas_disponibles()
+static void listar_entidades_disponibles(const char *tabla,
+        const char *titulo)
 {
-    ui_printf_centered_line("Canchas disponibles:");
-    sqlite3_stmt *stmt_canchas;
-    if (!preparar_stmt("SELECT id, nombre FROM cancha WHERE IFNULL(activa, 1) = "
-                       "1 ORDER BY id",
-                       &stmt_canchas))
+    ui_printf_centered_line("%s:", titulo);
+    sqlite3_stmt *stmt;
+    char sql[256];
+    snprintf(sql, sizeof(sql),
+             "SELECT id, nombre FROM %s WHERE IFNULL(activa, 1) = 1 ORDER BY id",
+             tabla);
+    if (!preparar_stmt(sql, &stmt))
     {
         return;
     }
-    while (sqlite3_step(stmt_canchas) == SQLITE_ROW)
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt_canchas, 0),
-                                sqlite3_column_text(stmt_canchas, 1));
+        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt, 0),
+                                sqlite3_column_text(stmt, 1));
     }
-    sqlite3_finalize(stmt_canchas);
+    sqlite3_finalize(stmt);
 }
 
-static void listar_camisetas_disponibles()
+static void listar_canchas_disponibles(void)
 {
-    ui_printf_centered_line("Camisetas disponibles:");
-    sqlite3_stmt *stmt_camisetas;
-    if (!preparar_stmt("SELECT id, nombre FROM camiseta WHERE IFNULL(activa, 1) "
-                       "= 1 ORDER BY id",
-                       &stmt_camisetas))
-    {
-        return;
-    }
-    while (sqlite3_step(stmt_camisetas) == SQLITE_ROW)
-    {
-        ui_printf_centered_line("%d | %s", sqlite3_column_int(stmt_camisetas, 0),
-                                sqlite3_column_text(stmt_camisetas, 1));
-    }
-    sqlite3_finalize(stmt_camisetas);
+    listar_entidades_disponibles("cancha", "Canchas disponibles");
 }
 
-/* Muestra el listado de canchas con la opcion "Nueva Cancha" al final */
-static void listar_canchas_con_nueva()
+static void listar_camisetas_disponibles(void)
 {
-    listar_canchas_disponibles();
-    ui_printf_centered_line("-1 | [+ Nueva Cancha]");
+    listar_entidades_disponibles("camiseta", "Camisetas disponibles");
 }
 
-/* Muestra el listado de camisetas con la opcion "Nueva Camiseta" al final */
-static void listar_camisetas_con_nueva()
+static void listar_entidades_con_nueva(const char *tabla, const char *titulo,
+                                       const char *etiqueta_nueva)
 {
-    listar_camisetas_disponibles();
-    ui_printf_centered_line("-1 | [+ Nueva Camiseta]");
+    listar_entidades_disponibles(tabla, titulo);
+    ui_printf_centered_line("-1 | [+ %s]", etiqueta_nueva);
 }
 
 static int crear_entidad_inline(const char *tabla, const char *prompt_nombre,
@@ -2006,12 +1978,13 @@ static int pedir_cancha_o_nueva(int permite_cancelar)
             if (nuevo_id > 0)
                 return nuevo_id;
             /* Si fallo volver a mostrar lista */
-            listar_canchas_con_nueva();
+            listar_entidades_con_nueva("cancha", "Canchas disponibles",
+                                       "Nueva Cancha");
             continue;
         }
         if (existe_id("cancha", id))
         {
-            if (cancha_esta_activa(id))
+            if (entidad_esta_activa("cancha", id))
                 return id;
 
             printf("La cancha esta inactiva. Seleccione una cancha activa o cree una "
@@ -2033,12 +2006,13 @@ static int pedir_camiseta_o_nueva(void)
             int nuevo_id = crear_camiseta_inline();
             if (nuevo_id > 0)
                 return nuevo_id;
-            listar_camisetas_con_nueva();
+            listar_entidades_con_nueva("camiseta", "Camisetas disponibles",
+                                       "Nueva Camiseta");
             continue;
         }
         if (existe_id("camiseta", id))
         {
-            if (camiseta_esta_activa(id))
+            if (entidad_esta_activa("camiseta", id))
                 return id;
 
             printf("La camiseta esta inactiva. Seleccione una camiseta activa o cree "
@@ -2674,7 +2648,8 @@ static int recopilar_datos_partido_base(DatosPartido *datos,
 
     inicializar_datos_partido(datos);
 
-    listar_canchas_con_nueva();
+    listar_entidades_con_nueva("cancha", "Canchas disponibles",
+                               "Nueva Cancha");
     datos->cancha_id = pedir_cancha_o_nueva(1);
     if (datos->cancha_id == 0)
     {
@@ -2727,7 +2702,8 @@ static int recopilar_datos_partido_base(DatosPartido *datos,
         datos->resultado = 0;
     }
 
-    listar_camisetas_con_nueva();
+    listar_entidades_con_nueva("camiseta", "Camisetas disponibles",
+                               "Nueva Camiseta");
     datos->camiseta = pedir_camiseta_o_nueva();
     datos->rendimiento_general =
         pedir_entero_en_rango("Rendimiento general (1-10): ", 1, 10,
@@ -3403,7 +3379,7 @@ static void modificar_cancha_partido()
         cancha = input_int("Nuevo ID Cancha (0 para cancelar): ");
         if (cancha == 0)
             return;
-        if (existe_id("cancha", cancha) && cancha_esta_activa(cancha))
+        if (existe_id("cancha", cancha) && entidad_esta_activa("cancha", cancha))
             break;
         printf("La cancha no existe o esta inactiva. Intente nuevamente.\n");
     }
@@ -3473,7 +3449,7 @@ static void modificar_camiseta_partido()
 {
     listar_camisetas_disponibles();
     int camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", camiseta) || !camiseta_esta_activa(camiseta))
+    if (!existe_id("camiseta", camiseta) || !entidad_esta_activa("camiseta", camiseta))
     {
         printf("La camiseta no existe o esta inactiva\n");
         return;
@@ -4014,7 +3990,7 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     listar_canchas_disponibles();
     datos->cancha_id = input_int("Nuevo ID Cancha: ");
     if (!existe_id("cancha", datos->cancha_id) ||
-            !cancha_esta_activa(datos->cancha_id))
+            !entidad_esta_activa("cancha", datos->cancha_id))
     {
         printf("La cancha no existe o esta inactiva\n");
         return 0;
@@ -4060,7 +4036,7 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     listar_camisetas_disponibles();
     datos->camiseta = input_int("Nuevo ID camiseta: ");
     if (!existe_id("camiseta", datos->camiseta) ||
-            !camiseta_esta_activa(datos->camiseta))
+            !entidad_esta_activa("camiseta", datos->camiseta))
     {
         printf("La camiseta no existe o esta inactiva\n");
         return 0;
@@ -4268,63 +4244,31 @@ void buscar_partidos()
     ejecutar_menu("BUSQUEDA DE PARTIDOS", items, 6);
 }
 
-static void manejar_gol_local(Equipo const *equipo_local, int minuto,
-                              int jugador_idx, int asistente_idx,
-                              int *estadisticas_local, int *asistencias_local,
-                              int *goles_local)
+static void manejar_gol(Equipo const *equipo, int minuto,
+                        int jugador_idx, int asistente_idx,
+                        int *estadisticas, int *asistencias, int *goles)
 {
-    if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
+    if (asistente_idx == jugador_idx && equipo->num_jugadores > 1)
     {
-        asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
+        asistente_idx = (asistente_idx + 1) % equipo->num_jugadores;
     }
 
-    (*goles_local)++;
-    estadisticas_local[jugador_idx]++;
+    (*goles)++;
+    estadisticas[jugador_idx]++;
     if (asistente_idx != jugador_idx)
     {
-        asistencias_local[asistente_idx]++;
+        asistencias[asistente_idx]++;
     }
 
     printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
     printf("   Gol de %s (%d) para %s\n",
-           equipo_local->jugadores[jugador_idx].nombre,
-           equipo_local->jugadores[jugador_idx].numero, equipo_local->nombre);
+           equipo->jugadores[jugador_idx].nombre,
+           equipo->jugadores[jugador_idx].numero, equipo->nombre);
     if (asistente_idx != jugador_idx)
     {
         printf("   Asistencia de %s (%d)\n",
-               equipo_local->jugadores[asistente_idx].nombre,
-               equipo_local->jugadores[asistente_idx].numero);
-    }
-}
-
-static void manejar_gol_visitante(Equipo const *equipo_visitante, int minuto,
-                                  int jugador_idx, int asistente_idx,
-                                  int *estadisticas_visitante,
-                                  int *asistencias_visitante,
-                                  int *goles_visitante)
-{
-    if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
-    {
-        asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
-    }
-
-    (*goles_visitante)++;
-    estadisticas_visitante[jugador_idx]++;
-    if (asistente_idx != jugador_idx)
-    {
-        asistencias_visitante[asistente_idx]++;
-    }
-
-    printf("*** ¡GOOOOL! Minuto %d ***\n", minuto);
-    printf("   Gol de %s (%d) para %s\n",
-           equipo_visitante->jugadores[jugador_idx].nombre,
-           equipo_visitante->jugadores[jugador_idx].numero,
-           equipo_visitante->nombre);
-    if (asistente_idx != jugador_idx)
-    {
-        printf("   Asistencia de %s (%d)\n",
-               equipo_visitante->jugadores[asistente_idx].nombre,
-               equipo_visitante->jugadores[asistente_idx].numero);
+               equipo->jugadores[asistente_idx].nombre,
+               equipo->jugadores[asistente_idx].numero);
     }
 }
 
@@ -4473,29 +4417,21 @@ static void simular_partido_logica(Equipo const *equipo_local,
         {
             int jugador_idx = secure_rand(equipo_local->num_jugadores);
             int asistente_idx = secure_rand(equipo_local->num_jugadores);
-            if (asistente_idx == jugador_idx && equipo_local->num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_local->num_jugadores;
-            }
 
-            manejar_gol_local(equipo_local, minuto, jugador_idx, asistente_idx,
-                              estadisticas->estadisticas_local,
-                              estadisticas->asistencias_local,
-                              &estadisticas->goles_local);
+            manejar_gol(equipo_local, minuto, jugador_idx, asistente_idx,
+                        estadisticas->estadisticas_local,
+                        estadisticas->asistencias_local,
+                        &estadisticas->goles_local);
         }
         else if (evento < 50)   // Gol visitante
         {
             int jugador_idx = secure_rand(equipo_visitante->num_jugadores);
             int asistente_idx = secure_rand(equipo_visitante->num_jugadores);
-            if (asistente_idx == jugador_idx && equipo_visitante->num_jugadores > 1)
-            {
-                asistente_idx = (asistente_idx + 1) % equipo_visitante->num_jugadores;
-            }
 
-            manejar_gol_visitante(equipo_visitante, minuto, jugador_idx,
-                                  asistente_idx, estadisticas->estadisticas_visitante,
-                                  estadisticas->asistencias_visitante,
-                                  &estadisticas->goles_visitante);
+            manejar_gol(equipo_visitante, minuto, jugador_idx, asistente_idx,
+                        estadisticas->estadisticas_visitante,
+                        estadisticas->asistencias_visitante,
+                        &estadisticas->goles_visitante);
         }
         else if (evento < 70)
         {

@@ -173,7 +173,7 @@
 
 1774966394 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1780803443 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1780861339 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"ascii_art.h"
 	"camiseta.h"
 	"db.h"
@@ -2894,13 +2894,13 @@
 	"direct.h"
 	<string.h>
 
-1780859387 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\formaciones.c
+1780861607 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\formaciones.c
 	"formaciones.h"
-	"db.h"
-	"utils.h"
-	"menu.h"
 	"ascii_charts.h"
+	"db.h"
 	"export.h"
+	"menu.h"
+	"utils.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>

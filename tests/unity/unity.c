@@ -2081,7 +2081,7 @@ static enum UnityLengthModifier UnityLengthModifierGet(const char *pch, int *len
  *-----------------------------------------------*/
 static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_mod, va_list va)
 {
-    va_list va_mut;
+    va_list va_mut; /* NOSONAR - S995: va_list is char* on this platform, must be mutable for va_arg */
     va_copy(va_mut, va);
 
     switch (*pch)

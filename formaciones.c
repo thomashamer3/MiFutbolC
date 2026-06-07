@@ -1,16 +1,16 @@
 #include "formaciones.h"
-#include "db.h"
-#include "utils.h"
-#include "menu.h"
 #include "ascii_charts.h"
+#include "db.h"
 #include "export.h"
+#include "menu.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define RES_VICTORIA 1
-#define RES_EMPATE   2
-#define RES_DERROTA  3
+#define RES_EMPATE 2
+#define RES_DERROTA 3
 
 static int preparar_stmt_formaciones(sqlite3_stmt **stmt, const char *sql)
 {
@@ -19,26 +19,37 @@ static int preparar_stmt_formaciones(sqlite3_stmt **stmt, const char *sql)
 
 static const char *formato_a_nombre_corto(const char *formato)
 {
-    if (!formato || formato[0] == '\0') return "N/A";
-    if (strcmp(formato, "Futbol 5") == 0)  return "F5";
-    if (strcmp(formato, "Futbol 7") == 0)  return "F7";
-    if (strcmp(formato, "Futbol 8") == 0)  return "F8";
-    if (strcmp(formato, "Futbol 11") == 0) return "F11";
+    if (!formato || formato[0] == '\0')
+        return "N/A";
+    if (strcmp(formato, "Futbol 5") == 0)
+        return "F5";
+    if (strcmp(formato, "Futbol 7") == 0)
+        return "F7";
+    if (strcmp(formato, "Futbol 8") == 0)
+        return "F8";
+    if (strcmp(formato, "Futbol 11") == 0)
+        return "F11";
     return formato;
 }
 
 typedef struct
 {
     const char *formato;
-    int total, v, e, d;
-    double goles, rend, pct_v;
+    int total;
+    int v;
+    int e;
+    int d;
+    double goles;
+    double rend;
+    double pct_v;
 } FormacionRow;
 
 static int formaciones_tienen_datos()
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_formaciones(&stmt,
-                                   "SELECT COUNT(*) FROM partido WHERE formato_partido IS NOT NULL AND formato_partido != ''"))
+    if (!preparar_stmt_formaciones(
+                &stmt, "SELECT COUNT(*) FROM partido WHERE formato_partido IS NOT "
+                "NULL AND formato_partido != ''"))
         return 0;
     int count = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -51,11 +62,11 @@ static void leer_fila_formacion(sqlite3_stmt *stmt, FormacionRow *r)
 {
     r->formato = (const char *)sqlite3_column_text(stmt, 0);
     r->total = sqlite3_column_int(stmt, 1);
-    r->v     = sqlite3_column_int(stmt, 2);
-    r->e     = sqlite3_column_int(stmt, 3);
-    r->d     = sqlite3_column_int(stmt, 4);
+    r->v = sqlite3_column_int(stmt, 2);
+    r->e = sqlite3_column_int(stmt, 3);
+    r->d = sqlite3_column_int(stmt, 4);
     r->goles = sqlite3_column_double(stmt, 5);
-    r->rend  = sqlite3_column_double(stmt, 6);
+    r->rend = sqlite3_column_double(stmt, 6);
     r->pct_v = r->total > 0 ? (r->v * 100.0 / r->total) : 0.0;
 }
 
@@ -70,21 +81,21 @@ static int verificar_datos_formacion(void)
     return 1;
 }
 
-#define SQL_FORMACION_BASE \
-    "SELECT p.formato_partido, " \
-    "  COUNT(*), " \
-    "  SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), " \
-    "  SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), " \
-    "  SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), " \
-    "  AVG(CAST(p.goles AS REAL)), " \
-    "  AVG(CAST(p.rendimiento_general AS REAL)) " \
-    "FROM partido p " \
-    "WHERE p.formato_partido IS NOT NULL AND p.formato_partido != '' "
+#define SQL_FORMACION_BASE                                                     \
+  "SELECT p.formato_partido, "                                                 \
+  "  COUNT(*), "                                                               \
+  "  SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), "                       \
+  "  SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), "                       \
+  "  SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), "                       \
+  "  AVG(CAST(p.goles AS REAL)), "                                             \
+  "  AVG(CAST(p.rendimiento_general AS REAL)) "                                \
+  "FROM partido p "                                                            \
+  "WHERE p.formato_partido IS NOT NULL AND p.formato_partido != '' "
 
 static void imprimir_cabecera_formacion(void)
 {
-    ui_printf("%-12s %6s %6s %6s %6s %8s %10s %10s\n",
-              "Formacion", "PJ", "V", "E", "D", "V%", "Goles", "Rend.");
+    ui_printf("%-12s %6s %6s %6s %6s %8s %10s %10s\n", "Formacion", "PJ", "V",
+              "E", "D", "V%", "Goles", "Rend.");
 }
 
 static int preparar_y_ejecutar(const char *sql, sqlite3_stmt **stmt)
@@ -101,11 +112,15 @@ static int preparar_y_ejecutar(const char *sql, sqlite3_stmt **stmt)
 void mostrar_efectividad_por_formacion()
 {
     mostrar_pantalla("EFECTIVIDAD POR FORMACION");
-    if (!verificar_datos_formacion()) return;
+    if (!verificar_datos_formacion())
+        return;
 
     sqlite3_stmt *stmt;
-    if (!preparar_y_ejecutar(SQL_FORMACION_BASE "GROUP BY p.formato_partido ORDER BY p.formato_partido",
-                             &stmt)) return;
+    if (!preparar_y_ejecutar(
+                SQL_FORMACION_BASE
+                "GROUP BY p.formato_partido ORDER BY p.formato_partido",
+                &stmt))
+        return;
 
     imprimir_cabecera_formacion();
     FormacionRow r;
@@ -116,8 +131,8 @@ void mostrar_efectividad_por_formacion()
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         leer_fila_formacion(stmt, &r);
-        ui_printf("%-12s %6d %6d %6d %6d %7.1f%% %8.2f %10.2f\n",
-                  r.formato, r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
+        ui_printf("%-12s %6d %6d %6d %6d %7.1f%% %8.2f %10.2f\n", r.formato,
+                  r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
         if (idx < 4)
         {
             valores[idx] = r.pct_v;
@@ -128,8 +143,8 @@ void mostrar_efectividad_por_formacion()
     sqlite3_finalize(stmt);
 
     if (idx > 0)
-        dibujar_grafico_barras(valores, etiquetas, idx,
-                               "% Victorias por Formacion", 20);
+        dibujar_grafico_barras(valores, etiquetas, idx, "% Victorias por Formacion",
+                               20);
     pause_console();
 }
 
@@ -143,8 +158,10 @@ void mostrar_mejor_formacion_por_cancha(int cancha_id)
     if (!preparar_y_ejecutar(SQL_FORMACION_BASE
                              "AND p.cancha_id = ? "
                              "GROUP BY p.formato_partido "
-                             "ORDER BY SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) * 1.0 / COUNT(*) DESC",
-                             &stmt)) return;
+                             "ORDER BY SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE "
+                             "0 END) * 1.0 / COUNT(*) DESC",
+                             &stmt))
+        return;
 
     sqlite3_bind_int(stmt, 1, cancha_id);
 
@@ -161,8 +178,8 @@ void mostrar_mejor_formacion_por_cancha(int cancha_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         leer_fila_formacion(stmt, &r);
-        ui_printf("%-12s %6d %6d %6d %6d %7.1f%% %8.2f %10.2f\n",
-                  r.formato, r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
+        ui_printf("%-12s %6d %6d %6d %6d %7.1f%% %8.2f %10.2f\n", r.formato,
+                  r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
 
         if (r.total > 0 && r.pct_v > mejor_pct)
         {
@@ -190,8 +207,8 @@ void mostrar_mejor_formacion_por_cancha(int cancha_id)
         ui_printf("\nMejor formacion para esta cancha: %s (%.1f%% victorias)\n",
                   mejor_formacion, mejor_pct);
     if (idx > 0)
-        dibujar_grafico_barras(valores, etiquetas, idx,
-                               "% Victorias por Formacion", 20);
+        dibujar_grafico_barras(valores, etiquetas, idx, "% Victorias por Formacion",
+                               20);
     pause_console();
 }
 
@@ -207,25 +224,26 @@ void mostrar_tendencia_formaciones()
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_formaciones(&stmt,
-                                   "SELECT SUBSTR(p.fecha_hora, 1, 7) AS mes, "
-                                   "  p.formato_partido, "
-                                   "  COUNT(*), "
-                                   "  AVG(CAST(p.rendimiento_general AS REAL)), "
-                                   "  AVG(CAST(p.goles AS REAL)) "
-                                   "FROM partido p "
-                                   "WHERE p.formato_partido IS NOT NULL AND p.formato_partido != '' "
-                                   "  AND p.fecha_hora IS NOT NULL "
-                                   "GROUP BY mes, p.formato_partido "
-                                   "ORDER BY mes ASC, p.formato_partido"))
+    if (!preparar_stmt_formaciones(
+                &stmt,
+                "SELECT SUBSTR(p.fecha_hora, 1, 7) AS mes, "
+                "  p.formato_partido, "
+                "  COUNT(*), "
+                "  AVG(CAST(p.rendimiento_general AS REAL)), "
+                "  AVG(CAST(p.goles AS REAL)) "
+                "FROM partido p "
+                "WHERE p.formato_partido IS NOT NULL AND p.formato_partido != '' "
+                "  AND p.fecha_hora IS NOT NULL "
+                "GROUP BY mes, p.formato_partido "
+                "ORDER BY mes ASC, p.formato_partido"))
     {
         mostrar_error_operacion("Formaciones", "consultar tendencia");
         pause_console();
         return;
     }
 
-    ui_printf("%-10s %-12s %6s %10s %10s\n",
-              "Mes", "Formacion", "PJ", "Rend.", "Gol Prom");
+    ui_printf("%-10s %-12s %6s %10s %10s\n", "Mes", "Formacion", "PJ", "Rend.",
+              "Gol Prom");
 
     double valores_trend[24];
     char *labels_trend[24];
@@ -233,14 +251,14 @@ void mostrar_tendencia_formaciones()
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *mes     = (const char *)sqlite3_column_text(stmt, 0);
+        const char *mes = (const char *)sqlite3_column_text(stmt, 0);
         const char *formato = (const char *)sqlite3_column_text(stmt, 1);
-        int total    = sqlite3_column_int(stmt, 2);
-        double rend  = sqlite3_column_double(stmt, 3);
+        int total = sqlite3_column_int(stmt, 2);
+        double rend = sqlite3_column_double(stmt, 3);
         double goles = sqlite3_column_double(stmt, 4);
 
-        ui_printf("%-10s %-12s %6d %10.2f %10.2f\n",
-                  mes, formato, total, rend, goles);
+        ui_printf("%-10s %-12s %6d %10.2f %10.2f\n", mes, formato, total, rend,
+                  goles);
 
         if (trend_count < 24)
         {
@@ -258,7 +276,8 @@ void mostrar_tendencia_formaciones()
 
     if (trend_count > 0)
     {
-        dibujar_grafico_barras(valores_trend, (const char **)labels_trend, trend_count > 8 ? 8 : trend_count,
+        dibujar_grafico_barras(valores_trend, (const char **)labels_trend,
+                               trend_count > 8 ? 8 : trend_count,
                                "Rendimiento por Mes-Formacion (max 8)", 20);
     }
 
@@ -272,17 +291,19 @@ void mostrar_tendencia_formaciones()
 
 void exportar_analisis_formaciones_csv()
 {
-    if (!verificar_datos_formacion()) return;
+    if (!verificar_datos_formacion())
+        return;
 
     const char *filename = "analisis_formaciones.csv";
     FILE *f = abrir_archivo_exportacion(filename, "Error al crear archivo CSV");
-    if (!f) return;
+    if (!f)
+        return;
 
-    fprintf(f, "Formacion,Total,Victorias,Empates,Derrotas,PorcentajeVictorias,PromedioGoles,PromedioRendimiento\n");
+    fprintf(f, "Formacion,Total,Victorias,Empates,Derrotas,PorcentajeVictorias,"
+            "PromedioGoles,PromedioRendimiento\n");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_formaciones(&stmt,
-                                   SQL_FORMACION_BASE
+    if (!preparar_stmt_formaciones(&stmt, SQL_FORMACION_BASE
                                    "GROUP BY p.formato_partido "
                                    "ORDER BY p.formato_partido"))
     {
@@ -296,8 +317,8 @@ void exportar_analisis_formaciones_csv()
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         leer_fila_formacion(stmt, &r);
-        fprintf(f, "%s,%d,%d,%d,%d,%.1f,%.2f,%.2f\n",
-                r.formato ? r.formato : "", r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
+        fprintf(f, "%s,%d,%d,%d,%d,%.1f,%.2f,%.2f\n", r.formato ? r.formato : "",
+                r.total, r.v, r.e, r.d, r.pct_v, r.goles, r.rend);
     }
     sqlite3_finalize(stmt);
     fclose(f);
