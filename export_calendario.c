@@ -30,64 +30,80 @@ static int comparar_eventos(const void *a, const void *b)
     return strcmp(ea->fecha, eb->fecha);
 }
 
-static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
+static void extraer_campo_calendario(char *dst, size_t dst_size, const cJSON *obj, const char *campo)
 {
-    FILE *f;
-    errno_t err = fopen_s(&f, RECORDATORIOS_PATH, "rb");
-    if (err != 0 || f == NULL)
+    cJSON const *jval = cJSON_GetObjectItemCaseSensitive(obj, campo);
+    if (jval && cJSON_IsString(jval))
+        strncpy_s(dst, dst_size, jval->valuestring, dst_size - 1);
+    else
+        dst[0] = '\0';
+}
+
+static int procesar_item_recordatorio(const cJSON *it, EventoCalendario *evento, long long id_fallback)
+{
+    if (!it || !cJSON_IsObject(it))
         return 0;
 
+    extraer_campo_calendario(evento->fecha, sizeof(evento->fecha), it, "fecha");
+    strncpy_s(evento->tipo, sizeof(evento->tipo), "recordatorio", sizeof(evento->tipo) - 1);
+    extraer_campo_calendario(evento->titulo, sizeof(evento->titulo), it, "tematica");
+    extraer_campo_calendario(evento->detalle, sizeof(evento->detalle), it, "nota");
+
+    cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
+    if (jid && cJSON_IsNumber(jid))
+        evento->id_origen = (long long)jid->valuedouble;
+    else
+        evento->id_origen = id_fallback;
+    return 1;
+}
+
+static cJSON* cargar_json_array_calendario(const char *path)
+{
+    FILE *f;
+    errno_t err = fopen_s(&f, path, "rb");
+    if (err != 0 || f == NULL)
+        return NULL;
     fseek(f, 0, SEEK_END);
     long len = ftell(f);
     fseek(f, 0, SEEK_SET);
     if (len <= 0)
     {
         fclose(f);
-        return 0;
+        return NULL;
     }
-
     char *buf = (char*)malloc((size_t)len + 1);
     if (!buf)
     {
         fclose(f);
-        return 0;
+        return NULL;
     }
-
     size_t read = fread(buf, 1, (size_t)len, f);
     fclose(f);
-    if (read > 0 && read <= (size_t)len) buf[read] = '\0';
-    else buf[0] = '\0';
-
+    if (read > 0 && read <= (size_t)len)
+        buf[read] = '\0';
+    else
+        buf[0] = '\0';
     cJSON *root = cJSON_Parse(buf);
     free(buf);
     if (!root || !cJSON_IsArray(root))
     {
         if (root) cJSON_Delete(root);
-        return 0;
+        return NULL;
     }
+    return root;
+}
+
+static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
+{
+    cJSON *root = cargar_json_array_calendario(RECORDATORIOS_PATH);
+    if (!root) return 0;
 
     int count = cJSON_GetArraySize(root);
     int total = 0;
     for (int i = 0; i < count && (offset + total) < max; i++)
     {
-        cJSON const *it = cJSON_GetArrayItem(root, i);
-        if (!it || !cJSON_IsObject(it)) continue;
-
-        cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-        cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-        cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
-        cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
-
-        int idx = offset + total;
-        strncpy_s(eventos[idx].fecha, sizeof(eventos[idx].fecha),
-                  jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", sizeof(eventos[idx].fecha) - 1);
-        strncpy_s(eventos[idx].tipo, sizeof(eventos[idx].tipo), "recordatorio", sizeof(eventos[idx].tipo) - 1);
-        strncpy_s(eventos[idx].titulo, sizeof(eventos[idx].titulo),
-                  jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", sizeof(eventos[idx].titulo) - 1);
-        strncpy_s(eventos[idx].detalle, sizeof(eventos[idx].detalle),
-                  jnota && cJSON_IsString(jnota) ? jnota->valuestring : "", sizeof(eventos[idx].detalle) - 1);
-        eventos[idx].id_origen = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : (long long)(i + 1);
-        total++;
+        if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total], (long long)(i + 1)))
+            total++;
     }
 
     cJSON_Delete(root);

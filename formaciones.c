@@ -229,7 +229,7 @@ void mostrar_tendencia_formaciones()
               "Mes", "Formacion", "PJ", "Rend.", "Gol Prom");
 
     double valores_trend[24];
-    const char *labels_trend[24];
+    char *labels_trend[24];
     int trend_count = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -259,13 +259,13 @@ void mostrar_tendencia_formaciones()
 
     if (trend_count > 0)
     {
-        dibujar_grafico_barras(valores_trend, labels_trend, trend_count > 8 ? 8 : trend_count,
+        dibujar_grafico_barras(valores_trend, (const char **)labels_trend, trend_count > 8 ? 8 : trend_count,
                                "Rendimiento por Mes-Formacion (max 8)", 20);
     }
 
     for (int i = 0; i < trend_count; i++)
     {
-        free((void *)labels_trend[i]);
+        free(labels_trend[i]);
     }
 
     pause_console();

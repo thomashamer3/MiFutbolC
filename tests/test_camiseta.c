@@ -6,8 +6,8 @@
 #include "camiseta.h"
 #include "menu.h"
 
-void setUp(void) { }
-void tearDown(void) { }
+void setUp(void) { /* No setup needed */ }
+void tearDown(void) { /* No cleanup needed */ }
 
 static void test_camiseta_functions_exist(void)
 {

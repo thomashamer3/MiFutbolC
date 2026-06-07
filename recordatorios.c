@@ -729,6 +729,108 @@ static int fecha_pasada_o_hoy(const char *fecha_str)
     return fecha_previo_o_hoy(&tm);
 }
 
+static int periodicidad_a_dias(int periodicidad)
+{
+    switch (periodicidad)
+    {
+    case PERIODICIDAD_DIARIO:
+        return 1;
+    case PERIODICIDAD_SEMANAL:
+        return 7;
+    case PERIODICIDAD_MENSUAL:
+        return 30;
+    default:
+        return 0;
+    }
+}
+
+static int fecha_str_es_hoy(const char *fecha_str)
+{
+    struct tm tm;
+    if (!parse_storage_datetime_to_tm(fecha_str, &tm)) return 0;
+    return fecha_coincide_con_hoy(&tm);
+}
+
+static int reminder_expirado(const Reminder *r)
+{
+    if (fecha_str_vacia_o_nula(r->fecha_fin)) return 0;
+    struct tm tm_fin, tm_fecha;
+    if (!parse_storage_datetime_to_tm(r->fecha_fin, &tm_fin)) return 0;
+    if (!parse_storage_datetime_to_tm(r->fecha, &tm_fecha)) return 0;
+    return mktime(&tm_fecha) > mktime(&tm_fin);
+}
+
+static int compute_next_date(const Reminder *r, int avanzar, int intento, char *temp, int temp_size)
+{
+    if (r->periodicidad == PERIODICIDAD_MENSUAL)
+        return agregar_mes_a_fecha(r->fecha, temp, temp_size);
+    return agregar_dias_a_fecha(r->fecha, avanzar * (intento + 1), temp, temp_size);
+}
+
+static int avanzar_recurrencia(Reminder *r, int avanzar, char *nueva_fecha, int size)
+{
+    for (int intento = 0; intento < 31; intento++)
+    {
+        char temp[MAX_FECHA];
+        if (!compute_next_date(r, avanzar, intento, temp, MAX_FECHA))
+            return 0;
+
+        struct tm tm_temp;
+        if (!parse_storage_datetime_to_tm(temp, &tm_temp))
+            return 0;
+
+        if (fecha_coincide_con_hoy(&tm_temp))
+        {
+            strncpy_s(nueva_fecha, (size_t)size, temp, (size_t)size - 1);
+            nueva_fecha[size - 1] = '\0';
+            return 1;
+        }
+
+        if (!fecha_previo_o_hoy(&tm_temp))
+            break;
+
+        strncpy_s(r->fecha, MAX_FECHA, temp, MAX_FECHA - 1);
+        r->fecha[MAX_FECHA - 1] = '\0';
+    }
+    return 0;
+}
+
+static Reminder crear_dup_reminder(const Reminder *r, const char *nueva_fecha, long long id)
+{
+    Reminder dup;
+    memset(&dup, 0, sizeof(dup));
+    dup.id = id;
+    strncpy_s(dup.fecha, MAX_FECHA, nueva_fecha, MAX_FECHA - 1);
+    dup.fecha[MAX_FECHA - 1] = '\0';
+    strncpy_s(dup.nota, MAX_NOTA, r->nota, MAX_NOTA - 1);
+    dup.nota[MAX_NOTA - 1] = '\0';
+    strncpy_s(dup.tematica, MAX_TEMATICA, r->tematica, MAX_TEMATICA - 1);
+    dup.tematica[MAX_TEMATICA - 1] = '\0';
+    dup.periodicidad = r->periodicidad;
+    strncpy_s(dup.fecha_fin, MAX_FECHA, r->fecha_fin, MAX_FECHA - 1);
+    dup.fecha_fin[MAX_FECHA - 1] = '\0';
+    return dup;
+}
+
+static int reminder_needs_recurrence(const Reminder *r)
+{
+    if (r->periodicidad == PERIODICIDAD_UNA_VEZ) return 0;
+    if (!fecha_pasada_o_hoy(r->fecha)) return 0;
+    if (reminder_expirado(r)) return 0;
+    if (fecha_str_es_hoy(r->fecha)) return 0;
+    return 1;
+}
+
+static int expand_array_if_full(Reminder **arr, int actual, int *capacidad)
+{
+    if (actual < *capacidad) return 1;
+    *capacidad *= 2;
+    Reminder *tmp = (Reminder*)realloc(*arr, sizeof(Reminder) * (size_t)*capacidad);
+    if (!tmp) return 0;
+    *arr = tmp;
+    return 1;
+}
+
 static void verificar_recordatorios_recurrentes()
 {
     int count = 0;
@@ -755,106 +857,21 @@ static void verificar_recordatorios_recurrentes()
 
     for (int i = 0; i < actual; i++)
     {
-        if (expandido[i].periodicidad == PERIODICIDAD_UNA_VEZ) continue;
+        Reminder *r = &expandido[i];
+        if (!reminder_needs_recurrence(r)) continue;
 
-        if (!fecha_pasada_o_hoy(expandido[i].fecha)) continue;
+        int avanzar = periodicidad_a_dias(r->periodicidad);
+        if (avanzar == 0) continue;
 
-        if (!fecha_str_vacia_o_nula(expandido[i].fecha_fin))
-        {
-            struct tm tm_fin;
-            if (parse_storage_datetime_to_tm(expandido[i].fecha_fin, &tm_fin))
-            {
-                struct tm tm_actual;
-                if (parse_storage_datetime_to_tm(expandido[i].fecha, &tm_actual))
-                {
-                    if (mktime(&tm_actual) > mktime(&tm_fin)) continue;
-                }
-            }
-        }
+        char nueva_fecha[MAX_FECHA];
+        if (!avanzar_recurrencia(r, avanzar, nueva_fecha, MAX_FECHA)) continue;
 
-        struct tm tm_fecha;
-        if (!parse_storage_datetime_to_tm(expandido[i].fecha, &tm_fecha)) continue;
+        if (!expand_array_if_full(&expandido, actual, &capacidad))
+            break;
 
-        if (!fecha_coincide_con_hoy(&tm_fecha))
-        {
-            int avanzar = 0;
-            switch (expandido[i].periodicidad)
-            {
-            case PERIODICIDAD_DIARIO:
-                avanzar = 1;
-                break;
-            case PERIODICIDAD_SEMANAL:
-                avanzar = 7;
-                break;
-            case PERIODICIDAD_MENSUAL:
-                avanzar = 30;
-                break;
-            }
-            if (avanzar == 0) continue;
-
-            char nueva_fecha[MAX_FECHA];
-            int ok = 0;
-            for (int intento = 0; intento < 31; intento++)
-            {
-                char temp[MAX_FECHA];
-                if (expandido[i].periodicidad == PERIODICIDAD_MENSUAL)
-                    ok = agregar_mes_a_fecha(expandido[i].fecha, temp, MAX_FECHA);
-                else
-                    ok = agregar_dias_a_fecha(expandido[i].fecha, avanzar * (intento + 1), temp, MAX_FECHA);
-                if (!ok) break;
-
-                struct tm tm_temp;
-                if (!parse_storage_datetime_to_tm(temp, &tm_temp))
-                {
-                    ok = 0;
-                    break;
-                }
-
-                if (fecha_coincide_con_hoy(&tm_temp))
-                {
-                    strncpy_s(nueva_fecha, MAX_FECHA, temp, MAX_FECHA - 1);
-                    nueva_fecha[MAX_FECHA - 1] = '\0';
-                    ok = 1;
-                    break;
-                }
-
-                if (fecha_previo_o_hoy(&tm_temp))
-                {
-                    strncpy_s(expandido[i].fecha, MAX_FECHA, temp, MAX_FECHA - 1);
-                    expandido[i].fecha[MAX_FECHA - 1] = '\0';
-                    continue;
-                }
-
-                break;
-            }
-
-            if (ok)
-            {
-                if (actual >= capacidad)
-                {
-                    capacidad *= 2;
-                    Reminder *tmp = (Reminder*)realloc(expandido, sizeof(Reminder) * (size_t)capacidad);
-                    if (!tmp) break;
-                    expandido = tmp;
-                }
-
-                Reminder dup;
-                memset(&dup, 0, sizeof(dup));
-                dup.id = obtener_siguiente_id_local(expandido, actual);
-                strncpy_s(dup.fecha, MAX_FECHA, nueva_fecha, MAX_FECHA - 1);
-                dup.fecha[MAX_FECHA - 1] = '\0';
-                strncpy_s(dup.nota, MAX_NOTA, expandido[i].nota, MAX_NOTA - 1);
-                dup.nota[MAX_NOTA - 1] = '\0';
-                strncpy_s(dup.tematica, MAX_TEMATICA, expandido[i].tematica, MAX_TEMATICA - 1);
-                dup.tematica[MAX_TEMATICA - 1] = '\0';
-                dup.periodicidad = expandido[i].periodicidad;
-                strncpy_s(dup.fecha_fin, MAX_FECHA, expandido[i].fecha_fin, MAX_FECHA - 1);
-                dup.fecha_fin[MAX_FECHA - 1] = '\0';
-
-                expandido[actual++] = dup;
-                nuevos++;
-            }
-        }
+        Reminder dup = crear_dup_reminder(r, nueva_fecha, obtener_siguiente_id_local(expandido, actual));
+        expandido[actual++] = dup;
+        nuevos++;
     }
 
     if (nuevos > 0)

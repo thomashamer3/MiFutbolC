@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <bcrypt.h>
 #include <io.h>
 #include <process.h>

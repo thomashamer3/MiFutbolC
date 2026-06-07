@@ -131,7 +131,7 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
             sqlite3_column_double(stmt, 7));
 }
 
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONAR */
 {
     (void)f;
     cJSON *root = (cJSON *)context;

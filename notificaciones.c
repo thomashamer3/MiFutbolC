@@ -229,16 +229,19 @@ static void cumpleanos_jugadores(void)
         int anio;
         int mes;
         int dia;
-        if (sscanf_s(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2)
+        if (sscanf_s(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
         {
-            if (mes == mes_actual)
-            {
-                count++;
-                int dias = dia - dia_actual;
-                printf("  %s: %s (%s)\n",
-                       sqlite3_column_text(stmt, 0), fnac,
-                       dias == 0 ? "HOY!" : (dias > 0 ? "En %d dias" : "Pasado"));
-            }
+            count++;
+            int dias = dia - dia_actual;
+            const char *estado;
+            if (dias == 0)
+                estado = "HOY!";
+            else if (dias > 0)
+                estado = "En %d dias";
+            else
+                estado = "Pasado";
+            printf("  %s: %s (%s)\n",
+                   sqlite3_column_text(stmt, 0), fnac, estado);
         }
     }
     sqlite3_finalize(stmt);

@@ -3,13 +3,11 @@
 #include "utils.h"
 #include "menu.h"
 #include "cJSON.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <errno.h>
-
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>

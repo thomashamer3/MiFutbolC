@@ -21,48 +21,84 @@ typedef struct
     char tematica[64];
 } Reminder;
 
-static int cargar_recordatorios(Reminder **out_arr, int *out_count)
+static char* leer_archivo_completo(const char *path)
 {
-    *out_arr = NULL;
-    *out_count = 0;
-
     FILE *f;
-    errno_t err = fopen_s(&f, RECORDATORIOS_PATH, "rb");
+    errno_t err = fopen_s(&f, path, "rb");
     if (err != 0 || f == NULL)
-    {
-        return 0;
-    }
-
+        return NULL;
     fseek(f, 0, SEEK_END);
     long len = ftell(f);
     fseek(f, 0, SEEK_SET);
     if (len <= 0)
     {
         fclose(f);
-        return 0;
+        return NULL;
     }
-
     char *buf = (char*)malloc((size_t)len + 1);
     if (!buf)
     {
         fclose(f);
-        return 0;
+        return NULL;
     }
-
     size_t read = fread(buf, 1, (size_t)len, f);
     fclose(f);
     if (read > 0 && read <= (size_t)len)
         buf[read] = '\0';
     else
         buf[0] = '\0';
+    return buf;
+}
 
+static cJSON* leer_json_recordatorios(void)
+{
+    char *buf = leer_archivo_completo(RECORDATORIOS_PATH);
+    if (!buf) return NULL;
     cJSON *root = cJSON_Parse(buf);
     free(buf);
     if (!root || !cJSON_IsArray(root))
     {
         if (root) cJSON_Delete(root);
-        return 0;
+        return NULL;
     }
+    return root;
+}
+
+static void extraer_datos_reminder(const cJSON *it, Reminder *r, int idx)
+{
+    cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
+    cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
+    cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
+    cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
+
+    if (jid && cJSON_IsNumber(jid))
+        r->id = (long long)jid->valuedouble;
+    else
+        r->id = (long long)(idx + 1);
+
+    if (jfecha && cJSON_IsString(jfecha))
+        strncpy_s(r->fecha, sizeof(r->fecha), jfecha->valuestring, sizeof(r->fecha) - 1);
+    else
+        r->fecha[0] = '\0';
+
+    if (jnota && cJSON_IsString(jnota))
+        strncpy_s(r->nota, sizeof(r->nota), jnota->valuestring, sizeof(r->nota) - 1);
+    else
+        r->nota[0] = '\0';
+
+    if (jtema && cJSON_IsString(jtema))
+        strncpy_s(r->tematica, sizeof(r->tematica), jtema->valuestring, sizeof(r->tematica) - 1);
+    else
+        r->tematica[0] = '\0';
+}
+
+static int cargar_recordatorios(Reminder **out_arr, int *out_count)
+{
+    *out_arr = NULL;
+    *out_count = 0;
+
+    cJSON *root = leer_json_recordatorios();
+    if (!root) return 0;
 
     int count = cJSON_GetArraySize(root);
     Reminder *arr = (Reminder*)calloc((size_t)count, sizeof(Reminder));
@@ -76,23 +112,10 @@ static int cargar_recordatorios(Reminder **out_arr, int *out_count)
     {
         cJSON const *it = cJSON_GetArrayItem(root, i);
         if (it && cJSON_IsObject(it))
-        {
-            cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
-            cJSON const *jfecha = cJSON_GetObjectItemCaseSensitive(it, "fecha");
-            cJSON const *jnota = cJSON_GetObjectItemCaseSensitive(it, "nota");
-            cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
-
-            arr[i].id = jid && cJSON_IsNumber(jid) ? (long long)jid->valuedouble : (long long)(i + 1);
-            strncpy_s(arr[i].fecha, sizeof(arr[i].fecha),
-                      jfecha && cJSON_IsString(jfecha) ? jfecha->valuestring : "", sizeof(arr[i].fecha) - 1);
-            strncpy_s(arr[i].nota, sizeof(arr[i].nota),
-                      jnota && cJSON_IsString(jnota) ? jnota->valuestring : "", sizeof(arr[i].nota) - 1);
-            strncpy_s(arr[i].tematica, sizeof(arr[i].tematica),
-                      jtema && cJSON_IsString(jtema) ? jtema->valuestring : "", sizeof(arr[i].tematica) - 1);
-        }
+            extraer_datos_reminder(it, &arr[i], i);
         else
         {
-            arr[i].id = i + 1;
+            arr[i].id = (long long)(i + 1);
             arr[i].fecha[0] = '\0';
             arr[i].nota[0] = '\0';
             arr[i].tematica[0] = '\0';

@@ -1,17 +1,17 @@
 #include "atajos.h"
 #include "utils.h"
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 #include <conio.h>
-#include <Windows.h>
+#include <windows.h>
 #else
-#include <termios.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <termios.h>
+#include <unistd.h>
 #endif
 
 static int atajos_activos = 0;

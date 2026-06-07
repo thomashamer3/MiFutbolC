@@ -73595,7 +73595,7 @@ struct WalIterator
 ** process to exit.
 */
 #ifdef SQLITE_USE_SEH
-#include <Windows.h>
+#include <windows.h>
 
 /* Beginning of a block of code in which an exception might occur */
 # define SEH_TRY    __try { \

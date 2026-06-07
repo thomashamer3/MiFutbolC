@@ -1,0 +1,19 @@
+{
+  "exportedAt": "2026-06-07T00:02:37Z",
+  "project": "thomashamer3_MiFutbolC",
+  "quality": "RELIABILITY",
+  "total": 1,
+  "issues": [
+    {
+      "rule": "c:S3519",
+      "severity": "BLOCKER",
+      "message": "Memory copy function accesses out-of-bound array element",
+      "file": "export_ods.c",
+      "line": 414,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "cert, cwe, symbolic-execution"
+    }
+  ]
+}

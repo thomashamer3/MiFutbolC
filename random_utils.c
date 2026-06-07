@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <bcrypt.h>
 #else
 #include <unistd.h>
@@ -13,7 +13,8 @@
 int secure_random_bytes(unsigned char *buffer, size_t size)
 {
     BCRYPT_ALG_HANDLE hAlgorithm = NULL;
-    NTSTATUS status = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
+    NTSTATUS status =
+        BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RNG_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
     {
         return -1;

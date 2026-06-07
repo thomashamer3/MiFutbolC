@@ -168,6 +168,18 @@ static void mostrar_mejor_rendimiento(int jugador_id)
     sqlite3_finalize(stmt);
 }
 
+static void imprimir_barras_atributos(const double vals[5], const char *etiquetas[5])
+{
+    for (int i = 0; i < 5; i++)
+    {
+        int barra = (int)(vals[i] / 5.0);
+        if (barra > 40) barra = 40;
+        printf("  %-10s |", etiquetas[i]);
+        for (int j = 0; j < barra; j++) printf("#");
+        printf(" %.0f\n", vals[i]);
+    }
+}
+
 static void mostrar_grafico_radar(int jugador_id)
 {
     sqlite3_stmt *stmt;
@@ -177,42 +189,38 @@ static void mostrar_grafico_radar(int jugador_id)
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== GRAFICO RADAR DE ATRIBUTOS ===\n");
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    if (sqlite3_step(stmt) != SQLITE_ROW)
     {
-        double vals[5] =
-        {
-            sqlite3_column_double(stmt, 0),
-            sqlite3_column_double(stmt, 1),
-            sqlite3_column_double(stmt, 2),
-            sqlite3_column_double(stmt, 3),
-            sqlite3_column_double(stmt, 4)
-        };
-        const char *etiquetas[5] = {"Ataque", "Defensa", "Resist.", "Veloc.", "Tecnica"};
-
-        int all_zero = 1;
-        for (int i = 0; i < 5; i++)
-            if (vals[i] > 0)
-            {
-                all_zero = 0;
-                break;
-            }
-
-        if (all_zero)
-        {
-            printf("  Sin datos de atributos.\n");
-        }
-        else
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                int barra = (int)(vals[i] / 5.0);
-                if (barra > 40) barra = 40;
-                printf("  %-10s |", etiquetas[i]);
-                for (int j = 0; j < barra; j++) printf("#");
-                printf(" %.0f\n", vals[i]);
-            }
-        }
+        sqlite3_finalize(stmt);
+        return;
     }
+
+    double vals[5] =
+    {
+        sqlite3_column_double(stmt, 0),
+        sqlite3_column_double(stmt, 1),
+        sqlite3_column_double(stmt, 2),
+        sqlite3_column_double(stmt, 3),
+        sqlite3_column_double(stmt, 4)
+    };
+    const char *etiquetas[5] = {"Ataque", "Defensa", "Resist.", "Veloc.", "Tecnica"};
+
+    int all_zero = 1;
+    for (int i = 0; i < 5; i++)
+        if (vals[i] > 0)
+        {
+            all_zero = 0;
+            break;
+        }
+
+    if (all_zero)
+    {
+        printf("  Sin datos de atributos.\n");
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    imprimir_barras_atributos(vals, etiquetas);
     sqlite3_finalize(stmt);
 }
 

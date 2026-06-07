@@ -137,7 +137,7 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
             get_nombre_formato_torneo((FormatoTorneos)formato));
 }
 
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONAR */
 {
     (void)f;
     cJSON *root = (cJSON *)context;

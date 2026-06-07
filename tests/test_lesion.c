@@ -6,8 +6,8 @@
 #include "lesion.h"
 #include "menu.h"
 
-void setUp(void) { }
-void tearDown(void) { }
+void setUp(void) { /* No setup needed */ }
+void tearDown(void) { /* No cleanup needed */ }
 
 static void test_lesion_functions_exist(void)
 {

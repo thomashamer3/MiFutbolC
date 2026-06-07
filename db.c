@@ -1,24 +1,23 @@
-﻿#include "export.h"
-#include "random_utils.h"
-#include "db.h"
+﻿#include "db.h"
+#include "export.h"
 #include "settings.h"
 #include "utils.h"
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
-#include <ctype.h>
-#include <stdint.h>
-#include <inttypes.h>
 #ifdef _WIN32
-#include <direct.h>
 #include <windows.h>
-#include <shlobj.h>
 #include <bcrypt.h>
+#include <direct.h>
+#include <shlobj.h>
 #else
-#include "direct.h"
 #include "compat_windows.h"
+#include "direct.h"
 #include "shlobj.h"
 #endif
 
@@ -35,7 +34,8 @@ static int directorio_existe(const char *path)
     }
 
     DWORD attrs = GetFileAttributesA(path);
-    return (attrs != INVALID_FILE_ATTRIBUTES) && (attrs & FILE_ATTRIBUTE_DIRECTORY);
+    return (attrs != INVALID_FILE_ATTRIBUTES) &&
+           (attrs & FILE_ATTRIBUTE_DIRECTORY);
 }
 #else
 #include <sys/stat.h>
@@ -69,10 +69,7 @@ static void sanitize_filename_token(char *token)
 
 static void generate_salt_hex(char *salt_out, size_t out_size)
 {
-    enum
-    {
-        SALT_BYTES = 16
-    };
+    enum { SALT_BYTES = 16 };
     char hex_buf[33];
     auth_generate_salt_hex(hex_buf, sizeof(hex_buf));
     if (!salt_out || out_size == 0)
@@ -82,7 +79,9 @@ static void generate_salt_hex(char *salt_out, size_t out_size)
     strncpy_s(salt_out, out_size, hex_buf, _TRUNCATE);
 }
 
-static void build_password_hash(const char *plain_password, const char *salt_hex, char *hash_out, size_t out_size)
+static void build_password_hash(const char *plain_password,
+                                const char *salt_hex, char *hash_out,
+                                size_t out_size)
 {
     auth_build_password_hash(plain_password, salt_hex, hash_out, out_size);
 }
@@ -118,12 +117,7 @@ static char MUSIC_DIR[1024];
 /** Usuario local activo para enrutar la base por perfil */
 static char ACTIVE_USER[128];
 
-typedef enum
-{
-    COPY_OK = 0,
-    COPY_SRC_ERROR,
-    COPY_DST_ERROR
-} CopyResult;
+typedef enum { COPY_OK = 0, COPY_SRC_ERROR, COPY_DST_ERROR } CopyResult;
 
 static void build_timestamp(char *buffer, size_t size)
 {
@@ -158,7 +152,8 @@ static void build_timestamp(char *buffer, size_t size)
 }
 
 static FILE *app_fopen(const char *path, const char *mode);
-static int execute_sql_statements(const char *const *statements, int *failed_index);
+static int execute_sql_statements(const char *const *statements,
+                                  int *failed_index);
 
 static FILE *g_log_fp = NULL;
 static int g_log_initialized = 0;
@@ -191,7 +186,8 @@ void app_log_close(void)
     g_log_initialized = 0;
 }
 
-static void app_log_write(const char *level, const char *component, const char *message)
+static void app_log_write(const char *level, const char *component,
+                          const char *message)
 {
     if (!level || !component || !message)
     {
@@ -210,7 +206,8 @@ static void app_log_write(const char *level, const char *component, const char *
 
     char timestamp[32] = {0};
     build_timestamp(timestamp, sizeof(timestamp));
-    fprintf(g_log_fp, "[%s] [%s] [%s] %s\n", timestamp, level, component, message);
+    fprintf(g_log_fp, "[%s] [%s] [%s] %s\n", timestamp, level, component,
+            message);
 }
 
 void app_log_event(const char *component, const char *message)
@@ -220,37 +217,33 @@ void app_log_event(const char *component, const char *message)
 
 static char log_buf_[1024];
 
-#define LOG_ERROR_FMT(component, fmt, ...) \
-    do \
-    { \
-        printf(fmt "\n", __VA_ARGS__); \
-        snprintf(log_buf_, sizeof(log_buf_), fmt, __VA_ARGS__); \
-        app_log_write("ERROR", component, log_buf_); \
-    } while (0)
+#define LOG_ERROR_FMT(component, fmt, ...)                                     \
+  do {                                                                         \
+    printf(fmt "\n", __VA_ARGS__);                                             \
+    snprintf(log_buf_, sizeof(log_buf_), fmt, __VA_ARGS__);                    \
+    app_log_write("ERROR", component, log_buf_);                               \
+  } while (0)
 
-#define LOG_ERROR_CONSOLE_LOG_FMT(component, console_fmt, log_fmt, ...) \
-    do \
-    { \
-        printf(console_fmt "\n", __VA_ARGS__); \
-        snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__); \
-        app_log_write("ERROR", component, log_buf_); \
-    } while (0)
+#define LOG_ERROR_CONSOLE_LOG_FMT(component, console_fmt, log_fmt, ...)        \
+  do {                                                                         \
+    printf(console_fmt "\n", __VA_ARGS__);                                     \
+    snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__);                \
+    app_log_write("ERROR", component, log_buf_);                               \
+  } while (0)
 
-#define LOG_ERROR_MSG(component, console_msg, log_msg) \
-    do \
-    { \
-        printf("%s\n", console_msg); \
-        snprintf(log_buf_, sizeof(log_buf_), "%s", log_msg); \
-        app_log_write("ERROR", component, log_buf_); \
-    } while (0)
+#define LOG_ERROR_MSG(component, console_msg, log_msg)                         \
+  do {                                                                         \
+    printf("%s\n", console_msg);                                               \
+    snprintf(log_buf_, sizeof(log_buf_), "%s", log_msg);                       \
+    app_log_write("ERROR", component, log_buf_);                               \
+  } while (0)
 
-#define LOG_ERROR_CONSOLE_MSG_LOG_FMT(component, console_msg, log_fmt, ...) \
-    do \
-    { \
-        printf("%s\n", console_msg); \
-        snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__); \
-        app_log_write("ERROR", component, log_buf_); \
-    } while (0)
+#define LOG_ERROR_CONSOLE_MSG_LOG_FMT(component, console_msg, log_fmt, ...)    \
+  do {                                                                         \
+    printf("%s\n", console_msg);                                               \
+    snprintf(log_buf_, sizeof(log_buf_), log_fmt, __VA_ARGS__);                \
+    app_log_write("ERROR", component, log_buf_);                               \
+  } while (0)
 
 static int asegurar_directorio(const char *path, const char *nombre)
 {
@@ -263,18 +256,23 @@ static int asegurar_directorio(const char *path, const char *nombre)
 #ifdef _WIN32
         strerror_s(error_buf, sizeof(error_buf), errno);
         printf("Error creando directorio %s: %s\n", nombre, error_buf);
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, error_buf);
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo crear directorio %.120s (%.420s): %.420s", nombre,
+                 path, error_buf);
         app_log_write("ERROR", "FS", log_buf_);
 #else
         printf("Error creando directorio %s: %s\n", nombre, strerror(errno));
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo crear directorio %.120s (%.420s): %.420s", nombre, path, strerror(errno));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo crear directorio %.120s (%.420s): %.420s", nombre,
+                 path, strerror(errno));
         app_log_write("ERROR", "FS", log_buf_);
 #endif
         return 0;
     }
     if (!already_exists)
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Directorio disponible: %.120s (%.860s)", nombre, path);
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "Directorio disponible: %.120s (%.860s)", nombre, path);
         app_log_write("INFO", "FS", log_buf_);
     }
     return 1;
@@ -300,14 +298,16 @@ static FILE *app_fopen(const char *path, const char *mode)
 }
 
 #ifdef _WIN32
-static int configurar_directorio_documentos(const char *subdir, char *out_dir, size_t out_size,
-        const char *nombre_principal, const char *nombre_subdir)
+static int configurar_directorio_documentos(const char *subdir, char *out_dir,
+        size_t out_size,
+        const char *nombre_principal,
+        const char *nombre_subdir)
 {
     char documents_path[MAX_PATH];
     /*
-     * Se utiliza SHGetFolderPathA con CSIDL_PERSONAL para obtener la ruta a "Mis Documentos".
-     * Esta ubicacion se reserva para archivos que el usuario debe manipular manualmente,
-     * como las exportaciones e importaciones de datos.
+     * Se utiliza SHGetFolderPathA con CSIDL_PERSONAL para obtener la ruta a "Mis
+     * Documentos". Esta ubicacion se reserva para archivos que el usuario debe
+     * manipular manualmente, como las exportaciones e importaciones de datos.
      */
     if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, documents_path) != S_OK)
     {
@@ -341,8 +341,7 @@ static int configurar_directorio_documentos(const char *subdir, char *out_dir, s
 static int configurar_directorio_usuario(const char *dir_preferido_local,
         const char *dir_legado_local,
         const char *subdir_documentos,
-        char *out_dir,
-        size_t out_size,
+        char *out_dir, size_t out_size,
         const char *nombre_subdir)
 {
     if (!out_dir || out_size == 0)
@@ -365,7 +364,8 @@ static int configurar_directorio_usuario(const char *dir_preferido_local,
         out_dir[0] = '\0';
     }
 
-    if (dir_legado_local && dir_legado_local[0] != '\0' && directorio_existe(dir_legado_local))
+    if (dir_legado_local && dir_legado_local[0] != '\0' &&
+            directorio_existe(dir_legado_local))
     {
         strcpy_s(out_dir, out_size, dir_legado_local);
         if (asegurar_directorio(out_dir, nombre_subdir))
@@ -378,10 +378,8 @@ static int configurar_directorio_usuario(const char *dir_preferido_local,
 #ifdef _WIN32
     if (subdir_documentos && subdir_documentos[0] != '\0')
     {
-        return configurar_directorio_documentos(subdir_documentos,
-                                                out_dir,
-                                                out_size,
-                                                "MiFutbolC en Documents",
+        return configurar_directorio_documentos(subdir_documentos, out_dir,
+                                                out_size, "MiFutbolC en Documents",
                                                 nombre_subdir);
     }
     return 0;
@@ -390,7 +388,8 @@ static int configurar_directorio_usuario(const char *dir_preferido_local,
 #endif
 }
 
-static CopyResult copiar_archivo(const char *source_path, const char *dest_path)
+static CopyResult copiar_archivo(const char *source_path,
+                                 const char *dest_path)
 {
     FILE *src = app_fopen(source_path, "rb");
     if (!src)
@@ -433,10 +432,8 @@ static int append_str(char *dest, size_t *used, size_t cap, const char *str)
     return 1;
 }
 
-static int ejecutar_stmt_texto(const char *sql,
-                               const char *const *params,
-                               size_t params_count,
-                               int *rows_changed)
+static int ejecutar_stmt_texto(const char *sql, const char *const *params,
+                               size_t params_count, int *rows_changed)
 {
     sqlite3_stmt *stmt = NULL;
 
@@ -453,7 +450,8 @@ static int ejecutar_stmt_texto(const char *sql,
     for (size_t i = 0; i < params_count; i++)
     {
         const char *valor = (params && params[i]) ? params[i] : "";
-        if (sqlite3_bind_text(stmt, (int)i + 1, valor, -1, SQLITE_STATIC) != SQLITE_OK)
+        if (sqlite3_bind_text(stmt, (int)i + 1, valor, -1, SQLITE_STATIC) !=
+                SQLITE_OK)
         {
             sqlite3_finalize(stmt);
             return 0;
@@ -544,7 +542,8 @@ static int setup_database_paths()
     if (ACTIVE_USER[0] != '\0')
     {
         snprintf(db_filename, sizeof(db_filename), "mifutbol_%s.db", ACTIVE_USER);
-        snprintf(log_filename, sizeof(log_filename), "mifutbol_%s.log", ACTIVE_USER);
+        snprintf(log_filename, sizeof(log_filename), "mifutbol_%s.log",
+                 ACTIVE_USER);
     }
     else
     {
@@ -558,17 +557,21 @@ static int setup_database_paths()
     /*
      * La base de datos se almacena en CSIDL_LOCAL_APPDATA para garantizar que
      * no sea borrada accidentalmente por el usuario y que el sistema tenga
-     * permisos de escritura consistentes sin requerir privilegios de administrador.
+     * permisos de escritura consistentes sin requerir privilegios de
+     * administrador.
      */
-    if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appdata_path) != S_OK)
+    if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appdata_path) !=
+            S_OK)
     {
         printf("Error obteniendo AppData path\n");
         return 0;
     }
 
     snprintf(DB_DIR, sizeof(DB_DIR), "%s\\MiFutbolC\\data", appdata_path);
-    snprintf(DB_PATH, sizeof(DB_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path, db_filename);
-    snprintf(LOG_PATH, sizeof(LOG_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path, log_filename);
+    snprintf(DB_PATH, sizeof(DB_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path,
+             db_filename);
+    snprintf(LOG_PATH, sizeof(LOG_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path,
+             log_filename);
 
     // Crear directorios si no existen
     char temp_path[1024];
@@ -609,11 +612,13 @@ static int create_database_connection()
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
         printf("Error abriendo DB: %s\n", sqlite3_errmsg(db));
-        snprintf(log_buf_, sizeof(log_buf_), "Error abriendo DB %.700s: %.280s", DB_PATH, sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error abriendo DB %.700s: %.280s",
+                 DB_PATH, sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
-    snprintf(log_buf_, sizeof(log_buf_), "Conexion SQLite abierta en %.996s", DB_PATH);
+    snprintf(log_buf_, sizeof(log_buf_), "Conexion SQLite abierta en %.996s",
+             DB_PATH);
     app_log_write("INFO", "DB", log_buf_);
     return 1;
 }
@@ -622,25 +627,24 @@ static int apply_database_tuning()
 {
     if (sqlite3_busy_timeout(db, 5000) != SQLITE_OK)
     {
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo configurar busy timeout: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo configurar busy timeout: %s", sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
 
     const char *pragma_statements[] =
     {
-        "PRAGMA journal_mode = WAL;",
-        "PRAGMA temp_store = MEMORY;",
-        "PRAGMA cache_size = -16384;",
-        "PRAGMA mmap_size = 67108864;",
-        "PRAGMA automatic_index = ON;",
-        NULL
+        "PRAGMA journal_mode = WAL;",   "PRAGMA temp_store = MEMORY;",
+        "PRAGMA cache_size = -16384;",  "PRAGMA mmap_size = 67108864;",
+        "PRAGMA automatic_index = ON;", NULL
     };
 
     int failed_index = -1;
     if (!execute_sql_statements(pragma_statements, &failed_index))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA '%s': %s", pragma_statements[failed_index], sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA '%s': %s",
+                 pragma_statements[failed_index], sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
@@ -648,7 +652,8 @@ static int apply_database_tuning()
     return 1;
 }
 
-static int execute_sql_statements(const char *const *statements, int *failed_index)
+static int execute_sql_statements(const char *const *statements,
+                                  int *failed_index)
 {
     if (failed_index)
     {
@@ -696,7 +701,8 @@ static int get_user_version(int *out_version)
     }
 
     *out_version = 0;
-    if (sqlite3_prepare_v2(db, "PRAGMA user_version;", -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db, "PRAGMA user_version;", -1, &stmt, NULL) !=
+            SQLITE_OK)
     {
         return 0;
     }
@@ -721,7 +727,9 @@ static void backfill_mes_anio_once(void)
     int current_version = 0;
     if (!get_user_version(&current_version))
     {
-        app_log_write("WARN", "DB", "No se pudo leer PRAGMA user_version; se omite backfill de mes_anio");
+        app_log_write(
+            "WARN", "DB",
+            "No se pudo leer PRAGMA user_version; se omite backfill de mes_anio");
         return;
     }
 
@@ -730,26 +738,29 @@ static void backfill_mes_anio_once(void)
         return;
     }
 
-    if (sqlite3_exec(db,
-                     "UPDATE partido SET mes_anio = "
-                     "CASE "
-                     "WHEN length(fecha_hora) >= 10 AND substr(fecha_hora, 5, 1) = '-' "
-                     "THEN substr(fecha_hora, 1, 7) "
-                     "ELSE substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) "
-                     "END "
-                     "WHERE (mes_anio = '' OR mes_anio IS NULL) AND length(fecha_hora) >= 7;",
-                     NULL,
-                     NULL,
-                     NULL) != SQLITE_OK)
+    if (sqlite3_exec(
+                db,
+                "UPDATE partido SET mes_anio = "
+                "CASE "
+                "WHEN length(fecha_hora) >= 10 AND substr(fecha_hora, 5, 1) = '-' "
+                "THEN substr(fecha_hora, 1, 7) "
+                "ELSE substr(fecha_hora, 7, 4) || '-' || substr(fecha_hora, 4, 2) "
+                "END "
+                "WHERE (mes_anio = '' OR mes_anio IS NULL) AND length(fecha_hora) >= "
+                "7;",
+                NULL, NULL, NULL) != SQLITE_OK)
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo backfill mes_anio: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo backfill mes_anio: %s",
+                 sqlite3_errmsg(db));
         app_log_write("WARN", "DB", log_buf_);
         return;
     }
 
     if (!set_user_version(DB_VERSION_SCHEMA))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras backfill mes_anio: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo actualizar user_version tras backfill mes_anio: %s",
+                 sqlite3_errmsg(db));
         app_log_write("WARN", "DB", log_buf_);
         return;
     }
@@ -757,7 +768,8 @@ static void backfill_mes_anio_once(void)
     app_log_write("INFO", "DB", "Backfill mes_anio aplicado una sola vez");
 }
 
-/* Definiciones compartidas para evitar duplicar columnas entre CREATE TABLE y ALTER TABLE. */
+/* Definiciones compartidas para evitar duplicar columnas entre CREATE TABLE y
+ * ALTER TABLE. */
 #define COL_CAMISETA_COLOR_PRINCIPAL "color_principal TEXT DEFAULT ''"
 #define COL_CAMISETA_COLOR_SECUNDARIO "color_secundario TEXT DEFAULT ''"
 #define COL_CAMISETA_MARCA "marca TEXT DEFAULT ''"
@@ -779,16 +791,21 @@ static void backfill_mes_anio_once(void)
 #define COL_CANCHA_LOCALIDAD "localidad TEXT DEFAULT ''"
 #define COL_CANCHA_TIPO_CANCHA_CODIGO "tipo_cancha_codigo INTEGER DEFAULT 0"
 #define COL_CANCHA_SUPERFICIE_CODIGO "superficie_codigo INTEGER DEFAULT 0"
-#define COL_CANCHA_TECHADA_ESTADO_CODIGO "techada_estado_codigo INTEGER DEFAULT 2"
+#define COL_CANCHA_TECHADA_ESTADO_CODIGO                                       \
+  "techada_estado_codigo INTEGER DEFAULT 2"
 #define COL_CANCHA_TIENE_ILUMINACION "tiene_iluminacion INTEGER DEFAULT 0"
-#define COL_CANCHA_HORARIO_APERTURA_MIN "horario_apertura_min INTEGER DEFAULT -1"
+#define COL_CANCHA_HORARIO_APERTURA_MIN                                        \
+  "horario_apertura_min INTEGER DEFAULT -1"
 #define COL_CANCHA_HORARIO_CIERRE_MIN "horario_cierre_min INTEGER DEFAULT -1"
-#define COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS "precio_hora_dia_centavos INTEGER DEFAULT 0"
-#define COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS "precio_hora_noche_centavos INTEGER DEFAULT 0"
+#define COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS                                    \
+  "precio_hora_dia_centavos INTEGER DEFAULT 0"
+#define COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS                                  \
+  "precio_hora_noche_centavos INTEGER DEFAULT 0"
 #define COL_CANCHA_TIENE_VESTUARIOS "tiene_vestuarios INTEGER DEFAULT 0"
 #define COL_CANCHA_TIENE_DUCHAS "tiene_duchas INTEGER DEFAULT 0"
 #define COL_CANCHA_TIENE_BUFFET "tiene_buffet INTEGER DEFAULT 0"
-#define COL_CANCHA_TIENE_ESTACIONAMIENTO "tiene_estacionamiento INTEGER DEFAULT 0"
+#define COL_CANCHA_TIENE_ESTACIONAMIENTO                                       \
+  "tiene_estacionamiento INTEGER DEFAULT 0"
 #define COL_CANCHA_CANTIDAD_CANCHAS "cantidad_canchas INTEGER DEFAULT 1"
 #define COL_CANCHA_ESTADO "estado TEXT DEFAULT ''"
 #define COL_CANCHA_DESCRIPCION "descripcion TEXT DEFAULT ''"
@@ -887,10 +904,13 @@ static int create_database_schema()
         " fecha_asociacion TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         " PRIMARY KEY(coleccion_id, inventario_id),"
         " FOREIGN KEY(coleccion_id) REFERENCES coleccion(id) ON DELETE CASCADE,"
-        " FOREIGN KEY(inventario_id) REFERENCES inventario_item(id) ON DELETE CASCADE);",
+        " FOREIGN KEY(inventario_id) REFERENCES inventario_item(id) ON DELETE "
+        "CASCADE);",
 
-        "CREATE INDEX IF NOT EXISTS idx_inventario_tipo ON inventario_item(tipo);",
-        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_item ON coleccion_inventario(inventario_id);",
+        "CREATE INDEX IF NOT EXISTS idx_inventario_tipo ON "
+        "inventario_item(tipo);",
+        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_item ON "
+        "coleccion_inventario(inventario_id);",
 
         "INSERT OR IGNORE INTO coleccion(nombre, descripcion) VALUES"
         " ('Equipamiento actual', 'Items que usas actualmente.'),"
@@ -1463,7 +1483,8 @@ static int create_database_schema()
     if (!execute_sql_statements(schema_statements, &failed_index))
     {
         printf("Error creando tablas\n");
-        snprintf(log_buf_, sizeof(log_buf_), "Error creando esquema (stmt %d): %s", failed_index, sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Error creando esquema (stmt %d): %s",
+                 failed_index, sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
@@ -1500,12 +1521,13 @@ static void add_camiseta_columns(void)
         char *errmsg = NULL;
         int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
         int error_esperado =
-            (errmsg != NULL) &&
-            ((strstr(errmsg, dup_col_msg) != NULL) ||
-             (strstr(errmsg, no_table_msg) != NULL));
+            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
+                                 (strstr(errmsg, no_table_msg) != NULL));
         if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
         {
-            snprintf(log_buf_, sizeof(log_buf_), "Migracion camiseta con error: %.320s | %.520s", alter_statements[i], errmsg);
+            snprintf(log_buf_, sizeof(log_buf_),
+                     "Migracion camiseta con error: %.320s | %.520s",
+                     alter_statements[i], errmsg);
             app_log_write("WARN", "DB", log_buf_);
         }
         sqlite3_free(errmsg);
@@ -1528,7 +1550,8 @@ static void add_cancha_columns(void)
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO_APERTURA_MIN ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_HORARIO_CIERRE_MIN ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA_DIA_CENTAVOS ";",
-        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_PRECIO_HORA_NOCHE_CENTAVOS
+        ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_VESTUARIOS ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_DUCHAS ";",
         "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_BUFFET ";",
@@ -1556,12 +1579,13 @@ static void add_cancha_columns(void)
         char *errmsg = NULL;
         int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
         int error_esperado =
-            (errmsg != NULL) &&
-            ((strstr(errmsg, dup_col_msg) != NULL) ||
-             (strstr(errmsg, no_table_msg) != NULL));
+            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
+                                 (strstr(errmsg, no_table_msg) != NULL));
         if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
         {
-            snprintf(log_buf_, sizeof(log_buf_), "Migracion cancha con error: %.320s | %.520s", alter_statements[i], errmsg);
+            snprintf(log_buf_, sizeof(log_buf_),
+                     "Migracion cancha con error: %.320s | %.520s",
+                     alter_statements[i], errmsg);
             app_log_write("WARN", "DB", log_buf_);
         }
         sqlite3_free(errmsg);
@@ -1621,12 +1645,13 @@ static void add_partido_columns(void)
         char *errmsg = NULL;
         int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
         int error_esperado =
-            (errmsg != NULL) &&
-            ((strstr(errmsg, dup_col_msg) != NULL) ||
-             (strstr(errmsg, no_table_msg) != NULL));
+            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
+                                 (strstr(errmsg, no_table_msg) != NULL));
         if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
         {
-            snprintf(log_buf_, sizeof(log_buf_), "Migracion partido con error: %.320s | %.520s", alter_statements[i], errmsg);
+            snprintf(log_buf_, sizeof(log_buf_),
+                     "Migracion partido con error: %.320s | %.520s",
+                     alter_statements[i], errmsg);
             app_log_write("WARN", "DB", log_buf_);
         }
         sqlite3_free(errmsg);
@@ -1657,10 +1682,14 @@ static void add_missing_columns()
         return;
     }
 
-    if (current_version < DB_VERSION_CAMISETA_COLS)       add_camiseta_columns();
-    if (current_version < DB_VERSION_CANCHA_COLS)         add_cancha_columns();
-    if (current_version < DB_VERSION_PARTIDO_COLS)        add_partido_columns();
-    if (current_version < DB_VERSION_CANCHA_GRABACION)    add_cancha_columns();
+    if (current_version < DB_VERSION_CAMISETA_COLS)
+        add_camiseta_columns();
+    if (current_version < DB_VERSION_CANCHA_COLS)
+        add_cancha_columns();
+    if (current_version < DB_VERSION_PARTIDO_COLS)
+        add_partido_columns();
+    if (current_version < DB_VERSION_CANCHA_GRABACION)
+        add_cancha_columns();
 }
 
 static int drop_legacy_mes_anio_triggers(void)
@@ -1668,13 +1697,13 @@ static int drop_legacy_mes_anio_triggers(void)
     const char *drop_statements[] =
     {
         "DROP TRIGGER IF EXISTS trg_partido_mes_anio_insert;",
-        "DROP TRIGGER IF EXISTS trg_partido_mes_anio_update;",
-        NULL
+        "DROP TRIGGER IF EXISTS trg_partido_mes_anio_update;", NULL
     };
     int failed = -1;
     if (!execute_sql_statements(drop_statements, &failed))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo eliminando trigger obsoleto: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "Fallo eliminando trigger obsoleto: %s", sqlite3_errmsg(db));
         app_log_write("WARN", "DB", log_buf_);
         return 0;
     }
@@ -1698,26 +1727,32 @@ static int create_performance_indexes()
                 "CREATE INDEX IF NOT EXISTS idx_camiseta_nombre ON camiseta(nombre);",
                 "CREATE INDEX IF NOT EXISTS idx_cancha_nombre ON cancha(nombre);",
                 "CREATE INDEX IF NOT EXISTS idx_equipo_nombre ON equipo(nombre);",
-                "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
-                "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON notificacion(leida, fecha_hora);",
+                "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON "
+                "temporada(nombre);",
+                "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON "
+                "notificacion(leida, fecha_hora);",
                 NULL
             };
             int failed = -1;
             if (!execute_sql_statements(extra_indexes, &failed))
             {
-                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice extra '%s': %s", extra_indexes[failed], sqlite3_errmsg(db));
+                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice extra '%s': %s",
+                         extra_indexes[failed], sqlite3_errmsg(db));
                 app_log_write("ERROR", "DB", log_buf_);
             }
             if (!set_user_version(DB_VERSION_CURRENT))
             {
-                snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras indices extra: %s", sqlite3_errmsg(db));
+                snprintf(log_buf_, sizeof(log_buf_),
+                         "No se pudo actualizar user_version tras indices extra: %s",
+                         sqlite3_errmsg(db));
                 app_log_write("WARN", "DB", log_buf_);
             }
         }
 
         if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
         {
-            snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s", sqlite3_errmsg(db));
+            snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s",
+                     sqlite3_errmsg(db));
             app_log_write("ERROR", "DB", log_buf_);
             return 0;
         }
@@ -1728,56 +1763,81 @@ static int create_performance_indexes()
 
     const char *index_statements[] =
     {
-        "CREATE INDEX IF NOT EXISTS idx_partido_fecha_hora ON partido(fecha_hora);",
-        "CREATE INDEX IF NOT EXISTS idx_partido_cancha_fecha ON partido(cancha_id, fecha_hora);",
-        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta_fecha ON partido(camiseta_id, fecha_hora);",
-        "CREATE INDEX IF NOT EXISTS idx_lesion_camiseta_fecha ON lesion(camiseta_id, fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_fecha_hora ON "
+        "partido(fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_cancha_fecha ON "
+        "partido(cancha_id, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta_fecha ON "
+        "partido(camiseta_id, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_lesion_camiseta_fecha ON "
+        "lesion(camiseta_id, fecha);",
         "CREATE INDEX IF NOT EXISTS idx_lesion_partido_id ON lesion(partido_id);",
-        "CREATE INDEX IF NOT EXISTS idx_jugador_equipo_numero ON jugador(equipo_id, numero);",
-        "CREATE INDEX IF NOT EXISTS idx_equipo_torneo_equipo_id ON equipo_torneo(equipo_id);",
-        "CREATE INDEX IF NOT EXISTS idx_partido_torneo_torneo_fase ON partido_torneo(torneo_id, fase);",
-        "CREATE INDEX IF NOT EXISTS idx_jugador_estadisticas_jugador_torneo ON jugador_estadisticas(jugador_id, torneo_id);",
-        "CREATE INDEX IF NOT EXISTS idx_torneo_temporada_temporada_orden ON torneo_temporada(temporada_id, orden_en_temporada);",
-        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_partido ON carrera_partido_hito(partido_id);",
-        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_tipo ON carrera_partido_hito(tipo_hito);",
-        "CREATE INDEX IF NOT EXISTS idx_carrera_resumen_fecha ON carrera_resumen_narrativo(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_jugador_equipo_numero ON "
+        "jugador(equipo_id, numero);",
+        "CREATE INDEX IF NOT EXISTS idx_equipo_torneo_equipo_id ON "
+        "equipo_torneo(equipo_id);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_torneo_torneo_fase ON "
+        "partido_torneo(torneo_id, fase);",
+        "CREATE INDEX IF NOT EXISTS idx_jugador_estadisticas_jugador_torneo ON "
+        "jugador_estadisticas(jugador_id, torneo_id);",
+        "CREATE INDEX IF NOT EXISTS idx_torneo_temporada_temporada_orden ON "
+        "torneo_temporada(temporada_id, orden_en_temporada);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_partido ON "
+        "carrera_partido_hito(partido_id);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_hito_tipo ON "
+        "carrera_partido_hito(tipo_hito);",
+        "CREATE INDEX IF NOT EXISTS idx_carrera_resumen_fecha ON "
+        "carrera_resumen_narrativo(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_partido_resultado ON partido(resultado);",
         "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
-        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON partido(camiseta_id);",
+        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON "
+        "partido(camiseta_id);",
         "CREATE INDEX IF NOT EXISTS idx_partido_mes_anio ON partido(mes_anio);",
         "CREATE INDEX IF NOT EXISTS idx_equipo_partido_id ON equipo(partido_id);",
-        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_coleccion ON coleccion_inventario(coleccion_id);",
-        "CREATE INDEX IF NOT EXISTS idx_financiamiento_fecha ON financiamiento(fecha);",
-        "CREATE INDEX IF NOT EXISTS idx_financiamiento_tipo_fecha ON financiamiento(tipo, fecha);",
-        "CREATE INDEX IF NOT EXISTS idx_financiamiento_substr_fecha ON financiamiento(substr(fecha, 1, 7));",
-        "CREATE INDEX IF NOT EXISTS idx_bienestar_sesion_fecha ON bienestar_sesion_mental(fecha);",
-        "CREATE INDEX IF NOT EXISTS idx_bienestar_entrenamiento_fecha ON bienestar_entrenamiento(fecha);",
-        "CREATE INDEX IF NOT EXISTS idx_bienestar_comida_fecha_calidad ON bienestar_comida(fecha, calidad);",
+        "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_coleccion ON "
+        "coleccion_inventario(coleccion_id);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_fecha ON "
+        "financiamiento(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_tipo_fecha ON "
+        "financiamiento(tipo, fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_financiamiento_substr_fecha ON "
+        "financiamiento(substr(fecha, 1, 7));",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_sesion_fecha ON "
+        "bienestar_sesion_mental(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_entrenamiento_fecha ON "
+        "bienestar_entrenamiento(fecha);",
+        "CREATE INDEX IF NOT EXISTS idx_bienestar_comida_fecha_calidad ON "
+        "bienestar_comida(fecha, calidad);",
         "CREATE INDEX IF NOT EXISTS idx_camiseta_nombre ON camiseta(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_cancha_nombre ON cancha(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_equipo_nombre ON equipo(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
-        "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON notificacion(leida, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON "
+        "notificacion(leida, fecha_hora);",
         NULL
     };
 
     int failed_index = -1;
     if (!execute_sql_statements(index_statements, &failed_index))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo creando indice '%s': %s", index_statements[failed_index], sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo creando indice '%s': %s",
+                 index_statements[failed_index], sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
 
     if (!set_user_version(DB_VERSION_CURRENT))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version tras crear indices: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo actualizar user_version tras crear indices: %s",
+                 sqlite3_errmsg(db));
         app_log_write("WARN", "DB", log_buf_);
     }
 
     if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s", sqlite3_errmsg(db));
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo PRAGMA optimize: %s",
+                 sqlite3_errmsg(db));
         app_log_write("ERROR", "DB", log_buf_);
         return 0;
     }
@@ -1866,13 +1926,14 @@ char *get_user_name()
 int set_user_name(const char *nombre)
 {
     const char *sql_update = "UPDATE usuario SET nombre = ? WHERE id = 1;";
-    const char *sql_insert =
-        "INSERT INTO usuario (id, nombre, password_salt, password_hash) VALUES (1, ?, '', '');";
+    const char *sql_insert = "INSERT INTO usuario (id, nombre, password_salt, "
+                             "password_hash) VALUES (1, ?, '', '');";
     int updated_rows = 0;
     const char *update_params[] = {nombre};
     const char *insert_params[] = {nombre};
 
-    if (ejecutar_stmt_texto(sql_update, update_params, 1, &updated_rows) && updated_rows > 0)
+    if (ejecutar_stmt_texto(sql_update, update_params, 1, &updated_rows) &&
+            updated_rows > 0)
     {
         return 1;
     }
@@ -1885,7 +1946,8 @@ int user_has_password(void)
     const char *sql = "SELECT password_hash FROM usuario WHERE id = 1;";
     char hash_tmp[128] = {0};
 
-    return db_query_single_text(sql, hash_tmp, sizeof(hash_tmp)) && hash_tmp[0] != '\0';
+    return db_query_single_text(sql, hash_tmp, sizeof(hash_tmp)) &&
+           hash_tmp[0] != '\0';
 }
 
 int set_user_password(const char *plain_password)
@@ -1894,9 +1956,10 @@ int set_user_password(const char *plain_password)
     char hash_hex[17];
     int updated_rows = 0;
     char *nombre = NULL;
-    const char *sql_update = "UPDATE usuario SET password_salt = ?, password_hash = ? WHERE id = 1;";
-    const char *sql_insert =
-        "INSERT INTO usuario (id, nombre, password_salt, password_hash) VALUES (1, ?, ?, ?);";
+    const char *sql_update =
+        "UPDATE usuario SET password_salt = ?, password_hash = ? WHERE id = 1;";
+    const char *sql_insert = "INSERT INTO usuario (id, nombre, password_salt, "
+                             "password_hash) VALUES (1, ?, ?, ?);";
 
     if (!plain_password || plain_password[0] == '\0')
     {
@@ -1907,7 +1970,8 @@ int set_user_password(const char *plain_password)
     build_password_hash(plain_password, salt_hex, hash_hex, sizeof(hash_hex));
 
     const char *update_params[] = {salt_hex, hash_hex};
-    if (ejecutar_stmt_texto(sql_update, update_params, 2, &updated_rows) && updated_rows > 0)
+    if (ejecutar_stmt_texto(sql_update, update_params, 2, &updated_rows) &&
+            updated_rows > 0)
     {
         return 1;
     }
@@ -1954,13 +2018,15 @@ int verify_user_password(const char *plain_password)
     }
 
     char computed_hash[17];
-    build_password_hash(plain_password, salt, computed_hash, sizeof(computed_hash));
+    build_password_hash(plain_password, salt, computed_hash,
+                        sizeof(computed_hash));
     return strcmp(computed_hash, stored_hash) == 0;
 }
 
 int clear_user_password(void)
 {
-    const char *sql = "UPDATE usuario SET password_salt = '', password_hash = '' WHERE id = 1;";
+    const char *sql =
+        "UPDATE usuario SET password_salt = '', password_hash = '' WHERE id = 1;";
     return ejecutar_stmt_texto(sql, NULL, 0, NULL);
 }
 
@@ -1972,15 +2038,11 @@ const char *get_data_dir()
 static const char *obtener_directorio_publico(const char *dir_preferido_local,
         const char *dir_legado_local,
         const char *subdir_documentos,
-        char *out_dir,
-        size_t out_size,
+        char *out_dir, size_t out_size,
         const char *nombre_subdir)
 {
-    if (!configurar_directorio_usuario(dir_preferido_local,
-                                       dir_legado_local,
-                                       subdir_documentos,
-                                       out_dir,
-                                       out_size,
+    if (!configurar_directorio_usuario(dir_preferido_local, dir_legado_local,
+                                       subdir_documentos, out_dir, out_size,
                                        nombre_subdir))
     {
         return NULL;
@@ -2021,60 +2083,41 @@ static const char *resolver_directorio_config(const DirCfg *cfg)
     }
 #endif
 
-    return obtener_directorio_publico(dir_preferido_local,
-                                      dir_legado_local,
-                                      cfg->subdir_documentos,
-                                      cfg->out_dir,
-                                      cfg->out_size,
-                                      cfg->nombre_subdir);
+    return obtener_directorio_publico(dir_preferido_local, dir_legado_local,
+                                      cfg->subdir_documentos, cfg->out_dir,
+                                      cfg->out_size, cfg->nombre_subdir);
 }
 
-static const DirCfg DIR_CFG_EXPORT =
-{
-    NULL,
-    NULL,
-    "./Exportaciones",
-    NULL,
-    "Exportaciones",
-    "Exportaciones",
-    EXPORT_DIR,
-    sizeof(EXPORT_DIR)
-};
+static const DirCfg DIR_CFG_EXPORT = {NULL,
+                                      NULL,
+                                      "./Exportaciones",
+                                      NULL,
+                                      "Exportaciones",
+                                      "Exportaciones",
+                                      EXPORT_DIR,
+                                      sizeof(EXPORT_DIR)
+                                     };
 
-static const DirCfg DIR_CFG_IMPORT =
-{
-    NULL,
-    NULL,
-    "./Importaciones",
-    "./importaciones",
-    "Importaciones",
-    "Importaciones",
-    IMPORT_DIR,
-    sizeof(IMPORT_DIR)
-};
+static const DirCfg DIR_CFG_IMPORT = {NULL,
+                                      NULL,
+                                      "./Importaciones",
+                                      "./importaciones",
+                                      "Importaciones",
+                                      "Importaciones",
+                                      IMPORT_DIR,
+                                      sizeof(IMPORT_DIR)
+                                     };
 
 static const DirCfg DIR_CFG_IMAGES =
 {
-    "./Imagenes",
-    NULL,
-    NULL,
-    NULL,
-    "Imagenes",
-    "Imagenes",
-    IMAGES_DIR,
-    sizeof(IMAGES_DIR)
+    "./Imagenes", NULL,       NULL,       NULL,
+    "Imagenes",   "Imagenes", IMAGES_DIR, sizeof(IMAGES_DIR)
 };
 
 static const DirCfg DIR_CFG_MUSIC =
 {
-    NULL,
-    NULL,
-    "./Musica",
-    NULL,
-    "Musica",
-    "Musica",
-    MUSIC_DIR,
-    sizeof(MUSIC_DIR)
+    NULL,     NULL,     "./Musica", NULL,
+    "Musica", "Musica", MUSIC_DIR,  sizeof(MUSIC_DIR)
 };
 
 const char *get_export_dir()
@@ -2097,7 +2140,8 @@ const char *get_music_dir()
     return resolver_directorio_config(&DIR_CFG_MUSIC);
 }
 
-int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)
+int db_get_image_path_by_id(const char *table_name, int id, char *ruta,
+                            size_t size)
 {
     if (!table_name || table_name[0] == '\0' || !ruta || size == 0 || id <= 0)
     {
@@ -2114,7 +2158,8 @@ int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t s
     }
 
     char sql[256] = {0};
-    snprintf(sql, sizeof(sql), "SELECT imagen_ruta FROM %s WHERE id=?", table_name);
+    snprintf(sql, sizeof(sql), "SELECT imagen_ruta FROM %s WHERE id=?",
+             table_name);
 
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
@@ -2128,7 +2173,8 @@ int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t s
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const unsigned char *valor = sqlite3_column_text(stmt, 0);
-        if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
+        if (valor && valor[0] != '\0' &&
+                strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
         {
             ok = 1;
         }
@@ -2138,7 +2184,8 @@ int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t s
     return ok;
 }
 
-int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, size_t size)
+int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta,
+                                   size_t size)
 {
     if (!ruta_db || ruta_db[0] == '\0' || !ruta_absoluta || size == 0)
     {
@@ -2146,7 +2193,8 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
     }
 
     char nombre_archivo[260] = {0};
-    if (!app_get_file_name_from_path(ruta_db, nombre_archivo, sizeof(nombre_archivo)))
+    if (!app_get_file_name_from_path(ruta_db, nombre_archivo,
+                                     sizeof(nombre_archivo)))
     {
         return 0;
     }
@@ -2177,7 +2225,8 @@ void exportar_base_datos()
     if (!dest_path)
     {
         LOG_ERROR_MSG("EXPORT",
-                      "Error: No se pudo obtener la ruta de destino para exportar la base de datos.",
+                      "Error: No se pudo obtener la ruta de destino para exportar "
+                      "la base de datos.",
                       "No se pudo obtener ruta de destino para exportacion");
         pause_console();
         return;
@@ -2190,37 +2239,39 @@ void exportar_base_datos()
         CopyResult result = copiar_archivo(source_path, dest_path);
         if (result == COPY_SRC_ERROR)
         {
-            LOG_ERROR_CONSOLE_LOG_FMT("EXPORT",
-                                      "Error: No se encontro la base de datos en:\n%s",
-                                      "No se encontro DB origen para exportar: %.980s",
-                                      source_path);
+            LOG_ERROR_CONSOLE_LOG_FMT(
+                "EXPORT", "Error: No se encontro la base de datos en:\n%s",
+                "No se encontro DB origen para exportar: %.980s", source_path);
             pause_console();
             return;
         }
 
         if (result == COPY_DST_ERROR)
         {
-            LOG_ERROR_CONSOLE_LOG_FMT("EXPORT",
-                                      "Error creando archivo destino:\n%s",
-                                      "No se pudo abrir DB destino para exportar: %.977s",
-                                      dest_path);
+            LOG_ERROR_CONSOLE_LOG_FMT(
+                "EXPORT", "Error creando archivo destino:\n%s",
+                "No se pudo abrir DB destino para exportar: %.977s", dest_path);
             pause_console();
             return;
         }
 
         printf("Base de datos exportada a:\n%s\n", dest_path);
-        snprintf(log_buf_, sizeof(log_buf_), "Exportacion finalizada (copia directa): %.983s", dest_path);
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "Exportacion finalizada (copia directa): %.983s", dest_path);
         app_log_write("INFO", "EXPORT", log_buf_);
         pause_console();
         return;
     }
 
-    // Exportacion segura con SQLite backup API (evita errores por archivo en uso).
+    // Exportacion segura con SQLite backup API (evita errores por archivo en
+    // uso).
     sqlite3 *dest_db = NULL;
     if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
     {
         printf("Error abriendo base de datos destino:\n%s\n", dest_path);
-        snprintf(log_buf_, sizeof(log_buf_), "Error abriendo DB destino (%.700s): %.260s", dest_path, sqlite3_errmsg(dest_db));
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "Error abriendo DB destino (%.700s): %.260s", dest_path,
+                 sqlite3_errmsg(dest_db));
         app_log_write("ERROR", "EXPORT", log_buf_);
         if (dest_db)
         {
@@ -2233,8 +2284,7 @@ void exportar_base_datos()
     sqlite3_backup *backup = sqlite3_backup_init(dest_db, "main", db, "main");
     if (!backup)
     {
-        LOG_ERROR_FMT("EXPORT",
-                      "Error iniciando backup SQLite: %s",
+        LOG_ERROR_FMT("EXPORT", "Error iniciando backup SQLite: %s",
                       sqlite3_errmsg(dest_db));
         sqlite3_close(dest_db);
         pause_console();
@@ -2249,30 +2299,34 @@ void exportar_base_datos()
 
     if (final_rc != SQLITE_OK)
     {
-        printf("Error exportando base de datos (SQLite backup): %s\n", sqlite3_errstr(final_rc));
-        snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup final_rc=%d (%s)", final_rc, sqlite3_errstr(final_rc));
+        printf("Error exportando base de datos (SQLite backup): %s\n",
+               sqlite3_errstr(final_rc));
+        snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup final_rc=%d (%s)",
+                 final_rc, sqlite3_errstr(final_rc));
         app_log_write("ERROR", "EXPORT", log_buf_);
         pause_console();
         return;
     }
 
     printf("Base de datos exportada a:\n%s\n", dest_path);
-    snprintf(log_buf_, sizeof(log_buf_), "Exportacion finalizada (SQLite backup): %.982s", dest_path);
+    snprintf(log_buf_, sizeof(log_buf_),
+             "Exportacion finalizada (SQLite backup): %.982s", dest_path);
     app_log_write("INFO", "EXPORT", log_buf_);
     pause_console();
 }
 
 int backup_base_datos_automatico(const char *motivo)
 {
-    snprintf(log_buf_, sizeof(log_buf_), "Inicio de backup automatico. Motivo: %s", (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
+    snprintf(log_buf_, sizeof(log_buf_),
+             "Inicio de backup automatico. Motivo: %s",
+             (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
     app_log_write("INFO", "BACKUP", log_buf_);
 
     const char *source_path = DB_PATH;
     const char *export_dir = get_export_dir();
     if (!export_dir)
     {
-        LOG_ERROR_MSG("BACKUP",
-                      get_text("backup_failed"),
+        LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo resolver directorio de exportacion");
         return 0;
     }
@@ -2283,10 +2337,9 @@ int backup_base_datos_automatico(const char *motivo)
 
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
-        LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP",
-                                      get_text("backup_failed"),
-                                      "No se pudo crear/acceder a directorio de backups: %.972s",
-                                      backup_dir);
+        LOG_ERROR_CONSOLE_MSG_LOG_FMT(
+            "BACKUP", get_text("backup_failed"),
+            "No se pudo crear/acceder a directorio de backups: %.972s", backup_dir);
         return 0;
     }
 
@@ -2300,7 +2353,8 @@ int backup_base_datos_automatico(const char *motivo)
 
     if (motivo && motivo[0] != '\0')
     {
-        strncpy_s(motivo_safe, sizeof(motivo_safe), motivo, sizeof(motivo_safe) - 1);
+        strncpy_s(motivo_safe, sizeof(motivo_safe), motivo,
+                  sizeof(motivo_safe) - 1);
         sanitize_filename_token(motivo_safe);
     }
 
@@ -2311,8 +2365,7 @@ int backup_base_datos_automatico(const char *motivo)
             !append_str(dest_path, &used, sizeof(dest_path), DB_PATH_SEP) ||
             !append_str(dest_path, &used, sizeof(dest_path), prefix))
     {
-        LOG_ERROR_MSG("BACKUP",
-                      get_text("backup_failed"),
+        LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo construir ruta base de backup");
         return 0;
     }
@@ -2321,8 +2374,7 @@ int backup_base_datos_automatico(const char *motivo)
             (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
              !append_str(dest_path, &used, sizeof(dest_path), "_")))
     {
-        LOG_ERROR_MSG("BACKUP",
-                      get_text("backup_failed"),
+        LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo agregar motivo a ruta de backup");
         return 0;
     }
@@ -2330,8 +2382,7 @@ int backup_base_datos_automatico(const char *motivo)
     if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
             !append_str(dest_path, &used, sizeof(dest_path), ext))
     {
-        LOG_ERROR_MSG("BACKUP",
-                      get_text("backup_failed"),
+        LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo completar nombre de archivo backup");
         return 0;
     }
@@ -2339,16 +2390,16 @@ int backup_base_datos_automatico(const char *motivo)
     CopyResult result = copiar_archivo(source_path, dest_path);
     if (result != COPY_OK)
     {
-        LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP",
-                                      get_text("backup_failed"),
-                                      "Fallo copia de backup desde %.470s hacia %.470s",
-                                      source_path,
-                                      dest_path);
+        LOG_ERROR_CONSOLE_MSG_LOG_FMT(
+            "BACKUP", get_text("backup_failed"),
+            "Fallo copia de backup desde %.470s hacia %.470s", source_path,
+            dest_path);
         return 0;
     }
 
     printf("%s\n%s\n", get_text("backup_created"), dest_path);
-    snprintf(log_buf_, sizeof(log_buf_), "Backup automatico completado: %.992s", dest_path);
+    snprintf(log_buf_, sizeof(log_buf_), "Backup automatico completado: %.992s",
+             dest_path);
     app_log_write("INFO", "BACKUP", log_buf_);
     return 1;
 }
@@ -2360,8 +2411,7 @@ void importar_base_datos()
     const char *import_dir = get_import_dir();
     if (!import_dir)
     {
-        LOG_ERROR_MSG("IMPORT",
-                      "Error obteniendo directorio de importaciones",
+        LOG_ERROR_MSG("IMPORT", "Error obteniendo directorio de importaciones",
                       "No se pudo obtener directorio de importaciones");
         return;
     }
@@ -2378,17 +2428,15 @@ void importar_base_datos()
     {
         if (result == COPY_SRC_ERROR)
         {
-            LOG_ERROR_CONSOLE_LOG_FMT("IMPORT",
-                                      "Error: No se encontro el archivo a importar en:\n%s",
-                                      "No se encontro archivo de importacion: %.983s",
-                                      source_path);
+            LOG_ERROR_CONSOLE_LOG_FMT(
+                "IMPORT", "Error: No se encontro el archivo a importar en:\n%s",
+                "No se encontro archivo de importacion: %.983s", source_path);
         }
         else
         {
-            LOG_ERROR_CONSOLE_LOG_FMT("IMPORT",
-                                      "Error: No se pudo abrir la base de datos destino:\n%s",
-                                      "No se pudo abrir DB destino para importar: %.977s",
-                                      dest_path);
+            LOG_ERROR_CONSOLE_LOG_FMT(
+                "IMPORT", "Error: No se pudo abrir la base de datos destino:\n%s",
+                "No se pudo abrir DB destino para importar: %.977s", dest_path);
         }
         return;
     }
@@ -2398,7 +2446,9 @@ void importar_base_datos()
     printf("Destino: %s\n", dest_path);
     printf("Reinicia la aplicacion para usar la nueva base.\n");
 
-    snprintf(log_buf_, sizeof(log_buf_), "Importacion completada. Origen: %.470s | Destino: %.470s", source_path, dest_path);
+    snprintf(log_buf_, sizeof(log_buf_),
+             "Importacion completada. Origen: %.470s | Destino: %.470s",
+             source_path, dest_path);
     app_log_write("INFO", "IMPORT", log_buf_);
 
     pause_console();

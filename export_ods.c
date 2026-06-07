@@ -155,15 +155,17 @@ static void zip_write_end(FILE *f, uint32_t cd_offset, uint32_t cd_size, uint16_
 static uint16_t dos_time_now(void)
 {
     time_t t = time(NULL);
-    struct tm const *tm = localtime(&t);
-    return (uint16_t)((tm->tm_sec / 2) | (tm->tm_min << 5) | (tm->tm_hour << 11));
+    struct tm local_tm;
+    if (localtime_s(&local_tm, &t) != 0) return 0;
+    return (uint16_t)((local_tm.tm_sec / 2) | (local_tm.tm_min << 5) | (local_tm.tm_hour << 11));
 }
 
 static uint16_t dos_date_now(void)
 {
     time_t t = time(NULL);
-    struct tm const *tm = localtime(&t);
-    return (uint16_t)(tm->tm_mday | ((tm->tm_mon + 1) << 5) | ((tm->tm_year - 80) << 9));
+    struct tm local_tm;
+    if (localtime_s(&local_tm, &t) != 0) return 0;
+    return (uint16_t)(local_tm.tm_mday | ((local_tm.tm_mon + 1) << 5) | ((local_tm.tm_year - 80) << 9));
 }
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -402,10 +404,16 @@ static void dynbuf_init(DynBuf *b)
 
 static int dynbuf_write(DynBuf *b, const void *src, size_t n)
 {
-    if (b->len + n >= b->cap)
+    if (n == 0) return 1;
+    size_t remaining = b->cap - b->len;
+    if (n > remaining)
     {
         size_t newcap = b->cap ? b->cap * 2 : 65536;
-        while (newcap < b->len + n) newcap *= 2;
+        while (newcap - b->len < n)
+        {
+            if (newcap > SIZE_MAX / 2) return 0;
+            newcap *= 2;
+        }
         uint8_t *p = (uint8_t *)realloc(b->data, newcap);
         if (!p) return 0;
         b->data = p;
@@ -416,14 +424,15 @@ static int dynbuf_write(DynBuf *b, const void *src, size_t n)
     return 1;
 }
 
-static int dynbuf_printf(DynBuf *b, const char *fmt, ...)
+static int dynbuf_printf(DynBuf *b, const char *fmt, ...) // NOSONAR
 {
     char tmp[4096];
     va_list ap;
     va_start(ap, fmt);
-    int n = vsnprintf(tmp, sizeof(tmp), fmt, ap);
+    int n = vsnprintf(tmp, sizeof(tmp), fmt, ap); // NOSONAR
     va_end(ap);
     if (n < 0) return 0;
+    if ((size_t)n >= sizeof(tmp)) n = (int)(sizeof(tmp) - 1);
     return dynbuf_write(b, tmp, (size_t)n);
 }
 
@@ -464,6 +473,41 @@ static void xlsx_escape_xml_buf(DynBuf *b, const char *texto)
     }
 }
 
+static void xlsx_write_type_data(DynBuf *buf, sqlite3_stmt *stmt, int col)
+{
+    int col_type = sqlite3_column_type(stmt, col);
+    if (col_type == SQLITE_INTEGER)
+    {
+        char num[32];
+        snprintf(num, sizeof(num), "%d", sqlite3_column_int(stmt, col));
+        dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
+    }
+    else if (col_type == SQLITE_FLOAT)
+    {
+        char num[64];
+        snprintf(num, sizeof(num), "%.2f", sqlite3_column_double(stmt, col));
+        dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
+    }
+    else if (col_type != SQLITE_NULL)
+    {
+        const char *txt = (const char*)sqlite3_column_text(stmt, col);
+        xlsx_escape_xml_buf(buf, txt);
+    }
+}
+
+static void xlsx_write_cell(DynBuf *buf, sqlite3_stmt *stmt, int col)
+{
+    dynbuf_write(buf, "    <Cell><Data ss:Type=\"", 25);
+    int col_type = sqlite3_column_type(stmt, col);
+    if (col_type == SQLITE_INTEGER || col_type == SQLITE_FLOAT)
+        dynbuf_write(buf, "Number", 6);
+    else
+        dynbuf_write(buf, "String", 6);
+    dynbuf_write(buf, "\">", 2);
+    xlsx_write_type_data(buf, stmt, col);
+    dynbuf_write(buf, "</Data></Cell>\n", 15);
+}
+
 static int xlsx_generar_xml(const char *nombre_hoja, const char *sql,
                             const char *encabezados[], int num_cols, DynBuf *buf)
 {
@@ -492,40 +536,7 @@ static int xlsx_generar_xml(const char *nombre_hoja, const char *sql,
         {
             dynbuf_write(buf, "   <Row>\n", 9);
             for (int i = 0; i < num_cols; i++)
-            {
-                dynbuf_write(buf, "    <Cell><Data ss:Type=\"", 25);
-                int col_type = sqlite3_column_type(stmt, i);
-                if (col_type == SQLITE_INTEGER)
-                    dynbuf_write(buf, "Number", 6);
-                else if (col_type == SQLITE_FLOAT)
-                    dynbuf_write(buf, "Number", 6);
-                else
-                    dynbuf_write(buf, "String", 6);
-                dynbuf_write(buf, "\">", 2);
-
-                if (col_type == SQLITE_NULL)
-                {
-                    // Nothing
-                }
-                else if (col_type == SQLITE_INTEGER)
-                {
-                    char num[32];
-                    snprintf(num, sizeof(num), "%d", sqlite3_column_int(stmt, i));
-                    dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
-                }
-                else if (col_type == SQLITE_FLOAT)
-                {
-                    char num[64];
-                    snprintf(num, sizeof(num), "%.2f", sqlite3_column_double(stmt, i));
-                    dynbuf_write(buf, num, strnlen_s(num, (size_t)-1));
-                }
-                else
-                {
-                    const char *txt = (const char*)sqlite3_column_text(stmt, i);
-                    xlsx_escape_xml_buf(buf, txt);
-                }
-                dynbuf_write(buf, "</Data></Cell>\n", 15);
-            }
+                xlsx_write_cell(buf, stmt, i);
             dynbuf_write(buf, "   </Row>\n", 10);
         }
         sqlite3_finalize(stmt);

@@ -54,6 +54,8 @@ static void menu_configurar_filtros(FiltrosBusqueda *f)
             input_string("Formacion (ej: 4-4-2): ", f->formacion, sizeof(f->formacion));
             f->usar_formacion = (f->formacion[0] != '\0') ? 1 : 0;
             break;
+        default:
+            break;
         }
     }
     while (opcion != 0);

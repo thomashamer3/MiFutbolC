@@ -303,6 +303,92 @@ void exportar_carrera_html()
     printf("Archivo exportado a: %s\n", get_export_path("carrera.html"));
 }
 
+typedef void (*pdf_fila_callback)(struct pdf_doc *pdf, float y, sqlite3_stmt *stmt, float margin, float wrap_w, char *buffer, size_t buf_size);
+
+static void escribir_fila_hito_pdf(struct pdf_doc *pdf, float y, sqlite3_stmt *stmt, float margin, float wrap_w, char *buffer, size_t buf_size)
+{
+    snprintf(buffer, buf_size, "#%d [%s] %s",
+             sqlite3_column_int(stmt, 0),
+             (const char*)sqlite3_column_text(stmt, 1),
+             (const char*)sqlite3_column_text(stmt, 2));
+    pdf_add_text_wrap(pdf, NULL, buffer, 10, margin, y, 0, PDF_BLACK, wrap_w, PDF_ALIGN_LEFT, NULL);
+}
+
+static void escribir_fila_resumen_pdf(struct pdf_doc *pdf, float y, sqlite3_stmt *stmt, float margin, float wrap_w, char *buffer, size_t buf_size)
+{
+    snprintf(buffer, buf_size, "[%s] %s",
+             (const char*)sqlite3_column_text(stmt, 1),
+             (const char*)sqlite3_column_text(stmt, 2));
+    pdf_add_text_wrap(pdf, NULL, buffer, 10, margin, y, 0, PDF_BLACK, wrap_w, PDF_ALIGN_LEFT, NULL);
+}
+
+static void escribir_identidad_pdf(struct pdf_doc *pdf, float *y, float margin, float line_h)
+{
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, SQL_IDENTIDAD, -1, &stmt, NULL) == SQLITE_OK)
+    {
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer), "Nombre: %s",
+                     (const char*)sqlite3_column_text(stmt, 1));
+            pdf_add_text(pdf, NULL, buffer, 10, margin, *y, PDF_BLACK);
+            *y -= line_h;
+
+            snprintf(buffer, sizeof(buffer), "Posicion: %s",
+                     (const char*)sqlite3_column_text(stmt, 2));
+            pdf_add_text(pdf, NULL, buffer, 10, margin, *y, PDF_BLACK);
+            *y -= line_h;
+
+            snprintf(buffer, sizeof(buffer), "Club Inicios: %s",
+                     (const char*)sqlite3_column_text(stmt, 3));
+            pdf_add_text(pdf, NULL, buffer, 10, margin, *y, PDF_BLACK);
+            *y -= line_h;
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void escribir_seccion_pdf(struct pdf_doc *pdf, float *y,
+                                 const char *sql, const char *titulo,
+                                 const char *sin_registros,
+                                 float margin, float wrap_w,
+                                 float small_h, float line_h,
+                                 pdf_fila_callback escribir_fila)
+{
+    if (*y < 60)
+    {
+        pdf_append_page(pdf);
+        *y = PDF_A4_HEIGHT - margin;
+    }
+    pdf_add_text(pdf, NULL, titulo, 14, margin, *y, PDF_BLACK);
+    *y -= 18;
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+    {
+        int count = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            if (*y < 40)
+            {
+                pdf_append_page(pdf);
+                *y = PDF_A4_HEIGHT - margin;
+            }
+            char buffer[512];
+            escribir_fila(pdf, *y, stmt, margin, wrap_w, buffer, sizeof(buffer));
+            *y -= small_h;
+            count++;
+        }
+        sqlite3_finalize(stmt);
+        if (count == 0)
+        {
+            pdf_add_text(pdf, NULL, sin_registros, 10, margin, *y, PDF_BLACK);
+            *y -= line_h;
+        }
+    }
+}
+
 void exportar_carrera_pdf()
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
@@ -341,108 +427,19 @@ void exportar_carrera_pdf()
     pdf_add_text(pdf, NULL, "Carrera Futbolistica", 18, margin, y, PDF_BLACK);
     y -= 24;
 
-    // Identidad section
     pdf_add_text(pdf, NULL, "Identidad", 14, margin, y, PDF_BLACK);
     y -= 18;
-
-    sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db, SQL_IDENTIDAD, -1, &stmt, NULL) == SQLITE_OK)
-    {
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            char buffer[256];
-            snprintf(buffer, sizeof(buffer), "Nombre: %s",
-                     (const char*)sqlite3_column_text(stmt, 1));
-            pdf_add_text(pdf, NULL, buffer, 10, margin, y, PDF_BLACK);
-            y -= line_h;
-
-            snprintf(buffer, sizeof(buffer), "Posicion: %s",
-                     (const char*)sqlite3_column_text(stmt, 2));
-            pdf_add_text(pdf, NULL, buffer, 10, margin, y, PDF_BLACK);
-            y -= line_h;
-
-            snprintf(buffer, sizeof(buffer), "Club Inicios: %s",
-                     (const char*)sqlite3_column_text(stmt, 3));
-            pdf_add_text(pdf, NULL, buffer, 10, margin, y, PDF_BLACK);
-            y -= line_h;
-        }
-        sqlite3_finalize(stmt);
-    }
-
+    escribir_identidad_pdf(pdf, &y, margin, line_h);
     y -= 8;
 
-    // Hitos section
-    if (y < 60)
-    {
-        pdf_append_page(pdf);
-        y = PDF_A4_HEIGHT - margin;
-    }
-    pdf_add_text(pdf, NULL, "Hitos de la Carrera", 14, margin, y, PDF_BLACK);
-    y -= 18;
-
-    if (sqlite3_prepare_v2(db, SQL_HITOS, -1, &stmt, NULL) == SQLITE_OK)
-    {
-        int count = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            if (y < 40)
-            {
-                pdf_append_page(pdf);
-                y = PDF_A4_HEIGHT - margin;
-            }
-            char buffer[512];
-            snprintf(buffer, sizeof(buffer), "#%d [%s] %s",
-                     sqlite3_column_int(stmt, 0),
-                     (const char*)sqlite3_column_text(stmt, 1),
-                     (const char*)sqlite3_column_text(stmt, 2));
-            pdf_add_text_wrap(pdf, NULL, buffer, 10, margin, y, 0, PDF_BLACK, wrap_w, PDF_ALIGN_LEFT, NULL);
-            y -= small_h;
-            count++;
-        }
-        sqlite3_finalize(stmt);
-        if (count == 0)
-        {
-            pdf_add_text(pdf, NULL, "Sin hitos registrados.", 10, margin, y, PDF_BLACK);
-            y -= line_h;
-        }
-    }
-
+    escribir_seccion_pdf(pdf, &y, SQL_HITOS, "Hitos de la Carrera",
+                         "Sin hitos registrados.", margin, wrap_w,
+                         small_h, line_h, escribir_fila_hito_pdf);
     y -= 8;
 
-    // Resumenes section
-    if (y < 60)
-    {
-        pdf_append_page(pdf);
-        y = PDF_A4_HEIGHT - margin;
-    }
-    pdf_add_text(pdf, NULL, "Resumenes Narrativos", 14, margin, y, PDF_BLACK);
-    y -= 18;
-
-    if (sqlite3_prepare_v2(db, SQL_RESUMENES, -1, &stmt, NULL) == SQLITE_OK)
-    {
-        int count = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            if (y < 40)
-            {
-                pdf_append_page(pdf);
-                y = PDF_A4_HEIGHT - margin;
-            }
-            char buffer[512];
-            snprintf(buffer, sizeof(buffer), "[%s] %s",
-                     (const char*)sqlite3_column_text(stmt, 1),
-                     (const char*)sqlite3_column_text(stmt, 2));
-            pdf_add_text_wrap(pdf, NULL, buffer, 10, margin, y, 0, PDF_BLACK, wrap_w, PDF_ALIGN_LEFT, NULL);
-            y -= small_h;
-            count++;
-        }
-        sqlite3_finalize(stmt);
-        if (count == 0)
-        {
-            pdf_add_text(pdf, NULL, "Sin resumenes registrados.", 10, margin, y, PDF_BLACK);
-            y -= line_h;
-        }
-    }
+    escribir_seccion_pdf(pdf, &y, SQL_RESUMENES, "Resumenes Narrativos",
+                         "Sin resumenes registrados.", margin, wrap_w,
+                         small_h, line_h, escribir_fila_resumen_pdf);
 
     if (pdf_save(pdf, get_export_path("carrera.pdf")) < 0)
     {

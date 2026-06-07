@@ -7,8 +7,8 @@
 #include "menu.h"
 #include <string.h>
 
-void setUp(void) { }
-void tearDown(void) { }
+void setUp(void) { /* No setup needed */ }
+void tearDown(void) { /* No cleanup needed */ }
 
 static void test_get_nombre_tipo_torneo_ida_vuelta(void)
 {
