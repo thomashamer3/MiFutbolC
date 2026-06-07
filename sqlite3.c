@@ -112258,7 +112258,7 @@ notExistsWithKey:
                     ** engine starts picking positive candidate ROWIDs at random until
                     ** it finds one that is not previously used. */
                     assert( pOp->p3==0 );  /* We cannot be in random rowid mode if this is
-     ** an AUTOINCREMENT table. */
+ ** an AUTOINCREMENT table. */
                     cnt = 0;
                     do
                     {

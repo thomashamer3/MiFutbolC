@@ -312,10 +312,7 @@ int crear_backup(const char *descripcion)
             printf("Error: No se pudo crear el archivo de backup.\n");
             snprintf(backup_dir, sizeof(backup_dir), "Error creando backup: %s", sqlite3_errmsg(dest_db));
             app_log_event("BACKUP", backup_dir);
-            if (dest_db)
-            {
-                sqlite3_close(dest_db);
-            }
+            sqlite3_close(dest_db);
             return 0;
         }
 
@@ -711,8 +708,10 @@ static void pedir_y_restaurar_backup(void)
     int validos = 0;
     char *nombres[MAX_BUFFER];
 
-    for (int i = 0; i < count && validos < MAX_BUFFER; i++)
+    for (int i = 0; i < count; i++)
     {
+        if (validos >= MAX_BUFFER) break;
+
         cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON *fname = cJSON_GetObjectItem(entry, "filename");
         cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
@@ -807,8 +806,10 @@ static void pedir_y_eliminar_backup(void)
     int validos = 0;
     char *nombres[MAX_BUFFER];
 
-    for (int i = 0; i < count && validos < MAX_BUFFER; i++)
+    for (int i = 0; i < count; i++)
     {
+        if (validos >= MAX_BUFFER) break;
+
         cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON *fname = cJSON_GetObjectItem(entry, "filename");
         cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
@@ -985,25 +986,22 @@ int verificar_backup_programado(void)
     if (t_prox == -1)
         return 0;
 
-    if (difftime(ahora, t_prox) >= 0)
+    if (difftime(ahora, t_prox) >= 0 && crear_backup("Auto-backup programado"))
     {
-        if (crear_backup("Auto-backup programado"))
+        /* Actualizar proximo backup usando el intervalo */
+        sqlite3_stmt *upd;
+        char sql_upd[256];
+        snprintf(sql_upd, sizeof(sql_upd),
+                 "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d hours') WHERE id = 1",
+                 intervalo);
+        if (sqlite3_prepare_v2(db, sql_upd, -1, &upd, NULL) == SQLITE_OK)
         {
-            /* Actualizar proximo backup usando el intervalo */
-            sqlite3_stmt *upd;
-            char sql_upd[256];
-            snprintf(sql_upd, sizeof(sql_upd),
-                     "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d hours') WHERE id = 1",
-                     intervalo);
-            if (sqlite3_prepare_v2(db, sql_upd, -1, &upd, NULL) == SQLITE_OK)
-            {
-                sqlite3_step(upd);
-                sqlite3_finalize(upd);
-            }
-            app_log_event("BACKUP", "Auto-backup ejecutado");
-            printf("[Auto-Backup] Backup creado automaticamente.\n");
-            return 1;
+            sqlite3_step(upd);
+            sqlite3_finalize(upd);
         }
+        app_log_event("BACKUP", "Auto-backup ejecutado");
+        printf("[Auto-Backup] Backup creado automaticamente.\n");
+        return 1;
     }
     return 0;
 }

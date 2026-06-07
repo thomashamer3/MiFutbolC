@@ -24,7 +24,7 @@ void verificar_integridad_bd(void);
  * Version optimizada de integrity_check que realiza una verificacion
  * menos exhaustiva pero mas rapida.
  */
-void verificar_integrdiad_rapida(void);
+void verificar_integridad_rapida(void);
 
 /**
  * @brief Reconstruye la base de datos para recuperar espacio (VACUUM)

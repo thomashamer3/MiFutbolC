@@ -19,6 +19,6 @@ typedef struct
 } FiltrosBusqueda;
 
 void menu_filtros_avanzados(void);
-int aplicar_filtros_partidos(FiltrosBusqueda *f);
+int aplicar_filtros_partidos(FiltrosBusqueda const *f);
 
 #endif

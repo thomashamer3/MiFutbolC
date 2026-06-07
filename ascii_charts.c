@@ -66,6 +66,9 @@ static void print_line_char(char ch, int length)
  */
 static char elegir_caracter_linea(const int *rows, int c, int width)
 {
+    if (width <= 1)
+        return '-';
+
     if (c > 0 && c < width - 1)
     {
         if (rows[c] > rows[c - 1] && rows[c] > rows[c + 1])
@@ -84,15 +87,15 @@ static char elegir_caracter_linea(const int *rows, int c, int width)
     }
     if (c == 0)
     {
-        if (width > 1 && rows[c] < rows[c + 1])
+        if (rows[c] < rows[c + 1])
             return '\\';
-        if (width > 1 && rows[c] > rows[c + 1])
+        if (rows[c] > rows[c + 1])
             return '/';
         return '-';
     }
-    if (width > 1 && rows[c] > rows[c - 1])
+    if (rows[c] > rows[c - 1])
         return '\\';
-    if (width > 1 && rows[c] < rows[c - 1])
+    if (rows[c] < rows[c - 1])
         return '/';
     return '-';
 }
@@ -177,6 +180,87 @@ void dibujar_grafico_barras(const double *values, const char **labels,
     ui_printf("\n");
 }
 
+/**
+ * @brief Interpola valores en columnas para el gráfico de líneas
+ * @param rows    Arreglo de salida (filas para cada columna)
+ * @param values  Datos originales
+ * @param count   Número de datos originales
+ * @param width   Ancho del gráfico en columnas
+ * @param height  Alto del gráfico en filas
+ * @param max_val Valor máximo del rango
+ * @param range   Rango (max_val - min_val)
+ */
+static void calcular_rows_grafico_lineas(int *rows, const double *values,
+        int count, int width, int height,
+        double max_val, double range)
+{
+    for (int c = 0; c < width; c++)
+    {
+        double t = (count > 1) ? (double)c / (width - 1) * (count - 1) : 0.0;
+        int idx = (int)t;
+        double frac = t - idx;
+
+        if (idx >= count - 1)
+        {
+            idx = count - 1;
+            frac = 0.0;
+        }
+
+        double val = values[idx];
+        if (count > 1 && idx < count - 1)
+            val = values[idx] * (1.0 - frac) + values[idx + 1] * frac;
+
+        int r = round_to_int((max_val - val) / range * (height - 1));
+        if (r < 0)
+            r = 0;
+        if (r >= height)
+            r = height - 1;
+        rows[c] = r;
+    }
+}
+
+/**
+ * @brief Imprime una fila del gráfico de líneas
+ */
+static void imprimir_fila_grafico_lineas(int r, const int *rows, int width,
+        int height, int count, int label_w,
+        const char *label_max,
+        const char *label_min)
+{
+    char line[MAX_CHART_WIDTH + 1];
+    memset(line, ' ', width);
+    line[width] = '\0';
+
+    for (int c = 0; c < width; c++)
+    {
+        if (rows[c] == r)
+            line[c] = elegir_caracter_linea(rows, c, width);
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        int c;
+        if (count > 1)
+            c = round_to_int((double)i / (count - 1) * (width - 1));
+        else
+            c = 0;
+
+        if (c >= 0 && c < width && rows[c] == r)
+            line[c] = '*';
+    }
+
+    const char *yl = "";
+    if (r == 0)
+        yl = label_max;
+    else if (r == height - 1)
+        yl = label_min;
+
+    ui_printf(" %*s | ", label_w, yl);
+    for (int c = 0; c < width; c++)
+        ui_putchar(line[c]);
+    ui_printf("\n");
+}
+
 /* ---------------------------------------------------------------
  * Gráfico de líneas
  * --------------------------------------------------------------- */
@@ -216,30 +300,7 @@ void dibujar_grafico_lineas(const double *values, int count, const char *title,
     /* Interpolar valores para cada columna */
     int rows[MAX_CHART_WIDTH];
 
-    for (int c = 0; c < width; c++)
-    {
-        double t = (count > 1) ? (double)c / (width - 1) * (count - 1) : 0.0;
-        int idx = (int)t;
-        double frac = t - idx;
-
-        if (idx >= count - 1)
-        {
-            idx = count - 1;
-            frac = 0.0;
-        }
-
-        double val = values[idx];
-        if (count > 1 && idx < count - 1)
-            val = values[idx] * (1.0 - frac) + values[idx + 1] * frac;
-
-        /* Mapear: max_val → fila 0 (arriba), min_val → fila height-1 (abajo) */
-        int r = round_to_int((max_val - val) / range * (height - 1));
-        if (r < 0)
-            r = 0;
-        if (r >= height)
-            r = height - 1;
-        rows[c] = r;
-    }
+    calcular_rows_grafico_lineas(rows, values, count, width, height, max_val, range);
 
     ui_printf("\n%s\n\n", title);
 
@@ -254,43 +315,7 @@ void dibujar_grafico_lineas(const double *values, int count, const char *title,
 
     /* Imprimir fila por fila, de arriba a abajo */
     for (int r = 0; r < height; r++)
-    {
-        char line[MAX_CHART_WIDTH + 1];
-        memset(line, ' ', width);
-        line[width] = '\0';
-
-        for (int c = 0; c < width; c++)
-        {
-            if (rows[c] == r)
-                line[c] = elegir_caracter_linea(rows, c, width);
-        }
-
-        /* Sobrescribir con '*' en las columnas que corresponden a datos originales
-         */
-        for (int i = 0; i < count; i++)
-        {
-            int c;
-            if (count > 1)
-                c = round_to_int((double)i / (count - 1) * (width - 1));
-            else
-                c = 0;
-
-            if (c >= 0 && c < width && rows[c] == r)
-                line[c] = '*';
-        }
-
-        /* Etiqueta Y */
-        const char *yl = "";
-        if (r == 0)
-            yl = label_max;
-        else if (r == height - 1)
-            yl = label_min;
-
-        ui_printf(" %*s | ", label_w, yl);
-        for (int c = 0; c < width; c++)
-            ui_putchar(line[c]);
-        ui_printf("\n");
-    }
+        imprimir_fila_grafico_lineas(r, rows, width, height, count, label_w, label_max, label_min);
 
     /* Eje X */
     ui_printf(" %*s +", label_w, "");
@@ -300,6 +325,33 @@ void dibujar_grafico_lineas(const double *values, int count, const char *title,
     if (count > 1)
         ui_printf("%*d", width - 1, count - 1);
     ui_printf("\n\n");
+}
+
+/**
+ * @brief Imprime una fila del histograma
+ */
+static void imprimir_fila_histograma(int i, int bins, double min_val,
+                                     double bin_width, const int *freq,
+                                     int max_freq, int bar_max,
+                                     const char *bar_char)
+{
+    double lo = min_val + i * bin_width;
+    double hi = lo + bin_width;
+
+    char range_label[32];
+    if (i == bins - 1)
+        snprintf(range_label, sizeof(range_label), "[%.2f, %.2f]", lo, hi);
+    else
+        snprintf(range_label, sizeof(range_label), "[%.2f, %.2f)", lo, hi);
+
+    int bar_len = round_to_int((double)freq[i] / max_freq * bar_max);
+    if (bar_len < 0)
+        bar_len = 0;
+
+    ui_printf(" %-26s | %4d ", range_label, freq[i]);
+    for (int j = 0; j < bar_len; j++)
+        ui_printf("%s", bar_char);
+    ui_printf("\n");
 }
 
 /* ---------------------------------------------------------------
@@ -369,25 +421,7 @@ void dibujar_histograma(const double *values, int count, int bins,
     ui_printf("\n");
 
     for (int i = 0; i < bins; i++)
-    {
-        double lo = min_val + i * bin_width;
-        double hi = lo + bin_width;
-
-        char range_label[32];
-        if (i == bins - 1)
-            snprintf(range_label, sizeof(range_label), "[%.2f, %.2f]", lo, hi);
-        else
-            snprintf(range_label, sizeof(range_label), "[%.2f, %.2f)", lo, hi);
-
-        int bar_len = round_to_int((double)freq[i] / max_freq * bar_max);
-        if (bar_len < 0)
-            bar_len = 0;
-
-        ui_printf(" %-26s | %4d ", range_label, freq[i]);
-        for (int j = 0; j < bar_len; j++)
-            ui_printf("%s", bar_char);
-        ui_printf("\n");
-    }
+        imprimir_fila_histograma(i, bins, min_val, bin_width, freq, max_freq, bar_max, bar_char);
 
     ui_printf("\n");
 }

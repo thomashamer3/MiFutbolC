@@ -671,9 +671,8 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
 static unsigned parse_hex4(const unsigned char * const input)
 {
     unsigned int h = 0;
-    size_t i = 0;
 
-    for (i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         /* parse digit */
         if ((input[i] >= '0') && (input[i] <= '9'))
@@ -711,7 +710,6 @@ static unsigned char utf16_literal_to_utf8(const unsigned char * const input_poi
     unsigned int first_code = 0;
     const unsigned char *first_sequence = input_pointer;
     unsigned char utf8_length = 0;
-    unsigned char utf8_position = 0;
     unsigned char sequence_length = 0;
     unsigned char first_byte_mark = 0;
 
@@ -801,7 +799,7 @@ static unsigned char utf16_literal_to_utf8(const unsigned char * const input_poi
     }
 
     /* encode as utf8 */
-    for (utf8_position = (unsigned char)(utf8_length - 1); utf8_position > 0; utf8_position--)
+    for (unsigned char utf8_position = (unsigned char)(utf8_length - 1); utf8_position > 0; utf8_position--)
     {
         /* 10xxxxxx */
         (*output_pointer)[utf8_position] = (unsigned char)((codepoint | 0x80) & 0xBF);
@@ -1910,8 +1908,6 @@ CJSON_PUBLIC(int) cJSON_GetArraySize(const cJSON *array)
         size++;
         child = child->next;
     }
-
-    /* FIXME: Can overflow here. Cannot be fixed without breaking the API */
 
     return (int)size;
 }
@@ -3178,7 +3174,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * cons
         cJSON *b_element = NULL;
         cJSON_ArrayForEach(a_element, a)
         {
-            /* TODO This has O(n^2) runtime, which is horrible! */
+
             b_element = get_object_item(b, a_element->string, case_sensitive);
             if (b_element == NULL)
             {
@@ -3191,8 +3187,6 @@ CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * cons
             }
         }
 
-        /* doing this twice, once on a and b to prevent true comparison if a subset of b
-         * TODO: Do this the proper way, this is just a fix for now */
         cJSON_ArrayForEach(b_element, b)
         {
             a_element = get_object_item(a, b_element->string, case_sensitive);

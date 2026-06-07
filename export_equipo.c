@@ -127,13 +127,14 @@ static const char* posicion_to_text(int pos)
 static void posiciones_to_text(const char *posiciones_csv, char *out, size_t out_size)
 {
     char buffer[256];
-    char const *token;
+    char *token;
+    char *saveptr;
     int first = 1;
 
     strncpy_s(buffer, sizeof(buffer), posiciones_csv, _TRUNCATE);
     out[0] = '\0';
 
-    token = strtok(buffer, ",");
+    token = strtok_r(buffer, ",", &saveptr);
     while (token != NULL)
     {
         int pos = atoi(token);
@@ -142,7 +143,7 @@ static void posiciones_to_text(const char *posiciones_csv, char *out, size_t out
             strncat_s(out, out_size, ", ", _TRUNCATE);
         strncat_s(out, out_size, label, _TRUNCATE);
         first = 0;
-        token = strtok(NULL, ",");
+        token = strtok_r(NULL, ",", &saveptr);
     }
 }
 
