@@ -141,69 +141,9 @@ static void write_html_footer(FILE *f, void *context)
 /** @name Funciones de exportacion del dashboard */
 /** @{ */
 
-void exportar_dashboard_csv()
-{
-    ExportConfig config =
-    {
-        .filename = "dashboard.csv",
-        .context = NULL,
-        .write_header = write_csv_header,
-        .write_row = write_csv_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_dashboard(&count);
-    if (!stmt) return;
-    export_generic_single(&config, stmt);
-}
-
-void exportar_dashboard_txt()
-{
-    ExportConfig config =
-    {
-        .filename = "dashboard.txt",
-        .context = NULL,
-        .write_header = write_txt_header,
-        .write_row = write_txt_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_dashboard(&count);
-    if (!stmt) return;
-    export_generic_single(&config, stmt);
-}
-
-void exportar_dashboard_json()
-{
-    cJSON *root = cJSON_CreateObject();
-    ExportConfig config =
-    {
-        .filename = "dashboard.json",
-        .context = root,
-        .write_header = NULL,
-        .write_row = write_json_row,
-        .write_footer = write_json_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_dashboard(&count);
-    if (!stmt) return;
-    export_generic_single(&config, stmt);
-}
-
-void exportar_dashboard_html()
-{
-    ExportConfig config =
-    {
-        .filename = "dashboard.html",
-        .context = NULL,
-        .write_header = write_html_header,
-        .write_row = write_html_row,
-        .write_footer = write_html_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_dashboard(&count);
-    if (!stmt) return;
-    export_generic_single(&config, stmt);
-}
+EXPORT_FORMAT_SINGLE(exportar_dashboard_csv, obtener_datos_dashboard, "dashboard.csv", NULL, write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_txt, obtener_datos_dashboard, "dashboard.txt", NULL, write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_json, obtener_datos_dashboard, "dashboard.json", cJSON_CreateObject(), NULL, write_json_row, write_json_footer)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_html, obtener_datos_dashboard, "dashboard.html", NULL, write_html_header, write_html_row, write_html_footer)
 
 /** @} */

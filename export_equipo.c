@@ -218,69 +218,9 @@ static void write_html_footer(FILE *f, void *context)
 /** @name Funciones de exportacion de equipos */
 /** @{ */
 
-void exportar_equipos_csv()
-{
-    ExportConfig config =
-    {
-        .filename = "equipos.csv",
-        .context = NULL,
-        .write_header = write_csv_header,
-        .write_row = write_csv_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_equipos_txt()
-{
-    ExportConfig config =
-    {
-        .filename = "equipos.txt",
-        .context = NULL,
-        .write_header = write_txt_header,
-        .write_row = write_txt_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_equipos_json()
-{
-    cJSON *root = cJSON_CreateArray();
-    ExportConfig config =
-    {
-        .filename = "equipos.json",
-        .context = root,
-        .write_header = NULL,
-        .write_row = write_json_row,
-        .write_footer = write_json_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_equipos_html()
-{
-    ExportConfig config =
-    {
-        .filename = "equipos.html",
-        .context = NULL,
-        .write_header = write_html_header,
-        .write_row = write_html_row,
-        .write_footer = write_html_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
+EXPORT_FORMAT_ROWS(exportar_equipos_csv, obtener_datos_equipos, "equipos.csv", NULL, write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_equipos_txt, obtener_datos_equipos, "equipos.txt", NULL, write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_equipos_json, obtener_datos_equipos, "equipos.json", cJSON_CreateArray(), NULL, write_json_row, write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_equipos_html, obtener_datos_equipos, "equipos.html", NULL, write_html_header, write_html_row, write_html_footer)
 
 /** @} */

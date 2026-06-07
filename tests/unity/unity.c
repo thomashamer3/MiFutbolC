@@ -2081,13 +2081,16 @@ static enum UnityLengthModifier UnityLengthModifierGet(const char *pch, int *len
  *-----------------------------------------------*/
 static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_mod, va_list va)
 {
+    va_list va_mut;
+    va_copy(va_mut, va);
+
     switch (*pch)
     {
         case 'd':
         case 'i':
             {
                 UNITY_INT number;
-                UNITY_EXTRACT_ARG(UNITY_INT, number, length_mod, va, int);
+                UNITY_EXTRACT_ARG(UNITY_INT, number, length_mod, va_mut, int);
                 UnityPrintNumber(number);
                 break;
             }
@@ -2095,7 +2098,7 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
         case 'f':
         case 'g':
             {
-                const double number = va_arg(va, double);
+                const double number = va_arg(va_mut, double);
                 UnityPrintFloat(number);
                 break;
             }
@@ -2103,14 +2106,14 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
         case 'u':
             {
                 UNITY_UINT number;
-                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va_mut, unsigned int);
                 UnityPrintNumberUnsigned(number);
                 break;
             }
         case 'b':
             {
                 UNITY_UINT number;
-                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va_mut, unsigned int);
                 const UNITY_UINT mask = (UNITY_UINT)0 - (UNITY_UINT)1;
                 UNITY_OUTPUT_CHAR('0');
                 UNITY_OUTPUT_CHAR('b');
@@ -2121,7 +2124,7 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
         case 'X':
             {
                 UNITY_UINT number;
-                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va_mut, unsigned int);
                 UNITY_OUTPUT_CHAR('0');
                 UNITY_OUTPUT_CHAR('x');
                 UnityPrintNumberHex(number, UNITY_MAX_NIBBLES);
@@ -2136,7 +2139,7 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
                     length_mod = UNITY_LENGTH_MODIFIER_LONG_LONG;
                     nibbles_to_print = 16;
                 }
-                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va_mut, unsigned int);
                 UNITY_OUTPUT_CHAR('0');
                 UNITY_OUTPUT_CHAR('x');
                 UnityPrintNumberHex(number, nibbles_to_print);
@@ -2144,13 +2147,13 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
             }
         case 'c':
             {
-                const int ch = va_arg(va, int);
+                const int ch = va_arg(va_mut, int);
                 UnityPrintChar((const char *)&ch);
                 break;
             }
         case 's':
             {
-                const char * string = va_arg(va, const char *);
+                const char * string = va_arg(va_mut, const char *);
                 UnityPrint(string);
                 break;
             }
@@ -2167,6 +2170,8 @@ static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_
                 break;
             }
     }
+
+    va_end(va_mut);
 }
 
 static void UnityPrintFVA(const char* format, va_list va)
@@ -2205,7 +2210,7 @@ static void UnityPrintFVA(const char* format, va_list va)
     }
 }
 
-void UnityPrintF(const UNITY_LINE_TYPE line, const char* format, ...)
+void UnityPrintF(const UNITY_LINE_TYPE line, const char* format, ...) /* NOSONAR - S923: variadic required for printf-like API */
 
 {
     UnityTestResultsBegin(Unity.TestFile, line);
@@ -2396,13 +2401,13 @@ void UnityPopDetail(UNITY_DETAIL_LABEL_TYPE label, UNITY_DETAIL_VALUE_TYPE value
  *-----------------------------------------------*/
 #ifdef UNITY_USE_COMMAND_LINE_ARGS
 
-char* UnityOptionIncludeNamed = NULL;
-char* UnityOptionExcludeNamed = NULL;
+const char* UnityOptionIncludeNamed = NULL;
+const char* UnityOptionExcludeNamed = NULL;
 int UnityVerbosity            = 1;
 int UnityStrictMatch          = 0;
 
 /*-----------------------------------------------*/
-static int UnityParseNamedArg(const char* arg, int* idx, int argc, char** argv)
+static int UnityParseNamedArg(const char* arg, int* idx, int argc)
 {
     if (arg[2] == '=')
     {
@@ -2418,11 +2423,11 @@ static int UnityParseNamedArg(const char* arg, int* idx, int argc, char** argv)
 
 static int UnityParseIncludeArg(const char* arg, int* idx, int argc, char** argv)
 {
-    if (UnityParseNamedArg(arg, idx, argc, argv) == 0)
+    if (UnityParseNamedArg(arg, idx, argc) == 0)
     {
         UnityStrictMatch = (arg[1] == 'n');
         if (arg[2] == '=')
-            UnityOptionIncludeNamed = (char*)&arg[3];
+            UnityOptionIncludeNamed = &arg[3];
         else
             UnityOptionIncludeNamed = argv[*idx];
         return 0;
@@ -2434,10 +2439,10 @@ static int UnityParseIncludeArg(const char* arg, int* idx, int argc, char** argv
 
 static int UnityParseExcludeArg(const char* arg, int* idx, int argc, char** argv)
 {
-    if (UnityParseNamedArg(arg, idx, argc, argv) == 0)
+    if (UnityParseNamedArg(arg, idx, argc) == 0)
     {
         if (arg[2] == '=')
-            UnityOptionExcludeNamed = (char*)&arg[3];
+            UnityOptionExcludeNamed = &arg[3];
         else
             UnityOptionExcludeNamed = argv[*idx];
         return 0;

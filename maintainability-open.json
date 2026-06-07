@@ -1,118 +1,63 @@
 {
-  "exportedAt": "2026-06-07T01:58:42Z",
+  "exportedAt": "2026-06-07T15:28:38Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
-  "total": 10,
+  "total": 5,
   "issues": [
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 29 to the 25 allowed.",
-      "file": "tests/unity/unity.c",
-      "line": 339,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "9min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S5955",
-      "severity": "MINOR",
-      "message": "Declare the variable \"i\" inside the loop.",
-      "file": "tests/unity/unity.c",
-      "line": 1763,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "clumsy, cppcoreguidelines"
-    },
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "tests/unity/unity.c",
-      "line": 2133,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 28 to the 25 allowed.",
-      "file": "tests/unity/unity.c",
-      "line": 2389,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "8min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S886",
-      "severity": "MINOR",
-      "message": "Refactor this loop so that it is less error-prone.",
-      "file": "tests/unity/unity.c",
-      "line": 2395,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "based-on-misra"
-    },
-    {
-      "rule": "c:S107",
-      "severity": "MAJOR",
-      "message": "This function has 8 parameters, which is greater than the 7 authorized.",
-      "file": "tests/unity/unity.c",
-      "line": 1595,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "20min",
-      "tags": "brain-overload"
-    },
     {
       "rule": "c:S995",
       "severity": "MINOR",
       "message": "Make the type of this parameter a pointer-to-const. The current type of \"va\" is \"char *\".",
       "file": "tests/unity/unity.c",
-      "line": 2067,
+      "line": 2082,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
       "effort": "2min",
       "tags": "bad-practice, misra-c++2008, misra-c2004, misra-c2012"
     },
     {
+      "rule": "c:S1172",
+      "severity": "MAJOR",
+      "message": "Remove the unused parameter \"argv\", make it unnamed, or declare it \"[[maybe_unused]]\".",
+      "file": "tests/unity/unity.c",
+      "line": 2405,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "5min",
+      "tags": "based-on-misra, cert, unused"
+    },
+    {
+      "rule": "c:S859",
+      "severity": "CRITICAL",
+      "message": "cast from 'const char *' to 'char *' drops const qualifier",
+      "file": "tests/unity/unity.c",
+      "line": 2425,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "20min",
+      "tags": "cert, cppcoreguidelines, misra-c++2008, misra-c2004, misra-c2012, suspicious"
+    },
+    {
+      "rule": "c:S859",
+      "severity": "CRITICAL",
+      "message": "cast from 'const char *' to 'char *' drops const qualifier",
+      "file": "tests/unity/unity.c",
+      "line": 2440,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "20min",
+      "tags": "cert, cppcoreguidelines, misra-c++2008, misra-c2004, misra-c2012, suspicious"
+    },
+    {
       "rule": "c:S923",
       "severity": "CRITICAL",
       "message": "Remove use of ellipsis notation.",
       "file": "tests/unity/unity.c",
-      "line": 2192,
+      "line": 2208,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
       "effort": "30min",
       "tags": "cert, misra-c++2008, misra-c2004, pitfall"
-    },
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "tests/unity/unity.c",
-      "line": 2406,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "tests/unity/unity.c",
-      "line": 2432,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
     }
   ]
 }

@@ -34,6 +34,52 @@ typedef struct
 } ExportConfig;
 
 /**
+ * @name Macros para reducir el boilerplate de exportacion
+ *
+ * Cada modulo define sus callbacks write_*_header/row/footer y una funcion
+ * obtener_datos_ENTIDAD(), y luego invoca estos macros para las 4 funciones
+ * publicas exportar_ENTIDAD_{csv,txt,json,html}.
+ */
+/** @{ */
+
+/**
+ * @brief Macro para exportar en formato de varias filas.
+ * @param name   Nombre completo de la funcion (ej. exportar_camisetas_csv)
+ * @param data_fn Funcion que prepara el stmt (ej. obtener_datos_camisetas)
+ * @param fn     Nombre del archivo de salida
+ * @param ctx    Contexto (NULL para CSV/TXT/HTML, cJSON_CreateArray() para JSON)
+ * @param hdr    Callback de cabecera
+ * @param row    Callback de fila
+ * @param ftr    Callback de pie (NULL para CSV/TXT/HTML)
+ */
+#define EXPORT_FORMAT_ROWS(name, data_fn, fn, ctx, hdr, row, ftr) \
+    void name() \
+    { \
+        ExportConfig config = { .filename = fn, .context = ctx, \
+            .write_header = hdr, .write_row = row, .write_footer = ftr }; \
+        int count; \
+        sqlite3_stmt *stmt = data_fn(&count); \
+        if (!stmt) return; \
+        export_generic_rows(&config, stmt); \
+    }
+
+/**
+ * @brief Macro para exportar en formato de una sola fila (dashboard).
+ */
+#define EXPORT_FORMAT_SINGLE(name, data_fn, fn, ctx, hdr, row, ftr) \
+    void name() \
+    { \
+        ExportConfig config = { .filename = fn, .context = ctx, \
+            .write_header = hdr, .write_row = row, .write_footer = ftr }; \
+        int count; \
+        sqlite3_stmt *stmt = data_fn(&count); \
+        if (!stmt) return; \
+        export_generic_single(&config, stmt); \
+    }
+
+/** @} */
+
+/**
  * @brief Ejecuta el flujo generico de exportacion iterando filas del @p stmt.
  *
  * Escribe la cabecera (si esta definida), recorre todas las filas invocando
@@ -192,5 +238,35 @@ int exportar_archivo_si_hay_registros(const char *tabla,
  * Campos agregados: id, jugador, tipo, descripcion, fecha.
  */
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt);
+
+/** @name Funciones de escritura de secciones (multi-seccion) */
+/** @{ */
+
+/**
+ * @brief Escribe una seccion CSV a partir de una consulta SQL.
+ */
+int escribir_seccion_csv(FILE *f, const char *sql, const char *cabecera,
+                         void (*escribir_fila)(FILE *f, sqlite3_stmt *stmt));
+
+/**
+ * @brief Escribe una seccion TXT a partir de una consulta SQL.
+ */
+void escribir_seccion_txt(FILE *f, const char *titulo, const char *sql,
+                          void (*escribir_fila)(FILE *f, sqlite3_stmt *stmt));
+
+/**
+ * @brief Escribe una seccion JSON a partir de una consulta SQL.
+ */
+void escribir_seccion_json(cJSON *arr, const char *sql,
+                           void (*escribir_objeto)(cJSON *item, sqlite3_stmt *stmt));
+
+/**
+ * @brief Escribe una seccion HTML a partir de una consulta SQL.
+ */
+void escribir_seccion_html(FILE *f, const char *titulo, const char *sql,
+                           const char *cabeceras[],
+                           void (*escribir_fila)(FILE *f, sqlite3_stmt *stmt));
+
 /** @} */
+
 #endif

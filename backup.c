@@ -118,6 +118,25 @@ static int construir_ruta_db(char *buffer, size_t size)
     return 1;
 }
 
+static int file_exists_regular(const char *path)
+{
+#ifdef _WIN32
+    DWORD attr = GetFileAttributesA(path);
+    return (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
+#else
+    struct stat st;
+    return (stat(path, &st) == 0 && S_ISREG(st.st_mode));
+#endif
+}
+
+static void build_backup_path(char *buf, size_t size, const char *dir, const char *file)
+{
+    snprintf(buf, size, "%.*s%s%.*s",
+             (int)((size - 2) / 2), dir,
+             BACKUP_PATH_SEP,
+             (int)((size - 2) / 2), file);
+}
+
 static long long obtener_tamano_archivo(const char *path)
 {
     FILE *f = NULL;
@@ -138,10 +157,7 @@ static long long obtener_tamano_archivo(const char *path)
 static cJSON *leer_manifest(const char *backup_dir)
 {
     char manifest_path[MAX_BUFFER];
-    snprintf(manifest_path, sizeof(manifest_path), "%.*s%s%.*s",
-             (int)((sizeof(manifest_path) - 2) / 2), backup_dir,
-             BACKUP_PATH_SEP,
-             (int)((sizeof(manifest_path) - 2) / 2), MANIFEST_NAME);
+    build_backup_path(manifest_path, sizeof(manifest_path), backup_dir, MANIFEST_NAME);
 
     FILE *f = NULL;
     if (fopen_s(&f, manifest_path, "rb") != 0 || !f)
@@ -190,10 +206,7 @@ static cJSON *leer_manifest(const char *backup_dir)
 static int guardar_manifest(const char *backup_dir, cJSON const *manifest)
 {
     char manifest_path[MAX_BUFFER];
-    snprintf(manifest_path, sizeof(manifest_path), "%.*s%s%.*s",
-             (int)((sizeof(manifest_path) - 2) / 2), backup_dir,
-             BACKUP_PATH_SEP,
-             (int)((sizeof(manifest_path) - 2) / 2), MANIFEST_NAME);
+    build_backup_path(manifest_path, sizeof(manifest_path), backup_dir, MANIFEST_NAME);
 
     char *json_str = cJSON_Print(manifest);
     if (!json_str)
@@ -289,10 +302,7 @@ int crear_backup(const char *descripcion)
     snprintf(filename, sizeof(filename), "%s_%s.db", timestamp, desc_safe);
 
     char dest_path[MAX_BUFFER];
-    snprintf(dest_path, sizeof(dest_path), "%.*s%s%.*s",
-             (int)((sizeof(dest_path) - 2) / 2), backup_dir,
-             BACKUP_PATH_SEP,
-             (int)((sizeof(dest_path) - 2) / 2), filename);
+    build_backup_path(dest_path, sizeof(dest_path), backup_dir, filename);
 
     char db_path[MAX_BUFFER];
     if (!construir_ruta_db(db_path, sizeof(db_path)))
@@ -432,21 +442,9 @@ int listar_backups(void)
         long long sz = (size && cJSON_IsNumber(size)) ? (long long)size->valuedouble : 0;
 
         char filepath[MAX_BUFFER];
-        snprintf(filepath, sizeof(filepath), "%.*s%s%.*s",
-                 (int)((sizeof(filepath) - 2) / 2), backup_dir,
-                 BACKUP_PATH_SEP,
-                 (int)((sizeof(filepath) - 2) / 2), fn);
+        build_backup_path(filepath, sizeof(filepath), backup_dir, fn);
 
-        int existe = 0;
-#ifdef _WIN32
-        DWORD attr = GetFileAttributesA(filepath);
-        existe = (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-        struct stat st;
-        existe = (stat(filepath, &st) == 0 && S_ISREG(st.st_mode));
-#endif
-
-        if (!existe)
+        if (!file_exists_regular(filepath))
         {
             continue;
         }
@@ -491,21 +489,9 @@ int restaurar_backup(const char *filename)
     }
 
     char source_path[MAX_BUFFER];
-    snprintf(source_path, sizeof(source_path), "%.*s%s%.*s",
-             (int)((sizeof(source_path) - 2) / 2), backup_dir,
-             BACKUP_PATH_SEP,
-             (int)((sizeof(source_path) - 2) / 2), filename);
+    build_backup_path(source_path, sizeof(source_path), backup_dir, filename);
 
-    int archivo_valido = 0;
-#ifdef _WIN32
-    DWORD attr = GetFileAttributesA(source_path);
-    archivo_valido = (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-    struct stat st;
-    archivo_valido = (stat(source_path, &st) == 0 && S_ISREG(st.st_mode));
-#endif
-
-    if (!archivo_valido)
+    if (!file_exists_regular(source_path))
     {
         printf("Error: El archivo de backup no existe:\n%s\n", source_path);
         app_log_event("BACKUP", "Archivo de backup no encontrado para restaurar");
@@ -577,21 +563,9 @@ int eliminar_backup(const char *filename)
     }
 
     char filepath[MAX_BUFFER];
-    snprintf(filepath, sizeof(filepath), "%.*s%s%.*s",
-             (int)((sizeof(filepath) - 2) / 2), backup_dir,
-             BACKUP_PATH_SEP,
-             (int)((sizeof(filepath) - 2) / 2), filename);
+    build_backup_path(filepath, sizeof(filepath), backup_dir, filename);
 
-    int archivo_valido = 0;
-#ifdef _WIN32
-    DWORD attr = GetFileAttributesA(filepath);
-    archivo_valido = (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-    struct stat st;
-    archivo_valido = (stat(filepath, &st) == 0 && S_ISREG(st.st_mode));
-#endif
-
-    if (!archivo_valido)
+    if (!file_exists_regular(filepath))
     {
         printf("Error: El archivo de backup no existe:\n%s\n", filepath);
         app_log_event("BACKUP", "Archivo de backup no encontrado para eliminar");
@@ -678,7 +652,11 @@ static void pedir_y_crear_backup(void)
     pause_console();
 }
 
-static void pedir_y_restaurar_backup(void)
+typedef int (*AccionBackupFn)(const char *filename);
+
+static void seleccionar_backup(const char *titulo, const char *prompt,
+                               const char *cancel_msg, int needs_pause,
+                               AccionBackupFn accion)
 {
     char backup_dir[MAX_BUFFER];
     if (!get_backup_dir(backup_dir, sizeof(backup_dir)))
@@ -691,16 +669,13 @@ static void pedir_y_restaurar_backup(void)
     cJSON *manifest = leer_manifest(backup_dir);
     if (!manifest || cJSON_GetArraySize(manifest) == 0)
     {
-        if (manifest)
-        {
-            cJSON_Delete(manifest);
-        }
+        if (manifest) cJSON_Delete(manifest);
         mostrar_no_hay_registros("backups");
         pause_console();
         return;
     }
 
-    mostrar_pantalla("SELECCIONAR BACKUP A RESTAURAR");
+    mostrar_pantalla(titulo);
 
     int count = cJSON_GetArraySize(manifest);
     int validos = 0;
@@ -715,34 +690,14 @@ static void pedir_y_restaurar_backup(void)
         cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
         cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
 
-        if (!fname || !cJSON_IsString(fname))
-        {
-            continue;
-        }
+        if (!fname || !cJSON_IsString(fname)) continue;
 
         char filepath[MAX_BUFFER];
-        snprintf(filepath, sizeof(filepath), "%.*s%s%.*s",
-                 (int)((sizeof(filepath) - 2) / 2), backup_dir,
-                 BACKUP_PATH_SEP,
-                 (int)((sizeof(filepath) - 2) / 2), fname->valuestring);
+        build_backup_path(filepath, sizeof(filepath), backup_dir, fname->valuestring);
 
-        int existe = 0;
-#ifdef _WIN32
-        DWORD attr = GetFileAttributesA(filepath);
-        existe = (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-        struct stat st;
-        existe = (stat(filepath, &st) == 0 && S_ISREG(st.st_mode));
-#endif
-
-        if (!existe)
-        {
-            continue;
-        }
-
+        if (!file_exists_regular(filepath)) continue;
 
         nombres[validos] = fname->valuestring;
-
         const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
         const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
 
@@ -761,118 +716,33 @@ static void pedir_y_restaurar_backup(void)
         return;
     }
 
-    int seleccion = input_int_rango("Seleccione el numero de backup a restaurar (0 para cancelar): ", 0, validos);
+    int seleccion = input_int_rango(prompt, 0, validos);
     if (seleccion <= 0)
     {
         cJSON_Delete(manifest);
-        printf("Restauracion cancelada.\n");
+        printf("%s\n", cancel_msg);
         pause_console();
         return;
     }
 
     const char *filename = nombres[seleccion - 1];
     cJSON_Delete(manifest);
+    accion(filename);
+    if (needs_pause) pause_console();
+}
 
-    restaurar_backup(filename);
+static void pedir_y_restaurar_backup(void)
+{
+    seleccionar_backup("SELECCIONAR BACKUP A RESTAURAR",
+                       "Seleccione el numero de backup a restaurar (0 para cancelar): ",
+                       "Restauracion cancelada.", 0, restaurar_backup);
 }
 
 static void pedir_y_eliminar_backup(void)
 {
-    char backup_dir[MAX_BUFFER];
-    if (!get_backup_dir(backup_dir, sizeof(backup_dir)))
-    {
-        mostrar_no_hay_registros("backups");
-        pause_console();
-        return;
-    }
-
-    cJSON *manifest = leer_manifest(backup_dir);
-    if (!manifest || cJSON_GetArraySize(manifest) == 0)
-    {
-        if (manifest)
-        {
-            cJSON_Delete(manifest);
-        }
-        mostrar_no_hay_registros("backups");
-        pause_console();
-        return;
-    }
-
-    mostrar_pantalla("SELECCIONAR BACKUP A ELIMINAR");
-
-    int count = cJSON_GetArraySize(manifest);
-    int validos = 0;
-    char *nombres[MAX_BUFFER];
-
-    for (int i = 0; i < count; i++)
-    {
-        if (validos >= MAX_BUFFER) break;
-
-        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
-        cJSON *fname = cJSON_GetObjectItem(entry, "filename");
-        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
-        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
-
-        if (!fname || !cJSON_IsString(fname))
-        {
-            continue;
-        }
-
-        char filepath[MAX_BUFFER];
-        snprintf(filepath, sizeof(filepath), "%.*s%s%.*s",
-                 (int)((sizeof(filepath) - 2) / 2), backup_dir,
-                 BACKUP_PATH_SEP,
-                 (int)((sizeof(filepath) - 2) / 2), fname->valuestring);
-
-        int existe = 0;
-#ifdef _WIN32
-        DWORD attr = GetFileAttributesA(filepath);
-        existe = (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
-#else
-        struct stat st;
-        existe = (stat(filepath, &st) == 0 && S_ISREG(st.st_mode));
-#endif
-
-        if (!existe)
-        {
-            continue;
-        }
-
-
-        nombres[validos] = fname->valuestring;
-
-        const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
-        const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
-
-        printf("  %d. %s\n", validos + 1, nombres[validos]);
-        printf("     Descripcion: %s\n", dc);
-        printf("     Fecha: %s\n", fe);
-        printf("     ----------------------------------------\n");
-        validos++;
-    }
-
-    if (validos == 0)
-    {
-        cJSON_Delete(manifest);
-        mostrar_no_hay_registros("backups");
-        pause_console();
-        return;
-    }
-
-    int seleccion = input_int_rango("Seleccione el numero de backup a eliminar (0 para cancelar): ", 0, validos);
-    if (seleccion <= 0)
-    {
-        cJSON_Delete(manifest);
-        printf("Eliminacion cancelada.\n");
-        pause_console();
-        return;
-    }
-
-    const char *filename = nombres[seleccion - 1];
-    cJSON_Delete(manifest);
-
-    eliminar_backup(filename);
-    pause_console();
+    seleccionar_backup("SELECCIONAR BACKUP A ELIMINAR",
+                       "Seleccione el numero de backup a eliminar (0 para cancelar): ",
+                       "Eliminacion cancelada.", 1, eliminar_backup);
 }
 
 static void configurar_auto_backup(void)

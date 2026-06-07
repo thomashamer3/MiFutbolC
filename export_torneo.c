@@ -165,69 +165,9 @@ static void write_html_footer(FILE *f, void *context)
 /** @name Funciones de exportacion de torneos */
 /** @{ */
 
-void exportar_torneos_csv()
-{
-    ExportConfig config =
-    {
-        .filename = "torneos.csv",
-        .context = NULL,
-        .write_header = write_csv_header,
-        .write_row = write_csv_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_torneos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_torneos_txt()
-{
-    ExportConfig config =
-    {
-        .filename = "torneos.txt",
-        .context = NULL,
-        .write_header = write_txt_header,
-        .write_row = write_txt_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_torneos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_torneos_json()
-{
-    cJSON *root = cJSON_CreateArray();
-    ExportConfig config =
-    {
-        .filename = "torneos.json",
-        .context = root,
-        .write_header = NULL,
-        .write_row = write_json_row,
-        .write_footer = write_json_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_torneos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_torneos_html()
-{
-    ExportConfig config =
-    {
-        .filename = "torneos.html",
-        .context = NULL,
-        .write_header = write_html_header,
-        .write_row = write_html_row,
-        .write_footer = write_html_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_torneos(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
+EXPORT_FORMAT_ROWS(exportar_torneos_csv, obtener_datos_torneos, "torneos.csv", NULL, write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_torneos_txt, obtener_datos_torneos, "torneos.txt", NULL, write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_torneos_json, obtener_datos_torneos, "torneos.json", cJSON_CreateArray(), NULL, write_json_row, write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_torneos_html, obtener_datos_torneos, "torneos.html", NULL, write_html_header, write_html_row, write_html_footer)
 
 /** @} */

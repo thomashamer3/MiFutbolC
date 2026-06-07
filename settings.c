@@ -744,44 +744,22 @@ int settings_get_music_eq_enabled(void)
     return current_settings.music_eq_enabled ? 1 : 0;
 }
 
-void settings_set_music_eq_bass_db(float gain_value)
-{
-    current_settings.music_eq_bass_db = utils_clamp_float(
-                                            gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-    settings_save();
+#define DEFINE_EQ_BAND(name, field)                                 \
+void settings_set_music_eq_##name##_db(float gain_value)            \
+{                                                                    \
+    current_settings.field = utils_clamp_float(                      \
+        gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX); \
+    settings_save();                                                \
+}                                                                    \
+float settings_get_music_eq_##name##_db(void)                       \
+{                                                                    \
+    return utils_clamp_float(current_settings.field,                 \
+                             SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX); \
 }
 
-float settings_get_music_eq_bass_db(void)
-{
-    return utils_clamp_float(current_settings.music_eq_bass_db,
-                             SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-}
-
-void settings_set_music_eq_mid_db(float gain_value)
-{
-    current_settings.music_eq_mid_db = utils_clamp_float(
-                                           gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-    settings_save();
-}
-
-float settings_get_music_eq_mid_db(void)
-{
-    return utils_clamp_float(current_settings.music_eq_mid_db,
-                             SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-}
-
-void settings_set_music_eq_treble_db(float gain_value)
-{
-    current_settings.music_eq_treble_db = utils_clamp_float(
-            gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-    settings_save();
-}
-
-float settings_get_music_eq_treble_db(void)
-{
-    return utils_clamp_float(current_settings.music_eq_treble_db,
-                             SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-}
+DEFINE_EQ_BAND(bass, music_eq_bass_db)
+DEFINE_EQ_BAND(mid, music_eq_mid_db)
+DEFINE_EQ_BAND(treble, music_eq_treble_db)
 
 void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db,
                                    float treble_db)
@@ -931,162 +909,49 @@ static const char *get_menu_text_by_mode(const char *text_key,
     return NULL;
 }
 
-const char *get_menu_camisetas()
-{
-    return get_menu_text_by_mode("menu_camisetas", "camisetas", 1, 1, 1);
+#define DEFINE_GET_MENU(name, text_key, custom_menu, vis_simple, vis_adv, vis_custom) \
+const char *get_menu_##name(void)                                                      \
+{                                                                                      \
+    return get_menu_text_by_mode(text_key, custom_menu, vis_simple, vis_adv, vis_custom); \
 }
 
-const char *get_menu_canchas()
-{
-    return get_menu_text_by_mode("menu_canchas", "canchas", 1, 1, 1);
+#define DEFINE_GET_MENU_TEXT(name, text_key) \
+const char *get_##name(void)                \
+{                                           \
+    return get_text(text_key);             \
 }
 
-const char *get_menu_partidos()
-{
-    return get_menu_text_by_mode("menu_partidos", "partidos", 1, 1, 1);
-}
-
-const char *get_menu_equipos()
-{
-    return get_menu_text_by_mode("menu_equipos", "equipos", 0, 1, 1);
-}
-
-const char *get_menu_estadisticas()
-{
-    return get_menu_text_by_mode("menu_estadisticas", "estadisticas", 0, 1, 1);
-}
-
-const char *get_menu_logros()
-{
-    return get_menu_text_by_mode("menu_logros", "logros", 0, 1, 1);
-}
-
-const char *get_menu_analisis()
-{
-    return get_menu_text_by_mode("menu_analisis", "analisis", 0, 1, 1);
-}
-
-const char *get_menu_bienestar()
-{
-    return get_menu_text_by_mode("menu_bienestar", "bienestar", 0, 1, 1);
-}
-
-const char *get_menu_lesiones()
-{
-    return get_menu_text_by_mode("menu_lesiones", "lesiones", 1, 1, 1);
-}
-
-const char *get_menu_financiamiento()
-{
-    return get_menu_text_by_mode("menu_financiamiento", "financiamiento", 0, 1,
-                                 1);
-}
-
-const char *get_menu_exportar()
-{
-    return get_menu_text_by_mode("menu_exportar", "exportar", 0, 1, 1);
-}
-
-const char *get_menu_importar()
-{
-    return get_menu_text_by_mode("menu_importar", "importar", 0, 1, 1);
-}
-
-const char *get_menu_torneos()
-{
-    return get_menu_text_by_mode("menu_torneos", NULL, 0, 1, 0);
-}
-
-const char *get_menu_temporada()
-{
-    return get_menu_text_by_mode("menu_temporada", "temporada", 0, 1, 1);
-}
-
-const char *get_menu_entrenador_ia()
-{
-    return get_menu_text_by_mode("menu_entrenador_ia", "entrenador_ia", 0, 1, 1);
-}
-
-const char *get_menu_settings()
-{
-    return get_text("menu_settings");
-}
-
-const char *get_menu_records_rankings()
-{
-    return get_menu_text_by_mode("menu_records_rankings", "records_rankings", 0,
-                                 1, 1);
-}
-
-const char *get_menu_exit()
-{
-    return get_text("menu_exit");
-}
-
-const char *get_menu_title()
-{
-    return get_text("menu_title");
-}
-
-const char *get_settings_theme()
-{
-    return get_text("settings_theme");
-}
-
-const char *get_settings_language()
-{
-    return get_text("settings_language");
-}
-
-const char *get_menu_usuario()
-{
-    return get_text("menu_usuario");
-}
-
-const char *get_show_current()
-{
-    return get_text("show_current");
-}
-
-const char *get_reset_defaults()
-{
-    return get_text("reset_defaults");
-}
-
-const char *get_menu_back()
-{
-    return get_text("menu_back");
-}
-
-const char *get_menu_dashboard()
-{
-    return get_text("menu_dashboard");
-}
-
-const char *get_menu_calendario()
-{
-    return get_text("menu_calendario");
-}
-
-const char *get_menu_carrera()
-{
-    return get_text("menu_carrera");
-}
-
-const char *get_menu_recordatorios()
-{
-    return get_text("menu_recordatorios");
-}
-
-const char *get_menu_colecciones()
-{
-    return get_text("menu_colecciones");
-}
-
-const char *get_menu_musica()
-{
-    return get_text("menu_musica");
-}
+DEFINE_GET_MENU(camisetas, "menu_camisetas", "camisetas", 1, 1, 1)
+DEFINE_GET_MENU(canchas, "menu_canchas", "canchas", 1, 1, 1)
+DEFINE_GET_MENU(partidos, "menu_partidos", "partidos", 1, 1, 1)
+DEFINE_GET_MENU(equipos, "menu_equipos", "equipos", 0, 1, 1)
+DEFINE_GET_MENU(estadisticas, "menu_estadisticas", "estadisticas", 0, 1, 1)
+DEFINE_GET_MENU(logros, "menu_logros", "logros", 0, 1, 1)
+DEFINE_GET_MENU(analisis, "menu_analisis", "analisis", 0, 1, 1)
+DEFINE_GET_MENU(bienestar, "menu_bienestar", "bienestar", 0, 1, 1)
+DEFINE_GET_MENU(lesiones, "menu_lesiones", "lesiones", 1, 1, 1)
+DEFINE_GET_MENU(financiamiento, "menu_financiamiento", "financiamiento", 0, 1, 1)
+DEFINE_GET_MENU(exportar, "menu_exportar", "exportar", 0, 1, 1)
+DEFINE_GET_MENU(importar, "menu_importar", "importar", 0, 1, 1)
+DEFINE_GET_MENU(torneos, "menu_torneos", NULL, 0, 1, 0)
+DEFINE_GET_MENU(temporada, "menu_temporada", "temporada", 0, 1, 1)
+DEFINE_GET_MENU(entrenador_ia, "menu_entrenador_ia", "entrenador_ia", 0, 1, 1)
+DEFINE_GET_MENU(records_rankings, "menu_records_rankings", "records_rankings", 0, 1, 1)
+DEFINE_GET_MENU_TEXT(menu_settings, "menu_settings")
+DEFINE_GET_MENU_TEXT(menu_exit, "menu_exit")
+DEFINE_GET_MENU_TEXT(menu_title, "menu_title")
+DEFINE_GET_MENU_TEXT(menu_usuario, "menu_usuario")
+DEFINE_GET_MENU_TEXT(menu_dashboard, "menu_dashboard")
+DEFINE_GET_MENU_TEXT(menu_calendario, "menu_calendario")
+DEFINE_GET_MENU_TEXT(menu_carrera, "menu_carrera")
+DEFINE_GET_MENU_TEXT(menu_recordatorios, "menu_recordatorios")
+DEFINE_GET_MENU_TEXT(menu_colecciones, "menu_colecciones")
+DEFINE_GET_MENU_TEXT(menu_musica, "menu_musica")
+DEFINE_GET_MENU_TEXT(settings_theme, "settings_theme")
+DEFINE_GET_MENU_TEXT(settings_language, "settings_language")
+DEFINE_GET_MENU_TEXT(show_current, "show_current")
+DEFINE_GET_MENU_TEXT(reset_defaults, "reset_defaults")
+DEFINE_GET_MENU_TEXT(menu_back, "menu_back")
 
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name,

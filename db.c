@@ -297,6 +297,29 @@ static FILE *app_fopen(const char *path, const char *mode)
 #endif
 }
 
+static void ejecutar_alter_table_group(const char *const *statements,
+                                       const char *component)
+{
+    const char *dup_col_msg = "duplicate column name";
+    const char *no_table_msg = "no such table";
+    for (int i = 0; statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int rc = sqlite3_exec(db, statements[i], NULL, NULL, &errmsg);
+        int error_esperado =
+            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
+                                 (strstr(errmsg, no_table_msg) != NULL));
+        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
+        {
+            snprintf(log_buf_, sizeof(log_buf_),
+                     "Migracion %s con error: %.320s | %.520s",
+                     component, statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
+        }
+        sqlite3_free(errmsg);
+    }
+}
+
 #ifdef _WIN32
 static int configurar_directorio_documentos(const char *subdir, char *out_dir,
         size_t out_size,
@@ -1514,24 +1537,7 @@ static void add_camiseta_columns(void)
         "ALTER TABLE camiseta ADD COLUMN " COL_CAMISETA_REGALO_DE ";",
         NULL
     };
-    const char *dup_col_msg = "duplicate column name";
-    const char *no_table_msg = "no such table";
-    for (int i = 0; alter_statements[i] != NULL; i++)
-    {
-        char *errmsg = NULL;
-        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
-        int error_esperado =
-            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
-                                 (strstr(errmsg, no_table_msg) != NULL));
-        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
-        {
-            snprintf(log_buf_, sizeof(log_buf_),
-                     "Migracion camiseta con error: %.320s | %.520s",
-                     alter_statements[i], errmsg);
-            app_log_write("WARN", "DB", log_buf_);
-        }
-        sqlite3_free(errmsg);
-    }
+    ejecutar_alter_table_group(alter_statements, "camiseta");
 }
 
 static void add_cancha_columns(void)
@@ -1572,24 +1578,7 @@ static void add_cancha_columns(void)
         "ALTER TABLE equipo ADD COLUMN activa INTEGER DEFAULT 1;",
         NULL
     };
-    const char *dup_col_msg = "duplicate column name";
-    const char *no_table_msg = "no such table";
-    for (int i = 0; alter_statements[i] != NULL; i++)
-    {
-        char *errmsg = NULL;
-        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
-        int error_esperado =
-            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
-                                 (strstr(errmsg, no_table_msg) != NULL));
-        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
-        {
-            snprintf(log_buf_, sizeof(log_buf_),
-                     "Migracion cancha con error: %.320s | %.520s",
-                     alter_statements[i], errmsg);
-            app_log_write("WARN", "DB", log_buf_);
-        }
-        sqlite3_free(errmsg);
-    }
+    ejecutar_alter_table_group(alter_statements, "cancha");
 }
 
 static void add_partido_columns(void)
@@ -1638,24 +1627,7 @@ static void add_partido_columns(void)
         "ALTER TABLE partido ADD COLUMN mes_anio TEXT DEFAULT '';",
         NULL
     };
-    const char *dup_col_msg = "duplicate column name";
-    const char *no_table_msg = "no such table";
-    for (int i = 0; alter_statements[i] != NULL; i++)
-    {
-        char *errmsg = NULL;
-        int rc = sqlite3_exec(db, alter_statements[i], NULL, NULL, &errmsg);
-        int error_esperado =
-            (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
-                                 (strstr(errmsg, no_table_msg) != NULL));
-        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
-        {
-            snprintf(log_buf_, sizeof(log_buf_),
-                     "Migracion partido con error: %.320s | %.520s",
-                     alter_statements[i], errmsg);
-            app_log_write("WARN", "DB", log_buf_);
-        }
-        sqlite3_free(errmsg);
-    }
+    ejecutar_alter_table_group(alter_statements, "partido");
 }
 
 static void add_missing_columns_legacy(void)

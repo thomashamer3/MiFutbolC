@@ -177,69 +177,9 @@ static void write_html_footer(FILE *f, void *context)
 /** @name Funciones de exportacion de bienestar */
 /** @{ */
 
-void exportar_bienestar_csv()
-{
-    ExportConfig config =
-    {
-        .filename = "bienestar.csv",
-        .context = NULL,
-        .write_header = write_csv_header,
-        .write_row = write_csv_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_bienestar(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_bienestar_txt()
-{
-    ExportConfig config =
-    {
-        .filename = "bienestar.txt",
-        .context = NULL,
-        .write_header = write_txt_header,
-        .write_row = write_txt_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_bienestar(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_bienestar_json()
-{
-    cJSON *root = cJSON_CreateArray();
-    ExportConfig config =
-    {
-        .filename = "bienestar.json",
-        .context = root,
-        .write_header = NULL,
-        .write_row = write_json_row,
-        .write_footer = write_json_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_bienestar(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_bienestar_html()
-{
-    ExportConfig config =
-    {
-        .filename = "bienestar.html",
-        .context = NULL,
-        .write_header = write_html_header,
-        .write_row = write_html_row,
-        .write_footer = write_html_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_bienestar(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
+EXPORT_FORMAT_ROWS(exportar_bienestar_csv, obtener_datos_bienestar, "bienestar.csv", NULL, write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_bienestar_txt, obtener_datos_bienestar, "bienestar.txt", NULL, write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_bienestar_json, obtener_datos_bienestar, "bienestar.json", cJSON_CreateArray(), NULL, write_json_row, write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_bienestar_html, obtener_datos_bienestar, "bienestar.html", NULL, write_html_header, write_html_row, write_html_footer)
 
 /** @} */

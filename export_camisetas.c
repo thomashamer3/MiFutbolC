@@ -168,69 +168,9 @@ static void write_html_footer(FILE *f, void *context)
 /** @name Funciones de exportacion de camisetas */
 /** @{ */
 
-void exportar_camisetas_csv()
-{
-    ExportConfig config =
-    {
-        .filename = "camisetas.csv",
-        .context = NULL,
-        .write_header = write_csv_header,
-        .write_row = write_csv_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_camisetas_txt()
-{
-    ExportConfig config =
-    {
-        .filename = "camisetas.txt",
-        .context = NULL,
-        .write_header = write_txt_header,
-        .write_row = write_txt_row,
-        .write_footer = NULL
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_camisetas_json()
-{
-    cJSON *root = cJSON_CreateArray();
-    ExportConfig config =
-    {
-        .filename = "camisetas.json",
-        .context = root,
-        .write_header = NULL,  // No header needed for JSON
-        .write_row = write_json_row,
-        .write_footer = write_json_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
-
-void exportar_camisetas_html()
-{
-    ExportConfig config =
-    {
-        .filename = "camisetas.html",
-        .context = NULL,
-        .write_header = write_html_header,
-        .write_row = write_html_row,
-        .write_footer = write_html_footer
-    };
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-    export_generic_rows(&config, stmt);
-}
+EXPORT_FORMAT_ROWS(exportar_camisetas_csv, obtener_datos_camisetas, "camisetas.csv", NULL, write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_camisetas_txt, obtener_datos_camisetas, "camisetas.txt", NULL, write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_camisetas_json, obtener_datos_camisetas, "camisetas.json", cJSON_CreateArray(), NULL, write_json_row, write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_camisetas_html, obtener_datos_camisetas, "camisetas.html", NULL, write_html_header, write_html_row, write_html_footer)
 
 /** @} */ /* End of Doxygen group */

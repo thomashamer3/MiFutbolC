@@ -163,31 +163,43 @@ static int cargar_eventos(EventoCalendario *eventos, int max)
     return total;
 }
 
-void exportar_calendario_csv()
+typedef void (*EscribirEventosFn)(FILE *f, const EventoCalendario *eventos, int total);
+
+static int exportar_calendario_base(const char *filename, const char *error_msg,
+                                    EscribirEventosFn write_fn)
 {
     EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
     if (!eventos)
     {
         printf("Error de memoria.\n");
-        return;
+        return 0;
     }
     int total = cargar_eventos(eventos, MAX_EVENTOS);
     if (total == 0)
     {
         printf("No hay eventos para exportar.\n");
         free(eventos);
-        return;
+        return 0;
     }
 
     FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("calendario.csv"), "w");
+    errno_t err = fopen_s(&f, get_export_path(filename), "w");
     if (err != 0 || f == NULL)
     {
-        printf("Error al crear el archivo CSV.\n");
+        printf("%s\n", error_msg);
         free(eventos);
-        return;
+        return 0;
     }
 
+    write_fn(f, eventos, total);
+    fclose(f);
+    free(eventos);
+    printf("Archivo exportado a: %s\n", get_export_path(filename));
+    return 1;
+}
+
+static void write_csv(FILE *f, const EventoCalendario *eventos, int total)
+{
     fprintf(f, "fecha,tipo,titulo,detalle\n");
     for (int i = 0; i < total; i++)
     {
@@ -201,66 +213,19 @@ void exportar_calendario_csv()
         sanitizar_ascii_basico(eventos[i].detalle, detalle_limpio, sizeof(detalle_limpio));
         fprintf(f, "%s,%s,%s,%s\n", fecha_limpio, tipo_limpio, titulo_limpio, detalle_limpio);
     }
-
-    fclose(f);
-    free(eventos);
-    printf("Archivo exportado a: %s\n", get_export_path("calendario.csv"));
 }
 
-void exportar_calendario_txt()
+static void write_txt(FILE *f, const EventoCalendario *eventos, int total)
 {
-    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
-    if (!eventos)
-    {
-        printf("Error de memoria.\n");
-        return;
-    }
-    int total = cargar_eventos(eventos, MAX_EVENTOS);
-    if (total == 0)
-    {
-        printf("No hay eventos para exportar.\n");
-        free(eventos);
-        return;
-    }
-
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("calendario.txt"), "w");
-    if (err != 0 || f == NULL)
-    {
-        printf("Error al crear el archivo TXT.\n");
-        free(eventos);
-        return;
-    }
-
     fprintf(f, "CALENDARIO DE EVENTOS\n\n");
     for (int i = 0; i < total; i++)
-    {
         fprintf(f, "[%s] %s\n  %s\n  %s\n\n",
                 eventos[i].fecha, eventos[i].tipo,
                 eventos[i].titulo, eventos[i].detalle);
-    }
-
-    fclose(f);
-    free(eventos);
-    printf("Archivo exportado a: %s\n", get_export_path("calendario.txt"));
 }
 
-void exportar_calendario_json()
+static void write_json_content(FILE *f, const EventoCalendario *eventos, int total)
 {
-    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
-    if (!eventos)
-    {
-        printf("Error de memoria.\n");
-        return;
-    }
-    int total = cargar_eventos(eventos, MAX_EVENTOS);
-    if (total == 0)
-    {
-        printf("No hay eventos para exportar.\n");
-        free(eventos);
-        return;
-    }
-
     cJSON *root = cJSON_CreateArray();
     for (int i = 0; i < total; i++)
     {
@@ -272,63 +237,39 @@ void exportar_calendario_json()
         cJSON_AddNumberToObject(item, "id", (double)eventos[i].id_origen);
         cJSON_AddItemToArray(root, item);
     }
-
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("calendario.json"), "w");
-    if (err != 0 || f == NULL)
-    {
-        printf("Error al crear el archivo JSON.\n");
-        cJSON_Delete(root);
-        free(eventos);
-        return;
-    }
-
     char *json_string = cJSON_Print(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
-    fclose(f);
-    free(eventos);
-    printf("Archivo exportado a: %s\n", get_export_path("calendario.json"));
+}
+
+static void write_html(FILE *f, const EventoCalendario *eventos, int total)
+{
+    fprintf(f, "<html><body><h1>Calendario de Eventos</h1><table border='1'>"
+            "<tr><th>Fecha</th><th>Tipo</th><th>Titulo</th><th>Detalle</th></tr>");
+    for (int i = 0; i < total; i++)
+        fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                eventos[i].fecha, eventos[i].tipo,
+                eventos[i].titulo, eventos[i].detalle);
+    fprintf(f, "</table></body></html>");
+}
+
+void exportar_calendario_csv()
+{
+    exportar_calendario_base("calendario.csv", "Error al crear el archivo CSV.", write_csv);
+}
+
+void exportar_calendario_txt()
+{
+    exportar_calendario_base("calendario.txt", "Error al crear el archivo TXT.", write_txt);
+}
+
+void exportar_calendario_json()
+{
+    exportar_calendario_base("calendario.json", "Error al crear el archivo JSON.", write_json_content);
 }
 
 void exportar_calendario_html()
 {
-    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
-    if (!eventos)
-    {
-        printf("Error de memoria.\n");
-        return;
-    }
-    int total = cargar_eventos(eventos, MAX_EVENTOS);
-    if (total == 0)
-    {
-        printf("No hay eventos para exportar.\n");
-        free(eventos);
-        return;
-    }
-
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("calendario.html"), "w");
-    if (err != 0 || f == NULL)
-    {
-        printf("Error al crear el archivo HTML.\n");
-        free(eventos);
-        return;
-    }
-
-    fprintf(f, "<html><body><h1>Calendario de Eventos</h1><table border='1'>"
-            "<tr><th>Fecha</th><th>Tipo</th><th>Titulo</th><th>Detalle</th></tr>");
-
-    for (int i = 0; i < total; i++)
-    {
-        fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                eventos[i].fecha, eventos[i].tipo,
-                eventos[i].titulo, eventos[i].detalle);
-    }
-
-    fprintf(f, "</table></body></html>");
-    fclose(f);
-    free(eventos);
-    printf("Archivo exportado a: %s\n", get_export_path("calendario.html"));
+    exportar_calendario_base("calendario.html", "Error al crear el archivo HTML.", write_html);
 }
