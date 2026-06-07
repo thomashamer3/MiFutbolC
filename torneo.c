@@ -1072,11 +1072,13 @@ static void obtener_mejor_goleador_equipo(int torneo_id, int equipo_id, char *go
     sqlite3_finalize(stmt);
 }
 
-static int generate_round_robin_fixture(int torneo_id, int *equipos, int total, int tipo_torneo)
+static int generate_round_robin_fixture(int torneo_id, const int *equipos, int total, int tipo_torneo)
 {
+#define MAX_TEMP 100
+    if (total <= 0 || total > MAX_TEMP) return 0;
     int rounds = (total % 2 == 0) ? total - 1 : total;
     int mid = total / 2;
-    int temp[100];
+    int temp[MAX_TEMP];
     for (int i = 0; i < total; i++) temp[i] = equipos[i];
     int actual_total = total;
     int num_matches = 0;
@@ -1142,7 +1144,8 @@ void generar_fixture(int torneo_id)
         sqlite3_finalize(stmt);
     }
 
-    int max_jornadas = (tipo_torneo == IDA_Y_VUELTA) ? ((n % 2 == 0) ? n - 1 : n) * 2 : (n % 2 == 0) ? n - 1 : n;
+    int jornadas_ida = (n % 2 == 0) ? n - 1 : n;
+    int max_jornadas = (tipo_torneo == IDA_Y_VUELTA) ? jornadas_ida * 2 : jornadas_ida;
     int num_matches = generate_round_robin_fixture(torneo_id, equipos, n, tipo_torneo);
 
     printf("Fixture generado exitosamente con %d partidos en %d jornadas.\n", num_matches, max_jornadas);
@@ -1236,7 +1239,8 @@ void ingresar_resultado(int torneo_id)
     int goles1 = input_int("Goles del equipo local: ");
     int goles2 = input_int("Goles del equipo visitante: ");
 
-    int equipo1_id = 0, equipo2_id = 0;
+    int equipo1_id = 0;
+    int equipo2_id = 0;
     if (!obtener_equipos_partido_db(partido_id, torneo_id, &equipo1_id, &equipo2_id))
     {
         printf("Partido no encontrado.\n");
@@ -1269,7 +1273,10 @@ void ingresar_resultado(int torneo_id)
 
 static void update_single_team_standings(int torneo_id, int eid, int gf, int gc)
 {
-    int pg = 0, pe = 0, pp = 0, pts = 0;
+    int pg = 0;
+    int pe = 0;
+    int pp = 0;
+    int pts = 0;
     if (gf > gc)
     {
         pg = 1;
@@ -1784,11 +1791,24 @@ void actualizar_fase_torneo(int torneo_id, int equipo1_id, int equipo2_id, int g
     }
 }
 
-static void guardar_historial_equipo(int torneo_id, int eid, int pos, int pj, int pg, int pe, int pp, int gf, int gc)
+typedef struct
+{
+    int torneo_id;
+    int eid;
+    int pos;
+    int pj;
+    int pg;
+    int pe;
+    int pp;
+    int gf;
+    int gc;
+} HistorialEquipoParams;
+
+static void guardar_historial_equipo(const HistorialEquipoParams *p)
 {
     char goleador[100] = "";
     int goles_goleador = 0;
-    obtener_mejor_goleador_equipo(torneo_id, eid, goleador, sizeof(goleador), &goles_goleador);
+    obtener_mejor_goleador_equipo(p->torneo_id, p->eid, goleador, sizeof(goleador), &goles_goleador);
 
     sqlite3_stmt *stmt2;
     const char *sql_hist = "INSERT INTO equipo_historial "
@@ -1796,15 +1816,15 @@ static void guardar_historial_equipo(int torneo_id, int eid, int pos, int pj, in
                            "partidos_empatados, partidos_perdidos, goles_favor, goles_contra, mejor_goleador, goles_mejor_goleador) "
                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
     if (!preparar_stmt(sql_hist, &stmt2)) return;
-    sqlite3_bind_int(stmt2, 1, eid);
-    sqlite3_bind_int(stmt2, 2, torneo_id);
-    sqlite3_bind_int(stmt2, 3, pos);
-    sqlite3_bind_int(stmt2, 4, pj);
-    sqlite3_bind_int(stmt2, 5, pg);
-    sqlite3_bind_int(stmt2, 6, pe);
-    sqlite3_bind_int(stmt2, 7, pp);
-    sqlite3_bind_int(stmt2, 8, gf);
-    sqlite3_bind_int(stmt2, 9, gc);
+    sqlite3_bind_int(stmt2, 1, p->eid);
+    sqlite3_bind_int(stmt2, 2, p->torneo_id);
+    sqlite3_bind_int(stmt2, 3, p->pos);
+    sqlite3_bind_int(stmt2, 4, p->pj);
+    sqlite3_bind_int(stmt2, 5, p->pg);
+    sqlite3_bind_int(stmt2, 6, p->pe);
+    sqlite3_bind_int(stmt2, 7, p->pp);
+    sqlite3_bind_int(stmt2, 8, p->gf);
+    sqlite3_bind_int(stmt2, 9, p->gc);
     sqlite3_bind_text(stmt2, 10, goleador, -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt2, 11, goles_goleador);
     sqlite3_step(stmt2);
@@ -1838,15 +1858,19 @@ void finalizar_torneo(int torneo_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         pos++;
-        guardar_historial_equipo(torneo_id,
-                                 sqlite3_column_int(stmt, 0),
-                                 pos,
-                                 sqlite3_column_int(stmt, 1),
-                                 sqlite3_column_int(stmt, 2),
-                                 sqlite3_column_int(stmt, 3),
-                                 sqlite3_column_int(stmt, 4),
-                                 sqlite3_column_int(stmt, 5),
-                                 sqlite3_column_int(stmt, 6));
+        HistorialEquipoParams hep =
+        {
+            .torneo_id = torneo_id,
+            .eid = sqlite3_column_int(stmt, 0),
+            .pos = pos,
+            .pj = sqlite3_column_int(stmt, 1),
+            .pg = sqlite3_column_int(stmt, 2),
+            .pe = sqlite3_column_int(stmt, 3),
+            .pp = sqlite3_column_int(stmt, 4),
+            .gf = sqlite3_column_int(stmt, 5),
+            .gc = sqlite3_column_int(stmt, 6)
+        };
+        guardar_historial_equipo(&hep);
     }
     sqlite3_finalize(stmt);
 

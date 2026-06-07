@@ -754,7 +754,8 @@ static int fecha_str_es_hoy(const char *fecha_str)
 static int reminder_expirado(const Reminder *r)
 {
     if (fecha_str_vacia_o_nula(r->fecha_fin)) return 0;
-    struct tm tm_fin, tm_fecha;
+    struct tm tm_fin;
+    struct tm tm_fecha;
     if (!parse_storage_datetime_to_tm(r->fecha_fin, &tm_fin)) return 0;
     if (!parse_storage_datetime_to_tm(r->fecha, &tm_fecha)) return 0;
     return mktime(&tm_fecha) > mktime(&tm_fin);
@@ -854,8 +855,9 @@ static void verificar_recordatorios_recurrentes()
     memcpy(expandido, arr, sizeof(Reminder) * (size_t)count);
     free(arr);
     int actual = count;
+    int initial = actual;
 
-    for (int i = 0; i < actual; i++)
+    for (int i = 0; i < initial; i++)
     {
         Reminder *r = &expandido[i];
         if (!reminder_needs_recurrence(r)) continue;

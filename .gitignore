@@ -3,10 +3,9 @@ bw-output/
 build-wrapper-dump.json
 sonar_issues.json
 sonar.ps1
-sonar-maintainability.json
-sonar-reliability.json
-sonar-security.json
-sonar-security-hotspots.json
+reliability-open.json
+security-open.json
+maintainability-open.json
 # Local/runtime data
 *.db
 *.log

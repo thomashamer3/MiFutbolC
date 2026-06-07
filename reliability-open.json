@@ -1,15 +1,26 @@
 {
-  "exportedAt": "2026-06-07T00:02:37Z",
+  "exportedAt": "2026-06-07T00:30:25Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "RELIABILITY",
-  "total": 1,
+  "total": 2,
   "issues": [
+    {
+      "rule": "c:S3519",
+      "severity": "BLOCKER",
+      "message": "Access of 'temp' containing 100 elements at negative index",
+      "file": "torneo.c",
+      "line": 1086,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "cert, cwe, symbolic-execution"
+    },
     {
       "rule": "c:S3519",
       "severity": "BLOCKER",
       "message": "Memory copy function accesses out-of-bound array element",
       "file": "export_ods.c",
-      "line": 414,
+      "line": 422,
       "status": "OPEN",
       "quality": "RELIABILITY",
       "effort": "5min",

@@ -100,10 +100,15 @@ static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
 
     int count = cJSON_GetArraySize(root);
     int total = 0;
-    for (int i = 0; i < count && (offset + total) < max; i++)
+    int max_alcanzado = 0;
+    for (int i = 0; i < count && !max_alcanzado; i++)
     {
         if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total], (long long)(i + 1)))
+        {
             total++;
+            if ((offset + total) >= max)
+                max_alcanzado = 1;
+        }
     }
 
     cJSON_Delete(root);

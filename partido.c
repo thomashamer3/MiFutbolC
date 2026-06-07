@@ -2216,8 +2216,9 @@ static void pedir_detalle_evento(int cantidad_objetivo, int es_asistencia,
     const char *etiqueta_tipo = es_asistencia ? "asistencia" : "gol";
     int cantidad_tipos = detalle_tipo_cantidad(es_asistencia);
     int cargados = 0;
+    int cancelado = 0;
 
-    while (cargados < cantidad_objetivo)
+    while (cargados < cantidad_objetivo && !cancelado)
     {
         printf("\n--- Detalle de %s (%d de %d) ---\n", etiqueta_tipo, cargados,
                cantidad_objetivo);
@@ -2233,7 +2234,8 @@ static void pedir_detalle_evento(int cantidad_objetivo, int es_asistencia,
 
         if (opcion == 0)
         {
-            break;
+            cancelado = 1;
+            continue;
         }
 
         if (opcion < 1 || opcion > cantidad_tipos)
@@ -2263,7 +2265,8 @@ static void pedir_detalle_evento(int cantidad_objetivo, int es_asistencia,
                 printf(
                     "No hay mas espacio para agregar tipos. Se finaliza el detalle.\n");
                 pause_console();
-                break;
+                cancelado = 1;
+                continue;
             }
         }
         cargados++;
@@ -5559,22 +5562,18 @@ static void menu_marcar_favorito_partido()
         {
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
-            if (id != 0)
+            if (id == 0) break;
+            if (!existe_id("partido", id))
             {
-                if (!existe_id("partido", id))
-                {
-                    printf("Partido no encontrado.\n");
-                    pause_console();
-                }
-                else
-                {
-                    int fav = partido_obtener_favorito(id);
-                    partido_marcar_favorito(id, !fav);
-                    ui_printf("Partido %s favorito.\n",
-                              !fav ? "marcado como" : "desmarcado como");
-                    pause_console();
-                }
+                printf("Partido no encontrado.\n");
+                pause_console();
+                break;
             }
+            int fav = partido_obtener_favorito(id);
+            partido_marcar_favorito(id, !fav);
+            ui_printf("Partido %s favorito.\n",
+                      !fav ? "marcado como" : "desmarcado como");
+            pause_console();
             break;
         }
         case 2:
@@ -5681,18 +5680,14 @@ static void menu_gestion_tags_partido()
         {
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
-            if (id != 0)
+            if (id == 0) break;
+            if (!existe_id("partido", id))
             {
-                if (!existe_id("partido", id))
-                {
-                    printf("Partido no encontrado.\n");
-                    pause_console();
-                }
-                else
-                {
-                    partido_manage_tags_for_id(id);
-                }
+                printf("Partido no encontrado.\n");
+                pause_console();
+                break;
             }
+            partido_manage_tags_for_id(id);
             break;
         }
         case 2:
