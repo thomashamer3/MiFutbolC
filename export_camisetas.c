@@ -40,55 +40,6 @@ static sqlite3_stmt* obtener_datos_camisetas(int *count)
     return stmt;
 }
 
-typedef struct
-{
-    const char *filename;           /**< Nombre del archivo de salida */
-    void *context;                  /**< Contexto adicional (ej. cJSON root para JSON) */
-    void (*write_header)(FILE *f, void *context); /**< Funcion para escribir encabezado */
-    void (*write_row)(FILE *f, sqlite3_stmt *stmt, void *context); /**< Funcion para escribir fila */
-    void (*write_footer)(FILE *f, void *context); /**< Funcion para escribir pie */
-} ExportConfig;
-
-static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
-{
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || f == NULL)
-    {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-    return f;
-}
-
-static void export_camisetas_generic(ExportConfig *config)
-{
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
-    if (!stmt) return;
-
-    FILE *f = open_export_file(config->filename, stmt);
-    if (!f) return;
-
-    // Escribir encabezado
-    if (config->write_header)
-        config->write_header(f, config->context);
-
-    // Procesar filas
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        config->write_row(f, stmt, config->context);
-    }
-
-    // Escribir pie
-    if (config->write_footer)
-        config->write_footer(f, config->context);
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path(config->filename));
-    fclose(f);
-}
-
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
@@ -227,7 +178,10 @@ void exportar_camisetas_csv()
         .write_row = write_csv_row,
         .write_footer = NULL
     };
-    export_camisetas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_camisetas_txt()
@@ -240,7 +194,10 @@ void exportar_camisetas_txt()
         .write_row = write_txt_row,
         .write_footer = NULL
     };
-    export_camisetas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_camisetas_json()
@@ -254,7 +211,10 @@ void exportar_camisetas_json()
         .write_row = write_json_row,
         .write_footer = write_json_footer
     };
-    export_camisetas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_camisetas_html()
@@ -267,7 +227,10 @@ void exportar_camisetas_html()
         .write_row = write_html_row,
         .write_footer = write_html_footer
     };
-    export_camisetas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_camisetas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 /** @} */ /* End of Doxygen group */

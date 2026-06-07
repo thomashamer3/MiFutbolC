@@ -225,7 +225,7 @@
 	"direct.h"
 	<string.h>
 
-1779772725 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
+1780809804 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
 	<stdio.h>
 
 1766433484 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.c
@@ -466,7 +466,7 @@
 
 1776199744 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_estadisticas_generales.h
 
-1777502160 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_camisetas.c
+1780809500 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_camisetas.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2792,7 +2792,7 @@
 
 1780553069 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_calendario.h
 
-1780799835 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_bienestar.c
+1780809753 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_bienestar.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2837,7 +2837,7 @@
 	"direct.h"
 	<string.h>
 
-1780799836 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_dashboard.c
+1780809750 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_dashboard.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2848,7 +2848,7 @@
 	"direct.h"
 	<string.h>
 
-1780799837 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_equipo.c
+1780809751 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_equipo.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2870,7 +2870,7 @@
 	"direct.h"
 	<string.h>
 
-1780553070 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_temporada.c
+1780809748 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_temporada.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2881,7 +2881,7 @@
 	"direct.h"
 	<string.h>
 
-1780799836 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_torneo.c
+1780809755 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_torneo.c
 	"export_torneo.h"
 	"export.h"
 	"db.h"
@@ -2924,7 +2924,7 @@
 	<windows.h>
 	<sys/stat.h>
 
-1780806434 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_ods.c
+1780808429 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_ods.c
 	"export_ods.h"
 	"menu.h"
 	"db.h"
@@ -3012,6 +3012,12 @@
 
 1780788919 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\posiciones.c
 	"posiciones.h"
+	"db.h"
+	"utils.h"
+	<stdio.h>
+
+1780810451 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_common.c
+	"export.h"
 	"db.h"
 	"utils.h"
 	<stdio.h>

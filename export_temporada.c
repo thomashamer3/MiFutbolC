@@ -27,52 +27,6 @@ static sqlite3_stmt* obtener_datos_temporadas(int *count)
     return stmt;
 }
 
-typedef struct
-{
-    const char *filename;
-    void *context;
-    void (*write_header)(FILE *f, void *context);
-    void (*write_row)(FILE *f, sqlite3_stmt *stmt, void *context);
-    void (*write_footer)(FILE *f, void *context);
-} ExportConfig;
-
-static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
-{
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || f == NULL)
-    {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-    return f;
-}
-
-static void export_temporadas_generic(ExportConfig *config)
-{
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_temporadas(&count);
-    if (!stmt) return;
-
-    FILE *f = open_export_file(config->filename, stmt);
-    if (!f) return;
-
-    if (config->write_header)
-        config->write_header(f, config->context);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        config->write_row(f, stmt, config->context);
-    }
-
-    if (config->write_footer)
-        config->write_footer(f, config->context);
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path(config->filename));
-    fclose(f);
-}
-
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
@@ -204,7 +158,10 @@ void exportar_temporadas_csv()
         .write_row = write_csv_row,
         .write_footer = NULL
     };
-    export_temporadas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_temporadas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_temporadas_txt()
@@ -217,7 +174,10 @@ void exportar_temporadas_txt()
         .write_row = write_txt_row,
         .write_footer = NULL
     };
-    export_temporadas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_temporadas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_temporadas_json()
@@ -231,7 +191,10 @@ void exportar_temporadas_json()
         .write_row = write_json_row,
         .write_footer = write_json_footer
     };
-    export_temporadas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_temporadas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_temporadas_html()
@@ -244,7 +207,10 @@ void exportar_temporadas_html()
         .write_row = write_html_row,
         .write_footer = write_html_footer
     };
-    export_temporadas_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_temporadas(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 /** @} */

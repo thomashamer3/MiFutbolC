@@ -336,6 +336,73 @@ void UnityPrintMask(const UNITY_UINT mask, const UNITY_UINT number)
 
 /*-----------------------------------------------*/
 #ifndef UNITY_EXCLUDE_FLOAT_PRINT
+static void UnityPrintFloatScaleSmall(UNITY_DOUBLE *number, int *exponent,
+                                      const UNITY_INT32 min_scaled,
+                                      const UNITY_INT32 max_scaled)
+{
+    UNITY_DOUBLE factor = 1.0f;
+    while (*number < (UNITY_DOUBLE)max_scaled / 1e10f)
+    {
+        *number *= 1e10f;
+        *exponent -= 10;
+    }
+    while ((*number) * factor < (UNITY_DOUBLE)min_scaled)
+    {
+        factor *= 10.0f;
+        (*exponent)--;
+    }
+    *number *= factor;
+}
+
+static void UnityPrintFloatScaleLarge(UNITY_DOUBLE *number, int *exponent,
+                                      const UNITY_INT32 min_scaled,
+                                      const UNITY_INT32 max_scaled)
+{
+    UNITY_DOUBLE divisor = 1.0f;
+    while (*number > (UNITY_DOUBLE)min_scaled * 1e10f)
+    {
+        *number /= 1e10f;
+        *exponent += 10;
+    }
+    while ((*number) / divisor > (UNITY_DOUBLE)max_scaled)
+    {
+        divisor *= 10.0f;
+        (*exponent)++;
+    }
+    *number /= divisor;
+}
+
+static void UnityPrintFloatScaleMid(UNITY_DOUBLE *number, int *exponent,
+                                    UNITY_INT32 *n_int,
+                                    const UNITY_INT32 min_scaled)
+{
+    UNITY_DOUBLE factor = 1.0f;
+    *n_int = (UNITY_INT32)*number;
+    *number -= (UNITY_DOUBLE)(*n_int);
+    while (*n_int < min_scaled)
+    {
+        *n_int *= 10;
+        factor *= 10.0f;
+        (*exponent)--;
+    }
+    *number *= factor;
+}
+
+static void UnityPrintFloatExponent(int exponent)
+{
+    UNITY_OUTPUT_CHAR('e');
+    if (exponent < 0)
+    {
+        UNITY_OUTPUT_CHAR('-');
+        exponent = -exponent;
+    }
+    else
+    {
+        UNITY_OUTPUT_CHAR('+');
+    }
+    UnityPrintNumberUnsigned((UNITY_UINT)exponent);
+}
+
 static void UnityPrintFloatNormal(UNITY_DOUBLE number, const int sig_digits,
                                    const UNITY_INT32 min_scaled,
                                    const UNITY_INT32 max_scaled)
@@ -347,41 +414,16 @@ static void UnityPrintFloatNormal(UNITY_DOUBLE number, const int sig_digits,
     int digits;
     char buf[16] = {0};
 
-    /*
-     * Scale up or down by powers of 10.  To minimize rounding error,
-     * start with a factor/divisor of 10^10, which is the largest
-     * power of 10 that can be represented exactly.  Finally, compute
-     * (exactly) the remaining power of 10 and perform one more
-     * multiplication or division.
-     */
     if (number < 1.0f)
-    {
-        UNITY_DOUBLE factor = 1.0f;
-        while (number < (UNITY_DOUBLE)max_scaled / 1e10f)  { number *= 1e10f; exponent -= 10; }
-        while (number * factor < (UNITY_DOUBLE)min_scaled) { factor *= 10.0f; exponent--; }
-        number *= factor;
-    }
+        UnityPrintFloatScaleSmall(&number, &exponent, min_scaled, max_scaled);
     else if (number > (UNITY_DOUBLE)max_scaled)
-    {
-        UNITY_DOUBLE divisor = 1.0f;
-        while (number > (UNITY_DOUBLE)min_scaled * 1e10f)   { number  /= 1e10f; exponent += 10; }
-        while (number / divisor > (UNITY_DOUBLE)max_scaled) { divisor *= 10.0f; exponent++; }
-        number /= divisor;
-    }
+        UnityPrintFloatScaleLarge(&number, &exponent, min_scaled, max_scaled);
     else
-    {
-        UNITY_DOUBLE factor = 1.0f;
-        n_int = (UNITY_INT32)number;
-        number -= (UNITY_DOUBLE)n_int;
-        while (n_int < min_scaled) { n_int *= 10; factor *= 10.0f; exponent--; }
-        number *= factor;
-    }
+        UnityPrintFloatScaleMid(&number, &exponent, &n_int, min_scaled);
 
-    /* round to nearest integer */
     n = ((UNITY_INT32)(number + number) + 1) / 2;
 
 #ifndef UNITY_ROUND_TIES_AWAY_FROM_ZERO
-    /* round to even if exactly between two integers */
     if ((n & 1) && (((UNITY_DOUBLE)n - number) == 0.5f))
         n--;
 #endif
@@ -394,18 +436,15 @@ static void UnityPrintFloatNormal(UNITY_DOUBLE number, const int sig_digits,
         exponent++;
     }
 
-    /* determine where to place decimal point */
     decimals = ((exponent <= 0) && (exponent >= -(sig_digits + 3))) ? (-exponent) : (sig_digits - 1);
     exponent += decimals;
 
-    /* truncate trailing zeroes after decimal point */
     while ((decimals > 0) && ((n % 10) == 0))
     {
         n /= 10;
         decimals--;
     }
 
-    /* build up buffer in reverse order */
     digits = 0;
     while ((n != 0) || (digits <= decimals))
     {
@@ -413,33 +452,15 @@ static void UnityPrintFloatNormal(UNITY_DOUBLE number, const int sig_digits,
         n /= 10;
     }
 
-    /* print out buffer (backwards) */
     while (digits > 0)
     {
         if (digits == decimals)
-        {
             UNITY_OUTPUT_CHAR('.');
-        }
         UNITY_OUTPUT_CHAR(buf[--digits]);
     }
 
-    /* print exponent if needed */
     if (exponent != 0)
-    {
-        UNITY_OUTPUT_CHAR('e');
-
-        if (exponent < 0)
-        {
-            UNITY_OUTPUT_CHAR('-');
-            exponent = -exponent;
-        }
-        else
-        {
-            UNITY_OUTPUT_CHAR('+');
-        }
-
-        UnityPrintNumberUnsigned((UNITY_UINT)exponent);
-    }
+        UnityPrintFloatExponent(exponent);
 }
 
 /*
@@ -1598,8 +1619,7 @@ void UnityAssertNumbersArrayWithin(const UNITY_UINT delta,
                                    const UNITY_UINT32 num_elements,
                                    const char* msg,
                                    const UNITY_LINE_TYPE lineNumber,
-                                   const UNITY_DISPLAY_STYLE_T style,
-                                   const UNITY_FLAGS_T flags)
+                                   const UNITY_DISPLAY_STYLE_T style)
 {
     UNITY_UINT32 elements = num_elements;
     unsigned int length   = style & 0xF;
@@ -1666,11 +1686,7 @@ void UnityAssertNumbersArrayWithin(const UNITY_UINT delta,
                 UNITY_FAIL_AND_BAIL;
             }
         }
-        /* Walk through array by incrementing the pointers */
-        if (flags == UNITY_ARRAY_TO_ARRAY)
-        {
-            expected = (UNITY_INTERNAL_PTR)((const char*)expected + increment);
-        }
+        expected = (UNITY_INTERNAL_PTR)((const char*)expected + increment);
         actual = (UNITY_INTERNAL_PTR)((const char*)actual + increment);
     }
 }
@@ -1759,8 +1775,7 @@ static int UnityCompareStrings(const char* expd, const char* act)
 {
     if (expd && act)
     {
-        UNITY_UINT32 i;
-        for (i = 0; expd[i] || act[i]; i++)
+        for (UNITY_UINT32 i = 0; expd[i] || act[i]; i++)
         {
             if (expd[i] != act[i]) return 0;
         }
@@ -2064,6 +2079,96 @@ static enum UnityLengthModifier UnityLengthModifierGet(const char *pch, int *len
 /*-----------------------------------------------
  * printf helper function
  *-----------------------------------------------*/
+static void UnityPrintFHandler(const char* pch, enum UnityLengthModifier length_mod, va_list va)
+{
+    switch (*pch)
+    {
+        case 'd':
+        case 'i':
+            {
+                UNITY_INT number;
+                UNITY_EXTRACT_ARG(UNITY_INT, number, length_mod, va, int);
+                UnityPrintNumber(number);
+                break;
+            }
+#ifndef UNITY_EXCLUDE_FLOAT_PRINT
+        case 'f':
+        case 'g':
+            {
+                const double number = va_arg(va, double);
+                UnityPrintFloat(number);
+                break;
+            }
+#endif
+        case 'u':
+            {
+                UNITY_UINT number;
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UnityPrintNumberUnsigned(number);
+                break;
+            }
+        case 'b':
+            {
+                UNITY_UINT number;
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                const UNITY_UINT mask = (UNITY_UINT)0 - (UNITY_UINT)1;
+                UNITY_OUTPUT_CHAR('0');
+                UNITY_OUTPUT_CHAR('b');
+                UnityPrintMask(mask, number);
+                break;
+            }
+        case 'x':
+        case 'X':
+            {
+                UNITY_UINT number;
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_OUTPUT_CHAR('0');
+                UNITY_OUTPUT_CHAR('x');
+                UnityPrintNumberHex(number, UNITY_MAX_NIBBLES);
+                break;
+            }
+        case 'p':
+            {
+                UNITY_UINT number;
+                char nibbles_to_print = 8;
+                if (UNITY_POINTER_WIDTH == 64)
+                {
+                    length_mod = UNITY_LENGTH_MODIFIER_LONG_LONG;
+                    nibbles_to_print = 16;
+                }
+                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
+                UNITY_OUTPUT_CHAR('0');
+                UNITY_OUTPUT_CHAR('x');
+                UnityPrintNumberHex(number, nibbles_to_print);
+                break;
+            }
+        case 'c':
+            {
+                const int ch = va_arg(va, int);
+                UnityPrintChar((const char *)&ch);
+                break;
+            }
+        case 's':
+            {
+                const char * string = va_arg(va, const char *);
+                UnityPrint(string);
+                break;
+            }
+        case '%':
+            {
+                UnityPrintChar(pch);
+                break;
+            }
+        default:
+            {
+                /* print the unknown format character */
+                UNITY_OUTPUT_CHAR('%');
+                UnityPrintChar(pch);
+                break;
+            }
+    }
+}
+
 static void UnityPrintFVA(const char* format, va_list va)
 {
     if (format == NULL) return;
@@ -2073,120 +2178,31 @@ static void UnityPrintFVA(const char* format, va_list va)
         /* format identification character */
         if (*pch == '%')
         {
+            int length_mod_size;
+            enum UnityLengthModifier length_mod;
             pch++;
-
-            {
-                    int length_mod_size;
-                    enum UnityLengthModifier length_mod = UnityLengthModifierGet(pch, &length_mod_size);
-                    pch += length_mod_size;
-
-                    switch (*pch)
-                    {
-                        case 'd':
-                        case 'i':
-                            {
-                                UNITY_INT number;
-                                UNITY_EXTRACT_ARG(UNITY_INT, number, length_mod, va, int);
-                                UnityPrintNumber(number);
-                                break;
-                            }
-#ifndef UNITY_EXCLUDE_FLOAT_PRINT
-                        case 'f':
-                        case 'g':
-                            {
-                                const double number = va_arg(va, double);
-                                UnityPrintFloat(number);
-                                break;
-                            }
-#endif
-                        case 'u':
-                            {
-                                UNITY_UINT number;
-                                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
-                                UnityPrintNumberUnsigned(number);
-                                break;
-                            }
-                        case 'b':
-                            {
-                                UNITY_UINT number;
-                                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
-                                const UNITY_UINT mask = (UNITY_UINT)0 - (UNITY_UINT)1;
-                                UNITY_OUTPUT_CHAR('0');
-                                UNITY_OUTPUT_CHAR('b');
-                                UnityPrintMask(mask, number);
-                                break;
-                            }
-                        case 'x':
-                        case 'X':
-                            {
-                                UNITY_UINT number;
-                                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
-                                UNITY_OUTPUT_CHAR('0');
-                                UNITY_OUTPUT_CHAR('x');
-                                UnityPrintNumberHex(number, UNITY_MAX_NIBBLES);
-                                break;
-                            }
-                        case 'p':
-                            {
-                                UNITY_UINT number;
-                                char nibbles_to_print = 8;
-                                if (UNITY_POINTER_WIDTH == 64)
-                                {
-                                    length_mod = UNITY_LENGTH_MODIFIER_LONG_LONG;
-                                    nibbles_to_print = 16;
-                                }
-                                UNITY_EXTRACT_ARG(UNITY_UINT, number, length_mod, va, unsigned int);
-                                UNITY_OUTPUT_CHAR('0');
-                                UNITY_OUTPUT_CHAR('x');
-                                UnityPrintNumberHex(number, nibbles_to_print);
-                                break;
-                            }
-                        case 'c':
-                            {
-                                const int ch = va_arg(va, int);
-                                UnityPrintChar((const char *)&ch);
-                                break;
-                            }
-                        case 's':
-                            {
-                                const char * string = va_arg(va, const char *);
-                                UnityPrint(string);
-                                break;
-                            }
-                        case '%':
-                            {
-                                UnityPrintChar(pch);
-                                break;
-                            }
-                        default:
-                            {
-                                /* print the unknown format character */
-                                UNITY_OUTPUT_CHAR('%');
-                                UnityPrintChar(pch);
-                                break;
-                            }
-                    }
-                }
-            }
-#ifdef UNITY_OUTPUT_COLOR
-            /* print ANSI escape code */
-            else if ((*pch == 27) && (*(pch + 1) == '['))
-            {
-                pch += UnityPrintAnsiEscapeString(pch);
-                continue;
-            }
-#endif
-            else if (*pch == '\n')
-            {
-                UNITY_PRINT_EOL();
-            }
-            else
-            {
-                UnityPrintChar(pch);
-            }
-
-            pch++;
+            length_mod = UnityLengthModifierGet(pch, &length_mod_size);
+            pch += length_mod_size;
+            UnityPrintFHandler(pch, length_mod, va);
         }
+#ifdef UNITY_OUTPUT_COLOR
+        else if ((*pch == 27) && (*(pch + 1) == '['))
+        {
+            pch += UnityPrintAnsiEscapeString(pch);
+            continue;
+        }
+#endif
+        else if (*pch == '\n')
+        {
+            UNITY_PRINT_EOL();
+        }
+        else
+        {
+            UnityPrintChar(pch);
+        }
+
+        pch++;
+    }
 }
 
 void UnityPrintF(const UNITY_LINE_TYPE line, const char* format, ...)
@@ -2386,95 +2402,112 @@ int UnityVerbosity            = 1;
 int UnityStrictMatch          = 0;
 
 /*-----------------------------------------------*/
+static int UnityParseNamedArg(const char* arg, int* idx, int argc, char** argv)
+{
+    if (arg[2] == '=')
+    {
+        return 0; /* value is in arg itself */
+    }
+    (*idx)++;
+    if (*idx < argc)
+    {
+        return 0; /* value is in next argv */
+    }
+    return 1; /* error */
+}
+
+static int UnityParseIncludeArg(const char* arg, int* idx, int argc, char** argv)
+{
+    if (UnityParseNamedArg(arg, idx, argc, argv) == 0)
+    {
+        UnityStrictMatch = (arg[1] == 'n');
+        if (arg[2] == '=')
+            UnityOptionIncludeNamed = (char*)&arg[3];
+        else
+            UnityOptionIncludeNamed = argv[*idx];
+        return 0;
+    }
+    UnityPrint("ERROR: No Test String to Include Matches For");
+    UNITY_PRINT_EOL();
+    return 1;
+}
+
+static int UnityParseExcludeArg(const char* arg, int* idx, int argc, char** argv)
+{
+    if (UnityParseNamedArg(arg, idx, argc, argv) == 0)
+    {
+        if (arg[2] == '=')
+            UnityOptionExcludeNamed = (char*)&arg[3];
+        else
+            UnityOptionExcludeNamed = argv[*idx];
+        return 0;
+    }
+    UnityPrint("ERROR: No Test String to Exclude Matches For");
+    UNITY_PRINT_EOL();
+    return 1;
+}
+
+static void UnityPrintOptions(void)
+{
+    UnityPrint("Options: "); UNITY_PRINT_EOL();
+    UnityPrint("-l        List all tests and exit"); UNITY_PRINT_EOL();
+    UnityPrint("-f NAME   Filter to run only tests whose name includes NAME"); UNITY_PRINT_EOL();
+    UnityPrint("-n NAME   Run only the test named NAME"); UNITY_PRINT_EOL();
+    UnityPrint("-h        show this Help menu"); UNITY_PRINT_EOL();
+    UnityPrint("-q        Quiet/decrease verbosity"); UNITY_PRINT_EOL();
+    UnityPrint("-v        increase Verbosity"); UNITY_PRINT_EOL();
+    UnityPrint("-x NAME   eXclude tests whose name includes NAME"); UNITY_PRINT_EOL();
+    UNITY_OUTPUT_FLUSH();
+}
+
+static int UnityHandleOption(char option, const char* arg, int* idx, int argc, char** argv)
+{
+    int result = 0;
+    switch (option)
+    {
+        case 'l':
+            return -1;
+        case 'n':
+        case 'f':
+            result = UnityParseIncludeArg(arg, idx, argc, argv);
+            break;
+        case 'q':
+            UnityVerbosity = 0;
+            break;
+        case 'v':
+            UnityVerbosity = 2;
+            break;
+        case 'x':
+            result = UnityParseExcludeArg(arg, idx, argc, argv);
+            break;
+        case 'h':
+            UnityPrintOptions();
+            return 1;
+        default:
+            UnityPrint("ERROR: Unknown Option ");
+            UNITY_OUTPUT_CHAR(option);
+            UNITY_PRINT_EOL();
+            UnityPrintOptions();
+            return 1;
+    }
+    return result;
+}
+
 int UnityParseOptions(int argc, char** argv)
 {
+    int i = 1;
     UnityOptionIncludeNamed = NULL;
     UnityOptionExcludeNamed = NULL;
     UnityStrictMatch = 0;
 
-    for (int i = 1; i < argc; i++)
+    while (i < argc)
     {
         if (argv[i][0] == '-')
         {
-            switch (argv[i][1])
-            {
-                case 'l': /* list tests */
-                    return -1;
-                case 'n': /* include tests with name including this string */
-                case 'f': /* an alias for -n */
-                    UnityStrictMatch = (argv[i][1] == 'n'); /* strictly match this string if -n */
-                    if (argv[i][2] == '=')
-                    {
-                        UnityOptionIncludeNamed = &argv[i][3];
-                    }
-                    else
-                    {
-                        i++;
-                        if (i < argc)
-                        {
-                            UnityOptionIncludeNamed = argv[i];
-                        }
-                        else
-                        {
-                            UnityPrint("ERROR: No Test String to Include Matches For");
-                            UNITY_PRINT_EOL();
-                            return 1;
-                        }
-                    }
-                    break;
-                case 'q': /* quiet */
-                    UnityVerbosity = 0;
-                    break;
-                case 'v': /* verbose */
-                    UnityVerbosity = 2;
-                    break;
-                case 'x': /* exclude tests with name including this string */
-                    if (argv[i][2] == '=')
-                    {
-                        UnityOptionExcludeNamed = &argv[i][3];
-                    }
-                    else
-                    {
-                        i++;
-                        if (i < argc)
-                        {
-                            UnityOptionExcludeNamed = argv[i];
-                        }
-                        else
-                        {
-                            UnityPrint("ERROR: No Test String to Exclude Matches For");
-                            UNITY_PRINT_EOL();
-                            return 1;
-                        }
-                    }
-                    break;
-                case 'h':
-                    UnityPrint("Options: "); UNITY_PRINT_EOL();
-                    UnityPrint("-l        List all tests and exit"); UNITY_PRINT_EOL();
-                    UnityPrint("-f NAME   Filter to run only tests whose name includes NAME"); UNITY_PRINT_EOL();
-                    UnityPrint("-n NAME   Run only the test named NAME"); UNITY_PRINT_EOL();
-                    UnityPrint("-h        show this Help menu"); UNITY_PRINT_EOL();
-                    UnityPrint("-q        Quiet/decrease verbosity"); UNITY_PRINT_EOL();
-                    UnityPrint("-v        increase Verbosity"); UNITY_PRINT_EOL();
-                    UnityPrint("-x NAME   eXclude tests whose name includes NAME"); UNITY_PRINT_EOL();
-                    UNITY_OUTPUT_FLUSH();
-                    return 1;
-                default:
-                    UnityPrint("ERROR: Unknown Option ");
-                    UNITY_OUTPUT_CHAR(argv[i][1]);
-                    UNITY_PRINT_EOL();
-                    UnityPrint("Options: "); UNITY_PRINT_EOL();
-                    UnityPrint("-l        List all tests and exit"); UNITY_PRINT_EOL();
-                    UnityPrint("-f NAME   Filter to run only tests whose name includes NAME"); UNITY_PRINT_EOL();
-                    UnityPrint("-n NAME   Run only the test named NAME"); UNITY_PRINT_EOL();
-                    UnityPrint("-h        show this Help menu"); UNITY_PRINT_EOL();
-                    UnityPrint("-q        Quiet/decrease verbosity"); UNITY_PRINT_EOL();
-                    UnityPrint("-v        increase Verbosity"); UNITY_PRINT_EOL();
-                    UnityPrint("-x NAME   eXclude tests whose name includes NAME"); UNITY_PRINT_EOL();
-                    UNITY_OUTPUT_FLUSH();
-                    return 1;
-            }
+            int rc = UnityHandleOption(argv[i][1], argv[i], &i, argc, argv);
+            if (rc != 0) return rc;
         }
+        i++;
     }
 
     return 0;

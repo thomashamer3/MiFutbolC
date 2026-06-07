@@ -405,11 +405,12 @@ static void dynbuf_init(DynBuf *b)
 static int dynbuf_write(DynBuf *b, const void *src, size_t n)
 {
     if (n == 0) return 1;
-    size_t remaining = (b->cap > b->len) ? (b->cap - b->len) : 0;
-    if (n > remaining)
+    if (n > SIZE_MAX - b->len) return 0;
+    size_t required = b->len + n;
+    if (required > b->cap)
     {
-        size_t newcap = b->cap ? b->cap * 2 : 65536;
-        while (newcap - b->len < n)
+        size_t newcap = b->cap ? b->cap : 65536;
+        while (newcap < required)
         {
             if (newcap > SIZE_MAX / 2) return 0;
             newcap *= 2;

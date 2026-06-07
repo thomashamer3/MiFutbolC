@@ -32,59 +32,10 @@ else
   endif
 endif
 
-SRC = \
-  analisis.c \
-  bienestar.c \
-  cJSON.c \
-  camiseta.c \
-  colecciones.c \
-  cancha.c \
-  db.c \
-  estadisticas.c \
-  estadisticas_meta.c \
-  estadisticas_anio.c \
-  estadisticas_generales.c \
-  estadisticas_lesiones.c \
-  estadisticas_mes.c \
-  export.c \
-  export_all.c \
-  export_all_mejorado.c \
-  export_camisetas.c \
-  export_camisetas_mejorado.c \
-  export_estadisticas.c \
-  export_estadisticas_generales.c \
-  export_lesiones.c \
-  export_lesiones_mejorado.c \
-  export_partidos.c \
-  export_records_rankings.c \
-  export_pdf.c \
-  formaciones.c \
-  import.c \
-  lesion.c \
-  logros.c \
-  main.c \
-  menu.c \
-  partido.c \
-  records_rankings.c \
-  pdfgen.c \
-  sqlite3.c \
-  sqlite3_exports.c \
-  utils.c \
-  equipo.c \
-  torneo.c \
-  temporada.c \
-  financiamiento.c \
-  settings.c \
-  entrenador_ia.c \
-  carrera.c \
-  dashboard.c \
-  busqueda.c \
-  calendario.c \
-  atajos.c \
-  musica.c \
-  musica_helpers.c \
-  recordatorios.c \
-  random_utils.c
+# Auto-discover all .c files in the project root so new files are picked up
+# automatically (e.g. export_common.c, undo.c, backup.c, filtros.c, etc.).
+# Files under tests/, sqlite/, and unity/ are excluded explicitly below.
+SRC = $(filter-out $(wildcard tests/*.c) $(wildcard sqlite/*.c) tests/unity/unity.c, $(wildcard *.c))
 
 OUT = MiFutbolC
 

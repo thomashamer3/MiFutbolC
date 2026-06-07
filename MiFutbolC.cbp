@@ -216,6 +216,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="export_colecciones.h" />
+		<Unit filename="export_common.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="export_dashboard.c">
 			<Option compilerVar="CC" />
 		</Unit>

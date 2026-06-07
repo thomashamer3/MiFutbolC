@@ -18,6 +18,43 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 
 typedef void (*ExportWriterFn)(FILE *file);
 
+/**
+ * @brief Configuracion reutilizable para el flujo generico de exportacion.
+ *
+ * El llamador prepara los callbacks de cabecera/fila/pie, el nombre del archivo
+ * de salida y un contexto opcional (por ejemplo, un cJSON root para JSON).
+ */
+typedef struct
+{
+    const char *filename;
+    void *context;
+    void (*write_header)(FILE *f, void *context);
+    void (*write_row)(FILE *f, sqlite3_stmt *stmt, void *context);
+    void (*write_footer)(FILE *f, void *context);
+} ExportConfig;
+
+/**
+ * @brief Ejecuta el flujo generico de exportacion iterando filas del @p stmt.
+ *
+ * Escribe la cabecera (si esta definida), recorre todas las filas invocando
+ * el callback de fila, y finalmente escribe el pie (si esta definido).
+ *
+ * @param config Configuracion con callbacks y nombre de archivo.
+ * @param stmt Sentencia preparada que se finaliza antes de retornar.
+ */
+void export_generic_rows(ExportConfig *config, sqlite3_stmt *stmt);
+
+/**
+ * @brief Ejecuta el flujo generico de exportacion para una unica fila.
+ *
+ * Variante de export_generic_rows() para consultas que devuelven un solo
+ * registro (por ejemplo, agregaciones de dashboard).
+ *
+ * @param config Configuracion con callbacks y nombre de archivo.
+ * @param stmt Sentencia preparada que se finaliza antes de retornar.
+ */
+void export_generic_single(ExportConfig *config, sqlite3_stmt *stmt);
+
 /** @name Funciones utilitarias */
 /** @{ */
 

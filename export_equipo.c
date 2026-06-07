@@ -31,52 +31,6 @@ static sqlite3_stmt* obtener_datos_equipos(int *count)
     return stmt;
 }
 
-typedef struct
-{
-    const char *filename;
-    void *context;
-    void (*write_header)(FILE *f, void *context);
-    void (*write_row)(FILE *f, sqlite3_stmt *stmt, void *context);
-    void (*write_footer)(FILE *f, void *context);
-} ExportConfig;
-
-static FILE* open_export_file(const char *filename, sqlite3_stmt *stmt)
-{
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || f == NULL)
-    {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-    return f;
-}
-
-static void export_equipos_generic(ExportConfig *config)
-{
-    int count;
-    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
-    if (!stmt) return;
-
-    FILE *f = open_export_file(config->filename, stmt);
-    if (!f) return;
-
-    if (config->write_header)
-        config->write_header(f, config->context);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        config->write_row(f, stmt, config->context);
-    }
-
-    if (config->write_footer)
-        config->write_footer(f, config->context);
-
-    sqlite3_finalize(stmt);
-    printf("Archivo exportado a: %s\n", get_export_path(config->filename));
-    fclose(f);
-}
-
 static const char* tipo_equipo_to_text(int tipo)
 {
     switch (tipo)
@@ -274,7 +228,10 @@ void exportar_equipos_csv()
         .write_row = write_csv_row,
         .write_footer = NULL
     };
-    export_equipos_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_equipos_txt()
@@ -287,7 +244,10 @@ void exportar_equipos_txt()
         .write_row = write_txt_row,
         .write_footer = NULL
     };
-    export_equipos_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_equipos_json()
@@ -301,7 +261,10 @@ void exportar_equipos_json()
         .write_row = write_json_row,
         .write_footer = write_json_footer
     };
-    export_equipos_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 void exportar_equipos_html()
@@ -314,7 +277,10 @@ void exportar_equipos_html()
         .write_row = write_html_row,
         .write_footer = write_html_footer
     };
-    export_equipos_generic(&config);
+    int count;
+    sqlite3_stmt *stmt = obtener_datos_equipos(&count);
+    if (!stmt) return;
+    export_generic_rows(&config, stmt);
 }
 
 /** @} */
