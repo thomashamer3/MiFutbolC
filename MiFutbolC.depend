@@ -626,7 +626,7 @@
 
 1777490503 d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.h
 
-1780803847 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
+1780870411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\torneo.c
 	"db.h"
 	"utils.h"
 	"menu.h"
@@ -2735,7 +2735,7 @@
 	<bcrypt.h>
 	<unistd.h>
 
-1780802562 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.c
+1780870623 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.c
 	"ascii_charts.h"
 	"utils.h"
 	<stddef.h>
@@ -2744,7 +2744,7 @@
 
 1780553070 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.h
 
-1780858074 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
+1780870389 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
 	"backup.h"
 	"db.h"
 	"utils.h"
@@ -2909,7 +2909,7 @@
 
 1780795251 d:\anime\libros\lenguaje c\proyectos\mifutbolc\undo.h
 
-1780802562 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\undo.c
+1780870640 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\undo.c
 	"undo.h"
 	"db.h"
 	"utils.h"

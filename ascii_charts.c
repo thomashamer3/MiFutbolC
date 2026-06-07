@@ -64,39 +64,34 @@ static void print_line_char(char ch, int length)
  * @param width Ancho total
  * @return Carácter a dibujar
  */
+static char caracter_conexion_medio(int cur, int left, int right)
+{
+    if (cur > left && cur > right) return '+';
+    if (cur > left) return '\\';
+    if (cur > right) return '/';
+    if (cur < left && cur < right) return '+';
+    if (cur < left) return '/';
+    if (cur < right) return '\\';
+    return '-';
+}
+
 static char elegir_caracter_linea(const int *rows, int c, int width)
 {
     if (width <= 1)
         return '-';
 
     if (c > 0 && c < width - 1)
-    {
-        if (rows[c] > rows[c - 1] && rows[c] > rows[c + 1])
-            return '+';
-        if (rows[c] > rows[c - 1])
-            return '\\';
-        if (rows[c] > rows[c + 1])
-            return '/';
-        if (rows[c] < rows[c - 1] && rows[c] < rows[c + 1])
-            return '+';
-        if (rows[c] < rows[c - 1])
-            return '/';
-        if (rows[c] < rows[c + 1])
-            return '\\';
-        return '-';
-    }
+        return caracter_conexion_medio(rows[c], rows[c - 1], rows[c + 1]);
+
     if (c == 0)
     {
-        if (rows[c] < rows[c + 1])
-            return '\\';
-        if (rows[c] > rows[c + 1])
-            return '/';
+        if (rows[c] < rows[c + 1]) return '\\';
+        if (rows[c] > rows[c + 1]) return '/';
         return '-';
     }
-    if (rows[c] > rows[c - 1])
-        return '\\';
-    if (rows[c] < rows[c - 1])
-        return '/';
+
+    if (rows[c] > rows[c - 1]) return '\\';
+    if (rows[c] < rows[c - 1]) return '/';
     return '-';
 }
 
@@ -390,6 +385,30 @@ static void imprimir_fila_histograma(int i, const HistogramRowConfig *cfg)
  * Histograma
  * --------------------------------------------------------------- */
 
+static void calcular_bins_histograma(const double *values, int count,
+                                     double min_val, double max_val,
+                                     int bins, int *freq, int *max_freq)
+{
+    double bin_width = (max_val - min_val) / bins;
+
+    memset(freq, 0, sizeof(int) * bins);
+    for (int i = 0; i < count; i++)
+    {
+        int b = (int)((values[i] - min_val) / bin_width);
+        if (b >= bins) b = bins - 1;
+        if (b < 0)     b = 0;
+        freq[b]++;
+    }
+
+    *max_freq = 0;
+    for (int i = 0; i < bins; i++)
+        if (freq[i] > *max_freq)
+            *max_freq = freq[i];
+
+    if (*max_freq == 0)
+        *max_freq = 1;
+}
+
 void dibujar_histograma(const double *values, int count, int bins,
                         const char *title)
 {
@@ -418,29 +437,9 @@ void dibujar_histograma(const double *values, int count, int bins,
         }
     }
 
-    double bin_width = (max_val - min_val) / bins;
-
-    /* Contar frecuencias */
     int freq[MAX_BINS];
-    memset(freq, 0, sizeof(freq));
-
-    for (int i = 0; i < count; i++)
-    {
-        int b = (int)((values[i] - min_val) / bin_width);
-        if (b >= bins)
-            b = bins - 1;
-        if (b < 0)
-            b = 0;
-        freq[b]++;
-    }
-
-    int max_freq = 0;
-    for (int i = 0; i < bins; i++)
-        if (freq[i] > max_freq)
-            max_freq = freq[i];
-
-    if (max_freq == 0)
-        max_freq = 1;
+    int max_freq;
+    calcular_bins_histograma(values, count, min_val, max_val, bins, freq, &max_freq);
 
     int bar_max = MAX_CHART_WIDTH / 2;
     if (bar_max > 60)
@@ -456,7 +455,7 @@ void dibujar_histograma(const double *values, int count, int bins,
     {
         .bins = bins,
         .min_val = min_val,
-        .bin_width = bin_width,
+        .bin_width = (max_val - min_val) / bins,
         .freq = freq,
         .max_freq = max_freq,
         .bar_max = bar_max,
@@ -472,6 +471,26 @@ void dibujar_histograma(const double *values, int count, int bins,
  * Gráfico de pastel
  * --------------------------------------------------------------- */
 
+static void imprimir_fila_pastel(double valor, double total,
+                                 const char *label, int bar_max,
+                                 const char *bar_char, const char *empty_char)
+{
+    double pct = (valor / total) * 100.0;
+    int bar_len = round_to_int(valor / total * bar_max);
+    if (bar_len < 0) bar_len = 0;
+    if (bar_len > bar_max) bar_len = bar_max;
+
+    char label_buf[MAX_LABEL];
+    snprintf(label_buf, sizeof(label_buf), "%s", label ? label : "");
+
+    ui_printf(" %-*s |", MAX_LABEL - 4, label_buf);
+    for (int j = 0; j < bar_len; j++)
+        ui_printf("%s", bar_char);
+    for (int j = bar_len; j < bar_max; j++)
+        ui_printf("%s", empty_char);
+    ui_printf("| %5.1f%% (%.2f)\n", pct, valor);
+}
+
 void dibujar_grafico_pastel(const double *values, const char **labels,
                             int count, const char *title)
 {
@@ -482,7 +501,6 @@ void dibujar_grafico_pastel(const double *values, const char **labels,
     const char *bar_char = usar_unicode ? "\xE2\x96\x88" : "#";
     const char *empty_char = " ";
 
-    /* Calcular total */
     double total = 0.0;
     for (int i = 0; i < count; i++)
     {
@@ -506,25 +524,8 @@ void dibujar_grafico_pastel(const double *values, const char **labels,
     {
         if (values[i] <= 0.0)
             continue;
-
-        double pct = (values[i] / total) * 100.0;
-        int bar_len = round_to_int(values[i] / total * bar_max);
-        if (bar_len < 0)
-            bar_len = 0;
-        if (bar_len > bar_max)
-            bar_len = bar_max;
-
-        char label_buf[MAX_LABEL];
-        snprintf(label_buf, sizeof(label_buf), "%s", labels[i] ? labels[i] : "");
-
-        ui_printf(" %-*s |", MAX_LABEL - 4, label_buf);
-
-        for (int j = 0; j < bar_len; j++)
-            ui_printf("%s", bar_char);
-        for (int j = bar_len; j < bar_max; j++)
-            ui_printf("%s", empty_char);
-
-        ui_printf("| %5.1f%% (%.2f)\n", pct, values[i]);
+        imprimir_fila_pastel(values[i], total, labels[i], bar_max,
+                             bar_char, empty_char);
     }
 
     ui_printf(" %-*s +", MAX_LABEL - 4, "");
@@ -536,6 +537,52 @@ void dibujar_grafico_pastel(const double *values, const char **labels,
 /* ---------------------------------------------------------------
  * Minigráfico (sparkline)
  * --------------------------------------------------------------- */
+
+static void dibujar_sparkline_sin_variacion(int width, int usar_unicode)
+{
+    for (int i = 0; i < width; i++)
+    {
+        if (usar_unicode)
+            ui_printf("%s", sparkline_char(4));
+        else
+            ui_putchar('~');
+    }
+    ui_printf("\n");
+}
+
+static void dibujar_sparkline_interpolar(const double *values, int count,
+        int width, int usar_unicode)
+{
+    double min_val = chart_min(values, count);
+    double max_val = chart_max(values, count);
+    double range = max_val - min_val;
+
+    for (int c = 0; c < width; c++)
+    {
+        double t = (count > 1) ? (double)c / (width - 1) * (count - 1) : 0.0;
+        int idx = (int)t;
+        double frac = t - idx;
+
+        double val;
+        if (idx >= count - 1)
+            val = values[count - 1];
+        else
+            val = values[idx] * (1.0 - frac) + values[idx + 1] * frac;
+
+        int lvl = round_to_int((val - min_val) / range * 7.0);
+        if (lvl < 0) lvl = 0;
+        if (lvl > 7) lvl = 7;
+
+        if (usar_unicode)
+            ui_printf("%s", sparkline_char(lvl));
+        else
+        {
+            static const char ascii_levels[] = "_.,-=+#";
+            ui_putchar(ascii_levels[lvl]);
+        }
+    }
+    ui_printf("\n");
+}
 
 void dibujar_minigrafico(const double *values, int count, int width)
 {
@@ -549,55 +596,11 @@ void dibujar_minigrafico(const double *values, int count, int width)
     double min_val = chart_min(values, count);
     double max_val = chart_max(values, count);
 
-    /* Sin variación: nivel medio */
-    double range = max_val - min_val;
-    if (range == 0.0)
+    if (max_val - min_val == 0.0)
     {
-        int lvl = 4;
-        for (int i = 0; i < width; i++)
-        {
-            if (usar_unicode)
-                ui_printf("%s", sparkline_char(lvl));
-            else
-                ui_putchar('~');
-        }
-        ui_printf("\n");
+        dibujar_sparkline_sin_variacion(width, usar_unicode);
         return;
     }
 
-    /* Muestrear/interpolar valores a las posiciones del sparkline */
-    for (int c = 0; c < width; c++)
-    {
-        double t = (count > 1) ? (double)c / (width - 1) * (count - 1) : 0.0;
-        int idx = (int)t;
-        double frac = t - idx;
-
-        double val;
-        if (idx >= count - 1)
-        {
-            val = values[count - 1];
-        }
-        else
-        {
-            val = values[idx] * (1.0 - frac) + values[idx + 1] * frac;
-        }
-
-        /* Mapear a 8 niveles (0..7) */
-        int lvl = round_to_int((val - min_val) / range * 7.0);
-        if (lvl < 0)
-            lvl = 0;
-        if (lvl > 7)
-            lvl = 7;
-
-        if (usar_unicode)
-            ui_printf("%s", sparkline_char(lvl));
-        else
-        {
-            /* Alternativa ASCII con caracteres simples */
-            static const char ascii_levels[] = "_.,-=+#";
-            char ch = ascii_levels[lvl];
-            ui_putchar(ch);
-        }
-    }
-    ui_printf("\n");
+    dibujar_sparkline_interpolar(values, count, width, usar_unicode);
 }

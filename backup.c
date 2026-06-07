@@ -265,18 +265,16 @@ static char *obtener_fecha_actual(void)
     return buffer;
 }
 
-int crear_backup(const char *descripcion)
+static int preparar_backup_paths(const char *descripcion, char *backup_dir,
+                                 char *filename, char *dest_path,
+                                 char *db_path, size_t size)
 {
-    app_log_event("BACKUP", "Inicio de creacion de backup manual");
-
-    char backup_dir[MAX_BUFFER];
-    if (!get_backup_dir(backup_dir, sizeof(backup_dir)))
+    if (!get_backup_dir(backup_dir, size))
     {
         printf("Error: No se pudo obtener el directorio de backups.\n");
         app_log_event("BACKUP", "No se pudo obtener directorio de backups");
         return 0;
     }
-
     if (!asegurar_backup_dir(backup_dir))
     {
         printf("Error: No se pudo crear el directorio de backups.\n");
@@ -289,41 +287,34 @@ int crear_backup(const char *descripcion)
 
     char desc_safe[128] = {0};
     if (descripcion && descripcion[0] != '\0')
-    {
         sanitizar_descripcion(descripcion, desc_safe, sizeof(desc_safe));
-    }
-
     if (desc_safe[0] == '\0')
-    {
         strcpy_s(desc_safe, sizeof(desc_safe), "sin_descripcion");
-    }
 
-    char filename[MAX_BUFFER];
-    snprintf(filename, sizeof(filename), "%s_%s.db", timestamp, desc_safe);
+    snprintf(filename, size, "%s_%s.db", timestamp, desc_safe);
+    build_backup_path(dest_path, size, backup_dir, filename);
 
-    char dest_path[MAX_BUFFER];
-    build_backup_path(dest_path, sizeof(dest_path), backup_dir, filename);
-
-    char db_path[MAX_BUFFER];
-    if (!construir_ruta_db(db_path, sizeof(db_path)))
+    if (!construir_ruta_db(db_path, size))
     {
         printf("Error: No se pudo determinar la ruta de la base de datos.\n");
         app_log_event("BACKUP", "No se pudo determinar ruta de DB");
         return 0;
     }
+    return 1;
+}
 
+static int ejecutar_backup_db(const char *dest_path, const char *db_path)
+{
     if (db)
     {
         sqlite3 *dest_db = NULL;
         if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
         {
             printf("Error: No se pudo crear el archivo de backup.\n");
-            snprintf(backup_dir, sizeof(backup_dir), "Error creando backup: %s", sqlite3_errmsg(dest_db));
-            app_log_event("BACKUP", backup_dir);
+            app_log_event("BACKUP", "Error creando backup via SQLite");
             sqlite3_close(dest_db);
             return 0;
         }
-
         sqlite3_backup *backup = sqlite3_backup_init(dest_db, "main", db, "main");
         if (!backup)
         {
@@ -331,7 +322,6 @@ int crear_backup(const char *descripcion)
             sqlite3_close(dest_db);
             return 0;
         }
-
         int step_rc = sqlite3_backup_step(backup, -1);
         int finish_rc = sqlite3_backup_finish(backup);
         sqlite3_close(dest_db);
@@ -343,22 +333,20 @@ int crear_backup(const char *descripcion)
             return 0;
         }
     }
-    else
+    else if (!app_copy_binary_file(db_path, dest_path))
     {
-        if (!app_copy_binary_file(db_path, dest_path))
-        {
-            printf("Error: No se pudo copiar la base de datos.\n");
-            app_log_event("BACKUP", "Fallo copia directa del archivo DB");
-            return 0;
-        }
+        printf("Error: No se pudo copiar la base de datos.\n");
+        app_log_event("BACKUP", "Fallo copia directa del archivo DB");
+        return 0;
     }
+    return 1;
+}
 
-    long long file_size = obtener_tamano_archivo(dest_path);
-    if (file_size < 0)
-    {
-        file_size = 0;
-    }
-
+static int agregar_entrada_manifest(const char *backup_dir,
+                                    const char *filename,
+                                    const char *descripcion,
+                                    long long file_size)
+{
     cJSON *manifest = leer_manifest(backup_dir);
     if (!manifest)
     {
@@ -375,7 +363,9 @@ int crear_backup(const char *descripcion)
 
     cJSON *entry = cJSON_CreateObject();
     cJSON_AddStringToObject(entry, "filename", filename);
-    cJSON_AddStringToObject(entry, "descripcion", (descripcion && descripcion[0] != '\0') ? descripcion : "sin_descripcion");
+    cJSON_AddStringToObject(entry, "descripcion",
+                            (descripcion && descripcion[0] != '\0')
+                            ? descripcion : "sin_descripcion");
     cJSON_AddStringToObject(entry, "fecha", fecha_str);
     cJSON_AddNumberToObject(entry, "size_bytes", (double)file_size);
     cJSON_AddItemToArray(manifest, entry);
@@ -390,14 +380,42 @@ int crear_backup(const char *descripcion)
         app_log_event("BACKUP", "No se pudo guardar el manifiesto");
         return 0;
     }
+    return 1;
+}
+
+int crear_backup(const char *descripcion)
+{
+    app_log_event("BACKUP", "Inicio de creacion de backup manual");
+
+    char backup_dir[MAX_BUFFER];
+    char filename[MAX_BUFFER];
+    char dest_path[MAX_BUFFER];
+    char db_path[MAX_BUFFER];
+
+    if (!preparar_backup_paths(descripcion, backup_dir, filename, dest_path,
+                               db_path, sizeof(backup_dir)))
+    {
+        return 0;
+    }
+
+    if (!ejecutar_backup_db(dest_path, db_path))
+        return 0;
+
+    long long file_size = obtener_tamano_archivo(dest_path);
+    if (file_size < 0)
+        file_size = 0;
+
+    if (!agregar_entrada_manifest(backup_dir, filename, descripcion, file_size))
+        return 0;
 
     printf("Backup creado exitosamente:\n");
     printf("  Archivo: %s\n", filename);
     printf("  Ruta: %s\n", dest_path);
     printf("  Tamano: %lld bytes\n", file_size);
 
-    snprintf(backup_dir, sizeof(backup_dir), "Backup manual completado: %.990s", dest_path);
-    app_log_event("BACKUP", backup_dir);
+    char msg[MAX_BUFFER];
+    snprintf(msg, sizeof(msg), "Backup manual completado: %.990s", dest_path);
+    app_log_event("BACKUP", msg);
     return 1;
 }
 
@@ -654,6 +672,40 @@ static void pedir_y_crear_backup(void)
 
 typedef int (*AccionBackupFn)(const char *filename);
 
+static int listar_backups_validos(cJSON const *manifest,
+                                  const char *backup_dir,
+                                  const char **nombres, int max_nombres)
+{
+    int count = cJSON_GetArraySize(manifest);
+    int validos = 0;
+
+    for (int i = 0; i < count && validos < max_nombres; i++)
+    {
+        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
+        cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
+        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
+        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
+
+        if (!fname || !cJSON_IsString(fname)) continue;
+
+        char filepath[MAX_BUFFER];
+        build_backup_path(filepath, sizeof(filepath), backup_dir, fname->valuestring);
+
+        if (!file_exists_regular(filepath)) continue;
+
+        nombres[validos] = fname->valuestring;
+        const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
+        const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
+
+        printf("  %d. %s\n", validos + 1, nombres[validos]);
+        printf("     Descripcion: %s\n", dc);
+        printf("     Fecha: %s\n", fe);
+        printf("     ----------------------------------------\n");
+        validos++;
+    }
+    return validos;
+}
+
 static void seleccionar_backup(const char *titulo, const char *prompt,
                                const char *cancel_msg, int needs_pause,
                                AccionBackupFn accion)
@@ -677,36 +729,8 @@ static void seleccionar_backup(const char *titulo, const char *prompt,
 
     mostrar_pantalla(titulo);
 
-    int count = cJSON_GetArraySize(manifest);
-    int validos = 0;
-    char *nombres[MAX_BUFFER];
-
-    for (int i = 0; i < count; i++)
-    {
-        if (validos >= MAX_BUFFER) break;
-
-        cJSON const *entry = cJSON_GetArrayItem(manifest, i);
-        cJSON *fname = cJSON_GetObjectItem(entry, "filename");
-        cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
-        cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
-
-        if (!fname || !cJSON_IsString(fname)) continue;
-
-        char filepath[MAX_BUFFER];
-        build_backup_path(filepath, sizeof(filepath), backup_dir, fname->valuestring);
-
-        if (!file_exists_regular(filepath)) continue;
-
-        nombres[validos] = fname->valuestring;
-        const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
-        const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
-
-        printf("  %d. %s\n", validos + 1, nombres[validos]);
-        printf("     Descripcion: %s\n", dc);
-        printf("     Fecha: %s\n", fe);
-        printf("     ----------------------------------------\n");
-        validos++;
-    }
+    const char *nombres[MAX_BUFFER];
+    int validos = listar_backups_validos(manifest, backup_dir, nombres, MAX_BUFFER);
 
     if (validos == 0)
     {

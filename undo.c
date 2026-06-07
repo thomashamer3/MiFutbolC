@@ -519,92 +519,67 @@ static int restaurar_desde_snapshot(const UndoEntry *entry)
    Funciones publicas
    --------------------------------------------------------------- */
 
-char *undo_tomar_snapshot(const char *tabla, int id)
+static int descubrir_columnas_tabla(const char *tabla,
+                                    char (*columnas)[128], int *num_cols)
 {
-    if (!tabla || id <= 0 || !db)
-    {
-        return NULL;
-    }
-
-    /* Descubrir columnas via PRAGMA table_info */
     char pragma_sql[128];
     snprintf(pragma_sql, sizeof(pragma_sql), "PRAGMA table_info(\"%s\")", tabla);
 
     sqlite3_stmt *pragma_stmt = NULL;
     if (sqlite3_prepare_v2(db, pragma_sql, -1, &pragma_stmt, NULL) != SQLITE_OK)
-    {
-        return NULL;
-    }
+        return 0;
 
-    char columnas[128][128];
-    int num_cols = 0;
-
-    while (sqlite3_step(pragma_stmt) == SQLITE_ROW && num_cols < 128)
+    *num_cols = 0;
+    while (sqlite3_step(pragma_stmt) == SQLITE_ROW && *num_cols < 128)
     {
         const char *name = (const char *)sqlite3_column_text(pragma_stmt, 1);
         if (name)
         {
-            strncpy_s(columnas[num_cols], sizeof(columnas[num_cols]), name, _TRUNCATE);
-            num_cols++;
+            strncpy_s(columnas[*num_cols], 128, name, _TRUNCATE);
+            (*num_cols)++;
         }
     }
     sqlite3_finalize(pragma_stmt);
+    return *num_cols > 0;
+}
 
-    if (num_cols == 0)
-    {
-        return NULL;
-    }
-
-    /* Construir SELECT con columnas escapadas */
-    char select_sql[8192];
-    snprintf(select_sql, sizeof(select_sql), "SELECT \"%s\"", columnas[0]);
+static int construir_select_todas_columnas(const char *tabla,
+        const char (*columnas)[128], int num_cols,
+        char *select_sql, size_t select_size)
+{
+    snprintf(select_sql, select_size, "SELECT \"%.127s\"", columnas[0]);
     for (int i = 1; i < num_cols; i++)
     {
         char col_part[256];
-        snprintf(col_part, sizeof(col_part), ", \"%s\"", columnas[i]);
-        strcat_s(select_sql, sizeof(select_sql), col_part);
+        snprintf(col_part, sizeof(col_part), ", \"%.127s\"", columnas[i]);
+        strcat_s(select_sql, select_size, col_part);
     }
     {
         char from_part[256];
         snprintf(from_part, sizeof(from_part), " FROM \"%s\" WHERE \"id\" = ?", tabla);
-        strcat_s(select_sql, sizeof(select_sql), from_part);
+        strcat_s(select_sql, select_size, from_part);
     }
+    return 1;
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (sqlite3_prepare_v2(db, select_sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return NULL;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-
-    /* Construir objeto JSON */
+static cJSON *resultset_a_json(sqlite3_stmt *stmt,
+                               const char (*columnas)[128], int num_cols)
+{
     cJSON *json = cJSON_CreateObject();
-
     for (int i = 0; i < num_cols; i++)
     {
         int type = sqlite3_column_type(stmt, i);
-
         switch (type)
         {
         case SQLITE_NULL:
             cJSON_AddNullToObject(json, columnas[i]);
             break;
-
         case SQLITE_INTEGER:
             cJSON_AddNumberToObject(json, columnas[i], sqlite3_column_int64(stmt, i));
             break;
-
         case SQLITE_FLOAT:
             cJSON_AddNumberToObject(json, columnas[i], sqlite3_column_double(stmt, i));
             break;
-
         case SQLITE_TEXT:
         default:
         {
@@ -614,7 +589,36 @@ char *undo_tomar_snapshot(const char *tabla, int id)
         }
         }
     }
+    return json;
+}
 
+char *undo_tomar_snapshot(const char *tabla, int id)
+{
+    if (!tabla || id <= 0 || !db)
+        return NULL;
+
+    char columnas[128][128];
+    int num_cols = 0;
+    if (!descubrir_columnas_tabla(tabla, columnas, &num_cols))
+        return NULL;
+
+    char select_sql[8192];
+    construir_select_todas_columnas(tabla, (const char(*)[128])columnas,
+                                    num_cols, select_sql, sizeof(select_sql));
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, select_sql, -1, &stmt, NULL) != SQLITE_OK)
+        return NULL;
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+
+    cJSON *json = resultset_a_json(stmt, (const char(*)[128])columnas, num_cols);
     sqlite3_finalize(stmt);
 
     char *json_str = cJSON_Print(json);

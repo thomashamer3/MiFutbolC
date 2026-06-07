@@ -2115,6 +2115,13 @@ void generar_reporte_torneo(int torneo_id)
     pause_console();
 }
 
+static int pedir_id_equipo_opcional(const char *sufijo)
+{
+    char prompt[96];
+    snprintf(prompt, sizeof(prompt), "Ingrese ID del equipo %s: ", sufijo);
+    return input_int(prompt);
+}
+
 void administrar_torneo()
 {
     clear_screen();
@@ -2180,32 +2187,20 @@ void administrar_torneo()
             estado_equipos(torneo_id);
             break;
         case 6:
-        {
-            int eid = input_int("Ingrese ID del equipo (0 para vista general): ");
-            mostrar_dashboard_torneo(torneo_id, eid);
+            mostrar_dashboard_torneo(torneo_id, pedir_id_equipo_opcional("(0 para vista general)"));
             break;
-        }
         case 7:
-        {
-            int eid = input_int("Ingrese ID del equipo (0 para todos): ");
-            mostrar_estadisticas_jugador(torneo_id, eid);
+            mostrar_estadisticas_jugador(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
             break;
-        }
         case 8:
-        {
-            int eid = input_int("Ingrese ID del equipo: ");
-            mostrar_historial_equipo(eid);
+            mostrar_historial_equipo(pedir_id_equipo_opcional(""));
             break;
-        }
         case 9:
             exportar_tabla_posiciones(torneo_id);
             break;
         case 10:
-        {
-            int eid = input_int("Ingrese ID del equipo (0 para todos): ");
-            exportar_estadisticas_jugadores(torneo_id, eid);
+            exportar_estadisticas_jugadores(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
             break;
-        }
         case 11:
             generar_reporte_torneo(torneo_id);
             break;
