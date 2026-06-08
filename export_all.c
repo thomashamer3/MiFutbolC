@@ -27,31 +27,29 @@
 #include <stdio.h>
 #include <sqlite3.h>
 
-static void exportar_camisetas_all()
-{
-    exportar_camisetas_csv();
-    exportar_camisetas_txt();
-    exportar_camisetas_json();
-    exportar_camisetas_html();
-}
+/* Macros para reducir duplicacion de codigo en exportacion */
 
-static void exportar_partidos_all()
-{
-    exportar_partidos_csv();
-    exportar_partidos_txt();
-    exportar_partidos_json();
-    exportar_partidos_html();
-}
+#define DEFINE_EXPORT_ALL_4(name) \
+    static void exportar_##name##_all(void) { \
+        exportar_##name##_csv(); \
+        exportar_##name##_txt(); \
+        exportar_##name##_json(); \
+        exportar_##name##_html(); \
+    }
 
-static void exportar_lesiones_all()
-{
-    exportar_lesiones_csv();
-    exportar_lesiones_txt();
-    exportar_lesiones_json();
-    exportar_lesiones_html();
-}
+#define DEFINE_EXPORT_TODO(name, label) \
+    static void exportar_##name##_todo(void) { \
+        printf("Exportando " label "...\n"); \
+        exportar_##name##_all(); \
+        printf("Exportacion de " label " completada.\n"); \
+        pause_console(); \
+    }
 
-static void exportar_estadisticas_all()
+DEFINE_EXPORT_ALL_4(camisetas)
+DEFINE_EXPORT_ALL_4(partidos)
+DEFINE_EXPORT_ALL_4(lesiones)
+
+static void exportar_estadisticas_all(void)
 {
     exportar_estadisticas_csv();
     exportar_estadisticas_txt();
@@ -60,15 +58,9 @@ static void exportar_estadisticas_all()
     exportar_estadisticas_md();
 }
 
-static void exportar_analisis_all()
-{
-    exportar_analisis_csv();
-    exportar_analisis_txt();
-    exportar_analisis_json();
-    exportar_analisis_html();
-}
+DEFINE_EXPORT_ALL_4(analisis)
 
-static void exportar_estadisticas_generales_all()
+static void exportar_estadisticas_generales_all(void)
 {
     exportar_estadisticas_generales_csv();
     exportar_estadisticas_generales_txt();
@@ -77,23 +69,10 @@ static void exportar_estadisticas_generales_all()
     exportar_estadisticas_generales_md();
 }
 
-static void exportar_estadisticas_por_mes_all()
-{
-    exportar_estadisticas_por_mes_csv();
-    exportar_estadisticas_por_mes_txt();
-    exportar_estadisticas_por_mes_json();
-    exportar_estadisticas_por_mes_html();
-}
+DEFINE_EXPORT_ALL_4(estadisticas_por_mes)
+DEFINE_EXPORT_ALL_4(estadisticas_por_anio)
 
-static void exportar_estadisticas_por_anio_all()
-{
-    exportar_estadisticas_por_anio_csv();
-    exportar_estadisticas_por_anio_txt();
-    exportar_estadisticas_por_anio_json();
-    exportar_estadisticas_por_anio_html();
-}
-
-static void exportar_records_rankings_all()
+static void exportar_records_rankings_all(void)
 {
     exportar_record_goles_partido_csv();
     exportar_record_asistencias_partido_csv();
@@ -106,39 +85,12 @@ static void exportar_records_rankings_all()
     exportar_records_rankings_html();
 }
 
-static void exportar_equipos_all()
-{
-    exportar_equipos_csv();
-    exportar_equipos_txt();
-    exportar_equipos_json();
-    exportar_equipos_html();
-}
+DEFINE_EXPORT_ALL_4(equipos)
+DEFINE_EXPORT_ALL_4(temporadas)
+DEFINE_EXPORT_ALL_4(torneos)
+DEFINE_EXPORT_ALL_4(bienestar)
 
-static void exportar_temporadas_all()
-{
-    exportar_temporadas_csv();
-    exportar_temporadas_txt();
-    exportar_temporadas_json();
-    exportar_temporadas_html();
-}
-
-static void exportar_torneos_all()
-{
-    exportar_torneos_csv();
-    exportar_torneos_txt();
-    exportar_torneos_json();
-    exportar_torneos_html();
-}
-
-static void exportar_bienestar_all()
-{
-    exportar_bienestar_csv();
-    exportar_bienestar_txt();
-    exportar_bienestar_json();
-    exportar_bienestar_html();
-}
-
-static void exportar_carrera_all()
+static void exportar_carrera_all(void)
 {
     exportar_carrera_csv();
     exportar_carrera_txt();
@@ -147,109 +99,20 @@ static void exportar_carrera_all()
     exportar_carrera_pdf();
 }
 
-static void exportar_colecciones_all()
-{
-    exportar_colecciones_csv();
-    exportar_colecciones_txt();
-    exportar_colecciones_json();
-    exportar_colecciones_html();
-}
+DEFINE_EXPORT_ALL_4(colecciones)
+DEFINE_EXPORT_ALL_4(recordatorios)
+DEFINE_EXPORT_ALL_4(dashboard)
+DEFINE_EXPORT_ALL_4(calendario)
 
-static void exportar_recordatorios_all()
-{
-    exportar_recordatorios_csv();
-    exportar_recordatorios_txt();
-    exportar_recordatorios_json();
-    exportar_recordatorios_html();
-}
-
-static void exportar_dashboard_all()
-{
-    exportar_dashboard_csv();
-    exportar_dashboard_txt();
-    exportar_dashboard_json();
-    exportar_dashboard_html();
-}
-
-static void exportar_calendario_all()
-{
-    exportar_calendario_csv();
-    exportar_calendario_txt();
-    exportar_calendario_json();
-    exportar_calendario_html();
-}
-
-static void exportar_equipos_todo()
-{
-    printf("Exportando equipos...\n");
-    exportar_equipos_all();
-    printf("Exportacion de equipos completada.\n");
-    pause_console();
-}
-
-static void exportar_temporadas_todo()
-{
-    printf("Exportando temporadas...\n");
-    exportar_temporadas_all();
-    printf("Exportacion de temporadas completada.\n");
-    pause_console();
-}
-
-static void exportar_torneos_todo()
-{
-    printf("Exportando torneos...\n");
-    exportar_torneos_all();
-    printf("Exportacion de torneos completada.\n");
-    pause_console();
-}
-
-static void exportar_bienestar_todo()
-{
-    printf("Exportando bienestar...\n");
-    exportar_bienestar_all();
-    printf("Exportacion de bienestar completada.\n");
-    pause_console();
-}
-
-static void exportar_carrera_todo()
-{
-    printf("Exportando carrera...\n");
-    exportar_carrera_all();
-    printf("Exportacion de carrera completada.\n");
-    pause_console();
-}
-
-static void exportar_colecciones_todo()
-{
-    printf("Exportando colecciones...\n");
-    exportar_colecciones_all();
-    printf("Exportacion de colecciones completada.\n");
-    pause_console();
-}
-
-static void exportar_recordatorios_todo()
-{
-    printf("Exportando recordatorios...\n");
-    exportar_recordatorios_all();
-    printf("Exportacion de recordatorios completada.\n");
-    pause_console();
-}
-
-static void exportar_dashboard_todo()
-{
-    printf("Exportando dashboard...\n");
-    exportar_dashboard_all();
-    printf("Exportacion de dashboard completada.\n");
-    pause_console();
-}
-
-static void exportar_calendario_todo()
-{
-    printf("Exportando calendario...\n");
-    exportar_calendario_all();
-    printf("Exportacion de calendario completada.\n");
-    pause_console();
-}
+DEFINE_EXPORT_TODO(equipos, "equipos")
+DEFINE_EXPORT_TODO(temporadas, "temporadas")
+DEFINE_EXPORT_TODO(torneos, "torneos")
+DEFINE_EXPORT_TODO(bienestar, "bienestar")
+DEFINE_EXPORT_TODO(carrera, "carrera")
+DEFINE_EXPORT_TODO(colecciones, "colecciones")
+DEFINE_EXPORT_TODO(recordatorios, "recordatorios")
+DEFINE_EXPORT_TODO(dashboard, "dashboard")
+DEFINE_EXPORT_TODO(calendario, "calendario")
 
 static void exportar_todo_json()
 {
@@ -310,69 +173,14 @@ static void exportar_todo_csv()
     pause_console();
 }
 
-static void exportar_camisetas_todo()
-{
-    printf("Exportando camisetas...\n");
-    exportar_camisetas_all();
-    printf("Exportacion de camisetas completada.\n");
-    pause_console();
-}
-
-static void exportar_partidos_todo()
-{
-    printf("Exportando partidos...\n");
-    exportar_partidos_all();
-    printf("Exportacion de partidos completada.\n");
-    pause_console();
-}
-
-static void exportar_lesiones_todo()
-{
-    printf("Exportando lesiones...\n");
-    exportar_lesiones_all();
-    printf("Exportacion de lesiones completada.\n");
-    pause_console();
-}
-
-static void exportar_estadisticas_todo()
-{
-    printf("Exportando estadisticas...\n");
-    exportar_estadisticas_all();
-    printf("Exportacion de estadisticas completada.\n");
-    pause_console();
-}
-
-static void exportar_analisis_todo()
-{
-    printf("Exportando analisis...\n");
-    exportar_analisis_all();
-    printf("Exportacion de analisis completada.\n");
-    pause_console();
-}
-
-static void exportar_estadisticas_generales_todo()
-{
-    printf("Exportando estadisticas generales...\n");
-    exportar_estadisticas_generales_all();
-    printf("Exportacion de estadisticas generales completada.\n");
-    pause_console();
-}
-
-static void exportar_estadisticas_por_mes_todo()
-{
-    printf("Exportando estadisticas por mes...\n");
-    exportar_estadisticas_por_mes_all();
-    printf("Exportacion de estadisticas por mes completada.\n");
-    pause_console();
-}
-
-static void exportar_estadisticas_por_anio_todo()
-{
-    printf("Exportando estadisticas por anio...\n");
-    exportar_estadisticas_por_anio_all();
-    printf("Exportacion de estadisticas por anio completada.\n");
-    pause_console();
-}
+DEFINE_EXPORT_TODO(camisetas, "camisetas")
+DEFINE_EXPORT_TODO(partidos, "partidos")
+DEFINE_EXPORT_TODO(lesiones, "lesiones")
+DEFINE_EXPORT_TODO(estadisticas, "estadisticas")
+DEFINE_EXPORT_TODO(analisis, "analisis")
+DEFINE_EXPORT_TODO(estadisticas_generales, "estadisticas generales")
+DEFINE_EXPORT_TODO(estadisticas_por_mes, "estadisticas por mes")
+DEFINE_EXPORT_TODO(estadisticas_por_anio, "estadisticas por anio")
 
 static void exportar_records_rankings_todo()
 {

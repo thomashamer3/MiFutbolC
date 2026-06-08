@@ -668,6 +668,18 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats);
  */
 void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item);
 
+/**
+ * @brief Lee un archivo completo a un buffer asignado con malloc.
+ *
+ * Abre el archivo en modo binario, obtiene su tamaño, asigna memoria,
+ * lee el contenido y lo retorna. El llamante debe liberar el buffer con free().
+ *
+ * @param path Ruta del archivo a leer.
+ * @param out_size Opcional, recibe el tamaño leído (puede ser NULL).
+ * @return Puntero al buffer con el contenido, o NULL si falla.
+ */
+char *utils_file_read_to_buffer(const char *path, long *out_size);
+
 int app_is_path_safe_for_shell(const char *path);
 
 void auth_generate_salt_hex(char *salt_out, size_t out_size);

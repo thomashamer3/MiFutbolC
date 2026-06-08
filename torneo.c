@@ -2122,6 +2122,78 @@ static int pedir_id_equipo_opcional(const char *sufijo)
     return input_int(prompt);
 }
 
+static int mostrar_menu_administrar_torneo(int torneo_id)
+{
+    char nombre[128] = "";
+    obtener_nombre_torneo_db(torneo_id, nombre, sizeof(nombre));
+    printf("Torneo: %s (ID: %d)\n\n", nombre[0] ? nombre : "?", torneo_id);
+
+    printf("1. Generar Fixture\n");
+    printf("2. Mostrar Fixture\n");
+    printf("3. Ingresar Resultado\n");
+    printf("4. Ver Tabla de Posiciones\n");
+    printf("5. Estado de Equipos\n");
+    printf("6. Dashboard del Torneo\n");
+    printf("7. Estadisticas de Jugadores\n");
+    printf("8. Historial del Equipo\n");
+    printf("9. Exportar Tabla de Posiciones\n");
+    printf("10. Exportar Estadisticas de Jugadores\n");
+    printf("11. Generar Reporte del Torneo\n");
+    printf("12. Finalizar Torneo\n");
+    printf("0. Volver\n");
+
+    return input_int("> ");
+}
+
+static void ejecutar_opcion_torneo(int opcion, int torneo_id)
+{
+    switch (opcion)
+    {
+    case 1:
+        generar_fixture(torneo_id);
+        break;
+    case 2:
+        mostrar_fixture(torneo_id);
+        break;
+    case 3:
+        ingresar_resultado(torneo_id);
+        break;
+    case 4:
+        ver_tabla_posiciones(torneo_id);
+        break;
+    case 5:
+        estado_equipos(torneo_id);
+        break;
+    case 6:
+        mostrar_dashboard_torneo(torneo_id, pedir_id_equipo_opcional("(0 para vista general)"));
+        break;
+    case 7:
+        mostrar_estadisticas_jugador(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
+        break;
+    case 8:
+        mostrar_historial_equipo(pedir_id_equipo_opcional(""));
+        break;
+    case 9:
+        exportar_tabla_posiciones(torneo_id);
+        break;
+    case 10:
+        exportar_estadisticas_jugadores(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
+        break;
+    case 11:
+        generar_reporte_torneo(torneo_id);
+        break;
+    case 12:
+        finalizar_torneo(torneo_id);
+        break;
+    case 0:
+        break;
+    default:
+        printf("Opcion invalida.\n");
+        pause_console();
+        break;
+    }
+}
+
 void administrar_torneo()
 {
     clear_screen();
@@ -2148,72 +2220,8 @@ void administrar_torneo()
     {
         clear_screen();
         print_header("ADMINISTRACION DE TORNEO");
-
-        char nombre[128] = "";
-        obtener_nombre_torneo_db(torneo_id, nombre, sizeof(nombre));
-        printf("Torneo: %s (ID: %d)\n\n", nombre[0] ? nombre : "?", torneo_id);
-
-        printf("1. Generar Fixture\n");
-        printf("2. Mostrar Fixture\n");
-        printf("3. Ingresar Resultado\n");
-        printf("4. Ver Tabla de Posiciones\n");
-        printf("5. Estado de Equipos\n");
-        printf("6. Dashboard del Torneo\n");
-        printf("7. Estadisticas de Jugadores\n");
-        printf("8. Historial del Equipo\n");
-        printf("9. Exportar Tabla de Posiciones\n");
-        printf("10. Exportar Estadisticas de Jugadores\n");
-        printf("11. Generar Reporte del Torneo\n");
-        printf("12. Finalizar Torneo\n");
-        printf("0. Volver\n");
-
-        opcion = input_int("> ");
-
-        switch (opcion)
-        {
-        case 1:
-            generar_fixture(torneo_id);
-            break;
-        case 2:
-            mostrar_fixture(torneo_id);
-            break;
-        case 3:
-            ingresar_resultado(torneo_id);
-            break;
-        case 4:
-            ver_tabla_posiciones(torneo_id);
-            break;
-        case 5:
-            estado_equipos(torneo_id);
-            break;
-        case 6:
-            mostrar_dashboard_torneo(torneo_id, pedir_id_equipo_opcional("(0 para vista general)"));
-            break;
-        case 7:
-            mostrar_estadisticas_jugador(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
-            break;
-        case 8:
-            mostrar_historial_equipo(pedir_id_equipo_opcional(""));
-            break;
-        case 9:
-            exportar_tabla_posiciones(torneo_id);
-            break;
-        case 10:
-            exportar_estadisticas_jugadores(torneo_id, pedir_id_equipo_opcional("(0 para todos)"));
-            break;
-        case 11:
-            generar_reporte_torneo(torneo_id);
-            break;
-        case 12:
-            finalizar_torneo(torneo_id);
-            break;
-        case 0:
-            break;
-        default:
-            printf("Opcion invalida.\n");
-            pause_console();
-            break;
-        }
+        opcion = mostrar_menu_administrar_torneo(torneo_id);
+        ejecutar_opcion_torneo(opcion, torneo_id);
     }
     while (opcion != 0);
 }

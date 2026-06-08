@@ -2835,6 +2835,75 @@ static CanchaExportPdfCtx cancha_export_pdf_add_line(CanchaExportPdfCtx ctx,
     return ctx;
 }
 
+static CanchaExportPdfCtx cancha_export_pdf_print_fila(CanchaExportPdfCtx ctx, int id,
+        CanchaInfoDetalle const *detalle,
+        const char *hora_apertura,
+        const char *hora_cierre)
+{
+    int total_fields = 20;
+    struct
+    {
+        const char *fmt;
+        const char *arg;
+    } fields[] =
+    {
+        {"ID: %d", NULL},
+        {"Nombre: %s", texto_o_defecto(detalle->nombre, "(sin dato)")},
+        {"Telefono: %s", texto_o_defecto(detalle->telefono, "(sin dato)")},
+        {"Direccion: %s", texto_o_defecto(detalle->direccion, "(sin dato)")},
+        {"Localidad: %s", texto_o_defecto(detalle->localidad, "(sin dato)")},
+        {"Tipo de Cancha: %s", texto_tipo_cancha(detalle->tipo_cancha_codigo)},
+        {"Superficie: %s", texto_superficie(detalle->superficie_codigo)},
+        {"Techada: %s", texto_estado_techada(detalle->techada_estado)},
+        {"Iluminacion: %s", detalle->tiene_iluminacion ? "SI" : "NO"},
+        {"Horario: %s - %s", NULL},
+    };
+    char line[512];
+    (void)total_fields;
+
+    snprintf(line, sizeof(line), "----------------------------------------");
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+
+    snprintf(line, sizeof(line), "ID: %d", id);
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+
+    for (int i = 0; i < 9; i++)
+    {
+        snprintf(line, sizeof(line), fields[i].fmt, fields[i].arg);
+        ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    }
+
+    snprintf(line, sizeof(line), "Horario: %s - %s", hora_apertura, hora_cierre);
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+
+    snprintf(line, sizeof(line), "Precio Hora Dia: %.2f", (double)detalle->precio_hora_dia_centavos / 100.0);
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Precio Hora Noche: %.2f", (double)detalle->precio_hora_noche_centavos / 100.0);
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+
+    snprintf(line, sizeof(line), "Vestuarios: %s | Duchas: %s | Buffet: %s | Estacionamiento: %s",
+             detalle->servicios.vestuarios ? "SI" : "NO",
+             detalle->servicios.duchas ? "SI" : "NO",
+             detalle->servicios.buffet ? "SI" : "NO",
+             detalle->servicios.estacionamiento ? "SI" : "NO");
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+
+    snprintf(line, sizeof(line), "Cantidad Canchas: %d", detalle->cantidad_canchas);
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Estado Pasto: %s", texto_o_defecto(detalle->estado, "(sin dato)"));
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Descripcion: %s", texto_o_defecto(detalle->descripcion, "(sin dato)"));
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Contacto Alterno: %s", texto_o_defecto(detalle->contacto_alt, "(sin dato)"));
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Grabacion Partido: %s", detalle->tiene_grabacion ? "SI" : "NO");
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
+    snprintf(line, sizeof(line), "Estado: %s", cancha_export_estado_texto(detalle->activa));
+    ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 14.0f);
+
+    return ctx;
+}
+
 static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
@@ -2899,58 +2968,12 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
         CanchaInfoDetalle detalle = {0};
         char hora_apertura[16];
         char hora_cierre[16];
-        char line[512];
 
         cancha_export_cargar_desde_stmt(stmt, &id, &detalle);
         formatear_hora_minutos(detalle.horario_apertura_min, hora_apertura, sizeof(hora_apertura));
         formatear_hora_minutos(detalle.horario_cierre_min, hora_cierre, sizeof(hora_cierre));
 
-        snprintf(line, sizeof(line), "----------------------------------------");
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-
-        snprintf(line, sizeof(line), "ID: %d", id);
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Nombre: %s", texto_o_defecto(detalle.nombre, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Telefono: %s", texto_o_defecto(detalle.telefono, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Direccion: %s", texto_o_defecto(detalle.direccion, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Localidad: %s", texto_o_defecto(detalle.localidad, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Tipo de Cancha: %s", texto_tipo_cancha(detalle.tipo_cancha_codigo));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Superficie: %s", texto_superficie(detalle.superficie_codigo));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Techada: %s", texto_estado_techada(detalle.techada_estado));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Iluminacion: %s", detalle.tiene_iluminacion ? "SI" : "NO");
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Horario: %s - %s", hora_apertura, hora_cierre);
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Precio Hora Dia: %.2f", (double)detalle.precio_hora_dia_centavos / 100.0);
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Precio Hora Noche: %.2f", (double)detalle.precio_hora_noche_centavos / 100.0);
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Vestuarios: %s | Duchas: %s | Buffet: %s | Estacionamiento: %s",
-                 detalle.servicios.vestuarios ? "SI" : "NO",
-                 detalle.servicios.duchas ? "SI" : "NO",
-                 detalle.servicios.buffet ? "SI" : "NO",
-                 detalle.servicios.estacionamiento ? "SI" : "NO");
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Cantidad Canchas: %d", detalle.cantidad_canchas);
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Estado Pasto: %s", texto_o_defecto(detalle.estado, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Descripcion: %s", texto_o_defecto(detalle.descripcion, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Contacto Alterno: %s", texto_o_defecto(detalle.contacto_alt, "(sin dato)"));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Grabacion Partido: %s", detalle.tiene_grabacion ? "SI" : "NO");
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 12.0f);
-        snprintf(line, sizeof(line), "Estado: %s", cancha_export_estado_texto(detalle.activa));
-        pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, line, 10.0f, 14.0f);
-
+        pdf_ctx = cancha_export_pdf_print_fila(pdf_ctx, id, &detalle, hora_apertura, hora_cierre);
         total++;
     }
 

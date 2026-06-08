@@ -35,6 +35,27 @@
 #endif
 #endif
 
+#define PARTIDO_SELECT_COLUMNS \
+    "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, " \
+    "resultado, rendimiento_general, cansancio, estado_animo, " \
+    "comentario_personal, clima, dia, precio, " \
+    "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), " \
+    "IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), " \
+    "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), " \
+    "IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), " \
+    "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), " \
+    "IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), " \
+    "IFNULL(p.rating_mental, 0), " \
+    "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), " \
+    "IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), " \
+    "IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), " \
+    "IFNULL(p.dolor_fisico, 0), p.temperatura_c, " \
+    "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), " \
+    "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), " \
+    "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') " \
+    "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id " \
+    "JOIN cancha can ON p.cancha_id = can.id"
+
 // Prototipos de funciones estaticas usadas antes de su definicion
 static int cargar_equipo_desde_bd(int equipo_id, Equipo *equipo);
 static int cargar_jugadores_equipo(int equipo_id, Equipo *equipo);
@@ -919,26 +940,8 @@ static int partido_listado_mostrar_pagina_actual(
                                            sizeof(where_clause));
 
     snprintf(sql, sizeof(sql),
-             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, "
-             "resultado, rendimiento_general, cansancio, estado_animo, "
-             "comentario_personal, clima, dia, precio, "
-             "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), "
-             "IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
-             "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), "
-             "IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
-             "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), "
-             "IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), "
-             "IFNULL(p.rating_mental, 0), "
-             "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), "
-             "IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), "
-             "IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, "
-             "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), "
-             "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
-             "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-             "JOIN cancha can ON p.cancha_id = can.id "
-             "%s "
+             PARTIDO_SELECT_COLUMNS
+             " %s "
              "ORDER BY p.id %s LIMIT ? OFFSET ?",
              where_clause, orden_sql);
 
@@ -3331,26 +3334,8 @@ static void buscar_partidos_generico(const char *header, const char *campo,
 
     char sql[1900];
     snprintf(sql, sizeof(sql),
-             "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, "
-             "resultado, rendimiento_general, cansancio, estado_animo, "
-             "comentario_personal, clima, dia, precio, "
-             "IFNULL(p.tipo_partido, 1), IFNULL(p.rival_nombre, ''), "
-             "IFNULL(p.tipo_rival, ''), IFNULL(p.posicion_jugada, ''), "
-             "IFNULL(p.minutos_jugados, 0), IFNULL(p.intensidad, 0), "
-             "IFNULL(p.esfuerzo_percibido, 0), IFNULL(p.condicion_cancha, ''), "
-             "IFNULL(p.arbitraje, ''), IFNULL(p.eventos_clave, ''), "
-             "IFNULL(p.rating_tecnico, 0), IFNULL(p.rating_fisico, 0), "
-             "IFNULL(p.rating_mental, 0), "
-             "IFNULL(p.estado_cancha, 0), IFNULL(p.goles_equipo, -1), "
-             "IFNULL(p.goles_rival, -1), IFNULL(p.formato_partido, ''), "
-             "IFNULL(p.tarjeta, 1), IFNULL(p.goles_en_contra, 0), "
-             "IFNULL(p.dolor_fisico, 0), p.temperatura_c, "
-             "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), "
-             "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
-             "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
-             "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-             "JOIN cancha can ON p.cancha_id = can.id "
-             "WHERE p.%s = ?",
+             PARTIDO_SELECT_COLUMNS
+             " WHERE p.%s = ?",
              campo);
 
     sqlite3_stmt *stmt;

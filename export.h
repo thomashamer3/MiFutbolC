@@ -269,4 +269,25 @@ void escribir_seccion_html(FILE *f, const char *titulo, const char *sql,
 
 /** @} */
 
+/** @name Callbacks de pie de pagina compartidos (evitan duplicacion en modulos de exportacion) */
+/** @{ */
+
+/**
+ * @brief Callback de pie para exportacion JSON: imprime y libera el cJSON root.
+ *
+ * @param f Archivo de salida.
+ * @param context Puntero al objeto cJSON root (cJSON*).
+ */
+void export_write_json_footer(FILE *f, void *context);
+
+/**
+ * @brief Callback de pie para exportacion HTML: cierra la tabla y el documento.
+ *
+ * @param f Archivo de salida.
+ * @param context No utilizado.
+ */
+void export_write_html_footer(FILE *f, void *context);
+
+/** @} */
+
 #endif

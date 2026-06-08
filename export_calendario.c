@@ -59,30 +59,9 @@ static int procesar_item_recordatorio(const cJSON *it, EventoCalendario *evento,
 
 static cJSON* cargar_json_array_calendario(const char *path)
 {
-    FILE *f;
-    errno_t err = fopen_s(&f, path, "rb");
-    if (err != 0 || f == NULL)
-        return NULL;
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (len <= 0)
-    {
-        fclose(f);
-        return NULL;
-    }
-    char *buf = (char*)malloc((size_t)len + 1);
-    if (!buf)
-    {
-        fclose(f);
-        return NULL;
-    }
-    size_t read = fread(buf, 1, (size_t)len, f);
-    fclose(f);
-    if (read > 0 && read <= (size_t)len)
-        buf[read] = '\0';
-    else
-        buf[0] = '\0';
+    long len = 0;
+    char *buf = utils_file_read_to_buffer(path, &len);
+    if (!buf) return NULL;
     cJSON *root = cJSON_Parse(buf);
     free(buf);
     if (!root || !cJSON_IsArray(root))

@@ -4150,6 +4150,50 @@ void mostrar_alerta_operacion(const char *entidad, const char *operacion,
     pause_console();
 }
 
+char *utils_file_read_to_buffer(const char *path, long *out_size)
+{
+    if (!path)
+    {
+        if (out_size) *out_size = 0;
+        return NULL;
+    }
+    FILE *f;
+    errno_t err = fopen_s(&f, path, "rb");
+    if (err != 0 || f == NULL)
+    {
+        if (out_size) *out_size = 0;
+        return NULL;
+    }
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (len <= 0)
+    {
+        fclose(f);
+        if (out_size) *out_size = 0;
+        return NULL;
+    }
+    char *buf = (char*)malloc((size_t)len + 1);
+    if (!buf)
+    {
+        fclose(f);
+        if (out_size) *out_size = 0;
+        return NULL;
+    }
+    size_t read = fread(buf, 1, (size_t)len, f);
+    fclose(f);
+    if (read > 0 && read <= (size_t)len)
+    {
+        buf[read] = '\0';
+    }
+    else
+    {
+        buf[0] = '\0';
+    }
+    if (out_size) *out_size = (long)read;
+    return buf;
+}
+
 int app_is_path_safe_for_shell(const char *path)
 {
     if (!path || path[0] == '\0')

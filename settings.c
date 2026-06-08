@@ -184,41 +184,23 @@ static void toggle_dashboard_enabled_setting()
         label_dashboard_enabled, sizeof(label_dashboard_enabled));
 }
 
-static void abrir_busqueda_global_desde_settings(void)
-{
-    app_log_event("BUSQUEDA", "Ingreso a Busqueda Global desde Ajustes");
-    menu_busqueda_global();
-}
+#define DEFINE_ABRIR_DESDE_SETTINGS(name, event, display, func_call) \
+    static void abrir_##name##_desde_settings(void) { \
+        app_log_event(event, "Ingreso a " display " desde Ajustes"); \
+        func_call; \
+    }
 
-static void abrir_backup_desde_settings(void)
-{
-    app_log_event("BACKUP", "Ingreso a Backup & Restore desde Ajustes");
-    menu_backup_restore();
-}
-
-static void abrir_integridad_desde_settings(void)
-{
-    app_log_event("INTEGRIDAD", "Ingreso a Integridad BD desde Ajustes");
-    menu_integridad_bd();
-}
+DEFINE_ABRIR_DESDE_SETTINGS(busqueda_global, "BUSQUEDA", "Busqueda Global", menu_busqueda_global())
+DEFINE_ABRIR_DESDE_SETTINGS(backup, "BACKUP", "Backup & Restore", menu_backup_restore())
+DEFINE_ABRIR_DESDE_SETTINGS(integridad, "INTEGRIDAD", "Integridad BD", menu_integridad_bd())
+DEFINE_ABRIR_DESDE_SETTINGS(notificaciones, "NOTIFICACIONES", "Notificaciones", menu_notificaciones())
+DEFINE_ABRIR_DESDE_SETTINGS(export_ods, "EXPORT_ODS", "Exportacion ODS", menu_exportar_ods())
 
 static void abrir_undo_desde_settings(void)
 {
     app_log_event("UNDO", "Ingreso a Deshacer desde Ajustes");
     undo_mostrar_historial();
     pause_console();
-}
-
-static void abrir_notificaciones_desde_settings(void)
-{
-    app_log_event("NOTIFICACIONES", "Ingreso a Notificaciones desde Ajustes");
-    menu_notificaciones();
-}
-
-static void abrir_export_ods_desde_settings(void)
-{
-    app_log_event("EXPORT_ODS", "Ingreso a Exportacion ODS desde Ajustes");
-    menu_exportar_ods();
 }
 
 static void habilitar_menus_basicos_custom()

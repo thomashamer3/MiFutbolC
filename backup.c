@@ -679,25 +679,29 @@ static int listar_backups_validos(cJSON const *manifest,
     int count = cJSON_GetArraySize(manifest);
     int validos = 0;
 
-    for (int i = 0; i < count && validos < max_nombres; i++)
+    for (int i = 0; i < count; i++)
     {
+        if (validos >= max_nombres) break;
+
         cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
         cJSON const *desc = cJSON_GetObjectItem(entry, "descripcion");
         cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
 
-        if (!fname || !cJSON_IsString(fname)) continue;
+        if (!fname || !cJSON_IsString(fname))
+            continue;
 
         char filepath[MAX_BUFFER];
         build_backup_path(filepath, sizeof(filepath), backup_dir, fname->valuestring);
 
-        if (!file_exists_regular(filepath)) continue;
+        if (!file_exists_regular(filepath))
+            continue;
 
         nombres[validos] = fname->valuestring;
         const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
         const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
 
-        printf("  %d. %s\n", validos + 1, nombres[validos]);
+        printf("  %d. %s\n", validos + 1, fname->valuestring);
         printf("     Descripcion: %s\n", dc);
         printf("     Fecha: %s\n", fe);
         printf("     ----------------------------------------\n");
@@ -750,8 +754,8 @@ static void seleccionar_backup(const char *titulo, const char *prompt,
     }
 
     const char *filename = nombres[seleccion - 1];
-    cJSON_Delete(manifest);
     accion(filename);
+    cJSON_Delete(manifest);
     if (needs_pause) pause_console();
 }
 

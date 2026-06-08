@@ -17,6 +17,35 @@ static void inicializar_filtros(FiltrosBusqueda *f)
     memset(f, 0, sizeof(FiltrosBusqueda));
 }
 
+static void editar_filtro_por_opcion(FiltrosBusqueda *f, int opcion)
+{
+    switch (opcion)
+    {
+    case 1:
+        input_string("Fecha desde (YYYY-MM-DD): ", f->fecha_desde, sizeof(f->fecha_desde));
+        f->usar_fecha_desde = 1;
+        break;
+    case 2:
+        input_string("Fecha hasta (YYYY-MM-DD): ", f->fecha_hasta, sizeof(f->fecha_hasta));
+        f->usar_fecha_hasta = 1;
+        break;
+    case 3:
+        f->resultado = input_int("Resultado (1=Victoria, 2=Empate, 3=Derrota): ");
+        f->usar_resultado = (f->resultado >= 1 && f->resultado <= 3) ? 1 : 0;
+        break;
+    case 4:
+        f->equipo_id = input_int("ID del equipo: ");
+        f->usar_equipo = (f->equipo_id > 0) ? 1 : 0;
+        break;
+    case 5:
+        input_string("Formacion (ej: 4-4-2): ", f->formacion, sizeof(f->formacion));
+        f->usar_formacion = (f->formacion[0] != '\0') ? 1 : 0;
+        break;
+    default:
+        break;
+    }
+}
+
 static void menu_configurar_filtros(FiltrosBusqueda *f)
 {
     int opcion;
@@ -32,76 +61,55 @@ static void menu_configurar_filtros(FiltrosBusqueda *f)
         printf("  0. Aplicar y Volver\n");
 
         opcion = input_int("Opcion: ");
-        switch (opcion)
-        {
-        case 1:
-            input_string("Fecha desde (YYYY-MM-DD): ", f->fecha_desde, sizeof(f->fecha_desde));
-            f->usar_fecha_desde = 1;
-            break;
-        case 2:
-            input_string("Fecha hasta (YYYY-MM-DD): ", f->fecha_hasta, sizeof(f->fecha_hasta));
-            f->usar_fecha_hasta = 1;
-            break;
-        case 3:
-            f->resultado = input_int("Resultado (1=Victoria, 2=Empate, 3=Derrota): ");
-            f->usar_resultado = (f->resultado >= 1 && f->resultado <= 3) ? 1 : 0;
-            break;
-        case 4:
-            f->equipo_id = input_int("ID del equipo: ");
-            f->usar_equipo = (f->equipo_id > 0) ? 1 : 0;
-            break;
-        case 5:
-            input_string("Formacion (ej: 4-4-2): ", f->formacion, sizeof(f->formacion));
-            f->usar_formacion = (f->formacion[0] != '\0') ? 1 : 0;
-            break;
-        default:
-            break;
-        }
+        editar_filtro_por_opcion(f, opcion);
     }
     while (opcion != 0);
 }
 
-int aplicar_filtros_partidos(FiltrosBusqueda const *f)
+static int construir_sql_filtros(FiltrosBusqueda const *f, char *sql, size_t sql_size,
+                                 char condiciones[][256], int *num_condiciones)
 {
-    char sql[2048];
-    char condiciones[8][256];
-    int num_cond = 0;
-
-    snprintf(sql, sizeof(sql), "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, "
+    snprintf(sql, sql_size, "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, "
              "p.resultado, p.clima, p.dia, can.nombre "
              "FROM partido p LEFT JOIN cancha can ON p.cancha_id = can.id WHERE 1=1");
 
+    int num_cond = 0;
     if (f->usar_fecha_desde && f->fecha_desde[0])
     {
-        snprintf(condiciones[num_cond], sizeof(condiciones[num_cond]), " AND p.fecha_hora >= ?");
+        snprintf(condiciones[num_cond], 256, " AND p.fecha_hora >= ?");
         num_cond++;
     }
     if (f->usar_fecha_hasta && f->fecha_hasta[0])
     {
-        snprintf(condiciones[num_cond], sizeof(condiciones[num_cond]), " AND p.fecha_hora <= ?");
+        snprintf(condiciones[num_cond], 256, " AND p.fecha_hora <= ?");
         num_cond++;
     }
     if (f->usar_resultado)
     {
-        snprintf(condiciones[num_cond], sizeof(condiciones[num_cond]), " AND p.resultado = ?");
+        snprintf(condiciones[num_cond], 256, " AND p.resultado = ?");
         num_cond++;
     }
     if (f->usar_equipo && f->equipo_id > 0)
     {
-        snprintf(condiciones[num_cond], sizeof(condiciones[num_cond]), " AND p.equipo_id = ?");
+        snprintf(condiciones[num_cond], 256, " AND p.equipo_id = ?");
         num_cond++;
     }
     if (f->usar_formacion && f->formacion[0])
     {
-        snprintf(condiciones[num_cond], sizeof(condiciones[num_cond]), " AND p.formacion = ?");
+        snprintf(condiciones[num_cond], 256, " AND p.formacion = ?");
         num_cond++;
     }
+    *num_condiciones = num_cond;
 
     for (int i = 0; i < num_cond; i++)
-        strcat_s(sql, sizeof(sql), condiciones[i]);
+        strcat_s(sql, sql_size, condiciones[i]);
 
-    strcat_s(sql, sizeof(sql), " ORDER BY p.fecha_hora DESC LIMIT 100");
+    strcat_s(sql, sql_size, " ORDER BY p.fecha_hora DESC LIMIT 100");
+    return 1;
+}
 
+static int bind_y_ejecutar_filtros(FiltrosBusqueda const *f, const char *sql)
+{
     sqlite3_stmt *stmt;
     if (!preparar_stmt(sql, &stmt))
     {
@@ -135,6 +143,17 @@ int aplicar_filtros_partidos(FiltrosBusqueda const *f)
                resultado_to_text(sqlite3_column_int(stmt, 4)));
     }
     sqlite3_finalize(stmt);
+    return count;
+}
+
+int aplicar_filtros_partidos(FiltrosBusqueda const *f)
+{
+    char sql[2048];
+    char condiciones[8][256];
+    int num_cond = 0;
+
+    construir_sql_filtros(f, sql, sizeof(sql), condiciones, &num_cond);
+    int count = bind_y_ejecutar_filtros(f, sql);
 
     if (count == 0)
         mostrar_no_hay_registros("partidos con esos filtros");

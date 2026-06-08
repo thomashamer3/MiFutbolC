@@ -137,15 +137,6 @@ static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONA
     cJSON_AddItemToArray(root, item);
 }
 
-static void write_json_footer(FILE *f, void *context)
-{
-    cJSON *root = (cJSON *)context;
-    char *json_string = cJSON_Print(root);
-    fprintf(f, "%s", json_string);
-    free(json_string);
-    cJSON_Delete(root);
-}
-
 static void write_html_header(FILE *f, void *context)
 {
     (void)context;
@@ -166,12 +157,6 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
             sqlite3_column_text(stmt, 4));
 }
 
-static void write_html_footer(FILE *f, void *context)
-{
-    (void)context;
-    fprintf(f, "</table></body></html>");
-}
-
 /** @} */
 
 /** @name Funciones de exportacion de bienestar */
@@ -179,7 +164,7 @@ static void write_html_footer(FILE *f, void *context)
 
 EXPORT_FORMAT_ROWS(exportar_bienestar_csv, obtener_datos_bienestar, "bienestar.csv", NULL, write_csv_header, write_csv_row, NULL)
 EXPORT_FORMAT_ROWS(exportar_bienestar_txt, obtener_datos_bienestar, "bienestar.txt", NULL, write_txt_header, write_txt_row, NULL)
-EXPORT_FORMAT_ROWS(exportar_bienestar_json, obtener_datos_bienestar, "bienestar.json", cJSON_CreateArray(), NULL, write_json_row, write_json_footer)
-EXPORT_FORMAT_ROWS(exportar_bienestar_html, obtener_datos_bienestar, "bienestar.html", NULL, write_html_header, write_html_row, write_html_footer)
+EXPORT_FORMAT_ROWS(exportar_bienestar_json, obtener_datos_bienestar, "bienestar.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_bienestar_html, obtener_datos_bienestar, "bienestar.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
 /** @} */

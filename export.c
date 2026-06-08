@@ -72,6 +72,21 @@ int exportar_archivo_si_hay_registros(const char *tabla,
     return 1;
 }
 
+void export_write_json_footer(FILE *f, void *context)
+{
+    cJSON *root = (cJSON *)context;
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+    free(json_string);
+    cJSON_Delete(root);
+}
+
+void export_write_html_footer(FILE *f, void *context)
+{
+    (void)context;
+    fprintf(f, "</table></body></html>");
+}
+
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
 {
     if (!item || !stmt)

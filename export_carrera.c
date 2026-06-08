@@ -231,6 +231,15 @@ void exportar_carrera_html()
 
 typedef void (*pdf_fila_callback)(struct pdf_doc *pdf, float y, sqlite3_stmt *stmt, float margin, float wrap_w, char *buffer, size_t buf_size);
 
+typedef struct
+{
+    struct pdf_doc *pdf;
+    float margin;
+    float wrap_w;
+    float small_h;
+    float line_h;
+} PdfSeccionCtx;
+
 static void escribir_fila_hito_pdf(struct pdf_doc *pdf, float y, sqlite3_stmt *stmt, float margin, float wrap_w, char *buffer, size_t buf_size)
 {
     snprintf(buffer, buf_size, "#%d [%s] %s",
@@ -274,20 +283,17 @@ static void escribir_identidad_pdf(struct pdf_doc *pdf, float *y, float margin, 
         sqlite3_finalize(stmt);
     }
 }
-
-static void escribir_seccion_pdf(struct pdf_doc *pdf, float *y,
+static void escribir_seccion_pdf(PdfSeccionCtx ctx, float *y,
                                  const char *sql, const char *titulo,
                                  const char *sin_registros,
-                                 float margin, float wrap_w,
-                                 float small_h, float line_h,
                                  pdf_fila_callback escribir_fila)
 {
     if (*y < 60)
     {
-        pdf_append_page(pdf);
-        *y = PDF_A4_HEIGHT - margin;
+        pdf_append_page(ctx.pdf);
+        *y = PDF_A4_HEIGHT - ctx.margin;
     }
-    pdf_add_text(pdf, NULL, titulo, 14, margin, *y, PDF_BLACK);
+    pdf_add_text(ctx.pdf, NULL, titulo, 14, ctx.margin, *y, PDF_BLACK);
     *y -= 18;
 
     sqlite3_stmt *stmt;
@@ -298,19 +304,20 @@ static void escribir_seccion_pdf(struct pdf_doc *pdf, float *y,
         {
             if (*y < 40)
             {
-                pdf_append_page(pdf);
-                *y = PDF_A4_HEIGHT - margin;
+                pdf_append_page(ctx.pdf);
+                *y = PDF_A4_HEIGHT - ctx.margin;
             }
             char buffer[512];
-            escribir_fila(pdf, *y, stmt, margin, wrap_w, buffer, sizeof(buffer));
-            *y -= small_h;
+            escribir_fila(ctx.pdf, *y, stmt, ctx.margin, ctx.wrap_w, buffer, sizeof(buffer));
+            *y -= ctx.small_h;
             count++;
         }
         sqlite3_finalize(stmt);
+
         if (count == 0)
         {
-            pdf_add_text(pdf, NULL, sin_registros, 10, margin, *y, PDF_BLACK);
-            *y -= line_h;
+            pdf_add_text(ctx.pdf, NULL, sin_registros, 10, ctx.margin, *y, PDF_BLACK);
+            *y -= ctx.line_h;
         }
     }
 }
@@ -358,14 +365,13 @@ void exportar_carrera_pdf()
     escribir_identidad_pdf(pdf, &y, margin, line_h);
     y -= 8;
 
-    escribir_seccion_pdf(pdf, &y, SQL_HITOS, "Hitos de la Carrera",
-                         "Sin hitos registrados.", margin, wrap_w,
-                         small_h, line_h, escribir_fila_hito_pdf);
+    PdfSeccionCtx ctx = {pdf, margin, wrap_w, small_h, line_h};
+    escribir_seccion_pdf(ctx, &y, SQL_HITOS, "Hitos de la Carrera",
+                         "Sin hitos registrados.", escribir_fila_hito_pdf);
     y -= 8;
 
-    escribir_seccion_pdf(pdf, &y, SQL_RESUMENES, "Resumenes Narrativos",
-                         "Sin resumenes registrados.", margin, wrap_w,
-                         small_h, line_h, escribir_fila_resumen_pdf);
+    escribir_seccion_pdf(ctx, &y, SQL_RESUMENES, "Resumenes Narrativos",
+                         "Sin resumenes registrados.", escribir_fila_resumen_pdf);
 
     if (pdf_save(pdf, get_export_path("carrera.pdf")) < 0)
     {
