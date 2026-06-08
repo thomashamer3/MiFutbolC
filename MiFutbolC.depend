@@ -282,34 +282,34 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1780879218 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1780879955 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
-	"export_all_mejorado.h"
-	"export.h"
-	"export_camisetas.h"
-	"export_partidos.h"
-	"export_lesiones.h"
-	"export_estadisticas.h"
-	"export_estadisticas_generales.h"
-	"export_records_rankings.h"
-	"export_pdf.h"
-	"export_equipo.h"
-	"export_temporada.h"
-	"export_torneo.h"
-	"export_bienestar.h"
-	"export_carrera.h"
-	"export_colecciones.h"
-	"export_recordatorios.h"
-	"export_dashboard.h"
-	"export_calendario.h"
-	"export_ods.h"
-	"utils.h"
-	"menu.h"
 	"ascii_art.h"
 	"db.h"
+	"export.h"
+	"export_all_mejorado.h"
+	"export_bienestar.h"
+	"export_calendario.h"
+	"export_camisetas.h"
+	"export_carrera.h"
+	"export_colecciones.h"
+	"export_dashboard.h"
+	"export_equipo.h"
+	"export_estadisticas.h"
+	"export_estadisticas_generales.h"
+	"export_lesiones.h"
+	"export_ods.h"
+	"export_partidos.h"
+	"export_pdf.h"
+	"export_recordatorios.h"
+	"export_records_rankings.h"
+	"export_temporada.h"
+	"export_torneo.h"
+	"menu.h"
 	"settings.h"
-	<stdio.h>
+	"utils.h"
 	<sqlite3.h>
+	<stdio.h>
 
 1776275181 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.h
 
