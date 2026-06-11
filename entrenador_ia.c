@@ -10,7 +10,7 @@
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
-    return sqlite3_prepare_v2(db, sql, -1, stmt, 0) == SQLITE_OK;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static void iniciar_pantalla_ia(const char *titulo)

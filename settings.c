@@ -3,6 +3,7 @@
 #include "backup.h"
 #include "busqueda.h"
 #include "cJSON.h"
+#include "lang.h"
 #include "db.h"
 #include "db_integridad.h"
 #include "export.h"
@@ -254,212 +255,7 @@ buscar_opcion_menu(const struct MenuOption *options, int opcion)
     return NULL;
 }
 
-// Textos en diferentes idiomas
-typedef struct
-{
-    const char *key;
-    const char *spanish;
-    const char *english;
-} TextEntry;
 
-static const TextEntry text_entries[] =
-{
-    {"menu_title", "MI FUTBOL C", "MI FUTBOL C"},
-    {"menu_dashboard", "Dashboard", "Dashboard"},
-    {"menu_calendario", "Calendario", "Calendar"},
-    {"menu_camisetas", "Camisetas", "Shirts"},
-    {"menu_canchas", "Canchas", "Fields"},
-    {"menu_partidos", "Partidos", "Matches"},
-    {"menu_equipos", "Equipos", "Teams"},
-    {"menu_estadisticas", "Estadisticas", "Statistics"},
-    {"menu_logros", "Logros", "Achievements"},
-    {"menu_analisis", "Analisis", "Analysis"},
-    {"menu_bienestar", "Bienestar", "Wellness"},
-    {"menu_lesiones", "Lesiones", "Injuries"},
-    {"menu_financiamiento", "Financiamiento", "Financing"},
-    {"menu_exportar", "Exportar", "Export"},
-    {"menu_importar", "Importar", "Import"},
-    {"menu_usuario", "Usuario", "User"},
-    {"menu_torneos", "Torneos", "Tournaments"},
-    {"menu_temporadas", "Temporadas", "Seasons"},
-    {"menu_temporada", "Temporada", "Season"},
-    {"menu_qr", "Codigos QR", "QR Codes"},
-    {"menu_entrenador_ia", "Entrenador Virtual (IA)", "Virtual Coach (AI)"},
-    {"menu_comparador", "Comparador", "Comparator"},
-    {"menu_comparaciones", "Comparaciones", "Comparisons"},
-    {"menu_settings", "Ajustes", "Settings"},
-    {"menu_records_rankings", "Records & Rankings", "Records & Rankings"},
-    {"menu_exit", "Salir", "Exit"},
-    {"settings_theme", "Tema de Interfaz", "Interface Theme"},
-    {"settings_language", "Idioma", "Language"},
-    {"settings_mode", "Modo", "Mode"},
-    {"settings_music_autoplay", "Musica al iniciar", "Music on startup"},
-    {
-        "settings_dashboard_enabled", "Dashboard al iniciar",
-        "Dashboard on startup"
-    },
-    {"state_enabled", "Habilitada", "Enabled"},
-    {"state_disabled", "Deshabilitada", "Disabled"},
-    {"state_on", "Activado", "On"},
-    {"state_off", "Desactivado", "Off"},
-    {"settings_accessibility", "Accesibilidad", "Accessibility"},
-    {"settings_visual_mode", "Modo Visual", "Visual Mode"},
-    {"visual_mode_classic", "Modo Clasico", "Classic Mode"},
-    {"visual_mode_current", "Actual", "Current"},
-    {"settings_text_size", "Tamanio de texto", "Text size"},
-    {"text_size_small", "Pequenio", "Small"},
-    {"text_size_medium", "Mediano", "Medium"},
-    {"text_size_large", "Grande", "Large"},
-    {"settings_high_contrast", "Alto Contraste", "High Contrast"},
-    {
-        "settings_accessibility_normal", "Configuracion normal",
-        "Normal settings"
-    },
-    {"mode_simple", "Sencillo", "Simple"},
-    {"mode_advanced", "Avanzado", "Advanced"},
-    {"mode_custom", "Personalizado", "Custom"},
-    {"theme_light", "Claro", "Light"},
-    {"theme_dark", "Oscuro", "Dark"},
-    {"theme_blue", "Azul", "Blue"},
-    {"theme_green", "Verde", "Green"},
-    {"theme_red", "Rojo", "Red"},
-    {"theme_purple", "Morado", "Purple"},
-    {"theme_classic", "Clasico", "Classic"},
-    {"theme_high_contrast", "Alto Contraste", "High Contrast"},
-    {"lang_spanish", "Espaniol", "Spanish"},
-    {"lang_english", "Ingles", "English"},
-    {
-        "settings_saved", "Configuracion guardada exitosamente.",
-        "Settings saved successfully."
-    },
-    {"invalid_option", "Opcion invalida.", "Invalid option."},
-    {
-        "press_enter", "Presione Enter para continuar...",
-        "Press Enter to continue..."
-    },
-    {"welcome_back", "Bienvenido De Vuelta", "Welcome Back"},
-    {"menu_back", "Volver", "Back"},
-    {"export_menu_title", "EXPORTAR DATOS", "EXPORT DATA"},
-    {"export_partidos_menu_title", "EXPORTAR PARTIDOS", "EXPORT MATCHES"},
-    {
-        "export_estadisticas_generales_menu_title",
-        "EXPORTAR ESTADISTICAS GENERALES", "EXPORT GENERAL STATISTICS"
-    },
-    {"export_camisetas", "Camisetas", "Shirts"},
-    {"export_partidos", "Partidos", "Matches"},
-    {"export_lesiones", "Lesiones", "Injuries"},
-    {"export_estadisticas", "Estadisticas", "Statistics"},
-    {"export_analisis", "Analisis", "Analysis"},
-    {
-        "export_estadisticas_generales", "Estadisticas Generales",
-        "General Statistics"
-    },
-    {"export_analisis_avanzado", "Analisis Avanzado", "Advanced Analysis"},
-    {"export_base_datos", "Base de Datos", "Database"},
-    {"export_todo", "Todo", "All"},
-    {"export_informe_total_pdf", "Informe Total en PDF", "Full Report (PDF)"},
-    {"export_todo_json", "Todo (JSON)", "All (JSON)"},
-    {"export_todo_csv", "Todo (CSV)", "All (CSV)"},
-    {"export_todos_partidos", "Todos los Partidos", "All Matches"},
-    {
-        "export_partido_mas_goles", "Partido con Mas Goles",
-        "Match with Most Goals"
-    },
-    {
-        "export_partido_mas_asistencias", "Partido con Mas Asistencias",
-        "Match with Most Assists"
-    },
-    {
-        "export_partido_menos_goles_reciente", "Partido Menos Goles Reciente",
-        "Most Recent Match with Fewest Goals"
-    },
-    {
-        "export_partido_menos_asistencias_reciente",
-        "Partido Menos Asistencias Reciente",
-        "Most Recent Match with Fewest Assists"
-    },
-    {
-        "export_estadisticas_generales_item", "Estadisticas Generales",
-        "General Statistics"
-    },
-    {
-        "export_estadisticas_por_mes", "Estadisticas Por Mes",
-        "Monthly Statistics"
-    },
-    {
-        "export_estadisticas_por_anio", "Estadisticas Por Anio",
-        "Yearly Statistics"
-    },
-    {"export_records_rankings", "Records & Rankings", "Records & Rankings"},
-    {"import_menu_title", "IMPORTAR DATOS", "IMPORT DATA"},
-    {
-        "import_menu_json_title", "IMPORTAR DATOS DESDE JSON",
-        "IMPORT DATA FROM JSON"
-    },
-    {
-        "import_menu_txt_title", "IMPORTAR DATOS DESDE TXT",
-        "IMPORT DATA FROM TXT"
-    },
-    {
-        "import_menu_csv_title", "IMPORTAR DATOS DESDE CSV",
-        "IMPORT DATA FROM CSV"
-    },
-    {
-        "import_menu_html_title", "IMPORTAR DATOS DESDE HTML",
-        "IMPORT DATA FROM HTML"
-    },
-    {"import_from_json", "Importar desde JSON", "Import from JSON"},
-    {"import_from_txt", "Importar desde TXT", "Import from TXT"},
-    {"import_from_csv", "Importar desde CSV", "Import from CSV"},
-    {"import_from_html", "Importar desde HTML", "Import from HTML"},
-    {"import_from_db", "Importar desde Base de Datos", "Import from Database"},
-    {"import_camisetas", "Camisetas", "Shirts"},
-    {"import_partidos", "Partidos", "Matches"},
-    {"import_lesiones", "Lesiones", "Injuries"},
-    {"import_estadisticas", "Estadisticas", "Statistics"},
-    {"import_todo", "Todo", "All"},
-    {
-        "import_todo_json_rapido", "Importar TODO desde JSON",
-        "Import ALL from JSON"
-    },
-    {
-        "import_todo_csv_rapido", "Importar TODO desde CSV",
-        "Import ALL from CSV"
-    },
-    {
-        "backup_created",
-        "Backup automatico creado:", "Automatic backup created:"
-    },
-    {
-        "backup_failed", "Error creando backup automatico.",
-        "Failed to create automatic backup."
-    },
-    {"current_settings", "Configuracion Actual", "Current Settings"},
-    {"reset_settings", "Restablecer Configuracion", "Reset Settings"},
-    {
-        "reset_confirm",
-        "Esta seguro de que desea restablecer toda la configuracion a valores por "
-        "defecto?",
-        "Are you sure you want to reset all settings to default values?"
-    },
-    {"reset_cancelled", "Operacion cancelada.", "Operation cancelled."},
-    {
-        "reset_success", "Configuracion restablecida a valores por defecto.",
-        "Settings reset to default values."
-    },
-    {"show_current", "Ver Configuracion Actual", "Show Current Settings"},
-    {
-        "reset_defaults", "Restablecer a Valores por Defecto",
-        "Reset to Default Values"
-    },
-    {"welcome_message", "Bienvenido De Vuelta", "Welcome Back"},
-    {"menu_update", "Actualizar", "Update"},
-    {"menu_carrera", "Carrera Futbolistica", "Career"},
-    {"menu_recordatorios", "Recordatorios", "Reminders"},
-    {"menu_colecciones", "Colecciones", "Collections"},
-    {"menu_musica", "Musica", "Music"},
-    {NULL, NULL, NULL} // Terminador
-};
 
 static void settings_exec_ignore_error(const char *sql)
 {
@@ -653,6 +449,7 @@ void settings_set_theme(ThemeType theme)
 void settings_set_language(LanguageType language)
 {
     current_settings.language = language;
+    lang_set(language == LANGUAGE_SPANISH ? "es" : "en");
     settings_save();
 }
 
@@ -855,16 +652,7 @@ static void settings_apply_text_size()
 
 const char *get_text(const char *key)
 {
-    for (int i = 0; text_entries[i].key != NULL; i++)
-    {
-        if (strcmp(text_entries[i].key, key) == 0)
-        {
-            return (current_settings.language == LANGUAGE_SPANISH)
-                   ? text_entries[i].spanish
-                   : text_entries[i].english;
-        }
-    }
-    return key; // Retornar la clave si no se encuentra
+    return tr(key);
 }
 
 // Funciones wrapper para menu dinamico

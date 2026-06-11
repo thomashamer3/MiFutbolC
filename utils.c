@@ -2856,35 +2856,24 @@ const char *resultado_to_text(int resultado)
  */
 const char *clima_to_text(int clima)
 {
-    switch (clima)
+    static const char *clima_names[] =
     {
-    case 1:
-        return "Despejado";
-    case 2:
-        return "Nublado";
-    case 3:
-        return "Lluvia";
-    case 4:
-        return "Ventoso";
-    case 5:
-        return "Mucho Calor";
-    case 6:
-        return "Mucho Frio";
-    case 7:
-        return "Frio";
-    case 8:
-        return "Calor";
-    case 9:
-        return "Llovizna leve";
-    case 10:
-        return "Lluvia Moderada";
-    case 11:
-        return "Lluvia fuerte";
-    case 12:
-        return "Cancha inundada";
-    default:
-        return "DESCONOCIDO";
-    }
+        [1] = "Despejado",
+        [2] = "Nublado",
+        [3] = "Lluvia",
+        [4] = "Ventoso",
+        [5] = "Mucho Calor",
+        [6] = "Mucho Frio",
+        [7] = "Frio",
+        [8] = "Calor",
+        [9] = "Llovizna leve",
+        [10] = "Lluvia Moderada",
+        [11] = "Lluvia fuerte",
+        [12] = "Cancha inundada"
+    };
+    if (clima >= 1 && clima <= 12)
+        return clima_names[clima];
+    return "DESCONOCIDO";
 }
 
 /**
@@ -3616,6 +3605,7 @@ FILE *abrir_archivo_exportacion(const char *filename, const char *error_msg)
         printf("%s\n", error_msg);
         return NULL;
     }
+    setvbuf(file, NULL, _IOFBF, 65536);
     return file;
 }
 

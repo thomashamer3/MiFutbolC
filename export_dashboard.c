@@ -131,4 +131,16 @@ EXPORT_FORMAT_SINGLE(exportar_dashboard_txt, obtener_datos_dashboard, "dashboard
 EXPORT_FORMAT_SINGLE(exportar_dashboard_json, obtener_datos_dashboard, "dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_SINGLE(exportar_dashboard_html, obtener_datos_dashboard, "dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_dashboard_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "dashboard.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "dashboard.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer },
+        { "dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_dashboard, configs, 4);
+}
+
 /** @} */

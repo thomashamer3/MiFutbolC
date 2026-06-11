@@ -192,12 +192,7 @@ static char *read_file_content(const char *filename)
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static cJSON *cargar_json_array(const char *json_filename, const char *entity_name, int *out_count)

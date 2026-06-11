@@ -138,4 +138,16 @@ EXPORT_FORMAT_ROWS(exportar_temporadas_txt, obtener_datos_temporadas, "temporada
 EXPORT_FORMAT_ROWS(exportar_temporadas_json, obtener_datos_temporadas, "temporadas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_temporadas_html, obtener_datos_temporadas, "temporadas.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_temporadas_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "temporadas.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "temporadas.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "temporadas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
+        { "temporadas.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_temporadas, configs, 4);
+}
+
 /** @} */

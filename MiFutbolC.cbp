@@ -291,6 +291,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="jugador_perfil.h" />
+		<Unit filename="lang.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lang.h" />
 		<Unit filename="lesion.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -367,6 +371,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="temporada.h" />
+		<Unit filename="tienda.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="tienda.h" />
 		<Unit filename="torneo.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -47,6 +47,41 @@ void export_generic_rows(ExportConfig *config, sqlite3_stmt *stmt)
     fclose(f);
 }
 
+void export_all_formats(ExportDataFn data_fn, ExportConfig configs[], int num_formats)
+{
+    int count;
+    sqlite3_stmt *stmt = data_fn(&count);
+    if (!stmt) return;
+
+    for (int i = 0; i < num_formats; i++)
+    {
+        FILE *f;
+        errno_t err = fopen_s(&f, get_export_path(configs[i].filename), "w");
+        if (err != 0 || f == NULL)
+        {
+            printf("Error: No se pudo crear %s\n", configs[i].filename);
+            continue;
+        }
+
+        if (i > 0)
+            sqlite3_reset(stmt);
+
+        if (configs[i].write_header)
+            configs[i].write_header(f, configs[i].context);
+
+        while (sqlite3_step(stmt) == SQLITE_ROW)
+            configs[i].write_row(f, stmt, configs[i].context);
+
+        if (configs[i].write_footer)
+            configs[i].write_footer(f, configs[i].context);
+
+        printf("Archivo exportado a: %s\n", get_export_path(configs[i].filename));
+        fclose(f);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 void export_generic_single(ExportConfig *config, sqlite3_stmt *stmt)
 {
     FILE *f = open_export_file(config->filename, stmt);

@@ -13,12 +13,7 @@ static int current_lesion_id;
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static const char *estado_por_opcion(int opcion)

@@ -26,4 +26,9 @@ void exportar_dashboard_json();
  */
 void exportar_dashboard_html();
 
+/**
+ * @brief Exporta el dashboard a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_dashboard_all();
+
 #endif /* EXPORT_DASHBOARD_H */

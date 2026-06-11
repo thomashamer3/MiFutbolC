@@ -85,4 +85,9 @@ void exportar_estadisticas_html();
  */
 void exportar_estadisticas_md();
 
+/**
+ * @brief Exporta las estadisticas a los 5 formatos con una sola consulta SQL.
+ */
+void exportar_estadisticas_all();
+
 #endif /* EXPORT_ESTADISTICAS_H */

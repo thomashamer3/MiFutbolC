@@ -504,6 +504,120 @@ static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estad
 }
 
 /**
+ * @name Escritores de analisis (reutilizan stats precalculados)
+ */
+/** @{ */
+
+static void write_analisis_csv(FILE *f, const Estadisticas *generales,
+                               const Estadisticas *ultimos5,
+                               int mejor_racha_v, int peor_racha_d,
+                               const char *msg)
+{
+    fprintf(f, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_Cansancio,Promedio_Animo,Total_Partidos\n");
+    fprintf(f, "Generales,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
+            generales->avg_goles, generales->avg_asistencias,
+            generales->avg_rendimiento, generales->avg_cansancio,
+            generales->avg_animo, generales->total_partidos);
+    fprintf(f, "Ultimos5,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
+            ultimos5->avg_goles, ultimos5->avg_asistencias,
+            ultimos5->avg_rendimiento, ultimos5->avg_cansancio,
+            ultimos5->avg_animo, ultimos5->total_partidos);
+    fprintf(f, "Rachas,%d,%d\n", mejor_racha_v, peor_racha_d);
+    fprintf(f, "Mensaje,%s\n", msg);
+}
+
+static void write_analisis_txt(FILE *f, const Estadisticas *generales,
+                               const Estadisticas *ultimos5,
+                               int mejor_racha_v, int peor_racha_d,
+                               const char *msg)
+{
+    fprintf(f, "ANALISIS DE RENDIMIENTO\n\n");
+    fprintf(f, "ESTADISTICAS GENERALES:\n");
+    fprintf(f, "Total Partidos: %d\n", generales->total_partidos);
+    fprintf(f, "Promedio Goles: %.2f\n", generales->avg_goles);
+    fprintf(f, "Promedio Asistencias: %.2f\n", generales->avg_asistencias);
+    fprintf(f, "Promedio Rendimiento: %.2f\n", generales->avg_rendimiento);
+    fprintf(f, "Promedio Cansancio: %.2f\n", generales->avg_cansancio);
+    fprintf(f, "Promedio Estado Animo: %.2f\n\n", generales->avg_animo);
+    fprintf(f, "ULTIMOS 5 PARTIDOS:\n");
+    fprintf(f, "Total Partidos: %d\n", ultimos5->total_partidos);
+    fprintf(f, "Promedio Goles: %.2f\n", ultimos5->avg_goles);
+    fprintf(f, "Promedio Asistencias: %.2f\n", ultimos5->avg_asistencias);
+    fprintf(f, "Promedio Rendimiento: %.2f\n", ultimos5->avg_rendimiento);
+    fprintf(f, "Promedio Cansancio: %.2f\n", ultimos5->avg_cansancio);
+    fprintf(f, "Promedio Estado Animo: %.2f\n\n", ultimos5->avg_animo);
+    fprintf(f, "RACHAS:\n");
+    fprintf(f, "Mejor racha de victorias: %d partidos\n", mejor_racha_v);
+    fprintf(f, "Peor racha de derrotas: %d partidos\n\n", peor_racha_d);
+    fprintf(f, "ANALISIS MOTIVACIONAL:\n%s\n", msg);
+}
+
+static void write_analisis_json(FILE *f, const Estadisticas *generales,
+                                const Estadisticas *ultimos5,
+                                int mejor_racha_v, int peor_racha_d,
+                                const char *msg)
+{
+    cJSON *root = cJSON_CreateObject();
+    cJSON *generales_obj = cJSON_CreateObject();
+    cJSON_AddNumberToObject(generales_obj, "total_partidos", generales->total_partidos);
+    cJSON_AddNumberToObject(generales_obj, "avg_goles", generales->avg_goles);
+    cJSON_AddNumberToObject(generales_obj, "avg_asistencias", generales->avg_asistencias);
+    cJSON_AddNumberToObject(generales_obj, "avg_rendimiento", generales->avg_rendimiento);
+    cJSON_AddNumberToObject(generales_obj, "avg_cansancio", generales->avg_cansancio);
+    cJSON_AddNumberToObject(generales_obj, "avg_animo", generales->avg_animo);
+    cJSON_AddItemToObject(root, "generales", generales_obj);
+    cJSON *ultimos5_obj = cJSON_CreateObject();
+    cJSON_AddNumberToObject(ultimos5_obj, "total_partidos", ultimos5->total_partidos);
+    cJSON_AddNumberToObject(ultimos5_obj, "avg_goles", ultimos5->avg_goles);
+    cJSON_AddNumberToObject(ultimos5_obj, "avg_asistencias", ultimos5->avg_asistencias);
+    cJSON_AddNumberToObject(ultimos5_obj, "avg_rendimiento", ultimos5->avg_rendimiento);
+    cJSON_AddNumberToObject(ultimos5_obj, "avg_cansancio", ultimos5->avg_cansancio);
+    cJSON_AddNumberToObject(ultimos5_obj, "avg_animo", ultimos5->avg_animo);
+    cJSON_AddItemToObject(root, "ultimos5", ultimos5_obj);
+    cJSON *rachas_obj = cJSON_CreateObject();
+    cJSON_AddNumberToObject(rachas_obj, "mejor_racha_victorias", mejor_racha_v);
+    cJSON_AddNumberToObject(rachas_obj, "peor_racha_derrotas", peor_racha_d);
+    cJSON_AddItemToObject(root, "rachas", rachas_obj);
+    cJSON_AddStringToObject(root, "mensaje_motivacional", msg);
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+    free(json_string);
+    cJSON_Delete(root);
+}
+
+static void write_analisis_html(FILE *f, const Estadisticas *generales,
+                                const Estadisticas *ultimos5,
+                                int mejor_racha_v, int peor_racha_d,
+                                const char *msg)
+{
+    fprintf(f, "<html><body><h1>Analisis de Rendimiento</h1>");
+    fprintf(f, "<h2>Estadisticas Generales</h2><table border='1'>");
+    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", generales->total_partidos);
+    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", generales->avg_goles);
+    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", generales->avg_asistencias);
+    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", generales->avg_rendimiento);
+    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", generales->avg_cansancio);
+    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", generales->avg_animo);
+    fprintf(f, "</table>");
+    fprintf(f, "<h2>Ultimos 5 Partidos</h2><table border='1'>");
+    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", ultimos5->total_partidos);
+    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", ultimos5->avg_goles);
+    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", ultimos5->avg_asistencias);
+    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", ultimos5->avg_rendimiento);
+    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", ultimos5->avg_cansancio);
+    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", ultimos5->avg_animo);
+    fprintf(f, "</table>");
+    fprintf(f, "<h2>Rachas</h2><table border='1'>");
+    fprintf(f, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
+    fprintf(f, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
+    fprintf(f, "</table>");
+    fprintf(f, "<h2>Analisis Motivacional</h2><p>%s</p>", msg);
+    fprintf(f, "</body></html>");
+}
+
+/** @} */
+
+/**
  * Exporta el analisis de rendimiento a un archivo CSV.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
@@ -519,27 +633,13 @@ void exportar_analisis_csv()
     if (!f)
         return;
 
-    fprintf(f, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_Cansancio,Promedio_Animo,Total_Partidos\n");
-
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
     int mejor_racha_v;
     int peor_racha_d;
-
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
-
-    fprintf(f, "Generales,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
-            generales.avg_goles, generales.avg_asistencias, generales.avg_rendimiento,
-            generales.avg_cansancio, generales.avg_animo, generales.total_partidos);
-
-    fprintf(f, "Ultimos5,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
-            ultimos5.avg_goles, ultimos5.avg_asistencias, ultimos5.avg_rendimiento,
-            ultimos5.avg_cansancio, ultimos5.avg_animo, ultimos5.total_partidos);
-
-    fprintf(f, "Rachas,%d,%d\n", mejor_racha_v, peor_racha_d);
-
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    fprintf(f, "Mensaje,%s\n", msg);
+    write_analisis_csv(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.csv"));
     fclose(f);
@@ -561,37 +661,13 @@ void exportar_analisis_txt()
     if (!f)
         return;
 
-    fprintf(f, "ANALISIS DE RENDIMIENTO\n\n");
-
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
     int mejor_racha_v;
     int peor_racha_d;
-
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
-
-    fprintf(f, "ESTADISTICAS GENERALES:\n");
-    fprintf(f, "Total Partidos: %d\n", generales.total_partidos);
-    fprintf(f, "Promedio Goles: %.2f\n", generales.avg_goles);
-    fprintf(f, "Promedio Asistencias: %.2f\n", generales.avg_asistencias);
-    fprintf(f, "Promedio Rendimiento: %.2f\n", generales.avg_rendimiento);
-    fprintf(f, "Promedio Cansancio: %.2f\n", generales.avg_cansancio);
-    fprintf(f, "Promedio Estado Animo: %.2f\n\n", generales.avg_animo);
-
-    fprintf(f, "ULTIMOS 5 PARTIDOS:\n");
-    fprintf(f, "Total Partidos: %d\n", ultimos5.total_partidos);
-    fprintf(f, "Promedio Goles: %.2f\n", ultimos5.avg_goles);
-    fprintf(f, "Promedio Asistencias: %.2f\n", ultimos5.avg_asistencias);
-    fprintf(f, "Promedio Rendimiento: %.2f\n", ultimos5.avg_rendimiento);
-    fprintf(f, "Promedio Cansancio: %.2f\n", ultimos5.avg_cansancio);
-    fprintf(f, "Promedio Estado Animo: %.2f\n\n", ultimos5.avg_animo);
-
-    fprintf(f, "RACHAS:\n");
-    fprintf(f, "Mejor racha de victorias: %d partidos\n", mejor_racha_v);
-    fprintf(f, "Peor racha de derrotas: %d partidos\n\n", peor_racha_d);
-
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    fprintf(f, "ANALISIS MOTIVACIONAL:\n%s\n", msg);
+    write_analisis_txt(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.txt"));
     fclose(f);
@@ -613,46 +689,14 @@ void exportar_analisis_json()
     if (!f)
         return;
 
-    cJSON *root = cJSON_CreateObject();
-
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
     int mejor_racha_v;
     int peor_racha_d;
-
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
-
-    cJSON *generales_obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(generales_obj, "total_partidos", generales.total_partidos);
-    cJSON_AddNumberToObject(generales_obj, "avg_goles", generales.avg_goles);
-    cJSON_AddNumberToObject(generales_obj, "avg_asistencias", generales.avg_asistencias);
-    cJSON_AddNumberToObject(generales_obj, "avg_rendimiento", generales.avg_rendimiento);
-    cJSON_AddNumberToObject(generales_obj, "avg_cansancio", generales.avg_cansancio);
-    cJSON_AddNumberToObject(generales_obj, "avg_animo", generales.avg_animo);
-    cJSON_AddItemToObject(root, "generales", generales_obj);
-
-    cJSON *ultimos5_obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(ultimos5_obj, "total_partidos", ultimos5.total_partidos);
-    cJSON_AddNumberToObject(ultimos5_obj, "avg_goles", ultimos5.avg_goles);
-    cJSON_AddNumberToObject(ultimos5_obj, "avg_asistencias", ultimos5.avg_asistencias);
-    cJSON_AddNumberToObject(ultimos5_obj, "avg_rendimiento", ultimos5.avg_rendimiento);
-    cJSON_AddNumberToObject(ultimos5_obj, "avg_cansancio", ultimos5.avg_cansancio);
-    cJSON_AddNumberToObject(ultimos5_obj, "avg_animo", ultimos5.avg_animo);
-    cJSON_AddItemToObject(root, "ultimos5", ultimos5_obj);
-
-    cJSON *rachas_obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(rachas_obj, "mejor_racha_victorias", mejor_racha_v);
-    cJSON_AddNumberToObject(rachas_obj, "peor_racha_derrotas", peor_racha_d);
-    cJSON_AddItemToObject(root, "rachas", rachas_obj);
-
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    cJSON_AddStringToObject(root, "mensaje_motivacional", msg);
+    write_analisis_json(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
-    char *json_string = cJSON_Print(root);
-    fprintf(f, "%s", json_string);
-
-    free(json_string);
-    cJSON_Delete(root);
     printf("Archivo exportado a: %s\n", get_export_path("analisis.json"));
     fclose(f);
 }
@@ -673,46 +717,68 @@ void exportar_analisis_html()
     if (!f)
         return;
 
-    fprintf(f, "<html><body><h1>Analisis de Rendimiento</h1>");
+    Estadisticas generales = {0};
+    Estadisticas ultimos5 = {0};
+    int mejor_racha_v;
+    int peor_racha_d;
+    calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
+    const char *msg = mensaje_motivacional(&ultimos5, &generales);
+    write_analisis_html(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+
+    printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
+    fclose(f);
+}
+
+/**
+ * Exporta el analisis de rendimiento a los 4 formatos con una sola
+ * ejecucion de calcular_todas_estadisticas().
+ */
+void exportar_analisis_all(void)
+{
+    if (!has_partido_records())
+    {
+        mostrar_no_hay_registros("registros de partidos para exportar analisis");
+        return;
+    }
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
     int mejor_racha_v;
     int peor_racha_d;
-
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
-
-    fprintf(f, "<h2>Estadisticas Generales</h2>");
-    fprintf(f, "<table border='1'>");
-    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", generales.total_partidos);
-    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", generales.avg_goles);
-    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", generales.avg_asistencias);
-    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", generales.avg_rendimiento);
-    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", generales.avg_cansancio);
-    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", generales.avg_animo);
-    fprintf(f, "</table>");
-
-    fprintf(f, "<h2>Ultimos 5 Partidos</h2>");
-    fprintf(f, "<table border='1'>");
-    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", ultimos5.total_partidos);
-    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", ultimos5.avg_goles);
-    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", ultimos5.avg_asistencias);
-    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", ultimos5.avg_rendimiento);
-    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", ultimos5.avg_cansancio);
-    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", ultimos5.avg_animo);
-    fprintf(f, "</table>");
-
-    fprintf(f, "<h2>Rachas</h2>");
-    fprintf(f, "<table border='1'>");
-    fprintf(f, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
-    fprintf(f, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
-    fprintf(f, "</table>");
-
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    fprintf(f, "<h2>Analisis Motivacional</h2>");
-    fprintf(f, "<p>%s</p>", msg);
 
-    fprintf(f, "</body></html>");
-    printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
-    fclose(f);
+    FILE *f;
+
+    f = abrir_archivo_exportacion("analisis.csv", "Error al crear CSV");
+    if (f)
+    {
+        write_analisis_csv(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        printf("Archivo exportado a: %s\n", get_export_path("analisis.csv"));
+        fclose(f);
+    }
+
+    f = abrir_archivo_exportacion("analisis.txt", "Error al crear TXT");
+    if (f)
+    {
+        write_analisis_txt(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        printf("Archivo exportado a: %s\n", get_export_path("analisis.txt"));
+        fclose(f);
+    }
+
+    f = abrir_archivo_exportacion("analisis.json", "Error al crear JSON");
+    if (f)
+    {
+        write_analisis_json(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        printf("Archivo exportado a: %s\n", get_export_path("analisis.json"));
+        fclose(f);
+    }
+
+    f = abrir_archivo_exportacion("analisis.html", "Error al crear HTML");
+    if (f)
+    {
+        write_analisis_html(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
+        fclose(f);
+    }
 }

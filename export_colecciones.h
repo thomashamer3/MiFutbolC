@@ -26,4 +26,7 @@ void exportar_colecciones_json();
  */
 void exportar_colecciones_html();
 
+/** @brief Exporta colecciones a los 4 formatos con una sola consulta SQL */
+void exportar_colecciones_all(void);
+
 #endif /* EXPORT_COLECCIONES_H */

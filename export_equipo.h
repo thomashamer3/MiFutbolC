@@ -26,4 +26,9 @@ void exportar_equipos_json();
  */
 void exportar_equipos_html();
 
+/**
+ * @brief Exporta los equipos a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_equipos_all();
+
 #endif /* EXPORT_EQUIPO_H */

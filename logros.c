@@ -1,5 +1,6 @@
 #include "logros.h"
 #include "utils.h"
+#include "settings.h"
 #include "menu.h"
 #include "db.h"
 #include <stdio.h>
@@ -405,26 +406,26 @@ static void mostrar_logro_individual(const Logro *logro, int estado, int progres
     switch ((LogroEstado)estado)
     {
     case LOGRO_ESTADO_NO_INICIADO:
-        estado_texto = "[NO INICIADO]";
+        estado_texto = get_text("logros_estado_no_iniciado");
         color = "\x1b[31m"; // rojo
         break;
     case LOGRO_ESTADO_EN_PROGRESO:
-        estado_texto = "[EN PROGRESO]";
+        estado_texto = get_text("logros_estado_en_progreso");
         color = "\x1b[33m"; // amarillo
         break;
     case LOGRO_ESTADO_COMPLETADO:
-        estado_texto = "[COMPLETADO]";
+        estado_texto = get_text("logros_estado_completado");
         color = "\x1b[32m"; // Verde
         break;
     default:
-        estado_texto = "[DESCONOCIDO]";
+        estado_texto = get_text("logros_estado_desconocido");
         color = "\x1b[37m"; // blanco
         break;
     }
     // ARREGLAR COLOR CONSOLA
     ui_printf_centered_line("%s%s %s\x1b[0m", color, logro->nombre, estado_texto);
     ui_printf_centered_line("%s", logro->descripcion);
-    ui_printf_centered_line("Progreso: %d/%d", progreso, logro->objetivo);
+    ui_printf_centered_line(get_text("logros_progreso"), progreso, logro->objetivo);
     ui_printf("\n");
 }
 

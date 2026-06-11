@@ -26,4 +26,9 @@ void exportar_bienestar_json();
  */
 void exportar_bienestar_html();
 
+/**
+ * @brief Exporta los datos de bienestar a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_bienestar_all();
+
 #endif /* EXPORT_BIENESTAR_H */

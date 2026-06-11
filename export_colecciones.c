@@ -235,3 +235,160 @@ void exportar_colecciones_html()
     fclose(f);
     printf("Archivo exportado a: %s\n", get_export_path("colecciones.html"));
 }
+
+/* ============================================================================
+ * HELPERS BATCH (stmt externo, sin prepare/finalize interno)
+ * ============================================================================ */
+
+static void colecciones_csv_section(FILE *f, sqlite3_stmt *stmt_colec, sqlite3_stmt *stmt_items, sqlite3_stmt *stmt_inv)
+{
+    fprintf(f, "=== COLECCIONES ===\n");
+    fprintf(f, "id,nombre,descripcion\n");
+    while (sqlite3_step(stmt_colec) == SQLITE_ROW)
+        escribir_fila_coleccion_csv(f, stmt_colec);
+    fprintf(f, "\n=== ITEMS ===\n");
+    fprintf(f, "id,nombre,tipo,rareza,coleccion_id\n");
+    while (sqlite3_step(stmt_items) == SQLITE_ROW)
+        escribir_fila_item_csv(f, stmt_items);
+    fprintf(f, "\n=== INVENTARIO ===\n");
+    fprintf(f, "id,coleccion_id,item_id,cantidad\n");
+    while (sqlite3_step(stmt_inv) == SQLITE_ROW)
+        escribir_fila_inventario_csv(f, stmt_inv);
+    fprintf(f, "\n");
+}
+
+static void colecciones_txt_section(FILE *f, sqlite3_stmt *stmt_colec, sqlite3_stmt *stmt_items, sqlite3_stmt *stmt_inv)
+{
+    fprintf(f, "COLECCIONES E INVENTARIO\n\n");
+    fprintf(f, "=== COLECCIONES ===\n\n");
+    while (sqlite3_step(stmt_colec) == SQLITE_ROW)
+        escribir_fila_coleccion_txt(f, stmt_colec);
+    fprintf(f, "\n=== ITEMS ===\n\n");
+    while (sqlite3_step(stmt_items) == SQLITE_ROW)
+        escribir_fila_item_txt(f, stmt_items);
+    fprintf(f, "\n=== INVENTARIO ===\n\n");
+    while (sqlite3_step(stmt_inv) == SQLITE_ROW)
+        escribir_fila_inventario_txt(f, stmt_inv);
+    fprintf(f, "\n");
+}
+
+static void colecciones_html_section(FILE *f, sqlite3_stmt *stmt_colec, sqlite3_stmt *stmt_items, sqlite3_stmt *stmt_inv)
+{
+    fprintf(f, "<html><body><h1>Colecciones e Inventario</h1>\n");
+    fprintf(f, "<h2>Colecciones</h2><table border='1'><tr><th>ID</th><th>Nombre</th><th>Descripcion</th></tr>");
+    while (sqlite3_step(stmt_colec) == SQLITE_ROW)
+        escribir_fila_coleccion_html(f, stmt_colec);
+    fprintf(f, "</table><br>\n");
+    fprintf(f, "<h2>Items</h2><table border='1'><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Rareza</th><th>Coleccion ID</th></tr>");
+    while (sqlite3_step(stmt_items) == SQLITE_ROW)
+        escribir_fila_item_html(f, stmt_items);
+    fprintf(f, "</table><br>\n");
+    fprintf(f, "<h2>Inventario</h2><table border='1'><tr><th>ID</th><th>Coleccion ID</th><th>Item ID</th><th>Cantidad</th></tr>");
+    while (sqlite3_step(stmt_inv) == SQLITE_ROW)
+        escribir_fila_inventario_html(f, stmt_inv);
+    fprintf(f, "</table></body></html>\n");
+}
+
+static void colecciones_json_section(cJSON *root, sqlite3_stmt *stmt_colec, sqlite3_stmt *stmt_items, sqlite3_stmt *stmt_inv)
+{
+    cJSON *colecciones = cJSON_CreateArray();
+    while (sqlite3_step(stmt_colec) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_coleccion(item, stmt_colec);
+        cJSON_AddItemToArray(colecciones, item);
+    }
+    cJSON_AddItemToObject(root, "colecciones", colecciones);
+
+    cJSON *items = cJSON_CreateArray();
+    while (sqlite3_step(stmt_items) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_item(item, stmt_items);
+        cJSON_AddItemToArray(items, item);
+    }
+    cJSON_AddItemToObject(root, "items", items);
+
+    cJSON *inventario = cJSON_CreateArray();
+    while (sqlite3_step(stmt_inv) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_inventario(item, stmt_inv);
+        cJSON_AddItemToArray(inventario, item);
+    }
+    cJSON_AddItemToObject(root, "inventario", inventario);
+}
+
+void exportar_colecciones_all(void)
+{
+    if (!hay_registros("coleccion") && !hay_registros("inventario_item") && !hay_registros("coleccion_inventario"))
+    {
+        printf("No hay datos de colecciones para exportar.\n");
+        return;
+    }
+
+    sqlite3_stmt *stmt_colec, *stmt_items, *stmt_inv;
+    if (sqlite3_prepare_v2(db, SQL_COLECCIONES, -1, &stmt_colec, NULL) != SQLITE_OK) return;
+    if (sqlite3_prepare_v2(db, SQL_ITEMS, -1, &stmt_items, NULL) != SQLITE_OK)
+    {
+        sqlite3_finalize(stmt_colec);
+        return;
+    }
+    if (sqlite3_prepare_v2(db, SQL_INVENTARIO, -1, &stmt_inv, NULL) != SQLITE_OK)
+    {
+        sqlite3_finalize(stmt_colec);
+        sqlite3_finalize(stmt_items);
+        return;
+    }
+
+    FILE *f;
+    f = abrir_archivo_exportacion("colecciones.csv", "Error CSV");
+    if (f)
+    {
+        colecciones_csv_section(f, stmt_colec, stmt_items, stmt_inv);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("colecciones.csv"));
+    }
+    sqlite3_reset(stmt_colec);
+    sqlite3_reset(stmt_items);
+    sqlite3_reset(stmt_inv);
+
+    f = abrir_archivo_exportacion("colecciones.txt", "Error TXT");
+    if (f)
+    {
+        colecciones_txt_section(f, stmt_colec, stmt_items, stmt_inv);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("colecciones.txt"));
+    }
+    sqlite3_reset(stmt_colec);
+    sqlite3_reset(stmt_items);
+    sqlite3_reset(stmt_inv);
+
+    cJSON *root = cJSON_CreateObject();
+    colecciones_json_section(root, stmt_colec, stmt_items, stmt_inv);
+    f = abrir_archivo_exportacion("colecciones.json", "Error JSON");
+    if (f)
+    {
+        char *json_str = cJSON_Print(root);
+        fprintf(f, "%s", json_str);
+        free(json_str);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("colecciones.json"));
+    }
+    cJSON_Delete(root);
+    sqlite3_reset(stmt_colec);
+    sqlite3_reset(stmt_items);
+    sqlite3_reset(stmt_inv);
+
+    f = abrir_archivo_exportacion("colecciones.html", "Error HTML");
+    if (f)
+    {
+        colecciones_html_section(f, stmt_colec, stmt_items, stmt_inv);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("colecciones.html"));
+    }
+
+    sqlite3_finalize(stmt_colec);
+    sqlite3_finalize(stmt_items);
+    sqlite3_finalize(stmt_inv);
+}

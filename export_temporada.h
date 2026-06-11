@@ -26,4 +26,9 @@ void exportar_temporadas_json();
  */
 void exportar_temporadas_html();
 
+/**
+ * @brief Exporta las temporadas a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_temporadas_all();
+
 #endif /* EXPORT_TEMPORADA_H */

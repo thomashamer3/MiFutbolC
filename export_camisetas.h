@@ -26,4 +26,10 @@ void exportar_camisetas_json();
  */
 void exportar_camisetas_html();
 
+/**
+ * @brief Exporta las camisetas a los 4 formatos (CSV/TXT/JSON/HTML)
+ *        ejecutando la consulta SQL una sola vez.
+ */
+void exportar_camisetas_all();
+
 #endif /* EXPORT_CAMISETAS_H */

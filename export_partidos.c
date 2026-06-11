@@ -144,6 +144,37 @@ void exportar_partidos_html()
     export_partidos_generic("partidos.html", write_partido_html);
 }
 
+/**
+ * Export all partidos to all 4 formats using one SQL query.
+ */
+void exportar_partidos_all()
+{
+    if (!check_partido_records())
+    {
+        mostrar_no_hay_registros("partidos para exportar");
+        return;
+    }
+
+    sqlite3_stmt *stmt = prepare_partido_query(NULL);
+    if (!stmt) return;
+
+    static const char *fnames[] = {"partidos.csv", "partidos.txt", "partidos.json", "partidos.html"};
+    void (*writers[])(FILE *, sqlite3_stmt *) = {write_partido_csv, write_partido_txt, write_partido_json, write_partido_html};
+
+    for (int i = 0; i < 4; i++)
+    {
+        FILE *f = open_export_file(fnames[i]);
+        if (!f) continue;
+
+        if (i > 0) sqlite3_reset(stmt);
+        writers[i](f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path(fnames[i]));
+        fclose(f);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 /* ===================== PARTIDOS ESPECIFICOS ===================== */
 
 void exportar_partido_mas_goles_csv()

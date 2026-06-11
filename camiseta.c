@@ -2,6 +2,7 @@
 #include "db.h"
 #include "menu.h"
 #include "random_utils.h"
+#include "settings.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,7 +217,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
         else
         {
-            printf("Visor preferido no soportado en Windows: %s\n",
+            printf(get_text("camiseta_visor_no_soportado_windows"),
                    viewer); // DevSkim: ignore DS154189
         }
     }
@@ -242,7 +243,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
         else
         {
-            printf("El visor preferido '%s' no esta instalado.\n", viewer);
+            printf(get_text("camiseta_visor_no_instalado"), viewer);
         }
     }
 
@@ -262,16 +263,15 @@ static int abrir_imagen_en_sistema(const char *ruta)
 
     if (!visor)
     {
-        if (!confirmar("No se detecto visor de imagen. Desea instalar 'feh' "
-                       "automaticamente?"))
+        if (!confirmar(get_text("camiseta_instalar_visor_prompt")))
         {
             return 0;
         }
 
-        printf("Instalando visor liviano 'feh'...\n");
+        printf(get_text("camiseta_instalando_visor"));
         if (!instalar_paquete_linux("feh"))
         {
-            printf("No se pudo instalar 'feh'.\n");
+            printf(get_text("camiseta_no_instalar_visor"));
             return 0;
         }
 
@@ -289,21 +289,21 @@ static int abrir_imagen_en_sistema(const char *ruta)
 static void configurar_visor_preferido_imagen()
 {
     clear_screen();
-    print_header("CONFIGURAR VISOR DE IMAGEN");
+    print_header(get_text("camiseta_config_visor_titulo"));
 
     char actual[64] = {0};
     obtener_visor_preferido(actual, sizeof(actual));
-    printf("Visor actual: %s\n\n", actual[0] ? actual : "auto");
+    printf(get_text("camiseta_visor_actual"), actual[0] ? actual : "auto");
 
-    printf("Escribe el visor a usar o 'auto'.\n");
+    printf(get_text("camiseta_visor_escribir"));
 #ifdef _WIN32
-    printf("Opciones recomendadas: auto, mspaint\n");
+    printf(get_text("camiseta_visor_opciones_windows"));
 #else
-    printf("Opciones recomendadas: auto, xdg-open, gio, feh, eog, gwenview\n");
+    printf(get_text("camiseta_visor_opciones_linux"));
 #endif
 
     char nuevo[64] = {0};
-    input_string("Visor: ", nuevo, (int)sizeof(nuevo));
+    input_string(get_text("camiseta_visor_input"), nuevo, (int)sizeof(nuevo));
     trim_whitespace(nuevo);
 
     if (nuevo[0] == '\0')
@@ -471,7 +471,7 @@ static void menu_ajustes_imagen_camiseta()
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static int obtener_total(const char *sql)

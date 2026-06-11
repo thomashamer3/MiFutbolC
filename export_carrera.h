@@ -31,4 +31,7 @@ void exportar_carrera_html();
  */
 void exportar_carrera_pdf();
 
+/** @brief Exporta carrera a csv/txt/json/html/pdf con una sola consulta SQL */
+void exportar_carrera_all(void);
+
 #endif /* EXPORT_CARRERA_H */

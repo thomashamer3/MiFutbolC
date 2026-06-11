@@ -212,62 +212,62 @@ static void imprimir_racha_unicode(const dashboard_view_data_t *data)
 {
     if (data->racha > 0)
     {
-        printf("║  %s Racha Actual: %d %s %-25s║\n",
-               data->simbolo_racha, data->racha, data->texto_racha, "");
+        printf("║  %s %s: %d %s %-25s║\n",
+               data->simbolo_racha, get_text("dashboard_streak"), data->racha, data->texto_racha, "");
         return;
     }
 
-    printf("║  %s Sin racha destacada                                     ║\n", data->simbolo_racha);
+    printf("║  %s %-44s║\n", data->simbolo_racha, get_text("dashboard_no_streak"));
 }
 
 static void imprimir_racha_ascii(const dashboard_view_data_t *data)
 {
     if (data->racha > 0)
     {
-        printf("|  %s Racha Actual: %d %s%-32s|\n",
-               data->simbolo_racha, data->racha, data->texto_racha, "");
+        printf("|  %s %s: %d %s%-32s|\n",
+               data->simbolo_racha, get_text("dashboard_streak"), data->racha, data->texto_racha, "");
         return;
     }
 
-    printf("|  Sin racha destacada                                         |\n");
+    printf("|  %-50s|\n", get_text("dashboard_no_streak"));
 }
 
 static void imprimir_balance_unicode(const dashboard_view_data_t *data)
 {
     if (data->balance >= 0)
     {
-        printf("║  Balance del Mes: +$%d%-31s║\n", data->balance, "");
+        printf("║  %s: +$%d%-31s║\n", get_text("dashboard_balance"), data->balance, "");
         return;
     }
 
-    printf("║  Balance del Mes: -$%d%-31s║\n", -data->balance, "");
+    printf("║  %s: -$%d%-31s║\n", get_text("dashboard_balance"), -data->balance, "");
 }
 
 static void imprimir_balance_ascii(const dashboard_view_data_t *data)
 {
     if (data->balance >= 0)
     {
-        printf("|  Balance del Mes: +$%d%-37s|\n", data->balance, "");
+        printf("|  %s: +$%d%-37s|\n", get_text("dashboard_balance"), data->balance, "");
         return;
     }
 
-    printf("|  Balance del Mes: -$%d%-37s|\n", -data->balance, "");
+    printf("|  %s: -$%d%-37s|\n", get_text("dashboard_balance"), -data->balance, "");
 }
 
 static void imprimir_dashboard_unicode(const dashboard_view_data_t *data)
 {
     printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║              DASHBOARD - MiFutbolC 4.3                      ║\n");
+    printf("║              %s                              ║\n", get_text("header_dashboard"));
     printf("╠══════════════════════════════════════════════════════════════╣\n");
     printf("║                                                              ║\n");
 
-    printf("║  Proximos Partidos: %-2d                                 ║\n", data->proximos);
-    printf("║  Recordatorios Hoy: %-2d                                 ║\n", data->recordatorios_hoy);
+    printf("║  %s: %-2d                                 ║\n", get_text("dashboard_next_matches"), data->proximos);
+    printf("║  %s: %-2d                                 ║\n", get_text("dashboard_reminders_today"), data->recordatorios_hoy);
 
     imprimir_racha_unicode(data);
 
-    printf("║  Logros Desbloqueados: %d/%d (%d%%)%-19s║\n",
-           data->logros_completados, data->total_logros, data->porcentaje_logros, "");
+    printf("║  %s: %d/%d (%d%%)%-19s║\n",
+           get_text("dashboard_achievements"), data->logros_completados, data->total_logros, data->porcentaje_logros, "");
 
     imprimir_balance_unicode(data);
 
@@ -278,17 +278,17 @@ static void imprimir_dashboard_unicode(const dashboard_view_data_t *data)
 static void imprimir_dashboard_ascii(const dashboard_view_data_t *data)
 {
     printf("+--------------------------------------------------------------+\n");
-    printf("|              DASHBOARD - MiFutbolC 4.3                      |\n");
+    printf("|              %s                              |\n", get_text("header_dashboard"));
     printf("+--------------------------------------------------------------+\n");
     printf("|                                                              |\n");
 
-    printf("|  Proximos Partidos: %-2d                                      |\n", data->proximos);
-    printf("|  Recordatorios Hoy: %-2d                                      |\n", data->recordatorios_hoy);
+    printf("|  %s: %-2d                                      |\n", get_text("dashboard_next_matches"), data->proximos);
+    printf("|  %s: %-2d                                      |\n", get_text("dashboard_reminders_today"), data->recordatorios_hoy);
 
     imprimir_racha_ascii(data);
 
-    printf("|  Logros Desbloqueados: %d/%d (%d%%)%-22s|\n",
-           data->logros_completados, data->total_logros, data->porcentaje_logros, "");
+    printf("|  %s: %d/%d (%d%%)%-22s|\n",
+           get_text("dashboard_achievements"), data->logros_completados, data->total_logros, data->porcentaje_logros, "");
 
     imprimir_balance_ascii(data);
 
@@ -299,7 +299,7 @@ static void imprimir_dashboard_ascii(const dashboard_view_data_t *data)
 void mostrar_dashboard()
 {
     clear_screen();
-    print_header("DASHBOARD - MiFutbolC");
+    print_header(get_text("header_dashboard"));
 
     int usar_unicode = consola_soporta_unicode();
 

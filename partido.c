@@ -85,12 +85,7 @@ extern void obtener_fecha_actual(char *fecha);
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static const char *stmt_text_or_default(sqlite3_stmt *stmt, int columna,
@@ -3027,6 +3022,8 @@ void crear_partido()
            dia_to_text(datos.dia));
 
     long long id = obtener_siguiente_id("partido");
+
+    sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
     insertar_partido(id, &datos, fecha);
 
     // Crear transaccion financiera si el precio es mayor a 0
@@ -3034,6 +3031,7 @@ void crear_partido()
     {
         crear_transaccion_partido(id, datos.precio);
     }
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 }
 
 static int partido_listado_calcular_total_paginas(int total_partidos,

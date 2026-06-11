@@ -15,7 +15,7 @@
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static void crear_plan_entrenamiento(void)

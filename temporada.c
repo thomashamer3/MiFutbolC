@@ -19,12 +19,7 @@
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
@@ -323,6 +318,8 @@ void crear_fases_temporada_defecto(int temporada_id)
     const char *sql_insert = "INSERT INTO temporada_fase (temporada_id, nombre, tipo_fase, fecha_inicio, fecha_fin, descripcion) VALUES (?, ?, ?, ?, ?, ?);";
 
     // Pretemporada
+    sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
+
     if (preparar_stmt(sql_insert, &stmt))
     {
         sqlite3_bind_int(stmt, 1, temporada_id);
@@ -360,6 +357,8 @@ void crear_fases_temporada_defecto(int temporada_id)
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
     }
+
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 
     printf("Fases de temporada creadas automaticamente.\n");
 }
@@ -580,6 +579,8 @@ void eliminar_temporada()
     {
         sqlite3_stmt *stmt = NULL;
 
+        sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
+
         // Eliminar registros relacionados
         const char *sqls[] =
         {
@@ -602,6 +603,8 @@ void eliminar_temporada()
                 sqlite3_finalize(stmt);
             }
         }
+
+        sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 
         mostrar_alerta_operacion("Temporada", "Eliminada", NULL);
     }

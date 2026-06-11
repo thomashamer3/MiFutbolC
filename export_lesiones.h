@@ -69,4 +69,9 @@ void exportar_lesiones_html();
 
 /** @} */ /* End of Doxygen group */
 
+/**
+ * @brief Exporta las lesiones a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_lesiones_all();
+
 #endif /* EXPORT_LESIONES_H */

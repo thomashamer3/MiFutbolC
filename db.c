@@ -658,8 +658,13 @@ static int apply_database_tuning()
 
     const char *pragma_statements[] =
     {
-        "PRAGMA journal_mode = WAL;",   "PRAGMA temp_store = MEMORY;",
-        "PRAGMA cache_size = -16384;",  "PRAGMA mmap_size = 67108864;",
+        "PRAGMA journal_mode = WAL;",
+        "PRAGMA synchronous = NORMAL;",
+        "PRAGMA temp_store = MEMORY;",
+        "PRAGMA cache_size = -32768;",
+        "PRAGMA mmap_size = 268435456;",
+        "PRAGMA journal_size_limit = 4194304;",
+        "PRAGMA cache_spill = OFF;",
         "PRAGMA automatic_index = ON;", NULL
     };
 
@@ -712,7 +717,8 @@ enum
     DB_VERSION_INDEXES = 5,
     DB_VERSION_CANCHA_GRABACION = 6,
     DB_VERSION_ADDITIONAL_INDEXES = 7,
-    DB_VERSION_CURRENT = 7
+    DB_VERSION_PERFORMANCE_INDEXES = 8,
+    DB_VERSION_CURRENT = 8
 };
 
 static int get_user_version(int *out_version)
@@ -1712,10 +1718,40 @@ static int create_performance_indexes()
                          extra_indexes[failed], sqlite3_errmsg(db));
                 app_log_write("ERROR", "DB", log_buf_);
             }
-            if (!set_user_version(DB_VERSION_CURRENT))
+            if (!set_user_version(DB_VERSION_ADDITIONAL_INDEXES))
             {
                 snprintf(log_buf_, sizeof(log_buf_),
                          "No se pudo actualizar user_version tras indices extra: %s",
+                         sqlite3_errmsg(db));
+                app_log_write("WARN", "DB", log_buf_);
+            }
+        }
+
+        if (current_version < DB_VERSION_PERFORMANCE_INDEXES)
+        {
+            const char *perf_indexes[] =
+            {
+                "CREATE INDEX IF NOT EXISTS idx_camiseta_activa ON camiseta(activa);",
+                "CREATE INDEX IF NOT EXISTS idx_cancha_activa ON cancha(activa);",
+                "CREATE INDEX IF NOT EXISTS idx_temporada_estado_anio ON "
+                "temporada(estado, anio);",
+                "CREATE INDEX IF NOT EXISTS idx_mensual_resumen_temporada_mes ON "
+                "mensual_resumen(temporada_id, mes_anio);",
+                "CREATE INDEX IF NOT EXISTS idx_inventario_item_tipo ON "
+                "inventario_item(tipo);",
+                NULL
+            };
+            int failed = -1;
+            if (!execute_sql_statements(perf_indexes, &failed))
+            {
+                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice perf '%s': %s",
+                         perf_indexes[failed], sqlite3_errmsg(db));
+                app_log_write("ERROR", "DB", log_buf_);
+            }
+            if (!set_user_version(DB_VERSION_CURRENT))
+            {
+                snprintf(log_buf_, sizeof(log_buf_),
+                         "No se pudo actualizar user_version tras indices perf: %s",
                          sqlite3_errmsg(db));
                 app_log_write("WARN", "DB", log_buf_);
             }
@@ -1786,6 +1822,14 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON "
         "notificacion(leida, fecha_hora);",
+        "CREATE INDEX IF NOT EXISTS idx_camiseta_activa ON camiseta(activa);",
+        "CREATE INDEX IF NOT EXISTS idx_cancha_activa ON cancha(activa);",
+        "CREATE INDEX IF NOT EXISTS idx_temporada_estado_anio ON "
+        "temporada(estado, anio);",
+        "CREATE INDEX IF NOT EXISTS idx_mensual_resumen_temporada_mes ON "
+        "mensual_resumen(temporada_id, mes_anio);",
+        "CREATE INDEX IF NOT EXISTS idx_inventario_item_tipo ON "
+        "inventario_item(tipo);",
         NULL
     };
 

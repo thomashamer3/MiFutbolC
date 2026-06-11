@@ -155,4 +155,16 @@ EXPORT_FORMAT_ROWS(exportar_torneos_txt, obtener_datos_torneos, "torneos.txt", N
 EXPORT_FORMAT_ROWS(exportar_torneos_json, obtener_datos_torneos, "torneos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_torneos_html, obtener_datos_torneos, "torneos.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_torneos_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "torneos.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "torneos.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "torneos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
+        { "torneos.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_torneos, configs, 4);
+}
+
 /** @} */

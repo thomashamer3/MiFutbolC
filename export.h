@@ -90,6 +90,21 @@ typedef struct
  */
 void export_generic_rows(ExportConfig *config, sqlite3_stmt *stmt);
 
+typedef sqlite3_stmt* (*ExportDataFn)(int *count);
+
+/**
+ * @brief Exporta la misma consulta a multiples formatos (CSV/TXT/JSON/HTML)
+ *        ejecutando el SQL una sola vez y re-stepeando entre formatos.
+ *
+ * Elimina 3 de 4 ejecuciones de la consulta SQL cuando se exportan los 4
+ * formatos, ahorrando agregaciones/joins repetidos.
+ *
+ * @param data_fn Funcion que prepara y retorna el stmt (ej. obtener_datos_camisetas)
+ * @param configs Arreglo de ExportConfig, uno por formato
+ * @param num_formats Cantidad de formatos en configs
+ */
+void export_all_formats(ExportDataFn data_fn, ExportConfig configs[], int num_formats);
+
 /**
  * @brief Ejecuta el flujo generico de exportacion para una unica fila.
  *
@@ -173,6 +188,11 @@ void exportar_analisis_json();
  * Genera una página HTML con las estadísticas presentadas en formato web.
  */
 void exportar_analisis_html();
+
+/**
+ * @brief Exporta el analisis a los 4 formatos con un solo calculo de estadisticas.
+ */
+void exportar_analisis_all();
 
 /**
  * @brief Exporta un resumen financiero por mes y año a TXT

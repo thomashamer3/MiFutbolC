@@ -158,4 +158,16 @@ EXPORT_FORMAT_ROWS(exportar_camisetas_txt, obtener_datos_camisetas, "camisetas.t
 EXPORT_FORMAT_ROWS(exportar_camisetas_json, obtener_datos_camisetas, "camisetas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_camisetas_html, obtener_datos_camisetas, "camisetas.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_camisetas_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "camisetas.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "camisetas.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "camisetas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
+        { "camisetas.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_camisetas, configs, 4);
+}
+
 /** @} */ /* End of Doxygen group */

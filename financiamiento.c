@@ -90,12 +90,7 @@ char *formato_monto(int monto)
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
-    if (sqlite3_prepare_v2(db, sql, -1, stmt, 0) != SQLITE_OK)
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        return 0;
-    }
-    return 1;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static void obtener_mes_anio_actual(char *mes_anio)

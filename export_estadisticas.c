@@ -524,3 +524,263 @@ void exportar_estadisticas_por_anio_html()
     fclose(f);
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.html"));
 }
+
+/* ============================================================================
+ * HELPERS DE FILA (reutilizan stmt externo, sin prepare/finalize)
+ * ============================================================================ */
+
+static void stats_camiseta_csv_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "Camiseta,Goles,Asistencias,Partidos,Victorias,Empates,Derrotas\n");
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "%s,%d,%d,%d,%d,%d,%d\n",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
+}
+
+static void stats_camiseta_txt_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "%s | G:%d A:%d P:%d V:%d E:%d D:%d\n",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
+}
+
+static void stats_camiseta_html_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
+}
+
+static void stats_camiseta_json_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    cJSON *root = cJSON_CreateArray();
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 0));
+        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
+        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
+        cJSON_AddNumberToObject(item, "partidos", sqlite3_column_int(stmt, 3));
+        cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 4));
+        cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 5));
+        cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 6));
+        cJSON_AddItemToArray(root, item);
+    }
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+    free(json_string);
+    cJSON_Delete(root);
+}
+
+static void stats_camiseta_md_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "| Camiseta | Goles | Asistencias | Partidos | Victorias | Empates | Derrotas |\n");
+    fprintf(f, "|----------|-------|-------------|----------|-----------|---------|----------|\n");
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "| %s | %d | %d | %d | %d | %d | %d |\n",
+                sqlite3_column_text(stmt, 0),
+                sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
+}
+
+static void stats_anio_common_from_stmt(FILE *file, sqlite3_stmt *stmt,
+                                        anio_header_writer_t write_header,
+                                        anio_row_writer_t write_row,
+                                        anio_footer_writer_t write_footer)
+{
+    char current_anio[5] = "";
+    int hay = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
+        if (strcmp(current_anio, stats.anio) != 0)
+        {
+            write_header(file, stats.anio, hay);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
+        }
+        write_row(file, &stats);
+        hay = 1;
+    }
+    if (write_footer) write_footer(file, hay);
+}
+
+static void stats_anio_csv_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "Anio,Camiseta,Partidos,Goles,Asistencias,Promedio Goles,Promedio Asistencias\n");
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "%s,%s,%d,%d,%d,%.2f,%.2f\n",
+                sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
+                sqlite3_column_double(stmt, 6));
+}
+
+static void stats_anio_txt_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    stats_anio_common_from_stmt(f, stmt, write_stats_anio_txt_header, write_stats_anio_txt_row, NULL);
+}
+
+static void stats_anio_html_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    stats_anio_common_from_stmt(f, stmt, write_stats_anio_html_header, write_stats_anio_html_row, write_stats_anio_html_footer);
+}
+
+static void stats_anio_json_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    cJSON *root = cJSON_CreateObject();
+    char current_anio[5] = "";
+    cJSON *anio_arr = NULL;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        EstadisticaAnio stats;
+        extraer_estadistica_anio(stmt, &stats);
+        if (strcmp(current_anio, stats.anio) != 0)
+        {
+            anio_arr = cJSON_CreateArray();
+            cJSON_AddItemToObject(root, stats.anio, anio_arr);
+            strcpy_s(current_anio, sizeof(current_anio), stats.anio);
+        }
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "camiseta", stats.camiseta);
+        cJSON_AddNumberToObject(item, "partidos", stats.partidos);
+        cJSON_AddNumberToObject(item, "goles", stats.total_goles);
+        cJSON_AddNumberToObject(item, "asistencias", stats.total_asistencias);
+        cJSON_AddNumberToObject(item, "avg_goles", stats.avg_goles);
+        cJSON_AddNumberToObject(item, "avg_asistencias", stats.avg_asistencias);
+        cJSON_AddItemToArray(anio_arr, item);
+    }
+    char *json_string = cJSON_Print(root);
+    fprintf(f, "%s", json_string);
+    free(json_string);
+    cJSON_Delete(root);
+}
+
+/* ============================================================================
+ * EXPORTACIoN BATCH (una consulta SQL, todos los formatos)
+ * ============================================================================ */
+
+void exportar_estadisticas_all(void)
+{
+    if (!has_records("partido"))
+    {
+        mostrar_no_hay_registros("estadisticas para exportar");
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA)) return;
+    FILE *f;
+
+    f = abrir_archivo_exportacion("estadisticas.csv", "Error al crear CSV");
+    if (f)
+    {
+        stats_camiseta_csv_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas.csv"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas.txt", "Error al crear TXT");
+    if (f)
+    {
+        stats_camiseta_txt_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas.txt"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas.json", "Error al crear JSON");
+    if (f)
+    {
+        stats_camiseta_json_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas.json"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas.html", "Error al crear HTML");
+    if (f)
+    {
+        fprintf(f, "<html><body><h1>Estadisticas</h1><table border='1'><tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</th><th>Victorias</th><th>Empates</th><th>Derrotas</th></tr>");
+        stats_camiseta_html_rows(f, stmt);
+        fprintf(f, "</table></body></html>");
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas.md", "Error al crear MD");
+    if (f)
+    {
+        fprintf(f, "# Estadisticas por Camiseta\n\n*Generado por MiFutbolC*\n\n");
+        stats_camiseta_md_rows(f, stmt);
+        fprintf(f, "\n");
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas.md"));
+        fclose(f);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void exportar_estadisticas_por_anio_all(void)
+{
+    if (!has_records("partido"))
+    {
+        mostrar_no_hay_registros("estadisticas por ano para exportar");
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, SQL_STATS_BY_ANIO)) return;
+    FILE *f;
+
+    f = abrir_archivo_exportacion("estadisticas_por_anio.csv", "Error al crear CSV");
+    if (f)
+    {
+        stats_anio_csv_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.csv"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_anio.txt", "Error al crear TXT");
+    if (f)
+    {
+        stats_anio_txt_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.txt"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_anio.json", "Error al crear JSON");
+    if (f)
+    {
+        stats_anio_json_rows(f, stmt);
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.json"));
+        fclose(f);
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_anio.html", "Error al crear HTML");
+    if (f)
+    {
+        fprintf(f, "<html><body><h1>Estadisticas por Anio</h1>");
+        stats_anio_html_rows(f, stmt);
+        fprintf(f, "</body></html>");
+        printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.html"));
+        fclose(f);
+    }
+
+    sqlite3_finalize(stmt);
+}

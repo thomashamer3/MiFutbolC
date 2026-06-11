@@ -500,3 +500,276 @@ void exportar_estadisticas_por_mes_html(void)
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.html"));
 }
+
+/* ============================================================================
+ * HELPERS BATCH (reutilizan stats precalculados / stmt externo)
+ * ============================================================================ */
+
+static struct
+{
+    char nombre[256];
+    int valor;
+    int found;
+} g_cached_stats[STAT_DEFS_COUNT];
+
+static void cache_all_stats(void)
+{
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
+        g_cached_stats[i].found = get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order,
+                                  g_cached_stats[i].nombre,
+                                  sizeof(g_cached_stats[i].nombre),
+                                  &g_cached_stats[i].valor);
+    }
+}
+
+static void write_cached_csv(FILE *file)
+{
+    fprintf(file, "Categoria,Camiseta,Valor\n");
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        if (g_cached_stats[i].found)
+            fprintf(file, "%s,%s,%d\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+}
+
+static void write_cached_txt(FILE *file)
+{
+    fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        if (g_cached_stats[i].found)
+            fprintf(file, "%s: %s (%d)\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+}
+
+static void write_cached_json(FILE *file)
+{
+    cJSON *root = cJSON_CreateObject();
+    cJSON *stats = cJSON_CreateObject();
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
+        if (g_cached_stats[i].found)
+        {
+            cJSON *stat = cJSON_CreateObject();
+            cJSON_AddStringToObject(stat, "camiseta", g_cached_stats[i].nombre);
+            cJSON_AddNumberToObject(stat, "valor", g_cached_stats[i].valor);
+            cJSON_AddItemToObject(stats, STAT_DEFS[i].json_key, stat);
+        }
+    }
+    cJSON_AddItemToObject(root, "estadisticas_generales", stats);
+    char *json_str = cJSON_Print(root);
+    fprintf(file, "%s", json_str);
+    free(json_str);
+    cJSON_Delete(root);
+}
+
+static void write_cached_html(FILE *file)
+{
+    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
+    fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
+    fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        if (g_cached_stats[i].found)
+            fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+    fprintf(file, "</table>\n</body>\n</html>\n");
+}
+
+static void write_cached_md(FILE *file)
+{
+    fprintf(file, "# Estadisticas Generales\n\n*Generado por MiFutbolC*\n\n");
+    fprintf(file, "| Categoria | Camiseta | Valor |\n|-----------|----------|-------|\n");
+    for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+        if (g_cached_stats[i].found)
+            fprintf(file, "| %s | %s | %d |\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+    fprintf(file, "\n");
+}
+
+static void stats_mes_csv_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        fprintf(f, "%s,%s,%d,%d,%d,%.2f,%.2f\n",
+                sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
+                sqlite3_column_double(stmt, 6));
+}
+
+static void stats_mes_txt_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "ESTADISTICAS POR MES\n====================\n\n");
+    char current[8] = "";
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *month = (const char *)sqlite3_column_text(stmt, 0);
+        if (strcmp(current, month) != 0)
+        {
+            strcpy_s(current, sizeof(current), month);
+            fprintf(f, "\n%s:\n", month);
+        }
+        fprintf(f, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
+                sqlite3_column_text(stmt, 1),
+                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
+                sqlite3_column_double(stmt, 6));
+    }
+}
+
+static void stats_mes_json_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    cJSON *root = cJSON_CreateObject();
+    char current[8] = "";
+    cJSON *current_array = NULL;
+    month_stat_row_t row;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        read_month_stat_row(stmt, &row);
+        if (strcmp(current, row.month) != 0)
+        {
+            if (current_array) cJSON_AddItemToObject(root, current, current_array);
+            strcpy_s(current, sizeof(current), row.month);
+            current_array = cJSON_CreateArray();
+        }
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "camiseta", row.camiseta);
+        cJSON_AddNumberToObject(item, "partidos", row.partidos);
+        cJSON_AddNumberToObject(item, "goles", row.goles);
+        cJSON_AddNumberToObject(item, "asistencias", row.asistencias);
+        cJSON_AddNumberToObject(item, "avg_goles", row.avg_goles);
+        cJSON_AddNumberToObject(item, "avg_asistencias", row.avg_asistencias);
+        cJSON_AddItemToArray(current_array, item);
+    }
+    if (current_array) cJSON_AddItemToObject(root, current, current_array);
+    char *json_str = cJSON_Print(root);
+    fprintf(f, "%s", json_str);
+    free(json_str);
+    cJSON_Delete(root);
+}
+
+static void stats_mes_html_rows(FILE *f, sqlite3_stmt *stmt)
+{
+    fprintf(f, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
+    fprintf(f, "<body>\n<h1>Estadisticas por Mes</h1>\n");
+    char current[8] = "";
+    int hay = 0;
+    month_stat_row_t row;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        read_month_stat_row(stmt, &row);
+        if (strcmp(current, row.month) != 0)
+        {
+            if (hay) fprintf(f, "</table><br>");
+            fprintf(f, "<h2>%s</h2><table border='1'>", row.month);
+            fprintf(f, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
+            strcpy_s(current, sizeof(current), row.month);
+        }
+        fprintf(f, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
+                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles, row.avg_asistencias);
+        hay = 1;
+    }
+    if (hay) fprintf(f, "</table>");
+    fprintf(f, "</body></html>\n");
+}
+
+/* ============================================================================
+ * EXPORTACIoN BATCH (SQL ejecutado una vez, todos los formatos)
+ * ============================================================================ */
+
+void exportar_estadisticas_generales_all(void)
+{
+    if (!has_records("partido"))
+    {
+        printf("No hay registros.\n");
+        return;
+    }
+
+    cache_all_stats();
+    FILE *f;
+
+    f = abrir_archivo_exportacion("estadisticas_generales.csv", "Error CSV");
+    if (f)
+    {
+        write_cached_csv(f);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_generales.csv"));
+    }
+
+    f = abrir_archivo_exportacion("estadisticas_generales.txt", "Error TXT");
+    if (f)
+    {
+        write_cached_txt(f);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_generales.txt"));
+    }
+
+    f = abrir_archivo_exportacion("estadisticas_generales.json", "Error JSON");
+    if (f)
+    {
+        write_cached_json(f);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_generales.json"));
+    }
+
+    f = abrir_archivo_exportacion("estadisticas_generales.html", "Error HTML");
+    if (f)
+    {
+        write_cached_html(f);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_generales.html"));
+    }
+
+    f = abrir_archivo_exportacion("estadisticas_generales.md", "Error MD");
+    if (f)
+    {
+        write_cached_md(f);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_generales.md"));
+    }
+}
+
+void exportar_estadisticas_por_mes_all(void)
+{
+    if (!has_records("partido"))
+    {
+        printf("No hay registros.\n");
+        return;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH)) return;
+    FILE *f;
+
+    f = abrir_archivo_exportacion("estadisticas_por_mes.csv", "Error CSV");
+    if (f)
+    {
+        stats_mes_csv_rows(f, stmt);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.csv"));
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_mes.txt", "Error TXT");
+    if (f)
+    {
+        stats_mes_txt_rows(f, stmt);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.txt"));
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_mes.json", "Error JSON");
+    if (f)
+    {
+        stats_mes_json_rows(f, stmt);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.json"));
+    }
+
+    sqlite3_reset(stmt);
+    f = abrir_archivo_exportacion("estadisticas_por_mes.html", "Error HTML");
+    if (f)
+    {
+        stats_mes_html_rows(f, stmt);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.html"));
+    }
+
+    sqlite3_finalize(stmt);
+}

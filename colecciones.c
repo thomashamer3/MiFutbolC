@@ -32,7 +32,7 @@ typedef struct
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static FILE *abrir_archivo_lectura(const char *path)

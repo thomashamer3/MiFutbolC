@@ -384,3 +384,149 @@ void exportar_carrera_pdf()
 
     pdf_destroy(pdf);
 }
+
+/* ============================================================================
+ * HELPERS BATCH (stmt externo, sin prepare/finalize interno)
+ * ============================================================================ */
+
+static void carrera_csv_section(FILE *f, sqlite3_stmt *sid, sqlite3_stmt *shit, sqlite3_stmt *sres)
+{
+    fprintf(f, "=== IDENTIDAD ===\n");
+    fprintf(f, "id,nombre_apodo,posicion,club_inicios\n");
+    while (sqlite3_step(sid) == SQLITE_ROW) escribir_fila_identidad_csv(f, sid);
+    fprintf(f, "\n=== HITOS ===\n");
+    fprintf(f, "id,tipo,descripcion\n");
+    while (sqlite3_step(shit) == SQLITE_ROW) escribir_fila_hito_csv(f, shit);
+    fprintf(f, "\n=== RESUMENES ===\n");
+    fprintf(f, "id,anio,resumen\n");
+    while (sqlite3_step(sres) == SQLITE_ROW) escribir_fila_resumen_csv(f, sres);
+    fprintf(f, "\n");
+}
+
+static void carrera_txt_section(FILE *f, sqlite3_stmt *sid, sqlite3_stmt *shit, sqlite3_stmt *sres)
+{
+    fprintf(f, "CARRERA FUTBOLISTICA\n\n");
+    fprintf(f, "=== IDENTIDAD ===\n\n");
+    while (sqlite3_step(sid) == SQLITE_ROW) escribir_fila_identidad_txt(f, sid);
+    fprintf(f, "\n=== HITOS ===\n\n");
+    while (sqlite3_step(shit) == SQLITE_ROW) escribir_fila_hito_txt(f, shit);
+    fprintf(f, "\n=== RESUMENES NARRATIVOS ===\n\n");
+    while (sqlite3_step(sres) == SQLITE_ROW) escribir_fila_resumen_txt(f, sres);
+    fprintf(f, "\n");
+}
+
+static void carrera_json_section(cJSON *root, sqlite3_stmt *sid, sqlite3_stmt *shit, sqlite3_stmt *sres)
+{
+    cJSON *identidad = cJSON_CreateArray();
+    while (sqlite3_step(sid) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_identidad(item, sid);
+        cJSON_AddItemToArray(identidad, item);
+    }
+    cJSON_AddItemToObject(root, "identidad", identidad);
+    cJSON *hitos = cJSON_CreateArray();
+    while (sqlite3_step(shit) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_hito(item, shit);
+        cJSON_AddItemToArray(hitos, item);
+    }
+    cJSON_AddItemToObject(root, "hitos", hitos);
+    cJSON *resumenes = cJSON_CreateArray();
+    while (sqlite3_step(sres) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        escribir_objeto_resumen(item, sres);
+        cJSON_AddItemToArray(resumenes, item);
+    }
+    cJSON_AddItemToObject(root, "resumenes", resumenes);
+}
+
+static void carrera_html_section(FILE *f, sqlite3_stmt *sid, sqlite3_stmt *shit, sqlite3_stmt *sres)
+{
+    fprintf(f, "<html><body><h1>Carrera Futbolistica</h1>\n");
+    fprintf(f, "<h2>Identidad</h2><table border='1'><tr><th>ID</th><th>Nombre/Apodo</th><th>Posicion</th><th>Club Inicios</th></tr>");
+    while (sqlite3_step(sid) == SQLITE_ROW) escribir_fila_identidad_html(f, sid);
+    fprintf(f, "</table><br>\n<h2>Hitos</h2><table border='1'><tr><th>ID</th><th>Tipo</th><th>Descripcion</th></tr>");
+    while (sqlite3_step(shit) == SQLITE_ROW) escribir_fila_hito_html(f, shit);
+    fprintf(f, "</table><br>\n<h2>Resumenes Narrativos</h2><table border='1'><tr><th>ID</th><th>Anio</th><th>Resumen</th></tr>");
+    while (sqlite3_step(sres) == SQLITE_ROW) escribir_fila_resumen_html(f, sres);
+    fprintf(f, "</table></body></html>\n");
+}
+
+void exportar_carrera_all(void)
+{
+    if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
+    {
+        printf("No hay datos de carrera para exportar.\n");
+        return;
+    }
+
+    sqlite3_stmt *sid, *shit, *sres;
+    if (sqlite3_prepare_v2(db, SQL_IDENTIDAD, -1, &sid, NULL) != SQLITE_OK) return;
+    if (sqlite3_prepare_v2(db, SQL_HITOS, -1, &shit, NULL) != SQLITE_OK)
+    {
+        sqlite3_finalize(sid);
+        return;
+    }
+    if (sqlite3_prepare_v2(db, SQL_RESUMENES, -1, &sres, NULL) != SQLITE_OK)
+    {
+        sqlite3_finalize(sid);
+        sqlite3_finalize(shit);
+        return;
+    }
+
+    FILE *f;
+    f = abrir_archivo_exportacion("carrera.csv", "Error CSV");
+    if (f)
+    {
+        carrera_csv_section(f, sid, shit, sres);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("carrera.csv"));
+    }
+    sqlite3_reset(sid);
+    sqlite3_reset(shit);
+    sqlite3_reset(sres);
+
+    f = abrir_archivo_exportacion("carrera.txt", "Error TXT");
+    if (f)
+    {
+        carrera_txt_section(f, sid, shit, sres);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("carrera.txt"));
+    }
+    sqlite3_reset(sid);
+    sqlite3_reset(shit);
+    sqlite3_reset(sres);
+
+    cJSON *root = cJSON_CreateObject();
+    carrera_json_section(root, sid, shit, sres);
+    f = abrir_archivo_exportacion("carrera.json", "Error JSON");
+    if (f)
+    {
+        char *json_str = cJSON_Print(root);
+        fprintf(f, "%s", json_str);
+        free(json_str);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("carrera.json"));
+    }
+    cJSON_Delete(root);
+    sqlite3_reset(sid);
+    sqlite3_reset(shit);
+    sqlite3_reset(sres);
+
+    f = abrir_archivo_exportacion("carrera.html", "Error HTML");
+    if (f)
+    {
+        carrera_html_section(f, sid, shit, sres);
+        fclose(f);
+        printf("Exportado: %s\n", get_export_path("carrera.html"));
+    }
+
+    sqlite3_finalize(sid);
+    sqlite3_finalize(shit);
+    sqlite3_finalize(sres);
+
+    exportar_carrera_pdf();
+}

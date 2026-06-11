@@ -208,4 +208,16 @@ EXPORT_FORMAT_ROWS(exportar_equipos_txt, obtener_datos_equipos, "equipos.txt", N
 EXPORT_FORMAT_ROWS(exportar_equipos_json, obtener_datos_equipos, "equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_equipos_html, obtener_datos_equipos, "equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_equipos_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "equipos.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "equipos.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
+        { "equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_equipos, configs, 4);
+}
+
 /** @} */

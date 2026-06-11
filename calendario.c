@@ -142,7 +142,7 @@ static int mostrar_eventos_partidos(const char *fecha)
     {
         if (!tiene_partidos)
         {
-            printf("%s PARTIDOS:\n", consola_soporta_unicode() ? "⚽" : "P");
+            printf("%s %s:\n", consola_soporta_unicode() ? "⚽" : "P", get_text("entity_partidos"));
             printf("%s\n", linea_division_eventos());
             tiene_partidos = 1;
         }
@@ -185,7 +185,7 @@ static int mostrar_eventos_finanzas(const char *fecha)
     {
         if (!tiene_finanzas)
         {
-            printf("%s FINANZAS:\n", consola_soporta_unicode() ? "💰" : "$ ");
+            printf("%s %s:\n", consola_soporta_unicode() ? "💰" : "$", get_text("calendario_finanzas"));
             printf("%s\n", linea_division_eventos());
             tiene_finanzas = 1;
         }
@@ -195,7 +195,7 @@ static int mostrar_eventos_finanzas(const char *fecha)
         const unsigned char *desc = sqlite3_column_text(stmt, 2);
 
         printf("  %s $%d - %s\n",
-               tipo == 0 ? "INGRESO" : "GASTO", monto, desc);
+               tipo == 0 ? get_text("calendario_ingreso") : get_text("calendario_gasto"), monto, desc);
         eventos++;
     }
 
@@ -217,7 +217,7 @@ static void imprimir_encabezado_calendario_mes(int usar_unicode,
         printf("╔══════════════════════════════════════════════════════════════╗\n");
         printf("║              %s %d%-35s║\n", nombre_mes, anio, "");
         printf("╠══════════════════════════════════════════════════════════════╣\n");
-        printf("║  L    M    M    J    V    S    D                             ║\n");
+        printf("║%s║\n", get_text("calendario_dias_semana"));
         printf("╟──────────────────────────────────────────────────────────────╢\n");
         return;
     }
@@ -225,7 +225,7 @@ static void imprimir_encabezado_calendario_mes(int usar_unicode,
     printf("+--------------------------------------------------------------+\n");
     printf("|              %s %d%-35s|\n", nombre_mes, anio, "");
     printf("+--------------------------------------------------------------+\n");
-    printf("|  L    M    M    J    V    S    D                             |\n");
+    printf("|%s|\n", get_text("calendario_dias_semana"));
     printf("|--------------------------------------------------------------|\n");
 }
 
@@ -281,13 +281,13 @@ static void imprimir_pie_calendario_mes(int usar_unicode)
 void mostrar_calendario_mes(int mes, int anio)
 {
     clear_screen();
-    print_header("CALENDARIO");
+    print_header(get_text("header_calendario"));
     int usar_unicode = consola_soporta_unicode();
 
     const char *nombres_meses[] =
     {
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        get_text("mes_enero"), get_text("mes_febrero"), get_text("mes_marzo"), get_text("mes_abril"), get_text("mes_mayo"), get_text("mes_junio"),
+        get_text("mes_julio"), get_text("mes_agosto"), get_text("mes_septiembre"), get_text("mes_octubre"), get_text("mes_noviembre"), get_text("mes_diciembre")
     };
 
     printf("\n");
@@ -337,7 +337,7 @@ void mostrar_calendario_mes(int mes, int anio)
 
     printf(" %s\n", usar_unicode ? "║" : "|");
     imprimir_pie_calendario_mes(usar_unicode);
-    printf("\nLeyenda: [Hoy]  %s=Partido  $=Finanza\n", simbolo_partido_calendario());
+    printf(get_text("calendario_leyenda"), simbolo_partido_calendario());
     printf("\n");
 }
 
@@ -353,13 +353,13 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
     if (usar_unicode)
     {
         printf("╔══════════════════════════════════════════════════════════════╗\n");
-        printf("║              Eventos del dia %02d/%02d/%04d%-19s║\n", dia, mes, anio, "");
+        printf("║              %s %02d/%02d/%04d%-19s║\n", get_text("calendario_eventos_dia"), dia, mes, anio, "");
         printf("╚══════════════════════════════════════════════════════════════╝\n\n");
     }
     else
     {
         printf("+--------------------------------------------------------------+\n");
-        printf("|              Eventos del dia %02d/%02d/%04d%-19s|\n", dia, mes, anio, "");
+        printf("|              %s %02d/%02d/%04d%-19s|\n", get_text("calendario_eventos_dia"), dia, mes, anio, "");
         printf("+--------------------------------------------------------------+\n\n");
     }
 
@@ -369,7 +369,7 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
 
     if (eventos_totales == 0)
     {
-        printf("  (No hay eventos registrados para este dia)\n\n");
+        printf("  %s\n\n", get_text("calendario_sin_eventos"));
     }
 
     pause_console();
@@ -421,7 +421,7 @@ static void volver_a_hoy(int *mes_actual, int *anio_actual)
 
 static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
 {
-    printf("\nIngrese dia (1-%d): ", dias_en_mes(mes_actual, anio_actual));
+    printf(get_text("calendario_ingrese_dia"), dias_en_mes(mes_actual, anio_actual));
     int dia = input_int("");
 
     if (dia >= 1 && dia <= dias_en_mes(mes_actual, anio_actual))
@@ -430,7 +430,7 @@ static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
     }
     else
     {
-        printf("\nDia invalido.\n");
+        printf("\n%s\n", get_text("calendario_dia_invalido"));
         pause_console();
     }
 }
@@ -452,13 +452,13 @@ void menu_calendario()
     {
         mostrar_calendario_mes(mes_actual, anio_actual);
 
-        printf("Opciones:\n");
-        printf("  [N] Mes siguiente\n");
-        printf("  [P] Mes anterior\n");
-        printf("  [V] Ver eventos de un dia\n");
-        printf("  [H] Volver a hoy\n");
-        printf("  [0] Volver\n\n");
-        printf("Seleccione: ");
+        printf("%s\n", get_text("calendario_opciones"));
+        printf("  [N] %s\n", get_text("calendario_mes_siguiente"));
+        printf("  [P] %s\n", get_text("calendario_mes_anterior"));
+        printf("  [V] %s\n", get_text("calendario_ver_eventos"));
+        printf("  [H] %s\n", get_text("calendario_volver_hoy"));
+        printf("  [0] %s\n\n", get_text("action_volver"));
+        printf("%s ", get_text("prompt_seleccione"));
 
         char opcion[10];
         if (!fgets(opcion, sizeof(opcion), stdin))

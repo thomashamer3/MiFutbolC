@@ -1,5 +1,6 @@
 #include "atajos.h"
 #include "utils.h"
+#include "settings.h"
 #include <ctype.h>
 #include <stdio.h>
 
@@ -123,23 +124,23 @@ int verificar_atajo()
 void mostrar_ayuda_atajos()
 {
     clear_screen();
-    print_header("ATAJOS DE TECLADO");
+    print_header(get_text("header_atajos"));
 
     printf("\n");
     printf("╔══════════════════════════════════════════════════════════════╗\n");
-    printf("║                 ATAJOS RAPIDOS DISPONIBLES                   ║\n");
+    printf("║                 %-47s║\n", get_text("atajos_title"));
     printf("╠══════════════════════════════════════════════════════════════╣\n");
     printf("║                                                              ║\n");
-    printf("║  [D] - Mostrar Dashboard                                     ║\n");
-    printf("║  [B] - Busqueda Global                                       ║\n");
-    printf("║  [C] - Calendario del Mes                                    ║\n");
-    printf("║  [N] - Crear Nuevo Partido                                   ║\n");
-    printf("║  [S] - Ver Estadisticas                                      ║\n");
-    printf("║  [H] - Mostrar esta Ayuda                                    ║\n");
-    printf("║  [Q] - Salir de la Aplicacion                                ║\n");
+    printf("║  [D] - %-47s║\n", get_text("atajos_dashboard"));
+    printf("║  [B] - %-47s║\n", get_text("atajos_busqueda"));
+    printf("║  [C] - %-47s║\n", get_text("atajos_calendario"));
+    printf("║  [N] - %-47s║\n", get_text("atajos_nuevo_partido"));
+    printf("║  [S] - %-47s║\n", get_text("atajos_estadisticas"));
+    printf("║  [H] - %-47s║\n", get_text("atajos_ayuda"));
+    printf("║  [Q] - %-47s║\n", get_text("atajos_salir"));
     printf("║                                                              ║\n");
-    printf("║  Nota: Los atajos funcionan desde el menu principal          ║\n");
-    printf("║        Presione la tecla sin Enter                           ║\n");
+    printf("║  %-53s║\n", get_text("atajos_nota"));
+    printf("║  %-53s║\n", get_text("atajos_presione_tecla"));
     printf("║                                                              ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");
     printf("\n");

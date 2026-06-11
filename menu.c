@@ -13,6 +13,7 @@
 #include "compat_windows.h"
 #endif
 #endif
+#include "lang.h"
 #include "analisis.h"
 #include "bienestar.h"
 #include "calendario.h"
@@ -33,6 +34,7 @@
 #include "records_rankings.h"
 #include "settings.h"
 #include "temporada.h"
+#include "tienda.h"
 #include "torneo.h"
 
 // Definir items del menu principal directamente con inicializacion static
@@ -163,6 +165,12 @@ static void abrir_menu_records_rankings(void)
     menu_records_rankings();
 }
 
+static void abrir_menu_tiendas(void)
+{
+    app_log_event("TIENDAS", "Ingreso al modulo Tiendas");
+    menu_tiendas();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Dashboard", &abrir_dashboard},
@@ -184,7 +192,8 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {17, "Colecciones", &abrir_menu_colecciones},
     {18, "Musica", &abrir_menu_musica},
     {19, "Records & Rankings", &abrir_menu_records_rankings},
-    {20, "Ajustes", &abrir_menu_settings},
+    {20, "Tiendas", &abrir_menu_tiendas},
+    {21, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -249,6 +258,7 @@ void initialize_application()
         set_user_name(db_get_active_user());
     }
 
+    lang_init();
     settings_init();
     app_log_event("APP", "Aplicacion iniciada");
 }

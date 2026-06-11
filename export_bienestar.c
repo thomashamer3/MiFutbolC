@@ -167,4 +167,16 @@ EXPORT_FORMAT_ROWS(exportar_bienestar_txt, obtener_datos_bienestar, "bienestar.t
 EXPORT_FORMAT_ROWS(exportar_bienestar_json, obtener_datos_bienestar, "bienestar.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_bienestar_html, obtener_datos_bienestar, "bienestar.html", NULL, write_html_header, write_html_row, export_write_html_footer)
 
+void exportar_bienestar_all(void)
+{
+    ExportConfig configs[] =
+    {
+        { "bienestar.csv", NULL, write_csv_header, write_csv_row, NULL },
+        { "bienestar.txt", NULL, write_txt_header, write_txt_row, NULL },
+        { "bienestar.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
+        { "bienestar.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+    };
+    export_all_formats(obtener_datos_bienestar, configs, 4);
+}
+
 /** @} */

@@ -13,7 +13,7 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
-    return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
+    return db_prepare_stmt(stmt, sql);
 }
 
 static int preparar_stmt_con_mensaje(sqlite3_stmt **stmt, const char *sql)
@@ -238,6 +238,7 @@ static int asegurar_tabla_quimica_jugador_estadistica(void)
         " asistencias INTEGER DEFAULT 0,"
         " asistencias_al_usuario INTEGER DEFAULT 0,"
         " asistencias_del_usuario INTEGER DEFAULT 0,"
+        " rating INTEGER DEFAULT 0,"
         " comentario TEXT DEFAULT '',"
         " FOREIGN KEY(partido_id) REFERENCES partido(id));";
 
@@ -252,6 +253,9 @@ static int asegurar_tabla_quimica_jugador_estadistica(void)
         return 0;
 
     if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN asistencias_del_usuario INTEGER DEFAULT 0"))
+        return 0;
+
+    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN rating INTEGER DEFAULT 0"))
         return 0;
 
     return 1;
@@ -435,55 +439,62 @@ static void mostrar_mejor_quimica_jugadores()
 typedef struct
 {
     char jugador[100];
-    char companero_asistido[100];
     char posicion[40];
     char comentario[200];
     int goles;
-    int asistencias;
     int asistencias_al_usuario;
     int asistencias_del_usuario;
+    int rating;
 } DatosQuimicaJugador;
+
+static int validar_rating(int r)
+{
+    return (r >= 1 && r <= 10) ? r : 1;
+}
 
 static void capturar_datos_quimica_jugador(DatosQuimicaJugador *datos, int es_edicion)
 {
-    if (!es_edicion)
-    {
-        input_string("Nombre del companero que te asistio(Enter para Vacio): ", datos->jugador, sizeof(datos->jugador));
-        input_string("Nombre del companero al que asististe(Enter para Vacio): ", datos->companero_asistido, sizeof(datos->companero_asistido));
-        input_string("Posicion (ej: Mediocampista-Delantero): ", datos->posicion, sizeof(datos->posicion));
+    char prompt[200];
+    const char *pre = es_edicion ? "Nuevo " : "";
 
-        datos->goles = normalizar_no_negativo(input_int("Goles del companero: "));
-        datos->asistencias = normalizar_no_negativo(input_int("Asistencias totales del companero: "));
-        datos->asistencias_al_usuario = normalizar_no_negativo(input_int("Asistencias del companero hacia ti: "));
-        datos->asistencias_del_usuario = normalizar_no_negativo(input_int("Asistencias tuyas hacia ese companero: "));
+    snprintf(prompt, sizeof(prompt), "%sNombre del companero: ", pre);
+    input_string(prompt, datos->jugador, sizeof(datos->jugador));
 
-        input_string("Comentario (opcional): ", datos->comentario, sizeof(datos->comentario));
-        return;
-    }
+    snprintf(prompt, sizeof(prompt), "Posicion que jugo %s: ", datos->jugador);
+    input_string(prompt, datos->posicion, sizeof(datos->posicion));
 
-    input_string("Nuevo nombre del companero que te asistio: ", datos->jugador, sizeof(datos->jugador));
-    input_string("Nuevo nombre del companero al que asististe: ", datos->companero_asistido, sizeof(datos->companero_asistido));
-    input_string("Nueva posicion: ", datos->posicion, sizeof(datos->posicion));
+    printf("\n--- Lo que hizo %s ---\n", datos->jugador);
 
-    datos->goles = normalizar_no_negativo(input_int("Nuevos goles del companero: "));
-    datos->asistencias = normalizar_no_negativo(input_int("Nuevas asistencias totales del companero: "));
-    datos->asistencias_al_usuario = normalizar_no_negativo(input_int("Nuevas asistencias del companero hacia ti: "));
-    datos->asistencias_del_usuario = normalizar_no_negativo(input_int("Nuevas asistencias tuyas hacia ese companero: "));
+    snprintf(prompt, sizeof(prompt), "Cuantos goles metio %s: ", datos->jugador);
+    datos->goles = normalizar_no_negativo(input_int(prompt));
 
-    input_string("Nuevo comentario (opcional): ", datos->comentario, sizeof(datos->comentario));
+    snprintf(prompt, sizeof(prompt), "Cuantas veces te asistio %s a VOS: ", datos->jugador);
+    datos->asistencias_al_usuario = normalizar_no_negativo(input_int(prompt));
+
+    printf("\n--- Lo que hiciste vos con %s ---\n", datos->jugador);
+
+    snprintf(prompt, sizeof(prompt), "Cuantas veces asististe VOS a %s: ", datos->jugador);
+    datos->asistencias_del_usuario = normalizar_no_negativo(input_int(prompt));
+
+    printf("\n--- Como lo viste ---\n");
+
+    snprintf(prompt, sizeof(prompt), "Rating de %s en este partido (1-10): ", datos->jugador);
+    datos->rating = validar_rating(input_int(prompt));
+
+    snprintf(prompt, sizeof(prompt), "%sComentario sobre la dupla (Enter para vacio): ", pre);
+    input_string(prompt, datos->comentario, sizeof(datos->comentario));
 }
 
 static void bind_datos_quimica_jugador(sqlite3_stmt *stmt, int partido_id, const DatosQuimicaJugador *datos)
 {
     sqlite3_bind_int(stmt, 1, partido_id);
     sqlite3_bind_text(stmt, 2, datos->jugador, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, datos->companero_asistido, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, datos->posicion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 5, datos->goles);
-    sqlite3_bind_int(stmt, 6, datos->asistencias);
-    sqlite3_bind_int(stmt, 7, datos->asistencias_al_usuario);
-    sqlite3_bind_int(stmt, 8, datos->asistencias_del_usuario);
-    sqlite3_bind_text(stmt, 9, datos->comentario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, datos->posicion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, datos->goles);
+    sqlite3_bind_int(stmt, 5, datos->asistencias_al_usuario);
+    sqlite3_bind_int(stmt, 6, datos->asistencias_del_usuario);
+    sqlite3_bind_int(stmt, 7, datos->rating);
+    sqlite3_bind_text(stmt, 8, datos->comentario, -1, SQLITE_TRANSIENT);
 }
 
 static void crear_estadistica_quimica_jugador(void)
@@ -507,29 +518,49 @@ static void crear_estadistica_quimica_jugador(void)
     if (partido_id == 0)
         return;
 
-    DatosQuimicaJugador datos = {0};
-    capturar_datos_quimica_jugador(&datos, 0);
+    int companero_num = 0;
+    char respuesta;
 
-    sqlite3_stmt *stmt;
-    const char *sql =
-        "INSERT INTO quimica_jugador_estadistica "
-        "(partido_id, jugador, companero_asistido, posicion, goles, asistencias, asistencias_al_usuario, asistencias_del_usuario, comentario) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    if (!preparar_stmt_con_mensaje(&stmt, sql))
+    do
     {
-        pause_console();
-        return;
+        companero_num++;
+        printf("\n");
+        printf("═══════════════════════════════════════\n");
+        printf("  QUIMICA - Partido %d | Companero %d\n", partido_id, companero_num);
+        printf("═══════════════════════════════════════\n");
+
+        DatosQuimicaJugador datos = {0};
+        capturar_datos_quimica_jugador(&datos, 0);
+
+        sqlite3_stmt *stmt;
+        const char *sql =
+            "INSERT INTO quimica_jugador_estadistica "
+            "(partido_id, jugador, companero_asistido, posicion, goles, asistencias, "
+            "asistencias_al_usuario, asistencias_del_usuario, rating, comentario) "
+            "VALUES (?, ?, '', ?, ?, 0, ?, ?, ?, ?)";
+
+        if (!preparar_stmt_con_mensaje(&stmt, sql))
+        {
+            pause_console();
+            return;
+        }
+
+        bind_datos_quimica_jugador(stmt, partido_id, &datos);
+
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+            printf("\nQuimica con %s guardada.\n", datos.jugador);
+        else
+            printf("\nNo se pudo guardar la quimica.\n");
+
+        sqlite3_finalize(stmt);
+
+        printf("\nAgregar otro companero? (S/N): ");
+        respuesta = getchar();
+        while (getchar() != '\n');
+
     }
+    while (respuesta == 's' || respuesta == 'S');
 
-    bind_datos_quimica_jugador(stmt, partido_id, &datos);
-
-    if (sqlite3_step(stmt) == SQLITE_DONE)
-        printf("Estadistica guardada correctamente.\n");
-    else
-        printf("No se pudo guardar la estadistica.\n");
-
-    sqlite3_finalize(stmt);
     pause_console();
 }
 
@@ -545,8 +576,8 @@ static void listar_estadisticas_quimica_jugador(void)
 
     sqlite3_stmt *stmt;
     const char *sql =
-        "SELECT q.id, q.partido_id, p.fecha_hora, q.jugador, q.companero_asistido, q.posicion, "
-        "q.goles, q.asistencias, q.asistencias_al_usuario, q.asistencias_del_usuario "
+        "SELECT q.id, q.partido_id, p.fecha_hora, q.jugador, q.posicion, "
+        "q.goles, q.asistencias_al_usuario, q.asistencias_del_usuario, q.rating "
         "FROM quimica_jugador_estadistica q "
         "LEFT JOIN partido p ON p.id = q.partido_id "
         "ORDER BY q.id DESC";
@@ -564,24 +595,22 @@ static void listar_estadisticas_quimica_jugador(void)
         int partido_id = sqlite3_column_int(stmt, 1);
         const char *fecha = (const char *)sqlite3_column_text(stmt, 2);
         const char *jugador = (const char *)sqlite3_column_text(stmt, 3);
-        const char *companero_asistido = (const char *)sqlite3_column_text(stmt, 4);
-        const char *posicion = (const char *)sqlite3_column_text(stmt, 5);
-        int goles = sqlite3_column_int(stmt, 6);
-        int asistencias = sqlite3_column_int(stmt, 7);
-        int asist_usr = sqlite3_column_int(stmt, 8);
-        int asist_del_usr = sqlite3_column_int(stmt, 9);
+        const char *posicion = (const char *)sqlite3_column_text(stmt, 4);
+        int goles = sqlite3_column_int(stmt, 5);
+        int asist_usr = sqlite3_column_int(stmt, 6);
+        int asist_del_usr = sqlite3_column_int(stmt, 7);
+        int rating = sqlite3_column_int(stmt, 8);
 
-        printf("ID:%d | Partido:%d (%s) | Te asistio:%s | Asististe a:%s | %s | G:%d A:%d A->Tu:%d Tu->Comp:%d\n",
+        printf("ID:%d | P:%d (%s) | %s | %s | G:%d A->Ti:%d Tu->A:%d Rating:%d\n",
                id,
                partido_id,
                fecha ? fecha : "N/A",
                jugador ? jugador : "N/A",
-               companero_asistido ? companero_asistido : "N/A",
                posicion ? posicion : "N/A",
                goles,
-               asistencias,
                asist_usr,
-               asist_del_usr);
+               asist_del_usr,
+               rating);
         count++;
     }
 
@@ -625,8 +654,8 @@ static void editar_estadistica_quimica_jugador(void)
     sqlite3_stmt *stmt;
     const char *sql =
         "UPDATE quimica_jugador_estadistica "
-        "SET partido_id = ?, jugador = ?, companero_asistido = ?, posicion = ?, goles = ?, asistencias = ?, "
-        "asistencias_al_usuario = ?, asistencias_del_usuario = ?, comentario = ? "
+        "SET partido_id = ?, jugador = ?, companero_asistido = '', posicion = ?, goles = ?, asistencias = 0, "
+        "asistencias_al_usuario = ?, asistencias_del_usuario = ?, rating = ?, comentario = ? "
         "WHERE id = ?";
 
     if (!preparar_stmt_con_mensaje(&stmt, sql))
@@ -636,7 +665,7 @@ static void editar_estadistica_quimica_jugador(void)
     }
 
     bind_datos_quimica_jugador(stmt, partido_id, &datos);
-    sqlite3_bind_int(stmt, 10, id);
+    sqlite3_bind_int(stmt, 9, id);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
         printf("Estadistica actualizada correctamente.\n");

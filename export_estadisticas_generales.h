@@ -162,4 +162,19 @@ void exportar_estadisticas_por_anio_html();
 /** @brief Exporta estadisticas generales a Markdown (GFM) */
 void exportar_estadisticas_generales_md();
 
+/**
+ * @brief Exporta estadisticas generales a los 5 formatos con una sola consulta SQL.
+ */
+void exportar_estadisticas_generales_all(void);
+
+/**
+ * @brief Exporta estadisticas por mes a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_estadisticas_por_mes_all(void);
+
+/**
+ * @brief Exporta las estadisticas por ano a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_estadisticas_por_anio_all();
+
 #endif /* EXPORT_ESTADISTICAS_GENERALES_H */

@@ -108,4 +108,9 @@ void exportar_partido_menos_asistencias_reciente_json();
 void exportar_partido_menos_asistencias_reciente_html();
 /** @} */ /* End of Doxygen group */
 
+/**
+ * @brief Exporta todos los partidos a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_partidos_all();
+
 #endif /* EXPORT_PARTIDOS_H */

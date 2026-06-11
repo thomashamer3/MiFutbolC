@@ -26,4 +26,9 @@ void exportar_torneos_json();
  */
 void exportar_torneos_html();
 
+/**
+ * @brief Exporta los torneos a los 4 formatos con una sola consulta SQL.
+ */
+void exportar_torneos_all();
+
 #endif /* EXPORT_TORNEO_H */
