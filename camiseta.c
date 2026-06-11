@@ -218,7 +218,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
         else
         {
             printf(get_text("camiseta_visor_no_soportado_windows"),
-                   viewer); // DevSkim: ignore DS154189
+                   viewer);
         }
     }
 
@@ -295,9 +295,9 @@ static void configurar_visor_preferido_imagen()
     obtener_visor_preferido(actual, sizeof(actual));
     printf(get_text("camiseta_visor_actual"), actual[0] ? actual : "auto");
 
-    printf(get_text("camiseta_visor_escribir"));
+    fputs(get_text("camiseta_visor_escribir"), stdout);
 #ifdef _WIN32
-    printf(get_text("camiseta_visor_opciones_windows"));
+    fputs(get_text("camiseta_visor_opciones_windows"), stdout);
 #else
     printf(get_text("camiseta_visor_opciones_linux"));
 #endif

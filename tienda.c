@@ -198,6 +198,58 @@ void crear_tienda()
     pause_console();
 }
 
+static void imprimir_fila_tienda(sqlite3_stmt *stmt)
+{
+    int id = sqlite3_column_int(stmt, 0);
+    const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+    int tipo = sqlite3_column_int(stmt, 2);
+    const char *url = (const char *)sqlite3_column_text(stmt, 3);
+    const char *direccion = (const char *)sqlite3_column_text(stmt, 4);
+    const char *telefono = (const char *)sqlite3_column_text(stmt, 5);
+    const char *whatsapp = (const char *)sqlite3_column_text(stmt, 6);
+    const char *instagram = (const char *)sqlite3_column_text(stmt, 7);
+    const char *email = (const char *)sqlite3_column_text(stmt, 8);
+    int vende_botines = sqlite3_column_int(stmt, 9);
+    int vende_camisetas = sqlite3_column_int(stmt, 10);
+    int vende_pelotas = sqlite3_column_int(stmt, 11);
+    int vende_equipamiento = sqlite3_column_int(stmt, 12);
+    int vende_accesorios = sqlite3_column_int(stmt, 13);
+    int rango_precio = sqlite3_column_int(stmt, 14);
+    int tiene_envio = sqlite3_column_int(stmt, 15);
+    int mercadopago = sqlite3_column_int(stmt, 16);
+    int rating = sqlite3_column_int(stmt, 17);
+    int favorito = sqlite3_column_int(stmt, 18);
+    const char *notas = (const char *)sqlite3_column_text(stmt, 19);
+    const char *fecha = (const char *)sqlite3_column_text(stmt, 20);
+
+    printf("ID: %d%s\n", id, favorito ? " [FAVORITO]" : "");
+    printf("  Nombre: %s\n", nombre ? nombre : "");
+    printf("  Tipo: %s\n", tipo_tienda_str(tipo));
+    if (url && url[0]) printf("  URL: %s\n", url);
+    if (direccion && direccion[0]) printf("  Direccion: %s\n", direccion);
+    if (telefono && telefono[0]) printf("  Telefono: %s\n", telefono);
+    if (whatsapp && whatsapp[0]) printf("  WhatsApp: %s\n", whatsapp);
+    if (instagram && instagram[0]) printf("  Instagram: %s\n", instagram);
+    if (email && email[0]) printf("  Email: %s\n", email);
+
+    printf("  Vende: ");
+    if (vende_botines) printf("Botines ");
+    if (vende_camisetas) printf("Camisetas ");
+    if (vende_pelotas) printf("Pelotas ");
+    if (vende_equipamiento) printf("Equipamiento ");
+    if (vende_accesorios) printf("Accesorios ");
+    printf("\n");
+
+    printf("  Rango precio: %s\n", rango_precio_str(rango_precio));
+    printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n",
+           tiene_envio ? "Si" : "No",
+           mercadopago ? "Si" : "No",
+           rating);
+    if (notas && notas[0]) printf("  Notas: %s\n", notas);
+    printf("  Agregado: %s\n", fecha ? fecha : "");
+    printf("----------------------------------------\n");
+}
+
 void listar_tiendas()
 {
     clear_screen();
@@ -218,54 +270,7 @@ void listar_tiendas()
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             found = 1;
-            int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
-            int tipo = sqlite3_column_int(stmt, 2);
-            const char *url = (const char *)sqlite3_column_text(stmt, 3);
-            const char *direccion = (const char *)sqlite3_column_text(stmt, 4);
-            const char *telefono = (const char *)sqlite3_column_text(stmt, 5);
-            const char *whatsapp = (const char *)sqlite3_column_text(stmt, 6);
-            const char *instagram = (const char *)sqlite3_column_text(stmt, 7);
-            const char *email = (const char *)sqlite3_column_text(stmt, 8);
-            int vende_botines = sqlite3_column_int(stmt, 9);
-            int vende_camisetas = sqlite3_column_int(stmt, 10);
-            int vende_pelotas = sqlite3_column_int(stmt, 11);
-            int vende_equipamiento = sqlite3_column_int(stmt, 12);
-            int vende_accesorios = sqlite3_column_int(stmt, 13);
-            int rango_precio = sqlite3_column_int(stmt, 14);
-            int tiene_envio = sqlite3_column_int(stmt, 15);
-            int mercadopago = sqlite3_column_int(stmt, 16);
-            int rating = sqlite3_column_int(stmt, 17);
-            int favorito = sqlite3_column_int(stmt, 18);
-            const char *notas = (const char *)sqlite3_column_text(stmt, 19);
-            const char *fecha = (const char *)sqlite3_column_text(stmt, 20);
-
-            printf("ID: %d%s\n", id, favorito ? " [FAVORITO]" : "");
-            printf("  Nombre: %s\n", nombre ? nombre : "");
-            printf("  Tipo: %s\n", tipo_tienda_str(tipo));
-            if (url && url[0]) printf("  URL: %s\n", url);
-            if (direccion && direccion[0]) printf("  Direccion: %s\n", direccion);
-            if (telefono && telefono[0]) printf("  Telefono: %s\n", telefono);
-            if (whatsapp && whatsapp[0]) printf("  WhatsApp: %s\n", whatsapp);
-            if (instagram && instagram[0]) printf("  Instagram: %s\n", instagram);
-            if (email && email[0]) printf("  Email: %s\n", email);
-
-            printf("  Vende: ");
-            if (vende_botines) printf("Botines ");
-            if (vende_camisetas) printf("Camisetas ");
-            if (vende_pelotas) printf("Pelotas ");
-            if (vende_equipamiento) printf("Equipamiento ");
-            if (vende_accesorios) printf("Accesorios ");
-            printf("\n");
-
-            printf("  Rango precio: %s\n", rango_precio_str(rango_precio));
-            printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n",
-                   tiene_envio ? "Si" : "No",
-                   mercadopago ? "Si" : "No",
-                   rating);
-            if (notas && notas[0]) printf("  Notas: %s\n", notas);
-            printf("  Agregado: %s\n", fecha ? fecha : "");
-            printf("----------------------------------------\n");
+            imprimir_fila_tienda(stmt);
         }
 
         if (!found)

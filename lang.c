@@ -127,55 +127,80 @@ static int try_load(const char *code)
 
 static void load_fallback(void)
 {
-    static const char *fb_keys[] =
+    static const struct
     {
-        "menu_title", "menu_dashboard", "menu_calendario", "menu_camisetas",
-        "menu_canchas", "menu_partidos", "menu_equipos", "menu_estadisticas",
-        "menu_logros", "menu_analisis", "menu_bienestar", "menu_lesiones",
-        "menu_financiamiento", "menu_exportar", "menu_importar", "menu_usuario",
-        "menu_torneos", "menu_temporada", "menu_settings", "menu_exit",
-        "menu_carrera", "menu_recordatorios", "menu_colecciones", "menu_musica",
-        "menu_records_rankings", "menu_back", "settings_theme", "settings_language",
-        "settings_saved", "invalid_option", "press_enter", "welcome_back",
-        "lang_spanish", "lang_english", "settings_mode",
-        "mode_simple", "mode_advanced", "mode_custom",
-        "theme_light", "theme_dark", "theme_blue", "theme_green",
-        "theme_red", "theme_purple", "theme_classic", "theme_high_contrast",
-        "text_size_small", "text_size_medium", "text_size_large",
-        "settings_music_autoplay", "settings_dashboard_enabled",
-        "state_enabled", "state_disabled", "state_on", "state_off",
-        "show_current", "reset_defaults",
-        "current_settings", "reset_settings",
-        NULL
-    };
-    static const char *fb_vals[] =
+        const char *key;
+        const char *val;
+    } fb_pairs[] =
     {
-        "MI FUTBOL C", "Dashboard", "Calendar", "Shirts",
-        "Fields", "Matches", "Teams", "Statistics",
-        "Achievements", "Analysis", "Wellness", "Injuries",
-        "Financing", "Export", "Import", "User",
-        "Tournaments", "Season", "Settings", "Exit",
-        "Career", "Reminders", "Collections", "Music",
-        "Records & Rankings", "Back", "Interface Theme", "Language",
-        "Settings saved successfully.", "Invalid option.", "Press Enter to continue...", "Welcome Back",
-        "Spanish", "English", "Mode",
-        "Simple", "Advanced", "Custom",
-        "Light", "Dark", "Blue", "Green",
-        "Red", "Purple", "Classic", "High Contrast",
-        "Small", "Medium", "Large",
-        "Music on startup", "Dashboard on startup",
-        "Enabled", "Disabled", "On", "Off",
-        "Show Current Settings", "Reset to Default Values",
-        "Current Settings", "Reset Settings",
-        NULL
+        {"menu_title", "MI FUTBOL C"},
+        {"menu_dashboard", "Dashboard"},
+        {"menu_calendario", "Calendar"},
+        {"menu_camisetas", "Shirts"},
+        {"menu_canchas", "Fields"},
+        {"menu_partidos", "Matches"},
+        {"menu_equipos", "Teams"},
+        {"menu_estadisticas", "Statistics"},
+        {"menu_logros", "Achievements"},
+        {"menu_analisis", "Analysis"},
+        {"menu_bienestar", "Wellness"},
+        {"menu_lesiones", "Injuries"},
+        {"menu_financiamiento", "Financing"},
+        {"menu_exportar", "Export"},
+        {"menu_importar", "Import"},
+        {"menu_usuario", "User"},
+        {"menu_torneos", "Tournaments"},
+        {"menu_temporada", "Season"},
+        {"menu_settings", "Settings"},
+        {"menu_exit", "Exit"},
+        {"menu_carrera", "Career"},
+        {"menu_recordatorios", "Reminders"},
+        {"menu_colecciones", "Collections"},
+        {"menu_musica", "Music"},
+        {"menu_records_rankings", "Records & Rankings"},
+        {"menu_back", "Back"},
+        {"settings_theme", "Interface Theme"},
+        {"settings_language", "Language"},
+        {"settings_saved", "Settings saved successfully."},
+        {"invalid_option", "Invalid option."},
+        {"press_enter", "Press Enter to continue..."},
+        {"welcome_back", "Welcome Back"},
+        {"lang_spanish", "Spanish"},
+        {"lang_english", "English"},
+        {"settings_mode", "Mode"},
+        {"mode_simple", "Simple"},
+        {"mode_advanced", "Advanced"},
+        {"mode_custom", "Custom"},
+        {"theme_light", "Light"},
+        {"theme_dark", "Dark"},
+        {"theme_blue", "Blue"},
+        {"theme_green", "Green"},
+        {"theme_red", "Red"},
+        {"theme_purple", "Purple"},
+        {"theme_classic", "Classic"},
+        {"theme_high_contrast", "High Contrast"},
+        {"text_size_small", "Small"},
+        {"text_size_medium", "Medium"},
+        {"text_size_large", "Large"},
+        {"settings_music_autoplay", "Music on startup"},
+        {"settings_dashboard_enabled", "Dashboard on startup"},
+        {"state_enabled", "Enabled"},
+        {"state_disabled", "Disabled"},
+        {"state_on", "On"},
+        {"state_off", "Off"},
+        {"show_current", "Show Current Settings"},
+        {"reset_defaults", "Reset to Default Values"},
+        {"current_settings", "Current Settings"},
+        {"reset_settings", "Reset Settings"},
+        {NULL, NULL}
     };
 
-    for (int i = 0; fb_keys[i] && fb_vals[i] && s_count < LANG_MAX_KEYS; i++)
+    for (int i = 0; fb_pairs[i].key != NULL && s_count < LANG_MAX_KEYS; i++)
     {
         strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key),
-                  fb_keys[i], _TRUNCATE);
+                  fb_pairs[i].key, _TRUNCATE);
         strncpy_s(s_pairs[s_count].val, sizeof(s_pairs[s_count].val),
-                  fb_vals[i], _TRUNCATE);
+                  fb_pairs[i].val, _TRUNCATE);
         s_count++;
     }
 }

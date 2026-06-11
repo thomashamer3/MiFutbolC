@@ -1,4 +1,4 @@
-﻿#include "db.h"
+#include "db.h"
 #include "export.h"
 #include "settings.h"
 #include "utils.h"
@@ -589,7 +589,6 @@ static int setup_database_paths()
         printf("Error obteniendo AppData path\n");
         return 0;
     }
-
     snprintf(DB_DIR, sizeof(DB_DIR), "%s\\MiFutbolC\\data", appdata_path);
     snprintf(DB_PATH, sizeof(DB_PATH), "%s\\MiFutbolC\\data\\%s", appdata_path,
              db_filename);
@@ -1688,6 +1687,28 @@ static int drop_legacy_mes_anio_triggers(void)
     return 1;
 }
 
+static int run_index_migration(const char *const *statements, int version,
+                               const char *label)
+{
+    int failed = -1;
+    if (!execute_sql_statements(statements, &failed))
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo indice %s '%s': %s",
+                 label, statements[failed], sqlite3_errmsg(db));
+        app_log_write("ERROR", "DB", log_buf_);
+        return 0;
+    }
+    if (!set_user_version(version))
+    {
+        snprintf(log_buf_, sizeof(log_buf_),
+                 "No se pudo actualizar user_version tras indices %s: %s",
+                 label, sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+        return 0;
+    }
+    return 1;
+}
+
 static int create_performance_indexes()
 {
     int current_version = 0;
@@ -1708,23 +1729,10 @@ static int create_performance_indexes()
                 "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON "
                 "temporada(nombre);",
                 "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON "
-                "notificacion(leida, fecha_hora);",
+                "notificacion(leida, fecha);",
                 NULL
             };
-            int failed = -1;
-            if (!execute_sql_statements(extra_indexes, &failed))
-            {
-                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice extra '%s': %s",
-                         extra_indexes[failed], sqlite3_errmsg(db));
-                app_log_write("ERROR", "DB", log_buf_);
-            }
-            if (!set_user_version(DB_VERSION_ADDITIONAL_INDEXES))
-            {
-                snprintf(log_buf_, sizeof(log_buf_),
-                         "No se pudo actualizar user_version tras indices extra: %s",
-                         sqlite3_errmsg(db));
-                app_log_write("WARN", "DB", log_buf_);
-            }
+            run_index_migration(extra_indexes, DB_VERSION_ADDITIONAL_INDEXES, "extra");
         }
 
         if (current_version < DB_VERSION_PERFORMANCE_INDEXES)
@@ -1741,20 +1749,7 @@ static int create_performance_indexes()
                 "inventario_item(tipo);",
                 NULL
             };
-            int failed = -1;
-            if (!execute_sql_statements(perf_indexes, &failed))
-            {
-                snprintf(log_buf_, sizeof(log_buf_), "Fallo indice perf '%s': %s",
-                         perf_indexes[failed], sqlite3_errmsg(db));
-                app_log_write("ERROR", "DB", log_buf_);
-            }
-            if (!set_user_version(DB_VERSION_CURRENT))
-            {
-                snprintf(log_buf_, sizeof(log_buf_),
-                         "No se pudo actualizar user_version tras indices perf: %s",
-                         sqlite3_errmsg(db));
-                app_log_write("WARN", "DB", log_buf_);
-            }
+            run_index_migration(perf_indexes, DB_VERSION_CURRENT, "rendimiento");
         }
 
         if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)
@@ -1821,7 +1816,7 @@ static int create_performance_indexes()
         "CREATE INDEX IF NOT EXISTS idx_equipo_nombre ON equipo(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_temporada_nombre ON temporada(nombre);",
         "CREATE INDEX IF NOT EXISTS idx_notificacion_leida ON "
-        "notificacion(leida, fecha_hora);",
+        "notificacion(leida, fecha);",
         "CREATE INDEX IF NOT EXISTS idx_camiseta_activa ON camiseta(activa);",
         "CREATE INDEX IF NOT EXISTS idx_cancha_activa ON cancha(activa);",
         "CREATE INDEX IF NOT EXISTS idx_temporada_estado_anio ON "
@@ -1833,21 +1828,9 @@ static int create_performance_indexes()
         NULL
     };
 
-    int failed_index = -1;
-    if (!execute_sql_statements(index_statements, &failed_index))
+    if (!run_index_migration(index_statements, DB_VERSION_CURRENT, "inicial"))
     {
-        snprintf(log_buf_, sizeof(log_buf_), "Fallo creando indice '%s': %s",
-                 index_statements[failed_index], sqlite3_errmsg(db));
-        app_log_write("ERROR", "DB", log_buf_);
         return 0;
-    }
-
-    if (!set_user_version(DB_VERSION_CURRENT))
-    {
-        snprintf(log_buf_, sizeof(log_buf_),
-                 "No se pudo actualizar user_version tras crear indices: %s",
-                 sqlite3_errmsg(db));
-        app_log_write("WARN", "DB", log_buf_);
     }
 
     if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)

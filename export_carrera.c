@@ -463,7 +463,9 @@ void exportar_carrera_all(void)
         return;
     }
 
-    sqlite3_stmt *sid, *shit, *sres;
+    sqlite3_stmt *sid;
+    sqlite3_stmt *shit;
+    sqlite3_stmt *sres;
     if (sqlite3_prepare_v2(db, SQL_IDENTIDAD, -1, &sid, NULL) != SQLITE_OK) return;
     if (sqlite3_prepare_v2(db, SQL_HITOS, -1, &shit, NULL) != SQLITE_OK)
     {

@@ -83,7 +83,8 @@
 	<sys/uio.h>
 	<math.h>
 
-1781133575 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1781144090 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+	"db.h"
 	"export.h"
 	"settings.h"
 	"utils.h"
@@ -151,7 +152,7 @@
 	<io.h>
 	<process.h>
 
-1781133608 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1781139402 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"db.h"
 	"menu.h"
 	"random_utils.h"
@@ -236,7 +237,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1781129942 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1781144603 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"settings.h"
 	"utils.h"
 	<locale.h>
@@ -246,7 +247,6 @@
 	<time.h>
 	<windows.h>
 	"compat_windows.h"
-	"lang.h"
 	"analisis.h"
 	"bienestar.h"
 	"calendario.h"
@@ -259,6 +259,7 @@
 	"equipo.h"
 	"estadisticas.h"
 	"financiamiento.h"
+	"lang.h"
 	"lesion.h"
 	"logros.h"
 	"musica.h"
@@ -2095,7 +2096,7 @@
 
 1762402188 c:\msys64\mingw64\include\curl\typecheck-gcc.h
 
-1780684378 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
+1781144603 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
 1777499252 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
@@ -2115,7 +2116,7 @@
 	<string.h>
 	<time.h>
 
-1781129882 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1781144975 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"backup.h"
 	"busqueda.h"
@@ -2539,7 +2540,7 @@
 
 1776202513 d:\anime\libros\lenguaje c\proyectos\mifutbolc\calendario.h
 
-1781137234 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\calendario.c
+1781139372 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\calendario.c
 	"calendario.h"
 	"db.h"
 	"utils.h"
@@ -2820,7 +2821,7 @@
 	"direct.h"
 	<string.h>
 
-1781137234 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_carrera.c
+1781139196 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_carrera.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -2832,7 +2833,7 @@
 	"direct.h"
 	<string.h>
 
-1781137234 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_colecciones.c
+1781139196 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_colecciones.c
 	"export.h"
 	"db.h"
 	"utils.h"
@@ -3031,7 +3032,7 @@
 	<stdlib.h>
 	<string.h>
 
-1781130387 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
+1781144090 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
 	"lang.h"
 	"cJSON.h"
 	<stdio.h>
@@ -3045,7 +3046,7 @@
 
 1781129297 d:\anime\libros\lenguaje c\proyectos\mifutbolc\tienda.h
 
-1781133665 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\tienda.c
+1781139436 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\tienda.c
 	"tienda.h"
 	"db.h"
 	"menu.h"

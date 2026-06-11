@@ -722,6 +722,7 @@ DEFINE_GET_MENU_TEXT(settings_language, "settings_language")
 DEFINE_GET_MENU_TEXT(show_current, "show_current")
 DEFINE_GET_MENU_TEXT(reset_defaults, "reset_defaults")
 DEFINE_GET_MENU_TEXT(menu_back, "menu_back")
+DEFINE_GET_MENU_TEXT(menu_tiendas, "menu_tiendas")
 
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name,

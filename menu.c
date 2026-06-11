@@ -13,7 +13,6 @@
 #include "compat_windows.h"
 #endif
 #endif
-#include "lang.h"
 #include "analisis.h"
 #include "bienestar.h"
 #include "calendario.h"
@@ -26,6 +25,7 @@
 #include "equipo.h"
 #include "estadisticas.h"
 #include "financiamiento.h"
+#include "lang.h"
 #include "lesion.h"
 #include "logros.h"
 #include "musica.h"
@@ -335,7 +335,7 @@ MenuItem *create_filtered_menu(int *count)
         &get_menu_financiamiento,   &get_menu_torneos,      &get_menu_temporada,
         &get_menu_analisis,         &get_menu_bienestar,    &get_menu_carrera,
         &get_menu_recordatorios,    &get_menu_colecciones,  &get_menu_musica,
-        &get_menu_records_rankings, &get_menu_settings
+        &get_menu_records_rankings, &get_menu_tiendas,      &get_menu_settings
     };
 
     int out = 0;

@@ -1,63 +1,96 @@
 {
-  "exportedAt": "2026-06-07T15:28:38Z",
+  "exportedAt": "2026-06-10T21:53:57Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
-  "total": 5,
+  "total": 8,
   "issues": [
     {
-      "rule": "c:S995",
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal",
+      "file": "calendario.c",
+      "line": 340,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal",
+      "file": "calendario.c",
+      "line": 424,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal",
+      "file": "camiseta.c",
+      "line": 220,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal",
+      "file": "camiseta.c",
+      "line": 296,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal (potentially insecure)",
+      "file": "camiseta.c",
+      "line": 298,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S5281",
+      "severity": "CRITICAL",
+      "message": "format string is not a string literal (potentially insecure)",
+      "file": "camiseta.c",
+      "line": 300,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "10min",
+      "tags": "bad-practice"
+    },
+    {
+      "rule": "c:S886",
       "severity": "MINOR",
-      "message": "Make the type of this parameter a pointer-to-const. The current type of \"va\" is \"char *\".",
-      "file": "tests/unity/unity.c",
-      "line": 2082,
+      "message": "Refactor this loop so that it is less error-prone.",
+      "file": "lang.c",
+      "line": 173,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
-      "effort": "2min",
-      "tags": "bad-practice, misra-c++2008, misra-c2004, misra-c2012"
+      "effort": "10min",
+      "tags": "based-on-misra"
     },
     {
-      "rule": "c:S1172",
-      "severity": "MAJOR",
-      "message": "Remove the unused parameter \"argv\", make it unnamed, or declare it \"[[maybe_unused]]\".",
-      "file": "tests/unity/unity.c",
-      "line": 2405,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "5min",
-      "tags": "based-on-misra, cert, unused"
-    },
-    {
-      "rule": "c:S859",
+      "rule": "c:S3776",
       "severity": "CRITICAL",
-      "message": "cast from 'const char *' to 'char *' drops const qualifier",
-      "file": "tests/unity/unity.c",
-      "line": 2425,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 63 to the 25 allowed.",
+      "file": "tienda.c",
+      "line": 201,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
-      "effort": "20min",
-      "tags": "cert, cppcoreguidelines, misra-c++2008, misra-c2004, misra-c2012, suspicious"
-    },
-    {
-      "rule": "c:S859",
-      "severity": "CRITICAL",
-      "message": "cast from 'const char *' to 'char *' drops const qualifier",
-      "file": "tests/unity/unity.c",
-      "line": 2440,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "20min",
-      "tags": "cert, cppcoreguidelines, misra-c++2008, misra-c2004, misra-c2012, suspicious"
-    },
-    {
-      "rule": "c:S923",
-      "severity": "CRITICAL",
-      "message": "Remove use of ellipsis notation.",
-      "file": "tests/unity/unity.c",
-      "line": 2208,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "30min",
-      "tags": "cert, misra-c++2008, misra-c2004, pitfall"
+      "effort": "43min",
+      "tags": "brain-overload"
     }
   ]
 }

@@ -327,7 +327,9 @@ void exportar_colecciones_all(void)
         return;
     }
 
-    sqlite3_stmt *stmt_colec, *stmt_items, *stmt_inv;
+    sqlite3_stmt *stmt_colec;
+    sqlite3_stmt *stmt_items;
+    sqlite3_stmt *stmt_inv;
     if (sqlite3_prepare_v2(db, SQL_COLECCIONES, -1, &stmt_colec, NULL) != SQLITE_OK) return;
     if (sqlite3_prepare_v2(db, SQL_ITEMS, -1, &stmt_items, NULL) != SQLITE_OK)
     {

@@ -30,18 +30,9 @@ typedef enum
     TEXT_SIZE_LARGE = 2
 } TextSizeType;
 
-typedef enum
-{
-    LANGUAGE_SPANISH = 0,
-    LANGUAGE_ENGLISH = 1
-} LanguageType;
+typedef enum { LANGUAGE_SPANISH = 0, LANGUAGE_ENGLISH = 1 } LanguageType;
 
-typedef enum
-{
-    MODE_SIMPLE = 0,
-    MODE_ADVANCED = 1,
-    MODE_CUSTOM = 2
-} ModeType;
+typedef enum { MODE_SIMPLE = 0, MODE_ADVANCED = 1, MODE_CUSTOM = 2 } ModeType;
 
 // Estructura para almacenar configuración
 typedef struct
@@ -76,7 +67,7 @@ void settings_save();
 /**
  * @brief Obtiene la configuración actual
  */
-AppSettings* settings_get();
+AppSettings *settings_get();
 
 /**
  * @brief Establece el tema de la interfaz
@@ -101,7 +92,7 @@ void settings_apply_theme();
 /**
  * @brief Obtiene el texto correspondiente al idioma actual
  */
-const char* get_text(const char* key);
+const char *get_text(const char *key);
 
 /**
  * @brief Establece el modo de la aplicación
@@ -194,7 +185,8 @@ void settings_set_music_volume_step(float step);
 float settings_get_music_volume_step(void);
 
 /**
- * @brief Habilita o deshabilita la muestra del Dashboard al iniciar la aplicacion.
+ * @brief Habilita o deshabilita la muestra del Dashboard al iniciar la
+ * aplicacion.
  */
 void settings_set_dashboard_enabled(int enabled);
 
@@ -203,39 +195,39 @@ void settings_set_dashboard_enabled(int enabled);
  */
 int settings_get_dashboard_enabled(void);
 
-
 // Funciones wrapper para internacionalización de menús
-const char* get_menu_camisetas();
-const char* get_menu_canchas();
-const char* get_menu_partidos();
-const char* get_menu_equipos();
-const char* get_menu_estadisticas();
-const char* get_menu_logros();
-const char* get_menu_analisis();
-const char* get_menu_bienestar();
-const char* get_menu_lesiones();
-const char* get_menu_financiamiento();
-const char* get_menu_exportar();
-const char* get_menu_importar();
-const char* get_menu_torneos();
-const char* get_menu_temporada();
-const char* get_menu_entrenador_ia();
-const char* get_menu_dashboard();
-const char* get_menu_calendario();
-const char* get_menu_carrera();
-const char* get_menu_recordatorios();
-const char* get_menu_colecciones();
-const char* get_menu_musica();
-const char* get_menu_settings();
-const char* get_menu_records_rankings();
-const char* get_menu_exit();
-const char* get_menu_title();
-const char* get_settings_theme();
-const char* get_settings_language();
-const char* get_menu_usuario();
-const char* get_show_current();
-const char* get_reset_defaults();
-const char* get_menu_back();
+const char *get_menu_camisetas();
+const char *get_menu_canchas();
+const char *get_menu_partidos();
+const char *get_menu_equipos();
+const char *get_menu_estadisticas();
+const char *get_menu_logros();
+const char *get_menu_analisis();
+const char *get_menu_bienestar();
+const char *get_menu_lesiones();
+const char *get_menu_financiamiento();
+const char *get_menu_exportar();
+const char *get_menu_importar();
+const char *get_menu_torneos();
+const char *get_menu_temporada();
+const char *get_menu_entrenador_ia();
+const char *get_menu_dashboard();
+const char *get_menu_calendario();
+const char *get_menu_carrera();
+const char *get_menu_recordatorios();
+const char *get_menu_colecciones();
+const char *get_menu_musica();
+const char *get_menu_settings();
+const char *get_menu_records_rankings();
+const char *get_menu_exit();
+const char *get_menu_title();
+const char *get_settings_theme();
+const char *get_settings_language();
+const char *get_menu_usuario();
+const char *get_show_current();
+const char *get_reset_defaults();
+const char *get_menu_back();
+const char *get_menu_tiendas();
 
 /**
  * @brief Menú para configurar menús personalizados en modo Custom
@@ -245,12 +237,12 @@ void menu_custom_menus();
 /**
  * @brief Verifica si un menú está habilitado en modo Custom
  */
-int is_custom_menu_enabled(const char* menu_name);
+int is_custom_menu_enabled(const char *menu_name);
 
 /**
  * @brief Establece el estado de un menú en modo Custom
  */
-void set_custom_menu_enabled(const char* menu_name, int enabled);
+void set_custom_menu_enabled(const char *menu_name, int enabled);
 
 /**
  * @brief Menú principal de configuración
@@ -259,12 +251,12 @@ void menu_settings();
 
 /**
  * @brief Verifica si hay actualizaciones disponibles de forma silenciosa
- * 
+ *
  * Esta función verifica si hay una nueva versión disponible en GitHub
  * y muestra una notificación discreta si es así.
- * 
- * @param mostrar_mensaje Si es 0, solo verifica sin mostrar nada si está actualizado
- *                        Si es 1, muestra mensaje tanto si hay actualización como si no
+ *
+ * @param mostrar_mensaje Si es 0, solo verifica sin mostrar nada si está
+ * actualizado Si es 1, muestra mensaje tanto si hay actualización como si no
  */
 void verificar_actualizacion_disponible(int mostrar_mensaje);
 
