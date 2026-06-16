@@ -198,7 +198,7 @@ void exportar_recordatorios_json()
         return;
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);

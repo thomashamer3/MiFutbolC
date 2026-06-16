@@ -52,7 +52,8 @@
     "IFNULL(p.dolor_fisico, 0), p.temperatura_c, " \
     "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), " \
     "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), " \
-    "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') " \
+    "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), " \
+    "IFNULL(p.atajaste_todo_el_partido, 1) " \
     "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id " \
     "JOIN cancha can ON p.cancha_id = can.id"
 
@@ -329,6 +330,8 @@ static void imprimir_bloque_base_partido(sqlite3_stmt *stmt,
     ui_printf_centered_line("Tarjeta: %s",
                             tarjeta_to_text(sqlite3_column_int(stmt, 31)));
     ui_printf_centered_line("Goles en contra: %d", sqlite3_column_int(stmt, 32));
+    ui_printf_centered_line("Atajaste todo el partido: %s",
+                            sqlite3_column_int(stmt, 41) == 1 ? "SI" : "NO");
     ui_printf_centered_line("Detalle Goles: %s",
                             stmt_text_or_default(stmt, 39, "N/A"));
     ui_printf_centered_line("Detalle Asistencias: %s",
@@ -1758,6 +1761,7 @@ typedef struct
     int tipo_partido;
     char goles_detalle[512];
     char asistencias_detalle[512];
+    int atajaste_todo_el_partido;
     DatosPartidoFormal formal;
 } DatosPartido;
 
@@ -2028,6 +2032,7 @@ static void inicializar_datos_partido(DatosPartido *datos)
     datos->tipo_partido = 1;
     strcpy_s(datos->goles_detalle, sizeof(datos->goles_detalle), "");
     strcpy_s(datos->asistencias_detalle, sizeof(datos->asistencias_detalle), "");
+    datos->atajaste_todo_el_partido = 1;
     strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
     strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "");
     strcpy_s(datos->formal.formato_partido, sizeof(datos->formal.formato_partido),
@@ -2301,16 +2306,15 @@ static const char *arbitraje_score_to_text(int arbitraje_score)
 
 static const char *tarjeta_to_text(int tarjeta)
 {
-    switch (tarjeta)
+    static const char *lookup[] =
     {
-    case 2:
-        return "Amarilla";
-    case 3:
-        return "Roja";
-    case 1:
-    default:
-        return "No";
-    }
+        [1] = "No",
+        [2] = "Amarilla",
+        [3] = "Roja"
+    };
+    if (tarjeta >= 1 && tarjeta <= 3)
+        return lookup[tarjeta];
+    return "No";
 }
 
 static void mostrar_opciones_clima_partido(void)
@@ -2720,6 +2724,12 @@ static int recopilar_datos_partido_base(DatosPartido *datos,
     datos->dia = 0;
     datos->precio = pedir_entero_minimo("Precio del partido: ", 0,
                                         "Precio invalido. Ingrese 0 o mas: ");
+    printf("Atajaste Todo el Partido:\n");
+    printf("  1) SI\n");
+    printf("  2) NO\n");
+    datos->atajaste_todo_el_partido = pedir_entero_en_rango(
+                                          "Opcion (1-2): ", 1, 2,
+                                          "Opcion invalida. Ingrese 1 (SI) o 2 (NO): ");
     datos->tipo_partido = tipo_partido;
 
     return 1;
@@ -2766,9 +2776,10 @@ static void insertar_partido(long long id, DatosPartido const *datos,
                 "eventos_clave,rating_tecnico,rating_fisico,rating_mental,"
                 "estado_cancha,goles_equipo,goles_rival,formato_partido,tarjeta,"
                 "goles_en_contra,dolor_fisico,temperatura_c,arbitraje_score,lo_mejor,"
-                "que_mejorar,tags,goles_detalle,asistencias_detalle)"
+                "que_mejorar,tags,goles_detalle,asistencias_detalle,"
+                "atajaste_todo_el_partido)"
                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?"
-                ",?,?,?,?,?,?,?,?,?,?,?)",
+                ",?,?,?,?,?,?,?,?,?,?,?,?)",
                 &stmt))
     {
         printf("Error al preparar insercion de partido: %s\n", sqlite3_errmsg(db));
@@ -2840,6 +2851,7 @@ static void insertar_partido(long long id, DatosPartido const *datos,
     sqlite3_bind_text(stmt, 40, datos->formal.notas.tags, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 41, datos->goles_detalle, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 42, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 43, datos->atajaste_todo_el_partido);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -4031,6 +4043,12 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
     datos->dia = pedir_entero_en_rango("Nuevo dia (1-6): ", 1, 6,
                                        "Dia invalido. Ingrese entre 1 y 6: ");
     datos->precio = input_int("Nuevo precio del partido: ");
+    printf("Atajaste Todo el Partido:\n");
+    printf("  1) SI\n");
+    printf("  2) NO\n");
+    datos->atajaste_todo_el_partido = pedir_entero_en_rango(
+                                          "Opcion (1-2): ", 1, 2,
+                                          "Opcion invalida. Ingrese 1 (SI) o 2 (NO): ");
 
     return 1;
 }
@@ -4042,7 +4060,8 @@ static void actualizar_partido_completo(DatosPartido const *datos,
     if (!preparar_stmt("UPDATE partido "
                        "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, "
                        "camiseta_id=?, resultado=?, clima=?, dia=?, precio=?, "
-                       "goles_detalle=?, asistencias_detalle=? "
+                       "goles_detalle=?, asistencias_detalle=?, "
+                       "atajaste_todo_el_partido=? "
                        "WHERE id=?",
                        &stmt))
     {
@@ -4064,10 +4083,18 @@ static void actualizar_partido_completo(DatosPartido const *datos,
     sqlite3_bind_int(stmt, 9, datos->precio);
     sqlite3_bind_text(stmt, 10, datos->goles_detalle, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 11, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 12, current_partido_id);
+    sqlite3_bind_int(stmt, 12, datos->atajaste_todo_el_partido);
+    sqlite3_bind_int(stmt, 13, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     mostrar_alerta_operacion("Partido", "Modificado", NULL);
+}
+
+static void modificar_atajaste_partido()
+{
+    modificar_campo_partido("atajaste_todo_el_partido",
+                            "Atajaste todo el partido (1=SI, 2=NO): ",
+                            "Atajaste todo el partido modificado", 1, 2, NULL);
 }
 
 static void modificar_todo_partido()
@@ -4126,11 +4153,12 @@ void modificar_partido()
             &menu_modificar_rendimiento_y_estado_partido
         },
         {12, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
-        {13, "Modificar Todo", modificar_todo_partido},
+        {13, "Atajaste Todo el Partido", modificar_atajaste_partido},
+        {14, "Modificar Todo", modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR PARTIDO", items, 14);
+    ejecutar_menu("MODIFICAR PARTIDO", items, 15);
 }
 
 static void buscar_por_camiseta()
@@ -4192,7 +4220,8 @@ static void buscar_por_tag()
                 "IFNULL(p.dolor_fisico, 0), p.temperatura_c, "
                 "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), "
                 "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
-                "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, '') "
+                "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), "
+                "IFNULL(p.atajaste_todo_el_partido, 1) "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                 "JOIN cancha can ON p.cancha_id = can.id "
                 "WHERE LOWER(IFNULL(p.tags, '')) LIKE LOWER(?) "

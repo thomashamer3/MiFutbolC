@@ -102,7 +102,7 @@ static void write_lesiones_json(FILE *file)
         cJSON_AddItemToArray(root, item);
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_string);
 
     free(json_string);
@@ -163,7 +163,7 @@ static void write_lesiones_json_rows(FILE *f, sqlite3_stmt *stmt)
         export_json_add_lesion_base_fields(item, stmt);
         cJSON_AddItemToArray(root, item);
     }
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);

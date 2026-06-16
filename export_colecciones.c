@@ -201,7 +201,7 @@ void exportar_colecciones_json()
         return;
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
@@ -371,7 +371,7 @@ void exportar_colecciones_all(void)
     f = abrir_archivo_exportacion("colecciones.json", "Error JSON");
     if (f)
     {
-        char *json_str = cJSON_Print(root);
+        char *json_str = cJSON_PrintUnformatted(root);
         fprintf(f, "%s", json_str);
         free(json_str);
         fclose(f);

@@ -1515,6 +1515,32 @@ static int utf8_to_utf32(const char *utf8, int len, uint32_t *utf32)
     return len;
 }
 
+struct UnicodeWinAnsi
+{
+    uint32_t unicode;
+    uint8_t winansi;
+};
+
+static int unicode_compare(const void *a, const void *b)
+{
+    uint32_t ua = ((const struct UnicodeWinAnsi *)a)->unicode;
+    uint32_t ub = ((const struct UnicodeWinAnsi *)b)->unicode;
+    if (ua < ub) return -1;
+    if (ua > ub) return 1;
+    return 0;
+}
+
+static const struct UnicodeWinAnsi unicode_to_winansi[] =
+{
+    {0x152, 0214}, {0x153, 0234}, {0x160, 0212}, {0x161, 0232},
+    {0x178, 0237}, {0x17d, 0216}, {0x17e, 0236}, {0x192, 0203},
+    {0x2c6, 0210}, {0x2dc, 0230}, {0x2013, 0226}, {0x2014, 0227},
+    {0x2018, 0221}, {0x2019, 0222}, {0x201a, 0202}, {0x201c, 0223},
+    {0x201d, 0224}, {0x201e, 0204}, {0x2020, 0206}, {0x2021, 0207},
+    {0x2022, 0225}, {0x2026, 0205}, {0x2030, 0211}, {0x2039, 0213},
+    {0x203a, 0233}, {0x20ac, 0200}, {0x2122, 0231}
+};
+
 static int utf8_to_pdfencoding(struct pdf_doc *pdf, const char *utf8, int len,
                                uint8_t *res)
 {
@@ -1531,94 +1557,16 @@ static int utf8_to_pdfencoding(struct pdf_doc *pdf, const char *utf8, int len,
 
     if (code > 255)
     {
-        /* We support *some* minimal UTF-8 characters */
-        // See Appendix D of
-        // https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf
-        // These are all in WinAnsiEncoding
-        switch (code)
+        struct UnicodeWinAnsi key = {.unicode = code};
+        const struct UnicodeWinAnsi *found = bsearch(&key, unicode_to_winansi,
+                                             sizeof(unicode_to_winansi) / sizeof(unicode_to_winansi[0]),
+                                             sizeof(unicode_to_winansi[0]), unicode_compare);
+        if (found)
         {
-        case 0x152: // Latin Capital Ligature OE
-            *res = 0214;
-            break;
-        case 0x153: // Latin Small Ligature oe
-            *res = 0234;
-            break;
-        case 0x160: // Latin Capital Letter S with caron
-            *res = 0212;
-            break;
-        case 0x161: // Latin Small Letter S with caron
-            *res = 0232;
-            break;
-        case 0x178: // Latin Capital Letter y with diaeresis
-            *res = 0237;
-            break;
-        case 0x17d: // Latin Capital Letter Z with caron
-            *res = 0216;
-            break;
-        case 0x17e: // Latin Small Letter Z with caron
-            *res = 0236;
-            break;
-        case 0x192: // Latin Small Letter F with hook
-            *res = 0203;
-            break;
-        case 0x2c6: // Modifier Letter Circumflex Accent
-            *res = 0210;
-            break;
-        case 0x2dc: // Small Tilde
-            *res = 0230;
-            break;
-        case 0x2013: // Endash
-            *res = 0226;
-            break;
-        case 0x2014: // Emdash
-            *res = 0227;
-            break;
-        case 0x2018: // Left Single Quote
-            *res = 0221;
-            break;
-        case 0x2019: // Right Single Quote
-            *res = 0222;
-            break;
-        case 0x201a: // Single low-9 Quotation Mark
-            *res = 0202;
-            break;
-        case 0x201c: // Left Double Quote
-            *res = 0223;
-            break;
-        case 0x201d: // Right Double Quote
-            *res = 0224;
-            break;
-        case 0x201e: // Double low-9 Quotation Mark
-            *res = 0204;
-            break;
-        case 0x2020: // Dagger
-            *res = 0206;
-            break;
-        case 0x2021: // Double Dagger
-            *res = 0207;
-            break;
-        case 0x2022: // Bullet
-            *res = 0225;
-            break;
-        case 0x2026: // Horizontal Ellipsis
-            *res = 0205;
-            break;
-        case 0x2030: // Per Mille Sign
-            *res = 0211;
-            break;
-        case 0x2039: // Single Left-pointing Angle Quotation Mark
-            *res = 0213;
-            break;
-        case 0x203a: // Single Right-pointing Angle Quotation Mark
-            *res = 0233;
-            break;
-        case 0x20ac: // Euro
-            *res = 0200;
-            break;
-        case 0x2122: // Trade Mark Sign
-            *res = 0231;
-            break;
-        default:
+            *res = found->winansi;
+        }
+        else
+        {
             return pdf_set_err(pdf, -EINVAL,
                                "Unsupported UTF-8 character: 0x%x 0o%o %s",
                                code, code, utf8);

@@ -216,7 +216,7 @@ static void write_json_content(FILE *f, const EventoCalendario *eventos, int tot
         cJSON_AddNumberToObject(item, "id", (double)eventos[i].id_origen);
         cJSON_AddItemToArray(root, item);
     }
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);

@@ -717,7 +717,8 @@ enum
     DB_VERSION_CANCHA_GRABACION = 6,
     DB_VERSION_ADDITIONAL_INDEXES = 7,
     DB_VERSION_PERFORMANCE_INDEXES = 8,
-    DB_VERSION_CURRENT = 8
+    DB_VERSION_PARTIDO_ATAJASTE = 9,
+    DB_VERSION_CURRENT = 9
 };
 
 static int get_user_version(int *out_version)
@@ -884,6 +885,7 @@ static void backfill_mes_anio_once(void)
 #define COL_PARTIDO_TAGS "tags TEXT DEFAULT ''"
 #define COL_PARTIDO_GOLES_DETALLE "goles_detalle TEXT DEFAULT ''"
 #define COL_PARTIDO_ASISTENCIAS_DETALLE "asistencias_detalle TEXT DEFAULT ''"
+#define COL_PARTIDO_ATAJASTE_TODO "atajaste_todo_el_partido INTEGER DEFAULT 1"
 
 static int create_database_schema()
 {
@@ -1020,6 +1022,7 @@ static int create_database_schema()
         " " COL_PARTIDO_TAGS ","
         " " COL_PARTIDO_GOLES_DETALLE ","
         " " COL_PARTIDO_ASISTENCIAS_DETALLE ","
+        " " COL_PARTIDO_ATAJASTE_TODO ","
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
@@ -1630,6 +1633,7 @@ static void add_partido_columns(void)
         "ALTER TABLE usuario ADD COLUMN password_salt TEXT DEFAULT '';",
         "ALTER TABLE usuario ADD COLUMN password_hash TEXT DEFAULT '';",
         "ALTER TABLE partido ADD COLUMN mes_anio TEXT DEFAULT '';",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_ATAJASTE_TODO ";",
         NULL
     };
     ejecutar_alter_table_group(alter_statements, "partido");
@@ -1667,6 +1671,8 @@ static void add_missing_columns()
         add_partido_columns();
     if (current_version < DB_VERSION_CANCHA_GRABACION)
         add_cancha_columns();
+    if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
+        add_partido_columns();
 }
 
 static int drop_legacy_mes_anio_triggers(void)
@@ -1749,7 +1755,12 @@ static int create_performance_indexes()
                 "inventario_item(tipo);",
                 NULL
             };
-            run_index_migration(perf_indexes, DB_VERSION_CURRENT, "rendimiento");
+            run_index_migration(perf_indexes, DB_VERSION_PERFORMANCE_INDEXES, "rendimiento");
+        }
+
+        if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
+        {
+            run_index_migration(NULL, DB_VERSION_CURRENT, "atajaste");
         }
 
         if (sqlite3_exec(db, "PRAGMA optimize;", NULL, NULL, NULL) != SQLITE_OK)

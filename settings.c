@@ -1,5 +1,6 @@
 
 #include "settings.h"
+#include "atajos.h"
 #include "backup.h"
 #include "busqueda.h"
 #include "cJSON.h"
@@ -323,6 +324,7 @@ static void settings_prompt_mode_selection(void)
         menu_custom_menus();
         break;
     case 0:
+        finalizar_atajos();
         db_close();
         exit(0);
     default:

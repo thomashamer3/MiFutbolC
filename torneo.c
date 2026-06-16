@@ -101,33 +101,24 @@ const char* get_nombre_tipo_torneo(TipoTorneos tipo)
 
 const char* get_nombre_formato_torneo(FormatoTorneos formato)
 {
-    switch (formato)
+    static const char *formatos[] =
     {
-    case ROUND_ROBIN:
-        return "Round-robin (sistema liga)";
-    case MINI_GRUPO_CON_FINAL:
-        return "Mini grupo con final";
-    case LIGA_SIMPLE:
-        return "Liga simple";
-    case LIGA_DOBLE:
-        return "Liga doble";
-    case GRUPOS_CON_FINAL:
-        return "Grupos + final";
-    case COPA_SIMPLE:
-        return "Copa simple";
-    case GRUPOS_ELIMINACION:
-        return "Grupos + eliminacion";
-    case COPA_REPECHAJE:
-        return "Copa + repechaje";
-    case LIGA_GRANDE:
-        return "Liga grande";
-    case MULTIPLES_GRUPOS:
-        return "Multiples grupos";
-    case ELIMINACION_FASES:
-        return "Eliminacion directa por fases";
-    default:
-        return "Desconocido";
-    }
+        "Round-robin (sistema liga)",
+        "Mini grupo con final",
+        "Liga simple",
+        "Liga doble",
+        "Grupos + final",
+        "Copa simple",
+        "Grupos + eliminacion",
+        "Copa + repechaje",
+        "Liga grande",
+        "Multiples grupos",
+        "Eliminacion directa por fases"
+    };
+    int idx = (int)formato;
+    if (idx >= 0 && idx < (int)(sizeof(formatos) / sizeof(formatos[0])))
+        return formatos[idx];
+    return "Desconocido";
 }
 
 static int listar_torneos_generico(const char *no_records_msg)

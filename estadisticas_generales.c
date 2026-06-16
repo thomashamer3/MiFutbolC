@@ -40,27 +40,6 @@ static size_t estadisticas_generales_strnlen_seguro(const char *texto,
 #endif
 }
 
-static const char *get_clima_case_sql()
-{
-    return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' "
-           "WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN "
-           "clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' WHEN "
-           "clima = 7 THEN 'Frio' WHEN clima = 8 THEN 'Calor' WHEN clima = 9 "
-           "THEN 'Llovizna leve' WHEN clima = 10 THEN 'Lluvia Moderada' WHEN "
-           "clima = 11 THEN 'Lluvia fuerte' WHEN clima = 12 THEN 'Cancha "
-           "inundada' END";
-}
-
-static const char *get_nivel_case_sql(const char *columna)
-{
-    static char sql[256];
-    snprintf(sql, sizeof(sql),
-             "CASE WHEN %s <= 3 THEN 'Bajo (1-3)' WHEN %s <= 7 THEN 'Medio "
-             "(4-7)' ELSE 'Alto (8-10)' END",
-             columna, columna);
-    return sql;
-}
-
 static void mostrar_por_dia_semana(const char *titulo, const char *columna,
                                    const char *order_by, int limit)
 {

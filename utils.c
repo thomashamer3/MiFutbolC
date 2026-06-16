@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "ascii_art.h"
+#include "atajos.h"
 #include "cJSON.h"
 #include "db.h"
 #include "export.h"
@@ -1473,6 +1474,7 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         {ASCII_TORNEOS, "TORNEOS", NULL},
         {ASCII_AJUSTES, "AJUSTES", "SETTINGS"},
         {ASCII_TEMPORADA, "TEMPORADA", "SEASON"},
+        {ASCII_TIENDAS, "TIENDAS", NULL},
         {ASCII_RECORDATORIOS, "RECORDATORIOS", NULL},
         {ASCII_COLECCIONES, "COLECCIONES", NULL},
         {ASCII_ENTRENADOR_IA, "ENTRENADOR IA", NULL},
@@ -2591,6 +2593,7 @@ static void eliminar_mi_cuenta_local()
 
     auth_get_user_data_paths(username, user_db_path, sizeof(user_db_path),
                              user_log_path, sizeof(user_log_path));
+    finalizar_atajos();
     db_close();
     remove(user_db_path);
     remove(user_log_path);
@@ -2835,17 +2838,15 @@ void sanitizar_ascii_basico(const char *src, char *dst, size_t dst_size)
  */
 const char *resultado_to_text(int resultado)
 {
-    switch (resultado)
+    static const char *lookup[] =
     {
-    case 1:
-        return "VICTORIA";
-    case 2:
-        return "EMPATE";
-    case 3:
-        return "DERROTA";
-    default:
-        return "DESCONOCIDO";
-    }
+        [1] = "VICTORIA",
+        [2] = "EMPATE",
+        [3] = "DERROTA"
+    };
+    if (resultado >= 1 && resultado <= 3)
+        return lookup[resultado];
+    return "DESCONOCIDO";
 }
 
 /**
@@ -2884,23 +2885,52 @@ const char *clima_to_text(int clima)
  */
 const char *dia_to_text(int dia)
 {
-    switch (dia)
+    static const char *lookup[] =
     {
-    case 1:
-        return "Madrugada";
-    case 2:
-        return "Manana";
-    case 3:
-        return "Mediodia";
-    case 4:
-        return "Tarde";
-    case 5:
-        return "Atardecer";
-    case 6:
-        return "Noche";
-    default:
-        return "DESCONOCIDO";
-    }
+        [1] = "Madrugada",
+        [2] = "Manana",
+        [3] = "Mediodia",
+        [4] = "Tarde",
+        [5] = "Atardecer",
+        [6] = "Noche"
+    };
+    if (dia >= 1 && dia <= 6)
+        return lookup[dia];
+    return "DESCONOCIDO";
+}
+
+const char *get_clima_case_sql(void)
+{
+    return "CASE WHEN clima = 1 THEN 'Despejado' WHEN clima = 2 THEN 'Nublado' "
+           "WHEN clima = 3 THEN 'Lluvia' WHEN clima = 4 THEN 'Ventoso' WHEN "
+           "clima = 5 THEN 'Mucho Calor' WHEN clima = 6 THEN 'Mucho Frio' WHEN "
+           "clima = 7 THEN 'Frio' WHEN clima = 8 THEN 'Calor' WHEN clima = 9 "
+           "THEN 'Llovizna leve' WHEN clima = 10 THEN 'Lluvia Moderada' WHEN "
+           "clima = 11 THEN 'Lluvia fuerte' WHEN clima = 12 THEN 'Cancha "
+           "inundada' END";
+}
+
+const char *get_nivel_case_sql(const char *columna)
+{
+    static char sql[256];
+    snprintf(sql, sizeof(sql),
+             "CASE WHEN %s <= 3 THEN 'Bajo (1-3)' WHEN %s <= 7 THEN 'Medio "
+             "(4-7)' ELSE 'Alto (8-10)' END",
+             columna, columna);
+    return sql;
+}
+
+const char *get_dolor_fisico_case_sql(void)
+{
+    return "CASE dolor_fisico WHEN 0 THEN '0 Ninguna' WHEN 1 THEN '1 Leve' "
+           "WHEN 2 THEN '2 Moderada' WHEN 3 THEN '3 Fuerte' ELSE 'Sin dato' END";
+}
+
+const char *get_arbitraje_case_sql(void)
+{
+    return "CASE arbitraje_score WHEN 1 THEN '1 Muy malo' WHEN 2 THEN '2 Regular' "
+           "WHEN 3 THEN '3 Normal' WHEN 4 THEN '4 Bueno' WHEN 5 THEN '5 Excelente' "
+           "ELSE 'Sin dato' END";
 }
 
 /**
@@ -3212,14 +3242,14 @@ static char *get_trimmed_cancha_from_stmt(sqlite3_stmt *stmt)
 void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
-    fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s\n", cancha_trimmed,
+    fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%d\n", cancha_trimmed,
             sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
             sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
             resultado_to_text(sqlite3_column_int(stmt, 5)),
             clima_to_text(sqlite3_column_int(stmt, 6)),
             dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
             sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_text(stmt, 11));
+            sqlite3_column_text(stmt, 11), sqlite3_column_int(stmt, 12));
     free(cancha_trimmed);
 }
 
@@ -3228,7 +3258,7 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
     fprintf(f,
             "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d "
-            "| %s\n",
+            "| Atajaste:%s | %s\n",
             cancha_trimmed, sqlite3_column_text(stmt, 1),
             sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
             sqlite3_column_text(stmt, 4),
@@ -3236,6 +3266,7 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
             clima_to_text(sqlite3_column_int(stmt, 6)),
             dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
             sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+            sqlite3_column_int(stmt, 12) == 1 ? "SI" : "NO",
             sqlite3_column_text(stmt, 11));
     free(cancha_trimmed);
 }
@@ -3263,6 +3294,8 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
     cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
     cJSON_AddStringToObject(item, "comentario_personal",
                             (const char *)sqlite3_column_text(stmt, 11));
+    cJSON_AddNumberToObject(item, "atajaste_todo_el_partido",
+                            sqlite3_column_int(stmt, 12));
 
     free(cancha_trimmed);
 }
@@ -3273,7 +3306,7 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
     fprintf(f,
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</"
             "td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</"
-            "td></tr>",
+            "td><td>%s</td></tr>",
             cancha_trimmed, sqlite3_column_text(stmt, 1),
             sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
             sqlite3_column_text(stmt, 4),
@@ -3281,7 +3314,8 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
             clima_to_text(sqlite3_column_int(stmt, 6)),
             dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
             sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_text(stmt, 11));
+            sqlite3_column_text(stmt, 11),
+            sqlite3_column_int(stmt, 12) == 1 ? "SI" : "NO");
     free(cancha_trimmed);
 }
 

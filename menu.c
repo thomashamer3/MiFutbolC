@@ -373,7 +373,6 @@ void run_menu(MenuItem *filtered_items, int count)
 {
     ejecutar_menu(get_text("menu_title"), filtered_items, count);
     free(filtered_items);
-    db_close();
 }
 
 static const char *menu_safe_title(const char *titulo)

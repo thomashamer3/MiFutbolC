@@ -1,3 +1,4 @@
+#include "db.h"
 #include "menu.h"
 #include "utils.h"
 #include "settings.h"
@@ -124,9 +125,11 @@ int main()
     MenuItem* filtered_items = create_filtered_menu(&count);
 
     run_menu(filtered_items, count);
-    
+
     // Finalizar sistema de atajos de teclado
     finalizar_atajos();
 
+    app_log_event("APP", "Aplicacion finalizada");
+    db_close();
     return 0;
 }

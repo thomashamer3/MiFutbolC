@@ -1847,6 +1847,32 @@ enum
     TAM_VALOR_OPCION_CANCHA = 200
 };
 
+struct CanchaTextoDesc
+{
+    int opcion;
+    const char *campo;
+    void (*prompt)(const char *, char *, int);
+    const char *mensaje;
+    void (*post)(char *);
+};
+
+static int cancha_texto_compare(const void *a, const void *b)
+{
+    return ((const struct CanchaTextoDesc *)a)->opcion -
+           ((const struct CanchaTextoDesc *)b)->opcion;
+}
+
+static const struct CanchaTextoDesc cancha_texto_campos[] =
+{
+    {1,  "nombre",       solicitar_nombre_cancha,    "Nuevo nombre: ",                              NULL},
+    {2,  "telefono",     solicitar_telefono_no_vacio,"Nuevo numero de telefono: ",                  NULL},
+    {3,  "direccion",    solicitar_campo_no_vacio,   "Nueva direccion: ",                           NULL},
+    {4,  "localidad",    solicitar_campo_no_vacio,   "Nueva localidad/zona: ",                      NULL},
+    {18, "estado",       solicitar_campo_no_vacio,   "Estado (ej: habilitada, en mantenimiento): ", NULL},
+    {19, "descripcion",  input_string,               "Descripcion breve: ",                         trim_whitespace},
+    {20, "contacto_alt", solicitar_campo_no_vacio,   "Nuevo contacto alternativo: ",                NULL}
+};
+
 static int solicitar_texto_y_campo_cancha(int opcion, char *valor, const char **campo)
 {
     if (!valor || !campo)
@@ -1854,40 +1880,19 @@ static int solicitar_texto_y_campo_cancha(int opcion, char *valor, const char **
         return 0;
     }
 
-    switch (opcion)
-    {
-    case 1:
-        solicitar_nombre_cancha("Nuevo nombre: ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "nombre";
-        return 1;
-    case 2:
-        solicitar_telefono_no_vacio("Nuevo numero de telefono: ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "telefono";
-        return 1;
-    case 3:
-        solicitar_campo_no_vacio("Nueva direccion: ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "direccion";
-        return 1;
-    case 4:
-        solicitar_campo_no_vacio("Nueva localidad/zona: ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "localidad";
-        return 1;
-    case 18:
-        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "estado";
-        return 1;
-    case 19:
-        input_string("Descripcion breve: ", valor, TAM_VALOR_OPCION_CANCHA);
-        trim_whitespace(valor);
-        *campo = "descripcion";
-        return 1;
-    case 20:
-        solicitar_campo_no_vacio("Nuevo contacto alternativo: ", valor, TAM_VALOR_OPCION_CANCHA);
-        *campo = "contacto_alt";
-        return 1;
-    default:
+    struct CanchaTextoDesc key = {.opcion = opcion};
+    const struct CanchaTextoDesc *found = bsearch(&key, cancha_texto_campos,
+                                          sizeof(cancha_texto_campos) / sizeof(cancha_texto_campos[0]),
+                                          sizeof(cancha_texto_campos[0]), cancha_texto_compare);
+
+    if (!found)
         return 0;
-    }
+
+    found->prompt(found->mensaje, valor, TAM_VALOR_OPCION_CANCHA);
+    if (found->post)
+        found->post(valor);
+    *campo = found->campo;
+    return 1;
 }
 
 static int procesar_opcion_texto_cancha(int id, int opcion, int *actualizado)

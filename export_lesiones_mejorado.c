@@ -148,7 +148,7 @@ static void write_lesiones_json(FILE *file)
         cJSON_AddItemToArray(root, item);
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_string);
 
     free(json_string);

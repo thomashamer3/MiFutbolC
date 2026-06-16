@@ -1,19 +1,19 @@
 ﻿{
-    "exportedAt":  "2026-06-10T21:54:09Z",
+    "exportedAt":  "2026-06-11T00:54:20Z",
     "project":  "thomashamer3_MiFutbolC",
     "summary":  {
-                    "total_lines":  71970,
-                    "duplicated_lines":  1316,
-                    "duplicated_lines_density":  "1.5",
-                    "duplicated_blocks":  42,
-                    "duplicated_files":  18
+                    "total_lines":  72159,
+                    "duplicated_lines":  1276,
+                    "duplicated_lines_density":  "1.4",
+                    "duplicated_blocks":  40,
+                    "duplicated_files":  17
                 },
     "files":  [
                   {
                       "file":  "db.c",
-                      "ncloc":  2161,
+                      "ncloc":  2145,
                       "duplicated_lines":  483,
-                      "duplicated_lines_density":  "19.5",
+                      "duplicated_lines_density":  "19.7",
                       "duplicated_blocks":  2
                   },
                   {
@@ -32,9 +32,9 @@
                   },
                   {
                       "file":  "tienda.c",
-                      "ncloc":  401,
+                      "ncloc":  405,
                       "duplicated_lines":  68,
-                      "duplicated_lines_density":  "14.6",
+                      "duplicated_lines_density":  "14.5",
                       "duplicated_blocks":  2
                   },
                   {
@@ -63,13 +63,6 @@
                       "ncloc":  3163,
                       "duplicated_lines":  40,
                       "duplicated_lines_density":  "1.1",
-                      "duplicated_blocks":  2
-                  },
-                  {
-                      "file":  "lang.c",
-                      "ncloc":  217,
-                      "duplicated_lines":  40,
-                      "duplicated_lines_density":  "16.3",
                       "duplicated_blocks":  2
                   },
                   {
@@ -115,17 +108,17 @@
                       "duplicated_blocks":  2
                   },
                   {
-                      "file":  "export_dashboard.c",
-                      "ncloc":  124,
-                      "duplicated_lines":  22,
-                      "duplicated_lines_density":  "15.0",
-                      "duplicated_blocks":  2
-                  },
-                  {
                       "file":  "temporada.c",
                       "ncloc":  1500,
                       "duplicated_lines":  22,
                       "duplicated_lines_density":  "1.2",
+                      "duplicated_blocks":  2
+                  },
+                  {
+                      "file":  "export_dashboard.c",
+                      "ncloc":  124,
+                      "duplicated_lines":  22,
+                      "duplicated_lines_density":  "15.0",
                       "duplicated_blocks":  2
                   },
                   {
@@ -136,8 +129,50 @@
                       "duplicated_blocks":  1
                   },
                   {
+                      "file":  "lang.h",
+                      "ncloc":  10,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "logros.c",
+                      "ncloc":  512,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "logros.h",
+                      "ncloc":  10,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
                       "file":  "lesion.h",
                       "ncloc":  11,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "lesion.c",
+                      "ncloc":  559,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "musica.c",
+                      "ncloc":  2340,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "models.h",
+                      "ncloc":  10,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -150,8 +185,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "musica.c",
-                      "ncloc":  2340,
+                      "file":  "musica_helpers.h",
+                      "ncloc":  10,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -165,35 +200,14 @@
                   },
                   {
                       "file":  "maintainability-open.json",
-                      "ncloc":  63,
+                      "ncloc":  96,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "lang.h",
-                      "ncloc":  10,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "lesion.c",
-                      "ncloc":  559,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "logros.h",
-                      "ncloc":  10,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "menu.c",
-                      "ncloc":  409,
+                      "file":  "main.c",
+                      "ncloc":  103,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -213,22 +227,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "logros.c",
-                      "ncloc":  512,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "main.c",
-                      "ncloc":  103,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "models.h",
-                      "ncloc":  10,
+                      "file":  "menu.c",
+                      "ncloc":  409,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -297,22 +297,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "install.ps1",
-                      "ncloc":  161,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "Instalador-Linux.sh",
-                      "ncloc":  0,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "jugador_perfil.h",
-                      "ncloc":  4,
+                      "file":  "formaciones.h",
+                      "ncloc":  8,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -325,29 +311,29 @@
                       "duplicated_blocks":  0
                   },
                   {
+                      "file":  "install.ps1",
+                      "ncloc":  161,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "lang.c",
+                      "ncloc":  242,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "jugador_perfil.h",
+                      "ncloc":  4,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
                       "file":  "export_records_rankings.c",
                       "ncloc":  396,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "import.c",
-                      "ncloc":  1818,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "formaciones.h",
-                      "ncloc":  8,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "index.html",
-                      "ncloc":  107,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -360,14 +346,77 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "musica_helpers.h",
-                      "ncloc":  10,
+                      "file":  "import.c",
+                      "ncloc":  1818,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "Instalador-Linux.sh",
+                      "ncloc":  0,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "index.html",
+                      "ncloc":  107,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "tests/test_partido.c",
+                      "ncloc":  60,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
                   },
                   {
                       "file":  "tests/test_lesion.c",
+                      "ncloc":  61,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "tests/test_temporada.c",
+                      "ncloc":  81,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "tests/test_utils.c",
+                      "ncloc":  197,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "tests/test_torneo.c",
+                      "ncloc":  96,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "temporada.h",
+                      "ncloc":  120,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "assets/style.css",
+                      "ncloc":  411,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "tests/test_camiseta.c",
                       "ncloc":  61,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
@@ -381,71 +430,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "tests/test_partido.c",
-                      "ncloc":  60,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "tests/test_torneo.c",
-                      "ncloc":  96,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "tests/test_temporada.c",
-                      "ncloc":  81,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "assets/style.css",
-                      "ncloc":  411,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "sqlite3_exports.c",
-                      "ncloc":  5,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "temporada.h",
-                      "ncloc":  120,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
                       "file":  "tests/test_cancha.c",
                       "ncloc":  60,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "tests/test_camiseta.c",
-                      "ncloc":  61,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "tests/unity/unity.h",
-                      "ncloc":  533,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "undo.h",
-                      "ncloc":  32,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -458,8 +444,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "utils.h",
-                      "ncloc":  143,
+                      "file":  "tests/unity/unity.h",
+                      "ncloc":  533,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -472,15 +458,15 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "assets/theme.js",
-                      "ncloc":  78,
+                      "file":  "version.h",
+                      "ncloc":  18,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "tests/test_utils.c",
-                      "ncloc":  197,
+                      "file":  "utils.h",
+                      "ncloc":  143,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -493,8 +479,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "undo.c",
-                      "ncloc":  704,
+                      "file":  "assets/theme.js",
+                      "ncloc":  78,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -502,6 +488,27 @@
                   {
                       "file":  "torneo.h",
                       "ncloc":  65,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "undo.h",
+                      "ncloc":  32,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "undo.c",
+                      "ncloc":  704,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "sqlite3_exports.c",
+                      "ncloc":  5,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -592,7 +599,7 @@
                   },
                   {
                       "file":  "settings.c",
-                      "ncloc":  1555,
+                      "ncloc":  1556,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -606,7 +613,7 @@
                   },
                   {
                       "file":  "settings.h",
-                      "ncloc":  112,
+                      "ncloc":  104,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -654,57 +661,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "db_integridad.c",
-                      "ncloc":  262,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
                       "file":  "db.h",
                       "ncloc":  30,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "db_integridad.h",
-                      "ncloc":  10,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "duplications.json",
-                      "ncloc":  1175,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "direct.h",
-                      "ncloc":  13,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "compat_port.h",
-                      "ncloc":  223,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "colecciones.h",
-                      "ncloc":  4,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "compat_windows.h",
-                      "ncloc":  98,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -717,6 +675,48 @@
                       "duplicated_blocks":  0
                   },
                   {
+                      "file":  "db_integridad.c",
+                      "ncloc":  262,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "direct.h",
+                      "ncloc":  13,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "db_integridad.h",
+                      "ncloc":  10,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "colecciones.h",
+                      "ncloc":  4,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "colecciones.c",
+                      "ncloc":  1247,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "compat_port.h",
+                      "ncloc":  223,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
                       "file":  "dashboard.c",
                       "ncloc":  268,
                       "duplicated_lines":  0,
@@ -724,8 +724,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "estadisticas.h",
-                      "ncloc":  9,
+                      "file":  "compat_windows.h",
+                      "ncloc":  98,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -738,15 +738,15 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "estadisticas_anio.c",
-                      "ncloc":  67,
+                      "file":  "langs/es.json",
+                      "ncloc":  840,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "estadisticas_generales.c",
-                      "ncloc":  599,
+                      "file":  "estadisticas.h",
+                      "ncloc":  9,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -759,8 +759,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "entrenador_ia.h",
-                      "ncloc":  66,
+                      "file":  "estadisticas_anio.c",
+                      "ncloc":  67,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -773,15 +773,15 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "equipo.c",
-                      "ncloc":  2224,
+                      "file":  "duplications.json",
+                      "ncloc":  1217,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "langs/es.json",
-                      "ncloc":  840,
+                      "file":  "entrenador_ia.h",
+                      "ncloc":  66,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -789,6 +789,13 @@
                   {
                       "file":  "equipo.h",
                       "ncloc":  50,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "equipo.c",
+                      "ncloc":  2224,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -815,8 +822,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "bienestar.h",
-                      "ncloc":  4,
+                      "file":  "benchmark_export.c",
+                      "ncloc":  86,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -864,57 +871,8 @@
                       "duplicated_blocks":  0
                   },
                   {
-                      "file":  "cancha.h",
-                      "ncloc":  10,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
                       "file":  "camiseta.h",
                       "ncloc":  11,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "carrera.h",
-                      "ncloc":  5,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "colecciones.c",
-                      "ncloc":  1247,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "CMakePresets.json",
-                      "ncloc":  78,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "busqueda.h",
-                      "ncloc":  15,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "busqueda.c",
-                      "ncloc":  536,
-                      "duplicated_lines":  0,
-                      "duplicated_lines_density":  "0.0",
-                      "duplicated_blocks":  0
-                  },
-                  {
-                      "file":  "calendario.c",
-                      "ncloc":  416,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -927,8 +885,64 @@
                       "duplicated_blocks":  0
                   },
                   {
+                      "file":  "cancha.h",
+                      "ncloc":  10,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "CMakePresets.json",
+                      "ncloc":  78,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "carrera.h",
+                      "ncloc":  5,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "busqueda.c",
+                      "ncloc":  536,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "bienestar.h",
+                      "ncloc":  4,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "busqueda.h",
+                      "ncloc":  15,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
                       "file":  "calendario.h",
                       "ncloc":  7,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "calendario.c",
+                      "ncloc":  416,
+                      "duplicated_lines":  0,
+                      "duplicated_lines_density":  "0.0",
+                      "duplicated_blocks":  0
+                  },
+                  {
+                      "file":  "estadisticas_generales.c",
+                      "ncloc":  599,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -970,7 +984,7 @@
                   },
                   {
                       "file":  "export_colecciones.c",
-                      "ncloc":  340,
+                      "ncloc":  342,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0
@@ -1166,7 +1180,7 @@
                   },
                   {
                       "file":  "export_carrera.c",
-                      "ncloc":  459,
+                      "ncloc":  461,
                       "duplicated_lines":  0,
                       "duplicated_lines_density":  "0.0",
                       "duplicated_blocks":  0

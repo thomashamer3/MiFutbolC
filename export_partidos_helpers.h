@@ -47,7 +47,7 @@ static sqlite3_stmt* prepare_partido_query(const char* order_by_clause)
     sqlite3_stmt *stmt;
     char query[512];
     snprintf(query, sizeof(query),
-             "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal "
+             "SELECT can.nombre,p.fecha_hora,p.goles,p.asistencias,c.nombre,p.resultado,p.clima,p.dia,p.rendimiento_general,p.cansancio,p.estado_animo,p.comentario_personal,p.atajaste_todo_el_partido "
              "FROM partido p JOIN camiseta c ON p.camiseta_id=c.id "
              "JOIN cancha can ON p.cancha_id = can.id %s",
              order_by_clause ? order_by_clause : "");

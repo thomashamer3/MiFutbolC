@@ -131,7 +131,7 @@ static void write_stats_json(FILE *file)
         cJSON_AddItemToArray(root, item);
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_string);
 
     free(json_string);
@@ -290,7 +290,7 @@ static void write_stats_anio_json(FILE *file)
         cJSON_AddItemToObject(root, current_anio, current_anio_array);
     }
 
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_string);
 
     free(json_string);
@@ -575,7 +575,7 @@ static void stats_camiseta_json_rows(FILE *f, sqlite3_stmt *stmt)
         cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 6));
         cJSON_AddItemToArray(root, item);
     }
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
@@ -660,7 +660,7 @@ static void stats_anio_json_rows(FILE *f, sqlite3_stmt *stmt)
         cJSON_AddNumberToObject(item, "avg_asistencias", stats.avg_asistencias);
         cJSON_AddItemToArray(anio_arr, item);
     }
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);

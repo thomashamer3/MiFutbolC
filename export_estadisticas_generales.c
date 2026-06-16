@@ -232,7 +232,7 @@ void exportar_estadisticas_generales_json(void)
     cJSON *stats = json_build_estadisticas();
     if (stats) cJSON_AddItemToObject(root, "estadisticas_generales", stats);
 
-    char *json_str = cJSON_Print(root);
+    char *json_str = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_str);
 
     free(json_str);
@@ -439,7 +439,7 @@ void exportar_estadisticas_por_mes_json(void)
         cJSON_AddItemToObject(root, current, current_array);
     }
 
-    char *json_str = cJSON_Print(root);
+    char *json_str = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_str);
 
     free(json_str);
@@ -554,7 +554,7 @@ static void write_cached_json(FILE *file)
         }
     }
     cJSON_AddItemToObject(root, "estadisticas_generales", stats);
-    char *json_str = cJSON_Print(root);
+    char *json_str = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_str);
     free(json_str);
     cJSON_Delete(root);
@@ -637,7 +637,7 @@ static void stats_mes_json_rows(FILE *f, sqlite3_stmt *stmt)
         cJSON_AddItemToArray(current_array, item);
     }
     if (current_array) cJSON_AddItemToObject(root, current, current_array);
-    char *json_str = cJSON_Print(root);
+    char *json_str = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_str);
     free(json_str);
     cJSON_Delete(root);

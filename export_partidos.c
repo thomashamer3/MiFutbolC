@@ -38,7 +38,8 @@ static void write_partido_csv(FILE *f, sqlite3_stmt *stmt)
 {
     fprintf(f,
             "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
-            "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal\n");
+            "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal,"
+            "Atajaste_Todo_El_Partido\n");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -96,7 +97,7 @@ static void write_partido_html(FILE *f, sqlite3_stmt *stmt)
             "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
             "th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</"
             "th><th>Rendimiento General</th><th>Cansancio</th><th>Estado "
-            "Animo</th><th>Comentario Personal</th></tr>");
+            "Animo</th><th>Comentario Personal</th><th>Atajaste Todo el Partido</th></tr>");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {

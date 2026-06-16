@@ -1,16 +1,38 @@
 {
-  "exportedAt": "2026-06-10T21:53:57Z",
+  "exportedAt": "2026-06-11T01:11:36Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
-  "total": 8,
+  "total": 6,
   "issues": [
+    {
+      "rule": "c:S3358",
+      "severity": "MAJOR",
+      "message": "Extract this nested conditional operator into an independent statement.",
+      "file": "benchmark_export.c",
+      "line": 88,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "5min",
+      "tags": "confusing"
+    },
+    {
+      "rule": "c:S3358",
+      "severity": "MAJOR",
+      "message": "Extract this nested conditional operator into an independent statement.",
+      "file": "benchmark_export.c",
+      "line": 89,
+      "status": "OPEN",
+      "quality": "MAINTAINABILITY",
+      "effort": "5min",
+      "tags": "confusing"
+    },
     {
       "rule": "c:S5281",
       "severity": "CRITICAL",
       "message": "format string is not a string literal",
       "file": "calendario.c",
       "line": 340,
-      "status": "OPEN",
+      "status": "REOPENED",
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"
@@ -21,7 +43,7 @@
       "message": "format string is not a string literal",
       "file": "calendario.c",
       "line": 424,
-      "status": "OPEN",
+      "status": "REOPENED",
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"
@@ -47,50 +69,6 @@
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"
-    },
-    {
-      "rule": "c:S5281",
-      "severity": "CRITICAL",
-      "message": "format string is not a string literal (potentially insecure)",
-      "file": "camiseta.c",
-      "line": 298,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "bad-practice"
-    },
-    {
-      "rule": "c:S5281",
-      "severity": "CRITICAL",
-      "message": "format string is not a string literal (potentially insecure)",
-      "file": "camiseta.c",
-      "line": 300,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "bad-practice"
-    },
-    {
-      "rule": "c:S886",
-      "severity": "MINOR",
-      "message": "Refactor this loop so that it is less error-prone.",
-      "file": "lang.c",
-      "line": 173,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "based-on-misra"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 63 to the 25 allowed.",
-      "file": "tienda.c",
-      "line": 201,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "43min",
-      "tags": "brain-overload"
     }
   ]
 }

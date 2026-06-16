@@ -75,7 +75,7 @@ int exportar_archivo_si_hay_registros(const char *tabla,
 void export_write_json_footer(FILE *f, void *context)
 {
     cJSON *root = (cJSON *)context;
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
@@ -579,7 +579,7 @@ static void write_analisis_json(FILE *f, const Estadisticas *generales,
     cJSON_AddNumberToObject(rachas_obj, "peor_racha_derrotas", peor_racha_d);
     cJSON_AddItemToObject(root, "rachas", rachas_obj);
     cJSON_AddStringToObject(root, "mensaje_motivacional", msg);
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);

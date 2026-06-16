@@ -232,7 +232,7 @@ void exportar_camisetas_json_mejorado()
     }
 
     // Escribir JSON al archivo y liberar recursos
-    char *json_string = cJSON_Print(root);
+    char *json_string = cJSON_PrintUnformatted(root);
     fprintf(f, "%s", json_string);
 
     free(json_string);

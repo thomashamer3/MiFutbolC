@@ -369,6 +369,31 @@ const char *clima_to_text(int clima);
 const char *dia_to_text(int dia);
 
 /**
+ * @brief Genera SQL CASE para mapear clima numerico a texto
+ * @return SQL CASE expression para usar en consultas
+ */
+const char *get_clima_case_sql(void);
+
+/**
+ * @brief Genera SQL CASE para clasificar columna numerica en Bajo/Medio/Alto
+ * @param columna Nombre de la columna SQL
+ * @return SQL CASE expression (usa buffer estatico, llamar solo una vez por SQL)
+ */
+const char *get_nivel_case_sql(const char *columna);
+
+/**
+ * @brief Genera SQL CASE para mapear dolor_fisico a texto descriptivo
+ * @return SQL CASE expression
+ */
+const char *get_dolor_fisico_case_sql(void);
+
+/**
+ * @brief Genera SQL CASE para mapear arbitraje_score a texto descriptivo
+ * @return SQL CASE expression
+ */
+const char *get_arbitraje_case_sql(void);
+
+/**
  * @brief Obtiene el nombre de una entidad por su ID desde la base de datos
  *
  * Función genérica que obtiene el nombre de cualquier entidad (camiseta, torneo, etc.)
