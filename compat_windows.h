@@ -5,8 +5,8 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <windows.h>
 #include <string.h>
+#include <windows.h>
 
 #ifndef strcasecmp
 #define strcasecmp _stricmp
@@ -14,9 +14,9 @@
 #else
 
 #include <stdint.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 #include <wchar.h>
 
 #ifndef __USECONDS_T_DEFINED
@@ -36,7 +36,7 @@ typedef void *HANDLE;
 #define FALSE 0
 #endif
 
-#define STD_OUTPUT_HANDLE ((DWORD)-11)
+#define STD_OUTPUT_HANDLE ((DWORD) - 11)
 
 #define FOREGROUND_BLUE 0x0001
 #define FOREGROUND_GREEN 0x0002
@@ -76,7 +76,8 @@ static inline BOOL SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttribut
     return TRUE;
 }
 
-static inline BOOL GetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, CONSOLE_FONT_INFOEX *lpConsoleCurrentFontEx)
+static inline BOOL GetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow,
+        CONSOLE_FONT_INFOEX *lpConsoleCurrentFontEx)
 {
     (void)hConsoleOutput;
     (void)bMaximumWindow;
@@ -84,7 +85,8 @@ static inline BOOL GetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumW
     return FALSE;
 }
 
-static inline BOOL SetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, CONSOLE_FONT_INFOEX *lpConsoleCurrentFontEx)
+static inline BOOL SetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow,
+        CONSOLE_FONT_INFOEX *lpConsoleCurrentFontEx)
 {
     (void)hConsoleOutput;
     (void)bMaximumWindow;

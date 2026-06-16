@@ -81,10 +81,15 @@ int main(void) {
     total += elapsed;
     executed++;
 
-    const char *status = elapsed < 0.05  ? "RAPIDO"
-                         : elapsed < 0.2 ? "OK"
-                         : elapsed < 1.0 ? "LENTO"
-                                         : "MUY LENTO";
+    const char *status;
+    if (elapsed < 0.05)
+        status = "RAPIDO";
+    else if (elapsed < 0.2)
+        status = "OK";
+    else if (elapsed < 1.0)
+        status = "LENTO";
+    else
+        status = "MUY LENTO";
     printf("%-35s %9.4fs  %s\n", benchmarks[i].name, elapsed, status);
   }
 

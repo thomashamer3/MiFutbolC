@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-06-11T01:11:36Z",
+  "exportedAt": "2026-06-16T19:25:05Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
   "total": 6,
@@ -9,7 +9,7 @@
       "severity": "MAJOR",
       "message": "Extract this nested conditional operator into an independent statement.",
       "file": "benchmark_export.c",
-      "line": 88,
+      "line": 85,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
       "effort": "5min",
@@ -20,7 +20,7 @@
       "severity": "MAJOR",
       "message": "Extract this nested conditional operator into an independent statement.",
       "file": "benchmark_export.c",
-      "line": 89,
+      "line": 86,
       "status": "OPEN",
       "quality": "MAINTAINABILITY",
       "effort": "5min",
@@ -54,7 +54,7 @@
       "message": "format string is not a string literal",
       "file": "camiseta.c",
       "line": 220,
-      "status": "OPEN",
+      "status": "REOPENED",
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"
@@ -65,7 +65,7 @@
       "message": "format string is not a string literal",
       "file": "camiseta.c",
       "line": 296,
-      "status": "OPEN",
+      "status": "REOPENED",
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"

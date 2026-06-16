@@ -1,19 +1,19 @@
 #include "backup.h"
-#include "db.h"
-#include "utils.h"
-#include "menu.h"
 #include "cJSON.h"
+#include "db.h"
+#include "menu.h"
+#include "utils.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
 #ifdef _WIN32
-#include <direct.h>
 #include <windows.h>
+#include <direct.h>
 #else
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -80,8 +80,8 @@ static void sanitizar_descripcion(const char *src, char *dst, size_t dst_size)
     while (*src && i < dst_size - 1)
     {
         char c = *src;
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                (c >= '0' && c <= '9') || c == '_' || c == '-')
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+                c == '_' || c == '-')
         {
             dst[i++] = c;
         }
@@ -131,9 +131,7 @@ static int file_exists_regular(const char *path)
 
 static void build_backup_path(char *buf, size_t size, const char *dir, const char *file)
 {
-    snprintf(buf, size, "%.*s%s%.*s",
-             (int)((size - 2) / 2), dir,
-             BACKUP_PATH_SEP,
+    snprintf(buf, size, "%.*s%s%.*s", (int)((size - 2) / 2), dir, BACKUP_PATH_SEP,
              (int)((size - 2) / 2), file);
 }
 
@@ -265,9 +263,8 @@ static char *obtener_fecha_actual(void)
     return buffer;
 }
 
-static int preparar_backup_paths(const char *descripcion, char *backup_dir,
-                                 char *filename, char *dest_path,
-                                 char *db_path, size_t size)
+static int preparar_backup_paths(const char *descripcion, char *backup_dir, char *filename,
+                                 char *dest_path, char *db_path, size_t size)
 {
     if (!get_backup_dir(backup_dir, size))
     {
@@ -342,10 +339,8 @@ static int ejecutar_backup_db(const char *dest_path, const char *db_path)
     return 1;
 }
 
-static int agregar_entrada_manifest(const char *backup_dir,
-                                    const char *filename,
-                                    const char *descripcion,
-                                    long long file_size)
+static int agregar_entrada_manifest(const char *backup_dir, const char *filename,
+                                    const char *descripcion, long long file_size)
 {
     cJSON *manifest = leer_manifest(backup_dir);
     if (!manifest)
@@ -364,8 +359,8 @@ static int agregar_entrada_manifest(const char *backup_dir,
     cJSON *entry = cJSON_CreateObject();
     cJSON_AddStringToObject(entry, "filename", filename);
     cJSON_AddStringToObject(entry, "descripcion",
-                            (descripcion && descripcion[0] != '\0')
-                            ? descripcion : "sin_descripcion");
+                            (descripcion && descripcion[0] != '\0') ? descripcion
+                            : "sin_descripcion");
     cJSON_AddStringToObject(entry, "fecha", fecha_str);
     cJSON_AddNumberToObject(entry, "size_bytes", (double)file_size);
     cJSON_AddItemToArray(manifest, entry);
@@ -392,8 +387,8 @@ int crear_backup(const char *descripcion)
     char dest_path[MAX_BUFFER];
     char db_path[MAX_BUFFER];
 
-    if (!preparar_backup_paths(descripcion, backup_dir, filename, dest_path,
-                               db_path, sizeof(backup_dir)))
+    if (!preparar_backup_paths(descripcion, backup_dir, filename, dest_path, db_path,
+                               sizeof(backup_dir)))
     {
         return 0;
     }
@@ -657,7 +652,8 @@ static void mostrar_lista_backups(void)
 static void pedir_y_crear_backup(void)
 {
     char descripcion[256];
-    input_string("Ingrese una descripcion para el backup (opcional): ", descripcion, (int)sizeof(descripcion));
+    input_string("Ingrese una descripcion para el backup (opcional): ", descripcion,
+                 (int)sizeof(descripcion));
 
     if (descripcion[0] == '\0')
     {
@@ -672,8 +668,7 @@ static void pedir_y_crear_backup(void)
 
 typedef int (*AccionBackupFn)(const char *filename);
 
-static int listar_backups_validos(cJSON const *manifest,
-                                  const char *backup_dir,
+static int listar_backups_validos(cJSON const *manifest, const char *backup_dir,
                                   const char **nombres, int max_nombres)
 {
     int count = cJSON_GetArraySize(manifest);
@@ -681,7 +676,8 @@ static int listar_backups_validos(cJSON const *manifest,
 
     for (int i = 0; i < count; i++)
     {
-        if (validos >= max_nombres) break;
+        if (validos >= max_nombres)
+            break;
 
         cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
@@ -710,9 +706,8 @@ static int listar_backups_validos(cJSON const *manifest,
     return validos;
 }
 
-static void seleccionar_backup(const char *titulo, const char *prompt,
-                               const char *cancel_msg, int needs_pause,
-                               AccionBackupFn accion)
+static void seleccionar_backup(const char *titulo, const char *prompt, const char *cancel_msg,
+                               int needs_pause, AccionBackupFn accion)
 {
     char backup_dir[MAX_BUFFER];
     if (!get_backup_dir(backup_dir, sizeof(backup_dir)))
@@ -725,7 +720,8 @@ static void seleccionar_backup(const char *titulo, const char *prompt,
     cJSON *manifest = leer_manifest(backup_dir);
     if (!manifest || cJSON_GetArraySize(manifest) == 0)
     {
-        if (manifest) cJSON_Delete(manifest);
+        if (manifest)
+            cJSON_Delete(manifest);
         mostrar_no_hay_registros("backups");
         pause_console();
         return;
@@ -756,7 +752,8 @@ static void seleccionar_backup(const char *titulo, const char *prompt,
     const char *filename = nombres[seleccion - 1];
     accion(filename);
     cJSON_Delete(manifest);
-    if (needs_pause) pause_console();
+    if (needs_pause)
+        pause_console();
 }
 
 static void pedir_y_restaurar_backup(void)
@@ -776,12 +773,15 @@ static void pedir_y_eliminar_backup(void)
 static void configurar_auto_backup(void)
 {
     int intervalo = input_int("Intervalo en horas entre backups (ej: 24): ");
-    if (intervalo < 1) intervalo = 24;
+    if (intervalo < 1)
+        intervalo = 24;
 
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db,
-                           "INSERT OR REPLACE INTO backup_config (id, intervalo_horas, proximo_backup, activo) "
-                           "VALUES (1, ?, datetime('now','localtime'), 1)", -1, &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(
+                db,
+                "INSERT OR REPLACE INTO backup_config (id, intervalo_horas, proximo_backup, activo) "
+                "VALUES (1, ?, datetime('now','localtime'), 1)",
+                -1, &stmt, NULL) == SQLITE_OK)
     {
         sqlite3_bind_int(stmt, 1, intervalo);
         if (sqlite3_step(stmt) == SQLITE_DONE)
@@ -797,15 +797,17 @@ static void configurar_auto_backup(void)
 static void mostrar_estado_auto_backup(void)
 {
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db,
-                           "SELECT intervalo_horas, proximo_backup, activo FROM backup_config WHERE id = 1",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(
+                db, "SELECT intervalo_horas, proximo_backup, activo FROM backup_config WHERE id = 1",
+                -1, &stmt, NULL) == SQLITE_OK)
     {
         mostrar_pantalla("ESTADO AUTO-BACKUP");
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             printf("  Intervalo: %d horas\n", sqlite3_column_int(stmt, 0));
-            printf("  Proximo backup: %s\n", sqlite3_column_text(stmt, 1) ? (const char*)sqlite3_column_text(stmt, 1) : "N/A");
+            printf("  Proximo backup: %s\n", sqlite3_column_text(stmt, 1)
+                   ? (const char *)sqlite3_column_text(stmt, 1)
+                   : "N/A");
             printf("  Activo: %s\n", sqlite3_column_int(stmt, 2) ? "SI" : "NO");
         }
         else
@@ -820,9 +822,8 @@ static void mostrar_estado_auto_backup(void)
 static void desactivar_auto_backup(void)
 {
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db,
-                           "UPDATE backup_config SET activo = 0 WHERE id = 1",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(db, "UPDATE backup_config SET activo = 0 WHERE id = 1", -1, &stmt,
+                           NULL) == SQLITE_OK)
     {
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
@@ -834,9 +835,7 @@ static void desactivar_auto_backup(void)
 
 static void menu_auto_backup(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Configurar Auto-Backup", &configurar_auto_backup},
+    MenuItem items[] = {{1, "Configurar Auto-Backup", &configurar_auto_backup},
         {2, "Estado Auto-Backup", &mostrar_estado_auto_backup},
         {3, "Desactivar Auto-Backup", &desactivar_auto_backup},
         {0, "Volver", NULL}
@@ -847,9 +846,9 @@ static void menu_auto_backup(void)
 int verificar_backup_programado(void)
 {
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db,
-                           "SELECT activo, proximo_backup, intervalo_horas FROM backup_config WHERE id = 1",
-                           -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(
+                db, "SELECT activo, proximo_backup, intervalo_horas FROM backup_config WHERE id = 1",
+                -1, &stmt, NULL) != SQLITE_OK)
         return 0;
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -857,7 +856,7 @@ int verificar_backup_programado(void)
         return 0;
     }
     int activo = sqlite3_column_int(stmt, 0);
-    const char *proximo = (const char*)sqlite3_column_text(stmt, 1);
+    const char *proximo = (const char *)sqlite3_column_text(stmt, 1);
     int intervalo = sqlite3_column_int(stmt, 2);
     sqlite3_finalize(stmt);
 
@@ -872,8 +871,8 @@ int verificar_backup_programado(void)
 #else
     sscanf(proximo, "%d-%d-%d %d:%d",
 #endif
-             &tm_prox.tm_year, &tm_prox.tm_mon, &tm_prox.tm_mday,
-             &tm_prox.tm_hour, &tm_prox.tm_min);
+             &tm_prox.tm_year, &tm_prox.tm_mon, &tm_prox.tm_mday, &tm_prox.tm_hour,
+             &tm_prox.tm_min);
     tm_prox.tm_year -= 1900;
     tm_prox.tm_mon -= 1;
     tm_prox.tm_isdst = -1;
@@ -888,7 +887,8 @@ int verificar_backup_programado(void)
         sqlite3_stmt *upd;
         char sql_upd[256];
         snprintf(sql_upd, sizeof(sql_upd),
-                 "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d hours') WHERE id = 1",
+                 "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d "
+                 "hours') WHERE id = 1",
                  intervalo);
         if (sqlite3_prepare_v2(db, sql_upd, -1, &upd, NULL) == SQLITE_OK)
         {
@@ -904,9 +904,7 @@ int verificar_backup_programado(void)
 
 void menu_backup_restore(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Crear backup", &pedir_y_crear_backup},
+    MenuItem items[] = {{1, "Crear backup", &pedir_y_crear_backup},
         {2, "Listar backups", &mostrar_lista_backups},
         {3, "Restaurar backup", &pedir_y_restaurar_backup},
         {4, "Eliminar backup", &pedir_y_eliminar_backup},

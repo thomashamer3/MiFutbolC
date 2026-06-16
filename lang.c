@@ -6,8 +6,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <unistd.h>
 #include <limits.h>
+#include <unistd.h>
 #endif
 
 #define LANG_DIR "langs"
@@ -62,7 +62,8 @@ static int load_file(const char *path)
 
     cJSON *root = cJSON_Parse(data);
     free(data);
-    if (!root) return 0;
+    if (!root)
+        return 0;
 
     cJSON *strings = cJSON_GetObjectItem(root, "strings");
     if (!strings || !cJSON_IsObject(strings))
@@ -79,10 +80,9 @@ static int load_file(const char *path)
             break;
         if (cJSON_IsString(item) && item->valuestring && item->string)
         {
-            strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key),
-                      item->string, _TRUNCATE);
-            strncpy_s(s_pairs[s_count].val, sizeof(s_pairs[s_count].val),
-                      item->valuestring, _TRUNCATE);
+            strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key), item->string, _TRUNCATE);
+            strncpy_s(s_pairs[s_count].val, sizeof(s_pairs[s_count].val), item->valuestring,
+                      _TRUNCATE);
             s_count++;
         }
     }
@@ -103,7 +103,8 @@ static int try_load(const char *code)
     if (GetModuleFileNameA(NULL, mod_path, sizeof(mod_path)))
     {
         char *p = strrchr(mod_path, '\\');
-        if (p) *p = '\0';
+        if (p)
+            *p = '\0';
         snprintf(path, sizeof(path), "%s\\%s\\%s.json", mod_path, LANG_DIR, code);
         if (load_file(path))
             return 1;
@@ -115,7 +116,8 @@ static int try_load(const char *code)
     {
         self[r] = '\0';
         char *p = strrchr(self, '/');
-        if (p) *p = '\0';
+        if (p)
+            *p = '\0';
         snprintf(path, sizeof(path), "%s/%s/%s.json", self, LANG_DIR, code);
         if (load_file(path))
             return 1;
@@ -131,9 +133,7 @@ static void load_fallback(void)
     {
         const char *key;
         const char *val;
-    } fb_pairs[] =
-    {
-        {"menu_title", "MI FUTBOL C"},
+    } fb_pairs[] = {{"menu_title", "MI FUTBOL C"},
         {"menu_dashboard", "Dashboard"},
         {"menu_calendario", "Calendar"},
         {"menu_camisetas", "Shirts"},
@@ -198,10 +198,8 @@ static void load_fallback(void)
 
     for (int i = 0; fb_pairs[i].key != NULL && s_count < LANG_MAX_KEYS; i++)
     {
-        strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key),
-                  fb_pairs[i].key, _TRUNCATE);
-        strncpy_s(s_pairs[s_count].val, sizeof(s_pairs[s_count].val),
-                  fb_pairs[i].val, _TRUNCATE);
+        strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key), fb_pairs[i].key, _TRUNCATE);
+        strncpy_s(s_pairs[s_count].val, sizeof(s_pairs[s_count].val), fb_pairs[i].val, _TRUNCATE);
         s_count++;
     }
 }

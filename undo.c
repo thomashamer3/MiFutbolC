@@ -20,8 +20,8 @@
 #include <errno.h>
 
 #ifdef _WIN32
-#include <direct.h>
 #include <windows.h>
+#include <direct.h>
 #else
 #include <sys/stat.h>
 #endif

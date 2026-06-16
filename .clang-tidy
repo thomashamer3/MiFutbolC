@@ -1,0 +1,13 @@
+Checks: >
+  bugprone-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  clang-analyzer-*,
+  -readability-magic-numbers
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: 'src/|include/'
+
+FormatStyle: file

@@ -337,7 +337,12 @@ void mostrar_calendario_mes(int mes, int anio)
 
     printf(" %s\n", usar_unicode ? "║" : "|");
     imprimir_pie_calendario_mes(usar_unicode);
-    printf(get_text("calendario_leyenda"), simbolo_partido_calendario());
+    {
+        const char *cfmt = get_text("calendario_leyenda");
+        char cbuf[384];
+        snprintf(cbuf, sizeof(cbuf), cfmt, simbolo_partido_calendario());
+        printf("%s", cbuf);
+    }
     printf("\n");
 }
 
@@ -421,7 +426,12 @@ static void volver_a_hoy(int *mes_actual, int *anio_actual)
 
 static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
 {
-    printf(get_text("calendario_ingrese_dia"), dias_en_mes(mes_actual, anio_actual));
+    {
+        const char *cfmt = get_text("calendario_ingrese_dia");
+        char cbuf[64];
+        snprintf(cbuf, sizeof(cbuf), cfmt, dias_en_mes(mes_actual, anio_actual));
+        printf("%s", cbuf);
+    }
     int dia = input_int("");
 
     if (dia >= 1 && dia <= dias_en_mes(mes_actual, anio_actual))

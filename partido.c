@@ -53,7 +53,7 @@
     "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), " \
     "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), " \
     "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), " \
-    "IFNULL(p.atajaste_todo_el_partido, 1) " \
+    "p.atajaste_todo_el_partido " \
     "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id " \
     "JOIN cancha can ON p.cancha_id = can.id"
 
@@ -330,8 +330,15 @@ static void imprimir_bloque_base_partido(sqlite3_stmt *stmt,
     ui_printf_centered_line("Tarjeta: %s",
                             tarjeta_to_text(sqlite3_column_int(stmt, 31)));
     ui_printf_centered_line("Goles en contra: %d", sqlite3_column_int(stmt, 32));
-    ui_printf_centered_line("Atajaste todo el partido: %s",
-                            sqlite3_column_int(stmt, 41) == 1 ? "SI" : "NO");
+    {
+        int atajaste = sqlite3_column_int(stmt, 41);
+        const char *atajaste_txt;
+        if (sqlite3_column_type(stmt, 41) == SQLITE_NULL || atajaste == 0)
+            atajaste_txt = "-";
+        else
+            atajaste_txt = (atajaste == 1) ? "SI" : "NO";
+        ui_printf_centered_line("Atajaste todo el partido: %s", atajaste_txt);
+    }
     ui_printf_centered_line("Detalle Goles: %s",
                             stmt_text_or_default(stmt, 39, "N/A"));
     ui_printf_centered_line("Detalle Asistencias: %s",
@@ -2032,7 +2039,7 @@ static void inicializar_datos_partido(DatosPartido *datos)
     datos->tipo_partido = 1;
     strcpy_s(datos->goles_detalle, sizeof(datos->goles_detalle), "");
     strcpy_s(datos->asistencias_detalle, sizeof(datos->asistencias_detalle), "");
-    datos->atajaste_todo_el_partido = 1;
+    datos->atajaste_todo_el_partido = 0;
     strcpy_s(datos->formal.rival_nombre, sizeof(datos->formal.rival_nombre), "");
     strcpy_s(datos->formal.tipo_rival, sizeof(datos->formal.tipo_rival), "");
     strcpy_s(datos->formal.formato_partido, sizeof(datos->formal.formato_partido),
@@ -2725,11 +2732,12 @@ static int recopilar_datos_partido_base(DatosPartido *datos,
     datos->precio = pedir_entero_minimo("Precio del partido: ", 0,
                                         "Precio invalido. Ingrese 0 o mas: ");
     printf("Atajaste Todo el Partido:\n");
+    printf("  0) No especificado\n");
     printf("  1) SI\n");
     printf("  2) NO\n");
     datos->atajaste_todo_el_partido = pedir_entero_en_rango(
-                                          "Opcion (1-2): ", 1, 2,
-                                          "Opcion invalida. Ingrese 1 (SI) o 2 (NO): ");
+                                          "Opcion (0-2): ", 0, 2,
+                                          "Opcion invalida. Ingrese 0 (No esp.), 1 (SI) o 2 (NO): ");
     datos->tipo_partido = tipo_partido;
 
     return 1;
@@ -4044,11 +4052,12 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
                                        "Dia invalido. Ingrese entre 1 y 6: ");
     datos->precio = input_int("Nuevo precio del partido: ");
     printf("Atajaste Todo el Partido:\n");
+    printf("  0) No especificado\n");
     printf("  1) SI\n");
     printf("  2) NO\n");
     datos->atajaste_todo_el_partido = pedir_entero_en_rango(
-                                          "Opcion (1-2): ", 1, 2,
-                                          "Opcion invalida. Ingrese 1 (SI) o 2 (NO): ");
+                                          "Opcion (0-2): ", 0, 2,
+                                          "Opcion invalida. Ingrese 0 (No esp.), 1 (SI) o 2 (NO): ");
 
     return 1;
 }
@@ -4221,7 +4230,7 @@ static void buscar_por_tag()
                 "IFNULL(p.arbitraje_score, 0), IFNULL(p.lo_mejor, ''), "
                 "IFNULL(p.que_mejorar, ''), IFNULL(p.tags, ''), "
                 "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), "
-                "IFNULL(p.atajaste_todo_el_partido, 1) "
+                "p.atajaste_todo_el_partido "
                 "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                 "JOIN cancha can ON p.cancha_id = can.id "
                 "WHERE LOWER(IFNULL(p.tags, '')) LIKE LOWER(?) "

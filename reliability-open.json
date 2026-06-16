@@ -1,7 +1,19 @@
 {
-  "exportedAt": "2026-06-11T01:11:34Z",
+  "exportedAt": "2026-06-16T19:25:04Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "RELIABILITY",
-  "total": 0,
-  "issues": []
+  "total": 1,
+  "issues": [
+    {
+      "rule": "c:S2259",
+      "severity": "MAJOR",
+      "message": "Array access (from variable 'statements') results in a null pointer dereference",
+      "file": "db.c",
+      "line": 1703,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "10min",
+      "tags": "cert, cwe, symbolic-execution"
+    }
+  ]
 }

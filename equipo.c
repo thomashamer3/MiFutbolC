@@ -1,9 +1,9 @@
 ﻿#include "equipo.h"
+#include "ascii_art.h"
 #include "db.h"
-#include "utils.h"
 #include "menu.h"
 #include "partido.h"
-#include "ascii_art.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,21 +11,21 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <bcrypt.h>
-#include <process.h>
 #include <io.h>
+#include <process.h>
 #else
 #include "compat_windows.h"
-#include <unistd.h>
 #include "process.h"
 #include <strings.h>
+#include <unistd.h>
 #endif
 #include "sqlite3.h"
 #include <ctype.h>
 #include <limits.h>
 
-#include "random_utils.h"
 #include "formaciones.h"
 #include "jugador_perfil.h"
+#include "random_utils.h"
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -282,9 +282,7 @@ static void mostrar_progreso_creacion_equipo(const Equipo *equipo, int cargados,
     printf("\n%sJugadores cargados hasta ahora:\n", prefix);
     for (int i = 0; i < cargados; i++)
     {
-        printf("- %s (N:%d, %s)%s\n",
-               equipo->jugadores[i].nombre,
-               equipo->jugadores[i].numero,
+        printf("- %s (N:%d, %s)%s\n", equipo->jugadores[i].nombre, equipo->jugadores[i].numero,
                get_nombre_posicion(equipo->jugadores[i].posicion),
                equipo->jugadores[i].es_capitan ? " [CAPITAN]" : "");
     }
@@ -327,7 +325,8 @@ int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo);
 
 // Prototipo anadido para evitar declaracion implicita
 void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombres[][50],
-                                 const int *jugadores_numeros, const int *jugadores_posiciones, const int *jugadores_capitanes, int jugador_count);
+                                 const int *jugadores_numeros, const int *jugadores_posiciones,
+                                 const int *jugadores_capitanes, int jugador_count);
 
 // Prototipo para seleccion de posicion (evita declaracion implicita al usarla antes)
 Posicion select_posicion();
@@ -387,8 +386,10 @@ int update_player_captain_status(int player_id, int is_captain)
     return ejecutar_update_int(sql, is_captain, player_id);
 }
 
-void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros, const int *jugadores_posiciones);
-void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros, int jugador_count);
+void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros,
+                           const int *jugadores_posiciones);
+void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros,
+                                int jugador_count);
 
 typedef int (*hay_arquero_cb_t)(void *ctx);
 
@@ -400,19 +401,23 @@ typedef struct
 
 static int hay_arquero_posiciones(void *ctx)
 {
-    PosicionesCtx const *p = (PosicionesCtx*)ctx;
-    if (!p || !p->posiciones) return 0;
+    PosicionesCtx const *p = (PosicionesCtx *)ctx;
+    if (!p || !p->posiciones)
+        return 0;
     for (int i = 0; i < p->count; i++)
-        if (p->posiciones[i] == ARQUERO) return 1;
+        if (p->posiciones[i] == ARQUERO)
+            return 1;
     return 0;
 }
 
 static int hay_arquero_en_equipo(void *ctx)
 {
-    Equipo const *e = (Equipo*)ctx;
-    if (!e) return 0;
+    Equipo const *e = (Equipo *)ctx;
+    if (!e)
+        return 0;
     for (int i = 0; i < e->num_jugadores; i++)
-        if (e->jugadores[i].posicion == ARQUERO) return 1;
+        if (e->jugadores[i].posicion == ARQUERO)
+            return 1;
     return 0;
 }
 
@@ -574,7 +579,8 @@ int get_equipo_id_to_modify()
 // Helper functions for reducing complexity in modificar_jugador_existente
 void handle_modify_player_name(int player_id);
 void handle_modify_player_number(int player_id, const int *all_numbers, int count);
-void handle_modify_player_position(int player_id, const int *all_positions, int count, int current_index);
+void handle_modify_player_position(int player_id, const int *all_positions, int count,
+                                   int current_index);
 void handle_toggle_player_captain(int player_id);
 
 void show_available_teams_for_modification()
@@ -591,7 +597,7 @@ void show_available_teams_for_modification()
         {
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
             int activa = sqlite3_column_int(stmt, 2);
             printf("%d. %s [%s]\n", id, nombre, activa ? "ACTIVO" : "INACTIVO");
         }
@@ -712,7 +718,8 @@ void handle_modify_players(int equipo_id)
 
     // Obtener jugadores actuales del equipo
     sqlite3_stmt *stmt_jugadores;
-    const char *sql_jugadores = "SELECT id, nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero;";
+    const char *sql_jugadores = "SELECT id, nombre, numero, posicion, es_capitan FROM jugador "
+                                "WHERE equipo_id = ? ORDER BY numero;";
 
     if (preparar_stmt(&stmt_jugadores, sql_jugadores))
     {
@@ -729,15 +736,14 @@ void handle_modify_players(int equipo_id)
         while (sqlite3_step(stmt_jugadores) == SQLITE_ROW)
         {
             jugadores_ids[jugador_count] = sqlite3_column_int(stmt_jugadores, 0);
-            snprintf(jugadores_nombres[jugador_count], sizeof(jugadores_nombres[jugador_count]), "%s", (const char*)sqlite3_column_text(stmt_jugadores, 1));
+            snprintf(jugadores_nombres[jugador_count], sizeof(jugadores_nombres[jugador_count]),
+                     "%s", (const char *)sqlite3_column_text(stmt_jugadores, 1));
             jugadores_numeros[jugador_count] = sqlite3_column_int(stmt_jugadores, 2);
             jugadores_posiciones[jugador_count] = sqlite3_column_int(stmt_jugadores, 3);
             jugadores_capitanes[jugador_count] = sqlite3_column_int(stmt_jugadores, 4);
 
-            printf("%d. %s (Numero: %d, Posicion: %s)%s\n",
-                   jugadores_numeros[jugador_count],
-                   jugadores_nombres[jugador_count],
-                   jugadores_numeros[jugador_count],
+            printf("%d. %s (Numero: %d, Posicion: %s)%s\n", jugadores_numeros[jugador_count],
+                   jugadores_nombres[jugador_count], jugadores_numeros[jugador_count],
                    get_nombre_posicion(jugadores_posiciones[jugador_count]),
                    jugadores_capitanes[jugador_count] ? " [CAPITAN]" : "");
 
@@ -765,21 +771,19 @@ void handle_modify_players(int equipo_id)
         switch (opcion_jugador)
         {
         case 1:
-            modificar_jugador_existente(jugadores_ids, jugadores_nombres,
-                                        jugadores_numeros, jugadores_posiciones, jugadores_capitanes, jugador_count);
+            modificar_jugador_existente(jugadores_ids, jugadores_nombres, jugadores_numeros,
+                                        jugadores_posiciones, jugadores_capitanes, jugador_count);
             break;
         case 2:
-            agregar_nuevo_jugador(equipo_id, jugador_count, jugadores_numeros, jugadores_posiciones);
+            agregar_nuevo_jugador(equipo_id, jugador_count, jugadores_numeros,
+                                  jugadores_posiciones);
             break;
         case 3:
             eliminar_jugador_existente(jugadores_ids, jugadores_numeros, jugador_count);
             break;
         case 4:
         {
-            EquipoPlayerInfo info =
-            {
-                .jugador_count = jugador_count
-            };
+            EquipoPlayerInfo info = {.jugador_count = jugador_count};
             memcpy(info.jugadores_ids, jugadores_ids, sizeof(int) * jugador_count);
             memcpy(info.jugadores_nombres, jugadores_nombres, sizeof(jugadores_nombres));
             memcpy(info.jugadores_numeros, jugadores_numeros, sizeof(int) * jugador_count);
@@ -834,7 +838,8 @@ void handle_modify_player_number(int player_id, const int *all_numbers, int coun
     }
 }
 
-void handle_modify_player_position(int player_id, const int *all_positions, int count, int current_index)
+void handle_modify_player_position(int player_id, const int *all_positions, int count,
+                                   int current_index)
 {
     printf("Seleccione la nueva posicion:\n");
     printf("1. Arquero\n");
@@ -925,16 +930,16 @@ void handle_toggle_player_captain(int player_id)
 int insert_equipo_record(const Equipo *equipo)
 {
     sqlite3_stmt *stmt;
-    const char *sql_next_id =
-        "SELECT CASE "
-        "WHEN NOT EXISTS (SELECT 1 FROM equipo WHERE id = 1) THEN 1 "
-        "ELSE ("
-        "  SELECT MIN(e1.id + 1) "
-        "  FROM equipo e1 "
-        "  LEFT JOIN equipo e2 ON e2.id = e1.id + 1 "
-        "  WHERE e2.id IS NULL"
-        ") END;";
-    const char *sql = "INSERT INTO equipo (id, nombre, tipo, tipo_futbol, num_jugadores, partido_id) VALUES (?, ?, ?, ?, ?, ?);";
+    const char *sql_next_id = "SELECT CASE "
+                              "WHEN NOT EXISTS (SELECT 1 FROM equipo WHERE id = 1) THEN 1 "
+                              "ELSE ("
+                              "  SELECT MIN(e1.id + 1) "
+                              "  FROM equipo e1 "
+                              "  LEFT JOIN equipo e2 ON e2.id = e1.id + 1 "
+                              "  WHERE e2.id IS NULL"
+                              ") END;";
+    const char *sql = "INSERT INTO equipo (id, nombre, tipo, tipo_futbol, num_jugadores, "
+                      "partido_id) VALUES (?, ?, ?, ?, ?, ?);";
     int next_id = -1;
 
     if (sqlite3_prepare_v2(db, sql_next_id, -1, &stmt, 0) != SQLITE_OK)
@@ -986,7 +991,8 @@ int insert_equipo_record(const Equipo *equipo)
 int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
 {
     sqlite3_stmt *stmt_jugador = NULL;
-    const char *sql_jugador = "INSERT INTO jugador (equipo_id, nombre, numero, posicion, es_capitan) VALUES (?, ?, ?, ?, ?);";
+    const char *sql_jugador = "INSERT INTO jugador (equipo_id, nombre, numero, posicion, "
+                              "es_capitan) VALUES (?, ?, ?, ?, ?);";
 
     if (sqlite3_prepare_v2(db, sql_jugador, -1, &stmt_jugador, 0) != SQLITE_OK)
     {
@@ -1053,18 +1059,77 @@ void mostrar_cancha_animada(int minuto, int evento_tipo)
     // Posiciones del balon basadas en el minuto y tipo de evento
     char *posiciones[12] =
     {
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n         O|  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n          ============                \n          |  CENTRO  |O                \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |O AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL O|               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n         O============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |O CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO O|                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          =========O==                \n                                       \n         +-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n        O+-------------+               \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+O              \n         | AREA VISITANTE |            \n         +-------------+               ",
-        "         +-------------+               \n         |  AREA LOCAL  |               \n         +-------------+               \n                                       \n          ============                \n          |  CENTRO  |                 \n          ============                \n                                       \n         +-------------+               \n         | AREA VISITANTE |O           \n         +-------------+               "
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n         O|  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n          ============                \n          |  "
+        "CENTRO  |O                \n          ============                \n                      "
+        "                 \n         +-------------+               \n         | AREA VISITANTE |   "
+        "         \n         +-------------+               ",
+        "         +-------------+               \n         |O AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL O|               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n         "
+        "O============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |O CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO O|                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "=========O==                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n        "
+        "O+-------------+               \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+O              \n         | AREA VISITANTE |            \n         "
+        "+-------------+               ",
+        "         +-------------+               \n         |  AREA LOCAL  |               \n       "
+        "  +-------------+               \n                                       \n          "
+        "============                \n          |  CENTRO  |                 \n          "
+        "============                \n                                       \n         "
+        "+-------------+               \n         | AREA VISITANTE |O           \n         "
+        "+-------------+               "
     };
 
     printf("=======================================\n");
@@ -1083,7 +1148,7 @@ void mostrar_cancha_animada(int minuto, int evento_tipo)
     printf("=======================================\n");
 }
 
-const char* get_nombre_posicion(Posicion posicion)
+const char *get_nombre_posicion(Posicion posicion)
 {
     switch (posicion)
     {
@@ -1100,7 +1165,7 @@ const char* get_nombre_posicion(Posicion posicion)
     }
 }
 
-const char* get_nombre_tipo_futbol(TipoFutbol tipo)
+const char *get_nombre_tipo_futbol(TipoFutbol tipo)
 {
     switch (tipo)
     {
@@ -1227,7 +1292,8 @@ void save_equipo_to_db(const Equipo *equipo)
     }
 
     char info[100];
-    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), equipo->nombre, equipo_id);
+    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), equipo->nombre,
+             equipo_id);
     if (confirmar("Desea cargar imagen para este equipo ahora?") &&
             !cargar_imagen_para_equipo_id(equipo_id))
     {
@@ -1243,7 +1309,8 @@ void input_equipo_basico(Equipo *equipo, TipoFutbol tipo_futbol, int num_jugador
     equipo->num_jugadores = num_jugadores;
 
     // Solicitar nombre del equipo
-    solicitar_nombre_equipo("Ingrese el nombre del equipo: ", equipo->nombre, sizeof(equipo->nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo: ", equipo->nombre,
+                            sizeof(equipo->nombre));
 }
 
 void crear_jugadores_equipo(Equipo *equipo, int auto_numero, const char *prefix)
@@ -1264,7 +1331,8 @@ void crear_jugadores_equipo(Equipo *equipo, int auto_numero, const char *prefix)
                 equipo->jugadores[i].numero = i + 1;
             }
 
-            if (!auto_numero && numero_repetido_en_equipo(equipo, i, equipo->jugadores[i].numero, -1))
+            if (!auto_numero &&
+                    numero_repetido_en_equipo(equipo, i, equipo->jugadores[i].numero, -1))
             {
                 printf("El numero ya esta en uso. Intente con otro.\n");
                 pause_console();
@@ -1330,7 +1398,8 @@ int get_num_jugadores_por_tipo(TipoFutbol tipo_futbol)
 }
 
 void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombres[][50],
-                                 const int *jugadores_numeros, const int *jugadores_posiciones, const int *jugadores_capitanes, int jugador_count)
+                                 const int *jugadores_numeros, const int *jugadores_posiciones,
+                                 const int *jugadores_capitanes, int jugador_count)
 {
     int jugador_num = input_int("Ingrese el numero del jugador a modificar: ");
 
@@ -1371,7 +1440,8 @@ void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombre
         handle_modify_player_number(jugadores_ids[jugador_idx], jugadores_numeros, jugador_count);
         break;
     case 3:
-        handle_modify_player_position(jugadores_ids[jugador_idx], jugadores_posiciones, jugador_count, jugador_idx);
+        handle_modify_player_position(jugadores_ids[jugador_idx], jugadores_posiciones,
+                                      jugador_count, jugador_idx);
         break;
     case 4:
         handle_toggle_player_captain(jugadores_ids[jugador_idx]);
@@ -1385,7 +1455,8 @@ void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombre
     pause_console();
 }
 
-void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros, const int *jugadores_posiciones)
+void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadores_numeros,
+                           const int *jugadores_posiciones)
 {
     if (jugador_count >= 11)
     {
@@ -1416,7 +1487,7 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
     }
 
     /* Seleccionar posicion usando helper con callback que revisa posiciones actuales */
-    PosicionesCtx pctx = { jugadores_posiciones, jugador_count };
+    PosicionesCtx pctx = {jugadores_posiciones, jugador_count};
     int pos = seleccionar_posicion_con_check(hay_arquero_posiciones, &pctx);
     if (pos == -1)
     {
@@ -1429,7 +1500,8 @@ void agregar_nuevo_jugador(int equipo_id, int jugador_count, const int *jugadore
 
     // Insertar nuevo jugador
     sqlite3_stmt *stmt;
-    const char *sql_insert = "INSERT INTO jugador (equipo_id, nombre, numero, posicion, es_capitan) VALUES (?, ?, ?, ?, ?);";
+    const char *sql_insert = "INSERT INTO jugador (equipo_id, nombre, numero, posicion, "
+                             "es_capitan) VALUES (?, ?, ?, ?, ?);";
     if (sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0) == SQLITE_OK)
     {
         sqlite3_bind_int(stmt, 1, equipo_id);
@@ -1524,7 +1596,8 @@ void agregar_jugador_momentaneo(Equipo *equipo)
     mostrar_alerta_operacion("Jugador", "Agregado", nuevo_jugador->nombre);
 }
 
-void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros, int jugador_count)
+void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_numeros,
+                                int jugador_count)
 {
     int jugador_num = input_int("Ingrese el numero del jugador a eliminar: ");
 
@@ -1571,7 +1644,8 @@ void eliminar_jugador_existente(const int *jugadores_ids, const int *jugadores_n
 void mostrar_jugadores_equipo(int equipo_id)
 {
     sqlite3_stmt *stmt_jugadores;
-    const char *sql_jugadores = "SELECT nombre, numero, posicion, es_capitan FROM jugador WHERE equipo_id = ? ORDER BY numero;";
+    const char *sql_jugadores = "SELECT nombre, numero, posicion, es_capitan FROM jugador WHERE "
+                                "equipo_id = ? ORDER BY numero;";
 
     if (sqlite3_prepare_v2(db, sql_jugadores, -1, &stmt_jugadores, 0) == SQLITE_OK)
     {
@@ -1581,16 +1655,13 @@ void mostrar_jugadores_equipo(int equipo_id)
         while (sqlite3_step(stmt_jugadores) == SQLITE_ROW)
         {
             has_jugadores = 1;
-            const char *jugador_nombre = (const char*)sqlite3_column_text(stmt_jugadores, 0);
+            const char *jugador_nombre = (const char *)sqlite3_column_text(stmt_jugadores, 0);
             int jugador_numero = sqlite3_column_int(stmt_jugadores, 1);
             int jugador_posicion = sqlite3_column_int(stmt_jugadores, 2);
             int es_capitan = sqlite3_column_int(stmt_jugadores, 3);
 
-            printf("%d. %s (Numero: %d, Posicion: %s)%s\n",
-                   jugador_numero,
-                   jugador_nombre,
-                   jugador_numero,
-                   get_nombre_posicion(jugador_posicion),
+            printf("%d. %s (Numero: %d, Posicion: %s)%s\n", jugador_numero, jugador_nombre,
+                   jugador_numero, get_nombre_posicion(jugador_posicion),
                    es_capitan ? " [CAPITAN]" : "");
         }
 
@@ -1620,12 +1691,8 @@ void mostrar_equipo(const Equipo *equipo)
     for (int i = 0; i < equipo->num_jugadores; i++)
     {
         const Jugador *jugador = &equipo->jugadores[i];
-        printf("%d. %s (Numero: %d, Posicion: %s)%s\n",
-               i + 1,
-               jugador->nombre,
-               jugador->numero,
-               get_nombre_posicion(jugador->posicion),
-               jugador->es_capitan ? " [CAPITAN]" : "");
+        printf("%d. %s (Numero: %d, Posicion: %s)%s\n", i + 1, jugador->nombre, jugador->numero,
+               get_nombre_posicion(jugador->posicion), jugador->es_capitan ? " [CAPITAN]" : "");
     }
     printf("\n");
 }
@@ -1638,7 +1705,8 @@ void crear_equipo_fijo()
 
     // Determinar tipo de futbol y numero de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == (TipoFutbol)-1) return; // Usuario cancelo
+    if (tipo_futbol == (TipoFutbol)-1)
+        return; // Usuario cancelo
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);
@@ -1687,7 +1755,8 @@ void crear_un_equipo_momentaneo()
 
     // Determinar tipo de futbol y numero de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == (TipoFutbol)-1) return; // Usuario cancelo
+    if (tipo_futbol == (TipoFutbol)-1)
+        return; // Usuario cancelo
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);
@@ -1971,7 +2040,8 @@ void crear_dos_equipos_momentaneos()
     equipo_visitante.num_jugadores = num_jugadores;
 
     // Solicitar nombre del equipo local
-    solicitar_nombre_equipo("Ingrese el nombre del equipo LOCAL: ", equipo_local.nombre, sizeof(equipo_local.nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo LOCAL: ", equipo_local.nombre,
+                            sizeof(equipo_local.nombre));
 
     // Solicitar informacion de jugadores para equipo local
     crear_jugadores_equipo(&equipo_local, 1, "EQUIPO LOCAL - ");
@@ -1994,7 +2064,8 @@ void crear_dos_equipos_momentaneos()
     }
 
     // Solicitar nombre del equipo visitante
-    solicitar_nombre_equipo("Ingrese el nombre del equipo VISITANTE: ", equipo_visitante.nombre, sizeof(equipo_visitante.nombre));
+    solicitar_nombre_equipo("Ingrese el nombre del equipo VISITANTE: ", equipo_visitante.nombre,
+                            sizeof(equipo_visitante.nombre));
 
     // Solicitar informacion de jugadores para equipo visitante
     crear_jugadores_equipo(&equipo_visitante, 1, "EQUIPO VISITANTE - ");
@@ -2072,7 +2143,8 @@ void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visi
 void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo)
 {
     char log_msg[128];
-    snprintf(log_msg, sizeof(log_msg), "Gestion equipo individual -> %s", tipo_equipo ? tipo_equipo : "(sin tipo)");
+    snprintf(log_msg, sizeof(log_msg), "Gestion equipo individual -> %s",
+             tipo_equipo ? tipo_equipo : "(sin tipo)");
     app_log_event("EQUIPOS", log_msg);
 
     int salir = 0;
@@ -2109,9 +2181,7 @@ static void accion_crear_equipo_momentaneo(void)
 
 void crear_equipo()
 {
-    MenuItem items[] =
-    {
-        {1, "Fijo", &accion_crear_equipo_fijo},
+    MenuItem items[] = {{1, "Fijo", &accion_crear_equipo_fijo},
         {2, "Momentaneo", &accion_crear_equipo_momentaneo},
         {0, "Volver", NULL}
     };
@@ -2140,7 +2210,7 @@ void listar_equipos()
         {
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
             int tipo = sqlite3_column_int(stmt, 2);
             int tipo_futbol = sqlite3_column_int(stmt, 3);
             int num_jugadores = sqlite3_column_int(stmt, 4);
@@ -2183,7 +2253,8 @@ void modificar_equipo()
 
     // Obtener y validar ID del equipo
     int equipo_id = get_equipo_id_to_modify();
-    if (equipo_id <= 0) return; // Usuario cancelo o error
+    if (equipo_id <= 0)
+        return; // Usuario cancelo o error
 
     // Mostrar menu de opciones de modificacion
     printf("\nSeleccione que desea modificar:\n");
@@ -2387,11 +2458,15 @@ int generar_evento_aleatorio()
 {
     unsigned int random_value = secure_rand_range(100);
     int evento_aleatorio = random_value % 100;
-    if (evento_aleatorio < 25) return 1; // gol local
-    if (evento_aleatorio < 50) return 2; // gol visitante
-    if (evento_aleatorio < 70) return 3; // oportunidad
-    if (evento_aleatorio < 85) return 4; // falta
-    return 0; // normal
+    if (evento_aleatorio < 25)
+        return 1; // gol local
+    if (evento_aleatorio < 50)
+        return 2; // gol visitante
+    if (evento_aleatorio < 70)
+        return 3; // oportunidad
+    if (evento_aleatorio < 85)
+        return 4; // falta
+    return 0;     // normal
 }
 
 int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_local,
@@ -2409,16 +2484,13 @@ int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_
     goles_jugadores_local[jugador_gol]++;
 
     printf("*** ¡GOOOOL! Minuto %d ***\n", minuto_actual);
-    printf("   Gol de %s (%d) para %s\n",
-           equipo_local->jugadores[jugador_gol].nombre,
-           equipo_local->jugadores[jugador_gol].numero,
-           equipo_local->nombre);
+    printf("   Gol de %s (%d) para %s\n", equipo_local->jugadores[jugador_gol].nombre,
+           equipo_local->jugadores[jugador_gol].numero, equipo_local->nombre);
 
     if (jugador_asistencia != jugador_gol)
     {
         asistencias_jugadores_local[jugador_asistencia]++;
-        printf("   Asistencia de %s (%d)\n",
-               equipo_local->jugadores[jugador_asistencia].nombre,
+        printf("   Asistencia de %s (%d)\n", equipo_local->jugadores[jugador_asistencia].nombre,
                equipo_local->jugadores[jugador_asistencia].numero);
     }
 
@@ -2440,32 +2512,32 @@ int manejar_gol_visitante(const Equipo *equipo_visitante, int minuto_actual, int
     goles_jugadores_visitante[jugador_gol]++;
 
     printf("*** ¡GOOOOL! Minuto %d ***\n", minuto_actual);
-    printf("   Gol de %s (%d) para %s\n",
-           equipo_visitante->jugadores[jugador_gol].nombre,
-           equipo_visitante->jugadores[jugador_gol].numero,
-           equipo_visitante->nombre);
+    printf("   Gol de %s (%d) para %s\n", equipo_visitante->jugadores[jugador_gol].nombre,
+           equipo_visitante->jugadores[jugador_gol].numero, equipo_visitante->nombre);
 
     if (jugador_asistencia != jugador_gol)
     {
         asistencias_jugadores_visitante[jugador_asistencia]++;
-        printf("   Asistencia de %s (%d)\n",
-               equipo_visitante->jugadores[jugador_asistencia].nombre,
+        printf("   Asistencia de %s (%d)\n", equipo_visitante->jugadores[jugador_asistencia].nombre,
                equipo_visitante->jugadores[jugador_asistencia].numero);
     }
 
     return 1; // tipo_evento para cancha
 }
 
-int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual)
+int manejar_oportunidad_gol(const Equipo *equipo_local, const Equipo *equipo_visitante,
+                            int minuto_actual)
 {
     unsigned int random_value = secure_rand_range(100);
     if (random_value % 2 == 0)
     {
-        printf("*** Oportunidad de gol para %s (Minuto %d) ***\n", equipo_local->nombre, minuto_actual);
+        printf("*** Oportunidad de gol para %s (Minuto %d) ***\n", equipo_local->nombre,
+               minuto_actual);
     }
     else
     {
-        printf("*** Oportunidad de gol para %s (Minuto %d) ***\n", equipo_visitante->nombre, minuto_actual);
+        printf("*** Oportunidad de gol para %s (Minuto %d) ***\n", equipo_visitante->nombre,
+               minuto_actual);
     }
     return 2; // tipo_evento para cancha
 }
@@ -2479,7 +2551,8 @@ int manejar_falta(const Equipo *equipo_local, const Equipo *equipo_visitante, in
     }
     else
     {
-        printf("*** Falta cometida por %s (Minuto %d) ***\n", equipo_visitante->nombre, minuto_actual);
+        printf("*** Falta cometida por %s (Minuto %d) ***\n", equipo_visitante->nombre,
+               minuto_actual);
     }
     return 3; // tipo_evento para cancha
 }
@@ -2490,7 +2563,8 @@ int manejar_evento_normal(int minuto_actual)
     return 0; // tipo_evento para cancha
 }
 
-int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *equipo_visitante, int minuto_actual, PartidoStats *stats)
+int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *equipo_visitante,
+                    int minuto_actual, PartidoStats *stats)
 {
     switch (tipo_evento)
     {
@@ -2499,7 +2573,8 @@ int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *e
                                  stats->goles_jugadores_local, stats->asistencias_jugadores_local);
     case 2: // gol visitante
         return manejar_gol_visitante(equipo_visitante, minuto_actual, &stats->goles_visitante,
-                                     stats->goles_jugadores_visitante, stats->asistencias_jugadores_visitante);
+                                     stats->goles_jugadores_visitante,
+                                     stats->asistencias_jugadores_visitante);
     case 3: // oportunidad
         return manejar_oportunidad_gol(equipo_local, equipo_visitante, minuto_actual);
     case 4: // falta
@@ -2509,19 +2584,21 @@ int procesar_evento(int tipo_evento, const Equipo *equipo_local, const Equipo *e
     }
 }
 
-void simular_minuto_partido(int minuto_actual, const Equipo *equipo_local, const Equipo *equipo_visitante, PartidoStats *stats)
+void simular_minuto_partido(int minuto_actual, const Equipo *equipo_local,
+                            const Equipo *equipo_visitante, PartidoStats *stats)
 {
     clear_screen();
     print_header("SIMULACION DE PARTIDO");
 
-    printf("=== %s %d - %d %s ===\n\n",
-           equipo_local->nombre, stats->goles_local, stats->goles_visitante, equipo_visitante->nombre);
+    printf("=== %s %d - %d %s ===\n\n", equipo_local->nombre, stats->goles_local,
+           stats->goles_visitante, equipo_visitante->nombre);
 
     printf("MINUTO: %d\n\n", minuto_actual);
 
     // Generar y procesar evento aleatorio
     int tipo_evento = generar_evento_aleatorio();
-    int tipo_evento_cancha = procesar_evento(tipo_evento, equipo_local, equipo_visitante, minuto_actual, stats);
+    int tipo_evento_cancha =
+        procesar_evento(tipo_evento, equipo_local, equipo_visitante, minuto_actual, stats);
 
     // Mostrar cancha animada con balon en movimiento
     mostrar_cancha_animada(minuto_actual, tipo_evento_cancha);
@@ -2536,8 +2613,8 @@ void mostrar_resultado_final(const Equipo *equipo_local, const Equipo *equipo_vi
     printf("*** RESULTADO FINAL ***\n\n");
     printf("*** 60 MINUTOS COMPLETADOS ***\n\n");
 
-    printf("*** %s %d - %d %s ***\n\n",
-           equipo_local->nombre, goles_local, goles_visitante, equipo_visitante->nombre);
+    printf("*** %s %d - %d %s ***\n\n", equipo_local->nombre, goles_local, goles_visitante,
+           equipo_visitante->nombre);
 
     // Determinar resultado
     if (goles_local > goles_visitante)
@@ -2554,7 +2631,8 @@ void mostrar_resultado_final(const Equipo *equipo_local, const Equipo *equipo_vi
     }
 }
 
-void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *equipo_visitante, const PartidoStats *stats)
+void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *equipo_visitante,
+                                    const PartidoStats *stats)
 {
     printf("*** ESTADISTICAS DEL PARTIDO ***\n\n");
 
@@ -2564,10 +2642,8 @@ void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *eq
     {
         if (stats->goles_jugadores_local[i] > 0 || stats->asistencias_jugadores_local[i] > 0)
         {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_local->jugadores[i].nombre,
-                   equipo_local->jugadores[i].numero,
-                   stats->goles_jugadores_local[i],
+            printf("  %s (%d): %d Goles, %d Asistencias\n", equipo_local->jugadores[i].nombre,
+                   equipo_local->jugadores[i].numero, stats->goles_jugadores_local[i],
                    stats->asistencias_jugadores_local[i]);
             tiene_estadisticas_local = 1;
         }
@@ -2581,12 +2657,11 @@ void mostrar_estadisticas_jugadores(const Equipo *equipo_local, const Equipo *eq
     int tiene_estadisticas_visitante = 0;
     for (int i = 0; i < equipo_visitante->num_jugadores; i++)
     {
-        if (stats->goles_jugadores_visitante[i] > 0 || stats->asistencias_jugadores_visitante[i] > 0)
+        if (stats->goles_jugadores_visitante[i] > 0 ||
+                stats->asistencias_jugadores_visitante[i] > 0)
         {
-            printf("  %s (%d): %d Goles, %d Asistencias\n",
-                   equipo_visitante->jugadores[i].nombre,
-                   equipo_visitante->jugadores[i].numero,
-                   stats->goles_jugadores_visitante[i],
+            printf("  %s (%d): %d Goles, %d Asistencias\n", equipo_visitante->jugadores[i].nombre,
+                   equipo_visitante->jugadores[i].numero, stats->goles_jugadores_visitante[i],
                    stats->asistencias_jugadores_visitante[i]);
             tiene_estadisticas_visitante = 1;
         }
@@ -2628,7 +2703,8 @@ void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
     clear_screen();
     print_header("FIN DEL PARTIDO");
 
-    mostrar_resultado_final(equipo_local, equipo_visitante, stats.goles_local, stats.goles_visitante);
+    mostrar_resultado_final(equipo_local, equipo_visitante, stats.goles_local,
+                            stats.goles_visitante);
     mostrar_estadisticas_jugadores(equipo_local, equipo_visitante, &stats);
 
     printf("\nPresione Enter para volver al menu...");
@@ -2637,9 +2713,7 @@ void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
 
 void menu_equipos()
 {
-    MenuItem items[] =
-    {
-        {1, "Crear", crear_equipo},
+    MenuItem items[] = {{1, "Crear", crear_equipo},
         {2, "Listar", listar_equipos},
         {3, "Modificar", modificar_equipo},
         {4, "Eliminar", eliminar_equipo},

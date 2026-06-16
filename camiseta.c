@@ -37,8 +37,7 @@ static int run_command_posix_argv(const char *const argv[])
     }
 
     pid_t pid = (pid_t)0;
-    if (posix_spawnp(&pid, argv[0], NULL, NULL, (char *const *)argv, environ) !=
-            0)
+    if (posix_spawnp(&pid, argv[0], NULL, NULL, (char *const *)argv, environ) != 0)
     {
         return 0;
     }
@@ -117,8 +116,7 @@ static int guardar_visor_preferido(const char *viewer)
     asegurar_fila_settings();
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
-                       "UPDATE settings SET image_viewer = ? WHERE id = 1"))
+    if (!preparar_stmt(&stmt, "UPDATE settings SET image_viewer = ? WHERE id = 1"))
     {
         return 0;
     }
@@ -140,11 +138,8 @@ static int instalar_paquete_linux(const char *package_name)
     if (app_command_exists("apt-get"))
     {
         const char *update_argv[] = {"sudo", "apt-get", "update", NULL};
-        const char *install_argv[] = {"sudo", "apt-get",    "install",
-                                      "-y",   package_name, NULL
-                                     };
-        return run_command_posix_argv(update_argv) &&
-               run_command_posix_argv(install_argv);
+        const char *install_argv[] = {"sudo", "apt-get", "install", "-y", package_name, NULL};
+        return run_command_posix_argv(update_argv) && run_command_posix_argv(install_argv);
     }
 
     if (app_command_exists("dnf"))
@@ -155,17 +150,13 @@ static int instalar_paquete_linux(const char *package_name)
 
     if (app_command_exists("pacman"))
     {
-        const char *argv[] = {"sudo",        "pacman",     "-Sy",
-                              "--noconfirm", package_name, NULL
-                             };
+        const char *argv[] = {"sudo", "pacman", "-Sy", "--noconfirm", package_name, NULL};
         return run_command_posix_argv(argv);
     }
 
     if (app_command_exists("zypper"))
     {
-        const char *argv[] = {"sudo",    "zypper",     "--non-interactive",
-                              "install", package_name, NULL
-                             };
+        const char *argv[] = {"sudo", "zypper", "--non-interactive", "install", package_name, NULL};
         return run_command_posix_argv(argv);
     }
 
@@ -173,8 +164,7 @@ static int instalar_paquete_linux(const char *package_name)
 }
 #endif
 
-static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta,
-        size_t size)
+static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, size_t size)
 {
     if (!ruta_absoluta || size == 0)
     {
@@ -217,8 +207,12 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
         else
         {
-            printf(get_text("camiseta_visor_no_soportado_windows"),
-                   viewer);
+            {
+                const char *cfmt = get_text("camiseta_visor_no_soportado_windows");
+                char cbuf[256];
+                snprintf(cbuf, sizeof(cbuf), cfmt, viewer);
+                printf("%s", cbuf);
+            }
         }
     }
 
@@ -243,7 +237,12 @@ static int abrir_imagen_en_sistema(const char *ruta)
         }
         else
         {
-            printf(get_text("camiseta_visor_no_instalado"), viewer);
+            {
+                const char *cfmt = get_text("camiseta_visor_no_instalado");
+                char cbuf[256];
+                snprintf(cbuf, sizeof(cbuf), cfmt, viewer);
+                printf("%s", cbuf);
+            }
         }
     }
 
@@ -268,10 +267,10 @@ static int abrir_imagen_en_sistema(const char *ruta)
             return 0;
         }
 
-        printf(get_text("camiseta_instalando_visor"));
+        printf("%s", get_text("camiseta_instalando_visor"));
         if (!instalar_paquete_linux("feh"))
         {
-            printf(get_text("camiseta_no_instalar_visor"));
+            printf("%s", get_text("camiseta_no_instalar_visor"));
             return 0;
         }
 
@@ -293,13 +292,18 @@ static void configurar_visor_preferido_imagen()
 
     char actual[64] = {0};
     obtener_visor_preferido(actual, sizeof(actual));
-    printf(get_text("camiseta_visor_actual"), actual[0] ? actual : "auto");
+    {
+        const char *cfmt = get_text("camiseta_visor_actual");
+        char cbuf[320];
+        snprintf(cbuf, sizeof(cbuf), cfmt, actual[0] ? actual : "auto");
+        printf("%s", cbuf);
+    }
 
     fputs(get_text("camiseta_visor_escribir"), stdout);
 #ifdef _WIN32
     fputs(get_text("camiseta_visor_opciones_windows"), stdout);
 #else
-    printf(get_text("camiseta_visor_opciones_linux"));
+    printf("%s", get_text("camiseta_visor_opciones_linux"));
 #endif
 
     char nuevo[64] = {0};
@@ -347,8 +351,7 @@ static void configurar_visor_preferido_imagen()
     pause_console();
 }
 
-static int pedir_imagen_camiseta_y_resolver_ruta(char *ruta_absoluta,
-        size_t size)
+static int pedir_imagen_camiseta_y_resolver_ruta(char *ruta_absoluta, size_t size)
 {
     if (!hay_registros("camiseta"))
     {
@@ -384,8 +387,7 @@ static void previsualizar_imagen_camiseta_consola()
     print_header("PREVISUALIZAR IMAGEN (CONSOLA)");
 
     char ruta_absoluta[1200] = {0};
-    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta,
-            sizeof(ruta_absoluta)))
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
     {
         pause_console();
         return;
@@ -405,8 +407,7 @@ static void previsualizar_imagen_camiseta_consola()
 #else
     if (!app_command_exists("chafa"))
     {
-        if (!confirmar(
-                    "No se detecto 'chafa'. Desea instalarlo automaticamente?"))
+        if (!confirmar("No se detecto 'chafa'. Desea instalarlo automaticamente?"))
         {
             pause_console();
             return;
@@ -439,8 +440,7 @@ static void probar_visor_imagen_actual()
     print_header("PROBAR VISOR DE IMAGEN");
 
     char ruta_absoluta[1200] = {0};
-    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta,
-            sizeof(ruta_absoluta)))
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
     {
         pause_console();
         return;
@@ -459,9 +459,7 @@ static void probar_visor_imagen_actual()
 
 static void menu_ajustes_imagen_camiseta()
 {
-    MenuItem items[] =
-    {
-        {1, "Configurar visor", configurar_visor_preferido_imagen},
+    MenuItem items[] = {{1, "Configurar visor", configurar_visor_preferido_imagen},
         {2, "Probar visor", probar_visor_imagen_actual},
         {3, "Previsualizar en consola", previsualizar_imagen_camiseta_consola},
         {0, "Volver", NULL}
@@ -492,8 +490,7 @@ static int obtener_total(const char *sql)
 static int contar_partidos_por_camiseta(int camiseta_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
-                       "SELECT COUNT(*) FROM partido WHERE camiseta_id = ?"))
+    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM partido WHERE camiseta_id = ?"))
     {
         return -1;
     }
@@ -511,8 +508,7 @@ static int contar_partidos_por_camiseta(int camiseta_id)
 static int contar_total_camisetas_activas(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                &stmt, "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1"))
+    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1"))
     {
         return -1;
     }
@@ -529,8 +525,7 @@ static int contar_total_camisetas_activas(void)
 static int camiseta_esta_activa(int camiseta_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
-                       "SELECT IFNULL(activa, 1) FROM camiseta WHERE id = ?"))
+    if (!preparar_stmt(&stmt, "SELECT IFNULL(activa, 1) FROM camiseta WHERE id = ?"))
     {
         return 0;
     }
@@ -602,8 +597,7 @@ static int ejecutar_sql_simple(const char *sql)
     return 1;
 }
 
-static int confirmar_borrado_irreversible_camiseta(int camiseta_id,
-        const char *detalle)
+static int confirmar_borrado_irreversible_camiseta(int camiseta_id, const char *detalle)
 {
     char esperado[64] = {0};
     char ingreso[64] = {0};
@@ -636,8 +630,7 @@ static int confirmar_borrado_irreversible_camiseta(int camiseta_id,
     return 1;
 }
 
-static int reasignar_partidos_y_eliminar_camiseta(int camiseta_origen,
-        int camiseta_destino)
+static int reasignar_partidos_y_eliminar_camiseta(int camiseta_origen, int camiseta_destino)
 {
     if (!ejecutar_sql_simple("BEGIN IMMEDIATE TRANSACTION;"))
     {
@@ -647,9 +640,7 @@ static int reasignar_partidos_y_eliminar_camiseta(int camiseta_origen,
     sqlite3_stmt *stmt_update = NULL;
     sqlite3_stmt *stmt_delete = NULL;
 
-    if (!preparar_stmt(
-                &stmt_update,
-                "UPDATE partido SET camiseta_id = ? WHERE camiseta_id = ?"))
+    if (!preparar_stmt(&stmt_update, "UPDATE partido SET camiseta_id = ? WHERE camiseta_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -697,8 +688,7 @@ static int eliminar_camiseta_y_partidos_asociados(int camiseta_id)
     sqlite3_stmt *stmt_delete_partidos = NULL;
     sqlite3_stmt *stmt_delete_camiseta = NULL;
 
-    if (!preparar_stmt(&stmt_delete_partidos,
-                       "DELETE FROM partido WHERE camiseta_id = ?"))
+    if (!preparar_stmt(&stmt_delete_partidos, "DELETE FROM partido WHERE camiseta_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -712,8 +702,7 @@ static int eliminar_camiseta_y_partidos_asociados(int camiseta_id)
     }
     sqlite3_finalize(stmt_delete_partidos);
 
-    if (!preparar_stmt(&stmt_delete_camiseta,
-                       "DELETE FROM camiseta WHERE id = ?"))
+    if (!preparar_stmt(&stmt_delete_camiseta, "DELETE FROM camiseta WHERE id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
         return 0;
@@ -736,8 +725,7 @@ static int eliminar_camiseta_y_partidos_asociados(int camiseta_id)
     return 1;
 }
 
-static void solicitar_nombre_camiseta(const char *prompt, char *buffer,
-                                      int size)
+static void solicitar_nombre_camiseta(const char *prompt, char *buffer, int size)
 {
     while (1)
     {
@@ -778,8 +766,7 @@ static const char *texto_o_defecto(const char *valor, const char *defecto)
     return defecto;
 }
 
-static void solicitar_campo_no_vacio(const char *prompt, char *buffer,
-                                     int size)
+static void solicitar_campo_no_vacio(const char *prompt, char *buffer, int size)
 {
     while (1)
     {
@@ -873,16 +860,14 @@ static int cargar_info_camiseta_detalle(int id, CamisetaInfoDetalle *info)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                &stmt,
-                "SELECT nombre, IFNULL(color_principal, ''), "
-                "IFNULL(color_secundario, ''), IFNULL(marca, ''), "
-                "IFNULL(modelo, ''), IFNULL(temporada, ''), IFNULL(estado_fisico, "
-                "''), IFNULL(fecha_compra, ''), "
-                "IFNULL(costo_centavos, 0), IFNULL(observaciones, ''), "
-                "IFNULL(proveedor, ''), "
-                "IFNULL(fue_regalo, 0), IFNULL(regalo_de, ''), IFNULL(activa, 1) "
-                "FROM camiseta WHERE id = ?"))
+    if (!preparar_stmt(&stmt, "SELECT nombre, IFNULL(color_principal, ''), "
+                       "IFNULL(color_secundario, ''), IFNULL(marca, ''), "
+                       "IFNULL(modelo, ''), IFNULL(temporada, ''), IFNULL(estado_fisico, "
+                       "''), IFNULL(fecha_compra, ''), "
+                       "IFNULL(costo_centavos, 0), IFNULL(observaciones, ''), "
+                       "IFNULL(proveedor, ''), "
+                       "IFNULL(fue_regalo, 0), IFNULL(regalo_de, ''), IFNULL(activa, 1) "
+                       "FROM camiseta WHERE id = ?"))
     {
         return 0;
     }
@@ -894,16 +879,13 @@ static int cargar_info_camiseta_detalle(int id, CamisetaInfoDetalle *info)
         return 0;
     }
 
-    snprintf(info->nombre, sizeof(info->nombre), "%s",
-             (const char *)sqlite3_column_text(stmt, 0));
+    snprintf(info->nombre, sizeof(info->nombre), "%s", (const char *)sqlite3_column_text(stmt, 0));
     snprintf(info->color_principal, sizeof(info->color_principal), "%s",
              (const char *)sqlite3_column_text(stmt, 1));
     snprintf(info->color_secundario, sizeof(info->color_secundario), "%s",
              (const char *)sqlite3_column_text(stmt, 2));
-    snprintf(info->marca, sizeof(info->marca), "%s",
-             (const char *)sqlite3_column_text(stmt, 3));
-    snprintf(info->modelo, sizeof(info->modelo), "%s",
-             (const char *)sqlite3_column_text(stmt, 4));
+    snprintf(info->marca, sizeof(info->marca), "%s", (const char *)sqlite3_column_text(stmt, 3));
+    snprintf(info->modelo, sizeof(info->modelo), "%s", (const char *)sqlite3_column_text(stmt, 4));
     snprintf(info->temporada, sizeof(info->temporada), "%s",
              (const char *)sqlite3_column_text(stmt, 5));
     snprintf(info->estado_fisico, sizeof(info->estado_fisico), "%s",
@@ -931,13 +913,11 @@ static int camiseta_necesita_completar_info(const CamisetaInfoDetalle *info)
         return 0;
     }
 
-    return info->color_principal[0] == '\0' &&
-           info->color_secundario[0] == '\0' && info->marca[0] == '\0' &&
-           info->modelo[0] == '\0' && info->temporada[0] == '\0' &&
+    return info->color_principal[0] == '\0' && info->color_secundario[0] == '\0' &&
+           info->marca[0] == '\0' && info->modelo[0] == '\0' && info->temporada[0] == '\0' &&
            info->estado_fisico[0] == '\0' && info->fecha_compra[0] == '\0' &&
            info->costo_centavos == 0 && info->observaciones[0] == '\0' &&
-           info->proveedor[0] == '\0' && info->fue_regalo == 0 &&
-           info->regalo_de[0] == '\0';
+           info->proveedor[0] == '\0' && info->fue_regalo == 0 && info->regalo_de[0] == '\0';
 }
 
 static int completar_informacion_camiseta(int id)
@@ -955,36 +935,30 @@ static int completar_informacion_camiseta(int id)
     int fue_regalo;
     char regalo_de[100] = {0};
 
-    solicitar_campo_no_vacio("Color principal: ", color_principal,
-                             sizeof(color_principal));
-    solicitar_campo_no_vacio("Color secundario: ", color_secundario,
-                             sizeof(color_secundario));
+    solicitar_campo_no_vacio("Color principal: ", color_principal, sizeof(color_principal));
+    solicitar_campo_no_vacio("Color secundario: ", color_secundario, sizeof(color_secundario));
     solicitar_campo_no_vacio("Marca: ", marca, sizeof(marca));
     solicitar_campo_no_vacio("Modelo: ", modelo, sizeof(modelo));
-    solicitar_campo_no_vacio("Temporada (ej: 2026): ", temporada,
-                             sizeof(temporada));
+    solicitar_campo_no_vacio("Temporada (ej: 2026): ", temporada, sizeof(temporada));
     solicitar_estado_fisico(estado_fisico, sizeof(estado_fisico));
     solicitar_campo_no_vacio("Fecha de compra (ej: 2026-04-22): ", fecha_compra,
                              sizeof(fecha_compra));
     costo_centavos = solicitar_costo_centavos("Costo de compra: ");
-    input_string_extended("Observaciones: ", observaciones,
-                          sizeof(observaciones));
+    input_string_extended("Observaciones: ", observaciones, sizeof(observaciones));
     trim_whitespace(observaciones);
     solicitar_campo_no_vacio("Proveedor: ", proveedor, sizeof(proveedor));
     fue_regalo = solicitar_si_no("Fue un regalo?");
     if (fue_regalo)
     {
-        solicitar_campo_no_vacio("Regalo de (ej: Ivan): ", regalo_de,
-                                 sizeof(regalo_de));
+        solicitar_campo_no_vacio("Regalo de (ej: Ivan): ", regalo_de, sizeof(regalo_de));
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                &stmt, "UPDATE camiseta SET color_principal = ?, color_secundario = "
-                "?, marca = ?, modelo = ?, "
-                "temporada = ?, estado_fisico = ?, fecha_compra = ?, "
-                "costo_centavos = ?, observaciones = ?, "
-                "proveedor = ?, fue_regalo = ?, regalo_de = ? WHERE id = ?"))
+    if (!preparar_stmt(&stmt, "UPDATE camiseta SET color_principal = ?, color_secundario = "
+                       "?, marca = ?, modelo = ?, "
+                       "temporada = ?, estado_fisico = ?, fecha_compra = ?, "
+                       "costo_centavos = ?, observaciones = ?, "
+                       "proveedor = ?, fue_regalo = ?, regalo_de = ? WHERE id = ?"))
     {
         return 0;
     }
@@ -1008,8 +982,7 @@ static int completar_informacion_camiseta(int id)
     return ok;
 }
 
-static void imprimir_info_camiseta_detalle(int id,
-        const CamisetaInfoDetalle *info)
+static void imprimir_info_camiseta_detalle(int id, const CamisetaInfoDetalle *info)
 {
     int uso_partidos = contar_partidos_por_camiseta(id);
     if (uso_partidos < 0)
@@ -1019,33 +992,22 @@ static void imprimir_info_camiseta_detalle(int id,
 
     printf("========================================\n");
     printf("ID                 : %d\n", id);
-    printf("Nombre             : %s\n",
-           texto_o_defecto(info->nombre, "(sin dato)"));
-    printf("Color Principal    : %s\n",
-           texto_o_defecto(info->color_principal, "(sin dato)"));
-    printf("Color Secundario   : %s\n",
-           texto_o_defecto(info->color_secundario, "(sin dato)"));
-    printf("Marca              : %s\n",
-           texto_o_defecto(info->marca, "(sin dato)"));
-    printf("Modelo             : %s\n",
-           texto_o_defecto(info->modelo, "(sin dato)"));
-    printf("Temporada          : %s\n",
-           texto_o_defecto(info->temporada, "(sin dato)"));
-    printf("Estado Fisico      : %s\n",
-           texto_o_defecto(info->estado_fisico, "(sin dato)"));
-    printf("Fecha Compra       : %s\n",
-           texto_o_defecto(info->fecha_compra, "(sin dato)"));
+    printf("Nombre             : %s\n", texto_o_defecto(info->nombre, "(sin dato)"));
+    printf("Color Principal    : %s\n", texto_o_defecto(info->color_principal, "(sin dato)"));
+    printf("Color Secundario   : %s\n", texto_o_defecto(info->color_secundario, "(sin dato)"));
+    printf("Marca              : %s\n", texto_o_defecto(info->marca, "(sin dato)"));
+    printf("Modelo             : %s\n", texto_o_defecto(info->modelo, "(sin dato)"));
+    printf("Temporada          : %s\n", texto_o_defecto(info->temporada, "(sin dato)"));
+    printf("Estado Fisico      : %s\n", texto_o_defecto(info->estado_fisico, "(sin dato)"));
+    printf("Fecha Compra       : %s\n", texto_o_defecto(info->fecha_compra, "(sin dato)"));
     printf("Costo Compra       : %.2f\n", (double)info->costo_centavos / 100.0);
     printf("Uso Acumulado      : %d partido(s)\n", uso_partidos);
-    printf("Observaciones      : %s\n",
-           texto_o_defecto(info->observaciones, "(sin dato)"));
-    printf("Proveedor          : %s\n",
-           texto_o_defecto(info->proveedor, "(sin dato)"));
+    printf("Observaciones      : %s\n", texto_o_defecto(info->observaciones, "(sin dato)"));
+    printf("Proveedor          : %s\n", texto_o_defecto(info->proveedor, "(sin dato)"));
     printf("Regalo             : %s\n", info->fue_regalo ? "SI" : "NO");
     if (info->fue_regalo)
     {
-        printf("Regalo De          : %s\n",
-               texto_o_defecto(info->regalo_de, "(sin dato)"));
+        printf("Regalo De          : %s\n", texto_o_defecto(info->regalo_de, "(sin dato)"));
     }
     printf("Estado             : %s\n", info->activa ? "ACTIVA" : "INACTIVA");
     printf("========================================\n");
@@ -1087,9 +1049,7 @@ static void listar_camisetas_simple()
 {
     sqlite3_stmt *stmt;
 
-    if (!preparar_stmt(
-                &stmt,
-                "SELECT id, nombre, IFNULL(activa, 1) FROM camiseta ORDER BY id"))
+    if (!preparar_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1) FROM camiseta ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -1098,8 +1058,7 @@ static void listar_camisetas_simple()
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *estado =
-            sqlite3_column_int(stmt, 2) == 1 ? "ACTIVA" : "INACTIVA";
+        const char *estado = sqlite3_column_int(stmt, 2) == 1 ? "ACTIVA" : "INACTIVA";
         ui_printf_centered_line("%d - %s [%s]", sqlite3_column_int(stmt, 0),
                                 sqlite3_column_text(stmt, 1), estado);
         hay = 1;
@@ -1126,30 +1085,25 @@ void crear_camiseta()
                              sizeof(info.color_secundario));
     solicitar_campo_no_vacio("Marca: ", info.marca, sizeof(info.marca));
     solicitar_campo_no_vacio("Modelo: ", info.modelo, sizeof(info.modelo));
-    solicitar_campo_no_vacio("Temporada (ej: 2026): ", info.temporada,
-                             sizeof(info.temporada));
+    solicitar_campo_no_vacio("Temporada (ej: 2026): ", info.temporada, sizeof(info.temporada));
     solicitar_estado_fisico(info.estado_fisico, sizeof(info.estado_fisico));
-    solicitar_campo_no_vacio("Fecha de compra (ej: 2026-04-22): ",
-                             info.fecha_compra, sizeof(info.fecha_compra));
+    solicitar_campo_no_vacio("Fecha de compra (ej: 2026-04-22): ", info.fecha_compra,
+                             sizeof(info.fecha_compra));
     info.costo_centavos = solicitar_costo_centavos("Costo de compra: ");
-    input_string_extended("Observaciones: ", info.observaciones,
-                          sizeof(info.observaciones));
+    input_string_extended("Observaciones: ", info.observaciones, sizeof(info.observaciones));
     trim_whitespace(info.observaciones);
-    solicitar_campo_no_vacio("Proveedor: ", info.proveedor,
-                             sizeof(info.proveedor));
+    solicitar_campo_no_vacio("Proveedor: ", info.proveedor, sizeof(info.proveedor));
     info.fue_regalo = solicitar_si_no("Fue un regalo?");
     info.regalo_de[0] = '\0';
     if (info.fue_regalo)
     {
-        solicitar_campo_no_vacio("Regalo de (ej: Ivan): ", info.regalo_de,
-                                 sizeof(info.regalo_de));
+        solicitar_campo_no_vacio("Regalo de (ej: Ivan): ", info.regalo_de, sizeof(info.regalo_de));
     }
 
     long long id = obtener_siguiente_id("camiseta");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
-                       "INSERT INTO camiseta(id, nombre, color_principal, "
+    if (!preparar_stmt(&stmt, "INSERT INTO camiseta(id, nombre, color_principal, "
                        "color_secundario, marca, modelo, temporada, "
                        "estado_fisico, fecha_compra, costo_centavos, "
                        "observaciones, proveedor, fue_regalo, regalo_de) "
@@ -1179,26 +1133,23 @@ void crear_camiseta()
     if (rc == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s",
-                 id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s", id, nombre);
         app_log_event("CAMISETA", log_msg);
 
-        int desea_cargar_imagen =
-            confirmar("Desea cargar imagen para esta camiseta ahora?");
+        int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
         if (desea_cargar_imagen)
         {
             if (!cargar_imagen_para_camiseta_id((int)id))
             {
                 printf("No se pudo cargar la imagen en este momento.\n");
                 snprintf(log_msg, sizeof(log_msg),
-                         "Camiseta id=%lld creada, pero fallo carga de imagen inicial",
-                         id);
+                         "Camiseta id=%lld creada, pero fallo carga de imagen inicial", id);
                 app_log_event("CAMISETA", log_msg);
             }
             else
             {
-                snprintf(log_msg, sizeof(log_msg),
-                         "Camiseta id=%lld creada con imagen inicial", id);
+                snprintf(log_msg, sizeof(log_msg), "Camiseta id=%lld creada con imagen inicial",
+                         id);
                 app_log_event("CAMISETA", log_msg);
             }
         }
@@ -1214,8 +1165,7 @@ void crear_camiseta()
     else
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s",
-                 nombre);
+        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s", nombre);
         app_log_event("CAMISETA", log_msg);
         printf("\nError al crear la camiseta en la base de datos.\n");
         pause_console();
@@ -1230,19 +1180,18 @@ static int cargar_imagen_para_camiseta_id(int id)
 static void listar_camisetas_con_stats()
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
-        "COUNT(p.id), "
-        "IFNULL(SUM(p.goles), 0), "
-        "IFNULL(SUM(p.asistencias), 0), "
-        "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
-        "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
-        "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) "
-        "FROM camiseta c "
-        "LEFT JOIN partido p ON c.id = p.camiseta_id "
-        "WHERE IFNULL(c.activa, 1) = 1 "
-        "GROUP BY c.id, c.nombre "
-        "ORDER BY c.id;";
+    const char *sql = "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
+                      "COUNT(p.id), "
+                      "IFNULL(SUM(p.goles), 0), "
+                      "IFNULL(SUM(p.asistencias), 0), "
+                      "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
+                      "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
+                      "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) "
+                      "FROM camiseta c "
+                      "LEFT JOIN partido p ON c.id = p.camiseta_id "
+                      "WHERE IFNULL(c.activa, 1) = 1 "
+                      "GROUP BY c.id, c.nombre "
+                      "ORDER BY c.id;";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -1321,8 +1270,7 @@ void editar_camiseta()
     sqlite3_finalize(stmt);
 
     char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg),
-             "Editada camiseta id=%d nuevo_nombre=%.180s", id, nombre);
+    snprintf(log_msg, sizeof(log_msg), "Editada camiseta id=%d nuevo_nombre=%.180s", id, nombre);
     app_log_event("CAMISETA", log_msg);
 
     mostrar_alerta_operacion("Camiseta", "Modificada", nombre);
@@ -1368,8 +1316,7 @@ void ver_imagen_camiseta()
     print_header("VER IMAGEN DE CAMISETA");
 
     char ruta_absoluta[1200] = {0};
-    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta,
-            sizeof(ruta_absoluta)))
+    if (!pedir_imagen_camiseta_y_resolver_ruta(ruta_absoluta, sizeof(ruta_absoluta)))
     {
         pause_console();
         return;
@@ -1386,8 +1333,7 @@ void ver_imagen_camiseta()
     pause_console();
 }
 
-static void procesar_eliminacion_reasignando_partidos(int id,
-        int partidos_asociados)
+static void procesar_eliminacion_reasignando_partidos(int id, int partidos_asociados)
 {
     int total_camisetas = contar_total_camisetas_activas();
     if (total_camisetas <= 1)
@@ -1433,21 +1379,19 @@ static void procesar_eliminacion_reasignando_partidos(int id,
     }
 
     char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg),
-             "Eliminada camiseta id=%d con reasignacion a id=%d", id,
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d con reasignacion a id=%d", id,
              camiseta_destino);
     app_log_event("CAMISETA", log_msg);
 
     mostrar_alerta_operacion("Camiseta", "Reasignada y Eliminada", NULL);
 }
 
-static void
-procesar_eliminacion_con_partidos_asociados(int id, int partidos_asociados)
+static void procesar_eliminacion_con_partidos_asociados(int id, int partidos_asociados)
 {
     char detalle[180] = {0};
     snprintf(detalle, sizeof(detalle),
-             "Se eliminara la camiseta %d y TODOS sus %d partido(s) asociados.",
-             id, partidos_asociados);
+             "Se eliminara la camiseta %d y TODOS sus %d partido(s) asociados.", id,
+             partidos_asociados);
     if (!confirmar_borrado_irreversible_camiseta(id, detalle))
     {
         return;
@@ -1461,12 +1405,10 @@ procesar_eliminacion_con_partidos_asociados(int id, int partidos_asociados)
     }
 
     char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg),
-             "Eliminada camiseta id=%d junto a partidos asociados", id);
+    snprintf(log_msg, sizeof(log_msg), "Eliminada camiseta id=%d junto a partidos asociados", id);
     app_log_event("CAMISETA", log_msg);
 
-    mostrar_alerta_operacion("Camiseta", "Eliminada con Partidos Asociados",
-                             NULL);
+    mostrar_alerta_operacion("Camiseta", "Eliminada con Partidos Asociados", NULL);
 }
 
 static void procesar_retiro_camiseta(int id)
@@ -1495,8 +1437,7 @@ static void procesar_camiseta_con_partidos(int id, int partidos_asociados)
 {
     printf("La camiseta esta asociada a %d partido(s).\n", partidos_asociados);
     printf("Elija una opcion:\n");
-    printf(
-        "1) Reasignar esos partidos a otra camiseta y eliminar esta camiseta\n");
+    printf("1) Reasignar esos partidos a otra camiseta y eliminar esta camiseta\n");
     printf("2) Eliminar esta camiseta y TODOS los partidos asociados\n");
     printf("3) Retirar camiseta (marcar INACTIVA y conservar historial)\n");
     printf("0) Cancelar\n");
@@ -1527,8 +1468,7 @@ static void procesar_camiseta_con_partidos(int id, int partidos_asociados)
 
 static void eliminar_camiseta_sin_partidos(int id)
 {
-    if (!confirmar_borrado_irreversible_camiseta(
-                id, "Se eliminara la camiseta seleccionada."))
+    if (!confirmar_borrado_irreversible_camiseta(id, "Se eliminara la camiseta seleccionada."))
     {
         return;
     }
@@ -1773,9 +1713,7 @@ static void cargar_informacion_camiseta()
 
 static void reiniciar_sorteo()
 {
-    sqlite3_exec(db,
-                 "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1",
-                 0, 0, 0);
+    sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0);
     printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
 }
 
@@ -1795,8 +1733,7 @@ static char *obtener_nombre_camiseta(int id)
 {
     char nombre_buffer[256];
 
-    if (obtener_nombre_entidad("camiseta", id, nombre_buffer,
-                               sizeof(nombre_buffer)))
+    if (obtener_nombre_entidad("camiseta", id, nombre_buffer, sizeof(nombre_buffer)))
     {
         return strdup(nombre_buffer);
     }
@@ -1815,8 +1752,7 @@ void sortear_camiseta()
     if (disponibles == 0)
     {
         reiniciar_sorteo();
-        disponibles = obtener_total(
-                          "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1");
+        disponibles = obtener_total("SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1");
     }
 
     if (disponibles == 0)

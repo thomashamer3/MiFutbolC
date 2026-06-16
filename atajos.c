@@ -1,12 +1,12 @@
 #include "atajos.h"
-#include "utils.h"
 #include "settings.h"
+#include "utils.h"
 #include <ctype.h>
 #include <stdio.h>
 
 #ifdef _WIN32
-#include <conio.h>
 #include <windows.h>
+#include <conio.h>
 #else
 #include <fcntl.h>
 #include <sys/select.h>

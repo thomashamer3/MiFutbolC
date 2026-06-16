@@ -17,20 +17,12 @@
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
-#include <conio.h>
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include "direct.h"
-#endif
-#define MKDIR(path) _mkdir(path)
-#ifdef _WIN32
 #include <windows.h>
 #include <bcrypt.h>
 #include <commdlg.h>
-#else
-#include "compat_windows.h"
-#endif
+#include <conio.h>
+#include <direct.h>
+#define MKDIR(path) _mkdir(path)
 #else
 #include <spawn.h>
 #include <sys/stat.h>
@@ -82,8 +74,15 @@ static uint64_t cache_hash_sql(const char *sql)
 
 int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
 {
-    *stmt = db_prepare_cached(sql);
-    return *stmt != NULL ? 1 : 0;
+    if (!stmt || !sql)
+    {
+        return 0;
+    }
+    if (sqlite3_prepare_v2(db, sql, -1, stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+    return 1;
 }
 
 sqlite3_stmt *db_prepare_cached(const char *sql)
@@ -3242,20 +3241,41 @@ static char *get_trimmed_cancha_from_stmt(sqlite3_stmt *stmt)
 void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
-    fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%d\n", cancha_trimmed,
-            sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-            sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
-            resultado_to_text(sqlite3_column_int(stmt, 5)),
-            clima_to_text(sqlite3_column_int(stmt, 6)),
-            dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
-            sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_text(stmt, 11), sqlite3_column_int(stmt, 12));
+    int atajaste_raw = sqlite3_column_int(stmt, 12);
+    if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_raw == 0)
+    {
+        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%s\n", cancha_trimmed,
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
+                resultado_to_text(sqlite3_column_int(stmt, 5)),
+                clima_to_text(sqlite3_column_int(stmt, 6)),
+                dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
+                sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+                sqlite3_column_text(stmt, 11), "-");
+    }
+    else
+    {
+        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%d\n", cancha_trimmed,
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
+                resultado_to_text(sqlite3_column_int(stmt, 5)),
+                clima_to_text(sqlite3_column_int(stmt, 6)),
+                dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
+                sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+                sqlite3_column_text(stmt, 11), atajaste_raw);
+    }
     free(cancha_trimmed);
 }
 
 void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
+    int atajaste_val = sqlite3_column_int(stmt, 12);
+    const char *atajaste_txt;
+    if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_val == 0)
+        atajaste_txt = "-";
+    else
+        atajaste_txt = (atajaste_val == 1) ? "SI" : "NO";
     fprintf(f,
             "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d "
             "| Atajaste:%s | %s\n",
@@ -3266,7 +3286,7 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
             clima_to_text(sqlite3_column_int(stmt, 6)),
             dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
             sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_int(stmt, 12) == 1 ? "SI" : "NO",
+            atajaste_txt,
             sqlite3_column_text(stmt, 11));
     free(cancha_trimmed);
 }
@@ -3294,8 +3314,15 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
     cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
     cJSON_AddStringToObject(item, "comentario_personal",
                             (const char *)sqlite3_column_text(stmt, 11));
-    cJSON_AddNumberToObject(item, "atajaste_todo_el_partido",
-                            sqlite3_column_int(stmt, 12));
+    int atajaste_j = sqlite3_column_int(stmt, 12);
+    if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_j == 0)
+    {
+        cJSON_AddNumberToObject(item, "atajaste_todo_el_partido", -1);
+    }
+    else
+    {
+        cJSON_AddNumberToObject(item, "atajaste_todo_el_partido", atajaste_j);
+    }
 
     free(cancha_trimmed);
 }
@@ -3303,6 +3330,12 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
 void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
+    int atajaste_h = sqlite3_column_int(stmt, 12);
+    const char *atajaste_html;
+    if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_h == 0)
+        atajaste_html = "-";
+    else
+        atajaste_html = (atajaste_h == 1) ? "SI" : "NO";
     fprintf(f,
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</"
             "td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</"
@@ -3315,7 +3348,7 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
             dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
             sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
             sqlite3_column_text(stmt, 11),
-            sqlite3_column_int(stmt, 12) == 1 ? "SI" : "NO");
+            atajaste_html);
     free(cancha_trimmed);
 }
 
