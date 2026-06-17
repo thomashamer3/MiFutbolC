@@ -196,6 +196,30 @@ void crear_tienda()
     pause_console();
 }
 
+static void imprimir_contacto_tienda(const char *url, const char *direccion,
+                                     const char *telefono, const char *whatsapp,
+                                     const char *instagram, const char *email)
+{
+    if (url && url[0])        printf("  URL: %s\n", url);
+    if (direccion && direccion[0]) printf("  Direccion: %s\n", direccion);
+    if (telefono && telefono[0])   printf("  Telefono: %s\n", telefono);
+    if (whatsapp && whatsapp[0])   printf("  WhatsApp: %s\n", whatsapp);
+    if (instagram && instagram[0]) printf("  Instagram: %s\n", instagram);
+    if (email && email[0])     printf("  Email: %s\n", email);
+}
+
+static void imprimir_productos_tienda(int botines, int camisetas, int pelotas,
+                                      int equipamiento, int accesorios)
+{
+    printf("  Vende: ");
+    if (botines)     printf("Botines ");
+    if (camisetas)   printf("Camisetas ");
+    if (pelotas)     printf("Pelotas ");
+    if (equipamiento) printf("Equipamiento ");
+    if (accesorios)  printf("Accesorios ");
+    printf("\n");
+}
+
 static void imprimir_fila_tienda(sqlite3_stmt *stmt)
 {
     int id = sqlite3_column_int(stmt, 0);
@@ -223,21 +247,9 @@ static void imprimir_fila_tienda(sqlite3_stmt *stmt)
     printf("ID: %d%s\n", id, favorito ? " [FAVORITO]" : "");
     printf("  Nombre: %s\n", nombre ? nombre : "");
     printf("  Tipo: %s\n", tipo_tienda_str(tipo));
-    if (url && url[0]) printf("  URL: %s\n", url);
-    if (direccion && direccion[0]) printf("  Direccion: %s\n", direccion);
-    if (telefono && telefono[0]) printf("  Telefono: %s\n", telefono);
-    if (whatsapp && whatsapp[0]) printf("  WhatsApp: %s\n", whatsapp);
-    if (instagram && instagram[0]) printf("  Instagram: %s\n", instagram);
-    if (email && email[0]) printf("  Email: %s\n", email);
-
-    printf("  Vende: ");
-    if (vende_botines) printf("Botines ");
-    if (vende_camisetas) printf("Camisetas ");
-    if (vende_pelotas) printf("Pelotas ");
-    if (vende_equipamiento) printf("Equipamiento ");
-    if (vende_accesorios) printf("Accesorios ");
-    printf("\n");
-
+    imprimir_contacto_tienda(url, direccion, telefono, whatsapp, instagram, email);
+    imprimir_productos_tienda(vende_botines, vende_camisetas, vende_pelotas,
+                              vende_equipamiento, vende_accesorios);
     printf("  Rango precio: %s\n", rango_precio_str(rango_precio));
     printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n",
            tiene_envio ? "Si" : "No",

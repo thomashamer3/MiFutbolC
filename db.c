@@ -1733,7 +1733,8 @@ static int create_performance_indexes()
 
         if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
         {
-            run_index_migration(NULL, DB_VERSION_PARTIDO_ATAJASTE, "atajaste");
+            static const char *empty_statements[] = { NULL };
+            run_index_migration(empty_statements, DB_VERSION_PARTIDO_ATAJASTE, "atajaste");
         }
 
         if (current_version < DB_VERSION_PARTIDO_ATAJASTE_FIX)
