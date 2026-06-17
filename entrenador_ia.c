@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h>
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {

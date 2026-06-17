@@ -9,14 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <limits.h>
-#ifdef _WIN32
-#include <process.h>
-#include <io.h>
-#else
-#include "process.h"
-#include <strings.h>
-#endif
+
 
 static void listar_canchas_simple(void);
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size);

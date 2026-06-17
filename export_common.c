@@ -13,8 +13,6 @@
 #include "cJSON.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 static FILE *open_export_file(const char *filename, sqlite3_stmt *stmt)
 {

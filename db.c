@@ -4,15 +4,12 @@
 #include "utils.h"
 #include <ctype.h>
 #include <errno.h>
-#include <inttypes.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <bcrypt.h>
 #include <direct.h>
 #include <shlobj.h>
 #else

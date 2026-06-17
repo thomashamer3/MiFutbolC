@@ -2,7 +2,6 @@
 #include "ascii_charts.h"
 #include "db.h"
 #include "export.h"
-#include "menu.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>

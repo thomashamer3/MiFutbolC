@@ -1,6 +1,4 @@
 #include "musica_helpers.h"
-
-#include "miniaudio.h"
 #include "utils.h"
 
 #include <ctype.h>

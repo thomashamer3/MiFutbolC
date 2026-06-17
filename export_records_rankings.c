@@ -4,8 +4,6 @@
 #include "utils.h"
 #include "export.h"
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 static sqlite3_stmt *execute_records_query(const char *sql);
 static int get_record_data(sqlite3_stmt *stmt, int *valor, const char **camiseta, const char **fecha);

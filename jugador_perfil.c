@@ -1,12 +1,8 @@
 #include "jugador_perfil.h"
-#include "menu.h"
 #include "db.h"
 #include "utils.h"
 #include "ascii_charts.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {

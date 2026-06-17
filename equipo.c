@@ -10,17 +10,10 @@
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <bcrypt.h>
-#include <io.h>
-#include <process.h>
 #else
 #include "compat_windows.h"
-#include "process.h"
-#include <strings.h>
-#include <unistd.h>
 #endif
 #include "sqlite3.h"
-#include <ctype.h>
 #include <limits.h>
 
 #include "formaciones.h"

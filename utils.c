@@ -8,7 +8,6 @@
 #include "menu.h"
 #include <ctype.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -18,7 +17,6 @@
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <bcrypt.h>
 #include <commdlg.h>
 #include <conio.h>
 #include <direct.h>

@@ -1,12 +1,9 @@
 #include "random_utils.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <bcrypt.h>
-#else
-#include <unistd.h>
 #endif
 
 #ifdef _WIN32

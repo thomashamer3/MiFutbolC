@@ -3,7 +3,6 @@
 #include "utils.h"
 #include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)

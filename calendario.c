@@ -2,9 +2,7 @@
 #include "db.h"
 #include "utils.h"
 #include "settings.h"
-#include "ascii_art.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 

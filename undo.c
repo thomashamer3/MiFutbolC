@@ -20,7 +20,6 @@
 #include <errno.h>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <direct.h>
 #else
 #include <sys/stat.h>

@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "menu.h"
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
 
 static void mostrar_partido_rendimiento(const char *titulo, const char *order_clause);

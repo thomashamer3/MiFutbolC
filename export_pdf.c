@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <ctype.h>
 #include "pdfgen.h"
 
 #ifdef _WIN32

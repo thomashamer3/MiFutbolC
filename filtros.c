@@ -2,9 +2,7 @@
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
-#include "ascii_charts.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)

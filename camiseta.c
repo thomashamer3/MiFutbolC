@@ -8,19 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#ifdef _WIN32
-#include <windows.h>
-#include <bcrypt.h>
-#include <io.h>
-#include <process.h>
-#else
-#include <process.h>
+#ifndef _WIN32
 #include <spawn.h>
-#include <strings.h>
 #include <sys/wait.h>
-#include <unistd.h>
 #endif
-#include <limits.h>
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql);
 static void listar_camisetas_simple(void);

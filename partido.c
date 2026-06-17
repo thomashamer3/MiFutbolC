@@ -12,20 +12,13 @@
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <bcrypt.h>
 #else
 #include "compat_windows.h"
 #endif
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
-#ifdef _WIN32
-#include <process.h>
-#else
-#include "process.h"
-#endif
 #include <limits.h>
-#include <memory.h>
 
 #ifndef UNUSED
 #if defined(__GNUC__) || defined(__clang__)

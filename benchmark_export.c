@@ -1,6 +1,5 @@
 #include "db.h"
 #include "export.h"
-#include "export_all.h"
 #include "export_bienestar.h"
 #include "export_camisetas.h"
 #include "export_dashboard.h"
@@ -12,10 +11,7 @@
 #include "export_temporada.h"
 #include "export_torneo.h"
 #include "utils.h"
-#include <direct.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 static double diff_sec(clock_t start, clock_t end) {

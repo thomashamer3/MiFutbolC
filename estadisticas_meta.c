@@ -4,8 +4,6 @@
 #include "utils.h"
 #include "ascii_charts.h"
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
 #include <time.h>
 
 static const char *resultado_a_texto(int resultado)

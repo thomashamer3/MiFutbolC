@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 

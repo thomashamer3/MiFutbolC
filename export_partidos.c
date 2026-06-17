@@ -4,11 +4,7 @@
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include "direct.h"
-#endif
+
 /* ===================== HELPER FUNCTIONS (STATIC) ===================== */
 
 /**

@@ -9,15 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#ifdef _WIN32
-#include <windows.h>
-#include <commdlg.h>
-#include <io.h>
-#include <process.h>
-#else
-#include "process.h"
-#include <strings.h>
-#endif
+
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {

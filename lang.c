@@ -6,8 +6,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <limits.h>
-#include <unistd.h>
 #endif
 
 #define LANG_DIR "langs"

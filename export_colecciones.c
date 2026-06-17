@@ -4,12 +4,6 @@
 #include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include "direct.h"
-#endif
-#include <string.h>
 
 static void escribir_fila_coleccion_csv(FILE *f, sqlite3_stmt *stmt)
 {

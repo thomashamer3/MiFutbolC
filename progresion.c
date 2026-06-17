@@ -4,14 +4,8 @@
 #include "utils.h"
 #include "ascii_charts.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
+
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
