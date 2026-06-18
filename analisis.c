@@ -50,8 +50,9 @@ static int migrar_columna_duplicable(const char *sql_alter)
         return 0;
     }
 
-    if (err)
+    if (err){
         sqlite3_free(err);
+    }
 
     return 1;
 }
