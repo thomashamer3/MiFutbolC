@@ -167,6 +167,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="entrenador_ia.h" />
+		<Unit filename="equipamiento_historial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="equipamiento_historial.h" />
 		<Unit filename="equipo.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -321,10 +325,18 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="media.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="media.h" />
 		<Unit filename="menu.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="menu.h" />
+		<Unit filename="metas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="metas.h" />
 		<Unit filename="models.h" />
 		<Unit filename="musica.c">
 			<Option compilerVar="CC" />
@@ -359,6 +371,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="random_utils.h" />
+		<Unit filename="reclutamiento.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="reclutamiento.h" />
 		<Unit filename="recordatorios.c">
 			<Option compilerVar="CC" />
 		</Unit>

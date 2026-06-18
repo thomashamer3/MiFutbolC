@@ -157,6 +157,8 @@ static void load_fallback(void)
         {"menu_musica", "Music"},
         {"menu_records_rankings", "Records & Rankings"},
         {"menu_tiendas", "Tiendas"},
+        {"menu_reclutamiento", "Recruitment"},
+        {"menu_media", "Media References"},
         {"menu_back", "Back"},
         {"settings_theme", "Interface Theme"},
         {"settings_language", "Language"},

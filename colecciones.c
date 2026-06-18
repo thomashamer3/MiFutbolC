@@ -1,4 +1,5 @@
 #include "colecciones.h"
+#include "equipamiento_historial.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -1451,8 +1452,9 @@ void menu_colecciones_inventario(void)
         {9, "Filtrar y buscar inventario", &filtrar_buscar_inventario},
         {10, "Exportar backup JSON", &exportar_backup_colecciones_json},
         {11, "Importar backup JSON", &importar_backup_colecciones_json},
+        {12, "Historial Equipamiento", &menu_equipamiento_historial},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("COLECCIONES E INVENTARIO", items, 12);
+    ejecutar_menu("COLECCIONES E INVENTARIO", items, 13);
 }

@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "settings.h"
 #include "logros.h"
+#include "metas.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -327,4 +328,6 @@ void mostrar_dashboard()
     printf("\n");
 
     pause_console();
+
+    menu_metas();
 }

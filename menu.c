@@ -27,8 +27,10 @@
 #include "lang.h"
 #include "lesion.h"
 #include "logros.h"
+#include "media.h"
 #include "musica.h"
 #include "partido.h"
+#include "reclutamiento.h"
 #include "recordatorios.h"
 #include "records_rankings.h"
 #include "settings.h"
@@ -170,6 +172,18 @@ static void abrir_menu_tiendas(void)
     menu_tiendas();
 }
 
+static void abrir_menu_reclutamiento(void)
+{
+    app_log_event("RECLUTAMIENTO", "Ingreso al modulo Reclutamiento");
+    menu_reclutamiento();
+}
+
+static void abrir_menu_media(void)
+{
+    app_log_event("MEDIA", "Ingreso al modulo Referencias Multimedia");
+    menu_media();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Dashboard", &abrir_dashboard},
@@ -192,7 +206,9 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {18, "Musica", &abrir_menu_musica},
     {19, "Records & Rankings", &abrir_menu_records_rankings},
     {20, "Tiendas", &abrir_menu_tiendas},
-    {21, "Ajustes", &abrir_menu_settings},
+    {21, "Reclutamiento", &abrir_menu_reclutamiento},
+    {22, "Referencias Multimedia", &abrir_menu_media},
+    {23, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -334,7 +350,9 @@ MenuItem *create_filtered_menu(int *count)
         &get_menu_financiamiento,   &get_menu_torneos,      &get_menu_temporada,
         &get_menu_analisis,         &get_menu_bienestar,    &get_menu_carrera,
         &get_menu_recordatorios,    &get_menu_colecciones,  &get_menu_musica,
-        &get_menu_records_rankings, &get_menu_tiendas,      &get_menu_settings
+        &get_menu_records_rankings, &get_menu_tiendas,      &get_menu_reclutamiento,
+        &get_menu_media,
+        &get_menu_settings
     };
 
     int out = 0;

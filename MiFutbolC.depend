@@ -83,7 +83,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1781736092 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1781739643 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -217,7 +217,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1781732656 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1781740252 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"settings.h"
 	"utils.h"
 	<locale.h>
@@ -241,8 +241,10 @@
 	"lang.h"
 	"lesion.h"
 	"logros.h"
+	"media.h"
 	"musica.h"
 	"partido.h"
+	"reclutamiento.h"
 	"recordatorios.h"
 	"records_rankings.h"
 	"settings.h"
@@ -2038,7 +2040,7 @@
 
 1762402188 c:\msys64\mingw64\include\curl\typecheck-gcc.h
 
-1781144603 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
+1781740286 d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.h
 	<stdio.h>
 
 1777499252 d:\anime\libros\lenguaje c\proyectos\mifutbolc\financiamiento.h
@@ -2058,7 +2060,7 @@
 	<string.h>
 	<time.h>
 
-1781731213 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1781740281 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"atajos.h"
 	"backup.h"
@@ -2419,8 +2421,9 @@
 	<string.h>
 	<time.h>
 
-1781133650 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\colecciones.c
+1781740276 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\colecciones.c
 	"colecciones.h"
+	"equipamiento_historial.h"
 	"menu.h"
 	"db.h"
 	"utils.h"
@@ -2457,12 +2460,13 @@
 
 1780555723 d:\anime\libros\lenguaje c\proyectos\mifutbolc\busqueda.h
 
-1781732664 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\dashboard.c
+1781740265 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\dashboard.c
 	"dashboard.h"
 	"db.h"
 	"utils.h"
 	"settings.h"
 	"logros.h"
+	"metas.h"
 	<stdio.h>
 	<time.h>
 
@@ -2902,7 +2906,7 @@
 	"cJSON.h"
 	<stdio.h>
 
-1781732655 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
+1781740290 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
 	"lang.h"
 	"cJSON.h"
 	<stdio.h>
@@ -2932,4 +2936,57 @@
 
 1781511285 c:\msys64\mingw64\include\sec_api\wconio_s.h
 	<corecrt_wconio.h>
+
+1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipamiento_historial.h
+
+1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\metas.h
+
+1781741235 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipamiento_historial.c
+	"equipamiento_historial.h"
+	"db.h"
+	"menu.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<windows.h>
+	<unistd.h>
+
+1781741235 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.c
+	"media.h"
+	"db.h"
+	"menu.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<windows.h>
+	<unistd.h>
+
+1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.h
+
+1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\reclutamiento.h
+
+1781741235 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\metas.c
+	"metas.h"
+	"db.h"
+	"menu.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	<windows.h>
+	<unistd.h>
+
+1781741235 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\reclutamiento.c
+	"reclutamiento.h"
+	"db.h"
+	"menu.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<windows.h>
+	<unistd.h>
 

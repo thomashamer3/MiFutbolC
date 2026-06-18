@@ -228,6 +228,8 @@ const char *get_show_current();
 const char *get_reset_defaults();
 const char *get_menu_back();
 const char *get_menu_tiendas();
+const char *get_menu_reclutamiento();
+const char *get_menu_media();
 
 /**
  * @brief Menú para configurar menús personalizados en modo Custom

@@ -1484,6 +1484,55 @@ static int create_database_schema()
         " proximo_backup TEXT,"
         " activo INTEGER DEFAULT 0);",
 
+        "CREATE TABLE IF NOT EXISTS reclutamiento ("
+        " id INTEGER PRIMARY KEY,"
+        " nombre TEXT NOT NULL,"
+        " estado INTEGER NOT NULL DEFAULT 1,"
+        " posicion TEXT DEFAULT '',"
+        " equipo_origen TEXT DEFAULT '',"
+        " fecha_visto TEXT DEFAULT '',"
+        " notas TEXT DEFAULT '');",
+
+        "CREATE TABLE IF NOT EXISTS meta ("
+        " id INTEGER PRIMARY KEY,"
+        " nombre TEXT NOT NULL,"
+        " tipo INTEGER NOT NULL,"
+        " valor_objetivo REAL NOT NULL,"
+        " valor_inicial REAL DEFAULT 0,"
+        " fecha_inicio TEXT DEFAULT '',"
+        " fecha_fin TEXT DEFAULT '',"
+        " estado TEXT DEFAULT 'Activa',"
+        " created_at TEXT DEFAULT (datetime('now','localtime')));",
+
+        "CREATE TABLE IF NOT EXISTS equipamiento_historial ("
+        " id INTEGER PRIMARY KEY,"
+        " tipo INTEGER NOT NULL DEFAULT 1,"
+        " marca TEXT DEFAULT '',"
+        " modelo TEXT DEFAULT '',"
+        " fecha_compra TEXT DEFAULT '',"
+        " precio REAL DEFAULT 0,"
+        " partidos_usados INTEGER DEFAULT 0,"
+        " estado_fisico INTEGER DEFAULT 1,"
+        " rating INTEGER DEFAULT 5,"
+        " notas TEXT DEFAULT '',"
+        " activo INTEGER DEFAULT 1);",
+
+        "CREATE TABLE IF NOT EXISTS media ("
+        " id INTEGER PRIMARY KEY,"
+        " partido_id INTEGER DEFAULT 0,"
+        " tipo INTEGER DEFAULT 1,"
+        " titulo TEXT,"
+        " url TEXT,"
+        " descripcion TEXT,"
+        " fecha TEXT DEFAULT (datetime('now','localtime')));",
+
+        "CREATE INDEX IF NOT EXISTS idx_reclutamiento_estado ON reclutamiento(estado);",
+        "CREATE INDEX IF NOT EXISTS idx_meta_estado ON meta(estado);",
+        "CREATE INDEX IF NOT EXISTS idx_equipamiento_tipo ON equipamiento_historial(tipo);",
+        "CREATE INDEX IF NOT EXISTS idx_equipamiento_activo ON equipamiento_historial(activo);",
+        "CREATE INDEX IF NOT EXISTS idx_media_tipo ON media(tipo);",
+        "CREATE INDEX IF NOT EXISTS idx_media_partido ON media(partido_id);",
+
         NULL
     };
 
