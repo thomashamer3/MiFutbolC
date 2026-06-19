@@ -120,7 +120,7 @@ static const char *SQL_COLECCIONES = "SELECT id, nombre, descripcion, COALESCE(f
 static const char *SQL_ITEMS = "SELECT i.id, COALESCE(i.nombre, ''), COALESCE(i.estado, 0), i.tipo, COALESCE(i.camiseta_id, 0) FROM inventario_item i ORDER BY i.id";
 static const char *SQL_INVENTARIO = "SELECT ROW_NUMBER() OVER () AS id, ci.coleccion_id, ci.inventario_id AS item_id, 1 AS cantidad FROM coleccion_inventario ci ORDER BY ci.coleccion_id, ci.inventario_id";
 
-void exportar_colecciones_csv()
+void exportar_colecciones_csv(void)
 {
     if (!hay_registros("coleccion") && !hay_registros("inventario_item") && !hay_registros("coleccion_inventario"))
     {
@@ -144,7 +144,7 @@ void exportar_colecciones_csv()
     printf("Archivo exportado a: %s\n", get_export_path("colecciones.csv"));
 }
 
-void exportar_colecciones_txt()
+void exportar_colecciones_txt(void)
 {
     if (!hay_registros("coleccion") && !hay_registros("inventario_item") && !hay_registros("coleccion_inventario"))
     {
@@ -164,7 +164,7 @@ void exportar_colecciones_txt()
     printf("Archivo exportado a: %s\n", get_export_path("colecciones.txt"));
 }
 
-void exportar_colecciones_json()
+void exportar_colecciones_json(void)
 {
     if (!hay_registros("coleccion") && !hay_registros("inventario_item") && !hay_registros("coleccion_inventario"))
     {
@@ -203,7 +203,7 @@ void exportar_colecciones_json()
     printf("Archivo exportado a: %s\n", get_export_path("colecciones.json"));
 }
 
-void exportar_colecciones_html()
+void exportar_colecciones_html(void)
 {
     if (!hay_registros("coleccion") && !hay_registros("inventario_item") && !hay_registros("coleccion_inventario"))
     {

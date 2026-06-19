@@ -74,7 +74,7 @@ static const char *rango_precio_str(int rango)
     }
 }
 
-void crear_tienda()
+void crear_tienda(void)
 {
     clear_screen();
     print_header("CREAR TIENDA");
@@ -260,7 +260,7 @@ static void imprimir_fila_tienda(sqlite3_stmt *stmt)
     printf("----------------------------------------\n");
 }
 
-void listar_tiendas()
+void listar_tiendas(void)
 {
     clear_screen();
     print_header("LISTADO DE TIENDAS");
@@ -292,7 +292,7 @@ void listar_tiendas()
     pause_console();
 }
 
-void modificar_tienda()
+void modificar_tienda(void)
 {
     clear_screen();
     print_header("MODIFICAR TIENDA");
@@ -417,7 +417,7 @@ void modificar_tienda()
     pause_console();
 }
 
-void eliminar_tienda()
+void eliminar_tienda(void)
 {
     clear_screen();
     print_header("ELIMINAR TIENDA");
@@ -462,7 +462,7 @@ void eliminar_tienda()
     pause_console();
 }
 
-void menu_tiendas()
+void menu_tiendas(void)
 {
     asegurar_tabla_tienda();
 

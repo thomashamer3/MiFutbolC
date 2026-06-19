@@ -57,17 +57,17 @@ typedef struct
  *
  * Carga configuración desde base de datos o establece valores por defecto.
  */
-void settings_init();
+void settings_init(void);
 
 /**
  * @brief Guarda la configuración actual en la base de datos
  */
-void settings_save();
+void settings_save(void);
 
 /**
  * @brief Obtiene la configuración actual
  */
-AppSettings *settings_get();
+AppSettings *settings_get(void);
 
 /**
  * @brief Establece el tema de la interfaz
@@ -87,7 +87,7 @@ void settings_set_text_size(TextSizeType text_size);
 /**
  * @brief Aplica el tema actual a la consola
  */
-void settings_apply_theme();
+void settings_apply_theme(void);
 
 /**
  * @brief Obtiene el texto correspondiente al idioma actual
@@ -102,7 +102,7 @@ void settings_set_mode(ModeType mode);
 /**
  * @brief Obtiene el modo actual de la aplicación
  */
-ModeType settings_get_mode();
+ModeType settings_get_mode(void);
 
 /**
  * @brief Habilita o deshabilita la reproduccion automatica al iniciar.
@@ -196,45 +196,45 @@ void settings_set_dashboard_enabled(int enabled);
 int settings_get_dashboard_enabled(void);
 
 // Funciones wrapper para internacionalización de menús
-const char *get_menu_camisetas();
-const char *get_menu_canchas();
-const char *get_menu_partidos();
-const char *get_menu_equipos();
-const char *get_menu_estadisticas();
-const char *get_menu_logros();
-const char *get_menu_analisis();
-const char *get_menu_bienestar();
-const char *get_menu_lesiones();
-const char *get_menu_financiamiento();
-const char *get_menu_exportar();
-const char *get_menu_importar();
-const char *get_menu_torneos();
-const char *get_menu_temporada();
-const char *get_menu_entrenador_ia();
-const char *get_menu_dashboard();
-const char *get_menu_calendario();
-const char *get_menu_carrera();
-const char *get_menu_recordatorios();
-const char *get_menu_colecciones();
-const char *get_menu_musica();
-const char *get_menu_settings();
-const char *get_menu_records_rankings();
-const char *get_menu_exit();
-const char *get_menu_title();
-const char *get_settings_theme();
-const char *get_settings_language();
-const char *get_menu_usuario();
-const char *get_show_current();
-const char *get_reset_defaults();
-const char *get_menu_back();
-const char *get_menu_tiendas();
-const char *get_menu_reclutamiento();
-const char *get_menu_media();
+const char * get_menu_camisetas(void);
+const char * get_menu_canchas(void);
+const char * get_menu_partidos(void);
+const char * get_menu_equipos(void);
+const char * get_menu_estadisticas(void);
+const char * get_menu_logros(void);
+const char * get_menu_analisis(void);
+const char * get_menu_bienestar(void);
+const char * get_menu_lesiones(void);
+const char * get_menu_financiamiento(void);
+const char * get_menu_exportar(void);
+const char * get_menu_importar(void);
+const char * get_menu_torneos(void);
+const char * get_menu_temporada(void);
+const char * get_menu_entrenador_ia(void);
+const char * get_menu_dashboard(void);
+const char * get_menu_calendario(void);
+const char * get_menu_carrera(void);
+const char * get_menu_recordatorios(void);
+const char * get_menu_colecciones(void);
+const char * get_menu_musica(void);
+const char * get_menu_settings(void);
+const char * get_menu_records_rankings(void);
+const char * get_menu_exit(void);
+const char * get_menu_title(void);
+const char * get_settings_theme(void);
+const char * get_settings_language(void);
+const char * get_menu_usuario(void);
+const char * get_show_current(void);
+const char * get_reset_defaults(void);
+const char * get_menu_back(void);
+const char * get_menu_tiendas(void);
+const char * get_menu_reclutamiento(void);
+const char * get_menu_media(void);
 
 /**
  * @brief Menú para configurar menús personalizados en modo Custom
  */
-void menu_custom_menus();
+void menu_custom_menus(void);
 
 /**
  * @brief Verifica si un menú está habilitado en modo Custom
@@ -249,7 +249,7 @@ void set_custom_menu_enabled(const char *menu_name, int enabled);
 /**
  * @brief Menú principal de configuración
  */
-void menu_settings();
+void menu_settings(void);
 
 /**
  * @brief Verifica si hay actualizaciones disponibles de forma silenciosa

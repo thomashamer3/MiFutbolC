@@ -80,12 +80,12 @@ int obtener_racha_actual(char *tipo_racha)
     return racha;
 }
 
-int contar_recordatorios_hoy()
+int contar_recordatorios_hoy(void)
 {
     return 0;
 }
 
-int contar_proximos_partidos()
+int contar_proximos_partidos(void)
 {
     sqlite3_stmt *stmt;
     const char *sql =
@@ -121,7 +121,7 @@ int contar_proximos_partidos()
     return count;
 }
 
-int obtener_balance_mes_actual()
+int obtener_balance_mes_actual(void)
 {
     sqlite3_stmt *stmt;
     time_t ahora = time(NULL);
@@ -294,7 +294,7 @@ static void imprimir_dashboard_ascii(const dashboard_view_data_t *data)
     printf("+--------------------------------------------------------------+\n");
 }
 
-void mostrar_dashboard()
+void mostrar_dashboard(void)
 {
     clear_screen();
     print_header(get_text("header_dashboard"));

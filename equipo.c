@@ -1,4 +1,4 @@
-﻿#include "equipo.h"
+#include "equipo.h"
 #include "ascii_art.h"
 #include "db.h"
 #include "menu.h"
@@ -61,7 +61,7 @@ static int cargar_imagen_para_equipo_id(int id)
     return app_cargar_imagen_entidad(id, "equipo", "mifutbol_imagen_sel_equipo.txt");
 }
 
-void cargar_imagen_equipo()
+void cargar_imagen_equipo(void)
 {
     clear_screen();
     print_header("CARGAR IMAGEN DE EQUIPO");
@@ -95,7 +95,7 @@ void cargar_imagen_equipo()
     pause_console();
 }
 
-void ver_imagen_equipo()
+void ver_imagen_equipo(void)
 {
     clear_screen();
     print_header("VER IMAGEN DE EQUIPO");
@@ -303,13 +303,13 @@ typedef struct
 } EquipoPlayerInfo;
 
 // Function prototypes
-void crear_un_equipo_momentaneo();
+void crear_un_equipo_momentaneo(void);
 void gestionar_equipo_momentaneo(Equipo *equipo);
 void modificar_jugador_momentaneo(Equipo *equipo);
 void agregar_jugador_momentaneo(Equipo *equipo);
 void eliminar_jugador_momentaneo(Equipo *equipo);
 void cambiar_capitan_momentaneo(Equipo *equipo);
-void crear_dos_equipos_momentaneos();
+void crear_dos_equipos_momentaneos(void);
 void gestionar_dos_equipos_momentaneos(Equipo *equipo_local, Equipo *equipo_visitante);
 void gestionar_equipo_individual(Equipo *equipo, const char *tipo_equipo);
 void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante);
@@ -322,7 +322,7 @@ void modificar_jugador_existente(const int *jugadores_ids, char jugadores_nombre
                                  const int *jugadores_capitanes, int jugador_count);
 
 // Prototipo para seleccion de posicion (evita declaracion implicita al usarla antes)
-Posicion select_posicion();
+Posicion select_posicion(void);
 
 static int procesar_opcion_gestion_equipo(Equipo *equipo, int opcion)
 {
@@ -546,13 +546,13 @@ void remove_team_from_party(int equipo_id)
 }
 
 // Helper functions for reducing complexity in modificar_equipo
-void show_available_teams_for_modification();
+void show_available_teams_for_modification(void);
 void handle_modify_team_name(int equipo_id);
 void handle_modify_team_type(int equipo_id);
 void handle_modify_team_assignment(int equipo_id);
 void handle_modify_players(int equipo_id);
 
-int get_equipo_id_to_modify()
+int get_equipo_id_to_modify(void)
 {
     int equipo_id = input_int("\nIngrese el ID del equipo a modificar (0 para cancelar): ");
 
@@ -576,7 +576,7 @@ void handle_modify_player_position(int player_id, const int *all_positions, int 
                                    int current_index);
 void handle_toggle_player_captain(int player_id);
 
-void show_available_teams_for_modification()
+void show_available_teams_for_modification(void)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, nombre, IFNULL(activa, 1) FROM equipo ORDER BY id;";
@@ -1206,7 +1206,7 @@ void input_jugador_data(Jugador *jugador, int numero_auto)
     jugador->es_capitan = 0;
 }
 
-Posicion select_posicion()
+Posicion select_posicion(void)
 {
     printf("Posicion:\n");
     printf("1. Arquero\n");
@@ -1344,7 +1344,7 @@ void crear_jugadores_equipo(Equipo *equipo, int auto_numero, const char *prefix)
     }
 }
 
-TipoFutbol seleccionar_tipo_futbol()
+TipoFutbol seleccionar_tipo_futbol(void)
 {
     printf("\nSeleccione el tipo de futbol:\n");
     printf("1. Futbol 5\n");
@@ -1690,7 +1690,7 @@ void mostrar_equipo(const Equipo *equipo)
     printf("\n");
 }
 
-void crear_equipo_fijo()
+void crear_equipo_fijo(void)
 {
     Equipo equipo;
     equipo.tipo = FIJO;
@@ -1728,7 +1728,7 @@ static void accion_crear_dos_equipos_momentaneos(void)
     crear_dos_equipos_momentaneos();
 }
 
-void crear_equipo_momentaneo()
+void crear_equipo_momentaneo(void)
 {
     MenuItem items[] =
     {
@@ -1740,7 +1740,7 @@ void crear_equipo_momentaneo()
     ejecutar_menu("CREAR EQUIPO MOMENTANEO", items, 3);
 }
 
-void crear_un_equipo_momentaneo()
+void crear_un_equipo_momentaneo(void)
 {
     Equipo equipo;
     equipo.tipo = MOMENTANEO;
@@ -1972,7 +1972,7 @@ void cambiar_capitan_momentaneo(Equipo *equipo)
     pause_console();
 }
 
-void crear_dos_equipos_momentaneos()
+void crear_dos_equipos_momentaneos(void)
 {
     Equipo equipo_local;
     Equipo equipo_visitante;
@@ -2172,7 +2172,7 @@ static void accion_crear_equipo_momentaneo(void)
     crear_equipo_momentaneo();
 }
 
-void crear_equipo()
+void crear_equipo(void)
 {
     MenuItem items[] = {{1, "Fijo", &accion_crear_equipo_fijo},
         {2, "Momentaneo", &accion_crear_equipo_momentaneo},
@@ -2182,7 +2182,7 @@ void crear_equipo()
     ejecutar_menu("CREAR EQUIPO", items, 3);
 }
 
-void listar_equipos()
+void listar_equipos(void)
 {
     clear_screen();
     print_header("LISTAR EQUIPOS");
@@ -2236,7 +2236,7 @@ void listar_equipos()
     pause_console();
 }
 
-void modificar_equipo()
+void modificar_equipo(void)
 {
     clear_screen();
     print_header("MODIFICAR EQUIPO");
@@ -2283,7 +2283,7 @@ void modificar_equipo()
     pause_console();
 }
 
-void eliminar_equipo()
+void eliminar_equipo(void)
 {
     clear_screen();
     print_header("ELIMINAR EQUIPO");
@@ -2332,7 +2332,7 @@ void eliminar_equipo()
     pause_console();
 }
 
-static void reactivar_equipo()
+static void reactivar_equipo(void)
 {
     clear_screen();
     print_header("REACTIVAR / DESACTIVAR EQUIPO");
@@ -2447,7 +2447,7 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
     Sleep(3000); // Esperar 3 segundos antes de comenzar
 }
 
-int generar_evento_aleatorio()
+int generar_evento_aleatorio(void)
 {
     unsigned int random_value = secure_rand_range(100);
     int evento_aleatorio = random_value % 100;
@@ -2704,7 +2704,7 @@ void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
     getchar();
 }
 
-void menu_equipos()
+void menu_equipos(void)
 {
     MenuItem items[] = {{1, "Crear", crear_equipo},
         {2, "Listar", listar_equipos},

@@ -1,4 +1,4 @@
-﻿
+
 #include "export_all.h"
 #include "ascii_art.h"
 #include "db.h"
@@ -79,7 +79,7 @@ DEFINE_EXPORT_TODO(recordatorios, "recordatorios")
 DEFINE_EXPORT_TODO(dashboard, "dashboard")
 DEFINE_EXPORT_TODO(calendario, "calendario")
 
-static void exportar_todo_json()
+static void exportar_todo_json(void)
 {
     printf("Exportando todo (JSON)...\n");
 
@@ -106,7 +106,7 @@ static void exportar_todo_json()
     pause_console();
 }
 
-static void exportar_todo_csv()
+static void exportar_todo_csv(void)
 {
     printf("Exportando todo (CSV)...\n");
 
@@ -147,7 +147,7 @@ DEFINE_EXPORT_TODO(estadisticas_generales, "estadisticas generales")
 DEFINE_EXPORT_TODO(estadisticas_por_mes, "estadisticas por mes")
 DEFINE_EXPORT_TODO(estadisticas_por_anio, "estadisticas por anio")
 
-static void exportar_records_rankings_todo()
+static void exportar_records_rankings_todo(void)
 {
     printf("Exportando records & rankings...\n");
     exportar_records_rankings_all();
@@ -155,7 +155,7 @@ static void exportar_records_rankings_todo()
     pause_console();
 }
 
-static void exportar_partido_mas_goles_todo()
+static void exportar_partido_mas_goles_todo(void)
 {
     printf("Exportando partido con mas goles...\n");
     exportar_partido_mas_goles_csv();
@@ -166,7 +166,7 @@ static void exportar_partido_mas_goles_todo()
     pause_console();
 }
 
-static void exportar_partido_mas_asistencias_todo()
+static void exportar_partido_mas_asistencias_todo(void)
 {
     printf("Exportando partido con mas asistencias...\n");
     exportar_partido_mas_asistencias_csv();
@@ -177,7 +177,7 @@ static void exportar_partido_mas_asistencias_todo()
     pause_console();
 }
 
-static void exportar_partido_menos_goles_reciente_todo()
+static void exportar_partido_menos_goles_reciente_todo(void)
 {
     printf("Exportando partido menos goles reciente...\n");
     exportar_partido_menos_goles_reciente_csv();
@@ -188,7 +188,7 @@ static void exportar_partido_menos_goles_reciente_todo()
     pause_console();
 }
 
-static void exportar_partido_menos_asistencias_reciente_todo()
+static void exportar_partido_menos_asistencias_reciente_todo(void)
 {
     printf("Exportando partido menos asistencias reciente...\n");
     exportar_partido_menos_asistencias_reciente_csv();
@@ -199,7 +199,7 @@ static void exportar_partido_menos_asistencias_reciente_todo()
     pause_console();
 }
 
-static void exportar_todo()
+static void exportar_todo(void)
 {
     printf("Exportando todo...\n");
 
@@ -266,7 +266,7 @@ static void exportar_todo()
     pause_console();
 }
 
-static void exportar_informe_total_pdf()
+static void exportar_informe_total_pdf(void)
 {
     printf("Generando informe total en PDF...\n");
     generar_informe_total_pdf();
@@ -319,7 +319,7 @@ static void md_exportar_tabla(FILE *f, const char *titulo, const char *sql,
     fprintf(f, "\n");
 }
 
-static void exportar_todo_md()
+static void exportar_todo_md(void)
 {
     printf("Exportando todo a Markdown...\n");
 
@@ -426,7 +426,7 @@ static void exportar_todo_md()
     pause_console();
 }
 
-static void menu_exportar_partidos()
+static void menu_exportar_partidos(void)
 {
     MenuItem items[] =
     {
@@ -452,7 +452,7 @@ static void menu_exportar_partidos()
     ejecutar_menu(get_text("export_partidos_menu_title"), items, 6);
 }
 
-static void menu_exportar_estadisticas_generales()
+static void menu_exportar_estadisticas_generales(void)
 {
     MenuItem items[] =
     {
@@ -474,7 +474,7 @@ static void menu_exportar_estadisticas_generales()
     ejecutar_menu(get_text("export_estadisticas_generales_menu_title"), items, 5);
 }
 
-void menu_exportar()
+void menu_exportar(void)
 {
     MenuItem items[] =
     {

@@ -1,4 +1,4 @@
-﻿
+
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -154,7 +154,7 @@ static void write_lesiones_json(FILE *file)
  * EXPORTACIoN LESIONES MEJORADO (4 formatos)
  * ============================================================================ */
 
-void exportar_lesiones_csv_mejorado()
+void exportar_lesiones_csv_mejorado(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -164,7 +164,7 @@ void exportar_lesiones_csv_mejorado()
                                       write_lesiones_csv);
 }
 
-void exportar_lesiones_txt_mejorado()
+void exportar_lesiones_txt_mejorado(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -174,7 +174,7 @@ void exportar_lesiones_txt_mejorado()
                                       write_lesiones_txt);
 }
 
-void exportar_lesiones_json_mejorado()
+void exportar_lesiones_json_mejorado(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -184,7 +184,7 @@ void exportar_lesiones_json_mejorado()
                                       write_lesiones_json);
 }
 
-void exportar_lesiones_html_mejorado()
+void exportar_lesiones_html_mejorado(void)
 {
     if (!has_records("lesion"))
     {

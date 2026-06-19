@@ -14,26 +14,26 @@
  *
  * Configura el modo de entrada para captura de combinaciones.
  */
-void inicializar_atajos();
+void inicializar_atajos(void);
 
 /**
  * @brief Verifica si hay un atajo de teclado presionado
  *
  * @return 1 si se detectó un atajo, 0 en caso contrario
  */
-int verificar_atajo();
+int verificar_atajo(void);
 
 /**
  * @brief Muestra la ayuda de atajos disponibles
  */
-void mostrar_ayuda_atajos();
+void mostrar_ayuda_atajos(void);
 
 /**
  * @brief Finaliza el sistema de atajos
  *
  * Restaura el modo de terminal normal.
  */
-void finalizar_atajos();
+void finalizar_atajos(void);
 
 // Códigos de atajos
 #define ATAJO_DASHBOARD   'D'

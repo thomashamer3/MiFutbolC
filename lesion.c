@@ -1,4 +1,4 @@
-﻿#include "lesion.h"
+#include "lesion.h"
 #include "menu.h"
 #include "db.h"
 #include "utils.h"
@@ -117,7 +117,7 @@ static int solicitar_partido_id(int permitir_omitir)
     return partido_id;
 }
 
-void crear_lesion()
+void crear_lesion(void)
 {
     clear_screen();
     char tipo[100];
@@ -207,7 +207,7 @@ void crear_lesion()
     mostrar_alerta_operacion("Lesión", "Creada", info);
 }
 
-void listar_lesiones()
+void listar_lesiones(void)
 {
     mostrar_pantalla("LISTADO DE LESIONES");
 
@@ -259,7 +259,7 @@ void listar_lesiones()
     pause_console();
 }
 
-static void modificar_tipo_lesion()
+static void modificar_tipo_lesion(void)
 {
     char tipo[100];
     solicitar_texto_no_vacio("Nuevo tipo de lesion: ", tipo, sizeof(tipo));
@@ -267,7 +267,7 @@ static void modificar_tipo_lesion()
     mostrar_alerta_operacion("Lesión", "Tipo Modificado", NULL);
 }
 
-static void modificar_descripcion_lesion()
+static void modificar_descripcion_lesion(void)
 {
     char descripcion[200];
     solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
@@ -275,7 +275,7 @@ static void modificar_descripcion_lesion()
     mostrar_alerta_operacion("Lesión", "Descripción Modificada", NULL);
 }
 
-static void modificar_fecha_lesion()
+static void modificar_fecha_lesion(void)
 {
     char fecha[20];
     char hora[10];
@@ -291,7 +291,7 @@ static void modificar_fecha_lesion()
     mostrar_alerta_operacion("Lesión", "Fecha Modificada", NULL);
 }
 
-static void modificar_camiseta_lesion()
+static void modificar_camiseta_lesion(void)
 {
     listar_camisetas();
     int camiseta_id = 0;
@@ -308,7 +308,7 @@ static void modificar_camiseta_lesion()
     mostrar_alerta_operacion("Lesión", "Camiseta Modificada", NULL);
 }
 
-static void modificar_estado_lesion()
+static void modificar_estado_lesion(void)
 {
     printf("\nEstados disponibles:\n");
     printf("1. ACTIVA - Lesion reciente, jugador NO apto\n");
@@ -325,7 +325,7 @@ static void modificar_estado_lesion()
     mostrar_alerta_operacion("Lesión", "Estado Modificado", info);
 }
 
-static void modificar_partido_lesion()
+static void modificar_partido_lesion(void)
 {
     printf("\nDesea asociar esta lesion a un partido? (S/N): ");
     char respuesta[10];
@@ -369,7 +369,7 @@ static void modificar_partido_lesion()
     }
 }
 
-static void modificar_todo_lesion()
+static void modificar_todo_lesion(void)
 {
     char tipo[100];
     char descripcion[200];
@@ -418,7 +418,7 @@ static void modificar_todo_lesion()
     mostrar_alerta_operacion("Lesión", "Modificada", NULL);
 }
 
-void modificar_lesion()
+void modificar_lesion(void)
 {
     mostrar_pantalla("MODIFICAR LESION");
 
@@ -461,7 +461,7 @@ void modificar_lesion()
     ejecutar_menu("MODIFICAR LESION", items, 8);
 }
 
-void eliminar_lesion()
+void eliminar_lesion(void)
 {
     mostrar_pantalla("ELIMINAR LESION");
 
@@ -540,7 +540,7 @@ static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
     return dias2 - dias1;
 }
 
-void mostrar_diferencias_lesiones()
+void mostrar_diferencias_lesiones(void)
 {
     clear_screen();
     print_header("DIFERENCIAS ENTRE LESIONES");
@@ -587,7 +587,7 @@ void mostrar_diferencias_lesiones()
     pause_console();
 }
 
-void actualizar_estados_lesiones()
+void actualizar_estados_lesiones(void)
 {
     mostrar_pantalla("ACTUALIZAR ESTADOS DE LESIONES");
 
@@ -648,7 +648,7 @@ void actualizar_estados_lesiones()
     pause_console();
 }
 
-void menu_lesiones()
+void menu_lesiones(void)
 {
     MenuItem items[] =
     {

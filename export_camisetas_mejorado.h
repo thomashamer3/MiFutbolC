@@ -33,7 +33,7 @@
  * @see exportar_camisetas_json_mejorado()
  * @see exportar_camisetas_html_mejorado()
  */
-void exportar_camisetas_csv_mejorado();
+void exportar_camisetas_csv_mejorado(void);
 
 /**
  * @brief Exportación de datos de camisetas en formato TXT con análisis avanzado
@@ -50,7 +50,7 @@ void exportar_camisetas_csv_mejorado();
  * @see exportar_camisetas_json_mejorado()
  * @see exportar_camisetas_html_mejorado()
  */
-void exportar_camisetas_txt_mejorado();
+void exportar_camisetas_txt_mejorado(void);
 
 /**
  * @brief Exportación de datos de camisetas en formato JSON con análisis avanzado
@@ -67,7 +67,7 @@ void exportar_camisetas_txt_mejorado();
  * @see exportar_camisetas_txt_mejorado()
  * @see exportar_camisetas_html_mejorado()
  */
-void exportar_camisetas_json_mejorado();
+void exportar_camisetas_json_mejorado(void);
 
 /**
  * @brief Exportación de datos de camisetas en formato HTML con análisis avanzado
@@ -84,6 +84,6 @@ void exportar_camisetas_json_mejorado();
  * @see exportar_camisetas_txt_mejorado()
  * @see exportar_camisetas_json_mejorado()
  */
-void exportar_camisetas_html_mejorado();
+void exportar_camisetas_html_mejorado(void);
 
 #endif

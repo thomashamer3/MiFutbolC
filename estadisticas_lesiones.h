@@ -17,6 +17,6 @@
  * incluyendo métricas demográficas, temporales y de impacto en rendimiento,
  * utilizando funciones de agregación y subconsultas para análisis avanzado.
  */
-void mostrar_estadisticas_lesiones();
+void mostrar_estadisticas_lesiones(void);
 
 #endif /* ESTADISTICAS_LESIONES_H */

@@ -22,7 +22,7 @@
  * para todas las funciones de exportación avanzada del sistema.
  *
  */
-void menu_exportar_mejorado();
+void menu_exportar_mejorado(void);
 
 /**
  * @brief Exportación integral de datos de camisetas con análisis avanzado
@@ -40,7 +40,7 @@ void menu_exportar_mejorado();
  * @note Esta función exporta en todos los formatos mejorados, proporcionando
  *       flexibilidad para diferentes usos y aplicaciones.
  */
-void exportar_camisetas_todo_mejorado();
+void exportar_camisetas_todo_mejorado(void);
 
 /**
  * @brief Exportación integral de datos de lesiones con análisis de impacto
@@ -58,7 +58,7 @@ void exportar_camisetas_todo_mejorado();
  * @note Esta función es particularmente útil para equipos médicos y entrenadores
  *       que necesitan evaluar el impacto de las lesiones en el desempeño.
  */
-void exportar_lesiones_todo_mejorado();
+void exportar_lesiones_todo_mejorado(void);
 
 /**
  * @brief Exportación completa del sistema con análisis avanzado
@@ -68,6 +68,6 @@ void exportar_lesiones_todo_mejorado();
  * avanzado como las versiones originales para mantener compatibilidad.
  *
  */
-void exportar_todo_mejorado();
+void exportar_todo_mejorado(void);
     
 #endif /* EXPORT_ALL_MEJORADO_H */

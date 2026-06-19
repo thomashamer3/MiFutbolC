@@ -17,6 +17,6 @@
  * unida con camiseta para presentación ordenada por año descendente y
  * goles totales descendentes dentro de cada año.
  */
-void mostrar_estadisticas_por_anio();
+void mostrar_estadisticas_por_anio(void);
 
 #endif /* ESTADISTICAS_ANIO_H */

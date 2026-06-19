@@ -3,7 +3,7 @@
 #include "utils.h"
 #include <stdio.h>
 
-void mostrar_tabla_posiciones_global()
+void mostrar_tabla_posiciones_global(void)
 {
     clear_screen();
     print_header("TABLA DE POSICIONES GLOBAL");

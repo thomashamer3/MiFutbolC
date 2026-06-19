@@ -1,4 +1,4 @@
-﻿#include "cJSON.h"
+#include "cJSON.h"
 #include "export.h"
 #include "export_partidos_helpers.h"
 #include "utils.h"
@@ -12,7 +12,7 @@
  * Returns 1 if records exist, 0 if no records found.
  * This avoids duplicating the count check in every export function.
  */
-int has_partido_records()
+int has_partido_records(void)
 {
     return check_partido_records();
 }
@@ -109,7 +109,7 @@ static void write_partido_html(FILE *f, sqlite3_stmt *stmt)
  * Export all partidos to CSV format.
  * Uses helper functions to keep the main function concise.
  */
-void exportar_partidos_csv()
+void exportar_partidos_csv(void)
 {
     export_partidos_generic("partidos.csv", write_partido_csv);
 }
@@ -118,7 +118,7 @@ void exportar_partidos_csv()
  * Export all partidos to TXT format.
  * Uses helper functions to keep the main function concise.
  */
-void exportar_partidos_txt()
+void exportar_partidos_txt(void)
 {
     export_partidos_generic("partidos.txt", write_partido_txt);
 }
@@ -127,7 +127,7 @@ void exportar_partidos_txt()
  * Export all partidos to JSON format.
  * Uses helper functions to keep the main function concise.
  */
-void exportar_partidos_json()
+void exportar_partidos_json(void)
 {
     export_partidos_generic("partidos.json", write_partido_json);
 }
@@ -136,7 +136,7 @@ void exportar_partidos_json()
  * Export all partidos to HTML format.
  * Uses helper functions to keep the main function concise.
  */
-void exportar_partidos_html()
+void exportar_partidos_html(void)
 {
     export_partidos_generic("partidos.html", write_partido_html);
 }
@@ -144,7 +144,7 @@ void exportar_partidos_html()
 /**
  * Export all partidos to all 4 formats using one SQL query.
  */
-void exportar_partidos_all()
+void exportar_partidos_all(void)
 {
     if (!check_partido_records())
     {
@@ -174,70 +174,70 @@ void exportar_partidos_all()
 
 /* ===================== PARTIDOS ESPECIFICOS ===================== */
 
-void exportar_partido_mas_goles_csv()
+void exportar_partido_mas_goles_csv(void)
 {
     exportar_partido_especifico_csv(
         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_goles.csv");
 }
 
-void exportar_partido_mas_goles_txt()
+void exportar_partido_mas_goles_txt(void)
 {
     exportar_partido_especifico_txt(
         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_goles.txt", "PARTIDO CON MAS GOLES");
 }
 
-void exportar_partido_mas_goles_json()
+void exportar_partido_mas_goles_json(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_goles.json", write_partido_json);
 }
 
-void exportar_partido_mas_goles_html()
+void exportar_partido_mas_goles_html(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.goles DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_goles.html", write_partido_html);
 }
 
-void exportar_partido_mas_asistencias_csv()
+void exportar_partido_mas_asistencias_csv(void)
 {
     exportar_partido_especifico_csv(
         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_asistencias.csv");
 }
 
-void exportar_partido_mas_asistencias_txt()
+void exportar_partido_mas_asistencias_txt(void)
 {
     exportar_partido_especifico_txt(
         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_asistencias.txt", "PARTIDO CON MAS ASISTENCIAS");
 }
 
-void exportar_partido_mas_asistencias_json()
+void exportar_partido_mas_asistencias_json(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_asistencias.json", write_partido_json);
 }
 
-void exportar_partido_mas_asistencias_html()
+void exportar_partido_mas_asistencias_html(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.asistencias DESC, p.fecha_hora DESC LIMIT 1",
         "partido_mas_asistencias.html", write_partido_html);
 }
 
-void exportar_partido_menos_goles_reciente_csv()
+void exportar_partido_menos_goles_reciente_csv(void)
 {
     exportar_partido_especifico_csv(
         "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
         "partido_menos_goles_reciente.csv");
 }
 
-void exportar_partido_menos_goles_reciente_txt()
+void exportar_partido_menos_goles_reciente_txt(void)
 {
     exportar_partido_especifico_txt(
         "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
@@ -245,28 +245,28 @@ void exportar_partido_menos_goles_reciente_txt()
         "PARTIDO MAS RECIENTE CON MENOS GOLES");
 }
 
-void exportar_partido_menos_goles_reciente_json()
+void exportar_partido_menos_goles_reciente_json(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
         "partido_menos_goles_reciente.json", write_partido_json);
 }
 
-void exportar_partido_menos_goles_reciente_html()
+void exportar_partido_menos_goles_reciente_html(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.goles ASC, p.fecha_hora DESC LIMIT 1",
         "partido_menos_goles_reciente.html", write_partido_html);
 }
 
-void exportar_partido_menos_asistencias_reciente_csv()
+void exportar_partido_menos_asistencias_reciente_csv(void)
 {
     exportar_partido_especifico_csv(
         "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
         "partido_menos_asistencias_reciente.csv");
 }
 
-void exportar_partido_menos_asistencias_reciente_txt()
+void exportar_partido_menos_asistencias_reciente_txt(void)
 {
     exportar_partido_especifico_txt(
         "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
@@ -274,14 +274,14 @@ void exportar_partido_menos_asistencias_reciente_txt()
         "PARTIDO MAS RECIENTE CON MENOS ASISTENCIAS");
 }
 
-void exportar_partido_menos_asistencias_reciente_json()
+void exportar_partido_menos_asistencias_reciente_json(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",
         "partido_menos_asistencias_reciente.json", write_partido_json);
 }
 
-void exportar_partido_menos_asistencias_reciente_html()
+void exportar_partido_menos_asistencias_reciente_html(void)
 {
     export_partido_especifico_generic(
         "ORDER BY p.asistencias ASC, p.fecha_hora DESC LIMIT 1",

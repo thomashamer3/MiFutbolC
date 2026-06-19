@@ -325,7 +325,7 @@ static void elegir_periodicidad(char *out, int size)
     out[size - 1] = '\0';
 }
 
-static void agregar_recordatorio()
+static void agregar_recordatorio(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -417,7 +417,7 @@ static void editar_tematica_recordatorio(Reminder *r)
     }
 }
 
-static void editar_recordatorio()
+static void editar_recordatorio(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -477,7 +477,7 @@ static void editar_recordatorio()
     free(arr);
 }
 
-static void eliminar_recordatorio()
+static void eliminar_recordatorio(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -516,7 +516,7 @@ static void eliminar_recordatorio()
     free(arr);
 }
 
-static void filtrar_por_tematica()
+static void filtrar_por_tematica(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -555,7 +555,7 @@ static void filtrar_por_tematica()
     free(arr);
 }
 
-static void export_recordatorios()
+static void export_recordatorios(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -625,7 +625,7 @@ static int merge_and_save_reminders(Reminder *newarr, int new_count)
     return saved;
 }
 
-static void import_recordatorios()
+static void import_recordatorios(void)
 {
     char path[260];
     strncpy_s(path, sizeof(path), "Importaciones/recordatorios.json", sizeof(path) - 1);
@@ -832,7 +832,7 @@ static int expand_array_if_full(Reminder **arr, int actual, int *capacidad)
     return 1;
 }
 
-static void verificar_recordatorios_recurrentes()
+static void verificar_recordatorios_recurrentes(void)
 {
     int count = 0;
     Reminder *arr = load_reminders(&count);
@@ -1065,7 +1065,7 @@ static int add_partidos_to_items(AgendaItem **items, size_t *cap, size_t *nitems
     return 1;
 }
 
-static void mostrar_agenda()
+static void mostrar_agenda(void)
 {
     size_t cap = 0;
     size_t nitems = 0;

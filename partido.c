@@ -1,4 +1,4 @@
-﻿#include "partido.h"
+#include "partido.h"
 #include "ascii_art.h"
 #include "camiseta.h"
 #include "db.h"
@@ -1821,7 +1821,7 @@ static int entidad_esta_activa(const char *tabla, int id)
     return activa;
 }
 
-static int verificar_prerrequisitos_partido()
+static int verificar_prerrequisitos_partido(void)
 {
     sqlite3_stmt *stmt_count_canchas;
     if (!preparar_stmt("SELECT COUNT(*) FROM cancha WHERE IFNULL(activa, 1) = 1",
@@ -2982,7 +2982,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     }
 }
 
-void crear_partido()
+void crear_partido(void)
 {
     // Activar IA antes de crear partido
     activar_ia_antes_partido();
@@ -3153,7 +3153,7 @@ static int partido_listado_navegacion_deshabilitada(int paginacion_todos,
     return 0;
 }
 
-void listar_partidos()
+void listar_partidos(void)
 {
     int partidos_por_pagina = partido_listado_cargar_paginacion();
     int orden_desc = 0;
@@ -3193,7 +3193,7 @@ void listar_partidos()
     }
 }
 
-void eliminar_partido()
+void eliminar_partido(void)
 {
     print_header("ELIMINAR PARTIDO");
 
@@ -3366,7 +3366,7 @@ static void buscar_partidos_generico(const char *header, const char *campo,
     pause_console();
 }
 
-static void modificar_cancha_partido()
+static void modificar_cancha_partido(void)
 {
     listar_canchas_disponibles();
     int cancha = 0;
@@ -3393,7 +3393,7 @@ static void modificar_cancha_partido()
     mostrar_alerta_operacion("Partido", "Cancha Modificada", NULL);
 }
 
-static void modificar_fecha_hora_partido()
+static void modificar_fecha_hora_partido(void)
 {
     char fecha[20];
     char hora[10];
@@ -3422,26 +3422,26 @@ static void modificar_fecha_hora_partido()
     mostrar_alerta_operacion("Partido", "Fecha y Hora Modificadas", NULL);
 }
 
-static void modificar_goles_partido()
+static void modificar_goles_partido(void)
 {
     modificar_campo_partido(
         "goles", "Nuevos goles: ", "Goles modificados correctamente", 0, 0, NULL);
 }
 
-static void modificar_asistencias_partido()
+static void modificar_asistencias_partido(void)
 {
     modificar_campo_partido("asistencias", "Nuevas asistencias: ",
                             "Asistencias modificadas correctamente", 0, 0, NULL);
 }
 
-static void modificar_resultado_partido()
+static void modificar_resultado_partido(void)
 {
     modificar_campo_partido("resultado",
                             "Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
                             "Resultado modificado correctamente", 1, 3, NULL);
 }
 
-static void modificar_camiseta_partido()
+static void modificar_camiseta_partido(void)
 {
     listar_camisetas_disponibles();
     int camiseta = input_int("Nuevo ID camiseta: ");
@@ -3463,95 +3463,95 @@ static void modificar_camiseta_partido()
     mostrar_alerta_operacion("Partido", "Camiseta Modificada", NULL);
 }
 
-static void modificar_clima_partido()
+static void modificar_clima_partido(void)
 {
     modificar_campo_partido(
         "clima", "Nuevo clima (1-12): ", "Clima modificado correctamente", 1, 12,
         mostrar_opciones_clima_partido);
 }
 
-static void modificar_dia_partido()
+static void modificar_dia_partido(void)
 {
     mostrar_opciones_dia_partido();
     modificar_campo_partido(
         "dia", "Nuevo dia (1-6): ", "Dia modificado correctamente", 1, 6, NULL);
 }
 
-static void modificar_comentario_partido()
+static void modificar_comentario_partido(void)
 {
     modificar_campo_texto_partido("comentario_personal",
                                   "Nuevo comentario personal: ",
                                   "Comentario modificado correctamente", 256);
 }
 
-static void modificar_precio_partido()
+static void modificar_precio_partido(void)
 {
     modificar_campo_partido("precio", "Nuevo precio del partido: ",
                             "Precio modificado correctamente", 0, 0, NULL);
 }
 
-static void modificar_rendimiento_general_partido()
+static void modificar_rendimiento_general_partido(void)
 {
     modificar_campo_partido(
         "rendimiento_general", "Nuevo rendimiento general (1-10): ",
         "Rendimiento general modificado correctamente", 1, 10, NULL);
 }
 
-static void modificar_cansancio_partido()
+static void modificar_cansancio_partido(void)
 {
     modificar_campo_partido("cansancio", "Nuevo cansancio (0-10): ",
                             "Cansancio modificado correctamente", 0, 10, NULL);
 }
 
-static void modificar_estado_animo_partido()
+static void modificar_estado_animo_partido(void)
 {
     modificar_campo_partido("estado_animo", "Nuevo estado de animo (0-10): ",
                             "Estado de animo modificado correctamente", 0, 10,
                             NULL);
 }
 
-static void modificar_minutos_jugados_partido()
+static void modificar_minutos_jugados_partido(void)
 {
     modificar_campo_partido("minutos_jugados", "Nuevos minutos jugados (0-180): ",
                             "Minutos jugados modificados correctamente", 0, 180,
                             NULL);
 }
 
-static void modificar_intensidad_partido()
+static void modificar_intensidad_partido(void)
 {
     modificar_campo_partido("intensidad", "Nueva intensidad (1-10): ",
                             "Intensidad modificada correctamente", 1, 10, NULL);
 }
 
-static void modificar_dolor_fisico_partido()
+static void modificar_dolor_fisico_partido(void)
 {
     mostrar_opciones_dolor_fisico_partido();
     modificar_campo_partido("dolor_fisico", "Nuevo dolor/molestia fisica (0-3): ",
                             "Dolor fisico modificado correctamente", 0, 3, NULL);
 }
 
-static void modificar_rating_tecnico_partido()
+static void modificar_rating_tecnico_partido(void)
 {
     modificar_campo_partido("rating_tecnico", "Nuevo rating tecnico (1-10): ",
                             "Rating tecnico modificado correctamente", 1, 10,
                             NULL);
 }
 
-static void modificar_rating_fisico_partido()
+static void modificar_rating_fisico_partido(void)
 {
     modificar_campo_partido("rating_fisico", "Nuevo rating fisico (1-10): ",
                             "Rating fisico modificado correctamente", 1, 10,
                             NULL);
 }
 
-static void modificar_rating_mental_partido()
+static void modificar_rating_mental_partido(void)
 {
     modificar_campo_partido("rating_mental", "Nuevo rating mental (1-10): ",
                             "Rating mental modificado correctamente", 1, 10,
                             NULL);
 }
 
-static void modificar_tipo_partido_partido()
+static void modificar_tipo_partido_partido(void)
 {
     printf("Modo de carga:\n");
     printf("1) Carga rapida\n");
@@ -3561,25 +3561,25 @@ static void modificar_tipo_partido_partido()
                             "Modo de carga modificado correctamente", 1, 3, NULL);
 }
 
-static void modificar_rival_nombre_partido()
+static void modificar_rival_nombre_partido(void)
 {
     modificar_campo_texto_partido(
         "rival_nombre", "Nuevo rival: ", "Rival modificado correctamente", 100);
 }
 
-static void modificar_tipo_rival_partido()
+static void modificar_tipo_rival_partido(void)
 {
     modificar_campo_texto_partido("tipo_rival", "Nuevo tipo de rival: ",
                                   "Tipo de rival modificado correctamente", 40);
 }
 
-static void modificar_posicion_jugada_partido()
+static void modificar_posicion_jugada_partido(void)
 {
     modificar_campo_texto_partido("posicion_jugada", "Nueva posicion jugada: ",
                                   "Posicion modificada correctamente", 40);
 }
 
-static void modificar_estado_cancha_partido()
+static void modificar_estado_cancha_partido(void)
 {
     mostrar_opciones_estado_cancha_partido();
     int estado_cancha =
@@ -3604,14 +3604,14 @@ static void modificar_estado_cancha_partido()
     mostrar_alerta_operacion("Partido", "Estado de Cancha Modificado", NULL);
 }
 
-static void modificar_condicion_cancha_partido()
+static void modificar_condicion_cancha_partido(void)
 {
     modificar_campo_texto_partido(
         "condicion_cancha", "Nueva condicion de cancha: ",
         "Condicion de cancha modificada correctamente", 60);
 }
 
-static void modificar_marcador_global_partido()
+static void modificar_marcador_global_partido(void)
 {
     int goles_equipo = input_int("Nuevos goles de tu equipo (-1 sin dato): ");
     while (goles_equipo < -1)
@@ -3642,7 +3642,7 @@ static void modificar_marcador_global_partido()
     mostrar_alerta_operacion("Partido", "Marcador Global Modificado", NULL);
 }
 
-static void modificar_formato_partido_partido()
+static void modificar_formato_partido_partido(void)
 {
     char futbol[24];
     if (!solicitar_futbol_partido(futbol, (int)sizeof(futbol), 1))
@@ -3665,14 +3665,14 @@ static void modificar_formato_partido_partido()
     mostrar_alerta_operacion("Partido", "Futbol Modificado", NULL);
 }
 
-static void modificar_tarjeta_partido()
+static void modificar_tarjeta_partido(void)
 {
     mostrar_opciones_tarjeta_partido();
     modificar_campo_partido("tarjeta", "Nueva tarjeta (1-3): ",
                             "Tarjeta modificada correctamente", 1, 3, NULL);
 }
 
-static void modificar_goles_en_contra_partido()
+static void modificar_goles_en_contra_partido(void)
 {
     int goles_en_contra = input_int("Nuevos goles en contra: ");
     while (goles_en_contra < 0)
@@ -3695,7 +3695,7 @@ static void modificar_goles_en_contra_partido()
     mostrar_alerta_operacion("Partido", "Goles en Contra Modificados", NULL);
 }
 
-static void modificar_temperatura_partido()
+static void modificar_temperatura_partido(void)
 {
     char buffer[64];
     input_string_extended("Nueva temperatura C (Enter para dejar vacio): ",
@@ -3747,7 +3747,7 @@ static void modificar_temperatura_partido()
     mostrar_alerta_operacion("Partido", "Temperatura Modificada", NULL);
 }
 
-static void modificar_arbitraje_score_partido()
+static void modificar_arbitraje_score_partido(void)
 {
     mostrar_opciones_arbitraje_partido();
     int arbitraje_score = pedir_entero_en_rango(
@@ -3771,14 +3771,14 @@ static void modificar_arbitraje_score_partido()
     mostrar_alerta_operacion("Partido", "Arbitraje Modificado", NULL);
 }
 
-static void modificar_arbitraje_texto_partido()
+static void modificar_arbitraje_texto_partido(void)
 {
     modificar_campo_texto_partido("arbitraje", "Nuevo texto de arbitraje: ",
                                   "Texto de arbitraje modificado correctamente",
                                   60);
 }
 
-static void modificar_eventos_clave_partido()
+static void modificar_eventos_clave_partido(void)
 {
     modificar_campo_texto_partido("eventos_clave", "Nuevos eventos clave: ",
                                   "Eventos clave modificados correctamente", 300);
@@ -3857,40 +3857,40 @@ static void modificar_detalle_evento_partido(const char *campo,
     pause_console();
 }
 
-static void modificar_goles_detalle_partido()
+static void modificar_goles_detalle_partido(void)
 {
     modificar_detalle_evento_partido("goles_detalle", "goles", 0,
                                      "Detalle de goles modificado correctamente");
 }
 
-static void modificar_asistencias_detalle_partido()
+static void modificar_asistencias_detalle_partido(void)
 {
     modificar_detalle_evento_partido(
         "asistencias_detalle", "asistencias", 1,
         "Detalle de asistencias modificado correctamente");
 }
 
-static void modificar_lo_mejor_partido()
+static void modificar_lo_mejor_partido(void)
 {
     modificar_campo_texto_partido(
         "lo_mejor",
         "Nuevo 'Lo mejor': ", "Campo 'Lo mejor' modificado correctamente", 300);
 }
 
-static void modificar_que_mejorar_partido()
+static void modificar_que_mejorar_partido(void)
 {
     modificar_campo_texto_partido("que_mejorar", "Nuevo 'Que mejorar': ",
                                   "Campo 'Que mejorar' modificado correctamente",
                                   300);
 }
 
-static void modificar_tags_partido()
+static void modificar_tags_partido(void)
 {
     modificar_campo_texto_partido("tags", "Nuevos tags (separados por coma): ",
                                   "Tags modificados correctamente", 300);
 }
 
-static void menu_modificar_rendimiento_y_estado_partido()
+static void menu_modificar_rendimiento_y_estado_partido(void)
 {
     MenuItem items[] =
     {
@@ -3909,7 +3909,7 @@ static void menu_modificar_rendimiento_y_estado_partido()
     ejecutar_menu("MODIFICAR RENDIMIENTO/ESTADO", items, 10);
 }
 
-static void menu_modificar_detalle_ampliado_partido()
+static void menu_modificar_detalle_ampliado_partido(void)
 {
     MenuItem items[] =
     {
@@ -4092,14 +4092,14 @@ static void actualizar_partido_completo(DatosPartido const *datos,
     mostrar_alerta_operacion("Partido", "Modificado", NULL);
 }
 
-static void modificar_atajaste_partido()
+static void modificar_atajaste_partido(void)
 {
     modificar_campo_partido("atajaste_todo_el_partido",
                             "Atajaste todo el partido (1=SI, 2=NO): ",
                             "Atajaste todo el partido modificado", 1, 2, NULL);
 }
 
-static void modificar_todo_partido()
+static void modificar_todo_partido(void)
 {
     DatosPartido datos;
     if (!recopilar_datos_completos_partido(&datos))
@@ -4110,7 +4110,7 @@ static void modificar_todo_partido()
     actualizar_partido_completo(&datos, datos.comentario_personal);
 }
 
-void modificar_partido()
+void modificar_partido(void)
 {
     print_header("MODIFICAR PARTIDO");
 
@@ -4163,31 +4163,31 @@ void modificar_partido()
     ejecutar_menu("MODIFICAR PARTIDO", items, 15);
 }
 
-static void buscar_por_camiseta()
+static void buscar_por_camiseta(void)
 {
     buscar_partidos_generico("BUSCAR PARTIDOS POR CAMISETA", "camiseta_id",
                              "ID de la camiseta: ", &listar_camisetas, 1);
 }
 
-static void buscar_por_goles()
+static void buscar_por_goles(void)
 {
     buscar_partidos_generico("BUSCAR PARTIDOS POR GOLES", "goles",
                              "Numero de goles: ", NULL, 0);
 }
 
-static void buscar_por_asistencias()
+static void buscar_por_asistencias(void)
 {
     buscar_partidos_generico("BUSCAR PARTIDOS POR ASISTENCIAS", "asistencias",
                              "Numero de asistencias: ", NULL, 0);
 }
 
-static void buscar_por_cancha()
+static void buscar_por_cancha(void)
 {
     buscar_partidos_generico("BUSCAR PARTIDOS POR CANCHA", "cancha_id",
                              "ID de la cancha: ", &listar_canchas_disponibles, 1);
 }
 
-static void buscar_por_tag()
+static void buscar_por_tag(void)
 {
     print_header("BUSCAR PARTIDOS POR TAG");
 
@@ -4245,7 +4245,7 @@ static void buscar_por_tag()
     pause_console();
 }
 
-void buscar_partidos()
+void buscar_partidos(void)
 {
     MenuItem items[] = {{1, "Por Camiseta", buscar_por_camiseta},
         {2, "Por Goles", buscar_por_goles},
@@ -4286,7 +4286,7 @@ static void manejar_gol(Equipo const *equipo, int minuto,
     }
 }
 
-static int verificar_equipos_disponibles()
+static int verificar_equipos_disponibles(void)
 {
     sqlite3_stmt *stmt_count;
     if (!preparar_stmt("SELECT COUNT(*) FROM equipo", &stmt_count))
@@ -4308,7 +4308,7 @@ static int verificar_equipos_disponibles()
     return 1;
 }
 
-static void mostrar_equipos_disponibles()
+static void mostrar_equipos_disponibles(void)
 {
     printf("=== EQUIPOS DISPONIBLES ===\n\n");
     sqlite3_stmt *stmt_equipos;
@@ -4608,7 +4608,7 @@ static void determinar_resultado_partido(int goles_local, int goles_visitante,
     }
 }
 
-static UNUSED int obtener_cancha_defecto()
+static UNUSED int obtener_cancha_defecto(void)
 {
     int cancha_id = 1;
     sqlite3_stmt *stmt_cancha;
@@ -4711,7 +4711,7 @@ crear_datos_simulacion(Equipo equipo_local, Equipo equipo_visitante,
     return datos_simulacion;
 }
 
-void simular_partido_guardados()
+void simular_partido_guardados(void)
 {
     clear_screen();
     print_header("SIMULAR PARTIDO CON EQUIPOS GUARDADOS");
@@ -5107,7 +5107,7 @@ static int tactica_listar_diagramas_simple(int con_pause)
     return count;
 }
 
-static void tactica_ver_diagrama()
+static void tactica_ver_diagrama(void)
 {
     clear_screen();
     print_header("DIAGRAMAS TACTICOS");
@@ -5160,7 +5160,7 @@ static void tactica_ver_diagrama()
     pause_console();
 }
 
-static void tactica_crear_diagrama()
+static void tactica_crear_diagrama(void)
 {
     clear_screen();
     print_header("CREAR DIAGRAMA TACTICO");
@@ -5215,7 +5215,7 @@ static void tactica_crear_diagrama()
     }
 }
 
-void menu_tacticas_partido()
+void menu_tacticas_partido(void)
 {
     MenuItem items[] = {{1, "Crear diagrama", tactica_crear_diagrama},
         {2, "Ver diagramas", tactica_ver_diagrama},
@@ -5492,7 +5492,7 @@ static int partido_mostrar_favoritos(void)
     return count;
 }
 
-static void menu_marcar_favorito_partido()
+static void menu_marcar_favorito_partido(void)
 {
     for (;;)
     {
@@ -5610,7 +5610,7 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
     return count;
 }
 
-static void menu_gestion_tags_partido()
+static void menu_gestion_tags_partido(void)
 {
     for (;;)
     {
@@ -5651,7 +5651,7 @@ static void menu_gestion_tags_partido()
     }
 }
 
-void menu_partidos()
+void menu_partidos(void)
 {
     MenuItem items[] =
     {

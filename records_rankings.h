@@ -38,7 +38,7 @@
  *
  * @details Utiliza ejecutar_menu() para navegación delegada
  */
-void menu_records_rankings();
+void menu_records_rankings(void);
 
 /**
  * @brief Identifica y muestra máximo de goles en un único partido
@@ -54,7 +54,7 @@ void menu_records_rankings();
  * - Camiseta en ese partido
  * - Contexto (clima, cansancio, rendimiento)
  */
-void mostrar_record_goles_partido();
+void mostrar_record_goles_partido(void);
 
 /**
  * @brief Identifica y muestra máximo de asistencias en un partido
@@ -69,7 +69,7 @@ void mostrar_record_goles_partido();
  *
  * @see mostrar_record_goles_partido()
  */
-void mostrar_record_asistencias_partido();
+void mostrar_record_asistencias_partido(void);
 
 /**
  * @brief Analiza y muestra mejor combinación cancha-camiseta
@@ -84,7 +84,7 @@ void mostrar_record_asistencias_partido();
  *
  * @note Requiere al menos 1 partido en combinación para incluir
  */
-void mostrar_mejor_combinacion_cancha_camiseta();
+void mostrar_mejor_combinacion_cancha_camiseta(void);
 
 /**
  * @brief Analiza y muestra peor combinación cancha-camiseta
@@ -94,7 +94,7 @@ void mostrar_mejor_combinacion_cancha_camiseta();
  *
  * @see mostrar_mejor_combinacion_cancha_camiseta()
  */
-void mostrar_peor_combinacion_cancha_camiseta();
+void mostrar_peor_combinacion_cancha_camiseta(void);
 
 /**
  * @brief Calcula y muestra mejor período temporal (mejor temporada)
@@ -107,7 +107,7 @@ void mostrar_peor_combinacion_cancha_camiseta();
  * - ORDER BY AVG(rendimiento_general) DESC LIMIT 1
  * - Muestra período y métricas del mejor desempeño
  */
-void mostrar_mejor_temporada();
+void mostrar_mejor_temporada(void);
 
 /**
  * @brief Calcula y muestra peor período temporal (peor temporada)
@@ -117,7 +117,7 @@ void mostrar_mejor_temporada();
  *
  * @see mostrar_mejor_temporada()
  */
-void mostrar_peor_temporada();
+void mostrar_peor_temporada(void);
 
 /**
  * @brief Muestra el partido con mejor rendimiento_general histórico
@@ -125,36 +125,36 @@ void mostrar_peor_temporada();
  * Obtiene partido con valor máximo en campo rendimiento_general,
  * mostrando desempeño excepcional puntual.
  */
-void mostrar_partido_peor_rendimiento_general();
+void mostrar_partido_peor_rendimiento_general(void);
 
 /**
  * @brief Muestra el partido con mejor combinación (goles + asistencias)
  */
-void mostrar_partido_mejor_combinacion_goles_asistencias();
+void mostrar_partido_mejor_combinacion_goles_asistencias(void);
 
 /**
  * @brief Muestra los partidos sin goles
  */
-void mostrar_partidos_sin_goles();
+void mostrar_partidos_sin_goles(void);
 
 /**
  * @brief Muestra los partidos sin asistencias
  */
-void mostrar_partidos_sin_asistencias();
+void mostrar_partidos_sin_asistencias(void);
 
 /**
  * @brief Muestra la mejor racha goleadora
  */
-void mostrar_mejor_racha_goleadora();
+void mostrar_mejor_racha_goleadora(void);
 
 /**
  * @brief Muestra la peor racha
  */
-void mostrar_peor_racha();
+void mostrar_peor_racha(void);
 
 /**
  * @brief Muestra los partidos consecutivos anotando
  */
-void mostrar_partidos_consecutivos_anotando();
+void mostrar_partidos_consecutivos_anotando(void);
 
 #endif /* RECORDS_RANKINGS_H */

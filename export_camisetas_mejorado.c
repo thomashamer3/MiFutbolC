@@ -1,4 +1,4 @@
-﻿
+
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -83,7 +83,7 @@ static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
     return stmt;
 }
 
-void exportar_camisetas_csv_mejorado()
+void exportar_camisetas_csv_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
@@ -128,7 +128,7 @@ void exportar_camisetas_csv_mejorado()
     fclose(f);
 }
 
-void exportar_camisetas_txt_mejorado()
+void exportar_camisetas_txt_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
@@ -185,7 +185,7 @@ void exportar_camisetas_txt_mejorado()
     fclose(f);
 }
 
-void exportar_camisetas_json_mejorado()
+void exportar_camisetas_json_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
@@ -236,7 +236,7 @@ void exportar_camisetas_json_mejorado()
     fclose(f);
 }
 
-void exportar_camisetas_html_mejorado()
+void exportar_camisetas_html_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);

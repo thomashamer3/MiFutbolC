@@ -118,21 +118,21 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
  *
  * Presenta al usuario los consejos más recientes de forma organizada por categoría.
  */
-void mostrar_consejos_actuales();
+void mostrar_consejos_actuales(void);
 
 /**
  * @brief Muestra el historial completo de consejos dados
  *
  * Presenta un registro de todos los consejos dados anteriormente y si fueron seguidos.
  */
-void mostrar_historial_consejos();
+void mostrar_historial_consejos(void);
 
 /**
  * @brief Permite al usuario evaluar si siguió un consejo pasado
  *
  * Actualiza el historial de consejos con la retroalimentación del usuario.
  */
-void evaluar_decision_pasada();
+void evaluar_decision_pasada(void);
 
 /**
  * @brief Configura el nivel de intervención de la IA
@@ -140,7 +140,7 @@ void evaluar_decision_pasada();
  * Permite al usuario ajustar qué tan frecuentemente y con qué intensidad
  * la IA debe intervenir con consejos.
  */
-void configurar_nivel_intervencion();
+void configurar_nivel_intervencion(void);
 
 /**
  * @brief Guarda un consejo en el historial
@@ -191,21 +191,21 @@ const char *categoria_a_string(CategoriaConsejo categoria);
  *
  * Genera consejos específicos para la preparación pre-partido.
  */
-void activar_ia_antes_partido();
+void activar_ia_antes_partido(void);
 
 /**
  * @brief Activa la IA antes de un torneo
  *
  * Genera consejos estratégicos para la planificación de torneos.
  */
-void activar_ia_antes_torneo();
+void activar_ia_antes_torneo(void);
 
 /**
  * @brief Activa la IA durante la visualización de estadísticas
  *
  * Genera insights y recomendaciones basadas en las estadísticas mostradas.
  */
-void activar_ia_estadisticas();
+void activar_ia_estadisticas(void);
 
 /**
  * @brief Muestra el menú principal del entrenador IA
@@ -213,7 +213,7 @@ void activar_ia_estadisticas();
  * Presenta opciones para interactuar con el sistema de IA, ver consejos,
  * historial y configurar preferencias.
  */
-void menu_entrenador_ia();
+void menu_entrenador_ia(void);
 
 /**
  * @brief Predice el resultado probable de un próximo partido
@@ -221,14 +221,14 @@ void menu_entrenador_ia();
  * Analiza datos históricos de rendimiento, condición física,
  * cancha, clima y otros factores para estimar probabilidad de victoria.
  */
-void predecir_resultado_partido();
+void predecir_resultado_partido(void);
 
 /**
  * @brief Recomienda formación óptima según rival y condiciones
  *
  * Sugiere la mejor formación táctica basada en análisis histórico.
  */
-void recomendar_formacion();
+void recomendar_formacion(void);
 
 /**
  * @brief Muestra alertas de rendimiento basadas en patrones
@@ -236,7 +236,7 @@ void recomendar_formacion();
  * Identifica tendencias negativas y patrones problemáticos
  * en el rendimiento del jugador/equipo.
  */
-void mostrar_alertas_rendimiento();
+void mostrar_alertas_rendimiento(void);
 
 /**
  * @brief Sugiere períodos óptimos de descanso
@@ -244,13 +244,13 @@ void mostrar_alertas_rendimiento();
  * Analiza cansancio acumulado y recomienda cuándo descansar
  * para optimizar rendimiento.
  */
-void sugerir_descanso();
+void sugerir_descanso(void);
 
 /**
  * @brief Identifica puntos débiles del equipo
  *
  * Analiza estadísticas para encontrar áreas de mejora.
  */
-void analizar_puntos_debiles();
+void analizar_puntos_debiles(void);
 
 #endif

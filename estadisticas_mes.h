@@ -12,6 +12,6 @@
  * Esta función muestra estadísticas individuales por camiseta agrupadas por mes,
  * incluyendo partidos jugados, goles, asistencias y promedios por partido.
  */
-void mostrar_estadisticas_por_mes();
+void mostrar_estadisticas_por_mes(void);
 
 #endif /* ESTADISTICAS_MES_H */

@@ -1,4 +1,4 @@
-﻿
+
 #include "estadisticas_mes.h"
 #include "db.h"
 #include "utils.h"
@@ -67,7 +67,7 @@ static void procesar_resultados_a_buf(sqlite3_stmt *stmt, char *buf, size_t buf_
  * Muestra estadisticas historicas agrupadas por mes.
  * Permite analizar tendencias temporales en el rendimiento deportivo, facilitando la identificacion de patrones y mejoras.
  */
-void mostrar_estadisticas_por_mes()
+void mostrar_estadisticas_por_mes(void)
 {
     clear_screen();
     print_header("ESTADISTICAS POR MES");

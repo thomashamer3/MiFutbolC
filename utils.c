@@ -1410,7 +1410,7 @@ static int clear_windows_console_buffer(HANDLE h_out)
 }
 #endif
 
-void clear_screen()
+void clear_screen(void)
 {
 #ifdef _WIN32
     HANDLE h_out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1558,7 +1558,7 @@ int consola_soporta_unicode(void)
  * Pausa la ejecucion para permitir al usuario revisar informacion antes de
  * continuar, mejorando la interaccion controlada.
  */
-void pause_console()
+void pause_console(void)
 {
     ui_printf("\nPresione ENTER para continuar...");
     getchar();
@@ -2295,7 +2295,7 @@ int iniciar_sesion_multiusuario_local(void)
     }
 }
 
-void configurar_password_inicial_opcional()
+void configurar_password_inicial_opcional(void)
 {
     char respuesta[16];
 
@@ -2321,7 +2321,7 @@ void configurar_password_inicial_opcional()
     }
 }
 
-int autenticar_usuario_si_tiene_password()
+int autenticar_usuario_si_tiene_password(void)
 {
     char intento[128];
 
@@ -2350,7 +2350,7 @@ int autenticar_usuario_si_tiene_password()
     return 0;
 }
 
-static void configurar_o_cambiar_password_usuario()
+static void configurar_o_cambiar_password_usuario(void)
 {
     sqlite3 *auth_db = NULL;
     char nueva[128];
@@ -2419,7 +2419,7 @@ static void configurar_o_cambiar_password_usuario()
     pause_console();
 }
 
-static void quitar_password_usuario()
+static void quitar_password_usuario(void)
 {
     sqlite3 *auth_db = NULL;
     sqlite3_stmt *stmt = NULL;
@@ -2458,7 +2458,7 @@ static void quitar_password_usuario()
  * Recopila la identidad del usuario en el inicio para personalizar la
  * aplicacion y mantener un registro de uso.
  */
-void pedir_nombre_usuario()
+void pedir_nombre_usuario(void)
 {
     char nombre[100];
     clear_screen();
@@ -2482,7 +2482,7 @@ void pedir_nombre_usuario()
  * Permite al usuario verificar su identidad actual almacenada,
  * facilitando la gestion de su perfil.
  */
-void mostrar_nombre_usuario()
+void mostrar_nombre_usuario(void)
 {
     char *nombre = get_user_name();
     if (nombre)
@@ -2501,7 +2501,7 @@ void mostrar_nombre_usuario()
  * Habilita la actualizacion de la identidad del usuario para mantener la
  * informacion actualizada y personalizada.
  */
-void editar_nombre_usuario()
+void editar_nombre_usuario(void)
 {
     char nombre[100];
     leer_nombre_no_vacio(
@@ -2520,7 +2520,7 @@ void editar_nombre_usuario()
     pause_console();
 }
 
-static void agregar_usuario_local()
+static void agregar_usuario_local(void)
 {
     sqlite3 *auth_db = NULL;
     if (!auth_open(&auth_db))
@@ -2535,7 +2535,7 @@ static void agregar_usuario_local()
     pause_console();
 }
 
-static void eliminar_mi_cuenta_local()
+static void eliminar_mi_cuenta_local(void)
 {
     sqlite3 *auth_db = NULL;
     sqlite3_stmt *stmt = NULL;
@@ -2601,7 +2601,7 @@ static void eliminar_mi_cuenta_local()
  * Proporciona una interfaz estructurada para gestionar opciones relacionadas
  * con el perfil del usuario.
  */
-void menu_usuario()
+void menu_usuario(void)
 {
     MenuItem items[] =
     {

@@ -1,4 +1,4 @@
-﻿
+
 #include "import.h"
 #include "cJSON.h"
 #include "db.h"
@@ -89,13 +89,13 @@ static int insertar_camiseta(int id, const char *nombre);
 static int insertar_lesion(int id, const char *jugador, const char *tipo,
                            const char *descripcion, const char *fecha);
 static void importar_con_pausa(const char *inicio, const char *fin,
-                               void (*func)());
+                               void (*func)(void));
 static int procesar_camiseta_importada(const CamisetaData *camiseta);
 static int parse_camiseta_txt_line(const char *line, CamisetaData *out);
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out);
 static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
         CamisetaLineParser parser);
-static bool crear_tabla_estadisticas();
+static bool crear_tabla_estadisticas(void);
 static int obtener_camiseta_id_estadistica(const char *camiseta_nombre);
 static bool estadistica_existe(int camiseta_id);
 static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
@@ -381,7 +381,7 @@ static int insertar_lesion(int id, const char *jugador, const char *tipo,
 }
 
 static void importar_con_pausa(const char *inicio, const char *fin,
-                               void (*func)())
+                               void (*func)(void))
 {
     printf("%s\n", inicio);
     func();
@@ -390,7 +390,7 @@ static void importar_con_pausa(const char *inicio, const char *fin,
 }
 
 static void importar_con_pausa_formato(const char *entidad, const char *formato,
-                                       void (*func)())
+                                       void (*func)(void))
 {
     char inicio[128];
     char fin[128];
@@ -411,10 +411,10 @@ typedef struct
 {
     const char *inicio;
     const char *fin;
-    void (*importar_camisetas)();
-    void (*importar_partidos)();
-    void (*importar_lesiones)();
-    void (*importar_estadisticas)();
+    void (*importar_camisetas)(void);
+    void (*importar_partidos)(void);
+    void (*importar_lesiones)(void);
+    void (*importar_estadisticas)(void);
 } ImportTodoConfig;
 
 static void importar_todo_con_config(const ImportTodoConfig *config)
@@ -944,7 +944,7 @@ static void import_json_generic(const char *extension,
     printf("Importacion completada. %d items importados\n", imported);
 }
 
-void importar_camisetas_json()
+void importar_camisetas_json(void)
 {
     import_json_generic("camisetas.json", parse_camiseta_json);
 }
@@ -1085,7 +1085,7 @@ static int procesar_partido_json_item(cJSON const *item)
     return procesar_e_insertar_partido(&input);
 }
 
-void importar_partidos_json()
+void importar_partidos_json(void)
 {
     int count;
     cJSON *json = cargar_json_array("partidos.json", "partidos", &count);
@@ -1105,7 +1105,7 @@ void importar_partidos_json()
            imported);
 }
 
-void importar_lesiones_json()
+void importar_lesiones_json(void)
 {
     int count;
     cJSON *json = cargar_json_array("lesiones.json", "lesiones", &count);
@@ -1147,7 +1147,7 @@ void importar_lesiones_json()
     printf("Importacion de lesiones completada\n");
 }
 
-void importar_estadisticas_json()
+void importar_estadisticas_json(void)
 {
     if (!crear_tabla_estadisticas())
         return;
@@ -1236,7 +1236,7 @@ DEFINE_IMPORT_CON_PAUSA(importar_lesiones_csv_con_pausa, "lesiones", "CSV", impo
 
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_csv_con_pausa, "estadisticas", "CSV", importar_estadisticas_csv)
 
-static void importar_todo_csv_con_pausa()
+static void importar_todo_csv_con_pausa(void)
 {
     ImportTodoConfig config =
     {
@@ -1258,7 +1258,7 @@ DEFINE_IMPORT_CON_PAUSA(importar_lesiones_html_con_pausa, "lesiones", "HTML", im
 
 DEFINE_IMPORT_CON_PAUSA(importar_estadisticas_html_con_pausa, "estadisticas", "HTML", importar_estadisticas_html)
 
-static void importar_todo_html_con_pausa()
+static void importar_todo_html_con_pausa(void)
 {
     ImportTodoConfig config =
     {
@@ -1272,7 +1272,7 @@ static void importar_todo_html_con_pausa()
     importar_todo_con_config(&config);
 }
 
-static void importar_todo_txt_con_pausa()
+static void importar_todo_txt_con_pausa(void)
 {
     ImportTodoConfig config =
     {
@@ -1288,7 +1288,7 @@ static void importar_todo_txt_con_pausa()
 
 /* ===================== IMPORTACIoN DESDE TXT ===================== */
 
-void importar_camisetas_txt()
+void importar_camisetas_txt(void)
 {
     importar_camisetas_desde_archivo("camisetas.txt", "TXT", parse_camiseta_txt_line);
 }
@@ -1473,24 +1473,24 @@ static int procesar_partido_txt_line(const char *line)
     return procesar_partido_desde_raw(&raw);
 }
 
-void importar_partidos_txt()
+void importar_partidos_txt(void)
 {
     importar_partidos_desde_archivo("partidos.txt", "TXT", procesar_partido_txt_line);
 }
 
-void importar_lesiones_txt()
+void importar_lesiones_txt(void)
 {
     importar_lesiones_desde_archivo("lesiones.txt", "TXT", parse_lesion_txt_line);
 }
 
-void importar_estadisticas_txt()
+void importar_estadisticas_txt(void)
 {
     importar_estadisticas_desde_archivo("estadisticas.txt", "TXT", parse_estadistica_txt_line, 1);
 }
 
 /* ===================== IMPORTACIoN DESDE CSV ===================== */
 
-void importar_camisetas_csv()
+void importar_camisetas_csv(void)
 {
     importar_camisetas_desde_archivo("camisetas.csv", "CSV", parse_camiseta_csv_line);
 }
@@ -1543,24 +1543,24 @@ static int procesar_partido_csv_line(const char *line)
     return procesar_partido_desde_raw(&raw);
 }
 
-void importar_partidos_csv()
+void importar_partidos_csv(void)
 {
     importar_partidos_desde_archivo("partidos.csv", "CSV", procesar_partido_csv_line);
 }
 
-void importar_lesiones_csv()
+void importar_lesiones_csv(void)
 {
     importar_lesiones_desde_archivo("lesiones.csv", "CSV", parse_lesion_csv_line);
 }
 
-void importar_estadisticas_csv()
+void importar_estadisticas_csv(void)
 {
     importar_estadisticas_desde_archivo("estadisticas.csv", "CSV", parse_estadistica_csv_line, 0);
 }
 
 /* ===================== IMPORTACIoN DESDE HTML ===================== */
 
-void importar_camisetas_html()
+void importar_camisetas_html(void)
 {
     char filename[1024];
     build_filename("camisetas.html", filename, sizeof(filename));
@@ -1738,7 +1738,7 @@ static int procesar_partido_html_row(char **ptr)
     return procesar_partido_desde_raw(&raw);
 }
 
-void importar_partidos_html()
+void importar_partidos_html(void)
 {
     char filename[1024];
     build_filename("partidos.html", filename, sizeof(filename));
@@ -1767,7 +1767,7 @@ void importar_partidos_html()
         count);
 }
 
-void importar_lesiones_html()
+void importar_lesiones_html(void)
 {
     char filename[1024];
     build_filename("lesiones.html", filename, sizeof(filename));
@@ -1864,7 +1864,7 @@ void importar_lesiones_html()
         count);
 }
 
-static bool crear_tabla_estadisticas()
+static bool crear_tabla_estadisticas(void)
 {
     const char *create_table_sql =
         "CREATE TABLE IF NOT EXISTS estadistica ("
@@ -1987,7 +1987,7 @@ static void insertar_estadistica(int camiseta_id, int goles, int asistencias,
     sqlite3_finalize(stmt);
 }
 
-void importar_estadisticas_html()
+void importar_estadisticas_html(void)
 {
     if (!crear_tabla_estadisticas())
         return;
@@ -2043,7 +2043,7 @@ void importar_estadisticas_html()
            count);
 }
 
-static void importar_todo_con_pausa()
+static void importar_todo_con_pausa(void)
 {
     ImportTodoConfig config =
     {
@@ -2057,7 +2057,7 @@ static void importar_todo_con_pausa()
     importar_todo_con_config(&config);
 }
 
-static void submenu_importar_json()
+static void submenu_importar_json(void)
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_json_con_pausa},
         {2, get_text("import_partidos"), &importar_partidos_json_con_pausa},
@@ -2069,7 +2069,7 @@ static void submenu_importar_json()
     ejecutar_menu(get_text("import_menu_json_title"), items, 6);
 }
 
-static void submenu_importar_txt()
+static void submenu_importar_txt(void)
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_txt_con_pausa},
         {2, get_text("import_partidos"), &importar_partidos_txt_con_pausa},
@@ -2081,7 +2081,7 @@ static void submenu_importar_txt()
     ejecutar_menu(get_text("import_menu_txt_title"), items, 6);
 }
 
-static void submenu_importar_csv()
+static void submenu_importar_csv(void)
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_csv_con_pausa},
         {2, get_text("import_partidos"), &importar_partidos_csv_con_pausa},
@@ -2093,7 +2093,7 @@ static void submenu_importar_csv()
     ejecutar_menu(get_text("import_menu_csv_title"), items, 6);
 }
 
-static void submenu_importar_html()
+static void submenu_importar_html(void)
 {
     MenuItem items[] = {{1, get_text("import_camisetas"), &importar_camisetas_html_con_pausa},
         {2, get_text("import_partidos"), &importar_partidos_html_con_pausa},
@@ -2105,49 +2105,49 @@ static void submenu_importar_html()
     ejecutar_menu(get_text("import_menu_html_title"), items, 6);
 }
 
-static void menu_importar_json_con_backup()
+static void menu_importar_json_con_backup(void)
 {
     backup_base_datos_automatico("import_json");
     submenu_importar_json();
 }
 
-static void menu_importar_txt_con_backup()
+static void menu_importar_txt_con_backup(void)
 {
     backup_base_datos_automatico("import_txt");
     submenu_importar_txt();
 }
 
-static void menu_importar_csv_con_backup()
+static void menu_importar_csv_con_backup(void)
 {
     backup_base_datos_automatico("import_csv");
     submenu_importar_csv();
 }
 
-static void menu_importar_html_con_backup()
+static void menu_importar_html_con_backup(void)
 {
     backup_base_datos_automatico("import_html");
     submenu_importar_html();
 }
 
-static void importar_todo_json_rapido()
+static void importar_todo_json_rapido(void)
 {
     backup_base_datos_automatico("import_json");
     importar_todo_con_pausa();
 }
 
-static void importar_todo_csv_rapido()
+static void importar_todo_csv_rapido(void)
 {
     backup_base_datos_automatico("import_csv");
     importar_todo_csv_con_pausa();
 }
 
-static void importar_base_datos_con_backup()
+static void importar_base_datos_con_backup(void)
 {
     backup_base_datos_automatico("import_db");
     importar_base_datos();
 }
 
-void menu_importar()
+void menu_importar(void)
 {
     MenuItem items[] = {{1, get_text("import_from_json"),&menu_importar_json_con_backup},
         {2, get_text("import_from_txt"), &menu_importar_txt_con_backup},

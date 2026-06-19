@@ -32,7 +32,7 @@
  * @see menu_estadisticas_asistencias()
  * @see menu_estadisticas_rendimiento()
  */
-void menu_estadisticas();
+void menu_estadisticas(void);
 
 /**
  * @brief Menú de estadísticas agregadas y análisis temporal
@@ -50,7 +50,7 @@ void menu_estadisticas();
  * @see mostrar_estadisticas_por_anio()
  * @see menu_records_rankings()
  */
-void menu_estadisticas_generales();
+void menu_estadisticas_generales(void);
 
 /**
  * @brief Menú de análisis de partidos jugados
@@ -69,7 +69,7 @@ void menu_estadisticas_generales();
  * @see mostrar_partidos_exigentes_bien_rendidos()
  * @see mostrar_partidos_faciles_mal_rendidos()
  */
-void menu_estadisticas_partidos();
+void menu_estadisticas_partidos(void);
 
 /**
  * @brief Menú de análisis de productividad ofensiva
@@ -89,7 +89,7 @@ void menu_estadisticas_partidos();
  * @see mostrar_goles_por_estado_animo()
  * @see mostrar_eficiencia_goles_vs_rendimiento()
  */
-void menu_estadisticas_goles();
+void menu_estadisticas_goles(void);
 
 /**
  * @brief Menú de análisis de juego en equipo
@@ -108,7 +108,7 @@ void menu_estadisticas_goles();
  * @see mostrar_asistencias_por_estado_animo()
  * @see mostrar_eficiencia_asistencias_vs_cansancio()
  */
-void menu_estadisticas_asistencias();
+void menu_estadisticas_asistencias(void);
 
 /**
  * @brief Menú de análisis de rendimiento global
@@ -138,6 +138,6 @@ void menu_estadisticas_asistencias();
  * @see mostrar_impacto_real_estado_animo()
  * @see mostrar_rendimiento_por_esfuerzo()
  */
-void menu_estadisticas_rendimiento();
+void menu_estadisticas_rendimiento(void);
 
 #endif

@@ -18,7 +18,7 @@
  * calcula rachas de victorias/derrotas y genera retroalimentación motivacional
  * basada en algoritmos de comparación de métricas clave.
  */
-void mostrar_analisis();
+void mostrar_analisis(void);
 
 /**
  * @brief Interfaz para análisis temporal de métricas deportivas
@@ -27,7 +27,7 @@ void mostrar_analisis();
  * permitiendo identificación de patrones estacionales y tendencias
  * de evolución en variables como goles, asistencias y rendimiento general.
  */
-void mostrar_evolucion_temporal();
+void mostrar_evolucion_temporal(void);
 
 /**
  * @brief Visualiza evolución mensual de estadística de gol
@@ -35,7 +35,7 @@ void mostrar_evolucion_temporal();
  * Consulta base de datos para agrupar y promediar métricas de gol
  * por períodos mensuales, ordenados cronológicamente descendente.
  */
-void evolucion_mensual_goles();
+void evolucion_mensual_goles(void);
 
 /**
  * @brief Visualiza evolución mensual de estadística de asistencia
@@ -43,7 +43,7 @@ void evolucion_mensual_goles();
  * Consulta base de datos para agrupar y promediar métricas de asistencia
  * por períodos mensuales, ordenados cronológicamente descendente.
  */
-void evolucion_mensual_asistencias();
+void evolucion_mensual_asistencias(void);
 
 /**
  * @brief Visualiza evolución mensual de rendimiento general
@@ -51,7 +51,7 @@ void evolucion_mensual_asistencias();
  * Consulta base de datos para agrupar y promediar métricas de rendimiento
  * por períodos mensuales, ordenados cronológicamente descendente.
  */
-void evolucion_mensual_rendimiento();
+void evolucion_mensual_rendimiento(void);
 
 /**
  * @brief Identifica mes histórico de máximo rendimiento
@@ -59,7 +59,7 @@ void evolucion_mensual_rendimiento();
  * Ejecuta consulta SQL con agregación GROUP BY para determinar
  * el mes con mayor promedio de rendimiento_general histórico.
  */
-void mejor_mes_historico();
+void mejor_mes_historico(void);
 
 /**
  * @brief Identifica mes histórico de mínimo rendimiento
@@ -67,7 +67,7 @@ void mejor_mes_historico();
  * Ejecuta consulta SQL con agregación GROUP BY para determinar
  * el mes con menor promedio de rendimiento_general histórico.
  */
-void peor_mes_historico();
+void peor_mes_historico(void);
 
 /**
  * @brief Compara rendimiento semestral inicio vs fin de año
@@ -76,7 +76,7 @@ void peor_mes_historico();
  * y calcula métricas comparativas para detectar variaciones
  * cíclicas anuales en el rendimiento deportivo.
  */
-void inicio_vs_fin_anio();
+void inicio_vs_fin_anio(void);
 
 /**
  * @brief Evalúa impacto de condiciones climáticas en rendimiento
@@ -85,7 +85,7 @@ void inicio_vs_fin_anio();
  * cálidos: Dic-Abr) y compara métricas promedio para identificar
  * correlaciones entre variables ambientales y rendimiento atlético.
  */
-void meses_frios_vs_calidos();
+void meses_frios_vs_calidos(void);
 
 /**
  * @brief Sintetiza trayectoria completa de desarrollo del jugador
@@ -94,6 +94,6 @@ void meses_frios_vs_calidos();
  * promedios históricos y análisis de tendencia mediante comparación
  * de primeros vs últimos partidos para evaluar evolución longitudinal.
  */
-void progreso_total_jugador();
+void progreso_total_jugador(void);
 
 #endif

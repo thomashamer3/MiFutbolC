@@ -1,4 +1,4 @@
-﻿#include "torneo.h"
+#include "torneo.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -14,7 +14,7 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 
 // Forward declaration to fix implicit function declaration
 void generar_fixture(int torneo_id);
-void gestionar_tablas_goleadores_asistidores();
+void gestionar_tablas_goleadores_asistidores(void);
 void listar_tablas_goleadores_asistidores(int torneo_id);
 void agregar_registro_goleador_asistidor(int torneo_id);
 void eliminar_registro_goleador_asistidor(int torneo_id);
@@ -588,7 +588,7 @@ static int save_torneo_to_db(Torneo const *torneo)
     return torneo_id;
 }
 
-void crear_torneo()
+void crear_torneo(void)
 {
     clear_screen();
     print_header("CREAR TORNEO");
@@ -626,7 +626,7 @@ void crear_torneo()
     pause_console();
 }
 
-void listar_torneos()
+void listar_torneos(void)
 {
     clear_screen();
     print_header("LISTAR TORNEOS");
@@ -668,7 +668,7 @@ void listar_torneos()
     pause_console();
 }
 
-void modificar_torneo()
+void modificar_torneo(void)
 {
     clear_screen();
     print_header("MODIFICAR TORNEO");
@@ -754,7 +754,7 @@ void modificar_torneo()
     pause_console();
 }
 
-void eliminar_torneo()
+void eliminar_torneo(void)
 {
     clear_screen();
     print_header("ELIMINAR TORNEO");
@@ -2179,7 +2179,7 @@ static void ejecutar_opcion_torneo(int opcion, int torneo_id)
     }
 }
 
-void administrar_torneo()
+void administrar_torneo(void)
 {
     clear_screen();
     print_header("ADMINISTRAR TORNEO");
@@ -2211,7 +2211,7 @@ void administrar_torneo()
     while (opcion != 0);
 }
 
-void menu_torneos()
+void menu_torneos(void)
 {
     MenuItem items[] =
     {

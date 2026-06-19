@@ -62,7 +62,7 @@ int backup_base_datos_automatico(const char *motivo);
  *
  * @return 1 si configuración completa exitosa, 0 en caso de error crítico
  */
-int db_init();
+int db_init(void);
 
 /**
  * @brief Finaliza conexión y libera recursos del motor SQLite
@@ -70,7 +70,7 @@ int db_init();
  * Cierra handle de base de datos de manera ordenada, asegurando
  * commit de transacciones pendientes y liberación de memoria.
  */
-void db_close();
+void db_close(void);
 
 /**
  * @brief Recupera configuración de usuario desde tabla relacional
@@ -80,7 +80,7 @@ void db_close();
  *
  * @return Puntero dinámico a string con nombre de usuario, NULL si no existe
  */
-char* get_user_name();
+char* get_user_name(void);
 
 /**
  * @brief Persiste configuración de usuario en base de datos
@@ -133,7 +133,7 @@ int clear_user_password(void);
  *
  * @return Puntero constante a string con path del directorio de datos
  */
-const char* get_data_dir();
+const char* get_data_dir(void);
 
 /**
  * @brief Determina ubicación canónica para archivos de exportación
@@ -144,7 +144,7 @@ const char* get_data_dir();
  *
  * @return Puntero constante a string con path del directorio de exportaciones
  */
-const char* get_export_dir();
+const char* get_export_dir(void);
 
 /**
  * @brief Determina ubicación canónica para archivos de importación
@@ -155,7 +155,7 @@ const char* get_export_dir();
  *
  * @return Puntero constante a string con path del directorio de importaciones
  */
-const char* get_import_dir();
+const char* get_import_dir(void);
 
 /**
  * @brief Determina ubicacion canónica para archivos de imagen
@@ -166,7 +166,7 @@ const char* get_import_dir();
  *
  * @return Puntero constante a string con path del directorio de imagenes
  */
-const char* get_images_dir();
+const char* get_images_dir(void);
 
 /**
  * @brief Determina ubicacion canónica para archivos de musica
@@ -176,7 +176,7 @@ const char* get_images_dir();
  *
  * @return Puntero constante a string con path del directorio de musica
  */
-const char* get_music_dir();
+const char* get_music_dir(void);
 
 /**
  * @brief Obtiene la ruta de imagen almacenada para una entidad por ID
@@ -226,7 +226,7 @@ void app_log_close(void);
  * desde la ubicación de datos internos a la carpeta de exportación
  * (normalmente Documentos del usuario).
  */
-void exportar_base_datos();
+void exportar_base_datos(void);
 
 /**
  * @brief Importa una base de datos SQLite desde un archivo externo
@@ -235,6 +235,6 @@ void exportar_base_datos();
  * desde un archivo externo, reemplazando la base de datos actual.
  * Se realiza una copia exacta del archivo de origen al directorio de datos.
  */
-void importar_base_datos();
+void importar_base_datos(void);
 
 #endif

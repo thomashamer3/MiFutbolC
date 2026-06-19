@@ -1,15 +1,17 @@
-﻿#include "analisis.h"
+#include "analisis.h"
 #include "db.h"
-#include "utils.h"
-#include "menu.h"
-#include "settings.h"
 #include "entrenador_ia.h"
+#include "menu.h"
 #include "partido.h"
+#include "settings.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// NOLINTBEGIN(bugprone-easily-swappable-parameters,performance-no-int-to-ptr)
 
-static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2);
+static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1,
+        int *id2);
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -41,32 +43,35 @@ static int normalizar_no_negativo(int valor)
 static int migrar_columna_duplicable(const char *sql_alter)
 {
     char *err = NULL;
-    int rc = sqlite3_exec(db, sql_alter, NULL, NULL, &err);
+    int estado = sqlite3_exec(db, sql_alter, NULL, NULL, &err);
 
-    if (rc != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
+    if (estado != SQLITE_OK && (!err || strstr(err, "duplicate column name") == NULL))
     {
         printf("Error al actualizar tabla de quimica: %s\n", err ? err : "desconocido");
         sqlite3_free(err);
         return 0;
     }
 
-    if (err){
+    if (err)
+    {
         sqlite3_free(err);
     }
 
     return 1;
 }
 
-static int existe_id_entidad(const char *tabla, int id)
+static int existe_id_entidad(const char *tabla, int entidad_id)
 {
     sqlite3_stmt *stmt;
     char sql[128];
     snprintf(sql, sizeof(sql), "SELECT 1 FROM %s WHERE id = ? LIMIT 1", tabla);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return 0;
+    }
 
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int(stmt, 1, entidad_id);
     int existe = (sqlite3_step(stmt) == SQLITE_ROW);
     sqlite3_finalize(stmt);
     return existe;
@@ -79,24 +84,22 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
 
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
-    calcular_estadisticas(stats,
-                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+    calcular_estadisticas(stats, "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                          "AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
                           "FROM partido");
 }
 
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
-    calcular_estadisticas(stats,
-                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+    calcular_estadisticas(stats, "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                          "AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
                           "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-                       "SELECT resultado FROM partido ORDER BY fecha_hora",
-                       -1, &stmt, NULL);
+    sqlite3_prepare_v2(db, "SELECT resultado FROM partido ORDER BY fecha_hora", -1, &stmt, NULL);
 
     int racha_actual_v = 0;
     int max_racha_v = 0;
@@ -106,8 +109,7 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int resultado = sqlite3_column_int(stmt, 0);
-        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v,
-                          &racha_actual_d, &max_racha_d);
+        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v, &racha_actual_d, &max_racha_d);
     }
 
     *mejor_racha_victorias = max_racha_v;
@@ -115,7 +117,7 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_ultimos5_partidos()
+static void mostrar_ultimos5_partidos(void)
 {
     printf("\nULTIMOS 5 PARTIDOS:\n");
     printf("----------------------------------------\n");
@@ -131,15 +133,15 @@ static void mostrar_ultimos5_partidos()
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        int partido_id = sqlite3_column_int(stmt, 0);
         const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
         int goles = sqlite3_column_int(stmt, 2);
         int asistencias = sqlite3_column_int(stmt, 3);
         int rendimiento = sqlite3_column_int(stmt, 4);
         int resultado = sqlite3_column_int(stmt, 5);
 
-        printf("%d | %s | G:%d A:%d | Rend:%d | %s\n",
-               id, fecha, goles, asistencias, rendimiento, resultado_to_text(resultado));
+        printf("%d | %s | G:%d A:%d | Rend:%d | %s\n", partido_id, fecha, goles, asistencias,
+               rendimiento, resultado_to_text(resultado));
         count++;
     }
 
@@ -151,7 +153,8 @@ static void mostrar_ultimos5_partidos()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos, const Estadisticas *generales)
+static void mostrar_comparacion_estadisticas(const Estadisticas *ultimos,
+        const Estadisticas *generales)
 {
     printf("\nCOMPARACION ULTIMOS 5 VS PROMEDIO GENERAL:\n");
     printf("----------------------------------------\n");
@@ -197,7 +200,7 @@ static void mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas
     }
 }
 
-static void mostrar_analisis_basico()
+static void mostrar_analisis_basico(void)
 {
     iniciar_pantalla_analisis("ANALISIS DE RENDIMIENTO");
 
@@ -228,20 +231,19 @@ static void mostrar_analisis_basico()
 
 static int asegurar_tabla_quimica_jugador_estadistica(void)
 {
-    const char *sql =
-        "CREATE TABLE IF NOT EXISTS quimica_jugador_estadistica ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " partido_id INTEGER NOT NULL,"
-        " jugador TEXT NOT NULL,"
-        " companero_asistido TEXT DEFAULT '',"
-        " posicion TEXT DEFAULT '',"
-        " goles INTEGER DEFAULT 0,"
-        " asistencias INTEGER DEFAULT 0,"
-        " asistencias_al_usuario INTEGER DEFAULT 0,"
-        " asistencias_del_usuario INTEGER DEFAULT 0,"
-        " rating INTEGER DEFAULT 0,"
-        " comentario TEXT DEFAULT '',"
-        " FOREIGN KEY(partido_id) REFERENCES partido(id));";
+    const char *sql = "CREATE TABLE IF NOT EXISTS quimica_jugador_estadistica ("
+                      " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                      " partido_id INTEGER NOT NULL,"
+                      " jugador TEXT NOT NULL,"
+                      " companero_asistido TEXT DEFAULT '',"
+                      " posicion TEXT DEFAULT '',"
+                      " goles INTEGER DEFAULT 0,"
+                      " asistencias INTEGER DEFAULT 0,"
+                      " asistencias_al_usuario INTEGER DEFAULT 0,"
+                      " asistencias_del_usuario INTEGER DEFAULT 0,"
+                      " rating INTEGER DEFAULT 0,"
+                      " comentario TEXT DEFAULT '',"
+                      " FOREIGN KEY(partido_id) REFERENCES partido(id));";
 
     if (sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK)
     {
@@ -250,14 +252,23 @@ static int asegurar_tabla_quimica_jugador_estadistica(void)
     }
 
     /* Migracion simple para bases ya existentes */
-    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN companero_asistido TEXT DEFAULT ''"))
+    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN "
+                                   "companero_asistido TEXT DEFAULT ''"))
+    {
         return 0;
+    }
 
-    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN asistencias_del_usuario INTEGER DEFAULT 0"))
+    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN "
+                                   "asistencias_del_usuario INTEGER DEFAULT 0"))
+    {
         return 0;
+    }
 
-    if (!migrar_columna_duplicable("ALTER TABLE quimica_jugador_estadistica ADD COLUMN rating INTEGER DEFAULT 0"))
+    if (!migrar_columna_duplicable(
+                "ALTER TABLE quimica_jugador_estadistica ADD COLUMN rating INTEGER DEFAULT 0"))
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -265,10 +276,9 @@ static int asegurar_tabla_quimica_jugador_estadistica(void)
 static void listar_partidos_para_quimica(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT id, fecha_hora, goles, asistencias, resultado "
-        "FROM partido "
-        "ORDER BY id ASC";
+    const char *sql = "SELECT id, fecha_hora, goles, asistencias, resultado "
+                      "FROM partido "
+                      "ORDER BY id ASC";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -281,18 +291,14 @@ static void listar_partidos_para_quimica(void)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        int partido_id = sqlite3_column_int(stmt, 0);
         const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
         int goles = sqlite3_column_int(stmt, 2);
         int asistencias = sqlite3_column_int(stmt, 3);
         int resultado = sqlite3_column_int(stmt, 4);
 
-        printf("ID:%d | %s | G:%d A:%d | %s\n",
-               id,
-               fecha ? fecha : "N/A",
-               goles,
-               asistencias,
-               resultado_to_text(resultado));
+        printf("ID:%d | %s | G:%d A:%d | %s\n", partido_id, fecha ? fecha : "N/A", goles,
+               asistencias, resultado_to_text(resultado));
     }
 
     sqlite3_finalize(stmt);
@@ -323,7 +329,7 @@ static int seleccionar_partido_para_quimica(const char *prompt)
     return partido_id;
 }
 
-static void mostrar_mejor_quimica_jugadores()
+static void mostrar_mejor_quimica_jugadores(void)
 {
     iniciar_pantalla_analisis("MEJOR COMBINACION DE JUGADORES");
 
@@ -448,9 +454,9 @@ typedef struct
     int rating;
 } DatosQuimicaJugador;
 
-static int validar_rating(int r)
+static int validar_rating(int rating_val)
 {
-    return (r >= 1 && r <= 10) ? r : 1;
+    return (rating_val >= 1 && rating_val <= 10) ? rating_val : 1;
 }
 
 static void capturar_datos_quimica_jugador(DatosQuimicaJugador *datos, int es_edicion)
@@ -486,7 +492,8 @@ static void capturar_datos_quimica_jugador(DatosQuimicaJugador *datos, int es_ed
     input_string(prompt, datos->comentario, sizeof(datos->comentario));
 }
 
-static void bind_datos_quimica_jugador(sqlite3_stmt *stmt, int partido_id, const DatosQuimicaJugador *datos)
+static void bind_datos_quimica_jugador(sqlite3_stmt *stmt, int partido_id,
+                                       const DatosQuimicaJugador *datos)
 {
     sqlite3_bind_int(stmt, 1, partido_id);
     sqlite3_bind_text(stmt, 2, datos->jugador, -1, SQLITE_TRANSIENT);
@@ -517,10 +524,12 @@ static void crear_estadistica_quimica_jugador(void)
 
     int partido_id = seleccionar_partido_para_quimica("Selecciona el ID del partido jugado: ");
     if (partido_id == 0)
+    {
         return;
+    }
 
     int companero_num = 0;
-    char respuesta;
+    int respuesta;
 
     do
     {
@@ -534,11 +543,10 @@ static void crear_estadistica_quimica_jugador(void)
         capturar_datos_quimica_jugador(&datos, 0);
 
         sqlite3_stmt *stmt;
-        const char *sql =
-            "INSERT INTO quimica_jugador_estadistica "
-            "(partido_id, jugador, companero_asistido, posicion, goles, asistencias, "
-            "asistencias_al_usuario, asistencias_del_usuario, rating, comentario) "
-            "VALUES (?, ?, '', ?, ?, 0, ?, ?, ?, ?)";
+        const char *sql = "INSERT INTO quimica_jugador_estadistica "
+                          "(partido_id, jugador, companero_asistido, posicion, goles, asistencias, "
+                          "asistencias_al_usuario, asistencias_del_usuario, rating, comentario) "
+                          "VALUES (?, ?, '', ?, ?, 0, ?, ?, ?, ?)";
 
         if (!preparar_stmt_con_mensaje(&stmt, sql))
         {
@@ -549,15 +557,22 @@ static void crear_estadistica_quimica_jugador(void)
         bind_datos_quimica_jugador(stmt, partido_id, &datos);
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
             printf("\nQuimica con %s guardada.\n", datos.jugador);
+        }
         else
+        {
             printf("\nNo se pudo guardar la quimica.\n");
+        }
 
         sqlite3_finalize(stmt);
 
         printf("\nAgregar otro companero? (S/N): ");
         respuesta = getchar();
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+        {
+            ;
+        }
 
     }
     while (respuesta == 's' || respuesta == 'S');
@@ -576,12 +591,11 @@ static void listar_estadisticas_quimica_jugador(void)
     }
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT q.id, q.partido_id, p.fecha_hora, q.jugador, q.posicion, "
-        "q.goles, q.asistencias_al_usuario, q.asistencias_del_usuario, q.rating "
-        "FROM quimica_jugador_estadistica q "
-        "LEFT JOIN partido p ON p.id = q.partido_id "
-        "ORDER BY q.id DESC";
+    const char *sql = "SELECT q.id, q.partido_id, p.fecha_hora, q.jugador, q.posicion, "
+                      "q.goles, q.asistencias_al_usuario, q.asistencias_del_usuario, q.rating "
+                      "FROM quimica_jugador_estadistica q "
+                      "LEFT JOIN partido p ON p.id = q.partido_id "
+                      "ORDER BY q.id DESC";
 
     if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
@@ -592,7 +606,7 @@ static void listar_estadisticas_quimica_jugador(void)
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        int registro_id = sqlite3_column_int(stmt, 0);
         int partido_id = sqlite3_column_int(stmt, 1);
         const char *fecha = (const char *)sqlite3_column_text(stmt, 2);
         const char *jugador = (const char *)sqlite3_column_text(stmt, 3);
@@ -602,21 +616,16 @@ static void listar_estadisticas_quimica_jugador(void)
         int asist_del_usr = sqlite3_column_int(stmt, 7);
         int rating = sqlite3_column_int(stmt, 8);
 
-        printf("ID:%d | P:%d (%s) | %s | %s | G:%d A->Ti:%d Tu->A:%d Rating:%d\n",
-               id,
-               partido_id,
-               fecha ? fecha : "N/A",
-               jugador ? jugador : "N/A",
-               posicion ? posicion : "N/A",
-               goles,
-               asist_usr,
-               asist_del_usr,
-               rating);
+        printf("ID:%d | P:%d (%s) | %s | %s | G:%d A->Ti:%d Tu->A:%d Rating:%d\n", registro_id,
+               partido_id, fecha ? fecha : "N/A", jugador ? jugador : "N/A",
+               posicion ? posicion : "N/A", goles, asist_usr, asist_del_usr, rating);
         count++;
     }
 
     if (count == 0)
+    {
         mostrar_no_hay_registros("estadisticas de jugadores");
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -634,11 +643,13 @@ static void editar_estadistica_quimica_jugador(void)
 
     listar_estadisticas_quimica_jugador();
 
-    int id = input_int("ID de la estadistica a editar (0 cancelar): ");
-    if (id <= 0)
+    int estadistica_id = input_int("ID de la estadistica a editar (0 cancelar): ");
+    if (estadistica_id <= 0)
+    {
         return;
+    }
 
-    if (!existe_id("quimica_jugador_estadistica", id))
+    if (!existe_id("quimica_jugador_estadistica", estadistica_id))
     {
         printf("ID invalido.\n");
         pause_console();
@@ -647,7 +658,9 @@ static void editar_estadistica_quimica_jugador(void)
 
     int partido_id = seleccionar_partido_para_quimica("Nuevo ID de partido jugado: ");
     if (partido_id == 0)
+    {
         return;
+    }
 
     DatosQuimicaJugador datos = {0};
     capturar_datos_quimica_jugador(&datos, 1);
@@ -655,7 +668,8 @@ static void editar_estadistica_quimica_jugador(void)
     sqlite3_stmt *stmt;
     const char *sql =
         "UPDATE quimica_jugador_estadistica "
-        "SET partido_id = ?, jugador = ?, companero_asistido = '', posicion = ?, goles = ?, asistencias = 0, "
+        "SET partido_id = ?, jugador = ?, companero_asistido = '', posicion = ?, goles = ?, "
+        "asistencias = 0, "
         "asistencias_al_usuario = ?, asistencias_del_usuario = ?, rating = ?, comentario = ? "
         "WHERE id = ?";
 
@@ -666,12 +680,16 @@ static void editar_estadistica_quimica_jugador(void)
     }
 
     bind_datos_quimica_jugador(stmt, partido_id, &datos);
-    sqlite3_bind_int(stmt, 9, id);
+    sqlite3_bind_int(stmt, 9, estadistica_id);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Estadistica actualizada correctamente.\n");
+    }
     else
+    {
         printf("No se pudo actualizar la estadistica.\n");
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -689,11 +707,13 @@ static void eliminar_estadistica_quimica_jugador(void)
 
     listar_estadisticas_quimica_jugador();
 
-    int id = input_int("ID de la estadistica a eliminar (0 cancelar): ");
-    if (id <= 0)
+    int estadistica_id = input_int("ID de la estadistica a eliminar (0 cancelar): ");
+    if (estadistica_id <= 0)
+    {
         return;
+    }
 
-    if (!existe_id("quimica_jugador_estadistica", id))
+    if (!existe_id("quimica_jugador_estadistica", estadistica_id))
     {
         printf("ID invalido.\n");
         pause_console();
@@ -701,7 +721,9 @@ static void eliminar_estadistica_quimica_jugador(void)
     }
 
     if (!confirmar("Seguro que deseas eliminar esta estadistica?"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     const char *sql = "DELETE FROM quimica_jugador_estadistica WHERE id = ?";
@@ -712,18 +734,22 @@ static void eliminar_estadistica_quimica_jugador(void)
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_int(stmt, 1, estadistica_id);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Estadistica eliminada correctamente.\n");
+    }
     else
+    {
         printf("No se pudo eliminar la estadistica.\n");
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
 }
 
-static void analizar_quimica_jugadores()
+static void analizar_quimica_jugadores(void)
 {
     if (!asegurar_tabla_quimica_jugador_estadistica())
     {
@@ -755,9 +781,13 @@ typedef struct
 static const char *determinar_ganador(double diff, const char *nombre1, const char *nombre2)
 {
     if (diff > 0)
+    {
         return nombre1;
+    }
     if (diff < 0)
+    {
         return nombre2;
+    }
     return "Empate";
 }
 
@@ -782,7 +812,8 @@ typedef struct
     const char *nombre;
 } ConsultaMetricas;
 
-static int enlazar_parametro_metricas(sqlite3_stmt *stmt, int indice, const ParametroMetricas *param)
+static int enlazar_parametro_metricas(sqlite3_stmt *stmt, int indice,
+                                      const ParametroMetricas *param)
 {
     if (!stmt || !param)
     {
@@ -796,26 +827,24 @@ static int enlazar_parametro_metricas(sqlite3_stmt *stmt, int indice, const Para
 
     if (param->tipo == METRICAS_PARAM_TEXT)
     {
-        return sqlite3_bind_text(stmt,
-                                 indice,
-                                 param->valor_texto ? param->valor_texto : "",
-                                 -1,
+        return sqlite3_bind_text(stmt, indice, param->valor_texto ? param->valor_texto : "", -1,
                                  SQLITE_TRANSIENT);
     }
 
     return SQLITE_MISUSE;
 }
 
-static void calcular_metricas_preparadas(MetricasComparacion *metricas,
-        const char *sql,
-        const ParametroMetricas *params,
-        int cantidad_params)
+static void calcular_metricas_preparadas(MetricasComparacion *metricas, const char *sql,
+        const ParametroMetricas *params, int cantidad_params)
 {
     sqlite3_stmt *stmt = NULL;
 
-    memset(metricas, 0, sizeof(*metricas));
-
     if (!metricas || !sql || cantidad_params < 0)
+    {
+        return;
+    }
+
+    memset(metricas, 0, sizeof(*metricas));
     {
         return;
     }
@@ -845,35 +874,41 @@ static void calcular_metricas_preparadas(MetricasComparacion *metricas,
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, const MetricasComparacion *m2,
+static void mostrar_comparacion_dos_metricas(const MetricasComparacion *metrica1,
+        const MetricasComparacion *metrica2,
         const char *nombre1, const char *nombre2)
 {
     printf("\nCOMPARACION: %s vs %s\n", nombre1, nombre2);
     printf("----------------------------------------\n");
 
-    if (m1->partidos == 0 && m2->partidos == 0)
+    if (metrica1->partidos == 0 && metrica2->partidos == 0)
     {
         printf("No hay datos suficientes para comparar.\n");
         return;
     }
 
-    printf("%-15s %-15s %-15s %-15s %-15s\n", "Metrica", nombre1, nombre2, "Diferencia", "Porcentaje");
+    printf("%-15s %-15s %-15s %-15s %-15s\n", "Metrica", nombre1, nombre2, "Diferencia",
+           "Porcentaje");
     printf("----------------------------------------\n");
 
     // Goles
-    double diff_goles = m1->goles - m2->goles;
-    double pct_goles = (m2->goles != 0) ? (diff_goles / m2->goles) * 100 : 0;
-    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Goles", m1->goles, m2->goles, diff_goles, pct_goles);
+    double diff_goles = metrica1->goles - metrica2->goles;
+    double pct_goles = (metrica2->goles != 0) ? (diff_goles / metrica2->goles) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Goles", metrica1->goles, metrica2->goles,
+           diff_goles, pct_goles);
 
     // Asistencias
-    double diff_asist = m1->asistencias - m2->asistencias;
-    double pct_asist = (m2->asistencias != 0) ? (diff_asist / m2->asistencias) * 100 : 0;
-    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Asistencias", m1->asistencias, m2->asistencias, diff_asist, pct_asist);
+    double diff_asist = metrica1->asistencias - metrica2->asistencias;
+    double pct_asist =
+        (metrica2->asistencias != 0) ? (diff_asist / metrica2->asistencias) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Asistencias", metrica1->asistencias,
+           metrica2->asistencias, diff_asist, pct_asist);
 
     // Rendimiento
-    double diff_rend = m1->rendimiento - m2->rendimiento;
-    double pct_rend = (m2->rendimiento != 0) ? (diff_rend / m2->rendimiento) * 100 : 0;
-    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Rendimiento", m1->rendimiento, m2->rendimiento, diff_rend, pct_rend);
+    double diff_rend = metrica1->rendimiento - metrica2->rendimiento;
+    double pct_rend = (metrica2->rendimiento != 0) ? (diff_rend / metrica2->rendimiento) * 100 : 0;
+    printf("%-15s %-15.2f %-15.2f %-15.2f %-15.1f%%\n", "Rendimiento", metrica1->rendimiento,
+           metrica2->rendimiento, diff_rend, pct_rend);
 
     printf("----------------------------------------\n");
 
@@ -887,31 +922,25 @@ static void mostrar_comparacion_dos_metricas(const MetricasComparacion *m1, cons
 static void comparar_y_mostrar_metricas_preparadas(const ConsultaMetricas *consulta_1,
         const ConsultaMetricas *consulta_2)
 {
-    MetricasComparacion m1 = {0};
-    MetricasComparacion m2 = {0};
+    MetricasComparacion metrica1 = {0};
+    MetricasComparacion metrica2 = {0};
 
     if (!consulta_1 || !consulta_2)
     {
         return;
     }
 
-    calcular_metricas_preparadas(&m1,
-                                 consulta_1->sql,
-                                 consulta_1->params,
+    calcular_metricas_preparadas(&metrica1, consulta_1->sql, consulta_1->params,
                                  consulta_1->cantidad_params);
-    calcular_metricas_preparadas(&m2,
-                                 consulta_2->sql,
-                                 consulta_2->params,
+    calcular_metricas_preparadas(&metrica2, consulta_2->sql, consulta_2->params,
                                  consulta_2->cantidad_params);
 
-    mostrar_comparacion_dos_metricas(&m1, &m2, consulta_1->nombre, consulta_2->nombre);
+    mostrar_comparacion_dos_metricas(&metrica1, &metrica2, consulta_1->nombre, consulta_2->nombre);
     pause_console();
 }
 
-static void comparar_entidades_por_tabla(const char *titulo_pantalla,
-        const char *tabla,
-        const char *titulo_lista,
-        const char *nombre_default_1,
+static void comparar_entidades_por_tabla(const char *titulo_pantalla, const char *tabla,
+        const char *titulo_lista, const char *nombre_default_1,
         const char *nombre_default_2)
 {
     int id1;
@@ -919,13 +948,15 @@ static void comparar_entidades_por_tabla(const char *titulo_pantalla,
     char nombre1[256];
     char nombre2[256];
     const char *sql = NULL;
-    ParametroMetricas p1[1];
-    ParametroMetricas p2[1];
+    ParametroMetricas param1[1];
+    ParametroMetricas param2[1];
 
     iniciar_pantalla_analisis(titulo_pantalla);
 
     if (!listar_y_seleccionar_dos_entidades(tabla, titulo_lista, &id1, &id2))
+    {
         return;
+    }
 
     if (strcmp(tabla, "camiseta") == 0)
     {
@@ -934,21 +965,22 @@ static void comparar_entidades_por_tabla(const char *titulo_pantalla,
     }
     else if (strcmp(tabla, "torneo") == 0)
     {
-        sql = "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
-              "FROM partido WHERE id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = ?)";
+        sql =
+            "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
+            "FROM partido WHERE id IN (SELECT partido_id FROM partido_torneo WHERE torneo_id = ?)";
     }
     else
     {
         return;
     }
 
-    p1[0].tipo = METRICAS_PARAM_INT;
-    p1[0].valor_int = id1;
-    p1[0].valor_texto = NULL;
+    param1[0].tipo = METRICAS_PARAM_INT;
+    param1[0].valor_int = id1;
+    param1[0].valor_texto = NULL;
 
-    p2[0].tipo = METRICAS_PARAM_INT;
-    p2[0].valor_int = id2;
-    p2[0].valor_texto = NULL;
+    param2[0].tipo = METRICAS_PARAM_INT;
+    param2[0].valor_int = id2;
+    param2[0].valor_texto = NULL;
 
     strcpy_s(nombre1, sizeof(nombre1), nombre_default_1);
     strcpy_s(nombre2, sizeof(nombre2), nombre_default_2);
@@ -956,12 +988,13 @@ static void comparar_entidades_por_tabla(const char *titulo_pantalla,
     obtener_nombre_entidad(tabla, id1, nombre1, sizeof(nombre1));
     obtener_nombre_entidad(tabla, id2, nombre2, sizeof(nombre2));
 
-    ConsultaMetricas c1 = {sql, p1, 1, nombre1};
-    ConsultaMetricas c2 = {sql, p2, 1, nombre2};
-    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
+    ConsultaMetricas consulta1 = {sql, param1, 1, nombre1};
+    ConsultaMetricas consulta2 = {sql, param2, 1, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&consulta1, &consulta2);
 }
 
-static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1, int *id2)
+static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *titulo, int *id1,
+        int *id2)
 {
     sqlite3_stmt *stmt;
 
@@ -980,9 +1013,9 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        int entidad_id = sqlite3_column_int(stmt, 0);
         const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
-        printf("%d. %s\n", id, nombre);
+        printf("%d. %s\n", entidad_id, nombre);
         count++;
     }
     sqlite3_finalize(stmt);
@@ -998,7 +1031,9 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
     {
         *id1 = input_int("\nIngrese ID de la primera entidad (0 para cancelar): ");
         if (*id1 == 0)
+        {
             return 0;
+        }
         if (!existe_id_entidad(tabla, *id1))
         {
             printf("ID invalido.\n");
@@ -1007,7 +1042,9 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
 
         *id2 = input_int("Ingrese ID de la segunda entidad (0 para cancelar): ");
         if (*id2 == 0)
+        {
             return 0;
+        }
         if (!existe_id_entidad(tabla, *id2))
         {
             printf("ID invalido.\n");
@@ -1022,25 +1059,18 @@ static int listar_y_seleccionar_dos_entidades(const char *tabla, const char *tit
     }
 }
 
-static void comparar_camisetas()
+static void comparar_camisetas(void)
 {
-    comparar_entidades_por_tabla("COMPARADOR: CAMISETAS",
-                                 "camiseta",
-                                 "Camiseta",
-                                 "Camiseta A",
+    comparar_entidades_por_tabla("COMPARADOR: CAMISETAS", "camiseta", "Camiseta", "Camiseta A",
                                  "Camiseta B");
 }
 
-static void comparar_torneos()
+static void comparar_torneos(void)
 {
-    comparar_entidades_por_tabla("COMPARADOR: TORNEOS",
-                                 "torneo",
-                                 "Torneo",
-                                 "Torneo A",
-                                 "Torneo B");
+    comparar_entidades_por_tabla("COMPARADOR: TORNEOS", "torneo", "Torneo", "Torneo A", "Torneo B");
 }
 
-static void comparar_periodos()
+static void comparar_periodos(void)
 {
     iniciar_pantalla_analisis("COMPARADOR: PERIODOS");
 
@@ -1053,54 +1083,60 @@ static void comparar_periodos()
     char fecha2_fin[20];
 
     printf("PRIMER PERIODO:\n");
-    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha1_inicio, sizeof(fecha1_inicio));
-    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin, sizeof(fecha1_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha1_inicio,
+                               sizeof(fecha1_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin,
+                               sizeof(fecha1_fin));
     while (strcmp(fecha1_fin, fecha1_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin, sizeof(fecha1_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha1_fin,
+                                   sizeof(fecha1_fin));
     }
 
     printf("\nSEGUNDO PERIODO:\n");
-    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha2_inicio, sizeof(fecha2_inicio));
-    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin, sizeof(fecha2_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha inicio (DD/MM/AAAA, Enter=hoy): ", fecha2_inicio,
+                               sizeof(fecha2_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin,
+                               sizeof(fecha2_fin));
     while (strcmp(fecha2_fin, fecha2_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin, sizeof(fecha2_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha fin (DD/MM/AAAA, Enter=hoy): ", fecha2_fin,
+                                   sizeof(fecha2_fin));
     }
 
     const char *sql_periodo =
         "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) "
         "FROM partido WHERE fecha_hora BETWEEN ? AND ?";
 
-    ParametroMetricas p1[2];
-    p1[0].tipo = METRICAS_PARAM_TEXT;
-    p1[0].valor_int = 0;
-    p1[0].valor_texto = fecha1_inicio;
-    p1[1].tipo = METRICAS_PARAM_TEXT;
-    p1[1].valor_int = 0;
-    p1[1].valor_texto = fecha1_fin;
+    ParametroMetricas param1[2];
+    param1[0].tipo = METRICAS_PARAM_TEXT;
+    param1[0].valor_int = 0;
+    param1[0].valor_texto = fecha1_inicio;
+    param1[1].tipo = METRICAS_PARAM_TEXT;
+    param1[1].valor_int = 0;
+    param1[1].valor_texto = fecha1_fin;
 
-    ParametroMetricas p2[2];
-    p2[0].tipo = METRICAS_PARAM_TEXT;
-    p2[0].valor_int = 0;
-    p2[0].valor_texto = fecha2_inicio;
-    p2[1].tipo = METRICAS_PARAM_TEXT;
-    p2[1].valor_int = 0;
-    p2[1].valor_texto = fecha2_fin;
+    ParametroMetricas param2[2];
+    param2[0].tipo = METRICAS_PARAM_TEXT;
+    param2[0].valor_int = 0;
+    param2[0].valor_texto = fecha2_inicio;
+    param2[1].tipo = METRICAS_PARAM_TEXT;
+    param2[1].valor_int = 0;
+    param2[1].valor_texto = fecha2_fin;
 
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "Periodo %s a %s", fecha1_inicio, fecha1_fin);
     snprintf(nombre2, sizeof(nombre2), "Periodo %s a %s", fecha2_inicio, fecha2_fin);
 
-    ConsultaMetricas c1 = {sql_periodo, p1, 2, nombre1};
-    ConsultaMetricas c2 = {sql_periodo, p2, 2, nombre2};
-    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
+    ConsultaMetricas consulta1 = {sql_periodo, param1, 2, nombre1};
+    ConsultaMetricas consulta2 = {sql_periodo, param2, 2, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&consulta1, &consulta2);
 }
 
-static void comparar_condiciones()
+static void comparar_condiciones(void)
 {
     iniciar_pantalla_analisis("COMPARADOR: CONDICIONES");
 
@@ -1113,7 +1149,9 @@ static void comparar_condiciones()
     {
         tipo_condicion = input_int("\nSeleccione tipo de condicion (1-2): ");
         if (tipo_condicion < 1 || tipo_condicion > 2)
+        {
             printf("Opcion invalida.\n");
+        }
     }
 
     int valor1;
@@ -1142,36 +1180,36 @@ static void comparar_condiciones()
     }
 
     const char *sql_condicion = (tipo_condicion == 1)
-                                ? "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) FROM partido WHERE clima = ?"
-                                : "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general) FROM partido WHERE dia = ?";
+                                ? "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                                "AVG(rendimiento_general) FROM partido WHERE clima = ?"
+                                : "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                                "AVG(rendimiento_general) FROM partido WHERE dia = ?";
 
-    ParametroMetricas p1[1];
-    p1[0].tipo = METRICAS_PARAM_INT;
-    p1[0].valor_int = valor1;
-    p1[0].valor_texto = NULL;
+    ParametroMetricas param1[1];
+    param1[0].tipo = METRICAS_PARAM_INT;
+    param1[0].valor_int = valor1;
+    param1[0].valor_texto = NULL;
 
-    ParametroMetricas p2[1];
-    p2[0].tipo = METRICAS_PARAM_INT;
-    p2[0].valor_int = valor2;
-    p2[0].valor_texto = NULL;
+    ParametroMetricas param2[1];
+    param2[0].tipo = METRICAS_PARAM_INT;
+    param2[0].valor_int = valor2;
+    param2[0].valor_texto = NULL;
 
     char nombre1[256];
     char nombre2[256];
     snprintf(nombre1, sizeof(nombre1), "%s %d", tipo_texto, valor1);
     snprintf(nombre2, sizeof(nombre2), "%s %d", tipo_texto, valor2);
 
-    ConsultaMetricas c1 = {sql_condicion, p1, 1, nombre1};
-    ConsultaMetricas c2 = {sql_condicion, p2, 1, nombre2};
-    comparar_y_mostrar_metricas_preparadas(&c1, &c2);
+    ConsultaMetricas consulta1 = {sql_condicion, param1, 1, nombre1};
+    ConsultaMetricas consulta2 = {sql_condicion, param2, 1, nombre2};
+    comparar_y_mostrar_metricas_preparadas(&consulta1, &consulta2);
 }
 
-static void mostrar_comparador_avanzado()
+static void mostrar_comparador_avanzado(void)
 {
     iniciar_pantalla_analisis("COMPARADOR AVANZADO");
 
-    MenuItem items[] =
-    {
-        {1, "Comparar Camisetas", comparar_camisetas},
+    MenuItem items[] = {{1, "Comparar Camisetas", comparar_camisetas},
         {2, "Comparar Torneos", comparar_torneos},
         {3, "Comparar Periodos", comparar_periodos},
         {4, "Comparar Condiciones", comparar_condiciones},
@@ -1181,13 +1219,11 @@ static void mostrar_comparador_avanzado()
     ejecutar_menu("COMPARADOR AVANZADO", items, 5);
 }
 
-void mostrar_analisis()
+void mostrar_analisis(void)
 {
     iniciar_pantalla_analisis("ANALISIS Y COMPARADOR");
 
-    MenuItem items[] =
-    {
-        {1, "Analisis Basico", mostrar_analisis_basico},
+    MenuItem items[] = {{1, "Analisis Basico", mostrar_analisis_basico},
         {2, "Comparador Avanzado", mostrar_comparador_avanzado},
         {3, "Analisis Tactico (Diagramas)", &menu_tacticas_partido},
         {4, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
@@ -1208,17 +1244,19 @@ typedef struct
 
 static const char *mes_to_text(int mes)
 {
-    static const char *meses[] =
-    {
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    };
+    static const char *meses[] = {"Enero",      "Febrero", "Marzo",     "Abril",
+                                  "Mayo",       "Junio",   "Julio",     "Agosto",
+                                  "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                                 };
     if (mes >= 1 && mes <= 12)
+    {
         return meses[mes - 1];
+    }
     return "DESCONOCIDO";
 }
 
-static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max_stats, const char *columna)
+static int calcular_estadisticas_mensuales(EstadisticasMensuales *stats, int max_stats,
+        const char *columna)
 {
     sqlite3_stmt *stmt;
     char sql[512];
@@ -1275,8 +1313,7 @@ static void mostrar_evolucion_mensual(const char *titulo, const char *columna)
 
     for (int i = 0; i < num_meses; i++)
     {
-        printf("%s %d: %.2f (%d partidos)\n",
-               mes_to_text(stats[i].mes), stats[i].anio,
+        printf("%s %d: %.2f (%d partidos)\n", mes_to_text(stats[i].mes), stats[i].anio,
                stats[i].avg_valor, stats[i].total_partidos);
     }
 
@@ -1288,17 +1325,17 @@ static void encontrar_mes_historico(int mejor)
     iniciar_pantalla_analisis(mejor ? "MEJOR MES HISTORICO" : "PEOR MES HISTORICO");
 
     sqlite3_stmt *stmt;
-    const char *sql = mejor ?
-                      "SELECT strftime('%m', fecha_hora) as mes, strftime('%Y', fecha_hora) as anio, "
-                      "AVG(rendimiento_general), COUNT(*) "
-                      "FROM partido "
-                      "GROUP BY strftime('%Y', fecha_hora), strftime('%m', fecha_hora) "
-                      "ORDER BY AVG(rendimiento_general) DESC LIMIT 1" :
-                      "SELECT strftime('%m', fecha_hora) as mes, strftime('%Y', fecha_hora) as anio, "
-                      "AVG(rendimiento_general), COUNT(*) "
-                      "FROM partido "
-                      "GROUP BY strftime('%Y', fecha_hora), strftime('%m', fecha_hora) "
-                      "ORDER BY AVG(rendimiento_general) ASC LIMIT 1";
+    const char *sql =
+        mejor ? "SELECT strftime('%m', fecha_hora) as mes, strftime('%Y', fecha_hora) as anio, "
+        "AVG(rendimiento_general), COUNT(*) "
+        "FROM partido "
+        "GROUP BY strftime('%Y', fecha_hora), strftime('%m', fecha_hora) "
+        "ORDER BY AVG(rendimiento_general) DESC LIMIT 1"
+        : "SELECT strftime('%m', fecha_hora) as mes, strftime('%Y', fecha_hora) as anio, "
+        "AVG(rendimiento_general), COUNT(*) "
+        "FROM partido "
+        "GROUP BY strftime('%Y', fecha_hora), strftime('%m', fecha_hora) "
+        "ORDER BY AVG(rendimiento_general) ASC LIMIT 1";
 
     if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
@@ -1327,10 +1364,9 @@ static void encontrar_mes_historico(int mejor)
 
     sqlite3_finalize(stmt);
     pause_console();
-
 }
 
-static void comparar_inicio_fin_anio()
+static void comparar_inicio_fin_anio(void)
 {
     iniciar_pantalla_analisis("INICIO VS FIN DE ANIO");
 
@@ -1340,12 +1376,13 @@ static void comparar_inicio_fin_anio()
      * Esto permite un analisis comparativo de la evolucion del rendimiento entre
      * la primera y la segunda mitad del ano calendario.
      */
-    const char *sql =
-        "SELECT "
-        "CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN 'Inicio' ELSE 'Fin' END as periodo, "
-        "AVG(goles), AVG(asistencias), AVG(rendimiento_general), COUNT(*) "
-        "FROM partido "
-        "GROUP BY CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN 'Inicio' ELSE 'Fin' END";
+    const char *sql = "SELECT "
+                      "CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN 'Inicio' "
+                      "ELSE 'Fin' END as periodo, "
+                      "AVG(goles), AVG(asistencias), AVG(rendimiento_general), COUNT(*) "
+                      "FROM partido "
+                      "GROUP BY CASE WHEN CAST(strftime('%m', fecha_hora) AS INTEGER) <= 6 THEN "
+                      "'Inicio' ELSE 'Fin' END";
 
     if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
@@ -1382,7 +1419,7 @@ static void comparar_inicio_fin_anio()
     pause_console();
 }
 
-static void comparar_meses_frios_calidos()
+static void comparar_meses_frios_calidos(void)
 {
     iniciar_pantalla_analisis("MESES FRIOS VS CALIDOS");
 
@@ -1418,7 +1455,9 @@ static void comparar_meses_frios_calidos()
     {
         const char *temporada = (const char *)sqlite3_column_text(stmt, 0);
         if (strcmp(temporada, "Otros") == 0)
+        {
             continue;
+        }
 
         double avg_goles = sqlite3_column_double(stmt, 1);
         double avg_asistencias = sqlite3_column_double(stmt, 2);
@@ -1447,9 +1486,13 @@ static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
     double avg_primeros = 0;
     double avg_ultimos = 0;
     if (sqlite3_step(tend_stmt) == SQLITE_ROW)
+    {
         avg_primeros = sqlite3_column_double(tend_stmt, 0);
+    }
     if (sqlite3_step(tend_stmt) == SQLITE_ROW)
+    {
         avg_ultimos = sqlite3_column_double(tend_stmt, 0);
+    }
 
     double tendencia = avg_ultimos - avg_primeros;
     printf("\nTENDENCIA:\n");
@@ -1474,17 +1517,16 @@ static void mostrar_tendencia(sqlite3_stmt *tend_stmt)
     sqlite3_finalize(tend_stmt);
 }
 
-static void calcular_progreso_total()
+static void calcular_progreso_total(void)
 {
     iniciar_pantalla_analisis("PROGRESO TOTAL DEL JUGADOR");
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT "
-        "COUNT(*), "
-        "AVG(goles), AVG(asistencias), AVG(rendimiento_general), "
-        "MIN(fecha_hora), MAX(fecha_hora) "
-        "FROM partido";
+    const char *sql = "SELECT "
+                      "COUNT(*), "
+                      "AVG(goles), AVG(asistencias), AVG(rendimiento_general), "
+                      "MIN(fecha_hora), MAX(fecha_hora) "
+                      "FROM partido";
 
     if (!preparar_stmt_con_mensaje(&stmt, sql))
     {
@@ -1509,7 +1551,8 @@ static void calcular_progreso_total()
 
     printf("PROGRESO TOTAL DEL JUGADOR:\n");
     printf("----------------------------------------\n");
-    printf("Periodo: %s - %s\n", fecha_inicio ? fecha_inicio : "N/A", fecha_fin ? fecha_fin : "N/A");
+    printf("Periodo: %s - %s\n", fecha_inicio ? fecha_inicio : "N/A",
+           fecha_fin ? fecha_fin : "N/A");
     printf("Total de partidos: %d\n", total_partidos);
     printf("Promedio de goles: %.2f\n", avg_goles);
     printf("Promedio de asistencias: %.2f\n", avg_asistencias);
@@ -1524,8 +1567,8 @@ static void calcular_progreso_total()
     }
 
     /*
-     * Algoritmo de Tendencia: Se comparan los promedios de los primeros 5 partidos vs los ultimos 5.
-     * Se usa UNION ALL para obtener ambos promedios en una sola ejecucion de statement,
+     * Algoritmo de Tendencia: Se comparan los promedios de los primeros 5 partidos vs los
+     * ultimos 5. Se usa UNION ALL para obtener ambos promedios en una sola ejecucion de statement,
      * optimizando el acceso a la base de datos para el calculo del delta de rendimiento.
      */
     sqlite3_stmt *tend_stmt;
@@ -1548,13 +1591,11 @@ static void calcular_progreso_total()
     pause_console();
 }
 
-void mostrar_evolucion_temporal()
+void mostrar_evolucion_temporal(void)
 {
     iniciar_pantalla_analisis("EVOLUCION TEMPORAL");
 
-    MenuItem items[] =
-    {
-        {1, "Evolucion Mensual de Goles", evolucion_mensual_goles},
+    MenuItem items[] = {{1, "Evolucion Mensual de Goles", evolucion_mensual_goles},
         {2, "Evolucion Mensual de Asistencias", evolucion_mensual_asistencias},
         {3, "Evolucion Mensual de Rendimiento", evolucion_mensual_rendimiento},
         {4, "Mejor Mes Historico", mejor_mes_historico},
@@ -1568,42 +1609,43 @@ void mostrar_evolucion_temporal()
     ejecutar_menu("EVOLUCION TEMPORAL", items, 9);
 }
 
-void evolucion_mensual_goles()
+void evolucion_mensual_goles(void)
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE GOLES", "goles");
 }
 
-void evolucion_mensual_asistencias()
+void evolucion_mensual_asistencias(void)
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE ASISTENCIAS", "asistencias");
 }
 
-void evolucion_mensual_rendimiento()
+void evolucion_mensual_rendimiento(void)
 {
     mostrar_evolucion_mensual("EVOLUCION MENSUAL DE RENDIMIENTO", "rendimiento_general");
 }
 
-void mejor_mes_historico()
+void mejor_mes_historico(void)
 {
     encontrar_mes_historico(1);
 }
 
-void peor_mes_historico()
+void peor_mes_historico(void)
 {
     encontrar_mes_historico(0);
 }
 
-void inicio_vs_fin_anio()
+void inicio_vs_fin_anio(void)
 {
     comparar_inicio_fin_anio();
 }
 
-void meses_frios_vs_calidos()
+void meses_frios_vs_calidos(void)
 {
     comparar_meses_frios_calidos();
 }
 
-void progreso_total_jugador()
+void progreso_total_jugador(void)
 {
     calcular_progreso_total();
 }
+// NOLINTEND(bugprone-easily-swappable-parameters,performance-no-int-to-ptr)

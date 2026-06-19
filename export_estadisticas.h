@@ -23,7 +23,7 @@
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas.csv' en el directorio de exportación
  */
-void exportar_estadisticas_csv();
+void exportar_estadisticas_csv(void);
 
 /**
  * @brief Exporta las estadísticas a formato TXT
@@ -34,7 +34,7 @@ void exportar_estadisticas_csv();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas.txt' en el directorio de exportación
  */
-void exportar_estadisticas_txt();
+void exportar_estadisticas_txt(void);
 
 /**
  * @brief Exporta las estadísticas a formato JSON
@@ -61,7 +61,7 @@ void exportar_estadisticas_txt();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas.json' en el directorio de exportación
  */
-void exportar_estadisticas_json();
+void exportar_estadisticas_json(void);
 
 /**
  * @brief Exporta las estadísticas a formato HTML
@@ -72,7 +72,7 @@ void exportar_estadisticas_json();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas.html' en el directorio de exportación
  */
-void exportar_estadisticas_html();
+void exportar_estadisticas_html(void);
 
 /**
  * @brief Exporta las estadisticas a formato Markdown (GitHub Flavored Markdown)
@@ -83,11 +83,11 @@ void exportar_estadisticas_html();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas.md' en el directorio de exportacion
  */
-void exportar_estadisticas_md();
+void exportar_estadisticas_md(void);
 
 /**
  * @brief Exporta las estadisticas a los 5 formatos con una sola consulta SQL.
  */
-void exportar_estadisticas_all();
+void exportar_estadisticas_all(void);
 
 #endif /* EXPORT_ESTADISTICAS_H */

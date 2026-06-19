@@ -1,4 +1,4 @@
-﻿
+
 #include "export.h"
 #include "db.h"
 #include "utils.h"
@@ -102,14 +102,14 @@ void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
 static void calcular_estadisticas_generales(Estadisticas *stats);
 static void calcular_estadisticas_ultimos5(Estadisticas *stats);
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas);
-static int has_partido_records();
+static int has_partido_records(void);
 
 /**
  * Verifica si hay registros de partidos en la base de datos.
  * Centraliza la logica de verificacion para evitar duplicacion de codigo.
  * Retorna 1 si hay registros, 0 si no hay.
  */
-static int has_partido_records()
+static int has_partido_records(void)
 {
     sqlite3_stmt *check_stmt;
     int count = 0;
@@ -186,7 +186,7 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
 
 /* ===================== EXPORTACIONES TXT ADICIONALES ===================== */
 
-void exportar_finanzas_resumen_txt()
+void exportar_finanzas_resumen_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("finanzas_resumen.txt", "Error al crear archivo de finanzas resumen TXT");
     if (!f)
@@ -244,7 +244,7 @@ void exportar_finanzas_resumen_txt()
     fclose(f);
 }
 
-void exportar_ranking_canchas_txt()
+void exportar_ranking_canchas_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("ranking_canchas.txt", "Error al crear archivo de ranking de canchas TXT");
     if (!f)
@@ -286,7 +286,7 @@ void exportar_ranking_canchas_txt()
     fclose(f);
 }
 
-void exportar_partidos_por_clima_txt()
+void exportar_partidos_por_clima_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("partidos_por_clima.txt", "Error al crear archivo de partidos por clima TXT");
     if (!f)
@@ -321,7 +321,7 @@ void exportar_partidos_por_clima_txt()
     fclose(f);
 }
 
-void exportar_lesiones_por_tipo_estado_txt()
+void exportar_lesiones_por_tipo_estado_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("lesiones_por_tipo_estado.txt", "Error al crear archivo de lesiones por tipo y estado TXT");
     if (!f)
@@ -354,7 +354,7 @@ void exportar_lesiones_por_tipo_estado_txt()
     fclose(f);
 }
 
-void exportar_rachas_historial_txt()
+void exportar_rachas_historial_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("rachas_historial.txt", "Error al crear archivo de rachas TXT");
     if (!f)
@@ -431,7 +431,7 @@ void exportar_rachas_historial_txt()
     fclose(f);
 }
 
-void exportar_estado_animo_cansancio_txt()
+void exportar_estado_animo_cansancio_txt(void)
 {
     FILE *f = abrir_archivo_exportacion("estado_animo_cansancio.txt", "Error al crear archivo de estado de animo y cansancio TXT");
     if (!f)
@@ -616,7 +616,7 @@ static void write_analisis_html(FILE *f, const Estadisticas *generales,
  * Exporta el analisis de rendimiento a un archivo CSV.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_analisis_csv()
+void exportar_analisis_csv(void)
 {
     if (!has_partido_records())
     {
@@ -644,7 +644,7 @@ void exportar_analisis_csv()
  * Exporta el analisis de rendimiento a un archivo de texto plano.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_analisis_txt()
+void exportar_analisis_txt(void)
 {
     if (!has_partido_records())
     {
@@ -672,7 +672,7 @@ void exportar_analisis_txt()
  * Exporta el analisis de rendimiento a un archivo JSON.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_analisis_json()
+void exportar_analisis_json(void)
 {
     if (!has_partido_records())
     {
@@ -700,7 +700,7 @@ void exportar_analisis_json()
  * Exporta el analisis de rendimiento a un archivo HTML.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_analisis_html()
+void exportar_analisis_html(void)
 {
     if (!has_partido_records())
     {

@@ -228,22 +228,22 @@ static void write_html(FILE *f, const EventoCalendario *eventos, int total)
     fprintf(f, "</table></body></html>");
 }
 
-void exportar_calendario_csv()
+void exportar_calendario_csv(void)
 {
     exportar_calendario_base("calendario.csv", "Error al crear el archivo CSV.", write_csv);
 }
 
-void exportar_calendario_txt()
+void exportar_calendario_txt(void)
 {
     exportar_calendario_base("calendario.txt", "Error al crear el archivo TXT.", write_txt);
 }
 
-void exportar_calendario_json()
+void exportar_calendario_json(void)
 {
     exportar_calendario_base("calendario.json", "Error al crear el archivo JSON.", write_json_content);
 }
 
-void exportar_calendario_html()
+void exportar_calendario_html(void)
 {
     exportar_calendario_base("calendario.html", "Error al crear el archivo HTML.", write_html);
 }

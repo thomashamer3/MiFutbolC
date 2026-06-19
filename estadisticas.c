@@ -1,4 +1,4 @@
-﻿
+
 #include "estadisticas.h"
 #include "estadisticas_generales.h"
 #include "estadisticas_mes.h"
@@ -12,7 +12,7 @@
 #include "filtros.h"
 #include "utils.h"
 
-void menu_estadisticas()
+void menu_estadisticas(void)
 {
     // Activar IA al abrir estadisticas
 #ifndef UNIT_TEST
@@ -34,7 +34,7 @@ void menu_estadisticas()
     ejecutar_menu("ESTADISTICAS", items, 8);
 }
 
-void menu_estadisticas_generales()
+void menu_estadisticas_generales(void)
 {
     MenuItem items[] =
     {
@@ -49,7 +49,7 @@ void menu_estadisticas_generales()
     ejecutar_menu("ESTADISTICAS GENERALES", items, 6);
 }
 
-void menu_estadisticas_partidos()
+void menu_estadisticas_partidos(void)
 {
     MenuItem items[] =
     {
@@ -64,7 +64,7 @@ void menu_estadisticas_partidos()
     ejecutar_menu("ESTADISTICAS DE PARTIDOS", items, 6);
 }
 
-void menu_estadisticas_goles()
+void menu_estadisticas_goles(void)
 {
     MenuItem items[] =
     {
@@ -81,7 +81,7 @@ void menu_estadisticas_goles()
     ejecutar_menu("ESTADISTICAS DE GOLES", items, 8);
 }
 
-void menu_estadisticas_asistencias()
+void menu_estadisticas_asistencias(void)
 {
     MenuItem items[] =
     {
@@ -96,7 +96,7 @@ void menu_estadisticas_asistencias()
     ejecutar_menu("ESTADISTICAS DE ASISTENCIAS", items, 6);
 }
 
-void menu_estadisticas_rendimiento()
+void menu_estadisticas_rendimiento(void)
 {
     MenuItem items[] =
     {

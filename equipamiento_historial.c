@@ -76,7 +76,8 @@ void equipamiento_historial_crear(void)
     input_date("Fecha compra (dd/mm/aaaa): ", fecha_compra, (int)sizeof(fecha_compra));
 
     double precio = input_double("Precio ($): ");
-    if (precio < 0) precio = 0;
+    if (precio < 0)
+        precio = 0;
 
     printf("Estado fisico (1=Nuevo, 2=Bueno, 3=Usado, 4=Gastado, 5=Descarte): ");
     int estado = input_int_rango("", 1, 5);
@@ -136,7 +137,8 @@ void equipamiento_historial_listar(void)
     print_header("HISTORIAL DE EQUIPAMIENTO");
 
     sqlite3_stmt *stmt = NULL;
-    if (!preparar_stmt(&stmt, "SELECT id, tipo, marca, modelo, fecha_compra, precio, "
+    if (!preparar_stmt(&stmt,
+                       "SELECT id, tipo, marca, modelo, fecha_compra, precio, "
                        "partidos_usados, estado_fisico, rating, notas, activo "
                        "FROM equipamiento_historial ORDER BY activo DESC, fecha_compra DESC"))
     {
@@ -157,14 +159,15 @@ void equipamiento_historial_listar(void)
         const char *notas = (const char *)sqlite3_column_text(stmt, 9);
         int activo = sqlite3_column_int(stmt, 10);
 
-        printf("  %d. [%s] %s %s\n",
-               id, activo ? "ACTIVO" : "INACTIVO",
-               marca ? marca : "", modelo ? modelo : "");
+        printf("  %d. [%s] %s %s\n", id, activo ? "ACTIVO" : "INACTIVO", marca ? marca : "",
+               modelo ? modelo : "");
         printf("     Tipo: %s\n", item_tipo_texto(tipo));
-        if (fecha && fecha[0]) printf("     Compra: %s | $%.2f\n", fecha, precio);
-        printf("     Partidos: %d | Estado: %s | Rating: %d/10\n",
-               partidos, estado_fisico_texto(estado_f), rating);
-        if (notas && notas[0]) printf("     Notas: %s\n", notas);
+        if (fecha && fecha[0])
+            printf("     Compra: %s | $%.2f\n", fecha, precio);
+        printf("     Partidos: %d | Estado: %s | Rating: %d/10\n", partidos,
+               estado_fisico_texto(estado_f), rating);
+        if (notas && notas[0])
+            printf("     Notas: %s\n", notas);
         printf("\n");
     }
     sqlite3_finalize(stmt);
@@ -185,7 +188,8 @@ void equipamiento_historial_editar(void)
     int id = input_int("ID del item a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("equipamiento_historial", id))
     {
-        if (id > 0) mostrar_no_existe("Item");
+        if (id > 0)
+            mostrar_no_existe("Item");
         pause_console();
         return;
     }
@@ -212,17 +216,21 @@ void equipamiento_historial_editar(void)
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *p = (const char *)sqlite3_column_text(stmt, 1);
-        if (p) strncpy_s(marca_actual, sizeof(marca_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(marca_actual, sizeof(marca_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 2);
-        if (p) strncpy_s(modelo_actual, sizeof(modelo_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(modelo_actual, sizeof(modelo_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 3);
-        if (p) strncpy_s(fecha_actual, sizeof(fecha_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(fecha_actual, sizeof(fecha_actual), p, _TRUNCATE);
         precio_actual = sqlite3_column_double(stmt, 4);
         partidos_actual = sqlite3_column_int(stmt, 5);
         estado_f_actual = sqlite3_column_int(stmt, 6);
         rating_actual = sqlite3_column_int(stmt, 7);
         p = (const char *)sqlite3_column_text(stmt, 8);
-        if (p) strncpy_s(notas_actual, sizeof(notas_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(notas_actual, sizeof(notas_actual), p, _TRUNCATE);
         activo_actual = sqlite3_column_int(stmt, 9);
     }
     sqlite3_finalize(stmt);
@@ -236,39 +244,48 @@ void equipamiento_historial_editar(void)
 
     printf("Marca [%s]: ", marca_actual);
     input_string("", marca, (int)sizeof(marca));
-    if (marca[0] == '\0') strncpy_s(marca, sizeof(marca), marca_actual, _TRUNCATE);
+    if (marca[0] == '\0')
+        strncpy_s(marca, sizeof(marca), marca_actual, _TRUNCATE);
 
     printf("Modelo [%s]: ", modelo_actual);
     input_string("", modelo, (int)sizeof(modelo));
-    if (modelo[0] == '\0') strncpy_s(modelo, sizeof(modelo), modelo_actual, _TRUNCATE);
+    if (modelo[0] == '\0')
+        strncpy_s(modelo, sizeof(modelo), modelo_actual, _TRUNCATE);
 
     printf("Fecha compra [%s]: ", fecha_actual);
     input_date("", fecha, (int)sizeof(fecha));
-    if (fecha[0] == '\0') strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
+    if (fecha[0] == '\0')
+        strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
 
     printf("Precio [%.2f]: ", precio_actual);
     double precio = input_double("");
-    if (precio < 0) precio = precio_actual;
+    if (precio < 0)
+        precio = precio_actual;
 
     printf("Partidos usados [%d]: ", partidos_actual);
     int partidos = input_int("");
-    if (partidos < 0) partidos = partidos_actual;
+    if (partidos < 0)
+        partidos = partidos_actual;
 
     printf("Estado fisico (1-5) [%d]: ", estado_f_actual);
     int estado_f = input_int("");
-    if (estado_f < 1 || estado_f > 5) estado_f = estado_f_actual;
+    if (estado_f < 1 || estado_f > 5)
+        estado_f = estado_f_actual;
 
     printf("Rating (1-10) [%d]: ", rating_actual);
     int rating = input_int("");
-    if (rating < 1 || rating > 10) rating = rating_actual;
+    if (rating < 1 || rating > 10)
+        rating = rating_actual;
 
     printf("Activo (1=Si, 0=No) [%d]: ", activo_actual);
     int activo = input_int("");
-    if (activo != 0 && activo != 1) activo = activo_actual;
+    if (activo != 0 && activo != 1)
+        activo = activo_actual;
 
     printf("Notas [%s]: ", notas_actual);
     input_string("", notas, (int)sizeof(notas));
-    if (notas[0] == '\0') strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
+    if (notas[0] == '\0')
+        strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
 
     if (!preparar_stmt(&stmt, "UPDATE equipamiento_historial SET marca=?, modelo=?, "
                        "fecha_compra=?, precio=?, partidos_usados=?, estado_fisico=?, "
@@ -317,7 +334,8 @@ void equipamiento_historial_eliminar(void)
     int id = input_int("ID del item a eliminar (0=cancelar): ");
     if (id <= 0 || !existe_id("equipamiento_historial", id))
     {
-        if (id > 0) mostrar_no_existe("Item");
+        if (id > 0)
+            mostrar_no_existe("Item");
         pause_console();
         return;
     }
@@ -334,9 +352,11 @@ void equipamiento_historial_eliminar(void)
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *p = (const char *)sqlite3_column_text(stmt, 0);
-        if (p) strncpy_s(marca, sizeof(marca), p, _TRUNCATE);
+        if (p)
+            strncpy_s(marca, sizeof(marca), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 1);
-        if (p) strncpy_s(modelo, sizeof(modelo), p, _TRUNCATE);
+        if (p)
+            strncpy_s(modelo, sizeof(modelo), p, _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -391,7 +411,8 @@ void equipamiento_historial_estadisticas(void)
         return;
     }
     int total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) total = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        total = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM equipamiento_historial WHERE activo=1"))
@@ -399,7 +420,8 @@ void equipamiento_historial_estadisticas(void)
         return;
     }
     int activos = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) activos = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        activos = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT SUM(partidos_usados) FROM equipamiento_historial"))
@@ -407,7 +429,8 @@ void equipamiento_historial_estadisticas(void)
         return;
     }
     int total_partidos = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) total_partidos = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        total_partidos = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT SUM(precio) FROM equipamiento_historial"))
@@ -415,7 +438,8 @@ void equipamiento_historial_estadisticas(void)
         return;
     }
     double total_gastado = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) total_gastado = sqlite3_column_double(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        total_gastado = sqlite3_column_double(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT AVG(rating) FROM equipamiento_historial"))
@@ -423,7 +447,8 @@ void equipamiento_historial_estadisticas(void)
         return;
     }
     double avg_rating = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) avg_rating = sqlite3_column_double(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        avg_rating = sqlite3_column_double(stmt, 0);
     sqlite3_finalize(stmt);
 
     printf("  Total items:        %d\n", total);
@@ -441,7 +466,8 @@ void equipamiento_historial_estadisticas(void)
         }
         sqlite3_bind_int(stmt, 1, t);
         int cnt = 0;
-        if (sqlite3_step(stmt) == SQLITE_ROW) cnt = sqlite3_column_int(stmt, 0);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            cnt = sqlite3_column_int(stmt, 0);
         sqlite3_finalize(stmt);
         if (cnt > 0)
         {
@@ -454,13 +480,11 @@ void equipamiento_historial_estadisticas(void)
 
 void menu_equipamiento_historial(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Nuevo item", equipamiento_historial_crear},
-        {2, "Listar items", equipamiento_historial_listar},
-        {3, "Editar item", equipamiento_historial_editar},
-        {4, "Eliminar item", equipamiento_historial_eliminar},
-        {5, "Estadisticas", equipamiento_historial_estadisticas},
+    MenuItem items[] = {{1, "Nuevo item", &equipamiento_historial_crear},
+        {2, "Listar items", &equipamiento_historial_listar},
+        {3, "Editar item", &equipamiento_historial_editar},
+        {4, "Eliminar item", &equipamiento_historial_eliminar},
+        {5, "Estadisticas", &equipamiento_historial_estadisticas},
         {0, "Volver", NULL}
     };
     ejecutar_menu("HISTORIAL DE EQUIPAMIENTO", items, 6);

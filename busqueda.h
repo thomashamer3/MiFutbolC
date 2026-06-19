@@ -15,7 +15,7 @@
  * Presenta interfaz de búsqueda donde el usuario puede ingresar
  * un término y buscar en todas las tablas del sistema.
  */
-void menu_busqueda_global();
+void menu_busqueda_global(void);
 
 /**
  * @brief Busca un término en la tabla de partidos

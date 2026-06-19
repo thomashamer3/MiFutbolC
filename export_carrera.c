@@ -113,7 +113,7 @@ static const char *SQL_IDENTIDAD = "SELECT id, nombre, posiciones, COALESCE(hist
 static const char *SQL_HITOS = "SELECT id, tipo_hito, COALESCE(nota, '') FROM carrera_partido_hito ORDER BY id";
 static const char *SQL_RESUMENES = "SELECT id, COALESCE(periodo_inicio, ''), resumen FROM carrera_resumen_narrativo ORDER BY id";
 
-void exportar_carrera_csv()
+void exportar_carrera_csv(void)
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
     {
@@ -137,7 +137,7 @@ void exportar_carrera_csv()
     printf("Archivo exportado a: %s\n", get_export_path("carrera.csv"));
 }
 
-void exportar_carrera_txt()
+void exportar_carrera_txt(void)
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
     {
@@ -157,7 +157,7 @@ void exportar_carrera_txt()
     printf("Archivo exportado a: %s\n", get_export_path("carrera.txt"));
 }
 
-void exportar_carrera_json()
+void exportar_carrera_json(void)
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
     {
@@ -196,7 +196,7 @@ void exportar_carrera_json()
     printf("Archivo exportado a: %s\n", get_export_path("carrera.json"));
 }
 
-void exportar_carrera_html()
+void exportar_carrera_html(void)
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
     {
@@ -316,7 +316,7 @@ static void escribir_seccion_pdf(PdfSeccionCtx ctx, float *y,
     }
 }
 
-void exportar_carrera_pdf()
+void exportar_carrera_pdf(void)
 {
     if (!hay_registros("carrera_identidad") && !hay_registros("carrera_partido_hito") && !hay_registros("carrera_resumen_narrativo"))
     {

@@ -67,42 +67,42 @@ typedef struct
 /**
  * @brief Interfaz de menú para operaciones CRUD de financiamiento
  */
-void menu_financiamiento();
+void menu_financiamiento(void);
 
 /**
  * @brief Agregar una nueva transacción financiera
  */
-void agregar_transaccion();
+void agregar_transaccion(void);
 
 /**
  * @brief Listar todas las transacciones financieras
  */
-void listar_transacciones();
+void listar_transacciones(void);
 
 /**
  * @brief Modificar una transacción financiera existente
  */
-void modificar_transaccion();
+void modificar_transaccion(void);
 
 /**
  * @brief Eliminar una transacción financiera
  */
-void eliminar_transaccion();
+void eliminar_transaccion(void);
 
 /**
  * @brief Mostrar resumen financiero del equipo
  */
-void mostrar_resumen_financiero();
+void mostrar_resumen_financiero(void);
 
 /**
  * @brief Mostrar balance general de gastos
  */
-void ver_balance_gastos();
+void ver_balance_gastos(void);
 
 /**
  * @brief Exportar transacciones financieras a archivo
  */
-void exportar_financiamiento();
+void exportar_financiamiento(void);
 
 /**
  * @brief Convierte un tipo de transacción a su nombre textual
@@ -122,27 +122,27 @@ void mostrar_transaccion(TransaccionFinanciera *transaccion);
 /**
  * @brief Gestión de presupuestos mensuales - menú principal
  */
-void menu_presupuestos_mensuales();
+void menu_presupuestos_mensuales(void);
 
 /**
  * @brief Configurar presupuesto mensual
  */
-void configurar_presupuesto_mensual();
+void configurar_presupuesto_mensual(void);
 
 /**
  * @brief Ver estado actual del presupuesto mensual
  */
-void ver_estado_presupuesto();
+void ver_estado_presupuesto(void);
 
 /**
  * @brief Verificar límites de gasto y mostrar alertas
  */
-void verificar_alertas_presupuesto();
+void verificar_alertas_presupuesto(void);
 
 /**
  * @brief Obtener gastos totales del mes actual
  */
-int obtener_gastos_mes_actual();
+int obtener_gastos_mes_actual(void);
 
 /**
  * @brief Obtener presupuesto y límite del mes actual

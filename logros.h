@@ -16,7 +16,7 @@
  * en progreso y disponibles. Utiliza la función ejecutar_menu para manejar
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
-void menu_logros();
+void menu_logros(void);
 
 /**
  * @brief Muestra todos los logros disponibles con su estado
@@ -24,28 +24,28 @@ void menu_logros();
  * Lista todos los logros definidos en el sistema, indicando cuáles están
  * completados, cuáles están en progreso y cuáles aún no se han iniciado.
  */
-void mostrar_todos_logros();
+void mostrar_todos_logros(void);
 
 /**
  * @brief Muestra solo los logros completados
  *
  * Lista únicamente los logros que ya han sido conseguidos por alguna camiseta.
  */
-void mostrar_logros_completados();
+void mostrar_logros_completados(void);
 
 /**
  * @brief Muestra los logros en progreso
  *
  * Lista los logros que están parcialmente completados pero aún no terminados.
  */
-void mostrar_logros_en_progreso();
+void mostrar_logros_en_progreso(void);
 
 /**
  * @brief Muestra los logros no completados
  *
  * Lista los logros que no han sido completados por ninguna camiseta.
  */
-void mostrar_logros_no_completados();
+void mostrar_logros_no_completados(void);
 
 /**
  * @brief Retorna el numero total de logros definidos en el sistema

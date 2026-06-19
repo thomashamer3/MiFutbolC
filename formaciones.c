@@ -43,7 +43,7 @@ typedef struct
     double pct_v;
 } FormacionRow;
 
-static int formaciones_tienen_datos()
+static int formaciones_tienen_datos(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_formaciones(
@@ -108,7 +108,7 @@ static int preparar_y_ejecutar(const char *sql, sqlite3_stmt **stmt)
     return 1;
 }
 
-void mostrar_efectividad_por_formacion()
+void mostrar_efectividad_por_formacion(void)
 {
     mostrar_pantalla("EFECTIVIDAD POR FORMACION");
     if (!verificar_datos_formacion())
@@ -211,7 +211,7 @@ void mostrar_mejor_formacion_por_cancha(int cancha_id)
     pause_console();
 }
 
-void mostrar_tendencia_formaciones()
+void mostrar_tendencia_formaciones(void)
 {
     mostrar_pantalla("TENDENCIA DE FORMACIONES");
 
@@ -288,7 +288,7 @@ void mostrar_tendencia_formaciones()
     pause_console();
 }
 
-void exportar_analisis_formaciones_csv()
+void exportar_analisis_formaciones_csv(void)
 {
     if (!verificar_datos_formacion())
         return;
@@ -326,7 +326,7 @@ void exportar_analisis_formaciones_csv()
     pause_console();
 }
 
-void menu_analisis_formaciones()
+void menu_analisis_formaciones(void)
 {
     int opcion;
     do

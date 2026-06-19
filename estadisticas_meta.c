@@ -1,4 +1,4 @@
-﻿
+
 #include "estadisticas_meta.h"
 #include "db.h"
 #include "utils.h"
@@ -84,7 +84,7 @@ static void query(const char *titulo, const char *sql)
     sqlite3_finalize(stmt);
 }
 
-void mostrar_consistencia_rendimiento()
+void mostrar_consistencia_rendimiento(void)
 {
     clear_screen();
     print_header("CONSISTENCIA DEL RENDIMIENTO");
@@ -147,7 +147,7 @@ static void mostrar_partidos_con_sql(const char *titulo, const char *descripcion
     pause_console();
 }
 
-void mostrar_partidos_outliers()
+void mostrar_partidos_outliers(void)
 {
     clear_screen();
     print_header("PARTIDOS ATIPICOS");
@@ -216,7 +216,7 @@ void mostrar_partidos_outliers()
     pause_console();
 }
 
-void mostrar_dependencia_contexto()
+void mostrar_dependencia_contexto(void)
 {
     clear_screen();
     print_header("DEPENDENCIA DEL CONTEXTO");
@@ -239,7 +239,7 @@ void mostrar_dependencia_contexto()
     pause_console();
 }
 
-void mostrar_impacto_real_cansancio()
+void mostrar_impacto_real_cansancio(void)
 {
     clear_screen();
     print_header("IMPACTO REAL DEL CANSANCIO");
@@ -273,7 +273,7 @@ void mostrar_impacto_real_cansancio()
     pause_console();
 }
 
-void mostrar_impacto_real_estado_animo()
+void mostrar_impacto_real_estado_animo(void)
 {
     clear_screen();
     print_header("IMPACTO REAL DEL ESTADO DE aNIMO");
@@ -307,7 +307,7 @@ void mostrar_impacto_real_estado_animo()
     pause_console();
 }
 
-void mostrar_eficiencia_goles_vs_rendimiento()
+void mostrar_eficiencia_goles_vs_rendimiento(void)
 {
     clear_screen();
     print_header("EFICIENCIA: GOLES POR PARTIDO VS RENDIMIENTO");
@@ -335,7 +335,7 @@ void mostrar_eficiencia_goles_vs_rendimiento()
     pause_console();
 }
 
-void mostrar_eficiencia_asistencias_vs_cansancio()
+void mostrar_eficiencia_asistencias_vs_cansancio(void)
 {
     clear_screen();
     print_header("EFICIENCIA: ASISTENCIAS VS CANSANCIO");
@@ -359,7 +359,7 @@ void mostrar_eficiencia_asistencias_vs_cansancio()
     pause_console();
 }
 
-void mostrar_rendimiento_por_esfuerzo()
+void mostrar_rendimiento_por_esfuerzo(void)
 {
     clear_screen();
     print_header("RENDIMIENTO POR INTENSIDAD");
@@ -387,7 +387,7 @@ void mostrar_rendimiento_por_esfuerzo()
     pause_console();
 }
 
-void mostrar_rendimiento_por_dolor_fisico()
+void mostrar_rendimiento_por_dolor_fisico(void)
 {
     clear_screen();
     print_header("RENDIMIENTO POR DOLOR FISICO");
@@ -416,7 +416,7 @@ void mostrar_rendimiento_por_dolor_fisico()
     pause_console();
 }
 
-void mostrar_rendimiento_por_arbitraje()
+void mostrar_rendimiento_por_arbitraje(void)
 {
     clear_screen();
     print_header("RENDIMIENTO POR ARBITRAJE");
@@ -445,7 +445,7 @@ void mostrar_rendimiento_por_arbitraje()
     pause_console();
 }
 
-void mostrar_rendimiento_por_temperatura()
+void mostrar_rendimiento_por_temperatura(void)
 {
     clear_screen();
     print_header("RENDIMIENTO POR TEMPERATURA");
@@ -470,7 +470,7 @@ void mostrar_rendimiento_por_temperatura()
     pause_console();
 }
 
-void mostrar_partidos_exigentes_bien_rendidos()
+void mostrar_partidos_exigentes_bien_rendidos(void)
 {
     mostrar_partidos_con_sql(
         "PARTIDOS EXIGENTES BIEN RENDIDOS",
@@ -482,7 +482,7 @@ void mostrar_partidos_exigentes_bien_rendidos()
     );
 }
 
-void mostrar_partidos_faciles_mal_rendidos()
+void mostrar_partidos_faciles_mal_rendidos(void)
 {
     mostrar_partidos_con_sql(
         "PARTIDOS FACILES MAL RENDIDOS",
@@ -494,7 +494,7 @@ void mostrar_partidos_faciles_mal_rendidos()
     );
 }
 
-void mostrar_tendencia_rendimiento_sparkline()
+void mostrar_tendencia_rendimiento_sparkline(void)
 {
     clear_screen();
     print_header("TENDENCIA DE RENDIMIENTO (SPARKLINE)");
@@ -565,7 +565,7 @@ void mostrar_tendencia_rendimiento_sparkline()
     pause_console();
 }
 
-void mostrar_efectividad_general()
+void mostrar_efectividad_general(void)
 {
     clear_screen();
     print_header("CALCULADORA DE EFECTIVIDAD");

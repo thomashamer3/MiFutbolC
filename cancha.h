@@ -16,7 +16,7 @@
  * Implementa patrón de menú interactivo delegando a funciones especializadas
  * para cada operación CRUD, utilizando estructura MenuItem para navegación.
  */
-void menu_canchas();
+void menu_canchas(void);
 
 /**
  * @brief Inserta nueva entidad cancha en base de datos
@@ -25,7 +25,7 @@ void menu_canchas();
  * recursiva SQL, insertando registro con binding de parámetros
  * para prevenir inyección SQL.
  */
-void crear_cancha();
+void crear_cancha(void);
 
 /**
  * @brief Recupera y visualiza conjunto completo de canchas
@@ -33,7 +33,7 @@ void crear_cancha();
  * Realiza consulta SELECT ordenada por ID, iterando sobre resultados
  * para presentación tabular en interfaz de consola.
  */
-void listar_canchas();
+void listar_canchas(void);
 
 /**
  * @brief Elimina entidad cancha con validaciones de integridad
@@ -42,7 +42,7 @@ void listar_canchas();
  * validación de existencia previa y manejo de restricciones referenciales
  * mediante operaciones DELETE condicionales.
  */
-void eliminar_cancha();
+void eliminar_cancha(void);
 
 /**
  * @brief Actualiza atributo nombre de entidad cancha existente
@@ -50,16 +50,16 @@ void eliminar_cancha();
  * Ejecuta UPDATE con validación de existencia y binding de parámetros,
  * permitiendo correcciones sin requerir eliminación/recreación del registro.
  */
-void modificar_cancha();
+void modificar_cancha(void);
 
 /**
  * @brief Carga una imagen asociada a una cancha existente
  */
-void cargar_imagen_cancha();
+void cargar_imagen_cancha(void);
 
 /**
  * @brief Abre en el sistema la imagen asociada a una cancha
  */
-void ver_imagen_cancha();
+void ver_imagen_cancha(void);
 
 #endif

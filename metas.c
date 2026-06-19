@@ -2,10 +2,10 @@
 #include "db.h"
 #include "menu.h"
 #include "utils.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -14,20 +14,13 @@
 
 #define META_TIPOS 5
 
-static const char *g_tipos[META_TIPOS] =
-{
-    "Partidos jugados",
-    "Goles totales",
-    "Asistencias",
-    "Victorias",
-    "Rendimiento promedio"
-};
+static const char *g_tipos[META_TIPOS] = {"Partidos jugados", "Goles totales", "Asistencias",
+                                          "Victorias", "Rendimiento promedio"
+                                         };
 
 static const char *g_tipo_col[META_TIPOS] =
 {
-    "COUNT(*)",
-    "COALESCE(SUM(goles),0)",
-    "COALESCE(SUM(asistencias),0)",
+    "COUNT(*)", "COALESCE(SUM(goles),0)", "COALESCE(SUM(asistencias),0)",
     "COALESCE(SUM(CASE WHEN resultado=1 THEN 1 ELSE 0 END),0)",
     "COALESCE(AVG(rendimiento_general),0)"
 };
@@ -56,8 +49,7 @@ static double obtener_valor_actual_meta(int tipo)
         return 0.0;
     }
 
-    snprintf(sql, sizeof(sql), "SELECT %s FROM partido WHERE resultado > 0",
-             g_tipo_col[tipo - 1]);
+    snprintf(sql, sizeof(sql), "SELECT %s FROM partido WHERE resultado > 0", g_tipo_col[tipo - 1]);
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -187,8 +179,10 @@ void metas_listar(void)
         if (objetivo > inicial)
         {
             progreso = ((actual - inicial) / (objetivo - inicial)) * 100.0;
-            if (progreso > 100.0) progreso = 100.0;
-            if (progreso < 0.0) progreso = 0.0;
+            if (progreso > 100.0)
+                progreso = 100.0;
+            if (progreso < 0.0)
+                progreso = 0.0;
         }
 
         printf("  %d. %s [%s]\n", id, nombre ? nombre : "", estado ? estado : "");
@@ -196,14 +190,19 @@ void metas_listar(void)
         printf("     Progreso: %.0f / %.0f (%.1f%%)\n", actual, objetivo, progreso);
 
         int barras = (int)(progreso / 5.0);
-        if (barras > 20) barras = 20;
+        if (barras > 20)
+            barras = 20;
         printf("     [");
-        for (int i = 0; i < barras; i++) printf("#");
-        for (int i = barras; i < 20; i++) printf(".");
+        for (int i = 0; i < barras; i++)
+            printf("#");
+        for (int i = barras; i < 20; i++)
+            printf(".");
         printf("]\n");
 
-        if (f_ini && f_ini[0]) printf("     Inicio: %s", f_ini);
-        if (f_fin && f_fin[0]) printf(" - Fin: %s", f_fin);
+        if (f_ini && f_ini[0])
+            printf("     Inicio: %s", f_ini);
+        if (f_fin && f_fin[0])
+            printf(" - Fin: %s", f_fin);
         printf("\n\n");
     }
     sqlite3_finalize(stmt);
@@ -224,7 +223,8 @@ void metas_editar(void)
     int id = input_int("ID de la meta a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("meta", id))
     {
-        if (id > 0) mostrar_no_existe("Meta");
+        if (id > 0)
+            mostrar_no_existe("Meta");
         pause_console();
         return;
     }
@@ -246,16 +246,19 @@ void metas_editar(void)
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(nombre_actual, sizeof(nombre_actual),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(nombre_actual, sizeof(nombre_actual), (const char *)sqlite3_column_text(stmt, 0),
+                  _TRUNCATE);
         tipo_actual = sqlite3_column_int(stmt, 1);
         objetivo_actual = sqlite3_column_double(stmt, 2);
         const char *p = (const char *)sqlite3_column_text(stmt, 3);
-        if (p) strncpy_s(f_ini_actual, sizeof(f_ini_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(f_ini_actual, sizeof(f_ini_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 4);
-        if (p) strncpy_s(f_fin_actual, sizeof(f_fin_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(f_fin_actual, sizeof(f_fin_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 5);
-        if (p) strncpy_s(estado_actual, sizeof(estado_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(estado_actual, sizeof(estado_actual), p, _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -264,28 +267,33 @@ void metas_editar(void)
     char f_fin[64] = {0};
     char estado[32] = {0};
 
-    printf("Editando: %s (tipo: %s, objetivo: %.0f, estado: %s)\n\n",
-           nombre_actual, tipo_to_text(tipo_actual), objetivo_actual, estado_actual);
+    printf("Editando: %s (tipo: %s, objetivo: %.0f, estado: %s)\n\n", nombre_actual,
+           tipo_to_text(tipo_actual), objetivo_actual, estado_actual);
 
     printf("Nombre [%s]: ", nombre_actual);
     input_string("", nombre, (int)sizeof(nombre));
-    if (nombre[0] == '\0') strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
+    if (nombre[0] == '\0')
+        strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
 
     printf("Valor objetivo [%.0f]: ", objetivo_actual);
     double objetivo = input_double("");
-    if (objetivo <= 0) objetivo = objetivo_actual;
+    if (objetivo <= 0)
+        objetivo = objetivo_actual;
 
     printf("Estado [%s]: ", estado_actual);
     input_string("", estado, (int)sizeof(estado));
-    if (estado[0] == '\0') strncpy_s(estado, sizeof(estado), estado_actual, _TRUNCATE);
+    if (estado[0] == '\0')
+        strncpy_s(estado, sizeof(estado), estado_actual, _TRUNCATE);
 
     printf("Fecha inicio [%s]: ", f_ini_actual);
     input_date("", f_ini, (int)sizeof(f_ini));
-    if (f_ini[0] == '\0') strncpy_s(f_ini, sizeof(f_ini), f_ini_actual, _TRUNCATE);
+    if (f_ini[0] == '\0')
+        strncpy_s(f_ini, sizeof(f_ini), f_ini_actual, _TRUNCATE);
 
     printf("Fecha fin [%s]: ", f_fin_actual);
     input_date("", f_fin, (int)sizeof(f_fin));
-    if (f_fin[0] == '\0') strncpy_s(f_fin, sizeof(f_fin), f_fin_actual, _TRUNCATE);
+    if (f_fin[0] == '\0')
+        strncpy_s(f_fin, sizeof(f_fin), f_fin_actual, _TRUNCATE);
 
     if (!preparar_stmt(&stmt, "UPDATE meta SET nombre=?, valor_objetivo=?, "
                        "fecha_inicio=?, fecha_fin=?, estado=? WHERE id=?"))
@@ -329,7 +337,8 @@ void metas_eliminar(void)
     int id = input_int("ID de la meta a eliminar (0=cancelar): ");
     if (id <= 0 || !existe_id("meta", id))
     {
-        if (id > 0) mostrar_no_existe("Meta");
+        if (id > 0)
+            mostrar_no_existe("Meta");
         pause_console();
         return;
     }
@@ -344,8 +353,7 @@ void metas_eliminar(void)
     char nombre[256] = {0};
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(nombre, sizeof(nombre),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -442,7 +450,8 @@ void metas_dashboard(void)
         return;
     }
     int activas = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) activas = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        activas = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM meta WHERE estado = 'Completada'"))
@@ -450,7 +459,8 @@ void metas_dashboard(void)
         return;
     }
     int completadas = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) completadas = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        completadas = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM meta"))
@@ -458,7 +468,8 @@ void metas_dashboard(void)
         return;
     }
     int total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) total = sqlite3_column_int(stmt, 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        total = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
     printf("  Metas activas:    %d\n", activas);
@@ -489,17 +500,22 @@ void metas_dashboard(void)
         double actual = obtener_valor_actual_meta(tipo);
 
         double progreso = 0.0;
-        if (objetivo > 0) progreso = (actual / objetivo) * 100.0;
-        if (progreso > 100.0) progreso = 100.0;
+        if (objetivo > 0)
+            progreso = (actual / objetivo) * 100.0;
+        if (progreso > 100.0)
+            progreso = 100.0;
 
-        printf("  %s (%s): %.0f/%.0f (%.1f%%)\n",
-               nombre ? nombre : "", tipo_to_text(tipo), actual, objetivo, progreso);
+        printf("  %s (%s): %.0f/%.0f (%.1f%%)\n", nombre ? nombre : "", tipo_to_text(tipo), actual,
+               objetivo, progreso);
 
         int b = (int)(progreso / 5.0);
-        if (b > 20) b = 20;
+        if (b > 20)
+            b = 20;
         printf("  ");
-        for (int i = 0; i < b; i++) printf("#");
-        for (int i = b; i < 20; i++) printf(".");
+        for (int i = 0; i < b; i++)
+            printf("#");
+        for (int i = b; i < 20; i++)
+            printf(".");
         printf("\n\n");
     }
     sqlite3_finalize(stmt);
@@ -513,14 +529,12 @@ void metas_dashboard(void)
 
 void menu_metas(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Nueva meta", metas_crear},
-        {2, "Listar metas", metas_listar},
-        {3, "Editar meta", metas_editar},
-        {4, "Eliminar meta", metas_eliminar},
-        {5, "Recalcular progreso", metas_recalcular_progreso},
-        {6, "Dashboard de metas", metas_dashboard},
+    MenuItem items[] = {{1, "Nueva meta", &metas_crear},
+        {2, "Listar metas", &metas_listar},
+        {3, "Editar meta", &metas_editar},
+        {4, "Eliminar meta", &metas_eliminar},
+        {5, "Recalcular progreso", &metas_recalcular_progreso},
+        {6, "Dashboard de metas", &metas_dashboard},
         {0, "Volver", NULL}
     };
     ejecutar_menu("METAS PERSONALES", items, 7);

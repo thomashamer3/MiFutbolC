@@ -1,4 +1,4 @@
-﻿#include "export.h"
+#include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
@@ -167,7 +167,7 @@ static void write_lesiones_json_rows(FILE *f, sqlite3_stmt *stmt)
  * EXPORTACIoN LESIONES (4 formatos)
  * ============================================================================ */
 
-void exportar_lesiones_csv()
+void exportar_lesiones_csv(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -177,7 +177,7 @@ void exportar_lesiones_csv()
                                       write_lesiones_csv);
 }
 
-void exportar_lesiones_txt()
+void exportar_lesiones_txt(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -187,7 +187,7 @@ void exportar_lesiones_txt()
                                       write_lesiones_txt);
 }
 
-void exportar_lesiones_json()
+void exportar_lesiones_json(void)
 {
     exportar_archivo_si_hay_registros("lesion",
                                       "lesiones para exportar",
@@ -197,7 +197,7 @@ void exportar_lesiones_json()
                                       write_lesiones_json);
 }
 
-void exportar_lesiones_html()
+void exportar_lesiones_html(void)
 {
     if (!has_records("lesion"))
     {

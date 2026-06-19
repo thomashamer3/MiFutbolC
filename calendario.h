@@ -18,7 +18,7 @@
  * Presenta un calendario visual tipo ASCII con iconos
  * que indican eventos importantes en cada día.
  */
-void mostrar_calendario();
+void mostrar_calendario(void);
 
 /**
  * @brief Muestra el calendario de un mes específico
@@ -33,7 +33,7 @@ void mostrar_calendario_mes(int mes, int anio);
  *
  * Permite navegar entre meses y ver detalles de días específicos.
  */
-void menu_calendario();
+void menu_calendario(void);
 
 /**
  * @brief Muestra eventos de un día específico

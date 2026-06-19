@@ -19,7 +19,7 @@ static int atajos_activos = 0;
 #ifndef _WIN32
 static struct termios old_term;
 
-static void set_nonblocking_mode()
+static void set_nonblocking_mode(void)
 {
     struct termios new_term;
 
@@ -36,7 +36,7 @@ static void set_nonblocking_mode()
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 }
 
-static void restore_terminal_mode()
+static void restore_terminal_mode(void)
 {
     tcsetattr(STDIN_FILENO, TCSANOW, &old_term);
 
@@ -45,7 +45,7 @@ static void restore_terminal_mode()
 }
 #endif
 
-void inicializar_atajos()
+void inicializar_atajos(void)
 {
 #ifndef _WIN32
     set_nonblocking_mode();
@@ -53,7 +53,7 @@ void inicializar_atajos()
     atajos_activos = 1;
 }
 
-void finalizar_atajos()
+void finalizar_atajos(void)
 {
     if (!atajos_activos)
     {
@@ -66,7 +66,7 @@ void finalizar_atajos()
     atajos_activos = 0;
 }
 
-static int kbhit_portable()
+static int kbhit_portable(void)
 {
 #ifdef _WIN32
     return _kbhit();
@@ -84,7 +84,7 @@ static int kbhit_portable()
 #endif
 }
 
-static int getch_portable()
+static int getch_portable(void)
 {
 #ifdef _WIN32
     return _getch();
@@ -94,7 +94,7 @@ static int getch_portable()
 #endif
 }
 
-int verificar_atajo()
+int verificar_atajo(void)
 {
     if (!atajos_activos)
     {
@@ -120,7 +120,7 @@ int verificar_atajo()
     return ch;
 }
 
-void mostrar_ayuda_atajos()
+void mostrar_ayuda_atajos(void)
 {
     clear_screen();
     print_header(get_text("header_atajos"));

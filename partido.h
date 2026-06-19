@@ -17,7 +17,7 @@
  * y eliminar partidos. Utiliza la función ejecutar_menu para manejar
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
-void menu_partidos();
+void menu_partidos(void);
 
 /**
  * @brief Crea un nuevo partido en la base de datos
@@ -27,7 +27,7 @@ void menu_partidos();
  * Verifica que la camiseta seleccionada exista antes de insertar.
  * Utiliza el ID más pequeño disponible para reutilizar IDs eliminados.
  */
-void crear_partido();
+void crear_partido(void);
 
 /**
  * @brief Muestra un listado de todos los partidos registrados
@@ -39,7 +39,7 @@ void crear_partido();
  *
  * @note Si no hay partidos registrados, muestra un mensaje informativo
  */
-void listar_partidos();
+void listar_partidos(void);
 
 /**
  * @brief Permite eliminar un partido existente
@@ -48,7 +48,7 @@ void listar_partidos();
  * verifica que exista y solicita confirmación antes de proceder con
  * la eliminación del registro de la base de datos.
  */
-void eliminar_partido();
+void eliminar_partido(void);
 
 /**
  * @brief Permite modificar los datos de un partido existente
@@ -58,7 +58,7 @@ void eliminar_partido();
  * cancha, goles, asistencias y camiseta utilizada.
  * Verifica que la camiseta especificada exista antes de actualizar.
  */
-void modificar_partido();
+void modificar_partido(void);
 
 /**
  * @brief Permite buscar partidos según diferentes criterios
@@ -69,13 +69,13 @@ void modificar_partido();
  * - Número de asistencias
  * - Cancha donde se jugó
  */
-void buscar_partidos();
+void buscar_partidos(void);
 
 /**
  * @brief Menú de análisis táctico con diagramas
  *
  * Permite crear, ver y guardar diagramas tácticos asociados a partidos.
  */
-void menu_tacticas_partido();
+void menu_tacticas_partido(void);
 
 #endif

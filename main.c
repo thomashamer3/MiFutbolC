@@ -79,7 +79,7 @@ static int acquire_single_instance_lock(void)
 }
 #endif
 
-int main()
+int main(void)
 {
 #ifndef _WIN32
     if (!acquire_single_instance_lock())

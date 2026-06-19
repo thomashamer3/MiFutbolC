@@ -1,4 +1,4 @@
-﻿#include "camiseta.h"
+#include "camiseta.h"
 #include "db.h"
 #include "menu.h"
 #include "random_utils.h"
@@ -63,7 +63,7 @@ static int is_safe_package_name(const char *package_name)
 }
 #endif
 
-static void asegurar_fila_settings()
+static void asegurar_fila_settings(void)
 {
     sqlite3_exec(db,
                  "INSERT OR IGNORE INTO settings(id, theme, language, mode, "
@@ -276,7 +276,7 @@ static int abrir_imagen_en_sistema(const char *ruta)
 #endif
 }
 
-static void configurar_visor_preferido_imagen()
+static void configurar_visor_preferido_imagen(void)
 {
     clear_screen();
     print_header(get_text("camiseta_config_visor_titulo"));
@@ -372,7 +372,7 @@ static int pedir_imagen_camiseta_y_resolver_ruta(char *ruta_absoluta, size_t siz
     return 1;
 }
 
-static void previsualizar_imagen_camiseta_consola()
+static void previsualizar_imagen_camiseta_consola(void)
 {
     clear_screen();
     print_header("PREVISUALIZAR IMAGEN (CONSOLA)");
@@ -425,7 +425,7 @@ static void previsualizar_imagen_camiseta_consola()
     pause_console();
 }
 
-static void probar_visor_imagen_actual()
+static void probar_visor_imagen_actual(void)
 {
     clear_screen();
     print_header("PROBAR VISOR DE IMAGEN");
@@ -448,7 +448,7 @@ static void probar_visor_imagen_actual()
     pause_console();
 }
 
-static void menu_ajustes_imagen_camiseta()
+static void menu_ajustes_imagen_camiseta(void)
 {
     MenuItem items[] = {{1, "Configurar visor", configurar_visor_preferido_imagen},
         {2, "Probar visor", probar_visor_imagen_actual},
@@ -1036,7 +1036,7 @@ static int listar_camisetas_con_info_pendiente(void)
     return pendientes;
 }
 
-static void listar_camisetas_simple()
+static void listar_camisetas_simple(void)
 {
     sqlite3_stmt *stmt;
 
@@ -1061,7 +1061,7 @@ static void listar_camisetas_simple()
     sqlite3_finalize(stmt);
 }
 
-void crear_camiseta()
+void crear_camiseta(void)
 {
     clear_screen();
     CamisetaInfoDetalle info;
@@ -1168,7 +1168,7 @@ static int cargar_imagen_para_camiseta_id(int id)
     return app_cargar_imagen_entidad(id, "camiseta", "mifutbol_imagen_sel.txt");
 }
 
-static void listar_camisetas_con_stats()
+static void listar_camisetas_con_stats(void)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
@@ -1205,7 +1205,7 @@ static void listar_camisetas_con_stats()
     sqlite3_finalize(stmt);
 }
 
-void listar_camisetas()
+void listar_camisetas(void)
 {
     clear_screen();
     print_header("LISTADO DE CAMISETAS");
@@ -1216,7 +1216,7 @@ void listar_camisetas()
     pause_console();
 }
 
-void editar_camiseta()
+void editar_camiseta(void)
 {
     clear_screen();
     print_header("EDITAR CAMISETA");
@@ -1267,7 +1267,7 @@ void editar_camiseta()
     mostrar_alerta_operacion("Camiseta", "Modificada", nombre);
 }
 
-void cargar_imagen_camiseta()
+void cargar_imagen_camiseta(void)
 {
     clear_screen();
     print_header("CARGAR IMAGEN DE CAMISETA");
@@ -1301,7 +1301,7 @@ void cargar_imagen_camiseta()
     pause_console();
 }
 
-void ver_imagen_camiseta()
+void ver_imagen_camiseta(void)
 {
     clear_screen();
     print_header("VER IMAGEN DE CAMISETA");
@@ -1483,7 +1483,7 @@ static void eliminar_camiseta_sin_partidos(int id)
     mostrar_alerta_operacion("Camiseta", "Eliminada", NULL);
 }
 
-void eliminar_camiseta()
+void eliminar_camiseta(void)
 {
     clear_screen();
     print_header("ELIMINAR CAMISETA");
@@ -1534,7 +1534,7 @@ void eliminar_camiseta()
     eliminar_camiseta_sin_partidos(id);
 }
 
-static void reactivar_camiseta()
+static void reactivar_camiseta(void)
 {
     clear_screen();
     print_header("REACTIVAR / DESACTIVAR CAMISETA");
@@ -1596,7 +1596,7 @@ static void reactivar_camiseta()
     }
 }
 
-static void ver_informacion_camiseta()
+static void ver_informacion_camiseta(void)
 {
     clear_screen();
     print_header("INFORMACION DE CAMISETA");
@@ -1636,7 +1636,7 @@ static void ver_informacion_camiseta()
     pause_console();
 }
 
-static void cargar_informacion_camiseta()
+static void cargar_informacion_camiseta(void)
 {
     clear_screen();
     print_header("CARGAR INFORMACION DE CAMISETA");
@@ -1702,7 +1702,7 @@ static void cargar_informacion_camiseta()
     mostrar_alerta_operacion("Camiseta", "Informacion Cargada", info.nombre);
 }
 
-static void reiniciar_sorteo()
+static void reiniciar_sorteo(void)
 {
     sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0);
     printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
@@ -1732,7 +1732,7 @@ static char *obtener_nombre_camiseta(int id)
     return strdup("Desconocida");
 }
 
-void sortear_camiseta()
+void sortear_camiseta(void)
 {
     clear_screen();
     print_header("SORTEO DE CAMISETAS");
@@ -1786,7 +1786,7 @@ void sortear_camiseta()
     pause_console();
 }
 
-void menu_camisetas()
+void menu_camisetas(void)
 {
     MenuItem items[] = {{1, "Crear", crear_camiseta},
         {2, "Listar", listar_camisetas},

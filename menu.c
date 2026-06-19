@@ -1,4 +1,4 @@
-﻿#include "menu.h"
+#include "menu.h"
 #include "settings.h"
 #include "utils.h"
 #include <locale.h>
@@ -254,7 +254,7 @@ void menu_test_set_capture(MenuTestCapture *capture)
 }
 #endif
 
-void initialize_application()
+void initialize_application(void)
 {
 #ifdef _WIN32
     SetConsoleOutputCP(65001);
@@ -278,7 +278,7 @@ void initialize_application()
     app_log_event("APP", "Aplicacion iniciada");
 }
 
-void handle_user_name()
+void handle_user_name(void)
 {
     char *nombre_usuario;
     char buffer[256];

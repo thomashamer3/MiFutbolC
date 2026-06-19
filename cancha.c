@@ -1352,7 +1352,7 @@ static int cargar_imagen_para_cancha_id(int id)
     return app_cargar_imagen_entidad(id, "cancha", "mifutbol_imagen_sel_cancha.txt");
 }
 
-void cargar_imagen_cancha()
+void cargar_imagen_cancha(void)
 {
     mostrar_pantalla("CARGAR IMAGEN DE CANCHA");
 
@@ -1385,7 +1385,7 @@ void cargar_imagen_cancha()
     pause_console();
 }
 
-void ver_imagen_cancha()
+void ver_imagen_cancha(void)
 {
     mostrar_pantalla("VER IMAGEN DE CANCHA");
 
@@ -1429,7 +1429,7 @@ void ver_imagen_cancha()
     pause_console();
 }
 
-void crear_cancha()
+void crear_cancha(void)
 {
     CanchaInfoDetalle info = {0};
     solicitar_datos_comunes_cancha(&info, 1);
@@ -1496,7 +1496,7 @@ void crear_cancha()
     }
 }
 
-void listar_canchas()
+void listar_canchas(void)
 {
     clear_screen();
     print_header("LISTADO DE CANCHAS");
@@ -1552,7 +1552,7 @@ void listar_canchas()
     pause_console();
 }
 
-static void listar_canchas_simple()
+static void listar_canchas_simple(void)
 {
     sqlite3_stmt *stmt;
     if (!db_prepare_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1), IFNULL(tipo_cancha_codigo, 0) FROM cancha ORDER BY id"))
@@ -1751,7 +1751,7 @@ static void eliminar_cancha_sin_partidos_asociados(int id)
     mostrar_alerta_operacion("Cancha", "Eliminada", NULL);
 }
 
-void eliminar_cancha()
+void eliminar_cancha(void)
 {
     mostrar_pantalla("ELIMINAR CANCHA");
 
@@ -2026,7 +2026,7 @@ static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_comp
     return 0;
 }
 
-void modificar_cancha()
+void modificar_cancha(void)
 {
     mostrar_pantalla("MODIFICAR CANCHA");
 
@@ -2087,7 +2087,7 @@ void modificar_cancha()
     }
 }
 
-static void ver_informacion_cancha()
+static void ver_informacion_cancha(void)
 {
     mostrar_pantalla("INFORMACION DE CANCHA");
 
@@ -2125,7 +2125,7 @@ static void ver_informacion_cancha()
     pause_console();
 }
 
-static void cargar_informacion_cancha()
+static void cargar_informacion_cancha(void)
 {
     mostrar_pantalla("CARGAR INFORMACION DE CANCHA");
 
@@ -2189,7 +2189,7 @@ static void cargar_informacion_cancha()
     mostrar_alerta_operacion("Cancha", "Informacion Cargada", info.nombre);
 }
 
-static void reactivar_cancha()
+static void reactivar_cancha(void)
 {
     mostrar_pantalla("REACTIVAR / DESACTIVAR CANCHA");
 
@@ -3126,7 +3126,7 @@ static void cancha_export_construir_detalle(int exportar_todas, int cancha_id, c
     snprintf(detalle, detalle_size, "Cancha ID %d", cancha_id);
 }
 
-static void exportar_informacion_canchas()
+static void exportar_informacion_canchas(void)
 {
     mostrar_pantalla("EXPORTAR INFORMACION DE CANCHAS");
 
@@ -3181,7 +3181,7 @@ static void exportar_informacion_canchas()
     }
 }
 
-void menu_canchas()
+void menu_canchas(void)
 {
     MenuItem items[] =
     {

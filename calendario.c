@@ -378,7 +378,7 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
     pause_console();
 }
 
-void mostrar_calendario()
+void mostrar_calendario(void)
 {
     time_t ahora = time(NULL);
     struct tm tm_info = {0};
@@ -443,7 +443,7 @@ static void ver_eventos_mes_actual(int mes_actual, int anio_actual)
     }
 }
 
-void menu_calendario()
+void menu_calendario(void)
 {
     time_t ahora = time(NULL);
     struct tm tm_info = {0};

@@ -1,4 +1,4 @@
-﻿#include "records_rankings.h"
+#include "records_rankings.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -79,7 +79,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     }
 }
 
-void mostrar_record_goles_partido()
+void mostrar_record_goles_partido(void)
 {
     clear_screen();
     print_header("RECORD DE GOLES EN UN PARTIDO");
@@ -93,7 +93,7 @@ void mostrar_record_goles_partido()
     pause_console();
 }
 
-void mostrar_record_asistencias_partido()
+void mostrar_record_asistencias_partido(void)
 {
     mostrar_record_simple("Record de Asistencias en un Partido",
                           "SELECT p.asistencias, c.nombre, p.fecha_hora "
@@ -102,7 +102,7 @@ void mostrar_record_asistencias_partido()
     pause_console();
 }
 
-void mostrar_mejor_combinacion_cancha_camiseta()
+void mostrar_mejor_combinacion_cancha_camiseta(void)
 {
     clear_screen();
     print_header("MEJOR COMBINACION CANCHA + CAMISETA");
@@ -118,7 +118,7 @@ void mostrar_mejor_combinacion_cancha_camiseta()
     pause_console();
 }
 
-void mostrar_peor_combinacion_cancha_camiseta()
+void mostrar_peor_combinacion_cancha_camiseta(void)
 {
     clear_screen();
     print_header("PEOR COMBINACION CANCHA + CAMISETA");
@@ -134,7 +134,7 @@ void mostrar_peor_combinacion_cancha_camiseta()
     pause_console();
 }
 
-void mostrar_mejor_temporada()
+void mostrar_mejor_temporada(void)
 {
     clear_screen();
     print_header("MEJOR TEMPORADA");
@@ -145,7 +145,7 @@ void mostrar_mejor_temporada()
     pause_console();
 }
 
-void mostrar_peor_temporada()
+void mostrar_peor_temporada(void)
 {
     clear_screen();
     print_header("PEOR TEMPORADA");
@@ -156,7 +156,7 @@ void mostrar_peor_temporada()
     pause_console();
 }
 
-void mostrar_partido_mejor_rendimiento_general()
+void mostrar_partido_mejor_rendimiento_general(void)
 {
     clear_screen();
     print_header("PARTIDO CON MEJOR RENDIMIENTO GENERAL");
@@ -165,7 +165,7 @@ void mostrar_partido_mejor_rendimiento_general()
                                 "ORDER BY p.rendimiento_general DESC LIMIT 1");
 }
 
-void mostrar_partido_peor_rendimiento_general()
+void mostrar_partido_peor_rendimiento_general(void)
 {
     clear_screen();
     print_header("PARTIDO CON PEOR RENDIMIENTO GENERAL");
@@ -208,7 +208,7 @@ static void mostrar_partido_rendimiento(const char *titulo, const char *order_cl
     pause_console();
 }
 
-void mostrar_partido_mejor_combinacion_goles_asistencias()
+void mostrar_partido_mejor_combinacion_goles_asistencias(void)
 {
     clear_screen();
     print_header("PARTIDO CON MEJOR COMBINACION GOLES+ASISTENCIAS");
@@ -296,13 +296,13 @@ static void mostrar_lista_partidos(const char *header, const char *titulo, const
     pause_console();
 }
 
-void mostrar_partidos_sin_goles()
+void mostrar_partidos_sin_goles(void)
 {
     mostrar_lista_partidos("PARTIDOS SIN GOLES", "Partidos sin Goles",
                            "p.goles = 0", "No hay partidos sin goles.");
 }
 
-void mostrar_partidos_sin_asistencias()
+void mostrar_partidos_sin_asistencias(void)
 {
     mostrar_lista_partidos("PARTIDOS SIN ASISTENCIAS", "Partidos sin Asistencias",
                            "p.asistencias = 0", "No hay partidos sin asistencias.");
@@ -395,7 +395,7 @@ static void mostrar_racha(const char *titulo, int tipo_racha)
     mostrar_racha_info(titulo, racha);
 }
 
-void mostrar_mejor_racha_goleadora()
+void mostrar_mejor_racha_goleadora(void)
 {
     clear_screen();
     print_header("MEJOR RACHA GOLEADORA");
@@ -405,7 +405,7 @@ void mostrar_mejor_racha_goleadora()
     pause_console();
 }
 
-void mostrar_peor_racha()
+void mostrar_peor_racha(void)
 {
     clear_screen();
     print_header("PEOR RACHA");
@@ -415,7 +415,7 @@ void mostrar_peor_racha()
     pause_console();
 }
 
-void mostrar_partidos_consecutivos_anotando()
+void mostrar_partidos_consecutivos_anotando(void)
 {
     clear_screen();
     print_header("PARTIDOS CONSECUTIVOS ANOTANDO");
@@ -533,7 +533,7 @@ static void mostrar_ranking_camisetas(void)
  * Construye array de opciones del menu de records y rankings.
  * Centralizado aqui para mantener consistencia y facilitar mantenimiento.
  */
-static MenuItem* construir_menu_records()
+static MenuItem* construir_menu_records(void)
 {
     static MenuItem items[] =
     {
@@ -558,7 +558,7 @@ static MenuItem* construir_menu_records()
     return items;
 }
 
-void menu_records_rankings()
+void menu_records_rankings(void)
 {
     MenuItem const *items = construir_menu_records();
     ejecutar_menu("RECORDS & RANKINGS", items, 17);

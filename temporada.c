@@ -1,4 +1,4 @@
-﻿#include "temporada.h"
+#include "temporada.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -52,7 +52,7 @@ const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
     }
 }
 
-int get_temporada_actual_id()
+int get_temporada_actual_id(void)
 {
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT id FROM temporada WHERE estado = 'Activa' ORDER BY fecha_inicio DESC LIMIT 1;";
@@ -192,7 +192,7 @@ static int calcular_nuevo_id_temporada(void)
     return nuevo_id;
 }
 
-void crear_temporada()
+void crear_temporada(void)
 {
     clear_screen();
     print_header("CREAR TEMPORADA");
@@ -362,7 +362,7 @@ void crear_fases_temporada_defecto(int temporada_id)
     printf("Fases de temporada creadas automaticamente.\n");
 }
 
-void listar_temporadas()
+void listar_temporadas(void)
 {
     clear_screen();
     print_header("LISTAR TEMPORADAS");
@@ -509,7 +509,7 @@ static int actualizar_estado_temporada(int temporada_id)
     return 1;
 }
 
-void modificar_temporada()
+void modificar_temporada(void)
 {
     clear_screen();
     print_header("MODIFICAR TEMPORADA");
@@ -557,7 +557,7 @@ void modificar_temporada()
     pause_console();
 }
 
-void eliminar_temporada()
+void eliminar_temporada(void)
 {
     clear_screen();
     print_header("ELIMINAR TEMPORADA");
@@ -1224,7 +1224,7 @@ void exportar_resumen_temporada(int temporada_id)
 
 // ========== MENu PRINCIPAL ==========
 
-void administrar_temporada()
+void administrar_temporada(void)
 {
     clear_screen();
     print_header("ADMINISTRAR TEMPORADA");
@@ -1790,7 +1790,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
 
 // ========== FUNCIoN DE COMPARACIoN DE TEMPORADAS ==========
 
-void seleccionar_comparar_temporadas()
+void seleccionar_comparar_temporadas(void)
 {
     clear_screen();
     print_header("COMPARAR TEMPORADAS");
@@ -1831,7 +1831,7 @@ void seleccionar_comparar_temporadas()
     comparar_temporadas(temporada1_id, temporada2_id);
 }
 
-void menu_temporadas()
+void menu_temporadas(void)
 {
     MenuItem items[] =
     {

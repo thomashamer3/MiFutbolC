@@ -16,7 +16,7 @@
  * Presenta opciones para crear, listar, editar, eliminar camisetas y
  * realizar sorteos. Gestiona el flujo de navegación del usuario.
  */
-void menu_camisetas();
+void menu_camisetas(void);
 
 /**
  * @brief Crea una nueva camiseta en la base de datos
@@ -24,7 +24,7 @@ void menu_camisetas();
  * Solicita al usuario el nombre o identificador de la camiseta y
  * la persiste en el sistema utilizando un ID autoincremental optimizado.
  */
-void crear_camiseta();
+void crear_camiseta(void);
 
 /**
  * @brief Lista todas las camisetas registradas
@@ -32,7 +32,7 @@ void crear_camiseta();
  * Recupera de la base de datos el listado completo de camisetas y
  * las muestra en formato de tabla en la consola.
  */
-void listar_camisetas();
+void listar_camisetas(void);
 
 /**
  * @brief Edita el nombre de una camiseta existente
@@ -40,7 +40,7 @@ void listar_camisetas();
  * Permite al usuario seleccionar una camiseta por su ID y modificar
  * su descripción o nombre actual.
  */
-void editar_camiseta();
+void editar_camiseta(void);
 
 /**
  * @brief Elimina una camiseta de la base de datos
@@ -48,7 +48,7 @@ void editar_camiseta();
  * Solicita el ID de la camiseta a eliminar y, tras confirmar con el usuario,
  * remueve el registro permanentemente de la base de datos.
  */
-void eliminar_camiseta();
+void eliminar_camiseta(void);
 
 /**
  * @brief Realiza un sorteo aleatorio entre camisetas disponibles
@@ -56,7 +56,7 @@ void eliminar_camiseta();
  * Selecciona al azar una de las camisetas registradas en el sistema.
  * Útil para decidir qué indumentaria usar en un partido.
  */
-void sortear_camiseta();
+void sortear_camiseta(void);
 
 /**
  * @brief Carga una imagen asociada a una camiseta
@@ -64,7 +64,7 @@ void sortear_camiseta();
  * Permite seleccionar una imagen del sistema, copiarla a la carpeta
  * Imagenes de la app y guardar su ruta relativa en la base de datos.
  */
-void cargar_imagen_camiseta();
+void cargar_imagen_camiseta(void);
 
 /**
  * @brief Abre la imagen asociada a una camiseta
@@ -72,7 +72,7 @@ void cargar_imagen_camiseta();
  * Recupera la ruta de imagen registrada en DB y la abre con el visor
  * predeterminado del sistema operativo.
  */
-void ver_imagen_camiseta();
+void ver_imagen_camiseta(void);
 
 #endif
 

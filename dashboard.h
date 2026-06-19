@@ -24,7 +24,7 @@
  * @note Esta función se puede llamar al inicio de la aplicación
  *       o desde el menú principal como opción independiente
  */
-void mostrar_dashboard();
+void mostrar_dashboard(void);
 
 /**
  * @brief Obtiene la racha actual de victorias o derrotas
@@ -42,14 +42,14 @@ int obtener_racha_actual(char *tipo_racha);
  *
  * @return Número de recordatorios para la fecha actual
  */
-int contar_recordatorios_hoy();
+int contar_recordatorios_hoy(void);
 
 /**
  * @brief Cuenta los próximos partidos (futuros)
  *
  * @return Número de partidos programados a futuro
  */
-int contar_proximos_partidos();
+int contar_proximos_partidos(void);
 
 /**
  * @brief Obtiene el balance financiero del mes actual
@@ -58,7 +58,7 @@ int contar_proximos_partidos();
  *
  * @return Balance del mes (puede ser negativo)
  */
-int obtener_balance_mes_actual();
+int obtener_balance_mes_actual(void);
 
 /**
  * @brief Obtiene el progreso de logros desbloqueados

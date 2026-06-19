@@ -183,7 +183,7 @@ void get_timestamp(char *buffer, int size);
 /**
  * @brief Limpia la pantalla de la consola.
  */
-void clear_screen();
+void clear_screen(void);
 
 /**
  * @brief Imprime un encabezado con el título proporcionado.
@@ -203,7 +203,7 @@ int consola_soporta_unicode(void);
 /**
  * @brief Pausa la ejecución del programa hasta que el usuario presione una tecla.
  */
-void pause_console();
+void pause_console(void);
 
 /* Fuerza maximizar la consola en Windows y ajusta el buffer de pantalla */
 void ensure_console_maximized_windows(void);
@@ -243,34 +243,34 @@ int iniciar_sesion_multiusuario_local(void);
 /**
  * @brief Pide el nombre del usuario en la primera ejecución
  */
-void pedir_nombre_usuario();
+void pedir_nombre_usuario(void);
 
 /**
  * @brief Muestra el nombre actual del usuario
  */
-void mostrar_nombre_usuario();
+void mostrar_nombre_usuario(void);
 
 /**
  * @brief Permite editar el nombre del usuario
  */
-void editar_nombre_usuario();
+void editar_nombre_usuario(void);
 
 /**
  * @brief Solicita configurar contraseña opcional al crear usuario
  */
-void configurar_password_inicial_opcional();
+void configurar_password_inicial_opcional(void);
 
 /**
  * @brief Solicita contraseña al iniciar si existe una configurada
  *
  * @return 1 si la autenticación fue exitosa o no hay contraseña, 0 si falla
  */
-int autenticar_usuario_si_tiene_password();
+int autenticar_usuario_si_tiene_password(void);
 
 /**
  * @brief Menú de gestión de usuario
  */
-void menu_usuario();
+void menu_usuario(void);
 
 /**
  * @brief Formatea una fecha para mostrar en el formato dd/mm/yyyy hh:mm

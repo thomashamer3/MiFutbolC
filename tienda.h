@@ -16,7 +16,7 @@
  * Presenta opciones para crear, listar, modificar y eliminar tiendas.
  * Gestiona el flujo de navegacion del usuario.
  */
-void menu_tiendas();
+void menu_tiendas(void);
 
 /**
  * @brief Crea una nueva tienda en la base de datos
@@ -25,7 +25,7 @@ void menu_tiendas();
  * datos de contacto, productos que vende, rango de precio, etc.)
  * y la persiste en el sistema.
  */
-void crear_tienda();
+void crear_tienda(void);
 
 /**
  * @brief Lista todas las tiendas registradas
@@ -33,7 +33,7 @@ void crear_tienda();
  * Recupera de la base de datos el listado completo de tiendas y
  * las muestra en formato de tabla en la consola.
  */
-void listar_tiendas();
+void listar_tiendas(void);
 
 /**
  * @brief Modifica una tienda existente
@@ -41,7 +41,7 @@ void listar_tiendas();
  * Permite al usuario seleccionar una tienda por su ID y modificar
  * sus campos.
  */
-void modificar_tienda();
+void modificar_tienda(void);
 
 /**
  * @brief Elimina una tienda de la base de datos
@@ -49,6 +49,6 @@ void modificar_tienda();
  * Solicita el ID de la tienda a eliminar y, tras confirmar con el usuario,
  * remueve el registro permanentemente de la base de datos.
  */
-void eliminar_tienda();
+void eliminar_tienda(void);
 
 #endif

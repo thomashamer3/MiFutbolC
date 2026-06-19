@@ -627,7 +627,7 @@ void buscar_global(const char *termino)
     pause_console();
 }
 
-void menu_busqueda_global()
+void menu_busqueda_global(void)
 {
     clear_screen();
     print_header("BUSQUEDA GLOBAL");

@@ -69,14 +69,14 @@ typedef struct
  * y eliminar torneos. Utiliza la función ejecutar_menu para manejar
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
-void menu_torneos();
+void menu_torneos(void);
 
 /**
  * @brief Crea un nuevo torneo
  *
  * Solicita al usuario los datos del torneo y lo guarda en la base de datos.
  */
-void crear_torneo();
+void crear_torneo(void);
 
 /**
  * @brief Muestra un listado de todos los torneos registrados
@@ -84,7 +84,7 @@ void crear_torneo();
  * Consulta la base de datos y muestra en pantalla todos los torneos
  * con sus respectivos datos.
  */
-void listar_torneos();
+void listar_torneos(void);
 
 /**
  * @brief Permite modificar los datos de un torneo existente
@@ -92,7 +92,7 @@ void listar_torneos();
  * Muestra la lista de torneos disponibles, solicita el ID a modificar,
  * verifica que exista y permite cambiar los campos del torneo.
  */
-void modificar_torneo();
+void modificar_torneo(void);
 
 /**
  * @brief Permite eliminar un torneo existente
@@ -101,7 +101,7 @@ void modificar_torneo();
  * verifica que exista y solicita confirmación antes de proceder con
  * la eliminación del registro de la base de datos.
  */
-void eliminar_torneo();
+void eliminar_torneo(void);
 
 /**
  * @brief Muestra la información de un torneo
@@ -117,7 +117,7 @@ void mostrar_torneo(Torneo *torneo);
  *
  * Permite administrar aspectos avanzados de un torneo como fixture, resultados y tablas de posiciones.
  */
-void administrar_torneo();
+void administrar_torneo(void);
 
 /**
  * @brief Muestra el fixture de un torneo
@@ -294,7 +294,7 @@ void generar_reporte_torneo(int torneo_id);
  *
  * Permite agregar, eliminar, modificar y listar registros en las tablas de goleadores y asistidores
  */
-void gestionar_tablas_goleadores_asistidores();
+void gestionar_tablas_goleadores_asistidores(void);
 
 /**
  * @brief Lista las tablas de goleadores y asistidores de un torneo

@@ -38,8 +38,8 @@ typedef HRESULT(WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR,
         DWORD, LPVOID);
 #endif
 
-void menu_exportar();
-void menu_update();
+void menu_exportar(void);
+void menu_update(void);
 
 // Repositorio usado para buscar la release. Formato: owner/repo
 // Si deseas cambiar, modifica esta constante.
@@ -65,7 +65,7 @@ static AppSettings current_settings = {THEME_LIGHT,
                                        1
                                       };
 
-static void settings_apply_text_size();
+static void settings_apply_text_size(void);
 static void habilitar_menus_basicos_custom(void);
 
 static char label_music_autoplay[96];
@@ -154,14 +154,14 @@ DEFINE_THEME_TEXT_ACTION(accessibility_normal_theme_text, THEME_LIGHT,
                          TEXT_SIZE_MEDIUM)
 DEFINE_SETTING_ACTION(mode_set_simple, set_mode_int, MODE_SIMPLE)
 DEFINE_SETTING_ACTION(mode_set_advanced, set_mode_int, MODE_ADVANCED)
-static void mode_set_custom()
+static void mode_set_custom(void)
 {
     settings_set_mode(MODE_CUSTOM);
     menu_custom_menus();
     pause_console();
 }
 
-static void toggle_music_autoplay_setting()
+static void toggle_music_autoplay_setting(void)
 {
     aplicar_config_y_pausar(set_music_autoplay_int,
                             current_settings.music_autoplay ? 0 : 1);
@@ -173,7 +173,7 @@ static void toggle_music_autoplay_setting()
         label_dashboard_enabled, sizeof(label_dashboard_enabled));
 }
 
-static void toggle_dashboard_enabled_setting()
+static void toggle_dashboard_enabled_setting(void)
 {
     aplicar_config_y_pausar(set_dashboard_enabled_int,
                             current_settings.dashboard_enabled ? 0 : 1);
@@ -204,7 +204,7 @@ static void abrir_undo_desde_settings(void)
     pause_console();
 }
 
-static void habilitar_menus_basicos_custom()
+static void habilitar_menus_basicos_custom(void)
 {
     set_custom_menu_enabled("camisetas", 1);
     set_custom_menu_enabled("canchas", 1);
@@ -267,7 +267,7 @@ static void settings_exec_ignore_error(const char *sql)
     }
 }
 
-static void ensure_settings_schema()
+static void ensure_settings_schema(void)
 {
 #define ALTER_SETTINGS_COLUMN(column_def)                                      \
   "ALTER TABLE settings ADD COLUMN " column_def ";"
@@ -332,7 +332,7 @@ static void settings_prompt_mode_selection(void)
     }
 }
 
-void settings_init()
+void settings_init(void)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT theme, language, mode, text_size, music_autoplay, "
@@ -384,7 +384,7 @@ void settings_init()
     settings_apply_text_size();
 }
 
-void settings_save()
+void settings_save(void)
 {
     sqlite3_stmt *stmt;
     const char *sql =
@@ -435,7 +435,7 @@ void settings_save()
     }
 }
 
-AppSettings *settings_get()
+AppSettings *settings_get(void)
 {
     return &current_settings;
 }
@@ -475,7 +475,7 @@ void settings_set_mode(ModeType mode)
     settings_save();
 }
 
-ModeType settings_get_mode()
+ModeType settings_get_mode(void)
 {
     return current_settings.mode;
 }
@@ -606,7 +606,7 @@ static WORD get_theme_color(ThemeType theme)
     }
 }
 
-void settings_apply_theme()
+void settings_apply_theme(void)
 {
 #ifdef _WIN32
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -619,7 +619,7 @@ void settings_apply_theme()
 #endif
 }
 
-static void settings_apply_text_size()
+static void settings_apply_text_size(void)
 {
 #ifdef _WIN32
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1299,7 +1299,7 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo,
 }
 #endif
 
-static void menu_theme_settings()
+static void menu_theme_settings(void)
 {
     MenuItem items[] =
     {
@@ -1318,7 +1318,7 @@ static void menu_theme_settings()
                   (int)(sizeof(items) / sizeof(items[0])));
 }
 
-static void menu_language_settings()
+static void menu_language_settings(void)
 {
     MenuItem items[] = {{1, get_text("lang_spanish"), &lang_set_spanish},
         {2, get_text("lang_english"), &lang_set_english},
@@ -1329,7 +1329,7 @@ static void menu_language_settings()
                   (int)(sizeof(items) / sizeof(items[0])));
 }
 
-static const char *get_current_theme_name()
+static const char * get_current_theme_name(void)
 {
     switch (current_settings.theme)
     {
@@ -1354,7 +1354,7 @@ static const char *get_current_theme_name()
     }
 }
 
-static const char *get_current_text_size_name()
+static const char * get_current_text_size_name(void)
 {
     switch (current_settings.text_size)
     {
@@ -1368,7 +1368,7 @@ static const char *get_current_text_size_name()
     }
 }
 
-static void show_current_settings()
+static void show_current_settings(void)
 {
     clear_screen();
     print_header(get_text("current_settings"));
@@ -1400,7 +1400,7 @@ static void show_current_settings()
     pause_console();
 }
 
-static void menu_text_size_settings()
+static void menu_text_size_settings(void)
 {
     MenuItem items[] = {{1, get_text("text_size_small"), &text_size_small},
         {2, get_text("text_size_medium"), &text_size_medium},
@@ -1412,7 +1412,7 @@ static void menu_text_size_settings()
                   (int)(sizeof(items) / sizeof(items[0])));
 }
 
-static void menu_accessibility_settings()
+static void menu_accessibility_settings(void)
 {
     MenuItem items[] =
     {
@@ -1429,7 +1429,7 @@ static void menu_accessibility_settings()
                   (int)(sizeof(items) / sizeof(items[0])));
 }
 
-static void reset_settings_to_defaults()
+static void reset_settings_to_defaults(void)
 {
     clear_screen();
     print_header(get_text("reset_settings"));
@@ -1518,7 +1518,7 @@ void set_custom_menu_enabled(const char *menu_name, int enabled)
     }
 }
 
-static void menu_mode_settings()
+static void menu_mode_settings(void)
 {
     MenuItem items[] = {{1, get_text("mode_simple"), &mode_set_simple},
         {2, get_text("mode_advanced"), &mode_set_advanced},
@@ -1530,7 +1530,7 @@ static void menu_mode_settings()
                   (int)(sizeof(items) / sizeof(items[0])));
 }
 
-void menu_custom_menus()
+void menu_custom_menus(void)
 {
 #if defined(UNIT_TEST)
     return;
@@ -1594,7 +1594,7 @@ void menu_custom_menus()
 #endif
 }
 
-void menu_update()
+void menu_update(void)
 {
 #if defined(UNIT_TEST)
     return;
@@ -1660,7 +1660,7 @@ void menu_update()
 #endif
 }
 
-void menu_settings()
+void menu_settings(void)
 {
     char label_tema[96];
     char label_idioma[96];

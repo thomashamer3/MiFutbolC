@@ -61,7 +61,8 @@ void media_crear(void)
     if (hay_registros("partido"))
     {
         partido_id = input_int("ID del partido asociado (0=ninguno): ");
-        if (partido_id < 0) partido_id = 0;
+        if (partido_id < 0)
+            partido_id = 0;
     }
 
     long long id = obtener_siguiente_id("media");
@@ -106,10 +107,14 @@ static void mostrar_media_item(sqlite3_stmt *stmt)
     const char *fecha = (const char *)sqlite3_column_text(stmt, 6);
 
     printf("  %d. [%s] %s\n", id, tipo_to_text(tipo), titulo ? titulo : "");
-    if (url && url[0]) printf("     URL: %s\n", url);
-    if (desc && desc[0]) printf("     Desc: %s\n", desc);
-    if (partido_id > 0) printf("     Partido ID: %d\n", partido_id);
-    if (fecha && fecha[0]) printf("     Fecha: %s\n", fecha);
+    if (url && url[0])
+        printf("     URL: %s\n", url);
+    if (desc && desc[0])
+        printf("     Desc: %s\n", desc);
+    if (partido_id > 0)
+        printf("     Partido ID: %d\n", partido_id);
+    if (fecha && fecha[0])
+        printf("     Fecha: %s\n", fecha);
     printf("\n");
 }
 
@@ -158,7 +163,8 @@ void media_editar(void)
     int id = input_int("ID de la referencia a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("media", id))
     {
-        if (id > 0) mostrar_no_existe("Referencia");
+        if (id > 0)
+            mostrar_no_existe("Referencia");
         pause_console();
         return;
     }
@@ -182,11 +188,14 @@ void media_editar(void)
         partido_actual = sqlite3_column_int(stmt, 0);
         tipo_actual = sqlite3_column_int(stmt, 1);
         const char *p = (const char *)sqlite3_column_text(stmt, 2);
-        if (p) strncpy_s(titulo_actual, sizeof(titulo_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(titulo_actual, sizeof(titulo_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 3);
-        if (p) strncpy_s(url_actual, sizeof(url_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(url_actual, sizeof(url_actual), p, _TRUNCATE);
         p = (const char *)sqlite3_column_text(stmt, 4);
-        if (p) strncpy_s(desc_actual, sizeof(desc_actual), p, _TRUNCATE);
+        if (p)
+            strncpy_s(desc_actual, sizeof(desc_actual), p, _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -198,23 +207,28 @@ void media_editar(void)
 
     printf("Titulo [%s]: ", titulo_actual);
     input_string("", titulo, (int)sizeof(titulo));
-    if (titulo[0] == '\0') strncpy_s(titulo, sizeof(titulo), titulo_actual, _TRUNCATE);
+    if (titulo[0] == '\0')
+        strncpy_s(titulo, sizeof(titulo), titulo_actual, _TRUNCATE);
 
     printf("Tipo (1-4) [%d]: ", tipo_actual);
     int tipo = input_int("");
-    if (tipo < 1 || tipo > 4) tipo = tipo_actual;
+    if (tipo < 1 || tipo > 4)
+        tipo = tipo_actual;
 
     printf("URL [%s]: ", url_actual);
     input_string("", url, (int)sizeof(url));
-    if (url[0] == '\0') strncpy_s(url, sizeof(url), url_actual, _TRUNCATE);
+    if (url[0] == '\0')
+        strncpy_s(url, sizeof(url), url_actual, _TRUNCATE);
 
     printf("Descripcion [%s]: ", desc_actual);
     input_string("", desc, (int)sizeof(desc));
-    if (desc[0] == '\0') strncpy_s(desc, sizeof(desc), desc_actual, _TRUNCATE);
+    if (desc[0] == '\0')
+        strncpy_s(desc, sizeof(desc), desc_actual, _TRUNCATE);
 
     printf("Partido ID [%d]: ", partido_actual);
     int partido_id = input_int("");
-    if (partido_id < 0) partido_id = partido_actual;
+    if (partido_id < 0)
+        partido_id = partido_actual;
 
     if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
                        "descripcion=?, partido_id=? WHERE id=?"))
@@ -258,7 +272,8 @@ void media_eliminar(void)
     int id = input_int("ID a eliminar (0=cancelar): ");
     if (id <= 0 || !existe_id("media", id))
     {
-        if (id > 0) mostrar_no_existe("Referencia");
+        if (id > 0)
+            mostrar_no_existe("Referencia");
         pause_console();
         return;
     }
@@ -273,8 +288,7 @@ void media_eliminar(void)
     char titulo[256] = {0};
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(titulo, sizeof(titulo),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(titulo, sizeof(titulo), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -345,13 +359,11 @@ void media_filtrar_por_tipo(void)
 
 void menu_media(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Nueva referencia", media_crear},
-        {2, "Listar todas", media_listar},
-        {3, "Filtrar por tipo", media_filtrar_por_tipo},
-        {4, "Editar referencia", media_editar},
-        {5, "Eliminar referencia", media_eliminar},
+    MenuItem items[] = {{1, "Nueva referencia", &media_crear},
+        {2, "Listar todas", &media_listar},
+        {3, "Filtrar por tipo", &media_filtrar_por_tipo},
+        {4, "Editar referencia", &media_editar},
+        {5, "Eliminar referencia", &media_eliminar},
         {0, "Volver", NULL}
     };
     ejecutar_menu("REFERENCIAS MULTIMEDIA", items, 6);

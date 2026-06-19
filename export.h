@@ -53,7 +53,7 @@ typedef struct
  * @param ftr    Callback de pie (NULL para CSV/TXT/HTML)
  */
 #define EXPORT_FORMAT_ROWS(name, data_fn, fn, ctx, hdr, row, ftr) \
-    void name() \
+    void name(void) \
     { \
         ExportConfig config = { .filename = fn, .context = ctx, \
             .write_header = hdr, .write_row = row, .write_footer = ftr }; \
@@ -67,7 +67,7 @@ typedef struct
  * @brief Macro para exportar en formato de una sola fila (dashboard).
  */
 #define EXPORT_FORMAT_SINGLE(name, data_fn, fn, ctx, hdr, row, ftr) \
-    void name() \
+    void name(void) \
     { \
         ExportConfig config = { .filename = fn, .context = ctx, \
             .write_header = hdr, .write_row = row, .write_footer = ftr }; \
@@ -164,7 +164,7 @@ const char *dia_to_text(int dia);
  * Genera un archivo CSV con las estadísticas generales, últimos 5 partidos,
  * rachas y análisis motivacional.
  */
-void exportar_analisis_csv();
+void exportar_analisis_csv(void);
 
 /**
  * @brief Exporta el análisis de rendimiento a formato TXT
@@ -172,7 +172,7 @@ void exportar_analisis_csv();
  * Genera un archivo de texto con las estadísticas generales, últimos 5 partidos,
  * rachas y análisis motivacional.
  */
-void exportar_analisis_txt();
+void exportar_analisis_txt(void);
 
 /**
  * @brief Exporta el análisis de rendimiento a formato JSON
@@ -180,49 +180,49 @@ void exportar_analisis_txt();
  * Genera un archivo JSON con un objeto conteniendo todas las estadísticas
  * del análisis de rendimiento.
  */
-void exportar_analisis_json();
+void exportar_analisis_json(void);
 
 /**
  * @brief Exporta el análisis de rendimiento a formato HTML
  *
  * Genera una página HTML con las estadísticas presentadas en formato web.
  */
-void exportar_analisis_html();
+void exportar_analisis_html(void);
 
 /**
  * @brief Exporta el analisis a los 4 formatos con un solo calculo de estadisticas.
  */
-void exportar_analisis_all();
+void exportar_analisis_all(void);
 
 /**
  * @brief Exporta un resumen financiero por mes y año a TXT
  */
-void exportar_finanzas_resumen_txt();
+void exportar_finanzas_resumen_txt(void);
 
 /**
  * @brief Exporta ranking de canchas por rendimiento y lesiones a TXT
  */
-void exportar_ranking_canchas_txt();
+void exportar_ranking_canchas_txt(void);
 
 /**
  * @brief Exporta partidos agrupados por clima a TXT
  */
-void exportar_partidos_por_clima_txt();
+void exportar_partidos_por_clima_txt(void);
 
 /**
  * @brief Exporta distribución de lesiones por tipo y estado a TXT
  */
-void exportar_lesiones_por_tipo_estado_txt();
+void exportar_lesiones_por_tipo_estado_txt(void);
 
 /**
  * @brief Exporta historial de rachas a TXT
  */
-void exportar_rachas_historial_txt();
+void exportar_rachas_historial_txt(void);
 
 /**
  * @brief Exporta distribución de estado de ánimo y cansancio a TXT
  */
-void exportar_estado_animo_cansancio_txt();
+void exportar_estado_animo_cansancio_txt(void);
 
 /** @} */
 

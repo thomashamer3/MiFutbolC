@@ -22,7 +22,7 @@
  * Checks if there are any partido records in the database.
  * Returns 1 if records exist, 0 if no records found.
  */
-static int check_partido_records()
+static int check_partido_records(void)
 {
     sqlite3_stmt *check_stmt;
     int count = 0;

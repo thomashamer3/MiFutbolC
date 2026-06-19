@@ -1,4 +1,4 @@
-﻿#include "estadisticas_lesiones.h"
+#include "estadisticas_lesiones.h"
 #include "db.h"
 #include "utils.h"
 #include "sqlite3.h"
@@ -58,7 +58,7 @@ static double calcular_promedio_rendimiento(const char *sql)
     return avg;
 }
 
-static void mostrar_total_lesiones()
+static void mostrar_total_lesiones(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, "SELECT COUNT(*) FROM lesion"))
@@ -73,7 +73,7 @@ static void mostrar_total_lesiones()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_lesiones_por_tipo()
+static void mostrar_lesiones_por_tipo(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, "SELECT tipo, COUNT(*) FROM lesion GROUP BY tipo ORDER BY COUNT(*) DESC"))
@@ -88,7 +88,7 @@ static void mostrar_lesiones_por_tipo()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_lesiones_por_camiseta()
+static void mostrar_lesiones_por_camiseta(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt,
@@ -104,7 +104,7 @@ static void mostrar_lesiones_por_camiseta()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_lesiones_por_mes()
+static void mostrar_lesiones_por_mes(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC"))
@@ -120,7 +120,7 @@ static void mostrar_lesiones_por_mes()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_mes_con_mas_lesiones()
+static void mostrar_mes_con_mas_lesiones(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, "SELECT strftime('%m', substr(fecha,7,4)||'-'||substr(fecha,4,2)||'-'||substr(fecha,1,2)) as mes, COUNT(*) FROM lesion GROUP BY mes ORDER BY COUNT(*) DESC LIMIT 1"))
@@ -140,7 +140,7 @@ static void mostrar_mes_con_mas_lesiones()
     sqlite3_finalize(stmt);
 }
 
-static void mostrar_tiempo_promedio_entre_lesiones()
+static void mostrar_tiempo_promedio_entre_lesiones(void)
 {
     // Obtener todas las fechas de lesiones ordenadas por camiseta y fecha
     sqlite3_stmt *stmt;
@@ -180,19 +180,19 @@ static void mostrar_tiempo_promedio_entre_lesiones()
     }
 }
 
-static double calcular_rendimiento_promedio_antes()
+static double calcular_rendimiento_promedio_antes(void)
 {
     return calcular_promedio_rendimiento(
                "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha < l.fecha");
 }
 
-static double calcular_rendimiento_promedio_despues()
+static double calcular_rendimiento_promedio_despues(void)
 {
     return calcular_promedio_rendimiento(
                "SELECT AVG(p.goles + p.asistencias) FROM partido p JOIN lesion l ON p.camiseta_id = l.camiseta_id WHERE p.fecha > l.fecha");
 }
 
-static void mostrar_rendimiento_promedio()
+static void mostrar_rendimiento_promedio(void)
 {
     double antes = calcular_rendimiento_promedio_antes();
     double despues = calcular_rendimiento_promedio_despues();
@@ -201,7 +201,7 @@ static void mostrar_rendimiento_promedio()
     printf("Baja el rendimiento previo a una lesion? %s\n", (antes < despues) ? "Si" : "No");
 }
 
-void mostrar_estadisticas_lesiones()
+void mostrar_estadisticas_lesiones(void)
 {
     clear_screen();
     print_header("ESTADISTICAS DE LESIONES");

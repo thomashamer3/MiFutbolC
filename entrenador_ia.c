@@ -1,4 +1,4 @@
-﻿#include "entrenador_ia.h"
+#include "entrenador_ia.h"
 #include "db.h"
 #include "utils.h"
 #include "menu.h"
@@ -145,7 +145,7 @@ static const char *CREATE_PERFIL_TABLE =
     "indice_prudencia REAL DEFAULT 0.5);";
 
 // Inicializar tablas de IA
-void init_ia_tables()
+void init_ia_tables(void)
 {
     sqlite3_exec(db, CREATE_CONSEJOS_TABLE, 0, 0, 0);
     sqlite3_exec(db, CREATE_PERFIL_TABLE, 0, 0, 0);
@@ -187,7 +187,7 @@ const char* categoria_a_string(CategoriaConsejo categoria)
 }
 
 // Evaluar estado del jugador basado en datos historicos
-EstadoJugador evaluar_estado_jugador()
+EstadoJugador evaluar_estado_jugador(void)
 {
     EstadoJugador estado = {0};
     sqlite3_stmt *stmt;
@@ -331,7 +331,7 @@ void generar_consejos(EstadoJugador estado, Consejo **consejos, int *num_consejo
 }
 
 // Mostrar consejos actuales
-void mostrar_consejos_actuales()
+void mostrar_consejos_actuales(void)
 {
     iniciar_pantalla_ia("Consejos Actuales del Entrenador IA");
 
@@ -376,7 +376,7 @@ void mostrar_consejos_actuales()
 }
 
 // Mostrar historial de consejos
-void mostrar_historial_consejos()
+void mostrar_historial_consejos(void)
 {
     iniciar_pantalla_ia("Historial de Consejos");
 
@@ -656,7 +656,7 @@ static void mostrar_conclusion(int mejoras)
 }
 
 // Evaluar decision pasada
-void evaluar_decision_pasada()
+void evaluar_decision_pasada(void)
 {
     iniciar_pantalla_ia("Evaluar Decision Pasada");
 
@@ -778,7 +778,7 @@ void evaluar_decision_pasada()
 }
 
 // Configurar nivel de intervencion
-void configurar_nivel_intervencion()
+void configurar_nivel_intervencion(void)
 {
     iniciar_pantalla_ia("Configurar Nivel de Intervencion IA");
 
@@ -817,7 +817,7 @@ void guardar_consejo_historial(const char *consejo, int seguido)
 }
 
 // Obtener perfil del usuario
-PerfilUsuarioIA obtener_perfil_usuario()
+PerfilUsuarioIA obtener_perfil_usuario(void)
 {
     PerfilUsuarioIA perfil = {0, 0, 0.5};
     sqlite3_stmt *stmt;
@@ -888,7 +888,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
 }
 
 // Funciones de activacion
-void activar_ia_antes_partido()
+void activar_ia_antes_partido(void)
 {
     // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
@@ -900,7 +900,7 @@ void activar_ia_antes_partido()
     }
 }
 
-void activar_ia_antes_torneo()
+void activar_ia_antes_torneo(void)
 {
     // Similar para torneos
     printf("\nIA: Analizando estado antes de torneo...\n");
@@ -913,7 +913,7 @@ void activar_ia_antes_torneo()
     }
 }
 
-void activar_ia_estadisticas()
+void activar_ia_estadisticas(void)
 {
     // Se activa al abrir estadisticas
     PerfilUsuarioIA perfil = obtener_perfil_usuario();
@@ -936,7 +936,7 @@ void activar_ia_estadisticas()
 }
 
 // Menu principal de la IA
-void menu_entrenador_ia()
+void menu_entrenador_ia(void)
 {
 #ifndef UNIT_TEST
     init_ia_tables();
@@ -963,7 +963,7 @@ void menu_entrenador_ia()
 // NUEVAS FUNCIONES MEJORADAS DEL ENTRENADOR IA
 // ═══════════════════════════════════════════════════════════════════════════
 
-void predecir_resultado_partido()
+void predecir_resultado_partido(void)
 {
     iniciar_pantalla_ia("Prediccion de Resultado");
 
@@ -1017,7 +1017,7 @@ void predecir_resultado_partido()
     pause_console();
 }
 
-void recomendar_formacion()
+void recomendar_formacion(void)
 {
     iniciar_pantalla_ia("Recomendacion de Formacion");
 
@@ -1083,7 +1083,7 @@ void recomendar_formacion()
     pause_console();
 }
 
-void mostrar_alertas_rendimiento()
+void mostrar_alertas_rendimiento(void)
 {
     iniciar_pantalla_ia("Alertas de Rendimiento");
 
@@ -1166,7 +1166,7 @@ void mostrar_alertas_rendimiento()
     pause_console();
 }
 
-void sugerir_descanso()
+void sugerir_descanso(void)
 {
     iniciar_pantalla_ia("Sugerencia de Descanso");
 
@@ -1383,7 +1383,7 @@ static int analizar_debilidad_consistencia(void)
     return identificada;
 }
 
-void analizar_puntos_debiles()
+void analizar_puntos_debiles(void)
 {
     iniciar_pantalla_ia("Analisis de Puntos Debiles");
 

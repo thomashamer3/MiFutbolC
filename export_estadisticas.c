@@ -1,4 +1,4 @@
-﻿#include "export.h"
+#include "export.h"
 #include "db.h"
 #include "utils.h"
 #include "cJSON.h"
@@ -322,7 +322,7 @@ static void write_stats_md(FILE *file)
  * EXPORTACIoN ESTADiSTICAS (4 formatos)
  * ============================================================================ */
 
-void exportar_estadisticas_csv()
+void exportar_estadisticas_csv(void)
 {
     if (!has_records("partido"))
     {
@@ -343,7 +343,7 @@ void exportar_estadisticas_csv()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.csv"));
 }
 
-void exportar_estadisticas_txt()
+void exportar_estadisticas_txt(void)
 {
     if (!has_records("partido"))
     {
@@ -363,7 +363,7 @@ void exportar_estadisticas_txt()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.txt"));
 }
 
-void exportar_estadisticas_json()
+void exportar_estadisticas_json(void)
 {
     if (!has_records("partido"))
     {
@@ -383,7 +383,7 @@ void exportar_estadisticas_json()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.json"));
 }
 
-void exportar_estadisticas_html()
+void exportar_estadisticas_html(void)
 {
     if (!has_records("partido"))
     {
@@ -409,7 +409,7 @@ void exportar_estadisticas_html()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
 }
 
-void exportar_estadisticas_md()
+void exportar_estadisticas_md(void)
 {
     if (!has_records("partido"))
     {
@@ -435,7 +435,7 @@ void exportar_estadisticas_md()
  * EXPORTACIoN ESTADiSTICAS POR AnO (4 formatos)
  * ============================================================================ */
 
-void exportar_estadisticas_por_anio_csv()
+void exportar_estadisticas_por_anio_csv(void)
 {
     if (!has_records("partido"))
     {
@@ -456,7 +456,7 @@ void exportar_estadisticas_por_anio_csv()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.csv"));
 }
 
-void exportar_estadisticas_por_anio_txt()
+void exportar_estadisticas_por_anio_txt(void)
 {
     if (!has_records("partido"))
     {
@@ -476,7 +476,7 @@ void exportar_estadisticas_por_anio_txt()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.txt"));
 }
 
-void exportar_estadisticas_por_anio_json()
+void exportar_estadisticas_por_anio_json(void)
 {
     if (!has_records("partido"))
     {
@@ -496,7 +496,7 @@ void exportar_estadisticas_por_anio_json()
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.json"));
 }
 
-void exportar_estadisticas_por_anio_html()
+void exportar_estadisticas_por_anio_html(void)
 {
     if (!has_records("partido"))
     {

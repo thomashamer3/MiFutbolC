@@ -1,4 +1,4 @@
-﻿
+
 #include "estadisticas_anio.h"
 #include "db.h"
 #include "utils.h"
@@ -10,7 +10,7 @@ static char s_anio_cache[STATS_ANIO_BUF_LEN];
 static int  s_anio_valid   = 0;
 static int  s_anio_changes = -1;
 
-void mostrar_estadisticas_por_anio()
+void mostrar_estadisticas_por_anio(void)
 {
     clear_screen();
     print_header("ESTADISTICAS POR ANIO");

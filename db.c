@@ -549,7 +549,7 @@ const char *db_get_active_user(void)
     return ACTIVE_USER;
 }
 
-static int setup_database_paths()
+static int setup_database_paths(void)
 {
     char db_filename[256];
     char log_filename[256];
@@ -617,7 +617,7 @@ static int setup_database_paths()
     return 1;
 }
 
-static int create_database_connection()
+static int create_database_connection(void)
 {
     if (sqlite3_open(DB_PATH, &db) != SQLITE_OK)
     {
@@ -632,7 +632,7 @@ static int create_database_connection()
     return 1;
 }
 
-static int apply_database_tuning()
+static int apply_database_tuning(void)
 {
     if (sqlite3_busy_timeout(db, 5000) != SQLITE_OK)
     {
@@ -864,7 +864,7 @@ static void backfill_mes_anio_once(void)
 #define COL_PARTIDO_ASISTENCIAS_DETALLE "asistencias_detalle TEXT DEFAULT ''"
 #define COL_PARTIDO_ATAJASTE_TODO "atajaste_todo_el_partido INTEGER DEFAULT 1"
 
-static int create_database_schema()
+static int create_database_schema(void)
 {
     const char *schema_statements[] =
     {
@@ -1671,7 +1671,7 @@ static void add_missing_columns_legacy(void)
     add_partido_columns();
 }
 
-static void add_missing_columns()
+static void add_missing_columns(void)
 {
     int current_version = 0;
     if (!get_user_version(&current_version))
@@ -1737,7 +1737,7 @@ static int run_index_migration(const char *const *statements, int version, const
     return 1;
 }
 
-static int create_performance_indexes()
+static int create_performance_indexes(void)
 {
     int current_version = 0;
     if (!get_user_version(&current_version))
@@ -1886,7 +1886,7 @@ static int create_performance_indexes()
     return 1;
 }
 
-int db_init()
+int db_init(void)
 {
     app_log_init();
     app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
@@ -1937,7 +1937,7 @@ int db_init()
     return 1;
 }
 
-void db_close()
+void db_close(void)
 {
     if (db)
     {
@@ -1949,7 +1949,7 @@ void db_close()
     }
 }
 
-char *get_user_name()
+char * get_user_name(void)
 {
     const char *sql = "SELECT nombre FROM usuario LIMIT 1;";
     char nombre_tmp[256] = {0};
@@ -2065,7 +2065,7 @@ int clear_user_password(void)
     return ejecutar_stmt_texto(sql, NULL, 0, NULL);
 }
 
-const char *get_data_dir()
+const char * get_data_dir(void)
 {
     return DB_DIR;
 }
@@ -2148,22 +2148,22 @@ static const DirCfg DIR_CFG_MUSIC = {NULL,     NULL,     "./Musica", NULL,
                                      "Musica", "Musica", MUSIC_DIR,  sizeof(MUSIC_DIR)
                                     };
 
-const char *get_export_dir()
+const char * get_export_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_EXPORT);
 }
 
-const char *get_import_dir()
+const char * get_import_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMPORT);
 }
 
-const char *get_images_dir()
+const char * get_images_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMAGES);
 }
 
-const char *get_music_dir()
+const char * get_music_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_MUSIC);
 }
@@ -2240,7 +2240,7 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
     return 1;
 }
 
-void exportar_base_datos()
+void exportar_base_datos(void)
 {
     app_log_write("INFO", "EXPORT", "Inicio de exportacion de base de datos");
 
@@ -2419,7 +2419,7 @@ int backup_base_datos_automatico(const char *motivo)
     return 1;
 }
 
-void importar_base_datos()
+void importar_base_datos(void)
 {
     app_log_write("INFO", "IMPORT", "Inicio de importacion de base de datos");
 

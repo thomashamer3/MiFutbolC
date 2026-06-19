@@ -85,7 +85,7 @@ typedef struct
  * para cada operación sobre entidades de equipo, utilizando
  * estructura MenuItem para navegación controlada.
  */
-void menu_equipos();
+void menu_equipos(void);
 
 /**
  * @brief Punto de entrada para creación de entidades de equipo
@@ -93,7 +93,7 @@ void menu_equipos();
  * Implementa menú de selección entre modos fijo (persistente) y momentáneo,
  * delegando a funciones especializadas según el tipo seleccionado por usuario.
  */
-void crear_equipo();
+void crear_equipo(void);
 
 /**
  * @brief Muestra un listado de todos los equipos registrados
@@ -101,7 +101,7 @@ void crear_equipo();
  * Consulta la base de datos y muestra en pantalla todos los equipos
  * con sus respectivos datos.
  */
-void listar_equipos();
+void listar_equipos(void);
 
 /**
  * @brief Permite modificar los datos de un equipo existente
@@ -109,7 +109,7 @@ void listar_equipos();
  * Muestra la lista de equipos disponibles, solicita el ID a modificar,
  * verifica que exista y permite cambiar los campos del equipo.
  */
-void modificar_equipo();
+void modificar_equipo(void);
 
 /**
  * @brief Permite eliminar un equipo existente
@@ -118,17 +118,17 @@ void modificar_equipo();
  * verifica que exista y solicita confirmación antes de proceder con
  * la eliminación del registro de la base de datos.
  */
-void eliminar_equipo();
+void eliminar_equipo(void);
 
 /**
  * @brief Carga una imagen asociada a un equipo existente
  */
-void cargar_imagen_equipo();
+void cargar_imagen_equipo(void);
 
 /**
  * @brief Abre en el sistema la imagen asociada a un equipo
  */
-void ver_imagen_equipo();
+void ver_imagen_equipo(void);
 
 
 /**

@@ -1,4 +1,4 @@
-﻿
+
 #include "financiamiento.h"
 #include "db.h"
 #include "utils.h"
@@ -481,7 +481,7 @@ static void truncar_resultado_partido(char const *item_especifico)
     }
 }
 
-void agregar_transaccion()
+void agregar_transaccion(void)
 {
     clear_screen();
     print_header("AGREGAR TRANSACCION FINANCIERA");
@@ -535,7 +535,7 @@ void agregar_transaccion()
     pause_console();
 }
 
-void menu_presupuestos_mensuales()
+void menu_presupuestos_mensuales(void)
 {
 #ifdef UNIT_TEST
     MenuItem items[] =
@@ -649,7 +649,7 @@ static void insertar_presupuesto(const PresupuestoMensual *presupuesto)
     }
 }
 
-void configurar_presupuesto_mensual()
+void configurar_presupuesto_mensual(void)
 {
     clear_screen();
     print_header("CONFIGURAR PRESUPUESTO MENSUAL");
@@ -682,7 +682,7 @@ void configurar_presupuesto_mensual()
     pause_console();
 }
 
-void ver_estado_presupuesto()
+void ver_estado_presupuesto(void)
 {
     clear_screen();
     print_header("ESTADO DEL PRESUPUESTO MENSUAL");
@@ -766,7 +766,7 @@ void ver_estado_presupuesto()
     pause_console();
 }
 
-void verificar_alertas_presupuesto()
+void verificar_alertas_presupuesto(void)
 {
     clear_screen();
     print_header("VERIFICACION DE ALERTAS DE PRESUPUESTO");
@@ -820,7 +820,7 @@ void verificar_alertas_presupuesto()
     pause_console();
 }
 
-int obtener_gastos_mes_actual()
+int obtener_gastos_mes_actual(void)
 {
     char mes_anio[32];
     obtener_mes_anio_actual(mes_anio);
@@ -933,7 +933,7 @@ static void imprimir_resumen_general(int num_transacciones, int total_ingresos, 
     mostrar_monto(total_ingresos - total_gastos);
 }
 
-static void imprimir_ingresos_por_categoria()
+static void imprimir_ingresos_por_categoria(void)
 {
     sqlite3_stmt *stmt;
     const char *sql_ingresos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 0 GROUP BY categoria ORDER BY SUM(monto) DESC;";
@@ -962,7 +962,7 @@ static void imprimir_ingresos_por_categoria()
     }
 }
 
-static void imprimir_gastos_por_categoria()
+static void imprimir_gastos_por_categoria(void)
 {
     sqlite3_stmt *stmt;
     const char *sql_gastos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 GROUP BY categoria ORDER BY SUM(monto) DESC;";
@@ -991,7 +991,7 @@ static void imprimir_gastos_por_categoria()
     }
 }
 
-static void imprimir_estadisticas_equipamiento()
+static void imprimir_estadisticas_equipamiento(void)
 {
     sqlite3_stmt *stmt;
     const char *sql_equipamiento = "SELECT item_especifico, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 1 AND item_especifico != '' GROUP BY item_especifico ORDER BY SUM(monto) DESC LIMIT 10;";
@@ -1020,7 +1020,7 @@ static void imprimir_estadisticas_equipamiento()
     }
 }
 
-static void imprimir_balance_mensual()
+static void imprimir_balance_mensual(void)
 {
     sqlite3_stmt *stmt;
     const char *sql_mensual = "SELECT strftime('%Y-%m', fecha) as mes, "
@@ -1058,7 +1058,7 @@ static void imprimir_balance_mensual()
     }
 }
 
-void mostrar_resumen_financiero()
+void mostrar_resumen_financiero(void)
 {
     clear_screen();
     print_header("RESUMEN FINANCIERO DEL EQUIPO");
@@ -1085,7 +1085,7 @@ void mostrar_resumen_financiero()
     pause_console();
 }
 
-void ver_balance_gastos()
+void ver_balance_gastos(void)
 {
     clear_screen();
     print_header("BALANCE GENERAL DE GASTOS");
@@ -1507,7 +1507,7 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
     }
 }
 
-void exportar_financiamiento()
+void exportar_financiamiento(void)
 {
     clear_screen();
     print_header("EXPORTAR FINANCIAMIENTO");
@@ -1623,7 +1623,7 @@ void exportar_financiamiento()
     pause_console();
 }
 
-void menu_financiamiento()
+void menu_financiamiento(void)
 {
     MenuItem items[] =
     {
@@ -1746,7 +1746,7 @@ static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera 
     return found;
 }
 
-void modificar_transaccion()
+void modificar_transaccion(void)
 {
     clear_screen();
     print_header("MODIFICAR TRANSACCION FINANCIERA");
@@ -1854,7 +1854,7 @@ void modificar_transaccion()
     pause_console();
 }
 
-void eliminar_transaccion()
+void eliminar_transaccion(void)
 {
     clear_screen();
     print_header("ELIMINAR TRANSACCION FINANCIERA");
@@ -1966,7 +1966,7 @@ void eliminar_transaccion()
     pause_console();
 }
 
-void listar_transacciones()
+void listar_transacciones(void)
 {
     clear_screen();
     print_header("LISTAR TRANSACCIONES FINANCIERAS");

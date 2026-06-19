@@ -471,7 +471,7 @@ static void mostrar_logros_camiseta(int camiseta_id, int filtro)
     }
 }
 
-static void listar_camisetas_con_partidos()
+static void listar_camisetas_con_partidos(void)
 {
     ui_printf_centered_line("Camisetas disponibles:");
     sqlite3_stmt *stmt;
@@ -497,7 +497,7 @@ static void listar_camisetas_con_partidos()
     }
 }
 
-static int seleccionar_camiseta()
+static int seleccionar_camiseta(void)
 {
     int camiseta_id = input_int("ID de la camiseta,(0 para Cancelar): ");
     if (!existe_id("camiseta", camiseta_id))
@@ -525,27 +525,27 @@ static void mostrar_logros_con_filtro(const char *titulo, int filtro)
     X(3, mostrar_logros_en_progreso, "LOGROS EN PROGRESO", LOGRO_FILTRO_EN_PROGRESO, "Logros en Progreso")   \
     X(4, mostrar_logros_no_completados, "LOGROS NO COMPLETADOS", LOGRO_FILTRO_NO_COMPLETADOS, "Logros No Completados")
 
-void mostrar_todos_logros()
+void mostrar_todos_logros(void)
 {
     mostrar_logros_con_filtro("TODOS LOS LOGROS", LOGRO_FILTRO_TODOS);
 }
 
-void mostrar_logros_completados()
+void mostrar_logros_completados(void)
 {
     mostrar_logros_con_filtro("LOGROS COMPLETADOS", LOGRO_FILTRO_COMPLETADOS);
 }
 
-void mostrar_logros_en_progreso()
+void mostrar_logros_en_progreso(void)
 {
     mostrar_logros_con_filtro("LOGROS EN PROGRESO", LOGRO_FILTRO_EN_PROGRESO);
 }
 
-void mostrar_logros_no_completados()
+void mostrar_logros_no_completados(void)
 {
     mostrar_logros_con_filtro("LOGROS NO COMPLETADOS", LOGRO_FILTRO_NO_COMPLETADOS);
 }
 
-void menu_logros()
+void menu_logros(void)
 {
     MenuItem items[] =
     {

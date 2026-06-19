@@ -19,7 +19,7 @@
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones_mejorado.csv' en el directorio de exportación
  */
-void exportar_lesiones_csv_mejorado();
+void exportar_lesiones_csv_mejorado(void);
 
 /**
  * @brief Exporta datos de lesiones a formato TXT con análisis avanzado
@@ -30,7 +30,7 @@ void exportar_lesiones_csv_mejorado();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones_mejorado.txt' en el directorio de exportación
  */
-void exportar_lesiones_txt_mejorado();
+void exportar_lesiones_txt_mejorado(void);
 
 /**
  * @brief Exporta datos de lesiones a formato JSON con análisis avanzado
@@ -61,7 +61,7 @@ void exportar_lesiones_txt_mejorado();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones_mejorado.json' en el directorio de exportación
  */
-void exportar_lesiones_json_mejorado();
+void exportar_lesiones_json_mejorado(void);
 
 /**
  * @brief Exporta datos de lesiones a formato HTML con análisis avanzado
@@ -72,6 +72,6 @@ void exportar_lesiones_json_mejorado();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones_mejorado.html' en el directorio de exportación
  */
-void exportar_lesiones_html_mejorado();
+void exportar_lesiones_html_mejorado(void);
 
 #endif /* EXPORT_LESIONES_MEJORADO_H */

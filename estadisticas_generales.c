@@ -1,4 +1,4 @@
-﻿
+
 #include "estadisticas_generales.h"
 #include "db.h"
 #include "utils.h"
@@ -239,7 +239,7 @@ static void mostrar_query_simple(const char *header, const char *titulo,
   "GROUP BY c.id "                                                             \
   "ORDER BY 2 DESC LIMIT 1"
 
-void mostrar_estadisticas_generales()
+void mostrar_estadisticas_generales(void)
 {
     clear_screen();
     print_header("ESTADISTICAS");
@@ -315,34 +315,34 @@ void mostrar_estadisticas_generales()
 #undef SQL_CAMISETA_POR_RESULTADO
 #undef SQL_CAMISETA_AGREGADA
 
-void mostrar_total_partidos_jugados()
+void mostrar_total_partidos_jugados(void)
 {
     mostrar_query_simple("TOTAL DE PARTIDOS JUGADOS", "Total de Partidos Jugados",
                          "SELECT COUNT(*) FROM partido");
 }
 
-void mostrar_promedio_goles_por_partido()
+void mostrar_promedio_goles_por_partido(void)
 {
     mostrar_query_simple("PROMEDIO DE GOLES POR PARTIDO",
                          "Promedio de Goles por Partido",
                          "SELECT ROUND(AVG(goles), 2) FROM partido");
 }
 
-void mostrar_promedio_asistencias_por_partido()
+void mostrar_promedio_asistencias_por_partido(void)
 {
     mostrar_query_simple("PROMEDIO DE ASISTENCIAS POR PARTIDO",
                          "Promedio de Asistencias por Partido",
                          "SELECT ROUND(AVG(asistencias), 2) FROM partido");
 }
 
-void mostrar_promedio_rendimiento_general()
+void mostrar_promedio_rendimiento_general(void)
 {
     mostrar_query_simple(
         "PROMEDIO DE RENDIMIENTO_GENERAL", "Promedio de Rendimiento General",
         "SELECT ROUND(AVG(rendimiento_general), 2) FROM partido");
 }
 
-void mostrar_rendimiento_promedio_por_clima()
+void mostrar_rendimiento_promedio_por_clima(void)
 {
     char sql[1024];
     int written =
@@ -360,7 +360,7 @@ void mostrar_rendimiento_promedio_por_clima()
                          "Rendimiento Promedio por Clima", sql);
 }
 
-void mostrar_goles_por_clima()
+void mostrar_goles_por_clima(void)
 {
     char sql[1024];
     int written = snprintf(sql, sizeof(sql),
@@ -376,7 +376,7 @@ void mostrar_goles_por_clima()
     mostrar_query_simple("GOLES POR CLIMA", "Goles por Clima", sql);
 }
 
-void mostrar_asistencias_por_clima()
+void mostrar_asistencias_por_clima(void)
 {
     char sql[1024];
     int written = snprintf(sql, sizeof(sql),
@@ -392,7 +392,7 @@ void mostrar_asistencias_por_clima()
     mostrar_query_simple("ASISTENCIAS POR CLIMA", "Asistencias por Clima", sql);
 }
 
-void mostrar_clima_mejor_rendimiento()
+void mostrar_clima_mejor_rendimiento(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -410,7 +410,7 @@ void mostrar_clima_mejor_rendimiento()
                          "Clima con Mejor Rendimiento Promedio", sql);
 }
 
-void mostrar_clima_peor_rendimiento()
+void mostrar_clima_peor_rendimiento(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -428,36 +428,36 @@ void mostrar_clima_peor_rendimiento()
                          "Clima con Peor Rendimiento Promedio", sql);
 }
 
-void mostrar_mejor_dia_semana()
+void mostrar_mejor_dia_semana(void)
 {
     mostrar_por_dia_semana("MEJOR DIA DE LA SEMANA", "rendimiento_general",
                            "DESC", 1);
 }
 
-void mostrar_peor_dia_semana()
+void mostrar_peor_dia_semana(void)
 {
     mostrar_por_dia_semana("PEOR DIA DE LA SEMANA", "rendimiento_general", "ASC",
                            1);
 }
 
-void mostrar_goles_promedio_por_dia()
+void mostrar_goles_promedio_por_dia(void)
 {
     mostrar_por_dia_semana("GOLES PROMEDIO POR DIA", "goles", "ds.dia_num", 0);
 }
 
-void mostrar_asistencias_promedio_por_dia()
+void mostrar_asistencias_promedio_por_dia(void)
 {
     mostrar_por_dia_semana("ASISTENCIAS PROMEDIO POR DIA", "asistencias",
                            "ds.dia_num", 0);
 }
 
-void mostrar_rendimiento_promedio_por_dia()
+void mostrar_rendimiento_promedio_por_dia(void)
 {
     mostrar_por_dia_semana("RENDIMIENTO PROMEDIO POR DIA", "rendimiento_general",
                            "ds.dia_num", 0);
 }
 
-void mostrar_rendimiento_por_nivel_cansancio()
+void mostrar_rendimiento_por_nivel_cansancio(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -476,7 +476,7 @@ void mostrar_rendimiento_por_nivel_cansancio()
                          "Rendimiento por Nivel de Cansancio", sql);
 }
 
-void mostrar_goles_cansancio_alto_vs_bajo()
+void mostrar_goles_cansancio_alto_vs_bajo(void)
 {
     clear_screen();
     print_header("GOLES CON CANSANCIO ALTO VS BAJO");
@@ -530,7 +530,7 @@ void mostrar_goles_cansancio_alto_vs_bajo()
     pause_console();
 }
 
-void mostrar_partidos_cansancio_alto()
+void mostrar_partidos_cansancio_alto(void)
 {
     mostrar_query_simple("PARTIDOS JUGADOS CON CANSANCIO ALTO",
                          "Partidos con Cansancio Alto (>7)",
@@ -538,7 +538,7 @@ void mostrar_partidos_cansancio_alto()
                          "partido WHERE cansancio > 7");
 }
 
-void mostrar_caida_rendimiento_cansancio_acumulado()
+void mostrar_caida_rendimiento_cansancio_acumulado(void)
 {
     clear_screen();
     print_header("CAIDA DE RENDIMIENTO POR CANSANCIO ACUMULADO");
@@ -580,7 +580,7 @@ void mostrar_caida_rendimiento_cansancio_acumulado()
     pause_console();
 }
 
-void mostrar_rendimiento_por_estado_animo()
+void mostrar_rendimiento_por_estado_animo(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -599,7 +599,7 @@ void mostrar_rendimiento_por_estado_animo()
                          "Rendimiento por Estado de Animo", sql);
 }
 
-void mostrar_goles_por_estado_animo()
+void mostrar_goles_por_estado_animo(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -618,7 +618,7 @@ void mostrar_goles_por_estado_animo()
                          sql);
 }
 
-void mostrar_asistencias_por_estado_animo()
+void mostrar_asistencias_por_estado_animo(void)
 {
     char sql[1024];
     int written = snprintf(
@@ -637,7 +637,7 @@ void mostrar_asistencias_por_estado_animo()
                          "Asistencias por Estado de Animo", sql);
 }
 
-void mostrar_estado_animo_ideal()
+void mostrar_estado_animo_ideal(void)
 {
     char sql[1024];
     int written = snprintf(

@@ -140,27 +140,27 @@ typedef struct
 /**
  * @brief Crea una nueva temporada
  */
-void crear_temporada();
+void crear_temporada(void);
 
 /**
  * @brief Lista todas las temporadas
  */
-void listar_temporadas();
+void listar_temporadas(void);
 
 /**
  * @brief Modifica una temporada existente
  */
-void modificar_temporada();
+void modificar_temporada(void);
 
 /**
  * @brief Elimina una temporada
  */
-void eliminar_temporada();
+void eliminar_temporada(void);
 
 /**
  * @brief Administra una temporada específica
  */
-void administrar_temporada();
+void administrar_temporada(void);
 
 /**
  * @brief Crea las fases por defecto para una temporada
@@ -259,7 +259,7 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio);
 /**
  * @brief Permite seleccionar y comparar dos temporadas
  */
-void seleccionar_comparar_temporadas();
+void seleccionar_comparar_temporadas(void);
 
 // ========== FUNCIONES AUXILIARES ==========
 
@@ -290,7 +290,7 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes);
  * @brief Obtiene el ID de la temporada actual
  * @return ID de la temporada actual o -1 si no hay
  */
-int get_temporada_actual_id();
+int get_temporada_actual_id(void);
 
 /**
  * @brief Verifica si una fecha está dentro de una temporada
@@ -313,6 +313,6 @@ int get_fase_temporada_actual(int temporada_id, const char* fecha);
 /**
  * @brief Muestra el menú principal de gestión de temporadas
  */
-void menu_temporadas();
+void menu_temporadas(void);
 
 #endif // TEMPORADA_H

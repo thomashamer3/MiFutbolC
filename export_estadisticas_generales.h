@@ -31,7 +31,7 @@
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_generales.csv' en el directorio de exportación
  */
-void exportar_estadisticas_generales_csv();
+void exportar_estadisticas_generales_csv(void);
 
 /**
  * @brief Exporta las estadísticas generales a formato TXT
@@ -42,7 +42,7 @@ void exportar_estadisticas_generales_csv();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_generales.txt' en el directorio de exportación
  */
-void exportar_estadisticas_generales_txt();
+void exportar_estadisticas_generales_txt(void);
 
 /**
  * @brief Exporta las estadísticas generales a formato JSON
@@ -64,7 +64,7 @@ void exportar_estadisticas_generales_txt();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_generales.json' en el directorio de exportación
  */
-void exportar_estadisticas_generales_json();
+void exportar_estadisticas_generales_json(void);
 
 /**
  * @brief Exporta las estadísticas generales a formato HTML
@@ -75,7 +75,7 @@ void exportar_estadisticas_generales_json();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_generales.html' en el directorio de exportación
  */
-void exportar_estadisticas_generales_html();
+void exportar_estadisticas_generales_html(void);
 
 /**
  * @brief Exporta las estadísticas mensuales a formato CSV
@@ -86,7 +86,7 @@ void exportar_estadisticas_generales_html();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_mes.csv' en el directorio de exportación
  */
-void exportar_estadisticas_por_mes_csv();
+void exportar_estadisticas_por_mes_csv(void);
 
 /**
  * @brief Exporta las estadísticas mensuales a formato TXT
@@ -96,7 +96,7 @@ void exportar_estadisticas_por_mes_csv();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_mes.txt' en el directorio de exportación
  */
-void exportar_estadisticas_por_mes_txt();
+void exportar_estadisticas_por_mes_txt(void);
 
 /**
  * @brief Exporta las estadísticas mensuales a formato JSON
@@ -106,7 +106,7 @@ void exportar_estadisticas_por_mes_txt();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_mes.json' en el directorio de exportación
  */
-void exportar_estadisticas_por_mes_json();
+void exportar_estadisticas_por_mes_json(void);
 
 /**
  * @brief Exporta las estadísticas mensuales a formato HTML
@@ -116,7 +116,7 @@ void exportar_estadisticas_por_mes_json();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_mes.html' en el directorio de exportación
  */
-void exportar_estadisticas_por_mes_html();
+void exportar_estadisticas_por_mes_html(void);
 
 /**
  * @brief Exporta las estadísticas anuales a formato CSV
@@ -127,7 +127,7 @@ void exportar_estadisticas_por_mes_html();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_anio.csv' en el directorio de exportación
  */
-void exportar_estadisticas_por_anio_csv();
+void exportar_estadisticas_por_anio_csv(void);
 
 /**
  * @brief Exporta las estadísticas anuales a formato TXT
@@ -137,7 +137,7 @@ void exportar_estadisticas_por_anio_csv();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_anio.txt' en el directorio de exportación
  */
-void exportar_estadisticas_por_anio_txt();
+void exportar_estadisticas_por_anio_txt(void);
 
 /**
  * @brief Exporta las estadísticas anuales a formato JSON
@@ -147,7 +147,7 @@ void exportar_estadisticas_por_anio_txt();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_anio.json' en el directorio de exportación
  */
-void exportar_estadisticas_por_anio_json();
+void exportar_estadisticas_por_anio_json(void);
 
 /**
  * @brief Exporta las estadísticas anuales a formato HTML
@@ -157,10 +157,10 @@ void exportar_estadisticas_por_anio_json();
  * @pre La base de datos debe contener registros en la tabla 'partido'
  * @post Crea el archivo 'estadisticas_por_anio.html' en el directorio de exportación
  */
-void exportar_estadisticas_por_anio_html();
+void exportar_estadisticas_por_anio_html(void);
 
 /** @brief Exporta estadisticas generales a Markdown (GFM) */
-void exportar_estadisticas_generales_md();
+void exportar_estadisticas_generales_md(void);
 
 /**
  * @brief Exporta estadisticas generales a los 5 formatos con una sola consulta SQL.
@@ -175,6 +175,6 @@ void exportar_estadisticas_por_mes_all(void);
 /**
  * @brief Exporta las estadisticas por ano a los 4 formatos con una sola consulta SQL.
  */
-void exportar_estadisticas_por_anio_all();
+void exportar_estadisticas_por_anio_all(void);
 
 #endif /* EXPORT_ESTADISTICAS_GENERALES_H */

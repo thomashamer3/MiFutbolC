@@ -95,7 +95,7 @@ static int cargar_recordatorios(Reminder **out_arr, int *out_count)
     return 1;
 }
 
-void exportar_recordatorios_csv()
+void exportar_recordatorios_csv(void)
 {
     Reminder *arr = NULL;
     int count = 0;
@@ -131,7 +131,7 @@ void exportar_recordatorios_csv()
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.csv"));
 }
 
-void exportar_recordatorios_txt()
+void exportar_recordatorios_txt(void)
 {
     Reminder *arr = NULL;
     int count = 0;
@@ -162,7 +162,7 @@ void exportar_recordatorios_txt()
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.txt"));
 }
 
-void exportar_recordatorios_json()
+void exportar_recordatorios_json(void)
 {
     Reminder *arr = NULL;
     int count = 0;
@@ -202,7 +202,7 @@ void exportar_recordatorios_json()
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.json"));
 }
 
-void exportar_recordatorios_html()
+void exportar_recordatorios_html(void)
 {
     Reminder *arr = NULL;
     int count = 0;

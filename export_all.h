@@ -22,6 +22,6 @@
  * seleccionar qué categorías de datos exportar y en qué formato.
  *
  */
-void menu_exportar();
+void menu_exportar(void);
 
 #endif

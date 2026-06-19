@@ -18,7 +18,7 @@
  *
  * Lee el archivo JSON de camisetas y las inserta en la base de datos.
  */
-void importar_camisetas_json();
+void importar_camisetas_json(void);
 
 /** @} */
 
@@ -30,21 +30,21 @@ void importar_camisetas_json();
  *
  * Lee el archivo JSON de partidos y los inserta en la base de datos.
  */
-void importar_partidos_json();
+void importar_partidos_json(void);
 
 /**
  * @brief Importa lesiones desde archivo JSON
  *
  * Lee el archivo JSON de lesiones y las inserta en la base de datos.
  */
-void importar_lesiones_json();
+void importar_lesiones_json(void);
 
 /**
  * @brief Importa estadísticas desde archivo JSON
  *
  * Lee el archivo JSON de estadísticas y las procesa.
  */
-void importar_estadisticas_json();
+void importar_estadisticas_json(void);
 
 /** @} */
 
@@ -56,28 +56,28 @@ void importar_estadisticas_json();
  *
  * Lee el archivo TXT de camisetas y las inserta en la base de datos.
  */
-void importar_camisetas_txt();
+void importar_camisetas_txt(void);
 
 /**
  * @brief Importa partidos desde archivo TXT
  *
  * Lee el archivo TXT de partidos y los inserta en la base de datos.
  */
-void importar_partidos_txt();
+void importar_partidos_txt(void);
 
 /**
  * @brief Importa lesiones desde archivo TXT
  *
  * Lee el archivo TXT de lesiones y las inserta en la base de datos.
  */
-void importar_lesiones_txt();
+void importar_lesiones_txt(void);
 
 /**
  * @brief Importa estadísticas desde archivo TXT
  *
  * Lee el archivo TXT de estadísticas y las procesa.
  */
-void importar_estadisticas_txt();
+void importar_estadisticas_txt(void);
 
 /** @} */
 
@@ -89,28 +89,28 @@ void importar_estadisticas_txt();
  *
  * Lee el archivo CSV de camisetas y las inserta en la base de datos.
  */
-void importar_camisetas_csv();
+void importar_camisetas_csv(void);
 
 /**
  * @brief Importa partidos desde archivo CSV
  *
  * Lee el archivo CSV de partidos y los inserta en la base de datos.
  */
-void importar_partidos_csv();
+void importar_partidos_csv(void);
 
 /**
  * @brief Importa lesiones desde archivo CSV
  *
  * Lee el archivo CSV de lesiones y las inserta en la base de datos.
  */
-void importar_lesiones_csv();
+void importar_lesiones_csv(void);
 
 /**
  * @brief Importa estadísticas desde archivo CSV
  *
  * Lee el archivo CSV de estadísticas y las procesa.
  */
-void importar_estadisticas_csv();
+void importar_estadisticas_csv(void);
 
 /** @} */
 
@@ -122,28 +122,28 @@ void importar_estadisticas_csv();
  *
  * Lee el archivo HTML de camisetas y las inserta en la base de datos.
  */
-void importar_camisetas_html();
+void importar_camisetas_html(void);
 
 /**
  * @brief Importa partidos desde archivo HTML
  *
  * Lee el archivo HTML de partidos y los inserta en la base de datos.
  */
-void importar_partidos_html();
+void importar_partidos_html(void);
 
 /**
  * @brief Importa lesiones desde archivo HTML
  *
  * Lee el archivo HTML de lesiones y las inserta en la base de datos.
  */
-void importar_lesiones_html();
+void importar_lesiones_html(void);
 
 /**
  * @brief Importa estadísticas desde archivo HTML
  *
  * Lee el archivo HTML de estadísticas y las procesa.
  */
-void importar_estadisticas_html();
+void importar_estadisticas_html(void);
 
 /**
  * @brief Muestra el menú principal de importación
@@ -152,6 +152,6 @@ void importar_estadisticas_html();
  * seleccionar qué tipo de datos desea importar y desde qué formato.
  * Proporciona acceso a todas las funciones de importación disponibles.
  */
-void menu_importar();
+void menu_importar(void);
 
 #endif

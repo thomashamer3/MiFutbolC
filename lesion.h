@@ -17,7 +17,7 @@
  * y la inserta en la tabla 'lesion'. Utiliza el ID más pequeño disponible
  * para reutilizar IDs eliminados.
  */
-void crear_lesion();
+void crear_lesion(void);
 
 /**
  * @brief Muestra un listado de todas las lesiones registradas
@@ -26,7 +26,7 @@ void crear_lesion();
  * con sus respectivos datos: ID, jugador, tipo, fecha y duración.
  * Si no hay lesiones, muestra un mensaje informativo.
  */
-void listar_lesiones();
+void listar_lesiones(void);
 
 /**
  * @brief Permite editar los datos de una lesión existente
@@ -34,7 +34,7 @@ void listar_lesiones();
  * Muestra la lista de lesiones disponibles, solicita el ID a editar,
  * verifica que exista y permite cambiar todos los campos de la lesión.
  */
-void modificar_lesion();
+void modificar_lesion(void);
 
 /**
  * @brief Elimina una lesión de la base de datos
@@ -42,7 +42,7 @@ void modificar_lesion();
  * Muestra la lista de lesiones disponibles, solicita el ID a eliminar,
  * verifica que exista y solicita confirmación antes de eliminar.
  */
-void eliminar_lesion();
+void eliminar_lesion(void);
 
 /**
  * @brief Muestra las estadísticas de lesiones
@@ -51,17 +51,17 @@ void eliminar_lesion();
  * por camiseta, por mes, mes con más lesiones, tiempo promedio entre lesiones,
  * rendimiento promedio antes y después de lesiones, y si baja el rendimiento previo.
  */
-void mostrar_estadisticas_lesiones();
+void mostrar_estadisticas_lesiones(void);
 
 /**
  * @brief Muestra diferencias de días entre lesiones consecutivas
  */
-void mostrar_diferencias_lesiones();
+void mostrar_diferencias_lesiones(void);
 
 /**
  * @brief Pregunta al usuario si desea actualizar el estado de las lesiones activas
  */
-void actualizar_estados_lesiones();
+void actualizar_estados_lesiones(void);
 
 /**
  * @brief Muestra el menú principal de gestión de lesiones
@@ -70,6 +70,6 @@ void actualizar_estados_lesiones();
  * y eliminar lesiones. Utiliza la función ejecutar_menu para manejar
  * la navegación del menú y delega las operaciones a las funciones correspondientes.
  */
-void menu_lesiones();
+void menu_lesiones(void);
 
 #endif

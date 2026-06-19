@@ -15,7 +15,7 @@
  * Presenta opciones para ver efectividad por formacion, mejor formacion
  * por cancha, tendencias temporales y exportacion CSV.
  */
-void menu_analisis_formaciones();
+void menu_analisis_formaciones(void);
 
 /**
  * @brief Muestra la efectividad (victorias/empates/derrotas) agrupada por
@@ -25,7 +25,7 @@ void menu_analisis_formaciones();
  * total de partidos, victorias, empates, derrotas, porcentaje de
  * victorias y promedio de goles.
  */
-void mostrar_efectividad_por_formacion();
+void mostrar_efectividad_por_formacion(void);
 
 /**
  * @brief Muestra la mejor formacion para una cancha especifica
@@ -45,7 +45,7 @@ void mostrar_mejor_formacion_por_cancha(int cancha_id);
  * Agrupa partidos por mes y tipo de formacion, mostrando la evolucion
  * del rendimiento general y promedio de goles para cada modalidad.
  */
-void mostrar_tendencia_formaciones();
+void mostrar_tendencia_formaciones(void);
 
 /**
  * @brief Exporta el analisis de formaciones a un archivo CSV
@@ -53,6 +53,6 @@ void mostrar_tendencia_formaciones();
  * Genera un archivo CSV con los datos de efectividad de cada formacion
  * incluyendo total de partidos, resultados y promedios.
  */
-void exportar_analisis_formaciones_csv();
+void exportar_analisis_formaciones_csv(void);
 
 #endif

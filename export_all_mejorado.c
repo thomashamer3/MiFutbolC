@@ -1,4 +1,4 @@
-﻿
+
 #include "export_all_mejorado.h"
 #include "export_camisetas_mejorado.h"
 #include "export_lesiones_mejorado.h"
@@ -9,7 +9,7 @@
 #include "menu.h"
 #include <stdio.h>
 
-static void exportar_camisetas_mejoradas()
+static void exportar_camisetas_mejoradas(void)
 {
     exportar_camisetas_csv_mejorado();
     exportar_camisetas_txt_mejorado();
@@ -17,7 +17,7 @@ static void exportar_camisetas_mejoradas()
     exportar_camisetas_html_mejorado();
 }
 
-static void exportar_lesiones_mejoradas()
+static void exportar_lesiones_mejoradas(void)
 {
     exportar_lesiones_csv_mejorado();
     exportar_lesiones_txt_mejorado();
@@ -25,7 +25,7 @@ static void exportar_lesiones_mejoradas()
     exportar_lesiones_html_mejorado();
 }
 
-static void exportar_camisetas_basicas()
+static void exportar_camisetas_basicas(void)
 {
     exportar_camisetas_csv();
     exportar_camisetas_txt();
@@ -33,7 +33,7 @@ static void exportar_camisetas_basicas()
     exportar_camisetas_html();
 }
 
-static void exportar_lesiones_basicas()
+static void exportar_lesiones_basicas(void)
 {
     exportar_lesiones_csv();
     exportar_lesiones_txt();
@@ -41,7 +41,7 @@ static void exportar_lesiones_basicas()
     exportar_lesiones_html();
 }
 
-void exportar_camisetas_todo_mejorado()
+void exportar_camisetas_todo_mejorado(void)
 {
     printf("Exportando camisetas con analisis avanzado...\n");
     exportar_camisetas_mejoradas();
@@ -49,7 +49,7 @@ void exportar_camisetas_todo_mejorado()
     pause_console();
 }
 
-void exportar_lesiones_todo_mejorado()
+void exportar_lesiones_todo_mejorado(void)
 {
     printf("Exportando lesiones con analisis avanzado...\n");
     exportar_lesiones_mejoradas();
@@ -57,7 +57,7 @@ void exportar_lesiones_todo_mejorado()
     pause_console();
 }
 
-void exportar_todo_mejorado()
+void exportar_todo_mejorado(void)
 {
     printf("Exportando todo con analisis avanzado...\n");
 
@@ -73,7 +73,7 @@ void exportar_todo_mejorado()
     pause_console();
 }
 
-void menu_exportar_mejorado()
+void menu_exportar_mejorado(void)
 {
     MenuItem items[] =
     {

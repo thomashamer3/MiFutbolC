@@ -21,7 +21,7 @@
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones.csv' en el directorio de exportación
  */
-void exportar_lesiones_csv();
+void exportar_lesiones_csv(void);
 
 /**
  * @brief Exporta la lista de lesiones a formato TXT
@@ -31,7 +31,7 @@ void exportar_lesiones_csv();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones.txt' en el directorio de exportación
  */
-void exportar_lesiones_txt();
+void exportar_lesiones_txt(void);
 
 /**
  * @brief Exporta la lista de lesiones a formato JSON
@@ -55,7 +55,7 @@ void exportar_lesiones_txt();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones.json' en el directorio de exportación
  */
-void exportar_lesiones_json();
+void exportar_lesiones_json(void);
 
 /**
  * @brief Exporta la lista de lesiones a formato HTML
@@ -65,13 +65,13 @@ void exportar_lesiones_json();
  * @pre La base de datos debe contener registros en la tabla 'lesion'
  * @post Crea el archivo 'lesiones.html' en el directorio de exportación
  */
-void exportar_lesiones_html();
+void exportar_lesiones_html(void);
 
 /** @} */ /* End of Doxygen group */
 
 /**
  * @brief Exporta las lesiones a los 4 formatos con una sola consulta SQL.
  */
-void exportar_lesiones_all();
+void exportar_lesiones_all(void);
 
 #endif /* EXPORT_LESIONES_H */

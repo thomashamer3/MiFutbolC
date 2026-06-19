@@ -1,4 +1,4 @@
-﻿
+
 #include "export_records_rankings.h"
 #include "db.h"
 #include "utils.h"
@@ -330,7 +330,7 @@ static void write_temporada_txt(FILE *file, const char *label, const char *sql)
         sqlite3_finalize(stmt);
 }
 
-void exportar_record_goles_partido_csv()
+void exportar_record_goles_partido_csv(void)
 {
     exportar_record_csv("Record de Goles en un Partido",
                         "SELECT p.goles, c.nombre, p.fecha_hora "
@@ -340,7 +340,7 @@ void exportar_record_goles_partido_csv()
                         get_export_path("record_goles_partido.csv"));
 }
 
-void exportar_record_asistencias_partido_csv()
+void exportar_record_asistencias_partido_csv(void)
 {
     exportar_record_csv("Record de Asistencias en un Partido",
                         "SELECT p.asistencias, c.nombre, p.fecha_hora "
@@ -350,7 +350,7 @@ void exportar_record_asistencias_partido_csv()
                         get_export_path("record_asistencias_partido.csv"));
 }
 
-void exportar_mejor_combinacion_cancha_camiseta_csv()
+void exportar_mejor_combinacion_cancha_camiseta_csv(void)
 {
     exportar_combinacion_csv("Mejor Combinacion Cancha + Camiseta",
                              "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
@@ -362,7 +362,7 @@ void exportar_mejor_combinacion_cancha_camiseta_csv()
                              get_export_path("mejor_combinacion_cancha_camiseta.csv"));
 }
 
-void exportar_peor_combinacion_cancha_camiseta_csv()
+void exportar_peor_combinacion_cancha_camiseta_csv(void)
 {
     exportar_combinacion_csv("Peor Combinacion Cancha + Camiseta",
                              "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
@@ -374,7 +374,7 @@ void exportar_peor_combinacion_cancha_camiseta_csv()
                              get_export_path("peor_combinacion_cancha_camiseta.csv"));
 }
 
-void exportar_mejor_temporada_csv()
+void exportar_mejor_temporada_csv(void)
 {
     exportar_temporada_csv("Mejor Temporada",
                            "SELECT substr(p.fecha_hora, 7, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
@@ -385,7 +385,7 @@ void exportar_mejor_temporada_csv()
                            get_export_path("mejor_temporada.csv"));
 }
 
-void exportar_peor_temporada_csv()
+void exportar_peor_temporada_csv(void)
 {
     exportar_temporada_csv("Peor Temporada",
                            "SELECT substr(p.fecha_hora, 7, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
@@ -400,7 +400,7 @@ void exportar_peor_temporada_csv()
  * Exporta records y rankings a TXT.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_records_rankings_txt()
+void exportar_records_rankings_txt(void)
 {
     FILE *file = abrir_archivo_exportacion("records_rankings.txt", "Error al crear el archivo");
     if (!file)
@@ -436,7 +436,7 @@ void exportar_records_rankings_txt()
  * Exporta records y rankings a JSON.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_records_rankings_json()
+void exportar_records_rankings_json(void)
 {
     FILE *file = abrir_archivo_exportacion("records_rankings.json", "Error al crear el archivo");
     if (!file)
@@ -469,7 +469,7 @@ void exportar_records_rankings_json()
  * Exporta records y rankings a HTML.
  * Usa funciones auxiliares para mantener el codigo conciso y dentro del limite de lineas.
  */
-void exportar_records_rankings_html()
+void exportar_records_rankings_html(void)
 {
     FILE *file = abrir_archivo_exportacion("records_rankings.html", "Error al crear el archivo");
     if (!file)
