@@ -13,15 +13,8 @@
 
 #define RECLUTAMIENTO_ESTADOS 6
 
-static const char *g_estados[RECLUTAMIENTO_ESTADOS] =
-{
-    "Visto",
-    "Prospecto",
-    "En Seguimiento",
-    "Contactado",
-    "Reclutado",
-    "Descartado"
-};
+static const char *g_estados[RECLUTAMIENTO_ESTADOS] = {"Visto",      "Prospecto", "En Seguimiento",
+                                                       "Contactado", "Reclutado", "Descartado"};
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -49,10 +42,14 @@ static void mostrar_prospecto_detalle(sqlite3_stmt *stmt)
 
     printf("  %d. %s\n", id, nombre ? nombre : "");
     printf("     Estado: %s\n", estado_to_text(estado));
-    if (posicion && posicion[0]) printf("     Posicion: %s\n", posicion);
-    if (equipo_origen && equipo_origen[0]) printf("     Equipo: %s\n", equipo_origen);
-    if (fecha_visto && fecha_visto[0]) printf("     Visto: %s\n", fecha_visto);
-    if (notas && notas[0]) printf("     Notas: %s\n", notas);
+    if (posicion && posicion[0])
+        printf("     Posicion: %s\n", posicion);
+    if (equipo_origen && equipo_origen[0])
+        printf("     Equipo: %s\n", equipo_origen);
+    if (fecha_visto && fecha_visto[0])
+        printf("     Visto: %s\n", fecha_visto);
+    if (notas && notas[0])
+        printf("     Notas: %s\n", notas);
     printf("\n");
 }
 
@@ -88,7 +85,7 @@ void reclutamiento_crear(void)
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "INSERT INTO reclutamiento(id, nombre, estado, posicion, "
-                       "equipo_origen, fecha_visto, notas) VALUES (?,?,?,?,?,?,?)"))
+                              "equipo_origen, fecha_visto, notas) VALUES (?,?,?,?,?,?,?)"))
     {
         mostrar_error_operacion("Reclutamiento", "crear");
         return;
@@ -130,7 +127,7 @@ void reclutamiento_listar(void)
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "SELECT id, nombre, estado, posicion, equipo_origen, "
-                       "fecha_visto, notas FROM reclutamiento ORDER BY estado, nombre"))
+                              "fecha_visto, notas FROM reclutamiento ORDER BY estado, nombre"))
     {
         return;
     }
@@ -161,14 +158,15 @@ void reclutamiento_editar(void)
     int id = input_int("ID del prospecto a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
-        if (id > 0) mostrar_no_existe("Prospecto");
+        if (id > 0)
+            mostrar_no_existe("Prospecto");
         pause_console();
         return;
     }
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "SELECT nombre, estado, posicion, equipo_origen, "
-                       "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
+                              "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
     {
         return;
     }
@@ -188,17 +186,21 @@ void reclutamiento_editar(void)
     char fecha_actual[64] = {0};
     char notas_actual[1024] = {0};
 
-    strncpy_s(nombre_actual, sizeof(nombre_actual),
-              (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+    strncpy_s(nombre_actual, sizeof(nombre_actual), (const char *)sqlite3_column_text(stmt, 0),
+              _TRUNCATE);
     int estado_actual = sqlite3_column_int(stmt, 1);
     const char *p = (const char *)sqlite3_column_text(stmt, 2);
-    if (p) strncpy_s(posicion_actual, sizeof(posicion_actual), p, _TRUNCATE);
+    if (p)
+        strncpy_s(posicion_actual, sizeof(posicion_actual), p, _TRUNCATE);
     p = (const char *)sqlite3_column_text(stmt, 3);
-    if (p) strncpy_s(equipo_actual, sizeof(equipo_actual), p, _TRUNCATE);
+    if (p)
+        strncpy_s(equipo_actual, sizeof(equipo_actual), p, _TRUNCATE);
     p = (const char *)sqlite3_column_text(stmt, 4);
-    if (p) strncpy_s(fecha_actual, sizeof(fecha_actual), p, _TRUNCATE);
+    if (p)
+        strncpy_s(fecha_actual, sizeof(fecha_actual), p, _TRUNCATE);
     p = (const char *)sqlite3_column_text(stmt, 5);
-    if (p) strncpy_s(notas_actual, sizeof(notas_actual), p, _TRUNCATE);
+    if (p)
+        strncpy_s(notas_actual, sizeof(notas_actual), p, _TRUNCATE);
     sqlite3_finalize(stmt);
 
     char nombre[256] = {0};
@@ -207,35 +209,42 @@ void reclutamiento_editar(void)
     char fecha[64] = {0};
     char notas[1024] = {0};
 
-    printf("Editando: %s (estado actual: %s)\n\n", nombre_actual,
-           estado_to_text(estado_actual));
+    printf("Editando: %s (estado actual: %s)\n\n", nombre_actual, estado_to_text(estado_actual));
 
     printf("Nombre [%s]: ", nombre_actual);
     input_string("", nombre, (int)sizeof(nombre));
-    if (nombre[0] == '\0') strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
+    if (nombre[0] == '\0')
+        strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
 
-    printf("Estado (1=Visto, 2=Prospecto, 3=Seguimiento, 4=Contactado, 5=Reclutado, 6=Descartado) [%d]: ", estado_actual);
+    printf("Estado (1=Visto, 2=Prospecto, 3=Seguimiento, 4=Contactado, 5=Reclutado, 6=Descartado) "
+           "[%d]: ",
+           estado_actual);
     int estado = input_int("");
-    if (estado < 1 || estado > RECLUTAMIENTO_ESTADOS) estado = estado_actual;
+    if (estado < 1 || estado > RECLUTAMIENTO_ESTADOS)
+        estado = estado_actual;
 
     printf("Posicion [%s]: ", posicion_actual);
     input_string("", posicion, (int)sizeof(posicion));
-    if (posicion[0] == '\0') strncpy_s(posicion, sizeof(posicion), posicion_actual, _TRUNCATE);
+    if (posicion[0] == '\0')
+        strncpy_s(posicion, sizeof(posicion), posicion_actual, _TRUNCATE);
 
     printf("Equipo origen [%s]: ", equipo_actual);
     input_string("", equipo, (int)sizeof(equipo));
-    if (equipo[0] == '\0') strncpy_s(equipo, sizeof(equipo), equipo_actual, _TRUNCATE);
+    if (equipo[0] == '\0')
+        strncpy_s(equipo, sizeof(equipo), equipo_actual, _TRUNCATE);
 
     printf("Fecha visto [%s]: ", fecha_actual);
     input_date("", fecha, (int)sizeof(fecha));
-    if (fecha[0] == '\0') strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
+    if (fecha[0] == '\0')
+        strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
 
     printf("Notas [%s]: ", notas_actual);
     input_string("", notas, (int)sizeof(notas));
-    if (notas[0] == '\0') strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
+    if (notas[0] == '\0')
+        strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
 
     if (!preparar_stmt(&stmt, "UPDATE reclutamiento SET nombre=?, estado=?, posicion=?, "
-                       "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
+                              "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
     {
         mostrar_error_operacion("Reclutamiento", "actualizar");
         return;
@@ -277,7 +286,8 @@ void reclutamiento_avanzar(void)
     int id = input_int("ID del prospecto a avanzar (0=cancelar): ");
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
-        if (id > 0) mostrar_no_existe("Prospecto");
+        if (id > 0)
+            mostrar_no_existe("Prospecto");
         pause_console();
         return;
     }
@@ -294,23 +304,21 @@ void reclutamiento_avanzar(void)
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(nombre, sizeof(nombre),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
         estado_actual = sqlite3_column_int(stmt, 1);
     }
     sqlite3_finalize(stmt);
 
     if (estado_actual >= RECLUTAMIENTO_ESTADOS)
     {
-        printf("%s ya esta en el ultimo estado: %s\n", nombre,
-               estado_to_text(estado_actual));
+        printf("%s ya esta en el ultimo estado: %s\n", nombre, estado_to_text(estado_actual));
         pause_console();
         return;
     }
 
     int nuevo_estado = estado_actual + 1;
-    printf("Avanzar '%s' de '%s' a '%s'?\n", nombre,
-           estado_to_text(estado_actual), estado_to_text(nuevo_estado));
+    printf("Avanzar '%s' de '%s' a '%s'?\n", nombre, estado_to_text(estado_actual),
+           estado_to_text(nuevo_estado));
 
     if (!confirmar("Confirmar avance"))
     {
@@ -365,7 +373,8 @@ void reclutamiento_retroceder(void)
     int id = input_int("ID del prospecto a retroceder (0=cancelar): ");
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
-        if (id > 0) mostrar_no_existe("Prospecto");
+        if (id > 0)
+            mostrar_no_existe("Prospecto");
         pause_console();
         return;
     }
@@ -382,23 +391,21 @@ void reclutamiento_retroceder(void)
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(nombre, sizeof(nombre),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
         estado_actual = sqlite3_column_int(stmt, 1);
     }
     sqlite3_finalize(stmt);
 
     if (estado_actual <= 1)
     {
-        printf("%s ya esta en el primer estado: %s\n", nombre,
-               estado_to_text(estado_actual));
+        printf("%s ya esta en el primer estado: %s\n", nombre, estado_to_text(estado_actual));
         pause_console();
         return;
     }
 
     int nuevo_estado = estado_actual - 1;
-    printf("Retroceder '%s' de '%s' a '%s'?\n", nombre,
-           estado_to_text(estado_actual), estado_to_text(nuevo_estado));
+    printf("Retroceder '%s' de '%s' a '%s'?\n", nombre, estado_to_text(estado_actual),
+           estado_to_text(nuevo_estado));
 
     if (!confirmar("Confirmar retroceso"))
     {
@@ -445,7 +452,8 @@ void reclutamiento_eliminar(void)
     int id = input_int("ID del prospecto a eliminar (0=cancelar): ");
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
-        if (id > 0) mostrar_no_existe("Prospecto");
+        if (id > 0)
+            mostrar_no_existe("Prospecto");
         pause_console();
         return;
     }
@@ -460,8 +468,7 @@ void reclutamiento_eliminar(void)
     char nombre[256] = {0};
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        strncpy_s(nombre, sizeof(nombre),
-                  (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+        strncpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
     }
     sqlite3_finalize(stmt);
 
@@ -544,16 +551,13 @@ void reclutamiento_estadisticas(void)
 
 void menu_reclutamiento(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Nuevo prospecto", reclutamiento_crear},
-        {2, "Listar prospectos", reclutamiento_listar},
-        {3, "Editar prospecto", reclutamiento_editar},
-        {4, "Avanzar estado", reclutamiento_avanzar},
-        {5, "Retroceder estado", reclutamiento_retroceder},
-        {6, "Eliminar prospecto", reclutamiento_eliminar},
-        {7, "Estadisticas del pipeline", reclutamiento_estadisticas},
-        {0, "Volver", NULL}
-    };
+    MenuItem items[] = {{1, "Nuevo prospecto", &reclutamiento_crear},
+                        {2, "Listar prospectos", &reclutamiento_listar},
+                        {3, "Editar prospecto", &reclutamiento_editar},
+                        {4, "Avanzar estado", &reclutamiento_avanzar},
+                        {5, "Retroceder estado", &reclutamiento_retroceder},
+                        {6, "Eliminar prospecto", &reclutamiento_eliminar},
+                        {7, "Estadisticas del pipeline", &reclutamiento_estadisticas},
+                        {0, "Volver", NULL}};
     ejecutar_menu("RECLUTAMIENTO - PIPELINE", items, 8);
 }
