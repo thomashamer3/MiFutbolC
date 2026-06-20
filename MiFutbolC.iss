@@ -56,6 +56,7 @@ Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Musica\*"; DestDir: "{app}\Musica"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "langs\*"; DestDir: "{app}\langs"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; ================================
 ; DIRECTORIOS

@@ -78,4 +78,12 @@ void buscar_partidos(void);
  */
 void menu_tacticas_partido(void);
 
+/**
+ * @brief Obtiene datos climáticos para partidos históricos sin temperatura
+ *
+ * Recorre todos los partidos con temperatura_c IS NULL y cuya cancha tenga
+ * coordenadas, consulta la API Open-Meteo y guarda los datos en la DB.
+ */
+void obtener_clima_partidos_historicos(void);
+
 #endif

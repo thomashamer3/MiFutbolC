@@ -704,7 +704,9 @@ enum
     DB_VERSION_PERFORMANCE_INDEXES = 8,
     DB_VERSION_PARTIDO_ATAJASTE = 9,
     DB_VERSION_PARTIDO_ATAJASTE_FIX = 10,
-    DB_VERSION_CURRENT = 10
+    DB_VERSION_CANCHA_CLIMA_REAL = 11,
+    DB_VERSION_BOTIN = 12,
+    DB_VERSION_CURRENT = 12
 };
 
 static int get_user_version(int *out_version)
@@ -826,6 +828,8 @@ static void backfill_mes_anio_once(void)
 #define COL_CANCHA_IMAGEN_RUTA "imagen_ruta TEXT DEFAULT ''"
 #define COL_CANCHA_ACTIVA "activa INTEGER DEFAULT 1"
 #define COL_CANCHA_TIENE_GRABACION "tiene_grabacion INTEGER DEFAULT 0"
+#define COL_CANCHA_LATITUD "latitud REAL DEFAULT NULL"
+#define COL_CANCHA_LONGITUD "longitud REAL DEFAULT NULL"
 
 #define COL_PARTIDO_RESULTADO "resultado INTEGER DEFAULT 0"
 #define COL_PARTIDO_RENDIMIENTO_GENERAL "rendimiento_general INTEGER DEFAULT 0"
@@ -863,6 +867,12 @@ static void backfill_mes_anio_once(void)
 #define COL_PARTIDO_GOLES_DETALLE "goles_detalle TEXT DEFAULT ''"
 #define COL_PARTIDO_ASISTENCIAS_DETALLE "asistencias_detalle TEXT DEFAULT ''"
 #define COL_PARTIDO_ATAJASTE_TODO "atajaste_todo_el_partido INTEGER DEFAULT 1"
+#define COL_PARTIDO_PRECIP_MM "precip_mm REAL DEFAULT NULL"
+#define COL_PARTIDO_WIND_KMH "wind_kmh REAL DEFAULT NULL"
+#define COL_PARTIDO_WEATHER_CODE "weather_code INTEGER DEFAULT NULL"
+#define COL_PARTIDO_CLIMA_JSON "clima_json TEXT DEFAULT ''"
+#define COL_PARTIDO_APPARENT_TEMP "apparent_temp_c REAL DEFAULT NULL"
+#define COL_PARTIDO_BOTIN_ID "botin_id INTEGER DEFAULT NULL"
 
 static int create_database_schema(void)
 {
@@ -886,6 +896,11 @@ static int create_database_schema(void)
         " " COL_CAMISETA_IMAGEN_RUTA ","
         " " COL_CAMISETA_SORTEADA ","
         " " COL_CAMISETA_ACTIVA ");",
+
+        "CREATE TABLE IF NOT EXISTS botin ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " activa INTEGER DEFAULT 1);",
 
         "CREATE TABLE IF NOT EXISTS coleccion ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1000,6 +1015,7 @@ static int create_database_schema(void)
         " " COL_PARTIDO_GOLES_DETALLE ","
         " " COL_PARTIDO_ASISTENCIAS_DETALLE ","
         " " COL_PARTIDO_ATAJASTE_TODO ","
+        " " COL_PARTIDO_BOTIN_ID ","
         " FOREIGN KEY(cancha_id) REFERENCES cancha(id),"
         " FOREIGN KEY(camiseta_id) REFERENCES camiseta(id));",
 
@@ -1149,7 +1165,8 @@ static int create_database_schema(void)
         " language INTEGER DEFAULT 0,"
         " mode INTEGER DEFAULT 0,"
         " text_size INTEGER DEFAULT 1,"
-        " image_viewer TEXT DEFAULT '');",
+        " image_viewer TEXT DEFAULT '',"
+        " botin_predeterminado INTEGER DEFAULT 0);",
 
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1671,6 +1688,33 @@ static void add_missing_columns_legacy(void)
     add_partido_columns();
 }
 
+static void add_cancha_clima_real_columns(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_LATITUD ";",
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_LONGITUD ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_PRECIP_MM ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_WIND_KMH ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_WEATHER_CODE ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_CLIMA_JSON ";",
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_APPARENT_TEMP ";",
+        NULL
+    };
+    ejecutar_alter_table_group(alter_statements, "cancha_clima_real");
+}
+
+static void add_botin_columns(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_BOTIN_ID ";",
+        "ALTER TABLE settings ADD COLUMN botin_predeterminado INTEGER DEFAULT 0;",
+        NULL
+    };
+    ejecutar_alter_table_group(alter_statements, "botin");
+}
+
 static void add_missing_columns(void)
 {
     int current_version = 0;
@@ -1685,6 +1729,7 @@ static void add_missing_columns(void)
         add_camiseta_columns();
         add_cancha_columns();
         add_partido_columns();
+        add_botin_columns();
         return;
     }
 
@@ -1698,6 +1743,10 @@ static void add_missing_columns(void)
         add_cancha_columns();
     if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
         add_partido_columns();
+    if (current_version < DB_VERSION_CANCHA_CLIMA_REAL)
+        add_cancha_clima_real_columns();
+    if (current_version < DB_VERSION_BOTIN)
+        add_botin_columns();
 }
 
 static int drop_legacy_mes_anio_triggers(void)

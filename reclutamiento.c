@@ -14,7 +14,8 @@
 #define RECLUTAMIENTO_ESTADOS 6
 
 static const char *g_estados[RECLUTAMIENTO_ESTADOS] = {"Visto",      "Prospecto", "En Seguimiento",
-                                                       "Contactado", "Reclutado", "Descartado"};
+                                                       "Contactado", "Reclutado", "Descartado"
+                                                      };
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -85,7 +86,7 @@ void reclutamiento_crear(void)
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "INSERT INTO reclutamiento(id, nombre, estado, posicion, "
-                              "equipo_origen, fecha_visto, notas) VALUES (?,?,?,?,?,?,?)"))
+                       "equipo_origen, fecha_visto, notas) VALUES (?,?,?,?,?,?,?)"))
     {
         mostrar_error_operacion("Reclutamiento", "crear");
         return;
@@ -127,7 +128,7 @@ void reclutamiento_listar(void)
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "SELECT id, nombre, estado, posicion, equipo_origen, "
-                              "fecha_visto, notas FROM reclutamiento ORDER BY estado, nombre"))
+                       "fecha_visto, notas FROM reclutamiento ORDER BY estado, nombre"))
     {
         return;
     }
@@ -166,7 +167,7 @@ void reclutamiento_editar(void)
 
     sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "SELECT nombre, estado, posicion, equipo_origen, "
-                              "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
+                       "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
     {
         return;
     }
@@ -244,7 +245,7 @@ void reclutamiento_editar(void)
         strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
 
     if (!preparar_stmt(&stmt, "UPDATE reclutamiento SET nombre=?, estado=?, posicion=?, "
-                              "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
+                       "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
     {
         mostrar_error_operacion("Reclutamiento", "actualizar");
         return;
@@ -552,12 +553,13 @@ void reclutamiento_estadisticas(void)
 void menu_reclutamiento(void)
 {
     MenuItem items[] = {{1, "Nuevo prospecto", &reclutamiento_crear},
-                        {2, "Listar prospectos", &reclutamiento_listar},
-                        {3, "Editar prospecto", &reclutamiento_editar},
-                        {4, "Avanzar estado", &reclutamiento_avanzar},
-                        {5, "Retroceder estado", &reclutamiento_retroceder},
-                        {6, "Eliminar prospecto", &reclutamiento_eliminar},
-                        {7, "Estadisticas del pipeline", &reclutamiento_estadisticas},
-                        {0, "Volver", NULL}};
+        {2, "Listar prospectos", &reclutamiento_listar},
+        {3, "Editar prospecto", &reclutamiento_editar},
+        {4, "Avanzar estado", &reclutamiento_avanzar},
+        {5, "Retroceder estado", &reclutamiento_retroceder},
+        {6, "Eliminar prospecto", &reclutamiento_eliminar},
+        {7, "Estadisticas del pipeline", &reclutamiento_estadisticas},
+        {0, "Volver", NULL}
+    };
     ejecutar_menu("RECLUTAMIENTO - PIPELINE", items, 8);
 }

@@ -198,6 +198,7 @@ int settings_get_dashboard_enabled(void);
 // Funciones wrapper para internacionalización de menús
 const char * get_menu_camisetas(void);
 const char * get_menu_canchas(void);
+const char * get_menu_botines(void);
 const char * get_menu_partidos(void);
 const char * get_menu_equipos(void);
 const char * get_menu_estadisticas(void);

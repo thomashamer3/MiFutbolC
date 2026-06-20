@@ -350,6 +350,7 @@ void settings_init(void)
         {
             current_settings.theme = sqlite3_column_int(stmt, 0);
             current_settings.language = sqlite3_column_int(stmt, 1);
+            lang_set(current_settings.language == LANGUAGE_SPANISH ? "es" : "en");
             current_settings.mode = sqlite3_column_int(stmt, 2);
             current_settings.text_size = sqlite3_column_int(stmt, 3);
             current_settings.music_autoplay = sqlite3_column_int(stmt, 4) ? 1 : 0;
@@ -694,6 +695,7 @@ const char *get_##name(void)                \
 
 DEFINE_GET_MENU(camisetas, "menu_camisetas", "camisetas", 1, 1, 1)
 DEFINE_GET_MENU(canchas, "menu_canchas", "canchas", 1, 1, 1)
+DEFINE_GET_MENU(botines, "menu_botines", "botines", 1, 1, 1)
 DEFINE_GET_MENU(partidos, "menu_partidos", "partidos", 1, 1, 1)
 DEFINE_GET_MENU(equipos, "menu_equipos", "equipos", 0, 1, 1)
 DEFINE_GET_MENU(estadisticas, "menu_estadisticas", "estadisticas", 0, 1, 1)
@@ -1373,27 +1375,30 @@ static void show_current_settings(void)
     clear_screen();
     print_header(get_text("current_settings"));
 
-    printf("Tema: %s\n", get_current_theme_name());
-    printf("Idioma: %s\n", current_settings.language == LANGUAGE_SPANISH
+    printf("%s: %s\n", get_text("settings_theme"), get_current_theme_name());
+    printf("%s: %s\n", get_text("settings_language"),
+           current_settings.language == LANGUAGE_SPANISH
            ? get_text("lang_spanish")
            : get_text("lang_english"));
-    printf("Tamanio de texto: %s\n", get_current_text_size_name());
-    printf("Musica al iniciar: %s\n", current_settings.music_autoplay
+    printf("%s: %s\n", get_text("settings_text_size"), get_current_text_size_name());
+    printf("%s: %s\n", get_text("settings_music_autoplay"),
+           current_settings.music_autoplay
            ? get_text("state_enabled")
            : get_text("state_disabled"));
-    printf("Dashboard al iniciar: %s\n", current_settings.dashboard_enabled
+    printf("%s: %s\n", get_text("settings_dashboard_enabled"),
+           current_settings.dashboard_enabled
            ? get_text("state_enabled")
            : get_text("state_disabled"));
 
     char *usuario = get_user_name();
     if (usuario)
     {
-        printf("Usuario: %s\n", usuario);
+        printf("%s: %s\n", get_text("menu_usuario"), usuario);
         free(usuario);
     }
     else
     {
-        printf("Usuario: No configurado\n");
+        printf("%s: %s\n", get_text("menu_usuario"), get_text("not_configured"));
     }
 
     printf("\n");
@@ -1662,36 +1667,6 @@ void menu_update(void)
 
 void menu_settings(void)
 {
-    char label_tema[96];
-    char label_idioma[96];
-    char label_accesibilidad[96];
-    char label_usuario[96];
-    char label_actual[96];
-    char label_reset[96];
-    char label_modo[96];
-    char label_exportar[96];
-    char label_importar[96];
-    char label_busqueda[96];
-    char label_actualizar[96];
-
-    snprintf(label_tema, sizeof(label_tema), "%s", get_text("settings_theme"));
-    snprintf(label_idioma, sizeof(label_idioma), "%s",
-             get_text("settings_language"));
-    snprintf(label_accesibilidad, sizeof(label_accesibilidad), "%s",
-             get_text("settings_accessibility"));
-    snprintf(label_usuario, sizeof(label_usuario), "%s",
-             get_text("menu_usuario"));
-    snprintf(label_actual, sizeof(label_actual), "%s", get_text("show_current"));
-    snprintf(label_reset, sizeof(label_reset), "%s", get_text("reset_defaults"));
-    snprintf(label_modo, sizeof(label_modo), "%s", get_text("settings_mode"));
-    snprintf(label_exportar, sizeof(label_exportar), "%s",
-             get_text("menu_exportar"));
-    snprintf(label_importar, sizeof(label_importar), "%s",
-             get_text("menu_importar"));
-    snprintf(label_busqueda, sizeof(label_busqueda), "Busqueda Global");
-    snprintf(label_actualizar, sizeof(label_actualizar), "%s",
-             get_text("menu_update"));
-
     AppSettings const *cfg = settings_get();
     settings_actualizar_label_toggle("settings_music_autoplay",
                                      cfg->music_autoplay, label_music_autoplay,
@@ -1702,24 +1677,24 @@ void menu_settings(void)
 
     MenuItem items[] =
     {
-        {1, label_tema, menu_theme_settings},
-        {2, label_idioma, menu_language_settings},
-        {3, label_accesibilidad, menu_accessibility_settings},
-        {4, label_usuario, menu_usuario},
-        {5, label_actual, show_current_settings},
-        {6, label_reset, reset_settings_to_defaults},
-        {7, label_modo, menu_mode_settings},
-        {8, label_exportar, menu_exportar},
-        {9, label_importar, menu_importar},
-        {10, "Exportar a ODS", &abrir_export_ods_desde_settings},
-        {11, label_busqueda, &abrir_busqueda_global_desde_settings},
-        {12, label_actualizar, menu_update},
+        {1, get_text("settings_theme"), menu_theme_settings},
+        {2, get_text("settings_language"), menu_language_settings},
+        {3, get_text("settings_accessibility"), menu_accessibility_settings},
+        {4, get_text("menu_usuario"), menu_usuario},
+        {5, get_text("show_current"), show_current_settings},
+        {6, get_text("reset_defaults"), reset_settings_to_defaults},
+        {7, get_text("settings_mode"), menu_mode_settings},
+        {8, get_text("menu_exportar"), menu_exportar},
+        {9, get_text("menu_importar"), menu_importar},
+        {10, get_text("menu_exportar_ods"), &abrir_export_ods_desde_settings},
+        {11, get_text("menu_busqueda_global"), &abrir_busqueda_global_desde_settings},
+        {12, get_text("menu_update"), menu_update},
         {13, label_music_autoplay, toggle_music_autoplay_setting},
         {14, label_dashboard_enabled, toggle_dashboard_enabled_setting},
-        {15, "Backup & Restore", &abrir_backup_desde_settings},
-        {16, "Integridad BD", &abrir_integridad_desde_settings},
-        {17, "Deshacer (Undo)", &abrir_undo_desde_settings},
-        {18, "Notificaciones", &abrir_notificaciones_desde_settings},
+        {15, get_text("menu_backup_restore"), &abrir_backup_desde_settings},
+        {16, get_text("menu_integridad_bd"), &abrir_integridad_desde_settings},
+        {17, get_text("menu_undo"), &abrir_undo_desde_settings},
+        {18, get_text("menu_notificaciones"), &abrir_notificaciones_desde_settings},
         {0, get_text("menu_back"), NULL}
     };
 

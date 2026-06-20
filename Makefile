@@ -46,6 +46,7 @@ all: $(OUT)
 
 $(OUT): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) $(AUDIO_LDFLAGS) -o $(OUT)
+	cp -rn langs . 2>/dev/null; true
 
 run: $(OUT)
 	./$(OUT)

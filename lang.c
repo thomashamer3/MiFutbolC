@@ -89,36 +89,46 @@ static int load_file(const char *path)
     return 1;
 }
 
-static int try_load(const char *code)
+static int try_load_in_dir(const char *dir, const char *code)
 {
     char path[1024];
-    snprintf(path, sizeof(path), "%s/%s.json", LANG_DIR, code);
-    if (load_file(path))
+    snprintf(path, sizeof(path), "%s/%s/%s.json", dir, LANG_DIR, code);
+    return load_file(path);
+}
+
+static int try_load(const char *code)
+{
+    /* Try CWD first */
+    if (try_load_in_dir(".", code))
         return 1;
 
 #ifdef _WIN32
     char mod_path[MAX_PATH];
     if (GetModuleFileNameA(NULL, mod_path, sizeof(mod_path)))
     {
+        /* Walk up from exe directory looking for langs/<code>.json */
         char *p = strrchr(mod_path, '\\');
-        if (p)
+        while (p)
+        {
             *p = '\0';
-        snprintf(path, sizeof(path), "%s\\%s\\%s.json", mod_path, LANG_DIR, code);
-        if (load_file(path))
-            return 1;
+            if (try_load_in_dir(mod_path, code))
+                return 1;
+            p = strrchr(mod_path, '\\');
+        }
     }
 #else
     char self[4096] = {0};
     ssize_t r = readlink("/proc/self/exe", self, sizeof(self) - 1);
     if (r > 0)
     {
-        self[r] = '\0';
         char *p = strrchr(self, '/');
-        if (p)
+        while (p)
+        {
             *p = '\0';
-        snprintf(path, sizeof(path), "%s/%s/%s.json", self, LANG_DIR, code);
-        if (load_file(path))
-            return 1;
+            if (try_load_in_dir(self, code))
+                return 1;
+            p = strrchr(self, '/');
+        }
     }
 #endif
 
@@ -136,6 +146,7 @@ static void load_fallback(void)
         {"menu_calendario", "Calendar"},
         {"menu_camisetas", "Shirts"},
         {"menu_canchas", "Fields"},
+        {"menu_botines", "Boots"},
         {"menu_partidos", "Matches"},
         {"menu_equipos", "Teams"},
         {"menu_estadisticas", "Statistics"},
@@ -159,6 +170,12 @@ static void load_fallback(void)
         {"menu_tiendas", "Tiendas"},
         {"menu_reclutamiento", "Recruitment"},
         {"menu_media", "Media References"},
+        {"menu_exportar_ods", "Export to ODS"},
+        {"menu_busqueda_global", "Global Search"},
+        {"menu_backup_restore", "Backup & Restore"},
+        {"menu_integridad_bd", "Database Integrity"},
+        {"menu_undo", "Undo"},
+        {"menu_notificaciones", "Notifications"},
         {"menu_back", "Back"},
         {"settings_theme", "Interface Theme"},
         {"settings_language", "Language"},
@@ -190,6 +207,7 @@ static void load_fallback(void)
         {"state_on", "On"},
         {"state_off", "Off"},
         {"show_current", "Show Current Settings"},
+        {"not_configured", "Not configured"},
         {"reset_defaults", "Reset to Default Values"},
         {"current_settings", "Current Settings"},
         {"reset_settings", "Reset Settings"},

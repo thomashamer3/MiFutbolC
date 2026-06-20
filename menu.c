@@ -14,6 +14,7 @@
 #endif
 #include "analisis.h"
 #include "bienestar.h"
+#include "botin.h"
 #include "calendario.h"
 #include "camiseta.h"
 #include "cancha.h"
@@ -62,6 +63,12 @@ static void abrir_menu_canchas(void)
 {
     app_log_event("CANCHAS", "Ingreso al modulo Canchas");
     menu_canchas();
+}
+
+static void abrir_menu_botines(void)
+{
+    app_log_event("BOTINES", "Ingreso al modulo Botines");
+    menu_botines();
 }
 
 static void abrir_menu_partidos(void)
@@ -190,25 +197,26 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {2, "Calendario", &abrir_calendario},
     {3, "Camisetas", &abrir_menu_camisetas},
     {4, "Canchas", &abrir_menu_canchas},
-    {5, "Equipos", &abrir_menu_equipos},
-    {6, "Partidos", &abrir_menu_partidos},
-    {7, "Lesiones", &abrir_menu_lesiones},
-    {8, "Estadisticas", &abrir_menu_estadisticas},
-    {9, "Logros", &abrir_menu_logros},
-    {10, "Financiamiento", &abrir_menu_financiamiento},
-    {11, "Torneos", &abrir_menu_torneos},
-    {12, "Temporada", &abrir_menu_temporadas},
-    {13, "Analisis", &abrir_menu_analisis},
-    {14, "Bienestar", &abrir_menu_bienestar},
-    {15, "Carrera Futbolistica", &abrir_menu_carrera},
-    {16, "Recordatorios", &abrir_menu_recordatorios},
-    {17, "Colecciones", &abrir_menu_colecciones},
-    {18, "Musica", &abrir_menu_musica},
-    {19, "Records & Rankings", &abrir_menu_records_rankings},
-    {20, "Tiendas", &abrir_menu_tiendas},
-    {21, "Reclutamiento", &abrir_menu_reclutamiento},
-    {22, "Referencias Multimedia", &abrir_menu_media},
-    {23, "Ajustes", &abrir_menu_settings},
+    {5, "Botines", &abrir_menu_botines},
+    {6, "Equipos", &abrir_menu_equipos},
+    {7, "Partidos", &abrir_menu_partidos},
+    {8, "Lesiones", &abrir_menu_lesiones},
+    {9, "Estadisticas", &abrir_menu_estadisticas},
+    {10, "Logros", &abrir_menu_logros},
+    {11, "Financiamiento", &abrir_menu_financiamiento},
+    {12, "Torneos", &abrir_menu_torneos},
+    {13, "Temporada", &abrir_menu_temporadas},
+    {14, "Analisis", &abrir_menu_analisis},
+    {15, "Bienestar", &abrir_menu_bienestar},
+    {16, "Carrera Futbolistica", &abrir_menu_carrera},
+    {17, "Recordatorios", &abrir_menu_recordatorios},
+    {18, "Colecciones", &abrir_menu_colecciones},
+    {19, "Musica", &abrir_menu_musica},
+    {20, "Records & Rankings", &abrir_menu_records_rankings},
+    {21, "Tiendas", &abrir_menu_tiendas},
+    {22, "Reclutamiento", &abrir_menu_reclutamiento},
+    {23, "Referencias Multimedia", &abrir_menu_media},
+    {24, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -261,6 +269,7 @@ void initialize_application(void)
     SetConsoleCP(65001);
 #endif
     setlocale(LC_ALL, "");
+    setlocale(LC_NUMERIC, "C");
 
     if (!db_init())
     {
@@ -345,8 +354,8 @@ MenuItem *create_filtered_menu(int *count)
     const char *(*getters[])(void) =
     {
         &get_menu_dashboard,        &get_menu_calendario,   &get_menu_camisetas,
-        &get_menu_canchas,          &get_menu_equipos,      &get_menu_partidos,
-        &get_menu_lesiones,         &get_menu_estadisticas, &get_menu_logros,
+        &get_menu_canchas,          &get_menu_botines,      &get_menu_equipos,
+        &get_menu_partidos,         &get_menu_lesiones,     &get_menu_estadisticas, &get_menu_logros,
         &get_menu_financiamiento,   &get_menu_torneos,      &get_menu_temporada,
         &get_menu_analisis,         &get_menu_bienestar,    &get_menu_carrera,
         &get_menu_recordatorios,    &get_menu_colecciones,  &get_menu_musica,

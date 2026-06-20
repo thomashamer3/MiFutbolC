@@ -7,6 +7,7 @@
     "menu_calendario": "Calendario",
     "menu_camisetas": "Camisetas",
     "menu_canchas": "Canchas",
+    "menu_botines": "Botines",
     "menu_partidos": "Partidos",
     "menu_equipos": "Equipos",
     "menu_estadisticas": "Estadisticas",
@@ -39,7 +40,13 @@
     "menu_metas": "Metas Personales",
     "menu_equipamiento": "Historial Equipamiento",
     "menu_media": "Referencias Multimedia",
-
+    "menu_exportar_ods": "Exportar a ODS",
+    "menu_busqueda_global": "Busqueda Global",
+    "menu_backup_restore": "Backup & Restore",
+    "menu_integridad_bd": "Integridad BD",
+    "menu_undo": "Deshacer (Undo)",
+    "menu_notificaciones": "Notificaciones",
+ 
     "mes_abril": "Abril",
     "mes_agosto": "Agosto",
     "mes_diciembre": "Diciembre",
@@ -757,6 +764,7 @@
     "reset_confirm": "Esta seguro de que desea restablecer toda la configuracion a valores por defecto?",
     "reset_cancelled": "Operacion cancelada.",
     "reset_success": "Configuracion restablecida a valores por defecto.",
+    "not_configured": "No configurado",
     "show_current": "Ver Configuracion Actual",
     "reset_defaults": "Restablecer a Valores por Defecto",
 

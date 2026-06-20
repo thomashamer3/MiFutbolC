@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
 #ifdef _WIN32
 #include <windows.h>
 #include <commdlg.h>
@@ -4522,4 +4523,32 @@ int app_cargar_imagen_entidad(int id, const char *tabla,
     db_stmt_release(stmt);
 
     return result;
+}
+
+void format_double_en_us(double val, char *buf, size_t size, int precision)
+{
+    char *saved = setlocale(LC_NUMERIC, NULL);
+    char saved_buf[64] = "";
+    if (saved)
+    {
+        strncpy(saved_buf, saved, sizeof(saved_buf) - 1);
+        saved_buf[sizeof(saved_buf) - 1] = '\0';
+    }
+    setlocale(LC_NUMERIC, "C");
+    snprintf(buf, size, "%.*f", precision, val);
+    if (saved_buf[0])
+        setlocale(LC_NUMERIC, saved_buf);
+}
+
+void format_double_es(double val, char *buf, size_t size, int precision)
+{
+    format_double_en_us(val, buf, size, precision);
+    for (size_t i = 0; buf[i] != '\0' && i < size; i++)
+    {
+        if (buf[i] == '.')
+        {
+            buf[i] = ',';
+            break;
+        }
+    }
 }

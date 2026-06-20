@@ -39,7 +39,13 @@
     "menu_metas": "Goals",
     "menu_equipamiento": "Equipment History",
     "menu_media": "Media References",
-
+    "menu_exportar_ods": "Export to ODS",
+    "menu_busqueda_global": "Global Search",
+    "menu_backup_restore": "Backup & Restore",
+    "menu_integridad_bd": "Database Integrity",
+    "menu_undo": "Undo",
+    "menu_notificaciones": "Notifications",
+ 
     "mes_abril": "April",
     "mes_agosto": "August",
     "mes_diciembre": "December",
@@ -757,6 +763,7 @@
     "reset_confirm": "Are you sure you want to reset all settings to default values?",
     "reset_cancelled": "Operation cancelled.",
     "reset_success": "Settings reset to default values.",
+    "not_configured": "Not configured",
     "show_current": "Show Current Settings",
     "reset_defaults": "Reset to Default Values",
 

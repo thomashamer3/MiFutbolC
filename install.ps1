@@ -158,6 +158,15 @@ Copy-IfExists -Source (Join-Path $repoRoot "README.pdf") -Destination (Join-Path
 Copy-IfExists -Source (Join-Path $repoRoot "LICENSE") -Destination (Join-Path $resolvedInstallDir "LICENSE")
 Copy-IfExists -Source (Join-Path $repoRoot "README.md") -Destination (Join-Path $resolvedInstallDir "README.md")
 
+# Copiar archivos de idioma
+$langsSourceDir = Join-Path $repoRoot "langs"
+$langsTargetDir = Join-Path $resolvedInstallDir "langs"
+if (Test-Path -LiteralPath $langsSourceDir) {
+    New-DirectoryIfMissing -Path $langsTargetDir
+    Copy-Item -Path (Join-Path $langsSourceDir "*") -Destination $langsTargetDir -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Output "Archivos de idioma copiados a $langsTargetDir"
+}
+
 $musicSourceDir = Join-Path $repoRoot "Musica"
 $musicTargetDir = Join-Path $resolvedInstallDir "Musica"
 if (Test-Path -LiteralPath $musicSourceDir) {

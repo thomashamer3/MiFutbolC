@@ -1061,9 +1061,54 @@ static void listar_camisetas_simple(void)
     sqlite3_finalize(stmt);
 }
 
-void crear_camiseta(void)
+static void crear_camiseta_simple(void)
 {
-    clear_screen();
+    char nombre[50];
+    solicitar_nombre_camiseta("Nombre y Numero: ", nombre, sizeof(nombre));
+
+    long long id = obtener_siguiente_id("camiseta");
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "INSERT INTO camiseta(id, nombre) VALUES(?, ?)"))
+    {
+        printf("Error al crear la camiseta.\n");
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc == SQLITE_DONE)
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (simple)", id, nombre);
+        app_log_event("CAMISETA", log_msg);
+
+        int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
+        if (desea_cargar_imagen)
+        {
+            if (!cargar_imagen_para_camiseta_id((int)id))
+            {
+                printf("No se pudo cargar la imagen en este momento.\n");
+            }
+        }
+
+        mostrar_alerta_operacion("Camiseta", "Creada (Simple)", nombre);
+    }
+    else
+    {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s (simple)", nombre);
+        app_log_event("CAMISETA", log_msg);
+        printf("\nError al crear la camiseta en la base de datos.\n");
+        pause_console();
+    }
+}
+
+static void crear_camiseta_avanzada(void)
+{
     CamisetaInfoDetalle info;
 
     char nombre[50];
@@ -1124,7 +1169,7 @@ void crear_camiseta(void)
     if (rc == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s", id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (avanzada)", id, nombre);
         app_log_event("CAMISETA", log_msg);
 
         int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
@@ -1161,6 +1206,26 @@ void crear_camiseta(void)
         printf("\nError al crear la camiseta en la base de datos.\n");
         pause_console();
     }
+}
+
+void crear_camiseta(void)
+{
+    clear_screen();
+    print_header("CREAR CAMISETA");
+
+    printf("Seleccione modo de carga:\n");
+    printf("1) Carga Simple (Solo nombre y numero)\n");
+    printf("2) Carga Avanzada (Nombre y todos los datos)\n");
+    printf("0) Cancelar\n");
+    int opcion = input_int("Opcion: ");
+    if (opcion == 0) return;
+
+    if (opcion == 1)
+        crear_camiseta_simple();
+    else if (opcion == 2)
+        crear_camiseta_avanzada();
+    else
+        printf("Opcion invalida.\n");
 }
 
 static int cargar_imagen_para_camiseta_id(int id)

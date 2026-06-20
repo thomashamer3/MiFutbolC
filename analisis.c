@@ -571,7 +571,6 @@ static void crear_estadistica_quimica_jugador(void)
         respuesta = getchar();
         while (getchar() != '\n')
         {
-            ;
         }
 
     }
@@ -1209,10 +1208,10 @@ static void mostrar_comparador_avanzado(void)
 {
     iniciar_pantalla_analisis("COMPARADOR AVANZADO");
 
-    MenuItem items[] = {{1, "Comparar Camisetas", comparar_camisetas},
-        {2, "Comparar Torneos", comparar_torneos},
-        {3, "Comparar Periodos", comparar_periodos},
-        {4, "Comparar Condiciones", comparar_condiciones},
+    MenuItem items[] = {{1, "Comparar Camisetas", &comparar_camisetas},
+        {2, "Comparar Torneos", &comparar_torneos},
+        {3, "Comparar Periodos", &comparar_periodos},
+        {4, "Comparar Condiciones", &comparar_condiciones},
         {0, "Volver", NULL}
     };
 
@@ -1223,11 +1222,11 @@ void mostrar_analisis(void)
 {
     iniciar_pantalla_analisis("ANALISIS Y COMPARADOR");
 
-    MenuItem items[] = {{1, "Analisis Basico", mostrar_analisis_basico},
-        {2, "Comparador Avanzado", mostrar_comparador_avanzado},
+    MenuItem items[] = {{1, "Analisis Basico", &mostrar_analisis_basico},
+        {2, "Comparador Avanzado", &mostrar_comparador_avanzado},
         {3, "Analisis Tactico (Diagramas)", &menu_tacticas_partido},
         {4, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
-        {5, "Quimica Entre Jugadores", analizar_quimica_jugadores},
+        {5, "Quimica Entre Jugadores", &analizar_quimica_jugadores},
         {0, "Volver", NULL}
     };
 
@@ -1595,14 +1594,14 @@ void mostrar_evolucion_temporal(void)
 {
     iniciar_pantalla_analisis("EVOLUCION TEMPORAL");
 
-    MenuItem items[] = {{1, "Evolucion Mensual de Goles", evolucion_mensual_goles},
-        {2, "Evolucion Mensual de Asistencias", evolucion_mensual_asistencias},
-        {3, "Evolucion Mensual de Rendimiento", evolucion_mensual_rendimiento},
-        {4, "Mejor Mes Historico", mejor_mes_historico},
-        {5, "Peor Mes Historico", peor_mes_historico},
-        {6, "Inicio vs Fin de Anio", inicio_vs_fin_anio},
-        {7, "Meses Frios vs Calidos", meses_frios_vs_calidos},
-        {8, "Progreso Total del Jugador", progreso_total_jugador},
+    MenuItem items[] = {{1, "Evolucion Mensual de Goles", &evolucion_mensual_goles},
+        {2, "Evolucion Mensual de Asistencias", &evolucion_mensual_asistencias},
+        {3, "Evolucion Mensual de Rendimiento", &evolucion_mensual_rendimiento},
+        {4, "Mejor Mes Historico", &mejor_mes_historico},
+        {5, "Peor Mes Historico", &peor_mes_historico},
+        {6, "Inicio vs Fin de Anio", &inicio_vs_fin_anio},
+        {7, "Meses Frios vs Calidos", &meses_frios_vs_calidos},
+        {8, "Progreso Total del Jugador", &progreso_total_jugador},
         {0, "Volver", NULL}
     };
 

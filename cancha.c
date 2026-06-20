@@ -5,11 +5,29 @@
 #include "utils.h"
 #include "pdfgen.h"
 #include "cJSON.h"
+#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <locale.h>
+#include <math.h>
 
+
+static double parse_double_c_locale(const char *str)
+{
+    double val = 0.0;
+    char *saved = setlocale(LC_NUMERIC, NULL);
+    char buf[64];
+    if (saved) strncpy(buf, saved, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    setlocale(LC_NUMERIC, "C");
+    val = strtod(str, NULL);
+    if (buf[0]) setlocale(LC_NUMERIC, buf);
+    return round(val * 1000000.0) / 1000000.0;
+}
+
+#define ROUND6(v) (round((v) * 1000000.0) / 1000000.0)
 
 static void listar_canchas_simple(void);
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size);
@@ -765,6 +783,8 @@ typedef struct
     char contacto_alt[120];
     int activa;
     int tiene_grabacion;
+    double latitud;
+    double longitud;
 } CanchaInfoDetalle;
 
 static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_nombre)
@@ -806,6 +826,28 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
     trim_whitespace(info->descripcion);
     solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt, sizeof(info->contacto_alt));
     info->tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
+
+    if (settings_get()->mode != MODE_SIMPLE)
+    {
+        char coords[128];
+        input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+        char *comma = strchr(coords, ',');
+        if (comma)
+        {
+            *comma = '\0';
+            char *lat_str = coords;
+            char *lon_str = comma + 1;
+            trim_whitespace(lat_str);
+            trim_whitespace(lon_str);
+            info->latitud = parse_double_c_locale(lat_str);
+            info->longitud = parse_double_c_locale(lon_str);
+        }
+        else
+        {
+            info->latitud = ROUND6(input_double("Latitud: "));
+            info->longitud = ROUND6(input_double("Longitud: "));
+        }
+    }
 }
 
 static const char *texto_o_defecto(const char *valor, const char *defecto)
@@ -833,7 +875,8 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
                          "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
                          "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
                          "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
-                         "IFNULL(tiene_grabacion, 0) "
+                         "IFNULL(tiene_grabacion, 0), "
+                         "latitud, longitud "
                          "FROM cancha WHERE id = ?"))
     {
         return 0;
@@ -872,6 +915,8 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s", (const char *)sqlite3_column_text(stmt, 19));
     info->activa = sqlite3_column_int(stmt, 20) == 1;
     info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
+    info->latitud = sqlite3_column_double(stmt, 22);
+    info->longitud = sqlite3_column_double(stmt, 23);
 
     db_stmt_release(stmt);
     return 1;
@@ -905,6 +950,14 @@ static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
     printf("Estado Pasto       : %s\n", texto_o_defecto(info->estado, "(sin dato)"));
     printf("Descripcion        : %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("Contacto Alterno   : %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    if (info->latitud != 0.0 || info->longitud != 0.0)
+    {
+        char lat_str[32];
+        char lon_str[32];
+        format_double_es(info->latitud, lat_str, sizeof(lat_str), 6);
+        format_double_es(info->longitud, lon_str, sizeof(lon_str), 6);
+        printf("Coordenadas        : %s, %s\n", lat_str, lon_str);
+    }
     printf("Grabacion Partido  : %s\n", info->tiene_grabacion ? "SI" : "NO");
     printf("Estado             : %s\n", info->activa ? "ACTIVA" : "INACTIVA");
     printf("========================================\n");
@@ -1432,9 +1485,56 @@ void ver_imagen_cancha(void)
 void crear_cancha(void)
 {
     CanchaInfoDetalle info = {0};
-    solicitar_datos_comunes_cancha(&info, 1);
-
     long long id = obtener_siguiente_id("cancha");
+
+    solicitar_nombre_cancha("Nombre de la cancha: ", info.nombre, sizeof(info.nombre));
+
+    if (settings_get()->mode != MODE_SIMPLE)
+    {
+        solicitar_telefono_no_vacio("Numero de telefono: ", info.telefono, sizeof(info.telefono));
+        solicitar_campo_no_vacio("Direccion: ", info.direccion, sizeof(info.direccion));
+        solicitar_campo_no_vacio("Localidad/Zona: ", info.localidad, sizeof(info.localidad));
+        info.tipo_cancha_codigo = solicitar_tipo_cancha_codigo();
+        info.superficie_codigo = solicitar_superficie_codigo();
+        info.techada_estado = solicitar_estado_techada_codigo();
+        info.tiene_iluminacion = solicitar_si_no("Tiene iluminacion?");
+        info.horario_apertura_min = solicitar_hora_minutos("Horario de apertura (HH:MM): ");
+        info.horario_cierre_min = solicitar_hora_minutos("Horario de cierre (HH:MM): ");
+        info.precio_hora_dia_centavos = solicitar_precio_centavos("Precio por hora (Dia): ");
+        info.precio_hora_noche_centavos = solicitar_precio_centavos("Precio por hora (Noche): ");
+        info.servicios.vestuarios = solicitar_si_no("Tiene vestuarios?");
+        info.servicios.duchas = solicitar_si_no("Tiene duchas?");
+        info.servicios.buffet = solicitar_si_no("Tiene buffet?");
+        info.servicios.estacionamiento = solicitar_si_no("Tiene estacionamiento?");
+        info.cantidad_canchas = input_int("Cantidad de canchas del complejo: ");
+        if (info.cantidad_canchas <= 0)
+            info.cantidad_canchas = 1;
+        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info.estado, sizeof(info.estado));
+        input_string("Descripcion breve: ", info.descripcion, sizeof(info.descripcion));
+        trim_whitespace(info.descripcion);
+        solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info.contacto_alt, sizeof(info.contacto_alt));
+        info.tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
+        {
+            char coords[128];
+            input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+            char *comma = strchr(coords, ',');
+            if (comma)
+            {
+                *comma = '\0';
+                char *lat_str = coords;
+                char *lon_str = comma + 1;
+                trim_whitespace(lat_str);
+                trim_whitespace(lon_str);
+                info.latitud = parse_double_c_locale(lat_str);
+                info.longitud = parse_double_c_locale(lon_str);
+            }
+            else
+            {
+                info.latitud = ROUND6(input_double("Latitud: "));
+                info.longitud = ROUND6(input_double("Longitud: "));
+            }
+        }
+    }
 
     sqlite3_stmt *stmt;
     if (!db_prepare_stmt(&stmt,
@@ -1442,8 +1542,9 @@ void crear_cancha(void)
                          "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
                          "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
                          "tiene_vestuarios, tiene_duchas, tiene_buffet, tiene_estacionamiento, cantidad_canchas, "
-                         "estado, descripcion, contacto_alt) "
-                         "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
+                         "estado, descripcion, contacto_alt, "
+                         "latitud, longitud) "
+                         "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
     {
         printf("Error al crear la cancha.\n");
         pause_console();
@@ -1471,6 +1572,8 @@ void crear_cancha(void)
     sqlite3_bind_text(stmt, 19, info.estado, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 20, info.descripcion, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 21, info.contacto_alt, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 22, info.latitud);
+    sqlite3_bind_double(stmt, 23, info.longitud);
     int rc = sqlite3_step(stmt);
     db_stmt_release(stmt);
 
@@ -1828,9 +1931,21 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info, int mo
     printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
     printf("21) Grabacion Partido: %s\n", info->tiene_grabacion ? "SI" : "NO");
+    if (info->latitud != 0.0 || info->longitud != 0.0)
+    {
+        char lat_str[32];
+        char lon_str[32];
+        format_double_es(info->latitud, lat_str, sizeof(lat_str), 6);
+        format_double_es(info->longitud, lon_str, sizeof(lon_str), 6);
+        printf("22) Coordenadas: %s, %s\n", lat_str, lon_str);
+    }
+    else
+    {
+        printf("22) Coordenadas: (sin coordenadas)\n");
+    }
     if (mostrar_completar_info)
     {
-        printf("22) Completar Informacion\n");
+        printf("23) Completar Informacion\n");
     }
     printf("0) Volver\n\n");
 }
@@ -1974,9 +2089,50 @@ static int procesar_opcion_cantidad_cancha(int id, int opcion, int *actualizado)
     return 1;
 }
 
+static int procesar_opcion_coordenadas_cancha(int id, int opcion, int *actualizado)
+{
+    if (!actualizado || opcion != 22)
+    {
+        return 0;
+    }
+
+    char coords[128];
+    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+    double lat = 0.0, lon = 0.0;
+    char *comma = strchr(coords, ',');
+    if (comma)
+    {
+        *comma = '\0';
+        char *lat_str = coords;
+        char *lon_str = comma + 1;
+        trim_whitespace(lat_str);
+        trim_whitespace(lon_str);
+        lat = parse_double_c_locale(lat_str);
+        lon = parse_double_c_locale(lon_str);
+    }
+    else
+    {
+        lat = ROUND6(input_double("Latitud: "));
+        lon = ROUND6(input_double("Longitud: "));
+    }
+
+    char sql[128];
+    sqlite3_stmt *stmt;
+    snprintf(sql, sizeof(sql), "UPDATE cancha SET latitud = ?, longitud = ? WHERE id = ?");
+    if (db_prepare_stmt(&stmt, sql))
+    {
+        sqlite3_bind_double(stmt, 1, lat);
+        sqlite3_bind_double(stmt, 2, lon);
+        sqlite3_bind_int(stmt, 3, id);
+        *actualizado = (sqlite3_step(stmt) == SQLITE_DONE);
+        db_stmt_release(stmt);
+    }
+    return 1;
+}
+
 static int procesar_opcion_completar_info_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
 {
-    if (!actualizado || opcion != 21)
+    if (!actualizado || opcion != 23)
     {
         return 0;
     }
@@ -2016,7 +2172,12 @@ static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_comp
         return 1;
     }
 
-    if (opcion == 21)
+    if (procesar_opcion_coordenadas_cancha(id, opcion, actualizado))
+    {
+        return 1;
+    }
+
+    if (opcion == 23)
     {
         return procesar_opcion_completar_info_cancha(id, opcion, mostrar_completar_info, actualizado);
     }

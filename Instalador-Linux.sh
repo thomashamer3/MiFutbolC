@@ -528,6 +528,13 @@ echo "Building (BUILD_TYPE=${BUILD_TYPE}) with $CC..."
 "$CC" $CFLAGS "${SRC[@]}" $LDFLAGS $AUDIO_LDFLAGS -o "$OUT"
 
 echo "Compilation successful: $OUT"
+
+# Copy language files alongside the binary
+if [[ -d "langs" ]]; then
+    cp -rn langs . 2>/dev/null || true
+    echo "Language files copied."
+fi
+
 if [[ "$STRIP_BINARY" -eq 1 ]]; then
   if command -v strip >/dev/null 2>&1; then
     echo "Stripping symbols from $OUT..."

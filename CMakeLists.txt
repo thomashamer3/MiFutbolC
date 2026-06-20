@@ -165,9 +165,16 @@ if(MIFUTBOLC_BUILD_TESTS AND TEST_SOURCES)
     endforeach()
 endif()
 
+# ---- Copy langs to output directory at configure time ----
+file(COPY "${CMAKE_SOURCE_DIR}/langs" DESTINATION "${CMAKE_BINARY_DIR}")
+
 # ---- Install ----
 include(GNUInstallDirs)
 
 install(TARGETS MiFutbolC
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/langs/"
+    DESTINATION "${CMAKE_INSTALL_BINDIR}/langs"
 )

@@ -728,4 +728,30 @@ int app_command_exists_public(const char *cmd);
 int app_open_with_default_app(const char *path);
 int app_open_with_command(const char *command, const char *path);
 
+/**
+ * @brief Formatea un double en un buffer usando siempre punto como separador
+ *        decimal (locale "C"/en_US), independientemente del locale del sistema.
+ *
+ * Util para generar URLs, JSON, o archivos que requieran punto decimal.
+ *
+ * @param val Valor double a formatear
+ * @param buf Buffer de salida
+ * @param size Tamaño del buffer
+ * @param precision Cantidad de decimales (ej: 6 para DECIMAL(9,6))
+ */
+void format_double_en_us(double val, char *buf, size_t size, int precision);
+
+/**
+ * @brief Formatea un double con coma como separador decimal (locale español).
+ *
+ * Internamente llama a format_double_en_us() y reemplaza el punto por coma.
+ * Util para mostrar valores al usuario en locale español.
+ *
+ * @param val Valor double a formatear
+ * @param buf Buffer de salida
+ * @param size Tamaño del buffer
+ * @param precision Cantidad de decimales
+ */
+void format_double_es(double val, char *buf, size_t size, int precision);
+
 #endif
