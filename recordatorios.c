@@ -232,7 +232,7 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
         return 0;
     }
     /* Use bounded length to avoid unbounded reads (c:S3519). Cap at 10 MiB. */
-    size_t out_len = safe_strlen_s(out, 10 * 1024 * 1024);
+    size_t out_len = safe_strlen_s(out, (size_t)10 * 1024 * 1024);
     fwrite(out, 1, out_len, f);
     fclose(f);
     free(out);

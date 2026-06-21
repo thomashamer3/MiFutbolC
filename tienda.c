@@ -11,30 +11,29 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 
 static void asegurar_tabla_tienda(void)
 {
-    const char *sql =
-        "CREATE TABLE IF NOT EXISTS tienda ("
-        " id                  INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " nombre              TEXT    NOT NULL,"
-        " tipo                INTEGER DEFAULT 1,"
-        " url                 TEXT    DEFAULT '',"
-        " direccion           TEXT    DEFAULT '',"
-        " telefono            TEXT    DEFAULT '',"
-        " whatsapp            TEXT    DEFAULT '',"
-        " instagram           TEXT    DEFAULT '',"
-        " email               TEXT    DEFAULT '',"
-        " vende_botines       INTEGER DEFAULT 0,"
-        " vende_camisetas     INTEGER DEFAULT 0,"
-        " vende_pelotas       INTEGER DEFAULT 0,"
-        " vende_equipamiento  INTEGER DEFAULT 0,"
-        " vende_accesorios    INTEGER DEFAULT 0,"
-        " rango_precio        INTEGER DEFAULT 0,"
-        " tiene_envio         INTEGER DEFAULT 0,"
-        " mercadopago         INTEGER DEFAULT 0,"
-        " rating              INTEGER DEFAULT 0,"
-        " favorito            INTEGER DEFAULT 0,"
-        " notas               TEXT    DEFAULT '',"
-        " fecha_agregado      TEXT    DEFAULT (datetime('now', 'localtime'))"
-        ");";
+    const char *sql = "CREATE TABLE IF NOT EXISTS tienda ("
+                      " id                  INTEGER PRIMARY KEY AUTOINCREMENT,"
+                      " nombre              TEXT    NOT NULL,"
+                      " tipo                INTEGER DEFAULT 1,"
+                      " url                 TEXT    DEFAULT '',"
+                      " direccion           TEXT    DEFAULT '',"
+                      " telefono            TEXT    DEFAULT '',"
+                      " whatsapp            TEXT    DEFAULT '',"
+                      " instagram           TEXT    DEFAULT '',"
+                      " email               TEXT    DEFAULT '',"
+                      " vende_botines       INTEGER DEFAULT 0,"
+                      " vende_camisetas     INTEGER DEFAULT 0,"
+                      " vende_pelotas       INTEGER DEFAULT 0,"
+                      " vende_equipamiento  INTEGER DEFAULT 0,"
+                      " vende_accesorios    INTEGER DEFAULT 0,"
+                      " rango_precio        INTEGER DEFAULT 0,"
+                      " tiene_envio         INTEGER DEFAULT 0,"
+                      " mercadopago         INTEGER DEFAULT 0,"
+                      " rating              INTEGER DEFAULT 0,"
+                      " favorito            INTEGER DEFAULT 0,"
+                      " notas               TEXT    DEFAULT '',"
+                      " fecha_agregado      TEXT    DEFAULT (datetime('now', 'localtime'))"
+                      ");";
 
     if (sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK)
     {
@@ -196,27 +195,37 @@ void crear_tienda(void)
     pause_console();
 }
 
-static void imprimir_contacto_tienda(const char *url, const char *direccion,
-                                     const char *telefono, const char *whatsapp,
-                                     const char *instagram, const char *email)
+static void imprimir_contacto_tienda(const char *url, const char *direccion, const char *telefono,
+                                     const char *whatsapp, const char *instagram, const char *email)
 {
-    if (url && url[0])        printf("  URL: %s\n", url);
-    if (direccion && direccion[0]) printf("  Direccion: %s\n", direccion);
-    if (telefono && telefono[0])   printf("  Telefono: %s\n", telefono);
-    if (whatsapp && whatsapp[0])   printf("  WhatsApp: %s\n", whatsapp);
-    if (instagram && instagram[0]) printf("  Instagram: %s\n", instagram);
-    if (email && email[0])     printf("  Email: %s\n", email);
+    if (url && url[0])
+        printf("  URL: %s\n", url);
+    if (direccion && direccion[0])
+        printf("  Direccion: %s\n", direccion);
+    if (telefono && telefono[0])
+        printf("  Telefono: %s\n", telefono);
+    if (whatsapp && whatsapp[0])
+        printf("  WhatsApp: %s\n", whatsapp);
+    if (instagram && instagram[0])
+        printf("  Instagram: %s\n", instagram);
+    if (email && email[0])
+        printf("  Email: %s\n", email);
 }
 
-static void imprimir_productos_tienda(int botines, int camisetas, int pelotas,
-                                      int equipamiento, int accesorios)
+static void imprimir_productos_tienda(int botines, int camisetas, int pelotas, int equipamiento,
+                                      int accesorios)
 {
     printf("  Vende: ");
-    if (botines)     printf("Botines ");
-    if (camisetas)   printf("Camisetas ");
-    if (pelotas)     printf("Pelotas ");
-    if (equipamiento) printf("Equipamiento ");
-    if (accesorios)  printf("Accesorios ");
+    if (botines)
+        printf("Botines ");
+    if (camisetas)
+        printf("Camisetas ");
+    if (pelotas)
+        printf("Pelotas ");
+    if (equipamiento)
+        printf("Equipamiento ");
+    if (accesorios)
+        printf("Accesorios ");
     printf("\n");
 }
 
@@ -248,14 +257,13 @@ static void imprimir_fila_tienda(sqlite3_stmt *stmt)
     printf("  Nombre: %s\n", nombre ? nombre : "");
     printf("  Tipo: %s\n", tipo_tienda_str(tipo));
     imprimir_contacto_tienda(url, direccion, telefono, whatsapp, instagram, email);
-    imprimir_productos_tienda(vende_botines, vende_camisetas, vende_pelotas,
-                              vende_equipamiento, vende_accesorios);
+    imprimir_productos_tienda(vende_botines, vende_camisetas, vende_pelotas, vende_equipamiento,
+                              vende_accesorios);
     printf("  Rango precio: %s\n", rango_precio_str(rango_precio));
-    printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n",
-           tiene_envio ? "Si" : "No",
-           mercadopago ? "Si" : "No",
-           rating);
-    if (notas && notas[0]) printf("  Notas: %s\n", notas);
+    printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n", tiene_envio ? "Si" : "No",
+           mercadopago ? "Si" : "No", rating);
+    if (notas && notas[0])
+        printf("  Notas: %s\n", notas);
     printf("  Agregado: %s\n", fecha ? fecha : "");
     printf("----------------------------------------\n");
 }
@@ -268,11 +276,10 @@ void listar_tiendas(void)
     asegurar_tabla_tienda();
 
     sqlite3_stmt *stmt = NULL;
-    const char *sql =
-        "SELECT id, nombre, tipo, url, direccion, telefono, whatsapp, instagram, "
-        "email, vende_botines, vende_camisetas, vende_pelotas, vende_equipamiento, "
-        "vende_accesorios, rango_precio, tiene_envio, mercadopago, rating, favorito, "
-        "notas, fecha_agregado FROM tienda ORDER BY favorito DESC, nombre ASC";
+    const char *sql = "SELECT id, nombre, tipo, url, direccion, telefono, whatsapp, instagram, "
+                      "email, vende_botines, vende_camisetas, vende_pelotas, vende_equipamiento, "
+                      "vende_accesorios, rango_precio, tiene_envio, mercadopago, rating, favorito, "
+                      "notas, fecha_agregado FROM tienda ORDER BY favorito DESC, nombre ASC";
 
     if (preparar_stmt(&stmt, sql))
     {
@@ -371,13 +378,12 @@ void modificar_tienda(void)
     input_string("Nuevas notas: ", notas, sizeof(notas));
 
     sqlite3_stmt *stmt = NULL;
-    const char *sql =
-        "UPDATE tienda SET "
-        "nombre = ?, tipo = ?, url = ?, direccion = ?, telefono = ?, whatsapp = ?, "
-        "instagram = ?, email = ?, vende_botines = ?, vende_camisetas = ?, "
-        "vende_pelotas = ?, vende_equipamiento = ?, vende_accesorios = ?, "
-        "rango_precio = ?, tiene_envio = ?, mercadopago = ?, rating = ?, "
-        "favorito = ?, notas = ? WHERE id = ?";
+    const char *sql = "UPDATE tienda SET "
+                      "nombre = ?, tipo = ?, url = ?, direccion = ?, telefono = ?, whatsapp = ?, "
+                      "instagram = ?, email = ?, vende_botines = ?, vende_camisetas = ?, "
+                      "vende_pelotas = ?, vende_equipamiento = ?, vende_accesorios = ?, "
+                      "rango_precio = ?, tiene_envio = ?, mercadopago = ?, rating = ?, "
+                      "favorito = ?, notas = ? WHERE id = ?";
 
     if (preparar_stmt(&stmt, sql))
     {
@@ -466,12 +472,10 @@ void menu_tiendas(void)
 {
     asegurar_tabla_tienda();
 
-    MenuItem items[] =
-    {
-        {1, "Crear Tienda", crear_tienda},
-        {2, "Listar Tiendas", listar_tiendas},
-        {3, "Modificar Tienda", modificar_tienda},
-        {4, "Eliminar Tienda", eliminar_tienda},
+    MenuItem items[] = {{1, "Crear Tienda", &crear_tienda},
+        {2, "Listar Tiendas", &listar_tiendas},
+        {3, "Modificar Tienda", &modificar_tienda},
+        {4, "Eliminar Tienda", &eliminar_tienda},
         {0, "Volver", NULL}
     };
 

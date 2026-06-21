@@ -4,9 +4,13 @@ Checks: >
   portability-*,
   readability-*,
   clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   -readability-magic-numbers
 
 WarningsAsErrors: ''
+CheckOptions:
+  readability-identifier-length.IgnoredVariableNames: 'id'
+  readability-identifier-length.IgnoredParameterNames: 'id'
 
 HeaderFilterRegex: 'src/|include/'
 

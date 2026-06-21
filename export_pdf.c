@@ -148,7 +148,7 @@ static void new_page(PdfCtx *ctx)
     if (ctx->page_cap <= ctx->page_count)
     {
         int new_cap = ctx->page_cap == 0 ? 8 : ctx->page_cap * 2;
-        struct pdf_object **new_pages = (struct pdf_object **)realloc(ctx->pages, sizeof(struct pdf_object *) * new_cap);
+        struct pdf_object **new_pages = (struct pdf_object **)realloc((void *)ctx->pages, sizeof(struct pdf_object *) * new_cap);
         if (new_pages)
         {
             ctx->pages = new_pages;
@@ -653,9 +653,7 @@ static void format_datetime_filename(const char *src, char *dst, size_t size)
     while (*p != '\0' && remaining > 1)
     {
         char c = *p++;
-        if (c == '/')
-            c = '-';
-        else if (c == ' ')
+        if (c == '/' || c == ' ')
             c = '-';
         else if (c == ':')
             c = '.';
@@ -761,7 +759,7 @@ static void cleanup_pdf_ctx(PdfCtx *ctx)
         pdf_destroy(ctx->pdf);
 
     if (ctx->pages)
-        free(ctx->pages);
+        free((void *)ctx->pages);
 
     memset(ctx, 0, sizeof(*ctx));
 }

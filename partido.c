@@ -51,7 +51,7 @@
     "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), "                             \
     "p.atajaste_todo_el_partido, "                                                                 \
     "p.precip_mm, p.wind_kmh, p.weather_code, IFNULL(p.clima_json, ''), "                          \
-    "p.apparent_temp_c, b.nombre, p.botin_id "                                                    \
+    "p.apparent_temp_c, b.nombre, p.botin_id "                                                     \
     "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "                                      \
     "JOIN cancha can ON p.cancha_id = can.id "                                                     \
     "LEFT JOIN botin b ON p.botin_id = b.id"
@@ -1929,8 +1929,7 @@ static int crear_camiseta_inline(void)
 static int crear_botin_inline(void)
 {
     return crear_entidad_inline("botin", "Nombre del nuevo botin: ", 100,
-                                "Error al crear el botin.", "Error al guardar el botin.",
-                                "Botin");
+                                "Error al crear el botin.", "Error al guardar el botin.", "Botin");
 }
 
 /* Pide un ID de cancha; si el usuario ingresa -1 ofrece crear una nueva.
@@ -2966,7 +2965,8 @@ void crear_partido(void)
     if (settings_get()->mode != MODE_SIMPLE)
     {
         int cancha_id = datos.cancha_id;
-        double lat = 0.0, lon = 0.0;
+        double lat = 0.0;
+        double lon = 0.0;
         sqlite3_stmt *s = NULL;
         if (db_prepare_stmt(&s, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
         {
@@ -2981,7 +2981,9 @@ void crear_partido(void)
 
         if (lat != 0.0 || lon != 0.0)
         {
-            int anio = 0, mes = 0, dia = 0;
+            int anio = 0;
+            int mes = 0;
+            int dia = 0;
             if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) >= 3)
             {
                 OpenMeteoParams omp;
@@ -3822,15 +3824,15 @@ static void modificar_tags_partido(void)
 
 static void menu_modificar_rendimiento_y_estado_partido(void)
 {
-    MenuItem items[] = {{1, "Rendimiento General", modificar_rendimiento_general_partido},
-        {2, "Cansancio", modificar_cansancio_partido},
-        {3, "Estado de Animo", modificar_estado_animo_partido},
-        {4, "Minutos Jugados", modificar_minutos_jugados_partido},
-        {5, "Intensidad", modificar_intensidad_partido},
-        {6, "Dolor Fisico", modificar_dolor_fisico_partido},
-        {7, "Rating Tecnico", modificar_rating_tecnico_partido},
-        {8, "Rating Fisico", modificar_rating_fisico_partido},
-        {9, "Rating Mental", modificar_rating_mental_partido},
+    MenuItem items[] = {{1, "Rendimiento General", &modificar_rendimiento_general_partido},
+        {2, "Cansancio", &modificar_cansancio_partido},
+        {3, "Estado de Animo", &modificar_estado_animo_partido},
+        {4, "Minutos Jugados", &modificar_minutos_jugados_partido},
+        {5, "Intensidad", &modificar_intensidad_partido},
+        {6, "Dolor Fisico", &modificar_dolor_fisico_partido},
+        {7, "Rating Tecnico", &modificar_rating_tecnico_partido},
+        {8, "Rating Fisico", &modificar_rating_fisico_partido},
+        {9, "Rating Mental", &modificar_rating_mental_partido},
         {0, "Volver", NULL}
     };
 
@@ -3839,25 +3841,25 @@ static void menu_modificar_rendimiento_y_estado_partido(void)
 
 static void menu_modificar_detalle_ampliado_partido(void)
 {
-    MenuItem items[] = {{1, "Tipo de Carga", modificar_tipo_partido_partido},
-        {2, "Rival", modificar_rival_nombre_partido},
-        {3, "Tipo de Rival", modificar_tipo_rival_partido},
-        {4, "Posicion Jugada", modificar_posicion_jugada_partido},
-        {5, "Estado de Cancha", modificar_estado_cancha_partido},
-        {6, "Condicion de Cancha (Texto)", modificar_condicion_cancha_partido},
-        {7, "Marcador Global", modificar_marcador_global_partido},
-        {8, "Futbol", modificar_formato_partido_partido},
-        {9, "Tarjeta", modificar_tarjeta_partido},
-        {10, "Goles en Contra", modificar_goles_en_contra_partido},
-        {11, "Temperatura", modificar_temperatura_partido},
-        {12, "Arbitraje (Escala 1-5)", modificar_arbitraje_score_partido},
-        {13, "Arbitraje (Texto)", modificar_arbitraje_texto_partido},
-        {14, "Eventos Clave", modificar_eventos_clave_partido},
-        {15, "Lo Mejor", modificar_lo_mejor_partido},
-        {16, "Que Mejorar", modificar_que_mejorar_partido},
-        {17, "Tags", modificar_tags_partido},
-        {18, "Detalle Goles", modificar_goles_detalle_partido},
-        {19, "Detalle Asistencias", modificar_asistencias_detalle_partido},
+    MenuItem items[] = {{1, "Tipo de Carga", &modificar_tipo_partido_partido},
+        {2, "Rival", &modificar_rival_nombre_partido},
+        {3, "Tipo de Rival", &modificar_tipo_rival_partido},
+        {4, "Posicion Jugada", &modificar_posicion_jugada_partido},
+        {5, "Estado de Cancha", &modificar_estado_cancha_partido},
+        {6, "Condicion de Cancha (Texto)", &modificar_condicion_cancha_partido},
+        {7, "Marcador Global", &modificar_marcador_global_partido},
+        {8, "Futbol", &modificar_formato_partido_partido},
+        {9, "Tarjeta", &modificar_tarjeta_partido},
+        {10, "Goles en Contra", &modificar_goles_en_contra_partido},
+        {11, "Temperatura", &modificar_temperatura_partido},
+        {12, "Arbitraje (Escala 1-5)", &modificar_arbitraje_score_partido},
+        {13, "Arbitraje (Texto)", &modificar_arbitraje_texto_partido},
+        {14, "Eventos Clave", &modificar_eventos_clave_partido},
+        {15, "Lo Mejor", &modificar_lo_mejor_partido},
+        {16, "Que Mejorar", &modificar_que_mejorar_partido},
+        {17, "Tags", &modificar_tags_partido},
+        {18, "Detalle Goles", &modificar_goles_detalle_partido},
+        {19, "Detalle Asistencias", &modificar_asistencias_detalle_partido},
         {0, "Volver", NULL}
     };
 
@@ -4053,20 +4055,20 @@ void modificar_partido(void)
 
     current_partido_id = id;
 
-    MenuItem items[] = {{1, "Cancha", modificar_cancha_partido},
-        {2, "Fecha y Hora", modificar_fecha_hora_partido},
-        {3, "Goles", modificar_goles_partido},
-        {4, "Asistencias", modificar_asistencias_partido},
-        {5, "Resultado", modificar_resultado_partido},
-        {6, "Camiseta", modificar_camiseta_partido},
-        {7, "Clima", modificar_clima_partido},
-        {8, "Dia", modificar_dia_partido},
-        {9, "Comentario", modificar_comentario_partido},
-        {10, "Precio", modificar_precio_partido},
+    MenuItem items[] = {{1, "Cancha", &modificar_cancha_partido},
+        {2, "Fecha y Hora", &modificar_fecha_hora_partido},
+        {3, "Goles", &modificar_goles_partido},
+        {4, "Asistencias", &modificar_asistencias_partido},
+        {5, "Resultado", &modificar_resultado_partido},
+        {6, "Camiseta", &modificar_camiseta_partido},
+        {7, "Clima", &modificar_clima_partido},
+        {8, "Dia", &modificar_dia_partido},
+        {9, "Comentario", &modificar_comentario_partido},
+        {10, "Precio", &modificar_precio_partido},
         {11, "Rendimiento y Estado", &menu_modificar_rendimiento_y_estado_partido},
         {12, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
-        {13, "Atajaste Todo el Partido", modificar_atajaste_partido},
-        {14, "Modificar Todo", modificar_todo_partido},
+        {13, "Atajaste Todo el Partido", &modificar_atajaste_partido},
+        {14, "Modificar Todo", &modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
@@ -4155,11 +4157,11 @@ static void buscar_por_tag(void)
 
 void buscar_partidos(void)
 {
-    MenuItem items[] = {{1, "Por Camiseta", buscar_por_camiseta},
-        {2, "Por Goles", buscar_por_goles},
-        {3, "Por Asistencias", buscar_por_asistencias},
-        {4, "Por Cancha", buscar_por_cancha},
-        {5, "Por Tag", buscar_por_tag},
+    MenuItem items[] = {{1, "Por Camiseta", &buscar_por_camiseta},
+        {2, "Por Goles", &buscar_por_goles},
+        {3, "Por Asistencias", &buscar_por_asistencias},
+        {4, "Por Cancha", &buscar_por_cancha},
+        {5, "Por Tag", &buscar_por_tag},
         {0, "Volver", NULL}
     };
 
@@ -5080,8 +5082,8 @@ static void tactica_crear_diagrama(void)
 
 void menu_tacticas_partido(void)
 {
-    MenuItem items[] = {{1, "Crear diagrama", tactica_crear_diagrama},
-        {2, "Ver diagramas", tactica_ver_diagrama},
+    MenuItem items[] = {{1, "Crear diagrama", &tactica_crear_diagrama},
+        {2, "Ver diagramas", &tactica_ver_diagrama},
         {0, "Volver", NULL}
     };
 
@@ -5536,7 +5538,8 @@ void obtener_clima_partidos_historicos(void)
         const char *fecha_hora = (const char *)sqlite3_column_text(stmt, 2);
         total++;
 
-        double lat = 0.0, lon = 0.0;
+        double lat = 0.0;
+        double lon = 0.0;
         sqlite3_stmt *s_cancha = NULL;
         if (db_prepare_stmt(&s_cancha, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
         {
@@ -5552,7 +5555,9 @@ void obtener_clima_partidos_historicos(void)
         if (lat == 0.0 && lon == 0.0)
             continue;
 
-        int anio = 0, mes = 0, dia = 0;
+        int anio = 0;
+        int mes = 0;
+        int dia = 0;
         int parsed = 0;
         if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
             parsed = (sscanf(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
@@ -5621,15 +5626,15 @@ void obtener_clima_partidos_historicos(void)
 
 void menu_partidos(void)
 {
-    MenuItem items[] = {{1, "Crear", crear_partido},
-        {2, "Listar", listar_partidos},
-        {3, "Modificar", modificar_partido},
-        {4, "Eliminar", eliminar_partido},
-        {5, "Simular con Equipos Guardados", simular_partido_guardados},
-        {6, "Analisis Tactico", menu_tacticas_partido},
-        {7, "Favoritos", menu_marcar_favorito_partido},
-        {8, "Etiquetas (Tags)", menu_gestion_tags_partido},
-        {9, "Obtener Clima Historico", obtener_clima_partidos_historicos},
+    MenuItem items[] = {{1, "Crear", &crear_partido},
+        {2, "Listar", &listar_partidos},
+        {3, "Modificar", &modificar_partido},
+        {4, "Eliminar", &eliminar_partido},
+        {5, "Simular con Equipos Guardados", &simular_partido_guardados},
+        {6, "Analisis Tactico", &menu_tacticas_partido},
+        {7, "Favoritos", &menu_marcar_favorito_partido},
+        {8, "Etiquetas (Tags)", &menu_gestion_tags_partido},
+        {9, "Obtener Clima Historico", &obtener_clima_partidos_historicos},
         {0, "Volver", NULL}
     };
 

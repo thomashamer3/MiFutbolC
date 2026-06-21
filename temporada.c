@@ -1,9 +1,9 @@
 #include "temporada.h"
 #include "db.h"
-#include "utils.h"
-#include "menu.h"
 #include "equipo.h"
+#include "menu.h"
 #include "torneo.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -37,7 +37,7 @@ static void solicitar_fecha_yyyy_mm_dd(const char *prompt, char *buffer, int siz
     input_date(prompt, buffer, size);
 }
 
-const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
+const char *get_nombre_tipo_fase(TipoFaseTemporada tipo)
 {
     switch (tipo)
     {
@@ -55,7 +55,8 @@ const char* get_nombre_tipo_fase(TipoFaseTemporada tipo)
 int get_temporada_actual_id(void)
 {
     sqlite3_stmt *stmt = NULL;
-    const char *sql = "SELECT id FROM temporada WHERE estado = 'Activa' ORDER BY fecha_inicio DESC LIMIT 1;";
+    const char *sql =
+        "SELECT id FROM temporada WHERE estado = 'Activa' ORDER BY fecha_inicio DESC LIMIT 1;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -70,10 +71,11 @@ int get_temporada_actual_id(void)
     return -1;
 }
 
-int fecha_en_temporada(const char* fecha, int temporada_id)
+int fecha_en_temporada(const char *fecha, int temporada_id)
 {
     sqlite3_stmt *stmt = NULL;
-    const char *sql = "SELECT COUNT(*) FROM temporada WHERE id = ? AND ? BETWEEN fecha_inicio AND fecha_fin;";
+    const char *sql =
+        "SELECT COUNT(*) FROM temporada WHERE id = ? AND ? BETWEEN fecha_inicio AND fecha_fin;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -124,16 +126,15 @@ static void obtener_nombre_temporada(int temporada_id, char *nombre_buf, size_t 
 
 // ========== FUNCIONES DE CREACIoN Y GESTIoN ==========
 
-static void determinar_estado_temporada(const char *fecha_inicio, const char *fecha_fin, char *estado, size_t estado_size)
+static void determinar_estado_temporada(const char *fecha_inicio, const char *fecha_fin,
+                                        char *estado, size_t estado_size)
 {
     time_t now = time(NULL);
     struct tm current_time;
     localtime_s(&current_time, &now);
     char current_date[32];
-    snprintf(current_date, sizeof(current_date), "%04d-%02d-%02d",
-             current_time.tm_year + 1900,
-             current_time.tm_mon + 1,
-             current_time.tm_mday);
+    snprintf(current_date, sizeof(current_date), "%04d-%02d-%02d", current_time.tm_year + 1900,
+             current_time.tm_mon + 1, current_time.tm_mday);
 
     if (strcmp(current_date, fecha_inicio) >= 0 && strcmp(current_date, fecha_fin) <= 0)
     {
@@ -201,33 +202,38 @@ void crear_temporada(void)
     temporada.estado[0] = '\0'; // Inicializar como vacio
 
     // Solicitar datos basicos
-    solicitar_texto_no_vacio("Nombre de la temporada: ", temporada.nombre, sizeof(temporada.nombre));
+    solicitar_texto_no_vacio("Nombre de la temporada: ", temporada.nombre,
+                             sizeof(temporada.nombre));
     temporada.anio = input_int("Ano de la temporada: ");
     while (temporada.anio <= 0)
     {
         temporada.anio = input_int("Ano invalido. Ingrese un ano valido: ");
     }
 
-    solicitar_fecha_yyyy_mm_dd("Fecha de inicio (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_inicio, sizeof(temporada.fecha_inicio));
+    solicitar_fecha_yyyy_mm_dd("Fecha de inicio (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_inicio,
+                               sizeof(temporada.fecha_inicio));
 
-    solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+    solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin,
+                               sizeof(temporada.fecha_fin));
     while (strcmp(temporada.fecha_fin, temporada.fecha_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin, sizeof(temporada.fecha_fin));
+        solicitar_fecha_yyyy_mm_dd("Fecha de fin (DD/MM/AAAA, Enter=hoy): ", temporada.fecha_fin,
+                                   sizeof(temporada.fecha_fin));
     }
 
     input_string("Descripcion (opcional): ", temporada.descripcion, sizeof(temporada.descripcion));
 
     // Determinar estado automaticamente
-    determinar_estado_temporada(temporada.fecha_inicio, temporada.fecha_fin,
-                                temporada.estado, sizeof(temporada.estado));
+    determinar_estado_temporada(temporada.fecha_inicio, temporada.fecha_fin, temporada.estado,
+                                sizeof(temporada.estado));
 
     // Guardar en base de datos - reutilizar ID libre
     sqlite3_stmt *stmt = NULL;
     int nuevo_id = calcular_nuevo_id_temporada();
 
-    const char *sql = "INSERT INTO temporada (id, nombre, anio, fecha_inicio, fecha_fin, estado, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?);";
+    const char *sql = "INSERT INTO temporada (id, nombre, anio, fecha_inicio, fecha_fin, estado, "
+                      "descripcion) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -242,7 +248,8 @@ void crear_temporada(void)
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             char info[100];
-            snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), temporada.nombre, nuevo_id);
+            snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20),
+                     temporada.nombre, nuevo_id);
             mostrar_alerta_operacion("Temporada", "Creada", info);
 
             // Crear fases por defecto
@@ -275,10 +282,12 @@ void crear_fases_temporada_defecto(int temporada_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            const char *text0 = (const char*)sqlite3_column_text(stmt, 0);
-            if (text0) strcpy_s(fecha_inicio, sizeof(fecha_inicio), text0);
-            const char *text1 = (const char*)sqlite3_column_text(stmt, 1);
-            if (text1) strcpy_s(fecha_fin, sizeof(fecha_fin), text1);
+            const char *text0 = (const char *)sqlite3_column_text(stmt, 0);
+            if (text0)
+                strcpy_s(fecha_inicio, sizeof(fecha_inicio), text0);
+            const char *text1 = (const char *)sqlite3_column_text(stmt, 1);
+            if (text1)
+                strcpy_s(fecha_fin, sizeof(fecha_fin), text1);
             anio = sqlite3_column_int(stmt, 2);
         }
         else
@@ -314,7 +323,8 @@ void crear_fases_temporada_defecto(int temporada_id)
     snprintf(fecha_postemporada_fin, sizeof(fecha_postemporada_fin), "%04d-12-31", anio);
 
     // Insertar fases
-    const char *sql_insert = "INSERT INTO temporada_fase (temporada_id, nombre, tipo_fase, fecha_inicio, fecha_fin, descripcion) VALUES (?, ?, ?, ?, ?, ?);";
+    const char *sql_insert = "INSERT INTO temporada_fase (temporada_id, nombre, tipo_fase, "
+                             "fecha_inicio, fecha_fin, descripcion) VALUES (?, ?, ?, ?, ?, ?);";
 
     // Pretemporada
     sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
@@ -368,7 +378,8 @@ void listar_temporadas(void)
     print_header("LISTAR TEMPORADAS");
 
     sqlite3_stmt *stmt = NULL;
-    const char *sql = "SELECT id, nombre, anio, fecha_inicio, fecha_fin, estado FROM temporada ORDER BY anio DESC, fecha_inicio DESC;";
+    const char *sql = "SELECT id, nombre, anio, fecha_inicio, fecha_fin, estado FROM temporada "
+                      "ORDER BY anio DESC, fecha_inicio DESC;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -380,11 +391,11 @@ void listar_temporadas(void)
         {
             found = 1;
             int id = sqlite3_column_int(stmt, 0);
-            const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+            const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
             int anio = sqlite3_column_int(stmt, 2);
-            const char *fecha_inicio = (const char*)sqlite3_column_text(stmt, 3);
-            const char *fecha_fin = (const char*)sqlite3_column_text(stmt, 4);
-            const char *estado = (const char*)sqlite3_column_text(stmt, 5);
+            const char *fecha_inicio = (const char *)sqlite3_column_text(stmt, 3);
+            const char *fecha_fin = (const char *)sqlite3_column_text(stmt, 4);
+            const char *estado = (const char *)sqlite3_column_text(stmt, 5);
 
             ui_printf_centered_line("ID: %d", id);
             ui_printf_centered_line("Nombre: %s", nombre);
@@ -430,12 +441,15 @@ static void actualizar_fechas_temporada(int temporada_id)
     char nueva_fecha_inicio[20];
     char nueva_fecha_fin[20];
 
-    solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
-    solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+    solicitar_fecha_yyyy_mm_dd("Nueva fecha de inicio (DD/MM/AAAA, Enter=hoy): ",
+                               nueva_fecha_inicio, sizeof(nueva_fecha_inicio));
+    solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin,
+                               sizeof(nueva_fecha_fin));
     while (strcmp(nueva_fecha_fin, nueva_fecha_inicio) < 0)
     {
         printf("La fecha de fin no puede ser anterior a la de inicio.\n");
-        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin, sizeof(nueva_fecha_fin));
+        solicitar_fecha_yyyy_mm_dd("Nueva fecha de fin (DD/MM/AAAA, Enter=hoy): ", nueva_fecha_fin,
+                                   sizeof(nueva_fecha_fin));
     }
 
     sqlite3_stmt *stmt = NULL;
@@ -518,7 +532,8 @@ void modificar_temporada(void)
     listar_temporadas();
 
     int temporada_id = input_int("\nIngrese el ID de la temporada a modificar (0 para cancelar): ");
-    if (temporada_id == 0) return;
+    if (temporada_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -565,7 +580,8 @@ void eliminar_temporada(void)
     listar_temporadas();
 
     int temporada_id = input_int("\nIngrese el ID de la temporada a eliminar (0 para cancelar): ");
-    if (temporada_id == 0) return;
+    if (temporada_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -581,17 +597,15 @@ void eliminar_temporada(void)
         sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
 
         // Eliminar registros relacionados
-        const char *sqls[] =
-        {
-            "DELETE FROM torneo_temporada WHERE temporada_id = ?;",
-            "DELETE FROM temporada_fase WHERE temporada_id = ?;",
-            "DELETE FROM equipo_temporada_fatiga WHERE temporada_id = ?;",
-            "DELETE FROM jugador_temporada_fatiga WHERE temporada_id = ?;",
-            "DELETE FROM equipo_temporada_evolucion WHERE temporada_id = ?;",
-            "DELETE FROM temporada_resumen WHERE temporada_id = ?;",
-            "DELETE FROM temporada WHERE id = ?;",
-            NULL
-        };
+        const char *sqls[] = {"DELETE FROM torneo_temporada WHERE temporada_id = ?;",
+                              "DELETE FROM temporada_fase WHERE temporada_id = ?;",
+                              "DELETE FROM equipo_temporada_fatiga WHERE temporada_id = ?;",
+                              "DELETE FROM jugador_temporada_fatiga WHERE temporada_id = ?;",
+                              "DELETE FROM equipo_temporada_evolucion WHERE temporada_id = ?;",
+                              "DELETE FROM temporada_resumen WHERE temporada_id = ?;",
+                              "DELETE FROM temporada WHERE id = ?;",
+                              NULL
+                             };
 
         for (int i = 0; sqls[i] != NULL; i++)
         {
@@ -621,9 +635,11 @@ float calcular_fatiga_equipo(int equipo_id, int dias_recientes)
     // Calcular fatiga basada en partidos jugados en los ultimos dias
     sqlite3_stmt *stmt = NULL;
     char sql_query[500];
-    snprintf(sql_query, sizeof(sql_query), "SELECT COUNT(*) FROM partido_torneo pt "
+    snprintf(sql_query, sizeof(sql_query),
+             "SELECT COUNT(*) FROM partido_torneo pt "
              "JOIN equipo_torneo et ON pt.torneo_id = et.torneo_id "
-             "WHERE et.equipo_id = ? AND pt.fecha >= date('now', '-%d days');", dias_recientes);
+             "WHERE et.equipo_id = ? AND pt.fecha >= date('now', '-%d days');",
+             dias_recientes);
 
     float fatiga = 0.0f;
     if (preparar_stmt(sql_query, &stmt))
@@ -635,7 +651,8 @@ float calcular_fatiga_equipo(int equipo_id, int dias_recientes)
             int partidos_recientes = sqlite3_column_int(stmt, 0);
             // Fatiga aumenta con mas partidos recientes
             fatiga = (float)(partidos_recientes * 10); // 10% por partido en periodo reciente
-            if (fatiga > 100.0f) fatiga = 100.0f;
+            if (fatiga > 100.0f)
+                fatiga = 100.0f;
         }
         sqlite3_finalize(stmt);
     }
@@ -648,9 +665,11 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes)
     // Similar al calculo de equipo pero considerando minutos jugados
     sqlite3_stmt *stmt;
     char sql_query[500];
-    snprintf(sql_query, sizeof(sql_query), "SELECT COALESCE(SUM(je.minutos_jugados), 0) FROM jugador_estadisticas je "
+    snprintf(sql_query, sizeof(sql_query),
+             "SELECT COALESCE(SUM(je.minutos_jugados), 0) FROM jugador_estadisticas je "
              "JOIN partido_torneo pt ON je.torneo_id = pt.torneo_id "
-             "WHERE je.jugador_id = ? AND pt.fecha >= date('now', '-%d days');", dias_recientes);
+             "WHERE je.jugador_id = ? AND pt.fecha >= date('now', '-%d days');",
+             dias_recientes);
 
     float fatiga = 0.0f;
     if (preparar_stmt(sql_query, &stmt))
@@ -662,7 +681,8 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes)
             int minutos_recientes = sqlite3_column_int(stmt, 0);
             // Fatiga basada en minutos jugados (90 min = partido completo = 15% fatiga)
             fatiga = (float)(minutos_recientes * 15) / 90.0f;
-            if (fatiga > 100.0f) fatiga = 100.0f;
+            if (fatiga > 100.0f)
+                fatiga = 100.0f;
         }
         sqlite3_finalize(stmt);
     }
@@ -682,9 +702,11 @@ void actualizar_fatiga_equipo(int equipo_id, int temporada_id, int partido_id)
     // Insertar o actualizar registro de fatiga
     sqlite3_stmt *stmt;
     const char *sql = "INSERT OR REPLACE INTO equipo_temporada_fatiga "
-                      "(equipo_id, temporada_id, fecha, fatiga_acumulada, partidos_jugados, rendimiento_promedio) "
+                      "(equipo_id, temporada_id, fecha, fatiga_acumulada, partidos_jugados, "
+                      "rendimiento_promedio) "
                       "VALUES (?, ?, date('now'), ?, "
-                      "(SELECT COUNT(*) FROM partido_torneo pt JOIN equipo_torneo et ON pt.torneo_id = et.torneo_id "
+                      "(SELECT COUNT(*) FROM partido_torneo pt JOIN equipo_torneo et ON "
+                      "pt.torneo_id = et.torneo_id "
                       " WHERE et.equipo_id = ?), ?);";
 
     if (preparar_stmt(sql, &stmt))
@@ -699,7 +721,8 @@ void actualizar_fatiga_equipo(int equipo_id, int temporada_id, int partido_id)
     }
 }
 
-void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jugados, int lesion_ocurrida)
+void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jugados,
+                               int lesion_ocurrida)
 {
     // Calcular nueva fatiga
     float fatiga_actual = calcular_fatiga_jugador(jugador_id, 7); // ultima semana
@@ -709,7 +732,8 @@ void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jug
     if (lesion_ocurrida)
     {
         fatiga_actual += 20.0f;
-        if (fatiga_actual > 100.0f) fatiga_actual = 100.0f;
+        if (fatiga_actual > 100.0f)
+            fatiga_actual = 100.0f;
     }
 
     // Obtener rendimiento promedio del jugador
@@ -734,9 +758,11 @@ void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jug
 
     // Insertar o actualizar registro de fatiga
     const char *sql = "INSERT OR REPLACE INTO jugador_temporada_fatiga "
-                      "(jugador_id, temporada_id, fecha, fatiga_acumulada, minutos_jugados_total, rendimiento_promedio, lesiones_acumuladas) "
+                      "(jugador_id, temporada_id, fecha, fatiga_acumulada, minutos_jugados_total, "
+                      "rendimiento_promedio, lesiones_acumuladas) "
                       "VALUES (?, ?, date('now'), ?, "
-                      "(SELECT COALESCE(SUM(minutos_jugados), 0) FROM jugador_estadisticas WHERE jugador_id = ?), ?, ?);";
+                      "(SELECT COALESCE(SUM(minutos_jugados), 0) FROM jugador_estadisticas WHERE "
+                      "jugador_id = ?), ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -755,12 +781,13 @@ void actualizar_evolucion_equipo(int equipo_id, int temporada_id)
 {
     // Calcular puntuacion de rendimiento basada en resultados recientes
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT COUNT(*) as partidos_total, "
-                      "SUM(CASE WHEN ete.puntos > 0 THEN 1 ELSE 0 END) as partidos_ganados "
-                      "FROM equipo_torneo_estadisticas ete "
-                      "JOIN torneo t ON ete.torneo_id = t.id "
-                      "WHERE ete.equipo_id = ? AND EXISTS "
-                      "(SELECT 1 FROM torneo_temporada tt WHERE tt.torneo_id = t.id AND tt.temporada_id = ?);";
+    const char *sql =
+        "SELECT COUNT(*) as partidos_total, "
+        "SUM(CASE WHEN ete.puntos > 0 THEN 1 ELSE 0 END) as partidos_ganados "
+        "FROM equipo_torneo_estadisticas ete "
+        "JOIN torneo t ON ete.torneo_id = t.id "
+        "WHERE ete.equipo_id = ? AND EXISTS "
+        "(SELECT 1 FROM torneo_temporada tt WHERE tt.torneo_id = t.id AND tt.temporada_id = ?);";
 
     int partidos_total = 0;
     int partidos_ganados = 0;
@@ -777,16 +804,20 @@ void actualizar_evolucion_equipo(int equipo_id, int temporada_id)
         sqlite3_finalize(stmt);
     }
 
-    float puntuacion = partidos_total > 0 ? (float)(partidos_ganados * 100) / (float)partidos_total : 0.0f;
+    float puntuacion =
+        partidos_total > 0 ? (float)(partidos_ganados * 100) / (float)partidos_total : 0.0f;
 
     // Determinar tendencia (simplificada)
     const char *tendencia = "Estable";
-    if (puntuacion > 70.0f) tendencia = "Mejorando";
-    else if (puntuacion < 40.0f) tendencia = "Decayendo";
+    if (puntuacion > 70.0f)
+        tendencia = "Mejorando";
+    else if (puntuacion < 40.0f)
+        tendencia = "Decayendo";
 
     // Insertar registro de evolucion
     const char *sql_insert = "INSERT INTO equipo_temporada_evolucion "
-                             "(equipo_id, temporada_id, fecha_medicion, puntuacion_rendimiento, tendencia, partidos_ganados, partidos_totales) "
+                             "(equipo_id, temporada_id, fecha_medicion, puntuacion_rendimiento, "
+                             "tendencia, partidos_ganados, partidos_totales) "
                              "VALUES (?, ?, date('now'), ?, ?, ?, ?);";
 
     if (preparar_stmt(sql_insert, &stmt))
@@ -907,12 +938,13 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
 
     // Obtener datos de ambas temporadas
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT t.nombre, tr.total_partidos, tr.total_goles, tr.promedio_goles_partido, "
-                      "tr.total_lesiones, e.nombre as campeon "
-                      "FROM temporada t "
-                      "LEFT JOIN temporada_resumen tr ON t.id = tr.temporada_id "
-                      "LEFT JOIN equipo e ON tr.equipo_campeon_id = e.id "
-                      "WHERE t.id = ?;";
+    const char *sql =
+        "SELECT t.nombre, tr.total_partidos, tr.total_goles, tr.promedio_goles_partido, "
+        "tr.total_lesiones, e.nombre as campeon "
+        "FROM temporada t "
+        "LEFT JOIN temporada_resumen tr ON t.id = tr.temporada_id "
+        "LEFT JOIN equipo e ON tr.equipo_campeon_id = e.id "
+        "WHERE t.id = ?;";
 
     char nombre1[100] = "";
     char nombre2[100] = "";
@@ -934,12 +966,12 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre1, sizeof(nombre1), (const char*)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre1, sizeof(nombre1), (const char *)sqlite3_column_text(stmt, 0));
             partidos1 = sqlite3_column_int(stmt, 1);
             goles1 = sqlite3_column_int(stmt, 2);
             promedio1 = (float)sqlite3_column_double(stmt, 3);
             lesiones1 = sqlite3_column_int(stmt, 4);
-            const char *campeon = (const char*)sqlite3_column_text(stmt, 5);
+            const char *campeon = (const char *)sqlite3_column_text(stmt, 5);
             strcpy_s(campeon1, sizeof(campeon1), campeon ? campeon : "N/A");
         }
         sqlite3_finalize(stmt);
@@ -952,12 +984,12 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre2, sizeof(nombre2), (const char*)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre2, sizeof(nombre2), (const char *)sqlite3_column_text(stmt, 0));
             partidos2 = sqlite3_column_int(stmt, 1);
             goles2 = sqlite3_column_int(stmt, 2);
             promedio2 = (float)sqlite3_column_double(stmt, 3);
             lesiones2 = sqlite3_column_int(stmt, 4);
-            const char *campeon = (const char*)sqlite3_column_text(stmt, 5);
+            const char *campeon = (const char *)sqlite3_column_text(stmt, 5);
             strcpy_s(campeon2, sizeof(campeon2), campeon ? campeon : "N/A");
         }
         sqlite3_finalize(stmt);
@@ -968,7 +1000,8 @@ void comparar_temporadas(int temporada1_id, int temporada2_id)
 
     printf("Partidos jugados: %d vs %d (%+d)\n", partidos1, partidos2, partidos2 - partidos1);
     printf("Goles totales: %d vs %d (%+d)\n", goles1, goles2, goles2 - goles1);
-    printf("Promedio de goles por partido: %.2f vs %.2f (%+.2f)\n", promedio1, promedio2, promedio2 - promedio1);
+    printf("Promedio de goles por partido: %.2f vs %.2f (%+.2f)\n", promedio1, promedio2,
+           promedio2 - promedio1);
     printf("Lesiones totales: %d vs %d (%+d)\n", lesiones1, lesiones2, lesiones2 - lesiones1);
     printf("Equipo campeon: %s vs %s\n", campeon1, campeon2);
 
@@ -984,7 +1017,8 @@ void mostrar_dashboard_temporada(int temporada_id)
 
     // Obtener informacion basica de la temporada
     sqlite3_stmt *stmt;
-    const char *sql_temporada = "SELECT nombre, estado, fecha_inicio, fecha_fin FROM temporada WHERE id = ?;";
+    const char *sql_temporada =
+        "SELECT nombre, estado, fecha_inicio, fecha_fin FROM temporada WHERE id = ?;";
 
     char nombre[100] = "";
     char estado[20] = "";
@@ -996,10 +1030,11 @@ void mostrar_dashboard_temporada(int temporada_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre, sizeof(nombre), (const char*)sqlite3_column_text(stmt, 0));
-            strcpy_s(estado, sizeof(estado), (const char*)sqlite3_column_text(stmt, 1));
-            strcpy_s(fecha_inicio, sizeof(fecha_inicio), (const char*)sqlite3_column_text(stmt, 2));
-            strcpy_s(fecha_fin, sizeof(fecha_fin), (const char*)sqlite3_column_text(stmt, 3));
+            strcpy_s(nombre, sizeof(nombre), (const char *)sqlite3_column_text(stmt, 0));
+            strcpy_s(estado, sizeof(estado), (const char *)sqlite3_column_text(stmt, 1));
+            strcpy_s(fecha_inicio, sizeof(fecha_inicio),
+                     (const char *)sqlite3_column_text(stmt, 2));
+            strcpy_s(fecha_fin, sizeof(fecha_fin), (const char *)sqlite3_column_text(stmt, 3));
         }
         sqlite3_finalize(stmt);
     }
@@ -1009,8 +1044,9 @@ void mostrar_dashboard_temporada(int temporada_id)
     printf("═══════════════════════════════════════════════════════════════\n\n");
 
     // Estadisticas generales
-    const char *sql_resumen = "SELECT total_partidos, total_goles, promedio_goles_partido, total_lesiones "
-                              "FROM temporada_resumen WHERE temporada_id = ?;";
+    const char *sql_resumen =
+        "SELECT total_partidos, total_goles, promedio_goles_partido, total_lesiones "
+        "FROM temporada_resumen WHERE temporada_id = ?;";
 
     if (preparar_stmt(sql_resumen, &stmt))
     {
@@ -1053,8 +1089,8 @@ void mostrar_dashboard_temporada(int temporada_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             count++;
-            const char *torneo = (const char*)sqlite3_column_text(stmt, 0);
-            const char *fase = (const char*)sqlite3_column_text(stmt, 1);
+            const char *torneo = (const char *)sqlite3_column_text(stmt, 0);
+            const char *fase = (const char *)sqlite3_column_text(stmt, 1);
             printf("   %d. %s (%s)\n", count, torneo, fase ? fase : "Sin fase asignada");
         }
 
@@ -1092,7 +1128,7 @@ void mostrar_estadisticas_fatiga(int temporada_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             found = 1;
-            const char *equipo = (const char*)sqlite3_column_text(stmt, 0);
+            const char *equipo = (const char *)sqlite3_column_text(stmt, 0);
             float fatiga = (float)sqlite3_column_double(stmt, 1);
             int partidos = sqlite3_column_int(stmt, 2);
 
@@ -1110,12 +1146,13 @@ void mostrar_estadisticas_fatiga(int temporada_id)
 
     printf("JUGADORES CON MAYOR FATIGA:\n\n");
 
-    const char *sql_jugadores = "SELECT j.nombre, e.nombre as equipo, jtf.fatiga_acumulada, jtf.lesiones_acumuladas "
-                                "FROM jugador_temporada_fatiga jtf "
-                                "JOIN jugador j ON jtf.jugador_id = j.id "
-                                "JOIN equipo e ON j.equipo_id = e.id "
-                                "WHERE jtf.temporada_id = ? "
-                                "ORDER BY jtf.fatiga_acumulada DESC LIMIT 10;";
+    const char *sql_jugadores =
+        "SELECT j.nombre, e.nombre as equipo, jtf.fatiga_acumulada, jtf.lesiones_acumuladas "
+        "FROM jugador_temporada_fatiga jtf "
+        "JOIN jugador j ON jtf.jugador_id = j.id "
+        "JOIN equipo e ON j.equipo_id = e.id "
+        "WHERE jtf.temporada_id = ? "
+        "ORDER BY jtf.fatiga_acumulada DESC LIMIT 10;";
 
     if (preparar_stmt(sql_jugadores, &stmt))
     {
@@ -1125,8 +1162,8 @@ void mostrar_estadisticas_fatiga(int temporada_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             found = 1;
-            const char *jugador = (const char*)sqlite3_column_text(stmt, 0);
-            const char *equipo = (const char*)sqlite3_column_text(stmt, 1);
+            const char *jugador = (const char *)sqlite3_column_text(stmt, 0);
+            const char *equipo = (const char *)sqlite3_column_text(stmt, 1);
             float fatiga = (float)sqlite3_column_double(stmt, 2);
             int lesiones = sqlite3_column_int(stmt, 3);
 
@@ -1156,7 +1193,8 @@ void exportar_resumen_temporada(int temporada_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre_temporada, sizeof(nombre_temporada), (const char*)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre_temporada, sizeof(nombre_temporada),
+                     (const char *)sqlite3_column_text(stmt, 0));
         }
         sqlite3_finalize(stmt);
     }
@@ -1186,12 +1224,13 @@ void exportar_resumen_temporada(int temporada_id)
     fprintf(file, "Generado: %s\n\n", __DATE__);
 
     // Copiar contenido del dashboard al archivo
-    const char *sql_resumen = "SELECT total_partidos, total_goles, promedio_goles_partido, "
-                              "total_lesiones, e.nombre as campeon, j.nombre as goleador, mejor_goleador_goles "
-                              "FROM temporada_resumen tr "
-                              "LEFT JOIN equipo e ON tr.equipo_campeon_id = e.id "
-                              "LEFT JOIN jugador j ON tr.mejor_goleador_jugador_id = j.id "
-                              "WHERE tr.temporada_id = ?;";
+    const char *sql_resumen =
+        "SELECT total_partidos, total_goles, promedio_goles_partido, "
+        "total_lesiones, e.nombre as campeon, j.nombre as goleador, mejor_goleador_goles "
+        "FROM temporada_resumen tr "
+        "LEFT JOIN equipo e ON tr.equipo_campeon_id = e.id "
+        "LEFT JOIN jugador j ON tr.mejor_goleador_jugador_id = j.id "
+        "WHERE tr.temporada_id = ?;";
 
     if (preparar_stmt(sql_resumen, &stmt))
     {
@@ -1203,8 +1242,8 @@ void exportar_resumen_temporada(int temporada_id)
             int goles = sqlite3_column_int(stmt, 1);
             float promedio = (float)sqlite3_column_double(stmt, 2);
             int lesiones = sqlite3_column_int(stmt, 3);
-            const char *campeon = (const char*)sqlite3_column_text(stmt, 4);
-            const char *goleador = (const char*)sqlite3_column_text(stmt, 5);
+            const char *campeon = (const char *)sqlite3_column_text(stmt, 4);
+            const char *goleador = (const char *)sqlite3_column_text(stmt, 5);
             int goles_goleador = sqlite3_column_int(stmt, 6);
 
             fprintf(file, "ESTADISTICAS GENERALES:\n");
@@ -1213,7 +1252,8 @@ void exportar_resumen_temporada(int temporada_id)
             fprintf(file, "Promedio de goles por partido: %.2f\n", promedio);
             fprintf(file, "Lesiones registradas: %d\n", lesiones);
             fprintf(file, "Equipo campeon: %s\n", campeon ? campeon : "No determinado");
-            fprintf(file, "Mejor goleador: %s (%d goles)\n", goleador ? goleador : "No determinado", goles_goleador);
+            fprintf(file, "Mejor goleador: %s (%d goles)\n", goleador ? goleador : "No determinado",
+                    goles_goleador);
         }
         sqlite3_finalize(stmt);
     }
@@ -1232,8 +1272,10 @@ void administrar_temporada(void)
     // Mostrar lista de temporadas
     listar_temporadas();
 
-    int temporada_id = input_int("\nIngrese el ID de la temporada a administrar (0 para cancelar): ");
-    if (temporada_id == 0) return;
+    int temporada_id =
+        input_int("\nIngrese el ID de la temporada a administrar (0 para cancelar): ");
+    if (temporada_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -1347,7 +1389,7 @@ void asociar_torneo_temporada(int torneo_id)
             {
                 found = 1;
                 int id = sqlite3_column_int(stmt, 0);
-                const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+                const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
                 printf("%d. %s\n", id, nombre);
             }
 
@@ -1361,7 +1403,8 @@ void asociar_torneo_temporada(int torneo_id)
             sqlite3_finalize(stmt);
 
             torneo_id = input_int("\nIngrese el ID del torneo (0 para cancelar): ");
-            if (torneo_id == 0) return;
+            if (torneo_id == 0)
+                return;
         }
     }
 
@@ -1369,7 +1412,8 @@ void asociar_torneo_temporada(int torneo_id)
     listar_temporadas();
 
     int temporada_id = input_int("\nIngrese el ID de la temporada (0 para cancelar): ");
-    if (temporada_id == 0) return;
+    if (temporada_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -1406,20 +1450,21 @@ void asociar_torneo_temporada(int torneo_id)
 
 // ========== FUNCIONES DE RESUMEN MENSUAL ==========
 
-void generar_resumen_mensual(int temporada_id, const char* mes_anio)
+void generar_resumen_mensual(int temporada_id, const char *mes_anio)
 {
     sqlite3_stmt *stmt;
 
     // Contar estadisticas del mes para partidos de torneo
-    const char *sql_partidos = "SELECT "
-                               "COUNT(pt.id) as total_partidos, "
-                               "SUM(pt.goles_equipo1 + pt.goles_equipo2) as total_goles, "
-                               "COUNT(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 THEN 1 END) as partidos_ganados, "
-                               "COUNT(CASE WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 END) as partidos_empatados, "
-                               "COUNT(CASE WHEN pt.goles_equipo1 < pt.goles_equipo2 THEN 1 END) as partidos_perdidos "
-                               "FROM partido_torneo pt "
-                               "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
-                               "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ?;";
+    const char *sql_partidos =
+        "SELECT "
+        "COUNT(pt.id) as total_partidos, "
+        "SUM(pt.goles_equipo1 + pt.goles_equipo2) as total_goles, "
+        "COUNT(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 THEN 1 END) as partidos_ganados, "
+        "COUNT(CASE WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 END) as partidos_empatados, "
+        "COUNT(CASE WHEN pt.goles_equipo1 < pt.goles_equipo2 THEN 1 END) as partidos_perdidos "
+        "FROM partido_torneo pt "
+        "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
+        "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ?;";
 
     int total_partidos = 0;
     int total_goles = 0;
@@ -1481,16 +1526,18 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     // Encontrar mejor y peor equipo del mes (basado en puntos obtenidos)
     int mejor_equipo_mes = -1;
     int peor_equipo_mes = -1;
-    const char *sql_equipos = "SELECT e.id, "
-                              "SUM(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 AND et.equipo_id = pt.equipo1_id THEN 3 "
-                              "          WHEN pt.goles_equipo1 < pt.goles_equipo2 AND et.equipo_id = pt.equipo2_id THEN 3 "
-                              "          WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 ELSE 0 END) as puntos "
-                              "FROM equipo e "
-                              "JOIN equipo_torneo et ON e.id = et.equipo_id "
-                              "JOIN partido_torneo pt ON et.torneo_id = pt.torneo_id "
-                              "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
-                              "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
-                              "GROUP BY e.id ORDER BY puntos DESC LIMIT 1;";
+    const char *sql_equipos =
+        "SELECT e.id, "
+        "SUM(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 AND et.equipo_id = pt.equipo1_id THEN 3 "
+        "          WHEN pt.goles_equipo1 < pt.goles_equipo2 AND et.equipo_id = pt.equipo2_id THEN "
+        "3 "
+        "          WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 ELSE 0 END) as puntos "
+        "FROM equipo e "
+        "JOIN equipo_torneo et ON e.id = et.equipo_id "
+        "JOIN partido_torneo pt ON et.torneo_id = pt.torneo_id "
+        "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
+        "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
+        "GROUP BY e.id ORDER BY puntos DESC LIMIT 1;";
 
     if (preparar_stmt(sql_equipos, &stmt))
     {
@@ -1505,16 +1552,18 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     }
 
     // Peor equipo del mes
-    const char *sql_peor = "SELECT e.id, "
-                           "SUM(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 AND et.equipo_id = pt.equipo1_id THEN 3 "
-                           "          WHEN pt.goles_equipo1 < pt.goles_equipo2 AND et.equipo_id = pt.equipo2_id THEN 3 "
-                           "          WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 ELSE 0 END) as puntos "
-                           "FROM equipo e "
-                           "JOIN equipo_torneo et ON e.id = et.equipo_id "
-                           "JOIN partido_torneo pt ON et.torneo_id = pt.torneo_id "
-                           "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
-                           "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
-                           "GROUP BY e.id ORDER BY puntos ASC LIMIT 1;";
+    const char *sql_peor =
+        "SELECT e.id, "
+        "SUM(CASE WHEN pt.goles_equipo1 > pt.goles_equipo2 AND et.equipo_id = pt.equipo1_id THEN 3 "
+        "          WHEN pt.goles_equipo1 < pt.goles_equipo2 AND et.equipo_id = pt.equipo2_id THEN "
+        "3 "
+        "          WHEN pt.goles_equipo1 = pt.goles_equipo2 THEN 1 ELSE 0 END) as puntos "
+        "FROM equipo e "
+        "JOIN equipo_torneo et ON e.id = et.equipo_id "
+        "JOIN partido_torneo pt ON et.torneo_id = pt.torneo_id "
+        "JOIN torneo_temporada tt ON pt.torneo_id = tt.torneo_id "
+        "WHERE tt.temporada_id = ? AND strftime('%Y-%m', pt.fecha) = ? "
+        "GROUP BY e.id ORDER BY puntos ASC LIMIT 1;";
 
     if (preparar_stmt(sql_peor, &stmt))
     {
@@ -1529,11 +1578,12 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     }
 
     // Insertar resumen mensual
-    const char *sql_insert = "INSERT OR REPLACE INTO mensual_resumen "
-                             "(temporada_id, mes_anio, total_partidos, total_goles, promedio_goles_partido, "
-                             "partidos_ganados, partidos_empatados, partidos_perdidos, total_lesiones, "
-                             "total_gastos, total_ingresos, mejor_equipo_mes, peor_equipo_mes, fecha_generacion) "
-                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'));";
+    const char *sql_insert =
+        "INSERT OR REPLACE INTO mensual_resumen "
+        "(temporada_id, mes_anio, total_partidos, total_goles, promedio_goles_partido, "
+        "partidos_ganados, partidos_empatados, partidos_perdidos, total_lesiones, "
+        "total_gastos, total_ingresos, mejor_equipo_mes, peor_equipo_mes, fecha_generacion) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'));";
 
     if (preparar_stmt(sql_insert, &stmt))
     {
@@ -1557,7 +1607,7 @@ void generar_resumen_mensual(int temporada_id, const char* mes_anio)
     mostrar_alerta_operacion("Resumen Mensual", "Generado", mes_anio);
 }
 
-void mostrar_resumen_mensual(int temporada_id, const char* mes_anio)
+void mostrar_resumen_mensual(int temporada_id, const char *mes_anio)
 {
     clear_screen();
     print_header("RESUMEN MENSUAL");
@@ -1617,7 +1667,6 @@ void mostrar_resumen_mensual(int temporada_id, const char* mes_anio)
             {
                 printf("   Peor equipo del mes: %s\n", get_equipo_nombre(peor_equipo_mes));
             }
-
         }
         else
         {
@@ -1646,7 +1695,8 @@ void listar_resumenes_mensuales(int temporada_id)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre_temporada, sizeof(nombre_temporada), (const char*)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre_temporada, sizeof(nombre_temporada),
+                     (const char *)sqlite3_column_text(stmt, 0));
         }
         sqlite3_finalize(stmt);
     }
@@ -1669,7 +1719,7 @@ void listar_resumenes_mensuales(int temporada_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             found = 1;
-            const char *mes_anio = (const char*)sqlite3_column_text(stmt, 0);
+            const char *mes_anio = (const char *)sqlite3_column_text(stmt, 0);
             int total_partidos = sqlite3_column_int(stmt, 1);
             int total_goles = sqlite3_column_int(stmt, 2);
             float promedio = (float)sqlite3_column_double(stmt, 3);
@@ -1677,8 +1727,8 @@ void listar_resumenes_mensuales(int temporada_id)
             float gastos = (float)sqlite3_column_double(stmt, 5);
             float ingresos = (float)sqlite3_column_double(stmt, 6);
 
-            printf("%-8s | %-8d | %-5d | %-8.2f | %-8d | %-8.0f | %-8.0f\n",
-                   mes_anio, total_partidos, total_goles, promedio, lesiones, gastos, ingresos);
+            printf("%-8s | %-8d | %-5d | %-8.2f | %-8d | %-8.0f | %-8.0f\n", mes_anio,
+                   total_partidos, total_goles, promedio, lesiones, gastos, ingresos);
         }
 
         if (!found)
@@ -1691,7 +1741,7 @@ void listar_resumenes_mensuales(int temporada_id)
     pause_console();
 }
 
-void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
+void exportar_resumen_mensual(int temporada_id, const char *mes_anio)
 {
     // Obtener nombre de la temporada
     sqlite3_stmt *stmt;
@@ -1704,7 +1754,8 @@ void exportar_resumen_mensual(int temporada_id, const char* mes_anio)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strcpy_s(nombre_temporada, sizeof(nombre_temporada), (const char*)sqlite3_column_text(stmt, 0));
+            strcpy_s(nombre_temporada, sizeof(nombre_temporada),
+                     (const char *)sqlite3_column_text(stmt, 0));
         }
         sqlite3_finalize(stmt);
     }
@@ -1799,8 +1850,10 @@ void seleccionar_comparar_temporadas(void)
     listar_temporadas();
 
     // Solicitar primera temporada
-    int temporada1_id = input_int("\nIngrese el ID de la primera temporada a comparar (0 para cancelar): ");
-    if (temporada1_id == 0) return;
+    int temporada1_id =
+        input_int("\nIngrese el ID de la primera temporada a comparar (0 para cancelar): ");
+    if (temporada1_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada1_id))
     {
@@ -1810,8 +1863,10 @@ void seleccionar_comparar_temporadas(void)
     }
 
     // Solicitar segunda temporada
-    int temporada2_id = input_int("\nIngrese el ID de la segunda temporada a comparar (0 para cancelar): ");
-    if (temporada2_id == 0) return;
+    int temporada2_id =
+        input_int("\nIngrese el ID de la segunda temporada a comparar (0 para cancelar): ");
+    if (temporada2_id == 0)
+        return;
 
     if (!existe_id("temporada", temporada2_id))
     {
@@ -1833,14 +1888,12 @@ void seleccionar_comparar_temporadas(void)
 
 void menu_temporadas(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Crear Temporada", crear_temporada},
-        {2, "Listar Temporadas", listar_temporadas},
-        {3, "Modificar Temporada", modificar_temporada},
-        {4, "Eliminar Temporada", eliminar_temporada},
-        {5, "Administrar Temporada", administrar_temporada},
-        {6, "Comparar Temporadas", seleccionar_comparar_temporadas},
+    MenuItem items[] = {{1, "Crear Temporada", &crear_temporada},
+        {2, "Listar Temporadas", &listar_temporadas},
+        {3, "Modificar Temporada", &modificar_temporada},
+        {4, "Eliminar Temporada", &eliminar_temporada},
+        {5, "Administrar Temporada", &administrar_temporada},
+        {6, "Comparar Temporadas", &seleccionar_comparar_temporadas},
         {0, "Volver", NULL}
     };
 

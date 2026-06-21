@@ -1,29 +1,30 @@
 #include "cancha.h"
-#include "menu.h"
+#include "cJSON.h"
 #include "db.h"
 #include "export.h"
-#include "utils.h"
+#include "menu.h"
 #include "pdfgen.h"
-#include "cJSON.h"
 #include "settings.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "utils.h"
 #include <ctype.h>
 #include <locale.h>
 #include <math.h>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static double parse_double_c_locale(const char *str)
 {
     double val = 0.0;
     char *saved = setlocale(LC_NUMERIC, NULL);
     char buf[64];
-    if (saved) strncpy(buf, saved, sizeof(buf) - 1);
+    if (saved)
+        strncpy(buf, saved, sizeof(buf) - 1);
     buf[sizeof(buf) - 1] = '\0';
     setlocale(LC_NUMERIC, "C");
     val = strtod(str, NULL);
-    if (buf[0]) setlocale(LC_NUMERIC, buf);
+    if (buf[0])
+        setlocale(LC_NUMERIC, buf);
     return round(val * 1000000.0) / 1000000.0;
 }
 
@@ -57,11 +58,10 @@ static int cancha_telefono_valido(const char *buffer)
 }
 
 static void solicitar_texto_validado(const char *prompt, char *buffer, int size,
-                                     CanchaInputReader reader,
-                                     CanchaInputValidator validator,
+                                     CanchaInputReader reader, CanchaInputValidator validator,
                                      const char *error_message)
 {
-    while (1) //NOSONAR
+    while (1) // NOSONAR
     {
         reader(prompt, buffer, size);
         trim_whitespace(buffer);
@@ -77,14 +77,13 @@ static void solicitar_texto_validado(const char *prompt, char *buffer, int size,
 
 static void solicitar_campo_no_vacio(const char *prompt, char *buffer, int size)
 {
-    solicitar_texto_validado(prompt, buffer, size, input_string_extended,
-                             cancha_valor_no_vacio, "El campo no puede estar vacio.");
+    solicitar_texto_validado(prompt, buffer, size, input_string_extended, cancha_valor_no_vacio,
+                             "El campo no puede estar vacio.");
 }
 
 static void solicitar_telefono_no_vacio(const char *prompt, char *buffer, int size)
 {
-    solicitar_texto_validado(prompt, buffer, size, input_string_extended,
-                             cancha_telefono_valido,
+    solicitar_texto_validado(prompt, buffer, size, input_string_extended, cancha_telefono_valido,
                              "El telefono debe contener al menos un numero.");
 }
 
@@ -408,7 +407,8 @@ static int aplicar_opcion_superficie(int opcion, int *mask, int *no_se)
     return 1;
 }
 
-static int parsear_seleccion_superficie(const char *entrada, int *out_mask, int *out_count, int *out_no_se)
+static int parsear_seleccion_superficie(const char *entrada, int *out_mask, int *out_count,
+                                        int *out_no_se)
 {
     if (!entrada || !out_mask || !out_count || !out_no_se)
     {
@@ -821,16 +821,19 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
         info->cantidad_canchas = 1;
     }
 
-    solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info->estado, sizeof(info->estado));
+    solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info->estado,
+                             sizeof(info->estado));
     input_string("Descripcion breve: ", info->descripcion, sizeof(info->descripcion));
     trim_whitespace(info->descripcion);
-    solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt, sizeof(info->contacto_alt));
+    solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt,
+                             sizeof(info->contacto_alt));
     info->tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
 
     if (settings_get()->mode != MODE_SIMPLE)
     {
         char coords[128];
-        input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+        input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
+                              sizeof(coords));
         char *comma = strchr(coords, ',');
         if (comma)
         {
@@ -867,17 +870,20 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     }
 
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt,
-                         "SELECT nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
-                         "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
-                         "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
-                         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
-                         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
-                         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
-                         "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
-                         "IFNULL(tiene_grabacion, 0), "
-                         "latitud, longitud "
-                         "FROM cancha WHERE id = ?"))
+    if (!db_prepare_stmt(
+                &stmt,
+                "SELECT nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
+                "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), "
+                "IFNULL(techada_estado_codigo, 2), "
+                "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), "
+                "IFNULL(horario_cierre_min, -1), "
+                "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
+                "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
+                "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
+                "IFNULL(descripcion, ''), IFNULL(contacto_alt, ''), IFNULL(activa, 1), "
+                "IFNULL(tiene_grabacion, 0), "
+                "latitud, longitud "
+                "FROM cancha WHERE id = ?"))
     {
         return 0;
     }
@@ -890,9 +896,12 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     }
 
     snprintf(info->nombre, sizeof(info->nombre), "%s", (const char *)sqlite3_column_text(stmt, 0));
-    snprintf(info->telefono, sizeof(info->telefono), "%s", (const char *)sqlite3_column_text(stmt, 1));
-    snprintf(info->direccion, sizeof(info->direccion), "%s", (const char *)sqlite3_column_text(stmt, 2));
-    snprintf(info->localidad, sizeof(info->localidad), "%s", (const char *)sqlite3_column_text(stmt, 3));
+    snprintf(info->telefono, sizeof(info->telefono), "%s",
+             (const char *)sqlite3_column_text(stmt, 1));
+    snprintf(info->direccion, sizeof(info->direccion), "%s",
+             (const char *)sqlite3_column_text(stmt, 2));
+    snprintf(info->localidad, sizeof(info->localidad), "%s",
+             (const char *)sqlite3_column_text(stmt, 3));
     info->tipo_cancha_codigo = sqlite3_column_int(stmt, 4);
     info->superficie_codigo = sqlite3_column_int(stmt, 5);
     info->techada_estado = sqlite3_column_int(stmt, 6);
@@ -911,8 +920,10 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
         info->cantidad_canchas = 1;
     }
     snprintf(info->estado, sizeof(info->estado), "%s", (const char *)sqlite3_column_text(stmt, 17));
-    snprintf(info->descripcion, sizeof(info->descripcion), "%s", (const char *)sqlite3_column_text(stmt, 18));
-    snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s", (const char *)sqlite3_column_text(stmt, 19));
+    snprintf(info->descripcion, sizeof(info->descripcion), "%s",
+             (const char *)sqlite3_column_text(stmt, 18));
+    snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s",
+             (const char *)sqlite3_column_text(stmt, 19));
     info->activa = sqlite3_column_int(stmt, 20) == 1;
     info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
     info->latitud = sqlite3_column_double(stmt, 22);
@@ -970,15 +981,9 @@ static int cancha_necesita_completar_info(const CanchaInfoDetalle *info)
         return 0;
     }
 
-    const char *textos[] =
-    {
-        info->telefono,
-        info->direccion,
-        info->localidad,
-        info->estado,
-        info->descripcion,
-        info->contacto_alt
-    };
+    const char *textos[] = {info->telefono, info->direccion,   info->localidad,
+                            info->estado,   info->descripcion, info->contacto_alt
+                           };
 
     for (size_t i = 0; i < sizeof(textos) / sizeof(textos[0]); i++)
     {
@@ -990,18 +995,12 @@ static int cancha_necesita_completar_info(const CanchaInfoDetalle *info)
 
     const int condiciones[] =
     {
-        info->tipo_cancha_codigo == 0,
-        info->superficie_codigo == 0,
-        info->techada_estado == 2,
-        info->tiene_iluminacion == 0,
-        info->horario_apertura_min < 0,
-        info->horario_cierre_min < 0,
-        info->precio_hora_dia_centavos == 0,
-        info->precio_hora_noche_centavos == 0,
-        info->servicios.vestuarios == 0,
-        info->servicios.duchas == 0,
-        info->servicios.buffet == 0,
-        info->servicios.estacionamiento == 0,
+        info->tipo_cancha_codigo == 0,       info->superficie_codigo == 0,
+        info->techada_estado == 2,           info->tiene_iluminacion == 0,
+        info->horario_apertura_min < 0,      info->horario_cierre_min < 0,
+        info->precio_hora_dia_centavos == 0, info->precio_hora_noche_centavos == 0,
+        info->servicios.vestuarios == 0,     info->servicios.duchas == 0,
+        info->servicios.buffet == 0,         info->servicios.estacionamiento == 0,
         info->cantidad_canchas <= 1
     };
 
@@ -1058,15 +1057,18 @@ static int completar_informacion_cancha(int id)
     solicitar_datos_comunes_cancha(&info, 0);
 
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt,
-                         "UPDATE cancha "
-                         "SET telefono = ?, direccion = ?, localidad = ?, tipo_cancha_codigo = ?, "
-                         "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
-                         "horario_apertura_min = ?, horario_cierre_min = ?, precio_hora_dia_centavos = ?, "
-                         "precio_hora_noche_centavos = ?, tiene_vestuarios = ?, tiene_duchas = ?, tiene_buffet = ?, "
-                         "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, contacto_alt = ?, "
-                         "tiene_grabacion = ? "
-                         "WHERE id = ?"))
+    if (!db_prepare_stmt(
+                &stmt,
+                "UPDATE cancha "
+                "SET telefono = ?, direccion = ?, localidad = ?, tipo_cancha_codigo = ?, "
+                "superficie_codigo = ?, techada_estado_codigo = ?, tiene_iluminacion = ?, "
+                "horario_apertura_min = ?, horario_cierre_min = ?, precio_hora_dia_centavos = ?, "
+                "precio_hora_noche_centavos = ?, tiene_vestuarios = ?, tiene_duchas = ?, tiene_buffet "
+                "= ?, "
+                "tiene_estacionamiento = ?, cantidad_canchas = ?, estado = ?, descripcion = ?, "
+                "contacto_alt = ?, "
+                "tiene_grabacion = ? "
+                "WHERE id = ?"))
     {
         return 0;
     }
@@ -1169,7 +1171,9 @@ static int actualizar_estado_cancha(int cancha_id, int activa)
 static void listar_canchas_excluyendo(int cancha_excluida)
 {
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt, "SELECT id, nombre FROM cancha WHERE id <> ? AND IFNULL(activa, 1) = 1 ORDER BY id"))
+    if (!db_prepare_stmt(
+                &stmt,
+                "SELECT id, nombre FROM cancha WHERE id <> ? AND IFNULL(activa, 1) = 1 ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -1180,8 +1184,7 @@ static void listar_canchas_excluyendo(int cancha_excluida)
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        ui_printf_centered_line("%d - %s",
-                                sqlite3_column_int(stmt, 0),
+        ui_printf_centered_line("%d - %s", sqlite3_column_int(stmt, 0),
                                 sqlite3_column_text(stmt, 1));
         hay = 1;
     }
@@ -1396,8 +1399,8 @@ static int construir_ruta_absoluta_imagen_cancha_por_id(int id, char *ruta_absol
 
 static void solicitar_nombre_cancha(const char *prompt, char *buffer, int size)
 {
-    solicitar_texto_validado(prompt, buffer, size, input_string,
-                             cancha_valor_no_vacio, "El nombre no puede estar vacio.");
+    solicitar_texto_validado(prompt, buffer, size, input_string, cancha_valor_no_vacio,
+                             "El nombre no puede estar vacio.");
 }
 
 static int cargar_imagen_para_cancha_id(int id)
@@ -1509,14 +1512,17 @@ void crear_cancha(void)
         info.cantidad_canchas = input_int("Cantidad de canchas del complejo: ");
         if (info.cantidad_canchas <= 0)
             info.cantidad_canchas = 1;
-        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info.estado, sizeof(info.estado));
+        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info.estado,
+                                 sizeof(info.estado));
         input_string("Descripcion breve: ", info.descripcion, sizeof(info.descripcion));
         trim_whitespace(info.descripcion);
-        solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info.contacto_alt, sizeof(info.contacto_alt));
+        solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info.contacto_alt,
+                                 sizeof(info.contacto_alt));
         info.tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
         {
             char coords[128];
-            input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+            input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
+                                  sizeof(coords));
             char *comma = strchr(coords, ',');
             if (comma)
             {
@@ -1537,14 +1543,16 @@ void crear_cancha(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt,
-                         "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
-                         "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
-                         "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
-                         "tiene_vestuarios, tiene_duchas, tiene_buffet, tiene_estacionamiento, cantidad_canchas, "
-                         "estado, descripcion, contacto_alt, "
-                         "latitud, longitud) "
-                         "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
+    if (!db_prepare_stmt(
+                &stmt,
+                "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
+                "superficie_codigo, techada_estado_codigo, tiene_iluminacion, horario_apertura_min, "
+                "horario_cierre_min, precio_hora_dia_centavos, precio_hora_noche_centavos, "
+                "tiene_vestuarios, tiene_duchas, tiene_buffet, tiene_estacionamiento, "
+                "cantidad_canchas, "
+                "estado, descripcion, contacto_alt, "
+                "latitud, longitud) "
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
     {
         printf("Error al crear la cancha.\n");
         pause_console();
@@ -1606,16 +1614,15 @@ void listar_canchas(void)
     app_log_event("CANCHA", "Listado de canchas consultado");
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT c.id, c.nombre, "
-        "COUNT(p.id), "
-        "IFNULL(SUM(p.goles), 0), "
-        "IFNULL(SUM(p.asistencias), 0) "
-        "FROM cancha c "
-        "LEFT JOIN partido p ON c.id = p.cancha_id "
-        "WHERE IFNULL(c.activa, 1) = 1 "
-        "GROUP BY c.id, c.nombre "
-        "ORDER BY c.id;";
+    const char *sql = "SELECT c.id, c.nombre, "
+                      "COUNT(p.id), "
+                      "IFNULL(SUM(p.goles), 0), "
+                      "IFNULL(SUM(p.asistencias), 0) "
+                      "FROM cancha c "
+                      "LEFT JOIN partido p ON c.id = p.cancha_id "
+                      "WHERE IFNULL(c.activa, 1) = 1 "
+                      "GROUP BY c.id, c.nombre "
+                      "ORDER BY c.id;";
 
     if (!db_prepare_stmt(&stmt, sql))
     {
@@ -1636,14 +1643,8 @@ void listar_canchas(void)
         int goles = sqlite3_column_int(stmt, 3);
         int asistencias = sqlite3_column_int(stmt, 4);
 
-        ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d",
-                                id,
-                                nombre ? nombre : "(sin nombre)",
-                                sep,
-                                partidos,
-                                sep,
-                                goles,
-                                sep,
+        ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d", id,
+                                nombre ? nombre : "(sin nombre)", sep, partidos, sep, goles, sep,
                                 asistencias);
         hay = 1;
     }
@@ -1658,7 +1659,8 @@ void listar_canchas(void)
 static void listar_canchas_simple(void)
 {
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1), IFNULL(tipo_cancha_codigo, 0) FROM cancha ORDER BY id"))
+    if (!db_prepare_stmt(&stmt, "SELECT id, nombre, IFNULL(activa, 1), IFNULL(tipo_cancha_codigo, "
+                         "0) FROM cancha ORDER BY id"))
     {
         printf("Error al consultar la base de datos.\n");
         return;
@@ -1669,10 +1671,8 @@ static void listar_canchas_simple(void)
     {
         const char *estado = sqlite3_column_int(stmt, 2) == 1 ? "ACTIVA" : "INACTIVA";
         int tipo_codigo = sqlite3_column_int(stmt, 3);
-        ui_printf_centered_line("%d - %s [%s] Tipo: %s",
-                                sqlite3_column_int(stmt, 0),
-                                sqlite3_column_text(stmt, 1),
-                                estado,
+        ui_printf_centered_line("%d - %s [%s] Tipo: %s", sqlite3_column_int(stmt, 0),
+                                sqlite3_column_text(stmt, 1), estado,
                                 texto_tipo_cancha(tipo_codigo));
         hay = 1;
     }
@@ -1735,7 +1735,8 @@ static void procesar_eliminacion_reasignando_partidos_cancha(int id, int partido
         return;
     }
 
-    if (cancha_destino == id || !existe_id("cancha", cancha_destino) || !cancha_esta_activa(cancha_destino))
+    if (cancha_destino == id || !existe_id("cancha", cancha_destino) ||
+            !cancha_esta_activa(cancha_destino))
     {
         printf("Cancha destino invalida.\n");
         pause_console();
@@ -1765,8 +1766,8 @@ static void procesar_eliminacion_con_partidos_asociados_cancha(int id, int parti
 {
     char detalle[160] = {0};
     snprintf(detalle, sizeof(detalle),
-             "Se eliminara la cancha %d y TODOS sus %d partido(s) asociados.",
-             id, partidos_asociados);
+             "Se eliminara la cancha %d y TODOS sus %d partido(s) asociados.", id,
+             partidos_asociados);
     if (!confirmar_borrado_irreversible_cancha(id, detalle))
     {
         return;
@@ -1784,7 +1785,8 @@ static void procesar_eliminacion_con_partidos_asociados_cancha(int id, int parti
 
 static void procesar_retiro_cancha(int id)
 {
-    if (!confirmar("Se retirara la cancha: no aparecera para partidos nuevos, pero conservara historial. Continuar?"))
+    if (!confirmar("Se retirara la cancha: no aparecera para partidos nuevos, pero conservara "
+                   "historial. Continuar?"))
     {
         return;
     }
@@ -1900,7 +1902,8 @@ void eliminar_cancha(void)
     eliminar_cancha_sin_partidos_asociados(id);
 }
 
-static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info, int mostrar_completar_info)
+static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info,
+        int mostrar_completar_info)
 {
     char hora_apertura[16];
     char hora_cierre[16];
@@ -1972,13 +1975,13 @@ static int cancha_texto_compare(const void *a, const void *b)
 
 static const struct CanchaTextoDesc cancha_texto_campos[] =
 {
-    {1,  "nombre",       solicitar_nombre_cancha,    "Nuevo nombre: ",                              NULL},
-    {2,  "telefono",     solicitar_telefono_no_vacio,"Nuevo numero de telefono: ",                  NULL},
-    {3,  "direccion",    solicitar_campo_no_vacio,   "Nueva direccion: ",                           NULL},
-    {4,  "localidad",    solicitar_campo_no_vacio,   "Nueva localidad/zona: ",                      NULL},
-    {18, "estado",       solicitar_campo_no_vacio,   "Estado (ej: habilitada, en mantenimiento): ", NULL},
-    {19, "descripcion",  input_string,               "Descripcion breve: ",                         trim_whitespace},
-    {20, "contacto_alt", solicitar_campo_no_vacio,   "Nuevo contacto alternativo: ",                NULL}
+    {1, "nombre", solicitar_nombre_cancha, "Nuevo nombre: ", NULL},
+    {2, "telefono", solicitar_telefono_no_vacio, "Nuevo numero de telefono: ", NULL},
+    {3, "direccion", solicitar_campo_no_vacio, "Nueva direccion: ", NULL},
+    {4, "localidad", solicitar_campo_no_vacio, "Nueva localidad/zona: ", NULL},
+    {18, "estado", solicitar_campo_no_vacio, "Estado (ej: habilitada, en mantenimiento): ", NULL},
+    {19, "descripcion", input_string, "Descripcion breve: ", trim_whitespace},
+    {20, "contacto_alt", solicitar_campo_no_vacio, "Nuevo contacto alternativo: ", NULL}
 };
 
 static int solicitar_texto_y_campo_cancha(int opcion, char *valor, const char **campo)
@@ -1989,9 +1992,9 @@ static int solicitar_texto_y_campo_cancha(int opcion, char *valor, const char **
     }
 
     struct CanchaTextoDesc key = {.opcion = opcion};
-    const struct CanchaTextoDesc *found = bsearch(&key, cancha_texto_campos,
-                                          sizeof(cancha_texto_campos) / sizeof(cancha_texto_campos[0]),
-                                          sizeof(cancha_texto_campos[0]), cancha_texto_compare);
+    const struct CanchaTextoDesc *found = bsearch(
+            &key, cancha_texto_campos, sizeof(cancha_texto_campos) / sizeof(cancha_texto_campos[0]),
+            sizeof(cancha_texto_campos[0]), cancha_texto_compare);
 
     if (!found)
         return 0;
@@ -2032,40 +2035,53 @@ static int procesar_opcion_entero_cancha(int id, int opcion, int *actualizado)
     switch (opcion)
     {
     case 5:
-        *actualizado = actualizar_campo_entero_cancha(id, "tipo_cancha_codigo", solicitar_tipo_cancha_codigo());
+        *actualizado = actualizar_campo_entero_cancha(id, "tipo_cancha_codigo",
+                       solicitar_tipo_cancha_codigo());
         return 1;
     case 6:
-        *actualizado = actualizar_campo_entero_cancha(id, "superficie_codigo", solicitar_superficie_codigo());
+        *actualizado =
+            actualizar_campo_entero_cancha(id, "superficie_codigo", solicitar_superficie_codigo());
         return 1;
     case 7:
-        *actualizado = actualizar_campo_entero_cancha(id, "techada_estado_codigo", solicitar_estado_techada_codigo());
+        *actualizado = actualizar_campo_entero_cancha(id, "techada_estado_codigo",
+                       solicitar_estado_techada_codigo());
         return 1;
     case 8:
-        *actualizado = actualizar_campo_entero_cancha(id, "tiene_iluminacion", solicitar_si_no("Tiene iluminacion?"));
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_iluminacion",
+                       solicitar_si_no("Tiene iluminacion?"));
         return 1;
     case 9:
-        *actualizado = actualizar_campo_entero_cancha(id, "horario_apertura_min", solicitar_hora_minutos("Horario de apertura (HH:MM): "));
+        *actualizado = actualizar_campo_entero_cancha(
+                           id, "horario_apertura_min", solicitar_hora_minutos("Horario de apertura (HH:MM): "));
         return 1;
     case 10:
-        *actualizado = actualizar_campo_entero_cancha(id, "horario_cierre_min", solicitar_hora_minutos("Horario de cierre (HH:MM): "));
+        *actualizado = actualizar_campo_entero_cancha(
+                           id, "horario_cierre_min", solicitar_hora_minutos("Horario de cierre (HH:MM): "));
         return 1;
     case 11:
-        *actualizado = actualizar_campo_entero_cancha(id, "precio_hora_dia_centavos", solicitar_precio_centavos("Precio por hora (Dia): "));
+        *actualizado = actualizar_campo_entero_cancha(
+                           id, "precio_hora_dia_centavos", solicitar_precio_centavos("Precio por hora (Dia): "));
         return 1;
     case 12:
-        *actualizado = actualizar_campo_entero_cancha(id, "precio_hora_noche_centavos", solicitar_precio_centavos("Precio por hora (Noche): "));
+        *actualizado =
+            actualizar_campo_entero_cancha(id, "precio_hora_noche_centavos",
+                                           solicitar_precio_centavos("Precio por hora (Noche): "));
         return 1;
     case 13:
-        *actualizado = actualizar_campo_entero_cancha(id, "tiene_vestuarios", solicitar_si_no("Tiene vestuarios?"));
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_vestuarios",
+                       solicitar_si_no("Tiene vestuarios?"));
         return 1;
     case 14:
-        *actualizado = actualizar_campo_entero_cancha(id, "tiene_duchas", solicitar_si_no("Tiene duchas?"));
+        *actualizado =
+            actualizar_campo_entero_cancha(id, "tiene_duchas", solicitar_si_no("Tiene duchas?"));
         return 1;
     case 15:
-        *actualizado = actualizar_campo_entero_cancha(id, "tiene_buffet", solicitar_si_no("Tiene buffet?"));
+        *actualizado =
+            actualizar_campo_entero_cancha(id, "tiene_buffet", solicitar_si_no("Tiene buffet?"));
         return 1;
     case 16:
-        *actualizado = actualizar_campo_entero_cancha(id, "tiene_estacionamiento", solicitar_si_no("Tiene estacionamiento?"));
+        *actualizado = actualizar_campo_entero_cancha(id, "tiene_estacionamiento",
+                       solicitar_si_no("Tiene estacionamiento?"));
         return 1;
     default:
         return 0;
@@ -2097,8 +2113,10 @@ static int procesar_opcion_coordenadas_cancha(int id, int opcion, int *actualiza
     }
 
     char coords[128];
-    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
-    double lat = 0.0, lon = 0.0;
+    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
+                          sizeof(coords));
+    double lat = 0.0;
+    double lon = 0.0;
     char *comma = strchr(coords, ',');
     if (comma)
     {
@@ -2130,7 +2148,8 @@ static int procesar_opcion_coordenadas_cancha(int id, int opcion, int *actualiza
     return 1;
 }
 
-static int procesar_opcion_completar_info_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+static int procesar_opcion_completar_info_cancha(int id, int opcion, int mostrar_completar_info,
+        int *actualizado)
 {
     if (!actualizado || opcion != 23)
     {
@@ -2148,7 +2167,8 @@ static int procesar_opcion_completar_info_cancha(int id, int opcion, int mostrar
     return 0;
 }
 
-static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_completar_info, int *actualizado)
+static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_completar_info,
+        int *actualizado)
 {
     if (!actualizado)
     {
@@ -2179,7 +2199,8 @@ static int procesar_opcion_modificar_cancha(int id, int opcion, int mostrar_comp
 
     if (opcion == 23)
     {
-        return procesar_opcion_completar_info_cancha(id, opcion, mostrar_completar_info, actualizado);
+        return procesar_opcion_completar_info_cancha(id, opcion, mostrar_completar_info,
+                actualizado);
     }
 
     printf("Opcion invalida.\n");
@@ -2415,8 +2436,10 @@ static int cancha_export_preparar_stmt(sqlite3_stmt **stmt, int exportar_todas, 
 {
     const char *sql_todas =
         "SELECT id, nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
-        "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
-        "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
+        "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), "
+        "IFNULL(techada_estado_codigo, 2), "
+        "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), "
+        "IFNULL(horario_cierre_min, -1), "
         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
@@ -2426,8 +2449,10 @@ static int cancha_export_preparar_stmt(sqlite3_stmt **stmt, int exportar_todas, 
 
     const char *sql_una =
         "SELECT id, nombre, IFNULL(telefono, ''), IFNULL(direccion, ''), IFNULL(localidad, ''), "
-        "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), IFNULL(techada_estado_codigo, 2), "
-        "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), IFNULL(horario_cierre_min, -1), "
+        "IFNULL(tipo_cancha_codigo, 0), IFNULL(superficie_codigo, 0), "
+        "IFNULL(techada_estado_codigo, 2), "
+        "IFNULL(tiene_iluminacion, 0), IFNULL(horario_apertura_min, -1), "
+        "IFNULL(horario_cierre_min, -1), "
         "IFNULL(precio_hora_dia_centavos, 0), IFNULL(precio_hora_noche_centavos, 0), "
         "IFNULL(tiene_vestuarios, 0), IFNULL(tiene_duchas, 0), IFNULL(tiene_buffet, 0), "
         "IFNULL(tiene_estacionamiento, 0), IFNULL(cantidad_canchas, 1), IFNULL(estado, ''), "
@@ -2447,7 +2472,8 @@ static int cancha_export_preparar_stmt(sqlite3_stmt **stmt, int exportar_todas, 
     return 1;
 }
 
-static void cancha_export_cargar_desde_stmt(sqlite3_stmt *stmt, int *out_id, CanchaInfoDetalle *info)
+static void cancha_export_cargar_desde_stmt(sqlite3_stmt *stmt, int *out_id,
+        CanchaInfoDetalle *info)
 {
     if (!stmt || !out_id || !info)
     {
@@ -2482,7 +2508,8 @@ static void cancha_export_cargar_desde_stmt(sqlite3_stmt *stmt, int *out_id, Can
 
     snprintf(info->estado, sizeof(info->estado), "%s", cancha_export_col_text(stmt, 18));
     snprintf(info->descripcion, sizeof(info->descripcion), "%s", cancha_export_col_text(stmt, 19));
-    snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s", cancha_export_col_text(stmt, 20));
+    snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s",
+             cancha_export_col_text(stmt, 20));
     info->activa = sqlite3_column_int(stmt, 21) == 1;
     info->tiene_grabacion = sqlite3_column_int(stmt, 22) ? 1 : 0;
 }
@@ -2562,7 +2589,8 @@ static int cancha_export_info_txt(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
     char filename[128];
-    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "txt", exportar_todas, cancha_id);
+    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "txt", exportar_todas,
+                                         cancha_id);
 
     FILE *f = abrir_archivo_exportacion(filename, "Error al crear archivo TXT de canchas.");
     if (!f)
@@ -2633,7 +2661,8 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
     char filename[128];
-    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "csv", exportar_todas, cancha_id);
+    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "csv", exportar_todas,
+                                         cancha_id);
 
     FILE *f = abrir_archivo_exportacion(filename, "Error al crear archivo CSV de canchas.");
     if (!f)
@@ -2648,7 +2677,10 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         return 0;
     }
 
-    fprintf(f, "id,nombre,telefono,direccion,localidad,tipo_cancha,superficie,techada,iluminacion,horario_apertura,horario_cierre,precio_hora_dia,precio_hora_noche,vestuarios,duchas,buffet,estacionamiento,cantidad_canchas,estado_pasto,descripcion,contacto_alterno,grabacion_partido,estado\n");
+    fprintf(f, "id,nombre,telefono,direccion,localidad,tipo_cancha,superficie,techada,iluminacion,"
+            "horario_apertura,horario_cierre,precio_hora_dia,precio_hora_noche,vestuarios,"
+            "duchas,buffet,estacionamiento,cantidad_canchas,estado_pasto,descripcion,contacto_"
+            "alterno,grabacion_partido,estado\n");
 
     int total = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2682,13 +2714,9 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         cancha_export_write_csv_field(f, hora_apertura);
         fprintf(f, ",");
         cancha_export_write_csv_field(f, hora_cierre);
-        fprintf(f, ",%.2f,%.2f,%d,%d,%d,%d,%d,",
-                (double)info.precio_hora_dia_centavos / 100.0,
-                (double)info.precio_hora_noche_centavos / 100.0,
-                info.servicios.vestuarios,
-                info.servicios.duchas,
-                info.servicios.buffet,
-                info.servicios.estacionamiento,
+        fprintf(f, ",%.2f,%.2f,%d,%d,%d,%d,%d,", (double)info.precio_hora_dia_centavos / 100.0,
+                (double)info.precio_hora_noche_centavos / 100.0, info.servicios.vestuarios,
+                info.servicios.duchas, info.servicios.buffet, info.servicios.estacionamiento,
                 info.cantidad_canchas);
         cancha_export_write_csv_field(f, texto_o_defecto(info.estado, ""));
         fprintf(f, ",");
@@ -2746,7 +2774,8 @@ static cJSON *cancha_export_json_build_item(sqlite3_stmt *stmt)
     cJSON_AddStringToObject(item, "horario_apertura", hora_apertura);
     cJSON_AddStringToObject(item, "horario_cierre", hora_cierre);
     cJSON_AddNumberToObject(item, "precio_hora_dia", (double)info.precio_hora_dia_centavos / 100.0);
-    cJSON_AddNumberToObject(item, "precio_hora_noche", (double)info.precio_hora_noche_centavos / 100.0);
+    cJSON_AddNumberToObject(item, "precio_hora_noche",
+                            (double)info.precio_hora_noche_centavos / 100.0);
     cJSON_AddBoolToObject(item, "tiene_vestuarios", info.servicios.vestuarios);
     cJSON_AddBoolToObject(item, "tiene_duchas", info.servicios.duchas);
     cJSON_AddBoolToObject(item, "tiene_buffet", info.servicios.buffet);
@@ -2765,7 +2794,8 @@ static int cancha_export_info_json(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
     char filename[128];
-    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "json", exportar_todas, cancha_id);
+    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "json", exportar_todas,
+                                         cancha_id);
 
     FILE *f = abrir_archivo_exportacion(filename, "Error al crear archivo JSON de canchas.");
     if (!f)
@@ -2852,7 +2882,8 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
     char filename[128];
-    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "html", exportar_todas, cancha_id);
+    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "html", exportar_todas,
+                                         cancha_id);
 
     FILE *f = abrir_archivo_exportacion(filename, "Error al crear archivo HTML de canchas.");
     if (!f)
@@ -2869,11 +2900,20 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
 
     fprintf(f, "<!doctype html>\n");
     fprintf(f, "<html><head><meta charset=\"utf-8\"><title>Canchas</title>");
-    fprintf(f, "<style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;width:100%%;}th,td{border:1px solid #ccc;padding:6px;text-align:left;}th{background:#f0f0f0;}h1{margin-bottom:16px;}</style>");
+    fprintf(
+        f,
+        "<style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;"
+        "width:100%%;}th,td{border:1px solid "
+        "#ccc;padding:6px;text-align:left;}th{background:#f0f0f0;}h1{margin-bottom:16px;}</style>");
     fprintf(f, "</head><body>\n");
     fprintf(f, "<h1>Informacion de Canchas</h1>\n");
     fprintf(f, "<table><thead><tr>");
-    fprintf(f, "<th>ID</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th>Localidad</th><th>Tipo</th><th>Superficie</th><th>Techada</th><th>Iluminacion</th><th>Apertura</th><th>Cierre</th><th>Precio Dia</th><th>Precio Noche</th><th>Vestuarios</th><th>Duchas</th><th>Buffet</th><th>Estacionamiento</th><th>Cantidad</th><th>Estado Pasto</th><th>Descripcion</th><th>Contacto Alterno</th><th>Grabacion</th><th>Estado</th>");
+    fprintf(f, "<th>ID</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th>Localidad</"
+            "th><th>Tipo</th><th>Superficie</th><th>Techada</th><th>Iluminacion</"
+            "th><th>Apertura</th><th>Cierre</th><th>Precio Dia</th><th>Precio "
+            "Noche</th><th>Vestuarios</th><th>Duchas</th><th>Buffet</th><th>Estacionamiento</"
+            "th><th>Cantidad</th><th>Estado Pasto</th><th>Descripcion</th><th>Contacto "
+            "Alterno</th><th>Grabacion</th><th>Estado</th>");
     fprintf(f, "</tr></thead><tbody>\n");
 
     int total = 0;
@@ -2904,14 +2944,11 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         cancha_export_write_html_text(f, texto_estado_techada(info.techada_estado));
         fprintf(f, "</td><td>%s</td>", info.tiene_iluminacion ? "SI" : "NO");
         fprintf(f, "<td>%s</td><td>%s</td>", hora_apertura, hora_cierre);
-        fprintf(f, "<td>%.2f</td><td>%.2f</td>",
-                (double)info.precio_hora_dia_centavos / 100.0,
+        fprintf(f, "<td>%.2f</td><td>%.2f</td>", (double)info.precio_hora_dia_centavos / 100.0,
                 (double)info.precio_hora_noche_centavos / 100.0);
         fprintf(f, "<td>%s</td><td>%s</td><td>%s</td><td>%s</td>",
-                info.servicios.vestuarios ? "SI" : "NO",
-                info.servicios.duchas ? "SI" : "NO",
-                info.servicios.buffet ? "SI" : "NO",
-                info.servicios.estacionamiento ? "SI" : "NO");
+                info.servicios.vestuarios ? "SI" : "NO", info.servicios.duchas ? "SI" : "NO",
+                info.servicios.buffet ? "SI" : "NO", info.servicios.estacionamiento ? "SI" : "NO");
         fprintf(f, "<td>%d</td><td>", info.cantidad_canchas);
         cancha_export_write_html_text(f, texto_o_defecto(info.estado, ""));
         fprintf(f, "</td><td>");
@@ -2953,10 +2990,8 @@ typedef struct
     float margin;
 } CanchaExportPdfCtx;
 
-static CanchaExportPdfCtx cancha_export_pdf_add_line(CanchaExportPdfCtx ctx,
-        const char *text,
-        float size,
-        float leading)
+static CanchaExportPdfCtx cancha_export_pdf_add_line(CanchaExportPdfCtx ctx, const char *text,
+        float size, float leading)
 {
     if (!ctx.pdf || !ctx.page || !text)
     {
@@ -3011,11 +3046,14 @@ static CanchaExportPdfCtx cancha_export_pdf_print_fila(CanchaExportPdfCtx ctx, i
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
     snprintf(line, sizeof(line), "Telefono: %s", texto_o_defecto(detalle->telefono, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Direccion: %s", texto_o_defecto(detalle->direccion, "(sin dato)"));
+    snprintf(line, sizeof(line), "Direccion: %s",
+             texto_o_defecto(detalle->direccion, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Localidad: %s", texto_o_defecto(detalle->localidad, "(sin dato)"));
+    snprintf(line, sizeof(line), "Localidad: %s",
+             texto_o_defecto(detalle->localidad, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Tipo de Cancha: %s", texto_tipo_cancha(detalle->tipo_cancha_codigo));
+    snprintf(line, sizeof(line), "Tipo de Cancha: %s",
+             texto_tipo_cancha(detalle->tipo_cancha_codigo));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
     snprintf(line, sizeof(line), "Superficie: %s", texto_superficie(detalle->superficie_codigo));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
@@ -3027,25 +3065,29 @@ static CanchaExportPdfCtx cancha_export_pdf_print_fila(CanchaExportPdfCtx ctx, i
     snprintf(line, sizeof(line), "Horario: %s - %s", hora_apertura, hora_cierre);
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
 
-    snprintf(line, sizeof(line), "Precio Hora Dia: $%.2f", (double)detalle->precio_hora_dia_centavos / 100.0);
+    snprintf(line, sizeof(line), "Precio Hora Dia: $%.2f",
+             (double)detalle->precio_hora_dia_centavos / 100.0);
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Precio Hora Noche: $%.2f", (double)detalle->precio_hora_noche_centavos / 100.0);
+    snprintf(line, sizeof(line), "Precio Hora Noche: $%.2f",
+             (double)detalle->precio_hora_noche_centavos / 100.0);
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
 
     snprintf(line, sizeof(line), "Vestuarios: %s | Duchas: %s | Buffet: %s | Estacionamiento: %s",
-             detalle->servicios.vestuarios ? "SI" : "NO",
-             detalle->servicios.duchas ? "SI" : "NO",
+             detalle->servicios.vestuarios ? "SI" : "NO", detalle->servicios.duchas ? "SI" : "NO",
              detalle->servicios.buffet ? "SI" : "NO",
              detalle->servicios.estacionamiento ? "SI" : "NO");
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
 
     snprintf(line, sizeof(line), "Cantidad Canchas: %d", detalle->cantidad_canchas);
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Estado Pasto: %s", texto_o_defecto(detalle->estado, "(sin dato)"));
+    snprintf(line, sizeof(line), "Estado Pasto: %s",
+             texto_o_defecto(detalle->estado, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Descripcion: %s", texto_o_defecto(detalle->descripcion, "(sin dato)"));
+    snprintf(line, sizeof(line), "Descripcion: %s",
+             texto_o_defecto(detalle->descripcion, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Contacto Alterno: %s", texto_o_defecto(detalle->contacto_alt, "(sin dato)"));
+    snprintf(line, sizeof(line), "Contacto Alterno: %s",
+             texto_o_defecto(detalle->contacto_alt, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
     snprintf(line, sizeof(line), "Grabacion Partido: %s", detalle->tiene_grabacion ? "SI" : "NO");
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
@@ -3059,7 +3101,8 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
 {
     sqlite3_stmt *stmt = NULL;
     char filename[128];
-    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "pdf", exportar_todas, cancha_id);
+    cancha_export_generar_nombre_archivo(filename, sizeof(filename), "pdf", exportar_todas,
+                                         cancha_id);
 
     if (!cancha_export_preparar_stmt(&stmt, exportar_todas, cancha_id))
     {
@@ -3100,10 +3143,9 @@ static int cancha_export_info_pdf(int exportar_todas, int cancha_id)
     CanchaExportPdfCtx pdf_ctx = {pdf, page, y, 0, 40.0f};
 
     pdf_ctx = cancha_export_pdf_add_line(pdf_ctx, "INFORMACION DE CANCHAS", 14.0f, 18.0f);
-    pdf_ctx = cancha_export_pdf_add_line(pdf_ctx,
-                                         exportar_todas ? "Alcance: Todas las canchas" : "Alcance: Una cancha",
-                                         10.0f,
-                                         14.0f);
+    pdf_ctx = cancha_export_pdf_add_line(
+                  pdf_ctx, exportar_todas ? "Alcance: Todas las canchas" : "Alcance: Una cancha", 10.0f,
+                  14.0f);
     if (!exportar_todas)
     {
         char alcance_line[64];
@@ -3276,7 +3318,8 @@ static int cancha_export_ejecutar_por_modo(int modo, int exportar_todas, int can
     return -1;
 }
 
-static void cancha_export_construir_detalle(int exportar_todas, int cancha_id, char *detalle, size_t detalle_size)
+static void cancha_export_construir_detalle(int exportar_todas, int cancha_id, char *detalle,
+        size_t detalle_size)
 {
     if (exportar_todas)
     {
@@ -3344,18 +3387,16 @@ static void exportar_informacion_canchas(void)
 
 void menu_canchas(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Crear", crear_cancha},
-        {2, "Listar", listar_canchas},
-        {3, "Modificar", modificar_cancha},
-        {4, "Eliminar", eliminar_cancha},
-        {5, "Cargar Imagen", cargar_imagen_cancha},
-        {6, "Ver Imagen", ver_imagen_cancha},
-        {7, "Ver Informacion", ver_informacion_cancha},
-        {8, "Cargar Informacion", cargar_informacion_cancha},
-        {9, "Reactivar/Desactivar Cancha", reactivar_cancha},
-        {10, "Exportar Informacion", exportar_informacion_canchas},
+    MenuItem items[] = {{1, "Crear", &crear_cancha},
+        {2, "Listar", &listar_canchas},
+        {3, "Modificar", &modificar_cancha},
+        {4, "Eliminar", &eliminar_cancha},
+        {5, "Cargar Imagen", &cargar_imagen_cancha},
+        {6, "Ver Imagen", &ver_imagen_cancha},
+        {7, "Ver Informacion", &ver_informacion_cancha},
+        {8, "Cargar Informacion", &cargar_informacion_cancha},
+        {9, "Reactivar/Desactivar Cancha", &reactivar_cancha},
+        {10, "Exportar Informacion", &exportar_informacion_canchas},
         {0, "Volver", NULL}
     };
 

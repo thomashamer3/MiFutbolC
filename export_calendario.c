@@ -76,7 +76,7 @@ static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
     int total = 0;
     for (int i = 0; i < count; i++)
     {
-        if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total], (long long)(i + 1)))
+        if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total], (long long)i + 1))
         {
             total++;
             if ((offset + total) >= max)

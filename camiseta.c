@@ -450,9 +450,9 @@ static void probar_visor_imagen_actual(void)
 
 static void menu_ajustes_imagen_camiseta(void)
 {
-    MenuItem items[] = {{1, "Configurar visor", configurar_visor_preferido_imagen},
-        {2, "Probar visor", probar_visor_imagen_actual},
-        {3, "Previsualizar en consola", previsualizar_imagen_camiseta_consola},
+    MenuItem items[] = {{1, "Configurar visor", &configurar_visor_preferido_imagen},
+        {2, "Probar visor", &probar_visor_imagen_actual},
+        {3, "Previsualizar en consola", &previsualizar_imagen_camiseta_consola},
         {0, "Volver", NULL}
     };
     ejecutar_menu("AJUSTES IMAGEN", items, 4);
@@ -1083,7 +1083,8 @@ static void crear_camiseta_simple(void)
     if (rc == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (simple)", id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (simple)", id,
+                 nombre);
         app_log_event("CAMISETA", log_msg);
 
         int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
@@ -1100,7 +1101,8 @@ static void crear_camiseta_simple(void)
     else
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s (simple)", nombre);
+        snprintf(log_msg, sizeof(log_msg), "Error al crear camiseta nombre=%.180s (simple)",
+                 nombre);
         app_log_event("CAMISETA", log_msg);
         printf("\nError al crear la camiseta en la base de datos.\n");
         pause_console();
@@ -1169,7 +1171,8 @@ static void crear_camiseta_avanzada(void)
     if (rc == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (avanzada)", id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (avanzada)", id,
+                 nombre);
         app_log_event("CAMISETA", log_msg);
 
         int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
@@ -1218,7 +1221,8 @@ void crear_camiseta(void)
     printf("2) Carga Avanzada (Nombre y todos los datos)\n");
     printf("0) Cancelar\n");
     int opcion = input_int("Opcion: ");
-    if (opcion == 0) return;
+    if (opcion == 0)
+        return;
 
     if (opcion == 1)
         crear_camiseta_simple();
@@ -1853,17 +1857,17 @@ void sortear_camiseta(void)
 
 void menu_camisetas(void)
 {
-    MenuItem items[] = {{1, "Crear", crear_camiseta},
-        {2, "Listar", listar_camisetas},
-        {3, "Modificar", editar_camiseta},
-        {4, "Eliminar", eliminar_camiseta},
-        {5, "Sortear", sortear_camiseta},
-        {6, "Cargar Imagen", cargar_imagen_camiseta},
-        {7, "Ver Camiseta", ver_imagen_camiseta},
-        {8, "Ajustes Imagen", menu_ajustes_imagen_camiseta},
-        {9, "Ver Informacion", ver_informacion_camiseta},
-        {10, "Cargar Informacion", cargar_informacion_camiseta},
-        {11, "Reactivar/Desactivar", reactivar_camiseta},
+    MenuItem items[] = {{1, "Crear", &crear_camiseta},
+        {2, "Listar", &listar_camisetas},
+        {3, "Modificar", &editar_camiseta},
+        {4, "Eliminar", &eliminar_camiseta},
+        {5, "Sortear", &sortear_camiseta},
+        {6, "Cargar Imagen", &cargar_imagen_camiseta},
+        {7, "Ver Camiseta", &ver_imagen_camiseta},
+        {8, "Ajustes Imagen", &menu_ajustes_imagen_camiseta},
+        {9, "Ver Informacion", &ver_informacion_camiseta},
+        {10, "Cargar Informacion", &cargar_informacion_camiseta},
+        {11, "Reactivar/Desactivar", &reactivar_camiseta},
         {0, "Volver", NULL}
     };
     ejecutar_menu("CAMISETAS", items, 12);

@@ -142,17 +142,12 @@ static void query(const char *titulo, const char *sql)
             snprintf(nombre, sizeof(nombre), "%s", sqlite3_column_text(stmt, 0));
 
             // Check if the second column is integer or real
-            if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
-            {
-                printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
-            }
-            else if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
+            if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
             {
                 printf("%-30s : %.2f\n", nombre, sqlite3_column_double(stmt, 1));
             }
             else
             {
-                // Fallback to int
                 printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
             }
         }
@@ -193,10 +188,7 @@ static void query_to_buf(const char *sql, char *out, size_t out_size)
         {
             snprintf(nombre, sizeof(nombre), "%s",
                      (const char *)sqlite3_column_text(stmt, 0));
-            if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
-                snprintf(line, sizeof(line), "%-30s : %d\n", nombre,
-                         sqlite3_column_int(stmt, 1));
-            else if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
+            if (sqlite3_column_type(stmt, 1) == SQLITE_FLOAT)
                 snprintf(line, sizeof(line), "%-30s : %.2f\n", nombre,
                          sqlite3_column_double(stmt, 1));
             else

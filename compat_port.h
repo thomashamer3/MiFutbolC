@@ -266,4 +266,74 @@ static inline size_t strnlen_s(const char *s, size_t maxlen)
 #endif /* __STDC_LIB_EXT1__ */
 #endif /* !_WIN32 */
 
+#if defined(__STDC_LIB_EXT1__)
+
+/* System provides Annex K; nothing to add. */
+
+#elif defined(_WIN32)
+
+/* On Windows (UCRT), the system headers already declare fprintf_s in
+ * <sec_api/stdio_s.h> (included from <stdio.h>) when __STDC_WANT_LIB_EXT1__
+ * is defined, but snprintf_s may not be consistently exposed. */
+#include <stdio.h>
+#include <stdarg.h>
+
+#ifndef snprintf_s
+static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...)
+{
+    if (!buffer || !format || bufsz == 0)
+    {
+        return -1;
+    }
+    va_list args;
+    va_start(args, format);
+    int ret = vsnprintf(buffer, bufsz, format, args);
+    va_end(args);
+    if (ret < 0 || ret >= (int)bufsz)
+    {
+        buffer[bufsz - 1] = '\0';
+        return -1;
+    }
+    return ret;
+}
+#endif
+
+#else /* non-Windows, non-Annex-K */
+
+#include <stdio.h>
+#include <stdarg.h>
+
+static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...)
+{
+    if (!buffer || !format || bufsz == 0)
+    {
+        return -1;
+    }
+    va_list args;
+    va_start(args, format);
+    int ret = vsnprintf(buffer, bufsz, format, args);
+    va_end(args);
+    if (ret < 0 || ret >= (int)bufsz)
+    {
+        buffer[bufsz - 1] = '\0';
+        return -1;
+    }
+    return ret;
+}
+
+static inline int fprintf_s(FILE *stream, const char *format, ...)
+{
+    if (!stream || !format)
+    {
+        return -1;
+    }
+    va_list args;
+    va_start(args, format);
+    int ret = vfprintf(stream, format, args);
+    va_end(args);
+    return ret;
+}
+
+#endif /* platform selection */
+
 #endif /* COMPAT_PORT_H */

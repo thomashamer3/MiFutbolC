@@ -1,11 +1,11 @@
 #include "torneo.h"
 #include "db.h"
-#include "utils.h"
-#include "menu.h"
 #include "equipo.h"
+#include "menu.h"
+#include "sqlite3.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
-#include "sqlite3.h"
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
@@ -81,7 +81,7 @@ static void aplicar_actualizacion_formato(int torneo_id, int tipo, int formato)
  * Traduce valores enumerados de tipos de torneo a nombres legibles para la interfaz de usuario,
  * facilitando la comprension de las opciones disponibles.
  */
-const char* get_nombre_tipo_torneo(TipoTorneos tipo)
+const char *get_nombre_tipo_torneo(TipoTorneos tipo)
 {
     switch (tipo)
     {
@@ -98,22 +98,20 @@ const char* get_nombre_tipo_torneo(TipoTorneos tipo)
     }
 }
 
-const char* get_nombre_formato_torneo(FormatoTorneos formato)
+const char *get_nombre_formato_torneo(FormatoTorneos formato)
 {
-    static const char *formatos[] =
-    {
-        "Round-robin (sistema liga)",
-        "Mini grupo con final",
-        "Liga simple",
-        "Liga doble",
-        "Grupos + final",
-        "Copa simple",
-        "Grupos + eliminacion",
-        "Copa + repechaje",
-        "Liga grande",
-        "Multiples grupos",
-        "Eliminacion directa por fases"
-    };
+    static const char *formatos[] = {"Round-robin (sistema liga)",
+                                     "Mini grupo con final",
+                                     "Liga simple",
+                                     "Liga doble",
+                                     "Grupos + final",
+                                     "Copa simple",
+                                     "Grupos + eliminacion",
+                                     "Copa + repechaje",
+                                     "Liga grande",
+                                     "Multiples grupos",
+                                     "Eliminacion directa por fases"
+                                    };
     int idx = (int)formato;
     if (idx >= 0 && idx < (int)(sizeof(formatos) / sizeof(formatos[0])))
         return formatos[idx];
@@ -139,7 +137,7 @@ static int listar_torneos_generico(const char *no_records_msg)
     {
         found = 1;
         int id = sqlite3_column_int(stmt, 0);
-        const char *nombre = (const char*)sqlite3_column_text(stmt, 1);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
         ui_printf_centered_line("%d. %s", id, nombre);
     }
 
@@ -221,7 +219,8 @@ static void asignar_formato_21_o_mas(int opcion, TipoTorneos *tipo, FormatoTorne
     }
 }
 
-static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *tipo, FormatoTorneos *formato)
+static void obtener_formato_por_cantidad(int opcion, int cantidad, TipoTorneos *tipo,
+        FormatoTorneos *formato)
 {
     *tipo = SOLO_IDA;
     *formato = LIGA_SIMPLE;
@@ -259,7 +258,8 @@ void mostrar_torneo(Torneo *torneo)
     }
     ui_printf_centered_line("Cantidad de equipos: %d", torneo->cantidad_equipos);
     ui_printf_centered_line("Tipo de torneo: %s", get_nombre_tipo_torneo(torneo->tipo_torneo));
-    ui_printf_centered_line("Formato de torneo: %s", get_nombre_formato_torneo(torneo->formato_torneo));
+    ui_printf_centered_line("Formato de torneo: %s",
+                            get_nombre_formato_torneo(torneo->formato_torneo));
     ui_printf("\n");
 }
 
@@ -275,7 +275,8 @@ static void agregar_equipo_nombre_torneo(int torneo_id)
     }
 
     sqlite3_stmt *stmt;
-    const char *sql_check = "SELECT COUNT(*) FROM equipo_torneo_nombre WHERE torneo_id = ? AND nombre = ?;";
+    const char *sql_check =
+        "SELECT COUNT(*) FROM equipo_torneo_nombre WHERE torneo_id = ? AND nombre = ?;";
     if (preparar_stmt(sql_check, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -319,10 +320,11 @@ static void agregar_equipos_nombres_torneo(int torneo_id)
         {
             // trim newline
             size_t len = strlen_s(nombre, sizeof(nombre));
-            while (len > 0 && (nombre[len-1] == '\n' || nombre[len-1] == '\r'))
+            while (len > 0 && (nombre[len - 1] == '\n' || nombre[len - 1] == '\r'))
                 nombre[--len] = '\0';
         }
-        if (nombre[0] == '\0') break;
+        if (nombre[0] == '\0')
+            break;
 
         sqlite3_stmt *stmt;
         const char *sql = "INSERT INTO equipo_torneo_nombre (torneo_id, nombre) VALUES (?, ?);";
@@ -354,7 +356,8 @@ void asociar_equipos_torneo(int torneo_id)
     }
 
     // Verificar si ya esta asociado
-    const char *sql_check = "SELECT COUNT(*) FROM equipo_torneo WHERE torneo_id = ? AND equipo_id = ?;";
+    const char *sql_check =
+        "SELECT COUNT(*) FROM equipo_torneo WHERE torneo_id = ? AND equipo_id = ?;";
     if (preparar_stmt(sql_check, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -549,7 +552,8 @@ static void determine_formato_torneo(Torneo *torneo)
 static int save_torneo_to_db(Torneo const *torneo)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT INTO torneo (nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo) VALUES (?, ?, ?, ?, ?, ?);";
+    const char *sql = "INSERT INTO torneo (nombre, tiene_equipo_fijo, equipo_fijo_id, "
+                      "cantidad_equipos, tipo_torneo, formato_torneo) VALUES (?, ?, ?, ?, ?, ?);";
 
     if (!preparar_stmt(sql, &stmt))
     {
@@ -610,7 +614,8 @@ void crear_torneo(void)
         return;
 
     char info[100];
-    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), torneo.nombre, torneo_id);
+    snprintf(info, sizeof(info), "%.*s - ID: %d", (int)(sizeof(info) - 20), torneo.nombre,
+             torneo_id);
     mostrar_alerta_operacion("Torneo", "Guardado", info);
 
     printf("\nAgregar equipos al torneo:\n");
@@ -638,7 +643,8 @@ void listar_torneos(void)
     }
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo ORDER BY id;";
+    const char *sql = "SELECT id, nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, "
+                      "tipo_torneo, formato_torneo FROM torneo ORDER BY id;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -646,7 +652,8 @@ void listar_torneos(void)
         {
             Torneo torneo;
             torneo.id = sqlite3_column_int(stmt, 0);
-            strncpy_s(torneo.nombre, sizeof(torneo.nombre), (const char*)sqlite3_column_text(stmt, 1), sizeof(torneo.nombre));
+            strncpy_s(torneo.nombre, sizeof(torneo.nombre),
+                      (const char *)sqlite3_column_text(stmt, 1), sizeof(torneo.nombre));
             torneo.tiene_equipo_fijo = sqlite3_column_int(stmt, 2);
             torneo.equipo_fijo_id = sqlite3_column_int(stmt, 3);
             torneo.cantidad_equipos = sqlite3_column_int(stmt, 4);
@@ -681,7 +688,8 @@ void modificar_torneo(void)
 
     int torneo_id = input_int("\nIngrese el ID del torneo a modificar (0 para cancelar): ");
 
-    if (torneo_id == 0) return;
+    if (torneo_id == 0)
+        return;
 
     if (!existe_id("torneo", torneo_id))
     {
@@ -692,7 +700,8 @@ void modificar_torneo(void)
 
     Torneo torneo = {0};
     sqlite3_stmt *stmt;
-    const char *sql_torneo = "SELECT nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, tipo_torneo, formato_torneo FROM torneo WHERE id = ?;";
+    const char *sql_torneo = "SELECT nombre, tiene_equipo_fijo, equipo_fijo_id, cantidad_equipos, "
+                             "tipo_torneo, formato_torneo FROM torneo WHERE id = ?;";
 
     if (preparar_stmt(sql_torneo, &stmt))
     {
@@ -700,7 +709,8 @@ void modificar_torneo(void)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            strncpy_s(torneo.nombre, sizeof(torneo.nombre), (const char*)sqlite3_column_text(stmt, 0), sizeof(torneo.nombre));
+            strncpy_s(torneo.nombre, sizeof(torneo.nombre),
+                      (const char *)sqlite3_column_text(stmt, 0), sizeof(torneo.nombre));
             torneo.tiene_equipo_fijo = sqlite3_column_int(stmt, 1);
             torneo.equipo_fijo_id = sqlite3_column_int(stmt, 2);
             torneo.cantidad_equipos = sqlite3_column_int(stmt, 3);
@@ -767,7 +777,8 @@ void eliminar_torneo(void)
 
     int torneo_id = input_int("\nIngrese el ID del torneo a eliminar (0 para cancelar): ");
 
-    if (torneo_id == 0) return;
+    if (torneo_id == 0)
+        return;
 
     if (!existe_id("torneo", torneo_id))
     {
@@ -784,20 +795,18 @@ void eliminar_torneo(void)
     }
 
     sqlite3_stmt *stmt;
-    const char *sqls[] =
-    {
-        "DELETE FROM equipo_fase WHERE torneo_id = ?;",
-        "DELETE FROM torneo_fases WHERE torneo_id = ?;",
-        "DELETE FROM jugador_estadisticas WHERE torneo_id = ?;",
-        "DELETE FROM equipo_torneo_estadisticas WHERE torneo_id = ?;",
-        "DELETE FROM partido_torneo WHERE torneo_id = ?;",
-        "DELETE FROM equipo_torneo WHERE torneo_id = ?;",
-        "DELETE FROM equipo_torneo_nombre WHERE torneo_id = ?;",
-        "DELETE FROM equipo_historial WHERE torneo_id = ?;",
-        "DELETE FROM torneo_temporada WHERE torneo_id = ?;",
-        "DELETE FROM torneo WHERE id = ?;",
-        NULL
-    };
+    const char *sqls[] = {"DELETE FROM equipo_fase WHERE torneo_id = ?;",
+                          "DELETE FROM torneo_fases WHERE torneo_id = ?;",
+                          "DELETE FROM jugador_estadisticas WHERE torneo_id = ?;",
+                          "DELETE FROM equipo_torneo_estadisticas WHERE torneo_id = ?;",
+                          "DELETE FROM partido_torneo WHERE torneo_id = ?;",
+                          "DELETE FROM equipo_torneo WHERE torneo_id = ?;",
+                          "DELETE FROM equipo_torneo_nombre WHERE torneo_id = ?;",
+                          "DELETE FROM equipo_historial WHERE torneo_id = ?;",
+                          "DELETE FROM torneo_temporada WHERE torneo_id = ?;",
+                          "DELETE FROM torneo WHERE id = ?;",
+                          NULL
+                         };
 
     for (int i = 0; sqls[i] != NULL; i++)
     {
@@ -839,8 +848,8 @@ static void actualizar_nombre_torneo(int torneo_id)
 
 static int seleccionar_equipo_disponible(void)
 {
-    return select_team_id("\nIngrese el ID del equipo fijo (0 para cancelar): ",
-                          "equipos registrados", 1);
+    return select_team_id(
+               "\nIngrese el ID del equipo fijo (0 para cancelar): ", "equipos registrados", 1);
 }
 
 static void actualizar_equipo_fijo(int torneo_id)
@@ -850,7 +859,8 @@ static void actualizar_equipo_fijo(int torneo_id)
     if (!nuevo_tiene_equipo_fijo)
     {
         sqlite3_stmt *stmt;
-        const char *sql_update = "UPDATE torneo SET tiene_equipo_fijo = 0, equipo_fijo_id = -1 WHERE id = ?;";
+        const char *sql_update =
+            "UPDATE torneo SET tiene_equipo_fijo = 0, equipo_fijo_id = -1 WHERE id = ?;";
         if (preparar_stmt(sql_update, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
@@ -869,10 +879,12 @@ static void actualizar_equipo_fijo(int torneo_id)
     }
 
     int equipo_id = seleccionar_equipo_disponible();
-    if (equipo_id == 0) return;
+    if (equipo_id == 0)
+        return;
 
     sqlite3_stmt *stmt;
-    const char *sql_update = "UPDATE torneo SET tiene_equipo_fijo = ?, equipo_fijo_id = ? WHERE id = ?;";
+    const char *sql_update =
+        "UPDATE torneo SET tiene_equipo_fijo = ?, equipo_fijo_id = ? WHERE id = ?;";
     if (preparar_stmt(sql_update, &stmt))
     {
         sqlite3_bind_int(stmt, 1, 1);
@@ -913,14 +925,15 @@ static void listar_equipos_asociados(int torneo_id)
 
     // Equipos guardados (de tabla equipo)
     sqlite3_stmt *stmt_equipos;
-    const char *sql_equipos = "SELECT e.id, e.nombre FROM equipo e JOIN equipo_torneo et ON e.id = et.equipo_id WHERE et.torneo_id = ? ORDER BY e.id;";
+    const char *sql_equipos = "SELECT e.id, e.nombre FROM equipo e JOIN equipo_torneo et ON e.id = "
+                              "et.equipo_id WHERE et.torneo_id = ? ORDER BY e.id;";
     if (preparar_stmt(sql_equipos, &stmt_equipos))
     {
         sqlite3_bind_int(stmt_equipos, 1, torneo_id);
         while (sqlite3_step(stmt_equipos) == SQLITE_ROW)
         {
             has_equipos = 1;
-            const char *equipo_nombre = (const char*)sqlite3_column_text(stmt_equipos, 1);
+            const char *equipo_nombre = (const char *)sqlite3_column_text(stmt_equipos, 1);
             printf("%d. %s\n", count++, equipo_nombre);
         }
         sqlite3_finalize(stmt_equipos);
@@ -928,14 +941,15 @@ static void listar_equipos_asociados(int torneo_id)
 
     // Equipos por nombre (solo nombre, sin equipo completo)
     sqlite3_stmt *stmt_nombres;
-    const char *sql_nombres = "SELECT nombre FROM equipo_torneo_nombre WHERE torneo_id = ? ORDER BY id;";
+    const char *sql_nombres =
+        "SELECT nombre FROM equipo_torneo_nombre WHERE torneo_id = ? ORDER BY id;";
     if (preparar_stmt(sql_nombres, &stmt_nombres))
     {
         sqlite3_bind_int(stmt_nombres, 1, torneo_id);
         while (sqlite3_step(stmt_nombres) == SQLITE_ROW)
         {
             has_equipos = 1;
-            const char *nombre = (const char*)sqlite3_column_text(stmt_nombres, 0);
+            const char *nombre = (const char *)sqlite3_column_text(stmt_nombres, 0);
             printf("%d. %s\n", count++, nombre);
         }
         sqlite3_finalize(stmt_nombres);
@@ -947,14 +961,15 @@ static void listar_equipos_asociados(int torneo_id)
     }
 }
 
-const char* get_equipo_nombre(int equipo_id)
+const char *get_equipo_nombre(int equipo_id)
 {
     static char nombre[50];
     strcpy_s(nombre, sizeof(nombre), "Desconocido");
 
     sqlite3_stmt *stmt;
     const char *sql = "SELECT nombre FROM equipo WHERE id = ?;";
-    if (!preparar_stmt(sql, &stmt)) return nombre;
+    if (!preparar_stmt(sql, &stmt))
+        return nombre;
     sqlite3_bind_int(stmt, 1, equipo_id);
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -977,13 +992,14 @@ static void obtener_nombre_torneo_db(int torneo_id, char *nombre, size_t size)
         {
             const unsigned char *txt = sqlite3_column_text(stmt, 0);
             if (txt)
-                strncpy_s(nombre, size, (const char*)txt, size - 1);
+                strncpy_s(nombre, size, (const char *)txt, size - 1);
         }
         sqlite3_finalize(stmt);
     }
 }
 
-static void print_fixture_match(int pid, const char *n1, const char *n2, int g1, int g2, const char *estado, const char *fecha)
+static void print_fixture_match(int pid, const char *n1, const char *n2, int g1, int g2,
+                                const char *estado, const char *fecha)
 {
     if (estado && strcmp(estado, "Jugado") == 0)
         printf("Partido %d: %s %d - %d %s (Jugado)\n", pid, n1, g1, g2, n2);
@@ -996,14 +1012,17 @@ static void print_fixture_match(int pid, const char *n1, const char *n2, int g1,
 static void print_proximo_partido(int pid, int e1, int e2, const char *fecha)
 {
     if (fecha && fecha[0])
-        printf("  Partido %d: %s vs %s (%s)\n", pid, get_equipo_nombre(e1), get_equipo_nombre(e2), fecha);
+        printf("  Partido %d: %s vs %s (%s)\n", pid, get_equipo_nombre(e1), get_equipo_nombre(e2),
+               fecha);
     else
         printf("  Partido %d: %s vs %s\n", pid, get_equipo_nombre(e1), get_equipo_nombre(e2));
 }
 
-static void process_match_fixture(sqlite3_stmt *stmt, int torneo_id, int home, int away, int tipo_torneo, int *num_matches)
+static void process_match_fixture(sqlite3_stmt *stmt, int torneo_id, int home, int away,
+                                  int tipo_torneo, int *num_matches)
 {
-    if (home == -1 || away == -1) return;
+    if (home == -1 || away == -1)
+        return;
 
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, home);
@@ -1025,14 +1044,16 @@ static void process_match_fixture(sqlite3_stmt *stmt, int torneo_id, int home, i
 
 static void rotate_circle(int *temp, int total)
 {
-    if (total <= 1) return;
+    if (total <= 1)
+        return;
     int last = temp[total - 1];
     for (int i = total - 1; i > 1; i--)
         temp[i] = temp[i - 1];
     temp[1] = last;
 }
 
-static void obtener_mejor_goleador_equipo(int torneo_id, int equipo_id, char *goleador, size_t goleador_size, int *goles_goleador)
+static void obtener_mejor_goleador_equipo(int torneo_id, int equipo_id, char *goleador,
+        size_t goleador_size, int *goles_goleador)
 {
     goleador[0] = '\0';
     *goles_goleador = 0;
@@ -1042,7 +1063,8 @@ static void obtener_mejor_goleador_equipo(int torneo_id, int equipo_id, char *go
                       "JOIN jugador j ON j.id = js.jugador_id "
                       "WHERE js.torneo_id = ? AND js.equipo_id = ? "
                       "GROUP BY js.jugador_id ORDER BY SUM(js.goles) DESC LIMIT 1;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1050,21 +1072,24 @@ static void obtener_mejor_goleador_equipo(int torneo_id, int equipo_id, char *go
         const unsigned char *txt = sqlite3_column_text(stmt, 0);
         if (txt)
         {
-            strncpy_s(goleador, goleador_size, (const char*)txt, goleador_size - 1);
+            strncpy_s(goleador, goleador_size, (const char *)txt, goleador_size - 1);
             *goles_goleador = sqlite3_column_int(stmt, 1);
         }
     }
     sqlite3_finalize(stmt);
 }
 
-static int generate_round_robin_fixture(int torneo_id, const int *equipos, int total, int tipo_torneo)
+static int generate_round_robin_fixture(int torneo_id, const int *equipos, int total,
+                                        int tipo_torneo)
 {
 #define MAX_TEMP 100
-    if (total <= 0 || total > MAX_TEMP) return 0;
+    if (total <= 0 || total > MAX_TEMP)
+        return 0;
     int rounds = (total % 2 == 0) ? total - 1 : total;
     int mid = total / 2;
     int temp[MAX_TEMP];
-    for (int i = 0; i < total; i++) temp[i] = equipos[i];
+    for (int i = 0; i < total; i++)
+        temp[i] = equipos[i];
     int actual_total = total;
     int num_matches = 0;
 
@@ -1075,14 +1100,17 @@ static int generate_round_robin_fixture(int torneo_id, const int *equipos, int t
         mid = actual_total / 2;
     }
 
-    const char *sql_insert = "INSERT INTO partido_torneo (torneo_id, equipo1_id, equipo2_id, fase) VALUES (?, ?, ?, 'Fase de Grupos');";
+    const char *sql_insert = "INSERT INTO partido_torneo (torneo_id, equipo1_id, equipo2_id, fase) "
+                             "VALUES (?, ?, ?, 'Fase de Grupos');";
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql_insert, &stmt)) return 0;
+    if (!preparar_stmt(sql_insert, &stmt))
+        return 0;
 
     for (int r = 0; r < rounds; r++)
     {
         for (int i = 0; i < mid; i++)
-            process_match_fixture(stmt, torneo_id, temp[i], temp[actual_total - 1 - i], tipo_torneo, &num_matches);
+            process_match_fixture(stmt, torneo_id, temp[i], temp[actual_total - 1 - i], tipo_torneo,
+                                  &num_matches);
         rotate_circle(temp, actual_total);
     }
     sqlite3_finalize(stmt);
@@ -1105,7 +1133,8 @@ void generar_fixture(int torneo_id)
 
     int equipos[100];
     int n = 0;
-    const char *sql_eq = "SELECT equipo_id FROM equipo_torneo WHERE torneo_id = ? ORDER BY equipo_id;";
+    const char *sql_eq =
+        "SELECT equipo_id FROM equipo_torneo WHERE torneo_id = ? ORDER BY equipo_id;";
     if (preparar_stmt(sql_eq, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1116,7 +1145,8 @@ void generar_fixture(int torneo_id)
 
     if (n < 2)
     {
-        printf("Se necesitan al menos 2 equipos registrados en el torneo para generar el fixture.\n");
+        printf(
+            "Se necesitan al menos 2 equipos registrados en el torneo para generar el fixture.\n");
         pause_console();
         return;
     }
@@ -1133,7 +1163,8 @@ void generar_fixture(int torneo_id)
     int max_jornadas = (tipo_torneo == IDA_Y_VUELTA) ? jornadas_ida * 2 : jornadas_ida;
     int num_matches = generate_round_robin_fixture(torneo_id, equipos, n, tipo_torneo);
 
-    printf("Fixture generado exitosamente con %d partidos en %d jornadas.\n", num_matches, max_jornadas);
+    printf("Fixture generado exitosamente con %d partidos en %d jornadas.\n", num_matches,
+           max_jornadas);
     pause_console();
 }
 
@@ -1144,7 +1175,8 @@ void mostrar_fixture(int torneo_id)
 
     sqlite3_stmt *stmt;
     int count = 0;
-    const char *sql = "SELECT id, equipo1_id, equipo2_id, goles_equipo1, goles_equipo2, estado, fecha FROM partido_torneo WHERE torneo_id = ? ORDER BY id;";
+    const char *sql = "SELECT id, equipo1_id, equipo2_id, goles_equipo1, goles_equipo2, estado, "
+                      "fecha FROM partido_torneo WHERE torneo_id = ? ORDER BY id;";
     if (preparar_stmt(sql, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1156,8 +1188,8 @@ void mostrar_fixture(int torneo_id)
             int e2 = sqlite3_column_int(stmt, 2);
             int g1 = sqlite3_column_int(stmt, 3);
             int g2 = sqlite3_column_int(stmt, 4);
-            const char *estado = (const char*)sqlite3_column_text(stmt, 5);
-            const char *fecha = (const char*)sqlite3_column_text(stmt, 6);
+            const char *estado = (const char *)sqlite3_column_text(stmt, 5);
+            const char *fecha = (const char *)sqlite3_column_text(stmt, 6);
 
             const char *n1 = get_equipo_nombre(e1);
             const char *n2 = get_equipo_nombre(e2);
@@ -1175,8 +1207,10 @@ void mostrar_fixture(int torneo_id)
 static int listar_pendientes_mostrar(int torneo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql_list = "SELECT id, equipo1_id, equipo2_id FROM partido_torneo WHERE torneo_id = ? AND (estado IS NULL OR estado != 'Jugado') ORDER BY id;";
-    if (!preparar_stmt(sql_list, &stmt)) return 0;
+    const char *sql_list = "SELECT id, equipo1_id, equipo2_id FROM partido_torneo WHERE torneo_id "
+                           "= ? AND (estado IS NULL OR estado != 'Jugado') ORDER BY id;";
+    if (!preparar_stmt(sql_list, &stmt))
+        return 0;
     sqlite3_bind_int(stmt, 1, torneo_id);
     int found = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1193,8 +1227,10 @@ static int listar_pendientes_mostrar(int torneo_id)
 static int obtener_equipos_partido_db(int partido_id, int torneo_id, int *eq1, int *eq2)
 {
     sqlite3_stmt *stmt;
-    const char *sql_get = "SELECT equipo1_id, equipo2_id FROM partido_torneo WHERE id = ? AND torneo_id = ?;";
-    if (!preparar_stmt(sql_get, &stmt)) return 0;
+    const char *sql_get =
+        "SELECT equipo1_id, equipo2_id FROM partido_torneo WHERE id = ? AND torneo_id = ?;";
+    if (!preparar_stmt(sql_get, &stmt))
+        return 0;
     sqlite3_bind_int(stmt, 1, partido_id);
     sqlite3_bind_int(stmt, 2, torneo_id);
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1234,7 +1270,8 @@ void ingresar_resultado(int torneo_id)
     }
 
     sqlite3_stmt *stmt;
-    const char *sql_upd = "UPDATE partido_torneo SET goles_equipo1 = ?, goles_equipo2 = ?, estado = 'Jugado' WHERE id = ? AND torneo_id = ?;";
+    const char *sql_upd = "UPDATE partido_torneo SET goles_equipo1 = ?, goles_equipo2 = ?, estado "
+                          "= 'Jugado' WHERE id = ? AND torneo_id = ?;";
     if (preparar_stmt(sql_upd, &stmt))
     {
         sqlite3_bind_int(stmt, 1, goles1);
@@ -1243,8 +1280,8 @@ void ingresar_resultado(int torneo_id)
         sqlite3_bind_int(stmt, 4, torneo_id);
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            printf("Resultado registrado: %s %d - %d %s\n",
-                   get_equipo_nombre(equipo1_id), goles1, goles2, get_equipo_nombre(equipo2_id));
+            printf("Resultado registrado: %s %d - %d %s\n", get_equipo_nombre(equipo1_id), goles1,
+                   goles2, get_equipo_nombre(equipo2_id));
             actualizar_tabla_posiciones(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
             actualizar_estadisticas_jugadores(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
             actualizar_fase_torneo(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
@@ -1280,7 +1317,8 @@ static void update_single_team_standings(int torneo_id, int eid, int gf, int gc)
 
     sqlite3_stmt *stmt;
     int exists = 0;
-    const char *sql_check = "SELECT COUNT(*) FROM equipo_torneo_estadisticas WHERE torneo_id = ? AND equipo_id = ?;";
+    const char *sql_check =
+        "SELECT COUNT(*) FROM equipo_torneo_estadisticas WHERE torneo_id = ? AND equipo_id = ?;";
     if (preparar_stmt(sql_check, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1317,10 +1355,11 @@ static void update_single_team_standings(int torneo_id, int eid, int gf, int gc)
     }
     else
     {
-        const char *sql_ins = "INSERT INTO equipo_torneo_estadisticas "
-                              "(torneo_id, equipo_id, partidos_jugados, partidos_ganados, partidos_empatados, "
-                              "partidos_perdidos, goles_favor, goles_contra, puntos) "
-                              "VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?);";
+        const char *sql_ins =
+            "INSERT INTO equipo_torneo_estadisticas "
+            "(torneo_id, equipo_id, partidos_jugados, partidos_ganados, partidos_empatados, "
+            "partidos_perdidos, goles_favor, goles_contra, puntos) "
+            "VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?);";
         if (preparar_stmt(sql_ins, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1337,7 +1376,8 @@ static void update_single_team_standings(int torneo_id, int eid, int gf, int gc)
     }
 }
 
-void actualizar_tabla_posiciones(int torneo_id, int equipo1_id, int equipo2_id, int goles1, int goles2)
+void actualizar_tabla_posiciones(int torneo_id, int equipo1_id, int equipo2_id, int goles1,
+                                 int goles2)
 {
     int ids[2] = {equipo1_id, equipo2_id};
     int goles[2] = {goles1, goles2};
@@ -1351,13 +1391,14 @@ void ver_tabla_posiciones(int torneo_id)
     print_header("TABLA DE POSICIONES");
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT e.nombre, et.puntos, et.partidos_jugados, "
-                      "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
-                      "et.goles_favor, et.goles_contra "
-                      "FROM equipo_torneo_estadisticas et "
-                      "JOIN equipo e ON e.id = et.equipo_id "
-                      "WHERE et.torneo_id = ? "
-                      "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
+    const char *sql =
+        "SELECT e.nombre, et.puntos, et.partidos_jugados, "
+        "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
+        "et.goles_favor, et.goles_contra "
+        "FROM equipo_torneo_estadisticas et "
+        "JOIN equipo e ON e.id = et.equipo_id "
+        "WHERE et.torneo_id = ? "
+        "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -1368,7 +1409,7 @@ void ver_tabla_posiciones(int torneo_id)
         {
             found = 1;
             pos++;
-            const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+            const char *nom = (const char *)sqlite3_column_text(stmt, 0);
             int pts = sqlite3_column_int(stmt, 1);
             int pj = sqlite3_column_int(stmt, 2);
             int pg = sqlite3_column_int(stmt, 3);
@@ -1377,8 +1418,8 @@ void ver_tabla_posiciones(int torneo_id)
             int gf = sqlite3_column_int(stmt, 6);
             int gc = sqlite3_column_int(stmt, 7);
             int dg = gf - gc;
-            printf("%2d. %-20s Pts:%3d PJ:%2d PG:%2d PE:%2d PP:%2d GF:%2d GC:%2d DG:%+3d\n",
-                   pos, nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, dg);
+            printf("%2d. %-20s Pts:%3d PJ:%2d PG:%2d PE:%2d PP:%2d GF:%2d GC:%2d DG:%+3d\n", pos,
+                   nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, dg);
         }
         sqlite3_finalize(stmt);
 
@@ -1391,27 +1432,32 @@ void ver_tabla_posiciones(int torneo_id)
 static int mostrar_estado_por_fase(int torneo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql_fase = "SELECT ef.equipo_id, ef.grupo, ef.posicion_en_grupo, ef.clasificado, ef.eliminado, "
-                           "e.nombre FROM equipo_fase ef JOIN equipo e ON e.id = ef.equipo_id WHERE ef.torneo_id = ? ORDER BY ef.grupo, ef.posicion_en_grupo;";
-    if (!preparar_stmt(sql_fase, &stmt)) return 0;
+    const char *sql_fase =
+        "SELECT ef.equipo_id, ef.grupo, ef.posicion_en_grupo, ef.clasificado, ef.eliminado, "
+        "e.nombre FROM equipo_fase ef JOIN equipo e ON e.id = ef.equipo_id WHERE ef.torneo_id = ? "
+        "ORDER BY ef.grupo, ef.posicion_en_grupo;";
+    if (!preparar_stmt(sql_fase, &stmt))
+        return 0;
     sqlite3_bind_int(stmt, 1, torneo_id);
     int found = 0;
     char last_grupo[50] = "";
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         found = 1;
-        const char *grupo = (const char*)sqlite3_column_text(stmt, 1);
+        const char *grupo = (const char *)sqlite3_column_text(stmt, 1);
         int clas = sqlite3_column_int(stmt, 3);
         int elim = sqlite3_column_int(stmt, 4);
-        const char *nom = (const char*)sqlite3_column_text(stmt, 5);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 5);
         if (grupo && strcmp(grupo, last_grupo) != 0)
         {
             strncpy_s(last_grupo, sizeof(last_grupo), grupo, sizeof(last_grupo) - 1);
             printf("\n--- Grupo %s ---\n", grupo);
         }
         printf("  %s", nom ? nom : "?");
-        if (clas) printf(" [CLASIFICADO]");
-        if (elim) printf(" [ELIMINADO]");
+        if (clas)
+            printf(" [CLASIFICADO]");
+        if (elim)
+            printf(" [ELIMINADO]");
         printf("\n");
     }
     sqlite3_finalize(stmt);
@@ -1426,16 +1472,17 @@ static void mostrar_estado_por_estadisticas(int torneo_id)
                           "JOIN equipo e ON e.id = et.equipo_id "
                           "WHERE et.torneo_id = ? "
                           "ORDER BY et.puntos DESC;";
-    if (!preparar_stmt(sql_est, &stmt)) return;
+    if (!preparar_stmt(sql_est, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     int found = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         found = 1;
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
         int pts = sqlite3_column_int(stmt, 1);
         int pj = sqlite3_column_int(stmt, 2);
-        const char *est = (const char*)sqlite3_column_text(stmt, 3);
+        const char *est = (const char *)sqlite3_column_text(stmt, 3);
         printf("%-20s Pts:%d PJ:%d Estado: %s\n", nom ? nom : "?", pts, pj, est ? est : "Activo");
     }
     sqlite3_finalize(stmt);
@@ -1462,9 +1509,11 @@ static void mostrar_posicion_equipo(int torneo_id, int equipo_id)
 {
     sqlite3_stmt *stmt;
     const char *sql_pos = "SELECT COUNT(*) + 1 FROM equipo_torneo_estadisticas e1 "
-                          "WHERE e1.torneo_id = ? AND e1.puntos > (SELECT e2.puntos FROM equipo_torneo_estadisticas e2 "
+                          "WHERE e1.torneo_id = ? AND e1.puntos > (SELECT e2.puntos FROM "
+                          "equipo_torneo_estadisticas e2 "
                           "WHERE e2.torneo_id = ? AND e2.equipo_id = ?);";
-    if (!preparar_stmt(sql_pos, &stmt)) return;
+    if (!preparar_stmt(sql_pos, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, torneo_id);
     sqlite3_bind_int(stmt, 3, equipo_id);
@@ -1479,17 +1528,17 @@ static void mostrar_estadisticas_equipo_dashboard(int torneo_id, int equipo_id)
     const char *sql_est = "SELECT partidos_jugados, partidos_ganados, partidos_empatados, "
                           "partidos_perdidos, goles_favor, goles_contra, puntos "
                           "FROM equipo_torneo_estadisticas WHERE torneo_id = ? AND equipo_id = ?;";
-    if (!preparar_stmt(sql_est, &stmt)) return;
+    if (!preparar_stmt(sql_est, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("Partidos: %d | G: %d | E: %d | P: %d | GF: %d | GC: %d | DG: %d | Pts: %d\n",
-               sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
-               sqlite3_column_int(stmt, 4) - sqlite3_column_int(stmt, 5),
-               sqlite3_column_int(stmt, 6));
+        printf(
+            "Partidos: %d | G: %d | E: %d | P: %d | GF: %d | GC: %d | DG: %d | Pts: %d\n",
+            sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
+            sqlite3_column_int(stmt, 4) - sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
     }
     sqlite3_finalize(stmt);
 }
@@ -1521,7 +1570,8 @@ static void mostrar_proximos_partidos_equipo(int torneo_id, int equipo_id)
     const char *sql = "SELECT id, equipo1_id, equipo2_id, fecha FROM partido_torneo "
                       "WHERE torneo_id = ? AND (equipo1_id = ? OR equipo2_id = ?) "
                       "AND (estado IS NULL OR estado != 'Jugado') ORDER BY id;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
     sqlite3_bind_int(stmt, 3, equipo_id);
@@ -1533,19 +1583,22 @@ static void mostrar_proximos_partidos_equipo(int torneo_id, int equipo_id)
         int pid = sqlite3_column_int(stmt, 0);
         int e1 = sqlite3_column_int(stmt, 1);
         int e2 = sqlite3_column_int(stmt, 2);
-        const char *fecha = (const char*)sqlite3_column_text(stmt, 3);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 3);
         print_proximo_partido(pid, e1, e2, fecha);
     }
     sqlite3_finalize(stmt);
-    if (!found) printf("  No hay partidos pendientes.\n");
+    if (!found)
+        printf("  No hay partidos pendientes.\n");
 }
 
 static void mostrar_proximos_partidos_general(int torneo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, equipo1_id, equipo2_id, fecha FROM partido_torneo "
-                      "WHERE torneo_id = ? AND (estado IS NULL OR estado != 'Jugado') ORDER BY id LIMIT 10;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    const char *sql =
+        "SELECT id, equipo1_id, equipo2_id, fecha FROM partido_torneo "
+        "WHERE torneo_id = ? AND (estado IS NULL OR estado != 'Jugado') ORDER BY id LIMIT 10;";
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     printf("Proximos partidos (generales):\n");
     int found = 0;
@@ -1555,11 +1608,12 @@ static void mostrar_proximos_partidos_general(int torneo_id)
         int pid = sqlite3_column_int(stmt, 0);
         int e1 = sqlite3_column_int(stmt, 1);
         int e2 = sqlite3_column_int(stmt, 2);
-        const char *fecha = (const char*)sqlite3_column_text(stmt, 3);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 3);
         print_proximo_partido(pid, e1, e2, fecha);
     }
     sqlite3_finalize(stmt);
-    if (!found) printf("  No hay partidos pendientes.\n");
+    if (!found)
+        printf("  No hay partidos pendientes.\n");
 }
 
 void mostrar_proximos_partidos(int torneo_id, int equipo_id)
@@ -1573,12 +1627,14 @@ void mostrar_proximos_partidos(int torneo_id, int equipo_id)
 static void mostrar_estadisticas_por_equipo(int torneo_id, int equipo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT j.nombre, js.goles, js.asistencias, js.tarjetas_amarillas, js.tarjetas_rojas "
-                      "FROM jugador_estadisticas js "
-                      "JOIN jugador j ON j.id = js.jugador_id "
-                      "WHERE js.torneo_id = ? AND js.equipo_id = ? "
-                      "ORDER BY js.goles DESC;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    const char *sql =
+        "SELECT j.nombre, js.goles, js.asistencias, js.tarjetas_amarillas, js.tarjetas_rojas "
+        "FROM jugador_estadisticas js "
+        "JOIN jugador j ON j.id = js.jugador_id "
+        "WHERE js.torneo_id = ? AND js.equipo_id = ? "
+        "ORDER BY js.goles DESC;";
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
     printf("Jugadores de %s:\n", get_equipo_nombre(equipo_id));
@@ -1586,7 +1642,7 @@ static void mostrar_estadisticas_por_equipo(int torneo_id, int equipo_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         found = 1;
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
         int g = sqlite3_column_int(stmt, 1);
         int a = sqlite3_column_int(stmt, 2);
         int am = sqlite3_column_int(stmt, 3);
@@ -1594,7 +1650,8 @@ static void mostrar_estadisticas_por_equipo(int torneo_id, int equipo_id)
         printf("  %-20s Goles:%d Asist:%d TA:%d TR:%d\n", nom ? nom : "?", g, a, am, rj);
     }
     sqlite3_finalize(stmt);
-    if (!found) printf("  Sin estadisticas registradas.\n");
+    if (!found)
+        printf("  Sin estadisticas registradas.\n");
 }
 
 static void mostrar_goleadores_torneo(int torneo_id)
@@ -1606,21 +1663,23 @@ static void mostrar_goleadores_torneo(int torneo_id)
                       "JOIN equipo e ON e.id = js.equipo_id "
                       "WHERE js.torneo_id = ? "
                       "ORDER BY js.goles DESC LIMIT 20;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     printf("Mejores goleadores del torneo:\n");
     int found = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         found = 1;
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
-        const char *eq = (const char*)sqlite3_column_text(stmt, 1);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
+        const char *eq = (const char *)sqlite3_column_text(stmt, 1);
         int g = sqlite3_column_int(stmt, 2);
         int a = sqlite3_column_int(stmt, 3);
         printf("  %-20s (%-15s) Goles:%d Asist:%d\n", nom ? nom : "?", eq ? eq : "?", g, a);
     }
     sqlite3_finalize(stmt);
-    if (!found) printf("  Sin estadisticas registradas.\n");
+    if (!found)
+        printf("  Sin estadisticas registradas.\n");
 }
 
 void mostrar_estadisticas_jugador(int torneo_id, int equipo_id)
@@ -1655,7 +1714,7 @@ void mostrar_historial_equipo(int equipo_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             found = 1;
-            const char *tname = (const char*)sqlite3_column_text(stmt, 0);
+            const char *tname = (const char *)sqlite3_column_text(stmt, 0);
             int pos = sqlite3_column_int(stmt, 1);
             int pj = sqlite3_column_int(stmt, 2);
             int pg = sqlite3_column_int(stmt, 3);
@@ -1663,12 +1722,12 @@ void mostrar_historial_equipo(int equipo_id)
             int pp = sqlite3_column_int(stmt, 5);
             int gf = sqlite3_column_int(stmt, 6);
             int gc = sqlite3_column_int(stmt, 7);
-            const char *gol = (const char*)sqlite3_column_text(stmt, 8);
+            const char *gol = (const char *)sqlite3_column_text(stmt, 8);
             int goles_gol = sqlite3_column_int(stmt, 9);
 
             printf("Torneo: %s\n", tname ? tname : "?");
-            printf("  Posicion: %d | PJ: %d | PG: %d | PE: %d | PP: %d | GF: %d | GC: %d\n",
-                   pos, pj, pg, pe, pp, gf, gc);
+            printf("  Posicion: %d | PJ: %d | PG: %d | PE: %d | PP: %d | GF: %d | GC: %d\n", pos,
+                   pj, pg, pe, pp, gf, gc);
             if (gol && gol[0])
                 printf("  Mejor goleador: %s (%d goles)\n", gol, goles_gol);
             printf("\n");
@@ -1680,7 +1739,8 @@ void mostrar_historial_equipo(int equipo_id)
     pause_console();
 }
 
-void actualizar_estadisticas_jugadores(int torneo_id, int equipo1_id, int equipo2_id, int goles1, int goles2)
+void actualizar_estadisticas_jugadores(int torneo_id, int equipo1_id, int equipo2_id, int goles1,
+                                       int goles2)
 {
     // This function updates goal/assist stats for players.
     // In a real scenario, you'd ask which players scored/assisted.
@@ -1691,11 +1751,14 @@ void actualizar_estadisticas_jugadores(int torneo_id, int equipo1_id, int equipo
 
     for (int i = 0; i < 2; i++)
     {
-        if (goles[i] <= 0) continue;
+        if (goles[i] <= 0)
+            continue;
 
         // Create stats entries for players who don't have them yet
-        const char *sql_ins = "INSERT OR IGNORE INTO jugador_estadisticas (jugador_id, torneo_id, equipo_id, goles, asistencias) "
-                              "SELECT j.id, ?, j.equipo_id, 0, 0 FROM jugador j WHERE j.equipo_id = ?;";
+        const char *sql_ins =
+            "INSERT OR IGNORE INTO jugador_estadisticas (jugador_id, torneo_id, equipo_id, goles, "
+            "asistencias) "
+            "SELECT j.id, ?, j.equipo_id, 0, 0 FROM jugador j WHERE j.equipo_id = ?;";
         if (preparar_stmt(sql_ins, &stmt))
         {
             sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1708,7 +1771,8 @@ void actualizar_estadisticas_jugadores(int torneo_id, int equipo1_id, int equipo
         if (goles[i] > 0)
         {
             const char *sql_upd = "UPDATE jugador_estadisticas SET goles = goles + ? "
-                                  "WHERE torneo_id = ? AND equipo_id = ? AND jugador_id IN (SELECT id FROM jugador WHERE equipo_id = ? LIMIT 1);";
+                                  "WHERE torneo_id = ? AND equipo_id = ? AND jugador_id IN (SELECT "
+                                  "id FROM jugador WHERE equipo_id = ? LIMIT 1);";
             if (preparar_stmt(sql_upd, &stmt))
             {
                 sqlite3_bind_int(stmt, 1, goles[i]);
@@ -1738,7 +1802,8 @@ void actualizar_fase_torneo(int torneo_id, int equipo1_id, int equipo2_id, int g
         sqlite3_finalize(stmt);
     }
 
-    if (tipo_torneo != ELIMINACION_DIRECTA) return;
+    if (tipo_torneo != ELIMINACION_DIRECTA)
+        return;
 
     // Determine winner
     int winner_id = 0;
@@ -1753,10 +1818,12 @@ void actualizar_fase_torneo(int torneo_id, int equipo1_id, int equipo2_id, int g
         winner_id = equipo2_id;
         loser_id = equipo1_id;
     }
-    else return; // Draw in elimination -> not handled here (would need extra time)
+    else
+        return; // Draw in elimination -> not handled here (would need extra time)
 
     // Mark loser as eliminated in equipo_fase
-    const char *sql_elim = "UPDATE equipo_fase SET eliminado = 1 WHERE torneo_id = ? AND equipo_id = ?;";
+    const char *sql_elim =
+        "UPDATE equipo_fase SET eliminado = 1 WHERE torneo_id = ? AND equipo_id = ?;";
     if (preparar_stmt(sql_elim, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1766,7 +1833,8 @@ void actualizar_fase_torneo(int torneo_id, int equipo1_id, int equipo2_id, int g
     }
 
     // Mark winner as clasificado
-    const char *sql_clas = "UPDATE equipo_fase SET clasificado = 1 WHERE torneo_id = ? AND equipo_id = ?;";
+    const char *sql_clas =
+        "UPDATE equipo_fase SET clasificado = 1 WHERE torneo_id = ? AND equipo_id = ?;";
     if (preparar_stmt(sql_clas, &stmt))
     {
         sqlite3_bind_int(stmt, 1, torneo_id);
@@ -1793,14 +1861,18 @@ static void guardar_historial_equipo(const HistorialEquipoParams *p)
 {
     char goleador[100] = "";
     int goles_goleador = 0;
-    obtener_mejor_goleador_equipo(p->torneo_id, p->eid, goleador, sizeof(goleador), &goles_goleador);
+    obtener_mejor_goleador_equipo(p->torneo_id, p->eid, goleador, sizeof(goleador),
+                                  &goles_goleador);
 
     sqlite3_stmt *stmt2;
-    const char *sql_hist = "INSERT INTO equipo_historial "
-                           "(equipo_id, torneo_id, posicion_final, partidos_jugados, partidos_ganados, "
-                           "partidos_empatados, partidos_perdidos, goles_favor, goles_contra, mejor_goleador, goles_mejor_goleador) "
-                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    if (!preparar_stmt(sql_hist, &stmt2)) return;
+    const char *sql_hist =
+        "INSERT INTO equipo_historial "
+        "(equipo_id, torneo_id, posicion_final, partidos_jugados, partidos_ganados, "
+        "partidos_empatados, partidos_perdidos, goles_favor, goles_contra, mejor_goleador, "
+        "goles_mejor_goleador) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    if (!preparar_stmt(sql_hist, &stmt2))
+        return;
     sqlite3_bind_int(stmt2, 1, p->eid);
     sqlite3_bind_int(stmt2, 2, p->torneo_id);
     sqlite3_bind_int(stmt2, 3, p->pos);
@@ -1829,9 +1901,10 @@ void finalizar_torneo(int torneo_id)
     }
 
     sqlite3_stmt *stmt;
-    const char *sql_est = "SELECT equipo_id, partidos_jugados, partidos_ganados, partidos_empatados, "
-                          "partidos_perdidos, goles_favor, goles_contra, puntos "
-                          "FROM equipo_torneo_estadisticas WHERE torneo_id = ? ORDER BY puntos DESC;";
+    const char *sql_est =
+        "SELECT equipo_id, partidos_jugados, partidos_ganados, partidos_empatados, "
+        "partidos_perdidos, goles_favor, goles_contra, puntos "
+        "FROM equipo_torneo_estadisticas WHERE torneo_id = ? ORDER BY puntos DESC;";
     if (!preparar_stmt(sql_est, &stmt))
     {
         pause_console();
@@ -1843,18 +1916,16 @@ void finalizar_torneo(int torneo_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         pos++;
-        HistorialEquipoParams hep =
-        {
-            .torneo_id = torneo_id,
-            .eid = sqlite3_column_int(stmt, 0),
-            .pos = pos,
-            .pj = sqlite3_column_int(stmt, 1),
-            .pg = sqlite3_column_int(stmt, 2),
-            .pe = sqlite3_column_int(stmt, 3),
-            .pp = sqlite3_column_int(stmt, 4),
-            .gf = sqlite3_column_int(stmt, 5),
-            .gc = sqlite3_column_int(stmt, 6)
-        };
+        HistorialEquipoParams hep = {.torneo_id = torneo_id,
+                                     .eid = sqlite3_column_int(stmt, 0),
+                                     .pos = pos,
+                                     .pj = sqlite3_column_int(stmt, 1),
+                                     .pg = sqlite3_column_int(stmt, 2),
+                                     .pe = sqlite3_column_int(stmt, 3),
+                                     .pp = sqlite3_column_int(stmt, 4),
+                                     .gf = sqlite3_column_int(stmt, 5),
+                                     .gc = sqlite3_column_int(stmt, 6)
+                                    };
         guardar_historial_equipo(&hep);
     }
     sqlite3_finalize(stmt);
@@ -1881,13 +1952,14 @@ void exportar_tabla_posiciones(int torneo_id)
 
     fprintf(f, "=== TABLA DE POSICIONES ===\n\n");
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT e.nombre, et.puntos, et.partidos_jugados, "
-                      "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
-                      "et.goles_favor, et.goles_contra "
-                      "FROM equipo_torneo_estadisticas et "
-                      "JOIN equipo e ON e.id = et.equipo_id "
-                      "WHERE et.torneo_id = ? "
-                      "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
+    const char *sql =
+        "SELECT e.nombre, et.puntos, et.partidos_jugados, "
+        "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
+        "et.goles_favor, et.goles_contra "
+        "FROM equipo_torneo_estadisticas et "
+        "JOIN equipo e ON e.id = et.equipo_id "
+        "WHERE et.torneo_id = ? "
+        "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -1896,7 +1968,7 @@ void exportar_tabla_posiciones(int torneo_id)
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             pos++;
-            const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+            const char *nom = (const char *)sqlite3_column_text(stmt, 0);
             int pts = sqlite3_column_int(stmt, 1);
             int pj = sqlite3_column_int(stmt, 2);
             int pg = sqlite3_column_int(stmt, 3);
@@ -1904,8 +1976,8 @@ void exportar_tabla_posiciones(int torneo_id)
             int pp = sqlite3_column_int(stmt, 5);
             int gf = sqlite3_column_int(stmt, 6);
             int gc = sqlite3_column_int(stmt, 7);
-            fprintf(f, "%d. %s - Pts:%d PJ:%d PG:%d PE:%d PP:%d GF:%d GC:%d DG:%+d\n",
-                    pos, nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, gf - gc);
+            fprintf(f, "%d. %s - Pts:%d PJ:%d PG:%d PE:%d PP:%d GF:%d GC:%d DG:%+d\n", pos,
+                    nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, gf - gc);
         }
         sqlite3_finalize(stmt);
     }
@@ -1918,18 +1990,20 @@ void exportar_tabla_posiciones(int torneo_id)
 static void exportar_estadisticas_por_equipo(FILE *f, int torneo_id, int equipo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT j.nombre, js.goles, js.asistencias, js.tarjetas_amarillas, js.tarjetas_rojas "
-                      "FROM jugador_estadisticas js "
-                      "JOIN jugador j ON j.id = js.jugador_id "
-                      "WHERE js.torneo_id = ? AND js.equipo_id = ? "
-                      "ORDER BY js.goles DESC;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    const char *sql =
+        "SELECT j.nombre, js.goles, js.asistencias, js.tarjetas_amarillas, js.tarjetas_rojas "
+        "FROM jugador_estadisticas js "
+        "JOIN jugador j ON j.id = js.jugador_id "
+        "WHERE js.torneo_id = ? AND js.equipo_id = ? "
+        "ORDER BY js.goles DESC;";
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
     fprintf(f, "Equipo: %s\n\n", get_equipo_nombre(equipo_id));
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
         int g = sqlite3_column_int(stmt, 1);
         int a = sqlite3_column_int(stmt, 2);
         int am = sqlite3_column_int(stmt, 3);
@@ -1948,12 +2022,13 @@ static void exportar_estadisticas_todas(FILE *f, int torneo_id)
                       "JOIN equipo e ON e.id = js.equipo_id "
                       "WHERE js.torneo_id = ? "
                       "ORDER BY js.goles DESC;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
-        const char *eq = (const char*)sqlite3_column_text(stmt, 1);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
+        const char *eq = (const char *)sqlite3_column_text(stmt, 1);
         int g = sqlite3_column_int(stmt, 2);
         int a = sqlite3_column_int(stmt, 3);
         fprintf(f, "%s (%s) - Goles:%d Asist:%d\n", nom ? nom : "?", eq ? eq : "?", g, a);
@@ -1967,9 +2042,11 @@ void exportar_estadisticas_jugadores(int torneo_id, int equipo_id)
 
     char filename[512];
     if (equipo_id > 0)
-        snprintf(filename, sizeof(filename), "%s/estadisticas_jugadores_%d_%d.txt", export_dir, torneo_id, equipo_id);
+        snprintf(filename, sizeof(filename), "%s/estadisticas_jugadores_%d_%d.txt", export_dir,
+                 torneo_id, equipo_id);
     else
-        snprintf(filename, sizeof(filename), "%s/estadisticas_jugadores_%d.txt", export_dir, torneo_id);
+        snprintf(filename, sizeof(filename), "%s/estadisticas_jugadores_%d.txt", export_dir,
+                 torneo_id);
 
     FILE *f = NULL;
     if (fopen_s(&f, filename, "w") != 0)
@@ -1994,20 +2071,22 @@ void exportar_estadisticas_jugadores(int torneo_id, int equipo_id)
 static void escribir_tabla_posiciones_reporte(FILE *f, int torneo_id)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT e.nombre, et.puntos, et.partidos_jugados, "
-                      "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
-                      "et.goles_favor, et.goles_contra "
-                      "FROM equipo_torneo_estadisticas et "
-                      "JOIN equipo e ON e.id = et.equipo_id "
-                      "WHERE et.torneo_id = ? "
-                      "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    const char *sql =
+        "SELECT e.nombre, et.puntos, et.partidos_jugados, "
+        "et.partidos_ganados, et.partidos_empatados, et.partidos_perdidos, "
+        "et.goles_favor, et.goles_contra "
+        "FROM equipo_torneo_estadisticas et "
+        "JOIN equipo e ON e.id = et.equipo_id "
+        "WHERE et.torneo_id = ? "
+        "ORDER BY et.puntos DESC, (et.goles_favor - et.goles_contra) DESC, et.goles_favor DESC;";
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     int pos = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         pos++;
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
         int pts = sqlite3_column_int(stmt, 1);
         int pj = sqlite3_column_int(stmt, 2);
         int pg = sqlite3_column_int(stmt, 3);
@@ -2015,8 +2094,8 @@ static void escribir_tabla_posiciones_reporte(FILE *f, int torneo_id)
         int pp = sqlite3_column_int(stmt, 5);
         int gf = sqlite3_column_int(stmt, 6);
         int gc = sqlite3_column_int(stmt, 7);
-        fprintf(f, "%d. %s - Pts:%d PJ:%d PG:%d PE:%d PP:%d GF:%d GC:%d DG:%+d\n",
-                pos, nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, gf - gc);
+        fprintf(f, "%d. %s - Pts:%d PJ:%d PG:%d PE:%d PP:%d GF:%d GC:%d DG:%+d\n", pos,
+                nom ? nom : "?", pts, pj, pg, pe, pp, gf, gc, gf - gc);
     }
     sqlite3_finalize(stmt);
 }
@@ -2030,12 +2109,13 @@ static void escribir_goleadores_reporte(FILE *f, int torneo_id)
                       "JOIN equipo e ON e.id = js.equipo_id "
                       "WHERE js.torneo_id = ? "
                       "ORDER BY js.goles DESC LIMIT 10;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *nom = (const char*)sqlite3_column_text(stmt, 0);
-        const char *eq = (const char*)sqlite3_column_text(stmt, 1);
+        const char *nom = (const char *)sqlite3_column_text(stmt, 0);
+        const char *eq = (const char *)sqlite3_column_text(stmt, 1);
         int g = sqlite3_column_int(stmt, 2);
         fprintf(f, "%s (%s) - %d goles\n", nom ? nom : "?", eq ? eq : "?", g);
     }
@@ -2047,7 +2127,8 @@ static void escribir_resultados_reporte(FILE *f, int torneo_id)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT equipo1_id, equipo2_id, goles_equipo1, goles_equipo2, estado "
                       "FROM partido_torneo WHERE torneo_id = ? ORDER BY id;";
-    if (!preparar_stmt(sql, &stmt)) return;
+    if (!preparar_stmt(sql, &stmt))
+        return;
     sqlite3_bind_int(stmt, 1, torneo_id);
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -2055,7 +2136,7 @@ static void escribir_resultados_reporte(FILE *f, int torneo_id)
         int e2 = sqlite3_column_int(stmt, 1);
         int g1 = sqlite3_column_int(stmt, 2);
         int g2 = sqlite3_column_int(stmt, 3);
-        const char *est = (const char*)sqlite3_column_text(stmt, 4);
+        const char *est = (const char *)sqlite3_column_text(stmt, 4);
         fprintf(f, "%s vs %s - ", get_equipo_nombre(e1), get_equipo_nombre(e2));
         if (est && strcmp(est, "Jugado") == 0)
             fprintf(f, "%d - %d\n", g1, g2);
@@ -2191,7 +2272,8 @@ void administrar_torneo(void)
     }
 
     int torneo_id = input_int("\nIngrese el ID del torneo a administrar (0 para cancelar): ");
-    if (torneo_id == 0) return;
+    if (torneo_id == 0)
+        return;
 
     if (!existe_id("torneo", torneo_id))
     {
@@ -2213,13 +2295,11 @@ void administrar_torneo(void)
 
 void menu_torneos(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Crear Torneo", crear_torneo},
-        {2, "Listar Torneos", listar_torneos},
-        {3, "Modificar Torneo", modificar_torneo},
-        {4, "Eliminar Torneo", eliminar_torneo},
-        {5, "Administrar Torneo", administrar_torneo},
+    MenuItem items[] = {{1, "Crear Torneo", &crear_torneo},
+        {2, "Listar Torneos", &listar_torneos},
+        {3, "Modificar Torneo", &modificar_torneo},
+        {4, "Eliminar Torneo", &eliminar_torneo},
+        {5, "Administrar Torneo", &administrar_torneo},
         {0, "Volver", NULL}
     };
 

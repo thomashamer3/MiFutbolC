@@ -11,7 +11,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
-#include <shlobj.h>
+#include <ShlObj.h>
 #else
 #include "compat_windows.h"
 #include "direct.h"

@@ -30,8 +30,8 @@
 static int asegurar_backup_dir(const char *path)
 {
     errno = 0;
-    int rc = MKDIR_BACKUP(path);
-    if (rc != 0 && errno != EEXIST)
+    int result = MKDIR_BACKUP(path);
+    if (result != 0 && errno != EEXIST)
     {
 #ifdef _WIN32
         char err_buf[128];
@@ -52,18 +52,18 @@ static int get_backup_dir(char *buffer, size_t size)
     {
         return 0;
     }
-    snprintf(buffer, size, "%s%s%s", export_dir, BACKUP_PATH_SEP, BACKUP_SUBDIR);
+    snprintf_s(buffer, size, "%s%s%s", export_dir, BACKUP_PATH_SEP, BACKUP_SUBDIR);
     return 1;
 }
 
 static void get_timestamp_seconds(char *buffer, size_t size)
 {
-    time_t t = time(NULL);
+    time_t now = time(NULL);
     struct tm tm_struct;
 #ifdef _WIN32
-    localtime_s(&tm_struct, &t);
+    localtime_s(&tm_struct, &now);
 #else
-    localtime_r(&t, &tm_struct);
+    localtime_r(&now, &tm_struct);
 #endif
     strftime(buffer, size, "%Y%m%d_%H%M%S", &tm_struct);
 }
@@ -74,22 +74,22 @@ static void sanitizar_descripcion(const char *src, char *dst, size_t dst_size)
     {
         return;
     }
-    size_t i = 0;
-    while (*src && i < dst_size - 1)
+    size_t idx = 0;
+    while (*src && idx < dst_size - 1)
     {
-        char c = *src;
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-                c == '_' || c == '-')
+        char cur_char = *src;
+        if ((cur_char >= 'a' && cur_char <= 'z') || (cur_char >= 'A' && cur_char <= 'Z') || (cur_char >= '0' && cur_char <= '9') ||
+                cur_char == '_' || cur_char == '-')
         {
-            dst[i++] = c;
+            dst[idx++] = cur_char;
         }
-        else if (c == ' ')
+        else if (cur_char == ' ')
         {
-            dst[i++] = '_';
+            dst[idx++] = '_';
         }
         src++;
     }
-    dst[i] = '\0';
+    dst[idx] = '\0';
 }
 
 static int construir_ruta_db(char *buffer, size_t size)
@@ -105,14 +105,14 @@ static int construir_ruta_db(char *buffer, size_t size)
 
     if (active_user && active_user[0] != '\0')
     {
-        snprintf(db_filename, sizeof(db_filename), "mifutbol_%s.db", active_user);
+        snprintf_s(db_filename, sizeof(db_filename), "mifutbol_%s.db", active_user);
     }
     else
     {
         strcpy_s(db_filename, sizeof(db_filename), "mifutbol.db");
     }
 
-    snprintf(buffer, size, "%s%s%s", data_dir, BACKUP_PATH_SEP, db_filename);
+    snprintf_s(buffer, size, "%s%s%s", data_dir, BACKUP_PATH_SEP, db_filename);
     return 1;
 }
 
@@ -129,24 +129,24 @@ static int file_exists_regular(const char *path)
 
 static void build_backup_path(char *buf, size_t size, const char *dir, const char *file)
 {
-    snprintf(buf, size, "%.*s%s%.*s", (int)((size - 2) / 2), dir, BACKUP_PATH_SEP,
-             (int)((size - 2) / 2), file);
+    snprintf_s(buf, size, "%.*s%s%.*s", (int)((size - 2) / 2), dir, BACKUP_PATH_SEP,
+               (int)((size - 2) / 2), file);
 }
 
 static long long obtener_tamano_archivo(const char *path)
 {
-    FILE *f = NULL;
-    if (fopen_s(&f, path, "rb") != 0 || !f)
+    FILE *f_archivo = NULL;
+    if (fopen_s(&f_archivo, path, "rb") != 0 || !f_archivo)
     {
         return -1;
     }
-    if (fseek(f, 0, SEEK_END) != 0)
+    if (fseek(f_archivo, 0, SEEK_END) != 0)
     {
-        fclose(f);
+        fclose(f_archivo);
         return -1;
     }
-    long size = ftell(f);
-    fclose(f);
+    long size = ftell(f_archivo);
+    fclose(f_archivo);
     return (size < 0) ? -1 : (long long)size;
 }
 
@@ -155,31 +155,31 @@ static cJSON *leer_manifest(const char *backup_dir)
     char manifest_path[MAX_BUFFER];
     build_backup_path(manifest_path, sizeof(manifest_path), backup_dir, MANIFEST_NAME);
 
-    FILE *f = NULL;
-    if (fopen_s(&f, manifest_path, "rb") != 0 || !f)
+    FILE *f_archivo = NULL;
+    if (fopen_s(&f_archivo, manifest_path, "rb") != 0 || !f_archivo)
     {
         return cJSON_CreateArray();
     }
 
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    fseek(f_archivo, 0, SEEK_END);
+    long len = ftell(f_archivo);
+    fseek(f_archivo, 0, SEEK_SET);
 
     if (len <= 0)
     {
-        fclose(f);
+        fclose(f_archivo);
         return cJSON_CreateArray();
     }
 
     char *content = (char *)malloc((size_t)len + 1);
     if (!content)
     {
-        fclose(f);
+        fclose(f_archivo);
         return cJSON_CreateArray();
     }
 
-    size_t read_len = fread(content, 1, (size_t)len, f);
-    fclose(f);
+    size_t read_len = fread(content, 1, (size_t)len, f_archivo);
+    fclose(f_archivo);
     content[read_len] = '\0';
 
     cJSON *manifest = cJSON_Parse(content);
@@ -210,15 +210,15 @@ static int guardar_manifest(const char *backup_dir, cJSON const *manifest)
         return 0;
     }
 
-    FILE *f = NULL;
-    if (fopen_s(&f, manifest_path, "w") != 0 || !f)
+    FILE *f_archivo = NULL;
+    if (fopen_s(&f_archivo, manifest_path, "w") != 0 || !f_archivo)
     {
         cJSON_free(json_str);
         return 0;
     }
 
-    fprintf(f, "%s\n", json_str);
-    fclose(f);
+    fprintf_s(f_archivo, "%s\n", json_str);
+    fclose(f_archivo);
     cJSON_free(json_str);
     return 1;
 }
@@ -245,12 +245,12 @@ static int backup_existe_en_manifest(cJSON const *manifest, const char *filename
 
 static char *obtener_fecha_actual(void)
 {
-    time_t t = time(NULL);
+    time_t now = time(NULL);
     struct tm tm_struct;
 #ifdef _WIN32
-    localtime_s(&tm_struct, &t);
+    localtime_s(&tm_struct, &now);
 #else
-    localtime_r(&t, &tm_struct);
+    localtime_r(&now, &tm_struct);
 #endif
     char *buffer = (char *)malloc(32);
     if (!buffer)
@@ -261,8 +261,10 @@ static char *obtener_fecha_actual(void)
     return buffer;
 }
 
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
 static int preparar_backup_paths(const char *descripcion, char *backup_dir, char *filename,
                                  char *dest_path, char *db_path, size_t size)
+// NOLINTEND(bugprone-easily-swappable-parameters)
 {
     if (!get_backup_dir(backup_dir, size))
     {
@@ -282,11 +284,15 @@ static int preparar_backup_paths(const char *descripcion, char *backup_dir, char
 
     char desc_safe[128] = {0};
     if (descripcion && descripcion[0] != '\0')
+    {
         sanitizar_descripcion(descripcion, desc_safe, sizeof(desc_safe));
+    }
     if (desc_safe[0] == '\0')
+    {
         strcpy_s(desc_safe, sizeof(desc_safe), "sin_descripcion");
+    }
 
-    snprintf(filename, size, "%s_%s.db", timestamp, desc_safe);
+    snprintf_s(filename, size, "%s_%s.db", timestamp, desc_safe);
     build_backup_path(dest_path, size, backup_dir, filename);
 
     if (!construir_ruta_db(db_path, size))
@@ -337,8 +343,10 @@ static int ejecutar_backup_db(const char *dest_path, const char *db_path)
     return 1;
 }
 
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
 static int agregar_entrada_manifest(const char *backup_dir, const char *filename,
                                     const char *descripcion, long long file_size)
+// NOLINTEND(bugprone-easily-swappable-parameters)
 {
     cJSON *manifest = leer_manifest(backup_dir);
     if (!manifest)
@@ -363,11 +371,11 @@ static int agregar_entrada_manifest(const char *backup_dir, const char *filename
     cJSON_AddNumberToObject(entry, "size_bytes", (double)file_size);
     cJSON_AddItemToArray(manifest, entry);
 
-    int ok = guardar_manifest(backup_dir, manifest);
+    int success = guardar_manifest(backup_dir, manifest);
     cJSON_Delete(manifest);
     free(fecha_str);
 
-    if (!ok)
+    if (!success)
     {
         printf("Error: No se pudo actualizar el manifiesto de backups.\n");
         app_log_event("BACKUP", "No se pudo guardar el manifiesto");
@@ -392,14 +400,20 @@ int crear_backup(const char *descripcion)
     }
 
     if (!ejecutar_backup_db(dest_path, db_path))
+    {
         return 0;
+    }
 
     long long file_size = obtener_tamano_archivo(dest_path);
     if (file_size < 0)
+    {
         file_size = 0;
+    }
 
     if (!agregar_entrada_manifest(backup_dir, filename, descripcion, file_size))
+    {
         return 0;
+    }
 
     printf("Backup creado exitosamente:\n");
     printf("  Archivo: %s\n", filename);
@@ -407,7 +421,7 @@ int crear_backup(const char *descripcion)
     printf("  Tamano: %lld bytes\n", file_size);
 
     char msg[MAX_BUFFER];
-    snprintf(msg, sizeof(msg), "Backup manual completado: %.990s", dest_path);
+    snprintf_s(msg, sizeof(msg), "Backup manual completado: %.990s", dest_path);
     app_log_event("BACKUP", msg);
     return 1;
 }
@@ -447,13 +461,13 @@ int listar_backups(void)
         cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
         cJSON const *size = cJSON_GetObjectItem(entry, "size_bytes");
 
-        const char *fn = (fname && cJSON_IsString(fname)) ? fname->valuestring : "?";
-        const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
-        const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
-        long long sz = (size && cJSON_IsNumber(size)) ? (long long)size->valuedouble : 0;
+        const char *name = (fname && cJSON_IsString(fname)) ? fname->valuestring : "?";
+        const char *desc_str = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
+        const char *fecha_str = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
+        long long size_val = (size && cJSON_IsNumber(size)) ? (long long)size->valuedouble : 0;
 
         char filepath[MAX_BUFFER];
-        build_backup_path(filepath, sizeof(filepath), backup_dir, fn);
+        build_backup_path(filepath, sizeof(filepath), backup_dir, name);
 
         if (!file_exists_regular(filepath))
         {
@@ -461,10 +475,10 @@ int listar_backups(void)
         }
 
         validos++;
-        printf("  %d. %s\n", validos, fn);
-        printf("     Descripcion: %s\n", dc);
-        printf("     Fecha: %s\n", fe);
-        printf("     Tamano: %lld bytes\n", sz);
+        printf("  %d. %s\n", validos, name);
+        printf("     Descripcion: %s\n", desc_str);
+        printf("     Fecha: %s\n", fecha_str);
+        printf("     Tamano: %lld bytes\n", size_val);
         printf("     ----------------------------------------\n");
     }
 
@@ -540,7 +554,7 @@ int restaurar_backup(const char *filename)
     if (!app_copy_binary_file(source_path, db_path))
     {
         printf("Error: No se pudo restaurar la base de datos desde el backup.\n");
-        snprintf(backup_dir, sizeof(backup_dir), "Fallo restauracion desde: %.970s", source_path);
+        snprintf_s(backup_dir, sizeof(backup_dir), "Fallo restauracion desde: %.970s", source_path);
         app_log_event("BACKUP", backup_dir);
         return 0;
     }
@@ -550,7 +564,7 @@ int restaurar_backup(const char *filename)
     printf("  -> %s\n", db_path);
     printf("\nIMPORTANTE: Reinicie la aplicacion para usar la base de datos restaurada.\n");
 
-    snprintf(backup_dir, sizeof(backup_dir), "Restauracion completada desde: %.970s", source_path);
+    snprintf_s(backup_dir, sizeof(backup_dir), "Restauracion completada desde: %.970s", source_path);
     app_log_event("BACKUP", backup_dir);
     pause_console();
     return 1;
@@ -624,10 +638,10 @@ int eliminar_backup(const char *filename)
         }
     }
 
-    int ok = guardar_manifest(backup_dir, manifest);
+    int success = guardar_manifest(backup_dir, manifest);
     cJSON_Delete(manifest);
 
-    if (!ok)
+    if (!success)
     {
         printf("Error: No se pudo actualizar el manifiesto de backups.\n");
         app_log_event("BACKUP", "No se pudo guardar el manifiesto tras eliminacion");
@@ -637,7 +651,7 @@ int eliminar_backup(const char *filename)
     printf("Backup eliminado exitosamente:\n");
     printf("  %s\n", filename);
 
-    snprintf(backup_dir, sizeof(backup_dir), "Backup eliminado: %.970s", filename);
+    snprintf_s(backup_dir, sizeof(backup_dir), "Backup eliminado: %.970s", filename);
     app_log_event("BACKUP", backup_dir);
     return 1;
 }
@@ -675,7 +689,9 @@ static int listar_backups_validos(cJSON const *manifest, const char *backup_dir,
     for (int i = 0; i < count; i++)
     {
         if (validos >= max_nombres)
+        {
             break;
+        }
 
         cJSON const *entry = cJSON_GetArrayItem(manifest, i);
         cJSON const *fname = cJSON_GetObjectItem(entry, "filename");
@@ -683,29 +699,35 @@ static int listar_backups_validos(cJSON const *manifest, const char *backup_dir,
         cJSON const *fecha = cJSON_GetObjectItem(entry, "fecha");
 
         if (!fname || !cJSON_IsString(fname))
+        {
             continue;
+        }
 
         char filepath[MAX_BUFFER];
         build_backup_path(filepath, sizeof(filepath), backup_dir, fname->valuestring);
 
         if (!file_exists_regular(filepath))
+        {
             continue;
+        }
 
         nombres[validos] = fname->valuestring;
-        const char *dc = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
-        const char *fe = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
+        const char *desc_str = (desc && cJSON_IsString(desc)) ? desc->valuestring : "?";
+        const char *fecha_str = (fecha && cJSON_IsString(fecha)) ? fecha->valuestring : "?";
 
         printf("  %d. %s\n", validos + 1, fname->valuestring);
-        printf("     Descripcion: %s\n", dc);
-        printf("     Fecha: %s\n", fe);
+        printf("     Descripcion: %s\n", desc_str);
+        printf("     Fecha: %s\n", fecha_str);
         printf("     ----------------------------------------\n");
         validos++;
     }
     return validos;
 }
 
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
 static void seleccionar_backup(const char *titulo, const char *prompt, const char *cancel_msg,
                                int needs_pause, AccionBackupFn accion)
+// NOLINTEND(bugprone-easily-swappable-parameters)
 {
     char backup_dir[MAX_BUFFER];
     if (!get_backup_dir(backup_dir, sizeof(backup_dir)))
@@ -719,7 +741,9 @@ static void seleccionar_backup(const char *titulo, const char *prompt, const cha
     if (!manifest || cJSON_GetArraySize(manifest) == 0)
     {
         if (manifest)
+        {
             cJSON_Delete(manifest);
+        }
         mostrar_no_hay_registros("backups");
         pause_console();
         return;
@@ -751,7 +775,9 @@ static void seleccionar_backup(const char *titulo, const char *prompt, const cha
     accion(filename);
     cJSON_Delete(manifest);
     if (needs_pause)
+    {
         pause_console();
+    }
 }
 
 static void pedir_y_restaurar_backup(void)
@@ -772,7 +798,9 @@ static void configurar_auto_backup(void)
 {
     int intervalo = input_int("Intervalo en horas entre backups (ej: 24): ");
     if (intervalo < 1)
+    {
         intervalo = 24;
+    }
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(
@@ -783,9 +811,13 @@ static void configurar_auto_backup(void)
     {
         sqlite3_bind_int(stmt, 1, intervalo);
         if (sqlite3_step(stmt) == SQLITE_DONE)
+        {
             printf("Auto-backup configurado (cada %d horas).\n", intervalo);
+        }
         else
+        {
             printf("Error al configurar auto-backup: %s\n", sqlite3_errmsg(db));
+        }
         sqlite3_finalize(stmt);
     }
     app_log_event("BACKUP", "Auto-backup configurado");
@@ -847,7 +879,9 @@ int verificar_backup_programado(void)
     if (sqlite3_prepare_v2(
                 db, "SELECT activo, proximo_backup, intervalo_horas FROM backup_config WHERE id = 1",
                 -1, &stmt, NULL) != SQLITE_OK)
+    {
         return 0;
+    }
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
         sqlite3_finalize(stmt);
@@ -859,7 +893,9 @@ int verificar_backup_programado(void)
     sqlite3_finalize(stmt);
 
     if (!activo || !proximo)
+    {
         return 0;
+    }
 
     time_t ahora = time(NULL);
     struct tm tm_prox = {0};
@@ -877,17 +913,19 @@ int verificar_backup_programado(void)
 
     time_t t_prox = mktime(&tm_prox);
     if (t_prox == -1)
+    {
         return 0;
+    }
 
     if (difftime(ahora, t_prox) >= 0 && crear_backup("Auto-backup programado"))
     {
         /* Actualizar proximo backup usando el intervalo */
         sqlite3_stmt *upd;
         char sql_upd[256];
-        snprintf(sql_upd, sizeof(sql_upd),
-                 "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d "
-                 "hours') WHERE id = 1",
-                 intervalo);
+        snprintf_s(sql_upd, sizeof(sql_upd),
+                   "UPDATE backup_config SET proximo_backup = datetime('now','localtime','+%d "
+                   "hours') WHERE id = 1",
+                   intervalo);
         if (sqlite3_prepare_v2(db, sql_upd, -1, &upd, NULL) == SQLITE_OK)
         {
             sqlite3_step(upd);

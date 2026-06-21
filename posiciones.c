@@ -39,7 +39,7 @@ void mostrar_tabla_posiciones_global(void)
         int gc = sqlite3_column_int(stmt, 5);
         int dg = sqlite3_column_int(stmt, 6);
         int pts = sqlite3_column_int(stmt, 7);
-        float v_ratio = total > 0 ? (100.0f * pg / total) : 0.0f;
+        float v_ratio = total > 0 ? (100.0f * (float)pg / (float)total) : 0.0f;
 
         printf("\n");
         printf("  %-25s %s\n", "Metrica", "Valor");
@@ -104,7 +104,7 @@ void mostrar_tabla_posiciones_global(void)
         int gf2 = sqlite3_column_int(stmt, 5);
         int gc2 = sqlite3_column_int(stmt, 6);
         int dg2 = sqlite3_column_int(stmt, 7);
-        float vp = t > 0 ? (100.0f * pg2 / t) : 0.0f;
+        float vp = t > 0 ? (100.0f * (float)pg2 / (float)t) : 0.0f;
         printf("  %4d | %3d | %3d | %3d | %3d | %3d | %3d | %+4d | %4.0f%%\n", anio,
                t, pg2, pe2, pp2, gf2, gc2, dg2, vp);
     }

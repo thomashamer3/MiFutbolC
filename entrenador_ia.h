@@ -99,7 +99,7 @@ typedef struct
  *
  * @return Estructura EstadoJugador con las métricas calculadas
  */
-EstadoJugador evaluar_estado_jugador();
+EstadoJugador evaluar_estado_jugador(void);
 
 /**
  * @brief Genera consejos personalizados basados en el estado del jugador
@@ -159,7 +159,7 @@ void guardar_consejo_historial(const char *consejo, int seguido);
  *
  * @return Estructura PerfilUsuarioIA con las métricas del usuario
  */
-PerfilUsuarioIA obtener_perfil_usuario();
+PerfilUsuarioIA obtener_perfil_usuario(void);
 
 /**
  * @brief Actualiza el perfil del usuario según si siguió un consejo

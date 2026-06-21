@@ -1,7 +1,7 @@
 #include "records_rankings.h"
 #include "db.h"
-#include "utils.h"
 #include "menu.h"
+#include "utils.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -59,7 +59,7 @@ static void mostrar_temporada(const char *titulo, const char *sql)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            const char* year = (const char*)sqlite3_column_text(stmt, 0);
+            const char *year = (const char *)sqlite3_column_text(stmt, 0);
             if (year)
             {
                 printf("Anio: %s\n", year);
@@ -107,13 +107,14 @@ void mostrar_mejor_combinacion_cancha_camiseta(void)
     clear_screen();
     print_header("MEJOR COMBINACION CANCHA + CAMISETA");
 
-    mostrar_combinacion("Mejor Combinacion Cancha + Camiseta",
-                        "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
-                        "FROM partido p "
-                        "JOIN cancha ca ON p.cancha_id = ca.id "
-                        "JOIN camiseta c ON p.camiseta_id = c.id "
-                        "GROUP BY p.cancha_id, p.camiseta_id "
-                        "ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
+    mostrar_combinacion(
+        "Mejor Combinacion Cancha + Camiseta",
+        "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
+        "FROM partido p "
+        "JOIN cancha ca ON p.cancha_id = ca.id "
+        "JOIN camiseta c ON p.camiseta_id = c.id "
+        "GROUP BY p.cancha_id, p.camiseta_id "
+        "ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
 
     pause_console();
 }
@@ -123,13 +124,14 @@ void mostrar_peor_combinacion_cancha_camiseta(void)
     clear_screen();
     print_header("PEOR COMBINACION CANCHA + CAMISETA");
 
-    mostrar_combinacion("Peor Combinacion Cancha + Camiseta",
-                        "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
-                        "FROM partido p "
-                        "JOIN cancha ca ON p.cancha_id = ca.id "
-                        "JOIN camiseta c ON p.camiseta_id = c.id "
-                        "GROUP BY p.cancha_id, p.camiseta_id "
-                        "ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
+    mostrar_combinacion(
+        "Peor Combinacion Cancha + Camiseta",
+        "SELECT ca.nombre, c.nombre, ROUND(AVG(p.rendimiento_general), 2), COUNT(*) "
+        "FROM partido p "
+        "JOIN cancha ca ON p.cancha_id = ca.id "
+        "JOIN camiseta c ON p.camiseta_id = c.id "
+        "GROUP BY p.cancha_id, p.camiseta_id "
+        "ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
 
     pause_console();
 }
@@ -140,7 +142,10 @@ void mostrar_mejor_temporada(void)
     print_header("MEJOR TEMPORADA");
 
     mostrar_temporada("Mejor Temporada",
-                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
+                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), "
+                      "ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE "
+                      "p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, "
+                      "'/') + 4, 4) ORDER BY AVG(p.rendimiento_general) DESC LIMIT 1");
 
     pause_console();
 }
@@ -151,7 +156,10 @@ void mostrar_peor_temporada(void)
     print_header("PEOR TEMPORADA");
 
     mostrar_temporada("Peor Temporada",
-                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
+                      "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4), "
+                      "ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM partido p WHERE "
+                      "p.fecha_hora IS NOT NULL GROUP BY substr(p.fecha_hora, instr(p.fecha_hora, "
+                      "'/') + 4, 4) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
 
     pause_console();
 }
@@ -218,12 +226,12 @@ void mostrar_partido_mejor_combinacion_goles_asistencias(void)
     printf("\nPartido con Mejor Combinacion Goles+Asistencias\n");
     printf("----------------------------------------\n");
 
-    if (preparar_stmt(
-                "SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias, (p.goles + p.asistencias) AS combinacion "
-                "FROM partido p "
-                "JOIN camiseta c ON p.camiseta_id = c.id "
-                "ORDER BY combinacion DESC LIMIT 1",
-                &stmt))
+    if (preparar_stmt("SELECT p.id, p.fecha_hora, c.nombre, p.goles, p.asistencias, (p.goles + "
+                      "p.asistencias) AS combinacion "
+                      "FROM partido p "
+                      "JOIN camiseta c ON p.camiseta_id = c.id "
+                      "ORDER BY combinacion DESC LIMIT 1",
+                      &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -248,7 +256,8 @@ void mostrar_partido_mejor_combinacion_goles_asistencias(void)
  * Muestra lista de partidos que cumplen una condicion especifica.
  * Reutilizable para diferentes criterios de filtrado de partidos.
  */
-static void mostrar_lista_partidos(const char *header, const char *titulo, const char *condicion, const char *mensaje_vacio)
+static void mostrar_lista_partidos(const char *header, const char *titulo, const char *condicion,
+                                   const char *mensaje_vacio)
 {
     clear_screen();
     print_header(header);
@@ -273,10 +282,8 @@ static void mostrar_lista_partidos(const char *header, const char *titulo, const
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             printf("ID: %d | Fecha: %s | Camiseta: %s | Goles: %d | Asistencias: %d\n",
-                   sqlite3_column_int(stmt, 0),
-                   sqlite3_column_text(stmt, 1),
-                   sqlite3_column_text(stmt, 2),
-                   sqlite3_column_int(stmt, 3),
+                   sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                   sqlite3_column_text(stmt, 2), sqlite3_column_int(stmt, 3),
                    sqlite3_column_int(stmt, 4));
             count++;
         }
@@ -298,8 +305,8 @@ static void mostrar_lista_partidos(const char *header, const char *titulo, const
 
 void mostrar_partidos_sin_goles(void)
 {
-    mostrar_lista_partidos("PARTIDOS SIN GOLES", "Partidos sin Goles",
-                           "p.goles = 0", "No hay partidos sin goles.");
+    mostrar_lista_partidos("PARTIDOS SIN GOLES", "Partidos sin Goles", "p.goles = 0",
+                           "No hay partidos sin goles.");
 }
 
 void mostrar_partidos_sin_asistencias(void)
@@ -454,12 +461,8 @@ static void mostrar_top5_mejores_partidos(void)
         int asistencias = sqlite3_column_int(stmt, 2);
         int rendimiento = sqlite3_column_int(stmt, 3);
 
-        printf("%d. %s    %d goles - %d asistencias    rendimiento %d\n",
-               pos,
-               fecha ? fecha : "N/A",
-               goles,
-               asistencias,
-               rendimiento);
+        printf("%d. %s    %d goles - %d asistencias    rendimiento %d\n", pos,
+               fecha ? fecha : "N/A", goles, asistencias, rendimiento);
         pos++;
     }
 
@@ -514,8 +517,8 @@ static void mostrar_ranking_camisetas(void)
         double winrate = sqlite3_column_double(stmt, 5);
 
         printf("%d) %s\n", pos, nombre ? nombre : "Camiseta sin nombre");
-        printf("   Partidos: %d  Victorias: %d  Empates: %d  Derrotas: %d\n",
-               partidos, victorias, empates, derrotas);
+        printf("   Partidos: %d  Victorias: %d  Empates: %d  Derrotas: %d\n", partidos, victorias,
+               empates, derrotas);
         printf("   Winrate: %.0f%%\n\n", winrate);
         pos++;
     }
@@ -533,24 +536,27 @@ static void mostrar_ranking_camisetas(void)
  * Construye array de opciones del menu de records y rankings.
  * Centralizado aqui para mantener consistencia y facilitar mantenimiento.
  */
-static MenuItem* construir_menu_records(void)
+static MenuItem *construir_menu_records(void)
 {
     static MenuItem items[] =
     {
-        {1, "Record de Goles en un Partido", mostrar_record_goles_partido},
-        {2, "Record de Asistencias", mostrar_record_asistencias_partido},
-        {3, "Mejor Combinacion Cancha + Camiseta", mostrar_mejor_combinacion_cancha_camiseta},
-        {4, "Peor Combinacion Cancha + Camiseta", mostrar_peor_combinacion_cancha_camiseta},
-        {5, "Mejor Temporada", mostrar_mejor_temporada},
-        {6, "Peor Temporada", mostrar_peor_temporada},
-        {7, "Partido con Mejor Rendimiento General", mostrar_partido_mejor_rendimiento_general},
-        {8, "Partido con Peor Rendimiento General", mostrar_partido_peor_rendimiento_general},
-        {9, "Partido con Mejor Combinacion Goles+Asistencias", mostrar_partido_mejor_combinacion_goles_asistencias},
-        {10, "Partidos sin Goles", mostrar_partidos_sin_goles},
-        {11, "Partidos sin Asistencias", mostrar_partidos_sin_asistencias},
-        {12, "Mejor Racha Goleadora", mostrar_mejor_racha_goleadora},
-        {13, "Peor Racha", mostrar_peor_racha},
-        {14, "Partidos Consecutivos Anotando", mostrar_partidos_consecutivos_anotando},
+        {1, "Record de Goles en un Partido", &mostrar_record_goles_partido},
+        {2, "Record de Asistencias", &mostrar_record_asistencias_partido},
+        {3, "Mejor Combinacion Cancha + Camiseta", &mostrar_mejor_combinacion_cancha_camiseta},
+        {4, "Peor Combinacion Cancha + Camiseta", &mostrar_peor_combinacion_cancha_camiseta},
+        {5, "Mejor Temporada", &mostrar_mejor_temporada},
+        {6, "Peor Temporada", &mostrar_peor_temporada},
+        {7, "Partido con Mejor Rendimiento General", &mostrar_partido_mejor_rendimiento_general},
+        {8, "Partido con Peor Rendimiento General", &mostrar_partido_peor_rendimiento_general},
+        {
+            9, "Partido con Mejor Combinacion Goles+Asistencias",
+            &mostrar_partido_mejor_combinacion_goles_asistencias
+        },
+        {10, "Partidos sin Goles", &mostrar_partidos_sin_goles},
+        {11, "Partidos sin Asistencias", &mostrar_partidos_sin_asistencias},
+        {12, "Mejor Racha Goleadora", &mostrar_mejor_racha_goleadora},
+        {13, "Peor Racha", &mostrar_peor_racha},
+        {14, "Partidos Consecutivos Anotando", &mostrar_partidos_consecutivos_anotando},
         {15, "Top 5 Mejores Partidos", &mostrar_top5_mejores_partidos},
         {16, "Ranking de Tus Camisetas", &mostrar_ranking_camisetas},
         {0, "Volver", NULL}

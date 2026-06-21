@@ -1,13 +1,13 @@
 #include "lesion.h"
-#include "menu.h"
-#include "db.h"
-#include "utils.h"
-#include "estadisticas_lesiones.h"
 #include "camiseta.h"
+#include "db.h"
+#include "estadisticas_lesiones.h"
+#include "menu.h"
 #include "partido.h"
+#include "utils.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int current_lesion_id;
 
@@ -88,9 +88,8 @@ static int solicitar_partido_id(int permitir_omitir)
 {
     listar_partidos();
 
-    const char *mensaje = permitir_omitir ?
-                          "\nID del Partido (0 para omitir): " :
-                          "\nNuevo ID del Partido (0 para quitar asociacion): ";
+    const char *mensaje = permitir_omitir ? "\nID del Partido (0 para omitir): "
+                          : "\nNuevo ID del Partido (0 para quitar asociacion): ";
 
     int partido_id;
     int partido_valido = 0;
@@ -169,9 +168,9 @@ void crear_lesion(void)
     long long id = obtener_siguiente_id("lesion");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                "INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, estado, partido_id) VALUES(?,?,?,?,?,?,?,?)",
-                &stmt))
+    if (!preparar_stmt("INSERT INTO lesion(id, jugador, tipo, descripcion, fecha, camiseta_id, "
+                       "estado, partido_id) VALUES(?,?,?,?,?,?,?,?)",
+                       &stmt))
     {
         if (strcmp(jugador, "Usuario Desconocido") != 0)
         {
@@ -203,7 +202,8 @@ void crear_lesion(void)
     }
 
     char info[200];
-    snprintf(info, sizeof(info), "Estado: %s%s", estado, partido_id > 0 ? " - Asociada a partido" : "");
+    snprintf(info, sizeof(info), "Estado: %s%s", estado,
+             partido_id > 0 ? " - Asociada a partido" : "");
     mostrar_alerta_operacion("Lesión", "Creada", info);
 }
 
@@ -212,15 +212,15 @@ void listar_lesiones(void)
     mostrar_pantalla("LISTADO DE LESIONES");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                "SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, l.camiseta_id, l.estado, l.partido_id, "
-                "c.nombre, p.fecha_hora, can.nombre "
-                "FROM lesion l "
-                "LEFT JOIN camiseta c ON l.camiseta_id = c.id "
-                "LEFT JOIN partido p ON l.partido_id = p.id "
-                "LEFT JOIN cancha can ON p.cancha_id = can.id "
-                "ORDER BY l.id ASC",
-                &stmt))
+    if (!preparar_stmt("SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, l.camiseta_id, "
+                       "l.estado, l.partido_id, "
+                       "c.nombre, p.fecha_hora, can.nombre "
+                       "FROM lesion l "
+                       "LEFT JOIN camiseta c ON l.camiseta_id = c.id "
+                       "LEFT JOIN partido p ON l.partido_id = p.id "
+                       "LEFT JOIN cancha can ON p.cancha_id = can.id "
+                       "ORDER BY l.id ASC",
+                       &stmt))
     {
         pause_console();
         return;
@@ -271,7 +271,8 @@ static void modificar_descripcion_lesion(void)
 {
     char descripcion[200];
     solicitar_texto_no_vacio("Nueva descripcion: ", descripcion, sizeof(descripcion));
-    ejecutar_update_texto("UPDATE lesion SET descripcion=? WHERE id=?", descripcion, current_lesion_id);
+    ejecutar_update_texto("UPDATE lesion SET descripcion=? WHERE id=?", descripcion,
+                          current_lesion_id);
     mostrar_alerta_operacion("Lesión", "Descripción Modificada", NULL);
 }
 
@@ -304,7 +305,8 @@ static void modificar_camiseta_lesion(void)
             break;
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
-    ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id, current_lesion_id);
+    ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id,
+                        current_lesion_id);
     mostrar_alerta_operacion("Lesión", "Camiseta Modificada", NULL);
 }
 
@@ -446,15 +448,13 @@ void modificar_lesion(void)
 
     current_lesion_id = id;
 
-    MenuItem items[] =
-    {
-        {1, "Tipo", modificar_tipo_lesion},
-        {2, "Descripcion", modificar_descripcion_lesion},
-        {3, "Fecha", modificar_fecha_lesion},
-        {4, "Camiseta", modificar_camiseta_lesion},
-        {5, "Estado", modificar_estado_lesion},
-        {6, "Partido", modificar_partido_lesion},
-        {7, "Modificar Todo", modificar_todo_lesion},
+    MenuItem items[] = {{1, "Tipo", &modificar_tipo_lesion},
+        {2, "Descripcion", &modificar_descripcion_lesion},
+        {3, "Fecha", &modificar_fecha_lesion},
+        {4, "Camiseta", &modificar_camiseta_lesion},
+        {5, "Estado", &modificar_estado_lesion},
+        {6, "Partido", &modificar_partido_lesion},
+        {7, "Modificar Todo", &modificar_todo_lesion},
         {0, "Volver", NULL}
     };
 
@@ -592,9 +592,9 @@ void actualizar_estados_lesiones(void)
     mostrar_pantalla("ACTUALIZAR ESTADOS DE LESIONES");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(
-                "SELECT id, tipo, descripcion, fecha, estado FROM lesion WHERE estado != 'RECUPERADO' ORDER BY fecha DESC",
-                &stmt))
+    if (!preparar_stmt("SELECT id, tipo, descripcion, fecha, estado FROM lesion WHERE estado != "
+                       "'RECUPERADO' ORDER BY fecha DESC",
+                       &stmt))
     {
         pause_console();
         return;
@@ -650,15 +650,13 @@ void actualizar_estados_lesiones(void)
 
 void menu_lesiones(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Crear", crear_lesion},
-        {2, "Listar", listar_lesiones},
-        {3, "Modificar", modificar_lesion},
-        {4, "Eliminar", eliminar_lesion},
-        {5, "Estadisticas", mostrar_estadisticas_lesiones},
-        {6, "Diferencias entre Lesiones", mostrar_diferencias_lesiones},
-        {7, "Actualizar Estados", actualizar_estados_lesiones},
+    MenuItem items[] = {{1, "Crear", &crear_lesion},
+        {2, "Listar", &listar_lesiones},
+        {3, "Modificar", &modificar_lesion},
+        {4, "Eliminar", &eliminar_lesion},
+        {5, "Estadisticas", &mostrar_estadisticas_lesiones},
+        {6, "Diferencias entre Lesiones", &mostrar_diferencias_lesiones},
+        {7, "Actualizar Estados", &actualizar_estados_lesiones},
         {0, "Volver", NULL}
     };
     ejecutar_menu("LESIONES", items, 8);

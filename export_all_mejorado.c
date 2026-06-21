@@ -1,12 +1,11 @@
 
 #include "export_all_mejorado.h"
-#include "export_camisetas_mejorado.h"
-#include "export_lesiones_mejorado.h"
 #include "export_camisetas.h"
+#include "export_camisetas_mejorado.h"
 #include "export_lesiones.h"
-#include "export.h"
-#include "utils.h"
+#include "export_lesiones_mejorado.h"
 #include "menu.h"
+#include "utils.h"
 #include <stdio.h>
 
 static void exportar_camisetas_mejoradas(void)
@@ -75,11 +74,9 @@ void exportar_todo_mejorado(void)
 
 void menu_exportar_mejorado(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Camisetas con Analisis Avanzado", exportar_camisetas_todo_mejorado},
-        {2, "Lesiones con Analisis de Impacto", exportar_lesiones_todo_mejorado},
-        {3, "Todo con Analisis Avanzado", exportar_todo_mejorado},
+    MenuItem items[] = {{1, "Camisetas con Analisis Avanzado", &exportar_camisetas_todo_mejorado},
+        {2, "Lesiones con Analisis de Impacto", &exportar_lesiones_todo_mejorado},
+        {3, "Todo con Analisis Avanzado", &exportar_todo_mejorado},
         {0, "Volver", NULL}
     };
     ejecutar_menu("EXPORTAR DATOS MEJORADOS", items, 4);

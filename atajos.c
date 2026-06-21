@@ -107,17 +107,17 @@ int verificar_atajo(void)
         return 0;
     }
 
-    int ch = getch_portable();
+    int check = getch_portable();
 
-    if (ch == -1 || ch == EOF)
+    if (check == -1 || check == EOF)
     {
         return 0;
     }
 
     // Convertir a mayúscula
-    ch = toupper(ch);
+    check = toupper(check);
 
-    return ch;
+    return check;
 }
 
 void mostrar_ayuda_atajos(void)

@@ -2,11 +2,11 @@
 #include "db.h"
 #include "menu.h"
 #include "random_utils.h"
-#include "settings.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// NOLINTBEGIN(bugprone-easily-swappable-parameters,performance-no-int-to-ptr)
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 {
@@ -21,13 +21,13 @@ static int obtener_botin_predeterminado(void)
         return 0;
     }
 
-    int id = 0;
+    int botin_id = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        id = sqlite3_column_int(stmt, 0);
+        botin_id = sqlite3_column_int(stmt, 0);
     }
     sqlite3_finalize(stmt);
-    return id;
+    return botin_id;
 }
 
 int botin_obtener_predeterminado(void)
@@ -49,22 +49,24 @@ static void listar_botines_simple(void)
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        int botin_id = sqlite3_column_int(stmt, 0);
         const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
         const char *estado = sqlite3_column_int(stmt, 2) == 1 ? "ACTIVO" : "INACTIVO";
-        if (id == predet)
+        if (botin_id == predet)
         {
-            ui_printf_centered_line("%d - %s [%s] (PREDETERMINADO)", id, nombre, estado);
+            ui_printf_centered_line("%d - %s [%s] (PREDETERMINADO)", botin_id, nombre, estado);
         }
         else
         {
-            ui_printf_centered_line("%d - %s [%s]", id, nombre, estado);
+            ui_printf_centered_line("%d - %s [%s]", botin_id, nombre, estado);
         }
         hay = 1;
     }
 
     if (!hay)
+    {
         mostrar_no_hay_registros("botines cargados");
+    }
 
     sqlite3_finalize(stmt);
 }
@@ -102,7 +104,7 @@ void crear_botin(void)
         return;
     }
 
-    long long id = obtener_siguiente_id("botin");
+    long long botin_ll_id = obtener_siguiente_id("botin");
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "INSERT INTO botin(id, nombre) VALUES(?, ?)"))
@@ -111,15 +113,15 @@ void crear_botin(void)
         pause_console();
         return;
     }
-    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_int64(stmt, 1, botin_ll_id);
     sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    int rc = sqlite3_step(stmt);
+    int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    if (rc == SQLITE_DONE)
+    if (result == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creado botin id=%lld nombre=%.180s", id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creado botin id=%lld nombre=%.180s", botin_ll_id, nombre);
         app_log_event("BOTIN", log_msg);
         mostrar_alerta_operacion("Botin", "Creado", nombre);
     }
@@ -159,7 +161,9 @@ void editar_botin(void)
 
     int id = input_int("\nID a editar (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -216,7 +220,9 @@ void eliminar_botin(void)
 
     int id = input_int("\nID a eliminar (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -236,7 +242,9 @@ void eliminar_botin(void)
     }
 
     if (!confirmar("Esta seguro de eliminar este botin?"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "DELETE FROM botin WHERE id=?"))
@@ -253,11 +261,11 @@ void eliminar_botin(void)
     int predet = obtener_botin_predeterminado();
     if (id == predet)
     {
-        sqlite3_stmt *s;
-        if (preparar_stmt(&s, "UPDATE settings SET botin_predeterminado = 0 WHERE id = 1"))
+        sqlite3_stmt *stmt2;
+        if (preparar_stmt(&stmt2, "UPDATE settings SET botin_predeterminado = 0 WHERE id = 1"))
         {
-            sqlite3_step(s);
-            sqlite3_finalize(s);
+            sqlite3_step(stmt2);
+            sqlite3_finalize(stmt2);
         }
     }
 
@@ -326,11 +334,15 @@ void fijar_botin_predeterminado(void)
 static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, size_t size)
 {
     if (!ruta_absoluta || size == 0)
+    {
         return 0;
+    }
 
     char ruta_db[300] = {0};
     if (!db_get_image_path_by_id("botin", id, ruta_db, sizeof(ruta_db)))
+    {
         return 0;
+    }
 
     return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
@@ -346,7 +358,9 @@ static int pedir_imagen_botin_y_resolver_ruta(char *ruta_absoluta, size_t size)
     listar_botines_simple();
     int id = input_int("\nID de botin (0 para cancelar): ");
     if (id == 0)
+    {
         return 0;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -367,7 +381,9 @@ static int contar_total_botines_activos(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(activa, 1) = 1"))
+    {
         return 0;
+    }
     sqlite3_step(stmt);
     int total = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
@@ -382,7 +398,9 @@ static int botin_esta_activo(int botin_id)
     sqlite3_bind_int(stmt, 1, botin_id);
     int activo = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         activo = sqlite3_column_int(stmt, 0) == 1;
+    }
     sqlite3_finalize(stmt);
     return activo;
 }
@@ -394,9 +412,9 @@ static int actualizar_estado_botin(int botin_id, int activo)
         return 0;
     sqlite3_bind_int(stmt, 1, activo ? 1 : 0);
     sqlite3_bind_int(stmt, 2, botin_id);
-    int ok = sqlite3_step(stmt) == SQLITE_DONE;
+    int success = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
-    return ok;
+    return success;
 }
 
 void sortear_botin(void)
@@ -414,7 +432,8 @@ void sortear_botin(void)
 
     int offset = secure_rand_range(disponibles);
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM botin WHERE IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
+    if (!preparar_stmt(&stmt,
+                       "SELECT id, nombre FROM botin WHERE IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
     {
         printf("Error al seleccionar botin aleatorio.\n");
         pause_console();
@@ -456,7 +475,9 @@ void cargar_imagen_botin(void)
     listar_botines_simple();
     int id = input_int("\nID de botin (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -523,7 +544,9 @@ static void ver_informacion_botin(void)
 
     int id = input_int("ID de botin para ver informacion (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -589,7 +612,9 @@ static void reactivar_botin(void)
 
     int id = input_int("ID de botin (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("botin", id))
     {
@@ -602,7 +627,9 @@ static void reactivar_botin(void)
     int nuevo_estado = esta_activo ? 0 : 1;
 
     if (!confirmar(esta_activo ? "Desea desactivar este botin?" : "Desea reactivar este botin?"))
+    {
         return;
+    }
 
     if (!actualizar_estado_botin(id, nuevo_estado))
     {
@@ -626,9 +653,11 @@ static void configurar_visor_preferido_imagen(void)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            const unsigned char *v = sqlite3_column_text(stmt, 0);
-            if (v)
-                snprintf(actual, sizeof(actual), "%s", (const char *)v);
+            const unsigned char *visor_val = sqlite3_column_text(stmt, 0);
+            if (visor_val)
+            {
+                snprintf(actual, sizeof(actual), "%s", (const char *)visor_val);
+            }
         }
         sqlite3_finalize(stmt);
     }
@@ -647,7 +676,8 @@ static void configurar_visor_preferido_imagen(void)
         return;
     }
 
-    if (preparar_stmt(&stmt, "INSERT OR IGNORE INTO settings(id, theme, language, mode, text_size, image_viewer) VALUES(1, 0, 0, 0, 1, '')"))
+    if (preparar_stmt(&stmt, "INSERT OR IGNORE INTO settings(id, theme, language, mode, text_size, "
+                      "image_viewer) VALUES(1, 0, 0, 0, 1, '')"))
     {
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
@@ -687,10 +717,8 @@ static void probar_visor_imagen_actual(void)
 
 static void menu_ajustes_imagen_botin(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Configurar visor", configurar_visor_preferido_imagen},
-        {2, "Probar visor", probar_visor_imagen_actual},
+    MenuItem items[] = {{1, "Configurar visor", &configurar_visor_preferido_imagen},
+        {2, "Probar visor", &probar_visor_imagen_actual},
         {0, "Volver", NULL}
     };
     ejecutar_menu("AJUSTES IMAGEN BOTIN", items, 3);
@@ -698,19 +726,20 @@ static void menu_ajustes_imagen_botin(void)
 
 void menu_botines(void)
 {
-    MenuItem items[] = {{1, "Crear", crear_botin},
-        {2, "Listar", listar_botines},
-        {3, "Modificar", editar_botin},
-        {4, "Eliminar", eliminar_botin},
-        {5, "Sortear", sortear_botin},
-        {6, "Cargar Imagen", cargar_imagen_botin},
-        {7, "Ver Botin", ver_imagen_botin},
-        {8, "Ajustes Imagen", menu_ajustes_imagen_botin},
-        {9, "Ver Informacion", ver_informacion_botin},
-        {10, "Cargar Informacion", cargar_informacion_botin},
-        {11, "Reactivar/Desactivar", reactivar_botin},
-        {12, "Fijar Predeterminado", fijar_botin_predeterminado},
+    MenuItem items[] = {{1, "Crear", &crear_botin},
+        {2, "Listar", &listar_botines},
+        {3, "Modificar", &editar_botin},
+        {4, "Eliminar", &eliminar_botin},
+        {5, "Sortear", &sortear_botin},
+        {6, "Cargar Imagen", &cargar_imagen_botin},
+        {7, "Ver Botin", &ver_imagen_botin},
+        {8, "Ajustes Imagen", &menu_ajustes_imagen_botin},
+        {9, "Ver Informacion", &ver_informacion_botin},
+        {10, "Cargar Informacion", &cargar_informacion_botin},
+        {11, "Reactivar/Desactivar", &reactivar_botin},
+        {12, "Fijar Predeterminado", &fijar_botin_predeterminado},
         {0, "Volver", NULL}
     };
     ejecutar_menu("BOTINES", items, 13);
 }
+// NOLINTEND(bugprone-easily-swappable-parameters,performance-no-int-to-ptr)

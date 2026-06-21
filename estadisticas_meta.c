@@ -70,10 +70,6 @@ static void query(const char *titulo, const char *sql)
             {
                 printf("%-30s : %.2f\n", nombre, sqlite3_column_double(stmt, 1));
             }
-            else if (sqlite3_column_type(stmt, 1) == SQLITE_INTEGER)
-            {
-                printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));
-            }
             else
             {
                 printf("%-30s : %d\n", nombre, sqlite3_column_int(stmt, 1));

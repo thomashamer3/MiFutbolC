@@ -8,6 +8,7 @@
 #include "menu.h"
 #include <ctype.h>
 #include <inttypes.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <locale.h>
 #ifdef _WIN32
 #include <windows.h>
 #include <commdlg.h>
@@ -41,9 +41,15 @@ extern char **environ;
 /* Funcion deshabilitada: evitar maximizar la consola automaticamente
  * Se deja como no-op para que el usuario pueda cerrar/reducir la ventana.
  */
-void ensure_console_maximized_windows(void) { /* Intencionalmente vacio */ }
+void ensure_console_maximized_windows(void)
+{
+    /* Intencionalmente vacio */
+}
 #else
-void ensure_console_maximized_windows(void) { /* No-op en otros sistemas */ }
+void ensure_console_maximized_windows(void)
+{
+    /* No-op en otros sistemas */
+}
 #endif
 
 #define STMT_CACHE_SIZE 128
@@ -166,8 +172,7 @@ void db_clear_stmt_cache(void)
     g_stmt_cache_initialized = 0;
 }
 
-int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
-                               const char *error_message)
+int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql, const char *error_message)
 {
     if (db_prepare_stmt(stmt, sql))
     {
@@ -207,8 +212,7 @@ int utils_clamp_int(int value, int minv, int maxv)
     return value;
 }
 
-static uint64_t auth_fnv1a64_update(uint64_t hash, const unsigned char *data,
-                                    size_t len)
+static uint64_t auth_fnv1a64_update(uint64_t hash, const unsigned char *data, size_t len)
 {
     const uint64_t prime = 1099511628211ULL;
     for (size_t i = 0; i < len; i++)
@@ -226,8 +230,7 @@ static uint64_t auth_fnv1a64_string(const char *text)
     {
         return offset_basis;
     }
-    return auth_fnv1a64_update(offset_basis, (const unsigned char *)text,
-                               strlen_s(text, SIZE_MAX));
+    return auth_fnv1a64_update(offset_basis, (const unsigned char *)text, strlen_s(text, SIZE_MAX));
 }
 
 void auth_generate_salt_hex(char *salt_out, size_t out_size)
@@ -244,20 +247,20 @@ void auth_generate_salt_hex(char *salt_out, size_t out_size)
     {
         for (int i = 0; i < 16; i++)
         {
-            salt[i] = (unsigned char)((clock() ^ ((time(NULL)) + i * 12345)) & 0xFF);
+            salt[i] = (unsigned char)((clock() ^ ((time(NULL)) + (time_t)i * 12345)) & 0xFF);
         }
     }
 
     for (int i = 0; i < 16; i++)
     {
-        salt_out[i * 2] = hex[(salt[i] >> 4) & 0x0F];
-        salt_out[i * 2 + 1] = hex[salt[i] & 0x0F];
+        salt_out[(size_t)i * 2] = hex[(salt[i] >> 4) & 0x0F];
+        salt_out[(size_t)i * 2 + 1] = hex[salt[i] & 0x0F];
     }
     salt_out[32] = '\0';
 }
 
-void auth_build_password_hash(const char *plain_password, const char *salt_hex,
-                              char *hash_out, size_t out_size)
+void auth_build_password_hash(const char *plain_password, const char *salt_hex, char *hash_out,
+                              size_t out_size)
 {
     char round_input[512];
     uint64_t h1;
@@ -274,15 +277,14 @@ void auth_build_password_hash(const char *plain_password, const char *salt_hex,
 
     snprintf(round_input, sizeof(round_input), "%s:%s", salt_hex, plain_password);
     h1 = auth_fnv1a64_string(round_input);
-    snprintf(round_input, sizeof(round_input), "%s:%016" PRIx64 ":%s",
-             plain_password, h1, salt_hex);
+    snprintf(round_input, sizeof(round_input), "%s:%016" PRIx64 ":%s", plain_password, h1,
+             salt_hex);
     h2 = auth_fnv1a64_string(round_input);
     snprintf(hash_out, out_size, "%016" PRIx64, h2);
 }
 
 static int auth_username_exists(sqlite3 *auth_db, const char *username);
-static int auth_upsert_user(sqlite3 *auth_db, const char *username,
-                            const char *plain_password);
+static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password);
 
 int utils_get_env_var_copy(const char *name, char *buffer, size_t size)
 {
@@ -320,8 +322,7 @@ int utils_get_env_var_copy(const char *name, char *buffer, size_t size)
 #endif
 }
 
-static int app_build_local_appdata_path(char *dest, size_t size,
-                                        const char *suffix)
+static int app_build_local_appdata_path(char *dest, size_t size, const char *suffix)
 {
 #ifdef _WIN32
     char local_app_data[1024] = {0};
@@ -330,8 +331,7 @@ static int app_build_local_appdata_path(char *dest, size_t size,
         return 0;
     }
 
-    if (!utils_get_env_var_copy("LOCALAPPDATA", local_app_data,
-                                sizeof(local_app_data)))
+    if (!utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)))
     {
         return 0;
     }
@@ -369,8 +369,7 @@ static void auth_get_db_path(char *path, size_t size)
 {
 #ifdef _WIN32
     char local_app_data[1024] = {0};
-    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data,
-                               sizeof(local_app_data)) &&
+    if (utils_get_env_var_copy("LOCALAPPDATA", local_app_data, sizeof(local_app_data)) &&
             strcpy_s(path, size, local_app_data) == 0 &&
             strcat_s(path, size, "\\MiFutbolC\\data\\users.db") == 0)
     {
@@ -388,9 +387,8 @@ static void build_user_file_path(char *dest, size_t size, const char *base_dir,
     app_build_path(dest, size, base_dir, filename);
 }
 
-static void auth_get_user_data_paths(const char *username, char *db_path,
-                                     size_t db_size, char *log_path,
-                                     size_t log_size)
+static void auth_get_user_data_paths(const char *username, char *db_path, size_t db_size,
+                                     char *log_path, size_t log_size)
 {
     const char *safe_username = username ? username : "";
     char data_dir[1024] = {0};
@@ -504,8 +502,8 @@ static int auth_user_count(sqlite3 *auth_db)
         return 0;
     }
 
-    if (sqlite3_prepare_v2(auth_db, "SELECT COUNT(*) FROM local_users;", -1,
-                           &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(auth_db, "SELECT COUNT(*) FROM local_users;", -1, &stmt, NULL) ==
+            SQLITE_OK)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -535,8 +533,7 @@ static int auth_file_exists(const char *path)
     return 1;
 }
 
-static void auth_normalizar_username_legado(const char *input, char *output,
-        size_t out_size)
+static void auth_normalizar_username_legado(const char *input, char *output, size_t out_size)
 {
     size_t j = 0;
 
@@ -577,8 +574,7 @@ static void auth_normalizar_username_legado(const char *input, char *output,
     }
 }
 
-static int auth_legacy_open_if_exists(const char *legacy_db_path,
-                                      sqlite3 **legacy_db)
+static int auth_legacy_open_if_exists(const char *legacy_db_path, sqlite3 **legacy_db)
 {
     if (!legacy_db || !legacy_db_path || !auth_file_exists(legacy_db_path))
     {
@@ -598,11 +594,9 @@ static int auth_legacy_open_if_exists(const char *legacy_db_path,
     return 1;
 }
 
-static int auth_legacy_load_user_with_password(sqlite3 *legacy_db,
-        char *username_raw,
-        size_t username_size, char *salt,
-        size_t salt_size, char *hash,
-        size_t hash_size)
+static int auth_legacy_load_user_with_password(sqlite3 *legacy_db, char *username_raw,
+        size_t username_size, char *salt, size_t salt_size,
+        char *hash, size_t hash_size)
 {
     sqlite3_stmt *stmt = NULL;
     int found = 0;
@@ -617,8 +611,7 @@ static int auth_legacy_load_user_with_password(sqlite3 *legacy_db,
             const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
             const char *salt_db = (const char *)sqlite3_column_text(stmt, 1);
             const char *hash_db = (const char *)sqlite3_column_text(stmt, 2);
-            strncpy_s(username_raw, username_size, nombre ? nombre : "",
-                      username_size - 1);
+            strncpy_s(username_raw, username_size, nombre ? nombre : "", username_size - 1);
             strncpy_s(salt, salt_size, salt_db ? salt_db : "", salt_size - 1);
             strncpy_s(hash, hash_size, hash_db ? hash_db : "", hash_size - 1);
             found = 1;
@@ -629,21 +622,19 @@ static int auth_legacy_load_user_with_password(sqlite3 *legacy_db,
     return found;
 }
 
-static int auth_legacy_load_fallback_user(sqlite3 *legacy_db,
-        char *username_raw,
+static int auth_legacy_load_fallback_user(sqlite3 *legacy_db, char *username_raw,
         size_t username_size)
 {
     sqlite3_stmt *stmt = NULL;
     int found = 0;
 
-    if (sqlite3_prepare_v2(legacy_db, "SELECT nombre FROM usuario LIMIT 1;", -1,
-                           &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(legacy_db, "SELECT nombre FROM usuario LIMIT 1;", -1, &stmt, NULL) ==
+            SQLITE_OK)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
-            strncpy_s(username_raw, username_size, nombre ? nombre : "",
-                      username_size - 1);
+            strncpy_s(username_raw, username_size, nombre ? nombre : "", username_size - 1);
             found = 1;
         }
         db_stmt_release(stmt);
@@ -652,8 +643,8 @@ static int auth_legacy_load_fallback_user(sqlite3 *legacy_db,
     return found;
 }
 
-static int auth_insert_legacy_user(sqlite3 *auth_db, const char *username_norm,
-                                   const char *salt, const char *hash)
+static int auth_insert_legacy_user(sqlite3 *auth_db, const char *username_norm, const char *salt,
+                                   const char *hash)
 {
     int inserted = 0;
 
@@ -680,8 +671,7 @@ static int auth_insert_legacy_user(sqlite3 *auth_db, const char *username_norm,
     return inserted;
 }
 
-static int auth_import_legacy_from_db(sqlite3 *auth_db,
-                                      const char *legacy_db_path)
+static int auth_import_legacy_from_db(sqlite3 *auth_db, const char *legacy_db_path)
 {
     sqlite3 *legacy_db = NULL;
     char username_raw[128] = "";
@@ -695,14 +685,12 @@ static int auth_import_legacy_from_db(sqlite3 *auth_db,
         return 0;
     }
 
-    auth_legacy_load_user_with_password(legacy_db, username_raw,
-                                        sizeof(username_raw), salt, sizeof(salt),
-                                        hash, sizeof(hash));
+    auth_legacy_load_user_with_password(legacy_db, username_raw, sizeof(username_raw), salt,
+                                        sizeof(salt), hash, sizeof(hash));
 
     if (username_raw[0] == '\0')
     {
-        auth_legacy_load_fallback_user(legacy_db, username_raw,
-                                       sizeof(username_raw));
+        auth_legacy_load_fallback_user(legacy_db, username_raw, sizeof(username_raw));
     }
 
     sqlite3_close(legacy_db);
@@ -712,10 +700,8 @@ static int auth_import_legacy_from_db(sqlite3 *auth_db,
         return 0;
     }
 
-    auth_normalizar_username_legado(username_raw, username_norm,
-                                    sizeof(username_norm));
-    if (!auth_username_valido(username_norm) ||
-            auth_username_exists(auth_db, username_norm))
+    auth_normalizar_username_legado(username_raw, username_norm, sizeof(username_norm));
+    if (!auth_username_valido(username_norm) || auth_username_exists(auth_db, username_norm))
     {
         return 0;
     }
@@ -735,8 +721,7 @@ static int auth_importar_usuario_legado_si_existe(sqlite3 *auth_db)
     char legacy1[1024];
     char legacy2[1024];
 #ifdef _WIN32
-    if (app_build_local_appdata_path(legacy1, sizeof(legacy1),
-                                     "data\\mifutbol.db"))
+    if (app_build_local_appdata_path(legacy1, sizeof(legacy1), "data\\mifutbol.db"))
     {
         /* ruta lista */
     }
@@ -857,11 +842,10 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
     int empates = sqlite3_column_int(stmt, 7);
     int derrotas = sqlite3_column_int(stmt, 8);
 
-    ui_printf_centered_line(
-        "%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d%sVictorias: "
-        "%2d%sEmpates: %2d%sDerrotas: %2d",
-        id, nom ? nom : "(sin nombre)", sep, partidos, sep, goles, sep,
-        asistencias, sep, victorias, sep, empates, sep, derrotas);
+    ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d%sVictorias: "
+                            "%2d%sEmpates: %2d%sDerrotas: %2d",
+                            id, nom ? nom : "(sin nombre)", sep, partidos, sep, goles, sep,
+                            asistencias, sep, victorias, sep, empates, sep, derrotas);
     return 1;
 }
 
@@ -975,8 +959,7 @@ static int is_thousands_separator(const char *buffer, int position)
  * Devuelve 1 si se agrego un caracter, 0 si se omitio, -1 si se alcanzo el
  * limite.
  */
-static int process_character(char c, char *output, size_t *j,
-                             size_t output_size, int *has_decimal,
+static int process_character(char c, char *output, size_t *j, size_t output_size, int *has_decimal,
                              const char *input, int i)
 {
     // Procesar coma como separador decimal
@@ -1019,8 +1002,7 @@ static int process_character(char c, char *output, size_t *j,
  * a formato estandar. Convierte comas a puntos decimales y elimina separadores
  * de miles.
  */
-static void process_numeric_input(const char *input, char *output,
-                                  size_t output_size)
+static void process_numeric_input(const char *input, char *output, size_t output_size)
 {
     size_t j = 0;
     int has_decimal = 0;
@@ -1038,8 +1020,7 @@ static void process_numeric_input(const char *input, char *output,
     {
         char c = input[i];
 
-        ok = (process_character(c, output, &j, output_size, &has_decimal, input,
-                                i) != -1);
+        ok = (process_character(c, output, &j, output_size, &has_decimal, input, i) != -1);
         i++;
     }
 
@@ -1097,10 +1078,9 @@ void input_string(const char *msg, char *buffer, int size)
         int valid = 1;
         for (int i = 0; buffer[i] != '\0'; i++)
         {
-            if (!isalpha((unsigned char)buffer[i]) &&
-                    !isspace((unsigned char)buffer[i]) &&
-                    !isdigit((unsigned char)buffer[i]) && buffer[i] != '-' &&
-                    buffer[i] != '.' && buffer[i] != '(' && buffer[i] != ')')
+            if (!isalpha((unsigned char)buffer[i]) && !isspace((unsigned char)buffer[i]) &&
+                    !isdigit((unsigned char)buffer[i]) && buffer[i] != '-' && buffer[i] != '.' &&
+                    buffer[i] != '(' && buffer[i] != ')')
             {
                 valid = 0;
                 break;
@@ -1128,8 +1108,8 @@ void input_string_extended(const char *msg, char *buffer, int size)
         for (int i = 0; buffer[i] != '\0'; i++)
         {
             unsigned char c = (unsigned char)buffer[i];
-            if (!isalnum(c) && !isspace(c) && c != '+' && c != '-' && c != '.' &&
-                    c != ',' && c != '(' && c != ')' && c != ':')
+            if (!isalnum(c) && !isspace(c) && c != '+' && c != '-' && c != '.' && c != ',' &&
+                    c != '(' && c != ')' && c != ':')
             {
                 valid = 0;
                 break;
@@ -1142,8 +1122,8 @@ void input_string_extended(const char *msg, char *buffer, int size)
     }
 }
 
-void convert_display_date_to_storage(const char *display_date,
-                                     char *storage_buffer, int buffer_size);
+void convert_display_date_to_storage(const char *display_date, char *storage_buffer,
+                                     int buffer_size);
 
 static void get_current_date(char *buffer, int size)
 {
@@ -1192,20 +1172,18 @@ static int msg_pide_datetime(const char *msg)
     if (!msg)
         return 0;
     return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) &&
-           (strstr(msg, "DD") || strstr(msg, "dd") || strstr(msg, "YYYY") ||
-            strstr(msg, "AAAA") || strstr(msg, "/"));
+           (strstr(msg, "DD") || strstr(msg, "dd") || strstr(msg, "YYYY") || strstr(msg, "AAAA") ||
+            strstr(msg, "/"));
 }
 
 static int msg_pide_hora(const char *msg)
 {
     if (!msg)
         return 0;
-    return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) &&
-           !msg_pide_datetime(msg);
+    return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) && !msg_pide_datetime(msg);
 }
 
-static void completar_fecha_por_defecto(const char *msg, char *buffer,
-                                        int size)
+static void completar_fecha_por_defecto(const char *msg, char *buffer, int size)
 {
     if (msg_pide_datetime(msg))
     {
@@ -1226,8 +1204,8 @@ static int validar_fecha_chars(const char *buffer)
 {
     for (int i = 0; buffer[i] != '\0'; i++)
     {
-        if (!isdigit(buffer[i]) && buffer[i] != '/' && buffer[i] != ':' &&
-                buffer[i] != ' ' && buffer[i] != '-')
+        if (!isdigit(buffer[i]) && buffer[i] != '/' && buffer[i] != ':' && buffer[i] != ' ' &&
+                buffer[i] != '-')
         {
             return 0;
         }
@@ -1244,9 +1222,8 @@ static int procesar_input_date(const char *msg, char *buffer, int size)
 
     if (!validar_fecha_chars(buffer))
     {
-        ui_printf(
-            "Entrada invalida. Solo se permiten digitos, barras diagonales (/), "
-            "guiones (-) y dos puntos (:).\n");
+        ui_printf("Entrada invalida. Solo se permiten digitos, barras diagonales (/), "
+                  "guiones (-) y dos puntos (:).\n");
         return 0;
     }
 
@@ -1362,8 +1339,7 @@ static int clear_windows_console_buffer(HANDLE h_out)
     COORD origin = {0, 0};
     DWORD written = 0;
 
-    if (h_out == INVALID_HANDLE_VALUE ||
-            !GetConsoleScreenBufferInfo(h_out, &csbi))
+    if (h_out == INVALID_HANDLE_VALUE || !GetConsoleScreenBufferInfo(h_out, &csbi))
     {
         return 0;
     }
@@ -1376,9 +1352,7 @@ static int clear_windows_console_buffer(HANDLE h_out)
         return 0;
     }
 
-    SMALL_RECT reset_window = {0, 0, (SHORT)(window_width - 1),
-                               (SHORT)(window_height - 1)
-                              };
+    SMALL_RECT reset_window = {0, 0, (SHORT)(window_width - 1), (SHORT)(window_height - 1)};
     COORD resized_buffer = csbi.dwSize;
 
     if (resized_buffer.X < window_width)
@@ -1401,8 +1375,7 @@ static int clear_windows_console_buffer(HANDLE h_out)
     {
         return 0;
     }
-    if (!FillConsoleOutputAttribute(h_out, csbi.wAttributes, total_cells, origin,
-                                    &written))
+    if (!FillConsoleOutputAttribute(h_out, csbi.wAttributes, total_cells, origin, &written))
     {
         return 0;
     }
@@ -1431,8 +1404,7 @@ typedef struct
     const char *keyword_secondary;
 } HeaderAsciiRule;
 
-static int titulo_coincide_regla_ascii(const char *titulo,
-                                       const HeaderAsciiRule *rule)
+static int titulo_coincide_regla_ascii(const char *titulo, const HeaderAsciiRule *rule)
 {
     if (!titulo || !rule || !rule->keyword_primary)
     {
@@ -1454,9 +1426,7 @@ static int titulo_coincide_regla_ascii(const char *titulo,
  */
 static const char *obtener_ascii_por_titulo(const char *titulo)
 {
-    static const HeaderAsciiRule rules[] =
-    {
-        {ASCII_BIENVENIDA, "MI FUTBOL C", NULL},
+    static const HeaderAsciiRule rules[] = {{ASCII_BIENVENIDA, "MI FUTBOL C", NULL},
         {ASCII_CAMISETA, "CAMISETA", "CAMISETAS"},
         {ASCII_CANCHA, "CANCHAS", NULL},
         {ASCII_FUTBOL, "PARTIDO", "PARTIDOS"},
@@ -1502,8 +1472,7 @@ static void free_nombre_usuario_if_needed(char *nombre_usuario)
 }
 
 static void print_header_stdout(const char *ascii, const char *titulo_display,
-                                const char *nombre_usuario, const char *fecha,
-                                int mostrar_datos)
+                                const char *nombre_usuario, const char *fecha, int mostrar_datos)
 {
     if (ascii)
     {
@@ -1541,8 +1510,7 @@ void print_header(const char *titulo)
         mostrar_datos = 0;
     }
 
-    print_header_stdout(ascii, titulo_display, nombre_usuario, fecha,
-                        mostrar_datos);
+    print_header_stdout(ascii, titulo_display, nombre_usuario, fecha, mostrar_datos);
     free_nombre_usuario_if_needed(nombre_usuario);
 }
 
@@ -1583,8 +1551,8 @@ int confirmar(const char *msg)
     return (linea[0] == 's' || linea[0] == 'S');
 }
 
-static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
-                                 char *nombre, int size)
+static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio, char *nombre,
+                                 int size)
 {
     ui_printf("%s", prompt);
 
@@ -1599,8 +1567,7 @@ static void leer_nombre_no_vacio(const char *prompt, const char *prompt_vacio,
     }
 }
 
-static int leer_contrasena_no_vacia(const char *prompt, char *buffer,
-                                    int size)
+static int leer_contrasena_no_vacia(const char *prompt, char *buffer, int size)
 {
     if (!buffer || size <= 1)
     {
@@ -1695,8 +1662,7 @@ static int password_es_alfanumerica_con_reglas(const char *password)
     for (int i = 0; password[i] != '\0'; i++)
     {
         unsigned char c = (unsigned char)password[i];
-        if (!isalnum(c) &&
-                !(password_symbols_enabled() && es_simbolo_password_permitido(c)))
+        if (!isalnum(c) && !(password_symbols_enabled() && es_simbolo_password_permitido(c)))
         {
             return 0;
         }
@@ -1770,8 +1736,7 @@ static int flujo_configurar_password(int requiere_actual)
 
     (void)requiere_actual;
 
-    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva,
-                                  (int)sizeof(nueva)))
+    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva, (int)sizeof(nueva)))
     {
         return 0;
     }
@@ -1821,9 +1786,8 @@ static int auth_username_exists(sqlite3 *auth_db, const char *username)
     sqlite3_stmt *stmt = NULL;
     int exists = 0;
 
-    if (sqlite3_prepare_v2(
-                auth_db, "SELECT 1 FROM local_users WHERE username = ? LIMIT 1;", -1,
-                &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(auth_db, "SELECT 1 FROM local_users WHERE username = ? LIMIT 1;", -1,
+                           &stmt, NULL) == SQLITE_OK)
     {
         sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
         exists = (sqlite3_step(stmt) == SQLITE_ROW);
@@ -1832,8 +1796,7 @@ static int auth_username_exists(sqlite3 *auth_db, const char *username)
     return exists;
 }
 
-static int auth_upsert_user(sqlite3 *auth_db, const char *username,
-                            const char *plain_password)
+static int auth_upsert_user(sqlite3 *auth_db, const char *username, const char *plain_password)
 {
     sqlite3_stmt *stmt = NULL;
     char salt[33] = "";
@@ -1866,9 +1829,8 @@ static int auth_upsert_user(sqlite3 *auth_db, const char *username,
     return 1;
 }
 
-static int auth_get_password_fields(sqlite3 *auth_db, const char *username,
-                                    char *salt_out, size_t salt_size,
-                                    char *hash_out, size_t hash_size)
+static int auth_get_password_fields(sqlite3 *auth_db, const char *username, char *salt_out,
+                                    size_t salt_size, char *hash_out, size_t hash_size)
 {
     sqlite3_stmt *stmt = NULL;
     int ok = 0;
@@ -1908,8 +1870,7 @@ static int auth_verify_user_password(sqlite3 *auth_db, const char *username,
     char hash[64];
     char computed[32];
 
-    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash,
-                                  sizeof(hash)))
+    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash, sizeof(hash)))
     {
         return 0;
     }
@@ -1927,8 +1888,7 @@ static int auth_user_requires_password(sqlite3 *auth_db, const char *username)
 {
     char salt[64];
     char hash[64];
-    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash,
-                                  sizeof(hash)))
+    if (!auth_get_password_fields(auth_db, username, salt, sizeof(salt), hash, sizeof(hash)))
     {
         return 0;
     }
@@ -1946,8 +1906,7 @@ static int auth_prompt_password_login(sqlite3 *auth_db, const char *username)
 
     for (int i = 0; i < 3; i++)
     {
-        if (!leer_contrasena_no_vacia("Contrasena: ", intento,
-                                      (int)sizeof(intento)))
+        if (!leer_contrasena_no_vacia("Contrasena: ", intento, (int)sizeof(intento)))
         {
             continue;
         }
@@ -1963,8 +1922,7 @@ static int auth_prompt_password_login(sqlite3 *auth_db, const char *username)
     return 0;
 }
 
-static int auth_open_for_active_user(sqlite3 **auth_db,
-                                     const char **username_out)
+static int auth_open_for_active_user(sqlite3 **auth_db, const char **username_out)
 {
     const char *username = db_get_active_user();
 
@@ -1986,8 +1944,7 @@ static int auth_open_for_active_user(sqlite3 **auth_db,
     return 1;
 }
 
-static int auth_confirm_current_password(sqlite3 *auth_db, const char *username,
-        const char *prompt,
+static int auth_confirm_current_password(sqlite3 *auth_db, const char *username, const char *prompt,
         const char *error_message)
 {
     char actual[128];
@@ -2016,14 +1973,12 @@ static int auth_registrar_usuario_interactivo(sqlite3 *auth_db)
     char nueva[128] = "";
     char confirmar_pwd[128] = "";
 
-    leer_nombre_no_vacio("Nuevo usuario (3-32, letras/numeros/_/-): ",
-                         "Usuario obligatorio: ", username,
-                         (int)sizeof(username));
+    leer_nombre_no_vacio("Nuevo usuario (3-32, letras/numeros/_/-): ", "Usuario obligatorio: ",
+                         username, (int)sizeof(username));
 
     if (!auth_username_valido(username))
     {
-        ui_printf(
-            "Usuario invalido. Usa 3-32 caracteres: letras, numeros, '_' o '-'.\n");
+        ui_printf("Usuario invalido. Usa 3-32 caracteres: letras, numeros, '_' o '-'.\n");
         return 0;
     }
 
@@ -2041,8 +1996,7 @@ static int auth_registrar_usuario_interactivo(sqlite3 *auth_db)
 
     if (respuesta[0] == 's' || respuesta[0] == 'S')
     {
-        if (!leer_contrasena_no_vacia("Ingresa contrasena: ", nueva,
-                                      (int)sizeof(nueva)))
+        if (!leer_contrasena_no_vacia("Ingresa contrasena: ", nueva, (int)sizeof(nueva)))
         {
             return 0;
         }
@@ -2074,8 +2028,7 @@ static int auth_registrar_usuario_interactivo(sqlite3 *auth_db)
     return 1;
 }
 
-static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out,
-                                    size_t out_size)
+static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out, size_t out_size)
 {
     sqlite3_stmt *stmt = NULL;
     char users[64][64];
@@ -2086,9 +2039,8 @@ static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out,
         return 0;
     }
 
-    if (sqlite3_prepare_v2(auth_db,
-                           "SELECT username FROM local_users ORDER BY username;",
-                           -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(auth_db, "SELECT username FROM local_users ORDER BY username;", -1,
+                           &stmt, NULL) != SQLITE_OK)
     {
         return 0;
     }
@@ -2096,8 +2048,7 @@ static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out,
     while (sqlite3_step(stmt) == SQLITE_ROW && count < 64)
     {
         const char *u = (const char *)sqlite3_column_text(stmt, 0);
-        strncpy_s(users[count], sizeof(users[count]), u ? u : "",
-                  sizeof(users[count]) - 1);
+        strncpy_s(users[count], sizeof(users[count]), u ? u : "", sizeof(users[count]) - 1);
         count++;
     }
     db_stmt_release(stmt);
@@ -2124,8 +2075,7 @@ static int auth_seleccionar_usuario(sqlite3 *auth_db, char *username_out,
     return 1;
 }
 
-static int auth_get_single_username(sqlite3 *auth_db, char *username_out,
-                                    size_t out_size)
+static int auth_get_single_username(sqlite3 *auth_db, char *username_out, size_t out_size)
 {
     sqlite3_stmt *stmt = NULL;
     int ok = 0;
@@ -2135,10 +2085,8 @@ static int auth_get_single_username(sqlite3 *auth_db, char *username_out,
         return 0;
     }
 
-    if (sqlite3_prepare_v2(
-                auth_db,
-                "SELECT username FROM local_users ORDER BY username LIMIT 1;", -1,
-                &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(auth_db, "SELECT username FROM local_users ORDER BY username LIMIT 1;",
+                           -1, &stmt, NULL) != SQLITE_OK)
     {
         return 0;
     }
@@ -2154,26 +2102,22 @@ static int auth_get_single_username(sqlite3 *auth_db, char *username_out,
     return ok;
 }
 
-static int auth_activar_usuario_y_cerrar(sqlite3 *auth_db,
-        const char *username)
+static int auth_activar_usuario_y_cerrar(sqlite3 *auth_db, const char *username)
 {
     db_set_active_user(username);
     sqlite3_close(auth_db);
     return 1;
 }
 
-static int auth_flujo_sin_usuarios(sqlite3 *auth_db, char *selected_user,
-                                   size_t selected_user_size)
+static int auth_flujo_sin_usuarios(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
 {
     if (auth_importar_usuario_legado_si_existe(auth_db))
     {
         return 0;
     }
 
-    ui_printf(
-        "\nNo hay usuarios locales. Crea tu primer usuario para continuar.\n");
-    ui_printf(
-        "Con un solo usuario es suficiente; agregar mas usuarios es opcional.\n");
+    ui_printf("\nNo hay usuarios locales. Crea tu primer usuario para continuar.\n");
+    ui_printf("Con un solo usuario es suficiente; agregar mas usuarios es opcional.\n");
 
     if (!auth_registrar_usuario_interactivo(auth_db))
     {
@@ -2188,8 +2132,7 @@ static int auth_flujo_sin_usuarios(sqlite3 *auth_db, char *selected_user,
     return 1;
 }
 
-static int auth_flujo_un_usuario(sqlite3 *auth_db, char *selected_user,
-                                 size_t selected_user_size)
+static int auth_flujo_un_usuario(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
 {
     if (!auth_get_single_username(auth_db, selected_user, selected_user_size))
     {
@@ -2206,8 +2149,7 @@ static int auth_flujo_un_usuario(sqlite3 *auth_db, char *selected_user,
     return 1;
 }
 
-static int auth_menu_multiusuario(sqlite3 *auth_db, char *selected_user,
-                                  size_t selected_user_size)
+static int auth_menu_multiusuario(sqlite3 *auth_db, char *selected_user, size_t selected_user_size)
 {
     ui_printf("\n=== MULTIUSUARIO LOCAL ===\n");
     ui_printf("1. Iniciar sesion\n");
@@ -2262,8 +2204,7 @@ int iniciar_sesion_multiusuario_local(void)
         int total = auth_user_count(auth_db);
         if (total == 0)
         {
-            if (auth_flujo_sin_usuarios(auth_db, selected_user,
-                                        sizeof(selected_user)))
+            if (auth_flujo_sin_usuarios(auth_db, selected_user, sizeof(selected_user)))
             {
                 return auth_activar_usuario_y_cerrar(auth_db, selected_user);
             }
@@ -2272,16 +2213,14 @@ int iniciar_sesion_multiusuario_local(void)
 
         if (total == 1)
         {
-            if (auth_flujo_un_usuario(auth_db, selected_user,
-                                      sizeof(selected_user)))
+            if (auth_flujo_un_usuario(auth_db, selected_user, sizeof(selected_user)))
             {
                 return auth_activar_usuario_y_cerrar(auth_db, selected_user);
             }
             continue;
         }
 
-        int action =
-            auth_menu_multiusuario(auth_db, selected_user, sizeof(selected_user));
+        int action = auth_menu_multiusuario(auth_db, selected_user, sizeof(selected_user));
         if (action == 0)
         {
             sqlite3_close(auth_db);
@@ -2334,8 +2273,7 @@ int autenticar_usuario_si_tiene_password(void)
     ui_printf("\nEste perfil tiene contrasena.\n");
     for (int i = 0; i < 3; i++)
     {
-        if (!leer_contrasena_no_vacia("Ingresa tu contrasena: ", intento,
-                                      (int)sizeof(intento)))
+        if (!leer_contrasena_no_vacia("Ingresa tu contrasena: ", intento, (int)sizeof(intento)))
         {
             continue;
         }
@@ -2363,14 +2301,12 @@ static void configurar_o_cambiar_password_usuario(void)
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
             !auth_confirm_current_password(
-                auth_db, username,
-                "Ingresa tu contrasena actual: ", "Contrasena actual incorrecta."))
+                auth_db, username, "Ingresa tu contrasena actual: ", "Contrasena actual incorrecta."))
     {
         return;
     }
 
-    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva,
-                                  (int)sizeof(nueva)))
+    if (!leer_contrasena_no_vacia("Ingresa tu nueva contrasena: ", nueva, (int)sizeof(nueva)))
     {
         sqlite3_close(auth_db);
         pause_console();
@@ -2428,8 +2364,8 @@ static void quitar_password_usuario(void)
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
             !auth_confirm_current_password(
-                auth_db, username, "Para quitarla, ingresa tu contrasena actual: ",
-                "Contrasena incorrecta."))
+                auth_db, username,
+                "Para quitarla, ingresa tu contrasena actual: ", "Contrasena incorrecta."))
     {
         return;
     }
@@ -2465,8 +2401,8 @@ void pedir_nombre_usuario(void)
     clear_screen();
     ui_printf("%s\n", ASCII_BIENVENIDA);
     leer_nombre_no_vacio("Por favor, ingresa tu Nombre: ",
-                         "El nombre no puede estar vacio. Ingresa tu nombre: ",
-                         nombre, (int)sizeof(nombre));
+                         "El nombre no puede estar vacio. Ingresa tu nombre: ", nombre,
+                         (int)sizeof(nombre));
 
     if (set_user_name(nombre))
     {
@@ -2505,10 +2441,9 @@ void mostrar_nombre_usuario(void)
 void editar_nombre_usuario(void)
 {
     char nombre[100];
-    leer_nombre_no_vacio(
-        "Ingresa tu nuevo nombre: ",
-        "El nombre no puede estar vacio. Ingresa tu nuevo nombre: ", nombre,
-        (int)sizeof(nombre));
+    leer_nombre_no_vacio("Ingresa tu nuevo nombre: ",
+                         "El nombre no puede estar vacio. Ingresa tu nuevo nombre: ", nombre,
+                         (int)sizeof(nombre));
 
     if (set_user_name(nombre))
     {
@@ -2551,8 +2486,7 @@ static void eliminar_mi_cuenta_local(void)
         return;
     }
 
-    ui_printf(
-        "ATENCION: Esta accion es IRREVERSIBLE y eliminara tu cuenta local.\n");
+    ui_printf("ATENCION: Esta accion es IRREVERSIBLE y eliminara tu cuenta local.\n");
     if (!confirmar("Estas seguro de continuar"))
     {
         ui_printf("Operacion cancelada.\n");
@@ -2561,15 +2495,14 @@ static void eliminar_mi_cuenta_local(void)
     }
 
     if (!auth_open_for_active_user(&auth_db, &username) ||
-            !auth_confirm_current_password(
-                auth_db, username,
-                "Confirma tu contrasena actual: ", "Contrasena incorrecta."))
+            !auth_confirm_current_password(auth_db, username,
+                                           "Confirma tu contrasena actual: ", "Contrasena incorrecta."))
     {
         return;
     }
 
-    if (sqlite3_prepare_v2(auth_db, "DELETE FROM local_users WHERE username = ?;",
-                           -1, &stmt, NULL) == SQLITE_OK)
+    if (sqlite3_prepare_v2(auth_db, "DELETE FROM local_users WHERE username = ?;", -1, &stmt,
+                           NULL) == SQLITE_OK)
     {
         sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
         if (sqlite3_step(stmt) == SQLITE_DONE)
@@ -2589,8 +2522,8 @@ static void eliminar_mi_cuenta_local(void)
 
     sqlite3_close(auth_db);
 
-    auth_get_user_data_paths(username, user_db_path, sizeof(user_db_path),
-                             user_log_path, sizeof(user_log_path));
+    auth_get_user_data_paths(username, user_db_path, sizeof(user_db_path), user_log_path,
+                             sizeof(user_log_path));
     finalizar_atajos();
     db_close();
     remove(user_db_path);
@@ -2604,14 +2537,12 @@ static void eliminar_mi_cuenta_local(void)
  */
 void menu_usuario(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Mostrar Nombre", mostrar_nombre_usuario},
-        {2, "Editar Nombre Visible", editar_nombre_usuario},
-        {3, "Agregar Usuario Local", agregar_usuario_local},
-        {4, "Modificar Mi Contrasena", configurar_o_cambiar_password_usuario},
-        {5, "Quitar Mi Contrasena", quitar_password_usuario},
-        {6, "Eliminar Mi Cuenta (Irreversible)", eliminar_mi_cuenta_local},
+    MenuItem items[] = {{1, "Mostrar Nombre", &mostrar_nombre_usuario},
+        {2, "Editar Nombre Visible", &editar_nombre_usuario},
+        {3, "Agregar Usuario Local", &agregar_usuario_local},
+        {4, "Modificar Mi Contrasena", &configurar_o_cambiar_password_usuario},
+        {5, "Quitar Mi Contrasena", &quitar_password_usuario},
+        {6, "Eliminar Mi Cuenta (Irreversible)", &eliminar_mi_cuenta_local},
         {0, "Volver", NULL}
     };
 
@@ -2622,14 +2553,13 @@ void menu_usuario(void)
  * Adapta fechas del almacenamiento interno a un formato amigable para la
  * visualizacion, permitiendo flexibilidad en formatos futuros.
  */
-void format_date_for_display(const char *input_date, char *output_buffer,
-                             int buffer_size)
+void format_date_for_display(const char *input_date, char *output_buffer, int buffer_size)
 {
     if (!input_date || buffer_size <= 0)
         return;
 
-    if (safe_strnlen(input_date, (size_t)buffer_size) >= 10 &&
-            input_date[4] == '-' && input_date[7] == '-')
+    if (safe_strnlen(input_date, (size_t)buffer_size) >= 10 && input_date[4] == '-' &&
+            input_date[7] == '-')
     {
         char fecha[16];
         fecha[0] = input_date[8];
@@ -2646,8 +2576,7 @@ void format_date_for_display(const char *input_date, char *output_buffer,
 
         if (input_date[10] == ' ')
         {
-            snprintf(output_buffer, (size_t)buffer_size, "%s%s", fecha,
-                     input_date + 10);
+            snprintf(output_buffer, (size_t)buffer_size, "%s%s", fecha, input_date + 10);
         }
         else
         {
@@ -2659,14 +2588,12 @@ void format_date_for_display(const char *input_date, char *output_buffer,
     strncpy_s(output_buffer, buffer_size, input_date, buffer_size - 1);
 }
 
-void format_date_with_weekday_for_display(const char *input_date,
-        char *output_buffer,
+void format_date_with_weekday_for_display(const char *input_date, char *output_buffer,
         int buffer_size)
 {
-    static const char *dias_semana[] =
-    {
-        "Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"
-    };
+    static const char *dias_semana[] = {"Domingo", "Lunes",   "Martes", "Miercoles",
+                                        "Jueves",  "Viernes", "Sabado"
+                                       };
 
     if (!output_buffer || buffer_size <= 0)
     {
@@ -2680,8 +2607,7 @@ void format_date_with_weekday_for_display(const char *input_date,
     }
 
     char fecha_formateada[32] = {0};
-    format_date_for_display(input_date, fecha_formateada,
-                            sizeof(fecha_formateada));
+    format_date_for_display(input_date, fecha_formateada, sizeof(fecha_formateada));
     if (fecha_formateada[0] == '\0')
     {
         return;
@@ -2703,11 +2629,10 @@ void format_date_with_weekday_for_display(const char *input_date,
             tm_fecha.tm_mon = mes - 1;
             tm_fecha.tm_year = anio - 1900;
 
-            if (mktime(&tm_fecha) != (time_t)-1 && tm_fecha.tm_wday >= 0 &&
-                    tm_fecha.tm_wday <= 6)
+            if (mktime(&tm_fecha) != (time_t)-1 && tm_fecha.tm_wday >= 0 && tm_fecha.tm_wday <= 6)
             {
-                snprintf(output_buffer, (size_t)buffer_size, "%s %s",
-                         dias_semana[tm_fecha.tm_wday], fecha_formateada);
+                snprintf(output_buffer, (size_t)buffer_size, "%s %s", dias_semana[tm_fecha.tm_wday],
+                         fecha_formateada);
                 return;
             }
         }
@@ -2720,18 +2645,15 @@ void format_date_with_weekday_for_display(const char *input_date,
  * Convierte fechas ingresadas por el usuario a un formato interno consistente,
  * facilitando el almacenamiento y procesamiento uniforme.
  */
-void convert_display_date_to_storage(const char *display_date,
-                                     char *storage_buffer, int buffer_size)
+void convert_display_date_to_storage(const char *display_date, char *storage_buffer,
+                                     int buffer_size)
 {
     if (!display_date || buffer_size <= 0)
         return;
 
-    if (strchr(display_date, '/') != NULL &&
-            safe_strnlen(display_date, (size_t)buffer_size) >= 10)
+    if (strchr(display_date, '/') != NULL && safe_strnlen(display_date, (size_t)buffer_size) >= 10)
     {
-        char yyyy[5] = {display_date[6], display_date[7], display_date[8],
-                        display_date[9], '\0'
-                       };
+        char yyyy[5] = {display_date[6], display_date[7], display_date[8], display_date[9], '\0'};
         char mm[3] = {display_date[3], display_date[4], '\0'};
         char dd[3] = {display_date[0], display_date[1], '\0'};
 
@@ -2766,9 +2688,8 @@ char *remover_tildes(const char *str)
         return buffer;
     }
 
-    const unsigned char acentos[][3] = {{0xE1, 0xC1, 'a'}, {0xE9, 0xC9, 'e'},
-        {0xED, 0xCD, 'i'}, {0xF3, 0xD3, 'o'},
-        {0xFA, 0xDA, 'u'}, {0xF1, 0xD1, 'n'},
+    const unsigned char acentos[][3] = {{0xE1, 0xC1, 'a'}, {0xE9, 0xC9, 'e'}, {0xED, 0xCD, 'i'},
+        {0xF3, 0xD3, 'o'}, {0xFA, 0xDA, 'u'}, {0xF1, 0xD1, 'n'},
         {0xFC, 0xDC, 'u'}
     };
 
@@ -2836,12 +2757,7 @@ void sanitizar_ascii_basico(const char *src, char *dst, size_t dst_size)
  */
 const char *resultado_to_text(int resultado)
 {
-    static const char *lookup[] =
-    {
-        [1] = "VICTORIA",
-        [2] = "EMPATE",
-        [3] = "DERROTA"
-    };
+    static const char *lookup[] = {[1] = "VICTORIA", [2] = "EMPATE", [3] = "DERROTA"};
     if (resultado >= 1 && resultado <= 3)
         return lookup[resultado];
     return "DESCONOCIDO";
@@ -2855,21 +2771,13 @@ const char *resultado_to_text(int resultado)
  */
 const char *clima_to_text(int clima)
 {
-    static const char *clima_names[] =
-    {
-        [1] = "Despejado",
-        [2] = "Nublado",
-        [3] = "Lluvia",
-        [4] = "Ventoso",
-        [5] = "Mucho Calor",
-        [6] = "Mucho Frio",
-        [7] = "Frio",
-        [8] = "Calor",
-        [9] = "Llovizna leve",
-        [10] = "Lluvia Moderada",
-        [11] = "Lluvia fuerte",
-        [12] = "Cancha inundada"
-    };
+    static const char *clima_names[] = {[1] = "Despejado",      [2] = "Nublado",
+                                        [3] = "Lluvia",         [4] = "Ventoso",
+                                        [5] = "Mucho Calor",    [6] = "Mucho Frio",
+                                        [7] = "Frio",           [8] = "Calor",
+                                        [9] = "Llovizna leve",  [10] = "Lluvia Moderada",
+                                        [11] = "Lluvia fuerte", [12] = "Cancha inundada"
+                                       };
     if (clima >= 1 && clima <= 12)
         return clima_names[clima];
     return "DESCONOCIDO";
@@ -2883,15 +2791,9 @@ const char *clima_to_text(int clima)
  */
 const char *dia_to_text(int dia)
 {
-    static const char *lookup[] =
-    {
-        [1] = "Madrugada",
-        [2] = "Manana",
-        [3] = "Mediodia",
-        [4] = "Tarde",
-        [5] = "Atardecer",
-        [6] = "Noche"
-    };
+    static const char *lookup[] = {[1] = "Madrugada", [2] = "Manana",    [3] = "Mediodia",
+                                   [4] = "Tarde",     [5] = "Atardecer", [6] = "Noche"
+                                  };
     if (dia >= 1 && dia <= 6)
         return lookup[dia];
     return "DESCONOCIDO";
@@ -2941,8 +2843,7 @@ const char *get_arbitraje_case_sql(void)
  * @param size Tamano maximo del buffer
  * @return 1 si se encontro la entidad, 0 si no se encontro
  */
-int obtener_nombre_entidad(const char *tabla, int id, char *buffer,
-                           size_t size)
+int obtener_nombre_entidad(const char *tabla, int id, char *buffer, size_t size)
 {
     sqlite3_stmt *stmt;
     char sql[256];
@@ -3062,8 +2963,7 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
     return id;
 }
 
-void listar_entidades(const char *tabla, const char *titulo,
-                      const char *mensaje_vacio)
+void listar_entidades(const char *tabla, const char *titulo, const char *mensaje_vacio)
 {
     if (!tabla || !titulo || !mensaje_vacio)
         return;
@@ -3143,8 +3043,8 @@ char *trim_trailing_spaces(char *str)
         return str;
 
     size_t len = safe_strnlen(str, SIZE_MAX);
-    while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' ||
-                       str[len - 1] == '\n' || str[len - 1] == '\r'))
+    while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' || str[len - 1] == '\n' ||
+                       str[len - 1] == '\r'))
     {
         str[--len] = '\0';
     }
@@ -3201,8 +3101,7 @@ int list_available_teams(const char *no_records_msg, int pause_on_empty)
     return 0;
 }
 
-int select_team_id(const char *prompt, const char *no_records_msg,
-                   int pause_on_error)
+int select_team_id(const char *prompt, const char *no_records_msg, int pause_on_error)
 {
     if (!list_available_teams(no_records_msg, pause_on_error))
     {
@@ -3243,25 +3142,23 @@ void write_partido_csv_row(FILE *f, sqlite3_stmt *stmt)
     int atajaste_raw = sqlite3_column_int(stmt, 12);
     if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_raw == 0)
     {
-        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%s\n", cancha_trimmed,
-                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11), "-");
+        fprintf(
+            f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%s\n", cancha_trimmed,
+            sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+            sqlite3_column_text(stmt, 4), resultado_to_text(sqlite3_column_int(stmt, 5)),
+            clima_to_text(sqlite3_column_int(stmt, 6)), dia_to_text(sqlite3_column_int(stmt, 7)),
+            sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+            sqlite3_column_text(stmt, 11), "-");
     }
     else
     {
-        fprintf(f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%d\n", cancha_trimmed,
-                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
-                resultado_to_text(sqlite3_column_int(stmt, 5)),
-                clima_to_text(sqlite3_column_int(stmt, 6)),
-                dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
-                sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-                sqlite3_column_text(stmt, 11), atajaste_raw);
+        fprintf(
+            f, "%s,%s,%d,%d,%s,%s,%s,%s,%d,%d,%d,%s,%d\n", cancha_trimmed,
+            sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+            sqlite3_column_text(stmt, 4), resultado_to_text(sqlite3_column_int(stmt, 5)),
+            clima_to_text(sqlite3_column_int(stmt, 6)), dia_to_text(sqlite3_column_int(stmt, 7)),
+            sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+            sqlite3_column_text(stmt, 11), atajaste_raw);
     }
     free(cancha_trimmed);
 }
@@ -3278,15 +3175,12 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
     fprintf(f,
             "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d "
             "| Atajaste:%s | %s\n",
-            cancha_trimmed, sqlite3_column_text(stmt, 1),
-            sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-            sqlite3_column_text(stmt, 4),
+            cancha_trimmed, sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
             resultado_to_text(sqlite3_column_int(stmt, 5)),
-            clima_to_text(sqlite3_column_int(stmt, 6)),
-            dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
-            sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            atajaste_txt,
-            sqlite3_column_text(stmt, 11));
+            clima_to_text(sqlite3_column_int(stmt, 6)), dia_to_text(sqlite3_column_int(stmt, 7)),
+            sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+            atajaste_txt, sqlite3_column_text(stmt, 11));
     free(cancha_trimmed);
 }
 
@@ -3295,20 +3189,14 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
 
     cJSON_AddStringToObject(item, "cancha", cancha_trimmed);
-    cJSON_AddStringToObject(item, "fecha",
-                            (const char *)sqlite3_column_text(stmt, 1));
+    cJSON_AddStringToObject(item, "fecha", (const char *)sqlite3_column_text(stmt, 1));
     cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 2));
     cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 3));
-    cJSON_AddStringToObject(item, "camiseta",
-                            (const char *)sqlite3_column_text(stmt, 4));
-    cJSON_AddStringToObject(item, "resultado",
-                            resultado_to_text(sqlite3_column_int(stmt, 5)));
-    cJSON_AddStringToObject(item, "clima",
-                            clima_to_text(sqlite3_column_int(stmt, 6)));
-    cJSON_AddStringToObject(item, "dia",
-                            dia_to_text(sqlite3_column_int(stmt, 7)));
-    cJSON_AddNumberToObject(item, "rendimiento_general",
-                            sqlite3_column_int(stmt, 8));
+    cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 4));
+    cJSON_AddStringToObject(item, "resultado", resultado_to_text(sqlite3_column_int(stmt, 5)));
+    cJSON_AddStringToObject(item, "clima", clima_to_text(sqlite3_column_int(stmt, 6)));
+    cJSON_AddStringToObject(item, "dia", dia_to_text(sqlite3_column_int(stmt, 7)));
+    cJSON_AddNumberToObject(item, "rendimiento_general", sqlite3_column_int(stmt, 8));
     cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 9));
     cJSON_AddNumberToObject(item, "estado_animo", sqlite3_column_int(stmt, 10));
     cJSON_AddStringToObject(item, "comentario_personal",
@@ -3339,15 +3227,12 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</"
             "td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</"
             "td><td>%s</td></tr>",
-            cancha_trimmed, sqlite3_column_text(stmt, 1),
-            sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-            sqlite3_column_text(stmt, 4),
+            cancha_trimmed, sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
             resultado_to_text(sqlite3_column_int(stmt, 5)),
-            clima_to_text(sqlite3_column_int(stmt, 6)),
-            dia_to_text(sqlite3_column_int(stmt, 7)), sqlite3_column_int(stmt, 8),
-            sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_text(stmt, 11),
-            atajaste_html);
+            clima_to_text(sqlite3_column_int(stmt, 6)), dia_to_text(sqlite3_column_int(stmt, 7)),
+            sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
+            sqlite3_column_text(stmt, 11), atajaste_html);
     free(cancha_trimmed);
 }
 
@@ -3432,8 +3317,7 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
     db_stmt_release(stmt);
 }
 
-void exportar_record_simple_csv(const char *titulo, const char *sql,
-                                const char *filename)
+void exportar_record_simple_csv(const char *titulo, const char *sql, const char *filename)
 {
     FILE *file = NULL;
     errno_t err = fopen_s(&file, get_export_path(filename), "w");
@@ -3449,8 +3333,8 @@ void exportar_record_simple_csv(const char *titulo, const char *sql,
     sqlite3_stmt *stmt = execute_query(sql);
     if (stmt && sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "%d,%s,%s\n", sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
+        fprintf(file, "%d,%s,%s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2));
     }
 
     if (stmt)
@@ -3459,8 +3343,7 @@ void exportar_record_simple_csv(const char *titulo, const char *sql,
     fclose(file);
 }
 
-void exportar_partido_especifico_csv(const char *order_by,
-                                     const char *filename)
+void exportar_partido_especifico_csv(const char *order_by, const char *filename)
 {
     if (!has_records("partido"))
     {
@@ -3470,9 +3353,8 @@ void exportar_partido_especifico_csv(const char *order_by,
     FILE *f = NULL;
     if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
         return;
-    write_csv_header(
-        f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
-        "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal");
+    write_csv_header(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
+                     "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal");
     sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (stmt)
     {
@@ -3484,8 +3366,7 @@ void exportar_partido_especifico_csv(const char *order_by,
     fclose(f);
 }
 
-void exportar_partido_especifico_txt(const char *order_by, const char *filename,
-                                     const char *title)
+void exportar_partido_especifico_txt(const char *order_by, const char *filename, const char *title)
 {
     if (!has_records("partido"))
     {
@@ -3507,8 +3388,7 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
     fclose(f);
 }
 
-void exportar_partido_especifico_json(const char *order_by,
-                                      const char *filename)
+void exportar_partido_especifico_json(const char *order_by, const char *filename)
 {
     if (!has_records("partido"))
     {
@@ -3534,8 +3414,7 @@ void exportar_partido_especifico_json(const char *order_by,
     fclose(f);
 }
 
-void exportar_partido_especifico_html(const char *order_by,
-                                      const char *filename, const char *title)
+void exportar_partido_especifico_html(const char *order_by, const char *filename, const char *title)
 {
     if (!has_records("partido"))
     {
@@ -3593,8 +3472,8 @@ void calcular_estadisticas(Estadisticas *stats, const char *sql)
     db_stmt_release(stmt);
 }
 
-void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v,
-                       int *racha_actual_d, int *max_racha_d)
+void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v, int *racha_actual_d,
+                       int *max_racha_d)
 {
     if (resultado == 1)
     {
@@ -3623,9 +3502,8 @@ int preparar_stmt_export(sqlite3_stmt **stmt, const char *sql)
     return sqlite3_prepare_v2(db, sql, -1, stmt, NULL) == SQLITE_OK;
 }
 
-int preparar_consulta_con_verificacion(sqlite3_stmt **stmt, const char *tabla,
-                                       const char *mensaje, const char *sql,
-                                       int *count)
+int preparar_consulta_con_verificacion(sqlite3_stmt **stmt, const char *tabla, const char *mensaje,
+                                       const char *sql, int *count)
 {
     sqlite3_stmt *check_stmt;
     *count = 0;
@@ -3735,8 +3613,7 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats)
 #if defined(_WIN32)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
-static void app_escape_single_quotes_ps(const char *src, char *dst,
-                                        size_t dst_size)
+static void app_escape_single_quotes_ps(const char *src, char *dst, size_t dst_size)
 {
     if (!src || !dst || dst_size == 0)
     {
@@ -3778,8 +3655,8 @@ static int app_command_has_safe_chars(const char *cmd)
     const unsigned char *p = (const unsigned char *)cmd;
     while (*p != '\0')
     {
-        if (!(isalnum(*p) || *p == '_' || *p == '-' || *p == '.' || *p == '/' ||
-                *p == '\\' || *p == ':'))
+        if (!(isalnum(*p) || *p == '_' || *p == '-' || *p == '.' || *p == '/' || *p == '\\' ||
+                *p == ':'))
         {
             return 0;
         }
@@ -3829,8 +3706,7 @@ static int app_path_is_executable_file(const char *path)
 static int app_search_in_windows_path(const char *name)
 {
     char resolved[MAX_PATH];
-    DWORD found =
-        SearchPathA(NULL, name, NULL, (DWORD)sizeof(resolved), resolved, NULL);
+    DWORD found = SearchPathA(NULL, name, NULL, (DWORD)sizeof(resolved), resolved, NULL);
     return found > 0 && found < (DWORD)sizeof(resolved);
 }
 
@@ -3974,8 +3850,7 @@ int app_command_exists_public(const char *cmd)
 }
 
 #ifndef _WIN32
-static int app_spawn_command_posix(const char *command, const char *arg1,
-                                   const char *arg2)
+static int app_spawn_command_posix(const char *command, const char *arg1, const char *arg2)
 {
     if (!command || command[0] == '\0')
     {
@@ -4040,8 +3915,7 @@ int app_open_with_command(const char *command, const char *path)
         return 0;
     }
 
-    HINSTANCE h =
-        ShellExecuteA(NULL, "open", command, parameters, NULL, SW_SHOWNORMAL);
+    HINSTANCE h = ShellExecuteA(NULL, "open", command, parameters, NULL, SW_SHOWNORMAL);
     return (INT_PTR)h > 32;
 #else
     if (!app_command_exists_posix(command))
@@ -4081,8 +3955,7 @@ int app_open_with_default_app(const char *path)
 #endif
 }
 
-void app_build_path(char *dest, size_t size, const char *dir,
-                    const char *file_name)
+void app_build_path(char *dest, size_t size, const char *dir, const char *file_name)
 {
     if (!dest || size == 0)
     {
@@ -4169,8 +4042,7 @@ int app_get_file_name_from_path(const char *path, char *nombre, size_t size)
     return strncpy_s(nombre, size, base, _TRUNCATE) == 0;
 }
 
-void mostrar_alerta_operacion(const char *entidad, const char *operacion,
-                              const char *nombre_item)
+void mostrar_alerta_operacion(const char *entidad, const char *operacion, const char *nombre_item)
 {
     char log_msg[512];
     const char *entidad_safe = entidad ? entidad : "Entidad";
@@ -4193,13 +4065,12 @@ void mostrar_alerta_operacion(const char *entidad, const char *operacion,
 
     if (nombre_item && nombre_item[0] != '\0')
     {
-        snprintf(log_msg, sizeof(log_msg), "%s %s: %.200s", entidad_safe,
-                 operacion_safe, nombre_item);
+        snprintf(log_msg, sizeof(log_msg), "%s %s: %.200s", entidad_safe, operacion_safe,
+                 nombre_item);
     }
     else
     {
-        snprintf(log_msg, sizeof(log_msg), "%s %s exitosamente", entidad_safe,
-                 operacion_safe);
+        snprintf(log_msg, sizeof(log_msg), "%s %s exitosamente", entidad_safe, operacion_safe);
     }
 
     app_log_event("OPERACION", log_msg);
@@ -4210,14 +4081,16 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
 {
     if (!path)
     {
-        if (out_size) *out_size = 0;
+        if (out_size)
+            *out_size = 0;
         return NULL;
     }
     FILE *f;
     errno_t err = fopen_s(&f, path, "rb");
     if (err != 0 || f == NULL)
     {
-        if (out_size) *out_size = 0;
+        if (out_size)
+            *out_size = 0;
         return NULL;
     }
     fseek(f, 0, SEEK_END);
@@ -4226,14 +4099,16 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     if (len <= 0)
     {
         fclose(f);
-        if (out_size) *out_size = 0;
+        if (out_size)
+            *out_size = 0;
         return NULL;
     }
-    char *buf = (char*)malloc((size_t)len + 1);
+    char *buf = (char *)malloc((size_t)len + 1);
     if (!buf)
     {
         fclose(f);
-        if (out_size) *out_size = 0;
+        if (out_size)
+            *out_size = 0;
         return NULL;
     }
     size_t read = fread(buf, 1, (size_t)len, f);
@@ -4246,7 +4121,8 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     {
         buf[0] = '\0';
     }
-    if (out_size) *out_size = (long)read;
+    if (out_size)
+        *out_size = (long)read;
     return buf;
 }
 
@@ -4349,8 +4225,7 @@ int app_copy_file_binary(const char *source_path, const char *dest_path)
 }
 
 int app_select_existing_file(char *ruta, size_t size, const char *prompt,
-                             const char *windows_filter,
-                             const char *windows_userprofile_subdir)
+                             const char *windows_filter, const char *windows_userprofile_subdir)
 {
     if (!ruta || size == 0)
     {
@@ -4408,12 +4283,10 @@ static int appSeleccionarArchivoImagen(char *ruta, size_t size)
         "(*.jpg;*.jpeg;*.png;*.bmp;*.webp)\0*.jpg;*.jpeg;*.png;*.bmp;*.webp\0"
         "Todos los archivos (*.*)\0*.*\0";
 
-    return app_select_existing_file(ruta, size, "Ruta de la imagen: ", filter,
-                                    "\\Pictures");
+    return app_select_existing_file(ruta, size, "Ruta de la imagen: ", filter, "\\Pictures");
 }
 
-int app_seleccionar_y_copiar_imagen(const char *config_file,
-                                    const char *prefijo, char *ruta_out,
+int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo, char *ruta_out,
                                     size_t ruta_size)
 {
     if (!config_file || !ruta_out || ruta_size == 0)
@@ -4438,8 +4311,7 @@ int app_seleccionar_y_copiar_imagen(const char *config_file,
 
     char dest_nombre[350];
     const char *pref = prefijo ? prefijo : "imagen";
-    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%s.%s", pref, timestamp_str,
-             nombre_archivo);
+    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%s.%s", pref, timestamp_str, nombre_archivo);
 
     char app_dir[512] = {0};
     app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
@@ -4465,8 +4337,7 @@ int app_seleccionar_y_copiar_imagen(const char *config_file,
     return 1;
 }
 
-int app_cargar_imagen_entidad(int id, const char *tabla,
-                              const char *config_file)
+int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file)
 {
     if (!tabla || !config_file)
     {
@@ -4489,8 +4360,8 @@ int app_cargar_imagen_entidad(int id, const char *tabla,
     get_timestamp(timestamp_str, sizeof(timestamp_str));
 
     char dest_nombre[350];
-    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%d_%s.%s", tabla, id,
-             timestamp_str, nombre_archivo);
+    snprintf(dest_nombre, sizeof(dest_nombre), "%s_%d_%s.%s", tabla, id, timestamp_str,
+             nombre_archivo);
 
     char app_dir[512] = {0};
     app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
@@ -4508,8 +4379,7 @@ int app_cargar_imagen_entidad(int id, const char *tabla,
     snprintf(rel_path, sizeof(rel_path), "imagenes/%s", dest_nombre);
 
     char sql[512];
-    snprintf(sql, sizeof(sql), "UPDATE %s SET imagen_ruta = ? WHERE id = ?",
-             tabla);
+    snprintf(sql, sizeof(sql), "UPDATE %s SET imagen_ruta = ? WHERE id = ?", tabla);
 
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)

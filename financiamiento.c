@@ -1,12 +1,12 @@
 
 #include "financiamiento.h"
-#include "db.h"
-#include "utils.h"
-#include "menu.h"
 #include "ascii_art.h"
 #include "cJSON.h"
-#include "sqlite3.h"
+#include "db.h"
+#include "menu.h"
 #include "partido.h"
+#include "sqlite3.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -317,7 +317,8 @@ static int verificar_partido_precio_asignado(int id_partido)
 static int verificar_partido_transaccion_asociada(int id_partido)
 {
     sqlite3_stmt *stmt_check;
-    const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 6 AND item_especifico LIKE ?";
+    const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 6 "
+                            "AND item_especifico LIKE ?";
     char item_pattern[256];
     snprintf(item_pattern, sizeof(item_pattern), "Partido ID: %d%%", id_partido);
 
@@ -332,7 +333,8 @@ static int verificar_partido_transaccion_asociada(int id_partido)
         int count = sqlite3_column_int(stmt_check, 0);
         if (count > 0)
         {
-            printf("El partido ya tiene una transaccion financiera asociada (precio ya asignado).\n");
+            printf(
+                "El partido ya tiene una transaccion financiera asociada (precio ya asignado).\n");
             printf("No se puede agregar otra transaccion para este partido.\n");
             sqlite3_finalize(stmt_check);
             pause_console();
@@ -346,13 +348,15 @@ static int verificar_partido_transaccion_asociada(int id_partido)
 static void construir_item_partido(TransaccionFinanciera *transaccion, int id_partido)
 {
     sqlite3_stmt *stmt_partido;
-    const char *sql_partido = "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
-                              "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
-                              "JOIN cancha can ON p.cancha_id = can.id WHERE p.id = ?";
+    const char *sql_partido =
+        "SELECT p.id, can.nombre, fecha_hora, goles, asistencias, c.nombre, resultado, clima, dia "
+        "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
+        "JOIN cancha can ON p.cancha_id = can.id WHERE p.id = ?";
 
     if (!preparar_stmt(sql_partido, &stmt_partido))
     {
-        snprintf(transaccion->item_especifico, sizeof(transaccion->item_especifico), "Partido ID: %d", id_partido);
+        snprintf(transaccion->item_especifico, sizeof(transaccion->item_especifico),
+                 "Partido ID: %d", id_partido);
         return;
     }
 
@@ -360,23 +364,22 @@ static void construir_item_partido(TransaccionFinanciera *transaccion, int id_pa
     if (sqlite3_step(stmt_partido) == SQLITE_ROW)
     {
         char fecha_formateada[20];
-        format_date_for_display((const char *)sqlite3_column_text(stmt_partido, 2), fecha_formateada, sizeof(fecha_formateada));
+        format_date_for_display((const char *)sqlite3_column_text(stmt_partido, 2),
+                                fecha_formateada, sizeof(fecha_formateada));
 
         snprintf(transaccion->item_especifico, sizeof(transaccion->item_especifico),
                  "(%d |Cancha:%s |Fecha:%s | G:%d A:%d |Camiseta:%s | %s |Clima:%s |Dia:%s)",
-                 sqlite3_column_int(stmt_partido, 0),
-                 sqlite3_column_text(stmt_partido, 1),
-                 fecha_formateada,
-                 sqlite3_column_int(stmt_partido, 3),
-                 sqlite3_column_int(stmt_partido, 4),
-                 sqlite3_column_text(stmt_partido, 5),
+                 sqlite3_column_int(stmt_partido, 0), sqlite3_column_text(stmt_partido, 1),
+                 fecha_formateada, sqlite3_column_int(stmt_partido, 3),
+                 sqlite3_column_int(stmt_partido, 4), sqlite3_column_text(stmt_partido, 5),
                  resultado_to_text(sqlite3_column_int(stmt_partido, 6)),
                  clima_to_text(sqlite3_column_int(stmt_partido, 7)),
                  dia_to_text(sqlite3_column_int(stmt_partido, 8)));
     }
     else
     {
-        snprintf(transaccion->item_especifico, sizeof(transaccion->item_especifico), "Partido ID: %d (no encontrado)", id_partido);
+        snprintf(transaccion->item_especifico, sizeof(transaccion->item_especifico),
+                 "Partido ID: %d (no encontrado)", id_partido);
     }
     sqlite3_finalize(stmt_partido);
 }
@@ -422,7 +425,8 @@ static int completar_item_especifico(TransaccionFinanciera *transaccion)
 static void guardar_transaccion_db(const TransaccionFinanciera *transaccion)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT INTO financiamiento (id, fecha, tipo, categoria, descripcion, monto, item_especifico) VALUES (?, ?, ?, ?, ?, ?, ?);";
+    const char *sql = "INSERT INTO financiamiento (id, fecha, tipo, categoria, descripcion, monto, "
+                      "item_especifico) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -437,7 +441,8 @@ static void guardar_transaccion_db(const TransaccionFinanciera *transaccion)
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             char desc[200];
-            snprintf(desc, sizeof(desc), "%.*s - $%d", (int)(sizeof(desc) - 20), transaccion->descripcion, transaccion->monto);
+            snprintf(desc, sizeof(desc), "%.*s - $%d", (int)(sizeof(desc) - 20),
+                     transaccion->descripcion, transaccion->monto);
             mostrar_alerta_operacion("Transacción", "Guardada", desc);
         }
         else
@@ -505,7 +510,8 @@ void agregar_transaccion(void)
     }
 
     // Descripcion
-    solicitar_texto_no_vacio("Descripcion: ", transaccion.descripcion, sizeof(transaccion.descripcion));
+    solicitar_texto_no_vacio("Descripcion: ", transaccion.descripcion,
+                             sizeof(transaccion.descripcion));
 
     // Monto
     transaccion.monto = solicitar_monto_no_negativo("Monto: ");
@@ -538,11 +544,9 @@ void agregar_transaccion(void)
 void menu_presupuestos_mensuales(void)
 {
 #ifdef UNIT_TEST
-    MenuItem items[] =
-    {
-        {1, "Configurar Presupuesto Mensual", configurar_presupuesto_mensual},
-        {2, "Ver Estado del Presupuesto", ver_estado_presupuesto},
-        {3, "Verificar Alertas de Gasto", verificar_alertas_presupuesto},
+    MenuItem items[] = {{1, "Configurar Presupuesto Mensual", &configurar_presupuesto_mensual},
+        {2, "Ver Estado del Presupuesto", &ver_estado_presupuesto},
+        {3, "Verificar Alertas de Gasto", &verificar_alertas_presupuesto},
         {0, "Volver", NULL}
     };
 
@@ -555,11 +559,9 @@ void menu_presupuestos_mensuales(void)
     // Verificar alertas automaticamente al entrar al menu
     verificar_alertas_presupuesto();
 
-    MenuItem items[] =
-    {
-        {1, "Configurar Presupuesto Mensual", configurar_presupuesto_mensual},
-        {2, "Ver Estado del Presupuesto", ver_estado_presupuesto},
-        {3, "Verificar Alertas de Gasto", verificar_alertas_presupuesto},
+    MenuItem items[] = {{1, "Configurar Presupuesto Mensual", &configurar_presupuesto_mensual},
+        {2, "Ver Estado del Presupuesto", &ver_estado_presupuesto},
+        {3, "Verificar Alertas de Gasto", &verificar_alertas_presupuesto},
         {0, "Volver", NULL}
     };
 
@@ -599,7 +601,9 @@ static int presupuesto_existe(const char *mes_anio)
 static void actualizar_presupuesto(const PresupuestoMensual *presupuesto)
 {
     sqlite3_stmt *stmt;
-    const char *sql_update = "UPDATE presupuesto_mensual SET presupuesto_total = ?, limite_gasto = ?, alertas_habilitadas = ?, fecha_modificacion = ? WHERE mes_anio = ?;";
+    const char *sql_update =
+        "UPDATE presupuesto_mensual SET presupuesto_total = ?, limite_gasto = ?, "
+        "alertas_habilitadas = ?, fecha_modificacion = ? WHERE mes_anio = ?;";
 
     if (preparar_stmt(sql_update, &stmt))
     {
@@ -625,7 +629,9 @@ static void actualizar_presupuesto(const PresupuestoMensual *presupuesto)
 static void insertar_presupuesto(const PresupuestoMensual *presupuesto)
 {
     sqlite3_stmt *stmt;
-    const char *sql_insert = "INSERT INTO presupuesto_mensual (mes_anio, presupuesto_total, limite_gasto, alertas_habilitadas, fecha_creacion, fecha_modificacion) VALUES (?, ?, ?, ?, ?, ?);";
+    const char *sql_insert =
+        "INSERT INTO presupuesto_mensual (mes_anio, presupuesto_total, limite_gasto, "
+        "alertas_habilitadas, fecha_creacion, fecha_modificacion) VALUES (?, ?, ?, ?, ?, ?);";
 
     if (preparar_stmt(sql_insert, &stmt))
     {
@@ -664,7 +670,8 @@ void configurar_presupuesto_mensual(void)
 
     // Fechas
     obtener_fecha_actual(presupuesto.fecha_creacion);
-    strcpy_s(presupuesto.fecha_modificacion, sizeof(presupuesto.fecha_modificacion), presupuesto.fecha_creacion);
+    strcpy_s(presupuesto.fecha_modificacion, sizeof(presupuesto.fecha_modificacion),
+             presupuesto.fecha_creacion);
 
     if (presupuesto_existe(mes_anio))
     {
@@ -708,7 +715,8 @@ void ver_estado_presupuesto(void)
 
     // Obtener ingresos del mes
     sqlite3_stmt *stmt;
-    const char *sql_ingresos = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 0 AND substr(fecha, 1, 7) = ?;";
+    const char *sql_ingresos =
+        "SELECT SUM(monto) FROM financiamiento WHERE tipo = 0 AND substr(fecha, 1, 7) = ?;";
 
     if (preparar_stmt(sql_ingresos, &stmt))
     {
@@ -745,7 +753,8 @@ void ver_estado_presupuesto(void)
     double porcentaje_presupuesto = 0.0;
     if (presupuesto.presupuesto_total > 0)
     {
-        porcentaje_presupuesto = ((ingresos_actuales - gastos_actuales) / (double)presupuesto.presupuesto_total) * 100.0;
+        porcentaje_presupuesto =
+            ((ingresos_actuales - gastos_actuales) / (double)presupuesto.presupuesto_total) * 100.0;
     }
 
     printf("\n=== INDICADORES ===\n");
@@ -826,7 +835,8 @@ int obtener_gastos_mes_actual(void)
     obtener_mes_anio_actual(mes_anio);
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT SUM(monto) FROM financiamiento WHERE tipo = 1 AND substr(fecha, 1, 7) = ?;";
+    const char *sql =
+        "SELECT SUM(monto) FROM financiamiento WHERE tipo = 1 AND substr(fecha, 1, 7) = ?;";
     int gastos = 0;
 
     if (preparar_stmt(sql, &stmt))
@@ -848,7 +858,9 @@ int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
     obtener_mes_anio_actual(mes_anio);
 
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, presupuesto_total, limite_gasto, alertas_habilitadas, fecha_creacion, fecha_modificacion FROM presupuesto_mensual WHERE mes_anio = ?;";
+    const char *sql =
+        "SELECT id, presupuesto_total, limite_gasto, alertas_habilitadas, fecha_creacion, "
+        "fecha_modificacion FROM presupuesto_mensual WHERE mes_anio = ?;";
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -861,8 +873,10 @@ int obtener_presupuesto_mes_actual(PresupuestoMensual *presupuesto)
             presupuesto->presupuesto_total = sqlite3_column_int(stmt, 1);
             presupuesto->limite_gasto = sqlite3_column_int(stmt, 2);
             presupuesto->alertas_habilitadas = sqlite3_column_int(stmt, 3);
-            strcpy_s(presupuesto->fecha_creacion, sizeof(presupuesto->fecha_creacion), (const char *)sqlite3_column_text(stmt, 4));
-            strcpy_s(presupuesto->fecha_modificacion, sizeof(presupuesto->fecha_modificacion), (const char *)sqlite3_column_text(stmt, 5));
+            strcpy_s(presupuesto->fecha_creacion, sizeof(presupuesto->fecha_creacion),
+                     (const char *)sqlite3_column_text(stmt, 4));
+            strcpy_s(presupuesto->fecha_modificacion, sizeof(presupuesto->fecha_modificacion),
+                     (const char *)sqlite3_column_text(stmt, 5));
 
             sqlite3_finalize(stmt);
             return 1; // exito
@@ -894,10 +908,12 @@ void mostrar_alerta_exceso_gasto(int gastos_actuales, int limite)
     printf("\n");
 }
 
-static void obtener_estadisticas_generales(int *total_ingresos, int *total_gastos, int *num_transacciones)
+static void obtener_estadisticas_generales(int *total_ingresos, int *total_gastos,
+        int *num_transacciones)
 {
     sqlite3_stmt *stmt;
-    const char *sql_totales = "SELECT tipo, SUM(monto), COUNT(*) FROM financiamiento GROUP BY tipo;";
+    const char *sql_totales =
+        "SELECT tipo, SUM(monto), COUNT(*) FROM financiamiento GROUP BY tipo;";
 
     if (preparar_stmt(sql_totales, &stmt))
     {
@@ -936,7 +952,8 @@ static void imprimir_resumen_general(int num_transacciones, int total_ingresos, 
 static void imprimir_ingresos_por_categoria(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql_ingresos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 0 GROUP BY categoria ORDER BY SUM(monto) DESC;";
+    const char *sql_ingresos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE "
+                               "tipo = 0 GROUP BY categoria ORDER BY SUM(monto) DESC;";
 
     printf("\n=== INGRESOS POR CATEGORIA ===\n");
     if (preparar_stmt(sql_ingresos, &stmt))
@@ -965,7 +982,8 @@ static void imprimir_ingresos_por_categoria(void)
 static void imprimir_gastos_por_categoria(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql_gastos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 GROUP BY categoria ORDER BY SUM(monto) DESC;";
+    const char *sql_gastos = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE "
+                             "tipo = 1 GROUP BY categoria ORDER BY SUM(monto) DESC;";
 
     printf("\n=== GASTOS POR CATEGORIA ===\n");
     if (preparar_stmt(sql_gastos, &stmt))
@@ -994,7 +1012,10 @@ static void imprimir_gastos_por_categoria(void)
 static void imprimir_estadisticas_equipamiento(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql_equipamiento = "SELECT item_especifico, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 1 AND item_especifico != '' GROUP BY item_especifico ORDER BY SUM(monto) DESC LIMIT 10;";
+    const char *sql_equipamiento =
+        "SELECT item_especifico, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 AND "
+        "categoria = 1 AND item_especifico != '' GROUP BY item_especifico ORDER BY SUM(monto) DESC "
+        "LIMIT 10;";
 
     printf("\n=== TOP ITEMS DE EQUIPAMIENTO ===\n");
     if (preparar_stmt(sql_equipamiento, &stmt))
@@ -1096,7 +1117,8 @@ void ver_balance_gastos(void)
     int total_gastos = 0;
     int num_gastos = 0;
 
-    const char *sql_total_gastos = "SELECT SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1;";
+    const char *sql_total_gastos =
+        "SELECT SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1;";
 
     if (preparar_stmt(sql_total_gastos, &stmt))
     {
@@ -1123,7 +1145,9 @@ void ver_balance_gastos(void)
 
     // Desglose por categorias de gastos
     printf("=== DESGLOSE POR CATEGORIAS ===\n");
-    const char *sql_gastos_categoria = "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 GROUP BY categoria ORDER BY SUM(monto) DESC;";
+    const char *sql_gastos_categoria =
+        "SELECT categoria, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 GROUP BY "
+        "categoria ORDER BY SUM(monto) DESC;";
 
     if (preparar_stmt(sql_gastos_categoria, &stmt))
     {
@@ -1137,15 +1161,16 @@ void ver_balance_gastos(void)
             int count = sqlite3_column_int(stmt, 2);
             double porcentaje = (suma / (double)total_gastos) * 100.0;
 
-            printf("%-15s $%s %-10d %-7.1f%%\n",
-                   get_nombre_categoria(categoria), formato_monto(suma), count, porcentaje);
+            printf("%-15s $%s %-10d %-7.1f%%\n", get_nombre_categoria(categoria),
+                   formato_monto(suma), count, porcentaje);
         }
         sqlite3_finalize(stmt);
     }
 
     // Top 5 gastos mas altos
     printf("\n=== TOP 5 GASTOS MAS ALTOS ===\n");
-    const char *sql_top_gastos = "SELECT descripcion, monto, fecha, categoria FROM financiamiento WHERE tipo = 1 ORDER BY monto DESC LIMIT 5;";
+    const char *sql_top_gastos = "SELECT descripcion, monto, fecha, categoria FROM financiamiento "
+                                 "WHERE tipo = 1 ORDER BY monto DESC LIMIT 5;";
 
     if (preparar_stmt(sql_top_gastos, &stmt))
     {
@@ -1172,7 +1197,9 @@ void ver_balance_gastos(void)
 
     // Balance mensual de gastos (ultimos 6 meses)
     printf("\n=== BALANCE MENSUAL DE GASTOS (ULTIMOS 6 MESES) ===\n");
-    const char *sql_mensual_gastos = "SELECT strftime('%Y-%m', fecha) as mes, SUM(monto), COUNT(*) FROM financiamiento WHERE tipo = 1 AND fecha >= date('now', '-6 months') GROUP BY mes ORDER BY mes DESC;";
+    const char *sql_mensual_gastos =
+        "SELECT strftime('%Y-%m', fecha) as mes, SUM(monto), COUNT(*) FROM financiamiento WHERE "
+        "tipo = 1 AND fecha >= date('now', '-6 months') GROUP BY mes ORDER BY mes DESC;";
 
     if (preparar_stmt(sql_mensual_gastos, &stmt))
     {
@@ -1216,7 +1243,8 @@ typedef struct
     cJSON **json_array;
 } ExportPrepParams;
 
-static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *html_file, FILE *json_file, cJSON *json_array)
+static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *html_file,
+        FILE *json_file, cJSON *json_array)
 {
     if (csv_file)
     {
@@ -1245,7 +1273,8 @@ static void limpiar_archivos_exportacion(FILE *csv_file, FILE *txt_file, FILE *h
     }
 }
 
-static void abrir_archivo(FILE **file, const char *filename, const char *mode, const char *tipo_archivo)
+static void abrir_archivo(FILE **file, const char *filename, const char *mode,
+                          const char *tipo_archivo)
 {
     errno_t err = fopen_s(file, filename, mode);
     if (err != 0)
@@ -1257,16 +1286,20 @@ static void abrir_archivo(FILE **file, const char *filename, const char *mode, c
 
 static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *html_file)
 {
-    if (csv_file) fclose(csv_file);
-    if (txt_file) fclose(txt_file);
-    if (html_file) fclose(html_file);
+    if (csv_file)
+        fclose(csv_file);
+    if (txt_file)
+        fclose(txt_file);
+    if (html_file)
+        fclose(html_file);
 }
 
 static void preparar_archivos_exportacion(ExportPrepParams *params)
 {
 
     // CSV
-    snprintf(params->csv_filename, 300, "%s%sfinanciamiento_%s.csv", params->export_dir, PATH_SEP, params->timestamp);
+    snprintf(params->csv_filename, 300, "%s%sfinanciamiento_%s.csv", params->export_dir, PATH_SEP,
+             params->timestamp);
     abrir_archivo(params->csv_file, params->csv_filename, "w", "CSV");
     if (*params->csv_file)
     {
@@ -1274,7 +1307,8 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // TXT
-    snprintf(params->txt_filename, 300, "%s%sfinanciamiento_%s.txt", params->export_dir, PATH_SEP, params->timestamp);
+    snprintf(params->txt_filename, 300, "%s%sfinanciamiento_%s.txt", params->export_dir, PATH_SEP,
+             params->timestamp);
     if (*params->csv_file)
     {
         abrir_archivo(params->txt_file, params->txt_filename, "w", "TXT");
@@ -1292,14 +1326,18 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // HTML
-    snprintf(params->html_filename, 300, "%s%sfinanciamiento_%s.html", params->export_dir, PATH_SEP, params->timestamp);
+    snprintf(params->html_filename, 300, "%s%sfinanciamiento_%s.html", params->export_dir, PATH_SEP,
+             params->timestamp);
     if (*params->csv_file && *params->txt_file)
     {
         abrir_archivo(params->html_file, params->html_filename, "w", "HTML");
         if (*params->html_file)
         {
             fprintf(*params->html_file, "<html><body><h1>Transacciones Financieras</h1>");
-            fprintf(*params->html_file, "<table border='1'><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</th><th>Descripcion</th><th>Monto</th><th>Item Especifico</th></tr>");
+            fprintf(*params->html_file,
+                    "<table "
+                    "border='1'><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</"
+                    "th><th>Descripcion</th><th>Monto</th><th>Item Especifico</th></tr>");
         }
         else
         {
@@ -1311,7 +1349,8 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
     }
 
     // JSON
-    snprintf(params->json_filename, 300, "%s%sfinanciamiento_%s.json", params->export_dir, PATH_SEP, params->timestamp);
+    snprintf(params->json_filename, 300, "%s%sfinanciamiento_%s.json", params->export_dir, PATH_SEP,
+             params->timestamp);
     if (*params->csv_file && *params->txt_file && *params->html_file)
     {
         abrir_archivo(params->json_file, params->json_filename, "w", "JSON");
@@ -1364,9 +1403,9 @@ static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *p
     // CSV
     if (params->csv_file)
     {
-        fprintf(params->csv_file, "%d,%s,%s,%s,\"%s\",%d",
-                id, fecha, get_nombre_tipo_transaccion(tipo),
-                get_nombre_categoria(categoria), descripcion, monto);
+        fprintf(params->csv_file, "%d,%s,%s,%s,\"%s\",%d", id, fecha,
+                get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion,
+                monto);
 
         if (item && safe_strnlen(item, 65536) > 0)
         {
@@ -1398,9 +1437,11 @@ static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *p
     // HTML
     if (params->html_file)
     {
-        fprintf(params->html_file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>$%s</td><td>%s</td></tr>",
-                id, fecha, get_nombre_tipo_transaccion(tipo),
-                get_nombre_categoria(categoria), descripcion, formato_monto(monto),
+        fprintf(params->html_file,
+                "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>$%s</td><td>%s</"
+                "td></tr>",
+                id, fecha, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria),
+                descripcion, formato_monto(monto),
                 (item && safe_strnlen(item, 65536) > 0) ? item : "");
     }
 
@@ -1448,7 +1489,8 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
         fprintf(params->csv_file, "RESUMEN,,Total Transacciones:,%d\n", params->count);
         fprintf(params->csv_file, "RESUMEN,,Total Ingresos:,$%d\n", params->total_ingresos);
         fprintf(params->csv_file, "RESUMEN,,Total Gastos:,$%d\n", params->total_gastos);
-        fprintf(params->csv_file, "RESUMEN,,Balance Neto:,$%d\n", params->total_ingresos - params->total_gastos);
+        fprintf(params->csv_file, "RESUMEN,,Balance Neto:,$%d\n",
+                params->total_ingresos - params->total_gastos);
         fclose(params->csv_file);
         printf("CSV exportado: %s\n", params->csv_filename);
     }
@@ -1461,7 +1503,8 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
         fprintf(params->txt_file, "Total de transacciones: %d\n", params->count);
         fprintf(params->txt_file, "Total Ingresos: $%s\n", formato_monto(params->total_ingresos));
         fprintf(params->txt_file, "Total Gastos: $%s\n", formato_monto(params->total_gastos));
-        fprintf(params->txt_file, "Balance Neto: $%s\n", formato_monto(params->total_ingresos - params->total_gastos));
+        fprintf(params->txt_file, "Balance Neto: $%s\n",
+                formato_monto(params->total_ingresos - params->total_gastos));
         fclose(params->txt_file);
         printf("TXT exportado: %s\n", params->txt_filename);
     }
@@ -1472,10 +1515,14 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
         fprintf(params->html_file, "</table>");
         fprintf(params->html_file, "<h2>Resumen General</h2>");
         fprintf(params->html_file, "<table border='1'>");
-        fprintf(params->html_file, "<tr><th>Total Transacciones</th><td>%d</td></tr>", params->count);
-        fprintf(params->html_file, "<tr><th>Total Ingresos</th><td>$%s</td></tr>", formato_monto(params->total_ingresos));
-        fprintf(params->html_file, "<tr><th>Total Gastos</th><td>$%s</td></tr>", formato_monto(params->total_gastos));
-        fprintf(params->html_file, "<tr><th>Balance Neto</th><td>$%s</td></tr>", formato_monto(params->total_ingresos - params->total_gastos));
+        fprintf(params->html_file, "<tr><th>Total Transacciones</th><td>%d</td></tr>",
+                params->count);
+        fprintf(params->html_file, "<tr><th>Total Ingresos</th><td>$%s</td></tr>",
+                formato_monto(params->total_ingresos));
+        fprintf(params->html_file, "<tr><th>Total Gastos</th><td>$%s</td></tr>",
+                formato_monto(params->total_gastos));
+        fprintf(params->html_file, "<tr><th>Balance Neto</th><td>$%s</td></tr>",
+                formato_monto(params->total_ingresos - params->total_gastos));
         fprintf(params->html_file, "</table></body></html>");
         fclose(params->html_file);
         printf("HTML exportado: %s\n", params->html_filename);
@@ -1491,7 +1538,8 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
         cJSON_AddNumberToObject(resumen, "total_transacciones", params->count);
         cJSON_AddNumberToObject(resumen, "total_ingresos", params->total_ingresos);
         cJSON_AddNumberToObject(resumen, "total_gastos", params->total_gastos);
-        cJSON_AddNumberToObject(resumen, "balance_neto", params->total_ingresos - params->total_gastos);
+        cJSON_AddNumberToObject(resumen, "balance_neto",
+                                params->total_ingresos - params->total_gastos);
         cJSON_AddItemToObject(root, "resumen", resumen);
 
         char *json_string = cJSON_Print(root);
@@ -1526,9 +1574,8 @@ void exportar_financiamiento(void)
     struct tm tm;
     localtime_s(&tm, &t);
     char timestamp[32];
-    snprintf(timestamp, sizeof(timestamp), "%04d%02d%02d_%02d%02d%02d",
-             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-             tm.tm_hour, tm.tm_min, tm.tm_sec);
+    snprintf(timestamp, sizeof(timestamp), "%04d%02d%02d_%02d%02d%02d", tm.tm_year + 1900,
+             tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     printf("Exportando datos de financiamiento en todos los formatos...\n\n");
 
@@ -1543,26 +1590,25 @@ void exportar_financiamiento(void)
     FILE *json_file = NULL; // Inicializar explicitamente a NULL
     cJSON *json_array = NULL;
 
-    ExportPrepParams prep_params =
-    {
-        .export_dir = export_dir,
-        .timestamp = timestamp,
-        .csv_filename = csv_filename,
-        .csv_file = &csv_file,
-        .txt_filename = txt_filename,
-        .txt_file = &txt_file,
-        .html_filename = html_filename,
-        .html_file = &html_file,
-        .json_filename = json_filename,
-        .json_file = &json_file,
-        .json_array = &json_array
-    };
+    ExportPrepParams prep_params = {.export_dir = export_dir,
+                                    .timestamp = timestamp,
+                                    .csv_filename = csv_filename,
+                                    .csv_file = &csv_file,
+                                    .txt_filename = txt_filename,
+                                    .txt_file = &txt_file,
+                                    .html_filename = html_filename,
+                                    .html_file = &html_file,
+                                    .json_filename = json_filename,
+                                    .json_file = &json_file,
+                                    .json_array = &json_array
+                                   };
 
     preparar_archivos_exportacion(&prep_params);
 
     // Obtener transacciones
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento ORDER BY fecha DESC, id DESC;";
+    const char *sql = "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM "
+                      "financiamiento ORDER BY fecha DESC, id DESC;";
 
     int count = 0;
     int total_ingresos = 0;
@@ -1576,16 +1622,14 @@ void exportar_financiamiento(void)
     }
 
     // Procesar transacciones
-    ExportParams params =
-    {
-        .csv_file = csv_file,
-        .txt_file = txt_file,
-        .html_file = html_file,
-        .json_array = json_array,
-        .count = &count,
-        .total_ingresos = &total_ingresos,
-        .total_gastos = &total_gastos
-    };
+    ExportParams params = {.csv_file = csv_file,
+                           .txt_file = txt_file,
+                           .html_file = html_file,
+                           .json_array = json_array,
+                           .count = &count,
+                           .total_ingresos = &total_ingresos,
+                           .total_gastos = &total_gastos
+                          };
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -1595,21 +1639,19 @@ void exportar_financiamiento(void)
     sqlite3_finalize(stmt);
 
     // Finalizar archivos
-    ExportFinalizeParams finalize_params =
-    {
-        .csv_filename = csv_filename,
-        .csv_file = csv_file,
-        .txt_filename = txt_filename,
-        .txt_file = txt_file,
-        .html_filename = html_filename,
-        .html_file = html_file,
-        .json_filename = json_filename,
-        .json_file = json_file,
-        .json_array = json_array,
-        .count = count,
-        .total_ingresos = total_ingresos,
-        .total_gastos = total_gastos
-    };
+    ExportFinalizeParams finalize_params = {.csv_filename = csv_filename,
+                                            .csv_file = csv_file,
+                                            .txt_filename = txt_filename,
+                                            .txt_file = txt_file,
+                                            .html_filename = html_filename,
+                                            .html_file = html_file,
+                                            .json_filename = json_filename,
+                                            .json_file = json_file,
+                                            .json_array = json_array,
+                                            .count = count,
+                                            .total_ingresos = total_ingresos,
+                                            .total_gastos = total_gastos
+                                           };
 
     finalizar_archivos_exportacion(&finalize_params);
 
@@ -1625,16 +1667,14 @@ void exportar_financiamiento(void)
 
 void menu_financiamiento(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Agregar Transaccion", agregar_transaccion},
-        {2, "Listar Transacciones", listar_transacciones},
-        {3, "Modificar Transaccion", modificar_transaccion},
-        {4, "Eliminar Transaccion", eliminar_transaccion},
-        {5, "Ver Resumen Financiero", mostrar_resumen_financiero},
-        {6, "Balance General de Gastos", ver_balance_gastos},
-        {7, "Exportar Datos", exportar_financiamiento},
-        {8, "Presupuestos Mensuales", menu_presupuestos_mensuales},
+    MenuItem items[] = {{1, "Agregar Transaccion", &agregar_transaccion},
+        {2, "Listar Transacciones", &listar_transacciones},
+        {3, "Modificar Transaccion", &modificar_transaccion},
+        {4, "Eliminar Transaccion", &eliminar_transaccion},
+        {5, "Ver Resumen Financiero", &mostrar_resumen_financiero},
+        {6, "Balance General de Gastos", &ver_balance_gastos},
+        {7, "Exportar Datos", &exportar_financiamiento},
+        {8, "Presupuestos Mensuales", &menu_presupuestos_mensuales},
         {0, "Volver", NULL}
     };
 
@@ -1668,7 +1708,8 @@ static void modificar_tipo_transaccion(int id_transaccion)
     }
     const char *sql = "UPDATE financiamiento SET tipo = ? WHERE id = ?;";
     ejecutar_update_int(sql, nuevo_tipo, id_transaccion);
-    mostrar_alerta_operacion("Transacción", "Tipo Actualizado", nuevo_tipo == 0 ? "Ingreso" : "Gasto");
+    mostrar_alerta_operacion("Transacción", "Tipo Actualizado",
+                             nuevo_tipo == 0 ? "Ingreso" : "Gasto");
 }
 
 static void modificar_categoria_transaccion(int id_transaccion)
@@ -1720,9 +1761,11 @@ static void modificar_item_especifico_transaccion(int id_transaccion)
 /* Helper: obtener transaccion por ID y llenar estructura TransaccionFinanciera */
 static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera *out)
 {
-    if (!out) return 0;
+    if (!out)
+        return 0;
     sqlite3_stmt *stmt;
-    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
+    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico "
+                              "FROM financiamiento WHERE id = ?;";
     if (!preparar_stmt(sql_obtener, &stmt))
         return 0;
     sqlite3_bind_int(stmt, 1, id_transaccion);
@@ -1730,14 +1773,17 @@ static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         out->id = id_transaccion;
-        strncpy_s(out->fecha, sizeof(out->fecha), (const char *)sqlite3_column_text(stmt, 0), sizeof(out->fecha) - 1);
+        strncpy_s(out->fecha, sizeof(out->fecha), (const char *)sqlite3_column_text(stmt, 0),
+                  sizeof(out->fecha) - 1);
         out->tipo = sqlite3_column_int(stmt, 1);
         out->categoria = sqlite3_column_int(stmt, 2);
-        strncpy_s(out->descripcion, sizeof(out->descripcion), (const char *)sqlite3_column_text(stmt, 3), sizeof(out->descripcion) - 1);
+        strncpy_s(out->descripcion, sizeof(out->descripcion),
+                  (const char *)sqlite3_column_text(stmt, 3), sizeof(out->descripcion) - 1);
         out->monto = sqlite3_column_int(stmt, 4);
         const char *item = (const char *)sqlite3_column_text(stmt, 5);
         if (item)
-            strncpy_s(out->item_especifico, sizeof(out->item_especifico), item, sizeof(out->item_especifico) - 1);
+            strncpy_s(out->item_especifico, sizeof(out->item_especifico), item,
+                      sizeof(out->item_especifico) - 1);
         else
             out->item_especifico[0] = '\0';
         found = 1;
@@ -1753,7 +1799,8 @@ void modificar_transaccion(void)
 
     // Mostrar lista de todas las transacciones
     sqlite3_stmt *stmt;
-    const char *sql_lista = "SELECT id, fecha, tipo, categoria, descripcion, monto FROM financiamiento ORDER BY fecha DESC, id DESC;";
+    const char *sql_lista = "SELECT id, fecha, tipo, categoria, descripcion, monto FROM "
+                            "financiamiento ORDER BY fecha DESC, id DESC;";
 
     if (preparar_stmt(sql_lista, &stmt))
     {
@@ -1773,7 +1820,8 @@ void modificar_transaccion(void)
             char fecha_display[48] = "";
             format_date_with_weekday_for_display(fecha_db, fecha_display, sizeof(fecha_display));
 
-            printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
+            printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display,
+                   get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
             mostrar_monto(monto);
             printf("\n");
         }
@@ -1787,7 +1835,8 @@ void modificar_transaccion(void)
         }
     }
 
-    int id_transaccion = input_int("\nIngrese el ID de la transaccion a modificar (0 para cancelar): ");
+    int id_transaccion =
+        input_int("\nIngrese el ID de la transaccion a modificar (0 para cancelar): ");
 
     if (id_transaccion == 0)
         return;
@@ -1861,7 +1910,8 @@ void eliminar_transaccion(void)
 
     // Mostrar lista de transacciones recientes
     sqlite3_stmt *stmt;
-    const char *sql_lista = "SELECT id, fecha, tipo, categoria, descripcion, monto FROM financiamiento ORDER BY fecha DESC, id DESC LIMIT 10;";
+    const char *sql_lista = "SELECT id, fecha, tipo, categoria, descripcion, monto FROM "
+                            "financiamiento ORDER BY fecha DESC, id DESC LIMIT 10;";
 
     if (preparar_stmt(sql_lista, &stmt))
     {
@@ -1880,7 +1930,8 @@ void eliminar_transaccion(void)
             int monto = sqlite3_column_int(stmt, 5);
 
             format_date_with_weekday_for_display(fecha, fecha_display, sizeof(fecha_display));
-            printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
+            printf("ID: %d | %s | %s | %s | %s | $", id, fecha_display,
+                   get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria), descripcion);
             mostrar_monto(monto);
             printf("\n");
         }
@@ -1894,7 +1945,8 @@ void eliminar_transaccion(void)
         }
     }
 
-    int id_transaccion = input_int("\nIngrese el ID de la transaccion a eliminar (0 para cancelar): ");
+    int id_transaccion =
+        input_int("\nIngrese el ID de la transaccion a eliminar (0 para cancelar): ");
 
     if (id_transaccion == 0)
         return;
@@ -1908,7 +1960,8 @@ void eliminar_transaccion(void)
     }
 
     // Mostrar la transaccion antes de eliminar
-    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento WHERE id = ?;";
+    const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico "
+                              "FROM financiamiento WHERE id = ?;";
 
     if (preparar_stmt(sql_obtener, &stmt))
     {
@@ -1918,15 +1971,19 @@ void eliminar_transaccion(void)
         {
             TransaccionFinanciera transaccion;
             transaccion.id = id_transaccion;
-            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha), (const char *)sqlite3_column_text(stmt, 0), sizeof(transaccion.fecha) - 1);
+            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha),
+                      (const char *)sqlite3_column_text(stmt, 0), sizeof(transaccion.fecha) - 1);
             transaccion.tipo = sqlite3_column_int(stmt, 1);
             transaccion.categoria = sqlite3_column_int(stmt, 2);
-            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion), (const char *)sqlite3_column_text(stmt, 3), sizeof(transaccion.descripcion) - 1);
+            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion),
+                      (const char *)sqlite3_column_text(stmt, 3),
+                      sizeof(transaccion.descripcion) - 1);
             transaccion.monto = sqlite3_column_int(stmt, 4);
             const char *item = (const char *)sqlite3_column_text(stmt, 5);
             if (item)
             {
-                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item, sizeof(transaccion.item_especifico) - 1);
+                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item,
+                          sizeof(transaccion.item_especifico) - 1);
             }
             else
             {
@@ -1939,7 +1996,8 @@ void eliminar_transaccion(void)
         sqlite3_finalize(stmt);
     }
 
-    if (confirmar("Esta seguro que desea eliminar esta transaccion? Esta accion no se puede deshacer."))
+    if (confirmar(
+                "Esta seguro que desea eliminar esta transaccion? Esta accion no se puede deshacer."))
     {
         const char *sql_delete = "DELETE FROM financiamiento WHERE id = ?;";
         if (preparar_stmt(sql_delete, &stmt))
@@ -1972,7 +2030,8 @@ void listar_transacciones(void)
     print_header("LISTAR TRANSACCIONES FINANCIERAS");
 
     // Listar todas las transacciones sin filtros
-    const char *sql = "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM financiamiento ORDER BY fecha DESC, id DESC;";
+    const char *sql = "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM "
+                      "financiamiento ORDER BY fecha DESC, id DESC;";
 
     sqlite3_stmt *stmt;
     if (preparar_stmt(sql, &stmt))
@@ -1990,15 +2049,19 @@ void listar_transacciones(void)
             TransaccionFinanciera transaccion;
 
             transaccion.id = sqlite3_column_int(stmt, 0);
-            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha), (const char *)sqlite3_column_text(stmt, 1), sizeof(transaccion.fecha) - 1);
+            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha),
+                      (const char *)sqlite3_column_text(stmt, 1), sizeof(transaccion.fecha) - 1);
             transaccion.tipo = sqlite3_column_int(stmt, 2);
             transaccion.categoria = sqlite3_column_int(stmt, 3);
-            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion), (const char *)sqlite3_column_text(stmt, 4), sizeof(transaccion.descripcion) - 1);
+            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion),
+                      (const char *)sqlite3_column_text(stmt, 4),
+                      sizeof(transaccion.descripcion) - 1);
             transaccion.monto = sqlite3_column_int(stmt, 5);
             const char *item = (const char *)sqlite3_column_text(stmt, 6);
             if (item)
             {
-                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item, sizeof(transaccion.item_especifico) - 1);
+                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item,
+                          sizeof(transaccion.item_especifico) - 1);
                 // Truncate after the result to avoid showing Clima and Dia
                 truncar_resultado_partido(transaccion.item_especifico);
             }

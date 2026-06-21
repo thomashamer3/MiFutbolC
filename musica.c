@@ -58,7 +58,7 @@ void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, flo
 #define EQ_TREBLE_FREQ 8000.0   /* Hz - agudos */
 #define EQ_Q             0.7    /* Q / pendiente de filtro */
 #define EQ_DB_STEP       3.0f   /* dB por pulsacion */
-#define EQ_DB_MIN       -12.0f
+#define EQ_DB_MIN       (-12.0f)
 #define EQ_DB_MAX        12.0f
 
 /* ---- Playlists ---- */
@@ -739,9 +739,6 @@ static void verificar_fin_pista(void)
         break;
 
     case REPETIR_LISTA:
-        siguiente_pista();
-        break;
-
     case REPETIR_ALEATORIO:
         siguiente_pista();
         break;
@@ -2054,7 +2051,7 @@ static void cargar_playlist_archivo(const char *nombre_txt)
         const char *music_dir = MUSICA_DIR;
         char ruta_audio[MAX_RUTA];
         size_t max_nombre_len = 0;
-        size_t dir_len = strlen_s(music_dir, MAX_RUTA * 4);
+        size_t dir_len = strlen_s(music_dir, (size_t)MAX_RUTA * 4);
         if (sizeof(ruta_audio) > dir_len + 2)
         {
             max_nombre_len = sizeof(ruta_audio) - dir_len - 2;

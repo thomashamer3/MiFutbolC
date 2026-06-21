@@ -58,5 +58,5 @@ int secure_rand_range(int max)
     }
     unsigned int r = (rand_bytes[0] << 24) | (rand_bytes[1] << 16) |
                      (rand_bytes[2] << 8) | rand_bytes[3];
-    return r % max;
+    return (int)(r % (unsigned int)max);
 }

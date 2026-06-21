@@ -19,7 +19,7 @@ typedef struct
 {
     int opcion;            /**< Número de opción del menú (usado para selección) */
     const char *texto;     /**< Texto descriptivo mostrado al usuario */
-    void (*accion)();      /**< Puntero a función que se ejecuta al seleccionar */
+    void (*accion)(void);      /**< Puntero a función que se ejecuta al seleccionar */
 } MenuItem;
 
 /**

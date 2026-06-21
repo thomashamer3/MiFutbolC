@@ -42,7 +42,7 @@ static int load_file(const char *path)
         return 0;
     }
 
-    char *data = (char *)malloc((size_t)(len + 1));
+    char *data = (char *)malloc((size_t)len + 1);
     if (!data)
     {
         fclose(f);

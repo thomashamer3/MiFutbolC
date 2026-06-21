@@ -574,7 +574,7 @@ static cJSON *resultset_a_json(sqlite3_stmt *stmt,
             cJSON_AddNullToObject(json, columnas[i]);
             break;
         case SQLITE_INTEGER:
-            cJSON_AddNumberToObject(json, columnas[i], sqlite3_column_int64(stmt, i));
+            cJSON_AddNumberToObject(json, columnas[i], (double)sqlite3_column_int64(stmt, i));
             break;
         case SQLITE_FLOAT:
             cJSON_AddNumberToObject(json, columnas[i], sqlite3_column_double(stmt, i));

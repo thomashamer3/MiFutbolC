@@ -4,12 +4,12 @@
 #include "backup.h"
 #include "busqueda.h"
 #include "cJSON.h"
-#include "lang.h"
 #include "db.h"
 #include "db_integridad.h"
 #include "export_all.h"
 #include "export_ods.h"
 #include "import.h"
+#include "lang.h"
 #include "menu.h"
 #include "notificaciones.h"
 #include "undo.h"
@@ -34,8 +34,7 @@
 #define SETTINGS_MUSIC_VOLUME_STEP_DEFAULT 0.1f
 
 #ifdef _WIN32
-typedef HRESULT(WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR,
-        DWORD, LPVOID);
+typedef HRESULT(WINAPI *URLDownloadToFileAFunc)(LPUNKNOWN, LPCSTR, LPCSTR, DWORD, LPVOID);
 #endif
 
 void menu_exportar(void);
@@ -71,13 +70,11 @@ static void habilitar_menus_basicos_custom(void);
 static char label_music_autoplay[96];
 static char label_dashboard_enabled[96];
 
-static void settings_actualizar_label_toggle(const char *clave_base,
-        int habilitado, char *destino,
+static void settings_actualizar_label_toggle(const char *clave_base, int habilitado, char *destino,
         size_t destino_size)
 {
     const char *base = get_text(clave_base);
-    const char *estado =
-        habilitado ? get_text("state_on") : get_text("state_off");
+    const char *estado = habilitado ? get_text("state_on") : get_text("state_off");
     snprintf(destino, destino_size, "%s: %s", base, estado);
 }
 
@@ -118,8 +115,7 @@ static void aplicar_config_y_pausar(void (*setter)(int), int value)
     pause_console();
 }
 
-static void aplicar_tema_texto_y_pausar(ThemeType theme,
-                                        TextSizeType text_size)
+static void aplicar_tema_texto_y_pausar(ThemeType theme, TextSizeType text_size)
 {
     settings_set_theme(theme);
     settings_set_text_size(text_size);
@@ -127,11 +123,17 @@ static void aplicar_tema_texto_y_pausar(ThemeType theme,
     pause_console();
 }
 
-#define DEFINE_SETTING_ACTION(name, setter, value)                             \
-  static void name(void) { aplicar_config_y_pausar(setter, value); }
+#define DEFINE_SETTING_ACTION(name, setter, value)                                                 \
+    static void name(void)                                                                         \
+    {                                                                                              \
+        aplicar_config_y_pausar(setter, value);                                                    \
+    }
 
-#define DEFINE_THEME_TEXT_ACTION(name, theme, text_size)                       \
-  static void name(void) { aplicar_tema_texto_y_pausar(theme, text_size); }
+#define DEFINE_THEME_TEXT_ACTION(name, theme, text_size)                                           \
+    static void name(void)                                                                         \
+    {                                                                                              \
+        aplicar_tema_texto_y_pausar(theme, text_size);                                             \
+    }
 
 /* Wrappers para usar como acciones en MenuItem (sin argumentos) */
 DEFINE_SETTING_ACTION(theme_set_light, set_theme_int, THEME_LIGHT)
@@ -141,17 +143,14 @@ DEFINE_SETTING_ACTION(theme_set_green, set_theme_int, THEME_GREEN)
 DEFINE_SETTING_ACTION(theme_set_red, set_theme_int, THEME_RED)
 DEFINE_SETTING_ACTION(theme_set_purple, set_theme_int, THEME_PURPLE)
 DEFINE_SETTING_ACTION(theme_set_classic, set_theme_int, THEME_CLASSIC)
-DEFINE_SETTING_ACTION(theme_set_high_contrast, set_theme_int,
-                      THEME_HIGH_CONTRAST)
+DEFINE_SETTING_ACTION(theme_set_high_contrast, set_theme_int, THEME_HIGH_CONTRAST)
 DEFINE_SETTING_ACTION(lang_set_spanish, set_language_int, LANGUAGE_SPANISH)
 DEFINE_SETTING_ACTION(lang_set_english, set_language_int, LANGUAGE_ENGLISH)
 DEFINE_SETTING_ACTION(text_size_small, set_text_size_int, TEXT_SIZE_SMALL)
 DEFINE_SETTING_ACTION(text_size_medium, set_text_size_int, TEXT_SIZE_MEDIUM)
 DEFINE_SETTING_ACTION(text_size_large, set_text_size_int, TEXT_SIZE_LARGE)
-DEFINE_SETTING_ACTION(accessibility_high_contrast, set_theme_int,
-                      THEME_HIGH_CONTRAST)
-DEFINE_THEME_TEXT_ACTION(accessibility_normal_theme_text, THEME_LIGHT,
-                         TEXT_SIZE_MEDIUM)
+DEFINE_SETTING_ACTION(accessibility_high_contrast, set_theme_int, THEME_HIGH_CONTRAST)
+DEFINE_THEME_TEXT_ACTION(accessibility_normal_theme_text, THEME_LIGHT, TEXT_SIZE_MEDIUM)
 DEFINE_SETTING_ACTION(mode_set_simple, set_mode_int, MODE_SIMPLE)
 DEFINE_SETTING_ACTION(mode_set_advanced, set_mode_int, MODE_ADVANCED)
 static void mode_set_custom(void)
@@ -163,38 +162,36 @@ static void mode_set_custom(void)
 
 static void toggle_music_autoplay_setting(void)
 {
-    aplicar_config_y_pausar(set_music_autoplay_int,
-                            current_settings.music_autoplay ? 0 : 1);
-    settings_actualizar_label_toggle(
-        "settings_music_autoplay", current_settings.music_autoplay,
-        label_music_autoplay, sizeof(label_music_autoplay));
-    settings_actualizar_label_toggle(
-        "settings_dashboard_enabled", current_settings.dashboard_enabled,
-        label_dashboard_enabled, sizeof(label_dashboard_enabled));
+    aplicar_config_y_pausar(set_music_autoplay_int, current_settings.music_autoplay ? 0 : 1);
+    settings_actualizar_label_toggle("settings_music_autoplay", current_settings.music_autoplay,
+                                     label_music_autoplay, sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled",
+                                     current_settings.dashboard_enabled, label_dashboard_enabled,
+                                     sizeof(label_dashboard_enabled));
 }
 
 static void toggle_dashboard_enabled_setting(void)
 {
-    aplicar_config_y_pausar(set_dashboard_enabled_int,
-                            current_settings.dashboard_enabled ? 0 : 1);
-    settings_actualizar_label_toggle(
-        "settings_music_autoplay", current_settings.music_autoplay,
-        label_music_autoplay, sizeof(label_music_autoplay));
-    settings_actualizar_label_toggle(
-        "settings_dashboard_enabled", current_settings.dashboard_enabled,
-        label_dashboard_enabled, sizeof(label_dashboard_enabled));
+    aplicar_config_y_pausar(set_dashboard_enabled_int, current_settings.dashboard_enabled ? 0 : 1);
+    settings_actualizar_label_toggle("settings_music_autoplay", current_settings.music_autoplay,
+                                     label_music_autoplay, sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled",
+                                     current_settings.dashboard_enabled, label_dashboard_enabled,
+                                     sizeof(label_dashboard_enabled));
 }
 
-#define DEFINE_ABRIR_DESDE_SETTINGS(name, event, display, func_call) \
-    static void abrir_##name##_desde_settings(void) { \
-        app_log_event(event, "Ingreso a " display " desde Ajustes"); \
-        func_call; \
+#define DEFINE_ABRIR_DESDE_SETTINGS(name, event, display, func_call)                               \
+    static void abrir_##name##_desde_settings(void)                                                \
+    {                                                                                              \
+        app_log_event(event, "Ingreso a " display " desde Ajustes");                               \
+        func_call;                                                                                 \
     }
 
 DEFINE_ABRIR_DESDE_SETTINGS(busqueda_global, "BUSQUEDA", "Busqueda Global", menu_busqueda_global())
 DEFINE_ABRIR_DESDE_SETTINGS(backup, "BACKUP", "Backup & Restore", menu_backup_restore())
 DEFINE_ABRIR_DESDE_SETTINGS(integridad, "INTEGRIDAD", "Integridad BD", menu_integridad_bd())
-DEFINE_ABRIR_DESDE_SETTINGS(notificaciones, "NOTIFICACIONES", "Notificaciones", menu_notificaciones())
+DEFINE_ABRIR_DESDE_SETTINGS(notificaciones, "NOTIFICACIONES", "Notificaciones",
+                            menu_notificaciones())
 DEFINE_ABRIR_DESDE_SETTINGS(export_ods, "EXPORT_ODS", "Exportacion ODS", menu_exportar_ods())
 
 static void abrir_undo_desde_settings(void)
@@ -242,8 +239,7 @@ static int extraer_primer_caracter(const char *input, char *out)
     return 0;
 }
 
-static const struct MenuOption *
-buscar_opcion_menu(const struct MenuOption *options, int opcion)
+static const struct MenuOption *buscar_opcion_menu(const struct MenuOption *options, int opcion)
 {
     for (int j = 0; options[j].name != NULL; j++)
     {
@@ -254,8 +250,6 @@ buscar_opcion_menu(const struct MenuOption *options, int opcion)
     }
     return NULL;
 }
-
-
 
 static void settings_exec_ignore_error(const char *sql)
 {
@@ -269,24 +263,21 @@ static void settings_exec_ignore_error(const char *sql)
 
 static void ensure_settings_schema(void)
 {
-#define ALTER_SETTINGS_COLUMN(column_def)                                      \
-  "ALTER TABLE settings ADD COLUMN " column_def ";"
-    const char *alter_statements[] =
-    {
-        ALTER_SETTINGS_COLUMN("mode INTEGER DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("text_size INTEGER DEFAULT 1"),
-        ALTER_SETTINGS_COLUMN("image_viewer TEXT DEFAULT ''"),
-        ALTER_SETTINGS_COLUMN("music_autoplay INTEGER DEFAULT 1"),
-        ALTER_SETTINGS_COLUMN("music_volume REAL DEFAULT 0.8"),
-        ALTER_SETTINGS_COLUMN("music_repeat_mode INTEGER DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("music_eq_enabled INTEGER DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("music_eq_bass_db REAL DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("music_eq_mid_db REAL DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("music_eq_treble_db REAL DEFAULT 0"),
-        ALTER_SETTINGS_COLUMN("music_volume_step REAL DEFAULT 0.1"),
-        ALTER_SETTINGS_COLUMN("dashboard_enabled INTEGER DEFAULT 1"),
-        NULL
-    };
+#define ALTER_SETTINGS_COLUMN(column_def) "ALTER TABLE settings ADD COLUMN " column_def ";"
+    const char *alter_statements[] = {ALTER_SETTINGS_COLUMN("mode INTEGER DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("text_size INTEGER DEFAULT 1"),
+                                      ALTER_SETTINGS_COLUMN("image_viewer TEXT DEFAULT ''"),
+                                      ALTER_SETTINGS_COLUMN("music_autoplay INTEGER DEFAULT 1"),
+                                      ALTER_SETTINGS_COLUMN("music_volume REAL DEFAULT 0.8"),
+                                      ALTER_SETTINGS_COLUMN("music_repeat_mode INTEGER DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("music_eq_enabled INTEGER DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("music_eq_bass_db REAL DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("music_eq_mid_db REAL DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("music_eq_treble_db REAL DEFAULT 0"),
+                                      ALTER_SETTINGS_COLUMN("music_volume_step REAL DEFAULT 0.1"),
+                                      ALTER_SETTINGS_COLUMN("dashboard_enabled INTEGER DEFAULT 1"),
+                                      NULL
+                                     };
 
 #undef ALTER_SETTINGS_COLUMN
 
@@ -356,20 +347,19 @@ void settings_init(void)
             current_settings.music_autoplay = sqlite3_column_int(stmt, 4) ? 1 : 0;
             current_settings.music_volume =
                 utils_clamp_float((float)sqlite3_column_double(stmt, 5), 0.0f, 1.0f);
-            current_settings.music_repeat_mode =
-                utils_clamp_int(sqlite3_column_int(stmt, 6), 0, 3);
+            current_settings.music_repeat_mode = utils_clamp_int(sqlite3_column_int(stmt, 6), 0, 3);
             current_settings.music_eq_enabled = sqlite3_column_int(stmt, 7) ? 1 : 0;
             current_settings.music_eq_bass_db =
-                utils_clamp_float((float)sqlite3_column_double(stmt, 8),
-                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+                utils_clamp_float((float)sqlite3_column_double(stmt, 8), SETTINGS_MUSIC_EQ_DB_MIN,
+                                  SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_mid_db =
-                utils_clamp_float((float)sqlite3_column_double(stmt, 9),
-                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+                utils_clamp_float((float)sqlite3_column_double(stmt, 9), SETTINGS_MUSIC_EQ_DB_MIN,
+                                  SETTINGS_MUSIC_EQ_DB_MAX);
             current_settings.music_eq_treble_db =
-                utils_clamp_float((float)sqlite3_column_double(stmt, 10),
-                                  SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-            current_settings.music_volume_step = utils_clamp_float(
-                    (float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
+                utils_clamp_float((float)sqlite3_column_double(stmt, 10), SETTINGS_MUSIC_EQ_DB_MIN,
+                                  SETTINGS_MUSIC_EQ_DB_MAX);
+            current_settings.music_volume_step =
+                utils_clamp_float((float)sqlite3_column_double(stmt, 11), 0.01f, 0.20f);
             current_settings.dashboard_enabled = sqlite3_column_int(stmt, 12) ? 1 : 0;
             has_settings = 1;
         }
@@ -388,12 +378,11 @@ void settings_init(void)
 void settings_save(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "INSERT OR REPLACE INTO settings ("
-        "id, theme, language, mode, text_size, music_autoplay, music_volume, "
-        "music_repeat_mode, music_eq_enabled, music_eq_bass_db, music_eq_mid_db, "
-        "music_eq_treble_db, music_volume_step, dashboard_enabled"
-        ") VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO settings ("
+                      "id, theme, language, mode, text_size, music_autoplay, music_volume, "
+                      "music_repeat_mode, music_eq_enabled, music_eq_bass_db, music_eq_mid_db, "
+                      "music_eq_treble_db, music_volume_step, dashboard_enabled"
+                      ") VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
     if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
@@ -402,30 +391,24 @@ void settings_save(void)
         sqlite3_bind_int(stmt, 3, current_settings.mode);
         sqlite3_bind_int(stmt, 4, current_settings.text_size);
         sqlite3_bind_int(stmt, 5, current_settings.music_autoplay ? 1 : 0);
-        sqlite3_bind_double(
-            stmt, 6,
-            (double)utils_clamp_float(current_settings.music_volume, 0.0f, 1.0f));
-        sqlite3_bind_int(stmt, 7,
-                         utils_clamp_int(current_settings.music_repeat_mode, 0, 3));
+        sqlite3_bind_double(stmt, 6,
+                            (double)utils_clamp_float(current_settings.music_volume, 0.0f, 1.0f));
+        sqlite3_bind_int(stmt, 7, utils_clamp_int(current_settings.music_repeat_mode, 0, 3));
         sqlite3_bind_int(stmt, 8, current_settings.music_eq_enabled ? 1 : 0);
+        sqlite3_bind_double(stmt, 9,
+                            (double)utils_clamp_float(current_settings.music_eq_bass_db,
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
+        sqlite3_bind_double(stmt, 10,
+                            (double)utils_clamp_float(current_settings.music_eq_mid_db,
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
+        sqlite3_bind_double(stmt, 11,
+                            (double)utils_clamp_float(current_settings.music_eq_treble_db,
+                                    SETTINGS_MUSIC_EQ_DB_MIN,
+                                    SETTINGS_MUSIC_EQ_DB_MAX));
         sqlite3_bind_double(
-            stmt, 9,
-            (double)utils_clamp_float(current_settings.music_eq_bass_db,
-                                      SETTINGS_MUSIC_EQ_DB_MIN,
-                                      SETTINGS_MUSIC_EQ_DB_MAX));
-        sqlite3_bind_double(
-            stmt, 10,
-            (double)utils_clamp_float(current_settings.music_eq_mid_db,
-                                      SETTINGS_MUSIC_EQ_DB_MIN,
-                                      SETTINGS_MUSIC_EQ_DB_MAX));
-        sqlite3_bind_double(
-            stmt, 11,
-            (double)utils_clamp_float(current_settings.music_eq_treble_db,
-                                      SETTINGS_MUSIC_EQ_DB_MIN,
-                                      SETTINGS_MUSIC_EQ_DB_MAX));
-        sqlite3_bind_double(stmt, 12,
-                            (double)utils_clamp_float(
-                                current_settings.music_volume_step, 0.01f, 0.20f));
+            stmt, 12, (double)utils_clamp_float(current_settings.music_volume_step, 0.01f, 0.20f));
         sqlite3_bind_int(stmt, 13, current_settings.dashboard_enabled ? 1 : 0);
         int result = sqlite3_step(stmt);
         if (result != SQLITE_DONE)
@@ -525,33 +508,32 @@ int settings_get_music_eq_enabled(void)
     return current_settings.music_eq_enabled ? 1 : 0;
 }
 
-#define DEFINE_EQ_BAND(name, field)                                 \
-void settings_set_music_eq_##name##_db(float gain_value)            \
-{                                                                    \
-    current_settings.field = utils_clamp_float(                      \
-        gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX); \
-    settings_save();                                                \
-}                                                                    \
-float settings_get_music_eq_##name##_db(void)                       \
-{                                                                    \
-    return utils_clamp_float(current_settings.field,                 \
-                             SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX); \
-}
+#define DEFINE_EQ_BAND(name, field)                                                                \
+    void settings_set_music_eq_##name##_db(float gain_value)                                       \
+    {                                                                                              \
+        current_settings.field =                                                                   \
+            utils_clamp_float(gain_value, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);     \
+        settings_save();                                                                           \
+    }                                                                                              \
+    float settings_get_music_eq_##name##_db(void)                                                  \
+    {                                                                                              \
+        return utils_clamp_float(current_settings.field, SETTINGS_MUSIC_EQ_DB_MIN,                 \
+                                 SETTINGS_MUSIC_EQ_DB_MAX);                                        \
+    }
 
 DEFINE_EQ_BAND(bass, music_eq_bass_db)
 DEFINE_EQ_BAND(mid, music_eq_mid_db)
 DEFINE_EQ_BAND(treble, music_eq_treble_db)
 
-void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db,
-                                   float treble_db)
+void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, float treble_db)
 {
     current_settings.music_eq_enabled = enabled ? 1 : 0;
-    current_settings.music_eq_bass_db = utils_clamp_float(
-                                            bass_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-    current_settings.music_eq_mid_db = utils_clamp_float(
-                                           mid_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
-    current_settings.music_eq_treble_db = utils_clamp_float(
-            treble_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+    current_settings.music_eq_bass_db =
+        utils_clamp_float(bass_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+    current_settings.music_eq_mid_db =
+        utils_clamp_float(mid_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
+    current_settings.music_eq_treble_db =
+        utils_clamp_float(treble_db, SETTINGS_MUSIC_EQ_DB_MIN, SETTINGS_MUSIC_EQ_DB_MAX);
     settings_save();
 }
 
@@ -584,24 +566,22 @@ static WORD get_theme_color(ThemeType theme)
     case THEME_LIGHT:
         return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_DARK:
-        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE |
-               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | FOREGROUND_RED |
+               FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_BLUE:
-        return BACKGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN |
-               FOREGROUND_BLUE;
+        return BACKGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_GREEN:
-        return BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN |
-               FOREGROUND_BLUE;
+        return BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_RED:
         return BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_PURPLE:
-        return BACKGROUND_RED | BACKGROUND_BLUE | FOREGROUND_RED |
-               FOREGROUND_GREEN | FOREGROUND_BLUE;
+        return BACKGROUND_RED | BACKGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN |
+               FOREGROUND_BLUE;
     case THEME_CLASSIC:
         return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     case THEME_HIGH_CONTRAST:
-        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE |
-               FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+        return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | FOREGROUND_RED |
+               FOREGROUND_GREEN | FOREGROUND_INTENSITY;
     default:
         return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     }
@@ -658,16 +638,13 @@ const char *get_text(const char *key)
 }
 
 // Funciones wrapper para menu dinamico
-static const char *get_menu_text_by_mode(const char *text_key,
-        const char *custom_menu_name,
-        int visible_simple,
-        int visible_advanced,
+static const char *get_menu_text_by_mode(const char *text_key, const char *custom_menu_name,
+        int visible_simple, int visible_advanced,
         int visible_custom)
 {
     ModeType mode = settings_get_mode();
 
-    if ((visible_simple && mode == MODE_SIMPLE) ||
-            (visible_advanced && mode == MODE_ADVANCED))
+    if ((visible_simple && mode == MODE_SIMPLE) || (visible_advanced && mode == MODE_ADVANCED))
     {
         return get_text(text_key);
     }
@@ -681,17 +658,17 @@ static const char *get_menu_text_by_mode(const char *text_key,
     return NULL;
 }
 
-#define DEFINE_GET_MENU(name, text_key, custom_menu, vis_simple, vis_adv, vis_custom) \
-const char *get_menu_##name(void)                                                      \
-{                                                                                      \
-    return get_menu_text_by_mode(text_key, custom_menu, vis_simple, vis_adv, vis_custom); \
-}
+#define DEFINE_GET_MENU(name, text_key, custom_menu, vis_simple, vis_adv, vis_custom)              \
+    const char *get_menu_##name(void)                                                              \
+    {                                                                                              \
+        return get_menu_text_by_mode(text_key, custom_menu, vis_simple, vis_adv, vis_custom);      \
+    }
 
-#define DEFINE_GET_MENU_TEXT(name, text_key) \
-const char *get_##name(void)                \
-{                                           \
-    return get_text(text_key);             \
-}
+#define DEFINE_GET_MENU_TEXT(name, text_key)                                                       \
+    const char *get_##name(void)                                                                   \
+    {                                                                                              \
+        return get_text(text_key);                                                                 \
+    }
 
 DEFINE_GET_MENU(camisetas, "menu_camisetas", "camisetas", 1, 1, 1)
 DEFINE_GET_MENU(canchas, "menu_canchas", "canchas", 1, 1, 1)
@@ -730,8 +707,7 @@ DEFINE_GET_MENU_TEXT(menu_reclutamiento, "menu_reclutamiento")
 DEFINE_GET_MENU_TEXT(menu_media, "menu_media")
 
 #ifdef _WIN32
-static void obtener_nombre_repo(const char *owner_repo, char *repo_name,
-                                size_t repo_name_size)
+static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)
 {
     const char *slash = strrchr(owner_repo, '/');
     if (slash && *(slash + 1) != '\0')
@@ -743,8 +719,7 @@ static void obtener_nombre_repo(const char *owner_repo, char *repo_name,
     snprintf(repo_name, repo_name_size, "%s", owner_repo);
 }
 
-static int cargar_descargador(URLDownloadToFileAFunc *out_downloader,
-                              HMODULE *out_module)
+static int cargar_descargador(URLDownloadToFileAFunc *out_downloader, HMODULE *out_module)
 {
     *out_downloader = NULL;
     *out_module = LoadLibraryA("urlmon.dll");
@@ -766,12 +741,10 @@ static int cargar_descargador(URLDownloadToFileAFunc *out_downloader,
 
 static int leer_archivo_completo(const char *path, char **out_data);
 static const char *obtener_release_label(const cJSON *tag, const cJSON *name);
-static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url,
-                             const char *dest);
+static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url, const char *dest);
 
-static cJSON *
-descargar_y_parsear_release_json(URLDownloadToFileAFunc downloader,
-                                 const char *api_url, const char *json_path)
+static cJSON *descargar_y_parsear_release_json(URLDownloadToFileAFunc downloader,
+        const char *api_url, const char *json_path)
 {
     if (!descargar_archivo(downloader, api_url, json_path))
     {
@@ -804,8 +777,7 @@ static void liberar_descargador(HMODULE module)
     }
 }
 
-static void liberar_releases(char *release_names[], char *asset_urls[],
-                             int count)
+static void liberar_releases(char *release_names[], char *asset_urls[], int count)
 {
     for (int i = 0; i < count; i++)
     {
@@ -814,8 +786,7 @@ static void liberar_releases(char *release_names[], char *asset_urls[],
     }
 }
 
-static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url,
-                             const char *dest)
+static int descargar_archivo(URLDownloadToFileAFunc downloader, const char *url, const char *dest)
 {
     HRESULT hr = E_FAIL;
     if (downloader)
@@ -832,8 +803,7 @@ static int ejecutar_instalador(const char *dest)
     if ((INT_PTR)h <= 32)
     {
         // Intentar elevar privilegios si la ejecucion fallo la primera vez.
-        HINSTANCE h2 =
-            ShellExecuteA(NULL, "runas", dest, NULL, NULL, SW_SHOWNORMAL);
+        HINSTANCE h2 = ShellExecuteA(NULL, "runas", dest, NULL, NULL, SW_SHOWNORMAL);
         if ((INT_PTR)h2 > 32)
         {
             return 1;
@@ -850,8 +820,7 @@ static int ejecutar_instalador(const char *dest)
 
 // Compara versiones semanticas simples (mayor.minor.patch).
 // Retorna -1 si a < b, 0 si son iguales, 1 si a > b.
-static void parsear_version_tripleta(const char *version, int *major,
-                                     int *minor, int *patch)
+static void parsear_version_tripleta(const char *version, int *major, int *minor, int *patch)
 {
     const char *p = version ? version : "";
     char *endptr = NULL;
@@ -928,8 +897,7 @@ static int comparar_versiones(const char *a, const char *b)
 // Descarga la informacion de la ultima release desde GitHub y devuelve su tag
 // (tag_name o name). El valor devuelto debe liberarse con free() por el
 // llamador.
-static char *obtener_latest_release_tag(const char *owner_repo,
-                                        const char *repo_name,
+static char *obtener_latest_release_tag(const char *owner_repo, const char *repo_name,
                                         const char *temp_path)
 {
     URLDownloadToFileAFunc downloader;
@@ -941,10 +909,9 @@ static char *obtener_latest_release_tag(const char *owner_repo,
 
     char api_url[1024];
     char json_path[1024];
-    snprintf(api_url, sizeof(api_url),
-             "https://api.github.com/repos/%s/releases/latest", owner_repo);
-    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path,
-             repo_name);
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases/latest",
+             owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path, repo_name);
 
     if (!descargar_archivo(downloader, api_url, json_path))
     {
@@ -1072,8 +1039,7 @@ static int extraer_asset_exe(const cJSON *assets, const char **asset_url)
     return 0;
 }
 
-static const char *buscar_nombre_asset(const cJSON *assets,
-                                       const char *target_url)
+static const char *buscar_nombre_asset(const cJSON *assets, const char *target_url)
 {
     if (!assets || !cJSON_IsArray(assets) || !target_url)
     {
@@ -1085,8 +1051,7 @@ static const char *buscar_nombre_asset(const cJSON *assets,
     {
         const cJSON *name_item = cJSON_GetObjectItem(asset, "name");
         const cJSON *url_item = cJSON_GetObjectItem(asset, "browser_download_url");
-        if (name_item && cJSON_IsString(name_item) && url_item &&
-                cJSON_IsString(url_item) &&
+        if (name_item && cJSON_IsString(name_item) && url_item && cJSON_IsString(url_item) &&
                 strcmp(url_item->valuestring, target_url) == 0)
         {
             return name_item->valuestring;
@@ -1096,8 +1061,8 @@ static const char *buscar_nombre_asset(const cJSON *assets,
     return NULL;
 }
 
-static int cargar_releases_ejecutables(cJSON *root, char *release_names[],
-                                       char *asset_urls[], int max_releases)
+static int cargar_releases_ejecutables(cJSON *root, char *release_names[], char *asset_urls[],
+                                       int max_releases)
 {
     int count = 0;
     cJSON *rel = NULL;
@@ -1134,8 +1099,7 @@ static int cargar_releases_ejecutables(cJSON *root, char *release_names[],
     return count;
 }
 
-static int descargar_y_ejecutar_latest(const char *owner_repo,
-                                       const char *repo_name,
+static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_name,
                                        const char *temp_path)
 {
     URLDownloadToFileAFunc downloader;
@@ -1152,10 +1116,9 @@ static int descargar_y_ejecutar_latest(const char *owner_repo,
         return 0;
     }
 
-    snprintf(api_url, sizeof(api_url),
-             "https://api.github.com/repos/%s/releases/latest", owner_repo);
-    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path,
-             repo_name);
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases/latest",
+             owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_latest_release.json", temp_path, repo_name);
 
     printf("Obteniendo informacion de la ultima release...\n");
     root = descargar_y_parsear_release_json(downloader, api_url, json_path);
@@ -1201,8 +1164,7 @@ cleanup:
     return success;
 }
 
-static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo,
-        const char *repo_name,
+static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo, const char *repo_name,
         const char *temp_path)
 {
     URLDownloadToFileAFunc downloader;
@@ -1215,10 +1177,8 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo,
 
     char api_url[1024];
     char json_path[1024];
-    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases",
-             owner_repo);
-    snprintf(json_path, sizeof(json_path), "%s%s_releases.json", temp_path,
-             repo_name);
+    snprintf(api_url, sizeof(api_url), "https://api.github.com/repos/%s/releases", owner_repo);
+    snprintf(json_path, sizeof(json_path), "%s%s_releases.json", temp_path, repo_name);
 
     printf("Obteniendo lista de releases...\n");
     if (!descargar_archivo(downloader, api_url, json_path))
@@ -1249,11 +1209,13 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo,
         return 0;
     }
 
-    enum { SETTINGS_MAX_RELEASES = 64 };
+    enum
+    {
+        SETTINGS_MAX_RELEASES = 64
+    };
     char *asset_urls[SETTINGS_MAX_RELEASES] = {0};
     char *release_names[SETTINGS_MAX_RELEASES] = {0};
-    int count = cargar_releases_ejecutables(root, release_names, asset_urls,
-                                            SETTINGS_MAX_RELEASES);
+    int count = cargar_releases_ejecutables(root, release_names, asset_urls, SETTINGS_MAX_RELEASES);
     cJSON_Delete(root);
 
     if (count == 0)
@@ -1303,9 +1265,7 @@ static int descargar_y_ejecutar_release_seleccionada(const char *owner_repo,
 
 static void menu_theme_settings(void)
 {
-    MenuItem items[] =
-    {
-        {1, get_text("theme_light"), &theme_set_light},
+    MenuItem items[] = {{1, get_text("theme_light"), &theme_set_light},
         {2, get_text("theme_dark"), &theme_set_dark},
         {3, get_text("theme_blue"), &theme_set_blue},
         {4, get_text("theme_green"), &theme_set_green},
@@ -1316,8 +1276,7 @@ static void menu_theme_settings(void)
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu(get_text("settings_theme"), items,
-                  (int)(sizeof(items) / sizeof(items[0])));
+    ejecutar_menu(get_text("settings_theme"), items, (int)(sizeof(items) / sizeof(items[0])));
 }
 
 static void menu_language_settings(void)
@@ -1327,11 +1286,10 @@ static void menu_language_settings(void)
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu(get_text("settings_language"), items,
-                  (int)(sizeof(items) / sizeof(items[0])));
+    ejecutar_menu(get_text("settings_language"), items, (int)(sizeof(items) / sizeof(items[0])));
 }
 
-static const char * get_current_theme_name(void)
+static const char *get_current_theme_name(void)
 {
     switch (current_settings.theme)
     {
@@ -1356,7 +1314,7 @@ static const char * get_current_theme_name(void)
     }
 }
 
-static const char * get_current_text_size_name(void)
+static const char *get_current_text_size_name(void)
 {
     switch (current_settings.text_size)
     {
@@ -1377,17 +1335,14 @@ static void show_current_settings(void)
 
     printf("%s: %s\n", get_text("settings_theme"), get_current_theme_name());
     printf("%s: %s\n", get_text("settings_language"),
-           current_settings.language == LANGUAGE_SPANISH
-           ? get_text("lang_spanish")
+           current_settings.language == LANGUAGE_SPANISH ? get_text("lang_spanish")
            : get_text("lang_english"));
     printf("%s: %s\n", get_text("settings_text_size"), get_current_text_size_name());
     printf("%s: %s\n", get_text("settings_music_autoplay"),
-           current_settings.music_autoplay
-           ? get_text("state_enabled")
+           current_settings.music_autoplay ? get_text("state_enabled")
            : get_text("state_disabled"));
     printf("%s: %s\n", get_text("settings_dashboard_enabled"),
-           current_settings.dashboard_enabled
-           ? get_text("state_enabled")
+           current_settings.dashboard_enabled ? get_text("state_enabled")
            : get_text("state_disabled"));
 
     char *usuario = get_user_name();
@@ -1413,8 +1368,7 @@ static void menu_text_size_settings(void)
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu(get_text("settings_text_size"), items,
-                  (int)(sizeof(items) / sizeof(items[0])));
+    ejecutar_menu(get_text("settings_text_size"), items, (int)(sizeof(items) / sizeof(items[0])));
 }
 
 static void menu_accessibility_settings(void)
@@ -1423,10 +1377,7 @@ static void menu_accessibility_settings(void)
     {
         {1, get_text("settings_text_size"), &menu_text_size_settings},
         {2, get_text("settings_high_contrast"), &accessibility_high_contrast},
-        {
-            3, get_text("settings_accessibility_normal"),
-            &accessibility_normal_theme_text
-        },
+        {3, get_text("settings_accessibility_normal"), &accessibility_normal_theme_text},
         {0, get_text("menu_back"), NULL}
     };
 
@@ -1444,8 +1395,7 @@ static void reset_settings_to_defaults(void)
 
     char confirm;
     char input[16];
-    if (!fgets(input, sizeof(input), stdin) ||
-            !extraer_primer_caracter(input, &confirm))
+    if (!fgets(input, sizeof(input), stdin) || !extraer_primer_caracter(input, &confirm))
     {
         confirm = 'N';
     }
@@ -1472,8 +1422,7 @@ static void reset_settings_to_defaults(void)
         // Limpiar nombre de usuario tambien
         sqlite3_stmt *stmt;
         const char *sql = "DELETE FROM usuario;";
-        if (db_prepare_stmt_with_error(&stmt, sql,
-                                       "Error al preparar la consulta"))
+        if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
         {
             sqlite3_step(stmt);
             db_stmt_release(stmt);
@@ -1511,8 +1460,7 @@ int is_custom_menu_enabled(const char *menu_name)
 void set_custom_menu_enabled(const char *menu_name, int enabled)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "INSERT OR REPLACE INTO custom_menus (menu_name, enabled) VALUES (?, ?);";
+    const char *sql = "INSERT OR REPLACE INTO custom_menus (menu_name, enabled) VALUES (?, ?);";
 
     if (db_prepare_stmt_with_error(&stmt, sql, "Error al preparar la consulta"))
     {
@@ -1531,8 +1479,7 @@ static void menu_mode_settings(void)
         {0, get_text("menu_back"), NULL}
     };
 
-    ejecutar_menu(get_text("settings_mode"), items,
-                  (int)(sizeof(items) / sizeof(items[0])));
+    ejecutar_menu(get_text("settings_mode"), items, (int)(sizeof(items) / sizeof(items[0])));
 }
 
 void menu_custom_menus(void)
@@ -1546,9 +1493,7 @@ void menu_custom_menus(void)
     printf("Selecciona los menus que deseas habilitar/deshabilitar:\n\n");
 
     // Lista de menus disponibles (excluyendo exit que siempre esta)
-    struct MenuOption options[] =
-    {
-        {1, "camisetas", get_text("menu_camisetas")},
+    struct MenuOption options[] = {{1, "camisetas", get_text("menu_camisetas")},
         {2, "canchas", get_text("menu_canchas")},
         {3, "partidos", get_text("menu_partidos")},
         {4, "equipos", get_text("menu_equipos")},
@@ -1567,8 +1512,7 @@ void menu_custom_menus(void)
     for (int j = 0; options[j].name != NULL; j++)
     {
         int enabled = is_custom_menu_enabled(options[j].name);
-        printf("%d. [%s] %s\n", options[j].opcion, enabled ? "X" : " ",
-               options[j].display_name);
+        printf("%d. [%s] %s\n", options[j].opcion, enabled ? "X" : " ", options[j].display_name);
     }
 
     printf("0. %s\n", get_text("menu_back"));
@@ -1592,8 +1536,7 @@ void menu_custom_menus(void)
 
     int current_state = is_custom_menu_enabled(option->name);
     set_custom_menu_enabled(option->name, !current_state);
-    printf("Menu %s %s.\n", option->display_name,
-           !current_state ? "habilitado" : "deshabilitado");
+    printf("Menu %s %s.\n", option->display_name, !current_state ? "habilitado" : "deshabilitado");
     pause_console();
     menu_custom_menus(); // Recargar menu
 #endif
@@ -1620,8 +1563,7 @@ void menu_update(void)
         return;
     }
 
-    char *latest_tag =
-        obtener_latest_release_tag(owner_repo, repo_name, temp_path);
+    char *latest_tag = obtener_latest_release_tag(owner_repo, repo_name, temp_path);
     if (latest_tag)
     {
         int cmp = comparar_versiones(APP_VERSION, latest_tag);
@@ -1633,8 +1575,7 @@ void menu_update(void)
             return;
         }
 
-        printf("Nueva version disponible: %s (actual: %s).\n", latest_tag,
-               APP_VERSION);
+        printf("Nueva version disponible: %s (actual: %s).\n", latest_tag, APP_VERSION);
         free(latest_tag);
     }
 
@@ -1668,29 +1609,27 @@ void menu_update(void)
 void menu_settings(void)
 {
     AppSettings const *cfg = settings_get();
-    settings_actualizar_label_toggle("settings_music_autoplay",
-                                     cfg->music_autoplay, label_music_autoplay,
-                                     sizeof(label_music_autoplay));
-    settings_actualizar_label_toggle(
-        "settings_dashboard_enabled", cfg->dashboard_enabled,
-        label_dashboard_enabled, sizeof(label_dashboard_enabled));
+    settings_actualizar_label_toggle("settings_music_autoplay", cfg->music_autoplay,
+                                     label_music_autoplay, sizeof(label_music_autoplay));
+    settings_actualizar_label_toggle("settings_dashboard_enabled", cfg->dashboard_enabled,
+                                     label_dashboard_enabled, sizeof(label_dashboard_enabled));
 
     MenuItem items[] =
     {
-        {1, get_text("settings_theme"), menu_theme_settings},
-        {2, get_text("settings_language"), menu_language_settings},
-        {3, get_text("settings_accessibility"), menu_accessibility_settings},
-        {4, get_text("menu_usuario"), menu_usuario},
-        {5, get_text("show_current"), show_current_settings},
-        {6, get_text("reset_defaults"), reset_settings_to_defaults},
-        {7, get_text("settings_mode"), menu_mode_settings},
-        {8, get_text("menu_exportar"), menu_exportar},
-        {9, get_text("menu_importar"), menu_importar},
+        {1, get_text("settings_theme"), &menu_theme_settings},
+        {2, get_text("settings_language"), &menu_language_settings},
+        {3, get_text("settings_accessibility"), &menu_accessibility_settings},
+        {4, get_text("menu_usuario"), &menu_usuario},
+        {5, get_text("show_current"), &show_current_settings},
+        {6, get_text("reset_defaults"), &reset_settings_to_defaults},
+        {7, get_text("settings_mode"), &menu_mode_settings},
+        {8, get_text("menu_exportar"), &menu_exportar},
+        {9, get_text("menu_importar"), &menu_importar},
         {10, get_text("menu_exportar_ods"), &abrir_export_ods_desde_settings},
         {11, get_text("menu_busqueda_global"), &abrir_busqueda_global_desde_settings},
-        {12, get_text("menu_update"), menu_update},
-        {13, label_music_autoplay, toggle_music_autoplay_setting},
-        {14, label_dashboard_enabled, toggle_dashboard_enabled_setting},
+        {12, get_text("menu_update"), &menu_update},
+        {13, label_music_autoplay, &toggle_music_autoplay_setting},
+        {14, label_dashboard_enabled, &toggle_dashboard_enabled_setting},
         {15, get_text("menu_backup_restore"), &abrir_backup_desde_settings},
         {16, get_text("menu_integridad_bd"), &abrir_integridad_desde_settings},
         {17, get_text("menu_undo"), &abrir_undo_desde_settings},
@@ -1719,8 +1658,7 @@ void verificar_actualizacion_disponible(int mostrar_mensaje)
         return;
     }
 
-    char *latest_tag =
-        obtener_latest_release_tag(owner_repo, repo_name, temp_path);
+    char *latest_tag = obtener_latest_release_tag(owner_repo, repo_name, temp_path);
     if (!latest_tag)
     {
         if (mostrar_mensaje)
@@ -1736,24 +1674,16 @@ void verificar_actualizacion_disponible(int mostrar_mensaje)
     {
         // Hay una nueva versión disponible
         printf("\n");
-        printf(
-            "╔══════════════════════════════════════════════════════════════╗\n");
-        printf(
-            "║                                                              ║\n");
+        printf("╔══════════════════════════════════════════════════════════════╗\n");
+        printf("║                                                              ║\n");
         printf("║           ¡NUEVA VERSION DISPONIBLE!                        ║\n");
-        printf(
-            "║                                                              ║\n");
-        printf("║  Version actual:  %-10s                             ║\n",
-               APP_VERSION);
-        printf("║  Nueva version:   %-10s                             ║\n",
-               latest_tag);
-        printf(
-            "║                                                              ║\n");
+        printf("║                                                              ║\n");
+        printf("║  Version actual:  %-10s                             ║\n", APP_VERSION);
+        printf("║  Nueva version:   %-10s                             ║\n", latest_tag);
+        printf("║                                                              ║\n");
         printf("║  Para actualizar, ve a Ajustes > Actualizar                 ║\n");
-        printf(
-            "║                                                              ║\n");
-        printf(
-            "╚══════════════════════════════════════════════════════════════╝\n");
+        printf("║                                                              ║\n");
+        printf("╚══════════════════════════════════════════════════════════════╝\n");
         printf("\n");
         pause_console();
     }

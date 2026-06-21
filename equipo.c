@@ -2450,7 +2450,7 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
 int generar_evento_aleatorio(void)
 {
     unsigned int random_value = secure_rand_range(100);
-    int evento_aleatorio = random_value % 100;
+    int evento_aleatorio = (int)(random_value % 100u);
     if (evento_aleatorio < 25)
         return 1; // gol local
     if (evento_aleatorio < 50)
@@ -2706,14 +2706,14 @@ void simular_partido(const Equipo *equipo_local, const Equipo *equipo_visitante)
 
 void menu_equipos(void)
 {
-    MenuItem items[] = {{1, "Crear", crear_equipo},
-        {2, "Listar", listar_equipos},
-        {3, "Modificar", modificar_equipo},
-        {4, "Eliminar", eliminar_equipo},
-        {5, "Cargar Imagen", cargar_imagen_equipo},
-        {6, "Ver Imagen", ver_imagen_equipo},
-        {7, "Reactivar/Desactivar Equipo", reactivar_equipo},
-        {8, "Analisis Formaciones", menu_analisis_formaciones},
+    MenuItem items[] = {{1, "Crear", &crear_equipo},
+        {2, "Listar", &listar_equipos},
+        {3, "Modificar", &modificar_equipo},
+        {4, "Eliminar", &eliminar_equipo},
+        {5, "Cargar Imagen", &cargar_imagen_equipo},
+        {6, "Ver Imagen", &ver_imagen_equipo},
+        {7, "Reactivar/Desactivar Equipo", &reactivar_equipo},
+        {8, "Analisis Formaciones", &menu_analisis_formaciones},
         {9, "Perfil de Jugador", &menu_perfil_jugador},
         {0, "Volver", NULL}
     };

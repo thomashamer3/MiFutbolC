@@ -41,7 +41,7 @@ static void extraer_datos_reminder(const cJSON *it, Reminder *r, int idx)
     if (jid && cJSON_IsNumber(jid))
         r->id = (long long)jid->valuedouble;
     else
-        r->id = (long long)(idx + 1);
+        r->id = (long long)idx + 1;
 
     if (jfecha && cJSON_IsString(jfecha))
         strncpy_s(r->fecha, sizeof(r->fecha), jfecha->valuestring, sizeof(r->fecha) - 1);
@@ -82,7 +82,7 @@ static int cargar_recordatorios(Reminder **out_arr, int *out_count)
             extraer_datos_reminder(it, &arr[i], i);
         else
         {
-            arr[i].id = (long long)(i + 1);
+            arr[i].id = (long long)i + 1;
             arr[i].fecha[0] = '\0';
             arr[i].nota[0] = '\0';
             arr[i].tematica[0] = '\0';
