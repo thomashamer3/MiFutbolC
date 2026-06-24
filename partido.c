@@ -295,7 +295,8 @@ static const char *wmo_code_to_text(int code)
     };
     for (size_t i = 0; i < sizeof(wmo_map) / sizeof(wmo_map[0]); i++)
     {
-        if (wmo_map[i].code == code) return wmo_map[i].text;
+        if (wmo_map[i].code == code)
+            return wmo_map[i].text;
     }
     return "Desconocido";
 }
@@ -2932,13 +2933,22 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
         }
         db_stmt_release(s);
     }
-    if (lat == 0.0 && lon == 0.0) return;
-
-    int anio = 0, mes = 0, dia = 0;
+    if (lat == 0.0 && lon == 0.0)
+    {
+        return;
+    }
+    int anio = 0;
+    int mes = 0;
+    int dia = 0;
 #if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3) return;
+    if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
+        return;
 #else
-    if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3) return;
+    if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
+    {
+        return;
+    }
+
 #endif
 
     OpenMeteoParams omp;
@@ -2957,8 +2967,7 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
     }
 
     sqlite3_stmt *u = NULL;
-    if (!db_prepare_stmt(&u,
-                         "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
+    if (!db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
                          "precip_mm=?, wind_kmh=?, "
                          "weather_code=?, clima_json=? WHERE id=?"))
     {
@@ -5634,7 +5643,8 @@ static void menu_gestion_tags_partido(void)
     }
 }
 
-static int procesar_clima_partido_historico(long long partido_id, int cancha_id, const char *fecha_hora)
+static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
+        const char *fecha_hora)
 {
     double lat = 0.0;
     double lon = 0.0;
@@ -5649,9 +5659,14 @@ static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
         }
         db_stmt_release(s_cancha);
     }
-    if (lat == 0.0 && lon == 0.0) return 0;
+    if (lat == 0.0 && lon == 0.0)
+    {
+        return 0;
+    }
 
-    int anio = 0, mes = 0, dia = 0;
+    int anio = 0;
+    int mes = 0;
+    int dia = 0;
     int parsed = 0;
     if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
     {
@@ -5669,7 +5684,10 @@ static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
         parsed = (sscanf(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);
 #endif
     }
-    if (!parsed) return 0;
+    if (!parsed)
+    {
+        return 0;
+    }
 
     OpenMeteoParams omp;
     omp.latitud = lat;
@@ -5680,7 +5698,8 @@ static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
     omp.hora = 12;
     omp.minuto = 0;
 
-    printf("Consultando clima para partido ID %lld (%04d-%02d-%02d)... ", partido_id, anio, mes, dia);
+    printf("Consultando clima para partido ID %lld (%04d-%02d-%02d)... ", partido_id, anio, mes,
+           dia);
 
     OpenMeteoResult res;
     memset(&res, 0, sizeof(res));

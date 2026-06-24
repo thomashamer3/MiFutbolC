@@ -1,20 +1,9 @@
 {
-  "exportedAt": "2026-06-24T01:00:07Z",
+  "exportedAt": "2026-06-24T17:15:53Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "MAINTAINABILITY",
-  "total": 12,
+  "total": 1,
   "issues": [
-    {
-      "rule": "c:S923",
-      "severity": "CRITICAL",
-      "message": "Remove use of ellipsis notation.",
-      "file": "compat_port.h",
-      "line": 282,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "30min",
-      "tags": "cert, misra-c++2008, misra-c2004, pitfall"
-    },
     {
       "rule": "c:S5281",
       "severity": "CRITICAL",
@@ -25,116 +14,6 @@
       "quality": "MAINTAINABILITY",
       "effort": "10min",
       "tags": "bad-practice"
-    },
-    {
-      "rule": "c:S1820",
-      "severity": "MAJOR",
-      "message": "Refactor this structure so it has no more than 20 fields, rather than the 21 it currently has.",
-      "file": "cancha.c",
-      "line": 770,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "1h",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 32 to the 25 allowed.",
-      "file": "partido.c",
-      "line": 2936,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "12min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S1874",
-      "severity": "MINOR",
-      "message": "'sscanf' is deprecated: This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.",
-      "file": "partido.c",
-      "line": 3025,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "15min",
-      "tags": "cert, cwe, obsolete"
-    },
-    {
-      "rule": "c:S134",
-      "severity": "CRITICAL",
-      "message": "Refactor this code to not nest more than 3 if|for|do|while|switch statements.",
-      "file": "partido.c",
-      "line": 3036,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 28 to the 25 allowed.",
-      "file": "partido.c",
-      "line": 5648,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "8min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S1874",
-      "severity": "MINOR",
-      "message": "'sscanf' is deprecated: This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.",
-      "file": "partido.c",
-      "line": 5701,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "15min",
-      "tags": "cert, cwe, obsolete"
-    },
-    {
-      "rule": "c:S1874",
-      "severity": "MINOR",
-      "message": "'sscanf' is deprecated: This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.",
-      "file": "partido.c",
-      "line": 5705,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "15min",
-      "tags": "cert, cwe, obsolete"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 64 to the 25 allowed.",
-      "file": "openmeteo_client.c",
-      "line": 36,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "44min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 30 to the 25 allowed.",
-      "file": "equipamiento_historial.c",
-      "line": 183,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "10min",
-      "tags": "brain-overload"
-    },
-    {
-      "rule": "c:S3776",
-      "severity": "CRITICAL",
-      "message": "Refactor this function to reduce its Cognitive Complexity from 27 to the 25 allowed.",
-      "file": "metas.c",
-      "line": 147,
-      "status": "OPEN",
-      "quality": "MAINTAINABILITY",
-      "effort": "7min",
-      "tags": "brain-overload"
     }
   ]
 }

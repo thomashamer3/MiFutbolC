@@ -2,6 +2,7 @@
 #include "db.h"
 #include "menu.h"
 #include "utils.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,6 +162,59 @@ static int leer_campo_recluta_estado(int default_val)
     return (v >= 1 && v <= RECLUTAMIENTO_ESTADOS) ? v : default_val;
 }
 
+typedef struct
+{
+    char nombre[256];
+    int estado;
+    char posicion[128];
+    char equipo[256];
+    char fecha[64];
+    char notas[1024];
+} ReclutaActual;
+
+static bool leer_recluta_actual(int id, ReclutaActual *out)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, "SELECT nombre, estado, posicion, equipo_origen, "
+                       "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
+    {
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    memset(out, 0, sizeof(*out));
+    strncpy_s(out->nombre, sizeof(out->nombre), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
+    out->estado = sqlite3_column_int(stmt, 1);
+    for (int i = 2; i <= 5; i++)
+    {
+        const char *val = (const char *)sqlite3_column_text(stmt, i);
+        if (!val) continue;
+        switch (i)
+        {
+        case 2:
+            strncpy_s(out->posicion, sizeof(out->posicion), val, _TRUNCATE);
+            break;
+        case 3:
+            strncpy_s(out->equipo, sizeof(out->equipo), val, _TRUNCATE);
+            break;
+        case 4:
+            strncpy_s(out->fecha, sizeof(out->fecha), val, _TRUNCATE);
+            break;
+        case 5:
+            strncpy_s(out->notas, sizeof(out->notas), val, _TRUNCATE);
+            break;
+        }
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 void reclutamiento_editar(void)
 {
     if (!hay_registros("reclutamiento"))
@@ -180,53 +234,13 @@ void reclutamiento_editar(void)
         return;
     }
 
-    sqlite3_stmt *stmt = NULL;
-    if (!preparar_stmt(&stmt, "SELECT nombre, estado, posicion, equipo_origen, "
-                       "fecha_visto, notas FROM reclutamiento WHERE id = ?"))
+    ReclutaActual actual;
+    if (!leer_recluta_actual(id, &actual))
     {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, id);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        sqlite3_finalize(stmt);
         mostrar_no_existe("Prospecto");
         pause_console();
         return;
     }
-
-    char nombre_actual[256] = {0};
-    char posicion_actual[128] = {0};
-    char equipo_actual[256] = {0};
-    char fecha_actual[64] = {0};
-    char notas_actual[1024] = {0};
-
-    strncpy_s(nombre_actual, sizeof(nombre_actual), (const char *)sqlite3_column_text(stmt, 0), _TRUNCATE);
-    int estado_actual = sqlite3_column_int(stmt, 1);
-    for (int i = 2; i <= 5; i++)
-    {
-        const char *val = (const char *)sqlite3_column_text(stmt, i);
-        if (!val) continue;
-        switch (i)
-        {
-        case 2:
-            strncpy_s(posicion_actual, sizeof(posicion_actual), val, _TRUNCATE);
-            break;
-        case 3:
-            strncpy_s(equipo_actual, sizeof(equipo_actual), val, _TRUNCATE);
-            break;
-        case 4:
-            strncpy_s(fecha_actual, sizeof(fecha_actual), val, _TRUNCATE);
-            break;
-        case 5:
-            strncpy_s(notas_actual, sizeof(notas_actual), val, _TRUNCATE);
-            break;
-        default:
-            break;
-        }
-    }
-    sqlite3_finalize(stmt);
 
     char nombre[256] = {0};
     char posicion[128] = {0};
@@ -234,15 +248,16 @@ void reclutamiento_editar(void)
     char fecha[64] = {0};
     char notas[1024] = {0};
 
-    printf("Editando: %s (estado actual: %s)\n\n", nombre_actual, estado_to_text(estado_actual));
+    printf("Editando: %s (estado actual: %s)\n\n", actual.nombre, estado_to_text(actual.estado));
 
-    input_string_default("Nombre", nombre_actual, nombre, (int)sizeof(nombre));
-    int estado = leer_campo_recluta_estado(estado_actual);
-    input_string_default("Posicion", posicion_actual, posicion, (int)sizeof(posicion));
-    input_string_default("Equipo origen", equipo_actual, equipo, (int)sizeof(equipo));
-    input_date_default("Fecha visto", fecha_actual, fecha, (int)sizeof(fecha));
-    input_string_default("Notas", notas_actual, notas, (int)sizeof(notas));
+    input_string_default("Nombre", actual.nombre, nombre, (int)sizeof(nombre));
+    int estado = leer_campo_recluta_estado(actual.estado);
+    input_string_default("Posicion", actual.posicion, posicion, (int)sizeof(posicion));
+    input_string_default("Equipo origen", actual.equipo, equipo, (int)sizeof(equipo));
+    input_date_default("Fecha visto", actual.fecha, fecha, (int)sizeof(fecha));
+    input_string_default("Notas", actual.notas, notas, (int)sizeof(notas));
 
+    sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "UPDATE reclutamiento SET nombre=?, estado=?, posicion=?, "
                        "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
     {

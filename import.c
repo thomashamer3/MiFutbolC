@@ -473,8 +473,8 @@ static int parse_camiseta_data(int id, char *nombre, CamisetaData *out)
 
 static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
 {
-    int id;
-    char nombre[256];
+    int id = 0;
+    char nombre[256] = {0};
 
     if (!line)
     {
@@ -496,8 +496,8 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
 
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
 {
-    int id;
-    char nombre[256];
+    int id = 0;
+    char nombre[256] = {0};
 
     if (!line)
     {

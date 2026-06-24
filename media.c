@@ -2,6 +2,7 @@
 #include "db.h"
 #include "menu.h"
 #include "utils.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -159,6 +160,42 @@ void media_listar(void)
     pause_console();
 }
 
+typedef struct
+{
+    int partido_id;
+    int tipo;
+    char titulo[256];
+    char url[1024];
+    char desc[1024];
+} MediaActual;
+
+static bool leer_media_actual(int id, MediaActual *out)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, "SELECT partido_id, tipo, titulo, url, descripcion "
+                       "FROM media WHERE id=?"))
+    {
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+
+    memset(out, 0, sizeof(*out));
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        out->partido_id = sqlite3_column_int(stmt, 0);
+        out->tipo = sqlite3_column_int(stmt, 1);
+        const char *p;
+        p = (const char *)sqlite3_column_text(stmt, 2);
+        if (p) strncpy_s(out->titulo, sizeof(out->titulo), p, _TRUNCATE);
+        p = (const char *)sqlite3_column_text(stmt, 3);
+        if (p) strncpy_s(out->url, sizeof(out->url), p, _TRUNCATE);
+        p = (const char *)sqlite3_column_text(stmt, 4);
+        if (p) strncpy_s(out->desc, sizeof(out->desc), p, _TRUNCATE);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 void media_editar(void)
 {
     if (!hay_registros("media"))
@@ -173,67 +210,37 @@ void media_editar(void)
     int id = input_int("ID de la referencia a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("media", id))
     {
-        if (id > 0)
-        {
-            mostrar_no_existe("Referencia");
-        }
+        if (id > 0) mostrar_no_existe("Referencia");
         pause_console();
         return;
     }
 
-    sqlite3_stmt *stmt = NULL;
-    if (!preparar_stmt(&stmt, "SELECT partido_id, tipo, titulo, url, descripcion "
-                       "FROM media WHERE id=?"))
+    MediaActual actual;
+    if (!leer_media_actual(id, &actual))
     {
+        mostrar_no_existe("Referencia");
+        pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, id);
-
-    int partido_actual = 0;
-    int tipo_actual = 0;
-    char titulo_actual[256] = {0};
-    char url_actual[1024] = {0};
-    char desc_actual[1024] = {0};
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        partido_actual = sqlite3_column_int(stmt, 0);
-        tipo_actual = sqlite3_column_int(stmt, 1);
-        const char *p = (const char *)sqlite3_column_text(stmt, 2);
-        if (p)
-        {
-            strncpy_s(titulo_actual, sizeof(titulo_actual), p, _TRUNCATE);
-        }
-        p = (const char *)sqlite3_column_text(stmt, 3);
-        if (p)
-        {
-            strncpy_s(url_actual, sizeof(url_actual), p, _TRUNCATE);
-        }
-        p = (const char *)sqlite3_column_text(stmt, 4);
-        if (p)
-        {
-            strncpy_s(desc_actual, sizeof(desc_actual), p, _TRUNCATE);
-        }
-    }
-    sqlite3_finalize(stmt);
 
     char titulo[256] = {0};
     char url[1024] = {0};
     char desc[1024] = {0};
 
-    printf("Editando: %s\n\n", titulo_actual);
+    printf("Editando: %s\n\n", actual.titulo);
 
-    input_string_default("Titulo", titulo_actual, titulo, (int)sizeof(titulo));
-    printf("Tipo (1-4) [%d]: ", tipo_actual);
+    input_string_default("Titulo", actual.titulo, titulo, (int)sizeof(titulo));
+    printf("Tipo (1-4) [%d]: ", actual.tipo);
     int tipo = input_int("");
-    if (tipo < 1 || tipo > 4) tipo = tipo_actual;
-    input_string_default("URL", url_actual, url, (int)sizeof(url));
-    input_string_default("Descripcion", desc_actual, desc, (int)sizeof(desc));
+    if (tipo < 1 || tipo > 4) tipo = actual.tipo;
+    input_string_default("URL", actual.url, url, (int)sizeof(url));
+    input_string_default("Descripcion", actual.desc, desc, (int)sizeof(desc));
 
-    printf("Partido ID [%d]: ", partido_actual);
+    printf("Partido ID [%d]: ", actual.partido_id);
     int partido_id = input_int("");
-    if (partido_id < 0) partido_id = partido_actual;
+    if (partido_id < 0) partido_id = actual.partido_id;
 
+    sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
                        "descripcion=?, partido_id=? WHERE id=?"))
     {

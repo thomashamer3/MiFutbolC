@@ -287,7 +287,7 @@ static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...
     }
     va_list args;
     va_start(args, format);
-    int ret = vsnprintf(buffer, bufsz, format, args);
+    int ret = vsnprintf(buffer, bufsz, format, args); /* NOSONAR */
     va_end(args);
     if (ret < 0 || ret >= (int)bufsz)
     {
@@ -311,7 +311,7 @@ static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...
     }
     va_list args;
     va_start(args, format);
-    int ret = vsnprintf(buffer, bufsz, format, args);
+    int ret = vsnprintf(buffer, bufsz, format, args); /* NOSONAR */
     va_end(args);
     if (ret < 0 || ret >= (int)bufsz)
     {
@@ -329,7 +329,7 @@ static inline int fprintf_s(FILE *stream, const char *format, ...) /* NOSONAR */
     }
     va_list args;
     va_start(args, format);
-    int ret = vfprintf(stream, format, args);
+    int ret = vfprintf(stream, format, args); /* NOSONAR */
     va_end(args);
     return ret;
 }

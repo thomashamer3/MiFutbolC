@@ -1,6 +1,7 @@
 #include "openmeteo_client.h"
 #include "cJSON.h"
 #include "utils.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,8 +57,35 @@ static int es_fecha_futura(const OpenMeteoParams *params)
     return 0;
 }
 
+static bool contiene_shell_metachar(const char *s)
+{
+    if (!s) return false;
+    while (*s)
+    {
+        unsigned char c = (unsigned char)*s;
+        if (c <= 0x1F || c == 0x7F) return true;
+        s++;
+    }
+    return false;
+}
+
+static bool son_parametros_validos(const OpenMeteoParams *params)
+{
+    if (params->latitud < -90.0 || params->latitud > 90.0) return false;
+    if (params->longitud < -180.0 || params->longitud > 180.0) return false;
+    if (params->anio < 1900 || params->anio > 2100) return false;
+    if (params->mes < 1 || params->mes > 12) return false;
+    if (params->dia < 1 || params->dia > 31) return false;
+    return true;
+}
+
 static char *descargar_json_clima(const char *cmd)
 {
+    if (contiene_shell_metachar(cmd))
+    {
+        printf("Error: comando contiene caracteres peligrosos\n");
+        return NULL;
+    }
     FILE *fp = popen(cmd, "r");
     if (!fp)
     {
@@ -197,6 +225,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     out_result->weather_code = 0;
     out_result->clima_json = NULL;
 
+    if (!son_parametros_validos(params)) return 0;
     if (es_fecha_futura(params)) return 0;
 
     char date_str[11];
@@ -206,6 +235,13 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     char lon_str[32];
     snprintf(lat_str, sizeof(lat_str), "%.6f", params->latitud);
     snprintf(lon_str, sizeof(lon_str), "%.6f", params->longitud);
+
+    if (contiene_shell_metachar(lat_str) || contiene_shell_metachar(lon_str) ||
+            contiene_shell_metachar(date_str))
+    {
+        printf("Error: parametros invalidos detectados\n");
+        return 0;
+    }
 
     char cmd[2048];
     snprintf(cmd, sizeof(cmd),

@@ -2,6 +2,7 @@
 #include "db.h"
 #include "menu.h"
 #include "utils.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -180,6 +181,54 @@ void equipamiento_historial_listar(void)
     pause_console();
 }
 
+typedef struct
+{
+    int tipo;
+    char marca[128];
+    char modelo[128];
+    char fecha[64];
+    double precio;
+    int partidos_usados;
+    int estado_fisico;
+    int rating;
+    char notas[1024];
+    int activo;
+} EquipamientoActual;
+
+static bool leer_equipamiento_actual(int id, EquipamientoActual *out)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, "SELECT tipo, marca, modelo, fecha_compra, precio, "
+                       "partidos_usados, estado_fisico, rating, notas, activo "
+                       "FROM equipamiento_historial WHERE id=?"))
+    {
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+
+    memset(out, 0, sizeof(*out));
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        out->tipo = sqlite3_column_int(stmt, 0);
+        const char *s;
+        s = (const char *)sqlite3_column_text(stmt, 1);
+        if (s) strncpy_s(out->marca, sizeof(out->marca), s, _TRUNCATE);
+        s = (const char *)sqlite3_column_text(stmt, 2);
+        if (s) strncpy_s(out->modelo, sizeof(out->modelo), s, _TRUNCATE);
+        s = (const char *)sqlite3_column_text(stmt, 3);
+        if (s) strncpy_s(out->fecha, sizeof(out->fecha), s, _TRUNCATE);
+        out->precio = sqlite3_column_double(stmt, 4);
+        out->partidos_usados = sqlite3_column_int(stmt, 5);
+        out->estado_fisico = sqlite3_column_int(stmt, 6);
+        out->rating = sqlite3_column_int(stmt, 7);
+        s = (const char *)sqlite3_column_text(stmt, 8);
+        if (s) strncpy_s(out->notas, sizeof(out->notas), s, _TRUNCATE);
+        out->activo = sqlite3_column_int(stmt, 9);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 void equipamiento_historial_editar(void)
 {
     if (!hay_registros("equipamiento_historial"))
@@ -194,92 +243,49 @@ void equipamiento_historial_editar(void)
     int id = input_int("ID del item a editar (0=cancelar): ");
     if (id <= 0 || !existe_id("equipamiento_historial", id))
     {
-        if (id > 0)
-        {
-            mostrar_no_existe("Item");
-        }
+        if (id > 0) mostrar_no_existe("Item");
         pause_console();
         return;
     }
 
-    sqlite3_stmt *stmt = NULL;
-    if (!preparar_stmt(&stmt, "SELECT tipo, marca, modelo, fecha_compra, precio, "
-                       "partidos_usados, estado_fisico, rating, notas, activo "
-                       "FROM equipamiento_historial WHERE id=?"))
+    EquipamientoActual actual;
+    if (!leer_equipamiento_actual(id, &actual))
     {
+        mostrar_no_existe("Item");
+        pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, id);
-
-    char marca_actual[128] = {0};
-    char modelo_actual[128] = {0};
-    char fecha_actual[64] = {0};
-    double precio_actual = 0;
-    int partidos_actual = 0;
-    int estado_f_actual = 0;
-    int rating_actual = 0;
-    char notas_actual[1024] = {0};
-    int activo_actual = 0;
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *flag = (const char *)sqlite3_column_text(stmt, 1);
-        if (flag)
-        {
-            strncpy_s(marca_actual, sizeof(marca_actual), flag, _TRUNCATE);
-        }
-        const char *flag2 = (const char *)sqlite3_column_text(stmt, 2);
-        if (flag2)
-        {
-            strncpy_s(modelo_actual, sizeof(modelo_actual), flag2, _TRUNCATE);
-        }
-        const char *flag3 = (const char *)sqlite3_column_text(stmt, 3);
-        if (flag3)
-        {
-            strncpy_s(fecha_actual, sizeof(fecha_actual), flag3, _TRUNCATE);
-        }
-        precio_actual = sqlite3_column_double(stmt, 4);
-        partidos_actual = sqlite3_column_int(stmt, 5);
-        estado_f_actual = sqlite3_column_int(stmt, 6);
-        rating_actual = sqlite3_column_int(stmt, 7);
-        const char *flag4 = (const char *)sqlite3_column_text(stmt, 8);
-        if (flag4)
-        {
-            strncpy_s(notas_actual, sizeof(notas_actual), flag4, _TRUNCATE);
-        }
-        activo_actual = sqlite3_column_int(stmt, 9);
-    }
-    sqlite3_finalize(stmt);
 
     char marca[128] = {0};
     char modelo[128] = {0};
     char fecha[64] = {0};
     char notas[1024] = {0};
 
-    printf("Editando: %s %s\n\n", marca_actual, modelo_actual);
+    printf("Editando: %s %s\n\n", actual.marca, actual.modelo);
 
-    input_string_default("Marca", marca_actual, marca, (int)sizeof(marca));
-    input_string_default("Modelo", modelo_actual, modelo, (int)sizeof(modelo));
-    input_string_default("Fecha compra", fecha_actual, fecha, (int)sizeof(fecha));
-    input_string_default("Notas", notas_actual, notas, (int)sizeof(notas));
+    input_string_default("Marca", actual.marca, marca, (int)sizeof(marca));
+    input_string_default("Modelo", actual.modelo, modelo, (int)sizeof(modelo));
+    input_string_default("Fecha compra", actual.fecha, fecha, (int)sizeof(fecha));
+    input_string_default("Notas", actual.notas, notas, (int)sizeof(notas));
 
-    double precio = input_double_default("Precio", precio_actual, 0);
-    printf("Partidos usados [%d]: ", partidos_actual);
+    double precio = input_double_default("Precio", actual.precio, 0);
+    printf("Partidos usados [%d]: ", actual.partidos_usados);
     int partidos = input_int("");
-    if (partidos < 0) partidos = partidos_actual;
+    if (partidos < 0) partidos = actual.partidos_usados;
 
-    printf("Estado fisico (1-5) [%d]: ", estado_f_actual);
+    printf("Estado fisico (1-5) [%d]: ", actual.estado_fisico);
     int estado_f = input_int("");
-    if (estado_f < 1 || estado_f > 5) estado_f = estado_f_actual;
+    if (estado_f < 1 || estado_f > 5) estado_f = actual.estado_fisico;
 
-    printf("Rating (1-10) [%d]: ", rating_actual);
+    printf("Rating (1-10) [%d]: ", actual.rating);
     int rating = input_int("");
-    if (rating < 1 || rating > 10) rating = rating_actual;
+    if (rating < 1 || rating > 10) rating = actual.rating;
 
-    printf("Activo (1=Si, 0=No) [%d]: ", activo_actual);
+    printf("Activo (1=Si, 0=No) [%d]: ", actual.activo);
     int activo = input_int("");
-    if (activo < 0 || activo > 1) activo = activo_actual;
+    if (activo < 0 || activo > 1) activo = actual.activo;
 
+    sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "UPDATE equipamiento_historial SET marca=?, modelo=?, "
                        "fecha_compra=?, precio=?, partidos_usados=?, estado_fisico=?, "
                        "rating=?, notas=?, activo=? WHERE id=?"))
@@ -299,10 +305,10 @@ void equipamiento_historial_editar(void)
     sqlite3_bind_int(stmt, 9, activo);
     sqlite3_bind_int(stmt, 10, id);
 
-    int flag = sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    if (flag == SQLITE_DONE)
+    if (rc == SQLITE_DONE)
     {
         mostrar_alerta_operacion("Equipamiento", "Editado", marca);
     }

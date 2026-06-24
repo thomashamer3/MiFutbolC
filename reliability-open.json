@@ -1,31 +1,9 @@
 {
-  "exportedAt": "2026-06-24T01:00:06Z",
+  "exportedAt": "2026-06-24T17:15:51Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "RELIABILITY",
-  "total": 3,
+  "total": 1,
   "issues": [
-    {
-      "rule": "c:S1763",
-      "severity": "MAJOR",
-      "message": "code will never be executed",
-      "file": "utils.c",
-      "line": 1088,
-      "status": "OPEN",
-      "quality": "RELIABILITY",
-      "effort": "5min",
-      "tags": "based-on-misra, cert, cwe, unused"
-    },
-    {
-      "rule": "c:S3519",
-      "severity": "BLOCKER",
-      "message": "Memory copy function accesses out-of-bound array element",
-      "file": "export_ods.c",
-      "line": 451,
-      "status": "OPEN",
-      "quality": "RELIABILITY",
-      "effort": "5min",
-      "tags": "cert, cwe, symbolic-execution"
-    },
     {
       "rule": "c:S836",
       "severity": "MAJOR",
