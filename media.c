@@ -223,40 +223,16 @@ void media_editar(void)
 
     printf("Editando: %s\n\n", titulo_actual);
 
-    printf("Titulo [%s]: ", titulo_actual);
-    input_string("", titulo, (int)sizeof(titulo));
-    if (titulo[0] == '\0')
-    {
-        strncpy_s(titulo, sizeof(titulo), titulo_actual, _TRUNCATE);
-    }
-
+    input_string_default("Titulo", titulo_actual, titulo, (int)sizeof(titulo));
     printf("Tipo (1-4) [%d]: ", tipo_actual);
     int tipo = input_int("");
-    if (tipo < 1 || tipo > 4)
-    {
-        tipo = tipo_actual;
-    }
-
-    printf("URL [%s]: ", url_actual);
-    input_string("", url, (int)sizeof(url));
-    if (url[0] == '\0')
-    {
-        strncpy_s(url, sizeof(url), url_actual, _TRUNCATE);
-    }
-
-    printf("Descripcion [%s]: ", desc_actual);
-    input_string("", desc, (int)sizeof(desc));
-    if (desc[0] == '\0')
-    {
-        strncpy_s(desc, sizeof(desc), desc_actual, _TRUNCATE);
-    }
+    if (tipo < 1 || tipo > 4) tipo = tipo_actual;
+    input_string_default("URL", url_actual, url, (int)sizeof(url));
+    input_string_default("Descripcion", desc_actual, desc, (int)sizeof(desc));
 
     printf("Partido ID [%d]: ", partido_actual);
     int partido_id = input_int("");
-    if (partido_id < 0)
-    {
-        partido_id = partido_actual;
-    }
+    if (partido_id < 0) partido_id = partido_actual;
 
     if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
                        "descripcion=?, partido_id=? WHERE id=?"))

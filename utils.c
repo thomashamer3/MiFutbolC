@@ -1079,15 +1079,16 @@ double input_double(const char *msg)
 
 #if defined(_WIN32) && defined(_MSC_VER)
         if (sscanf_s(processed, "%lf", &v) == 1)
+        {
 #else
         if (sscanf(processed, "%lf", &v) == 1)
         {
 #endif
             return v;
+        }
+        ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
+                  "12.500, 250.000): ");
     }
-    ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
-              "12.500, 250.000): ");
-}
 }
 
 /**
@@ -3084,6 +3085,33 @@ int input_int_rango(const char *msg, int min, int max)
     }
     while (valor < min || valor > max);
     return valor;
+}
+
+void input_string_default(const char *msg, const char *default_val, char *buffer, int size)
+{
+    printf("%s [%s]: ", msg, default_val);
+    input_string("", buffer, size);
+    if (buffer[0] == '\0')
+    {
+        strncpy_s(buffer, (size_t)size, default_val, _TRUNCATE);
+    }
+}
+
+double input_double_default(const char *msg, double default_val, double min_val)
+{
+    printf("%s [%.2f]: ", msg, default_val);
+    double v = input_double("");
+    return (v < min_val) ? default_val : v;
+}
+
+void input_date_default(const char *msg, const char *default_val, char *buffer, int size)
+{
+    printf("%s [%s]: ", msg, default_val);
+    input_date("", buffer, size);
+    if (buffer[0] == '\0')
+    {
+        strncpy_s(buffer, (size_t)size, default_val, _TRUNCATE);
+    }
 }
 
 void mostrar_no_hay_registros(const char *entidad)

@@ -144,6 +144,25 @@ void metas_crear(void)
     pause_console();
 }
 
+static double calcular_progreso_meta(double actual, double inicial, double objetivo)
+{
+    if (objetivo <= inicial) return 0.0;
+    double p = ((actual - inicial) / (objetivo - inicial)) * 100.0;
+    if (p > 100.0) p = 100.0;
+    if (p < 0.0) p = 0.0;
+    return p;
+}
+
+static void imprimir_barra_progreso(double progreso)
+{
+    int barras = (int)(progreso / 5.0);
+    if (barras > 20) barras = 20;
+    printf("     [");
+    for (int i = 0; i < barras; i++) printf("#");
+    for (int i = barras; i < 20; i++) printf(".");
+    printf("]\n");
+}
+
 void metas_listar(void)
 {
     if (!hay_registros("meta"))
@@ -175,39 +194,12 @@ void metas_listar(void)
         const char *estado = (const char *)sqlite3_column_text(stmt, 7);
 
         double actual = obtener_valor_actual_meta(tipo);
-        double progreso = 0.0;
-        if (objetivo > inicial)
-        {
-            progreso = ((actual - inicial) / (objetivo - inicial)) * 100.0;
-            if (progreso > 100.0)
-            {
-                progreso = 100.0;
-            }
-            if (progreso < 0.0)
-            {
-                progreso = 0.0;
-            }
-        }
+        double progreso = calcular_progreso_meta(actual, inicial, objetivo);
 
         printf("  %d. %s [%s]\n", id, nombre ? nombre : "", estado ? estado : "");
         printf("     Tipo: %s\n", tipo_to_text(tipo));
         printf("     Progreso: %.0f / %.0f (%.1f%%)\n", actual, objetivo, progreso);
-
-        int barras = (int)(progreso / 5.0);
-        if (barras > 20)
-        {
-            barras = 20;
-        }
-        printf("     [");
-        for (int i = 0; i < barras; i++)
-        {
-            printf("#");
-        }
-        for (int i = barras; i < 20; i++)
-        {
-            printf(".");
-        }
-        printf("]\n");
+        imprimir_barra_progreso(progreso);
 
         if (f_ini && f_ini[0])
         {
@@ -293,41 +285,11 @@ void metas_editar(void)
     printf("Editando: %s (tipo: %s, objetivo: %.0f, estado: %s)\n\n", nombre_actual,
            tipo_to_text(tipo_actual), objetivo_actual, estado_actual);
 
-    printf("Nombre [%s]: ", nombre_actual);
-    input_string("", nombre, (int)sizeof(nombre));
-    if (nombre[0] == '\0')
-    {
-        strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
-    }
-
-    printf("Valor objetivo [%.0f]: ", objetivo_actual);
-    double objetivo = input_double("");
-    if (objetivo <= 0)
-    {
-        /* mantener valor actual */
-    }
-    objetivo = objetivo_actual;
-
-    printf("Estado [%s]: ", estado_actual);
-    input_string("", estado, (int)sizeof(estado));
-    if (estado[0] == '\0')
-    {
-        strncpy_s(estado, sizeof(estado), estado_actual, _TRUNCATE);
-    }
-
-    printf("Fecha inicio [%s]: ", f_ini_actual);
-    input_date("", f_ini, (int)sizeof(f_ini));
-    if (f_ini[0] == '\0')
-    {
-        strncpy_s(f_ini, sizeof(f_ini), f_ini_actual, _TRUNCATE);
-    }
-
-    printf("Fecha fin [%s]: ", f_fin_actual);
-    input_date("", f_fin, (int)sizeof(f_fin));
-    if (f_fin[0] == '\0')
-    {
-        strncpy_s(f_fin, sizeof(f_fin), f_fin_actual, _TRUNCATE);
-    }
+    input_string_default("Nombre", nombre_actual, nombre, (int)sizeof(nombre));
+    double objetivo = input_double_default("Valor objetivo", objetivo_actual, 0);
+    input_string_default("Estado", estado_actual, estado, (int)sizeof(estado));
+    input_date_default("Fecha inicio", f_ini_actual, f_ini, (int)sizeof(f_ini));
+    input_date_default("Fecha fin", f_fin_actual, f_fin, (int)sizeof(f_fin));
 
     if (!preparar_stmt(&stmt, "UPDATE meta SET nombre=?, valor_objetivo=?, "
                        "fecha_inicio=?, fecha_fin=?, estado=? WHERE id=?"))
@@ -475,48 +437,33 @@ void metas_recalcular_progreso(void)
     pause_console();
 }
 
+static int contar_metas(const char *where_clause)
+{
+    char sql[256];
+    if (where_clause)
+    {
+        snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM meta WHERE %s", where_clause);
+    }
+    else
+    {
+        snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM meta");
+    }
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, sql)) return 0;
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) count = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return count;
+}
+
 void metas_dashboard(void)
 {
     clear_screen();
     print_header("DASHBOARD DE METAS");
 
-    sqlite3_stmt *stmt = NULL;
-
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM meta WHERE estado = 'Activa'"))
-    {
-        return;
-    }
-    int activas = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        activas = sqlite3_column_int(stmt, 0);
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM meta WHERE estado = 'Completada'"))
-    {
-        return;
-    }
-    int completadas = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        completadas = sqlite3_column_int(stmt, 0);
-    }
-
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM meta"))
-    {
-        return;
-    }
-    int total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        total = sqlite3_column_int(stmt, 0);
-    }
-
-    sqlite3_finalize(stmt);
+    int activas = contar_metas("estado = 'Activa'");
+    int completadas = contar_metas("estado = 'Completada'");
+    int total = contar_metas(NULL);
 
     printf("  Metas activas:    %d\n", activas);
     printf("  Metas completadas: %d\n", completadas);
@@ -529,6 +476,7 @@ void metas_dashboard(void)
     }
     printf("\n");
 
+    sqlite3_stmt *stmt = NULL;
     if (!preparar_stmt(&stmt, "SELECT id, nombre, tipo, valor_objetivo, valor_inicial "
                        "FROM meta WHERE estado = 'Activa' ORDER BY id"))
     {
@@ -558,25 +506,8 @@ void metas_dashboard(void)
 
         printf("  %s (%s): %.0f/%.0f (%.1f%%)\n", nombre ? nombre : "", tipo_to_text(tipo), actual,
                objetivo, progreso);
-
-        int b = (int)(progreso / 5.0);
-        if (b > 20)
-        {
-            b = 20;
-            printf("  ");
-        }
-
-        for (int i = 0; i < b; i++)
-        {
-            printf("#");
-        }
-
-        for (int i = b; i < 20; i++)
-        {
-            printf(".");
-        }
-
-        printf("\n\n");
+        imprimir_barra_progreso(progreso);
+        printf("\n");
     }
     sqlite3_finalize(stmt);
 

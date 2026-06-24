@@ -258,62 +258,46 @@ static void imprimir_marcador_global_si_disponible(sqlite3_stmt *stmt)
 
 static const char *wmo_code_to_text(int code)
 {
-    switch (code)
+    static const struct
     {
-    case 0:
-        return "Despejado";
-    case 1:
-        return "Mayormente despejado";
-    case 2:
-        return "Parcialmente nublado";
-    case 3:
-        return "Nublado";
-    case 45:
-    case 48:
-        return "Niebla";
-    case 51:
-    case 53:
-    case 55:
-        return "Llovizna";
-    case 56:
-    case 57:
-        return "Llovizna helada";
-    case 61:
-        return "Lluvia ligera";
-    case 63:
-        return "Lluvia moderada";
-    case 65:
-        return "Lluvia fuerte";
-    case 66:
-    case 67:
-        return "Lluvia helada";
-    case 71:
-        return "Nieve ligera";
-    case 73:
-        return "Nieve moderada";
-    case 75:
-        return "Nieve fuerte";
-    case 77:
-        return "Granos de nieve";
-    case 80:
-        return "Chubascos ligeros";
-    case 81:
-        return "Chubascos moderados";
-    case 82:
-        return "Chubascos violentos";
-    case 85:
-        return "Chubascos de nieve ligeros";
-    case 86:
-        return "Chubascos de nieve fuertes";
-    case 95:
-        return "Tormenta";
-    case 96:
-        return "Tormenta con granizo leve";
-    case 99:
-        return "Tormenta con granizo fuerte";
-    default:
-        return "Desconocido";
+        int code;
+        const char *text;
+    } wmo_map[] =
+    {
+        {0, "Despejado"},
+        {1, "Mayormente despejado"},
+        {2, "Parcialmente nublado"},
+        {3, "Nublado"},
+        {45, "Niebla"},
+        {48, "Niebla"},
+        {51, "Llovizna"},
+        {53, "Llovizna"},
+        {55, "Llovizna"},
+        {56, "Llovizna helada"},
+        {57, "Llovizna helada"},
+        {61, "Lluvia ligera"},
+        {63, "Lluvia moderada"},
+        {65, "Lluvia fuerte"},
+        {66, "Lluvia helada"},
+        {67, "Lluvia helada"},
+        {71, "Nieve ligera"},
+        {73, "Nieve moderada"},
+        {75, "Nieve fuerte"},
+        {77, "Granos de nieve"},
+        {80, "Chubascos ligeros"},
+        {81, "Chubascos moderados"},
+        {82, "Chubascos violentos"},
+        {85, "Chubascos de nieve ligeros"},
+        {86, "Chubascos de nieve fuertes"},
+        {95, "Tormenta"},
+        {96, "Tormenta con granizo leve"},
+        {99, "Tormenta con granizo fuerte"},
+    };
+    for (size_t i = 0; i < sizeof(wmo_map) / sizeof(wmo_map[0]); i++)
+    {
+        if (wmo_map[i].code == code) return wmo_map[i].text;
     }
+    return "Desconocido";
 }
 
 static void imprimir_temperatura_partido(sqlite3_stmt *stmt)
@@ -2933,6 +2917,71 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     }
 }
 
+static void registrar_clima_partido(long long id, int cancha_id, const char *fecha)
+{
+    double lat = 0.0;
+    double lon = 0.0;
+    sqlite3_stmt *s = NULL;
+    if (db_prepare_stmt(&s, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
+    {
+        sqlite3_bind_int(s, 1, cancha_id);
+        if (sqlite3_step(s) == SQLITE_ROW)
+        {
+            lat = sqlite3_column_double(s, 0);
+            lon = sqlite3_column_double(s, 1);
+        }
+        db_stmt_release(s);
+    }
+    if (lat == 0.0 && lon == 0.0) return;
+
+    int anio = 0, mes = 0, dia = 0;
+#if defined(_WIN32) && defined(_MSC_VER)
+    if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3) return;
+#else
+    if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3) return;
+#endif
+
+    OpenMeteoParams omp;
+    omp.latitud = lat;
+    omp.longitud = lon;
+    omp.anio = anio;
+    omp.mes = mes;
+    omp.dia = dia;
+
+    OpenMeteoResult res;
+    memset(&res, 0, sizeof(res));
+    if (!openmeteo_fetch(&omp, &res))
+    {
+        printf("No se pudo obtener datos climaticos (sin conexion?).\n");
+        return;
+    }
+
+    sqlite3_stmt *u = NULL;
+    if (!db_prepare_stmt(&u,
+                         "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
+                         "precip_mm=?, wind_kmh=?, "
+                         "weather_code=?, clima_json=? WHERE id=?"))
+    {
+        openmeteo_result_free(&res);
+        return;
+    }
+
+    sqlite3_bind_double(u, 1, res.temp_c);
+    sqlite3_bind_double(u, 2, res.apparent_temp_c);
+    sqlite3_bind_double(u, 3, res.precip_mm);
+    sqlite3_bind_double(u, 4, res.wind_kmh);
+    sqlite3_bind_int(u, 5, res.weather_code);
+    sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
+    sqlite3_bind_int64(u, 7, id);
+    sqlite3_step(u);
+    db_stmt_release(u);
+
+    printf("Clima registrado: %.1f°C (sensacion %.1f°C), %.1fmm precip, %.1f "
+           "km/h viento\n",
+           res.temp_c, res.apparent_temp_c, res.precip_mm, res.wind_kmh);
+    openmeteo_result_free(&res);
+}
+
 void crear_partido(void)
 {
     // Activar IA antes de crear partido
@@ -3002,67 +3051,7 @@ void crear_partido(void)
 
     if (settings_get()->mode != MODE_SIMPLE)
     {
-        int cancha_id = datos.cancha_id;
-        double lat = 0.0;
-        double lon = 0.0;
-        sqlite3_stmt *s = NULL;
-        if (db_prepare_stmt(&s, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
-        {
-            sqlite3_bind_int(s, 1, cancha_id);
-            if (sqlite3_step(s) == SQLITE_ROW)
-            {
-                lat = sqlite3_column_double(s, 0);
-                lon = sqlite3_column_double(s, 1);
-            }
-            db_stmt_release(s);
-        }
-
-        if (lat != 0.0 || lon != 0.0)
-        {
-            int anio = 0;
-            int mes = 0;
-            int dia = 0;
-            if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) >= 3)
-            {
-                OpenMeteoParams omp;
-                omp.latitud = lat;
-                omp.longitud = lon;
-                omp.anio = anio;
-                omp.mes = mes;
-                omp.dia = dia;
-
-                OpenMeteoResult res;
-                memset(&res, 0, sizeof(res));
-                if (openmeteo_fetch(&omp, &res))
-                {
-                    sqlite3_stmt *u = NULL;
-                    if (db_prepare_stmt(&u,
-                                        "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
-                                        "precip_mm=?, wind_kmh=?, "
-                                        "weather_code=?, clima_json=? WHERE id=?"))
-                    {
-                        sqlite3_bind_double(u, 1, res.temp_c);
-                        sqlite3_bind_double(u, 2, res.apparent_temp_c);
-                        sqlite3_bind_double(u, 3, res.precip_mm);
-                        sqlite3_bind_double(u, 4, res.wind_kmh);
-                        sqlite3_bind_int(u, 5, res.weather_code);
-                        sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
-                        sqlite3_bind_int64(u, 7, id);
-                        sqlite3_step(u);
-                        db_stmt_release(u);
-
-                        printf("Clima registrado: %.1f°C (sensacion %.1f°C), %.1fmm precip, %.1f "
-                               "km/h viento\n",
-                               res.temp_c, res.apparent_temp_c, res.precip_mm, res.wind_kmh);
-                    }
-                    openmeteo_result_free(&res);
-                }
-                else
-                {
-                    printf("No se pudo obtener datos climaticos (sin conexion?).\n");
-                }
-            }
-        }
+        registrar_clima_partido(id, datos.cancha_id, fecha);
     }
 }
 
@@ -5645,6 +5634,85 @@ static void menu_gestion_tags_partido(void)
     }
 }
 
+static int procesar_clima_partido_historico(long long partido_id, int cancha_id, const char *fecha_hora)
+{
+    double lat = 0.0;
+    double lon = 0.0;
+    sqlite3_stmt *s_cancha = NULL;
+    if (db_prepare_stmt(&s_cancha, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
+    {
+        sqlite3_bind_int(s_cancha, 1, cancha_id);
+        if (sqlite3_step(s_cancha) == SQLITE_ROW)
+        {
+            lat = sqlite3_column_double(s_cancha, 0);
+            lon = sqlite3_column_double(s_cancha, 1);
+        }
+        db_stmt_release(s_cancha);
+    }
+    if (lat == 0.0 && lon == 0.0) return 0;
+
+    int anio = 0, mes = 0, dia = 0;
+    int parsed = 0;
+    if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        parsed = (sscanf_s(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
+#else
+        parsed = (sscanf(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
+#endif
+    }
+    else if (fecha_hora && fecha_hora[2] == '/' && fecha_hora[5] == '/')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        parsed = (sscanf_s(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);
+#else
+        parsed = (sscanf(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);
+#endif
+    }
+    if (!parsed) return 0;
+
+    OpenMeteoParams omp;
+    omp.latitud = lat;
+    omp.longitud = lon;
+    omp.anio = anio;
+    omp.mes = mes;
+    omp.dia = dia;
+    omp.hora = 12;
+    omp.minuto = 0;
+
+    printf("Consultando clima para partido ID %lld (%04d-%02d-%02d)... ", partido_id, anio, mes, dia);
+
+    OpenMeteoResult res;
+    memset(&res, 0, sizeof(res));
+    if (!openmeteo_fetch(&omp, &res))
+    {
+        printf("ERROR (sin conexion?)\n");
+        return 0;
+    }
+
+    sqlite3_stmt *u = NULL;
+    if (!db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, "
+                         "apparent_temp_c=?, precip_mm=?, wind_kmh=?, "
+                         "weather_code=?, clima_json=? WHERE id=?"))
+    {
+        openmeteo_result_free(&res);
+        return 0;
+    }
+
+    sqlite3_bind_double(u, 1, res.temp_c);
+    sqlite3_bind_double(u, 2, res.apparent_temp_c);
+    sqlite3_bind_double(u, 3, res.precip_mm);
+    sqlite3_bind_double(u, 4, res.wind_kmh);
+    sqlite3_bind_int(u, 5, res.weather_code);
+    sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
+    sqlite3_bind_int64(u, 7, partido_id);
+    sqlite3_step(u);
+    db_stmt_release(u);
+    printf("OK (%.1f C)\n", res.temp_c);
+    openmeteo_result_free(&res);
+    return 1;
+}
+
 void obtener_clima_partidos_historicos(void)
 {
     if (settings_get()->mode == MODE_SIMPLE)
@@ -5672,82 +5740,7 @@ void obtener_clima_partidos_historicos(void)
         int cancha_id = sqlite3_column_int(stmt, 1);
         const char *fecha_hora = (const char *)sqlite3_column_text(stmt, 2);
         total++;
-
-        double lat = 0.0;
-        double lon = 0.0;
-        sqlite3_stmt *s_cancha = NULL;
-        if (db_prepare_stmt(&s_cancha, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
-        {
-            sqlite3_bind_int(s_cancha, 1, cancha_id);
-            if (sqlite3_step(s_cancha) == SQLITE_ROW)
-            {
-                lat = sqlite3_column_double(s_cancha, 0);
-                lon = sqlite3_column_double(s_cancha, 1);
-            }
-            db_stmt_release(s_cancha);
-        }
-
-        if (lat == 0.0 && lon == 0.0)
-        {
-            continue;
-        }
-
-        int anio = 0;
-        int mes = 0;
-        int dia = 0;
-        int parsed = 0;
-        if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
-        {
-            parsed = (sscanf(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
-        }
-        else if (fecha_hora && fecha_hora[2] == '/' && fecha_hora[5] == '/')
-        {
-            parsed = (sscanf(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);
-        }
-        if (!parsed)
-        {
-            continue;
-        }
-
-        OpenMeteoParams omp;
-        omp.latitud = lat;
-        omp.longitud = lon;
-        omp.anio = anio;
-        omp.mes = mes;
-        omp.dia = dia;
-        omp.hora = 12;
-        omp.minuto = 0;
-
-        printf("Consultando clima para partido ID %lld (%04d-%02d-%02d)... ", partido_id, anio, mes,
-               dia);
-
-        OpenMeteoResult res;
-        memset(&res, 0, sizeof(res));
-        if (openmeteo_fetch(&omp, &res))
-        {
-            sqlite3_stmt *u = NULL;
-            if (db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, "
-                                "apparent_temp_c=?, precip_mm=?, wind_kmh=?, "
-                                "weather_code=?, clima_json=? WHERE id=?"))
-            {
-                sqlite3_bind_double(u, 1, res.temp_c);
-                sqlite3_bind_double(u, 2, res.apparent_temp_c);
-                sqlite3_bind_double(u, 3, res.precip_mm);
-                sqlite3_bind_double(u, 4, res.wind_kmh);
-                sqlite3_bind_int(u, 5, res.weather_code);
-                sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
-                sqlite3_bind_int64(u, 7, partido_id);
-                sqlite3_step(u);
-                db_stmt_release(u);
-                exitoso++;
-                printf("OK (%.1f C)\n", res.temp_c);
-            }
-            openmeteo_result_free(&res);
-        }
-        else
-        {
-            printf("ERROR (sin conexion?)\n");
-        }
+        exitoso += procesar_clima_partido_historico(partido_id, cancha_id, fecha_hora);
     }
     db_stmt_release(stmt);
 

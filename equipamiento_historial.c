@@ -258,68 +258,27 @@ void equipamiento_historial_editar(void)
 
     printf("Editando: %s %s\n\n", marca_actual, modelo_actual);
 
-    printf("Marca [%s]: ", marca_actual);
-    input_string("", marca, (int)sizeof(marca));
-    if (marca[0] == '\0')
-    {
-        strncpy_s(marca, sizeof(marca), marca_actual, _TRUNCATE);
-    }
+    input_string_default("Marca", marca_actual, marca, (int)sizeof(marca));
+    input_string_default("Modelo", modelo_actual, modelo, (int)sizeof(modelo));
+    input_string_default("Fecha compra", fecha_actual, fecha, (int)sizeof(fecha));
+    input_string_default("Notas", notas_actual, notas, (int)sizeof(notas));
 
-    printf("Modelo [%s]: ", modelo_actual);
-    input_string("", modelo, (int)sizeof(modelo));
-    if (modelo[0] == '\0')
-    {
-        strncpy_s(modelo, sizeof(modelo), modelo_actual, _TRUNCATE);
-    }
-
-    printf("Fecha compra [%s]: ", fecha_actual);
-    input_date("", fecha, (int)sizeof(fecha));
-    if (fecha[0] == '\0')
-    {
-        strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
-    }
-
-    printf("Precio [%.2f]: ", precio_actual);
-    double precio = input_double("");
-    if (precio < 0)
-    {
-        precio = precio_actual;
-    }
-
+    double precio = input_double_default("Precio", precio_actual, 0);
     printf("Partidos usados [%d]: ", partidos_actual);
     int partidos = input_int("");
-    if (partidos < 0)
-    {
-        partidos = partidos_actual;
-    }
+    if (partidos < 0) partidos = partidos_actual;
 
     printf("Estado fisico (1-5) [%d]: ", estado_f_actual);
     int estado_f = input_int("");
-    if (estado_f < 1 || estado_f > 5)
-    {
-        estado_f = estado_f_actual;
-    }
+    if (estado_f < 1 || estado_f > 5) estado_f = estado_f_actual;
 
     printf("Rating (1-10) [%d]: ", rating_actual);
     int rating = input_int("");
-    if (rating < 1 || rating > 10)
-    {
-        rating = rating_actual;
-    }
+    if (rating < 1 || rating > 10) rating = rating_actual;
 
     printf("Activo (1=Si, 0=No) [%d]: ", activo_actual);
     int activo = input_int("");
-    if (activo != 0 && activo != 1)
-    {
-        activo = activo_actual;
-    }
-
-    printf("Notas [%s]: ", notas_actual);
-    input_string("", notas, (int)sizeof(notas));
-    if (notas[0] == '\0')
-    {
-        strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
-    }
+    if (activo < 0 || activo > 1) activo = activo_actual;
 
     if (!preparar_stmt(&stmt, "UPDATE equipamiento_historial SET marca=?, modelo=?, "
                        "fecha_compra=?, precio=?, partidos_usados=?, estado_fisico=?, "
@@ -432,6 +391,37 @@ void equipamiento_historial_eliminar(void)
     pause_console();
 }
 
+static int contar_equipamiento(const char *where_clause)
+{
+    char sql[256];
+    if (where_clause)
+    {
+        snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM equipamiento_historial WHERE %s", where_clause);
+    }
+    else
+    {
+        snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM equipamiento_historial");
+    }
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, sql)) return 0;
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) count = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+static double sumar_equipamiento(const char *col)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql), "SELECT COALESCE(SUM(%s), 0) FROM equipamiento_historial", col);
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, sql)) return 0.0;
+    double val = 0.0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) val = sqlite3_column_double(stmt, 0);
+    sqlite3_finalize(stmt);
+    return val;
+}
+
 void equipamiento_historial_estadisticas(void)
 {
     if (!hay_registros("equipamiento_historial"))
@@ -444,62 +434,11 @@ void equipamiento_historial_estadisticas(void)
     clear_screen();
     print_header("ESTADISTICAS DE EQUIPAMIENTO");
 
-    sqlite3_stmt *stmt = NULL;
-
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM equipamiento_historial"))
-    {
-        return;
-    }
-    int total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        total = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM equipamiento_historial WHERE activo=1"))
-    {
-        return;
-    }
-    int activos = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        activos = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT SUM(partidos_usados) FROM equipamiento_historial"))
-    {
-        return;
-    }
-    int total_partidos = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        total_partidos = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT SUM(precio) FROM equipamiento_historial"))
-    {
-        return;
-    }
-    double total_gastado = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        total_gastado = sqlite3_column_double(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-
-    if (!preparar_stmt(&stmt, "SELECT AVG(rating) FROM equipamiento_historial"))
-    {
-        return;
-    }
-    double avg_rating = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        avg_rating = sqlite3_column_double(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
+    int total = contar_equipamiento(NULL);
+    int activos = contar_equipamiento("activo=1");
+    int total_partidos = (int)sumar_equipamiento("partidos_usados");
+    double total_gastado = sumar_equipamiento("precio");
+    double avg_rating = sumar_equipamiento("rating") / (total > 0 ? (double)total : 1.0);
 
     printf("  Total items:        %d\n", total);
     printf("  Items activos:      %d\n", activos);
@@ -510,21 +449,15 @@ void equipamiento_historial_estadisticas(void)
     printf("\n  Por tipo:\n");
     for (int tipo = 1; tipo <= 6; tipo++)
     {
+        sqlite3_stmt *stmt = NULL;
         if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM equipamiento_historial WHERE tipo=?"))
-        {
             continue;
-        }
         sqlite3_bind_int(stmt, 1, tipo);
         int cnt = 0;
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            cnt = sqlite3_column_int(stmt, 0);
-        }
+        if (sqlite3_step(stmt) == SQLITE_ROW) cnt = sqlite3_column_int(stmt, 0);
         sqlite3_finalize(stmt);
         if (cnt > 0)
-        {
             printf("    %s: %d\n", item_tipo_texto(tipo), cnt);
-        }
     }
 
     pause_console();

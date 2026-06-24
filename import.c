@@ -534,7 +534,7 @@ static void importar_camisetas_desde_archivo(const char *filename, const char *f
     sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
     while (fgets(line, sizeof(line), file))
     {
-        CamisetaData data;
+        CamisetaData data = {0};
         if (parser(line, &data))
         {
             count += procesar_camiseta_importada(&data);

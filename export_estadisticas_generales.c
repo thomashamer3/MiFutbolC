@@ -37,6 +37,9 @@ typedef struct
     double avg_asistencias;
 } month_stat_row_t;
 
+static void stats_mes_json_rows(FILE *file, sqlite3_stmt *stmt);
+static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt);
+
 static const stat_def_t STAT_DEFS[] =
 {
     {"mas_goles", "SUM(goles)", "DESC", "Mas Goles"},
@@ -406,53 +409,14 @@ void exportar_estadisticas_por_mes_json(void)
         return;
     }
 
-    cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
-        cJSON_Delete(root);
         fclose(file);
         return;
     }
 
-    char current[8] = "";
-    cJSON *current_array = NULL;
-    month_stat_row_t row;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        read_month_stat_row(stmt, &row);
-
-        if (strcmp(current, row.month) != 0)
-        {
-            if (current_array)
-            {
-                cJSON_AddItemToObject(root, current, current_array);
-            }
-            strcpy_s(current, sizeof(current), row.month);
-            current_array = cJSON_CreateArray();
-        }
-
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "camiseta", row.camiseta);
-        cJSON_AddNumberToObject(item, "partidos", row.partidos);
-        cJSON_AddNumberToObject(item, "goles", row.goles);
-        cJSON_AddNumberToObject(item, "asistencias", row.asistencias);
-        cJSON_AddNumberToObject(item, "avg_goles", row.avg_goles);
-        cJSON_AddNumberToObject(item, "avg_asistencias", row.avg_asistencias);
-        cJSON_AddItemToArray(current_array, item);
-    }
-
-    if (current_array)
-    {
-        cJSON_AddItemToObject(root, current, current_array);
-    }
-
-    char *json_str = cJSON_PrintUnformatted(root);
-    fprintf(file, "%s", json_str);
-
-    free(json_str);
-    cJSON_Delete(root);
+    stats_mes_json_rows(file, stmt);
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.json"));
 }
@@ -471,9 +435,6 @@ void exportar_estadisticas_por_mes_html(void)
         return;
     }
 
-    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
-    fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
-
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
@@ -481,39 +442,7 @@ void exportar_estadisticas_por_mes_html(void)
         return;
     }
 
-    char current[8] = "";
-    int hay = 0;
-    month_stat_row_t row;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        read_month_stat_row(stmt, &row);
-
-        if (strcmp(current, row.month) != 0)
-        {
-            if (hay)
-            {
-                fprintf(file, "</table><br>");
-            }
-            fprintf(file, "<h2>%s</h2><table border='1'>", row.month);
-            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</"
-                    "th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
-            strcpy_s(current, sizeof(current), row.month);
-        }
-
-        fprintf(file,
-                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles,
-                row.avg_asistencias);
-        hay = 1;
-    }
-
-    if (hay)
-    {
-        fprintf(file, "</table>");
-    }
-
-    fprintf(file, "</body></html>\n");
+    stats_mes_html_rows(file, stmt);
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.html"));
 }

@@ -769,6 +769,12 @@ typedef struct
 
 typedef struct
 {
+    double latitud;
+    double longitud;
+} CanchaCoordenadas;
+
+typedef struct
+{
     char nombre[100];
     char telefono[40];
     char direccion[200];
@@ -788,8 +794,7 @@ typedef struct
     char contacto_alt[120];
     int activa;
     int tiene_grabacion;
-    double latitud;
-    double longitud;
+    CanchaCoordenadas coordenadas;
 } CanchaInfoDetalle;
 
 static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_nombre)
@@ -847,13 +852,13 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
             char *lon_str = comma + 1;
             trim_whitespace(lat_str);
             trim_whitespace(lon_str);
-            info->latitud = parse_double_c_locale(lat_str);
-            info->longitud = parse_double_c_locale(lon_str);
+            info->coordenadas.latitud = parse_double_c_locale(lat_str);
+            info->coordenadas.longitud = parse_double_c_locale(lon_str);
         }
         else
         {
-            info->latitud = ROUND6(input_double("Latitud: "));
-            info->longitud = ROUND6(input_double("Longitud: "));
+            info->coordenadas.latitud = ROUND6(input_double("Latitud: "));
+            info->coordenadas.longitud = ROUND6(input_double("Longitud: "));
         }
     }
 }
@@ -931,8 +936,8 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
              (const char *)sqlite3_column_text(stmt, 19));
     info->activa = sqlite3_column_int(stmt, 20) == 1;
     info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
-    info->latitud = sqlite3_column_double(stmt, 22);
-    info->longitud = sqlite3_column_double(stmt, 23);
+    info->coordenadas.latitud = sqlite3_column_double(stmt, 22);
+    info->coordenadas.longitud = sqlite3_column_double(stmt, 23);
 
     db_stmt_release(stmt);
     return 1;
@@ -966,12 +971,12 @@ static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
     printf("Estado Pasto       : %s\n", texto_o_defecto(info->estado, "(sin dato)"));
     printf("Descripcion        : %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("Contacto Alterno   : %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
-    if (info->latitud != 0.0 || info->longitud != 0.0)
+    if (info->coordenadas.latitud != 0.0 || info->coordenadas.longitud != 0.0)
     {
         char lat_str[32];
         char lon_str[32];
-        format_double_es(info->latitud, lat_str, sizeof(lat_str), 6);
-        format_double_es(info->longitud, lon_str, sizeof(lon_str), 6);
+        format_double_es(info->coordenadas.latitud, lat_str, sizeof(lat_str), 6);
+        format_double_es(info->coordenadas.longitud, lon_str, sizeof(lon_str), 6);
         printf("Coordenadas        : %s, %s\n", lat_str, lon_str);
     }
     printf("Grabacion Partido  : %s\n", info->tiene_grabacion ? "SI" : "NO");
@@ -1540,13 +1545,13 @@ void crear_cancha(void)
                 char *lon_str = comma + 1;
                 trim_whitespace(lat_str);
                 trim_whitespace(lon_str);
-                info.latitud = parse_double_c_locale(lat_str);
-                info.longitud = parse_double_c_locale(lon_str);
+                info.coordenadas.latitud = parse_double_c_locale(lat_str);
+                info.coordenadas.longitud = parse_double_c_locale(lon_str);
             }
             else
             {
-                info.latitud = ROUND6(input_double("Latitud: "));
-                info.longitud = ROUND6(input_double("Longitud: "));
+                info.coordenadas.latitud = ROUND6(input_double("Latitud: "));
+                info.coordenadas.longitud = ROUND6(input_double("Longitud: "));
             }
         }
     }
@@ -1589,8 +1594,8 @@ void crear_cancha(void)
     sqlite3_bind_text(stmt, 19, info.estado, -1, DB_TRANSIENT);
     sqlite3_bind_text(stmt, 20, info.descripcion, -1, DB_TRANSIENT);
     sqlite3_bind_text(stmt, 21, info.contacto_alt, -1, DB_TRANSIENT);
-    sqlite3_bind_double(stmt, 22, info.latitud);
-    sqlite3_bind_double(stmt, 23, info.longitud);
+    sqlite3_bind_double(stmt, 22, info.coordenadas.latitud);
+    sqlite3_bind_double(stmt, 23, info.coordenadas.longitud);
     int result = sqlite3_step(stmt);
     db_stmt_release(stmt);
 
@@ -1947,12 +1952,12 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info,
     printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
     printf("21) Grabacion Partido: %s\n", info->tiene_grabacion ? "SI" : "NO");
-    if (info->latitud != 0.0 || info->longitud != 0.0)
+    if (info->coordenadas.latitud != 0.0 || info->coordenadas.longitud != 0.0)
     {
         char lat_str[32];
         char lon_str[32];
-        format_double_es(info->latitud, lat_str, sizeof(lat_str), 6);
-        format_double_es(info->longitud, lon_str, sizeof(lon_str), 6);
+        format_double_es(info->coordenadas.latitud, lat_str, sizeof(lat_str), 6);
+        format_double_es(info->coordenadas.longitud, lon_str, sizeof(lon_str), 6);
         printf("22) Coordenadas: %s, %s\n", lat_str, lon_str);
     }
     else

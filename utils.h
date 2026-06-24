@@ -83,6 +83,10 @@ void input_string_extended(const char *msg, char *buffer, int size);
  */
 void input_date(const char *msg, char *buffer, int size);
 
+void input_string_default(const char *msg, const char *default_val, char *buffer, int size);
+double input_double_default(const char *msg, double default_val, double min_val);
+void input_date_default(const char *msg, const char *default_val, char *buffer, int size);
+
 /**
  * @brief Prepara una sentencia SQLite usando la conexion global.
  *
