@@ -21,7 +21,8 @@ typedef enum
     IDA_Y_VUELTA,          /**< Los equipos juegan entre sí en partidos de ida y vuelta */
     SOLO_IDA,              /**< Los equipos juegan entre sí solo en un partido */
     ELIMINACION_DIRECTA,   /**< Formato de copa donde los perdedores quedan eliminados */
-    GRUPOS_Y_ELIMINACION  /**< Combinación de grupos iniciales con eliminación posterior */
+    GRUPOS_Y_ELIMINACION,  /**< Combinación de grupos iniciales con eliminación posterior */
+    TIPO_TORNEO_INVALIDO = 99 /**< Valor centinela para pruebas fuera de rango */
 } TipoTorneos;
 
 /**
@@ -42,7 +43,8 @@ typedef enum
     COPA_REPECHAJE,        /**< Copa con sistema de repechaje */
     LIGA_GRANDE,           /**< Liga grande con muchos equipos */
     MULTIPLES_GRUPOS,      /**< Múltiples grupos de clasificación */
-    ELIMINACION_FASES      /**< Eliminación directa organizada por fases */
+    ELIMINACION_FASES,     /**< Eliminación directa organizada por fases */
+    FORMATO_TORNEO_INVALIDO = 99 /**< Valor centinela para pruebas fuera de rango */
 } FormatoTorneos;
 
 /**

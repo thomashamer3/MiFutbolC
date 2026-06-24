@@ -114,14 +114,15 @@ void crear_botin(void)
         return;
     }
     sqlite3_bind_int64(stmt, 1, botin_ll_id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre, -1, DB_TRANSIENT);
     int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
     if (result == SQLITE_DONE)
     {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creado botin id=%lld nombre=%.180s", botin_ll_id, nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creado botin id=%lld nombre=%.180s", botin_ll_id,
+                 nombre);
         app_log_event("BOTIN", log_msg);
         mostrar_alerta_operacion("Botin", "Creado", nombre);
     }
@@ -190,7 +191,7 @@ void editar_botin(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -394,7 +395,9 @@ static int botin_esta_activo(int botin_id)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "SELECT IFNULL(activa, 1) FROM botin WHERE id = ?"))
+    {
         return 0;
+    }
     sqlite3_bind_int(stmt, 1, botin_id);
     int activo = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -409,7 +412,9 @@ static int actualizar_estado_botin(int botin_id, int activo)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "UPDATE botin SET activa = ? WHERE id = ?"))
+    {
         return 0;
+    }
     sqlite3_bind_int(stmt, 1, activo ? 1 : 0);
     sqlite3_bind_int(stmt, 2, botin_id);
     int success = sqlite3_step(stmt) == SQLITE_DONE;
@@ -685,7 +690,7 @@ static void configurar_visor_preferido_imagen(void)
 
     if (preparar_stmt(&stmt, "UPDATE settings SET image_viewer = ? WHERE id = 1"))
     {
-        sqlite3_bind_text(stmt, 1, nuevo, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 1, nuevo, -1, DB_TRANSIENT);
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
         printf("Visor guardado: %s\n", nuevo);

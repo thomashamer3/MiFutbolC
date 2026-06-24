@@ -62,8 +62,14 @@ static FILE *open_file_portable(const char *path, const char *mode)
 static size_t safe_strlen_s(const char *s, size_t max_len)
 {
     size_t i = 0;
-    if (!s) return 0;
-    while (i < max_len && s[i]) ++i;
+    if (!s)
+    {
+        return 0;
+    }
+    while (i < max_len && s[i])
+    {
+        ++i;
+    }
     return i;
 }
 
@@ -71,7 +77,9 @@ static char *read_text_file(const char *path)
 {
     FILE *f = open_file_portable(path, "rb");
     if (!f)
+    {
         return NULL;
+    }
 
     fseek(f, 0, SEEK_END);
     long len = ftell(f);
@@ -93,9 +101,13 @@ static char *read_text_file(const char *path)
     fclose(f);
 
     if (read > 0 && read <= (size_t)len)
+    {
         buf[read] = '\0';
+    }
     else
+    {
         buf[0] = '\0';
+    }
 
     return buf;
 }
@@ -170,7 +182,10 @@ static Reminder *load_reminders_from_path(const char *path, int *out_count)
     free(buf);
     if (!root || !cJSON_IsArray(root))
     {
-        if (root) cJSON_Delete(root);
+        if (root)
+        {
+            cJSON_Delete(root);
+        }
         return NULL;
     }
 
@@ -187,9 +202,15 @@ static Reminder *load_reminders(int *out_count)
 
 static int write_reminders_to_file(const Reminder *arr, int count, const char *path)
 {
-    if (count > 0 && !arr) return 0;
+    if (count > 0 && !arr)
+    {
+        return 0;
+    }
     cJSON *root = cJSON_CreateArray();
-    if (!root) return 0;
+    if (!root)
+    {
+        return 0;
+    }
 
     for (int i = 0; i < count; i++)
     {
@@ -211,7 +232,10 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
         }
 
         cJSON *obj = cJSON_CreateObject();
-        if (!obj) continue;
+        if (!obj)
+        {
+            continue;
+        }
         cJSON_AddNumberToObject(obj, "id", (double)id_value);
         cJSON_AddStringToObject(obj, "fecha", fecha);
         cJSON_AddStringToObject(obj, "nota", nota);
@@ -223,7 +247,10 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
 
     char *out = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
-    if (!out) return 0;
+    if (!out)
+    {
+        return 0;
+    }
 
     FILE *f = open_file_portable(path, "wb");
     if (!f)
@@ -253,7 +280,12 @@ static long long obtener_siguiente_id_local(const Reminder *arr, int count)
 {
     long long max = 0;
     for (int i = 0; i < count; i++)
-        if (arr[i].id > max) max = arr[i].id;
+    {
+        if (arr[i].id > max)
+        {
+            max = arr[i].id;
+        }
+    }
     return max + 1;
 }
 
@@ -281,7 +313,9 @@ static void listar_recordatorios(const Reminder *arr, int count)
 
         printf("[%lld] %s - %s\n", arr[i].id, tematica_mostrar, arr[i].fecha);
         if (arr[i].fecha_fin[0] != '\0')
+        {
             printf("    Hasta: %s\n", arr[i].fecha_fin);
+        }
         printf("    %s\n", arr[i].nota);
         printf("----------------------------------------\n");
     }
@@ -330,7 +364,10 @@ static void agregar_recordatorio(void)
     int count = 0;
     Reminder *arr = load_reminders(&count);
 
-    if (count < 0) count = 0;
+    if (count < 0)
+    {
+        count = 0;
+    }
 
     Reminder nuevo;
     memset(&nuevo, 0, sizeof(nuevo));
@@ -378,13 +415,21 @@ static void agregar_recordatorio(void)
 static int find_index_by_id(const Reminder *arr, int count, long long id)
 {
     for (int i = 0; i < count; i++)
-        if (arr[i].id == id) return i;
+    {
+        if (arr[i].id == id)
+        {
+            return i;
+        }
+    }
     return -1;
 }
 
 static void editar_fecha_recordatorio(Reminder *r)
 {
-    if (!r) return;
+    if (!r)
+    {
+        return;
+    }
     printf("Valor actual fecha: %s\n", r->fecha);
     input_date("Nueva fecha (dd/mm/yyyy hh:mm):", r->fecha, MAX_FECHA);
 }
@@ -392,7 +437,10 @@ static void editar_fecha_recordatorio(Reminder *r)
 static void editar_nota_recordatorio(Reminder *r)
 {
     char buf[MAX_NOTA];
-    if (!r) return;
+    if (!r)
+    {
+        return;
+    }
 
     printf("Valor actual nota:\n%s\n", r->nota);
     input_string_extended("Nueva nota:", buf, MAX_NOTA);
@@ -406,7 +454,10 @@ static void editar_nota_recordatorio(Reminder *r)
 static void editar_tematica_recordatorio(Reminder *r)
 {
     char tema[MAX_TEMATICA];
-    if (!r) return;
+    if (!r)
+    {
+        return;
+    }
 
     printf("Valor actual temática: %s\n", r->tematica);
     elegir_tematica(tema, MAX_TEMATICA);
@@ -504,7 +555,10 @@ static void eliminar_recordatorio(void)
         return;
     }
 
-    for (int i = idx; i < count - 1; i++) arr[i] = arr[i + 1];
+    for (int i = idx; i < count - 1; i++)
+    {
+        arr[i] = arr[i + 1];
+    }
     if (!save_reminders(arr, count - 1))
     {
         mostrar_error_operacion("recordatorio", "eliminar");
@@ -534,7 +588,10 @@ static void filtrar_por_tematica(void)
     {
         if (strcasecmp(arr[i].tematica, tema) == 0)
         {
-            if (!found) ui_printf("Recordatorios con temática: %s\n", tema);
+            if (!found)
+            {
+                ui_printf("Recordatorios con temática: %s\n", tema);
+            }
             char tematica_mostrar[MAX_TEMATICA + 32];
             const char *sufijo = periodicidad_str(arr[i].periodicidad);
             if (arr[i].periodicidad == PERIODICIDAD_UNA_VEZ)
@@ -551,7 +608,10 @@ static void filtrar_por_tematica(void)
         }
     }
 
-    if (!found) ui_puts("No se encontraron recordatorios con esa temática.");
+    if (!found)
+    {
+        ui_puts("No se encontraron recordatorios con esa temática.");
+    }
     free(arr);
 }
 
@@ -586,7 +646,10 @@ static int merge_and_save_reminders(Reminder *newarr, int new_count)
 {
     int exist_count = 0;
     Reminder *exist = load_reminders(&exist_count);
-    if (!exist) exist_count = 0;
+    if (!exist)
+    {
+        exist_count = 0;
+    }
 
     size_t merged_count = (size_t)exist_count + (size_t)new_count;
 
@@ -606,10 +669,18 @@ static int merge_and_save_reminders(Reminder *newarr, int new_count)
 
     /* Copiar existentes (si los hay) */
     if (exist_count > 0)
+    {
         memcpy(merged, exist, sizeof(Reminder) * (size_t)exist_count);
+    }
 
     long long maxid = 0;
-    for (int i = 0; i < exist_count; i++) if (merged[i].id > maxid) maxid = merged[i].id;
+    for (int i = 0; i < exist_count; i++)
+    {
+        if (merged[i].id > maxid)
+        {
+            maxid = merged[i].id;
+        }
+    }
 
     for (int i = 0; i < new_count; i++)
     {
@@ -646,9 +717,13 @@ static void import_recordatorios(void)
     if (op == 1)
     {
         if (!save_reminders(newarr, new_count))
+        {
             mostrar_error_operacion("recordatorios", "guardar");
+        }
         else
+        {
             ui_puts("Importación completada (reemplazado).");
+        }
     }
 
     if (!merge_and_save_reminders(newarr, new_count))
@@ -666,7 +741,10 @@ static int fecha_coincide_con_hoy(struct tm const *tm_fecha)
 {
     time_t now = time(NULL);
     struct tm tm_hoy;
-    if (localtime_s(&tm_hoy, &now) != 0) return 0;
+    if (localtime_s(&tm_hoy, &now) != 0)
+    {
+        return 0;
+    }
     return (tm_fecha->tm_year == tm_hoy.tm_year &&
             tm_fecha->tm_mon == tm_hoy.tm_mon &&
             tm_fecha->tm_mday == tm_hoy.tm_mday);
@@ -679,7 +757,10 @@ static int fecha_previo_o_hoy(struct tm *tm_fecha)
 {
     time_t now = time(NULL);
     struct tm tm_hoy;
-    if (localtime_s(&tm_hoy, &now) != 0) return 0;
+    if (localtime_s(&tm_hoy, &now) != 0)
+    {
+        return 0;
+    }
     time_t t_fecha = mktime(tm_fecha);
     time_t t_hoy = mktime(&tm_hoy);
     return (t_fecha <= t_hoy);
@@ -688,11 +769,20 @@ static int fecha_previo_o_hoy(struct tm *tm_fecha)
 static int agregar_dias_a_fecha(const char *fecha_orig, int dias, char *out, int size)
 {
     struct tm tm;
-    if (!parse_storage_datetime_to_tm(fecha_orig, &tm)) return 0;
+    if (!parse_storage_datetime_to_tm(fecha_orig, &tm))
+    {
+        return 0;
+    }
     time_t t = mktime(&tm);
-    if (t == (time_t)-1) return 0;
+    if (t == (time_t)-1)
+    {
+        return 0;
+    }
     t += (time_t)dias * 86400;
-    if (localtime_s(&tm, &t) != 0) return 0;
+    if (localtime_s(&tm, &t) != 0)
+    {
+        return 0;
+    }
     snprintf(out, (size_t)size, "%04d-%02d-%02d %02d:%02d",
              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
              tm.tm_hour, tm.tm_min);
@@ -703,7 +793,10 @@ static int agregar_dias_a_fecha(const char *fecha_orig, int dias, char *out, int
 static int agregar_mes_a_fecha(const char *fecha_orig, char *out, int size)
 {
     struct tm tm;
-    if (!parse_storage_datetime_to_tm(fecha_orig, &tm)) return 0;
+    if (!parse_storage_datetime_to_tm(fecha_orig, &tm))
+    {
+        return 0;
+    }
     tm.tm_mon++;
     if (tm.tm_mon > 11)
     {
@@ -725,7 +818,10 @@ static int fecha_str_vacia_o_nula(const char *s)
 static int fecha_pasada_o_hoy(const char *fecha_str)
 {
     struct tm tm;
-    if (!parse_storage_datetime_to_tm(fecha_str, &tm)) return 0;
+    if (!parse_storage_datetime_to_tm(fecha_str, &tm))
+    {
+        return 0;
+    }
     return fecha_previo_o_hoy(&tm);
 }
 
@@ -747,24 +843,38 @@ static int periodicidad_a_dias(int periodicidad)
 static int fecha_str_es_hoy(const char *fecha_str)
 {
     struct tm tm;
-    if (!parse_storage_datetime_to_tm(fecha_str, &tm)) return 0;
+    if (!parse_storage_datetime_to_tm(fecha_str, &tm))
+    {
+        return 0;
+    }
     return fecha_coincide_con_hoy(&tm);
 }
 
 static int reminder_expirado(const Reminder *r)
 {
-    if (fecha_str_vacia_o_nula(r->fecha_fin)) return 0;
+    if (fecha_str_vacia_o_nula(r->fecha_fin))
+    {
+        return 0;
+    }
     struct tm tm_fin;
     struct tm tm_fecha;
-    if (!parse_storage_datetime_to_tm(r->fecha_fin, &tm_fin)) return 0;
-    if (!parse_storage_datetime_to_tm(r->fecha, &tm_fecha)) return 0;
+    if (!parse_storage_datetime_to_tm(r->fecha_fin, &tm_fin))
+    {
+        return 0;
+    }
+    if (!parse_storage_datetime_to_tm(r->fecha, &tm_fecha))
+    {
+        return 0;
+    }
     return mktime(&tm_fecha) > mktime(&tm_fin);
 }
 
 static int compute_next_date(const Reminder *r, int avanzar, int intento, char *temp, int temp_size)
 {
     if (r->periodicidad == PERIODICIDAD_MENSUAL)
+    {
         return agregar_mes_a_fecha(r->fecha, temp, temp_size);
+    }
     return agregar_dias_a_fecha(r->fecha, avanzar * (intento + 1), temp, temp_size);
 }
 
@@ -774,11 +884,15 @@ static int avanzar_recurrencia(Reminder *r, int avanzar, char *nueva_fecha, int 
     {
         char temp[MAX_FECHA];
         if (!compute_next_date(r, avanzar, intento, temp, MAX_FECHA))
+        {
             return 0;
+        }
 
         struct tm tm_temp;
         if (!parse_storage_datetime_to_tm(temp, &tm_temp))
+        {
             return 0;
+        }
 
         if (fecha_coincide_con_hoy(&tm_temp))
         {
@@ -788,7 +902,9 @@ static int avanzar_recurrencia(Reminder *r, int avanzar, char *nueva_fecha, int 
         }
 
         if (!fecha_previo_o_hoy(&tm_temp))
+        {
             break;
+        }
 
         strncpy_s(r->fecha, MAX_FECHA, temp, MAX_FECHA - 1);
         r->fecha[MAX_FECHA - 1] = '\0';
@@ -815,19 +931,37 @@ static Reminder crear_dup_reminder(const Reminder *r, const char *nueva_fecha, l
 
 static int reminder_needs_recurrence(const Reminder *r)
 {
-    if (r->periodicidad == PERIODICIDAD_UNA_VEZ) return 0;
-    if (!fecha_pasada_o_hoy(r->fecha)) return 0;
-    if (reminder_expirado(r)) return 0;
-    if (fecha_str_es_hoy(r->fecha)) return 0;
+    if (r->periodicidad == PERIODICIDAD_UNA_VEZ)
+    {
+        return 0;
+    }
+    if (!fecha_pasada_o_hoy(r->fecha))
+    {
+        return 0;
+    }
+    if (reminder_expirado(r))
+    {
+        return 0;
+    }
+    if (fecha_str_es_hoy(r->fecha))
+    {
+        return 0;
+    }
     return 1;
 }
 
 static int expand_array_if_full(Reminder **arr, int actual, int *capacidad)
 {
-    if (actual < *capacidad) return 1;
+    if (actual < *capacidad)
+    {
+        return 1;
+    }
     *capacidad *= 2;
     Reminder *tmp = (Reminder*)realloc(*arr, sizeof(Reminder) * (size_t)*capacidad);
-    if (!tmp) return 0;
+    if (!tmp)
+    {
+        return 0;
+    }
     *arr = tmp;
     return 1;
 }
@@ -860,16 +994,27 @@ static void verificar_recordatorios_recurrentes(void)
     for (int i = 0; i < initial; i++)
     {
         Reminder *r = &expandido[i];
-        if (!reminder_needs_recurrence(r)) continue;
+        if (!reminder_needs_recurrence(r))
+        {
+            continue;
+        }
 
         int avanzar = periodicidad_a_dias(r->periodicidad);
-        if (avanzar == 0) continue;
+        if (avanzar == 0)
+        {
+            continue;
+        }
 
         char nueva_fecha[MAX_FECHA];
-        if (!avanzar_recurrencia(r, avanzar, nueva_fecha, MAX_FECHA)) continue;
+        if (!avanzar_recurrencia(r, avanzar, nueva_fecha, MAX_FECHA))
+        {
+            continue;
+        }
 
         if (!expand_array_if_full(&expandido, actual, &capacidad))
+        {
             break;
+        }
 
         Reminder dup = crear_dup_reminder(r, nueva_fecha, obtener_siguiente_id_local(expandido, actual));
         expandido[actual++] = dup;
@@ -880,7 +1025,9 @@ static void verificar_recordatorios_recurrentes(void)
     {
         ui_printf("Se generaron %d recordatorio(s) recurrente(s) para hoy.\n", nuevos);
         if (!save_reminders(expandido, actual))
+        {
             mostrar_error_operacion("recordatorios", "guardar");
+        }
     }
     else
     {
@@ -904,7 +1051,10 @@ typedef struct
 
 static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm)
 {
-    if (!s || !out_tm) return 0;
+    if (!s || !out_tm)
+    {
+        return 0;
+    }
     int y=0;
     int m=0;
     int d=0;
@@ -955,7 +1105,10 @@ static int parse_storage_datetime_to_tm(const char *s, struct tm *out_tm)
 static time_t parse_datetime_ts(const char *s)
 {
     struct tm tm_struct;
-    if (!parse_storage_datetime_to_tm(s, &tm_struct)) return (time_t)0;
+    if (!parse_storage_datetime_to_tm(s, &tm_struct))
+    {
+        return (time_t)0;
+    }
     return mktime(&tm_struct);
 }
 
@@ -963,8 +1116,14 @@ static int agenda_item_cmp(const void *a, const void *b)
 {
     const AgendaItem *x = a;
     const AgendaItem *y = b;
-    if (x->ts < y->ts) return -1;
-    if (x->ts > y->ts) return 1;
+    if (x->ts < y->ts)
+    {
+        return -1;
+    }
+    if (x->ts > y->ts)
+    {
+        return 1;
+    }
     return 0;
 }
 /* Helpers para manejo seguro del array dinámico de AgendaItem */
@@ -974,7 +1133,10 @@ static int append_agenda_item(AgendaItem **items, size_t *cap, size_t *nitems, c
     {
         size_t newcap = (*cap == 0) ? 16 : (*cap * 2);
         AgendaItem *tmp = (AgendaItem*)realloc(*items, sizeof(AgendaItem) * newcap);
-        if (!tmp) return 0;
+        if (!tmp)
+        {
+            return 0;
+        }
         *items = tmp;
         *cap = newcap;
     }
@@ -1027,7 +1189,10 @@ static int add_reminders_to_items(AgendaItem **items, size_t *cap, size_t *nitem
 static int add_partidos_to_items(AgendaItem **items, size_t *cap, size_t *nitems)
 {
     sqlite3_stmt *stmt = prepare_partido_query("ORDER BY p.fecha_hora ASC");
-    if (!stmt) return 1; /* no hay partidos o error silencioso */
+    if (!stmt)
+    {
+        return 1; /* no hay partidos o error silencioso */
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -1114,7 +1279,10 @@ static void mostrar_agenda(void)
             shown = 1;
         }
     }
-    if (!shown) ui_puts("(No hay eventos futuros)");
+    if (!shown)
+    {
+        ui_puts("(No hay eventos futuros)");
+    }
 
     ui_puts("\n=== Agenda: Eventos pasados ===");
     shown = 0;
@@ -1128,7 +1296,10 @@ static void mostrar_agenda(void)
             shown = 1;
         }
     }
-    if (!shown) ui_puts("(No hay eventos pasados)");
+    if (!shown)
+    {
+        ui_puts("(No hay eventos pasados)");
+    }
 
     free(items);
 }

@@ -27,7 +27,7 @@ static void test_get_nombre_tipo_fase_postemporada(void)
 
 static void test_get_nombre_tipo_fase_desconocido(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_fase(99));
+    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_fase(TIPO_FASE_INVALIDA));
 }
 
 static void test_temporada_struct_sizes(void)

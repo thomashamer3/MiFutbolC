@@ -199,7 +199,9 @@ static void imprimir_contacto_tienda(const char *url, const char *direccion, con
                                      const char *whatsapp, const char *instagram, const char *email)
 {
     if (url && url[0])
+    {
         printf("  URL: %s\n", url);
+    }
     if (direccion && direccion[0])
         printf("  Direccion: %s\n", direccion);
     if (telefono && telefono[0])
@@ -263,7 +265,10 @@ static void imprimir_fila_tienda(sqlite3_stmt *stmt)
     printf("  Envio: %s | MercadoPago: %s | Rating: %d/10\n", tiene_envio ? "Si" : "No",
            mercadopago ? "Si" : "No", rating);
     if (notas && notas[0])
+    {
         printf("  Notas: %s\n", notas);
+    }
+
     printf("  Agregado: %s\n", fecha ? fecha : "");
     printf("----------------------------------------\n");
 }
@@ -291,7 +296,9 @@ void listar_tiendas(void)
         }
 
         if (!found)
+        {
             mostrar_no_hay_registros("tiendas registradas");
+        }
 
         sqlite3_finalize(stmt);
     }
@@ -310,7 +317,9 @@ void modificar_tienda(void)
 
     int id = input_int("\nID de la tienda a modificar (0 cancelar): ");
     if (id <= 0)
+    {
         return;
+    }
 
     if (!existe_id("tienda", id))
     {

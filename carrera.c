@@ -1,8 +1,8 @@
 #include "carrera.h"
 #include "db.h"
-#include "utils.h"
 #include "menu.h"
 #include "progresion.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,38 +10,39 @@
 
 /* ======== helpers internos ======== */
 
-#define SQL_EXPR_ANIO_FECHA_SEGURO \
-    "CASE " \
-    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) " \
-    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 7, 4) AS INTEGER) " \
-    "  ELSE NULL " \
+#define SQL_EXPR_ANIO_FECHA_SEGURO                                                                 \
+    "CASE "                                                                                        \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "         \
+    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 7, 4) AS INTEGER) "         \
+    "  ELSE NULL "                                                                                 \
     "END"
 
-#define SQL_EXPR_ANIO_FECHA_FLEX \
-    "CASE " \
-    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) " \
-    "  ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) " \
+#define SQL_EXPR_ANIO_FECHA_FLEX                                                                   \
+    "CASE "                                                                                        \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 1, 4) AS INTEGER) "         \
+    "  ELSE CAST(substr(fecha_hora, 7, 4) AS INTEGER) "                                            \
     "END"
 
-#define SQL_EXPR_MES_FECHA \
-    "CASE " \
-    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 6, 2) AS INTEGER) " \
-    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 4, 2) AS INTEGER) " \
-    "  ELSE NULL " \
+#define SQL_EXPR_MES_FECHA                                                                         \
+    "CASE "                                                                                        \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 6, 2) AS INTEGER) "         \
+    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 4, 2) AS INTEGER) "         \
+    "  ELSE NULL "                                                                                 \
     "END"
 
-#define SQL_EXPR_DIA_FECHA \
-    "CASE " \
-    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 9, 2) AS INTEGER) " \
-    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 1, 2) AS INTEGER) " \
-    "  ELSE NULL " \
+#define SQL_EXPR_DIA_FECHA                                                                         \
+    "CASE "                                                                                        \
+    "  WHEN fecha_hora LIKE '____-__-__%' THEN CAST(substr(fecha_hora, 9, 2) AS INTEGER) "         \
+    "  WHEN fecha_hora LIKE '__/__/____%' THEN CAST(substr(fecha_hora, 1, 2) AS INTEGER) "         \
+    "  ELSE NULL "                                                                                 \
     "END"
 
-#define SQL_FECHA_ORD(col) \
-    "CASE " \
-    "  WHEN " col " LIKE '____-__-__%' THEN substr(" col ", 1, 10) " \
-    "  WHEN " col " LIKE '__/__/____%' THEN substr(" col ", 7, 4) || '-' || substr(" col ", 4, 2) || '-' || substr(" col ", 1, 2) " \
-    "  ELSE " col " " \
+#define SQL_FECHA_ORD(col)                                                                         \
+    "CASE "                                                                                        \
+    "  WHEN " col " LIKE '____-__-__%' THEN substr(" col ", 1, 10) "                               \
+    "  WHEN " col " LIKE '__/__/____%' THEN substr(" col ", 7, 4) || '-' || substr(" col           \
+    ", 4, 2) || '-' || substr(" col ", 1, 2) "                                                     \
+    "  ELSE " col " "                                                                              \
     "END"
 
 #define SEP_MAYOR " ========================================\n"
@@ -55,7 +56,9 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
 static int preparar_stmt_msg(sqlite3_stmt **stmt, const char *sql)
 {
     if (preparar_stmt(stmt, sql))
+    {
         return 1;
+    }
     printf("Error al consultar la base de datos.\n");
     return 0;
 }
@@ -65,10 +68,14 @@ static void imprimir_titulo_carrera_usuario(void)
     char *nombre_usuario = get_user_name();
 
     if (nombre_usuario && nombre_usuario[0] != '\0')
+    {
         printf("\n  Carrera Futbolistica de %s\n", nombre_usuario);
-    else
-        printf("\n  Carrera Futbolistica del Usuario\n");
+    }
 
+    else
+    {
+        printf("\n  Carrera Futbolistica del Usuario\n");
+    }
     free(nombre_usuario);
 }
 
@@ -100,35 +107,56 @@ static void actualizar_racha_actual(RachaActual *racha, int resultado, int *dete
     if (racha->tipo == 0)
     {
         if (resultado == 1)
+        {
             racha->tipo = 1;
+        }
+
         else if (resultado == 3)
+        {
             racha->tipo = 3;
+        }
+
         else
+        {
             racha->tipo = 2;
+        }
     }
 
     if (racha->tipo == 1)
     {
         if (resultado == 1)
+        {
             racha->victorias++;
+        }
+
         else
+        {
             *detener = 1;
+        }
         return;
     }
 
     if (racha->tipo == 3)
     {
         if (resultado == 3)
+        {
             racha->derrotas++;
+        }
         else
+        {
             *detener = 1;
+        }
         return;
     }
 
     if (resultado != 3)
+    {
         racha->invicto++;
+    }
     else
+    {
         *detener = 1;
+    }
 }
 
 static int obtener_racha_actual(RachaActual *racha)
@@ -142,7 +170,9 @@ static int obtener_racha_actual(RachaActual *racha)
     racha->invicto = 0;
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return 0;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -150,7 +180,9 @@ static int obtener_racha_actual(RachaActual *racha)
         int resultado = sqlite3_column_int(stmt, 0);
         actualizar_racha_actual(racha, resultado, &detener);
         if (detener)
+        {
             break;
+        }
     }
 
     sqlite3_finalize(stmt);
@@ -162,11 +194,17 @@ static void imprimir_racha_actual(const RachaActual *racha)
     printf("\n  ---- Racha actual ----\n");
 
     if (racha->tipo == 1 && racha->victorias > 0)
+    {
         printf("  Victorias consecutivas : %d\n", racha->victorias);
+    }
     else if (racha->tipo == 3 && racha->derrotas > 0)
+    {
         printf("  Derrotas consecutivas  : %d\n", racha->derrotas);
+    }
     else if (racha->tipo == 2 && racha->invicto > 0)
+    {
         printf("  Partidos invicto       : %d\n", racha->invicto);
+    }
 }
 
 /* ========================================================
@@ -177,18 +215,19 @@ static void imprimir_racha_actual(const RachaActual *racha)
 static void mostrar_carrera_futbolistica(void)
 {
     if (!iniciar_vista_carrera("CARRERA FUTBOLISTICA"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT "
-        "  COUNT(*) AS partidos, "
-        "  SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-        "  SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
-        "  SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas, "
-        "  COALESCE(SUM(goles), 0) AS goles, "
-        "  COALESCE(SUM(asistencias), 0) AS asistencias "
-        "FROM partido";
+    const char *sql = "SELECT "
+                      "  COUNT(*) AS partidos, "
+                      "  SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
+                      "  SUM(CASE WHEN resultado = 2 THEN 1 ELSE 0 END) AS empates, "
+                      "  SUM(CASE WHEN resultado = 3 THEN 1 ELSE 0 END) AS derrotas, "
+                      "  COALESCE(SUM(goles), 0) AS goles, "
+                      "  COALESCE(SUM(asistencias), 0) AS asistencias "
+                      "FROM partido";
 
     if (!preparar_stmt_msg(&stmt, sql))
     {
@@ -204,12 +243,12 @@ static void mostrar_carrera_futbolistica(void)
         return;
     }
 
-    int partidos     = sqlite3_column_int(stmt, 0);
-    int victorias    = sqlite3_column_int(stmt, 1);
-    int empates      = sqlite3_column_int(stmt, 2);
-    int derrotas     = sqlite3_column_int(stmt, 3);
-    int goles        = sqlite3_column_int(stmt, 4);
-    int asistencias  = sqlite3_column_int(stmt, 5);
+    int partidos = sqlite3_column_int(stmt, 0);
+    int victorias = sqlite3_column_int(stmt, 1);
+    int empates = sqlite3_column_int(stmt, 2);
+    int derrotas = sqlite3_column_int(stmt, 3);
+    int goles = sqlite3_column_int(stmt, 4);
+    int asistencias = sqlite3_column_int(stmt, 5);
     double prom_goles = (partidos > 0) ? (double)goles / partidos : 0.0;
 
     sqlite3_finalize(stmt);
@@ -229,12 +268,14 @@ static void mostrar_carrera_futbolistica(void)
     {
         printf("\n  ---- Distribucion de resultados ----\n");
         printf("  Victorias : %5.1f%%\n", (double)victorias / partidos * 100.0);
-        printf("  Empates   : %5.1f%%\n", (double)empates   / partidos * 100.0);
-        printf("  Derrotas  : %5.1f%%\n", (double)derrotas  / partidos * 100.0);
+        printf("  Empates   : %5.1f%%\n", (double)empates / partidos * 100.0);
+        printf("  Derrotas  : %5.1f%%\n", (double)derrotas / partidos * 100.0);
     }
     RachaActual racha;
     if (obtener_racha_actual(&racha))
+    {
         imprimir_racha_actual(&racha);
+    }
 
     pause_console();
 }
@@ -247,27 +288,28 @@ static void mostrar_carrera_futbolistica(void)
 static void mostrar_historia_futbolistica(void)
 {
     if (!iniciar_vista_carrera("TU HISTORIA FUTBOLISTICA"))
+    {
         return;
+    }
 
     /* --- Datos globales, primer partido y mejor anio --- */
     sqlite3_stmt *stmt;
-    const char *sql =
-        "WITH por_anio AS ("
-        "  SELECT " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, SUM(goles) AS total_goles "
-        "  FROM partido "
-        "  GROUP BY anio"
-        "), mejor AS ("
-        "  SELECT anio, total_goles FROM por_anio ORDER BY total_goles DESC LIMIT 1"
-        ") "
-        "SELECT "
-        "  COUNT(*), "
-        "  COALESCE(SUM(goles), 0), "
-        "  COALESCE(SUM(asistencias), 0), "
-        "  MIN(" SQL_EXPR_ANIO_FECHA_SEGURO "), "
-        "  MIN(fecha_hora), "
-        "  COALESCE((SELECT anio FROM mejor), 0), "
-        "  COALESCE((SELECT total_goles FROM mejor), 0) "
-        "FROM partido";
+    const char *sql = "WITH por_anio AS ("
+                      "  SELECT " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, SUM(goles) AS total_goles "
+                      "  FROM partido "
+                      "  GROUP BY anio"
+                      "), mejor AS ("
+                      "  SELECT anio, total_goles FROM por_anio ORDER BY total_goles DESC LIMIT 1"
+                      ") "
+                      "SELECT "
+                      "  COUNT(*), "
+                      "  COALESCE(SUM(goles), 0), "
+                      "  COALESCE(SUM(asistencias), 0), "
+                      "  MIN(" SQL_EXPR_ANIO_FECHA_SEGURO "), "
+                      "  MIN(fecha_hora), "
+                      "  COALESCE((SELECT anio FROM mejor), 0), "
+                      "  COALESCE((SELECT total_goles FROM mejor), 0) "
+                      "FROM partido";
 
     if (!preparar_stmt_msg(&stmt, sql))
     {
@@ -293,8 +335,9 @@ static void mostrar_historia_futbolistica(void)
     char primera_fecha[64] = "";
 
     if (primera_fecha_txt)
+    {
         snprintf(primera_fecha, sizeof(primera_fecha), "%s", primera_fecha_txt);
-
+    }
     sqlite3_finalize(stmt);
 
     imprimir_titulo_carrera_usuario();
@@ -302,9 +345,13 @@ static void mostrar_historia_futbolistica(void)
     printf("\n  Tu historia futbolistica\n");
 
     if (anio_inicio > 0)
+    {
         printf("  Primer partido   : %d\n", anio_inicio);
+    }
     else
+    {
         printf("  Primer partido   : %s\n", primera_fecha[0] ? primera_fecha : "N/A");
+    }
 
     printf("  Partidos jugados : %d\n", partidos);
     printf("  Goles            : %d\n", goles);
@@ -318,16 +365,15 @@ static void mostrar_historia_futbolistica(void)
 
     /* --- Desglose por anio --- */
     sqlite3_stmt *stmt3;
-    const char *sql_anios =
-        "SELECT "
-        "  " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, "
-        "  COUNT(*) AS partidos, "
-        "  SUM(goles) AS goles, "
-        "  SUM(asistencias) AS asistencias, "
-        "  ROUND(AVG(rendimiento_general), 1) AS rend_prom "
-        "FROM partido "
-        "GROUP BY anio "
-        "ORDER BY anio ASC";
+    const char *sql_anios = "SELECT "
+                            "  " SQL_EXPR_ANIO_FECHA_FLEX " AS anio, "
+                            "  COUNT(*) AS partidos, "
+                            "  SUM(goles) AS goles, "
+                            "  SUM(asistencias) AS asistencias, "
+                            "  ROUND(AVG(rendimiento_general), 1) AS rend_prom "
+                            "FROM partido "
+                            "GROUP BY anio "
+                            "ORDER BY anio ASC";
 
     if (preparar_stmt(&stmt3, sql_anios))
     {
@@ -337,12 +383,13 @@ static void mostrar_historia_futbolistica(void)
 
         while (sqlite3_step(stmt3) == SQLITE_ROW)
         {
-            int a = sqlite3_column_int(stmt3, 0);
-            int p = sqlite3_column_int(stmt3, 1);
-            int g = sqlite3_column_int(stmt3, 2);
-            int as = sqlite3_column_int(stmt3, 3);
-            double r = sqlite3_column_double(stmt3, 4);
-            printf("  %-6d  %8d  %6d  %6d  %6.1f\n", a, p, g, as, r);
+            int anio = sqlite3_column_int(stmt3, 0);
+            int partidos = sqlite3_column_int(stmt3, 1);
+            int goles = sqlite3_column_int(stmt3, 2);
+            int asistencias = sqlite3_column_int(stmt3, 3);
+            double rendimiento = sqlite3_column_double(stmt3, 4);
+            printf("  %-6d  %8d  %6d  %6d  %6.1f\n", anio, partidos, goles, asistencias,
+                   rendimiento);
         }
         sqlite3_finalize(stmt3);
     }
@@ -357,18 +404,19 @@ static void mostrar_historia_futbolistica(void)
 static void mostrar_resumen_carrera(void)
 {
     if (!iniciar_vista_carrera("RESUMEN GENERAL DE CARRERA"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT "
-        "  MIN(" SQL_EXPR_ANIO_FECHA_FLEX ") AS inicio, "
-        "  MAX(" SQL_EXPR_ANIO_FECHA_FLEX ") AS fin, "
-        "  COUNT(*) AS partidos, "
-        "  COALESCE(SUM(goles), 0) AS goles, "
-        "  COALESCE(SUM(asistencias), 0) AS asistencias, "
-        "  ROUND(AVG(rendimiento_general), 2) AS rend_prom "
-        "FROM partido";
+    const char *sql = "SELECT "
+                      "  MIN(" SQL_EXPR_ANIO_FECHA_FLEX ") AS inicio, "
+                      "  MAX(" SQL_EXPR_ANIO_FECHA_FLEX ") AS fin, "
+                      "  COUNT(*) AS partidos, "
+                      "  COALESCE(SUM(goles), 0) AS goles, "
+                      "  COALESCE(SUM(asistencias), 0) AS asistencias, "
+                      "  ROUND(AVG(rendimiento_general), 2) AS rend_prom "
+                      "FROM partido";
 
     if (!preparar_stmt_msg(&stmt, sql))
     {
@@ -384,11 +432,11 @@ static void mostrar_resumen_carrera(void)
         return;
     }
 
-    int anio_inicio  = sqlite3_column_int(stmt, 0);
-    int anio_fin     = sqlite3_column_int(stmt, 1);
-    int partidos     = sqlite3_column_int(stmt, 2);
-    int goles        = sqlite3_column_int(stmt, 3);
-    int asistencias  = sqlite3_column_int(stmt, 4);
+    int anio_inicio = sqlite3_column_int(stmt, 0);
+    int anio_fin = sqlite3_column_int(stmt, 1);
+    int partidos = sqlite3_column_int(stmt, 2);
+    int goles = sqlite3_column_int(stmt, 3);
+    int asistencias = sqlite3_column_int(stmt, 4);
     double rend_prom = sqlite3_column_double(stmt, 5);
 
     sqlite3_finalize(stmt);
@@ -415,8 +463,9 @@ static void mostrar_resumen_carrera(void)
 
     RachaActual racha;
     if (obtener_racha_actual(&racha))
+    {
         imprimir_racha_actual(&racha);
-
+    }
     pause_console();
 }
 
@@ -453,7 +502,9 @@ typedef struct
 static void identidad_set_defaults(CarreraIdentidad *identidad)
 {
     if (!identidad)
+    {
         return;
+    }
 
     memset(identidad, 0, sizeof(*identidad));
     snprintf(identidad->pie_habil, sizeof(identidad->pie_habil), "Derecho");
@@ -469,7 +520,9 @@ static void identidad_set_defaults(CarreraIdentidad *identidad)
 static void copiar_texto_limited(char *dest, size_t dest_size, const char *src)
 {
     if (!dest || dest_size == 0)
+    {
         return;
+    }
 
     if (!src)
     {
@@ -490,30 +543,46 @@ static void identidad_cargar_fila(sqlite3_stmt *stmt, CarreraIdentidad *identida
     const char *historia = (const char *)sqlite3_column_text(stmt, 9);
 
     if (nombre)
+    {
         copiar_texto_limited(identidad->nombre, sizeof(identidad->nombre), nombre);
+    }
     identidad->edad = sqlite3_column_int(stmt, 1);
     if (pie_habil)
+    {
         copiar_texto_limited(identidad->pie_habil, sizeof(identidad->pie_habil), pie_habil);
+    }
     if (posiciones)
+    {
         copiar_texto_limited(identidad->posiciones, sizeof(identidad->posiciones), posiciones);
+    }
     identidad->altura_cm = sqlite3_column_double(stmt, 4);
     identidad->peso_kg = sqlite3_column_double(stmt, 5);
     if (estilo)
+    {
         copiar_texto_limited(identidad->estilo, sizeof(identidad->estilo), estilo);
+    }
     identidad->dorsal_favorito = sqlite3_column_int(stmt, 7);
     if (objetivos)
+    {
         copiar_texto_limited(identidad->objetivos, sizeof(identidad->objetivos), objetivos);
+    }
     if (historia)
+    {
         copiar_texto_limited(identidad->historia, sizeof(identidad->historia), historia);
+    }
 }
 
 static void identidad_completar_desde_salud(CarreraIdentidad *identidad)
 {
     if (!identidad)
+    {
         return;
+    }
 
     if (identidad->altura_cm > 0.0 && identidad->peso_kg > 0.0)
+    {
         return;
+    }
 
     sqlite3_stmt *stmt_salud;
     const char *sql_salud = "SELECT altura_cm, peso_kg FROM bienestar_salud WHERE id = 1";
@@ -525,9 +594,13 @@ static void identidad_completar_desde_salud(CarreraIdentidad *identidad)
     if (sqlite3_step(stmt_salud) == SQLITE_ROW)
     {
         if (identidad->altura_cm <= 0.0)
+        {
             identidad->altura_cm = sqlite3_column_double(stmt_salud, 0);
+        }
         if (identidad->peso_kg <= 0.0)
+        {
             identidad->peso_kg = sqlite3_column_double(stmt_salud, 1);
+        }
     }
 
     sqlite3_finalize(stmt_salud);
@@ -536,14 +609,16 @@ static void identidad_completar_desde_salud(CarreraIdentidad *identidad)
 static int cargar_identidad(CarreraIdentidad *identidad)
 {
     if (!identidad)
+    {
         return 0;
+    }
 
     identidad_set_defaults(identidad);
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT nombre, edad, pie_habil, posiciones, altura_cm, peso_kg, estilo, dorsal_favorito, objetivos, historia "
-        "FROM carrera_identidad WHERE id = 1";
+    const char *sql = "SELECT nombre, edad, pie_habil, posiciones, altura_cm, peso_kg, estilo, "
+                      "dorsal_favorito, objetivos, historia "
+                      "FROM carrera_identidad WHERE id = 1";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -551,7 +626,9 @@ static int cargar_identidad(CarreraIdentidad *identidad)
     }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         identidad_cargar_fila(stmt, identidad);
+    }
 
     sqlite3_finalize(stmt);
 
@@ -563,16 +640,21 @@ static int cargar_identidad(CarreraIdentidad *identidad)
 static int guardar_identidad(const CarreraIdentidad *identidad)
 {
     if (!identidad)
+    {
         return 0;
+    }
 
     sqlite3_stmt *stmt;
     const char *sql =
-        "INSERT INTO carrera_identidad (id, nombre, edad, pie_habil, posiciones, altura_cm, peso_kg, estilo, dorsal_favorito, objetivos, historia, updated_at) "
+        "INSERT INTO carrera_identidad (id, nombre, edad, pie_habil, posiciones, altura_cm, "
+        "peso_kg, estilo, dorsal_favorito, objetivos, historia, updated_at) "
         "VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now')) "
         "ON CONFLICT(id) DO UPDATE SET "
         "nombre = excluded.nombre, edad = excluded.edad, pie_habil = excluded.pie_habil, "
-        "posiciones = excluded.posiciones, altura_cm = excluded.altura_cm, peso_kg = excluded.peso_kg, "
-        "estilo = excluded.estilo, dorsal_favorito = excluded.dorsal_favorito, objetivos = excluded.objetivos, "
+        "posiciones = excluded.posiciones, altura_cm = excluded.altura_cm, peso_kg = "
+        "excluded.peso_kg, "
+        "estilo = excluded.estilo, dorsal_favorito = excluded.dorsal_favorito, objetivos = "
+        "excluded.objetivos, "
         "historia = excluded.historia, updated_at = excluded.updated_at";
 
     if (!preparar_stmt(&stmt, sql))
@@ -580,16 +662,16 @@ static int guardar_identidad(const CarreraIdentidad *identidad)
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, identidad->nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, identidad->nombre, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, identidad->edad);
-    sqlite3_bind_text(stmt, 3, identidad->pie_habil, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, identidad->posiciones, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, identidad->pie_habil, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, identidad->posiciones, -1, DB_TRANSIENT);
     sqlite3_bind_double(stmt, 5, identidad->altura_cm);
     sqlite3_bind_double(stmt, 6, identidad->peso_kg);
-    sqlite3_bind_text(stmt, 7, identidad->estilo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, identidad->estilo, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 8, identidad->dorsal_favorito);
-    sqlite3_bind_text(stmt, 9, identidad->objetivos, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 10, identidad->historia, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 9, identidad->objetivos, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 10, identidad->historia, -1, DB_TRANSIENT);
 
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
@@ -615,14 +697,22 @@ static void mostrar_ficha_identidad(void)
     printf("Posiciones: %s\n", identidad.posiciones[0] ? identidad.posiciones : "N/A");
 
     if (identidad.altura_cm > 0.0)
+    {
         printf("Altura: %.1f cm\n", identidad.altura_cm);
+    }
     else
+    {
         printf("Altura: N/A\n");
+    }
 
     if (identidad.peso_kg > 0.0)
+    {
         printf("Peso: %.1f kg\n", identidad.peso_kg);
+    }
     else
+    {
         printf("Peso: N/A\n");
+    }
 
     printf("Estilo: %s\n", identidad.estilo[0] ? identidad.estilo : "N/A");
     printf("Dorsal favorito: %d\n", identidad.dorsal_favorito);
@@ -632,10 +722,8 @@ static void mostrar_ficha_identidad(void)
     pause_console();
 }
 
-static void identidad_editar_texto_campo(const char *label_actual,
-        const char *prompt,
-        int usar_input_extendido,
-        char *destino,
+static void identidad_editar_texto_campo(const char *label_actual, const char *prompt,
+        int usar_input_extendido, char *destino,
         size_t destino_size)
 {
     char buffer[512];
@@ -668,10 +756,8 @@ static void identidad_editar_entero_campo(const char *label_actual, const char *
     }
 }
 
-static void identidad_editar_decimal_campo(const char *label_actual,
-        const char *unidad,
-        const char *prompt,
-        double *valor)
+static void identidad_editar_decimal_campo(const char *label_actual, const char *unidad,
+        const char *prompt, double *valor)
 {
     char buffer[128];
 
@@ -699,38 +785,43 @@ static void editar_ficha_identidad(void)
     CarreraIdentidad identidad;
     cargar_identidad(&identidad);
 
-    identidad_editar_texto_campo("Nombre actual", "Nombre (Enter mantiene): ", 0,
-                                 identidad.nombre, sizeof(identidad.nombre));
+    identidad_editar_texto_campo("Nombre actual", "Nombre (Enter mantiene): ", 0, identidad.nombre,
+                                 sizeof(identidad.nombre));
     identidad_editar_entero_campo("Edad actual", "Edad (Enter mantiene): ", &identidad.edad);
     identidad_editar_texto_campo("Pie habil actual", "Pie habil (Enter mantiene): ", 0,
                                  identidad.pie_habil, sizeof(identidad.pie_habil));
     identidad_editar_texto_campo("Posiciones actuales", "Posiciones (Enter mantiene): ", 0,
                                  identidad.posiciones, sizeof(identidad.posiciones));
 
-    identidad_editar_decimal_campo("Altura actual", "cm", "Altura cm (Enter mantiene): ", &identidad.altura_cm);
-    identidad_editar_decimal_campo("Peso actual", "kg", "Peso kg (Enter mantiene): ", &identidad.peso_kg);
+    identidad_editar_decimal_campo("Altura actual", "cm",
+                                   "Altura cm (Enter mantiene): ", &identidad.altura_cm);
+    identidad_editar_decimal_campo("Peso actual", "kg",
+                                   "Peso kg (Enter mantiene): ", &identidad.peso_kg);
 
-    identidad_editar_texto_campo("Estilo actual", "Estilo (Enter mantiene): ", 0,
-                                 identidad.estilo, sizeof(identidad.estilo));
-    identidad_editar_entero_campo("Dorsal favorito actual", "Dorsal favorito (Enter mantiene): ", &identidad.dorsal_favorito);
+    identidad_editar_texto_campo("Estilo actual", "Estilo (Enter mantiene): ", 0, identidad.estilo,
+                                 sizeof(identidad.estilo));
+    identidad_editar_entero_campo("Dorsal favorito actual",
+                                  "Dorsal favorito (Enter mantiene): ", &identidad.dorsal_favorito);
     identidad_editar_texto_campo("Objetivos actuales", "Objetivos (Enter mantiene): ", 1,
                                  identidad.objetivos, sizeof(identidad.objetivos));
     identidad_editar_texto_campo("Historia actual", "Historia (Enter mantiene): ", 1,
                                  identidad.historia, sizeof(identidad.historia));
 
     if (guardar_identidad(&identidad))
+    {
         printf("Ficha de identidad actualizada.\n");
+    }
     else
+    {
         printf("No se pudo actualizar la ficha de identidad.\n");
+    }
 
     pause_console();
 }
 
 static void menu_identidad_jugador(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Ver ficha", &mostrar_ficha_identidad},
+    MenuItem items[] = {{1, "Ver ficha", &mostrar_ficha_identidad},
         {2, "Editar ficha", &editar_ficha_identidad},
         {0, "Volver", NULL}
     };
@@ -741,7 +832,9 @@ static void menu_identidad_jugador(void)
 static int calcular_momentum_delta(double *delta)
 {
     if (!delta)
+    {
         return 0;
+    }
 
     *delta = 0.0;
 
@@ -751,7 +844,8 @@ static int calcular_momentum_delta(double *delta)
         "  COALESCE((SELECT AVG(rendimiento_general) "
         "            FROM (SELECT rendimiento_general FROM partido ORDER BY id DESC LIMIT 5)), 0), "
         "  COALESCE((SELECT AVG(rendimiento_general) "
-        "            FROM (SELECT rendimiento_general FROM partido ORDER BY id DESC LIMIT 5 OFFSET 5)), 0)";
+        "            FROM (SELECT rendimiento_general FROM partido ORDER BY id DESC LIMIT 5 OFFSET "
+        "5)), 0)";
 
     double actual = 0.0;
     double previo = 0.0;
@@ -773,13 +867,12 @@ static int calcular_momentum_delta(double *delta)
 static int perfil_dinamico_cargar_totales(PerfilDinamico *perfil)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT COUNT(*), "
-        "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0), "
-        "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
-        "COALESCE(AVG(goles), 0), COALESCE(AVG(asistencias), 0), "
-        "COALESCE(AVG(rendimiento_general), 0), COALESCE(AVG(estado_animo), 0) "
-        "FROM partido";
+    const char *sql = "SELECT COUNT(*), "
+                      "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0), "
+                      "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
+                      "COALESCE(AVG(goles), 0), COALESCE(AVG(asistencias), 0), "
+                      "COALESCE(AVG(rendimiento_general), 0), COALESCE(AVG(estado_animo), 0) "
+                      "FROM partido";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -805,9 +898,9 @@ static int perfil_dinamico_cargar_totales(PerfilDinamico *perfil)
 static void perfil_dinamico_cargar_dispersion(PerfilDinamico *perfil)
 {
     sqlite3_stmt *stmt;
-    const char *sql_dispersion =
-        "SELECT COALESCE(AVG(ABS(rendimiento_general - (SELECT AVG(rendimiento_general) FROM partido))), 0) "
-        "FROM partido";
+    const char *sql_dispersion = "SELECT COALESCE(AVG(ABS(rendimiento_general - (SELECT "
+                                 "AVG(rendimiento_general) FROM partido))), 0) "
+                                 "FROM partido";
 
     if (preparar_stmt(&stmt, sql_dispersion))
     {
@@ -822,60 +915,68 @@ static void perfil_dinamico_cargar_dispersion(PerfilDinamico *perfil)
 static void perfil_dinamico_definir_etiqueta(PerfilDinamico *perfil)
 {
     double contrib_por_partido = perfil->avg_goles + perfil->avg_asistencias;
-    double ratio_victorias = (perfil->partidos > 0)
-                             ? (double)perfil->victorias * 100.0 / (double)perfil->partidos
-                             : 0.0;
+    double ratio_victorias =
+        (perfil->partidos > 0) ? (double)perfil->victorias * 100.0 / (double)perfil->partidos : 0.0;
 
     if (perfil->avg_goles >= 1.20 && perfil->avg_asistencias < 0.70)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Goleador");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Tu impacto principal llega por el gol.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Tu impacto principal llega por el gol.");
         return;
     }
 
     if (perfil->avg_asistencias >= 1.00 && perfil->avg_goles < 0.90)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Asistidor");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Generas juego y habilitas mucho a tus companeros.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Generas juego y habilitas mucho a tus companeros.");
         return;
     }
 
     if (perfil->avg_asistencias >= 0.80 && perfil->avg_goles >= 0.60)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Playmaker");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Combinas creacion y definicion con buen equilibrio ofensivo.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Combinas creacion y definicion con buen equilibrio ofensivo.");
         return;
     }
 
     if (perfil->avg_rendimiento >= 7.50 && perfil->avg_animo >= 7.00)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Equilibrado");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Sostienes un rendimiento parejo en distintos contextos.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Sostienes un rendimiento parejo en distintos contextos.");
         return;
     }
 
     if (contrib_por_partido >= 0.70 && ratio_victorias < 45.0)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Guerrero");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Aunque no siempre gane el equipo, mantienes aporte competitivo.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Aunque no siempre gane el equipo, mantienes aporte competitivo.");
         return;
     }
 
     if (perfil->partidos >= 15 && perfil->dispersion_rendimiento <= 1.20)
     {
         snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Regular");
-        snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Tu curva de rendimiento es estable partido a partido.");
+        snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+                 "Tu curva de rendimiento es estable partido a partido.");
         return;
     }
 
     snprintf(perfil->etiqueta, sizeof(perfil->etiqueta), "Inconsistente");
-    snprintf(perfil->descripcion, sizeof(perfil->descripcion), "Hay picos altos y bajos marcados en tu rendimiento reciente.");
+    snprintf(perfil->descripcion, sizeof(perfil->descripcion),
+             "Hay picos altos y bajos marcados en tu rendimiento reciente.");
 }
 
 static int calcular_perfil_dinamico(PerfilDinamico *perfil)
 {
     if (!perfil)
+    {
         return 0;
+    }
 
     memset(perfil, 0, sizeof(*perfil));
 
@@ -895,7 +996,9 @@ static int calcular_perfil_dinamico(PerfilDinamico *perfil)
 static void mostrar_perfil_dinamico(void)
 {
     if (!iniciar_vista_carrera("PERFIL DINAMICO DE JUGADOR"))
+    {
         return;
+    }
 
     PerfilDinamico perfil;
     if (!calcular_perfil_dinamico(&perfil) || perfil.partidos <= 0)
@@ -911,16 +1014,24 @@ static void mostrar_perfil_dinamico(void)
     printf("Partidos: %d\n", perfil.partidos);
     printf("Victorias: %d\n", perfil.victorias);
     printf("Goles totales: %d | Asistencias totales: %d\n", perfil.goles, perfil.asistencias);
-    printf("Promedio goles: %.2f | Promedio asistencias: %.2f\n", perfil.avg_goles, perfil.avg_asistencias);
-    printf("Promedio rendimiento: %.2f | Promedio animo: %.2f\n", perfil.avg_rendimiento, perfil.avg_animo);
+    printf("Promedio goles: %.2f | Promedio asistencias: %.2f\n", perfil.avg_goles,
+           perfil.avg_asistencias);
+    printf("Promedio rendimiento: %.2f | Promedio animo: %.2f\n", perfil.avg_rendimiento,
+           perfil.avg_animo);
     printf("Dispersion rendimiento: %.2f\n", perfil.dispersion_rendimiento);
 
     if (perfil.momentum_delta > 0.40)
+    {
         printf("Momentum: ASCENDENTE (%.2f)\n", perfil.momentum_delta);
+    }
     else if (perfil.momentum_delta < -0.40)
+    {
         printf("Momentum: DESCENDENTE (%.2f)\n", perfil.momentum_delta);
+    }
     else
+    {
         printf("Momentum: ESTABLE (%.2f)\n", perfil.momentum_delta);
+    }
 
     pause_console();
 }
@@ -928,9 +1039,8 @@ static void mostrar_perfil_dinamico(void)
 static void listar_partidos_simple(int limite)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
-        "FROM partido ORDER BY id DESC LIMIT ?";
+    const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
+                      "FROM partido ORDER BY id DESC LIMIT ?";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -951,13 +1061,8 @@ static void listar_partidos_simple(int limite)
         int rendimiento = sqlite3_column_int(stmt, 4);
         int resultado = sqlite3_column_int(stmt, 5);
 
-        printf("%d | %s | %d | %d | %d | %s\n",
-               id,
-               fecha ? fecha : "N/A",
-               goles,
-               asistencias,
-               rendimiento,
-               resultado_to_text(resultado));
+        printf("%d | %s | %d | %d | %d | %s\n", id, fecha ? fecha : "N/A", goles, asistencias,
+               rendimiento, resultado_to_text(resultado));
     }
 
     sqlite3_finalize(stmt);
@@ -966,7 +1071,9 @@ static void listar_partidos_simple(int limite)
 static void seleccionar_tipo_hito(char *tipo_hito, size_t size)
 {
     if (!tipo_hito || size == 0)
+    {
         return;
+    }
 
     printf("Tipo de hito:\n");
     printf("1) Memorable\n");
@@ -1001,7 +1108,9 @@ static void seleccionar_tipo_hito(char *tipo_hito, size_t size)
     default:
         input_string("Tipo personalizado: ", tipo_hito, (int)size);
         if (tipo_hito[0] == '\0')
+        {
             snprintf(tipo_hito, size, "Memorable");
+        }
         break;
     }
 }
@@ -1009,12 +1118,16 @@ static void seleccionar_tipo_hito(char *tipo_hito, size_t size)
 static void guardar_hito_partido(void)
 {
     if (!iniciar_vista_carrera("PARTIDOS QUE MARCARON"))
+    {
         return;
+    }
 
     listar_partidos_simple(30);
     int partido_id = input_int("ID de partido a etiquetar (0 cancelar): ");
     if (partido_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("partido", partido_id))
     {
@@ -1044,13 +1157,17 @@ static void guardar_hito_partido(void)
     }
 
     sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, tipo_hito, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, nota, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, tipo_hito, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, nota, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Partido marcado como hito.\n");
+    }
     else
+    {
         printf("Error guardando hito: %s\n", sqlite3_errmsg(db));
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -1059,14 +1176,16 @@ static void guardar_hito_partido(void)
 static void listar_partidos_hito(void)
 {
     if (!iniciar_vista_carrera("HITOS DE PARTIDOS"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT h.partido_id, p.fecha_hora, h.tipo_hito, COALESCE(h.nota, ''), p.goles, p.asistencias, p.rendimiento_general "
-        "FROM carrera_partido_hito h "
-        "JOIN partido p ON p.id = h.partido_id "
-        "ORDER BY p.id DESC";
+    const char *sql = "SELECT h.partido_id, p.fecha_hora, h.tipo_hito, COALESCE(h.nota, ''), "
+                      "p.goles, p.asistencias, p.rendimiento_general "
+                      "FROM carrera_partido_hito h "
+                      "JOIN partido p ON p.id = h.partido_id "
+                      "ORDER BY p.id DESC";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -1086,15 +1205,12 @@ static void listar_partidos_hito(void)
         int asistencias = sqlite3_column_int(stmt, 5);
         int rendimiento = sqlite3_column_int(stmt, 6);
 
-        printf("Partido %d | %s | %s | G:%d A:%d R:%d\n",
-               partido_id,
-               fecha ? fecha : "N/A",
-               tipo_hito ? tipo_hito : "Hito",
-               goles,
-               asistencias,
-               rendimiento);
+        printf("Partido %d | %s | %s | G:%d A:%d R:%d\n", partido_id, fecha ? fecha : "N/A",
+               tipo_hito ? tipo_hito : "Hito", goles, asistencias, rendimiento);
         if (nota && nota[0] != '\0')
+        {
             printf("  Nota: %s\n", nota);
+        }
         count++;
     }
 
@@ -1110,12 +1226,16 @@ static void listar_partidos_hito(void)
 static void eliminar_hito_partido(void)
 {
     if (!iniciar_vista_carrera("ELIMINAR HITO DE PARTIDO"))
+    {
         return;
+    }
 
     listar_partidos_hito();
     int partido_id = input_int("ID de partido para quitar hito (0 cancelar): ");
     if (partido_id == 0)
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     const char *sql = "DELETE FROM carrera_partido_hito WHERE partido_id = ?";
@@ -1128,9 +1248,13 @@ static void eliminar_hito_partido(void)
 
     sqlite3_bind_int(stmt, 1, partido_id);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Hito eliminado (si existia).\n");
+    }
     else
+    {
         printf("Error al eliminar hito: %s\n", sqlite3_errmsg(db));
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -1138,9 +1262,7 @@ static void eliminar_hito_partido(void)
 
 static void menu_partidos_hito(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Marcar/actualizar partido", &guardar_hito_partido},
+    MenuItem items[] = {{1, "Marcar/actualizar partido", &guardar_hito_partido},
         {2, "Listar partidos marcados", &listar_partidos_hito},
         {3, "Eliminar marca", &eliminar_hito_partido},
         {0, "Volver", NULL}
@@ -1152,13 +1274,16 @@ static void menu_partidos_hito(void)
 static void mostrar_timeline_carrera(void)
 {
     if (!iniciar_vista_carrera("TIMELINE DE CARRERA"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     const char *sql =
         "SELECT fecha_ord, fecha_txt, titulo, detalle FROM ("
         "  SELECT "
-        "    " SQL_FECHA_ORD("p.fecha_hora") " AS fecha_ord, "
+        "    " SQL_FECHA_ORD(
+            "p.fecha_hora") " AS fecha_ord, "
         "    p.fecha_hora AS fecha_txt, "
         "    'Debut' AS titulo, "
         "    'Primer partido registrado' AS detalle "
@@ -1166,31 +1291,69 @@ static void mostrar_timeline_carrera(void)
         "  WHERE p.id = (SELECT id FROM partido ORDER BY id ASC LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
-        "    " SQL_FECHA_ORD("p.fecha_hora") " AS fecha_ord, "
+        "    " SQL_FECHA_ORD(
+            "p.fecha_hora") " AS fecha_ord, "
         "    p.fecha_hora AS fecha_txt, "
         "    'Primer gol' AS titulo, "
         "    'Se inaugura la cuenta goleadora' AS detalle "
         "  FROM partido p "
-        "  WHERE p.id = (SELECT id FROM partido WHERE goles > 0 ORDER BY id ASC LIMIT 1) "
+        "  WHERE p.id = (SELECT id FROM partido WHERE "
+        "goles > 0 ORDER BY id ASC LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
-        "    " SQL_FECHA_ORD("p.fecha_hora") " AS fecha_ord, "
-        "    p.fecha_hora AS fecha_txt, "
-        "    'Primera asistencia' AS titulo, "
-        "    'Se inaugura la cuenta de asistencias' AS detalle "
+        "    " SQL_FECHA_ORD(
+            "p.fecha_hora") " AS fecha_ord, "
+        "    p.fecha_hora AS "
+        "fecha_txt, "
+        "    'Primera asistencia' AS "
+        "titulo, "
+        "    'Se inaugura la cuenta de "
+        "asistencias' AS detalle "
         "  FROM partido p "
-        "  WHERE p.id = (SELECT id FROM partido WHERE asistencias > 0 ORDER BY id ASC LIMIT 1) "
+        "  WHERE p.id = (SELECT id "
+        "FROM partido WHERE "
+        "asistencias > 0 ORDER BY id "
+        "ASC LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
-        "    " SQL_FECHA_ORD("p.fecha_hora") " AS fecha_ord, "
-        "    p.fecha_hora AS fecha_txt, "
-        "    h.tipo_hito AS titulo, "
-        "    COALESCE(h.nota, 'Partido marcado por el usuario') AS detalle "
-        "  FROM carrera_partido_hito h "
-        "  JOIN partido p ON p.id = h.partido_id "
-        "  UNION ALL "
+        "    " SQL_FECHA_ORD(
+            "p.fecha_hora") " AS "
+        "fecha_ord,"
+        " "
+        "    "
+        "p.fecha_"
+        "hora AS "
+        "fecha_txt,"
+        " "
+        "    "
+        "h.tipo_"
+        "hito AS "
+        "titulo, "
+        "    "
+        "COALESCE("
+        "h.nota, "
+        "'Partido "
+        "marcado "
+        "por el "
+        "usuario') "
+        "AS "
+        "detalle "
+        "  FROM "
+        "carrera_"
+        "partido_"
+        "hito h "
+        "  JOIN "
+        "partido p "
+        "ON p.id = "
+        "h.partido_"
+        "id "
+        "  UNION "
+        "ALL "
         "  SELECT "
-        "    " SQL_FECHA_ORD("l.fecha") " AS fecha_ord, "
+        "   "
+        " " SQL_FECHA_ORD(
+            "l."
+            "fecha") " AS fecha_ord, "
         "    l.fecha AS fecha_txt, "
         "    'Lesion' AS titulo, "
         "    COALESCE(l.tipo, 'Lesion') || ' - ' || COALESCE(l.descripcion, '') AS detalle "
@@ -1216,11 +1379,15 @@ static void mostrar_timeline_carrera(void)
         char fecha_display[64] = "";
         format_date_for_display(fecha_txt, fecha_display, (int)sizeof(fecha_display));
         if (fecha_display[0] == '\0' && fecha_txt)
+        {
             snprintf(fecha_display, sizeof(fecha_display), "%s", fecha_txt);
+        }
 
         printf("- %s | %s\n", fecha_display[0] ? fecha_display : "N/A", titulo ? titulo : "Evento");
         if (detalle && detalle[0] != '\0')
+        {
             printf("  %s\n", detalle);
+        }
         count++;
     }
 
@@ -1236,24 +1403,23 @@ static void mostrar_timeline_carrera(void)
 static void hof_mostrar_mejor_partido(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
-        "FROM partido ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, id DESC LIMIT 1";
+    const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
+                      "FROM partido ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, "
+                      "id DESC LIMIT 1";
 
     printf("MEJOR PARTIDO\n");
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
-        printf("Partido %d | Fecha %s | G:%d A:%d | Rend:%d\n",
-               sqlite3_column_int(stmt, 0),
-               fecha ? fecha : "N/A",
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
+        printf("Partido %d | Fecha %s | G:%d A:%d | Rend:%d\n", sqlite3_column_int(stmt, 0),
+               fecha ? fecha : "N/A", sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4));
     }
     else
@@ -1267,24 +1433,22 @@ static void hof_mostrar_mejor_partido(void)
 static void hof_mostrar_peor_partido(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
-        "FROM partido ORDER BY rendimiento_general ASC, id DESC LIMIT 1";
+    const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
+                      "FROM partido ORDER BY rendimiento_general ASC, id DESC LIMIT 1";
 
     printf("\nPEOR PARTIDO\n");
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
-        printf("Partido %d | Fecha %s | G:%d A:%d | Rend:%d\n",
-               sqlite3_column_int(stmt, 0),
-               fecha ? fecha : "N/A",
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
+        printf("Partido %d | Fecha %s | G:%d A:%d | Rend:%d\n", sqlite3_column_int(stmt, 0),
+               fecha ? fecha : "N/A", sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4));
     }
     else
@@ -1307,16 +1471,15 @@ static void hof_mostrar_mejor_temporada(void)
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("Anio %d | PJ:%d | G:%d | A:%d | Rend:%.2f\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_double(stmt, 4));
+        printf("Anio %d | PJ:%d | G:%d | A:%d | Rend:%.2f\n", sqlite3_column_int(stmt, 0),
+               sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3), sqlite3_column_double(stmt, 4));
     }
     else
     {
@@ -1329,30 +1492,30 @@ static void hof_mostrar_mejor_temporada(void)
 static void hof_mostrar_camiseta_legendaria(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT c.nombre, COUNT(p.id) AS pj, "
-        "SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
-        "ROUND(AVG(p.rendimiento_general), 2) AS rend "
-        "FROM camiseta c "
-        "JOIN partido p ON p.camiseta_id = c.id "
-        "GROUP BY c.id "
-        "HAVING COUNT(p.id) > 0 "
-        "ORDER BY (CAST(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) AS REAL) / COUNT(p.id)) DESC, rend DESC, pj DESC "
-        "LIMIT 1";
+    const char *sql = "SELECT c.nombre, COUNT(p.id) AS pj, "
+                      "SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) AS victorias, "
+                      "ROUND(AVG(p.rendimiento_general), 2) AS rend "
+                      "FROM camiseta c "
+                      "JOIN partido p ON p.camiseta_id = c.id "
+                      "GROUP BY c.id "
+                      "HAVING COUNT(p.id) > 0 "
+                      "ORDER BY (CAST(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END) AS REAL) / "
+                      "COUNT(p.id)) DESC, rend DESC, pj DESC "
+                      "LIMIT 1";
 
     printf("\nCAMISETA LEGENDARIA\n");
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *camiseta = (const char *)sqlite3_column_text(stmt, 0);
-        printf("%s | PJ:%d | Victorias:%d | Rend:%.2f\n",
-               camiseta ? camiseta : "N/A",
-               sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2),
+        printf("%s | PJ:%d | Victorias:%d | Rend:%.2f\n", camiseta ? camiseta : "N/A",
+               sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
                sqlite3_column_double(stmt, 3));
     }
     else
@@ -1366,14 +1529,16 @@ static void hof_mostrar_camiseta_legendaria(void)
 static void hof_mostrar_records_personales(void)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT COALESCE(MAX(goles), 0), COALESCE(MAX(asistencias), 0), COALESCE(MAX(rendimiento_general), 0) FROM partido";
+    const char *sql = "SELECT COALESCE(MAX(goles), 0), COALESCE(MAX(asistencias), 0), "
+                      "COALESCE(MAX(rendimiento_general), 0) FROM partido";
 
     printf("\nRECORDS PERSONALES\n");
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -1394,7 +1559,9 @@ static void hof_mostrar_hitos_registrados(void)
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -1408,7 +1575,9 @@ static void hof_mostrar_hitos_registrados(void)
 static void mostrar_hall_of_fame_personal(void)
 {
     if (!iniciar_vista_carrera("HALL OF FAME PERSONAL"))
+    {
         return;
+    }
 
     hof_mostrar_mejor_partido();
     hof_mostrar_peor_partido();
@@ -1433,11 +1602,10 @@ typedef struct
 static void resumen_narrativo_cargar_periodo(ResumenNarrativoPeriodo *periodo)
 {
     sqlite3_stmt *stmt;
-    const char *sql_periodo =
-        "SELECT MIN(fecha_hora), MAX(fecha_hora), COUNT(*), "
-        "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
-        "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0) "
-        "FROM partido";
+    const char *sql_periodo = "SELECT MIN(fecha_hora), MAX(fecha_hora), COUNT(*), "
+                              "COALESCE(SUM(goles), 0), COALESCE(SUM(asistencias), 0), "
+                              "COALESCE(SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END), 0) "
+                              "FROM partido";
 
     if (!periodo)
     {
@@ -1505,22 +1673,20 @@ static const char *resumen_narrativo_texto_momentum(double momentum_delta)
     return "estable";
 }
 
-static void resumen_narrativo_guardar(const char *fecha_inicio,
-                                      const char *fecha_fin,
-                                      const char *perfil,
-                                      const char *resumen)
+static void resumen_narrativo_guardar(const char *fecha_inicio, const char *fecha_fin,
+                                      const char *perfil, const char *resumen)
 {
     sqlite3_stmt *stmt;
-    const char *sql_insert =
-        "INSERT INTO carrera_resumen_narrativo (fecha, periodo_inicio, periodo_fin, perfil_dinamico, resumen) "
-        "VALUES (date('now'), ?, ?, ?, ?)";
+    const char *sql_insert = "INSERT INTO carrera_resumen_narrativo (fecha, periodo_inicio, "
+                             "periodo_fin, perfil_dinamico, resumen) "
+                             "VALUES (date('now'), ?, ?, ?, ?)";
 
     if (preparar_stmt(&stmt, sql_insert))
     {
-        sqlite3_bind_text(stmt, 1, fecha_inicio, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, fecha_fin, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 3, perfil, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 4, resumen, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 1, fecha_inicio, -1, DB_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, fecha_fin, -1, DB_TRANSIENT);
+        sqlite3_bind_text(stmt, 3, perfil, -1, DB_TRANSIENT);
+        sqlite3_bind_text(stmt, 4, resumen, -1, DB_TRANSIENT);
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
     }
@@ -1529,7 +1695,9 @@ static void resumen_narrativo_guardar(const char *fecha_inicio,
 static void generar_resumen_narrativo_automatico(void)
 {
     if (!iniciar_vista_carrera("RESUMEN NARRATIVO AUTOMATICO"))
+    {
         return;
+    }
 
     PerfilDinamico perfil;
     calcular_perfil_dinamico(&perfil);
@@ -1543,27 +1711,20 @@ static void generar_resumen_narrativo_automatico(void)
     const char *momentum_texto = resumen_narrativo_texto_momentum(perfil.momentum_delta);
     const char *perfil_dinamico = perfil.etiqueta[0] ? perfil.etiqueta : "Equilibrado";
 
-    double winrate = (periodo.partidos > 0)
-                     ? (double)periodo.victorias * 100.0 / (double)periodo.partidos
-                     : 0.0;
+    double winrate =
+        (periodo.partidos > 0) ? (double)periodo.victorias * 100.0 / (double)periodo.partidos : 0.0;
 
     char resumen[1200];
-    int resumen_len = snprintf(resumen, sizeof(resumen),
-                               "Entre %s y %s, disputaste %d partidos con %d goles y %d asistencias. "
-                               "Tu perfil dinamico actual es %s, con rendimiento promedio %.2f y un momentum %s. "
-                               "Acumulas %d hitos personales registrados y %d lesiones historicas. "
-                               "Tu porcentaje de victorias es %.1f%%, lo que refleja una etapa de construccion continua en tu carrera.",
-                               periodo.fecha_inicio,
-                               periodo.fecha_fin,
-                               periodo.partidos,
-                               periodo.goles,
-                               periodo.asistencias,
-                               perfil_dinamico,
-                               perfil.avg_rendimiento,
-                               momentum_texto,
-                               hitos,
-                               lesiones,
-                               winrate);
+    int resumen_len =
+        snprintf(resumen, sizeof(resumen),
+                 "Entre %s y %s, disputaste %d partidos con %d goles y %d asistencias. "
+                 "Tu perfil dinamico actual es %s, con rendimiento promedio %.2f y un momentum %s. "
+                 "Acumulas %d hitos personales registrados y %d lesiones historicas. "
+                 "Tu porcentaje de victorias es %.1f%%, lo que refleja una etapa de construccion "
+                 "continua en tu carrera.",
+                 periodo.fecha_inicio, periodo.fecha_fin, periodo.partidos, periodo.goles,
+                 periodo.asistencias, perfil_dinamico, perfil.avg_rendimiento, momentum_texto,
+                 hitos, lesiones, winrate);
 
     if (resumen_len < 0)
     {
@@ -1589,9 +1750,8 @@ static void listar_resumenes_narrativos(void)
     print_header("HISTORIAL DE RESUMENES NARRATIVOS");
 
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT id, fecha, periodo_inicio, periodo_fin, perfil_dinamico, resumen "
-        "FROM carrera_resumen_narrativo ORDER BY id DESC LIMIT 10";
+    const char *sql = "SELECT id, fecha, periodo_inicio, periodo_fin, perfil_dinamico, resumen "
+                      "FROM carrera_resumen_narrativo ORDER BY id DESC LIMIT 10";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -1610,12 +1770,8 @@ static void listar_resumenes_narrativos(void)
         const char *perfil = (const char *)sqlite3_column_text(stmt, 4);
         const char *resumen = (const char *)sqlite3_column_text(stmt, 5);
 
-        printf("[%d] Fecha: %s | Periodo: %s -> %s | Perfil: %s\n",
-               id,
-               fecha ? fecha : "N/A",
-               inicio ? inicio : "N/A",
-               fin ? fin : "N/A",
-               perfil ? perfil : "N/A");
+        printf("[%d] Fecha: %s | Periodo: %s -> %s | Perfil: %s\n", id, fecha ? fecha : "N/A",
+               inicio ? inicio : "N/A", fin ? fin : "N/A", perfil ? perfil : "N/A");
         printf("%s\n\n", resumen ? resumen : "");
         count++;
     }
@@ -1631,9 +1787,7 @@ static void listar_resumenes_narrativos(void)
 
 static void menu_resumen_narrativo(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Generar resumen automatico", &generar_resumen_narrativo_automatico},
+    MenuItem items[] = {{1, "Generar resumen automatico", &generar_resumen_narrativo_automatico},
         {2, "Ver historial", &listar_resumenes_narrativos},
         {0, "Volver", NULL}
     };
@@ -1686,15 +1840,15 @@ typedef struct
 
 static const char *retro_nombre_mes(int mes)
 {
-    static const char *meses[] =
-    {
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    };
+    static const char *meses[] = {"enero",      "febrero", "marzo",     "abril",
+                                  "mayo",       "junio",   "julio",     "agosto",
+                                  "septiembre", "octubre", "noviembre", "diciembre"
+                                 };
 
     if (mes < 1 || mes > 12)
+    {
         return "mes";
-
+    }
     return meses[mes - 1];
 }
 
@@ -1711,38 +1865,54 @@ static void retro_obtener_fecha_actual(int *dia, int *mes, int *anio, int *seman
 #endif
 
     if (dia)
+    {
         *dia = tm_ahora.tm_mday;
+    }
     if (mes)
+    {
         *mes = tm_ahora.tm_mon + 1;
+    }
     if (anio)
+    {
         *anio = tm_ahora.tm_year + 1900;
+    }
 
     strftime(semana_buffer, sizeof(semana_buffer), "%W", &tm_ahora);
     if (semana_anio)
+    {
         *semana_anio = atoi(semana_buffer);
+    }
 }
 
 static int retro_parse_2d(const char *src)
 {
     if (!src)
+    {
         return -1;
+    }
     if (src[0] < '0' || src[0] > '9' || src[1] < '0' || src[1] > '9')
+    {
         return -1;
+    }
     return (src[0] - '0') * 10 + (src[1] - '0');
 }
 
 static int retro_parse_4d(const char *src)
 {
-    int v = 0;
+    int parse = 0;
     if (!src)
+    {
         return -1;
+    }
     for (int i = 0; i < 4; i++)
     {
         if (src[i] < '0' || src[i] > '9')
+        {
             return -1;
-        v = v * 10 + (src[i] - '0');
+        }
+        parse = parse * 10 + (src[i] - '0');
     }
-    return v;
+    return parse;
 }
 
 static int retro_fecha_valida(int dia, int mes, int anio)
@@ -1750,46 +1920,57 @@ static int retro_fecha_valida(int dia, int mes, int anio)
     return !(anio < 0 || mes < 1 || mes > 12 || dia < 1 || dia > 31);
 }
 
-static void retro_fecha_asignar(int d, int m, int y, int *dia, int *mes, int *anio)
+static void retro_fecha_asignar(int dia_origen, int mes_origen, int anio_origen, int *dia_destino,
+                                int *mes_destino, int *anio_destino)
 {
-    if (dia)
-        *dia = d;
-    if (mes)
-        *mes = m;
-    if (anio)
-        *anio = y;
+    if (dia_origen && dia_destino)
+    {
+        *dia_destino = dia_origen;
+    }
+    if (mes_origen && mes_destino)
+    {
+        *mes_destino = mes_origen;
+    }
+    if (anio_origen && anio_destino)
+    {
+        *anio_destino = anio_origen;
+    }
 }
 
 static int retro_parse_fecha_iso(const char *fecha_hora, int *dia, int *mes, int *anio)
 {
-    int y = retro_parse_4d(fecha_hora + 0);
-    int m = retro_parse_2d(fecha_hora + 5);
-    int d = retro_parse_2d(fecha_hora + 8);
+    int parse_y = retro_parse_4d(fecha_hora + 0);
+    int parse_m = retro_parse_2d(fecha_hora + 5);
+    int parse_d = retro_parse_2d(fecha_hora + 8);
 
-    if (!retro_fecha_valida(d, m, y))
+    if (!retro_fecha_valida(parse_d, parse_m, parse_y))
+    {
         return 0;
-
-    retro_fecha_asignar(d, m, y, dia, mes, anio);
+    }
+    retro_fecha_asignar(parse_d, parse_m, parse_y, dia, mes, anio);
     return 1;
 }
 
 static int retro_parse_fecha_latam(const char *fecha_hora, int *dia, int *mes, int *anio)
 {
-    int d = retro_parse_2d(fecha_hora + 0);
-    int m = retro_parse_2d(fecha_hora + 3);
-    int y = retro_parse_4d(fecha_hora + 6);
+    int parse_d = retro_parse_2d(fecha_hora + 0);
+    int parse_m = retro_parse_2d(fecha_hora + 3);
+    int parse_y = retro_parse_4d(fecha_hora + 6);
 
-    if (!retro_fecha_valida(d, m, y))
+    if (!retro_fecha_valida(parse_d, parse_m, parse_y))
+    {
         return 0;
-
-    retro_fecha_asignar(d, m, y, dia, mes, anio);
+    }
+    retro_fecha_asignar(parse_d, parse_m, parse_y, dia, mes, anio);
     return 1;
 }
 
 static int retro_parse_fecha(const char *fecha_hora, int *dia, int *mes, int *anio)
 {
     if (!fecha_hora || safe_strnlen(fecha_hora, 32) < 10)
+    {
         return 0;
+    }
 
     if (fecha_hora[4] == '-' && fecha_hora[7] == '-')
     {
@@ -1807,7 +1988,7 @@ static int retro_parse_fecha(const char *fecha_hora, int *dia, int *mes, int *an
 static int retro_semana_del_anio(int dia, int mes, int anio)
 {
     struct tm tm_fecha;
-    time_t ts;
+    time_t time;
     char semana_buffer[8] = "0";
 
     memset(&tm_fecha, 0, sizeof(tm_fecha));
@@ -1815,47 +1996,56 @@ static int retro_semana_del_anio(int dia, int mes, int anio)
     tm_fecha.tm_mon = mes - 1;
     tm_fecha.tm_year = anio - 1900;
 
-    ts = mktime(&tm_fecha);
-    if (ts == (time_t)-1)
+    time = mktime(&tm_fecha);
+    if (time == (time_t)-1)
+    {
         return -1;
+    }
 
     strftime(semana_buffer, sizeof(semana_buffer), "%W", &tm_fecha);
     return atoi(semana_buffer);
 }
 
-static void retro_reset_recuerdo(RetroRecuerdo *r)
+static void retro_reset_recuerdo(RetroRecuerdo *recuerdo)
 {
-    if (!r)
+    if (!recuerdo)
+    {
         return;
-    memset(r, 0, sizeof(*r));
+    }
+    memset(recuerdo, 0, sizeof(*recuerdo));
 }
 
-static int retro_append_hito(RetroRecuerdo *recuerdos, int *count, int max_count,
-                             int anio_actual, const char *fecha_raw,
-                             const char *titulo, const char *detalle)
+static int retro_append_hito(RetroRecuerdo *recuerdos, int *count, int max_count, int anio_actual,
+                             const char *fecha_raw, const char *titulo, const char *detalle)
 {
     int dia_evento = 0;
     int mes_evento = 0;
     int anio_evento = 0;
-    RetroRecuerdo *r;
+    RetroRecuerdo *retro;
 
     if (!recuerdos || !count || *count >= max_count || !fecha_raw)
+    {
         return 0;
+    }
 
     if (!retro_parse_fecha(fecha_raw, &dia_evento, &mes_evento, &anio_evento))
+    {
         return 0;
+    }
 
     if (anio_evento >= anio_actual)
+    {
         return 0;
+    }
 
-    r = &recuerdos[*count];
-    retro_reset_recuerdo(r);
-    r->tipo = RETRO_RECUERDO_HITO;
-    r->anio_evento = anio_evento;
-    r->anios_atras = anio_actual - anio_evento;
-    format_date_for_display(fecha_raw, r->fecha_mostrar, (int)sizeof(r->fecha_mostrar));
-    snprintf(r->titulo, sizeof(r->titulo), "HITO - %s", titulo ? titulo : "Momento clave");
-    snprintf(r->linea1, sizeof(r->linea1), "%s", detalle ? detalle : "");
+    retro = &recuerdos[*count];
+    retro_reset_recuerdo(retro);
+    retro->tipo = RETRO_RECUERDO_HITO;
+    retro->anio_evento = anio_evento;
+    retro->anios_atras = anio_actual - anio_evento;
+    format_date_for_display(fecha_raw, retro->fecha_mostrar, (int)sizeof(retro->fecha_mostrar));
+    snprintf(retro->titulo, sizeof(retro->titulo), "HITO - %s", titulo ? titulo : "Momento clave");
+    snprintf(retro->linea1, sizeof(retro->linea1), "%s", detalle ? detalle : "");
 
     (*count)++;
     return 1;
@@ -1880,7 +2070,9 @@ static int retro_cargar_partidos_hoy(RetroRecuerdo *recuerdos, int *count, int m
         "LIMIT 8";
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return 0;
+    }
 
     sqlite3_bind_int(stmt, 1, dia_actual);
     sqlite3_bind_int(stmt, 2, mes_actual);
@@ -1888,7 +2080,7 @@ static int retro_cargar_partidos_hoy(RetroRecuerdo *recuerdos, int *count, int m
 
     while (sqlite3_step(stmt) == SQLITE_ROW && *count < max_count)
     {
-        RetroRecuerdo *r = &recuerdos[*count];
+        RetroRecuerdo *retro = &recuerdos[*count];
         const char *fecha_raw = (const char *)sqlite3_column_text(stmt, 1);
         const char *cancha = (const char *)sqlite3_column_text(stmt, 9);
         const char *camiseta = (const char *)sqlite3_column_text(stmt, 10);
@@ -1896,44 +2088,46 @@ static int retro_cargar_partidos_hoy(RetroRecuerdo *recuerdos, int *count, int m
         int anio_evento = 0;
 
         if (!retro_parse_fecha(fecha_raw, NULL, NULL, &anio_evento) || anio_evento >= anio_actual)
-            continue;
-
-        retro_reset_recuerdo(r);
-        r->tipo = RETRO_RECUERDO_PARTIDO;
-        r->partido_id = sqlite3_column_int(stmt, 0);
-        r->anio_evento = anio_evento;
-        r->anios_atras = anio_actual - anio_evento;
-        format_date_for_display(fecha_raw, r->fecha_mostrar, (int)sizeof(r->fecha_mostrar));
-
-        snprintf(r->titulo, sizeof(r->titulo), "HACE %d ANIOS - %s", r->anios_atras, r->fecha_mostrar);
-
-        if (sqlite3_column_int(stmt, 2) >= 0 && sqlite3_column_int(stmt, 3) >= 0 && rival && rival[0] != '\0')
         {
-            snprintf(r->linea1, sizeof(r->linea1), "Tu equipo %d - %d %s",
+            continue;
+        }
+
+        retro_reset_recuerdo(retro);
+        retro->tipo = RETRO_RECUERDO_PARTIDO;
+        retro->partido_id = sqlite3_column_int(stmt, 0);
+        retro->anio_evento = anio_evento;
+        retro->anios_atras = anio_actual - anio_evento;
+        format_date_for_display(fecha_raw, retro->fecha_mostrar, (int)sizeof(retro->fecha_mostrar));
+
+        snprintf(retro->titulo, sizeof(retro->titulo), "HACE %d ANIOS - %s", retro->anios_atras,
+                 retro->fecha_mostrar);
+
+        if (sqlite3_column_int(stmt, 2) >= 0 && sqlite3_column_int(stmt, 3) >= 0 && rival &&
+                rival[0] != '\0')
+        {
+            snprintf(retro->linea1, sizeof(retro->linea1), "Tu equipo %d - %d %s",
                      sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3), rival);
         }
         else if (rival && rival[0] != '\0')
         {
-            snprintf(r->linea1, sizeof(r->linea1), "Vs %s", rival);
+            snprintf(retro->linea1, sizeof(retro->linea1), "Vs %s", rival);
         }
         else
         {
-            snprintf(r->linea1, sizeof(r->linea1), "Partido registrado en tu historial");
+            snprintf(retro->linea1, sizeof(retro->linea1), "Partido registrado en tu historial");
         }
 
-        snprintf(r->linea2, sizeof(r->linea2), "%s | Cancha: %s",
+        snprintf(retro->linea2, sizeof(retro->linea2), "%s | Cancha: %s",
                  resultado_to_text(sqlite3_column_int(stmt, 8)),
                  (cancha && cancha[0] != '\0') ? cancha : "N/A");
 
-        snprintf(r->linea3, sizeof(r->linea3),
+        snprintf(retro->linea3, sizeof(retro->linea3),
                  "Tu actuacion: %d goles | %d asistencias | rendimiento %d/10",
-                 sqlite3_column_int(stmt, 4),
-                 sqlite3_column_int(stmt, 5),
+                 sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
                  sqlite3_column_int(stmt, 6));
 
-        snprintf(r->linea4, sizeof(r->linea4), "Camiseta: %s | Cansancio: %d/10",
-                 (camiseta && camiseta[0] != '\0') ? camiseta : "N/A",
-                 sqlite3_column_int(stmt, 7));
+        snprintf(retro->linea4, sizeof(retro->linea4), "Camiseta: %s | Cansancio: %d/10",
+                 (camiseta && camiseta[0] != '\0') ? camiseta : "N/A", sqlite3_column_int(stmt, 7));
 
         (*count)++;
     }
@@ -1951,8 +2145,11 @@ static void retro_cargar_hito_primer_partido(RetroRecuerdo *recuerdos, int *coun
     int mes = 0;
     int anio = 0;
 
-    if (!preparar_stmt(&stmt, "SELECT fecha_hora FROM partido ORDER BY fecha_hora ASC, id ASC LIMIT 1"))
+    if (!preparar_stmt(&stmt,
+                       "SELECT fecha_hora FROM partido ORDER BY fecha_hora ASC, id ASC LIMIT 1"))
+    {
         return;
+    }
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -1961,12 +2158,11 @@ static void retro_cargar_hito_primer_partido(RetroRecuerdo *recuerdos, int *coun
     }
 
     fecha_raw = (const char *)sqlite3_column_text(stmt, 0);
-    if (retro_parse_fecha(fecha_raw, &dia, &mes, &anio) &&
-            dia == dia_actual && mes == mes_actual && anio < anio_actual)
+    if (retro_parse_fecha(fecha_raw, &dia, &mes, &anio) && dia == dia_actual && mes == mes_actual &&
+            anio < anio_actual)
     {
         retro_append_hito(recuerdos, count, max_count, anio_actual, fecha_raw,
-                          "Primer partido registrado",
-                          "Empezaste a escribir tu historia ese dia.");
+                          "Primer partido registrado", "Empezaste a escribir tu historia ese dia.");
     }
 
     sqlite3_finalize(stmt);
@@ -1981,8 +2177,7 @@ static void retro_cargar_hito_primer_gol(RetroRecuerdo *recuerdos, int *count, i
     int mes = 0;
     int anio = 0;
 
-    if (!preparar_stmt(&stmt,
-                       "SELECT fecha_hora FROM partido "
+    if (!preparar_stmt(&stmt, "SELECT fecha_hora FROM partido "
                        "WHERE goles > 0 ORDER BY fecha_hora ASC, id ASC LIMIT 1"))
     {
         return;
@@ -1995,8 +2190,8 @@ static void retro_cargar_hito_primer_gol(RetroRecuerdo *recuerdos, int *count, i
     }
 
     fecha_raw = (const char *)sqlite3_column_text(stmt, 0);
-    if (retro_parse_fecha(fecha_raw, &dia, &mes, &anio) &&
-            dia == dia_actual && mes == mes_actual && anio < anio_actual)
+    if (retro_parse_fecha(fecha_raw, &dia, &mes, &anio) && dia == dia_actual && mes == mes_actual &&
+            anio < anio_actual)
     {
         retro_append_hito(recuerdos, count, max_count, anio_actual, fecha_raw,
                           "Aniversario de tu primer gol",
@@ -2010,16 +2205,17 @@ static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count,
         int dia_actual, int mes_actual, int anio_actual)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT TRIM(IFNULL(rival_nombre, '')) AS rival, MIN(fecha_hora) "
-        "FROM partido "
-        "WHERE TRIM(IFNULL(rival_nombre, '')) <> '' "
-        "GROUP BY TRIM(IFNULL(rival_nombre, '')) "
-        "ORDER BY MIN(fecha_hora) ASC";
+    const char *sql = "SELECT TRIM(IFNULL(rival_nombre, '')) AS rival, MIN(fecha_hora) "
+                      "FROM partido "
+                      "WHERE TRIM(IFNULL(rival_nombre, '')) <> '' "
+                      "GROUP BY TRIM(IFNULL(rival_nombre, '')) "
+                      "ORDER BY MIN(fecha_hora) ASC";
     int agregados = 0;
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -2031,12 +2227,18 @@ static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count,
         char detalle[180];
 
         if (*count >= max_count || agregados >= 2)
+        {
             break;
+        }
 
         if (!retro_parse_fecha(fecha_raw, &dia, &mes, &anio))
+        {
             continue;
+        }
         if (anio >= anio_actual || dia != dia_actual || mes != mes_actual)
+        {
             continue;
+        }
 
         snprintf(detalle, sizeof(detalle), "Primera vez que jugaste contra %s.",
                  (rival && rival[0] != '\0') ? rival : "ese rival");
@@ -2055,16 +2257,17 @@ static void retro_cargar_hito_primera_camiseta(RetroRecuerdo *recuerdos, int *co
         int dia_actual, int mes_actual, int anio_actual)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT IFNULL(c.nombre, ''), MIN(p.fecha_hora) "
-        "FROM partido p "
-        "JOIN camiseta c ON c.id = p.camiseta_id "
-        "GROUP BY p.camiseta_id, c.nombre "
-        "ORDER BY MIN(p.fecha_hora) ASC";
+    const char *sql = "SELECT IFNULL(c.nombre, ''), MIN(p.fecha_hora) "
+                      "FROM partido p "
+                      "JOIN camiseta c ON c.id = p.camiseta_id "
+                      "GROUP BY p.camiseta_id, c.nombre "
+                      "ORDER BY MIN(p.fecha_hora) ASC";
     int agregados = 0;
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -2076,12 +2279,18 @@ static void retro_cargar_hito_primera_camiseta(RetroRecuerdo *recuerdos, int *co
         char detalle[180];
 
         if (*count >= max_count || agregados >= 2)
+        {
             break;
+        }
 
         if (!retro_parse_fecha(fecha_raw, &dia, &mes, &anio))
+        {
             continue;
+        }
         if (anio >= anio_actual || dia != dia_actual || mes != mes_actual)
+        {
             continue;
+        }
 
         snprintf(detalle, sizeof(detalle), "Primera vez que usaste la camiseta %s.",
                  (camiseta && camiseta[0] != '\0') ? camiseta : "seleccionada");
@@ -2116,7 +2325,9 @@ static void retro_cargar_hito_mejor_racha(RetroRecuerdo *recuerdos, int *count, 
     char detalle[200];
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -2150,38 +2361,48 @@ static void retro_cargar_hito_mejor_racha(RetroRecuerdo *recuerdos, int *count, 
     sqlite3_finalize(stmt);
 
     if (best_len < 3 || best_inicio[0] == '\0')
+    {
         return;
+    }
 
     if (!retro_parse_fecha(best_inicio, &dia, &mes, &anio))
+    {
         return;
+    }
     if (anio >= anio_actual)
+    {
         return;
+    }
 
     semana_evento = retro_semana_del_anio(dia, mes, anio);
     if (semana_evento < 0 || semana_evento != semana_actual)
+    {
         return;
+    }
 
     format_date_for_display(best_inicio, inicio_fmt, (int)sizeof(inicio_fmt));
     format_date_for_display(best_fin, fin_fmt, (int)sizeof(fin_fmt));
     snprintf(detalle, sizeof(detalle),
-             "Esta semana de %d arrancaste tu mejor racha: %d victorias seguidas (%s -> %s).",
-             anio, best_len, inicio_fmt, fin_fmt);
+             "Esta semana de %d arrancaste tu mejor racha: %d victorias seguidas (%s -> %s).", anio,
+             best_len, inicio_fmt, fin_fmt);
 
     retro_append_hito(recuerdos, count, max_count, anio_actual, best_inicio,
                       "Semana de mejor racha", detalle);
 }
 
-static int retro_cargar_recuerdos_hoy(RetroRecuerdo *recuerdos, int max_count,
-                                      int dia_actual, int mes_actual, int anio_actual,
-                                      int semana_actual)
+static int retro_cargar_recuerdos_hoy(RetroRecuerdo *recuerdos, int max_count, int dia_actual,
+                                      int mes_actual, int anio_actual, int semana_actual)
 {
     int count = 0;
 
     retro_cargar_partidos_hoy(recuerdos, &count, max_count, dia_actual, mes_actual, anio_actual);
-    retro_cargar_hito_primer_partido(recuerdos, &count, max_count, dia_actual, mes_actual, anio_actual);
+    retro_cargar_hito_primer_partido(recuerdos, &count, max_count, dia_actual, mes_actual,
+                                     anio_actual);
     retro_cargar_hito_primer_gol(recuerdos, &count, max_count, dia_actual, mes_actual, anio_actual);
-    retro_cargar_hito_primer_rival(recuerdos, &count, max_count, dia_actual, mes_actual, anio_actual);
-    retro_cargar_hito_primera_camiseta(recuerdos, &count, max_count, dia_actual, mes_actual, anio_actual);
+    retro_cargar_hito_primer_rival(recuerdos, &count, max_count, dia_actual, mes_actual,
+                                   anio_actual);
+    retro_cargar_hito_primera_camiseta(recuerdos, &count, max_count, dia_actual, mes_actual,
+                                       anio_actual);
     retro_cargar_hito_mejor_racha(recuerdos, &count, max_count, semana_actual, anio_actual);
 
     return count;
@@ -2223,7 +2444,8 @@ static void retro_mostrar_detalle_partido(int partido_id)
         return;
     }
 
-    format_date_for_display((const char *)sqlite3_column_text(stmt, 1), fecha_fmt, (int)sizeof(fecha_fmt));
+    format_date_for_display((const char *)sqlite3_column_text(stmt, 1), fecha_fmt,
+                            (int)sizeof(fecha_fmt));
 
     printf("Partido #%d\n", sqlite3_column_int(stmt, 0));
     printf("Fecha: %s\n", fecha_fmt);
@@ -2231,19 +2453,20 @@ static void retro_mostrar_detalle_partido(int partido_id)
 
     if (sqlite3_column_int(stmt, 6) >= 0 && sqlite3_column_int(stmt, 7) >= 0)
     {
-        printf("Marcador global: %d - %d\n", sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7));
+        printf("Marcador global: %d - %d\n", sqlite3_column_int(stmt, 6),
+               sqlite3_column_int(stmt, 7));
     }
 
     printf("Cancha: %s\n", (const char *)sqlite3_column_text(stmt, 2));
     printf("Rival: %s\n", (const char *)sqlite3_column_text(stmt, 4));
     printf("Camiseta: %s\n", (const char *)sqlite3_column_text(stmt, 3));
-    printf("Actuacion: %d goles | %d asistencias\n",
-           sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9));
+    printf("Actuacion: %d goles | %d asistencias\n", sqlite3_column_int(stmt, 8),
+           sqlite3_column_int(stmt, 9));
     printf("Rendimiento: %d/10 | Cansancio: %d/10 | Estado de animo: %d/10\n",
-           sqlite3_column_int(stmt, 10), sqlite3_column_int(stmt, 11), sqlite3_column_int(stmt, 12));
+           sqlite3_column_int(stmt, 10), sqlite3_column_int(stmt, 11),
+           sqlite3_column_int(stmt, 12));
     printf("Posicion: %s | Minutos: %d | Intensidad: %d\n",
-           (const char *)sqlite3_column_text(stmt, 13),
-           sqlite3_column_int(stmt, 14),
+           (const char *)sqlite3_column_text(stmt, 13), sqlite3_column_int(stmt, 14),
            sqlite3_column_int(stmt, 15));
     printf("Comentario: %s\n", (const char *)sqlite3_column_text(stmt, 16));
     printf("Lo mejor: %s\n", (const char *)sqlite3_column_text(stmt, 17));
@@ -2268,13 +2491,17 @@ static int retro_cargar_partido_para_comparacion(int partido_id, RetroComparacio
         "WHERE p.id = ?";
 
     if (!out)
+    {
         return 0;
+    }
 
     memset(out, 0, sizeof(*out));
     out->id = partido_id;
 
     if (!preparar_stmt(&stmt, sql))
+    {
         return 0;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
     if (sqlite3_step(stmt) != SQLITE_ROW)
@@ -2284,9 +2511,11 @@ static int retro_cargar_partido_para_comparacion(int partido_id, RetroComparacio
     }
 
     out->id = sqlite3_column_int(stmt, 0);
-    format_date_for_display((const char *)sqlite3_column_text(stmt, 1), out->fecha, (int)sizeof(out->fecha));
+    format_date_for_display((const char *)sqlite3_column_text(stmt, 1), out->fecha,
+                            (int)sizeof(out->fecha));
     snprintf(out->cancha, sizeof(out->cancha), "%s", (const char *)sqlite3_column_text(stmt, 2));
-    snprintf(out->camiseta, sizeof(out->camiseta), "%s", (const char *)sqlite3_column_text(stmt, 3));
+    snprintf(out->camiseta, sizeof(out->camiseta), "%s",
+             (const char *)sqlite3_column_text(stmt, 3));
     snprintf(out->rival, sizeof(out->rival), "%s", (const char *)sqlite3_column_text(stmt, 4));
     out->resultado = sqlite3_column_int(stmt, 5);
     out->goles_equipo = sqlite3_column_int(stmt, 6);
@@ -2303,37 +2532,47 @@ static int retro_cargar_partido_para_comparacion(int partido_id, RetroComparacio
 
 static void retro_comparar_partidos(int partido_a, int partido_b)
 {
-    RetroComparacionPartido a;
-    RetroComparacionPartido b;
+    RetroComparacionPartido retro_partido_a;
+    RetroComparacionPartido retro_partido_b;
 
     clear_screen();
     print_header("MODO RETRO - COMPARACION DE PARTIDOS");
 
-    if (!retro_cargar_partido_para_comparacion(partido_a, &a) ||
-            !retro_cargar_partido_para_comparacion(partido_b, &b))
+    if (!retro_cargar_partido_para_comparacion(partido_a, &retro_partido_a) ||
+            !retro_cargar_partido_para_comparacion(partido_b, &retro_partido_b))
     {
         printf("No se pudieron cargar ambos partidos para comparar.\n");
         pause_console();
         return;
     }
 
-    printf("A) Partido #%d - %s\n", a.id, a.fecha);
-    printf("   Rival: %s | Cancha: %s | Camiseta: %s\n", a.rival, a.cancha, a.camiseta);
-    printf("B) Partido #%d - %s\n", b.id, b.fecha);
-    printf("   Rival: %s | Cancha: %s | Camiseta: %s\n", b.rival, b.cancha, b.camiseta);
+    printf("A) Partido #%d - %s\n", retro_partido_a.id, retro_partido_a.fecha);
+    printf("   Rival: %s | Cancha: %s | Camiseta: %s\n", retro_partido_a.rival,
+           retro_partido_a.cancha, retro_partido_a.camiseta);
+    printf("B) Partido #%d - %s\n", retro_partido_b.id, retro_partido_b.fecha);
+    printf("   Rival: %s | Cancha: %s | Camiseta: %s\n", retro_partido_b.rival,
+           retro_partido_b.cancha, retro_partido_b.camiseta);
     printf("%s", SEP_MENOR);
-    printf("Resultado: %s vs %s\n", resultado_to_text(a.resultado), resultado_to_text(b.resultado));
-    printf("Goles: %d vs %d (delta %+d)\n", a.goles, b.goles, b.goles - a.goles);
-    printf("Asistencias: %d vs %d (delta %+d)\n", a.asistencias, b.asistencias, b.asistencias - a.asistencias);
-    printf("Rendimiento: %d/10 vs %d/10 (delta %+d)\n", a.rendimiento, b.rendimiento, b.rendimiento - a.rendimiento);
-    printf("Cansancio: %d/10 vs %d/10 (delta %+d)\n", a.cansancio, b.cansancio, b.cansancio - a.cansancio);
-    printf("Estado animo: %d/10 vs %d/10 (delta %+d)\n", a.estado_animo, b.estado_animo, b.estado_animo - a.estado_animo);
+    printf("Resultado: %s vs %s\n", resultado_to_text(retro_partido_a.resultado),
+           resultado_to_text(retro_partido_b.resultado));
+    printf("Goles: %d vs %d (delta %+d)\n", retro_partido_a.goles, retro_partido_b.goles,
+           retro_partido_b.goles - retro_partido_a.goles);
+    printf("Asistencias: %d vs %d (delta %+d)\n", retro_partido_a.asistencias,
+           retro_partido_b.asistencias, retro_partido_b.asistencias - retro_partido_a.asistencias);
+    printf("Rendimiento: %d/10 vs %d/10 (delta %+d)\n", retro_partido_a.rendimiento,
+           retro_partido_b.rendimiento, retro_partido_b.rendimiento - retro_partido_a.rendimiento);
+    printf("Cansancio: %d/10 vs %d/10 (delta %+d)\n", retro_partido_a.cansancio,
+           retro_partido_b.cansancio, retro_partido_b.cansancio - retro_partido_a.cansancio);
+    printf("Estado animo: %d/10 vs %d/10 (delta %+d)\n", retro_partido_a.estado_animo,
+           retro_partido_b.estado_animo,
+           retro_partido_b.estado_animo - retro_partido_a.estado_animo);
 
-    if (a.goles_equipo >= 0 && a.goles_rival >= 0 && b.goles_equipo >= 0 && b.goles_rival >= 0)
+    if (retro_partido_a.goles_equipo >= 0 && retro_partido_a.goles_rival >= 0 &&
+            retro_partido_b.goles_equipo >= 0 && retro_partido_b.goles_rival >= 0)
     {
-        printf("Marcador global: %d-%d vs %d-%d\n",
-               a.goles_equipo, a.goles_rival,
-               b.goles_equipo, b.goles_rival);
+        printf("Marcador global: %d-%d vs %d-%d\n", retro_partido_a.goles_equipo,
+               retro_partido_a.goles_rival, retro_partido_b.goles_equipo,
+               retro_partido_b.goles_rival);
     }
 
     pause_console();
@@ -2376,18 +2615,21 @@ static void retro_ver_recuerdos_mes(int mes_actual, int anio_actual)
         const char *cancha = (const char *)sqlite3_column_text(stmt, 2);
         const char *camiseta = (const char *)sqlite3_column_text(stmt, 8);
 
-        if (!retro_parse_fecha(fecha_raw, NULL, NULL, &anio_evento) || anio_evento <= 0 || anio_evento >= anio_actual)
+        if (!retro_parse_fecha(fecha_raw, NULL, NULL, &anio_evento) || anio_evento <= 0 ||
+                anio_evento >= anio_actual)
+        {
             continue;
+        }
 
         format_date_for_display(fecha_raw, fecha_fmt, (int)sizeof(fecha_fmt));
-        printf("[%d] %s (hace %d anios)\n",
-               sqlite3_column_int(stmt, 0), fecha_fmt, anio_actual - anio_evento);
-        printf("    %s | Rival: %s | Cancha: %s\n",
-               resultado_to_text(sqlite3_column_int(stmt, 7)),
+        printf("[%d] %s (hace %d anios)\n", sqlite3_column_int(stmt, 0), fecha_fmt,
+               anio_actual - anio_evento);
+        printf("    %s | Rival: %s | Cancha: %s\n", resultado_to_text(sqlite3_column_int(stmt, 7)),
                (rival && rival[0] != '\0') ? rival : "N/A",
                (cancha && cancha[0] != '\0') ? cancha : "N/A");
         printf("    Actuacion: %d goles | %d asistencias | rendimiento %d/10\n",
-               sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
+               sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
+               sqlite3_column_int(stmt, 6));
         printf("    Camiseta: %s\n", (camiseta && camiseta[0] != '\0') ? camiseta : "N/A");
         printf("%s", SEP_MENOR);
         cantidad++;
@@ -2404,31 +2646,41 @@ static void retro_ver_recuerdos_mes(int mes_actual, int anio_actual)
     pause_console();
 }
 
-static void retro_imprimir_recuerdo(const RetroRecuerdo *r)
+static void retro_imprimir_recuerdo(const RetroRecuerdo *retro)
 {
-    if (!r)
-        return;
-
-    if (r->tipo == RETRO_RECUERDO_PARTIDO)
+    if (!retro)
     {
-        printf("> %s\n", r->titulo);
-        if (r->linea1[0] != '\0')
-            printf("  %s\n", r->linea1);
-        if (r->linea2[0] != '\0')
-            printf("  %s\n", r->linea2);
-        if (r->linea3[0] != '\0')
-            printf("  %s\n", r->linea3);
-        if (r->linea4[0] != '\0')
-            printf("  %s\n", r->linea4);
+        return;
+    }
+
+    if (retro->tipo == RETRO_RECUERDO_PARTIDO)
+    {
+        printf("> %s\n", retro->titulo);
+        if (retro->linea1[0] != '\0')
+        {
+            printf("  %s\n", retro->linea1);
+        }
+        if (retro->linea2[0] != '\0')
+        {
+            printf("  %s\n", retro->linea2);
+        }
+        if (retro->linea3[0] != '\0')
+        {
+            printf("  %s\n", retro->linea3);
+        }
+        if (retro->linea4[0] != '\0')
+        {
+            printf("  %s\n", retro->linea4);
+        }
     }
     else
     {
-        printf("> %s - %s (hace %d anios)\n",
-               r->titulo,
-               r->fecha_mostrar[0] ? r->fecha_mostrar : "fecha N/A",
-               r->anios_atras);
-        if (r->linea1[0] != '\0')
-            printf("  %s\n", r->linea1);
+        printf("> %s - %s (hace %d anios)\n", retro->titulo,
+               retro->fecha_mostrar[0] ? retro->fecha_mostrar : "fecha N/A", retro->anios_atras);
+        if (retro->linea1[0] != '\0')
+        {
+            printf("  %s\n", retro->linea1);
+        }
     }
 }
 
@@ -2436,8 +2688,7 @@ static void retro_mostrar_hoy_sin_recuerdos(int dia_actual, int mes_actual, int 
 {
     clear_screen();
     print_header("MODO RETRO - HOY EN TU HISTORIA");
-    printf("%02d/%02d/%04d - buscando en tu historial...\n\n",
-           dia_actual, mes_actual, anio_actual);
+    printf("%02d/%02d/%04d - buscando en tu historial...\n\n", dia_actual, mes_actual, anio_actual);
     printf("Hoy no hay recuerdos para esta fecha.\n");
     printf("Segui cargando partidos y esta seccion se volvera cada vez mas emotiva.\n\n");
     pause_console();
@@ -2460,30 +2711,37 @@ static int retro_preparar_lista_menu_hoy(const RetroRecuerdo *recuerdos, int can
         printf("%s", SEP_MENOR);
 
         if (recuerdos[i].tipo == RETRO_RECUERDO_PARTIDO && cantidad_partidos < 4)
+        {
             idx_partidos[cantidad_partidos++] = i;
+        }
     }
 
     return cantidad_partidos;
 }
 
 static int retro_mostrar_menu_hoy_y_leer_opcion(const RetroRecuerdo *recuerdos,
-        const int idx_partidos[4], int cantidad_partidos, int mes_actual,
-        int opt_detalles[4], int *opt_comp, int *opt_mes)
+        const int idx_partidos[4], int cantidad_partidos,
+        int mes_actual, int opt_detalles[4], int *opt_comp,
+        int *opt_mes)
 {
     int menu_idx = 1;
 
     if (opt_comp)
+    {
         *opt_comp = 0;
+    }
     if (opt_mes)
+    {
         *opt_mes = 0;
+    }
 
     printf("Que queres hacer?\n");
 
     for (int i = 0; i < cantidad_partidos; i++)
     {
         opt_detalles[i] = menu_idx++;
-        printf("[%d] Ver detalle completo del partido de %d\n",
-               opt_detalles[i], recuerdos[idx_partidos[i]].anio_evento);
+        printf("[%d] Ver detalle completo del partido de %d\n", opt_detalles[i],
+               recuerdos[idx_partidos[i]].anio_evento);
     }
 
     if (cantidad_partidos >= 2 && opt_comp)
@@ -2503,7 +2761,8 @@ static int retro_mostrar_menu_hoy_y_leer_opcion(const RetroRecuerdo *recuerdos,
 }
 
 static int retro_manejar_detalle_hoy(int opcion, const RetroRecuerdo *recuerdos,
-                                     const int idx_partidos[4], int cantidad_partidos, const int opt_detalles[4])
+                                     const int idx_partidos[4], int cantidad_partidos,
+                                     const int opt_detalles[4])
 {
     for (int i = 0; i < cantidad_partidos; i++)
     {
@@ -2530,8 +2789,8 @@ static void mostrar_modo_retro_hoy(void)
     int cantidad_partidos = 0;
 
     retro_obtener_fecha_actual(&dia_actual, &mes_actual, &anio_actual, &semana_actual);
-    cantidad = retro_cargar_recuerdos_hoy(recuerdos, RETRO_MAX_RECUERDOS,
-                                          dia_actual, mes_actual, anio_actual, semana_actual);
+    cantidad = retro_cargar_recuerdos_hoy(recuerdos, RETRO_MAX_RECUERDOS, dia_actual, mes_actual,
+                                          anio_actual, semana_actual);
 
     if (cantidad == 0)
     {
@@ -2547,17 +2806,24 @@ static void mostrar_modo_retro_hoy(void)
 
         clear_screen();
         print_header("MODO RETRO - HOY EN TU HISTORIA");
-        printf("%02d/%02d/%04d - buscando en tu historial...\n\n",
-               dia_actual, mes_actual, anio_actual);
+        printf("%02d/%02d/%04d - buscando en tu historial...\n\n", dia_actual, mes_actual,
+               anio_actual);
 
-        cantidad_partidos = retro_preparar_lista_menu_hoy(recuerdos, cantidad, idx_partidos, opt_detalles);
-        opcion = retro_mostrar_menu_hoy_y_leer_opcion(recuerdos, idx_partidos, cantidad_partidos,
-                 mes_actual, opt_detalles, &opt_comp, &opt_mes);
+        cantidad_partidos =
+            retro_preparar_lista_menu_hoy(recuerdos, cantidad, idx_partidos, opt_detalles);
+        opcion =
+            retro_mostrar_menu_hoy_y_leer_opcion(recuerdos, idx_partidos, cantidad_partidos,
+                    mes_actual, opt_detalles, &opt_comp, &opt_mes);
         if (opcion == 0)
+        {
             return;
+        }
 
-        if (retro_manejar_detalle_hoy(opcion, recuerdos, idx_partidos, cantidad_partidos, opt_detalles))
+        if (retro_manejar_detalle_hoy(opcion, recuerdos, idx_partidos, cantidad_partidos,
+                                      opt_detalles))
+        {
             continue;
+        }
 
         if (opcion == opt_comp && idx_partidos[0] >= 0 && idx_partidos[1] >= 0)
         {
@@ -2587,11 +2853,13 @@ void carrera_notificar_modo_retro_inicio(void)
     int cantidad;
 
     retro_obtener_fecha_actual(&dia_actual, &mes_actual, &anio_actual, &semana_actual);
-    cantidad = retro_cargar_recuerdos_hoy(recuerdos, RETRO_MAX_RECUERDOS,
-                                          dia_actual, mes_actual, anio_actual, semana_actual);
+    cantidad = retro_cargar_recuerdos_hoy(recuerdos, RETRO_MAX_RECUERDOS, dia_actual, mes_actual,
+                                          anio_actual, semana_actual);
 
     if (cantidad <= 0)
+    {
         return;
+    }
 
     printf("\n[MODO RETRO] Hoy en tu historia hay %d recuerdo(s).\n", cantidad);
     if (confirmar("Queres abrir Modo Retro ahora?"))
@@ -2607,7 +2875,8 @@ void carrera_notificar_modo_retro_inicio(void)
 static void mostrar_mejor_once_historico(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, p.rendimiento_general "
+    if (!preparar_stmt(&stmt,
+                       "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, p.rendimiento_general "
                        "FROM partido p WHERE p.resultado > 0 "
                        "ORDER BY p.rendimiento_general DESC LIMIT 11"))
     {
@@ -2620,15 +2889,17 @@ static void mostrar_mejor_once_historico(void)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %d. %s | G:%d A:%d | Rend: %d\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4));
+        printf("  %d. %s | G:%d A:%d | Rend: %d\n", sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("partidos con rendimiento");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("partidos con rendimiento");
+        pause_console();
+        return;
+    }
     pause_console();
 }
 
@@ -2652,7 +2923,12 @@ static void mostrar_vitrina_trofeos(void)
         printf("    Fecha: %s\n", sqlite3_column_text(stmt, 2));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("trofeos ganados");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("trofeos ganados");
+        pause_console();
+        return;
+    }
     pause_console();
 }
 
@@ -2671,16 +2947,19 @@ static void mostrar_estadisticas_temporada_visual(void)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %d. %s (%s)\n", sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
+        printf("  %d. %s (%s)\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
                sqlite3_column_text(stmt, 2));
-        printf("     Goles: %d | Asistencias: %d | Rend: %s\n",
-               sqlite3_column_int(stmt, 3),
+        printf("     Goles: %d | Asistencias: %d | Rend: %s\n", sqlite3_column_int(stmt, 3),
                sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5) ? (const char*)sqlite3_column_text(stmt, 5) : "N/A");
+               sqlite3_column_text(stmt, 5) ? (const char *)sqlite3_column_text(stmt, 5) : "N/A");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("temporadas");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("temporadas");
+        pause_console();
+        return;
+    }
     pause_console();
 }
 
@@ -2701,14 +2980,18 @@ static void mostrar_timeline_hitos(void)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %d. [%s] %s", count, sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2));
+        printf("  %d. [%s] %s", count, sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
         if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
+        {
             printf(" (Rend: %d)", sqlite3_column_int(stmt, 3));
+        }
         printf("\n");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("hitos en la carrera");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("hitos en la carrera");
+    }
     pause_console();
 }
 
@@ -2729,10 +3012,13 @@ static void mostrar_logros_carrera(void)
         count++;
         printf("  %d. %s\n", count, sqlite3_column_text(stmt, 0));
         printf("     %s (%s)\n", sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2) ? (const char*)sqlite3_column_text(stmt, 2) : "?");
+               sqlite3_column_text(stmt, 2) ? (const char *)sqlite3_column_text(stmt, 2) : "?");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("logros");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("logros");
+    }
     pause_console();
 }
 
@@ -2741,9 +3027,7 @@ static void mostrar_logros_carrera(void)
  * ======================================================== */
 void menu_carrera_futbolistica(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Carrera Futbolistica", &mostrar_carrera_futbolistica},
+    MenuItem items[] = {{1, "Carrera Futbolistica", &mostrar_carrera_futbolistica},
         {2, "Tu Historia Futbolistica", &mostrar_historia_futbolistica},
         {3, "Resumen General de Carrera", &mostrar_resumen_carrera},
         {4, "Ficha de Identidad del Jugador", &menu_identidad_jugador},

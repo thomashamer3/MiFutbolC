@@ -87,19 +87,19 @@ static int obtener_visor_preferido(char *buffer, size_t size)
         return 0;
     }
 
-    int ok = 0;
+    int flag = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const unsigned char *v = sqlite3_column_text(stmt, 0);
-        if (v && strncpy_s(buffer, size, (const char *)v, _TRUNCATE) == 0)
+        const unsigned char *flag_char = sqlite3_column_text(stmt, 0);
+        if (flag_char && strncpy_s(buffer, size, (const char *)flag_char, _TRUNCATE) == 0)
         {
             trim_whitespace(buffer);
-            ok = 1;
+            flag = 1;
         }
     }
 
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 static int guardar_visor_preferido(const char *viewer)
@@ -112,10 +112,10 @@ static int guardar_visor_preferido(const char *viewer)
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, viewer ? viewer : "", -1, SQLITE_TRANSIENT);
-    int rc = sqlite3_step(stmt);
+    sqlite3_bind_text(stmt, 1, viewer ? viewer : "", -1, DB_TRANSIENT);
+    int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    return rc == SQLITE_DONE;
+    return result == SQLITE_DONE;
 }
 
 #ifndef _WIN32
@@ -531,7 +531,9 @@ static int camiseta_esta_activa(int camiseta_id)
     return activa;
 }
 
-static int actualizar_estado_camiseta(int camiseta_id, int activa)
+static int
+actualizar_estado_camiseta(int camiseta_id, // NOLINT(bugprone-easily-swappable-parameters)
+                           int activa)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt, "UPDATE camiseta SET activa = ? WHERE id = ?"))
@@ -541,9 +543,9 @@ static int actualizar_estado_camiseta(int camiseta_id, int activa)
 
     sqlite3_bind_int(stmt, 1, activa ? 1 : 0);
     sqlite3_bind_int(stmt, 2, camiseta_id);
-    int ok = sqlite3_step(stmt) == SQLITE_DONE;
+    int flag = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 static void listar_camisetas_excluyendo(int camiseta_excluida)
@@ -568,8 +570,9 @@ static void listar_camisetas_excluyendo(int camiseta_excluida)
     }
 
     if (!hay)
+    {
         mostrar_no_hay_registros("camisetas destino");
-
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -724,8 +727,9 @@ static void solicitar_nombre_camiseta(const char *prompt, char *buffer, int size
         trim_whitespace(buffer);
 
         if (buffer[0] != '\0')
+        {
             return;
-
+        }
         printf("El nombre no puede estar vacio.\n");
     }
 }
@@ -954,23 +958,32 @@ static int completar_informacion_camiseta(int id)
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, color_principal, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, color_secundario, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, marca, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, modelo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, temporada, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, estado_fisico, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, fecha_compra, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, color_principal, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, color_secundario, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, marca, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, modelo, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, temporada, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, estado_fisico, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, fecha_compra, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
     sqlite3_bind_int(stmt, 8, costo_centavos);
-    sqlite3_bind_text(stmt, 9, observaciones, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 10, proveedor, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 11, fue_regalo ? 1 : 0);
-    sqlite3_bind_text(stmt, 12, regalo_de, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 9, observaciones, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 10, proveedor, -1, // NOLINTNEXTLINE(performance-no-int-to-ptr)
+                      DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 11, fue_regalo ? 1 : 0); // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 12, regalo_de, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 13, id);
 
-    int ok = sqlite3_step(stmt) == SQLITE_DONE;
+    int flag = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 static void imprimir_info_camiseta_detalle(int id, const CamisetaInfoDetalle *info)
@@ -1056,8 +1069,9 @@ static void listar_camisetas_simple(void)
     }
 
     if (!hay)
+    {
         mostrar_no_hay_registros("camisetas cargadas");
-
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -1076,11 +1090,12 @@ static void crear_camiseta_simple(void)
         return;
     }
     sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    int rc = sqlite3_step(stmt);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 2, nombre, -1, DB_TRANSIENT);
+    int flag = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    if (rc == SQLITE_DONE)
+    if (flag == SQLITE_DONE)
     {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (simple)", id,
@@ -1152,23 +1167,35 @@ static void crear_camiseta_avanzada(void)
         return;
     }
     sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, info.nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, info.color_principal, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, info.color_secundario, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, info.marca, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, info.modelo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, info.temporada, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, info.estado_fisico, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 9, info.fecha_compra, -1, SQLITE_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 2, info.nombre, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 3, info.color_principal, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 4, info.color_secundario, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 5, info.marca, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 6, info.modelo, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 7, info.temporada, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 8, info.estado_fisico, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 9, info.fecha_compra, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 10, info.costo_centavos);
-    sqlite3_bind_text(stmt, 11, info.observaciones, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 12, info.proveedor, -1, SQLITE_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 11, info.observaciones, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 12, info.proveedor, -1, DB_TRANSIENT);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
     sqlite3_bind_int(stmt, 13, info.fue_regalo ? 1 : 0);
-    sqlite3_bind_text(stmt, 14, info.regalo_de, -1, SQLITE_TRANSIENT);
-    int rc = sqlite3_step(stmt);
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
+    sqlite3_bind_text(stmt, 14, info.regalo_de, -1, DB_TRANSIENT);
+    int flag = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    if (rc == SQLITE_DONE)
+    if (flag == SQLITE_DONE)
     {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Creada camiseta id=%lld nombre=%.180s (avanzada)", id,
@@ -1222,14 +1249,21 @@ void crear_camiseta(void)
     printf("0) Cancelar\n");
     int opcion = input_int("Opcion: ");
     if (opcion == 0)
+    {
         return;
-
+    }
     if (opcion == 1)
+    {
         crear_camiseta_simple();
+    }
     else if (opcion == 2)
+    {
         crear_camiseta_avanzada();
+    }
     else
+    {
         printf("Opcion invalida.\n");
+    }
 }
 
 static int cargar_imagen_para_camiseta_id(int id)
@@ -1269,8 +1303,9 @@ static void listar_camisetas_con_stats(void)
     }
 
     if (!hay)
+    {
         mostrar_no_hay_registros("camisetas cargadas");
-
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -1303,8 +1338,9 @@ void editar_camiseta(void)
 
     int id = input_int("\nID a editar (0 para cancelar): ");
     if (id == 0)
+    {
         return;
-
+    }
     if (!existe_id("camiseta", id))
     {
         printf("ID inexistente\n");
@@ -1323,7 +1359,7 @@ void editar_camiseta(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
 
     sqlite3_step(stmt);
@@ -1570,8 +1606,9 @@ void eliminar_camiseta(void)
 
     int id = input_int("\nID a eliminar (0 para cancelar): ");
     if (id == 0)
+    {
         return;
-
+    }
     if (!existe_id("camiseta", id))
     {
         printf("ID inexistente\n");
@@ -1620,8 +1657,9 @@ static void reactivar_camiseta(void)
 
     int id = input_int("ID de camiseta (0 para cancelar): ");
     if (id == 0)
+    {
         return;
-
+    }
     if (!existe_id("camiseta", id))
     {
         printf("ID inexistente\n");
@@ -1635,12 +1673,16 @@ static void reactivar_camiseta(void)
     if (esta_activa)
     {
         if (!confirmar("Desea desactivar esta camiseta?"))
+        {
             return;
+        }
     }
     else
     {
         if (!confirmar("Desea reactivar esta camiseta?"))
+        {
             return;
+        }
     }
 
     if (!actualizar_estado_camiseta(id, nuevo_estado))
@@ -1834,7 +1876,9 @@ void sortear_camiseta(void)
     int seleccionado = -1;
     sqlite3_bind_int(stmt_sel, 1, offset);
     if (sqlite3_step(stmt_sel) == SQLITE_ROW)
+    {
         seleccionado = sqlite3_column_int(stmt_sel, 0);
+    }
     sqlite3_finalize(stmt_sel);
 
     if (seleccionado == -1)

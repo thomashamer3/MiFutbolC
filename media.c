@@ -62,7 +62,9 @@ void media_crear(void)
     {
         partido_id = input_int("ID del partido asociado (0=ninguno): ");
         if (partido_id < 0)
+        {
             partido_id = 0;
+        }
     }
 
     long long id = obtener_siguiente_id("media");
@@ -78,9 +80,9 @@ void media_crear(void)
     sqlite3_bind_int64(stmt, 1, id);
     sqlite3_bind_int(stmt, 2, partido_id);
     sqlite3_bind_int(stmt, 3, tipo);
-    sqlite3_bind_text(stmt, 4, titulo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, url[0] ? url : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, descripcion[0] ? descripcion : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, titulo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, url[0] ? url : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, descripcion[0] ? descripcion : "", -1, DB_TRANSIENT);
 
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -108,13 +110,21 @@ static void mostrar_media_item(sqlite3_stmt *stmt)
 
     printf("  %d. [%s] %s\n", id, tipo_to_text(tipo), titulo ? titulo : "");
     if (url && url[0])
+    {
         printf("     URL: %s\n", url);
+    }
     if (desc && desc[0])
+    {
         printf("     Desc: %s\n", desc);
+    }
     if (partido_id > 0)
+    {
         printf("     Partido ID: %d\n", partido_id);
+    }
     if (fecha && fecha[0])
+    {
         printf("     Fecha: %s\n", fecha);
+    }
     printf("\n");
 }
 
@@ -164,7 +174,9 @@ void media_editar(void)
     if (id <= 0 || !existe_id("media", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Referencia");
+        }
         pause_console();
         return;
     }
@@ -189,13 +201,19 @@ void media_editar(void)
         tipo_actual = sqlite3_column_int(stmt, 1);
         const char *p = (const char *)sqlite3_column_text(stmt, 2);
         if (p)
+        {
             strncpy_s(titulo_actual, sizeof(titulo_actual), p, _TRUNCATE);
+        }
         p = (const char *)sqlite3_column_text(stmt, 3);
         if (p)
+        {
             strncpy_s(url_actual, sizeof(url_actual), p, _TRUNCATE);
+        }
         p = (const char *)sqlite3_column_text(stmt, 4);
         if (p)
+        {
             strncpy_s(desc_actual, sizeof(desc_actual), p, _TRUNCATE);
+        }
     }
     sqlite3_finalize(stmt);
 
@@ -208,27 +226,37 @@ void media_editar(void)
     printf("Titulo [%s]: ", titulo_actual);
     input_string("", titulo, (int)sizeof(titulo));
     if (titulo[0] == '\0')
+    {
         strncpy_s(titulo, sizeof(titulo), titulo_actual, _TRUNCATE);
+    }
 
     printf("Tipo (1-4) [%d]: ", tipo_actual);
     int tipo = input_int("");
     if (tipo < 1 || tipo > 4)
+    {
         tipo = tipo_actual;
+    }
 
     printf("URL [%s]: ", url_actual);
     input_string("", url, (int)sizeof(url));
     if (url[0] == '\0')
+    {
         strncpy_s(url, sizeof(url), url_actual, _TRUNCATE);
+    }
 
     printf("Descripcion [%s]: ", desc_actual);
     input_string("", desc, (int)sizeof(desc));
     if (desc[0] == '\0')
+    {
         strncpy_s(desc, sizeof(desc), desc_actual, _TRUNCATE);
+    }
 
     printf("Partido ID [%d]: ", partido_actual);
     int partido_id = input_int("");
     if (partido_id < 0)
+    {
         partido_id = partido_actual;
+    }
 
     if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
                        "descripcion=?, partido_id=? WHERE id=?"))
@@ -238,9 +266,9 @@ void media_editar(void)
     }
 
     sqlite3_bind_int(stmt, 1, tipo);
-    sqlite3_bind_text(stmt, 2, titulo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, url, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, desc, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, titulo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, url, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, desc, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 5, partido_id);
     sqlite3_bind_int(stmt, 6, id);
 
@@ -273,7 +301,9 @@ void media_eliminar(void)
     if (id <= 0 || !existe_id("media", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Referencia");
+        }
         pause_console();
         return;
     }

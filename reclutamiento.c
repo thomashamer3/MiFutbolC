@@ -44,13 +44,21 @@ static void mostrar_prospecto_detalle(sqlite3_stmt *stmt)
     printf("  %d. %s\n", id, nombre ? nombre : "");
     printf("     Estado: %s\n", estado_to_text(estado));
     if (posicion && posicion[0])
+    {
         printf("     Posicion: %s\n", posicion);
+    }
     if (equipo_origen && equipo_origen[0])
+    {
         printf("     Equipo: %s\n", equipo_origen);
+    }
     if (fecha_visto && fecha_visto[0])
+    {
         printf("     Visto: %s\n", fecha_visto);
+    }
     if (notas && notas[0])
+    {
         printf("     Notas: %s\n", notas);
+    }
     printf("\n");
 }
 
@@ -93,12 +101,12 @@ void reclutamiento_crear(void)
     }
 
     sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, estado);
-    sqlite3_bind_text(stmt, 4, posicion[0] ? posicion : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, equipo_origen[0] ? equipo_origen : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, fecha_visto[0] ? fecha_visto : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, notas[0] ? notas : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, posicion[0] ? posicion : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, equipo_origen[0] ? equipo_origen : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, fecha_visto[0] ? fecha_visto : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, notas[0] ? notas : "", -1, DB_TRANSIENT);
 
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -160,7 +168,9 @@ void reclutamiento_editar(void)
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Prospecto");
+        }
         pause_console();
         return;
     }
@@ -192,16 +202,24 @@ void reclutamiento_editar(void)
     int estado_actual = sqlite3_column_int(stmt, 1);
     const char *p = (const char *)sqlite3_column_text(stmt, 2);
     if (p)
+    {
         strncpy_s(posicion_actual, sizeof(posicion_actual), p, _TRUNCATE);
+    }
     p = (const char *)sqlite3_column_text(stmt, 3);
     if (p)
+    {
         strncpy_s(equipo_actual, sizeof(equipo_actual), p, _TRUNCATE);
+    }
     p = (const char *)sqlite3_column_text(stmt, 4);
     if (p)
+    {
         strncpy_s(fecha_actual, sizeof(fecha_actual), p, _TRUNCATE);
+    }
     p = (const char *)sqlite3_column_text(stmt, 5);
     if (p)
+    {
         strncpy_s(notas_actual, sizeof(notas_actual), p, _TRUNCATE);
+    }
     sqlite3_finalize(stmt);
 
     char nombre[256] = {0};
@@ -215,34 +233,46 @@ void reclutamiento_editar(void)
     printf("Nombre [%s]: ", nombre_actual);
     input_string("", nombre, (int)sizeof(nombre));
     if (nombre[0] == '\0')
+    {
         strncpy_s(nombre, sizeof(nombre), nombre_actual, _TRUNCATE);
+    }
 
     printf("Estado (1=Visto, 2=Prospecto, 3=Seguimiento, 4=Contactado, 5=Reclutado, 6=Descartado) "
            "[%d]: ",
            estado_actual);
     int estado = input_int("");
     if (estado < 1 || estado > RECLUTAMIENTO_ESTADOS)
+    {
         estado = estado_actual;
+    }
 
     printf("Posicion [%s]: ", posicion_actual);
     input_string("", posicion, (int)sizeof(posicion));
     if (posicion[0] == '\0')
+    {
         strncpy_s(posicion, sizeof(posicion), posicion_actual, _TRUNCATE);
+    }
 
     printf("Equipo origen [%s]: ", equipo_actual);
     input_string("", equipo, (int)sizeof(equipo));
     if (equipo[0] == '\0')
+    {
         strncpy_s(equipo, sizeof(equipo), equipo_actual, _TRUNCATE);
+    }
 
     printf("Fecha visto [%s]: ", fecha_actual);
     input_date("", fecha, (int)sizeof(fecha));
     if (fecha[0] == '\0')
+    {
         strncpy_s(fecha, sizeof(fecha), fecha_actual, _TRUNCATE);
+    }
 
     printf("Notas [%s]: ", notas_actual);
     input_string("", notas, (int)sizeof(notas));
     if (notas[0] == '\0')
+    {
         strncpy_s(notas, sizeof(notas), notas_actual, _TRUNCATE);
+    }
 
     if (!preparar_stmt(&stmt, "UPDATE reclutamiento SET nombre=?, estado=?, posicion=?, "
                        "equipo_origen=?, fecha_visto=?, notas=? WHERE id=?"))
@@ -251,12 +281,12 @@ void reclutamiento_editar(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, estado);
-    sqlite3_bind_text(stmt, 3, posicion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, equipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, posicion, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, equipo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, notas, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 7, id);
 
     int rc = sqlite3_step(stmt);
@@ -288,7 +318,9 @@ void reclutamiento_avanzar(void)
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Prospecto");
+        }
         pause_console();
         return;
     }
@@ -375,7 +407,9 @@ void reclutamiento_retroceder(void)
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Prospecto");
+        }
         pause_console();
         return;
     }
@@ -454,7 +488,9 @@ void reclutamiento_eliminar(void)
     if (id <= 0 || !existe_id("reclutamiento", id))
     {
         if (id > 0)
+        {
             mostrar_no_existe("Prospecto");
+        }
         pause_console();
         return;
     }

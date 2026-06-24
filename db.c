@@ -9,9 +9,9 @@
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
-#include <windows.h>
-#include <direct.h>
 #include <ShlObj.h>
+#include <direct.h>
+#include <windows.h>
 #else
 #include "compat_windows.h"
 #include "direct.h"
@@ -55,8 +55,8 @@ static void sanitize_filename_token(char *token)
 
     for (size_t i = 0; token[i] != '\0'; i++)
     {
-        unsigned char ch = (unsigned char)token[i];
-        if (!(isalnum(ch) || ch == '_' || ch == '-'))
+        unsigned char signo = (unsigned char)token[i];
+        if (!(isalnum(signo) || signo == '_' || signo == '-'))
         {
             token[i] = '_';
         }
@@ -288,12 +288,12 @@ static FILE *app_fopen(const char *path, const char *mode)
     }
 
 #ifdef _WIN32
-    FILE *f = NULL;
-    if (fopen_s(&f, path, mode) != 0)
+    FILE *file = NULL;
+    if (fopen_s(&file, path, mode) != 0)
     {
         return NULL;
     }
-    return f;
+    return file;
 #else
     return fopen(path, mode);
 #endif
@@ -306,10 +306,10 @@ static void ejecutar_alter_table_group(const char *const *statements, const char
     for (int i = 0; statements[i] != NULL; i++)
     {
         char *errmsg = NULL;
-        int rc = sqlite3_exec(db, statements[i], NULL, NULL, &errmsg);
+        int flag = sqlite3_exec(db, statements[i], NULL, NULL, &errmsg);
         int error_esperado = (errmsg != NULL) && ((strstr(errmsg, dup_col_msg) != NULL) ||
                              (strstr(errmsg, no_table_msg) != NULL));
-        if (rc != SQLITE_OK && errmsg != NULL && !error_esperado)
+        if (flag != SQLITE_OK && errmsg != NULL && !error_esperado)
         {
             snprintf(log_buf_, sizeof(log_buf_), "Migracion %s con error: %.320s | %.520s",
                      component, statements[i], errmsg);
@@ -473,20 +473,20 @@ static int ejecutar_stmt_texto(const char *sql, const char *const *params, size_
         }
     }
 
-    int ok = (sqlite3_step(stmt) == SQLITE_DONE);
-    if (ok && rows_changed)
+    int flag = (sqlite3_step(stmt) == SQLITE_DONE);
+    if (flag && rows_changed)
     {
         *rows_changed = sqlite3_changes(db);
     }
 
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 static int db_query_single_text(const char *sql, char *out, size_t out_size)
 {
     sqlite3_stmt *stmt = NULL;
-    int ok = 0;
+    int flag = 0;
 
     if (!sql || !db)
     {
@@ -510,17 +510,17 @@ static int db_query_single_text(const char *sql, char *out, size_t out_size)
         {
             if (out && out_size > 0)
             {
-                ok = (strncpy_s(out, out_size, valor, _TRUNCATE) == 0);
+                flag = (strncpy_s(out, out_size, valor, _TRUNCATE) == 0);
             }
             else
             {
-                ok = 1;
+                flag = 1;
             }
         }
     }
 
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 int db_set_active_user(const char *username)
@@ -1709,8 +1709,7 @@ static void add_botin_columns(void)
     const char *alter_statements[] =
     {
         "ALTER TABLE partido ADD COLUMN " COL_PARTIDO_BOTIN_ID ";",
-        "ALTER TABLE settings ADD COLUMN botin_predeterminado INTEGER DEFAULT 0;",
-        NULL
+        "ALTER TABLE settings ADD COLUMN botin_predeterminado INTEGER DEFAULT 0;", NULL
     };
     ejecutar_alter_table_group(alter_statements, "botin");
 }
@@ -1734,19 +1733,33 @@ static void add_missing_columns(void)
     }
 
     if (current_version < DB_VERSION_CAMISETA_COLS)
+    {
         add_camiseta_columns();
+    }
     if (current_version < DB_VERSION_CANCHA_COLS)
+    {
         add_cancha_columns();
+    }
     if (current_version < DB_VERSION_PARTIDO_COLS)
+    {
         add_partido_columns();
+    }
     if (current_version < DB_VERSION_CANCHA_GRABACION)
+    {
         add_cancha_columns();
+    }
     if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
+    {
         add_partido_columns();
+    }
     if (current_version < DB_VERSION_CANCHA_CLIMA_REAL)
+    {
         add_cancha_clima_real_columns();
+    }
     if (current_version < DB_VERSION_BOTIN)
+    {
         add_botin_columns();
+    }
 }
 
 static int drop_legacy_mes_anio_triggers(void)
@@ -1831,7 +1844,7 @@ static int create_performance_indexes(void)
 
         if (current_version < DB_VERSION_PARTIDO_ATAJASTE)
         {
-            static const char *empty_statements[] = { NULL };
+            static const char *empty_statements[] = {NULL};
             run_index_migration(empty_statements, DB_VERSION_PARTIDO_ATAJASTE, "atajaste");
         }
 
@@ -1937,14 +1950,14 @@ static int create_performance_indexes(void)
 
 int db_init(void)
 {
-    app_log_init();
-    app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
-
     if (!setup_database_paths())
     {
-        app_log_write("ERROR", "APP", "Fallo setup_database_paths");
+        printf("Error configurando rutas de base de datos\n");
         return 0;
     }
+
+    app_log_init();
+    app_log_write("INFO", "APP", "Inicio de inicializacion de base de datos");
 
     if (!create_database_connection())
     {
@@ -1998,7 +2011,7 @@ void db_close(void)
     }
 }
 
-char * get_user_name(void)
+char *get_user_name(void)
 {
     const char *sql = "SELECT nombre FROM usuario LIMIT 1;";
     char nombre_tmp[256] = {0};
@@ -2114,7 +2127,7 @@ int clear_user_password(void)
     return ejecutar_stmt_texto(sql, NULL, 0, NULL);
 }
 
-const char * get_data_dir(void)
+const char *get_data_dir(void)
 {
     return DB_DIR;
 }
@@ -2197,22 +2210,22 @@ static const DirCfg DIR_CFG_MUSIC = {NULL,     NULL,     "./Musica", NULL,
                                      "Musica", "Musica", MUSIC_DIR,  sizeof(MUSIC_DIR)
                                     };
 
-const char * get_export_dir(void)
+const char *get_export_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_EXPORT);
 }
 
-const char * get_import_dir(void)
+const char *get_import_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMPORT);
 }
 
-const char * get_images_dir(void)
+const char *get_images_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMAGES);
 }
 
-const char * get_music_dir(void)
+const char *get_music_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_MUSIC);
 }
@@ -2226,8 +2239,8 @@ int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t s
 
     for (size_t i = 0; table_name[i] != '\0'; i++)
     {
-        unsigned char ch = (unsigned char)table_name[i];
-        if (!(isalnum(ch) || ch == '_'))
+        unsigned char signo = (unsigned char)table_name[i];
+        if (!(isalnum(signo) || signo == '_'))
         {
             return 0;
         }
@@ -2244,18 +2257,18 @@ int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t s
 
     sqlite3_bind_int(stmt, 1, id);
 
-    int ok = 0;
+    int flag = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const unsigned char *valor = sqlite3_column_text(stmt, 0);
         if (valor && valor[0] != '\0' && strncpy_s(ruta, size, (const char *)valor, _TRUNCATE) == 0)
         {
-            ok = 1;
+            flag = 1;
         }
     }
 
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, size_t size)
@@ -2279,12 +2292,12 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
 
     app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
 
-    FILE *f = app_fopen(ruta_absoluta, "rb");
-    if (!f)
+    FILE *file = app_fopen(ruta_absoluta, "rb");
+    if (!file)
     {
         return 0;
     }
-    fclose(f);
+    fclose(file);
 
     return 1;
 }

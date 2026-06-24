@@ -27,7 +27,9 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
     {
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) > 0)
+        {
             return;
+        }
         printf("El campo no puede estar vacio.\n");
     }
 }
@@ -173,11 +175,15 @@ static int calcular_nuevo_id_temporada(void)
     {
         int count = 0;
         if (sqlite3_step(stmt_id) == SQLITE_ROW)
+        {
             count = sqlite3_column_int(stmt_id, 0);
+        }
         sqlite3_finalize(stmt_id);
 
         if (count == 0)
+        {
             return 1;
+        }
     }
 
     // Calcular el menor ID libre
@@ -186,7 +192,9 @@ static int calcular_nuevo_id_temporada(void)
     if (preparar_stmt(sql_id, &stmt_id))
     {
         if (sqlite3_step(stmt_id) == SQLITE_ROW && sqlite3_column_type(stmt_id, 0) != SQLITE_NULL)
+        {
             nuevo_id = sqlite3_column_int(stmt_id, 0);
+        }
         sqlite3_finalize(stmt_id);
     }
 
@@ -284,10 +292,14 @@ void crear_fases_temporada_defecto(int temporada_id)
         {
             const char *text0 = (const char *)sqlite3_column_text(stmt, 0);
             if (text0)
+            {
                 strcpy_s(fecha_inicio, sizeof(fecha_inicio), text0);
+            }
             const char *text1 = (const char *)sqlite3_column_text(stmt, 1);
             if (text1)
+            {
                 strcpy_s(fecha_fin, sizeof(fecha_fin), text1);
+            }
             anio = sqlite3_column_int(stmt, 2);
         }
         else
@@ -533,7 +545,9 @@ void modificar_temporada(void)
 
     int temporada_id = input_int("\nIngrese el ID de la temporada a modificar (0 para cancelar): ");
     if (temporada_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -563,7 +577,9 @@ void modificar_temporada(void)
         break;
     case 4:
         if (!actualizar_estado_temporada(temporada_id))
+        {
             return;
+        }
         break;
     default:
         printf("Opcion invalida.\n");
@@ -581,7 +597,9 @@ void eliminar_temporada(void)
 
     int temporada_id = input_int("\nIngrese el ID de la temporada a eliminar (0 para cancelar): ");
     if (temporada_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -652,7 +670,9 @@ float calcular_fatiga_equipo(int equipo_id, int dias_recientes)
             // Fatiga aumenta con mas partidos recientes
             fatiga = (float)(partidos_recientes * 10); // 10% por partido en periodo reciente
             if (fatiga > 100.0f)
+            {
                 fatiga = 100.0f;
+            }
         }
         sqlite3_finalize(stmt);
     }
@@ -682,7 +702,9 @@ float calcular_fatiga_jugador(int jugador_id, int dias_recientes)
             // Fatiga basada en minutos jugados (90 min = partido completo = 15% fatiga)
             fatiga = (float)(minutos_recientes * 15) / 90.0f;
             if (fatiga > 100.0f)
+            {
                 fatiga = 100.0f;
+            }
         }
         sqlite3_finalize(stmt);
     }
@@ -733,7 +755,9 @@ void actualizar_fatiga_jugador(int jugador_id, int temporada_id, int minutos_jug
     {
         fatiga_actual += 20.0f;
         if (fatiga_actual > 100.0f)
+        {
             fatiga_actual = 100.0f;
+        }
     }
 
     // Obtener rendimiento promedio del jugador
@@ -810,9 +834,13 @@ void actualizar_evolucion_equipo(int equipo_id, int temporada_id)
     // Determinar tendencia (simplificada)
     const char *tendencia = "Estable";
     if (puntuacion > 70.0f)
+    {
         tendencia = "Mejorando";
+    }
     else if (puntuacion < 40.0f)
+    {
         tendencia = "Decayendo";
+    }
 
     // Insertar registro de evolucion
     const char *sql_insert = "INSERT INTO equipo_temporada_evolucion "
@@ -1275,7 +1303,9 @@ void administrar_temporada(void)
     int temporada_id =
         input_int("\nIngrese el ID de la temporada a administrar (0 para cancelar): ");
     if (temporada_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -1404,7 +1434,9 @@ void asociar_torneo_temporada(int torneo_id)
 
             torneo_id = input_int("\nIngrese el ID del torneo (0 para cancelar): ");
             if (torneo_id == 0)
+            {
                 return;
+            }
         }
     }
 
@@ -1413,7 +1445,9 @@ void asociar_torneo_temporada(int torneo_id)
 
     int temporada_id = input_int("\nIngrese el ID de la temporada (0 para cancelar): ");
     if (temporada_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada_id))
     {
@@ -1853,7 +1887,9 @@ void seleccionar_comparar_temporadas(void)
     int temporada1_id =
         input_int("\nIngrese el ID de la primera temporada a comparar (0 para cancelar): ");
     if (temporada1_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada1_id))
     {
@@ -1866,7 +1902,9 @@ void seleccionar_comparar_temporadas(void)
     int temporada2_id =
         input_int("\nIngrese el ID de la segunda temporada a comparar (0 para cancelar): ");
     if (temporada2_id == 0)
+    {
         return;
+    }
 
     if (!existe_id("temporada", temporada2_id))
     {

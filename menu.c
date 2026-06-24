@@ -34,7 +34,6 @@
 #include "reclutamiento.h"
 #include "recordatorios.h"
 #include "records_rankings.h"
-#include "settings.h"
 #include "temporada.h"
 #include "tienda.h"
 #include "torneo.h"
@@ -224,8 +223,7 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 static const size_t MENU_ITEM_COUNT = ARRAY_SIZE(MENU_ITEMS);
 
-static const MenuItem *buscar_item(const MenuItem *items, int cantidad,
-                                   int opcion)
+static const MenuItem *buscar_item(const MenuItem *items, int cantidad, int opcion)
 {
     for (int i = 0; i < cantidad; i++)
     {
@@ -250,8 +248,7 @@ const MenuItem *menu_get_items(void)
     return (const MenuItem *)MENU_ITEMS;
 }
 
-const MenuItem *menu_buscar_item(const MenuItem *items, int cantidad,
-                                 int opcion)
+const MenuItem *menu_buscar_item(const MenuItem *items, int cantidad, int opcion)
 {
     return buscar_item(items, cantidad, opcion);
 }
@@ -302,13 +299,10 @@ void handle_user_name(void)
 
     if (nombre_usuario)
     {
-        snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"),
-                 nombre_usuario);
-        snprintf(buffer, sizeof(buffer), "Sesion iniciada por usuario: %.180s",
-                 nombre_usuario);
+        snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"), nombre_usuario);
+        snprintf(buffer, sizeof(buffer), "Sesion iniciada por usuario: %.180s", nombre_usuario);
         app_log_event("APP", buffer);
-        snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"),
-                 nombre_usuario);
+        snprintf(buffer, sizeof(buffer), "%s, %s\n", get_text("welcome_message"), nombre_usuario);
         fputs(buffer, stdout);
         pause_console();
         free(nombre_usuario);
@@ -321,8 +315,7 @@ MenuItem *create_filtered_menu(int *count)
     // Durante tests mantenemos el comportamiento original (lista completa)
     *count = (int)MENU_ITEM_COUNT;
 
-    MenuItem *filtered_items =
-        (MenuItem *)malloc((size_t)(*count) * sizeof(MenuItem));
+    MenuItem *filtered_items = (MenuItem *)malloc((size_t)(*count) * sizeof(MenuItem));
     if (!filtered_items)
     {
         printf("Error de memoria\n");
@@ -351,18 +344,19 @@ MenuItem *create_filtered_menu(int *count)
     }
 
     // Getters definidos en settings.h — en el mismo orden lógico que MENU_ITEMS
-    const char *(*getters[])(void) =
-    {
-        &get_menu_dashboard,        &get_menu_calendario,   &get_menu_camisetas,
-        &get_menu_canchas,          &get_menu_botines,      &get_menu_equipos,
-        &get_menu_partidos,         &get_menu_lesiones,     &get_menu_estadisticas, &get_menu_logros,
-        &get_menu_financiamiento,   &get_menu_torneos,      &get_menu_temporada,
-        &get_menu_analisis,         &get_menu_bienestar,    &get_menu_carrera,
-        &get_menu_recordatorios,    &get_menu_colecciones,  &get_menu_musica,
-        &get_menu_records_rankings, &get_menu_tiendas,      &get_menu_reclutamiento,
-        &get_menu_media,
-        &get_menu_settings
-    };
+    const char *(*getters[])(void) = {&get_menu_dashboard,      &get_menu_calendario,
+                                      &get_menu_camisetas,      &get_menu_canchas,
+                                      &get_menu_botines,        &get_menu_equipos,
+                                      &get_menu_partidos,       &get_menu_lesiones,
+                                      &get_menu_estadisticas,   &get_menu_logros,
+                                      &get_menu_financiamiento, &get_menu_torneos,
+                                      &get_menu_temporada,      &get_menu_analisis,
+                                      &get_menu_bienestar,      &get_menu_carrera,
+                                      &get_menu_recordatorios,  &get_menu_colecciones,
+                                      &get_menu_musica,         &get_menu_records_rankings,
+                                      &get_menu_tiendas,        &get_menu_reclutamiento,
+                                      &get_menu_media,          &get_menu_settings
+                                     };
 
     int out = 0;
     for (int i = 0; i < max; i++)
@@ -407,8 +401,7 @@ static const char *menu_safe_title(const char *titulo)
 }
 
 #ifdef UNIT_TEST
-static int manejar_captura_test_menu(const char *titulo, const MenuItem *items,
-                                     int cantidad)
+static int manejar_captura_test_menu(const char *titulo, const MenuItem *items, int cantidad)
 {
     if (!g_menu_test_capture)
         return 0;
@@ -430,26 +423,23 @@ static int manejar_captura_test_menu(const char *titulo, const MenuItem *items,
 }
 #endif
 
-static void log_menu_opcion_invalida(const char *titulo, int opcion,
-                                     char *log_msg, size_t log_size)
+static void log_menu_opcion_invalida(const char *titulo, int opcion, char *log_msg, size_t log_size)
 {
-    snprintf(log_msg, log_size, "Menu %.120s -> opcion invalida: %d",
-             menu_safe_title(titulo), opcion);
+    snprintf(log_msg, log_size, "Menu %.120s -> opcion invalida: %d", menu_safe_title(titulo),
+             opcion);
     app_log_event("MENU", log_msg);
 }
 
-static int ejecutar_accion_menu(const char *titulo, const MenuItem *selected,
-                                char *log_msg, size_t log_size)
+static int ejecutar_accion_menu(const char *titulo, const MenuItem *selected, char *log_msg,
+                                size_t log_size)
 {
-    snprintf(log_msg, log_size, "Menu %.120s -> opcion %d (%.120s)",
-             menu_safe_title(titulo), selected->opcion,
-             selected->texto ? selected->texto : "(sin texto)");
+    snprintf(log_msg, log_size, "Menu %.120s -> opcion %d (%.120s)", menu_safe_title(titulo),
+             selected->opcion, selected->texto ? selected->texto : "(sin texto)");
     app_log_event("MENU", log_msg);
 
     if (!selected->accion)
     {
-        snprintf(log_msg, log_size, "Salida del menu: %.180s",
-                 menu_safe_title(titulo));
+        snprintf(log_msg, log_size, "Salida del menu: %.180s", menu_safe_title(titulo));
         app_log_event("MENU", log_msg);
         return 0;
     }
@@ -466,8 +456,7 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 #endif
     int opcion;
     char log_msg[512];
-    snprintf(log_msg, sizeof(log_msg), "Ingreso al menu: %.180s",
-             menu_safe_title(titulo));
+    snprintf(log_msg, sizeof(log_msg), "Ingreso al menu: %.180s", menu_safe_title(titulo));
     app_log_event("MENU", log_msg);
 
     while (1)
@@ -484,10 +473,9 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 
         if (opcion == -1)
         {
-            snprintf(
-                log_msg, sizeof(log_msg),
-                "Menu %.120s -> entrada no valida repetida/EOF, salida preventiva",
-                menu_safe_title(titulo));
+            snprintf(log_msg, sizeof(log_msg),
+                     "Menu %.120s -> entrada no valida repetida/EOF, salida preventiva",
+                     menu_safe_title(titulo));
             app_log_event("MENU", log_msg);
             return;
         }
@@ -500,6 +488,8 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
         }
 
         if (!ejecutar_accion_menu(titulo, selected, log_msg, sizeof(log_msg)))
+        {
             return;
+        }
     }
 }

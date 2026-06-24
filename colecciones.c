@@ -169,7 +169,7 @@ static int obtener_id_coleccion_por_nombre(const char *nombre)
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         id = sqlite3_column_int(stmt, 0);
@@ -214,10 +214,10 @@ static int obtener_item_inventario_equivalente(int tipo, const char *nombre, int
     }
 
     sqlite3_bind_int(stmt, 1, tipo);
-    sqlite3_bind_text(stmt, 2, nombre ? nombre : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre ? nombre : "", -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, estado);
     sqlite3_bind_double(stmt, 4, valor);
-    sqlite3_bind_text(stmt, 5, fecha_compra ? fecha_compra : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_compra ? fecha_compra : "", -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -240,9 +240,9 @@ static int guardar_coleccion_importada(const char *nombre, const char *descripci
         return 0;
     }
 
-    sqlite3_bind_text(stmt_insert, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt_insert, 2, descripcion ? descripcion : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt_insert, 3, fecha ? fecha : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt_insert, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt_insert, 2, descripcion ? descripcion : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt_insert, 3, fecha ? fecha : "", -1, DB_TRANSIENT);
     sqlite3_step(stmt_insert);
     sqlite3_finalize(stmt_insert);
 
@@ -251,8 +251,8 @@ static int guardar_coleccion_importada(const char *nombre, const char *descripci
         return 0;
     }
 
-    sqlite3_bind_text(stmt_update, 1, descripcion ? descripcion : "", -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt_update, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt_update, 1, descripcion ? descripcion : "", -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt_update, 2, nombre, -1, DB_TRANSIENT);
     sqlite3_step(stmt_update);
     sqlite3_finalize(stmt_update);
 
@@ -455,7 +455,7 @@ static void crear_item_inventario(void)
     sqlite3_bind_int(stmt, 1, tipo);
     sqlite3_bind_int(stmt, 3, estado);
     sqlite3_bind_double(stmt, 4, valor);
-    sqlite3_bind_text(stmt, 5, fecha_compra, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_compra, -1, DB_TRANSIENT);
 
     if (tipo == INV_TIPO_CAMISETA)
     {
@@ -493,13 +493,13 @@ static void crear_item_inventario(void)
             return;
         }
 
-        sqlite3_bind_text(stmt, 2, "", -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, "", -1, DB_TRANSIENT);
         sqlite3_bind_int(stmt, 6, camiseta_id);
     }
     else
     {
         leer_texto_obligatorio("Nombre del item: ", nombre_item, (int)sizeof(nombre_item));
-        sqlite3_bind_text(stmt, 2, nombre_item, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, nombre_item, -1, DB_TRANSIENT);
         sqlite3_bind_null(stmt, 6);
     }
 
@@ -612,8 +612,8 @@ static void crear_coleccion(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, descripcion, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -980,8 +980,8 @@ static void filtrar_buscar_inventario(void)
     sqlite3_bind_int(stmt, 4, estado);
     sqlite3_bind_int(stmt, 5, coleccion_id);
     sqlite3_bind_int(stmt, 6, coleccion_id);
-    sqlite3_bind_text(stmt, 7, termino, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, termino, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, termino, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 8, termino, -1, DB_TRANSIENT);
 
     int encontrados = 0;
     printf("\nResultados:\n");
@@ -1146,7 +1146,7 @@ static int guardar_item_camiseta_importado(int estado, double valor, const char 
 
     sqlite3_bind_int(stmt, 1, estado);
     sqlite3_bind_double(stmt, 2, valor);
-    sqlite3_bind_text(stmt, 3, texto_seguro(fecha_compra), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, texto_seguro(fecha_compra), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 4, camiseta_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -1175,10 +1175,10 @@ static int guardar_item_generico_importado(int tipo, const char *nombre, int est
     }
 
     sqlite3_bind_int(stmt, 1, tipo);
-    sqlite3_bind_text(stmt, 2, nombre_final, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre_final, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, estado);
     sqlite3_bind_double(stmt, 4, valor);
-    sqlite3_bind_text(stmt, 5, fecha_segura, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_segura, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {

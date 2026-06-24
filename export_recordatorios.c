@@ -1,7 +1,7 @@
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,16 +16,22 @@ typedef struct
     char tematica[64];
 } Reminder;
 
-static cJSON* leer_json_recordatorios(void)
+static cJSON *leer_json_recordatorios(void)
 {
     long len = 0;
     char *buf = utils_file_read_to_buffer(RECORDATORIOS_PATH, &len);
-    if (!buf) return NULL;
+    if (!buf)
+    {
+        return NULL;
+    }
     cJSON *root = cJSON_Parse(buf);
     free(buf);
     if (!root || !cJSON_IsArray(root))
     {
-        if (root) cJSON_Delete(root);
+        if (root)
+        {
+            cJSON_Delete(root);
+        }
         return NULL;
     }
     return root;
@@ -39,36 +45,55 @@ static void extraer_datos_reminder(const cJSON *it, Reminder *r, int idx)
     cJSON const *jtema = cJSON_GetObjectItemCaseSensitive(it, "tematica");
 
     if (jid && cJSON_IsNumber(jid))
+    {
         r->id = (long long)jid->valuedouble;
+    }
     else
+    {
         r->id = (long long)idx + 1;
+    }
 
     if (jfecha && cJSON_IsString(jfecha))
+    {
         strncpy_s(r->fecha, sizeof(r->fecha), jfecha->valuestring, sizeof(r->fecha) - 1);
+    }
     else
+    {
         r->fecha[0] = '\0';
 
-    if (jnota && cJSON_IsString(jnota))
-        strncpy_s(r->nota, sizeof(r->nota), jnota->valuestring, sizeof(r->nota) - 1);
-    else
-        r->nota[0] = '\0';
+        if (jnota && cJSON_IsString(jnota))
+        {
+            strncpy_s(r->nota, sizeof(r->nota), jnota->valuestring, sizeof(r->nota) - 1);
+        }
+        else
+        {
+            r->nota[0] = '\0';
+        }
 
-    if (jtema && cJSON_IsString(jtema))
-        strncpy_s(r->tematica, sizeof(r->tematica), jtema->valuestring, sizeof(r->tematica) - 1);
-    else
-        r->tematica[0] = '\0';
+        if (jtema && cJSON_IsString(jtema))
+        {
+            strncpy_s(r->tematica, sizeof(r->tematica), jtema->valuestring,
+                      sizeof(r->tematica) - 1);
+        }
+        else
+        {
+            r->tematica[0] = '\0';
+        }
+    }
 }
-
 static int cargar_recordatorios(Reminder **out_arr, int *out_count)
 {
     *out_arr = NULL;
     *out_count = 0;
 
     cJSON *root = leer_json_recordatorios();
-    if (!root) return 0;
+    if (!root)
+    {
+        return 0;
+    }
 
     int count = cJSON_GetArraySize(root);
-    Reminder *arr = (Reminder*)calloc((size_t)count, sizeof(Reminder));
+    Reminder *arr = (Reminder *)calloc((size_t)count, sizeof(Reminder));
     if (!arr)
     {
         cJSON_Delete(root);
@@ -79,7 +104,9 @@ static int cargar_recordatorios(Reminder **out_arr, int *out_count)
     {
         cJSON const *it = cJSON_GetArrayItem(root, i);
         if (it && cJSON_IsObject(it))
+        {
             extraer_datos_reminder(it, &arr[i], i);
+        }
         else
         {
             arr[i].id = (long long)i + 1;
@@ -105,16 +132,16 @@ void exportar_recordatorios_csv(void)
         return;
     }
 
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("recordatorios.csv"), "w");
-    if (err != 0 || f == NULL)
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("recordatorios.csv"), "w");
+    if (err != 0 || file == NULL)
     {
         printf("Error al crear el archivo CSV.\n");
         free(arr);
         return;
     }
 
-    fprintf(f, "id,fecha,tematica,nota\n");
+    fprintf(file, "id,fecha,tematica,nota\n");
     for (int i = 0; i < count; i++)
     {
         char fecha_limpio[64];
@@ -123,10 +150,10 @@ void exportar_recordatorios_csv(void)
         sanitizar_ascii_basico(arr[i].fecha, fecha_limpio, sizeof(fecha_limpio));
         sanitizar_ascii_basico(arr[i].tematica, tema_limpio, sizeof(tema_limpio));
         sanitizar_ascii_basico(arr[i].nota, nota_limpio, sizeof(nota_limpio));
-        fprintf(f, "%lld,%s,%s,%s\n", arr[i].id, fecha_limpio, tema_limpio, nota_limpio);
+        fprintf(file, "%lld,%s,%s,%s\n", arr[i].id, fecha_limpio, tema_limpio, nota_limpio);
     }
 
-    fclose(f);
+    fclose(file);
     free(arr);
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.csv"));
 }
@@ -141,23 +168,23 @@ void exportar_recordatorios_txt(void)
         return;
     }
 
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("recordatorios.txt"), "w");
-    if (err != 0 || f == NULL)
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("recordatorios.txt"), "w");
+    if (err != 0 || file == NULL)
     {
         printf("Error al crear el archivo TXT.\n");
         free(arr);
         return;
     }
 
-    fprintf(f, "RECORDATORIOS\n\n");
+    fprintf(file, "RECORDATORIOS\n\n");
     for (int i = 0; i < count; i++)
     {
-        fprintf(f, "ID: %lld\n  Fecha: %s\n  Tematica: %s\n  Nota: %s\n\n",
-                arr[i].id, arr[i].fecha, arr[i].tematica, arr[i].nota);
+        fprintf(file, "ID: %lld\n  Fecha: %s\n  Tematica: %s\n  Nota: %s\n\n", arr[i].id,
+                arr[i].fecha, arr[i].tematica, arr[i].nota);
     }
 
-    fclose(f);
+    fclose(file);
     free(arr);
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.txt"));
 }
@@ -183,9 +210,9 @@ void exportar_recordatorios_json(void)
         cJSON_AddItemToArray(root, item);
     }
 
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("recordatorios.json"), "w");
-    if (err != 0 || f == NULL)
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("recordatorios.json"), "w");
+    if (err != 0 || file == NULL)
     {
         printf("Error al crear el archivo JSON.\n");
         cJSON_Delete(root);
@@ -194,10 +221,10 @@ void exportar_recordatorios_json(void)
     }
 
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
-    fclose(f);
+    fclose(file);
     free(arr);
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.json"));
 }
@@ -212,26 +239,26 @@ void exportar_recordatorios_html(void)
         return;
     }
 
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path("recordatorios.html"), "w");
-    if (err != 0 || f == NULL)
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path("recordatorios.html"), "w");
+    if (err != 0 || file == NULL)
     {
         printf("Error al crear el archivo HTML.\n");
         free(arr);
         return;
     }
 
-    fprintf(f, "<html><body><h1>Recordatorios</h1><table border='1'>"
+    fprintf(file, "<html><body><h1>Recordatorios</h1><table border='1'>"
             "<tr><th>ID</th><th>Fecha</th><th>Tematica</th><th>Nota</th></tr>");
 
     for (int i = 0; i < count; i++)
     {
-        fprintf(f, "<tr><td>%lld</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                arr[i].id, arr[i].fecha, arr[i].tematica, arr[i].nota);
+        fprintf(file, "<tr><td>%lld</td><td>%s</td><td>%s</td><td>%s</td></tr>", arr[i].id,
+                arr[i].fecha, arr[i].tematica, arr[i].nota);
     }
 
-    fprintf(f, "</table></body></html>");
-    fclose(f);
+    fprintf(file, "</table></body></html>");
+    fclose(file);
     free(arr);
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.html"));
 }

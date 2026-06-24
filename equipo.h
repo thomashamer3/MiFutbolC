@@ -20,7 +20,8 @@ typedef enum
     ARQUERO,        /**< Portero o arquero - defiende la portería */
     DEFENSOR,       /**< Defensa - protege la zona defensiva */
     MEDIOCAMPISTA,  /**< Mediocampista - conecta defensa con ataque */
-    DELANTERO       /**< Delantero - ataca y busca marcar goles */
+    DELANTERO,      /**< Delantero - ataca y busca marcar goles */
+    POSICION_INVALIDA = 99 /**< Valor centinela para pruebas fuera de rango */
 } Posicion;
 
 /**
@@ -41,6 +42,7 @@ typedef enum
  */
 typedef enum
 {
+    FUTBOL_INVALIDO = -1, /**< Valor centinela para indicar cancelación o error */
     FUTBOL_5,  /**< Fútbol sala con 5 jugadores por equipo */
     FUTBOL_7,  /**< Fútbol reducido con 7 jugadores por equipo */
     FUTBOL_8,  /**< Fútbol con 8 jugadores por equipo */

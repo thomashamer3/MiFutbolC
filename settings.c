@@ -762,7 +762,9 @@ static cJSON *descargar_y_parsear_release_json(URLDownloadToFileAFunc downloader
     if (!root || !cJSON_IsObject(root))
     {
         if (root)
+        {
             cJSON_Delete(root);
+        }
         return NULL;
     }
 
@@ -886,11 +888,17 @@ static int comparar_versiones(const char *a, const char *b)
     parsear_version_tripleta(b, &bm, &bn, &bp);
 
     if (am != bm)
+    {
         return am < bm ? -1 : 1;
+    }
     if (an != bn)
+    {
         return an < bn ? -1 : 1;
+    }
     if (ap != bp)
+    {
         return ap < bp ? -1 : 1;
+    }
     return 0;
 }
 
@@ -1159,7 +1167,9 @@ static int descargar_y_ejecutar_latest(const char *owner_repo, const char *repo_
 
 cleanup:
     if (root)
+    {
         cJSON_Delete(root);
+    }
     liberar_descargador(module);
     return success;
 }

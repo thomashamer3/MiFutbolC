@@ -1,24 +1,25 @@
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static sqlite3_stmt* obtener_datos_equipos(int *count)
+static sqlite3_stmt *obtener_datos_equipos(int *count)
 {
     sqlite3_stmt *stmt;
 
-    if (!preparar_consulta_con_verificacion(&stmt, "equipo", "equipos para exportar",
-                                            "SELECT e.id, e.nombre, e.tipo, e.tipo_futbol, e.partido_id, "
-                                            "COUNT(j.id) as num_jugadores, "
-                                            "COALESCE(GROUP_CONCAT(DISTINCT j.posicion), '') as posiciones "
-                                            "FROM equipo e "
-                                            "LEFT JOIN jugador j ON e.id = j.equipo_id "
-                                            "GROUP BY e.id "
-                                            "ORDER BY e.id",
-                                            count))
+    if (!preparar_consulta_con_verificacion(
+                &stmt, "equipo", "equipos para exportar",
+                "SELECT e.id, e.nombre, e.tipo, e.tipo_futbol, e.partido_id, "
+                "COUNT(j.id) as num_jugadores, "
+                "COALESCE(GROUP_CONCAT(DISTINCT j.posicion), '') as posiciones "
+                "FROM equipo e "
+                "LEFT JOIN jugador j ON e.id = j.equipo_id "
+                "GROUP BY e.id "
+                "ORDER BY e.id",
+                count))
     {
         return NULL;
     }
@@ -26,7 +27,7 @@ static sqlite3_stmt* obtener_datos_equipos(int *count)
     return stmt;
 }
 
-static const char* tipo_equipo_to_text(int tipo)
+static const char *tipo_equipo_to_text(int tipo)
 {
     switch (tipo)
     {
@@ -39,7 +40,7 @@ static const char* tipo_equipo_to_text(int tipo)
     }
 }
 
-static const char* tipo_futbol_to_text(int tipo)
+static const char *tipo_futbol_to_text(int tipo)
 {
     switch (tipo)
     {
@@ -56,7 +57,7 @@ static const char* tipo_futbol_to_text(int tipo)
     }
 }
 
-static const char* posicion_to_text(int pos)
+static const char *posicion_to_text(int pos)
 {
     switch (pos)
     {
@@ -89,7 +90,9 @@ static void posiciones_to_text(const char *posiciones_csv, char *out, size_t out
         int pos = atoi(token);
         const char *label = posicion_to_text(pos);
         if (!first)
+        {
             strncat_s(out, out_size, ", ", _TRUNCATE);
+        }
         strncat_s(out, out_size, label, _TRUNCATE);
         first = 0;
         token = strtok_r(NULL, ",", &saveptr);
@@ -99,59 +102,57 @@ static void posiciones_to_text(const char *posiciones_csv, char *out, size_t out
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
-static void write_csv_header(FILE *f, void *context)
+static void write_csv_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f, "id,nombre,tipo,tipo_futbol,num_jugadores,posiciones\n");
+    fprintf(file, "id,nombre,tipo,tipo_futbol,num_jugadores,posiciones\n");
 }
 
-static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_csv_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
-    fprintf(f, "%d,%s,%d,%d,%d,%s\n",
-            sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1),
-            sqlite3_column_int(stmt, 2),
-            sqlite3_column_int(stmt, 3),
-            sqlite3_column_int(stmt, 5),
+    fprintf(file, "%d,%s,%d,%d,%d,%s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 5),
             sqlite3_column_text(stmt, 6));
 }
 
-static void write_txt_header(FILE *f, void *context)
+static void write_txt_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f, "LISTADO DE EQUIPOS\n\n");
+    fprintf(file, "LISTADO DE EQUIPOS\n\n");
 }
 
-static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_txt_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
     char pos_etiquetas[256] = "";
     const char *pos_raw = (const char *)sqlite3_column_text(stmt, 6);
     if (pos_raw && pos_raw[0] != '\0')
+    {
         posiciones_to_text(pos_raw, pos_etiquetas, sizeof(pos_etiquetas));
+    }
     else
+    {
         snprintf(pos_etiquetas, sizeof(pos_etiquetas), "SIN JUGADORES");
+    }
 
-    fprintf(f, "ID: %d\n"
+    fprintf(file,
+            "ID: %d\n"
             "  Nombre: %s\n"
             "  Tipo: %s\n"
             "  Tipo de Futbol: %s\n"
             "  Partido ID: %d\n"
             "  Numero de Jugadores: %d\n"
             "  Posiciones: %s\n\n",
-            sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
             tipo_equipo_to_text(sqlite3_column_int(stmt, 2)),
-            tipo_futbol_to_text(sqlite3_column_int(stmt, 3)),
-            sqlite3_column_int(stmt, 4),
-            sqlite3_column_int(stmt, 5),
-            pos_etiquetas);
+            tipo_futbol_to_text(sqlite3_column_int(stmt, 3)), sqlite3_column_int(stmt, 4),
+            sqlite3_column_int(stmt, 5), pos_etiquetas);
 }
 
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONAR */
+static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOSONAR */
 {
-    (void)f;
+    (void)file;
     cJSON *root = (cJSON *)context;
     cJSON *item = cJSON_CreateObject();
     cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
@@ -164,32 +165,32 @@ static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONA
     cJSON_AddItemToArray(root, item);
 }
 
-static void write_html_header(FILE *f, void *context)
+static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f,
-            "<html><body><h1>Equipos</h1><table border='1'>"
+    fprintf(file, "<html><body><h1>Equipos</h1><table border='1'>"
             "<tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Tipo de Futbol</th>"
             "<th>Numero de Jugadores</th><th>Posiciones</th></tr>");
 }
 
-static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
     char pos_etiquetas[256] = "";
     const char *pos_raw = (const char *)sqlite3_column_text(stmt, 6);
     if (pos_raw && pos_raw[0] != '\0')
+    {
         posiciones_to_text(pos_raw, pos_etiquetas, sizeof(pos_etiquetas));
+    }
     else
+    {
         snprintf(pos_etiquetas, sizeof(pos_etiquetas), "SIN JUGADORES");
+    }
 
-    fprintf(f,
-            "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td></tr>",
-            sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1),
+    fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td></tr>",
+            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
             tipo_equipo_to_text(sqlite3_column_int(stmt, 2)),
-            tipo_futbol_to_text(sqlite3_column_int(stmt, 3)),
-            sqlite3_column_int(stmt, 5),
+            tipo_futbol_to_text(sqlite3_column_int(stmt, 3)), sqlite3_column_int(stmt, 5),
             pos_etiquetas);
 }
 
@@ -198,19 +199,23 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
 /** @name Funciones de exportacion de equipos */
 /** @{ */
 
-EXPORT_FORMAT_ROWS(exportar_equipos_csv, obtener_datos_equipos, "equipos.csv", NULL, write_csv_header, write_csv_row, NULL)
-EXPORT_FORMAT_ROWS(exportar_equipos_txt, obtener_datos_equipos, "equipos.txt", NULL, write_txt_header, write_txt_row, NULL)
-EXPORT_FORMAT_ROWS(exportar_equipos_json, obtener_datos_equipos, "equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
-EXPORT_FORMAT_ROWS(exportar_equipos_html, obtener_datos_equipos, "equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer)
+EXPORT_FORMAT_ROWS(exportar_equipos_csv, obtener_datos_equipos, "equipos.csv", NULL,
+                   write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_equipos_txt, obtener_datos_equipos, "equipos.txt", NULL,
+                   write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_ROWS(exportar_equipos_json, obtener_datos_equipos, "equipos.json",
+                   cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
+EXPORT_FORMAT_ROWS(exportar_equipos_html, obtener_datos_equipos, "equipos.html", NULL,
+                   write_html_header, write_html_row, export_write_html_footer)
 
 void exportar_equipos_all(void)
 {
     ExportConfig configs[] =
     {
-        { "equipos.csv", NULL, write_csv_header, write_csv_row, NULL },
-        { "equipos.txt", NULL, write_txt_header, write_txt_row, NULL },
-        { "equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer },
-        { "equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+        {"equipos.csv", NULL, write_csv_header, write_csv_row, NULL},
+        {"equipos.txt", NULL, write_txt_header, write_txt_row, NULL},
+        {"equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer},
+        {"equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer}
     };
     export_all_formats(obtener_datos_equipos, configs, 4);
 }

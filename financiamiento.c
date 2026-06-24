@@ -131,7 +131,9 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
     {
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) > 0)
+        {
             return;
+        }
         printf("El campo no puede estar vacio.\n");
     }
 }
@@ -327,7 +329,7 @@ static int verificar_partido_transaccion_asociada(int id_partido)
         return 1;
     }
 
-    sqlite3_bind_text(stmt_check, 1, item_pattern, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt_check, 1, item_pattern, -1, DB_TRANSIENT);
     if (sqlite3_step(stmt_check) == SQLITE_ROW)
     {
         int count = sqlite3_column_int(stmt_check, 0);
@@ -397,9 +399,13 @@ static int completar_item_especifico(TransaccionFinanciera *transaccion)
         {
             id_partido = input_int("Ingrese el ID del partido (0 para cancelar): ");
             if (id_partido == 0)
+            {
                 return 0;
+            }
             if (existe_id("partido", id_partido))
+            {
                 break;
+            }
             printf("ID de partido invalido. Intente nuevamente.\n");
         }
 
@@ -1222,7 +1228,7 @@ void ver_balance_gastos(void)
     printf("\n=== RESUMEN EJECUTIVO ===\n");
     printf("Total gastado por el equipo: $");
     mostrar_monto(total_gastos);
-    float promedio = num_gastos > 0 ? (float)total_gastos / (float)num_gastos : 0.0f;
+    float promedio = num_gastos > 0 ? (float)total_gastos / (float)num_gastos : 0.0F;
     printf("Promedio por gasto: $%.2f\n", promedio);
 
     pause_console();
@@ -1287,11 +1293,17 @@ static void abrir_archivo(FILE **file, const char *filename, const char *mode,
 static void cerrar_archivos_anteriores(FILE *csv_file, FILE *txt_file, FILE *html_file)
 {
     if (csv_file)
+    {
         fclose(csv_file);
+    }
     if (txt_file)
+    {
         fclose(txt_file);
+    }
     if (html_file)
+    {
         fclose(html_file);
+    }
 }
 
 static void preparar_archivos_exportacion(ExportPrepParams *params)
@@ -1689,7 +1701,9 @@ static void modificar_fecha_transaccion(int id_transaccion)
     {
         input_date("", nueva_fecha, sizeof(nueva_fecha));
         if (safe_strnlen(nueva_fecha, sizeof(nueva_fecha)) > 0)
+        {
             break;
+        }
         printf("La fecha no puede estar vacia.\n");
     }
     const char *sql = "UPDATE financiamiento SET fecha = ? WHERE id = ?;";
@@ -1762,12 +1776,16 @@ static void modificar_item_especifico_transaccion(int id_transaccion)
 static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera *out)
 {
     if (!out)
+    {
         return 0;
+    }
     sqlite3_stmt *stmt;
     const char *sql_obtener = "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico "
                               "FROM financiamiento WHERE id = ?;";
     if (!preparar_stmt(sql_obtener, &stmt))
+    {
         return 0;
+    }
     sqlite3_bind_int(stmt, 1, id_transaccion);
     int found = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -1782,10 +1800,14 @@ static int obtener_transaccion_por_id(int id_transaccion, TransaccionFinanciera 
         out->monto = sqlite3_column_int(stmt, 4);
         const char *item = (const char *)sqlite3_column_text(stmt, 5);
         if (item)
+        {
             strncpy_s(out->item_especifico, sizeof(out->item_especifico), item,
                       sizeof(out->item_especifico) - 1);
+        }
         else
+        {
             out->item_especifico[0] = '\0';
+        }
         found = 1;
     }
     sqlite3_finalize(stmt);
@@ -1839,7 +1861,9 @@ void modificar_transaccion(void)
         input_int("\nIngrese el ID de la transaccion a modificar (0 para cancelar): ");
 
     if (id_transaccion == 0)
+    {
         return;
+    }
 
     // Verificar que existe
     if (!existe_id("financiamiento", id_transaccion))
@@ -1949,7 +1973,9 @@ void eliminar_transaccion(void)
         input_int("\nIngrese el ID de la transaccion a eliminar (0 para cancelar): ");
 
     if (id_transaccion == 0)
+    {
         return;
+    }
 
     // Verificar que existe
     if (!existe_id("financiamiento", id_transaccion))

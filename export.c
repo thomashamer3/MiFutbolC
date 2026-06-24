@@ -1,8 +1,8 @@
 
 #include "export.h"
+#include "cJSON.h"
 #include "db.h"
 #include "utils.h"
-#include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,12 +31,9 @@ char *get_export_path(const char *filename)
     return path;
 }
 
-int exportar_archivo_si_hay_registros(const char *tabla,
-                                      const char *mensaje_sin_registros,
-                                      const char *filename,
-                                      const char *error_al_abrir,
-                                      const char *cabecera_opcional,
-                                      ExportWriterFn writer)
+int exportar_archivo_si_hay_registros(const char *tabla, const char *mensaje_sin_registros,
+                                      const char *filename, const char *error_al_abrir,
+                                      const char *cabecera_opcional, ExportWriterFn writer)
 {
     if (!tabla || !mensaje_sin_registros || !filename || !error_al_abrir || !writer)
     {
@@ -49,37 +46,37 @@ int exportar_archivo_si_hay_registros(const char *tabla,
         return 0;
     }
 
-    FILE *f = abrir_archivo_exportacion(filename, error_al_abrir);
-    if (!f)
+    FILE *file = abrir_archivo_exportacion(filename, error_al_abrir);
+    if (!file)
     {
         return 0;
     }
 
     if (cabecera_opcional)
     {
-        fprintf(f, "%s", cabecera_opcional);
+        fprintf(file, "%s", cabecera_opcional);
     }
 
-    writer(f);
+    writer(file);
 
-    fclose(f);
+    fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     return 1;
 }
 
-void export_write_json_footer(FILE *f, void *context)
+void export_write_json_footer(FILE *file, void *context)
 {
     cJSON *root = (cJSON *)context;
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
 }
 
-void export_write_html_footer(FILE *f, void *context)
+void export_write_html_footer(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f, "</table></body></html>");
+    fprintf(file, "</table></body></html>");
 }
 
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
@@ -129,7 +126,8 @@ static int has_partido_records(void)
  * Calcula todas las estadisticas necesarias para el analisis.
  * Centraliza la logica de calculo para evitar duplicacion de codigo.
  */
-static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *ultimos5, int *mejor_racha_v, int *peor_racha_d)
+static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *ultimos5,
+                                        int *mejor_racha_v, int *peor_racha_d)
 {
     calcular_estadisticas_generales(generales);
     calcular_estadisticas_ultimos5(ultimos5);
@@ -144,23 +142,22 @@ static void calcular_todas_estadisticas(Estadisticas *generales, Estadisticas *u
  */
 static void calcular_estadisticas_generales(Estadisticas *stats)
 {
-    calcular_estadisticas(stats,
-                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+    calcular_estadisticas(stats, "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                          "AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
                           "FROM partido");
 }
 
 static void calcular_estadisticas_ultimos5(Estadisticas *stats)
 {
-    calcular_estadisticas(stats,
-                          "SELECT COUNT(*), AVG(goles), AVG(asistencias), AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
+    calcular_estadisticas(stats, "SELECT COUNT(*), AVG(goles), AVG(asistencias), "
+                          "AVG(rendimiento_general), AVG(cansancio), AVG(estado_animo) "
                           "FROM (SELECT * FROM partido ORDER BY fecha_hora DESC LIMIT 5)");
 }
 
 static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt,
-                              "SELECT resultado FROM partido ORDER BY fecha_hora"))
+    if (!preparar_stmt_export(&stmt, "SELECT resultado FROM partido ORDER BY fecha_hora"))
     {
         *mejor_racha_victorias = 0;
         *peor_racha_derrotas = 0;
@@ -175,8 +172,7 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int resultado = sqlite3_column_int(stmt, 0);
-        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v,
-                          &racha_actual_d, &max_racha_d);
+        actualizar_rachas(resultado, &racha_actual_v, &max_racha_v, &racha_actual_d, &max_racha_d);
     }
 
     *mejor_racha_victorias = max_racha_v;
@@ -188,25 +184,27 @@ static void calcular_rachas(int *mejor_racha_victorias, int *peor_racha_derrotas
 
 void exportar_finanzas_resumen_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("finanzas_resumen.txt", "Error al crear archivo de finanzas resumen TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("finanzas_resumen.txt",
+                                           "Error al crear archivo de finanzas resumen TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "RESUMEN FINANCIERO\n\n");
+    fprintf(file, "RESUMEN FINANCIERO\n\n");
 
     if (!has_records("financiamiento"))
     {
-        fprintf(f, "No hay transacciones financieras registradas.\n");
-        fclose(f);
+        fprintf(file, "No hay transacciones financieras registradas.\n");
+        fclose(file);
         return;
     }
 
     sqlite3_stmt *stmt;
 
-    fprintf(f, "RESUMEN POR MES\n");
-    fprintf(f, "----------------\n");
-    if (preparar_stmt_export(&stmt,
-                             "SELECT strftime('%Y-%m', fecha) as periodo, "
+    fprintf(file, "RESUMEN POR MES\n");
+    fprintf(file, "----------------\n");
+    if (preparar_stmt_export(&stmt, "SELECT strftime('%Y-%m', fecha) as periodo, "
                              "SUM(CASE WHEN tipo = 0 THEN monto ELSE 0 END) ingresos, "
                              "SUM(CASE WHEN tipo = 1 THEN monto ELSE 0 END) gastos "
                              "FROM financiamiento GROUP BY periodo ORDER BY periodo"))
@@ -216,16 +214,15 @@ void exportar_finanzas_resumen_txt(void)
             const char *periodo = (const char *)sqlite3_column_text(stmt, 0);
             double ingresos = sqlite3_column_double(stmt, 1);
             double gastos = sqlite3_column_double(stmt, 2);
-            fprintf(f, "Mes: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
+            fprintf(file, "Mes: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
                     periodo ? periodo : "-", ingresos, gastos, ingresos - gastos);
         }
         sqlite3_finalize(stmt);
     }
 
-    fprintf(f, "\nRESUMEN POR ANIO\n");
-    fprintf(f, "----------------\n");
-    if (preparar_stmt_export(&stmt,
-                             "SELECT strftime('%Y', fecha) as anio, "
+    fprintf(file, "\nRESUMEN POR ANIO\n");
+    fprintf(file, "----------------\n");
+    if (preparar_stmt_export(&stmt, "SELECT strftime('%Y', fecha) as anio, "
                              "SUM(CASE WHEN tipo = 0 THEN monto ELSE 0 END) ingresos, "
                              "SUM(CASE WHEN tipo = 1 THEN monto ELSE 0 END) gastos "
                              "FROM financiamiento GROUP BY anio ORDER BY anio"))
@@ -235,41 +232,44 @@ void exportar_finanzas_resumen_txt(void)
             const char *anio = (const char *)sqlite3_column_text(stmt, 0);
             double ingresos = sqlite3_column_double(stmt, 1);
             double gastos = sqlite3_column_double(stmt, 2);
-            fprintf(f, "Anio: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
+            fprintf(file, "Anio: %s | Ingresos: %.2f | Gastos: %.2f | Balance: %.2f\n",
                     anio ? anio : "-", ingresos, gastos, ingresos - gastos);
         }
         sqlite3_finalize(stmt);
     }
 
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_ranking_canchas_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("ranking_canchas.txt", "Error al crear archivo de ranking de canchas TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("ranking_canchas.txt",
+                                           "Error al crear archivo de ranking de canchas TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "RANKING DE CANCHAS (RENDIMIENTO Y LESIONES)\n\n");
+    fprintf(file, "RANKING DE CANCHAS (RENDIMIENTO Y LESIONES)\n\n");
 
     if (!has_records("cancha"))
     {
-        fprintf(f, "No hay canchas registradas.\n");
-        fclose(f);
+        fprintf(file, "No hay canchas registradas.\n");
+        fclose(file);
         return;
     }
 
     sqlite3_stmt *stmt;
-    if (preparar_stmt_export(&stmt,
-                             "SELECT can.nombre, "
-                             "COUNT(DISTINCT p.id) as partidos, "
-                             "COALESCE(AVG(p.rendimiento_general), 0), "
-                             "COUNT(l.id) as lesiones "
-                             "FROM cancha can "
-                             "LEFT JOIN partido p ON p.cancha_id = can.id "
-                             "LEFT JOIN lesion l ON l.partido_id = p.id "
-                             "GROUP BY can.id "
-                             "ORDER BY COALESCE(AVG(p.rendimiento_general), 0) DESC, COUNT(l.id) ASC"))
+    if (preparar_stmt_export(
+                &stmt, "SELECT can.nombre, "
+                "COUNT(DISTINCT p.id) as partidos, "
+                "COALESCE(AVG(p.rendimiento_general), 0), "
+                "COUNT(l.id) as lesiones "
+                "FROM cancha can "
+                "LEFT JOIN partido p ON p.cancha_id = can.id "
+                "LEFT JOIN lesion l ON l.partido_id = p.id "
+                "GROUP BY can.id "
+                "ORDER BY COALESCE(AVG(p.rendimiento_general), 0) DESC, COUNT(l.id) ASC"))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
@@ -277,33 +277,35 @@ void exportar_ranking_canchas_txt(void)
             int partidos = sqlite3_column_int(stmt, 1);
             double rendimiento = sqlite3_column_double(stmt, 2);
             int lesiones = sqlite3_column_int(stmt, 3);
-            fprintf(f, "Cancha: %s | Partidos: %d | Rendimiento Promedio: %.2f | Lesiones: %d\n",
+            fprintf(file, "Cancha: %s | Partidos: %d | Rendimiento Promedio: %.2f | Lesiones: %d\n",
                     nombre ? nombre : "-", partidos, rendimiento, lesiones);
         }
         sqlite3_finalize(stmt);
     }
 
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_partidos_por_clima_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("partidos_por_clima.txt", "Error al crear archivo de partidos por clima TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("partidos_por_clima.txt",
+                                           "Error al crear archivo de partidos por clima TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "PARTIDOS POR CLIMA\n\n");
+    fprintf(file, "PARTIDOS POR CLIMA\n\n");
 
     if (!has_records("partido"))
     {
-        fprintf(f, "No hay partidos registrados.\n");
-        fclose(f);
+        fprintf(file, "No hay partidos registrados.\n");
+        fclose(file);
         return;
     }
 
     sqlite3_stmt *stmt;
-    if (preparar_stmt_export(&stmt,
-                             "SELECT clima, COUNT(*), AVG(goles), AVG(asistencias) "
+    if (preparar_stmt_export(&stmt, "SELECT clima, COUNT(*), AVG(goles), AVG(asistencias) "
                              "FROM partido GROUP BY clima ORDER BY clima"))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -312,60 +314,67 @@ void exportar_partidos_por_clima_txt(void)
             int count = sqlite3_column_int(stmt, 1);
             double avg_goles = sqlite3_column_double(stmt, 2);
             double avg_asist = sqlite3_column_double(stmt, 3);
-            fprintf(f, "Clima: %s | Partidos: %d | Prom. Goles: %.2f | Prom. Asistencias: %.2f\n",
+            fprintf(file,
+                    "Clima: %s | Partidos: %d | Prom. Goles: %.2f | Prom. Asistencias: %.2f\n",
                     clima_to_text(clima), count, avg_goles, avg_asist);
         }
         sqlite3_finalize(stmt);
     }
 
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_lesiones_por_tipo_estado_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("lesiones_por_tipo_estado.txt", "Error al crear archivo de lesiones por tipo y estado TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion(
+                     "lesiones_por_tipo_estado.txt", "Error al crear archivo de lesiones por tipo y estado TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "DISTRIBUCION DE LESIONES POR TIPO Y ESTADO\n\n");
+    fprintf(file, "DISTRIBUCION DE LESIONES POR TIPO Y ESTADO\n\n");
 
     if (!has_records("lesion"))
     {
-        fprintf(f, "No hay lesiones registradas.\n");
-        fclose(f);
+        fprintf(file, "No hay lesiones registradas.\n");
+        fclose(file);
         return;
     }
 
     sqlite3_stmt *stmt;
-    if (preparar_stmt_export(&stmt,
-                             "SELECT tipo, estado, COUNT(*) FROM lesion GROUP BY tipo, estado ORDER BY tipo, estado"))
+    if (preparar_stmt_export(&stmt, "SELECT tipo, estado, COUNT(*) FROM lesion GROUP BY tipo, "
+                             "estado ORDER BY tipo, estado"))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             const char *tipo = (const char *)sqlite3_column_text(stmt, 0);
             const char *estado = (const char *)sqlite3_column_text(stmt, 1);
             int count = sqlite3_column_int(stmt, 2);
-            fprintf(f, "Tipo: %s | Estado: %s | Cantidad: %d\n",
-                    tipo ? tipo : "-", estado ? estado : "-", count);
+            fprintf(file, "Tipo: %s | Estado: %s | Cantidad: %d\n", tipo ? tipo : "-",
+                    estado ? estado : "-", count);
         }
         sqlite3_finalize(stmt);
     }
 
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_rachas_historial_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("rachas_historial.txt", "Error al crear archivo de rachas TXT");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("rachas_historial.txt", "Error al crear archivo de rachas TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "HISTORIAL DE RACHAS\n\n");
+    fprintf(file, "HISTORIAL DE RACHAS\n\n");
 
     if (!has_records("partido"))
     {
-        fprintf(f, "No hay partidos registrados.\n");
-        fclose(f);
+        fprintf(file, "No hay partidos registrados.\n");
+        fclose(file);
         return;
     }
 
@@ -373,7 +382,7 @@ void exportar_rachas_historial_txt(void)
     if (!preparar_stmt_export(&stmt,
                               "SELECT resultado, fecha_hora FROM partido ORDER BY fecha_hora"))
     {
-        fclose(f);
+        fclose(file);
         return;
     }
 
@@ -412,7 +421,7 @@ void exportar_rachas_historial_txt(void)
         }
         else
         {
-            fprintf(f, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
+            fprintf(file, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
                     resultado_to_text(racha_resultado), racha_count, fecha_inicio, fecha_fin);
             racha_resultado = resultado;
             racha_count = 1;
@@ -423,60 +432,63 @@ void exportar_rachas_historial_txt(void)
 
     if (racha_resultado != -1)
     {
-        fprintf(f, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
+        fprintf(file, "Racha %s: %d partido(s) | Desde %s hasta %s\n",
                 resultado_to_text(racha_resultado), racha_count, fecha_inicio, fecha_fin);
     }
 
     sqlite3_finalize(stmt);
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_estado_animo_cansancio_txt(void)
 {
-    FILE *f = abrir_archivo_exportacion("estado_animo_cansancio.txt", "Error al crear archivo de estado de animo y cansancio TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion(
+                     "estado_animo_cansancio.txt", "Error al crear archivo de estado de animo y cansancio TXT");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "DISTRIBUCION DE ESTADO DE ANIMO Y CANSANCIO\n\n");
+    fprintf(file, "DISTRIBUCION DE ESTADO DE ANIMO Y CANSANCIO\n\n");
 
     if (!has_records("partido"))
     {
-        fprintf(f, "No hay partidos registrados.\n");
-        fclose(f);
+        fprintf(file, "No hay partidos registrados.\n");
+        fclose(file);
         return;
     }
 
     sqlite3_stmt *stmt;
 
-    fprintf(f, "ESTADO DE ANIMO\n");
-    fprintf(f, "---------------\n");
-    if (preparar_stmt_export(&stmt,
-                             "SELECT estado_animo, COUNT(*) FROM partido GROUP BY estado_animo ORDER BY estado_animo"))
+    fprintf(file, "ESTADO DE ANIMO\n");
+    fprintf(file, "---------------\n");
+    if (preparar_stmt_export(&stmt, "SELECT estado_animo, COUNT(*) FROM partido GROUP BY "
+                             "estado_animo ORDER BY estado_animo"))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             int valor = sqlite3_column_int(stmt, 0);
             int count = sqlite3_column_int(stmt, 1);
-            fprintf(f, "Estado de animo %d: %d partido(s)\n", valor, count);
+            fprintf(file, "Estado de animo %d: %d partido(s)\n", valor, count);
         }
         sqlite3_finalize(stmt);
     }
 
-    fprintf(f, "\nCANSANCIO\n");
-    fprintf(f, "---------\n");
-    if (preparar_stmt_export(&stmt,
-                             "SELECT cansancio, COUNT(*) FROM partido GROUP BY cansancio ORDER BY cansancio"))
+    fprintf(file, "\nCANSANCIO\n");
+    fprintf(file, "---------\n");
+    if (preparar_stmt_export(
+                &stmt, "SELECT cansancio, COUNT(*) FROM partido GROUP BY cansancio ORDER BY cansancio"))
     {
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             int valor = sqlite3_column_int(stmt, 0);
             int count = sqlite3_column_int(stmt, 1);
-            fprintf(f, "Cansancio %d: %d partido(s)\n", valor, count);
+            fprintf(file, "Cansancio %d: %d partido(s)\n", valor, count);
         }
         sqlite3_finalize(stmt);
     }
 
-    fclose(f);
+    fclose(file);
 }
 
 static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estadisticas *generales)
@@ -486,15 +498,19 @@ static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estad
 
     if (diff_goles > 0.5 && diff_rendimiento > 0.5)
     {
-        return "Excelente. Estas en racha ascendente. Sigue asi, tu esfuerzo esta dando frutos. Mantien la consistencia y continua trabajando duro en los entrenamientos.";
+        return "Excelente. Estas en racha ascendente. Sigue asi, tu esfuerzo esta dando frutos. "
+               "Mantien la consistencia y continua trabajando duro en los entrenamientos.";
     }
     else if (diff_goles < -0.5 || diff_rendimiento < -0.5)
     {
-        return "No te desanimes. Todos tenemos dias dificiles. Analiza que puedes mejorar: Revisa tu preparacion fisica y tecnica. Habla con tu entrenador sobre estrategias. Recuerda: el futbol es un deporte de perseverancia.";
+        return "No te desanimes. Todos tenemos dias dificiles. Analiza que puedes mejorar: Revisa "
+               "tu preparacion fisica y tecnica. Habla con tu entrenador sobre estrategias. "
+               "Recuerda: el futbol es un deporte de perseverancia.";
     }
     else
     {
-        return "Buen trabajo manteniendo el nivel. La consistencia es clave en el futbol. Sigue entrenando y manten la motivacion alta. Cada partido es una oportunidad!";
+        return "Buen trabajo manteniendo el nivel. La consistencia es clave en el futbol. Sigue "
+               "entrenando y manten la motivacion alta. Cada partido es una oportunidad!";
     }
 }
 
@@ -503,53 +519,49 @@ static const char *mensaje_motivacional(const Estadisticas *ultimos, const Estad
  */
 /** @{ */
 
-static void write_analisis_csv(FILE *f, const Estadisticas *generales,
-                               const Estadisticas *ultimos5,
-                               int mejor_racha_v, int peor_racha_d,
+static void write_analisis_csv(FILE *file, const Estadisticas *generales,
+                               const Estadisticas *ultimos5, int mejor_racha_v, int peor_racha_d,
                                const char *msg)
 {
-    fprintf(f, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_Cansancio,Promedio_Animo,Total_Partidos\n");
-    fprintf(f, "Generales,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
-            generales->avg_goles, generales->avg_asistencias,
-            generales->avg_rendimiento, generales->avg_cansancio,
+    fprintf(file, "Tipo,Promedio_Goles,Promedio_Asistencias,Promedio_Rendimiento,Promedio_"
+            "Cansancio,Promedio_Animo,Total_Partidos\n");
+    fprintf(file, "Generales,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n", generales->avg_goles,
+            generales->avg_asistencias, generales->avg_rendimiento, generales->avg_cansancio,
             generales->avg_animo, generales->total_partidos);
-    fprintf(f, "Ultimos5,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n",
-            ultimos5->avg_goles, ultimos5->avg_asistencias,
-            ultimos5->avg_rendimiento, ultimos5->avg_cansancio,
+    fprintf(file, "Ultimos5,%.2f,%.2f,%.2f,%.2f,%.2f,%d\n", ultimos5->avg_goles,
+            ultimos5->avg_asistencias, ultimos5->avg_rendimiento, ultimos5->avg_cansancio,
             ultimos5->avg_animo, ultimos5->total_partidos);
-    fprintf(f, "Rachas,%d,%d\n", mejor_racha_v, peor_racha_d);
-    fprintf(f, "Mensaje,%s\n", msg);
+    fprintf(file, "Rachas,%d,%d\n", mejor_racha_v, peor_racha_d);
+    fprintf(file, "Mensaje,%s\n", msg);
 }
 
-static void write_analisis_txt(FILE *f, const Estadisticas *generales,
-                               const Estadisticas *ultimos5,
-                               int mejor_racha_v, int peor_racha_d,
+static void write_analisis_txt(FILE *file, const Estadisticas *generales,
+                               const Estadisticas *ultimos5, int mejor_racha_v, int peor_racha_d,
                                const char *msg)
 {
-    fprintf(f, "ANALISIS DE RENDIMIENTO\n\n");
-    fprintf(f, "ESTADISTICAS GENERALES:\n");
-    fprintf(f, "Total Partidos: %d\n", generales->total_partidos);
-    fprintf(f, "Promedio Goles: %.2f\n", generales->avg_goles);
-    fprintf(f, "Promedio Asistencias: %.2f\n", generales->avg_asistencias);
-    fprintf(f, "Promedio Rendimiento: %.2f\n", generales->avg_rendimiento);
-    fprintf(f, "Promedio Cansancio: %.2f\n", generales->avg_cansancio);
-    fprintf(f, "Promedio Estado Animo: %.2f\n\n", generales->avg_animo);
-    fprintf(f, "ULTIMOS 5 PARTIDOS:\n");
-    fprintf(f, "Total Partidos: %d\n", ultimos5->total_partidos);
-    fprintf(f, "Promedio Goles: %.2f\n", ultimos5->avg_goles);
-    fprintf(f, "Promedio Asistencias: %.2f\n", ultimos5->avg_asistencias);
-    fprintf(f, "Promedio Rendimiento: %.2f\n", ultimos5->avg_rendimiento);
-    fprintf(f, "Promedio Cansancio: %.2f\n", ultimos5->avg_cansancio);
-    fprintf(f, "Promedio Estado Animo: %.2f\n\n", ultimos5->avg_animo);
-    fprintf(f, "RACHAS:\n");
-    fprintf(f, "Mejor racha de victorias: %d partidos\n", mejor_racha_v);
-    fprintf(f, "Peor racha de derrotas: %d partidos\n\n", peor_racha_d);
-    fprintf(f, "ANALISIS MOTIVACIONAL:\n%s\n", msg);
+    fprintf(file, "ANALISIS DE RENDIMIENTO\n\n");
+    fprintf(file, "ESTADISTICAS GENERALES:\n");
+    fprintf(file, "Total Partidos: %d\n", generales->total_partidos);
+    fprintf(file, "Promedio Goles: %.2f\n", generales->avg_goles);
+    fprintf(file, "Promedio Asistencias: %.2f\n", generales->avg_asistencias);
+    fprintf(file, "Promedio Rendimiento: %.2f\n", generales->avg_rendimiento);
+    fprintf(file, "Promedio Cansancio: %.2f\n", generales->avg_cansancio);
+    fprintf(file, "Promedio Estado Animo: %.2f\n\n", generales->avg_animo);
+    fprintf(file, "ULTIMOS 5 PARTIDOS:\n");
+    fprintf(file, "Total Partidos: %d\n", ultimos5->total_partidos);
+    fprintf(file, "Promedio Goles: %.2f\n", ultimos5->avg_goles);
+    fprintf(file, "Promedio Asistencias: %.2f\n", ultimos5->avg_asistencias);
+    fprintf(file, "Promedio Rendimiento: %.2f\n", ultimos5->avg_rendimiento);
+    fprintf(file, "Promedio Cansancio: %.2f\n", ultimos5->avg_cansancio);
+    fprintf(file, "Promedio Estado Animo: %.2f\n\n", ultimos5->avg_animo);
+    fprintf(file, "RACHAS:\n");
+    fprintf(file, "Mejor racha de victorias: %d partidos\n", mejor_racha_v);
+    fprintf(file, "Peor racha de derrotas: %d partidos\n\n", peor_racha_d);
+    fprintf(file, "ANALISIS MOTIVACIONAL:\n%s\n", msg);
 }
 
-static void write_analisis_json(FILE *f, const Estadisticas *generales,
-                                const Estadisticas *ultimos5,
-                                int mejor_racha_v, int peor_racha_d,
+static void write_analisis_json(FILE *file, const Estadisticas *generales,
+                                const Estadisticas *ultimos5, int mejor_racha_v, int peor_racha_d,
                                 const char *msg)
 {
     cJSON *root = cJSON_CreateObject();
@@ -575,39 +587,40 @@ static void write_analisis_json(FILE *f, const Estadisticas *generales,
     cJSON_AddItemToObject(root, "rachas", rachas_obj);
     cJSON_AddStringToObject(root, "mensaje_motivacional", msg);
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
 }
 
-static void write_analisis_html(FILE *f, const Estadisticas *generales,
-                                const Estadisticas *ultimos5,
-                                int mejor_racha_v, int peor_racha_d,
+static void write_analisis_html(FILE *file, const Estadisticas *generales,
+                                const Estadisticas *ultimos5, int mejor_racha_v, int peor_racha_d,
                                 const char *msg)
 {
-    fprintf(f, "<html><body><h1>Analisis de Rendimiento</h1>");
-    fprintf(f, "<h2>Estadisticas Generales</h2><table border='1'>");
-    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", generales->total_partidos);
-    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", generales->avg_goles);
-    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", generales->avg_asistencias);
-    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", generales->avg_rendimiento);
-    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", generales->avg_cansancio);
-    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", generales->avg_animo);
-    fprintf(f, "</table>");
-    fprintf(f, "<h2>Ultimos 5 Partidos</h2><table border='1'>");
-    fprintf(f, "<tr><th>Total Partidos</th><td>%d</td></tr>", ultimos5->total_partidos);
-    fprintf(f, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", ultimos5->avg_goles);
-    fprintf(f, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", ultimos5->avg_asistencias);
-    fprintf(f, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", ultimos5->avg_rendimiento);
-    fprintf(f, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", ultimos5->avg_cansancio);
-    fprintf(f, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", ultimos5->avg_animo);
-    fprintf(f, "</table>");
-    fprintf(f, "<h2>Rachas</h2><table border='1'>");
-    fprintf(f, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
-    fprintf(f, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
-    fprintf(f, "</table>");
-    fprintf(f, "<h2>Analisis Motivacional</h2><p>%s</p>", msg);
-    fprintf(f, "</body></html>");
+    fprintf(file, "<html><body><h1>Analisis de Rendimiento</h1>");
+    fprintf(file, "<h2>Estadisticas Generales</h2><table border='1'>");
+    fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", generales->total_partidos);
+    fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", generales->avg_goles);
+    fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>",
+            generales->avg_asistencias);
+    fprintf(file, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>",
+            generales->avg_rendimiento);
+    fprintf(file, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", generales->avg_cansancio);
+    fprintf(file, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", generales->avg_animo);
+    fprintf(file, "</table>");
+    fprintf(file, "<h2>Ultimos 5 Partidos</h2><table border='1'>");
+    fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", ultimos5->total_partidos);
+    fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", ultimos5->avg_goles);
+    fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", ultimos5->avg_asistencias);
+    fprintf(file, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", ultimos5->avg_rendimiento);
+    fprintf(file, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", ultimos5->avg_cansancio);
+    fprintf(file, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", ultimos5->avg_animo);
+    fprintf(file, "</table>");
+    fprintf(file, "<h2>Rachas</h2><table border='1'>");
+    fprintf(file, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
+    fprintf(file, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
+    fprintf(file, "</table>");
+    fprintf(file, "<h2>Analisis Motivacional</h2><p>%s</p>", msg);
+    fprintf(file, "</body></html>");
 }
 
 /** @} */
@@ -624,9 +637,12 @@ void exportar_analisis_csv(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.csv", "Error al crear archivo de analisis CSV");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("analisis.csv", "Error al crear archivo de analisis CSV");
+    if (!file)
+    {
         return;
+    }
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
@@ -634,10 +650,10 @@ void exportar_analisis_csv(void)
     int peor_racha_d;
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    write_analisis_csv(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+    write_analisis_csv(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.csv"));
-    fclose(f);
+    fclose(file);
 }
 
 /**
@@ -652,9 +668,12 @@ void exportar_analisis_txt(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.txt", "Error al crear archivo de analisis TXT");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("analisis.txt", "Error al crear archivo de analisis TXT");
+    if (!file)
+    {
         return;
+    }
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
@@ -662,10 +681,10 @@ void exportar_analisis_txt(void)
     int peor_racha_d;
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    write_analisis_txt(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+    write_analisis_txt(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.txt"));
-    fclose(f);
+    fclose(file);
 }
 
 /**
@@ -680,9 +699,12 @@ void exportar_analisis_json(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.json", "Error al crear archivo de analisis JSON");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("analisis.json", "Error al crear archivo de analisis JSON");
+    if (!file)
+    {
         return;
+    }
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
@@ -690,10 +712,10 @@ void exportar_analisis_json(void)
     int peor_racha_d;
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    write_analisis_json(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+    write_analisis_json(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.json"));
-    fclose(f);
+    fclose(file);
 }
 
 /**
@@ -708,9 +730,12 @@ void exportar_analisis_html(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("analisis.html", "Error al crear archivo de analisis HTML");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("analisis.html", "Error al crear archivo de analisis HTML");
+    if (!file)
+    {
         return;
+    }
 
     Estadisticas generales = {0};
     Estadisticas ultimos5 = {0};
@@ -718,10 +743,10 @@ void exportar_analisis_html(void)
     int peor_racha_d;
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
-    write_analisis_html(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+    write_analisis_html(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
 
     printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
-    fclose(f);
+    fclose(file);
 }
 
 /**
@@ -743,37 +768,37 @@ void exportar_analisis_all(void)
     calcular_todas_estadisticas(&generales, &ultimos5, &mejor_racha_v, &peor_racha_d);
     const char *msg = mensaje_motivacional(&ultimos5, &generales);
 
-    FILE *f;
+    FILE *file;
 
-    f = abrir_archivo_exportacion("analisis.csv", "Error al crear CSV");
-    if (f)
+    file = abrir_archivo_exportacion("analisis.csv", "Error al crear CSV");
+    if (file)
     {
-        write_analisis_csv(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        write_analisis_csv(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
         printf("Archivo exportado a: %s\n", get_export_path("analisis.csv"));
-        fclose(f);
+        fclose(file);
     }
 
-    f = abrir_archivo_exportacion("analisis.txt", "Error al crear TXT");
-    if (f)
+    file = abrir_archivo_exportacion("analisis.txt", "Error al crear TXT");
+    if (file)
     {
-        write_analisis_txt(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        write_analisis_txt(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
         printf("Archivo exportado a: %s\n", get_export_path("analisis.txt"));
-        fclose(f);
+        fclose(file);
     }
 
-    f = abrir_archivo_exportacion("analisis.json", "Error al crear JSON");
-    if (f)
+    file = abrir_archivo_exportacion("analisis.json", "Error al crear JSON");
+    if (file)
     {
-        write_analisis_json(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        write_analisis_json(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
         printf("Archivo exportado a: %s\n", get_export_path("analisis.json"));
-        fclose(f);
+        fclose(file);
     }
 
-    f = abrir_archivo_exportacion("analisis.html", "Error al crear HTML");
-    if (f)
+    file = abrir_archivo_exportacion("analisis.html", "Error al crear HTML");
+    if (file)
     {
-        write_analisis_html(f, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
+        write_analisis_html(file, &generales, &ultimos5, mejor_racha_v, peor_racha_d, msg);
         printf("Archivo exportado a: %s\n", get_export_path("analisis.html"));
-        fclose(f);
+        fclose(file);
     }
 }

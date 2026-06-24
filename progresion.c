@@ -25,16 +25,24 @@ static void crear_plan_entrenamiento(void)
     sesiones_por_semana = input_int("Sesiones por semana: ");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO entrenamiento_plan (nombre, descripcion, duracion_semanas, sesiones_por_semana) VALUES (?,?,?,?)", &stmt))
+    if (!preparar_stmt("INSERT INTO entrenamiento_plan (nombre, descripcion, duracion_semanas, "
+                       "sesiones_por_semana) VALUES (?,?,?,?)",
+                       &stmt))
+    {
         return;
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, desc, -1, SQLITE_TRANSIENT);
+    }
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, desc, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, duracion_semanas);
     sqlite3_bind_int(stmt, 4, sesiones_por_semana);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Plan de entrenamiento creado.\n");
+    }
     else
+    {
         printf("Error al crear plan: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -61,7 +69,9 @@ static void listar_planes_entrenamiento(void)
     sqlite3_finalize(stmt);
 
     if (count == 0)
+    {
         mostrar_no_hay_registros("planes de entrenamiento");
+    }
     pause_console();
 }
 
@@ -70,12 +80,18 @@ static void eliminar_plan_entrenamiento(void)
     int id = input_int("ID del plan a eliminar: ");
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM entrenamiento_plan WHERE id = ?", &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, id);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Plan eliminado.\n");
+    }
     else
+    {
         printf("Error al eliminar plan: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -112,8 +128,12 @@ static void registrar_progresion(void)
     tecnica = input_int_rango("Progresion Tecnica (0-100): ", 0, 100);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO progresion_jugador (jugador_id, plan_id, semana, ataque, defensa, resistencia, velocidad, tecnica) VALUES (?,?,?,?,?,?,?,?)", &stmt))
+    if (!preparar_stmt("INSERT INTO progresion_jugador (jugador_id, plan_id, semana, ataque, "
+                       "defensa, resistencia, velocidad, tecnica) VALUES (?,?,?,?,?,?,?,?)",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
     sqlite3_bind_int(stmt, 2, plan_id);
     sqlite3_bind_int(stmt, 3, semana);
@@ -123,9 +143,13 @@ static void registrar_progresion(void)
     sqlite3_bind_int(stmt, 7, velocidad);
     sqlite3_bind_int(stmt, 8, tecnica);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Progresion registrada.\n");
+    }
     else
+    {
         printf("Error al registrar progresion: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -134,10 +158,15 @@ static void ver_progresion_jugador(void)
     int jugador_id = input_int("ID del jugador: ");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT p.semana, p.ataque, p.defensa, p.resistencia, p.velocidad, p.tecnica, pl.nombre "
-                       "FROM progresion_jugador p LEFT JOIN entrenamiento_plan pl ON p.plan_id = pl.id "
-                       "WHERE p.jugador_id = ? ORDER BY p.semana", &stmt))
+    if (!preparar_stmt(
+                "SELECT p.semana, p.ataque, p.defensa, p.resistencia, p.velocidad, p.tecnica, "
+                "pl.nombre "
+                "FROM progresion_jugador p LEFT JOIN entrenamiento_plan pl ON p.plan_id = pl.id "
+                "WHERE p.jugador_id = ? ORDER BY p.semana",
+                &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     mostrar_pantalla("PROGRESION DEL JUGADOR");
@@ -189,7 +218,9 @@ static void ver_progresion_jugador(void)
             promedios[4] += valores_tecnica[i];
         }
         for (int i = 0; i < 5; i++)
+        {
             promedios[i] = (count > 0) ? promedios[i] / count : 0;
+        }
 
         printf("\nPromedio por atributo:\n");
         dibujar_grafico_barras(promedios, etiquetas, 5, "Progresion Promedio", 40);
@@ -230,7 +261,10 @@ static void listar_progresiones(void)
     }
     sqlite3_finalize(stmt);
 
-    if (count == 0) mostrar_no_hay_registros("progresiones");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("progresiones");
+    }
     pause_console();
 }
 

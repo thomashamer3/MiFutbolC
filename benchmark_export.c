@@ -79,13 +79,21 @@ int main(void) {
 
     const char *status;
     if (elapsed < 0.05)
+    {
         status = "RAPIDO";
+    }
     else if (elapsed < 0.2)
+    {
         status = "OK";
+    }
     else if (elapsed < 1.0)
+    {
         status = "LENTO";
+    }
     else
+    {
         status = "MUY LENTO";
+    }
     printf("%-35s %9.4fs  %s\n", benchmarks[i].name, elapsed, status);
   }
 

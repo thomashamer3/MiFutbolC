@@ -1,21 +1,21 @@
-#include "export.h"
-#include "db.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
 #include <stdio.h>
 
-static sqlite3_stmt* obtener_datos_dashboard(int *count)
+static sqlite3_stmt *obtener_datos_dashboard(int *count)
 {
     sqlite3_stmt *stmt;
-    const char *sql =
-        "SELECT "
-        "  (SELECT COUNT(*) FROM partido) AS total_partidos, "
-        "  (SELECT COALESCE(SUM(goles), 0) FROM partido) AS total_goles, "
-        "  (SELECT COALESCE(SUM(asistencias), 0) FROM partido) AS total_asistencias, "
-        "  (SELECT COUNT(*) FROM equipo) AS total_equipos, "
-        "  (SELECT COUNT(*) FROM camiseta) AS total_camisetas, "
-        "  (SELECT COUNT(*) FROM cancha) AS total_canchas, "
-        "  (SELECT COUNT(*) FROM lesion) AS total_lesiones, "
-        "  (SELECT COALESCE(ROUND(AVG(rendimiento_general), 2), 0) FROM partido) AS rendimiento_promedio";
+    const char *sql = "SELECT "
+                      "  (SELECT COUNT(*) FROM partido) AS total_partidos, "
+                      "  (SELECT COALESCE(SUM(goles), 0) FROM partido) AS total_goles, "
+                      "  (SELECT COALESCE(SUM(asistencias), 0) FROM partido) AS total_asistencias, "
+                      "  (SELECT COUNT(*) FROM equipo) AS total_equipos, "
+                      "  (SELECT COUNT(*) FROM camiseta) AS total_camisetas, "
+                      "  (SELECT COUNT(*) FROM cancha) AS total_canchas, "
+                      "  (SELECT COUNT(*) FROM lesion) AS total_lesiones, "
+                      "  (SELECT COALESCE(ROUND(AVG(rendimiento_general), 2), 0) FROM partido) AS "
+                      "rendimiento_promedio";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
     {
@@ -31,35 +31,36 @@ static sqlite3_stmt* obtener_datos_dashboard(int *count)
 /** @name Funciones auxiliares para exportacion */
 /** @{ */
 
-static void write_csv_header(FILE *f, void *context)
+static void write_csv_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f, "metrica,valor\n");
+    fprintf(file, "metrica,valor\n");
 }
 
-static void write_csv_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_csv_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
-    fprintf(f, "total_partidos,%d\n", sqlite3_column_int(stmt, 0));
-    fprintf(f, "total_goles,%d\n", sqlite3_column_int(stmt, 1));
-    fprintf(f, "total_asistencias,%d\n", sqlite3_column_int(stmt, 2));
-    fprintf(f, "total_equipos,%d\n", sqlite3_column_int(stmt, 3));
-    fprintf(f, "total_camisetas,%d\n", sqlite3_column_int(stmt, 4));
-    fprintf(f, "total_canchas,%d\n", sqlite3_column_int(stmt, 5));
-    fprintf(f, "total_lesiones,%d\n", sqlite3_column_int(stmt, 6));
-    fprintf(f, "rendimiento_promedio,%.2f\n", sqlite3_column_double(stmt, 7));
+    fprintf(file, "total_partidos,%d\n", sqlite3_column_int(stmt, 0));
+    fprintf(file, "total_goles,%d\n", sqlite3_column_int(stmt, 1));
+    fprintf(file, "total_asistencias,%d\n", sqlite3_column_int(stmt, 2));
+    fprintf(file, "total_equipos,%d\n", sqlite3_column_int(stmt, 3));
+    fprintf(file, "total_camisetas,%d\n", sqlite3_column_int(stmt, 4));
+    fprintf(file, "total_canchas,%d\n", sqlite3_column_int(stmt, 5));
+    fprintf(file, "total_lesiones,%d\n", sqlite3_column_int(stmt, 6));
+    fprintf(file, "rendimiento_promedio,%.2f\n", sqlite3_column_double(stmt, 7));
 }
 
-static void write_txt_header(FILE *f, void *context)
+static void write_txt_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f, "DASHBOARD - RESUMEN DE METRICAS\n\n");
+    fprintf(file, "DASHBOARD - RESUMEN DE METRICAS\n\n");
 }
 
-static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_txt_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
-    fprintf(f, "Total de Partidos: %d\n"
+    fprintf(file,
+            "Total de Partidos: %d\n"
             "Total de Goles: %d\n"
             "Total de Asistencias: %d\n"
             "Total de Equipos: %d\n"
@@ -67,19 +68,14 @@ static void write_txt_row(FILE *f, sqlite3_stmt *stmt, void *context)
             "Total de Canchas: %d\n"
             "Total de Lesiones: %d\n"
             "Rendimiento Promedio: %.2f\n",
-            sqlite3_column_int(stmt, 0),
-            sqlite3_column_int(stmt, 1),
-            sqlite3_column_int(stmt, 2),
-            sqlite3_column_int(stmt, 3),
-            sqlite3_column_int(stmt, 4),
-            sqlite3_column_int(stmt, 5),
-            sqlite3_column_int(stmt, 6),
-            sqlite3_column_double(stmt, 7));
+            sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
+            sqlite3_column_int(stmt, 6), sqlite3_column_double(stmt, 7));
 }
 
-static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONAR */
+static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOSONAR */
 {
-    (void)f;
+    (void)file;
     cJSON *root = (cJSON *)context;
     cJSON_AddNumberToObject(root, "total_partidos", sqlite3_column_int(stmt, 0));
     cJSON_AddNumberToObject(root, "total_goles", sqlite3_column_int(stmt, 1));
@@ -91,26 +87,26 @@ static void write_json_row(FILE *f, sqlite3_stmt *stmt, void *context) /* NOSONA
     cJSON_AddNumberToObject(root, "rendimiento_promedio", sqlite3_column_double(stmt, 7));
 }
 
-static void write_html_header(FILE *f, void *context)
+static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(f,
-            "<html><body><h1>Dashboard - Resumen de Metricas</h1>"
+    fprintf(file, "<html><body><h1>Dashboard - Resumen de Metricas</h1>"
             "<table border='1'>"
             "<tr><th>Metrica</th><th>Valor</th></tr>");
 }
 
-static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
+static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
-    fprintf(f, "<tr><td>Total Partidos</td><td>%d</td></tr>", sqlite3_column_int(stmt, 0));
-    fprintf(f, "<tr><td>Total Goles</td><td>%d</td></tr>", sqlite3_column_int(stmt, 1));
-    fprintf(f, "<tr><td>Total Asistencias</td><td>%d</td></tr>", sqlite3_column_int(stmt, 2));
-    fprintf(f, "<tr><td>Total Equipos</td><td>%d</td></tr>", sqlite3_column_int(stmt, 3));
-    fprintf(f, "<tr><td>Total Camisetas</td><td>%d</td></tr>", sqlite3_column_int(stmt, 4));
-    fprintf(f, "<tr><td>Total Canchas</td><td>%d</td></tr>", sqlite3_column_int(stmt, 5));
-    fprintf(f, "<tr><td>Total Lesiones</td><td>%d</td></tr>", sqlite3_column_int(stmt, 6));
-    fprintf(f, "<tr><td>Rendimiento Promedio</td><td>%.2f</td></tr>", sqlite3_column_double(stmt, 7));
+    fprintf(file, "<tr><td>Total Partidos</td><td>%d</td></tr>", sqlite3_column_int(stmt, 0));
+    fprintf(file, "<tr><td>Total Goles</td><td>%d</td></tr>", sqlite3_column_int(stmt, 1));
+    fprintf(file, "<tr><td>Total Asistencias</td><td>%d</td></tr>", sqlite3_column_int(stmt, 2));
+    fprintf(file, "<tr><td>Total Equipos</td><td>%d</td></tr>", sqlite3_column_int(stmt, 3));
+    fprintf(file, "<tr><td>Total Camisetas</td><td>%d</td></tr>", sqlite3_column_int(stmt, 4));
+    fprintf(file, "<tr><td>Total Canchas</td><td>%d</td></tr>", sqlite3_column_int(stmt, 5));
+    fprintf(file, "<tr><td>Total Lesiones</td><td>%d</td></tr>", sqlite3_column_int(stmt, 6));
+    fprintf(file, "<tr><td>Rendimiento Promedio</td><td>%.2f</td></tr>",
+            sqlite3_column_double(stmt, 7));
 }
 
 /** @} */
@@ -118,19 +114,23 @@ static void write_html_row(FILE *f, sqlite3_stmt *stmt, void *context)
 /** @name Funciones de exportacion del dashboard */
 /** @{ */
 
-EXPORT_FORMAT_SINGLE(exportar_dashboard_csv, obtener_datos_dashboard, "dashboard.csv", NULL, write_csv_header, write_csv_row, NULL)
-EXPORT_FORMAT_SINGLE(exportar_dashboard_txt, obtener_datos_dashboard, "dashboard.txt", NULL, write_txt_header, write_txt_row, NULL)
-EXPORT_FORMAT_SINGLE(exportar_dashboard_json, obtener_datos_dashboard, "dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer)
-EXPORT_FORMAT_SINGLE(exportar_dashboard_html, obtener_datos_dashboard, "dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_csv, obtener_datos_dashboard, "dashboard.csv", NULL,
+                     write_csv_header, write_csv_row, NULL)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_txt, obtener_datos_dashboard, "dashboard.txt", NULL,
+                     write_txt_header, write_txt_row, NULL)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_json, obtener_datos_dashboard, "dashboard.json",
+                     cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer)
+EXPORT_FORMAT_SINGLE(exportar_dashboard_html, obtener_datos_dashboard, "dashboard.html", NULL,
+                     write_html_header, write_html_row, export_write_html_footer)
 
 void exportar_dashboard_all(void)
 {
     ExportConfig configs[] =
     {
-        { "dashboard.csv", NULL, write_csv_header, write_csv_row, NULL },
-        { "dashboard.txt", NULL, write_txt_header, write_txt_row, NULL },
-        { "dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer },
-        { "dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer }
+        {"dashboard.csv", NULL, write_csv_header, write_csv_row, NULL},
+        {"dashboard.txt", NULL, write_txt_header, write_txt_row, NULL},
+        {"dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer},
+        {"dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer}
     };
     export_all_formats(obtener_datos_dashboard, configs, 4);
 }

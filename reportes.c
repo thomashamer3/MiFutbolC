@@ -26,16 +26,24 @@ static void configurar_reporte_automatico(void)
     habilitado = input_int("Habilitado? (1=Si, 0=No): ");
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO reporte_config (nombre, descripcion, periodicidad, habilitado) VALUES (?,?,?,?)", &stmt))
+    if (!preparar_stmt("INSERT INTO reporte_config (nombre, descripcion, periodicidad, habilitado) "
+                       "VALUES (?,?,?,?)",
+                       &stmt))
+    {
         return;
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, desc, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, periodicidad, -1, SQLITE_TRANSIENT);
+    }
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, desc, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, periodicidad, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 4, habilitado);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Reporte configurado.\n");
+    }
     else
+    {
         printf("Error al configurar reporte: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -62,7 +70,10 @@ static void listar_reportes_config(void)
         printf("     ------------------------------\n");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("reportes configurados");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("reportes configurados");
+    }
     pause_console();
 }
 
@@ -70,13 +81,19 @@ static void toggle_reporte(int id, int habilitado)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt("UPDATE reporte_config SET habilitado = ? WHERE id = ?", &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, habilitado);
     sqlite3_bind_int(stmt, 2, id);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf(habilitado ? "Reporte activado.\n" : "Reporte desactivado.\n");
+    }
     else
+    {
         printf("Error al actualizar reporte: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -89,7 +106,10 @@ static void habilitar_reporte(void)
     }
     listar_reportes_config();
     int id = input_int("\nID del reporte a habilitar (0 para cancelar): ");
-    if (id <= 0) return;
+    if (id <= 0)
+    {
+        return;
+    }
     toggle_reporte(id, 1);
 }
 
@@ -102,7 +122,10 @@ static void deshabilitar_reporte(void)
     }
     listar_reportes_config();
     int id = input_int("\nID del reporte a deshabilitar (0 para cancelar): ");
-    if (id <= 0) return;
+    if (id <= 0)
+    {
+        return;
+    }
     toggle_reporte(id, 0);
 }
 
@@ -285,7 +308,10 @@ static void listar_reportes_generados(void)
         printf("     ------------------------------\n");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("reportes generados");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("reportes generados");
+    }
     pause_console();
 }
 

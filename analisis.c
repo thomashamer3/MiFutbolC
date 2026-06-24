@@ -411,7 +411,7 @@ static void mostrar_mejor_quimica_jugadores(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre_usuario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre_usuario, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -496,13 +496,13 @@ static void bind_datos_quimica_jugador(sqlite3_stmt *stmt, int partido_id,
                                        const DatosQuimicaJugador *datos)
 {
     sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, datos->jugador, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, datos->posicion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, datos->jugador, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, datos->posicion, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 4, datos->goles);
     sqlite3_bind_int(stmt, 5, datos->asistencias_al_usuario);
     sqlite3_bind_int(stmt, 6, datos->asistencias_del_usuario);
     sqlite3_bind_int(stmt, 7, datos->rating);
-    sqlite3_bind_text(stmt, 8, datos->comentario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 8, datos->comentario, -1, DB_TRANSIENT);
 }
 
 static void crear_estadistica_quimica_jugador(void)
@@ -827,7 +827,7 @@ static int enlazar_parametro_metricas(sqlite3_stmt *stmt, int indice,
     if (param->tipo == METRICAS_PARAM_TEXT)
     {
         return sqlite3_bind_text(stmt, indice, param->valor_texto ? param->valor_texto : "", -1,
-                                 SQLITE_TRANSIENT);
+                                 DB_TRANSIENT);
     }
 
     return SQLITE_MISUSE;

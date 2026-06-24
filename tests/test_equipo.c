@@ -32,7 +32,7 @@ static void test_get_nombre_posicion_delantero(void)
 
 static void test_get_nombre_posicion_desconocido(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_posicion(99));
+    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_posicion(POSICION_INVALIDA));
 }
 
 static void test_get_nombre_tipo_futbol_5(void)
@@ -57,7 +57,7 @@ static void test_get_nombre_tipo_futbol_11(void)
 
 static void test_get_nombre_tipo_futbol_desconocido(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_futbol(99));
+    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_futbol(FUTBOL_INVALIDO));
 }
 
 static void test_equipo_functions_exist(void)

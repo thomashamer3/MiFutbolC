@@ -15,6 +15,9 @@
 #include "compat_port.h"
 #include "sqlite3.h"
 
+/* NOLINTNEXTLINE(performance-no-int-to-ptr) */
+static const sqlite3_destructor_type DB_TRANSIENT = (sqlite3_destructor_type)-1;
+
 /**
  * @brief Instancia global de conexión SQLite3
  *

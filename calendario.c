@@ -1,7 +1,7 @@
 #include "calendario.h"
 #include "db.h"
-#include "utils.h"
 #include "settings.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -51,7 +51,7 @@ static int dias_en_mes(int mes, int anio)
     return dias[mes - 1];
 }
 
-static int primer_dia_semana(int mes, int anio)
+static int primer_dia_semana(int mes, int anio) // NOLINT(bugprone-easily-swappable-parameters)
 {
     struct tm fecha = {0};
     fecha.tm_mday = 1;
@@ -77,9 +77,8 @@ static EventosMes cargar_eventos_mes(int mes, int anio)
 
     sqlite3_stmt *stmt;
 
-    const char *sql_partidos =
-        "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM partido "
-        "WHERE substr(fecha, 1, 7) = ?;";
+    const char *sql_partidos = "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM partido "
+                               "WHERE substr(fecha, 1, 7) = ?;";
     if (preparar_stmt(sql_partidos, &stmt))
     {
         sqlite3_bind_text(stmt, 1, mes_str, -1, SQLITE_STATIC);
@@ -87,14 +86,15 @@ static EventosMes cargar_eventos_mes(int mes, int anio)
         {
             int dia = sqlite3_column_int(stmt, 0);
             if (dia >= 1 && dia <= 31)
+            {
                 eventos.dias_partido |= (1 << (dia - 1));
+            }
         }
         sqlite3_finalize(stmt);
     }
 
-    const char *sql_finanza =
-        "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM financiamiento "
-        "WHERE substr(fecha, 1, 7) = ?;";
+    const char *sql_finanza = "SELECT CAST(substr(fecha, 9, 2) AS INTEGER) FROM financiamiento "
+                              "WHERE substr(fecha, 1, 7) = ?;";
     if (preparar_stmt(sql_finanza, &stmt))
     {
         sqlite3_bind_text(stmt, 1, mes_str, -1, SQLITE_STATIC);
@@ -102,7 +102,9 @@ static EventosMes cargar_eventos_mes(int mes, int anio)
         {
             int dia = sqlite3_column_int(stmt, 0);
             if (dia >= 1 && dia <= 31)
+            {
                 eventos.dias_finanza |= (1 << (dia - 1));
+            }
         }
         sqlite3_finalize(stmt);
     }
@@ -114,11 +116,18 @@ static void obtener_icono_dia(int dia, const EventosMes *eventos, char *icono, s
 {
     int mask = 1 << (dia - 1);
     if (eventos->dias_partido & mask)
+    {
         snprintf(icono, tam, "%s", simbolo_partido_calendario());
+    }
+
     else if (eventos->dias_finanza & mask)
+    {
         snprintf(icono, tam, "$");
+    }
     else
+    {
         snprintf(icono, tam, " ");
+    }
 }
 
 static int mostrar_eventos_partidos(const char *fecha)
@@ -150,8 +159,7 @@ static int mostrar_eventos_partidos(const char *fecha)
         int goles = sqlite3_column_int(stmt, 2);
         int asistencias = sqlite3_column_int(stmt, 3);
 
-        printf("  %s - %s | Goles: %d, Asistencias: %d\n",
-               hora, cancha, goles, asistencias);
+        printf("  %s - %s | Goles: %d, Asistencias: %d\n", hora, cancha, goles, asistencias);
         eventos++;
     }
 
@@ -183,7 +191,8 @@ static int mostrar_eventos_finanzas(const char *fecha)
     {
         if (!tiene_finanzas)
         {
-            printf("%s %s:\n", consola_soporta_unicode() ? "💰" : "$", get_text("calendario_finanzas"));
+            printf("%s %s:\n", consola_soporta_unicode() ? "💰" : "$",
+                   get_text("calendario_finanzas"));
             printf("%s\n", linea_division_eventos());
             tiene_finanzas = 1;
         }
@@ -193,7 +202,8 @@ static int mostrar_eventos_finanzas(const char *fecha)
         const unsigned char *desc = sqlite3_column_text(stmt, 2);
 
         printf("  %s $%d - %s\n",
-               tipo == 0 ? get_text("calendario_ingreso") : get_text("calendario_gasto"), monto, desc);
+               tipo == 0 ? get_text("calendario_ingreso") : get_text("calendario_gasto"), monto,
+               desc);
         eventos++;
     }
 
@@ -206,9 +216,7 @@ static int mostrar_eventos_finanzas(const char *fecha)
     return eventos;
 }
 
-static void imprimir_encabezado_calendario_mes(int usar_unicode,
-        const char *nombre_mes,
-        int anio)
+static void imprimir_encabezado_calendario_mes(int usar_unicode, const char *nombre_mes, int anio)
 {
     if (usar_unicode)
     {
@@ -229,9 +237,7 @@ static void imprimir_encabezado_calendario_mes(int usar_unicode,
 
 static int es_dia_hoy(int dia, int mes, int anio, int hay_hoy, const struct tm *tm_hoy)
 {
-    return (hay_hoy &&
-            dia == tm_hoy->tm_mday &&
-            mes == tm_hoy->tm_mon + 1 &&
+    return (hay_hoy && dia == tm_hoy->tm_mday && mes == tm_hoy->tm_mon + 1 &&
             anio == tm_hoy->tm_year + 1900);
 }
 
@@ -247,7 +253,10 @@ static void imprimir_celda_dia(int dia, const char *icono, int es_hoy)
     }
 }
 
-static void imprimir_salto_semana_si_corresponde(int pos, int dia_actual, int dias, int usar_unicode)
+static void
+imprimir_salto_semana_si_corresponde(int pos, int dia_actual,
+                                     int dias, // NOLINT(bugprone-easily-swappable-parameters)
+                                     int usar_unicode)
 {
     if (pos % 7 == 0 && dia_actual <= dias)
     {
@@ -284,8 +293,10 @@ void mostrar_calendario_mes(int mes, int anio)
 
     const char *nombres_meses[] =
     {
-        get_text("mes_enero"), get_text("mes_febrero"), get_text("mes_marzo"), get_text("mes_abril"), get_text("mes_mayo"), get_text("mes_junio"),
-        get_text("mes_julio"), get_text("mes_agosto"), get_text("mes_septiembre"), get_text("mes_octubre"), get_text("mes_noviembre"), get_text("mes_diciembre")
+        get_text("mes_enero"),   get_text("mes_febrero"),   get_text("mes_marzo"),
+        get_text("mes_abril"),   get_text("mes_mayo"),      get_text("mes_junio"),
+        get_text("mes_julio"),   get_text("mes_agosto"),    get_text("mes_septiembre"),
+        get_text("mes_octubre"), get_text("mes_noviembre"), get_text("mes_diciembre")
     };
 
     printf("\n");
@@ -356,13 +367,15 @@ void mostrar_eventos_dia(int dia, int mes, int anio)
     if (usar_unicode)
     {
         printf("╔══════════════════════════════════════════════════════════════╗\n");
-        printf("║              %s %02d/%02d/%04d%-19s║\n", get_text("calendario_eventos_dia"), dia, mes, anio, "");
+        printf("║              %s %02d/%02d/%04d%-19s║\n", get_text("calendario_eventos_dia"), dia,
+               mes, anio, "");
         printf("╚══════════════════════════════════════════════════════════════╝\n\n");
     }
     else
     {
         printf("+--------------------------------------------------------------+\n");
-        printf("|              %s %02d/%02d/%04d%-19s|\n", get_text("calendario_eventos_dia"), dia, mes, anio, "");
+        printf("|              %s %02d/%02d/%04d%-19s|\n", get_text("calendario_eventos_dia"), dia,
+               mes, anio, "");
         printf("+--------------------------------------------------------------+\n\n");
     }
 
@@ -391,7 +404,8 @@ void mostrar_calendario(void)
     pause_console();
 }
 
-static void avanzar_mes(int *mes_actual, int *anio_actual)
+static void avanzar_mes(int *mes_actual, // NOLINT(bugprone-easily-swappable-parameters)
+                        int *anio_actual)
 {
     (*mes_actual)++;
     if (*mes_actual > 12)
@@ -401,7 +415,8 @@ static void avanzar_mes(int *mes_actual, int *anio_actual)
     }
 }
 
-static void retroceder_mes(int *mes_actual, int *anio_actual)
+static void retroceder_mes(int *mes_actual, // NOLINT(bugprone-easily-swappable-parameters)
+                           int *anio_actual)
 {
     (*mes_actual)--;
     if (*mes_actual < 1)
@@ -411,7 +426,8 @@ static void retroceder_mes(int *mes_actual, int *anio_actual)
     }
 }
 
-static void volver_a_hoy(int *mes_actual, int *anio_actual)
+static void volver_a_hoy(int *mes_actual, // NOLINT(bugprone-easily-swappable-parameters)
+                         int *anio_actual)
 {
     time_t hoy = time(NULL);
     struct tm tm_hoy_buf;

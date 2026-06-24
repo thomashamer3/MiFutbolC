@@ -7,8 +7,8 @@
 
 #define STATS_ANIO_BUF_LEN 32768
 static char s_anio_cache[STATS_ANIO_BUF_LEN];
-static int  s_anio_valid   = 0;
-static int  s_anio_changes = -1;
+static int s_anio_valid = 0;
+static int s_anio_changes = -1;
 
 void mostrar_estadisticas_por_anio(void)
 {
@@ -24,12 +24,15 @@ void mostrar_estadisticas_por_anio(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt,
-                              "SELECT substr(fecha_hora, 7, 4) AS anio, COALESCE(c.nombre, 'Sin Camiseta'), COUNT(*) AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
-                              "FROM partido p "
-                              "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
-                              "GROUP BY anio, c.id "
-                              "ORDER BY anio DESC, total_goles DESC"))
+    if (!preparar_stmt_export(
+                &stmt,
+                "SELECT substr(fecha_hora, 7, 4) AS anio, COALESCE(c.nombre, 'Sin Camiseta'), COUNT(*) "
+                "AS partidos, SUM(goles) AS total_goles, SUM(asistencias) AS total_asistencias, "
+                "ROUND(AVG(goles), 2) AS avg_goles, ROUND(AVG(asistencias), 2) AS avg_asistencias "
+                "FROM partido p "
+                "LEFT JOIN camiseta c ON p.camiseta_id = c.id "
+                "GROUP BY anio, c.id "
+                "ORDER BY anio DESC, total_goles DESC"))
     {
         printf("Error al consultar la base de datos.\n");
         pause_console();
@@ -54,25 +57,29 @@ void mostrar_estadisticas_por_anio(void)
             }
             snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "Anio: %s\n", stats.anio);
             pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
-            snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "----------------------------------------\n");
+            snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
+                     "----------------------------------------\n");
             pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
             strcpy_s(current_anio, sizeof(current_anio), stats.anio);
         }
 
         snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
-                 "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n",
-                 stats.camiseta, stats.partidos, stats.total_goles,
-                 stats.total_asistencias, stats.avg_goles, stats.avg_asistencias);
+                 "%-30s | PJ: %d | G: %d | A: %d | G/P: %.2f | A/P: %.2f\n", stats.camiseta,
+                 stats.partidos, stats.total_goles, stats.total_asistencias, stats.avg_goles,
+                 stats.avg_asistencias);
         pos += strnlen_s(s_anio_cache + pos, sizeof(s_anio_cache) - pos);
         hay = 1;
     }
 
     if (!hay)
-        snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos, "No hay estadisticas registradas.\n");
+    {
+        snprintf(s_anio_cache + pos, sizeof(s_anio_cache) - pos,
+                 "No hay estadisticas registradas.\n");
+    }
 
     sqlite3_finalize(stmt);
 
-    s_anio_valid   = 1;
+    s_anio_valid = 1;
     s_anio_changes = current_changes;
 
     printf("%s", s_anio_cache);

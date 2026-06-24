@@ -31,7 +31,7 @@ static double calcular_julianday(const char *fecha)
         return 0;
     }
 
-    sqlite3_bind_text(stmt_jd, 1, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt_jd, 1, fecha, -1, DB_TRANSIENT);
     if (sqlite3_step(stmt_jd) == SQLITE_ROW)
     {
         jd = sqlite3_column_double(stmt_jd, 0);

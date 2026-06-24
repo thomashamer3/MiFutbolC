@@ -42,7 +42,7 @@ static void ejecutar_update_texto(const char *sql, const char *valor, int id)
     {
         return;
     }
-    sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, valor, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -67,7 +67,9 @@ static void solicitar_texto_no_vacio(const char *prompt, char *buffer, int size)
     {
         input_string(prompt, buffer, size);
         if (safe_strnlen(buffer, (size_t)size) > 0)
+        {
             return;
+        }
         printf("El campo no puede estar vacio.\n");
     }
 }
@@ -79,7 +81,9 @@ static const char *solicitar_estado_lesion(const char *prompt)
         int opcion_estado = input_int(prompt);
         const char *estado_sel = estado_por_opcion(opcion_estado);
         if (estado_sel)
+        {
             return estado_sel;
+        }
         printf("Opcion invalida. Intente nuevamente.\n");
     }
 }
@@ -133,7 +137,9 @@ void crear_lesion(void)
         listar_camisetas();
         camiseta_id = input_int("ID de la Camiseta Asociada: ");
         if (existe_id("camiseta", camiseta_id))
+        {
             break;
+        }
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
 
@@ -179,12 +185,12 @@ void crear_lesion(void)
         return;
     }
     sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, jugador, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, jugador, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, tipo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, descripcion, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 6, camiseta_id);
-    sqlite3_bind_text(stmt, 7, estado, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, estado, -1, DB_TRANSIENT);
     if (partido_id > 0)
     {
         sqlite3_bind_int(stmt, 8, partido_id);
@@ -253,7 +259,9 @@ void listar_lesiones(void)
     }
 
     if (!hay)
+    {
         mostrar_no_hay_registros("lesiones");
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -300,9 +308,13 @@ static void modificar_camiseta_lesion(void)
     {
         camiseta_id = input_int("Nuevo ID de la Camiseta Asociada (0 para cancelar): ");
         if (camiseta_id == 0)
+        {
             return;
+        }
         if (existe_id("camiseta", camiseta_id))
+        {
             break;
+        }
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
     ejecutar_update_int("UPDATE lesion SET camiseta_id=? WHERE id=?", camiseta_id,
@@ -386,7 +398,9 @@ static void modificar_todo_lesion(void)
     {
         camiseta_id = input_int("Nuevo ID de la Camiseta Asociada: ");
         if (existe_id("camiseta", camiseta_id))
+        {
             break;
+        }
         printf("La camiseta no existe. Intente nuevamente.\n");
     }
 
@@ -409,11 +423,11 @@ static void modificar_todo_lesion(void)
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, descripcion, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, tipo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, descripcion, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, fecha, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 4, camiseta_id);
-    sqlite3_bind_text(stmt, 5, estado, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, estado, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 6, current_lesion_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -437,7 +451,9 @@ void modificar_lesion(void)
     int id = input_int("\nID Lesion a Modificar (0 para cancelar): ");
 
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("lesion", id))
     {
@@ -477,7 +493,9 @@ void eliminar_lesion(void)
 
     int id = input_int("\nID a eliminar (0 para cancelar): ");
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("lesion", id))
     {
@@ -487,7 +505,9 @@ void eliminar_lesion(void)
     }
 
     if (!confirmar("Seguro que desea eliminar esta lesion?"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM lesion WHERE id=?", &stmt))
@@ -534,8 +554,8 @@ static int calcular_diferencia_dias(const char *fecha1, const char *fecha2)
 #endif
 
     // Convertir a dias desde una fecha base (simplificacion)
-    int dias1 = ano1 * 365 + mes1 * 30 + dia1;
-    int dias2 = ano2 * 365 + mes2 * 30 + dia2;
+    int dias1 = (ano1 * 365) + (mes1 * 30) + dia1;
+    int dias2 = (ano2 * 365) + (mes2 * 30) + dia2;
 
     return dias2 - dias1;
 }
@@ -632,7 +652,9 @@ void actualizar_estados_lesiones(void)
         int id_lesion = input_int("Ingrese el ID de la lesion a actualizar (0 para cancelar): ");
 
         if (id_lesion == 0)
+        {
             return;
+        }
 
         if (!existe_id("lesion", id_lesion))
         {

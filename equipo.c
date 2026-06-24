@@ -195,8 +195,9 @@ static void solicitar_nombre_equipo(const char *prompt, char *buffer, int size)
         trim_whitespace(buffer);
 
         if (buffer[0] != '\0')
+        {
             return;
-
+        }
         printf("El nombre no puede estar vacio.\n");
     }
 }
@@ -394,23 +395,35 @@ typedef struct
 
 static int hay_arquero_posiciones(void *ctx)
 {
-    PosicionesCtx const *p = (PosicionesCtx *)ctx;
-    if (!p || !p->posiciones)
+    PosicionesCtx const *posicion = (PosicionesCtx *)ctx;
+    if (!posicion || !posicion->posiciones)
+    {
         return 0;
-    for (int i = 0; i < p->count; i++)
-        if (p->posiciones[i] == ARQUERO)
+    }
+    for (int i = 0; i < posicion->count; i++)
+    {
+        if (posicion->posiciones[i] == ARQUERO)
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
 static int hay_arquero_en_equipo(void *ctx)
 {
-    Equipo const *e = (Equipo *)ctx;
-    if (!e)
+    Equipo const *equipo = (Equipo *)ctx;
+    if (!equipo)
+    {
         return 0;
-    for (int i = 0; i < e->num_jugadores; i++)
-        if (e->jugadores[i].posicion == ARQUERO)
+    }
+    for (int i = 0; i < equipo->num_jugadores; i++)
+    {
+        if (equipo->jugadores[i].posicion == ARQUERO)
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
@@ -519,7 +532,9 @@ void assign_team_to_party(int equipo_id)
     listar_partidos();
     int partido_id = input_int("Ingrese el ID del partido (0 para cancelar): ");
     if (partido_id <= 0 || !existe_id("partido", partido_id))
+    {
         return;
+    }
 
     const char *sql_update = "UPDATE equipo SET partido_id = ? WHERE id = ?;";
     if (ejecutar_update_int(sql_update, partido_id, equipo_id))
@@ -557,7 +572,9 @@ int get_equipo_id_to_modify(void)
     int equipo_id = input_int("\nIngrese el ID del equipo a modificar (0 para cancelar): ");
 
     if (equipo_id == 0)
+    {
         return 0;
+    }
 
     if (!existe_id("equipo", equipo_id))
     {
@@ -884,7 +901,9 @@ int get_player_captain_status(int player_id)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT es_capitan FROM jugador WHERE id = ?;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK)
+    {
         return -1;
+    }
 
     sqlite3_bind_int(stmt, 1, player_id);
 
@@ -967,18 +986,13 @@ int insert_equipo_record(const Equipo *equipo)
             sqlite3_finalize(stmt);
             return next_id;
         }
-        else
-        {
-            printf("Error al guardar el equipo: %s\n", sqlite3_errmsg(db));
-            sqlite3_finalize(stmt);
-            return -1;
-        }
-    }
-    else
-    {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
+
+        printf("Error al guardar el equipo: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return -1;
     }
+    printf("Error al guardar el equipo: %s\n", sqlite3_errmsg(db));
+    return -1;
 }
 
 int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
@@ -1021,17 +1035,23 @@ int insert_jugadores_for_equipo(int equipo_id, const Equipo *equipo)
 void handle_party_assignment(int equipo_id)
 {
     if (!confirmar("Desea asignar este equipo a un partido existente?"))
+    {
         return;
+    }
 
     listar_partidos();
     int partido_id = input_int("Ingrese el ID del partido (0 para cancelar): ");
     if (partido_id <= 0 || !existe_id("partido", partido_id))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     const char *sql_update = "UPDATE equipo SET partido_id = ? WHERE id = ?;";
     if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0) != SQLITE_OK)
+    {
         return;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
     sqlite3_bind_int(stmt, 2, equipo_id);
@@ -1233,23 +1253,34 @@ Posicion select_posicion(void)
 
 int select_capitan(Equipo *equipo)
 {
+    if (equipo == NULL)
+    {
+        return -1;
+    }
+
+    if (equipo->num_jugadores <= 0 || equipo->num_jugadores > 11)
+    {
+        return -1;
+    }
+
     printf("\nSeleccione el capitan del equipo (1-%d):\n", equipo->num_jugadores);
+
     for (int i = 0; i < equipo->num_jugadores; i++)
     {
         printf("%d. %s\n", i + 1, equipo->jugadores[i].nombre);
     }
 
     int capitan_idx = input_int(">") - 1;
-    if (capitan_idx >= 0 && capitan_idx < equipo->num_jugadores)
-    {
-        equipo->jugadores[capitan_idx].es_capitan = 1;
-        return capitan_idx;
-    }
-    else
+
+    if (capitan_idx < 0 || capitan_idx >= equipo->num_jugadores)
     {
         printf("Seleccion invalida. No se asignara capitan.\n");
         return -1;
     }
+
+    equipo->jugadores[capitan_idx].es_capitan = 1;
+
+    return capitan_idx;
 }
 
 void save_equipo_to_db(const Equipo *equipo)
@@ -1365,11 +1396,11 @@ TipoFutbol seleccionar_tipo_futbol(void)
     case 4:
         return FUTBOL_11;
     case 5:
-        return -1; // Cancelar
+        return FUTBOL_INVALIDO;
     default:
         printf("Opcion invalida. Volviendo al menu principal.\n");
         pause_console();
-        return -1;
+        return FUTBOL_INVALIDO;
     }
 }
 
@@ -1533,6 +1564,8 @@ void agregar_jugador_momentaneo(Equipo *equipo)
     case FUTBOL_11:
         max_jugadores = 11;
         break;
+    default:
+        return;
     }
 
     if (equipo->num_jugadores >= max_jugadores)
@@ -1698,8 +1731,10 @@ void crear_equipo_fijo(void)
 
     // Determinar tipo de futbol y numero de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == (TipoFutbol)-1)
+    if (tipo_futbol == FUTBOL_INVALIDO)
+    {
         return; // Usuario cancelo
+    }
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);
@@ -1748,8 +1783,10 @@ void crear_un_equipo_momentaneo(void)
 
     // Determinar tipo de futbol y numero de jugadores
     TipoFutbol tipo_futbol = seleccionar_tipo_futbol();
-    if (tipo_futbol == (TipoFutbol)-1)
+    if (tipo_futbol == FUTBOL_INVALIDO)
+    {
         return; // Usuario cancelo
+    }
 
     int num_jugadores = get_num_jugadores_por_tipo(tipo_futbol);
     input_equipo_basico(&equipo, tipo_futbol, num_jugadores);
@@ -1888,7 +1925,9 @@ void modificar_jugador_momentaneo(Equipo *equipo)
 {
     int jugador_idx = seleccionar_jugador_momentaneo_para_modificar(equipo);
     if (jugador_idx < 0)
+    {
         return;
+    }
 
     Jugador *jugador = &equipo->jugadores[jugador_idx];
 
@@ -1902,9 +1941,13 @@ void modificar_jugador_momentaneo(Equipo *equipo)
 
     int resultado = procesar_campo_jugador_momentaneo(equipo, jugador_idx, campo);
     if (resultado == 0)
+    {
         return;
+    }
     if (resultado > 0)
+    {
         pause_console();
+    }
 }
 
 void eliminar_jugador_momentaneo(Equipo *equipo)
@@ -2247,7 +2290,9 @@ void modificar_equipo(void)
     // Obtener y validar ID del equipo
     int equipo_id = get_equipo_id_to_modify();
     if (equipo_id <= 0)
+    {
         return; // Usuario cancelo o error
+    }
 
     // Mostrar menu de opciones de modificacion
     printf("\nSeleccione que desea modificar:\n");
@@ -2425,7 +2470,9 @@ void imprimir_alineacion_equipo(const char *titulo, const Equipo *equipo)
     {
         printf("  %d. %s", equipo->jugadores[i].numero, equipo->jugadores[i].nombre);
         if (equipo->jugadores[i].es_capitan)
+        {
             printf(" (C)");
+        }
         printf("\n");
     }
 }
@@ -2450,16 +2497,24 @@ void mostrar_informacion_inicial(const Equipo *equipo_local, const Equipo *equip
 int generar_evento_aleatorio(void)
 {
     unsigned int random_value = secure_rand_range(100);
-    int evento_aleatorio = (int)(random_value % 100u);
+    int evento_aleatorio = (int)(random_value % 100U);
     if (evento_aleatorio < 25)
+    {
         return 1; // gol local
+    }
     if (evento_aleatorio < 50)
+    {
         return 2; // gol visitante
+    }
     if (evento_aleatorio < 70)
+    {
         return 3; // oportunidad
+    }
     if (evento_aleatorio < 85)
+    {
         return 4; // falta
-    return 0;     // normal
+    }
+    return 0; // normal
 }
 
 int manejar_gol_local(const Equipo *equipo_local, int minuto_actual, int *goles_local,

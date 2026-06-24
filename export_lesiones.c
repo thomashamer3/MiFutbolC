@@ -1,7 +1,7 @@
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,11 +25,8 @@ static void write_lesiones_csv(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "%d,%s,%s,%s,%s\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
+        fprintf(file, "%d,%s,%s,%s,%s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
                 sqlite3_column_text(stmt, 4));
     }
 
@@ -46,12 +43,9 @@ static void write_lesiones_txt(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "%d - %s | %s | %s | %s\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+        fprintf(file, "%d - %s | %s | %s | %s\n", sqlite3_column_int(stmt, 0),
+                sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2),
+                sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4));
     }
 
     sqlite3_finalize(stmt);
@@ -67,12 +61,9 @@ static void write_lesiones_html(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file,
-                "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
+        fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
                 sqlite3_column_text(stmt, 4));
     }
 
@@ -108,47 +99,38 @@ static void write_lesiones_json(FILE *file)
  * HELPERS DE FILA (reutilizan stmt externo, sin prepare/finalize)
  * ============================================================================ */
 
-static void write_lesiones_csv_rows(FILE *f, sqlite3_stmt *stmt)
+static void write_lesiones_csv_rows(FILE *file, sqlite3_stmt *stmt)
 {
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(f, "%d,%s,%s,%s,%s\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
+        fprintf(file, "%d,%s,%s,%s,%s\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
                 sqlite3_column_text(stmt, 4));
     }
 }
 
-static void write_lesiones_txt_rows(FILE *f, sqlite3_stmt *stmt)
+static void write_lesiones_txt_rows(FILE *file, sqlite3_stmt *stmt)
 {
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(f, "%d - %s | %s | %s | %s\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
+        fprintf(file, "%d - %s | %s | %s | %s\n", sqlite3_column_int(stmt, 0),
+                sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2),
+                sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4));
+    }
+}
+
+static void write_lesiones_html_rows(FILE *file, sqlite3_stmt *stmt)
+{
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
                 sqlite3_column_text(stmt, 4));
     }
 }
 
-static void write_lesiones_html_rows(FILE *f, sqlite3_stmt *stmt)
-{
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(f,
-                "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4));
-    }
-}
-
-static void write_lesiones_json_rows(FILE *f, sqlite3_stmt *stmt)
+static void write_lesiones_json_rows(FILE *file, sqlite3_stmt *stmt)
 {
     cJSON *root = cJSON_CreateArray();
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -158,7 +140,7 @@ static void write_lesiones_json_rows(FILE *f, sqlite3_stmt *stmt)
         cJSON_AddItemToArray(root, item);
     }
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
 }
@@ -169,32 +151,22 @@ static void write_lesiones_json_rows(FILE *f, sqlite3_stmt *stmt)
 
 void exportar_lesiones_csv(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones.csv",
+    exportar_archivo_si_hay_registros("lesion", "lesiones para exportar", "lesiones.csv",
                                       "Error al crear el archivo CSV",
-                                      "id,jugador,tipo,descripcion,fecha\n",
-                                      write_lesiones_csv);
+                                      "id,jugador,tipo,descripcion,fecha\n", write_lesiones_csv);
 }
 
 void exportar_lesiones_txt(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones.txt",
-                                      "Error al crear el archivo TXT",
-                                      "LISTADO DE LESIONES\n\n",
+    exportar_archivo_si_hay_registros("lesion", "lesiones para exportar", "lesiones.txt",
+                                      "Error al crear el archivo TXT", "LISTADO DE LESIONES\n\n",
                                       write_lesiones_txt);
 }
 
 void exportar_lesiones_json(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones.json",
-                                      "Error al crear el archivo JSON",
-                                      NULL,
-                                      write_lesiones_json);
+    exportar_archivo_si_hay_registros("lesion", "lesiones para exportar", "lesiones.json",
+                                      "Error al crear el archivo JSON", NULL, write_lesiones_json);
 }
 
 void exportar_lesiones_html(void)
@@ -205,21 +177,21 @@ void exportar_lesiones_html(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("lesiones.html", "Error al crear el archivo HTML");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("lesiones.html", "Error al crear el archivo HTML");
+    if (!file)
     {
         return;
     }
 
-    fprintf(f,
+    fprintf(file,
             "<html><body><h1>Lesiones</h1><table border='1'>"
             "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
 
-    write_lesiones_html(f);
+    write_lesiones_html(file);
 
-    fprintf(f, "</table></body></html>");
+    fprintf(file, "</table></body></html>");
 
-    fclose(f);
+    fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("lesiones.html"));
 }
 
@@ -232,56 +204,60 @@ void exportar_lesiones_all(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt, SQL_LESIONES)) return;
+    if (!preparar_stmt_export(&stmt, SQL_LESIONES))
+    {
+        return;
+    }
 
-    FILE *f;
+    FILE *file;
 
     /* CSV */
-    f = abrir_archivo_exportacion("lesiones.csv", "Error al crear CSV");
-    if (f)
+    file = abrir_archivo_exportacion("lesiones.csv", "Error al crear CSV");
+    if (file)
     {
-        fprintf(f, "id,jugador,tipo,descripcion,fecha\n");
-        write_lesiones_csv_rows(f, stmt);
+        fprintf(file, "id,jugador,tipo,descripcion,fecha\n");
+        write_lesiones_csv_rows(file, stmt);
         printf("Archivo exportado a: %s\n", get_export_path("lesiones.csv"));
-        fclose(f);
+        fclose(file);
     }
 
     sqlite3_reset(stmt);
 
     /* TXT */
-    f = abrir_archivo_exportacion("lesiones.txt", "Error al crear TXT");
-    if (f)
+    file = abrir_archivo_exportacion("lesiones.txt", "Error al crear TXT");
+    if (file)
     {
-        fprintf(f, "LISTADO DE LESIONES\n\n");
-        write_lesiones_txt_rows(f, stmt);
+        fprintf(file, "LISTADO DE LESIONES\n\n");
+        write_lesiones_txt_rows(file, stmt);
         printf("Archivo exportado a: %s\n", get_export_path("lesiones.txt"));
-        fclose(f);
+        fclose(file);
     }
 
     sqlite3_reset(stmt);
 
     /* JSON */
-    f = abrir_archivo_exportacion("lesiones.json", "Error al crear JSON");
-    if (f)
+    file = abrir_archivo_exportacion("lesiones.json", "Error al crear JSON");
+    if (file)
     {
-        write_lesiones_json_rows(f, stmt);
+        write_lesiones_json_rows(file, stmt);
         printf("Archivo exportado a: %s\n", get_export_path("lesiones.json"));
-        fclose(f);
+        fclose(file);
     }
 
     sqlite3_reset(stmt);
 
     /* HTML */
-    f = abrir_archivo_exportacion("lesiones.html", "Error al crear HTML");
-    if (f)
+    file = abrir_archivo_exportacion("lesiones.html", "Error al crear HTML");
+    if (file)
     {
-        fprintf(f,
-                "<html><body><h1>Lesiones</h1><table border='1'>"
-                "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
-        write_lesiones_html_rows(f, stmt);
-        fprintf(f, "</table></body></html>");
+        fprintf(
+            file,
+            "<html><body><h1>Lesiones</h1><table border='1'>"
+            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
+        write_lesiones_html_rows(file, stmt);
+        fprintf(file, "</table></body></html>");
         printf("Archivo exportado a: %s\n", get_export_path("lesiones.html"));
-        fclose(f);
+        fclose(file);
     }
 
     sqlite3_finalize(stmt);

@@ -386,9 +386,13 @@ static void imprimir_bloque_base_partido(sqlite3_stmt *stmt, const char *fecha_c
         int atajaste = sqlite3_column_int(stmt, 41);
         const char *atajaste_txt;
         if (sqlite3_column_type(stmt, 41) == SQLITE_NULL || atajaste == 0)
+        {
             atajaste_txt = "-";
+        }
         else
+        {
             atajaste_txt = (atajaste == 1) ? "SI" : "NO";
+        }
         ui_printf_centered_line("Atajaste todo el partido: %s", atajaste_txt);
     }
     ui_printf_centered_line("Detalle Goles: %s", stmt_text_or_default(stmt, 39, "N/A"));
@@ -846,7 +850,7 @@ static int partido_listado_bind_tag_si(sqlite3_stmt *stmt, int indice, const cha
     }
 
     snprintf(tag_pattern, sizeof(tag_pattern), "%%%s%%", tag);
-    sqlite3_bind_text(stmt, indice, tag_pattern, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, indice, tag_pattern, -1, DB_TRANSIENT);
     return indice + 1;
 }
 
@@ -1755,7 +1759,9 @@ typedef struct
 static int secure_rand(int max)
 {
     if (max <= 0)
+    {
         return 0;
+    }
     unsigned char rand_bytes[4];
     if (secure_random_bytes(rand_bytes, sizeof(rand_bytes)) == 0)
     {
@@ -1810,14 +1816,20 @@ static int verificar_prerrequisitos_partido(void)
     if (count_canchas == 0 || count_camisetas == 0)
     {
         if (count_canchas == 0 && count_camisetas == 0)
+        {
             printf("No se puede crear un partido porque no hay canchas ni camisetas "
                    "activas registradas.\n");
+        }
         else if (count_canchas == 0)
+        {
             printf("No se puede crear un partido porque no hay canchas activas "
                    "registradas.\n");
+        }
         else
+        {
             printf("No se puede crear un partido porque no hay camisetas activas "
                    "registradas.\n");
+        }
         pause_console();
         return 0;
     }
@@ -1892,7 +1904,7 @@ static int crear_entidad_inline(const char *tabla, const char *prompt_nombre, in
     }
 
     sqlite3_bind_int64(stmt, 1, id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre, -1, DB_TRANSIENT);
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
@@ -1940,12 +1952,16 @@ static int pedir_cancha_o_nueva(int permite_cancelar)
     {
         int id = input_int("ID Cancha, (-1 Nueva Cancha, 0 para Cancelar): ");
         if (permite_cancelar && id == 0)
+        {
             return 0;
+        }
         if (id == -1)
         {
             int nuevo_id = crear_cancha_inline();
             if (nuevo_id > 0)
+            {
                 return nuevo_id;
+            }
             /* Si fallo volver a mostrar lista */
             listar_entidades_con_nueva("cancha", "Canchas disponibles", "Nueva Cancha");
             continue;
@@ -1953,7 +1969,9 @@ static int pedir_cancha_o_nueva(int permite_cancelar)
         if (existe_id("cancha", id))
         {
             if (entidad_esta_activa("cancha", id))
+            {
                 return id;
+            }
 
             printf("La cancha esta inactiva. Seleccione una cancha activa o cree una "
                    "nueva.\n");
@@ -1973,14 +1991,18 @@ static int pedir_camiseta_o_nueva(void)
         {
             int nuevo_id = crear_camiseta_inline();
             if (nuevo_id > 0)
+            {
                 return nuevo_id;
+            }
             listar_entidades_con_nueva("camiseta", "Camisetas disponibles", "Nueva Camiseta");
             continue;
         }
         if (existe_id("camiseta", id))
         {
             if (entidad_esta_activa("camiseta", id))
+            {
                 return id;
+            }
 
             printf("La camiseta esta inactiva. Seleccione una camiseta activa o cree "
                    "una nueva.\n");
@@ -1994,7 +2016,9 @@ static int contar_botines_activos(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt("SELECT COUNT(*) FROM botin WHERE IFNULL(activa, 1) = 1", &stmt))
+    {
         return 0;
+    }
     sqlite3_step(stmt);
     int count = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
@@ -2037,14 +2061,18 @@ static int pedir_botin_o_nueva(void)
         {
             int nuevo_id = crear_botin_inline();
             if (nuevo_id > 0)
+            {
                 return nuevo_id;
+            }
             listar_entidades_con_nueva("botin", "Botines disponibles", "Nuevo Botin");
             continue;
         }
         if (existe_id("botin", id))
         {
             if (entidad_esta_activa("botin", id))
+            {
                 return id;
+            }
             printf("El botin esta inactivo. Seleccione un botin activo o cree uno nuevo.\n");
             continue;
         }
@@ -2315,7 +2343,9 @@ static const char *tarjeta_to_text(int tarjeta)
 {
     static const char *lookup[] = {[1] = "No", [2] = "Amarilla", [3] = "Roja"};
     if (tarjeta >= 1 && tarjeta <= 3)
+    {
         return lookup[tarjeta];
+    }
     return "No";
 }
 
@@ -2722,13 +2752,13 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     /* Convertir fecha a formato de almacenamiento (YYYY-MM-DD HH:MM) */
     char fecha_storage[64] = {0};
     convert_display_date_to_storage(fecha, fecha_storage, sizeof(fecha_storage));
-    sqlite3_bind_text(stmt, 3, fecha_storage, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, fecha_storage, -1, DB_TRANSIENT);
     char mes_anio[8] = {0};
     if (strnlen_s(fecha_storage, sizeof(fecha_storage)) >= 7 && fecha_storage[4] == '-')
     {
         snprintf(mes_anio, sizeof(mes_anio), "%.7s", fecha_storage);
     }
-    sqlite3_bind_text(stmt, 4, mes_anio, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, mes_anio, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 5, datos->goles);
     sqlite3_bind_int(stmt, 6, datos->asistencias);
     sqlite3_bind_int(stmt, 7, datos->camiseta);
@@ -2736,27 +2766,27 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_bind_int(stmt, 9, datos->rendimiento_general);
     sqlite3_bind_int(stmt, 10, datos->cansancio);
     sqlite3_bind_int(stmt, 11, datos->estado_animo);
-    sqlite3_bind_text(stmt, 12, datos->comentario_personal, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 12, datos->comentario_personal, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 13, datos->clima);
     sqlite3_bind_int(stmt, 14, datos->dia);
     sqlite3_bind_int(stmt, 15, datos->precio);
     sqlite3_bind_int(stmt, 16, datos->tipo_partido);
-    sqlite3_bind_text(stmt, 17, datos->formal.rival_nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 18, datos->formal.tipo_rival, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 19, datos->formal.posicion_jugada, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 17, datos->formal.rival_nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 18, datos->formal.tipo_rival, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 19, datos->formal.posicion_jugada, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 20, datos->formal.minutos_jugados);
     sqlite3_bind_int(stmt, 21, datos->formal.intensidad);
     sqlite3_bind_int(stmt, 22, 0);
-    sqlite3_bind_text(stmt, 23, datos->formal.contexto.condicion_cancha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 24, datos->formal.contexto.arbitraje, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 25, datos->formal.notas.eventos_clave, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 23, datos->formal.contexto.condicion_cancha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 24, datos->formal.contexto.arbitraje, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 25, datos->formal.notas.eventos_clave, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 26, datos->formal.rating.tecnico);
     sqlite3_bind_int(stmt, 27, datos->formal.rating.fisico);
     sqlite3_bind_int(stmt, 28, datos->formal.rating.mental);
     sqlite3_bind_int(stmt, 29, datos->formal.contexto.estado_cancha);
     sqlite3_bind_int(stmt, 30, datos->formal.marcador.goles_equipo);
     sqlite3_bind_int(stmt, 31, datos->formal.marcador.goles_rival);
-    sqlite3_bind_text(stmt, 32, datos->formal.formato_partido, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 32, datos->formal.formato_partido, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 33, datos->formal.marcador.tarjeta);
     sqlite3_bind_int(stmt, 34, datos->formal.marcador.goles_en_contra);
     sqlite3_bind_int(stmt, 35, datos->formal.contexto.dolor_fisico);
@@ -2769,16 +2799,20 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
         sqlite3_bind_null(stmt, 36);
     }
     sqlite3_bind_int(stmt, 37, datos->formal.contexto.arbitraje_score);
-    sqlite3_bind_text(stmt, 38, datos->formal.notas.lo_mejor, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 39, datos->formal.notas.que_mejorar, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 40, datos->formal.notas.tags, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 41, datos->goles_detalle, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 42, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 38, datos->formal.notas.lo_mejor, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 39, datos->formal.notas.que_mejorar, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 40, datos->formal.notas.tags, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 41, datos->goles_detalle, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 42, datos->asistencias_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 43, datos->atajaste_todo_el_partido);
     if (datos->botin > 0)
+    {
         sqlite3_bind_int(stmt, 44, datos->botin);
+    }
     else
+    {
         sqlite3_bind_null(stmt, 44);
+    }
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -2805,7 +2839,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
 
     if (preparar_stmt(sql_check, &stmt_check))
     {
-        sqlite3_bind_text(stmt_check, 1, item_pattern, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt_check, 1, item_pattern, -1, DB_TRANSIENT);
         if (sqlite3_step(stmt_check) == SQLITE_ROW)
         {
             int count = sqlite3_column_int(stmt_check, 0);
@@ -2905,7 +2939,9 @@ void crear_partido(void)
     activar_ia_antes_partido();
 
     if (!verificar_prerrequisitos_partido())
+    {
         return;
+    }
 
     int modalidad = seleccionar_modalidad_partido();
     if (modalidad == 0)
@@ -2929,7 +2965,9 @@ void crear_partido(void)
     }
 
     if (!datos_ok)
+    {
         return;
+    }
 
     char fecha[32];
     solicitar_fecha_hora_partido(fecha, sizeof(fecha));
@@ -3008,7 +3046,7 @@ void crear_partido(void)
                         sqlite3_bind_double(u, 3, res.precip_mm);
                         sqlite3_bind_double(u, 4, res.wind_kmh);
                         sqlite3_bind_int(u, 5, res.weather_code);
-                        sqlite3_bind_text(u, 6, res.clima_json, -1, SQLITE_TRANSIENT);
+                        sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
                         sqlite3_bind_int64(u, 7, id);
                         sqlite3_step(u);
                         db_stmt_release(u);
@@ -3186,7 +3224,9 @@ void eliminar_partido(void)
     }
 
     if (!confirmar("Seguro que desea eliminar este partido?"))
+    {
         return;
+    }
 
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM partido WHERE id = ?", &stmt))
@@ -3209,7 +3249,9 @@ static void modificar_campo_partido(const char *campo, const char *prompt,
                                     void (*mostrar_lista)(void))
 {
     if (mostrar_lista)
+    {
         mostrar_lista();
+    }
 
     int valor = input_int(prompt);
 
@@ -3284,7 +3326,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, valor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, valor, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3299,7 +3341,9 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
     print_header(header);
 
     if (mostrar_lista)
+    {
         mostrar_lista();
+    }
 
     int valor = input_int(prompt);
 
@@ -3324,7 +3368,9 @@ static void buscar_partidos_generico(const char *header, const char *campo, cons
     int hay = mostrar_partidos_desde_stmt(stmt);
 
     if (!hay)
+    {
         printf("No se encontraron partidos con ese criterio.\n");
+    }
 
     sqlite3_finalize(stmt);
     pause_console();
@@ -3338,9 +3384,13 @@ static void modificar_cancha_partido(void)
     {
         cancha = input_int("Nuevo ID Cancha (0 para cancelar): ");
         if (cancha == 0)
+        {
             return;
+        }
         if (existe_id("cancha", cancha) && entidad_esta_activa("cancha", cancha))
+        {
             break;
+        }
         printf("La cancha no existe o esta inactiva. Intente nuevamente.\n");
     }
 
@@ -3378,7 +3428,7 @@ static void modificar_fecha_hora_partido(void)
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, fecha_storage, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha_storage, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3548,7 +3598,7 @@ static void modificar_estado_cancha_partido(void)
     }
 
     sqlite3_bind_int(stmt, 1, estado_cancha);
-    sqlite3_bind_text(stmt, 2, estado_cancha_to_text(estado_cancha), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, estado_cancha_to_text(estado_cancha), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3605,7 +3655,7 @@ static void modificar_formato_partido_partido(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, futbol, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, futbol, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3706,7 +3756,7 @@ static void modificar_arbitraje_score_partido(void)
     }
 
     sqlite3_bind_int(stmt, 1, arbitraje_score);
-    sqlite3_bind_text(stmt, 2, arbitraje_score_to_text(arbitraje_score), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, arbitraje_score_to_text(arbitraje_score), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3783,7 +3833,7 @@ static void modificar_detalle_evento_partido(const char *campo, const char *etiq
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, nuevo_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nuevo_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -3904,7 +3954,9 @@ static void cargar_detalle_partido_actual(char *goles_detalle, size_t goles_size
 static int recopilar_datos_completos_partido(DatosPartido *datos)
 {
     if (!datos)
+    {
         return 0;
+    }
 
     memset(datos, 0, sizeof(*datos));
 
@@ -3993,7 +4045,7 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     /* Asegurar formato de almacenamiento (YYYY-MM-DD HH:MM) */
     char fecha_storage[64] = {0};
     convert_display_date_to_storage(fecha_hora, fecha_storage, sizeof(fecha_storage));
-    sqlite3_bind_text(stmt, 2, fecha_storage, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, fecha_storage, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, datos->goles);
     sqlite3_bind_int(stmt, 4, datos->asistencias);
     sqlite3_bind_int(stmt, 5, datos->camiseta);
@@ -4001,8 +4053,8 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_int(stmt, 7, datos->clima);
     sqlite3_bind_int(stmt, 8, datos->dia);
     sqlite3_bind_int(stmt, 9, datos->precio);
-    sqlite3_bind_text(stmt, 10, datos->goles_detalle, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 11, datos->asistencias_detalle, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 10, datos->goles_detalle, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 11, datos->asistencias_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 12, datos->atajaste_todo_el_partido);
     sqlite3_bind_int(stmt, 13, current_partido_id);
     sqlite3_step(stmt);
@@ -4044,7 +4096,9 @@ void modificar_partido(void)
     int id = input_int("ID Partido a Modificar (0 para cancelar): ");
 
     if (id == 0)
+    {
         return;
+    }
 
     if (!existe_id("partido", id))
     {
@@ -4144,7 +4198,7 @@ static void buscar_por_tag(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, patron, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, patron, -1, DB_TRANSIENT);
     int hay = mostrar_partidos_desde_stmt(stmt);
     if (!hay)
     {
@@ -4693,8 +4747,8 @@ static UNUSED void tactica_guardar_diagrama(int partido_id, const char *nombre,
     }
 
     sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, grid_text, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, grid_text, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -4715,7 +4769,9 @@ static UNUSED void tactica_guardar_diagrama(int partido_id, const char *nombre,
 static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t count)
 {
     if (!dest || !src || destsz == 0 || destsz > RSIZE_MAX_STR)
+    {
         return 1;
+    }
 
 #if defined(__STDC_LIB_EXT1__)
     return strncpy_s(dest, destsz, src, count == TACTICA_TRUNCATE ? _TRUNCATE : count);
@@ -4726,10 +4782,14 @@ static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t 
     size_t src_len = strnlen(src, max_src);
     size_t to_copy = src_len;
     if (to_copy > destsz - 1)
+    {
         to_copy = destsz - 1;
+    }
 
     if (to_copy > 0)
+    {
         memcpy(dest, src, to_copy);
+    }
 
     dest[to_copy] = '\0';
     return 0;
@@ -4739,7 +4799,9 @@ static int tactica_strncpy_s(char *dest, size_t destsz, const char *src, size_t 
 static size_t tactica_strlen_secure(const char *s, size_t max)
 {
     if (!s)
+    {
         return 0;
+    }
 
 #if defined(__STDC_LIB_EXT1__)
     return strlen_s(s, max);
@@ -4753,7 +4815,9 @@ static size_t tactica_strlen_secure(const char *s, size_t max)
 static void tactica_trim_newline(char *s)
 {
     if (!s)
+    {
         return;
+    }
 
     size_t len = tactica_strlen_secure(s, RSIZE_MAX_STR);
     while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r'))
@@ -4768,7 +4832,9 @@ static void tactica_leer_nombre_diagrama(char *nombre, size_t size)
     if (!fgets(nombre, (int)size, stdin))
     {
         if (size > 0)
+        {
             nombre[0] = '\0';
+        }
         return;
     }
 
@@ -4787,7 +4853,9 @@ static void tactica_mostrar_partidos_disponibles(void)
                       "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC";
     sqlite3_stmt *stmt;
     if (!preparar_stmt(sql, &stmt))
+    {
         return;
+    }
 
     ui_printf_centered_line("--- Partidos disponibles ---");
     ui_printf_centered_line("ID | Cancha | Fecha");
@@ -4806,7 +4874,9 @@ static void tactica_mostrar_partidos_disponibles(void)
     sqlite3_finalize(stmt);
 
     if (count == 0)
+    {
         ui_printf_centered_line("No hay partidos registrados.");
+    }
     ui_printf("\n");
 }
 
@@ -4814,11 +4884,15 @@ static void tactica_mostrar_grid_con_ejes(char grid[TACTIC_H][TACTIC_W + 1])
 {
     ui_printf("     ");
     for (int x = 0; x < TACTIC_W; x += 5)
+    {
         ui_printf("%-5d", x);
+    }
     ui_printf("\n");
 
     for (int y = 0; y < TACTIC_H; y++)
+    {
         ui_printf("%2d   %s\n", y, grid[y]);
+    }
 }
 
 static int tactica_colocar(const char *args, char grid[TACTIC_H][TACTIC_W + 1], char *grid_text,
@@ -4888,7 +4962,9 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
                                     const char *nombre)
 {
     if (!line || !grid || !grid_text)
+    {
         return 0;
+    }
 
     char cmd = line[0];
     switch (cmd)
@@ -4921,7 +4997,9 @@ static int tactica_procesar_comando(const char *line, char grid[TACTIC_H][TACTIC
 
     default:
         if (isdigit((unsigned char)cmd))
+        {
             return tactica_colocar(line, grid, grid_text, grid_text_size);
+        }
         ui_printf("Comando no reconocido.\n");
         pause_console();
         return 0;
@@ -5035,7 +5113,9 @@ static void tactica_crear_diagrama(void)
 
     int partido_id = input_int("ID de partido (0 para cancelar): ");
     if (partido_id <= 0)
+    {
         return;
+    }
 
     if (!existe_id("partido", partido_id))
     {
@@ -5068,15 +5148,21 @@ static void tactica_crear_diagrama(void)
 
         char line[64] = {0};
         if (!fgets(line, sizeof(line), stdin))
+        {
             return;
+        }
 
         tactica_trim_newline(line);
 
         if (line[0] == '\0')
+        {
             continue;
+        }
 
         if (tactica_procesar_comando(line, grid, grid_text, sizeof(grid_text), partido_id, nombre))
+        {
             return;
+        }
     }
 }
 
@@ -5126,12 +5212,16 @@ static int partido_obtener_favorito(int partido_id)
     sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT favorito FROM partido_meta WHERE partido_id = ?";
     if (!preparar_stmt(sql, &stmt))
+    {
         return 0;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
     int fav = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         fav = sqlite3_column_int(stmt, 0);
+    }
 
     sqlite3_finalize(stmt);
     return fav;
@@ -5144,7 +5234,9 @@ static void partido_marcar_favorito(int partido_id, int favorito)
     const char *sql = "INSERT OR REPLACE INTO partido_meta (partido_id, "
                       "favorito) VALUES (?, ?)";
     if (!preparar_stmt(sql, &stmt))
+    {
         return;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
     sqlite3_bind_int(stmt, 2, favorito ? 1 : 0);
@@ -5155,15 +5247,19 @@ static void partido_marcar_favorito(int partido_id, int favorito)
 static int partido_agregar_tag(int partido_id, const char *tag)
 {
     if (!tag || tag[0] == '\0')
+    {
         return 0;
+    }
     partido_init_meta_tables();
     sqlite3_stmt *stmt = NULL;
     const char *sql = "INSERT OR IGNORE INTO partido_tag (partido_id, tag) VALUES (?, ?)";
     if (!preparar_stmt(sql, &stmt))
+    {
         return 0;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, tag, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, tag, -1, DB_TRANSIENT);
     int res = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return res;
@@ -5172,15 +5268,19 @@ static int partido_agregar_tag(int partido_id, const char *tag)
 static int partido_quitar_tag(int partido_id, const char *tag)
 {
     if (!tag || tag[0] == '\0')
+    {
         return 0;
+    }
     partido_init_meta_tables();
     sqlite3_stmt *stmt = NULL;
     const char *sql = "DELETE FROM partido_tag WHERE partido_id = ? AND tag = ?";
     if (!preparar_stmt(sql, &stmt))
+    {
         return 0;
+    }
 
     sqlite3_bind_int(stmt, 1, partido_id);
-    sqlite3_bind_text(stmt, 2, tag, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, tag, -1, DB_TRANSIENT);
     int res = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return res;
@@ -5204,7 +5304,9 @@ static int partido_listar_tags_print(int partido_id)
     {
         const char *t = (const char *)sqlite3_column_text(stmt, 0);
         if (count)
+        {
             ui_printf(", ");
+        }
         ui_printf("%s", t ? t : "");
         count++;
     }
@@ -5216,12 +5318,16 @@ static int partido_listar_tags_print(int partido_id)
 static int partido_prompt_tag_input(const char *prompt, char *out, size_t size)
 {
     if (!prompt || !out || size == 0)
+    {
         return 0;
+    }
     ui_printf("%s", prompt);
     /* fgets expects an int for size; cast explicitly to avoid implicit
        conversion warnings when passing size_t (e.g. sizeof buffers). */
     if (!fgets(out, (int)size, stdin))
+    {
         return 0;
+    }
     tactica_trim_newline(out);
     trim_whitespace(out);
     return out[0] != '\0';
@@ -5237,9 +5343,13 @@ static void partido_ui_agregar_tag(int partido_id)
         return;
     }
     if (partido_agregar_tag(partido_id, tag))
+    {
         ui_printf("Etiqueta añadida.\n");
+    }
     else
+    {
         ui_printf("No se pudo agregar etiqueta o ya existe.\n");
+    }
     pause_console();
 }
 
@@ -5253,9 +5363,13 @@ static void partido_ui_quitar_tag(int partido_id)
         return;
     }
     if (partido_quitar_tag(partido_id, tag))
+    {
         ui_printf("Etiqueta eliminada.\n");
+    }
     else
+    {
         ui_printf("Etiqueta no encontrada.\n");
+    }
     pause_console();
 }
 
@@ -5275,7 +5389,9 @@ static void partido_manage_tags_for_id(int id)
         ui_printf("0) Volver\n");
         int opt2 = input_int("Opcion: ");
         if (opt2 == 0)
+        {
             break;
+        }
 
         switch (opt2)
         {
@@ -5301,7 +5417,9 @@ static void partido_list_tags_ui(void)
     char tag[PARTIDO_TAG_MAX_LEN] = {0};
     ui_printf("Etiqueta (dejar vacia para listar todos con tags): ");
     if (!fgets(tag, (int)sizeof(tag), stdin))
+    {
         tag[0] = '\0';
+    }
     tactica_trim_newline(tag);
     trim_whitespace(tag);
 
@@ -5309,9 +5427,13 @@ static void partido_list_tags_ui(void)
     if (res == 0)
     {
         if (tag[0])
+        {
             ui_printf("No hay partidos con la etiqueta '%s'.\n", tag);
+        }
         else
+        {
             ui_printf("No hay partidos con etiquetas.\n");
+        }
     }
     pause_console();
 }
@@ -5347,7 +5469,9 @@ static int partido_mostrar_favoritos(void)
     sqlite3_finalize(stmt);
 
     if (count == 0)
+    {
         ui_printf_centered_line("No hay partidos favoritos.");
+    }
     ui_printf("\n");
     return count;
 }
@@ -5364,7 +5488,9 @@ static void menu_marcar_favorito_partido(void)
         ui_printf("0) Volver\n");
         int opt = input_int("Opcion: ");
         if (opt == 0)
+        {
             return;
+        }
 
         switch (opt)
         {
@@ -5373,7 +5499,9 @@ static void menu_marcar_favorito_partido(void)
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
             if (id == 0)
+            {
                 break;
+            }
             if (!existe_id("partido", id))
             {
                 printf("Partido no encontrado.\n");
@@ -5419,7 +5547,7 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
             printf("Error consultando partidos con etiquetas.\n");
             return 0;
         }
-        sqlite3_bind_text(stmt, 1, tag, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 1, tag, -1, DB_TRANSIENT);
     }
     else
     {
@@ -5463,7 +5591,9 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
     sqlite3_finalize(stmt);
 
     if (count == 0)
+    {
         return 0;
+    }
 
     ui_printf("\n");
     return count;
@@ -5481,7 +5611,9 @@ static void menu_gestion_tags_partido(void)
         ui_printf("0) Volver\n");
         int opt = input_int("Opcion: ");
         if (opt == 0)
+        {
             return;
+        }
 
         switch (opt)
         {
@@ -5490,7 +5622,9 @@ static void menu_gestion_tags_partido(void)
             tactica_mostrar_partidos_disponibles();
             int id = input_int("ID de partido (0 para cancelar): ");
             if (id == 0)
+            {
                 break;
+            }
             if (!existe_id("partido", id))
             {
                 printf("Partido no encontrado.\n");
@@ -5553,18 +5687,26 @@ void obtener_clima_partidos_historicos(void)
         }
 
         if (lat == 0.0 && lon == 0.0)
+        {
             continue;
+        }
 
         int anio = 0;
         int mes = 0;
         int dia = 0;
         int parsed = 0;
         if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
+        {
             parsed = (sscanf(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
+        }
         else if (fecha_hora && fecha_hora[2] == '/' && fecha_hora[5] == '/')
+        {
             parsed = (sscanf(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);
+        }
         if (!parsed)
+        {
             continue;
+        }
 
         OpenMeteoParams omp;
         omp.latitud = lat;
@@ -5592,7 +5734,7 @@ void obtener_clima_partidos_historicos(void)
                 sqlite3_bind_double(u, 3, res.precip_mm);
                 sqlite3_bind_double(u, 4, res.wind_kmh);
                 sqlite3_bind_int(u, 5, res.weather_code);
-                sqlite3_bind_text(u, 6, res.clima_json, -1, SQLITE_TRANSIENT);
+                sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
                 sqlite3_bind_int64(u, 7, partido_id);
                 sqlite3_step(u);
                 db_stmt_release(u);

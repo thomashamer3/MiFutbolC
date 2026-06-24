@@ -1,4 +1,4 @@
-﻿#include "bienestar.h"
+#include "bienestar.h"
 #include "db.h"
 #include "export_pdf.h"
 #include "menu.h"
@@ -42,8 +42,8 @@ static int menuimg_guardar_ruta_menu(const char *menu_key, const char *ruta_rela
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, menu_key, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, ruta_relativa, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, menu_key, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, ruta_relativa, -1, DB_TRANSIENT);
     int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     return result == SQLITE_DONE;
@@ -62,7 +62,7 @@ static int menuimg_obtener_ruta_menu(const char *menu_key, char *ruta, size_t si
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, menu_key, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, menu_key, -1, DB_TRANSIENT);
     int success = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -339,7 +339,7 @@ static void actualizar_campo_fecha(const char *tabla, int ent_id, const char *pr
     {
         return;
     }
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, ent_id);
 
     finalizar_ejecucion(stmt, ok_msg, err_msg);
@@ -408,7 +408,7 @@ static void actualizar_campo_texto(const char *tabla, int ent_id, const char *ca
     {
         return;
     }
-    sqlite3_bind_text(stmt, 1, texto, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, texto, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, ent_id);
 
     finalizar_ejecucion(stmt, ok_msg, err_msg);
@@ -564,7 +564,7 @@ static void pedir_habito_input(HabitoInput *habito)
 
 static int bind_habito(sqlite3_stmt *stmt, const HabitoInput *habito, int index)
 {
-    sqlite3_bind_text(stmt, index, habito->fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, habito->fecha, -1, DB_TRANSIENT);
     index++;
     sqlite3_bind_int(stmt, index, habito->dormi_bien);
     index++;
@@ -572,7 +572,7 @@ static int bind_habito(sqlite3_stmt *stmt, const HabitoInput *habito, int index)
     index++;
     sqlite3_bind_int(stmt, index, habito->alcohol);
     index++;
-    sqlite3_bind_text(stmt, index, habito->estado_animico, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, habito->estado_animico, -1, DB_TRANSIENT);
     index++;
     sqlite3_bind_int(stmt, index, habito->nervios);
     index++;
@@ -580,9 +580,9 @@ static int bind_habito(sqlite3_stmt *stmt, const HabitoInput *habito, int index)
     index++;
     sqlite3_bind_int(stmt, index, habito->motivacion);
     index++;
-    sqlite3_bind_text(stmt, index, habito->notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, habito->notas, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, habito->tipo_diario, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, habito->tipo_diario, -1, DB_TRANSIENT);
     index++;
 
     return index;
@@ -684,11 +684,11 @@ static void crear_objetivo(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, fecha_inicio, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, fecha_fin, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, estado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, fecha_inicio, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, fecha_fin, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, estado, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, notas, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Objetivo guardado.", "Error guardando objetivo.");
 }
@@ -725,7 +725,7 @@ static void cambiar_estado_objetivo(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, estado, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, estado, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, obj_id);
 
     finalizar_ejecucion(stmt, "Estado actualizado.", "Error actualizando estado.");
@@ -805,8 +805,8 @@ static void crear_plan_entrenamiento(void)
 
     sqlite3_bind_int(stmt, 1, objetivo_id);
     sqlite3_bind_int(stmt, 2, frecuencia);
-    sqlite3_bind_text(stmt, 3, rutina, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, rutina, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, notas, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Plan guardado.", "Error guardando plan.");
 }
@@ -1184,11 +1184,11 @@ static void pedir_sesion_mental_input(SesionMentalInput *sesion)
 
 static int bind_sesion_mental(sqlite3_stmt *stmt, const SesionMentalInput *sesion, int index)
 {
-    sqlite3_bind_text(stmt, index, sesion->fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, sesion->fecha, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, tipo_sesion_texto(sesion->tipo), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, tipo_sesion_texto(sesion->tipo), -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, momento_sesion_texto(sesion->momento), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, momento_sesion_texto(sesion->momento), -1, DB_TRANSIENT);
     index++;
     if (sesion->partido_id > 0)
     {
@@ -1205,15 +1205,15 @@ static int bind_sesion_mental(sqlite3_stmt *stmt, const SesionMentalInput *sesio
     index++;
     sqlite3_bind_int(stmt, index, sesion->motivacion);
     index++;
-    sqlite3_bind_text(stmt, index, sesion->miedos, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, sesion->miedos, -1, DB_TRANSIENT);
     index++;
     sqlite3_bind_int(stmt, index, sesion->presion);
     index++;
     sqlite3_bind_int(stmt, index, sesion->concentracion);
     index++;
-    sqlite3_bind_text(stmt, index, sesion->pensamientos, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, sesion->pensamientos, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, sesion->texto_libre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, sesion->texto_libre, -1, DB_TRANSIENT);
     index++;
 
     return index;
@@ -1439,7 +1439,7 @@ static void actualizar_sesion_mental_tipo(int sesion_id)
     {
         return;
     }
-    sqlite3_bind_text(stmt, 1, tipo_sesion_texto(tipo), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, tipo_sesion_texto(tipo), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, sesion_id);
 
     finalizar_ejecucion(stmt, "Sesion mental actualizada.", "Error actualizando sesion mental.");
@@ -1461,7 +1461,7 @@ static void actualizar_sesion_mental_momento(int sesion_id)
     {
         return;
     }
-    sqlite3_bind_text(stmt, 1, momento_sesion_texto(momento), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, momento_sesion_texto(momento), -1, DB_TRANSIENT);
     if (partido_vinculado > 0)
     {
         sqlite3_bind_int(stmt, 2, partido_vinculado);
@@ -1929,11 +1929,11 @@ static void registrar_entrenamiento(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo_entrenamiento_texto(tipo), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, tipo_entrenamiento_texto(tipo), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, duracion);
     sqlite3_bind_int(stmt, 4, intensidad);
-    sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, notas, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Entrenamiento guardado.", "Error guardando entrenamiento.");
 }
@@ -2037,8 +2037,8 @@ static void registrar_ejercicio(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, grupo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, grupo, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Ejercicio guardado.", "Error guardando ejercicio.");
 }
@@ -2243,10 +2243,11 @@ static const char *calidad_comida_texto(int calidad)
     case 1:
         return "Mala";
     case 2:
-    default:
         return "Regular";
     case 3:
         return "Buena";
+    default:
+        return "Desconocida";
     }
 }
 
@@ -2257,10 +2258,11 @@ static const char *hidratacion_texto(int nivel)
     case 1:
         return "Baja";
     case 2:
-    default:
         return "Media";
     case 3:
         return "Alta";
+    default:
+        return "Desconocida";
     }
 }
 
@@ -2290,10 +2292,10 @@ static void registrar_comida(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, tipo_comida_texto(tipo), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, calidad_comida_texto(calidad), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, descripcion, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, tipo_comida_texto(tipo), -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, calidad_comida_texto(calidad), -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, descripcion, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Comida guardada.", "Error guardando comida.");
 }
@@ -2375,8 +2377,8 @@ static void registrar_dia_nutricional(void)
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, hidratacion_texto(hidratacion), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, hidratacion_texto(hidratacion), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, alcohol);
     if (peso >= 0.0)
     {
@@ -2386,7 +2388,7 @@ static void registrar_dia_nutricional(void)
     {
         sqlite3_bind_null(stmt, 4);
     }
-    sqlite3_bind_text(stmt, 5, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, notas, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Dia nutricional guardado.", "Error guardando dia nutricional.");
 }
@@ -2655,10 +2657,10 @@ static void actualizar_salud_perfil(void)
 
     sqlite3_bind_double(stmt, 1, altura);
     sqlite3_bind_double(stmt, 2, peso);
-    sqlite3_bind_text(stmt, 3, tipo_sangre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, ultima_revision, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, medidas, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, tipo_sangre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, ultima_revision, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, medidas, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, notas, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Datos de salud actualizados.", "Error guardando datos de salud.");
 }
@@ -2685,15 +2687,15 @@ static void pedir_control_medico_input(ControlMedicoInput *control, const char *
 
 static int bind_control_medico(sqlite3_stmt *stmt, const ControlMedicoInput *control, int index)
 {
-    sqlite3_bind_text(stmt, index, control->fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, control->fecha, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, control->tipo, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, control->tipo, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, control->profesional, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, control->profesional, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, control->resultado, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, control->resultado, -1, DB_TRANSIENT);
     index++;
-    sqlite3_bind_text(stmt, index, control->notas, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, control->notas, -1, DB_TRANSIENT);
     index++;
 
     return index;
@@ -3031,10 +3033,10 @@ static void adjuntar_archivo_control(void)
     }
 
     sqlite3_bind_int(stmt, 1, control_id);
-    sqlite3_bind_text(stmt, 2, nombre_original, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, ruta_relativa_db, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, tipo_archivo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, fecha_hoy_buf, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, nombre_original, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, ruta_relativa_db, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, tipo_archivo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, fecha_hoy_buf, -1, DB_TRANSIENT);
 
     finalizar_ejecucion(stmt, "Archivo adjuntado correctamente.", "Error guardando archivo en DB.");
 }
@@ -3262,11 +3264,11 @@ static void guardar_recomendacion(const char *fecha, int score, int riesgo, cons
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, fecha, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, score);
     sqlite3_bind_int(stmt, 3, riesgo);
-    sqlite3_bind_text(stmt, 4, resumen, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, rutina, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, resumen, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, rutina, -1, DB_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {

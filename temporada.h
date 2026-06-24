@@ -35,7 +35,8 @@ typedef enum
 {
     PRETEMPORADA,
     TEMPORADA_REGULAR,
-    POSTTEMPORADA
+    POSTTEMPORADA,
+    TIPO_FASE_INVALIDA = 99
 } TipoFaseTemporada;
 
 /**

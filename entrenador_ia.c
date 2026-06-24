@@ -20,8 +20,8 @@ static void iniciar_pantalla_ia(const char *titulo)
 
 static void limpiar_buffer_linea(void)
 {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF)
+    int flag;
+    while ((flag = getchar()) != '\n' && flag != EOF)
     {
         /* Descarta caracteres restantes del buffer de entrada. */
     }
@@ -55,8 +55,8 @@ static void bind_rango_fechas_yyyy_mm_dd(sqlite3_stmt *stmt, time_t fecha_inicio
     formatear_fecha_yyyy_mm_dd(fecha_inicio, fecha_inicio_str, sizeof(fecha_inicio_str));
     formatear_fecha_yyyy_mm_dd(fecha_fin, fecha_fin_str, sizeof(fecha_fin_str));
 
-    sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, fecha_inicio_str, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, fecha_fin_str, -1, DB_TRANSIENT);
 }
 
 static void ejecutar_upsert_perfil(const char *sql, int aceptados, int ignorados,
@@ -265,9 +265,9 @@ EstadoJugador evaluar_estado_jugador(void)
     estado.derrotas_consecutivas = derrotas_consecutivas;
 
     // Evaluar riesgo de lesion basado en cansancio y partidos consecutivos
-    estado.riesgo_lesion = (estado.cansancio_promedio / 10.0f) +
-                           ((float)estado.partidos_consecutivos / 3.0f) +
-                           ((float)estado.derrotas_consecutivas / 2.0f);
+    estado.riesgo_lesion = (estado.cansancio_promedio / 10.0F) +
+                           ((float)estado.partidos_consecutivos / 3.0F) +
+                           ((float)estado.derrotas_consecutivas / 2.0F);
 
     return estado;
 }
@@ -427,8 +427,8 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin, 
         "BETWEEN ? AND ? "
         "ORDER BY fecha_hora DESC;";
 
-    *rendimiento = 0.0f;
-    *cansancio = 0.0f;
+    *rendimiento = 0.0F;
+    *cansancio = 0.0F;
     *victorias = 0;
     *derrotas = 0;
     int count = 0;
@@ -444,9 +444,13 @@ static void obtener_estadisticas_periodo(time_t fecha_inicio, time_t fecha_fin, 
             int resultado = sqlite3_column_int(stmt, 2);
 
             if (resultado == 1)
+            {
                 (*victorias)++;
+            }
             else if (resultado == 0)
+            {
                 (*derrotas)++;
+            }
 
             count++;
         }
@@ -503,7 +507,9 @@ static ConsejoHistorial *seleccionar_consejo_historial(ConsejoHistorial consejos
     int id_seleccionado = input_int("");
 
     if (id_seleccionado == 0)
+    {
         return NULL;
+    }
 
     for (int i = 0; i < count; i++)
     {
@@ -547,29 +553,49 @@ static void evaluar_metricas(const EstadisticasPeriodo *antes, const Estadistica
     *empeoramientos = 0;
 
     if (despues->rendimiento > antes->rendimiento)
+    {
         (*mejoras)++;
+    }
     else if (despues->rendimiento < antes->rendimiento)
+    {
         (*empeoramientos)++;
+    }
 
     if (despues->cansancio < antes->cansancio)
+    {
         (*mejoras)++;
+    }
     else if (despues->cansancio > antes->cansancio)
+    {
         (*empeoramientos)++;
+    }
 
     if (despues->victorias > antes->victorias)
+    {
         (*mejoras)++;
+    }
     else if (despues->victorias < antes->victorias)
+    {
         (*empeoramientos)++;
+    }
 
     if (despues->derrotas < antes->derrotas)
+    {
         (*mejoras)++;
+    }
     else if (despues->derrotas > antes->derrotas)
+    {
         (*empeoramientos)++;
+    }
 
     if (despues->lesiones < antes->lesiones)
+    {
         (*mejoras)++;
+    }
     else if (despues->lesiones > antes->lesiones)
+    {
         (*empeoramientos)++;
+    }
 }
 
 // Funcion auxiliar para mostrar evaluacion cuando se siguio el consejo
@@ -583,29 +609,45 @@ static void mostrar_evaluacion_seguido(int decision_acertada, const Estadisticas
         printf("✓ DECISIoN ACERTADA\n\n");
         printf("Seguir el consejo resulto en mejoras observables:\n");
         if (despues->rendimiento > antes->rendimiento)
+        {
             printf("  • Rendimiento mejoro en %.1f puntos\n",
                    despues->rendimiento - antes->rendimiento);
+        }
         if (despues->cansancio < antes->cansancio)
+        {
             printf("  • Cansancio se redujo en %.1f puntos\n",
                    antes->cansancio - despues->cansancio);
+        }
         if (despues->victorias > antes->victorias)
+        {
             printf("  • Mas victorias (%d)\n", despues->victorias - antes->victorias);
+        }
         if (despues->lesiones < antes->lesiones)
+        {
             printf("  • Menos lesiones (%d)\n", antes->lesiones - despues->lesiones);
+        }
     }
     else
     {
         printf("✗ DECISIoN CUESTIONABLE\n\n");
         printf("Seguir el consejo no genero los resultados esperados:\n");
         if (despues->rendimiento < antes->rendimiento)
+        {
             printf("  • Rendimiento empeoro en %.1f puntos\n",
                    antes->rendimiento - despues->rendimiento);
+        }
         if (despues->cansancio > antes->cansancio)
+        {
             printf("  • Cansancio aumento en %.1f puntos\n", despues->cansancio - antes->cansancio);
+        }
         if (despues->derrotas > antes->derrotas)
+        {
             printf("  • Mas derrotas (%d)\n", despues->derrotas - antes->derrotas);
+        }
         if (despues->lesiones > antes->lesiones)
+        {
             printf("  • Mas lesiones (%d)\n", despues->lesiones - antes->lesiones);
+        }
     }
 }
 
@@ -624,10 +666,14 @@ static void mostrar_evaluacion_ignorado(int decision_acertada, int mejoras,
         {
             printf("De hecho, algunas metricas mejoraron:\n");
             if (despues->rendimiento > antes->rendimiento)
+            {
                 printf("  • Rendimiento mejoro en %.1f puntos\n",
                        despues->rendimiento - antes->rendimiento);
+            }
             if (despues->victorias > antes->victorias)
+            {
                 printf("  • Mas victorias (%d)\n", despues->victorias - antes->victorias);
+            }
         }
     }
     else
@@ -635,13 +681,21 @@ static void mostrar_evaluacion_ignorado(int decision_acertada, int mejoras,
         printf("✗ DECISIoN ERRoNEA\n\n");
         printf("Ignorar el consejo resulto en deterioro del rendimiento:\n");
         if (despues->rendimiento < antes->rendimiento)
+        {
             printf("  • Rendimiento cayo %.1f puntos\n", antes->rendimiento - despues->rendimiento);
+        }
         if (despues->cansancio > antes->cansancio)
+        {
             printf("  • Cansancio aumento %.1f puntos\n", despues->cansancio - antes->cansancio);
+        }
         if (despues->derrotas > antes->derrotas)
+        {
             printf("  • Mas derrotas (%d)\n", despues->derrotas - antes->derrotas);
+        }
         if (despues->lesiones > antes->lesiones)
+        {
             printf("  • Mas lesiones (%d) - CRiTICO\n", despues->lesiones - antes->lesiones);
+        }
         printf("\n  Recomendacion: En el futuro, considera seguir este tipo de consejos.\n");
     }
 }
@@ -653,16 +707,22 @@ static void mostrar_conclusion(int mejoras)
     printf("CONCLUSIoN\n");
     printf("═══════════════════════════════════════════════════════════════\n\n");
 
-    float efectividad = (float)mejoras / 5.0f * 100.0f;
+    float efectividad = (float)mejoras / 5.0F * 100.0F;
     printf("Efectividad de la decision: %.0f%% (%d de 5 metricas mejoraron)\n\n", efectividad,
            mejoras);
 
     if (efectividad >= 60)
+    {
         printf("Tu decision fue acertada. Continua tomando decisiones similares.\n");
+    }
     else if (efectividad >= 40)
+    {
         printf("Resultados mixtos. Analiza mejor el contexto antes de decidir.\n");
+    }
     else
+    {
         printf("La decision no fue optima. Aprende de esta experiencia.\n");
+    }
 }
 
 // Evaluar decision pasada
@@ -832,7 +892,7 @@ void guardar_consejo_historial(const char *consejo, int seguido)
 // Obtener perfil del usuario
 PerfilUsuarioIA obtener_perfil_usuario(void)
 {
-    PerfilUsuarioIA perfil = {0, 0, 0.5f};
+    PerfilUsuarioIA perfil = {0, 0, 0.5F};
     sqlite3_stmt *stmt;
     const char *sql = "SELECT consejos_aceptados, consejos_ignorados, indice_prudencia FROM "
                       "perfil_usuario_ia LIMIT 1;";
@@ -890,7 +950,7 @@ void actualizar_perfil_usuario(int consejo_seguido)
     float indice_prudencia;
     if (aceptados + ignorados == 0)
     {
-        indice_prudencia = 0.5f;
+        indice_prudencia = 0.5F;
     }
     else
     {
@@ -898,10 +958,14 @@ void actualizar_perfil_usuario(int consejo_seguido)
     }
 
     // Actualizar o insertar
-    if (aceptados + ignorados > 1) // Ya existe registro
+    if (aceptados + ignorados > 1)
+    {
         ejecutar_upsert_perfil(sql_update, aceptados, ignorados, indice_prudencia);
+    }
     else // Primer registro
+    {
         ejecutar_upsert_perfil(sql_insert, aceptados, ignorados, indice_prudencia);
+    }
 }
 
 // Funciones de activacion
@@ -985,31 +1049,35 @@ void predecir_resultado_partido(void)
     EstadoJugador estado = evaluar_estado_jugador();
 
     // Calcular probabilidad de victoria basada en métricas
-    float prob_victoria = 50.0f; // Base 50%
+    float prob_victoria = 50.0F; // Base 50%
 
     // Ajustar por rendimiento
-    prob_victoria += (estado.rendimiento_promedio - 5.0f) * 5.0f;
+    prob_victoria += (estado.rendimiento_promedio - 5.0F) * 5.0F;
 
     // Ajustar por cansancio (negativo)
-    prob_victoria -= (estado.cansancio_promedio - 5.0f) * 3.0f;
+    prob_victoria -= (estado.cansancio_promedio - 5.0F) * 3.0F;
 
     // Ajustar por estado de ánimo
-    prob_victoria += (estado.estado_animo_promedio - 5.0f) * 4.0f;
+    prob_victoria += (estado.estado_animo_promedio - 5.0F) * 4.0F;
 
     // Ajustar por racha
     if (estado.derrotas_consecutivas > 0)
     {
-        prob_victoria -= (float)estado.derrotas_consecutivas * 5.0f;
+        prob_victoria -= (float)estado.derrotas_consecutivas * 5.0F;
     }
 
     // Limitar entre 5% y 95%
-    if (prob_victoria < 5.0f)
-        prob_victoria = 5.0f;
-    if (prob_victoria > 95.0f)
-        prob_victoria = 95.0f;
+    if (prob_victoria < 5.0F)
+    {
+        prob_victoria = 5.0F;
+    }
+    if (prob_victoria > 95.0F)
+    {
+        prob_victoria = 95.0F;
+    }
 
-    float prob_empate = (100.0f - prob_victoria) * 0.3f;
-    float prob_derrota = 100.0f - prob_victoria - prob_empate;
+    float prob_empate = (100.0F - prob_victoria) * 0.3F;
+    float prob_derrota = 100.0F - prob_victoria - prob_empate;
 
     printf("\n╔══════════════════════════════════════════════════════════════╗\n");
     printf("║             PREDICCIoN PARA EL PRoXIMO PARTIDO              ║\n");
@@ -1046,12 +1114,12 @@ void recomendar_formacion(void)
     const char *razon;
 
     // Lógica de recomendación
-    if (estado.cansancio_promedio > 7.0f)
+    if (estado.cansancio_promedio > 7.0F)
     {
         formacion_recomendada = "4-5-1 (Defensiva)";
         razon = "Equipo cansado - Priorizar defensa y conservar energia";
     }
-    else if (estado.rendimiento_promedio >= 7.0f)
+    else if (estado.rendimiento_promedio >= 7.0F)
     {
         formacion_recomendada = "4-3-3 (Ofensiva)";
         razon = "Buen rendimiento - Aprovechar momento ofensivo";
@@ -1061,7 +1129,7 @@ void recomendar_formacion(void)
         formacion_recomendada = "4-4-2 (Equilibrada)";
         razon = "Racha negativa - Buscar equilibrio y confianza";
     }
-    else if (estado.estado_animo_promedio < 4.0f)
+    else if (estado.estado_animo_promedio < 4.0F)
     {
         formacion_recomendada = "5-3-2 (Conservadora)";
         razon = "Moral baja - Asegurar defensa y jugar simple";
@@ -1083,15 +1151,15 @@ void recomendar_formacion(void)
     printf("Razon: %s\n\n", razon);
 
     printf("Consejos adicionales:\n");
-    if (estado.cansancio_promedio > 6.0f)
+    if (estado.cansancio_promedio > 6.0F)
     {
         printf("  • Considerar rotacion de jugadores\n");
     }
-    if (estado.riesgo_lesion > 2.0f)
+    if (estado.riesgo_lesion > 2.0F)
     {
         printf("  • Evitar jugadores con alto riesgo de lesion\n");
     }
-    if (estado.estado_animo_promedio < 5.0f)
+    if (estado.estado_animo_promedio < 5.0F)
     {
         printf("  • Dar charla motivacional antes del partido\n");
     }
@@ -1161,9 +1229,9 @@ void mostrar_alertas_rendimiento(void)
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             float promedio_reciente = (float)sqlite3_column_double(stmt, 0);
-            if (promedio_reciente < 4.5f)
+            if (promedio_reciente < 4.5F)
             {
-                printf("⚠️  ALERTA: Tendencia negativa en ultimos 5 partidos (%.1f/10)\n",
+                printf("  ALERTA: Tendencia negativa en ultimos 5 partidos (%.1f/10)\n",
                        promedio_reciente);
                 printf("    Recomendacion: Analizar tacticas y motivacion del equipo\n\n");
                 alertas_encontradas++;
@@ -1201,12 +1269,12 @@ void sugerir_descanso(void)
     int dias_descanso_recomendados = 0;
     const char *urgencia;
 
-    if (estado.cansancio_promedio >= 8.0f)
+    if (estado.cansancio_promedio >= 8.0F)
     {
         dias_descanso_recomendados = 7;
         urgencia = "URGENTE";
     }
-    else if (estado.cansancio_promedio >= 6.0f || estado.partidos_consecutivos >= 4)
+    else if (estado.cansancio_promedio >= 6.0F || estado.partidos_consecutivos >= 4)
     {
         dias_descanso_recomendados = 5;
         urgencia = "Recomendado";
@@ -1236,7 +1304,7 @@ void sugerir_descanso(void)
         printf("Descanso recomendado: %d dias\n", dias_descanso_recomendados);
         printf("Nivel de urgencia: %s\n\n", urgencia);
 
-        if (estado.riesgo_lesion > 2.5f)
+        if (estado.riesgo_lesion > 2.5F)
         {
             printf("⚠️  IMPORTANTE: Alto riesgo de lesion detectado!\n");
             printf("   El descanso es CRITICO para evitar lesiones.\n\n");
@@ -1246,7 +1314,7 @@ void sugerir_descanso(void)
         printf("  □ Evitar partidos oficiales\n");
         printf("  □ Reducir intensidad de entrenamientos\n");
         printf("  □ Enfocarse en recuperacion y estiramiento\n");
-        if (estado.estado_animo_promedio < 5.0f)
+        if (estado.estado_animo_promedio < 5.0F)
         {
             printf("  □ Trabajar en aspectos mentales y motivacion\n");
         }
@@ -1275,9 +1343,9 @@ static int analizar_debilidad_goles(void)
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         float promedio_goles = (float)sqlite3_column_double(stmt, 0);
-        if (promedio_goles < 1.5f)
+        if (promedio_goles < 1.5F)
         {
-            printf("⚠️  DEBILIDAD: Capacidad ofensiva (%.1f goles/partido)\n", promedio_goles);
+            printf(" DEBILIDAD: Capacidad ofensiva (%.1f goles/partido)\n", promedio_goles);
             printf("    Sugerencias:\n");
             printf("      • Practicar definicion y finalizacion\n");
             printf("      • Trabajar jugadas de ataque\n");
@@ -1304,9 +1372,9 @@ static int analizar_debilidad_asistencias(void)
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         float promedio_asist = (float)sqlite3_column_double(stmt, 0);
-        if (promedio_asist < 1.0f)
+        if (promedio_asist < 1.0F)
         {
-            printf("⚠️  DEBILIDAD: Juego en equipo (%.1f asistencias/partido)\n", promedio_asist);
+            printf("  DEBILIDAD: Juego en equipo (%.1f asistencias/partido)\n", promedio_asist);
             printf("    Sugerencias:\n");
             printf("      • Mejorar comunicacion en cancha\n");
             printf("      • Practicar pases y movimientos sin balon\n");
@@ -1328,15 +1396,15 @@ static int obtener_count_desde_sql(const char *sql, int *valor)
         return 0;
     }
 
-    int ok = 0;
+    int flag = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         *valor = sqlite3_column_int(stmt, 0);
-        ok = 1;
+        flag = 1;
     }
 
     sqlite3_finalize(stmt);
-    return ok;
+    return flag;
 }
 
 static int analizar_debilidad_lesiones(void)
@@ -1353,12 +1421,12 @@ static int analizar_debilidad_lesiones(void)
     }
 
     float tasa_lesiones = (float)total_lesiones / (float)total_partidos;
-    if (tasa_lesiones <= 0.3f)
+    if (tasa_lesiones <= 0.3F)
     {
         return 0;
     }
 
-    printf("⚠️  DEBILIDAD: Alta tasa de lesiones (%.1f%%)\n", tasa_lesiones * 100);
+    printf(" DEBILIDAD: Alta tasa de lesiones (%.1f%%)\n", tasa_lesiones * 100);
     printf("    Sugerencias:\n");
     printf("      • Mejorar calentamiento pre-partido\n");
     printf("      • Aumentar trabajo de flexibilidad\n");
@@ -1384,7 +1452,7 @@ static int analizar_debilidad_consistencia(void)
         int varianza = sqlite3_column_int(stmt, 0);
         if (varianza > 6)
         {
-            printf("⚠️  DEBILIDAD: Falta de consistencia (varianza: %d puntos)\n", varianza);
+            printf("  DEBILIDAD: Falta de consistencia (varianza: %d puntos)\n", varianza);
             printf("    Sugerencias:\n");
             printf("      • Establecer rutinas pre-partido\n");
             printf("      • Trabajar aspectos mentales\n");
@@ -1413,7 +1481,7 @@ void analizar_puntos_debiles(void)
 
     if (areas_identificadas == 0)
     {
-        printf("✅ No se identificaron debilidades criticas.\n");
+        printf(" No se identificaron debilidades criticas.\n");
         printf("   El equipo muestra un desarrollo equilibrado.\n");
         printf("   Continua con el trabajo actual.\n\n");
     }

@@ -268,12 +268,12 @@ static void vincular_valores_snapshot(sqlite3_stmt *stmt, cJSON const *json,
         }
         else if (cJSON_IsString(val))
         {
-            sqlite3_bind_text(stmt, bind_idx++, val->valuestring, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, bind_idx++, val->valuestring, -1, DB_TRANSIENT);
         }
         else
         {
             char *printed = cJSON_Print(val);
-            sqlite3_bind_text(stmt, bind_idx++, printed, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, bind_idx++, printed, -1, DB_TRANSIENT);
             cJSON_free(printed);
         }
     }
@@ -526,7 +526,9 @@ static int descubrir_columnas_tabla(const char *tabla,
 
     sqlite3_stmt *pragma_stmt = NULL;
     if (sqlite3_prepare_v2(db, pragma_sql, -1, &pragma_stmt, NULL) != SQLITE_OK)
+    {
         return 0;
+    }
 
     *num_cols = 0;
     while (sqlite3_step(pragma_stmt) == SQLITE_ROW && *num_cols < 128)
@@ -594,12 +596,16 @@ static cJSON *resultset_a_json(sqlite3_stmt *stmt,
 char *undo_tomar_snapshot(const char *tabla, int id)
 {
     if (!tabla || id <= 0 || !db)
+    {
         return NULL;
+    }
 
     char columnas[128][128];
     int num_cols = 0;
     if (!descubrir_columnas_tabla(tabla, columnas, &num_cols))
+    {
         return NULL;
+    }
 
     char select_sql[8192];
     construir_select_todas_columnas(tabla, (const char(*)[128])columnas,
@@ -607,7 +613,9 @@ char *undo_tomar_snapshot(const char *tabla, int id)
 
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db, select_sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
         return NULL;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
 

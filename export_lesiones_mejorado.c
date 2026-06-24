@@ -1,8 +1,8 @@
 
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,14 +12,22 @@
 
 static const char *SQL_LESIONES_AVANZADO =
     "SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, c.nombre as camiseta_nombre, "
-    "(SELECT COUNT(*) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha) as partidos_antes_lesion, "
-    "(SELECT COUNT(*) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora > l.fecha) as partidos_despues_lesion, "
-    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha) as rendimiento_antes, "
-    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora > l.fecha) as rendimiento_despues, "
-    "CASE WHEN (SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha) > 0 "
-    "THEN ((SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora > l.fecha) - "
-    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha)) * 100.0 / "
-    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < l.fecha) "
+    "(SELECT COUNT(*) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora < "
+    "l.fecha) as partidos_antes_lesion, "
+    "(SELECT COUNT(*) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND p.fecha_hora > "
+    "l.fecha) as partidos_despues_lesion, "
+    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND "
+    "p.fecha_hora < l.fecha) as rendimiento_antes, "
+    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND "
+    "p.fecha_hora > l.fecha) as rendimiento_despues, "
+    "CASE WHEN (SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = "
+    "l.camiseta_id AND p.fecha_hora < l.fecha) > 0 "
+    "THEN ((SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id "
+    "AND p.fecha_hora > l.fecha) - "
+    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND "
+    "p.fecha_hora < l.fecha)) * 100.0 / "
+    "(SELECT AVG(p.rendimiento_general) FROM partido p WHERE p.camiseta_id = l.camiseta_id AND "
+    "p.fecha_hora < l.fecha) "
     "ELSE 0 END as impacto_rendimiento "
     "FROM lesion l "
     "LEFT JOIN camiseta c ON l.camiseta_id = c.id";
@@ -38,18 +46,12 @@ static void write_lesiones_csv(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "%d,%s,%s,%s,%s,%s,%d,%d,%.2f,%.2f,%.2f\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                sqlite3_column_text(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_double(stmt, 8),
-                sqlite3_column_double(stmt, 9),
-                sqlite3_column_double(stmt, 10));
+        fprintf(file, "%d,%s,%s,%s,%s,%s,%d,%d,%.2f,%.2f,%.2f\n", sqlite3_column_int(stmt, 0),
+                sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2),
+                sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4),
+                sqlite3_column_text(stmt, 5), sqlite3_column_int(stmt, 6),
+                sqlite3_column_int(stmt, 7), sqlite3_column_double(stmt, 8),
+                sqlite3_column_double(stmt, 9), sqlite3_column_double(stmt, 10));
     }
 
     sqlite3_finalize(stmt);
@@ -65,7 +67,8 @@ static void write_lesiones_txt(FILE *file)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "ID: %d - Jugador: %s\n"
+        fprintf(file,
+                "ID: %d - Jugador: %s\n"
                 "  Tipo: %s\n"
                 "  Descripcion: %s\n"
                 "  Fecha: %s\n"
@@ -75,16 +78,11 @@ static void write_lesiones_txt(FILE *file)
                 "  Rendimiento antes: %.2f\n"
                 "  Rendimiento despues: %.2f\n"
                 "  Impacto en rendimiento: %.2f%%\n\n",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                sqlite3_column_text(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_double(stmt, 8),
-                sqlite3_column_double(stmt, 9),
+                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
+                sqlite3_column_text(stmt, 4), sqlite3_column_text(stmt, 5),
+                sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7),
+                sqlite3_column_double(stmt, 8), sqlite3_column_double(stmt, 9),
                 sqlite3_column_double(stmt, 10));
     }
 
@@ -102,17 +100,13 @@ static void write_lesiones_html(FILE *file)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         fprintf(file,
-                "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f%%</td></tr>",
-                sqlite3_column_int(stmt, 0),
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2),
-                sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4),
-                sqlite3_column_text(stmt, 5),
-                sqlite3_column_int(stmt, 6),
-                sqlite3_column_int(stmt, 7),
-                sqlite3_column_double(stmt, 8),
-                sqlite3_column_double(stmt, 9),
+                "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</"
+                "td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f%%</td></tr>",
+                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
+                sqlite3_column_text(stmt, 4), sqlite3_column_text(stmt, 5),
+                sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7),
+                sqlite3_column_double(stmt, 8), sqlite3_column_double(stmt, 9),
                 sqlite3_column_double(stmt, 10));
     }
 
@@ -133,7 +127,8 @@ static void write_lesiones_json(FILE *file)
     {
         cJSON *item = cJSON_CreateObject();
         export_json_add_lesion_base_fields(item, stmt);
-        cJSON_AddStringToObject(item, "camiseta_nombre", (const char *)sqlite3_column_text(stmt, 5));
+        cJSON_AddStringToObject(item, "camiseta_nombre",
+                                (const char *)sqlite3_column_text(stmt, 5));
         cJSON_AddNumberToObject(item, "partidos_antes_lesion", sqlite3_column_int(stmt, 6));
         cJSON_AddNumberToObject(item, "partidos_despues_lesion", sqlite3_column_int(stmt, 7));
         cJSON_AddNumberToObject(item, "rendimiento_antes", sqlite3_column_double(stmt, 8));
@@ -156,19 +151,17 @@ static void write_lesiones_json(FILE *file)
 
 void exportar_lesiones_csv_mejorado(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones_mejorado.csv",
-                                      "Error al crear el archivo CSV",
-                                      "id,jugador,tipo,descripcion,fecha,camiseta_nombre,partidos_antes_lesion,partidos_despues_lesion,rendimiento_antes,rendimiento_despues,impacto_rendimiento\n",
-                                      write_lesiones_csv);
+    exportar_archivo_si_hay_registros(
+        "lesion", "lesiones para exportar", "lesiones_mejorado.csv",
+        "Error al crear el archivo CSV",
+        "id,jugador,tipo,descripcion,fecha,camiseta_nombre,partidos_antes_lesion,partidos_despues_"
+        "lesion,rendimiento_antes,rendimiento_despues,impacto_rendimiento\n",
+        write_lesiones_csv);
 }
 
 void exportar_lesiones_txt_mejorado(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones_mejorado.txt",
+    exportar_archivo_si_hay_registros("lesion", "lesiones para exportar", "lesiones_mejorado.txt",
                                       "Error al crear el archivo TXT",
                                       "LISTADO DE LESIONES CON ANALISIS DE IMPACTO\n\n",
                                       write_lesiones_txt);
@@ -176,12 +169,8 @@ void exportar_lesiones_txt_mejorado(void)
 
 void exportar_lesiones_json_mejorado(void)
 {
-    exportar_archivo_si_hay_registros("lesion",
-                                      "lesiones para exportar",
-                                      "lesiones_mejorado.json",
-                                      "Error al crear el archivo JSON",
-                                      NULL,
-                                      write_lesiones_json);
+    exportar_archivo_si_hay_registros("lesion", "lesiones para exportar", "lesiones_mejorado.json",
+                                      "Error al crear el archivo JSON", NULL, write_lesiones_json);
 }
 
 void exportar_lesiones_html_mejorado(void)
@@ -192,20 +181,23 @@ void exportar_lesiones_html_mejorado(void)
         return;
     }
 
-    FILE *f = abrir_archivo_exportacion("lesiones_mejorado.html", "Error al crear el archivo HTML");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("lesiones_mejorado.html", "Error al crear el archivo HTML");
+    if (!file)
     {
         return;
     }
 
-    fprintf(f,
+    fprintf(file,
             "<html><body><h1>Lesiones con Analisis de Impacto</h1><table border='1'>"
-            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th><th>Camiseta</th><th>Partidos Antes</th><th>Partidos Despues</th><th>Rendimiento Antes</th><th>Rendimiento Despues</th><th>Impacto %%</th></tr>");
+            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</"
+            "th><th>Camiseta</th><th>Partidos Antes</th><th>Partidos Despues</th><th>Rendimiento "
+            "Antes</th><th>Rendimiento Despues</th><th>Impacto %%</th></tr>");
 
-    write_lesiones_html(f);
+    write_lesiones_html(file);
 
-    fprintf(f, "</table></body></html>");
+    fprintf(file, "</table></body></html>");
 
-    fclose(f);
+    fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("lesiones_mejorado.html"));
 }

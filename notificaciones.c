@@ -14,9 +14,11 @@ static void agregar_notificacion(const char *tipo, const char *mensaje)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt("INSERT INTO notificacion (tipo, mensaje, leida) VALUES (?, ?, 0)", &stmt))
+    {
         return;
-    sqlite3_bind_text(stmt, 1, tipo, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, mensaje, -1, SQLITE_TRANSIENT);
+    }
+    sqlite3_bind_text(stmt, 1, tipo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, mensaje, -1, DB_TRANSIENT);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 }
@@ -56,7 +58,10 @@ static void listar_todas(void)
         printf("     ------------------------------\n");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("notificaciones");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("notificaciones");
+    }
     pause_console();
 }
 
@@ -82,7 +87,10 @@ static void listar_no_leidas(void)
         printf("     ------------------------------\n");
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("notificaciones no leidas");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("notificaciones no leidas");
+    }
     pause_console();
 }
 
@@ -91,12 +99,18 @@ static void marcar_leida(void)
     int id = input_int("ID de la notificacion: ");
     sqlite3_stmt *stmt;
     if (!preparar_stmt("UPDATE notificacion SET leida = 1 WHERE id = ?", &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, id);
     if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
         printf("Notificacion marcada como leida.\n");
+    }
     else
+    {
         printf("Error: %s\n", sqlite3_errmsg(db));
+    }
     sqlite3_finalize(stmt);
 }
 
@@ -104,7 +118,9 @@ static void marcar_todas_leidas(void)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt("UPDATE notificacion SET leida = 1 WHERE leida = 0", &stmt))
+    {
         return;
+    }
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     printf("Todas las notificaciones marcadas como leidas.\n");
@@ -115,7 +131,9 @@ static void eliminar_notificacion(void)
     int id = input_int("ID de la notificacion a eliminar: ");
     sqlite3_stmt *stmt;
     if (!preparar_stmt("DELETE FROM notificacion WHERE id = ?", &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -144,7 +162,10 @@ static void alertas_lesiones(void)
                sqlite3_column_text(stmt, 2));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("lesiones recientes");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("lesiones recientes");
+    }
     pause_console();
 }
 
@@ -171,7 +192,10 @@ static void alertas_financieras(void)
                sqlite3_column_text(stmt, 4));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("movimientos financieros");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("movimientos financieros");
+    }
     pause_console();
 }
 
@@ -196,7 +220,10 @@ static void torneos_por_vencer(void)
                sqlite3_column_text(stmt, 1));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) mostrar_no_hay_registros("torneos por vencer");
+    if (count == 0)
+    {
+        mostrar_no_hay_registros("torneos por vencer");
+    }
     pause_console();
 }
 
@@ -222,7 +249,10 @@ static void cumpleanos_jugadores(void)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         const char *fnac = (const char*)sqlite3_column_text(stmt, 1);
-        if (!fnac) continue;
+        if (!fnac)
+        {
+            continue;
+        }
         int anio;
         int mes;
         int dia;
@@ -232,17 +262,26 @@ static void cumpleanos_jugadores(void)
             int dias = dia - dia_actual;
             const char *estado;
             if (dias == 0)
+            {
                 estado = "HOY!";
+            }
             else if (dias > 0)
+            {
                 estado = "En %d dias";
+            }
             else
+            {
                 estado = "Pasado";
+            }
             printf("  %s: %s (%s)\n",
                    sqlite3_column_text(stmt, 0), fnac, estado);
         }
     }
     sqlite3_finalize(stmt);
-    if (count == 0) printf("  No hay cumpleanos este mes.\n");
+    if (count == 0)
+    {
+        printf("  No hay cumpleanos este mes.\n");
+    }
     pause_console();
 }
 

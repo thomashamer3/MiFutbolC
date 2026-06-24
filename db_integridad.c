@@ -4,8 +4,8 @@
  */
 
 #include "db_integridad.h"
-#include "menu.h"
 #include "db.h"
+#include "menu.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
@@ -20,7 +20,11 @@ static int callback_integridad(void *data, int argc, char **argv, char **col_nam
     int *errores = (int *)data;
     for (int i = 0; i < argc; i++)
     {
-        if (!argv[i]) continue;
+        if (!argv[i])
+        {
+            continue;
+        }
+
         if (strcmp(argv[i], "ok") == 0)
         {
             ui_printf("  [OK] Base de datos integra\n");
@@ -28,7 +32,10 @@ static int callback_integridad(void *data, int argc, char **argv, char **col_nam
         else
         {
             ui_printf("  [ERROR] %s\n", argv[i]);
-            if (errores) (*errores)++;
+            if (errores)
+            {
+                (*errores)++;
+            }
         }
     }
     return 0;
@@ -51,7 +58,7 @@ static int callback_info(void *data, int argc, char **argv, char **col_name)
  * Ejecuta un PRAGMA con callback y muestra el resultado
  */
 static int ejecutar_pragma(const char *pragma, const char *titulo,
-                           int (*callback)(void*,int,char**,char**), void *data)
+                           int (*callback)(void *, int, char **, char **), void *data)
 {
     char *errmsg = NULL;
 
@@ -63,8 +70,8 @@ static int ejecutar_pragma(const char *pragma, const char *titulo,
 
     ui_printf("  Ejecutando: %s\n\n", pragma);
 
-    int rc = sqlite3_exec(db, pragma, callback, data, &errmsg);
-    if (rc != SQLITE_OK)
+    int flag = sqlite3_exec(db, pragma, callback, data, &errmsg);
+    if (flag != SQLITE_OK)
     {
         ui_printf("  Error: %s\n", errmsg ? errmsg : "desconocido");
         app_log_event("INTEGRIDAD", errmsg ? errmsg : "Error al ejecutar PRAGMA");
@@ -80,8 +87,8 @@ void verificar_integridad_bd(void)
     int errores = 0;
     app_log_event("INTEGRIDAD", "Iniciando integrity_check");
 
-    ejecutar_pragma("PRAGMA integrity_check;", "VERIFICACION DE INTEGRIDAD",
-                    callback_integridad, &errores);
+    ejecutar_pragma("PRAGMA integrity_check;", "VERIFICACION DE INTEGRIDAD", callback_integridad,
+                    &errores);
 
     if (errores > 0)
     {
@@ -103,8 +110,8 @@ void verificar_integridad_rapida(void)
     int errores = 0;
     app_log_event("INTEGRIDAD", "Iniciando quick_check");
 
-    ejecutar_pragma("PRAGMA quick_check;", "VERIFICACION RAPIDA DE INTEGRIDAD",
-                    callback_integridad, &errores);
+    ejecutar_pragma("PRAGMA quick_check;", "VERIFICACION RAPIDA DE INTEGRIDAD", callback_integridad,
+                    &errores);
 
     if (errores > 0)
     {
@@ -155,9 +162,9 @@ void reconstruir_bd(void)
     ui_printf("  Por favor espere...\n\n");
 
     char *errmsg = NULL;
-    int rc = sqlite3_exec(db, "VACUUM;", NULL, NULL, &errmsg);
+    int flag = sqlite3_exec(db, "VACUUM;", NULL, NULL, &errmsg);
 
-    if (rc == SQLITE_OK)
+    if (flag == SQLITE_OK)
     {
         ui_printf("  [OK] Base de datos reconstruida exitosamente.\n");
         app_log_event("INTEGRIDAD", "VACUUM completado exitosamente");
@@ -180,9 +187,9 @@ void analizar_bd(void)
     ui_printf("  Ejecutando ANALYZE para actualizar estadisticas del optimizador...\n\n");
 
     char *errmsg = NULL;
-    int rc = sqlite3_exec(db, "ANALYZE;", NULL, NULL, &errmsg);
+    int flag = sqlite3_exec(db, "ANALYZE;", NULL, NULL, &errmsg);
 
-    if (rc == SQLITE_OK)
+    if (flag == SQLITE_OK)
     {
         ui_printf("  [OK] Tablas analizadas exitosamente.\n");
         app_log_event("INTEGRIDAD", "ANALYZE completado");
@@ -206,9 +213,9 @@ void reparar_bd(void)
 
     int errores = 0;
     char *errmsg = NULL;
-    int rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback_integridad, &errores, &errmsg);
+    int flag = sqlite3_exec(db, "PRAGMA integrity_check;", callback_integridad, &errores, &errmsg);
 
-    if (rc != SQLITE_OK)
+    if (flag != SQLITE_OK)
     {
         ui_printf("  Error al verificar integridad: %s\n", errmsg ? errmsg : "desconocido");
         sqlite3_free(errmsg);
@@ -227,8 +234,8 @@ void reparar_bd(void)
     ui_printf("\n  PASO 2: Reconstruyendo indices (REINDEX)...\n\n");
     app_log_event("INTEGRIDAD", "Iniciando REINDEX por errores detectados");
 
-    rc = sqlite3_exec(db, "REINDEX;", NULL, NULL, &errmsg);
-    if (rc == SQLITE_OK)
+    flag = sqlite3_exec(db, "REINDEX;", NULL, NULL, &errmsg);
+    if (flag == SQLITE_OK)
     {
         ui_printf("  [OK] Indices reconstruidos.\n");
         app_log_event("INTEGRIDAD", "REINDEX completado");
@@ -244,8 +251,8 @@ void reparar_bd(void)
     ui_printf("\n  PASO 3: Verificando integridad despues de REINDEX...\n\n");
 
     errores = 0;
-    rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback_integridad, &errores, &errmsg);
-    if (rc != SQLITE_OK)
+    flag = sqlite3_exec(db, "PRAGMA integrity_check;", callback_integridad, &errores, &errmsg);
+    if (flag != SQLITE_OK)
     {
         ui_printf("  Error al verificar integridad: %s\n", errmsg ? errmsg : "desconocido");
         sqlite3_free(errmsg);
@@ -272,21 +279,16 @@ void mostrar_info_bd(void)
     mostrar_pantalla("INFORMACION DE LA BASE DE DATOS");
     ui_printf("\n");
 
-    const char *pragmas[] =
-    {
-        "PRAGMA page_count;",
-        "PRAGMA page_size;",
-        "PRAGMA freelist_count;",
-        "PRAGMA schema_version;",
-        "PRAGMA user_version;"
-    };
+    const char *pragmas[] = {"PRAGMA page_count;", "PRAGMA page_size;", "PRAGMA freelist_count;",
+                             "PRAGMA schema_version;", "PRAGMA user_version;"
+                            };
     int num_pragmas = sizeof(pragmas) / sizeof(pragmas[0]);
 
     for (int i = 0; i < num_pragmas; i++)
     {
         char *errmsg = NULL;
-        int rc = sqlite3_exec(db, pragmas[i], callback_info, NULL, &errmsg);
-        if (rc != SQLITE_OK)
+        int flag = sqlite3_exec(db, pragmas[i], callback_info, NULL, &errmsg);
+        if (flag != SQLITE_OK)
         {
             ui_printf("  PRAGMA %d - Error: %s\n", i + 1, errmsg ? errmsg : "desconocido");
             sqlite3_free(errmsg);
@@ -300,9 +302,7 @@ void mostrar_info_bd(void)
 
 void menu_integridad_bd(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Verificar integridad", &verificar_integridad_bd},
+    MenuItem items[] = {{1, "Verificar integridad", &verificar_integridad_bd},
         {2, "Verificacion rapida", &verificar_integridad_rapida},
         {3, "Reconstruir base de datos (VACUUM)", &reconstruir_bd},
         {4, "Analizar tablas (ANALYZE)", &analizar_bd},

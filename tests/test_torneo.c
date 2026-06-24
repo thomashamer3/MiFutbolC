@@ -32,7 +32,7 @@ static void test_get_nombre_tipo_torneo_grupos_eliminacion(void)
 
 static void test_get_nombre_tipo_torneo_desconocido(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_torneo(99));
+    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_tipo_torneo(TIPO_TORNEO_INVALIDO));
 }
 
 static void test_get_nombre_formato_torneo_round_robin(void)
@@ -52,7 +52,7 @@ static void test_get_nombre_formato_torneo_eliminacion_fases(void)
 
 static void test_get_nombre_formato_torneo_desconocido(void)
 {
-    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_formato_torneo(99));
+    TEST_ASSERT_EQUAL_STRING("Desconocido", get_nombre_formato_torneo(FORMATO_TORNEO_INVALIDO));
 }
 
 static void test_torneo_functions_exist(void)

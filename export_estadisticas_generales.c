@@ -1,8 +1,8 @@
 ﻿
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,16 +57,18 @@ static const stat_def_t STAT_DEFS[] =
  * HELPER ESTaTICOS
  * ============================================================================ */
 
-static int get_top_camiseta(const char *metric, const char *orderDir,
-                            char *nombre, size_t nombre_size, int *valor)
+static int get_top_camiseta(const char *metric, const char *orderDir, char *nombre,
+                            size_t nombre_size, int *valor)
 {
     sqlite3_stmt *stmt = NULL;
     char query[512];
     int result = 0;
 
-    snprintf(query, sizeof(query), "SELECT c.nombre, %s FROM partido p "
+    snprintf(query, sizeof(query),
+             "SELECT c.nombre, %s FROM partido p "
              "JOIN camiseta c ON p.camiseta_id = c.id "
-             "GROUP BY c.id ORDER BY 2 %s LIMIT 1", metric, orderDir);
+             "GROUP BY c.id ORDER BY 2 %s LIMIT 1",
+             metric, orderDir);
 
     if (preparar_stmt_export(&stmt, query))
     {
@@ -93,8 +95,7 @@ static void read_month_stat_row(sqlite3_stmt *stmt, month_stat_row_t *row)
     row->avg_asistencias = sqlite3_column_double(stmt, 6);
 }
 
-static void json_write_stat(cJSON *json, const char *cat,
-                            const char *nombre, int valor)
+static void json_write_stat(cJSON *json, const char *cat, const char *nombre, int valor)
 {
     cJSON *stat = cJSON_CreateObject();
     cJSON_AddStringToObject(stat, "camiseta", nombre);
@@ -137,19 +138,25 @@ static void write_stats_md(FILE *file, const stat_def_t *def)
     char nombre[256];
     int valor;
     if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
+    {
         fprintf(file, "| %s | %s | %d |\n", def->label, nombre, valor);
+    }
 }
 
 static cJSON *json_build_estadisticas(void)
 {
     cJSON *root = cJSON_CreateObject();
-    if (!root) return NULL;
+    if (!root)
+    {
+        return NULL;
+    }
 
     char nombre[256];
     int valor;
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
     {
-        if (get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order, nombre, sizeof(nombre), &valor))
+        if (get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order, nombre, sizeof(nombre),
+                             &valor))
         {
             json_write_stat(root, STAT_DEFS[i].json_key, nombre, valor);
         }
@@ -230,7 +237,10 @@ void exportar_estadisticas_generales_json(void)
 
     cJSON *root = cJSON_CreateObject();
     cJSON *stats = json_build_estadisticas();
-    if (stats) cJSON_AddItemToObject(root, "estadisticas_generales", stats);
+    if (stats)
+    {
+        cJSON_AddItemToObject(root, "estadisticas_generales", stats);
+    }
 
     char *json_str = cJSON_PrintUnformatted(root);
     fprintf(file, "%s", json_str);
@@ -278,18 +288,21 @@ void exportar_estadisticas_generales_md(void)
         return;
     }
 
-    FILE *file = abrir_archivo_exportacion("estadisticas_generales.md",
-                                           "Error Markdown");
+    FILE *file = abrir_archivo_exportacion("estadisticas_generales.md", "Error Markdown");
     if (!file)
+    {
         return;
+    }
 
     fprintf(file, "# Estadisticas Generales\n\n");
     fprintf(file, "*Generado por MiFutbolC*\n\n");
     fprintf(file, "| Categoria | Camiseta | Valor |\n");
     fprintf(file, "|-----------|----------|-------|\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
         write_stats_md(file, &STAT_DEFS[i]);
-    fprintf(file, "\n");
+        fprintf(file, "\n");
+    }
 
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_generales.md"));
@@ -324,11 +337,10 @@ void exportar_estadisticas_por_mes_csv(void)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f\n",
-                sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6));
+        fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f\n", sqlite3_column_text(stmt, 0),
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
     }
 
     sqlite3_finalize(stmt);
@@ -370,12 +382,9 @@ void exportar_estadisticas_por_mes_txt(void)
         }
 
         fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6));
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
     }
 
     sqlite3_finalize(stmt);
@@ -482,19 +491,27 @@ void exportar_estadisticas_por_mes_html(void)
 
         if (strcmp(current, row.month) != 0)
         {
-            if (hay) fprintf(file, "</table><br>");
+            if (hay)
+            {
+                fprintf(file, "</table><br>");
+            }
             fprintf(file, "<h2>%s</h2><table border='1'>", row.month);
-            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
+            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</"
+                    "th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
             strcpy_s(current, sizeof(current), row.month);
         }
 
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles, row.avg_asistencias);
+                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles,
+                row.avg_asistencias);
         hay = 1;
     }
 
-    if (hay) fprintf(file, "</table>");
+    if (hay)
+    {
+        fprintf(file, "</table>");
+    }
 
     fprintf(file, "</body></html>\n");
     fclose(file);
@@ -516,10 +533,9 @@ static void cache_all_stats(void)
 {
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
     {
-        g_cached_stats[i].found = get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order,
-                                  g_cached_stats[i].nombre,
-                                  sizeof(g_cached_stats[i].nombre),
-                                  &g_cached_stats[i].valor);
+        g_cached_stats[i].found =
+            get_top_camiseta(STAT_DEFS[i].metric, STAT_DEFS[i].order, g_cached_stats[i].nombre,
+                             sizeof(g_cached_stats[i].nombre), &g_cached_stats[i].valor);
     }
 }
 
@@ -527,16 +543,26 @@ static void write_cached_csv(FILE *file)
 {
     fprintf(file, "Categoria,Camiseta,Valor\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
         if (g_cached_stats[i].found)
-            fprintf(file, "%s,%s,%d\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+        {
+            fprintf(file, "%s,%s,%d\n", STAT_DEFS[i].label, g_cached_stats[i].nombre,
+                    g_cached_stats[i].valor);
+        }
+    }
 }
 
 static void write_cached_txt(FILE *file)
 {
     fprintf(file, "ESTADISTICAS GENERALES\n======================\n\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
         if (g_cached_stats[i].found)
-            fprintf(file, "%s: %s (%d)\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+        {
+            fprintf(file, "%s: %s (%d)\n", STAT_DEFS[i].label, g_cached_stats[i].nombre,
+                    g_cached_stats[i].valor);
+        }
+    }
 }
 
 static void write_cached_json(FILE *file)
@@ -566,8 +592,13 @@ static void write_cached_html(FILE *file)
     fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
     fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
         if (g_cached_stats[i].found)
-            fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+        {
+            fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", STAT_DEFS[i].label,
+                    g_cached_stats[i].nombre, g_cached_stats[i].valor);
+        }
+    }
     fprintf(file, "</table>\n</body>\n</html>\n");
 }
 
@@ -576,25 +607,31 @@ static void write_cached_md(FILE *file)
     fprintf(file, "# Estadisticas Generales\n\n*Generado por MiFutbolC*\n\n");
     fprintf(file, "| Categoria | Camiseta | Valor |\n|-----------|----------|-------|\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
+    {
         if (g_cached_stats[i].found)
-            fprintf(file, "| %s | %s | %d |\n", STAT_DEFS[i].label, g_cached_stats[i].nombre, g_cached_stats[i].valor);
+        {
+            fprintf(file, "| %s | %s | %d |\n", STAT_DEFS[i].label, g_cached_stats[i].nombre,
+                    g_cached_stats[i].valor);
+        }
+    }
     fprintf(file, "\n");
 }
 
-static void stats_mes_csv_rows(FILE *f, sqlite3_stmt *stmt)
+static void stats_mes_csv_rows(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(f, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
+    fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        fprintf(f, "%s,%s,%d,%d,%d,%.2f,%.2f\n",
-                sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6));
+    {
+        fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f\n", sqlite3_column_text(stmt, 0),
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
+    }
 }
 
-static void stats_mes_txt_rows(FILE *f, sqlite3_stmt *stmt)
+static void stats_mes_txt_rows(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(f, "ESTADISTICAS POR MES\n====================\n\n");
+    fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
     char current[8] = "";
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -602,17 +639,16 @@ static void stats_mes_txt_rows(FILE *f, sqlite3_stmt *stmt)
         if (strcmp(current, month) != 0)
         {
             strcpy_s(current, sizeof(current), month);
-            fprintf(f, "\n%s:\n", month);
+            fprintf(file, "\n%s:\n", month);
         }
-        fprintf(f, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
-                sqlite3_column_text(stmt, 1),
-                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5),
-                sqlite3_column_double(stmt, 6));
+        fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
+                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
+                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
     }
 }
 
-static void stats_mes_json_rows(FILE *f, sqlite3_stmt *stmt)
+static void stats_mes_json_rows(FILE *file, sqlite3_stmt *stmt)
 {
     cJSON *root = cJSON_CreateObject();
     char current[8] = "";
@@ -623,7 +659,10 @@ static void stats_mes_json_rows(FILE *f, sqlite3_stmt *stmt)
         read_month_stat_row(stmt, &row);
         if (strcmp(current, row.month) != 0)
         {
-            if (current_array) cJSON_AddItemToObject(root, current, current_array);
+            if (current_array)
+            {
+                cJSON_AddItemToObject(root, current, current_array);
+            }
             strcpy_s(current, sizeof(current), row.month);
             current_array = cJSON_CreateArray();
         }
@@ -636,17 +675,20 @@ static void stats_mes_json_rows(FILE *f, sqlite3_stmt *stmt)
         cJSON_AddNumberToObject(item, "avg_asistencias", row.avg_asistencias);
         cJSON_AddItemToArray(current_array, item);
     }
-    if (current_array) cJSON_AddItemToObject(root, current, current_array);
+    if (current_array)
+    {
+        cJSON_AddItemToObject(root, current, current_array);
+    }
     char *json_str = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_str);
+    fprintf(file, "%s", json_str);
     free(json_str);
     cJSON_Delete(root);
 }
 
-static void stats_mes_html_rows(FILE *f, sqlite3_stmt *stmt)
+static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(f, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
-    fprintf(f, "<body>\n<h1>Estadisticas por Mes</h1>\n");
+    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
+    fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
     char current[8] = "";
     int hay = 0;
     month_stat_row_t row;
@@ -655,17 +697,26 @@ static void stats_mes_html_rows(FILE *f, sqlite3_stmt *stmt)
         read_month_stat_row(stmt, &row);
         if (strcmp(current, row.month) != 0)
         {
-            if (hay) fprintf(f, "</table><br>");
-            fprintf(f, "<h2>%s</h2><table border='1'>", row.month);
-            fprintf(f, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
+            if (hay)
+            {
+                fprintf(file, "</table><br>");
+            }
+            fprintf(file, "<h2>%s</h2><table border='1'>", row.month);
+            fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</"
+                    "th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
             strcpy_s(current, sizeof(current), row.month);
         }
-        fprintf(f, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles, row.avg_asistencias);
+        fprintf(file,
+                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
+                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles,
+                row.avg_asistencias);
         hay = 1;
     }
-    if (hay) fprintf(f, "</table>");
-    fprintf(f, "</body></html>\n");
+    if (hay)
+    {
+        fprintf(file, "</table>");
+    }
+    fprintf(file, "</body></html>\n");
 }
 
 /* ============================================================================
@@ -681,45 +732,45 @@ void exportar_estadisticas_generales_all(void)
     }
 
     cache_all_stats();
-    FILE *f;
+    FILE *file;
 
-    f = abrir_archivo_exportacion("estadisticas_generales.csv", "Error CSV");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_generales.csv", "Error CSV");
+    if (file)
     {
-        write_cached_csv(f);
-        fclose(f);
+        write_cached_csv(file);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_generales.csv"));
     }
 
-    f = abrir_archivo_exportacion("estadisticas_generales.txt", "Error TXT");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_generales.txt", "Error TXT");
+    if (file)
     {
-        write_cached_txt(f);
-        fclose(f);
+        write_cached_txt(file);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_generales.txt"));
     }
 
-    f = abrir_archivo_exportacion("estadisticas_generales.json", "Error JSON");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_generales.json", "Error JSON");
+    if (file)
     {
-        write_cached_json(f);
-        fclose(f);
+        write_cached_json(file);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_generales.json"));
     }
 
-    f = abrir_archivo_exportacion("estadisticas_generales.html", "Error HTML");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_generales.html", "Error HTML");
+    if (file)
     {
-        write_cached_html(f);
-        fclose(f);
+        write_cached_html(file);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_generales.html"));
     }
 
-    f = abrir_archivo_exportacion("estadisticas_generales.md", "Error MD");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_generales.md", "Error MD");
+    if (file)
     {
-        write_cached_md(f);
-        fclose(f);
+        write_cached_md(file);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_generales.md"));
     }
 }
@@ -733,41 +784,44 @@ void exportar_estadisticas_por_mes_all(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH)) return;
-    FILE *f;
-
-    f = abrir_archivo_exportacion("estadisticas_por_mes.csv", "Error CSV");
-    if (f)
+    if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
-        stats_mes_csv_rows(f, stmt);
-        fclose(f);
+        return;
+    }
+    FILE *file;
+
+    file = abrir_archivo_exportacion("estadisticas_por_mes.csv", "Error CSV");
+    if (file)
+    {
+        stats_mes_csv_rows(file, stmt);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.csv"));
     }
 
     sqlite3_reset(stmt);
-    f = abrir_archivo_exportacion("estadisticas_por_mes.txt", "Error TXT");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_por_mes.txt", "Error TXT");
+    if (file)
     {
-        stats_mes_txt_rows(f, stmt);
-        fclose(f);
+        stats_mes_txt_rows(file, stmt);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.txt"));
     }
 
     sqlite3_reset(stmt);
-    f = abrir_archivo_exportacion("estadisticas_por_mes.json", "Error JSON");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_por_mes.json", "Error JSON");
+    if (file)
     {
-        stats_mes_json_rows(f, stmt);
-        fclose(f);
+        stats_mes_json_rows(file, stmt);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.json"));
     }
 
     sqlite3_reset(stmt);
-    f = abrir_archivo_exportacion("estadisticas_por_mes.html", "Error HTML");
-    if (f)
+    file = abrir_archivo_exportacion("estadisticas_por_mes.html", "Error HTML");
+    if (file)
     {
-        stats_mes_html_rows(f, stmt);
-        fclose(f);
+        stats_mes_html_rows(file, stmt);
+        fclose(file);
         printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.html"));
     }
 

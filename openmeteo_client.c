@@ -16,7 +16,9 @@ static int weather_code_mode(const int *codes, int count)
     for (int i = 0; i < count; i++)
     {
         if (codes[i] >= 0 && codes[i] < WEATHER_CODE_COUNT)
+        {
             freq[codes[i]]++;
+        }
     }
     int best = 0;
     int best_count = 0;
@@ -34,7 +36,9 @@ static int weather_code_mode(const int *codes, int count)
 int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 {
     if (!params || !out_result)
+    {
         return 0;
+    }
 
     out_result->temp_c = 0.0;
     out_result->apparent_temp_c = 0.0;
@@ -52,21 +56,19 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     localtime_r(&ahora, &tm_hoy);
 #endif
     int hoy_anio = tm_hoy.tm_year + 1900;
-    int hoy_mes  = tm_hoy.tm_mon + 1;
-    int hoy_dia  = tm_hoy.tm_mday;
+    int hoy_mes = tm_hoy.tm_mon + 1;
+    int hoy_dia = tm_hoy.tm_mday;
 
-    if (params->anio > hoy_anio ||
-            (params->anio == hoy_anio && params->mes > hoy_mes) ||
+    if (params->anio > hoy_anio || (params->anio == hoy_anio && params->mes > hoy_mes) ||
             (params->anio == hoy_anio && params->mes == hoy_mes && params->dia > hoy_dia))
     {
-        printf("Fecha futura (%04d-%02d-%02d): saltando consulta.\n",
-               params->anio, params->mes, params->dia);
+        printf("Fecha futura (%04d-%02d-%02d): saltando consulta.\n", params->anio, params->mes,
+               params->dia);
         return 0;
     }
 
     char date_str[11];
-    snprintf(date_str, sizeof(date_str), "%04d-%02d-%02d",
-             params->anio, params->mes, params->dia);
+    snprintf(date_str, sizeof(date_str), "%04d-%02d-%02d", params->anio, params->mes, params->dia);
 
     /* LC_NUMERIC="C" garantiza separador decimal con punto */
     char lat_str[32];
@@ -85,8 +87,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
     /* Descargar con curl.exe */
     char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "curl.exe -s --compressed --max-time 15 \"%s\" 2>&1", url);
+    snprintf(cmd, sizeof(cmd), "curl.exe -s --compressed --max-time 15 \"%s\" 2>&1", url);
 
     FILE *fp = popen(cmd, "r");
     if (!fp)
@@ -135,9 +136,8 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     json_data[total] = '\0';
 
     /* Saltar BOM UTF-8 si existe */
-    char *json_ptr = json_data;
-    if ((unsigned char)json_ptr[0] == 0xEF &&
-            (unsigned char)json_ptr[1] == 0xBB &&
+    char const *json_ptr = json_data;
+    if ((unsigned char)json_ptr[0] == 0xEF && (unsigned char)json_ptr[1] == 0xBB &&
             (unsigned char)json_ptr[2] == 0xBF)
     {
         json_ptr += 3;
@@ -150,13 +150,17 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     {
         const char *err = cJSON_GetErrorPtr();
         if (err)
+        {
             printf("Error parseando JSON cerca de:\n%s\n", err);
+        }
         else
+        {
             printf("Error: JSON invalido (razon desconocida)\n");
+        }
         return 0;
     }
 
-    cJSON *hourly = cJSON_GetObjectItem(root, "hourly");
+    cJSON const *hourly = cJSON_GetObjectItem(root, "hourly");
     if (!hourly)
     {
         printf("Error: respuesta no contiene 'hourly'\n");
@@ -164,11 +168,11 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
         return 0;
     }
 
-    cJSON *temp_arr = cJSON_GetObjectItem(hourly, "temperature_2m");
-    cJSON *apparent_arr = cJSON_GetObjectItem(hourly, "apparent_temperature");
-    cJSON *precip_arr = cJSON_GetObjectItem(hourly, "precipitation");
-    cJSON *wind_arr = cJSON_GetObjectItem(hourly, "wind_speed_10m");
-    cJSON *code_arr = cJSON_GetObjectItem(hourly, "weather_code");
+    cJSON const *temp_arr = cJSON_GetObjectItem(hourly, "temperature_2m");
+    cJSON const *apparent_arr = cJSON_GetObjectItem(hourly, "apparent_temperature");
+    cJSON const *precip_arr = cJSON_GetObjectItem(hourly, "precipitation");
+    cJSON const *wind_arr = cJSON_GetObjectItem(hourly, "wind_speed_10m");
+    cJSON const *code_arr = cJSON_GetObjectItem(hourly, "weather_code");
 
     if (!temp_arr || !cJSON_IsArray(temp_arr))
     {
@@ -200,7 +204,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
     for (int i = 0; i < count; i++)
     {
-        cJSON *t = cJSON_GetArrayItem(temp_arr, i);
+        cJSON const *t = cJSON_GetArrayItem(temp_arr, i);
         if (t && cJSON_IsNumber(t))
         {
             temp_sum += t->valuedouble;
@@ -209,7 +213,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
         if (apparent_arr && cJSON_IsArray(apparent_arr))
         {
-            cJSON *a = cJSON_GetArrayItem(apparent_arr, i);
+            cJSON const *a = cJSON_GetArrayItem(apparent_arr, i);
             if (a && cJSON_IsNumber(a))
             {
                 apparent_sum += a->valuedouble;
@@ -219,25 +223,33 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
         if (precip_arr && cJSON_IsArray(precip_arr))
         {
-            cJSON *p = cJSON_GetArrayItem(precip_arr, i);
+            cJSON const *p = cJSON_GetArrayItem(precip_arr, i);
             if (p && cJSON_IsNumber(p))
+            {
                 precip_sum += p->valuedouble;
+            }
         }
 
         if (wind_arr && cJSON_IsArray(wind_arr))
         {
-            cJSON *w = cJSON_GetArrayItem(wind_arr, i);
+            cJSON const *w = cJSON_GetArrayItem(wind_arr, i);
             if (w && cJSON_IsNumber(w))
+            {
                 wind_sum += w->valuedouble;
+            }
         }
 
         if (code_arr && cJSON_IsArray(code_arr))
         {
-            cJSON *c = cJSON_GetArrayItem(code_arr, i);
+            cJSON const *c = cJSON_GetArrayItem(code_arr, i);
             if (c && cJSON_IsNumber(c))
+            {
                 wcodes[i] = (int)c->valuedouble;
+            }
             else
+            {
                 wcodes[i] = -1;
+            }
         }
         else
         {

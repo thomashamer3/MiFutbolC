@@ -23,34 +23,36 @@ static char s_current[LANG_CODE_SIZE] = "en";
 
 static int load_file(const char *path)
 {
-    FILE *f = NULL;
+    FILE *file = NULL;
 #ifdef _WIN32
-    if (fopen_s(&f, path, "rb") != 0 || !f)
+    if (fopen_s(&file, path, "rb") != 0 || !file)
+    {
         return 0;
+    }
 #else
-    f = fopen(path, "rb");
+    file = fopen(path, "rb");
     if (!f)
         return 0;
 #endif
 
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    fseek(file, 0, SEEK_END);
+    long len = ftell(file);
+    fseek(file, 0, SEEK_SET);
     if (len <= 0)
     {
-        fclose(f);
+        fclose(file);
         return 0;
     }
 
     char *data = (char *)malloc((size_t)len + 1);
     if (!data)
     {
-        fclose(f);
+        fclose(file);
         return 0;
     }
 
-    size_t nread = fread(data, 1, (size_t)len, f);
-    fclose(f);
+    size_t nread = fread(data, 1, (size_t)len, file);
+    fclose(file);
     if ((long)nread != len)
     {
         free(data);
@@ -61,7 +63,9 @@ static int load_file(const char *path)
     cJSON *root = cJSON_Parse(data);
     free(data);
     if (!root)
+    {
         return 0;
+    }
 
     cJSON *strings = cJSON_GetObjectItem(root, "strings");
     if (!strings || !cJSON_IsObject(strings))
@@ -75,7 +79,9 @@ static int load_file(const char *path)
     cJSON_ArrayForEach(item, strings)
     {
         if (s_count >= LANG_MAX_KEYS)
+        {
             break;
+        }
         if (cJSON_IsString(item) && item->valuestring && item->string)
         {
             strncpy_s(s_pairs[s_count].key, sizeof(s_pairs[s_count].key), item->string, _TRUNCATE);
@@ -100,7 +106,9 @@ static int try_load(const char *code)
 {
     /* Try CWD first */
     if (try_load_in_dir(".", code))
+    {
         return 1;
+    }
 
 #ifdef _WIN32
     char mod_path[MAX_PATH];
@@ -112,7 +120,9 @@ static int try_load(const char *code)
         {
             *p = '\0';
             if (try_load_in_dir(mod_path, code))
+            {
                 return 1;
+            }
             p = strrchr(mod_path, '\\');
         }
     }
@@ -245,7 +255,9 @@ int lang_init(void)
 void lang_set(const char *lang_code)
 {
     if (!lang_code || lang_code[0] == '\0')
+    {
         return;
+    }
 
     LangPair backup[LANG_MAX_KEYS];
     int backup_count = s_count;
@@ -270,12 +282,16 @@ const char *lang_get_current(void)
 const char *tr(const char *key)
 {
     if (!key)
+    {
         return "";
+    }
 
     for (int i = 0; i < s_count; i++)
     {
         if (strcmp(s_pairs[i].key, key) == 0)
+        {
             return s_pairs[i].val;
+        }
     }
     return key;
 }

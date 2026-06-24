@@ -1,7 +1,7 @@
 #include "jugador_perfil.h"
+#include "ascii_charts.h"
 #include "db.h"
 #include "utils.h"
-#include "ascii_charts.h"
 #include <stdio.h>
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
@@ -12,8 +12,12 @@ static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 static void mostrar_datos_personales(int jugador_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT nombre, edad, posicion, fecha_nacimiento, nacionalidad FROM jugador WHERE id = ?", &stmt))
+    if (!preparar_stmt("SELECT nombre, edad, posicion, fecha_nacimiento, nacionalidad FROM jugador "
+                       "WHERE id = ?",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -21,9 +25,12 @@ static void mostrar_datos_personales(int jugador_id)
         printf("\n=== DATOS PERSONALES ===\n");
         printf("  Nombre: %s\n", sqlite3_column_text(stmt, 0));
         printf("  Edad: %d\n", sqlite3_column_int(stmt, 1));
-        printf("  Posicion: %s\n", sqlite3_column_text(stmt, 2) ? (const char*)sqlite3_column_text(stmt, 2) : "N/A");
-        printf("  Fecha Nac: %s\n", sqlite3_column_text(stmt, 3) ? (const char*)sqlite3_column_text(stmt, 3) : "N/A");
-        printf("  Nacionalidad: %s\n", sqlite3_column_text(stmt, 4) ? (const char*)sqlite3_column_text(stmt, 4) : "N/A");
+        printf("  Posicion: %s\n",
+               sqlite3_column_text(stmt, 2) ? (const char *)sqlite3_column_text(stmt, 2) : "N/A");
+        printf("  Fecha Nac: %s\n",
+               sqlite3_column_text(stmt, 3) ? (const char *)sqlite3_column_text(stmt, 3) : "N/A");
+        printf("  Nacionalidad: %s\n",
+               sqlite3_column_text(stmt, 4) ? (const char *)sqlite3_column_text(stmt, 4) : "N/A");
     }
     else
     {
@@ -37,8 +44,11 @@ static void mostrar_estadisticas_historicas(int jugador_id)
     sqlite3_stmt *stmt;
     if (!preparar_stmt("SELECT COUNT(*), COALESCE(SUM(goles),0), COALESCE(SUM(asistencias),0), "
                        "COALESCE(AVG(rendimiento_general),0) "
-                       "FROM partido WHERE equipo_id = ? AND resultado > 0", &stmt))
+                       "FROM partido WHERE equipo_id = ? AND resultado > 0",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== ESTADISTICAS HISTORICAS ===\n");
@@ -55,8 +65,12 @@ static void mostrar_estadisticas_historicas(int jugador_id)
 static void mostrar_lesiones_recientes(int jugador_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT descripcion, fecha, gravedad FROM lesion WHERE jugador_id = ? ORDER BY fecha DESC LIMIT 5", &stmt))
+    if (!preparar_stmt("SELECT descripcion, fecha, gravedad FROM lesion WHERE jugador_id = ? ORDER "
+                       "BY fecha DESC LIMIT 5",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== LESIONES RECIENTES ===\n");
@@ -64,22 +78,27 @@ static void mostrar_lesiones_recientes(int jugador_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %s - %s (Gravedad: %d)\n",
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 0),
-               sqlite3_column_int(stmt, 2));
+        printf("  %s - %s (Gravedad: %d)\n", sqlite3_column_text(stmt, 1),
+               sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 2));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) printf("  Sin lesiones registradas.\n");
+    if (count == 0)
+    {
+        printf("  Sin lesiones registradas.\n");
+    }
 }
 
 static void mostrar_partidos_recientes(int jugador_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT p.fecha_hora, p.goles, p.asistencias, p.resultado, p.rendimiento_general "
-                       "FROM partido p WHERE p.equipo_id = ? AND p.resultado > 0 "
-                       "ORDER BY p.fecha_hora DESC LIMIT 5", &stmt))
+    if (!preparar_stmt(
+                "SELECT p.fecha_hora, p.goles, p.asistencias, p.resultado, p.rendimiento_general "
+                "FROM partido p WHERE p.equipo_id = ? AND p.resultado > 0 "
+                "ORDER BY p.fecha_hora DESC LIMIT 5",
+                &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== PARTIDOS RECIENTES ===\n");
@@ -87,23 +106,26 @@ static void mostrar_partidos_recientes(int jugador_id)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %s | G:%d A:%d | %s | Rend: %d\n",
-               sqlite3_column_text(stmt, 0),
-               sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2),
-               resultado_to_text(sqlite3_column_int(stmt, 3)),
-               sqlite3_column_int(stmt, 4));
+        printf("  %s | G:%d A:%d | %s | Rend: %d\n", sqlite3_column_text(stmt, 0),
+               sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+               resultado_to_text(sqlite3_column_int(stmt, 3)), sqlite3_column_int(stmt, 4));
     }
     sqlite3_finalize(stmt);
-    if (count == 0) printf("  Sin partidos registrados.\n");
+    if (count == 0)
+    {
+        printf("  Sin partidos registrados.\n");
+    }
 }
 
 static void mostrar_progresion_atributos(int jugador_id)
 {
     sqlite3_stmt *stmt;
     if (!preparar_stmt("SELECT semana, ataque, defensa, resistencia, velocidad, tecnica "
-                       "FROM progresion_jugador WHERE jugador_id = ? ORDER BY semana", &stmt))
+                       "FROM progresion_jugador WHERE jugador_id = ? ORDER BY semana",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== PROGRESION DE ATRIBUTOS ===\n");
@@ -131,11 +153,9 @@ static void mostrar_progresion_atributos(int jugador_id)
         return;
     }
 
-    double promedios[5] =
-    {
-        prom_ataque / count, prom_defensa / count,
-        prom_resistencia / count, prom_velocidad / count, prom_tecnica / count
-    };
+    double promedios[5] = {prom_ataque / count, prom_defensa / count, prom_resistencia / count,
+                           prom_velocidad / count, prom_tecnica / count
+                          };
     const char *etiquetas[5] = {"Ataque", "Defensa", "Resist.", "Veloc.", "Tecnica"};
     dibujar_grafico_barras(promedios, etiquetas, 5, "Progresion Promedio", 40);
 }
@@ -145,15 +165,19 @@ static void mostrar_mejor_rendimiento(int jugador_id)
     sqlite3_stmt *stmt;
     if (!preparar_stmt("SELECT fecha_hora, goles, asistencias, rendimiento_general, resultado "
                        "FROM partido WHERE equipo_id = ? AND resultado > 0 "
-                       "ORDER BY rendimiento_general DESC LIMIT 1", &stmt))
+                       "ORDER BY rendimiento_general DESC LIMIT 1",
+                       &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== MEJOR RENDIMIENTO ===\n");
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         printf("  Fecha: %s\n", sqlite3_column_text(stmt, 0));
-        printf("  Goles: %d | Asistencias: %d\n", sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2));
+        printf("  Goles: %d | Asistencias: %d\n", sqlite3_column_int(stmt, 1),
+               sqlite3_column_int(stmt, 2));
         printf("  Rendimiento: %d\n", sqlite3_column_int(stmt, 3));
         printf("  Resultado: %s\n", resultado_to_text(sqlite3_column_int(stmt, 4)));
     }
@@ -169,9 +193,15 @@ static void imprimir_barras_atributos(const double vals[5], const char *etiqueta
     for (int i = 0; i < 5; i++)
     {
         int barra = (int)(vals[i] / 5.0);
-        if (barra > 40) barra = 40;
+        if (barra > 40)
+        {
+            barra = 40;
+        }
         printf("  %-10s |", etiquetas[i]);
-        for (int j = 0; j < barra; j++) printf("#");
+        for (int j = 0; j < barra; j++)
+        {
+            printf("#");
+        }
         printf(" %.0f\n", vals[i]);
     }
 }
@@ -179,9 +209,13 @@ static void imprimir_barras_atributos(const double vals[5], const char *etiqueta
 static void mostrar_grafico_radar(int jugador_id)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT AVG(ataque), AVG(defensa), AVG(resistencia), AVG(velocidad), AVG(tecnica) "
-                       "FROM progresion_jugador WHERE jugador_id = ?", &stmt))
+    if (!preparar_stmt(
+                "SELECT AVG(ataque), AVG(defensa), AVG(resistencia), AVG(velocidad), AVG(tecnica) "
+                "FROM progresion_jugador WHERE jugador_id = ?",
+                &stmt))
+    {
         return;
+    }
     sqlite3_bind_int(stmt, 1, jugador_id);
 
     printf("\n=== GRAFICO RADAR DE ATRIBUTOS ===\n");
@@ -191,24 +225,21 @@ static void mostrar_grafico_radar(int jugador_id)
         return;
     }
 
-    double vals[5] =
-    {
-        sqlite3_column_double(stmt, 0),
-        sqlite3_column_double(stmt, 1),
-        sqlite3_column_double(stmt, 2),
-        sqlite3_column_double(stmt, 3),
-        sqlite3_column_double(stmt, 4)
-    };
+    double vals[5] = {sqlite3_column_double(stmt, 0), sqlite3_column_double(stmt, 1),
+                      sqlite3_column_double(stmt, 2), sqlite3_column_double(stmt, 3),
+                      sqlite3_column_double(stmt, 4)
+                     };
     const char *etiquetas[5] = {"Ataque", "Defensa", "Resist.", "Veloc.", "Tecnica"};
 
     int all_zero = 1;
     for (int i = 0; i < 5; i++)
+    {
         if (vals[i] > 0)
         {
             all_zero = 0;
             break;
         }
-
+    }
     if (all_zero)
     {
         printf("  Sin datos de atributos.\n");
@@ -223,8 +254,11 @@ static void mostrar_grafico_radar(int jugador_id)
 static void listar_jugadores(void)
 {
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db, "SELECT id, nombre, posicion, equipo_id FROM jugador ORDER BY id", -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db, "SELECT id, nombre, posicion, equipo_id FROM jugador ORDER BY id",
+                           -1, &stmt, NULL) != SQLITE_OK)
+    {
         return;
+    }
 
     printf("\nJugadores disponibles:\n");
     printf("----------------------------------------\n");
@@ -232,14 +266,15 @@ static void listar_jugadores(void)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        printf("  %d - %s (Pos: %d, Equipo ID: %d)\n",
-               sqlite3_column_int(stmt, 0),
-               sqlite3_column_text(stmt, 1),
-               sqlite3_column_int(stmt, 2),
+        printf("  %d - %s (Pos: %d, Equipo ID: %d)\n", sqlite3_column_int(stmt, 0),
+               sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
                sqlite3_column_int(stmt, 3));
     }
     sqlite3_finalize(stmt);
-    if (!count) printf("  No hay jugadores registrados.\n");
+    if (!count)
+    {
+        printf("  No hay jugadores registrados.\n");
+    }
     printf("\n");
 }
 

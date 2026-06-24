@@ -1,7 +1,7 @@
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,19 +25,27 @@ static int comparar_eventos(const void *a, const void *b)
     return strcmp(ea->fecha, eb->fecha);
 }
 
-static void extraer_campo_calendario(char *dst, size_t dst_size, const cJSON *obj, const char *campo)
+static void extraer_campo_calendario(char *dst, size_t dst_size, const cJSON *obj,
+                                     const char *campo)
 {
     cJSON const *jval = cJSON_GetObjectItemCaseSensitive(obj, campo);
     if (jval && cJSON_IsString(jval))
+    {
         strncpy_s(dst, dst_size, jval->valuestring, dst_size - 1);
+    }
     else
+    {
         dst[0] = '\0';
+    }
 }
 
-static int procesar_item_recordatorio(const cJSON *it, EventoCalendario *evento, long long id_fallback)
+static int procesar_item_recordatorio(const cJSON *it, EventoCalendario *evento,
+                                      long long id_fallback)
 {
     if (!it || !cJSON_IsObject(it))
+    {
         return 0;
+    }
 
     extraer_campo_calendario(evento->fecha, sizeof(evento->fecha), it, "fecha");
     strncpy_s(evento->tipo, sizeof(evento->tipo), "recordatorio", sizeof(evento->tipo) - 1);
@@ -46,22 +54,32 @@ static int procesar_item_recordatorio(const cJSON *it, EventoCalendario *evento,
 
     cJSON const *jid = cJSON_GetObjectItemCaseSensitive(it, "id");
     if (jid && cJSON_IsNumber(jid))
+    {
         evento->id_origen = (long long)jid->valuedouble;
+    }
     else
+    {
         evento->id_origen = id_fallback;
+    }
     return 1;
 }
 
-static cJSON* cargar_json_array_calendario(const char *path)
+static cJSON *cargar_json_array_calendario(const char *path)
 {
     long len = 0;
     char *buf = utils_file_read_to_buffer(path, &len);
-    if (!buf) return NULL;
+    if (!buf)
+    {
+        return NULL;
+    }
     cJSON *root = cJSON_Parse(buf);
     free(buf);
     if (!root || !cJSON_IsArray(root))
     {
-        if (root) cJSON_Delete(root);
+        if (root)
+        {
+            cJSON_Delete(root);
+        }
         return NULL;
     }
     return root;
@@ -70,17 +88,23 @@ static cJSON* cargar_json_array_calendario(const char *path)
 static int cargar_recordatorios(EventoCalendario *eventos, int offset, int max)
 {
     cJSON *root = cargar_json_array_calendario(RECORDATORIOS_PATH);
-    if (!root) return 0;
+    if (!root)
+    {
+        return 0;
+    }
 
     int count = cJSON_GetArraySize(root);
     int total = 0;
     for (int i = 0; i < count; i++)
     {
-        if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total], (long long)i + 1))
+        if (procesar_item_recordatorio(cJSON_GetArrayItem(root, i), &eventos[offset + total],
+                                       (long long)i + 1))
         {
             total++;
             if ((offset + total) >= max)
+            {
                 break;
+            }
         }
     }
 
@@ -96,30 +120,31 @@ static int cargar_partidos(EventoCalendario *eventos, int offset, int max)
                       "FROM partido ORDER BY fecha_hora";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
         return 0;
+    }
 
     int total = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW && (offset + total) < max)
     {
         int idx = offset + total;
-        const char *fecha = (const char*)sqlite3_column_text(stmt, 1);
-        strncpy_s(eventos[idx].fecha, sizeof(eventos[idx].fecha),
-                  fecha ? fecha : "", sizeof(eventos[idx].fecha) - 1);
-        strncpy_s(eventos[idx].tipo, sizeof(eventos[idx].tipo), "partido", sizeof(eventos[idx].tipo) - 1);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+        strncpy_s(eventos[idx].fecha, sizeof(eventos[idx].fecha), fecha ? fecha : "",
+                  sizeof(eventos[idx].fecha) - 1);
+        strncpy_s(eventos[idx].tipo, sizeof(eventos[idx].tipo), "partido",
+                  sizeof(eventos[idx].tipo) - 1);
 
         char titulo[128];
         snprintf(titulo, sizeof(titulo), "Partido #%d (%d goles, %d asistencias)",
-                 sqlite3_column_int(stmt, 0),
-                 sqlite3_column_int(stmt, 2),
+                 sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 2),
                  sqlite3_column_int(stmt, 3));
-        strncpy_s(eventos[idx].titulo, sizeof(eventos[idx].titulo),
-                  titulo, sizeof(eventos[idx].titulo) - 1);
+        strncpy_s(eventos[idx].titulo, sizeof(eventos[idx].titulo), titulo,
+                  sizeof(eventos[idx].titulo) - 1);
 
         char detalle[128];
-        snprintf(detalle, sizeof(detalle), "Rendimiento: %d/10",
-                 sqlite3_column_int(stmt, 4));
-        strncpy_s(eventos[idx].detalle, sizeof(eventos[idx].detalle),
-                  detalle, sizeof(eventos[idx].detalle) - 1);
+        snprintf(detalle, sizeof(detalle), "Rendimiento: %d/10", sqlite3_column_int(stmt, 4));
+        strncpy_s(eventos[idx].detalle, sizeof(eventos[idx].detalle), detalle,
+                  sizeof(eventos[idx].detalle) - 1);
 
         eventos[idx].id_origen = sqlite3_column_int(stmt, 0);
         total++;
@@ -137,7 +162,7 @@ static int cargar_eventos(EventoCalendario *eventos, int max)
     return total;
 }
 
-typedef void (*EscribirEventosFn)(FILE *f, const EventoCalendario *eventos, int total);
+typedef void (*EscribirEventosFn)(FILE *file, const EventoCalendario *eventos, int total);
 
 static int exportar_calendario_base(const char *filename, const char *error_msg,
                                     EscribirEventosFn write_fn)
@@ -156,25 +181,25 @@ static int exportar_calendario_base(const char *filename, const char *error_msg,
         return 0;
     }
 
-    FILE *f;
-    errno_t err = fopen_s(&f, get_export_path(filename), "w");
-    if (err != 0 || f == NULL)
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path(filename), "w");
+    if (err != 0 || file == NULL)
     {
         printf("%s\n", error_msg);
         free(eventos);
         return 0;
     }
 
-    write_fn(f, eventos, total);
-    fclose(f);
+    write_fn(file, eventos, total);
+    fclose(file);
     free(eventos);
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     return 1;
 }
 
-static void write_csv(FILE *f, const EventoCalendario *eventos, int total)
+static void write_csv(FILE *file, const EventoCalendario *eventos, int total)
 {
-    fprintf(f, "fecha,tipo,titulo,detalle\n");
+    fprintf(file, "fecha,tipo,titulo,detalle\n");
     for (int i = 0; i < total; i++)
     {
         char fecha_limpio[64];
@@ -185,20 +210,21 @@ static void write_csv(FILE *f, const EventoCalendario *eventos, int total)
         sanitizar_ascii_basico(eventos[i].tipo, tipo_limpio, sizeof(tipo_limpio));
         sanitizar_ascii_basico(eventos[i].titulo, titulo_limpio, sizeof(titulo_limpio));
         sanitizar_ascii_basico(eventos[i].detalle, detalle_limpio, sizeof(detalle_limpio));
-        fprintf(f, "%s,%s,%s,%s\n", fecha_limpio, tipo_limpio, titulo_limpio, detalle_limpio);
+        fprintf(file, "%s,%s,%s,%s\n", fecha_limpio, tipo_limpio, titulo_limpio, detalle_limpio);
     }
 }
 
-static void write_txt(FILE *f, const EventoCalendario *eventos, int total)
+static void write_txt(FILE *file, const EventoCalendario *eventos, int total)
 {
-    fprintf(f, "CALENDARIO DE EVENTOS\n\n");
+    fprintf(file, "CALENDARIO DE EVENTOS\n\n");
     for (int i = 0; i < total; i++)
-        fprintf(f, "[%s] %s\n  %s\n  %s\n\n",
-                eventos[i].fecha, eventos[i].tipo,
+    {
+        fprintf(file, "[%s] %s\n  %s\n  %s\n\n", eventos[i].fecha, eventos[i].tipo,
                 eventos[i].titulo, eventos[i].detalle);
+    }
 }
 
-static void write_json_content(FILE *f, const EventoCalendario *eventos, int total)
+static void write_json_content(FILE *file, const EventoCalendario *eventos, int total)
 {
     cJSON *root = cJSON_CreateArray();
     for (int i = 0; i < total; i++)
@@ -212,20 +238,21 @@ static void write_json_content(FILE *f, const EventoCalendario *eventos, int tot
         cJSON_AddItemToArray(root, item);
     }
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
     free(json_string);
     cJSON_Delete(root);
 }
 
-static void write_html(FILE *f, const EventoCalendario *eventos, int total)
+static void write_html(FILE *file, const EventoCalendario *eventos, int total)
 {
-    fprintf(f, "<html><body><h1>Calendario de Eventos</h1><table border='1'>"
+    fprintf(file, "<html><body><h1>Calendario de Eventos</h1><table border='1'>"
             "<tr><th>Fecha</th><th>Tipo</th><th>Titulo</th><th>Detalle</th></tr>");
     for (int i = 0; i < total; i++)
-        fprintf(f, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                eventos[i].fecha, eventos[i].tipo,
-                eventos[i].titulo, eventos[i].detalle);
-    fprintf(f, "</table></body></html>");
+    {
+        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", eventos[i].fecha,
+                eventos[i].tipo, eventos[i].titulo, eventos[i].detalle);
+    }
+    fprintf(file, "</table></body></html>");
 }
 
 void exportar_calendario_csv(void)
@@ -240,7 +267,8 @@ void exportar_calendario_txt(void)
 
 void exportar_calendario_json(void)
 {
-    exportar_calendario_base("calendario.json", "Error al crear el archivo JSON.", write_json_content);
+    exportar_calendario_base("calendario.json", "Error al crear el archivo JSON.",
+                             write_json_content);
 }
 
 void exportar_calendario_html(void)

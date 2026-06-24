@@ -29,21 +29,23 @@
 
 /* Macros para reducir duplicacion de codigo en exportacion */
 
-#define DEFINE_EXPORT_ALL_4(name)                                              \
-  static void exportar_##name##_all(void) {                                    \
-    exportar_##name##_csv();                                                   \
-    exportar_##name##_txt();                                                   \
-    exportar_##name##_json();                                                  \
-    exportar_##name##_html();                                                  \
-  }
+#define DEFINE_EXPORT_ALL_4(name)                                                                  \
+    static void exportar_##name##_all(void)                                                        \
+    {                                                                                              \
+        exportar_##name##_csv();                                                                   \
+        exportar_##name##_txt();                                                                   \
+        exportar_##name##_json();                                                                  \
+        exportar_##name##_html();                                                                  \
+    }
 
-#define DEFINE_EXPORT_TODO(name, label)                                        \
-  static void exportar_##name##_todo(void) {                                   \
-    printf("Exportando " label "...\n");                                       \
-    exportar_##name##_all();                                                   \
-    printf("Exportacion de " label " completada.\n");                          \
-    pause_console();                                                           \
-  }
+#define DEFINE_EXPORT_TODO(name, label)                                                            \
+    static void exportar_##name##_todo(void)                                                       \
+    {                                                                                              \
+        printf("Exportando " label "...\n");                                                       \
+        exportar_##name##_all();                                                                   \
+        printf("Exportacion de " label " completada.\n");                                          \
+        pause_console();                                                                           \
+    }
 
 /* partidos/lesiones ahora usan batch en su modulo */
 
@@ -273,155 +275,160 @@ static void exportar_informe_total_pdf(void)
     pause_console();
 }
 
-static void md_exportar_tabla(FILE *f, const char *titulo, const char *sql,
+static void md_exportar_tabla(FILE *file, const char *titulo, const char *sql,
                               const char *encabezados[], int num_cols)
 {
-    fprintf(f, "\n## %s\n\n", titulo);
-    fprintf(f, "|");
+    fprintf(file, "\n## %s\n\n", titulo);
+    fprintf(file, "|");
     for (int i = 0; i < num_cols; i++)
-        fprintf(f, " %s |", encabezados[i]);
-    fprintf(f, "\n|");
+    {
+        fprintf(file, " %s |", encabezados[i]);
+    }
+    fprintf(file, "\n|");
     for (int i = 0; i < num_cols; i++)
-        fprintf(f, "---|");
-    fprintf(f, "\n");
+    {
+        fprintf(file, "---|");
+    }
+    fprintf(file, "\n");
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
     {
-        fprintf(f, "_Sin datos._\n\n");
+        fprintf(file, "_Sin datos._\n\n");
         return;
     }
 
     int rows = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        fprintf(f, "|");
+        fprintf(file, "|");
         for (int i = 0; i < num_cols; i++)
         {
             if (sqlite3_column_type(stmt, i) == SQLITE_NULL)
-                fprintf(f, " |");
+            {
+                fprintf(file, " |");
+            }
             else if (sqlite3_column_type(stmt, i) == SQLITE_INTEGER)
-                fprintf(f, " %d |", sqlite3_column_int(stmt, i));
+            {
+                fprintf(file, " %d |", sqlite3_column_int(stmt, i));
+            }
             else if (sqlite3_column_type(stmt, i) == SQLITE_FLOAT)
-                fprintf(f, " %.2f |", sqlite3_column_double(stmt, i));
+            {
+                fprintf(file, " %.2f |", sqlite3_column_double(stmt, i));
+            }
             else
             {
                 const char *txt = (const char *)sqlite3_column_text(stmt, i);
-                fprintf(f, " %s |", txt ? txt : "");
+                fprintf(file, " %s |", txt ? txt : "");
             }
         }
-        fprintf(f, "\n");
+        fprintf(file, "\n");
         rows++;
     }
     sqlite3_finalize(stmt);
     if (rows == 0)
-        fprintf(f, "_Sin datos._\n");
-    fprintf(f, "\n");
+    {
+        fprintf(file, "_Sin datos._\n");
+    }
+    fprintf(file, "\n");
 }
 
 static void exportar_todo_md(void)
 {
     printf("Exportando todo a Markdown...\n");
 
-    FILE *f = abrir_archivo_exportacion("exportacion_completa.md",
-                                        "Error al crear el archivo Markdown");
-    if (!f)
+    FILE *file =
+        abrir_archivo_exportacion("exportacion_completa.md", "Error al crear el archivo Markdown");
+    if (!file)
+    {
         return;
+    }
 
-    fprintf(f, "# Exportacion Completa - MiFutbolC\n\n");
-    fprintf(f, "*Generado el %s*\n\n", __DATE__);
+    fprintf(file, "# Exportacion Completa - MiFutbolC\n\n");
+    fprintf(file, "*Generado el %s*\n\n", __DATE__);
 
     md_exportar_tabla(
-        f, "Partidos",
+        file, "Partidos",
         "SELECT p.id, p.fecha_hora, p.goles, p.asistencias, p.resultado, "
         "COALESCE(ca.nombre,''), COALESCE(cam.nombre,'') "
         "FROM partido p LEFT JOIN cancha ca ON p.cancha_id=ca.id "
         "LEFT JOIN camiseta cam ON p.camiseta_id=cam.id ORDER BY p.fecha_hora "
         "DESC LIMIT 100",
         (const char *[])
-    {"ID", "Fecha", "Goles", "Asist", "Result", "Cancha",
-        "Camiseta"
-    },
-    7);
+    {"ID", "Fecha", "Goles", "Asist", "Result", "Cancha", "Camiseta"
+    }, 7);
 
-    md_exportar_tabla(
-        f, "Equipos",
-        "SELECT id, nombre, tipo, num_jugadores FROM equipo ORDER BY nombre",
-        (const char *[])
+    md_exportar_tabla(file, "Equipos",
+                      "SELECT id, nombre, tipo, num_jugadores FROM equipo ORDER BY nombre",
+                      (const char *[])
     {"ID", "Nombre", "Tipo", "Jugadores"
     }, 4);
 
-    md_exportar_tabla(
-        f, "Camisetas",
-        "SELECT id, nombre, club, temporada FROM camisetas ORDER BY nombre",
-        (const char *[])
+    md_exportar_tabla(file, "Camisetas",
+                      "SELECT id, nombre, club, temporada FROM camisetas ORDER BY nombre",
+                      (const char *[])
     {"ID", "Nombre", "Club", "Temp"
     }, 4);
 
-    md_exportar_tabla(
-        f, "Canchas",
-        "SELECT id, nombre, ciudad, capacidad FROM cancha ORDER BY nombre",
-        (const char *[])
+    md_exportar_tabla(file, "Canchas",
+                      "SELECT id, nombre, ciudad, capacidad FROM cancha ORDER BY nombre",
+                      (const char *[])
     {"ID", "Nombre", "Ciudad", "Capacidad"
     }, 4);
 
-    md_exportar_tabla(
-        f, "Jugadores",
-        "SELECT id, nombre, numero, posicion FROM jugador ORDER BY nombre",
-        (const char *[])
+    md_exportar_tabla(file, "Jugadores",
+                      "SELECT id, nombre, numero, posicion FROM jugador ORDER BY nombre",
+                      (const char *[])
     {"ID", "Nombre", "#", "Pos"
     }, 4);
 
-    md_exportar_tabla(f, "Lesiones",
+    md_exportar_tabla(file, "Lesiones",
                       "SELECT id, jugador, tipo, fecha FROM lesion ORDER BY "
                       "fecha DESC LIMIT 50",
                       (const char *[])
     {"ID", "Jugador", "Tipo", "Fecha"
     }, 4);
 
-    md_exportar_tabla(f, "Torneos",
+    md_exportar_tabla(file, "Torneos",
                       "SELECT id, nombre, tipo_torneo, formato_torneo FROM "
                       "torneo ORDER BY nombre",
                       (const char *[])
     {"ID", "Nombre", "Tipo", "Formato"
     }, 4);
 
-    md_exportar_tabla(
-        f, "Temporadas",
-        "SELECT id, nombre, anio, estado FROM temporada ORDER BY anio DESC",
-        (const char *[])
+    md_exportar_tabla(file, "Temporadas",
+                      "SELECT id, nombre, anio, estado FROM temporada ORDER BY anio DESC",
+                      (const char *[])
     {"ID", "Nombre", "Anio", "Estado"
     }, 4);
 
-    md_exportar_tabla(f, "Financiamiento",
+    md_exportar_tabla(file, "Financiamiento",
                       "SELECT id, descripcion, monto, fecha FROM financiamiento "
                       "ORDER BY fecha DESC LIMIT 50",
                       (const char *[])
     {"ID", "Descripcion", "Monto", "Fecha"
     }, 4);
 
-    md_exportar_tabla(
-        f, "Carrera - Identidad",
-        "SELECT id, nombre, posiciones, club_inicios FROM carrera_identidad",
-        (const char *[])
+    md_exportar_tabla(file, "Carrera - Identidad",
+                      "SELECT id, nombre, posiciones, club_inicios FROM carrera_identidad",
+                      (const char *[])
     {"ID", "Nombre", "Posicion", "Club"
     }, 4);
 
-    md_exportar_tabla(f, "Carrera - Hitos",
+    md_exportar_tabla(file, "Carrera - Hitos",
                       "SELECT id, tipo_hito, nota FROM carrera_partido_hito "
                       "ORDER BY id LIMIT 50",
                       (const char *[])
     {"ID", "Tipo", "Nota"
     }, 3);
 
-    md_exportar_tabla(
-        f, "Bienestar - Objetivos",
-        "SELECT id, descripcion FROM bienestar_objetivo ORDER BY id",
-        (const char *[])
+    md_exportar_tabla(file, "Bienestar - Objetivos",
+                      "SELECT id, descripcion FROM bienestar_objetivo ORDER BY id",
+                      (const char *[])
     {"ID", "Descripcion"
     }, 2);
 
-    fclose(f);
+    fclose(file);
     printf("Exportado a: %s\n", get_export_path("exportacion_completa.md"));
     pause_console();
 }
@@ -431,14 +438,8 @@ static void menu_exportar_partidos(void)
     MenuItem items[] =
     {
         {1, get_text("export_todos_partidos"), &exportar_partidos_todo},
-        {
-            2, get_text("export_partido_mas_goles"),
-            &exportar_partido_mas_goles_todo
-        },
-        {
-            3, get_text("export_partido_mas_asistencias"),
-            &exportar_partido_mas_asistencias_todo
-        },
+        {2, get_text("export_partido_mas_goles"), &exportar_partido_mas_goles_todo},
+        {3, get_text("export_partido_mas_asistencias"), &exportar_partido_mas_asistencias_todo},
         {
             4, get_text("export_partido_menos_goles_reciente"),
             &exportar_partido_menos_goles_reciente_todo
@@ -456,18 +457,9 @@ static void menu_exportar_estadisticas_generales(void)
 {
     MenuItem items[] =
     {
-        {
-            1, get_text("export_estadisticas_generales_item"),
-            &exportar_estadisticas_generales_todo
-        },
-        {
-            2, get_text("export_estadisticas_por_mes"),
-            &exportar_estadisticas_por_mes_todo
-        },
-        {
-            3, get_text("export_estadisticas_por_anio"),
-            &exportar_estadisticas_por_anio_todo
-        },
+        {1, get_text("export_estadisticas_generales_item"), &exportar_estadisticas_generales_todo},
+        {2, get_text("export_estadisticas_por_mes"), &exportar_estadisticas_por_mes_todo},
+        {3, get_text("export_estadisticas_por_anio"), &exportar_estadisticas_por_anio_todo},
         {4, get_text("export_records_rankings"), &exportar_records_rankings_todo},
         {0, get_text("menu_back"), NULL}
     };
@@ -476,9 +468,7 @@ static void menu_exportar_estadisticas_generales(void)
 
 void menu_exportar(void)
 {
-    MenuItem items[] =
-    {
-        {1, "Camisetas", &exportar_camisetas_todo},
+    MenuItem items[] = {{1, "Camisetas", &exportar_camisetas_todo},
         {2, "Partidos", &menu_exportar_partidos},
         {3, "Lesiones", &exportar_lesiones_todo},
         {4, "Estadisticas", &exportar_estadisticas_todo},

@@ -1,8 +1,8 @@
 
-#include "export.h"
-#include "db.h"
-#include "utils.h"
 #include "cJSON.h"
+#include "db.h"
+#include "export.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -50,32 +50,40 @@ static CamisetaDataMejorado leer_camiseta_mejorada(sqlite3_stmt *stmt)
     return data;
 }
 
-static sqlite3_stmt* obtener_datos_camisetas_mejorado(int *count)
+static sqlite3_stmt *obtener_datos_camisetas_mejorado(int *count)
 {
     sqlite3_stmt *stmt;
 
-    if (!preparar_consulta_con_verificacion(&stmt, "camiseta", "camisetas para exportar",
-                                            "SELECT c.id, c.nombre, "
-                                            "COALESCE(SUM(p.goles), 0) as total_goles, "
-                                            "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
-                                            "COUNT(p.id) as total_partidos, "
-                                            "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
-                                            "COUNT(CASE WHEN p.resultado = 2 THEN 1 END) as empates, "
-                                            "COUNT(CASE WHEN p.resultado = 3 THEN 1 END) as derrotas, "
-                                            "COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) as total_lesiones, "
-                                            "COALESCE(AVG(p.rendimiento_general), 0) as rendimiento_promedio, "
-                                            "COALESCE(AVG(p.cansancio), 0) as cansancio_promedio, "
-                                            "COALESCE(AVG(p.estado_animo), 0) as estado_animo_promedio, "
-                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_goles_por_partido, "
-                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.asistencias), 0) * 1.0 / COUNT(p.id) ELSE 0 END as eficiencia_asistencias_por_partido, "
-                                            "CASE WHEN COALESCE(SUM(p.asistencias), 0) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COALESCE(SUM(p.asistencias), 0) ELSE 0 END as relacion_goles_asistencias, "
-                                            "CASE WHEN COUNT(p.id) > 0 THEN COUNT(CASE WHEN p.resultado = 1 THEN 1 END) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_victorias, "
-                                            "CASE WHEN COUNT(p.id) > 0 THEN COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) * 100.0 / COUNT(p.id) ELSE 0 END as porcentaje_lesiones_por_partido "
-                                            "FROM camiseta c "
-                                            "LEFT JOIN partido p ON c.id = p.camiseta_id "
-                                            "GROUP BY c.id, c.nombre "
-                                            "ORDER BY c.id",
-                                            count))
+    if (!preparar_consulta_con_verificacion(
+                &stmt, "camiseta", "camisetas para exportar",
+                "SELECT c.id, c.nombre, "
+                "COALESCE(SUM(p.goles), 0) as total_goles, "
+                "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
+                "COUNT(p.id) as total_partidos, "
+                "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
+                "COUNT(CASE WHEN p.resultado = 2 THEN 1 END) as empates, "
+                "COUNT(CASE WHEN p.resultado = 3 THEN 1 END) as derrotas, "
+                "COALESCE((SELECT COUNT(*) FROM lesion l WHERE l.camiseta_id = c.id), 0) as "
+                "total_lesiones, "
+                "COALESCE(AVG(p.rendimiento_general), 0) as rendimiento_promedio, "
+                "COALESCE(AVG(p.cansancio), 0) as cansancio_promedio, "
+                "COALESCE(AVG(p.estado_animo), 0) as estado_animo_promedio, "
+                "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / COUNT(p.id) ELSE 0 "
+                "END as eficiencia_goles_por_partido, "
+                "CASE WHEN COUNT(p.id) > 0 THEN COALESCE(SUM(p.asistencias), 0) * 1.0 / COUNT(p.id) "
+                "ELSE 0 END as eficiencia_asistencias_por_partido, "
+                "CASE WHEN COALESCE(SUM(p.asistencias), 0) > 0 THEN COALESCE(SUM(p.goles), 0) * 1.0 / "
+                "COALESCE(SUM(p.asistencias), 0) ELSE 0 END as relacion_goles_asistencias, "
+                "CASE WHEN COUNT(p.id) > 0 THEN COUNT(CASE WHEN p.resultado = 1 THEN 1 END) * 100.0 / "
+                "COUNT(p.id) ELSE 0 END as porcentaje_victorias, "
+                "CASE WHEN COUNT(p.id) > 0 THEN COALESCE((SELECT COUNT(*) FROM lesion l WHERE "
+                "l.camiseta_id = c.id), 0) * 100.0 / COUNT(p.id) ELSE 0 END as "
+                "porcentaje_lesiones_por_partido "
+                "FROM camiseta c "
+                "LEFT JOIN partido p ON c.id = p.camiseta_id "
+                "GROUP BY c.id, c.nombre "
+                "ORDER BY c.id",
+                count))
     {
         return NULL;
     }
@@ -87,68 +95,70 @@ void exportar_camisetas_csv_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
-    if (!stmt) return;
+    if (!stmt)
+    {
+        return;
+    }
 
-    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.csv", "Error al crear archivo de camisetas mejorado CSV");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("camisetas_mejorado.csv",
+                                           "Error al crear archivo de camisetas mejorado CSV");
+    if (!file)
     {
         sqlite3_finalize(stmt);
         return;
     }
 
     // Escribir encabezado CSV con metricas avanzadas
-    fprintf(f, "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio,eficiencia_goles_por_partido,eficiencia_asistencias_por_partido,relacion_goles_asistencias,porcentaje_victorias,porcentaje_lesiones_por_partido\n");
+    fprintf(file,
+            "id,nombre,total_goles,total_asistencias,total_partidos,victorias,empates,derrotas,"
+            "total_lesiones,rendimiento_promedio,cansancio_promedio,estado_animo_promedio,"
+            "eficiencia_goles_por_partido,eficiencia_asistencias_por_partido,relacion_goles_"
+            "asistencias,porcentaje_victorias,porcentaje_lesiones_por_partido\n");
 
     // Procesar cada fila de resultados con analisis avanzado
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);
-        fprintf(f, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
-                data.id,
-                data.nombre,
-                data.total_goles,
-                data.total_asistencias,
-                data.total_partidos,
-                data.victorias,
-                data.empates,
-                data.derrotas,
-                data.total_lesiones,
-                data.rendimiento_promedio,
-                data.cansancio_promedio,
-                data.estado_animo_promedio,
-                data.eficiencia_goles_por_partido,
-                data.eficiencia_asistencias_por_partido,
-                data.relacion_goles_asistencias,
-                data.porcentaje_victorias,
+        fprintf(file, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                data.id, data.nombre, data.total_goles, data.total_asistencias, data.total_partidos,
+                data.victorias, data.empates, data.derrotas, data.total_lesiones,
+                data.rendimiento_promedio, data.cansancio_promedio, data.estado_animo_promedio,
+                data.eficiencia_goles_por_partido, data.eficiencia_asistencias_por_partido,
+                data.relacion_goles_asistencias, data.porcentaje_victorias,
                 data.porcentaje_lesiones_por_partido);
     }
 
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("camisetas_mejorado.csv"));
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_camisetas_txt_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
-    if (!stmt) return;
+    if (!stmt)
+    {
+        return;
+    }
 
-    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.txt", "Error al crear archivo de camisetas mejorado TXT");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("camisetas_mejorado.txt",
+                                           "Error al crear archivo de camisetas mejorado TXT");
+    if (!file)
     {
         sqlite3_finalize(stmt);
         return;
     }
 
     // Escribir encabezado del archivo de texto con analisis avanzado
-    fprintf(f, "LISTADO DE CAMISETAS CON ESTADISTICAS AVANZADAS\n\n");
+    fprintf(file, "LISTADO DE CAMISETAS CON ESTADISTICAS AVANZADAS\n\n");
 
     // Procesar cada fila de resultados con formato legible y metricas avanzadas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);
-        fprintf(f, "ID: %d - Nombre: %s\n"
+        fprintf(file,
+                "ID: %d - Nombre: %s\n"
                 "  Goles Totales: %d\n"
                 "  Asistencias Totales: %d\n"
                 "  Partidos Totales: %d\n"
@@ -161,38 +171,31 @@ void exportar_camisetas_txt_mejorado(void)
                 "  Estado de Animo Promedio: %.2f\n"
                 "  Eficiencia: %.2f goles/partido, %.2f asistencias/partido\n"
                 "  Relacion Goles/Asistencias: %.2f\n\n",
-                data.id,
-                data.nombre,
-                data.total_goles,
-                data.total_asistencias,
-                data.total_partidos,
-                data.victorias,
-                data.porcentaje_victorias,
-                data.empates,
-                data.derrotas,
-                data.total_lesiones,
-                data.porcentaje_lesiones_por_partido,
-                data.rendimiento_promedio,
-                data.cansancio_promedio,
-                data.estado_animo_promedio,
-                data.eficiencia_goles_por_partido,
-                data.eficiencia_asistencias_por_partido,
+                data.id, data.nombre, data.total_goles, data.total_asistencias, data.total_partidos,
+                data.victorias, data.porcentaje_victorias, data.empates, data.derrotas,
+                data.total_lesiones, data.porcentaje_lesiones_por_partido,
+                data.rendimiento_promedio, data.cansancio_promedio, data.estado_animo_promedio,
+                data.eficiencia_goles_por_partido, data.eficiencia_asistencias_por_partido,
                 data.relacion_goles_asistencias);
     }
 
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("camisetas_mejorado.txt"));
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_camisetas_json_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
-    if (!stmt) return;
+    if (!stmt)
+    {
+        return;
+    }
 
-    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.json", "Error al crear archivo de camisetas mejorado JSON");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("camisetas_mejorado.json",
+                                           "Error al crear archivo de camisetas mejorado JSON");
+    if (!file)
     {
         sqlite3_finalize(stmt);
         return;
@@ -217,71 +220,74 @@ void exportar_camisetas_json_mejorado(void)
         cJSON_AddNumberToObject(item, "rendimiento_promedio", data.rendimiento_promedio);
         cJSON_AddNumberToObject(item, "cansancio_promedio", data.cansancio_promedio);
         cJSON_AddNumberToObject(item, "estado_animo_promedio", data.estado_animo_promedio);
-        cJSON_AddNumberToObject(item, "eficiencia_goles_por_partido", data.eficiencia_goles_por_partido);
-        cJSON_AddNumberToObject(item, "eficiencia_asistencias_por_partido", data.eficiencia_asistencias_por_partido);
-        cJSON_AddNumberToObject(item, "relacion_goles_asistencias", data.relacion_goles_asistencias);
+        cJSON_AddNumberToObject(item, "eficiencia_goles_por_partido",
+                                data.eficiencia_goles_por_partido);
+        cJSON_AddNumberToObject(item, "eficiencia_asistencias_por_partido",
+                                data.eficiencia_asistencias_por_partido);
+        cJSON_AddNumberToObject(item, "relacion_goles_asistencias",
+                                data.relacion_goles_asistencias);
         cJSON_AddNumberToObject(item, "porcentaje_victorias", data.porcentaje_victorias);
-        cJSON_AddNumberToObject(item, "porcentaje_lesiones_por_partido", data.porcentaje_lesiones_por_partido);
+        cJSON_AddNumberToObject(item, "porcentaje_lesiones_por_partido",
+                                data.porcentaje_lesiones_por_partido);
         cJSON_AddItemToArray(root, item);
     }
 
     // Escribir JSON al archivo y liberar recursos
     char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(f, "%s", json_string);
+    fprintf(file, "%s", json_string);
 
     free(json_string);
     cJSON_Delete(root);
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("camisetas_mejorado.json"));
-    fclose(f);
+    fclose(file);
 }
 
 void exportar_camisetas_html_mejorado(void)
 {
     int count;
     sqlite3_stmt *stmt = obtener_datos_camisetas_mejorado(&count);
-    if (!stmt) return;
+    if (!stmt)
+    {
+        return;
+    }
 
-    FILE *f = abrir_archivo_exportacion("camisetas_mejorado.html", "Error al crear archivo de camisetas mejorado HTML");
-    if (!f)
+    FILE *file = abrir_archivo_exportacion("camisetas_mejorado.html",
+                                           "Error al crear archivo de camisetas mejorado HTML");
+    if (!file)
     {
         sqlite3_finalize(stmt);
         return;
     }
 
     // Escribir encabezado HTML y estructura de tabla con metricas avanzadas
-    fprintf(f,
-            "<html><body><h1>Camisetas con Estadisticas Avanzadas</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias Totales</th><th>Partidos Totales</th><th>Victorias</th><th>%% Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>%% Lesiones</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado de Animo Promedio</th><th>Eficiencia Goles/P</th><th>Eficiencia Asist/P</th><th>Relacion G/A</th></tr>");
+    fprintf(file, "<html><body><h1>Camisetas con Estadisticas Avanzadas</h1><table border='1'>"
+            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias "
+            "Totales</th><th>Partidos Totales</th><th>Victorias</th><th>%% "
+            "Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>%% "
+            "Lesiones</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado "
+            "de Animo Promedio</th><th>Eficiencia Goles/P</th><th>Eficiencia "
+            "Asist/P</th><th>Relacion G/A</th></tr>");
 
     // Procesar cada fila de resultados y generar filas HTML con metricas avanzadas
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         CamisetaDataMejorado data = leer_camiseta_mejorada(stmt);
-        fprintf(f,
-                "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</td><td>%.2f</td><td>%.2f</td><td>%.2f</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
-                data.id,
-                data.nombre,
-                data.total_goles,
-                data.total_asistencias,
-                data.total_partidos,
-                data.victorias,
-                data.porcentaje_victorias,
-                data.empates,
-                data.derrotas,
-                data.total_lesiones,
-                data.porcentaje_lesiones_por_partido,
-                data.rendimiento_promedio,
-                data.cansancio_promedio,
-                data.estado_animo_promedio,
-                data.eficiencia_goles_por_partido,
-                data.eficiencia_asistencias_por_partido,
+        fprintf(file,
+                "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</"
+                "td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</td><td>%.2f</td><td>%.2f</"
+                "td><td>%.2f</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
+                data.id, data.nombre, data.total_goles, data.total_asistencias, data.total_partidos,
+                data.victorias, data.porcentaje_victorias, data.empates, data.derrotas,
+                data.total_lesiones, data.porcentaje_lesiones_por_partido,
+                data.rendimiento_promedio, data.cansancio_promedio, data.estado_animo_promedio,
+                data.eficiencia_goles_por_partido, data.eficiencia_asistencias_por_partido,
                 data.relacion_goles_asistencias);
     }
 
     // Cerrar estructura HTML
-    fprintf(f, "</table></body></html>");
+    fprintf(file, "</table></body></html>");
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("camisetas_mejorado.html"));
-    fclose(f);
+    fclose(file);
 }

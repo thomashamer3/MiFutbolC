@@ -68,7 +68,9 @@ static uint64_t cache_hash_sql(const char *sql)
 {
     uint64_t h = 14695981039346656037ULL;
     if (!sql)
+    {
         return h;
+    }
     while (*sql)
     {
         h ^= (unsigned char)*sql++;
@@ -93,7 +95,9 @@ int db_prepare_stmt(sqlite3_stmt **stmt, const char *sql)
 sqlite3_stmt *db_prepare_cached(const char *sql)
 {
     if (!sql)
+    {
         return NULL;
+    }
 
     if (!g_stmt_cache_initialized)
     {
@@ -141,7 +145,9 @@ sqlite3_stmt *db_prepare_cached(const char *sql)
 void db_stmt_release(sqlite3_stmt *stmt)
 {
     if (!stmt)
+    {
         return;
+    }
     for (int i = 0; i < STMT_CACHE_SIZE; i++)
     {
         if (g_stmt_cache[i].stmt == stmt && g_stmt_cache[i].sql != NULL)
@@ -903,27 +909,33 @@ int input_int(const char *msg)
         if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
 #else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
+        {
 #endif
             return v;
-
-        ui_printf("Entrada invalida. Intente nuevamente.\n");
-        attempts++;
     }
 
-    ui_printf("Se alcanzo el maximo de intentos.\n");
-    return -1;
+    ui_printf("Entrada invalida. Intente nuevamente.\n");
+    attempts++;
+}
+
+ui_printf("Se alcanzo el maximo de intentos.\n");
+return -1;
 }
 
 /* Implementacion portable de safe_strnlen */
 size_t safe_strnlen(const char *s, size_t maxlen)
 {
     if (s == NULL)
+    {
         return 0;
+    }
     size_t i;
     for (i = 0; i < maxlen; i++)
     {
         if (s[i] == '\0')
+        {
             break;
+        }
     }
     return i;
 }
@@ -966,7 +978,9 @@ static int process_character(char c, char *output, size_t *j, size_t output_size
     if (c == ',' && !*has_decimal)
     {
         if (*j >= output_size - 1)
+        {
             return -1;
+        }
         output[(*j)++] = '.';
         *has_decimal = 1;
         return 1;
@@ -976,9 +990,13 @@ static int process_character(char c, char *output, size_t *j, size_t output_size
     if (c == '.' && !*has_decimal)
     {
         if (is_thousands_separator(input, i))
+        {
             return 0; // Omitir separador de miles
+        }
         if (*j >= output_size - 1)
+        {
             return -1;
+        }
         output[(*j)++] = '.';
         *has_decimal = 1;
         return 1;
@@ -988,7 +1006,9 @@ static int process_character(char c, char *output, size_t *j, size_t output_size
     if (isdigit(c))
     {
         if (*j >= output_size - 1)
+        {
             return -1;
+        }
         output[(*j)++] = c;
         return 1;
     }
@@ -1011,7 +1031,9 @@ static void process_numeric_input(const char *input, char *output, size_t output
     if (input == NULL || output == NULL || output_size == 0)
     {
         if (output && output_size > 0)
+        {
             output[0] = '\0';
+        }
         return;
     }
 
@@ -1044,7 +1066,9 @@ double input_double(const char *msg)
         ui_printf("%s", msg);
 
         if (!ui_readline(buffer, sizeof(buffer)))
+        {
             continue;
+        }
         buffer[strcspn(buffer, "\n")] = 0;
 
         process_numeric_input(buffer, processed, sizeof(processed));
@@ -1053,11 +1077,13 @@ double input_double(const char *msg)
         if (sscanf_s(processed, "%lf", &v) == 1)
 #else
         if (sscanf(processed, "%lf", &v) == 1)
+        {
 #endif
             return v;
-        ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
-                  "12.500, 250.000): ");
     }
+    ui_printf("Entrada invalida. Ingrese un numero valido (ej: 250, 1.500, "
+              "12.500, 250.000): ");
+}
 }
 
 /**
@@ -1072,7 +1098,9 @@ void input_string(const char *msg, char *buffer, int size)
         ui_printf("%s", msg);
 
         if (!ui_readline(buffer, size))
+        {
             continue;
+        }
         buffer[strcspn(buffer, "\n")] = 0;
 
         int valid = 1;
@@ -1088,7 +1116,9 @@ void input_string(const char *msg, char *buffer, int size)
         }
 
         if (valid)
+        {
             return;
+        }
         ui_printf("Entrada invalida. Solo se permiten letras, espacios, numeros, "
                   "guiones, puntos y parentesis.\n");
     }
@@ -1101,7 +1131,9 @@ void input_string_extended(const char *msg, char *buffer, int size)
         ui_printf("%s", msg);
 
         if (!ui_readline(buffer, size))
+        {
             continue;
+        }
         buffer[strcspn(buffer, "\n")] = 0;
 
         int valid = 1;
@@ -1117,7 +1149,9 @@ void input_string_extended(const char *msg, char *buffer, int size)
         }
 
         if (valid)
+        {
             return;
+        }
         ui_printf("Entrada invalida. Caracteres no permitidos.\n");
     }
 }
@@ -1170,7 +1204,9 @@ static int es_hora_sola(const char *buffer)
 static int msg_pide_datetime(const char *msg)
 {
     if (!msg)
+    {
         return 0;
+    }
     return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) &&
            (strstr(msg, "DD") || strstr(msg, "dd") || strstr(msg, "YYYY") || strstr(msg, "AAAA") ||
             strstr(msg, "/"));
@@ -1179,7 +1215,9 @@ static int msg_pide_datetime(const char *msg)
 static int msg_pide_hora(const char *msg)
 {
     if (!msg)
+    {
         return 0;
+    }
     return (strstr(msg, "HH:MM") || strstr(msg, "hh:mm")) && !msg_pide_datetime(msg);
 }
 
@@ -1248,7 +1286,9 @@ void input_date(const char *msg, char *buffer, int size)
         ui_printf("%s", msg);
 
         if (!ui_readline(buffer, size))
+        {
             continue;
+        }
         buffer[strcspn(buffer, "\n")] = 0;
 
         if (procesar_input_date(msg, buffer, size))
@@ -1542,12 +1582,18 @@ int confirmar(const char *msg)
     char linea[16];
     ui_printf("%s (S/N): ", msg);
     if (!fgets(linea, sizeof(linea), stdin))
+    {
         return 0;
+    }
     size_t len = strlen_s(linea, sizeof(linea));
     if (len > 0 && linea[len - 1] == '\n')
+    {
         linea[len - 1] = '\0';
+    }
     if (linea[0] == '\0')
+    {
         return 0;
+    }
     return (linea[0] == 's' || linea[0] == 'S');
 }
 
@@ -2556,7 +2602,9 @@ void menu_usuario(void)
 void format_date_for_display(const char *input_date, char *output_buffer, int buffer_size)
 {
     if (!input_date || buffer_size <= 0)
+    {
         return;
+    }
 
     if (safe_strnlen(input_date, (size_t)buffer_size) >= 10 && input_date[4] == '-' &&
             input_date[7] == '-')
@@ -2649,7 +2697,9 @@ void convert_display_date_to_storage(const char *display_date, char *storage_buf
                                      int buffer_size)
 {
     if (!display_date || buffer_size <= 0)
+    {
         return;
+    }
 
     if (strchr(display_date, '/') != NULL && safe_strnlen(display_date, (size_t)buffer_size) >= 10)
     {
@@ -2759,7 +2809,9 @@ const char *resultado_to_text(int resultado)
 {
     static const char *lookup[] = {[1] = "VICTORIA", [2] = "EMPATE", [3] = "DERROTA"};
     if (resultado >= 1 && resultado <= 3)
+    {
         return lookup[resultado];
+    }
     return "DESCONOCIDO";
 }
 
@@ -2779,7 +2831,9 @@ const char *clima_to_text(int clima)
                                         [11] = "Lluvia fuerte", [12] = "Cancha inundada"
                                        };
     if (clima >= 1 && clima <= 12)
+    {
         return clima_names[clima];
+    }
     return "DESCONOCIDO";
 }
 
@@ -2795,7 +2849,9 @@ const char *dia_to_text(int dia)
                                    [4] = "Tarde",     [5] = "Atardecer", [6] = "Noche"
                                   };
     if (dia >= 1 && dia <= 6)
+    {
         return lookup[dia];
+    }
     return "DESCONOCIDO";
 }
 
@@ -2883,7 +2939,9 @@ long long obtener_siguiente_id(const char *tabla)
     char sql[512];
 
     if (!tabla)
+    {
         return 1;
+    }
 
     for (size_t i = 0; tabla[i] != '\0'; i++)
     {
@@ -2912,7 +2970,9 @@ long long obtener_siguiente_id(const char *tabla)
     {
         id = sqlite3_column_int64(stmt, 0);
         if (id <= 0)
+        {
             id = 1;
+        }
     }
     db_stmt_release(stmt);
     return id;
@@ -2924,7 +2984,9 @@ int hay_registros(const char *tabla)
     char sql[256];
 
     if (!tabla)
+    {
         return 0;
+    }
 
     snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", tabla);
     if (!db_prepare_stmt(&stmt, sql))
@@ -2934,7 +2996,9 @@ int hay_registros(const char *tabla)
 
     int count = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         count = sqlite3_column_int(stmt, 0);
+    }
     db_stmt_release(stmt);
 
     return count > 0;
@@ -2946,18 +3010,22 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
     char sql[256];
 
     if (!tabla || !nombre)
+    {
         return -1;
+    }
 
     snprintf(sql, sizeof(sql), "SELECT id FROM %s WHERE nombre = ?", tabla);
     if (!db_prepare_stmt(&stmt, sql))
     {
         return -1;
     }
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
 
     int id = -1;
     if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         id = sqlite3_column_int(stmt, 0);
+    }
     db_stmt_release(stmt);
 
     return id;
@@ -2966,7 +3034,9 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre)
 void listar_entidades(const char *tabla, const char *titulo, const char *mensaje_vacio)
 {
     if (!tabla || !titulo || !mensaje_vacio)
+    {
         return;
+    }
 
     clear_screen();
     print_header(titulo);
@@ -2989,7 +3059,9 @@ void listar_entidades(const char *tabla, const char *titulo, const char *mensaje
     }
 
     if (!hay)
+    {
         ui_printf_centered_line("%s", mensaje_vacio);
+    }
 
     db_stmt_release(stmt);
     pause_console();
@@ -3002,7 +3074,9 @@ int input_int_rango(const char *msg, int min, int max)
     {
         valor = input_int(msg);
         if (valor < min || valor > max)
+        {
             printf("Ingrese un valor entre %d y %d.\n", min, max);
+        }
     }
     while (valor < min || valor > max);
     return valor;
@@ -3011,7 +3085,9 @@ int input_int_rango(const char *msg, int min, int max)
 void mostrar_no_hay_registros(const char *entidad)
 {
     if (!entidad)
+    {
         return;
+    }
     size_t len = safe_strnlen(entidad, SIZE_MAX);
     printf("No hay %s registrad%s.\n", entidad,
            (entidad[len - 1] == 'a' || entidad[len - 1] == 'o') ? "o" : "os");
@@ -3020,14 +3096,18 @@ void mostrar_no_hay_registros(const char *entidad)
 void mostrar_no_existe(const char *entidad)
 {
     if (!entidad)
+    {
         return;
+    }
     printf("El %s no existe.\n", entidad);
 }
 
 void mostrar_error_operacion(const char *entidad, const char *operacion)
 {
     if (!entidad || !operacion)
+    {
         return;
+    }
     printf("Error al %s el %s.\n", operacion, entidad);
 }
 
@@ -3040,7 +3120,9 @@ void mostrar_pantalla(const char *titulo)
 char *trim_trailing_spaces(char *str)
 {
     if (!str)
+    {
         return str;
+    }
 
     size_t len = safe_strnlen(str, SIZE_MAX);
     while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' || str[len - 1] == '\n' ||
@@ -3169,9 +3251,13 @@ void write_partido_txt_row(FILE *f, sqlite3_stmt *stmt)
     int atajaste_val = sqlite3_column_int(stmt, 12);
     const char *atajaste_txt;
     if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_val == 0)
+    {
         atajaste_txt = "-";
+    }
     else
+    {
         atajaste_txt = (atajaste_val == 1) ? "SI" : "NO";
+    }
     fprintf(f,
             "%s | %s | G:%d A:%d | %s | Res:%s Cli:%s Dia:%s RG:%d Can:%d EA:%d "
             "| Atajaste:%s | %s\n",
@@ -3220,9 +3306,13 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
     int atajaste_h = sqlite3_column_int(stmt, 12);
     const char *atajaste_html;
     if (sqlite3_column_type(stmt, 12) == SQLITE_NULL || atajaste_h == 0)
+    {
         atajaste_html = "-";
+    }
     else
+    {
         atajaste_html = (atajaste_h == 1) ? "SI" : "NO";
+    }
     fprintf(f,
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</"
             "td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</"
@@ -3240,7 +3330,9 @@ void mostrar_record_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
     if (!stmt)
+    {
         return;
+    }
 
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
@@ -3268,7 +3360,9 @@ void mostrar_combinacion_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
     if (!stmt)
+    {
         return;
+    }
 
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
@@ -3291,7 +3385,9 @@ void mostrar_temporada_simple(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt = execute_query(sql);
     if (!stmt)
+    {
         return;
+    }
 
     printf("\n%s\n", titulo);
     printf("----------------------------------------\n");
@@ -3338,7 +3434,9 @@ void exportar_record_simple_csv(const char *titulo, const char *sql, const char 
     }
 
     if (stmt)
+    {
         db_stmt_release(stmt);
+    }
     printf("Exportado a %s\n", get_export_path(filename));
     fclose(file);
 }
@@ -3352,14 +3450,18 @@ void exportar_partido_especifico_csv(const char *order_by, const char *filename)
     }
     FILE *f = NULL;
     if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
+    {
         return;
+    }
     write_csv_header(f, "Cancha,Fecha,Goles,Asistencias,Camiseta,Resultado,Clima,Dia,"
                      "Rendimiento_General,Cansancio,Estado_Animo,Comentario_Personal");
     sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
             write_partido_csv_row(f, stmt);
+        }
         db_stmt_release(stmt);
     }
     printf("Archivo exportado a: %s\n", get_export_path(filename));
@@ -3375,13 +3477,17 @@ void exportar_partido_especifico_txt(const char *order_by, const char *filename,
     }
     FILE *f = NULL;
     if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
+    {
         return;
+    }
     fprintf(f, "%s\n\n", title);
     sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
             write_partido_txt_row(f, stmt);
+        }
         db_stmt_release(stmt);
     }
     printf("Archivo exportado a: %s\n", get_export_path(filename));
@@ -3397,13 +3503,17 @@ void exportar_partido_especifico_json(const char *order_by, const char *filename
     }
     FILE *f = NULL;
     if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
+    {
         return;
+    }
     cJSON *root = cJSON_CreateObject();
     sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
             write_partido_json_object(root, stmt);
+        }
         db_stmt_release(stmt);
     }
     char *json_string = cJSON_Print(root);
@@ -3423,7 +3533,9 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
     }
     FILE *f = NULL;
     if (fopen_s(&f, get_export_path(filename), "w") != 0 || !f)
+    {
         return;
+    }
     fprintf(f,
             "<html><body><h1>%s</h1><table border='1'>"
             "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
@@ -3435,7 +3547,9 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
     if (stmt)
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
             write_partido_html_row(f, stmt);
+        }
         db_stmt_release(stmt);
     }
     fprintf(f, "</table></body></html>");
@@ -3479,7 +3593,9 @@ void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v, int
     {
         (*racha_actual_v)++;
         if (*racha_actual_v > *max_racha_v)
+        {
             *max_racha_v = *racha_actual_v;
+        }
         *racha_actual_d = 0;
         return;
     }
@@ -3488,7 +3604,9 @@ void actualizar_rachas(int resultado, int *racha_actual_v, int *max_racha_v, int
     {
         (*racha_actual_d)++;
         if (*racha_actual_d > *max_racha_d)
+        {
             *max_racha_d = *racha_actual_d;
+        }
         *racha_actual_v = 0;
         return;
     }
@@ -3578,25 +3696,37 @@ int has_records(const char *table_name)
 void trim_whitespace(char *str)
 {
     if (!str)
+    {
         return;
+    }
 
     size_t total = strlen_s(str, SIZE_MAX);
     if (total == 0)
+    {
         return;
+    }
 
     char const *start = str;
     while (*start && isspace((unsigned char)*start))
+    {
         start++;
+    }
 
     char const *end = start + strlen_s(start, SIZE_MAX);
     while (end > start && isspace((unsigned char)*(end - 1)))
+    {
         end--;
+    }
 
     size_t len = (size_t)(end - start);
     if (start != str)
+    {
         memmove(str, start, len + 1);
+    }
     else
+    {
         str[len] = '\0';
+    }
 }
 
 void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats)
@@ -4082,7 +4212,9 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     if (!path)
     {
         if (out_size)
+        {
             *out_size = 0;
+        }
         return NULL;
     }
     FILE *f;
@@ -4090,7 +4222,9 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     if (err != 0 || f == NULL)
     {
         if (out_size)
+        {
             *out_size = 0;
+        }
         return NULL;
     }
     fseek(f, 0, SEEK_END);
@@ -4100,7 +4234,9 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     {
         fclose(f);
         if (out_size)
+        {
             *out_size = 0;
+        }
         return NULL;
     }
     char *buf = (char *)malloc((size_t)len + 1);
@@ -4108,7 +4244,9 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
     {
         fclose(f);
         if (out_size)
+        {
             *out_size = 0;
+        }
         return NULL;
     }
     size_t read = fread(buf, 1, (size_t)len, f);
@@ -4122,7 +4260,9 @@ char *utils_file_read_to_buffer(const char *path, long *out_size)
         buf[0] = '\0';
     }
     if (out_size)
+    {
         *out_size = (long)read;
+    }
     return buf;
 }
 
@@ -4387,7 +4527,7 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file
         return 0;
     }
 
-    sqlite3_bind_text(stmt, 1, rel_path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, rel_path, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, id);
     int result = sqlite3_step(stmt) == SQLITE_DONE;
     db_stmt_release(stmt);
@@ -4407,7 +4547,9 @@ void format_double_en_us(double val, char *buf, size_t size, int precision)
     setlocale(LC_NUMERIC, "C");
     snprintf(buf, size, "%.*f", precision, val);
     if (saved_buf[0])
+    {
         setlocale(LC_NUMERIC, saved_buf);
+    }
 }
 
 void format_double_es(double val, char *buf, size_t size, int precision)
