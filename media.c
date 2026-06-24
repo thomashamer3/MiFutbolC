@@ -196,6 +196,66 @@ static bool leer_media_actual(int id, MediaActual *out)
     return true;
 }
 
+typedef struct
+{
+    int tipo;
+    int partido_id;
+    char titulo[256];
+    char url[1024];
+    char desc[1024];
+} MediaInput;
+
+static MediaInput pedir_datos_media(const MediaActual *actual)
+{
+    MediaInput in;
+    memset(&in, 0, sizeof(in));
+
+    printf("Editando: %s\n\n", actual->titulo);
+
+    input_string_default("Titulo", actual->titulo, in.titulo, (int)sizeof(in.titulo));
+    printf("Tipo (1-4) [%d]: ", actual->tipo);
+    in.tipo = input_int("");
+    if (in.tipo < 1 || in.tipo > 4) in.tipo = actual->tipo;
+    input_string_default("URL", actual->url, in.url, (int)sizeof(in.url));
+    input_string_default("Descripcion", actual->desc, in.desc, (int)sizeof(in.desc));
+
+    printf("Partido ID [%d]: ", actual->partido_id);
+    in.partido_id = input_int("");
+    if (in.partido_id < 0) in.partido_id = actual->partido_id;
+
+    return in;
+}
+
+static void actualizar_media_en_db(int id, const MediaInput *in)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
+                       "descripcion=?, partido_id=? WHERE id=?"))
+    {
+        mostrar_error_operacion("Media", "actualizar");
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, in->tipo);
+    sqlite3_bind_text(stmt, 2, in->titulo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, in->url, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, in->desc, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, in->partido_id);
+    sqlite3_bind_int(stmt, 6, id);
+
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc == SQLITE_DONE)
+    {
+        mostrar_alerta_operacion("Referencia", "Editada", in->titulo);
+    }
+    else
+    {
+        mostrar_error_operacion("Media", "editar");
+    }
+}
+
 void media_editar(void)
 {
     if (!hay_registros("media"))
@@ -223,49 +283,8 @@ void media_editar(void)
         return;
     }
 
-    char titulo[256] = {0};
-    char url[1024] = {0};
-    char desc[1024] = {0};
-
-    printf("Editando: %s\n\n", actual.titulo);
-
-    input_string_default("Titulo", actual.titulo, titulo, (int)sizeof(titulo));
-    printf("Tipo (1-4) [%d]: ", actual.tipo);
-    int tipo = input_int("");
-    if (tipo < 1 || tipo > 4) tipo = actual.tipo;
-    input_string_default("URL", actual.url, url, (int)sizeof(url));
-    input_string_default("Descripcion", actual.desc, desc, (int)sizeof(desc));
-
-    printf("Partido ID [%d]: ", actual.partido_id);
-    int partido_id = input_int("");
-    if (partido_id < 0) partido_id = actual.partido_id;
-
-    sqlite3_stmt *stmt = NULL;
-    if (!preparar_stmt(&stmt, "UPDATE media SET tipo=?, titulo=?, url=?, "
-                       "descripcion=?, partido_id=? WHERE id=?"))
-    {
-        mostrar_error_operacion("Media", "actualizar");
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, tipo);
-    sqlite3_bind_text(stmt, 2, titulo, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, url, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, desc, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 5, partido_id);
-    sqlite3_bind_int(stmt, 6, id);
-
-    int rc = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    if (rc == SQLITE_DONE)
-    {
-        mostrar_alerta_operacion("Referencia", "Editada", titulo);
-    }
-    else
-    {
-        mostrar_error_operacion("Media", "editar");
-    }
+    MediaInput in = pedir_datos_media(&actual);
+    actualizar_media_en_db(id, &in);
     pause_console();
 }
 

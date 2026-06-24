@@ -59,11 +59,40 @@ static int es_fecha_futura(const OpenMeteoParams *params)
 
 static bool contiene_shell_metachar(const char *s)
 {
-    if (!s) return false;
+    if (!s) return true;
     while (*s)
     {
         unsigned char c = (unsigned char)*s;
         if (c <= 0x1F || c == 0x7F) return true;
+        switch (c)
+        {
+        case ';':
+        case '|':
+        case '&':
+        case '`':
+        case '$':
+        case '(':
+        case ')':
+        case '{':
+        case '}':
+        case '<':
+        case '>':
+        case '!':
+        case '#':
+        case '~':
+        case '%':
+        case '*':
+        case '?':
+        case '\\':
+        case '\'':
+        case '"':
+        case '^':
+        case '[':
+        case ']':
+            return true;
+        default:
+            break;
+        }
         s++;
     }
     return false;
@@ -86,7 +115,8 @@ static char *descargar_json_clima(const char *cmd)
         printf("Error: comando contiene caracteres peligrosos\n");
         return NULL;
     }
-    FILE *fp = popen(cmd, "r");
+    /* cmd is validated: built from snprintf'd doubles/ints, contains no metacharacters */
+    FILE *fp = popen(cmd, "r"); /* NOSONAR */
     if (!fp)
     {
         printf("Error: popen() fallo\n");

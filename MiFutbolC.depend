@@ -2966,7 +2966,7 @@
 
 1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\metas.h
 
-1782332517 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipamiento_historial.c
+1782333925 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\equipamiento_historial.c
 	"equipamiento_historial.h"
 	"db.h"
 	"menu.h"
@@ -2978,7 +2978,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1782332548 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.c
+1782333959 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.c
 	"media.h"
 	"db.h"
 	"menu.h"
@@ -3006,7 +3006,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1782332483 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\reclutamiento.c
+1782334903 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\reclutamiento.c
 	"reclutamiento.h"
 	"db.h"
 	"menu.h"
@@ -3018,7 +3018,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1782333091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1782334903 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"
