@@ -482,13 +482,16 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
     }
 #if defined(_WIN32) && defined(_MSC_VER)
     if (sscanf_s(line, "%d - %255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+    {
+        return 0;
+    }
 #else
     if (sscanf(line, "%d - %255s", &id, nombre) != 2)
     {
-#endif
         return 0;
-}
-return parse_camiseta_data(id, nombre, out);
+    }
+#endif
+    return parse_camiseta_data(id, nombre, out);
 }
 
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
@@ -502,14 +505,17 @@ static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
     }
 #if defined(_WIN32) && defined(_MSC_VER)
     if (sscanf_s(line, "%d,%255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+    {
+        return 0;
+    }
 #else
     if (sscanf(line, "%d,%255s", &id, nombre) != 2)
     {
-#endif
         return 0;
-}
+    }
+#endif
 
-return parse_camiseta_data(id, nombre, out);
+    return parse_camiseta_data(id, nombre, out);
 }
 
 static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
@@ -1490,36 +1496,36 @@ static int procesar_partido_txt_line(const char *line)
     if (sscanf(line, " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | %511[^|] | %511[^\n]", cancha,
                fecha, &goles, &asistencias, camiseta, meta, comentario) != 7)
     {
-#endif
         return 0;
-}
+    }
+#endif
 
-trim_whitespace(cancha);
-trim_whitespace(fecha);
-trim_whitespace(camiseta);
-trim_whitespace(meta);
-trim_whitespace(comentario);
+        trim_whitespace(cancha);
+    trim_whitespace(fecha);
+    trim_whitespace(camiseta);
+    trim_whitespace(meta);
+    trim_whitespace(comentario);
 
-if (!parsear_campo_meta_partido(meta, "Res:", " Cli:", resultado_str, sizeof(resultado_str)) ||
-        !parsear_campo_meta_partido(meta, "Cli:", " Dia:", clima_str, sizeof(clima_str)) ||
-        !parsear_campo_meta_partido(meta, "Dia:", " RG:", dia_str, sizeof(dia_str)) ||
-        !parsear_campo_meta_partido(meta, "RG:", " Can:", rg_str, sizeof(rg_str)) ||
-        !parsear_campo_meta_partido(meta, "Can:", " EA:", can_str, sizeof(can_str)) ||
-        !parsear_campo_meta_partido(meta, "EA:", NULL, ea_str, sizeof(ea_str)))
-{
-    return 0;
-}
+    if (!parsear_campo_meta_partido(meta, "Res:", " Cli:", resultado_str, sizeof(resultado_str)) ||
+            !parsear_campo_meta_partido(meta, "Cli:", " Dia:", clima_str, sizeof(clima_str)) ||
+            !parsear_campo_meta_partido(meta, "Dia:", " RG:", dia_str, sizeof(dia_str)) ||
+            !parsear_campo_meta_partido(meta, "RG:", " Can:", rg_str, sizeof(rg_str)) ||
+            !parsear_campo_meta_partido(meta, "Can:", " EA:", can_str, sizeof(can_str)) ||
+            !parsear_campo_meta_partido(meta, "EA:", NULL, ea_str, sizeof(ea_str)))
+    {
+        return 0;
+    }
 
-rendimiento_general = atoi(rg_str);
-cansancio = atoi(can_str);
-estado_animo = atoi(ea_str);
+    rendimiento_general = atoi(rg_str);
+    cansancio = atoi(can_str);
+    estado_animo = atoi(ea_str);
 
-PartidoRawInput raw = {cancha,        fecha,     goles,   asistencias,         camiseta,
-                       resultado_str, clima_str, dia_str, rendimiento_general, cansancio,
-                       estado_animo,  comentario
-                      };
+    PartidoRawInput raw = {cancha,        fecha,     goles,   asistencias,         camiseta,
+                           resultado_str, clima_str, dia_str, rendimiento_general, cansancio,
+                           estado_animo,  comentario
+                          };
 
-return procesar_partido_desde_raw(&raw);
+    return procesar_partido_desde_raw(&raw);
 }
 
 void importar_partidos_txt(void)
@@ -1546,44 +1552,45 @@ void importar_camisetas_csv(void)
 
 static int procesar_partido_csv_line(const char *line)
 {
-    char cancha[256];
-    char fecha[256];
-    char camiseta[256];
+    char csv_cancha[256];
+    char csv_fecha[256];
+    char csv_camiseta[256];
     char resultado_str[32];
     char clima_str[32];
     char dia_str[32];
-    char comentario[512];
+    char csv_comentario[512];
     int goles;
     int asistencias;
-    int rendimiento_general;
-    int cansancio;
-    int estado_animo;
+    int csv_rendimiento;
+    int csv_cansancio;
+    int csv_animo;
 
     // Formato:
     // cancha,fecha,goles,asistencias,camiseta,resultado,clima,dia,rendimiento_general,cansancio,estado_animo,comentario
 #if defined(_WIN32) && defined(_MSC_VER)
     if (sscanf_s(line,
                  "%255[^,],%255[^,],%d,%d,%255[^,],%31[^,],%31[^,],%31[^,],%d,%d,%d,%511[^\n]",
-                 cancha, (unsigned)sizeof(cancha), fecha, (unsigned)sizeof(fecha), &goles,
-                 &asistencias, camiseta, (unsigned)sizeof(camiseta), resultado_str,
+                 csv_cancha, (unsigned)sizeof(csv_cancha), csv_fecha, (unsigned)sizeof(csv_fecha), &goles,
+                 &asistencias, csv_camiseta, (unsigned)sizeof(csv_camiseta), resultado_str,
                  (unsigned)sizeof(resultado_str), clima_str, (unsigned)sizeof(clima_str), dia_str,
-                 (unsigned)sizeof(dia_str), &rendimiento_general, &cansancio, &estado_animo,
-                 comentario, (unsigned)sizeof(comentario)) != 12)
+                 (unsigned)sizeof(dia_str), &csv_rendimiento, &csv_cansancio, &csv_animo,
+                 csv_comentario, (unsigned)sizeof(csv_comentario)) != 12)
+    {
 #else
     if (sscanf(line, "%255[^,],%255[^,],%d,%d,%255[^,],%31[^,],%31[^,],%31[^,],%d,%d,%d,%511[^\n]",
-               cancha, fecha, &goles, &asistencias, camiseta, resultado_str, clima_str, dia_str,
-               &rendimiento_general, &cansancio, &estado_animo, comentario) != 12)
+               csv_cancha, csv_fecha, &goles, &asistencias, csv_camiseta, resultado_str, clima_str, dia_str,
+               &csv_rendimiento, &csv_cansancio, &csv_animo, csv_comentario) != 12)
     {
 #endif
         return 0;
-}
+    }
 
-PartidoRawInput raw = {cancha,        fecha,     goles,   asistencias,         camiseta,
-                       resultado_str, clima_str, dia_str, rendimiento_general, cansancio,
-                       estado_animo,  comentario
-                      };
+    PartidoRawInput raw = {csv_cancha,   csv_fecha,   goles,   asistencias,         csv_camiseta,
+                           resultado_str, clima_str, dia_str, csv_rendimiento, csv_cansancio,
+                           csv_animo,     csv_comentario
+                          };
 
-return procesar_partido_desde_raw(&raw);
+    return procesar_partido_desde_raw(&raw);
 }
 
 void importar_partidos_csv(void)
@@ -1679,18 +1686,18 @@ void importar_camisetas_html(void)
 
 typedef struct
 {
-    char cancha[256];
-    char fecha[256];
-    char camiseta[256];
+    char h_cancha[256];
+    char h_fecha[256];
+    char h_camiseta[256];
     char resultado_str[32];
     char clima_str[32];
     char dia_str[32];
-    char comentario[512];
+    char h_comentario[512];
     int goles;
     int asistencias;
-    int rendimiento_general;
-    int cansancio;
-    int estado_animo;
+    int h_rendimiento;
+    int h_cansancio;
+    int h_animo;
 } PartidoHtmlRowData;
 
 static int extraer_siguiente_td_html(char **ptr, char **td_value)
@@ -1724,10 +1731,10 @@ static void asignar_celda_partido_html(PartidoHtmlRowData *data, int idx, const 
     switch (idx)
     {
     case 0:
-        strcpy_s(data->cancha, sizeof(data->cancha), value);
+        strcpy_s(data->h_cancha, sizeof(data->h_cancha), value);
         break;
     case 1:
-        strcpy_s(data->fecha, sizeof(data->fecha), value);
+        strcpy_s(data->h_fecha, sizeof(data->h_fecha), value);
         break;
     case 2:
         data->goles = atoi(value);
@@ -1736,7 +1743,7 @@ static void asignar_celda_partido_html(PartidoHtmlRowData *data, int idx, const 
         data->asistencias = atoi(value);
         break;
     case 4:
-        strcpy_s(data->camiseta, sizeof(data->camiseta), value);
+        strcpy_s(data->h_camiseta, sizeof(data->h_camiseta), value);
         break;
     case 5:
         strcpy_s(data->resultado_str, sizeof(data->resultado_str), value);
@@ -1748,16 +1755,16 @@ static void asignar_celda_partido_html(PartidoHtmlRowData *data, int idx, const 
         strcpy_s(data->dia_str, sizeof(data->dia_str), value);
         break;
     case 8:
-        data->rendimiento_general = atoi(value);
+        data->h_rendimiento = atoi(value);
         break;
     case 9:
-        data->cansancio = atoi(value);
+        data->h_cansancio = atoi(value);
         break;
     case 10:
-        data->estado_animo = atoi(value);
+        data->h_animo = atoi(value);
         break;
     case 11:
-        strcpy_s(data->comentario, sizeof(data->comentario), value);
+        strcpy_s(data->h_comentario, sizeof(data->h_comentario), value);
         break;
     default:
         break;
@@ -1780,13 +1787,13 @@ static int procesar_partido_html_row(char **ptr)
         asignar_celda_partido_html(&data, i, td);
     }
 
-    PartidoRawInput raw = {data.cancha,      data.fecha,        data.goles,
-                           data.asistencias, data.camiseta,     data.resultado_str,
-                           data.clima_str,   data.dia_str,      data.rendimiento_general,
-                           data.cansancio,   data.estado_animo, data.comentario
-                          };
+    PartidoRawInput input = {data.h_cancha,    data.h_fecha,      data.goles,
+                             data.asistencias, data.h_camiseta,   data.resultado_str,
+                             data.clima_str,   data.dia_str,      data.h_rendimiento,
+                             data.h_cansancio, data.h_animo,      data.h_comentario
+                            };
 
-    return procesar_partido_desde_raw(&raw);
+    return procesar_partido_desde_raw(&input);
 }
 
 void importar_partidos_html(void)
@@ -1845,7 +1852,7 @@ void importar_lesiones_html(void)
         char jugador[256];
         char tipo[256];
         char descripcion[512];
-        char fecha[256];
+        char fecha_str[256];
 
         // Extraer celdas
         char const *td = strstr(ptr, "<td>");
@@ -1920,10 +1927,10 @@ void importar_lesiones_html(void)
             continue;
         }
         *end = '\0';
-        strcpy_s(fecha, sizeof(fecha), td);
+        strcpy_s(fecha_str, sizeof(fecha_str), td);
         ptr = end + 5;
 
-        if (!insertar_lesion(id, jugador, tipo, descripcion, fecha))
+        if (!insertar_lesion(id, jugador, tipo, descripcion, fecha_str))
         {
             printf("Lesion ID %d ya existe, omitiendo...\n", id);
             continue;
@@ -1961,7 +1968,7 @@ static bool crear_tabla_estadisticas(void)
 
 typedef struct
 {
-    char camiseta[256];
+    char nombre_camiseta[256];
     int goles;
     int asistencias;
     int partidos;
@@ -1990,7 +1997,7 @@ static bool extraer_datos_estadisticas_html(char **ptr, EstadisticasData *data)
 
         if (i == 0)
         {
-            strcpy_s(data->camiseta, 256, td);
+            strcpy_s(data->nombre_camiseta, 256, td);
         }
         else if (i == 1)
         {
@@ -2107,22 +2114,22 @@ void importar_estadisticas_html(void)
             continue;
         }
 
-        int camiseta_id = obtener_camiseta_id_estadistica(data.camiseta);
+        int camiseta_id = obtener_camiseta_id_estadistica(data.nombre_camiseta);
         if (camiseta_id == -1)
         {
-            printf("Camiseta '%s' no encontrada, omitiendo estadistica...\n", data.camiseta);
+            printf("Camiseta '%s' no encontrada, omitiendo estadistica...\n", data.nombre_camiseta);
             continue;
         }
 
         if (estadistica_existe(camiseta_id))
         {
-            printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n", data.camiseta);
+            printf("Estadistica para camiseta '%s' ya existe, omitiendo...\n", data.nombre_camiseta);
             continue;
         }
 
         insertar_estadistica(camiseta_id, data.goles, data.asistencias, data.partidos,
                              data.victorias, data.empates, data.derrotas);
-        printf("Estadistica de '%s' importada correctamente\n", data.camiseta);
+        printf("Estadistica de '%s' importada correctamente\n", data.nombre_camiseta);
         count++;
     }
 

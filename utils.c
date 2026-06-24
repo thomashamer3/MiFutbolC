@@ -21,6 +21,7 @@
 #include <commdlg.h>
 #include <conio.h>
 #include <direct.h>
+#include <shellapi.h>
 #define MKDIR(path) _mkdir(path)
 #else
 #include <spawn.h>
@@ -907,19 +908,22 @@ int input_int(const char *msg)
         char extra = '\0';
 #if defined(_WIN32) && defined(_MSC_VER)
         if (sscanf_s(buffer, "%d %c", &v, &extra, 1) == 1)
+        {
+            return v;
+        }
 #else
         if (sscanf(buffer, "%d %c", &v, &extra) == 1)
         {
-#endif
             return v;
+        }
+#endif
+
+        ui_printf("Entrada invalida. Intente nuevamente.\n");
+        attempts++;
     }
 
-    ui_printf("Entrada invalida. Intente nuevamente.\n");
-    attempts++;
-}
-
-ui_printf("Se alcanzo el maximo de intentos.\n");
-return -1;
+    ui_printf("Se alcanzo el maximo de intentos.\n");
+    return -1;
 }
 
 /* Implementacion portable de safe_strnlen */
@@ -971,8 +975,8 @@ static int is_thousands_separator(const char *buffer, int position)
  * Devuelve 1 si se agrego un caracter, 0 si se omitio, -1 si se alcanzo el
  * limite.
  */
-static int process_character(char c, char *output, size_t *j, size_t output_size, int *has_decimal,
-                             const char *input, int i)
+static int process_character(char c, char *output, size_t *j, size_t output_size,
+                             int *has_decimal, const char *input, int i)
 {
     // Procesar coma como separador decimal
     if (c == ',' && !*has_decimal)
@@ -4537,11 +4541,11 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file
 
 void format_double_en_us(double val, char *buf, size_t size, int precision)
 {
-    char *saved = setlocale(LC_NUMERIC, NULL);
+    const char *saved = setlocale(LC_NUMERIC, NULL);
     char saved_buf[64] = "";
     if (saved)
     {
-        strncpy(saved_buf, saved, sizeof(saved_buf) - 1);
+        strncpy_s(saved_buf, sizeof(saved_buf), saved, _TRUNCATE);
         saved_buf[sizeof(saved_buf) - 1] = '\0';
     }
     setlocale(LC_NUMERIC, "C");

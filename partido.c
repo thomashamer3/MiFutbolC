@@ -5663,7 +5663,8 @@ void obtener_clima_partidos_historicos(void)
         return;
     }
 
-    int total = 0, exitoso = 0;
+    int total = 0;
+    int exitoso = 0;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {

@@ -429,7 +429,7 @@ static int dynbuf_write(DynBuf *buffer, const void *src, size_t n)
         return 0;
     }
     size_t required = buffer->len + n;
-    if (required > buffer->cap)
+    if (!buffer->data || required > buffer->cap)
     {
         size_t newcap = buffer->cap ? buffer->cap : 65536;
         while (newcap < required)

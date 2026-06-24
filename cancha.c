@@ -20,7 +20,7 @@ static double parse_double_c_locale(const char *str)
     char buf[64];
     if (saved)
     {
-        strncpy(buf, saved, sizeof(buf) - 1);
+        strncpy_s(buf, sizeof(buf), saved, _TRUNCATE);
         buf[sizeof(buf) - 1] = '\0';
         setlocale(LC_NUMERIC, "C");
         val = strtod(str, NULL);

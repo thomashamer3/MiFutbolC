@@ -384,11 +384,11 @@ static void mostrar_historia_futbolistica(void)
         while (sqlite3_step(stmt3) == SQLITE_ROW)
         {
             int anio = sqlite3_column_int(stmt3, 0);
-            int partidos = sqlite3_column_int(stmt3, 1);
-            int goles = sqlite3_column_int(stmt3, 2);
-            int asistencias = sqlite3_column_int(stmt3, 3);
+            int partidos_anio = sqlite3_column_int(stmt3, 1);
+            int goles_anio = sqlite3_column_int(stmt3, 2);
+            int asistencias_anio = sqlite3_column_int(stmt3, 3);
             double rendimiento = sqlite3_column_double(stmt3, 4);
-            printf("  %-6d  %8d  %6d  %6d  %6.1f\n", anio, partidos, goles, asistencias,
+            printf("  %-6d  %8d  %6d  %6d  %6.1f\n", anio, partidos_anio, goles_anio, asistencias_anio,
                    rendimiento);
         }
         sqlite3_finalize(stmt3);

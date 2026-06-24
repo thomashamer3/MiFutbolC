@@ -1,19 +1,74 @@
 {
-  "exportedAt": "2026-06-16T19:25:04Z",
+  "exportedAt": "2026-06-24T00:22:28Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "RELIABILITY",
-  "total": 1,
+  "total": 6,
   "issues": [
     {
-      "rule": "c:S2259",
-      "severity": "MAJOR",
-      "message": "Array access (from variable 'statements') results in a null pointer dereference",
-      "file": "db.c",
-      "line": 1703,
+      "rule": "c:S3519",
+      "severity": "BLOCKER",
+      "message": "Memory copy function accesses out-of-bound array element",
+      "file": "export_ods.c",
+      "line": 451,
       "status": "OPEN",
       "quality": "RELIABILITY",
-      "effort": "10min",
+      "effort": "5min",
       "tags": "cert, cwe, symbolic-execution"
+    },
+    {
+      "rule": "c:S836",
+      "severity": "MAJOR",
+      "message": "1st function call argument is an uninitialized value",
+      "file": "import.c",
+      "line": 451,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "15min",
+      "tags": "based-on-misra, cwe, symbolic-execution"
+    },
+    {
+      "rule": "c:S935",
+      "severity": "CRITICAL",
+      "message": "non-void function does not return a value in all control paths",
+      "file": "import.c",
+      "line": 490,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "based-on-misra, cert, cwe"
+    },
+    {
+      "rule": "c:S935",
+      "severity": "CRITICAL",
+      "message": "non-void function does not return a value in all control paths",
+      "file": "import.c",
+      "line": 1579,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "based-on-misra, cert, cwe"
+    },
+    {
+      "rule": "c:S935",
+      "severity": "CRITICAL",
+      "message": "non-void function does not return a value in all control paths",
+      "file": "utils.c",
+      "line": 919,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "based-on-misra, cert, cwe"
+    },
+    {
+      "rule": "c:S1763",
+      "severity": "MAJOR",
+      "message": "code will never be executed",
+      "file": "analisis.c",
+      "line": 851,
+      "status": "OPEN",
+      "quality": "RELIABILITY",
+      "effort": "5min",
+      "tags": "based-on-misra, cert, cwe, unused"
     }
   ]
 }

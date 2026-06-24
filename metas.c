@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -304,6 +304,7 @@ void metas_editar(void)
     double objetivo = input_double("");
     if (objetivo <= 0)
     {
+        /* mantener valor actual */
     }
     objetivo = objetivo_actual;
 

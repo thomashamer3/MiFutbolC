@@ -571,6 +571,7 @@ static void crear_estadistica_quimica_jugador(void)
         respuesta = getchar();
         while (getchar() != '\n')
         {
+            /* flush input buffer */
         }
 
     }
@@ -844,9 +845,6 @@ static void calcular_metricas_preparadas(MetricasComparacion *metricas, const ch
     }
 
     memset(metricas, 0, sizeof(*metricas));
-    {
-        return;
-    }
 
     if (!preparar_stmt(&stmt, sql))
     {

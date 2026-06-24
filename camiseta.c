@@ -1102,13 +1102,9 @@ static void crear_camiseta_simple(void)
                  nombre);
         app_log_event("CAMISETA", log_msg);
 
-        int desea_cargar_imagen = confirmar("Desea cargar imagen para esta camiseta ahora?");
-        if (desea_cargar_imagen)
+        if (confirmar("Desea cargar imagen para esta camiseta ahora?") && !cargar_imagen_para_camiseta_id((int)id))
         {
-            if (!cargar_imagen_para_camiseta_id((int)id))
-            {
-                printf("No se pudo cargar la imagen en este momento.\n");
-            }
+            printf("No se pudo cargar la imagen en este momento.\n");
         }
 
         mostrar_alerta_operacion("Camiseta", "Creada (Simple)", nombre);
