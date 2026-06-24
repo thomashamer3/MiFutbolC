@@ -112,7 +112,26 @@ static char *descargar_json_clima(const char *cmd)
     return data;
 }
 
-static int parsear_resultado_json(cJSON *root, OpenMeteoResult *out_result)
+static double acumular_array(cJSON const *arr, int i, int *count)
+{
+    if (!arr || !cJSON_IsArray(arr)) return 0.0;
+    cJSON const *item = cJSON_GetArrayItem(arr, i);
+    if (item && cJSON_IsNumber(item))
+    {
+        if (count) (*count)++;
+        return item->valuedouble;
+    }
+    return 0.0;
+}
+
+static int obtener_codigo_weather(cJSON const *code_arr, int i)
+{
+    if (!code_arr || !cJSON_IsArray(code_arr)) return -1;
+    cJSON const *c = cJSON_GetArrayItem(code_arr, i);
+    return (c && cJSON_IsNumber(c)) ? (int)c->valuedouble : -1;
+}
+
+static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result)
 {
     cJSON const *hourly = cJSON_GetObjectItem(root, "hourly");
     if (!hourly)
@@ -140,51 +159,22 @@ static int parsear_resultado_json(cJSON *root, OpenMeteoResult *out_result)
     cJSON const *wind_arr = cJSON_GetObjectItem(hourly, "wind_speed_10m");
     cJSON const *code_arr = cJSON_GetObjectItem(hourly, "weather_code");
 
-    double temp_sum = 0.0, apparent_sum = 0.0, precip_sum = 0.0, wind_sum = 0.0;
-    int valid_count = 0, apparent_count = 0;
+    double temp_sum = 0.0;
+    double apparent_sum = 0.0;
+    double precip_sum = 0.0;
+    double wind_sum = 0.0;
+    int valid_count = 0;
+    int apparent_count = 0;
     int *wcodes = (int *)malloc((size_t)count * sizeof(int));
     if (!wcodes) return 0;
 
     for (int i = 0; i < count; i++)
     {
-        cJSON const *t = cJSON_GetArrayItem(temp_arr, i);
-        if (t && cJSON_IsNumber(t))
-        {
-            temp_sum += t->valuedouble;
-            valid_count++;
-        }
-
-        if (apparent_arr && cJSON_IsArray(apparent_arr))
-        {
-            cJSON const *a = cJSON_GetArrayItem(apparent_arr, i);
-            if (a && cJSON_IsNumber(a))
-            {
-                apparent_sum += a->valuedouble;
-                apparent_count++;
-            }
-        }
-
-        if (precip_arr && cJSON_IsArray(precip_arr))
-        {
-            cJSON const *p = cJSON_GetArrayItem(precip_arr, i);
-            if (p && cJSON_IsNumber(p)) precip_sum += p->valuedouble;
-        }
-
-        if (wind_arr && cJSON_IsArray(wind_arr))
-        {
-            cJSON const *w = cJSON_GetArrayItem(wind_arr, i);
-            if (w && cJSON_IsNumber(w)) wind_sum += w->valuedouble;
-        }
-
-        if (code_arr && cJSON_IsArray(code_arr))
-        {
-            cJSON const *c = cJSON_GetArrayItem(code_arr, i);
-            wcodes[i] = (c && cJSON_IsNumber(c)) ? (int)c->valuedouble : -1;
-        }
-        else
-        {
-            wcodes[i] = -1;
-        }
+        temp_sum += acumular_array(temp_arr, i, &valid_count);
+        apparent_sum += acumular_array(apparent_arr, i, &apparent_count);
+        precip_sum += acumular_array(precip_arr, i, NULL);
+        wind_sum += acumular_array(wind_arr, i, NULL);
+        wcodes[i] = obtener_codigo_weather(code_arr, i);
     }
 
     out_result->temp_c = (valid_count > 0) ? (temp_sum / valid_count) : 0.0;
@@ -212,7 +202,8 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     char date_str[11];
     snprintf(date_str, sizeof(date_str), "%04d-%02d-%02d", params->anio, params->mes, params->dia);
 
-    char lat_str[32], lon_str[32];
+    char lat_str[32];
+    char lon_str[32];
     snprintf(lat_str, sizeof(lat_str), "%.6f", params->latitud);
     snprintf(lon_str, sizeof(lon_str), "%.6f", params->longitud);
 

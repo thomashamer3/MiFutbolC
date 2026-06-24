@@ -222,6 +222,8 @@ void reclutamiento_editar(void)
         case 5:
             strncpy_s(notas_actual, sizeof(notas_actual), val, _TRUNCATE);
             break;
+        default:
+            break;
         }
     }
     sqlite3_finalize(stmt);

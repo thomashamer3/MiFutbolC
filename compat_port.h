@@ -279,7 +279,7 @@ static inline size_t strnlen_s(const char *s, size_t maxlen)
 #include <stdarg.h>
 
 #ifndef snprintf_s
-static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...)
+static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...) /* NOSONAR */
 {
     if (!buffer || !format || bufsz == 0)
     {
@@ -303,7 +303,7 @@ static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...
 #include <stdio.h>
 #include <stdarg.h>
 
-static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...)
+static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...) /* NOSONAR */
 {
     if (!buffer || !format || bufsz == 0)
     {
@@ -321,7 +321,7 @@ static inline int snprintf_s(char *buffer, size_t bufsz, const char *format, ...
     return ret;
 }
 
-static inline int fprintf_s(FILE *stream, const char *format, ...)
+static inline int fprintf_s(FILE *stream, const char *format, ...) /* NOSONAR */
 {
     if (!stream || !format)
     {
