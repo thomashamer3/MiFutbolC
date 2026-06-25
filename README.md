@@ -41,7 +41,7 @@
 - 💰 **Control financiero** (ingresos, gastos, balances)
 - 🎖️ **Sistema gamificado** (logros y badges)
 - 🤖 **Entrenador IA** (recomendaciones inteligentes)
-- 📤 **Exportación multiformato** (CSV, JSON, HTML, TXT)
+- 📤 **Exportación multiformato** (CSV, JSON, HTML, TXT, PDF, ODS)
 - 📄 **Informe PDF mejorado** (portada, secciones y más datos)
 - 📥 **Importación de datos** (restauración desde JSON/TXT/CSV/HTML)
 
@@ -49,12 +49,14 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ## 🆕 Últimos Cambios (v4.3)
 
+- **Nuevos módulos independientes**: Botines, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central con calendario integrado.
 - **Carrera Futbolística ampliada**: nueva ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y **Modo Retro: Hoy en tu Historia**.
 - **Canchas con exportación avanzada**: exportación de información de canchas en **TXT, CSV, JSON, HTML y PDF** desde el propio módulo.
 - **Partidos más completos**: nuevos modos de carga (**Amistoso, Torneo y Entrenamiento**) y más contexto del partido (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).
 - **Estadísticas de rendimiento extendidas**: métricas nuevas por **intensidad, dolor físico, arbitraje y temperatura**.
+- **Exportación a ODS**: nuevo formato de hoja de cálculo OpenDocument compatible con LibreOffice y Excel.
 - **Catálogo climático ampliado**: nuevos climas (frío, calor, llovizna, lluvia moderada/fuerte, cancha inundada) en carga, análisis y exportación.
-- **Esquema de BD evolucionado**: nuevas columnas en `partido` y nuevas tablas para carrera (`carrera_identidad`, `carrera_partido_hito`, `carrera_resumen_narrativo`).
+- **Esquema de BD evolucionado**: nuevas columnas en `partido` y nuevas tablas para carrera, botines, tiendas, reclutamiento, referencias multimedia, metas, notificaciones y más.
 - **Mejoras de robustez previas mantenidas**: rutas de BD con `snprintf`, logs más consistentes, flujo de imágenes reforzado y script `install.ps1` para instalación por consola en Windows.
 
 ## ✨ Características Principales
@@ -64,7 +66,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
 - **Ciclo Activa/Inactiva en Camisetas**: retirar y reactivar camisetas para preservar historial
 - **Imágenes de Camisetas**: carga, apertura y ajustes de visor (incluye prueba de visor y previsualización en consola)
-- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada)
+- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada). Al crear o editar una cancha puedes ingresar sus **coordenadas geográficas** (latitud, longitud) para que el sistema consulte el clima automáticamente vía Open-Meteo al registrar un partido.
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
 
 ### 👥 Administración de Equipos y Jugadores
@@ -74,13 +76,21 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Posiciones Definidas**: Arqueros, Defensores, Mediocampistas, Delanteros
 - **Formaciones Tácticas**: Configuración de formaciones y designación de capitanes
 - **Gestión de Plantillas**: Hasta 11 jugadores por equipo con datos completos
+- **Reclutamiento**: Pipeline completo de captación de jugadores (Visto → Reclutado/Descartado)
+
+### 👟 Gestión de Botines
+
+- **CRUD Completo**: Crear, listar, modificar y eliminar botines de fútbol
+- **Botín Predeterminado**: Fijar el calzado que se usará por defecto en partidos
+- **Sorteo Aleatorio**: Selección al azar del botín para cada encuentro
+- **Imágenes**: Carga y visualización de imágenes de cada botín
 
 ### ⚽ Registro y Gestión de Partidos
 
 - **Modos de carga**: Amistoso, Torneo y Entrenamiento
 - **Partidos Detallados**: Registro completo con fecha/hora, cancha, camisetas, resultados y franja horaria
 - **Métricas Avanzadas**: Goles, asistencias, rendimiento, estado físico y mental, dolor físico, temperatura y arbitraje
-- **Contexto ampliado**: estado de cancha, marcador global, formato de fútbol, tarjeta, goles en contra, eventos clave y tags
+- **Contexto ampliado**: estado de cancha, marcador global, formato de fútbol, tarjeta, goles en contra, eventos clave y tags. El clima y la temperatura se obtienen automáticamente desde las coordenadas de la cancha vía API Open-Meteo.
 - **Simulación de Partidos**: Simulador con cancha ASCII animada y eventos aleatorios
 - **Historial Completo**: Consulta de partidos pasados con filtros avanzados (incluye búsqueda por tag)
 
@@ -209,6 +219,31 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Fade In/Out**: transiciones suaves entre pistas (400 ms entrada, 250 ms salida)
 - **Multiplataforma**: Windows y Linux/macOS vía miniaudio (header-only, sin dependencias externas)
 
+### 📊 Dashboard y Calendario
+
+- **Dashboard Central**: Vista consolidada con resumen de partidos, estadísticas rápidas, logros recientes y alertas
+- **Metas Personales**: Define objetivos deportivos con progreso automático contra datos reales
+- **Calendario Integrado**: Vista mensual de eventos, partidos agendados y recordatorios
+- **Navegación Temporal**: Cambio entre meses y retorno al día actual
+
+### 🏪 Gestión de Tiendas
+
+- **CRUD Completo**: Crear, listar, modificar y eliminar tiendas deportivas
+- **Información Detallada**: Nombre, tipo, contacto, productos y rango de precio
+- **Clasificación**: Tiendas físicas, online y otros comercios relacionados al fútbol
+
+### 🔍 Reclutamiento de Jugadores
+
+- **Pipeline de 6 Etapas**: Visto → Prospecto → En Seguimiento → Contactado → Reclutado / Descartado
+- **Gestión de Prospectos**: CRUD completo con seguimiento por etapa
+- **Estadísticas**: Métricas de conversión y distribución del pipeline
+
+### 🎬 Referencias Multimedia
+
+- **Tipos de Referencia**: Video, Foto, Artículo y Audio
+- **Almacenamiento de URLs**: Enlaces a YouTube, Google Drive y otras plataformas
+- **Filtrado por Tipo**: Consulta de referencias por categoría multimedia
+
 ### 🤖 Entrenador IA
 
 - **Recomendaciones Inteligentes**: Sugerencias basadas en análisis de datos históricos
@@ -219,14 +254,16 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### 📤 Exportación e Importación de Datos
 
 #### Exportación Multiformato
-- **Formatos Disponibles**: CSV, JSON, HTML, TXT
+- **Formatos Disponibles**: CSV, JSON, HTML, TXT, PDF, ODS
 - **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Exportar
-- **Exportación por Módulo**: Camisetas, partidos, lesiones, estadísticas, análisis y base de datos
-- **Exportación Completa**: Backup total del sistema
+- **Exportación por Módulo**: Camisetas, partidos, lesiones, estadísticas, análisis, canchas, dashboard, bienestar, calendario, carrera, colecciones, equipos, records, recordatorios, temporada, torneo y base de datos
+- **Exportación Completa**: Backup total del sistema en todos los formatos
 - **Exportación Mejorada**: Con análisis integrado y métricas adicionales
 - **Exportación Selectiva**: Partidos con características específicas
- - **TXT adicionales**: finanzas por mes/año, ranking de canchas, partidos por clima,
-   lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
+- **Exportación a ODS**: Hojas de cálculo OpenDocument con múltiples hojas por módulo
+- **Informe PDF Total**: Reporte integral con portada, secciones y análisis completos
+- **TXT adicionales**: finanzas por mes/año, ranking de canchas, partidos por clima,
+  lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
 
 #### Importación de Datos
 - **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
@@ -261,7 +298,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### Bibliotecas y Dependencias
 
 #### SQLite3 (Incluida)
-- **Versión**: 3.x
+- **Versión**: 3.53.2
 - **Archivos**: `sqlite3.c`, `sqlite3.h`
 - **Propósito**: Base de datos embebida para almacenamiento persistente
 - **Características**: Transacciones ACID, consultas SQL completas, sin servidor
@@ -461,21 +498,26 @@ Al ejecutar `MiFutbolC`, el sistema:
 2. Calendario
 3. Camisetas
 4. Canchas
-5. Equipos
-6. Partidos
-7. Lesiones
-8. Estadísticas
-9. Logros
-10. Financiamiento
-11. Torneos
-12. Temporada
-13. Análisis
-14. Bienestar
-15. Carrera Futbolistica
-16. Recordatorios
-17. Colecciones
-18. Ajustes
-19. Música
+5. Botines
+6. Equipos
+7. Partidos
+8. Lesiones
+9. Estadisticas
+10. Logros
+11. Financiamiento
+12. Torneos
+13. Temporada
+14. Analisis
+15. Bienestar
+16. Carrera Futbolistica
+17. Recordatorios
+18. Colecciones
+19. Musica
+20. Records & Rankings
+21. Tiendas
+22. Reclutamiento
+23. Referencias Multimedia
+24. Ajustes
 0. Salir
 >
 ```
@@ -485,7 +527,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 #### 1️⃣ Configuración Inicial
 
 ```
-Menú Principal → Ajustes (18)
+Menú Principal → Ajustes (24)
   ├── Cambiar tema de interfaz
   ├── Cambiar idioma
   └── Usuario (nombre visible, contraseña y cuentas locales)
@@ -496,13 +538,21 @@ Menú Principal → Ajustes (18)
 ```
 Menú Principal → Camisetas (3) → Crear camiseta
 Menú Principal → Canchas (4) → Crear cancha
-Menú Principal → Equipos (5) → Crear equipo
+  └── Opcional: ingresar coordenadas geográficas (lat, lon) para clima automático
+
+> **📍 Cómo obtener coordenadas de tu cancha:**
+> 1. Abre [Google Maps](https://maps.google.com) y busca tu cancha
+> 2. Haz clic derecho sobre la ubicación exacta → las coordenadas aparecen arriba
+> 3. Cópialas (ej: `-34.5453, -58.4498`) y pégalas en la consola cuando el sistema las solicite
+> 4. Formato: `latitud, longitud` separados por coma
+
+Menú Principal → Equipos (6) → Crear equipo
 ```
 
 #### 3️⃣ Registrar un Partido
 
 ```
-Menú Principal → Partidos (6) → Crear partido
+Menú Principal → Partidos (7) → Crear partido
   ├── Seleccionar cancha
   ├── Seleccionar camiseta
   ├── Ingresar goles y asistencias
@@ -514,7 +564,7 @@ Menú Principal → Partidos (6) → Crear partido
 #### 4️⃣ Organizar un Torneo
 
 ```
-Menú Principal → Torneos (11)
+Menú Principal → Torneos (12)
   ├── Crear torneo
   ├── Listar torneos
   ├── Modificar torneo
@@ -524,13 +574,13 @@ Menú Principal → Torneos (11)
 #### 5️⃣ Analizar Rendimiento
 
 ```
-Menú Principal → Estadísticas (8)
+Menú Principal → Estadisticas (9)
   ├── Ver estadísticas generales
   ├── Estadísticas por año
   ├── Estadísticas por mes
   └── Meta-análisis
 
-Menú Principal → Análisis (13)
+Menú Principal → Analisis (14)
   ├── Análisis Básico
   ├── Comparador Avanzado
   ├── Análisis Táctico (Diagramas)
@@ -544,7 +594,7 @@ Análisis → Química Entre Jugadores
   ├── Editar Estadística de Jugador
   └── Eliminar Estadística de Jugador
 
-Menú Principal → Bienestar (14)
+Menú Principal → Bienestar (15)
   ├── Planificación Personal
   ├── Mentalidad y Hábitos
   ├── Entrenamiento
@@ -555,7 +605,7 @@ Menú Principal → Bienestar (14)
 #### 6️⃣ Gestionar Finanzas
 
 ```
-Menú Principal → Financiamiento (10)
+Menú Principal → Financiamiento (11)
   ├── Registrar ingreso
   ├── Registrar gasto
   ├── Ver balance
@@ -565,7 +615,7 @@ Menú Principal → Financiamiento (10)
 #### 7️⃣ Gestionar Recordatorios
 
 ```
-Menú Principal → Recordatorios (16)
+Menú Principal → Recordatorios (17)
   ├── Listar recordatorios
   ├── Agregar/editar/eliminar recordatorio
   ├── Filtrar por temática
@@ -575,7 +625,7 @@ Menú Principal → Recordatorios (16)
 #### 8️⃣ Gestionar Inventario y Colecciones
 
 ```
-Menú Principal → Colecciones (17)
+Menú Principal → Colecciones (18)
   ├── Crear y listar inventario
   ├── Sincronizar camisetas al inventario
   ├── Crear y listar colecciones
@@ -586,7 +636,7 @@ Menú Principal → Colecciones (17)
 #### 9️⃣ Exportar Datos
 
 ```
-Menú Principal → Ajustes (18) → Exportar
+Menú Principal → Ajustes (24) → Exportar
   ├── Seleccionar módulo (camisetas, partidos, etc.)
   ├── Elegir formato (CSV, JSON, HTML, TXT)
   └── Archivos guardados en el directorio de exportaciones (ver sección [Base de Datos](#-base-de-datos))
@@ -608,7 +658,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 #### Ejemplo 2: Crear un Torneo de Fútbol 5
 
 1. Crea al menos 4 equipos (Menú → Equipos → Crear)
-2. Ve a Torneos (opción 11)
+2. Ve a Torneos (opción 12)
 3. Selecciona "Crear torneo"
 4. Ingresa nombre: `"Copa Primavera 2026"`
 5. Selecciona formato: `Round Robin`
@@ -617,7 +667,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 
 #### Ejemplo 3: Analizar tu Rendimiento
 
-1. Ve a Análisis (opción 13)
+1. Ve a Analisis (opción 14)
 2. El sistema muestra:
    - Comparación últimos 5 partidos vs promedio general
    - Mejor racha de victorias
@@ -799,13 +849,17 @@ MiFutbolC/
 ├── 🎨 CAPA DE PRESENTACIÓN
 │   ├── menu.c / menu.h                          # Sistema de menús interactivos
 │   ├── ascii_art.h                              # Arte ASCII para interfaz
+│   ├── ascii_charts.c / ascii_charts.h          # Gráficos ASCII
 │   └── utils.c / utils.h                        # Utilidades auxiliares
 │
 ├── ⚙️ CAPA DE LÓGICA DE NEGOCIO
 │   ├── 🎽 Gestión de Recursos
 │   │   ├── camiseta.c / camiseta.h              # Gestión de camisetas
 │   │   ├── cancha.c / cancha.h                  # Gestión de canchas
-│   │   └── equipo.c / equipo.h                  # Gestión de equipos
+│   │   ├── botin.c / botin.h                    # Gestión de botines
+│   │   ├── equipo.c / equipo.h                  # Gestión de equipos
+│   │   ├── formaciones.c / formaciones.h        # Análisis táctico de formaciones
+│   │   └── posiciones.c / posiciones.h          # Gestión de posiciones
 │   │
 │   ├── ⚽ Gestión de Partidos y Torneos
 │   │   ├── partido.c / partido.h                # Gestión de partidos
@@ -828,11 +882,30 @@ MiFutbolC/
 │   │   ├── bienestar.c / bienestar.h            # Módulo de bienestar integral
 │   │   ├── carrera.c / carrera.h                # Carrera futbolística
 │   │   ├── recordatorios.c / recordatorios.h    # Agenda y recordatorios
-│   │   └── colecciones.c / colecciones.h        # Inventario y colecciones
+│   │   ├── colecciones.c / colecciones.h        # Inventario y colecciones
+│   │   ├── metas.c / metas.h                    # Metas personales
+│   │   └── progresion.c / progresion.h          # Progresión y entrenamiento
 │   │
 │   ├── 🖥️ Interfaz de Soporte
 │   │   ├── dashboard.c / dashboard.h            # Dashboard del sistema
 │   │   └── calendario.c / calendario.h          # Calendario y eventos
+│   │
+│   ├── 🏪 Gestión Comercial
+│   │   ├── tienda.c / tienda.h                  # Gestión de tiendas
+│   │   ├── reclutamiento.c / reclutamiento.h    # Reclutamiento de jugadores
+│   │   └── media.c / media.h                    # Referencias multimedia
+│   │
+│   ├── 🔧 Infraestructura y Servicios
+│   │   ├── backup.c / backup.h                  # Backup y restauración
+│   │   ├── db_integridad.c / db_integridad.h    # Integridad de BD
+│   │   ├── undo.c / undo.h                      # Sistema de deshacer
+│   │   ├── filtros.c / filtros.h                # Filtros avanzados
+│   │   ├── notificaciones.c / notificaciones.h  # Notificaciones del sistema
+│   │   ├── busqueda.c / busqueda.h              # Búsqueda global
+│   │   └── reportes.c / reportes.h              # Reportes automáticos
+│   │
+│   ├── 👤 Perfil de Jugador
+│   │   └── jugador_perfil.c / jugador_perfil.h  # Perfil detallado del jugador
 │   │
 │   ├── 🎵 Audio
 │   │   ├── musica.c / musica.h                  # Reproductor de música
@@ -840,6 +913,9 @@ MiFutbolC/
 │   │
 │   ├── ⚙️ Configuración
 │   │   └── settings.c / settings.h              # Sistema de configuración
+│   │
+│   ├── ⌨️ Atajos de Teclado
+│   │   └── atajos.c / atajos.h                  # Atajos de teclado
 │   │
 │
 ├── 📊 CAPA DE ESTADÍSTICAS Y ANÁLISIS
@@ -868,7 +944,18 @@ MiFutbolC/
 │       ├── export_partidos_helpers.h            # Helpers para exportación
 │       ├── export_estadisticas.c / .h           # Exportación de estadísticas
 │       ├── export_estadisticas_generales.c / .h # Exportación estadísticas generales
-│       └── export_records_rankings.c / .h       # Exportación récords/rankings
+│       ├── export_records_rankings.c / .h       # Exportación récords/rankings
+│       ├── export_bienestar.c / .h              # Exportación de bienestar
+│       ├── export_calendario.c / .h             # Exportación de calendario
+│       ├── export_carrera.c / .h                # Exportación de carrera
+│       ├── export_colecciones.c / .h            # Exportación de colecciones
+│       ├── export_dashboard.c / .h              # Exportación de dashboard
+│       ├── export_equipo.c / .h                 # Exportación de equipos
+│       ├── export_ods.c / .h                    # Exportación a ODS
+│       ├── export_pdf.c / .h                    # Exportación a PDF
+│       ├── export_recordatorios.c / .h          # Exportación de recordatorios
+│       ├── export_temporada.c / .h              # Exportación de temporada
+│       └── export_torneo.c / .h                 # Exportación de torneo
 │
 ├── 📚 BIBLIOTECAS INCLUIDAS
 │   ├── sqlite3.c / sqlite3.h                    # SQLite embebido
@@ -889,8 +976,34 @@ MiFutbolC/
 │
 ├── 🎨 RECURSOS
 │   ├── MiFutbolC.ico                            # Icono del programa
-│   └── images/                                  # Imágenes y capturas
-│       └── *.png
+│   └── images/                                  # Imágenes y capturas (28 PNG)
+│       ├── menu.png                             # Menú principal
+│       ├── dashboard.png                        # Dashboard
+│       ├── calendario.png                       # Calendario
+│       ├── bienvenido.png                       # Pantalla de bienvenida
+│       ├── menucamisetas.png                    # Gestión de camisetas
+│       ├── menucanchas.png                      # Gestión de canchas
+│       ├── menubotines.png                      # Gestión de botines
+│       ├── menuequipos.png                      # Gestión de equipos
+│       ├── menupartidos.png                     # Gestión de partidos
+│       ├── menulesiones.png                     # Gestión de lesiones
+│       ├── menuestadisticas.png                 # Estadísticas
+│       ├── menulogros.png                       # Logros
+│       ├── menufinanciamiento.png               # Financiamiento
+│       ├── menutorneos.png                      # Torneos
+│       ├── menutemporadas.png                   # Temporadas
+│       ├── menuanalisis.png                     # Análisis
+│       ├── menubienestar.png                    # Bienestar
+│       ├── menucarrerafutbolistica.png          # Carrera futbolística
+│       ├── menurecordatorios.png               # Recordatorios
+│       ├── menucolecciones.png                 # Colecciones
+│       ├── menumusica.png                       # Música
+│       ├── menurecordsyrankings.png             # Records & Rankings
+│       ├── menutiendas.png                      # Tiendas
+│       ├── menureclutamiento.png                # Reclutamiento
+│       ├── menumultimedia.png                   # Referencias Multimedia
+│       ├── menuajustes.png                      # Ajustes
+│       └── menumetas.png                        # Metas personales
 │
 ├── 📖 DOCUMENTACIÓN
 │   ├── README.md                                # Este archivo
@@ -931,26 +1044,38 @@ Conteo referencial (puede variar según cambios y scripts de build).
 
 | Categoría | Archivos `.c` | Archivos `.h` | Total |
 |-----------|---------------|---------------|-------|
-| Lógica de Negocio | 12 | 12 | 24 |
-| Estadísticas | 7 | 7 | 14 |
-| Exportación | 11 | 11 | 22 |
+| Lógica de Negocio (Core) | 5 | 5 | 10 |
+| Gestión Deportiva | 12 | 12 | 24 |
+| Dashboard y Calendario | 2 | 2 | 4 |
+| Gestión Comercial | 3 | 3 | 6 |
+| Análisis y Estadísticas | 10 | 10 | 20 |
+| Exportación | 22 | 22 | 44 |
 | Importación | 1 | 1 | 2 |
-| Interfaz | 2 | 3 | 5 |
-| Base de Datos | 2 | 2 | 4 |
-| Bibliotecas | 2 | 2 | 4 |
-| **TOTAL** | **37** | **38** | **75** |
+| Infraestructura y Servicios | 6 | 6 | 12 |
+| Perfil y Progresión | 3 | 3 | 6 |
+| Bienestar y Productividad | 5 | 5 | 10 |
+| Audio | 2 | 2 | 4 |
+| Inteligencia Artificial | 1 | 1 | 2 |
+| Extras | 3 | 3 | 6 |
+| Bibliotecas | 4 | 4 | 8 |
+| **TOTAL** | **79** | **79** | **158** |
 
 ### Módulos Principales
 
 | Módulo | Archivos | Descripción |
 |--------|----------|-------------|
-| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c`, `dashboard.c`, `calendario.c` | Núcleo del sistema e interfaz base |
-| **Gestión** | `camiseta.c`, `cancha.c`, `equipo.c`, `partido.c`, `torneo.c`, `temporada.c`, `lesion.c` | Gestión deportiva principal |
-| **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c` | Análisis y estadísticas |
-| **I/O** | `export*.c`, `import.c` | Importación/Exportación |
-| **Bienestar y Productividad** | `bienestar.c`, `carrera.c`, `recordatorios.c`, `colecciones.c` | Bienestar, agenda y colecciones |
-| **Audio** | `musica.c`, `musica_helpers.c`, `miniaudio.h` | Reproductor y procesamiento de audio |
-| **Extras** | `logros.c`, `financiamiento.c`, `entrenador_ia.c`, `settings.c` | Funcionalidades transversales |
+| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c`, `settings.c` | Núcleo del sistema e interfaz base |
+| **Dashboard** | `dashboard.c/.h`, `calendario.c/.h` | Visualización y planificación |
+| **Gestión Deportiva** | `camiseta.c/.h`, `cancha.c/.h`, `botin.c/.h`, `equipo.c/.h`, `partido.c/.h`, `torneo.c/.h`, `temporada.c/.h`, `lesion.c/.h` | Gestión deportiva principal |
+| **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c`, `formaciones.c`, `posiciones.c` | Análisis, estadísticas y formaciones |
+| **I/O** | `export*.c` (22 módulos), `import.c` | Importación/Exportación multiformato |
+| **Gestión Comercial** | `tienda.c/.h`, `reclutamiento.c/.h`, `media.c/.h` | Tiendas, reclutamiento y multimedia |
+| **Bienestar y Productividad** | `bienestar.c/.h`, `carrera.c/.h`, `recordatorios.c/.h`, `colecciones.c/.h`, `metas.c/.h` | Bienestar, agenda y colecciones |
+| **Audio** | `musica.c/.h`, `musica_helpers.c/.h` | Reproductor y procesamiento de audio |
+| **IA** | `entrenador_ia.c/.h` | Entrenador con recomendaciones inteligentes |
+| **Infraestructura** | `backup.c`, `db_integridad.c`, `undo.c`, `filtros.c`, `notificaciones.c`, `busqueda.c` | Servicios del sistema |
+| **Perfil** | `jugador_perfil.c/.h`, `progresion.c/.h`, `reportes.c/.h` | Perfil, progresión y reportes |
+| **Extras** | `logros.c`, `financiamiento.c`, `atajos.c`, `ascii_charts.c` | Funcionalidades transversales |
 
 ## 🗄️ Base de Datos
 
@@ -980,11 +1105,16 @@ Conteo referencial (puede variar según cambios y scripts de build).
 
 El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos. Tablas principales (resumen):
 
-- **Base**: `camiseta`, `cancha`, `partido`, `lesion`, `usuario`, `quimica_jugador_estadistica`
+- **Base**: `camiseta`, `cancha`, `botin`, `partido`, `lesion`, `usuario`, `quimica_jugador_estadistica`
 - **Equipos/Torneos**: `equipo`, `jugador`, `torneo`, `equipo_torneo`, `partido_torneo`, `equipo_torneo_estadisticas`, `jugador_estadisticas`, `equipo_historial`, `torneo_fases`, `equipo_fase`
 - **Temporadas**: `temporada`, `temporada_fase`, `torneo_temporada`, `equipo_temporada_fatiga`, `jugador_temporada_fatiga`, `equipo_temporada_evolucion`, `temporada_resumen`, `mensual_resumen`
 - **Configuración/Finanzas**: `settings`, `financiamiento`, `presupuesto_mensual`, `comparacion_historial`
-- **Carrera avanzada**: `carrera_identidad`, `carrera_partido_hito`, `carrera_resumen_narrativo`
+- **Carrera avanzada**: `carrera_identidad`, `carrera_partido_hito`, `carrera_resumen_narrativo`, `carrera_hitos`, `carrera_timeline`
+- **Comercial**: `tienda`, `reclutamiento_prospecto`, `media_referencias`
+- **Metas**: `metas`
+- **Infraestructura**: `backup_registry`, `undo_log`, `notificaciones`, `filtros_guardados`, `reportes_config`
+- **Perfil**: `jugador_perfil`, `progresion_*`
+- **Servicios**: `dashboard_config`, `calendario_eventos`, `atajos_teclado`, `formaciones`, `posiciones`
 
 Campos clave (selección, no exhaustivo):
 
@@ -1101,6 +1231,16 @@ El módulo de gestión de equipos (`equipo.c / equipo.h`) permite crear, gestion
 - **Gestión de Plantillas**: Cada equipo puede tener hasta 11 jugadores con información completa (nombre, número, posición, capitán).
 - **Operaciones CRUD**: Crear, listar, modificar y eliminar equipos con validación de datos.
 
+## Módulo de Gestión de Botines
+
+El módulo de gestión de botines (`botin.c / botin.h`) permite administrar el calzado deportivo registrado en el sistema:
+
+- **Operaciones CRUD**: Crear, listar, modificar y eliminar botines con validación.
+- **Botín Predeterminado**: Permite fijar un botín que se usará automáticamente al cargar nuevos partidos.
+- **Sorteo Aleatorio**: Selecciona al azar un botín de la lista de disponibles.
+- **Gestión de Imágenes**: Carga y visualización de imágenes asociadas a cada botín.
+- **Exportación Integrada**: Los botines se incluyen en las exportaciones completas del sistema.
+
 ## Módulo de Gestión de Torneos
 
 El módulo de gestión de torneos (`torneo.c / torneo.h`) ofrece en el menú actual operaciones base de administración:
@@ -1138,6 +1278,41 @@ El módulo de récords y rankings (`records_rankings.c / records_rankings.h`) of
 - **Análisis Comparativo**: Funciones para identificar patrones y tendencias históricas.
 
 Este módulo utiliza consultas SQL avanzadas para extraer insights valiosos sobre el rendimiento histórico y ayudar en la toma de decisiones estratégicas.
+
+## Módulo de Gestión de Tiendas
+
+El módulo de gestión de tiendas (`tienda.c / tienda.h`) permite almacenar y administrar información de comercios deportivos:
+
+- **Operaciones CRUD**: Crear, listar, modificar y eliminar tiendas con datos completos (nombre, tipo, contacto, productos, rango de precio).
+- **Tipos de Tienda**: Soporte para tiendas físicas, online y otros tipos de comercio deportivo.
+- **Vinculación Deportiva**: Relacionada con botines, camisetas, indumentaria y todo equipamiento de fútbol.
+
+## Módulo de Reclutamiento
+
+El módulo de reclutamiento (`reclutamiento.c / reclutamiento.h`) gestiona el pipeline completo de captación de jugadores:
+
+- **Pipeline de 6 Etapas**: Visto → Prospecto → En Seguimiento → Contactado → Reclutado / Descartado.
+- **Operaciones CRUD**: Crear, listar, editar y eliminar prospectos en cualquier etapa.
+- **Avance y Retroceso**: Permite mover prospectos hacia adelante o atrás en el pipeline.
+- **Estadísticas del Pipeline**: Métricas de conversión y distribución por etapa.
+
+## Módulo de Referencias Multimedia
+
+El módulo de referencias multimedia (`media.c / media.h`) permite almacenar enlaces a contenido externo relacionado con la carrera futbolística:
+
+- **Tipos de Referencia**: Video, Foto, Artículo y Audio.
+- **Almacenamiento de URLs**: Guarda enlaces a YouTube, Google Drive y otras plataformas.
+- **Filtro por Tipo**: Permite consultar referencias filtradas por categoría.
+- **Operaciones CRUD**: Crear, listar, editar y eliminar referencias multimedia.
+
+## Módulo de Metas Personales
+
+El módulo de metas personales (`metas.c / metas.h`) permite definir objetivos deportivos con seguimiento automático de progreso:
+
+- **Creación de Metas**: Define objetivos cuantificables (ej: "10 goles en la temporada").
+- **Progreso Automático**: El sistema calcula el avance contra los datos reales de partidos.
+- **Dashboard de Metas**: Visualización consolidada del progreso de todas las metas.
+- **Recálculo Bajo Demanda**: Recalcula el progreso de todas las metas contra la BD.
 
 ## Módulo de Estadísticas por Año
 
@@ -1194,8 +1369,8 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: Gestionado en `menu.c` (invocado desde `main.c`), presenta las opciones principales del sistema (Dashboard, Calendario, Camisetas, Canchas, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Ajustes, Música, Salir).
-- **Accesos internos**: El **Entrenador IA** se abre desde Análisis y **Exportar/Importar** desde Ajustes.
+- **Menú Principal**: 24 opciones organizadas (1-24 más 0 para Salir): Dashboard, Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Música, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia y Ajustes.
+- **Accesos internos**: El **Entrenador IA** se abre desde Análisis, las **Metas Personales** desde Dashboard, y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
 - **Navegación**: La función `ejecutar_menu()` maneja la lógica de mostrar opciones, leer selección del usuario y ejecutar la acción correspondiente.
@@ -1393,7 +1568,7 @@ Referencial y sujeto a cambios:
 
 - **Tamaño del código**: proyecto C modular (ver árbol del proyecto).
 - **Tablas de BD**: esquema definido en `db.c`.
-- **Formatos de exportación**: CSV, JSON, HTML, TXT.
+- **Formatos de exportación**: CSV, JSON, HTML, TXT, PDF, ODS.
 - **Estado**: proyecto educativo en evolución.
 
 ---

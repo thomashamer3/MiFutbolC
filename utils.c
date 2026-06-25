@@ -1494,7 +1494,12 @@ static const char *obtener_ascii_por_titulo(const char *titulo)
         {ASCII_CARRERA, "CARRERA", NULL},
         {ASCII_DASHBOARD, "DASHBOARD", NULL},
         {ASCII_CALENDARIO, "CALENDARIO", NULL},
-        {ASCII_MUSICA, "MUSICA", NULL}
+        {ASCII_MUSICA, "MUSICA", NULL},
+        {ASCII_BOTINES, "BOTIN", "BOTINES"},
+        {ASCII_METAS, "METAS", "METAS PERSONALES"},
+        {ASCII_RECORDS_RANKINGS, "RECORDS", "RECORDS & RANKINGS"},
+        {ASCII_RECLUTAMIENTO, "RECLUTAMIENTO", NULL},
+        {ASCII_MEDIA, "MEDIA", "REFERENCIAS MULTIMEDIA"}
     };
 
     for (size_t i = 0; i < sizeof(rules) / sizeof(rules[0]); i++)

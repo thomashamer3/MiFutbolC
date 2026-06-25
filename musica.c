@@ -1,18 +1,19 @@
 
 /* ---- miniaudio: un solo TU define la implementacion ---- */
 #define MINIAUDIO_IMPLEMENTATION
+#define MA_ASSERT(x) ((void)(x))
 #include "miniaudio.h"
 
+#include "ascii_art.h"
+#include "db.h"
 #include "musica.h"
 #include "musica_helpers.h"
-#include "db.h"
-#include "utils.h"
 #include "settings.h"
-#include "ascii_art.h"
+#include "utils.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <time.h>
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -30,39 +31,44 @@ void settings_set_music_eq_profile(int enabled, float bass_db, float mid_db, flo
 
 /* Wrapper portable de fopen: usa fopen_s en MSVC, fopen en GCC/MinGW */
 #ifdef _MSC_VER
-#  define FOPEN_PORTABLE(fp, path, mode)                    \
-    do {                                                    \
-        if (fopen_s(&(fp), (path), (mode)) != 0) (fp) = NULL; \
+#define FOPEN_PORTABLE(fp, path, mode)                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        if (fopen_s(&(fp), (path), (mode)) != 0)                                                   \
+            (fp) = NULL;                                                                           \
     } while (0)
 #else
-#  define FOPEN_PORTABLE(fp, path, mode) \
-    do { (fp) = fopen((path), (mode)); } while (0)
+#define FOPEN_PORTABLE(fp, path, mode)                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        (fp) = fopen((path), (mode));                                                              \
+    } while (0)
 #endif
 
 /* ---- Constantes ---- */
 #define MUSICA_DIR_FALLBACK "Musica"
-#define MAX_PISTAS    256
-#define MAX_NOMBRE    512
-#define MAX_RUTA      512
-#define PASO_VOLUMEN  0.1f
-#define BARRA_ANCHO   20    /* caracteres de la barra de volumen */
-#define PROG_ANCHO    30    /* ancho de la barra de progreso */
+#define MAX_PISTAS 256
+#define MAX_NOMBRE 512
+#define MAX_RUTA 512
+#define PASO_VOLUMEN 0.1f
+#define BARRA_ANCHO 20 /* caracteres de la barra de volumen */
+#define PROG_ANCHO 30  /* ancho de la barra de progreso */
 
 /* ---- Fade ---- */
-#define FADE_IN_MS    400U  /* ms de fade-in al cargar pista */
-#define FADE_OUT_MS   250U  /* ms de fade-out al cambiar pista */
+#define FADE_IN_MS 400U  /* ms de fade-in al cargar pista */
+#define FADE_OUT_MS 250U /* ms de fade-out al cambiar pista */
 
 /* ---- Ecualizador ---- */
-#define EQ_BASS_FREQ    200.0   /* Hz - graves */
-#define EQ_MID_FREQ    1000.0   /* Hz - medios */
-#define EQ_TREBLE_FREQ 8000.0   /* Hz - agudos */
-#define EQ_Q             0.7    /* Q / pendiente de filtro */
-#define EQ_DB_STEP       3.0f   /* dB por pulsacion */
-#define EQ_DB_MIN       (-12.0f)
-#define EQ_DB_MAX        12.0f
+#define EQ_BASS_FREQ 200.0    /* Hz - graves */
+#define EQ_MID_FREQ 1000.0    /* Hz - medios */
+#define EQ_TREBLE_FREQ 8000.0 /* Hz - agudos */
+#define EQ_Q 0.7              /* Q / pendiente de filtro */
+#define EQ_DB_STEP 3.0f       /* dB por pulsacion */
+#define EQ_DB_MIN (-12.0f)
+#define EQ_DB_MAX 12.0f
 
 /* ---- Playlists ---- */
-#define MAX_PLAYLIST_NAME  128
+#define MAX_PLAYLIST_NAME 128
 
 #ifdef MA_HAS_VORBIS
 #define AUDIO_FORMATOS_TEXTO ".mp3, .wav, .flac, .ogg"
@@ -104,8 +110,8 @@ static ma_engine g_engine;
 static ma_sound g_sonido;
 static int g_engine_listo = 0;
 static int g_sonido_listo = 0;
-static Pista *g_pistas    = NULL;
-static int    g_cap_pistas = 0;
+static Pista *g_pistas = NULL;
+static int g_cap_pistas = 0;
 static int g_num_pistas = 0;
 static int g_pista_actual = -1;
 static EstadoReproductor g_estado = ESTADO_DETENIDO;
@@ -114,14 +120,15 @@ static ModoRepeticion g_modo_rep = REPETIR_NINGUNO;
 static unsigned int g_rand_seed = 12345;
 
 /* ---- Ecualizador 3 bandas (nodos del grafo de audio de miniaudio) ---- */
-static ma_loshelf_node  g_eq_bass;
-static ma_peak_node     g_eq_mid;
-static ma_hishelf_node  g_eq_treble;
-static int              g_eq_listo     = 0;   /* 1 = nodos inicializados */
-static int              g_eq_activo    = 0;   /* 1 = cadena EQ conectada */
-static float            g_eq_bass_db   = 0.0f;
-static float            g_eq_mid_db    = 0.0f;
-static float            g_eq_treble_db = 0.0f;
+static ma_loshelf_node g_eq_bass;
+static ma_peak_node g_eq_mid;
+static ma_hishelf_node g_eq_treble;
+static int g_eq_listo = 0;  /* 1 = nodos inicializados */
+static int g_eq_init_results[3]; /* 0=bass, 1=mid, 2=treble - codigos retorno */
+static int g_eq_activo = 0; /* 1 = cadena EQ conectada */
+static float g_eq_bass_db = 0.0f;
+static float g_eq_mid_db = 0.0f;
+static float g_eq_treble_db = 0.0f;
 
 /* Permite buscar por nombre dentro del listado actual */
 static char g_filtro_busqueda[MAX_NOMBRE] = {0};
@@ -132,12 +139,12 @@ static char g_playlist_activa[MAX_PLAYLIST_NAME] = {0};
 /* Historial de pistas en modo shuffle (ring buffer LIFO, max 20 entradas) */
 #define HISTORIAL_SHUFFLE_MAX 20
 static int g_historial_shuffle[HISTORIAL_SHUFFLE_MAX];
-static int g_historial_head  = 0;
+static int g_historial_head = 0;
 static int g_historial_count = 0;
 
 /* Sleep timer: timestamp en ms en que se detiene la musica (0 = inactivo) */
 static ma_uint64 g_sleep_timer_deadline_ms = 0;
-static int       g_sleep_timer_minutos     = 0;
+static int g_sleep_timer_minutos = 0;
 
 /* Paso de volumen configurable (fraccion 0-1, se carga desde settings) */
 static float g_paso_volumen = 0.1f;
@@ -159,7 +166,7 @@ static int pistas_grow(void)
     {
         return 0;
     }
-    g_pistas    = p;
+    g_pistas = p;
     g_cap_pistas = new_cap;
     return 1;
 }
@@ -224,8 +231,7 @@ static void programar_fade(FadeAccion accion, int indice_objetivo, int reproduci
         return;
     }
 
-    ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0F,
-                                      (ma_uint64)FADE_OUT_MS);
+    ma_sound_set_fade_in_milliseconds(&g_sonido, -1, 0.0F, (ma_uint64)FADE_OUT_MS);
     g_fade_accion = accion;
     g_fade_indice_objetivo = indice_objetivo;
     g_fade_reproducir_objetivo = reproducir_objetivo ? 1 : 0;
@@ -267,7 +273,7 @@ static int historial_shuffle_pop(void)
 
 static void historial_shuffle_limpiar(void)
 {
-    g_historial_head  = 0;
+    g_historial_head = 0;
     g_historial_count = 0;
 }
 
@@ -292,8 +298,7 @@ static void ordenar_pistas_catalogo(void)
 {
     if (g_num_pistas > 1)
     {
-        qsort(g_pistas, (size_t)g_num_pistas, sizeof(g_pistas[0]),
-              comparar_pistas_por_nombre);
+        qsort(g_pistas, (size_t)g_num_pistas, sizeof(g_pistas[0]), comparar_pistas_por_nombre);
     }
 }
 
@@ -330,10 +335,8 @@ static void escanear_directorio(void)
             break;
         }
 
-        snprintf(g_pistas[g_num_pistas].nombre,
-                 MAX_NOMBRE, "%s", fd.cFileName);
-        snprintf(g_pistas[g_num_pistas].ruta,
-                 MAX_RUTA, "%s\\%s", MUSICA_DIR, fd.cFileName);
+        snprintf(g_pistas[g_num_pistas].nombre, MAX_NOMBRE, "%s", fd.cFileName);
+        snprintf(g_pistas[g_num_pistas].ruta, MAX_RUTA, "%s\\%s", MUSICA_DIR, fd.cFileName);
         g_num_pistas++;
     }
     while (FindNextFileA(hFind, &fd));
@@ -351,10 +354,8 @@ static void escanear_directorio(void)
             continue;
         if (g_num_pistas >= g_cap_pistas && !pistas_grow())
             break;
-        snprintf(g_pistas[g_num_pistas].nombre,
-                 MAX_NOMBRE, "%s", entry->d_name);
-        snprintf(g_pistas[g_num_pistas].ruta,
-                 MAX_RUTA, "%s/%s", MUSICA_DIR, entry->d_name);
+        snprintf(g_pistas[g_num_pistas].nombre, MAX_NOMBRE, "%s", entry->d_name);
+        snprintf(g_pistas[g_num_pistas].ruta, MAX_RUTA, "%s/%s", MUSICA_DIR, entry->d_name);
         g_num_pistas++;
     }
     closedir(dir);
@@ -381,11 +382,14 @@ static ma_uint32 canales_engine_validos(void)
     ma_uint32 ch = ma_engine_get_channels(&g_engine);
     if (ch == 0 || ch >= 256)
     {
-        fprintf(stderr, "Aviso: canales de audio no validos (%u), usando fallback stereo.\n", (unsigned)ch);
+        fprintf(stderr, "Aviso: canales de audio no validos (%u), usando fallback stereo.\n",
+                (unsigned)ch);
         ch = 2;
     }
     return ch;
 }
+
+static void eq_reintentar_inicializar(void);
 
 static int inicializar_engine(void)
 {
@@ -396,7 +400,8 @@ static int inicializar_engine(void)
 
     ma_engine_config cfg = ma_engine_config_init();
     cfg.channels = 2;
-    fprintf(stderr, "DEBUG: inicializar_engine: cfg.channels=%u\n", (unsigned)cfg.channels);
+    cfg.noAutoStart = MA_TRUE;
+
     ma_result res = ma_engine_init(&cfg, &g_engine);
     if (res != MA_SUCCESS)
     {
@@ -405,15 +410,13 @@ static int inicializar_engine(void)
     }
     {
         ma_uint32 ch = ma_engine_get_channels(&g_engine);
-        fprintf(stderr, "DEBUG: inicializar_engine: engine channels=%u\n", (unsigned)ch);
         if (ch == 0 || ch >= 256)
         {
-            fprintf(stderr, "FATAL: engine has %u channels, cannot continue\n", (unsigned)ch);
             musica_cleanup();
             return 0;
         }
     }
-    g_engine_listo = 1;
+
     atexit(musica_cleanup);
     inicializar_shuffle_seed();
 
@@ -423,41 +426,25 @@ static int inicializar_engine(void)
     g_eq_bass_db = clampf_local(settings_get_music_eq_bass_db(), EQ_DB_MIN, EQ_DB_MAX);
     g_eq_mid_db = clampf_local(settings_get_music_eq_mid_db(), EQ_DB_MIN, EQ_DB_MAX);
     g_eq_treble_db = clampf_local(settings_get_music_eq_treble_db(), EQ_DB_MIN, EQ_DB_MAX);
-    g_paso_volumen  = clampf_local(settings_get_music_volume_step(), 0.01f, 0.20f);
+    g_paso_volumen = clampf_local(settings_get_music_volume_step(), 0.01f, 0.20f);
 
-    /* Inicializar nodos del ecualizador en el grafo del engine */
+    res = ma_engine_start(&g_engine);
+    if (res != MA_SUCCESS)
     {
-        ma_uint32 ch = canales_engine_validos();
-        ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
-
-        if (sr == 0)
-        {
-            fprintf(stderr, "Aviso: sample rate no valido, usando fallback 44100 Hz.\n");
-            sr = 44100;
-        }
-
-        ma_loshelf_node_config bassCfg =
-            ma_loshelf_node_config_init(ch, sr, (double)g_eq_bass_db,   EQ_Q, EQ_BASS_FREQ);
-        ma_peak_node_config    midCfg  =
-            ma_peak_node_config_init   (ch, sr, (double)g_eq_mid_db,    EQ_Q, EQ_MID_FREQ);
-        ma_hishelf_node_config trebCfg =
-            ma_hishelf_node_config_init(ch, sr, (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
-
-        if (ma_loshelf_node_init(ma_engine_get_node_graph(&g_engine),
-                                 &bassCfg, NULL, &g_eq_bass) == MA_SUCCESS &&
-                ma_peak_node_init   (ma_engine_get_node_graph(&g_engine),
-                                     &midCfg,  NULL, &g_eq_mid)  == MA_SUCCESS &&
-                ma_hishelf_node_init(ma_engine_get_node_graph(&g_engine),
-                                     &trebCfg, NULL, &g_eq_treble) == MA_SUCCESS)
-        {
-            /* Cadena fija: bass -> mid -> treble -> endpoint */
-            ma_node_attach_output_bus(&g_eq_bass,   0, &g_eq_mid,    0);
-            ma_node_attach_output_bus(&g_eq_mid,    0, &g_eq_treble, 0);
-            ma_node_attach_output_bus(&g_eq_treble, 0,
-                                      ma_engine_get_endpoint(&g_engine), 0);
-            g_eq_listo = 1;
-        }
+        musica_cleanup();
+        return 0;
     }
+
+    g_engine_listo = 1;
+
+    eq_reintentar_inicializar();
+    if (g_eq_listo)
+    {
+        ui_printf("  EQ inicializado: bass=%d mid=%d treb=%d canales=%u\n",
+                  g_eq_init_results[0], g_eq_init_results[1], g_eq_init_results[2],
+                  (unsigned)canales_engine_validos());
+    }
+
     return 1;
 }
 
@@ -483,17 +470,13 @@ static int cargar_pista(int indice)
 
     descargar_sonido();
 
-    ma_result res = ma_sound_init_from_file(
-                        &g_engine,
-                        g_pistas[indice].ruta,
-                        MA_SOUND_FLAG_STREAM, /* Streaming: carga por bloques */
-                        NULL, NULL,
-                        &g_sonido);
+    ma_result res = ma_sound_init_from_file(&g_engine, g_pistas[indice].ruta,
+                                            MA_SOUND_FLAG_STREAM, /* Streaming: carga por bloques */
+                                            NULL, NULL, &g_sonido);
 
     if (res != MA_SUCCESS)
     {
-        ui_printf("Error: No se pudo cargar '%s' (codigo %d).\n",
-                  g_pistas[indice].nombre, res);
+        ui_printf("Error: No se pudo cargar '%s' (codigo %d).\n", g_pistas[indice].nombre, res);
         return 0;
     }
 
@@ -506,8 +489,7 @@ static int cargar_pista(int indice)
     }
 
     /* Fade-in: el volumen comenzara en 0 y subira cuando se llame start() */
-    ma_sound_set_fade_in_milliseconds(&g_sonido, 0.0f, g_volumen,
-                                      (ma_uint64)FADE_IN_MS);
+    ma_sound_set_fade_in_milliseconds(&g_sonido, 0.0f, g_volumen, (ma_uint64)FADE_IN_MS);
 
     g_pista_actual = indice;
     g_sonido_listo = 1;
@@ -884,8 +866,7 @@ static void dibujar_barra_progreso(int unicode)
     float pos_s = (sr > 0) ? (float)cur / (float)sr : 0.0f;
     float tot_s = (sr > 0 && len > 0) ? (float)len / (float)sr : 0.0f;
 
-    int rellenos = (tot_s > 0.0f)
-                   ? (int)(pos_s / tot_s * PROG_ANCHO + 0.5f) : 0;
+    int rellenos = (tot_s > 0.0f) ? (int)(pos_s / tot_s * PROG_ANCHO + 0.5f) : 0;
     if (rellenos > PROG_ANCHO)
     {
         rellenos = PROG_ANCHO;
@@ -908,10 +889,8 @@ static void dibujar_barra_progreso(int unicode)
         {
             rem_s = 0.0f;
         }
-        ui_printf("] %02d:%02d / %02d:%02d (-%02d:%02d)\n",
-                  (int)pos_s / 60, (int)pos_s % 60,
-                  (int)tot_s / 60, (int)tot_s % 60,
-                  (int)rem_s / 60, (int)rem_s % 60);
+        ui_printf("] %02d:%02d / %02d:%02d (-%02d:%02d)\n", (int)pos_s / 60, (int)pos_s % 60,
+                  (int)tot_s / 60, (int)tot_s % 60, (int)rem_s / 60, (int)rem_s % 60);
     }
     else
     {
@@ -920,9 +899,7 @@ static void dibujar_barra_progreso(int unicode)
 }
 
 /** Renderiza el nombre y progreso de la pista activa (o mensaje de sin pista) */
-static void dibujar_pista_actual(int unicode,
-                                 const char *flechaP,
-                                 const char *pausa,
+static void dibujar_pista_actual(int unicode, const char *flechaP, const char *pausa,
                                  const char *stop)
 {
     if (g_pista_actual < 0 || g_num_pistas == 0)
@@ -944,8 +921,7 @@ static void dibujar_pista_actual(int unicode,
     {
         icono = stop;
     }
-    ui_printf("  %s Reproduciendo [%d/%d]:\n", icono,
-              g_pista_actual + 1, g_num_pistas);
+    ui_printf("  %s Reproduciendo [%d/%d]:\n", icono, g_pista_actual + 1, g_num_pistas);
     ui_printf("    %s\n", g_pistas[g_pista_actual].nombre);
     dibujar_barra_progreso(unicode);
 }
@@ -953,8 +929,7 @@ static void dibujar_pista_actual(int unicode,
 /** Renderiza estado, volumen, modo repeticion y EQ */
 static void dibujar_info_estado(void)
 {
-    static const char * const ESTADOS[] =
-    { "DETENIDO", "REPRODUCIENDO", "PAUSADO" };
+    static const char *const ESTADOS[] = {"DETENIDO", "REPRODUCIENDO", "PAUSADO"};
     ui_printf("  Estado  : %s\n", ESTADOS[(int)g_estado]);
 
     dibujar_barra_volumen();
@@ -980,9 +955,8 @@ static void dibujar_info_estado(void)
 
     if (g_eq_activo)
     {
-        ui_printf("  EQ      : ACTIVO  B:%+.0f  M:%+.0f  A:%+.0f dB\n",
-                  (double)g_eq_bass_db, (double)g_eq_mid_db,
-                  (double)g_eq_treble_db);
+        ui_printf("  EQ      : ACTIVO  B:%+.0f  M:%+.0f  A:%+.0f dB\n", (double)g_eq_bass_db,
+                  (double)g_eq_mid_db, (double)g_eq_treble_db);
     }
     else
     {
@@ -1011,7 +985,8 @@ static void dibujar_info_estado(void)
     {
         ma_uint64 ahora = tiempo_ms_actual();
         int restante_s = (g_sleep_timer_deadline_ms > ahora)
-                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U) : 0;
+                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U)
+                         : 0;
         ui_printf("  Timer   : apagado en %02d:%02d\n", restante_s / 60, restante_s % 60);
     }
 
@@ -1065,11 +1040,11 @@ static void dibujar_reproductor(void)
     print_header("MUSICA");
 
     int unicode = consola_soporta_unicode();
-    const char *linea   = unicode ? "\u2550" : "=";
-    const char *nota    = unicode ? "\u266b" : "*";
+    const char *linea = unicode ? "\u2550" : "=";
+    const char *nota = unicode ? "\u266b" : "*";
     const char *flechaP = unicode ? "\u25ba" : ">";
-    const char *pausa   = unicode ? "\u23f8" : "||";
-    const char *stop    = unicode ? "\u25a0" : "[]";
+    const char *pausa = unicode ? "\u23f8" : "||";
+    const char *stop = unicode ? "\u25a0" : "[]";
 
     ui_printf("\n");
     for (int i = 0; i < 50; i++)
@@ -1222,9 +1197,10 @@ static void accion_sleep_timer(void)
     {
         ma_uint64 ahora = tiempo_ms_actual();
         int restante_s = (g_sleep_timer_deadline_ms > ahora)
-                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U) : 0;
-        ui_printf("  Temporizador activo: se detendra en %02d:%02d\n",
-                  restante_s / 60, restante_s % 60);
+                         ? (int)((g_sleep_timer_deadline_ms - ahora) / 1000U)
+                         : 0;
+        ui_printf("  Temporizador activo: se detendra en %02d:%02d\n", restante_s / 60,
+                  restante_s % 60);
         ui_printf("  Ingrese 0 para cancelarlo o un nuevo tiempo en minutos.\n\n");
     }
     else
@@ -1269,8 +1245,7 @@ static void seek_a_tiempo_exacto_menu(void)
     ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
     float tot_s = (sr > 0 && len > 0) ? (float)len / (float)sr : 0.0f;
 
-    ui_printf("  Duracion total: %02d:%02d\n",
-              (int)tot_s / 60, (int)tot_s % 60);
+    ui_printf("  Duracion total: %02d:%02d\n", (int)tot_s / 60, (int)tot_s % 60);
     ui_printf("  Formato: MM:SS (ej: 1:30) o solo segundos (ej: 90)\n\n");
 
     char entrada[16] = {0};
@@ -1607,11 +1582,9 @@ static void eq_update_bass(void)
     {
         return;
     }
-    ma_loshelf_config cfg = ma_loshelf2_config_init(
-                                ma_format_f32,
-                                canales_engine_validos(),
-                                ma_engine_get_sample_rate(&g_engine),
-                                (double)g_eq_bass_db, EQ_Q, EQ_BASS_FREQ);
+    ma_loshelf_config cfg = ma_loshelf2_config_init(ma_format_f32, canales_engine_validos(),
+                            ma_engine_get_sample_rate(&g_engine),
+                            (double)g_eq_bass_db, EQ_Q, EQ_BASS_FREQ);
     ma_loshelf_node_reinit(&cfg, &g_eq_bass);
 }
 
@@ -1622,11 +1595,9 @@ static void eq_update_mid(void)
     {
         return;
     }
-    ma_peak_config cfg = ma_peak2_config_init(
-                             ma_format_f32,
-                             canales_engine_validos(),
-                             ma_engine_get_sample_rate(&g_engine),
-                             (double)g_eq_mid_db, EQ_Q, EQ_MID_FREQ);
+    ma_peak_config cfg = ma_peak2_config_init(ma_format_f32, canales_engine_validos(),
+                         ma_engine_get_sample_rate(&g_engine),
+                         (double)g_eq_mid_db, EQ_Q, EQ_MID_FREQ);
     ma_peak_node_reinit(&cfg, &g_eq_mid);
 }
 
@@ -1637,11 +1608,9 @@ static void eq_update_treble(void)
     {
         return;
     }
-    ma_hishelf_config cfg = ma_hishelf2_config_init(
-                                ma_format_f32,
-                                canales_engine_validos(),
-                                ma_engine_get_sample_rate(&g_engine),
-                                (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
+    ma_hishelf_config cfg = ma_hishelf2_config_init(ma_format_f32, canales_engine_validos(),
+                            ma_engine_get_sample_rate(&g_engine),
+                            (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
     ma_hishelf_node_reinit(&cfg, &g_eq_treble);
 }
 
@@ -1676,10 +1645,7 @@ static void eq_restablecer_bandas(void)
 
 static void eq_guardar_preferencias(void)
 {
-    settings_set_music_eq_profile(g_eq_activo ? 1 : 0,
-                                  g_eq_bass_db,
-                                  g_eq_mid_db,
-                                  g_eq_treble_db);
+    settings_set_music_eq_profile(g_eq_activo ? 1 : 0, g_eq_bass_db, g_eq_mid_db, g_eq_treble_db);
 }
 
 static int procesar_opcion_ecualizador(int op)
@@ -1712,13 +1678,11 @@ static int procesar_opcion_ecualizador(int op)
         void (*update_fn)(void);
     } EqAjuste;
 
-    static EqAjuste ajustes[] =
-    {
-        {2, &g_eq_bass_db, EQ_DB_STEP,  eq_update_bass},
+    static EqAjuste ajustes[] = {{2, &g_eq_bass_db, EQ_DB_STEP, eq_update_bass},
         {3, &g_eq_bass_db, -EQ_DB_STEP, eq_update_bass},
-        {4, &g_eq_mid_db,  EQ_DB_STEP,  eq_update_mid},
-        {5, &g_eq_mid_db,  -EQ_DB_STEP, eq_update_mid},
-        {6, &g_eq_treble_db, EQ_DB_STEP,  eq_update_treble},
+        {4, &g_eq_mid_db, EQ_DB_STEP, eq_update_mid},
+        {5, &g_eq_mid_db, -EQ_DB_STEP, eq_update_mid},
+        {6, &g_eq_treble_db, EQ_DB_STEP, eq_update_treble},
         {7, &g_eq_treble_db, -EQ_DB_STEP, eq_update_treble}
     };
 
@@ -1735,14 +1699,62 @@ static int procesar_opcion_ecualizador(int op)
     return 0;
 }
 
+/** Reintenta inicializar los nodos del ecualizador. Usado en menu_ecualizador si
+    la inicializacion previa en inicializar_engine fallo (codigos -2). */
+static void eq_reintentar_inicializar(void)
+{
+    if (!g_engine_listo)
+    {
+        return;
+    }
+
+    ma_uint32 ch = canales_engine_validos();
+    ma_uint32 sr = ma_engine_get_sample_rate(&g_engine);
+    if (sr == 0)
+    {
+        sr = 44100;
+    }
+
+    ma_loshelf_node_config bassCfg =
+        ma_loshelf_node_config_init(ch, sr, (double)g_eq_bass_db, EQ_Q, EQ_BASS_FREQ);
+    ma_peak_node_config midCfg =
+        ma_peak_node_config_init(ch, sr, (double)g_eq_mid_db, EQ_Q, EQ_MID_FREQ);
+    ma_hishelf_node_config trebCfg =
+        ma_hishelf_node_config_init(ch, sr, (double)g_eq_treble_db, EQ_Q, EQ_TREBLE_FREQ);
+
+    ma_result r1 = ma_loshelf_node_init(ma_engine_get_node_graph(&g_engine), &bassCfg, NULL,
+                                        &g_eq_bass);
+    ma_result r2 = ma_peak_node_init(ma_engine_get_node_graph(&g_engine), &midCfg, NULL, &g_eq_mid);
+    ma_result r3 = ma_hishelf_node_init(ma_engine_get_node_graph(&g_engine), &trebCfg, NULL,
+                                        &g_eq_treble);
+    g_eq_init_results[0] = (int)r1;
+    g_eq_init_results[1] = (int)r2;
+    g_eq_init_results[2] = (int)r3;
+    if (r1 == MA_SUCCESS && r2 == MA_SUCCESS && r3 == MA_SUCCESS)
+    {
+        ma_node_attach_output_bus(&g_eq_bass, 0, &g_eq_mid, 0);
+        ma_node_attach_output_bus(&g_eq_mid, 0, &g_eq_treble, 0);
+        ma_node_attach_output_bus(&g_eq_treble, 0, ma_engine_get_endpoint(&g_engine), 0);
+        g_eq_listo = 1;
+    }
+}
+
 /** Menu interactivo del ecualizador */
 static void menu_ecualizador(void)
 {
     if (!g_eq_listo)
     {
-        ui_printf("  El ecualizador no pudo inicializarse con este motor de audio.\n");
+        eq_reintentar_inicializar();
+        if (!g_eq_listo)
+        {
+            ui_printf("  El ecualizador no pudo inicializarse con este motor de audio.\n");
+            ui_printf("  Codigos retorno: bass=%d mid=%d treb=%d\n",
+                      g_eq_init_results[0], g_eq_init_results[1], g_eq_init_results[2]);
+            pause_console();
+            return;
+        }
+        ui_printf("  Ecualizador inicializado correctamente.\n");
         pause_console();
-        return;
     }
 
     int salir_eq = 0;
@@ -1755,17 +1767,17 @@ static void menu_ecualizador(void)
         ui_printf("\n");
         ui_printf("  Banda       Frec.   Ganancia\n");
         ui_printf("  ------------------------------------\n");
-        ui_printf("  Graves (B)  %4.0f Hz  %+.1f dB\n", EQ_BASS_FREQ,   (double)g_eq_bass_db);
-        ui_printf("  Medios  (M) %4.0f Hz  %+.1f dB\n", EQ_MID_FREQ,    (double)g_eq_mid_db);
+        ui_printf("  Graves (B)  %4.0f Hz  %+.1f dB\n", EQ_BASS_FREQ, (double)g_eq_bass_db);
+        ui_printf("  Medios  (M) %4.0f Hz  %+.1f dB\n", EQ_MID_FREQ, (double)g_eq_mid_db);
         ui_printf("  Agudos  (A) %4.0f Hz  %+.1f dB\n", EQ_TREBLE_FREQ, (double)g_eq_treble_db);
         ui_printf("\n");
         ui_printf("  [1] Activar / Desactivar EQ\n");
-        ui_printf("  [2] Graves  +%.0f dB     [3] Graves  -%.0f dB\n",
-                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
-        ui_printf("  [4] Medios  +%.0f dB     [5] Medios  -%.0f dB\n",
-                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
-        ui_printf("  [6] Agudos  +%.0f dB     [7] Agudos  -%.0f dB\n",
-                  (double)EQ_DB_STEP, (double)EQ_DB_STEP);
+        ui_printf("  [2] Graves  +%.0f dB     [3] Graves  -%.0f dB\n", (double)EQ_DB_STEP,
+                  (double)EQ_DB_STEP);
+        ui_printf("  [4] Medios  +%.0f dB     [5] Medios  -%.0f dB\n", (double)EQ_DB_STEP,
+                  (double)EQ_DB_STEP);
+        ui_printf("  [6] Agudos  +%.0f dB     [7] Agudos  -%.0f dB\n", (double)EQ_DB_STEP,
+                  (double)EQ_DB_STEP);
         ui_printf("  [8] Restablecer (0 dB en todas las bandas)\n");
         ui_printf("  [0] Volver\n\n");
 
@@ -1794,8 +1806,7 @@ static void ordenar_playlists(NombrePlaylist *lista, int cantidad)
 {
     if (lista && cantidad > 1)
     {
-        qsort(lista, (size_t)cantidad, sizeof(lista[0]),
-              comparar_playlists_por_nombre);
+        qsort(lista, (size_t)cantidad, sizeof(lista[0]), comparar_playlists_por_nombre);
     }
 }
 
@@ -1832,11 +1843,13 @@ static int escanear_playlists(NombrePlaylist *lista, int max)
     FindClose(hf);
 #else
     DIR *dir = opendir(MUSICA_DIR);
-    if (!dir) return 0;
+    if (!dir)
+        return 0;
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && n < max)
     {
-        if (!musica_es_txt_playlist(entry->d_name)) continue;
+        if (!musica_es_txt_playlist(entry->d_name))
+            continue;
         snprintf(lista[n].nombre, MAX_PLAYLIST_NAME, "%s", entry->d_name);
         n++;
     }
@@ -1856,8 +1869,7 @@ static void construir_ruta_playlist(const char *nombre_txt, char *ruta, size_t r
 #endif
 }
 
-static int guardar_nombres_playlist(const char *nombre_txt,
-                                    char nombres[][MAX_NOMBRE],
+static int guardar_nombres_playlist(const char *nombre_txt, char nombres[][MAX_NOMBRE],
                                     int cantidad)
 {
     char ruta[MAX_RUTA * 2];
@@ -1879,9 +1891,7 @@ static int guardar_nombres_playlist(const char *nombre_txt,
     return 1;
 }
 
-static int cargar_nombres_playlist(const char *nombre_txt,
-                                   char nombres[][MAX_NOMBRE],
-                                   int max)
+static int cargar_nombres_playlist(const char *nombre_txt, char nombres[][MAX_NOMBRE], int max)
 {
     char ruta[MAX_RUTA * 2];
     construir_ruta_playlist(nombre_txt, ruta, sizeof(ruta));
@@ -1931,8 +1941,7 @@ static int buscar_tema_en_playlist(char nombres[][MAX_NOMBRE], int n, const char
     return -1;
 }
 
-static void mostrar_selector_crear_playlist(const char *nombre,
-        const int seleccionadas[],
+static void mostrar_selector_crear_playlist(const char *nombre, const int seleccionadas[],
         int total_sel)
 {
     clear_screen();
@@ -1950,9 +1959,7 @@ static void mostrar_selector_crear_playlist(const char *nombre,
 }
 
 /* Retorna: -1 cancelar, 0 continuar, 1 listo para guardar, 2 sin seleccion */
-static int procesar_opcion_selector_playlist(int op,
-        int seleccionadas[],
-        int *total_sel)
+static int procesar_opcion_selector_playlist(int op, int seleccionadas[], int *total_sel)
 {
     if (op == -1)
     {
@@ -1983,8 +1990,7 @@ static int procesar_opcion_selector_playlist(int op,
     return 0;
 }
 
-static int construir_lista_temas_seleccionados(const int seleccionadas[],
-        char temas[][MAX_NOMBRE])
+static int construir_lista_temas_seleccionados(const int seleccionadas[], char temas[][MAX_NOMBRE])
 {
     int n = 0;
     for (int i = 0; i < g_num_pistas; i++)
@@ -2087,9 +2093,7 @@ static void editar_playlist_quitar_tema(char temas[][MAX_NOMBRE], int *n)
     pause_console();
 }
 
-static void editar_playlist_guardar(const char *nombre_txt,
-                                    char temas[][MAX_NOMBRE],
-                                    int n)
+static void editar_playlist_guardar(const char *nombre_txt, char temas[][MAX_NOMBRE], int n)
 {
     if (guardar_nombres_playlist(nombre_txt, temas, n))
     {
@@ -2161,7 +2165,7 @@ static void guardar_playlist(void)
         }
     }
 
-    char (*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
+    char(*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
     if (!temas)
     {
         free(seleccionadas);
@@ -2191,7 +2195,7 @@ static void editar_playlist_archivo(const char *nombre_txt)
         pause_console();
         return;
     }
-    char (*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
+    char(*temas)[MAX_NOMBRE] = malloc((size_t)g_num_pistas * sizeof(*temas));
     if (!temas)
     {
         pause_console();
@@ -2267,10 +2271,10 @@ static void cargar_playlist_archivo(const char *nombre_txt)
     /* Detener reproduccion actual para reemplazar el catalogo con la playlist. */
     descargar_sonido();
     g_pista_actual = -1;
-    g_num_pistas   = 0;
+    g_num_pistas = 0;
 
     char linea[MAX_NOMBRE];
-    int  cargadas = 0;
+    int cargadas = 0;
     while (fgets(linea, (int)sizeof(linea), f) != NULL)
     {
         /* Quitar salto de linea */
@@ -2321,15 +2325,14 @@ static void cargar_playlist_archivo(const char *nombre_txt)
             break;
         }
         snprintf(g_pistas[cargadas].nombre, MAX_NOMBRE, "%.*s", MAX_NOMBRE - 1, linea);
-        snprintf(g_pistas[cargadas].ruta,   MAX_RUTA,   "%.*s", MAX_RUTA - 1, ruta_audio);
+        snprintf(g_pistas[cargadas].ruta, MAX_RUTA, "%.*s", MAX_RUTA - 1, ruta_audio);
         cargadas++;
     }
     fclose(f);
     g_num_pistas = cargadas;
 
     snprintf(g_playlist_activa, sizeof(g_playlist_activa), "%s", nombre_txt);
-    ui_printf("  Playlist '%s' cargada: %d pista(s) válidas.\n",
-              nombre_txt, g_num_pistas);
+    ui_printf("  Playlist '%s' cargada: %d pista(s) válidas.\n", nombre_txt, g_num_pistas);
     pause_console();
 }
 
@@ -2442,7 +2445,7 @@ static void pl_accion_eliminar(const NombrePlaylist *lista, int n)
 #ifdef _WIN32
     snprintf(r, sizeof(r), "%s\\%s", MUSICA_DIR, lista[sel - 1].nombre);
 #else
-    snprintf(r, sizeof(r), "%s/%s",  MUSICA_DIR, lista[sel - 1].nombre);
+    snprintf(r, sizeof(r), "%s/%s", MUSICA_DIR, lista[sel - 1].nombre);
 #endif
     ui_printf("  Eliminar '%s'? [s/n]: ", lista[sel - 1].nombre);
     char conf[4] = {0};
@@ -2553,8 +2556,7 @@ static void guardar_posicion_resume(void)
     {
         return;
     }
-    fprintf(f, "%s\n%llu\n", g_pistas[g_pista_actual].nombre,
-            (unsigned long long)cur);
+    fprintf(f, "%s\n%llu\n", g_pistas[g_pista_actual].nombre, (unsigned long long)cur);
     fclose(f);
 }
 
@@ -2643,9 +2645,9 @@ void musica_cleanup(void)
     if (g_eq_listo)
     {
         ma_hishelf_node_uninit(&g_eq_treble, NULL);
-        ma_peak_node_uninit   (&g_eq_mid,    NULL);
-        ma_loshelf_node_uninit(&g_eq_bass,   NULL);
-        g_eq_listo  = 0;
+        ma_peak_node_uninit(&g_eq_mid, NULL);
+        ma_loshelf_node_uninit(&g_eq_bass, NULL);
+        g_eq_listo = 0;
         g_eq_activo = 0;
     }
 
@@ -2712,8 +2714,8 @@ static void info_pista_menu(void)
     const char *ext = musica_obtener_extension_archivo(g_pistas[g_pista_actual].nombre);
 
     ui_printf("  Nombre     : %s\n", g_pistas[g_pista_actual].nombre);
-    ui_printf("  Duracion   : %02d:%02d (%llu frames)\n",
-              (int)dur_s / 60, (int)dur_s % 60, (unsigned long long)len);
+    ui_printf("  Duracion   : %02d:%02d (%llu frames)\n", (int)dur_s / 60, (int)dur_s % 60,
+              (unsigned long long)len);
     ui_printf("  Formato    : %s\n", ext ? ext + 1 : "desconocido");
     ui_printf("  Sample Rate: %u Hz\n", (unsigned)sr);
     ui_printf("  Canales    : %u\n", (unsigned)ch);
@@ -2798,7 +2800,7 @@ static int ejecutar_renombrado_pista(int idx, const char *nombre_nuevo)
     }
 
     strncpy_s(g_pistas[idx].nombre, MAX_NOMBRE, nombre_nuevo, _TRUNCATE);
-    strncpy_s(g_pistas[idx].ruta,   MAX_RUTA,   ruta_nueva,  _TRUNCATE);
+    strncpy_s(g_pistas[idx].ruta, MAX_RUTA, ruta_nueva, _TRUNCATE);
     ui_printf("  Pista renombrada correctamente: %s\n", nombre_nuevo);
     pause_console();
     return 1;
@@ -2892,7 +2894,8 @@ static int solicitar_nombre_playlist_exportacion(char *nombre, size_t size)
     return 1;
 }
 
-static int recolectar_temas_exportacion(int usar_filtro, char temas_exp[][MAX_NOMBRE], int max_temas)
+static int recolectar_temas_exportacion(int usar_filtro, char temas_exp[][MAX_NOMBRE],
+                                        int max_temas)
 {
     int n = 0;
 
@@ -3066,15 +3069,13 @@ static int procesar_opcion_menu_musica(int opcion)
         return 0;
     }
 
-    static const OpcionMenuMusica opciones[] =
-    {
-        {1,  accion_reproducir_pausar},
-        {2,  detener},
-        {3,  pista_anterior},
-        {4,  siguiente_pista},
-        {5,  mostrar_lista_pistas},
-        {6,  subir_volumen},
-        {7,  bajar_volumen},
+    static const OpcionMenuMusica opciones[] = {{1, accion_reproducir_pausar},
+        {2, detener},
+        {3, pista_anterior},
+        {4, siguiente_pista},
+        {5, mostrar_lista_pistas},
+        {6, subir_volumen},
+        {7, bajar_volumen},
         {10, agregar_cancion_menu},
         {11, eliminar_cancion_menu},
         {12, menu_ecualizador},

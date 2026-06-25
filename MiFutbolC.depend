@@ -110,7 +110,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1782275483 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1782341925 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"atajos.h"
@@ -605,7 +605,7 @@
 	<stdio.h>
 	<string.h>
 
-1781885453 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1782416430 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
 
@@ -2078,7 +2078,7 @@
 	<string.h>
 	<time.h>
 
-1782269961 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1782340727 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"atajos.h"
 	"backup.h"
@@ -2510,25 +2510,25 @@
 
 1778107725 d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.h
 
-1782270411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
+1782415698 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\musica.c
 	"miniaudio.h"
+	"ascii_art.h"
+	"db.h"
 	"musica.h"
 	"musica_helpers.h"
-	"db.h"
-	"utils.h"
 	"settings.h"
-	"ascii_art.h"
+	"utils.h"
+	<stdint.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
-	<stdint.h>
 	<time.h>
 	<windows.h>
 	<dirent.h>
 	<sys/stat.h>
 	<sys/time.h>
 
-1780798506 d:\anime\libros\lenguaje c\proyectos\mifutbolc\miniaudio.h
+1782414311 d:\anime\libros\lenguaje c\proyectos\mifutbolc\miniaudio.h
 	<stddef.h>
 	<stdint.h>
 	<pthread.h>

@@ -76207,6 +76207,8 @@ MA_API ma_result ma_peak_node_init(ma_node_graph* pNodeGraph, const ma_peak_node
 {
     ma_result result;
     ma_node_config baseNodeConfig;
+    ma_uint32 inputChannels[1];
+    ma_uint32 outputChannels[1];
 
     if (pNode == NULL) {
         return MA_INVALID_ARGS;
@@ -76228,17 +76230,13 @@ MA_API ma_result ma_peak_node_init(ma_node_graph* pNodeGraph, const ma_peak_node
         return result;
     }
 
-    {
-        ma_uint32 inputChannels[1];
-        ma_uint32 outputChannels[1];
-        inputChannels[0]  = pConfig->peak.channels;
-        outputChannels[0] = pConfig->peak.channels;
+    inputChannels[0]  = pConfig->peak.channels;
+    outputChannels[0] = pConfig->peak.channels;
 
-        baseNodeConfig = ma_node_config_init();
-        baseNodeConfig.vtable          = &g_ma_peak_node_vtable;
-        baseNodeConfig.pInputChannels  = inputChannels;
-        baseNodeConfig.pOutputChannels = outputChannels;
-    }
+    baseNodeConfig = ma_node_config_init();
+    baseNodeConfig.vtable          = &g_ma_peak_node_vtable;
+    baseNodeConfig.pInputChannels  = inputChannels;
+    baseNodeConfig.pOutputChannels = outputChannels;
 
     result = ma_node_init(pNodeGraph, &baseNodeConfig, pAllocationCallbacks, pNode);
     if (result != MA_SUCCESS) {
@@ -76309,6 +76307,8 @@ MA_API ma_result ma_loshelf_node_init(ma_node_graph* pNodeGraph, const ma_loshel
 {
     ma_result result;
     ma_node_config baseNodeConfig;
+    ma_uint32 inputChannels[1];
+    ma_uint32 outputChannels[1];
 
     if (pNode == NULL) {
         return MA_INVALID_ARGS;
@@ -76329,17 +76329,13 @@ MA_API ma_result ma_loshelf_node_init(ma_node_graph* pNodeGraph, const ma_loshel
         return result;
     }
 
-    {
-        ma_uint32 inputChannels[1];
-        ma_uint32 outputChannels[1];
-        inputChannels[0]  = pConfig->loshelf.channels;
-        outputChannels[0] = pConfig->loshelf.channels;
+    inputChannels[0]  = pConfig->loshelf.channels;
+    outputChannels[0] = pConfig->loshelf.channels;
 
-        baseNodeConfig = ma_node_config_init();
-        baseNodeConfig.vtable          = &g_ma_loshelf_node_vtable;
-        baseNodeConfig.pInputChannels  = inputChannels;
-        baseNodeConfig.pOutputChannels = outputChannels;
-    }
+    baseNodeConfig = ma_node_config_init();
+    baseNodeConfig.vtable          = &g_ma_loshelf_node_vtable;
+    baseNodeConfig.pInputChannels  = inputChannels;
+    baseNodeConfig.pOutputChannels = outputChannels;
 
     result = ma_node_init(pNodeGraph, &baseNodeConfig, pAllocationCallbacks, pNode);
     if (result != MA_SUCCESS) {
@@ -76410,6 +76406,8 @@ MA_API ma_result ma_hishelf_node_init(ma_node_graph* pNodeGraph, const ma_hishel
 {
     ma_result result;
     ma_node_config baseNodeConfig;
+    ma_uint32 inputChannels[1];
+    ma_uint32 outputChannels[1];
 
     if (pNode == NULL) {
         return MA_INVALID_ARGS;
@@ -76430,17 +76428,13 @@ MA_API ma_result ma_hishelf_node_init(ma_node_graph* pNodeGraph, const ma_hishel
         return result;
     }
 
-    {
-        ma_uint32 inputChannels[1];
-        ma_uint32 outputChannels[1];
-        inputChannels[0]  = pConfig->hishelf.channels;
-        outputChannels[0] = pConfig->hishelf.channels;
+    inputChannels[0]  = pConfig->hishelf.channels;
+    outputChannels[0] = pConfig->hishelf.channels;
 
-        baseNodeConfig = ma_node_config_init();
-        baseNodeConfig.vtable          = &g_ma_hishelf_node_vtable;
-        baseNodeConfig.pInputChannels  = inputChannels;
-        baseNodeConfig.pOutputChannels = outputChannels;
-    }
+    baseNodeConfig = ma_node_config_init();
+    baseNodeConfig.vtable          = &g_ma_hishelf_node_vtable;
+    baseNodeConfig.pInputChannels  = inputChannels;
+    baseNodeConfig.pOutputChannels = outputChannels;
 
     result = ma_node_init(pNodeGraph, &baseNodeConfig, pAllocationCallbacks, pNode);
     if (result != MA_SUCCESS) {
