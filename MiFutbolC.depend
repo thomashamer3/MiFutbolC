@@ -164,7 +164,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1782333091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1782500455 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -187,7 +187,7 @@
 	<stdlib.h>
 	<time.h>
 
-1781936523 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
+1782499470 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
 
 1782012639 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.c
 	"estadisticas.h"
@@ -395,11 +395,12 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1782332436 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1782499508 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
 	"menu.h"
+	"partido.h"
 	"settings.h"
 	"sqlite3.h"
 	"utils.h"
@@ -3018,7 +3019,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1782334903 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1782498883 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"

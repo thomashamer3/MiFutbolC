@@ -86,4 +86,6 @@ void menu_tacticas_partido(void);
  */
 void obtener_clima_partidos_historicos(void);
 
+void reordenar_partidos_por_fecha(void);
+
 #endif

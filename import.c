@@ -3,6 +3,7 @@
 #include "cJSON.h"
 #include "db.h"
 #include "menu.h"
+#include "partido.h"
 #include "settings.h"
 #include "sqlite3.h"
 #include "utils.h"
@@ -331,6 +332,9 @@ static int procesar_e_insertar_partido(const PartidoInput *input)
     }
 
     printf("Partido en '%s' importado correctamente\n", input->cancha);
+
+    reordenar_partidos_por_fecha();
+
     return 1;
 }
 
@@ -1032,27 +1036,29 @@ static int partido_existe(sqlite3_int64 cancha_id, const char *fecha, int camise
 static int insertar_partido(PartidoData data)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("INSERT INTO partido(cancha_id, fecha_hora, mes_anio, goles, asistencias, "
+    long long id = obtener_siguiente_id("partido");
+    if (!preparar_stmt("INSERT INTO partido(id, cancha_id, fecha_hora, mes_anio, goles, asistencias, "
                        "camiseta_id, resultado, clima, dia, rendimiento_general, cansancio, "
                        "estado_animo, comentario_personal) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-                       "?, ?, ?)",
+                       "?, ?, ?, ?)",
                        &stmt))
     {
         return 0;
     }
-    sqlite3_bind_int64(stmt, 1, data.cancha_id);
-    sqlite3_bind_text(stmt, 2, data.fecha, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, data.mes_anio ? data.mes_anio : "", -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 4, data.goles);
-    sqlite3_bind_int(stmt, 5, data.asistencias);
-    sqlite3_bind_int(stmt, 6, data.camiseta_id);
-    sqlite3_bind_int(stmt, 7, data.resultado);
-    sqlite3_bind_int(stmt, 8, data.clima);
-    sqlite3_bind_int(stmt, 9, data.dia);
-    sqlite3_bind_int(stmt, 10, data.rendimiento_general);
-    sqlite3_bind_int(stmt, 11, data.cansancio);
-    sqlite3_bind_int(stmt, 12, data.estado_animo);
-    sqlite3_bind_text(stmt, 13, data.comentario_personal, -1, DB_TRANSIENT);
+    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_int64(stmt, 2, data.cancha_id);
+    sqlite3_bind_text(stmt, 3, data.fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, data.mes_anio ? data.mes_anio : "", -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, data.goles);
+    sqlite3_bind_int(stmt, 6, data.asistencias);
+    sqlite3_bind_int(stmt, 7, data.camiseta_id);
+    sqlite3_bind_int(stmt, 8, data.resultado);
+    sqlite3_bind_int(stmt, 9, data.clima);
+    sqlite3_bind_int(stmt, 10, data.dia);
+    sqlite3_bind_int(stmt, 11, data.rendimiento_general);
+    sqlite3_bind_int(stmt, 12, data.cansancio);
+    sqlite3_bind_int(stmt, 13, data.estado_animo);
+    sqlite3_bind_text(stmt, 14, data.comentario_personal, -1, DB_TRANSIENT);
     int result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     return result == SQLITE_DONE;

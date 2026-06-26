@@ -219,6 +219,11 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
         if (fecha[0] == '\0' || (fecha[0] == ' ' && fecha[1] == '\0'))
         {
             get_datetime(fecha, (int)fecha_size);
+            {
+                char iso[64];
+                convert_display_date_to_storage(fecha, iso, sizeof(iso));
+                strncpy_s(fecha, fecha_size, iso, fecha_size - 1);
+            }
             printf("Usando fecha/hora actual: %s\n", fecha);
             return;
         }
@@ -226,6 +231,9 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
         trim_whitespace(fecha);
         if (obtener_hora_desde_fecha_hora(fecha, &hora_ingresada))
         {
+            char iso[64];
+            convert_display_date_to_storage(fecha, iso, sizeof(iso));
+            strncpy_s(fecha, fecha_size, iso, fecha_size - 1);
             printf("Fecha/hora ingresada: %s\n", fecha);
             return;
         }
@@ -932,7 +940,7 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual, int partidos
 
     snprintf(sql, sizeof(sql),
              PARTIDO_SELECT_COLUMNS " %s "
-             "ORDER BY p.id %s LIMIT ? OFFSET ?",
+             "ORDER BY p.fecha_hora %s LIMIT ? OFFSET ?",
              where_clause, orden_sql);
 
     if (!preparar_stmt(sql, &stmt))
@@ -2940,16 +2948,30 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
     int anio = 0;
     int mes = 0;
     int dia = 0;
+    if (fecha && fecha[4] == '-' && fecha[7] == '-')
+    {
 #if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
-        return;
+        if (sscanf_s(fecha, "%d-%d-%d", &anio, &mes, &dia) < 3)
+            return;
 #else
-    if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
+        if (sscanf(fecha, "%d-%d-%d", &anio, &mes, &dia) < 3)
+            return;
+#endif
+    }
+    else if (fecha && fecha[2] == '/' && fecha[5] == '/')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
+            return;
+#else
+        if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
+            return;
+#endif
+    }
+    else
     {
         return;
     }
-
-#endif
 
     OpenMeteoParams omp;
     omp.latitud = lat;
@@ -3032,9 +3054,9 @@ void crear_partido(void)
 
     if (!calcular_dia_desde_fecha_hora(fecha, &datos.dia))
     {
-        char fecha_actual[32];
+        char fecha_actual[64];
         get_datetime(fecha_actual, sizeof(fecha_actual));
-        snprintf(fecha, sizeof(fecha), "%s", fecha_actual);
+        convert_display_date_to_storage(fecha_actual, fecha, (int)sizeof(fecha));
         if (!calcular_dia_desde_fecha_hora(fecha, &datos.dia))
         {
             datos.dia = 6;
@@ -3062,6 +3084,8 @@ void crear_partido(void)
     {
         registrar_clima_partido(id, datos.cancha_id, fecha);
     }
+
+    reordenar_partidos_por_fecha();
 }
 
 static int partido_listado_calcular_total_paginas(int total_partidos, int partidos_por_pagina)
@@ -3238,6 +3262,8 @@ void eliminar_partido(void)
     sqlite3_finalize(stmt);
 
     mostrar_alerta_operacion("Partido", "Eliminado", NULL);
+
+    reordenar_partidos_por_fecha();
 }
 
 static int current_partido_id;
@@ -4189,7 +4215,7 @@ static void buscar_por_tag(void)
                        "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "
                        "JOIN cancha can ON p.cancha_id = can.id "
                        "WHERE LOWER(IFNULL(p.tags, '')) LIKE LOWER(?) "
-                       "ORDER BY p.id ASC",
+                       "ORDER BY p.fecha_hora ASC",
                        &stmt))
     {
         pause_console();
@@ -4848,7 +4874,7 @@ static void tactica_leer_nombre_diagrama(char *nombre, size_t size)
 static void tactica_mostrar_partidos_disponibles(void)
 {
     const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
-                      "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.id ASC";
+                      "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.fecha_hora ASC";
     sqlite3_stmt *stmt;
     if (!preparar_stmt(sql, &stmt))
     {
@@ -5442,7 +5468,7 @@ static int partido_mostrar_favoritos(void)
     const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
                       "JOIN cancha can ON p.cancha_id = can.id "
                       "JOIN partido_meta m ON p.id = m.partido_id "
-                      "WHERE m.favorito = 1 ORDER BY p.id ASC";
+                      "WHERE m.favorito = 1 ORDER BY p.fecha_hora ASC";
     sqlite3_stmt *stmt;
     if (!preparar_stmt(sql, &stmt))
     {
@@ -5539,7 +5565,7 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
         sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
               "JOIN cancha can ON p.cancha_id = can.id "
               "JOIN partido_tag pt ON p.id = pt.partido_id "
-              "WHERE pt.tag = ? ORDER BY p.id ASC";
+              "WHERE pt.tag = ? ORDER BY p.fecha_hora ASC";
         if (!preparar_stmt(sql, &stmt))
         {
             printf("Error consultando partidos con etiquetas.\n");
@@ -5553,7 +5579,7 @@ static int partido_mostrar_partidos_con_tag(const char *tag)
               "as tags FROM partido p "
               "JOIN cancha can ON p.cancha_id = can.id "
               "JOIN partido_tag pt ON p.id = pt.partido_id "
-              "GROUP BY p.id ORDER BY p.id ASC";
+              "GROUP BY p.id ORDER BY p.fecha_hora ASC";
         if (!preparar_stmt(sql, &stmt))
         {
             printf("Error consultando partidos con etiquetas.\n");
@@ -5777,6 +5803,101 @@ void obtener_clima_partidos_historicos(void)
         }
     }
     pause_console();
+}
+
+void reordenar_partidos_por_fecha(void)
+{
+    int total = 0;
+    sqlite3_stmt *stmt = NULL;
+    if (db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM partido") &&
+            sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+    db_stmt_release(stmt);
+    if (total < 2) return;
+
+    printf("Reordenando IDs de partidos por fecha...\n");
+
+    char *err = NULL;
+    if (sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("Error al iniciar transaccion: %s\n", err);
+        sqlite3_free(err);
+        return;
+    }
+
+    const char *sql_map = "DROP TABLE IF EXISTS _pr;"
+                          "CREATE TEMP TABLE _pr AS "
+                          "SELECT id AS old_id, ROW_NUMBER() OVER (ORDER BY fecha_hora) AS new_id "
+                          "FROM partido;";
+
+    if (sqlite3_exec(db, sql_map, NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("Error al crear mapeo: %s\n", err);
+        sqlite3_free(err);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
+    }
+
+    if (sqlite3_exec(db, "UPDATE partido SET id = -id", NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("Error al desplazar IDs: %s\n", err);
+        sqlite3_free(err);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
+    }
+
+    const char *sql_assign = "UPDATE partido SET id = (SELECT new_id FROM _pr WHERE old_id = -partido.id)";
+    if (sqlite3_exec(db, sql_assign, NULL, NULL, &err) != SQLITE_OK)
+    {
+        printf("Error al reasignar IDs: %s\n", err);
+        sqlite3_free(err);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        return;
+    }
+
+    const char *sql_child[] =
+    {
+        "UPDATE equipo SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE bienestar_sesion_mental SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE carrera_partido_hito SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE tactica_diagrama SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE media SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE lesion SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE quimica_jugador_estadistica SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE partido_meta SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)",
+        "UPDATE partido_tag SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "WHERE partido_id IN (SELECT old_id FROM _pr)"
+    };
+    int n_child = (int)(sizeof(sql_child) / sizeof(sql_child[0]));
+
+    for (int i = 0; i < n_child; i++)
+    {
+        if (sqlite3_exec(db, sql_child[i], NULL, NULL, &err) != SQLITE_OK)
+        {
+            printf("Error al actualizar tabla hija: %s\n", err);
+            sqlite3_free(err);
+            sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+            return;
+        }
+    }
+
+    if (sqlite3_exec(db, "DROP TABLE _pr; COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
+    {
+        sqlite3_exec(db, "ROLLBACK; DROP TABLE IF EXISTS _pr;", NULL, NULL, NULL);
+        return;
+    }
+
+    printf("IDs reordenados correctamente (%d partidos).\n", total);
 }
 
 void menu_partidos(void)

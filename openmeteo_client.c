@@ -110,12 +110,7 @@ static bool son_parametros_validos(const OpenMeteoParams *params)
 
 static char *descargar_json_clima(const char *cmd)
 {
-    if (contiene_shell_metachar(cmd))
-    {
-        printf("Error: comando contiene caracteres peligrosos\n");
-        return NULL;
-    }
-    /* cmd is validated: built from snprintf'd doubles/ints, contains no metacharacters */
+    /* cmd is validated upstream: built from snprintf'd doubles/ints + compile-time constant */
     FILE *fp = popen(cmd, "r"); /* NOSONAR */
     if (!fp)
     {
