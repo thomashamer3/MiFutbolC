@@ -58,8 +58,6 @@
         color: #aaaaaa;
       }
     pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      {   }
     @media screen {
     pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
     }
@@ -77,7 +75,6 @@
     code span.dt { color: #902000; } /* DataType */
     code span.dv { color: #40a070; } /* DecVal */
     code span.er { color: #ff0000; font-weight: bold; } /* Error */
-    code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
     code span.im { color: #008000; font-weight: bold; } /* Import */
@@ -101,6 +98,11 @@
 </head>
 <body>
 <div class="page">
+<div class="topbar">
+<button id="theme-toggle" class="theme-toggle" type="button">
+    Modo claro
+</button>
+</div>
 <div class="content">
 <h1 id="manual-de-usuario---mifutbolc">Manual de Usuario - MiFutbolC</h1>
 <h2 id="introducción">Introducción</h2>
@@ -184,50 +186,50 @@
 </ol>
 <h3 id="opción-3-compilación-manual">Opción 3: Compilación Manual</h3>
 <h4 id="linux-macos-script">Linux / macOS (script)</h4>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compilar todos los archivos fuente</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC <span class="dt">\</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c <span class="dt">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    estadisticas.c estadisticas_generales.c estadisticas_anio.c <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    analisis.c cancha.c logros.c lesion.c temporada.c <span class="dt">\</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    financiamiento.c settings.c entrenador_ia.c <span class="dt">\</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    records_rankings.c export.c export_all.c export_all_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    export_camisetas.c export_camisetas_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    export_lesiones.c export_lesiones_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    export_partidos.c export_estadisticas.c <span class="dt">\</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    export_estadisticas_generales.c export_records_rankings.c <span class="dt">\</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    import.c utils.c sqlite3.c cJSON.c <span class="dt">\</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">-I.</span> <span class="at">-lm</span> <span class="at">-lpthread</span> <span class="at">-ldl</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Ejecutar el programa</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ex">./MiFutbolC</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Compilar todos los archivos fuente</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1">&nbsp;</a>    main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1">&nbsp;</a>    estadisticas.c estadisticas_generales.c estadisticas_anio.c <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1">&nbsp;</a>    estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1">&nbsp;</a>    analisis.c cancha.c logros.c lesion.c temporada.c <span class="dt">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1">&nbsp;</a>    financiamiento.c settings.c entrenador_ia.c <span class="dt">\</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1">&nbsp;</a>    records_rankings.c export.c export_all.c export_all_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_camisetas.c export_camisetas_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_lesiones.c export_lesiones_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_partidos.c export_estadisticas.c <span class="dt">\</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_estadisticas_generales.c export_records_rankings.c <span class="dt">\</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1">&nbsp;</a>    import.c utils.c sqlite3.c cJSON.c <span class="dt">\</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="at">-I.</span> <span class="at">-lm</span> <span class="at">-lpthread</span> <span class="at">-ldl</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Ejecutar el programa</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./MiFutbolC</span></span></code></pre></div>
 <h4 id="windows-con-mingw">Windows (con MinGW)</h4>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">WIN_LIBS</span><span class="op">=</span><span class="st">&quot;-lcomdlg32 -lshell32 -lbcrypt&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c <span class="at">-I.</span> <span class="va">$WIN_LIBS</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="va">WIN_LIBS</span><span class="op">=</span><span class="st">&quot;-lcomdlg32 -lshell32 -lbcrypt&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c <span class="at">-I.</span> <span class="va">$WIN_LIBS</span></span></code></pre></div>
 <h3 id="opción-4-usando-scripts-del-proyecto">Opción 4: Usando scripts del proyecto</h3>
 <h4 id="linux-macos">Linux / macOS</h4>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x Instalador-Linux.sh</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Debug</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span> <span class="at">--debug</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Compilar y ejecutar</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span> run</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">chmod</span> +x Instalador-Linux.sh</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Debug</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span> <span class="at">--debug</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Compilar y ejecutar</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span> run</span></code></pre></div>
 <h4 id="windows-script">Windows (script)</h4>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mingw32-make</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Debug</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">mingw32-make</span> BUILD_TYPE=Debug</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">mingw32-make</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Debug</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">mingw32-make</span> BUILD_TYPE=Debug</span></code></pre></div>
 <h4 id="windows-instalación-por-consola">Windows (instalación por consola)</h4>
-<div class="sourceCode" id="cb5"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Instalación estándar (compila + instala)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Debug</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>BuildType Debug</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Instalar usando un .exe ya compilado</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>SkipBuild</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Instalación estándar (compila + instala)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Debug</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>BuildType Debug</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Instalar usando un .exe ya compilado</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>SkipBuild</span></code></pre></div>
 <p><code>install.ps1</code> instala en <code>%LOCALAPPDATA%\Programs\MiFutbolC</code>, crea un launcher de consola (<code>MiFutbolC.cmd</code>) y puede agregar la ruta de instalación al <code>PATH</code> del usuario.</p>
 <p>En Linux/macOS, <code>Instalador-Linux.sh</code> también puede validar dependencias e instalar un launcher en <code>PATH</code>.</p>
 <h2 id="primer-uso">Primer Uso</h2>

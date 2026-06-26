@@ -58,8 +58,6 @@
         color: #aaaaaa;
       }
     pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      {   }
     @media screen {
     pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
     }
@@ -77,7 +75,6 @@
     code span.dt { color: #902000; } /* DataType */
     code span.dv { color: #40a070; } /* DecVal */
     code span.er { color: #ff0000; font-weight: bold; } /* Error */
-    code span.ex { } /* Extension */
     code span.fl { color: #40a070; } /* Float */
     code span.fu { color: #06287e; } /* Function */
     code span.im { color: #008000; font-weight: bold; } /* Import */
@@ -101,6 +98,11 @@
 </head>
 <body>
 <div class="page">
+<div class="topbar">
+<button id="theme-toggle" class="theme-toggle" type="button">
+    Modo claro
+</button>
+</div>
 <div class="content">
 <h1 id="mifutbolc---sistema-integral-de-gestión-de-fútbol">⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol</h1>
 <div data-align="center">
@@ -470,58 +472,58 @@ lesiones por tipo/estado, historial de rachas y distribución de estado de ánim
 <h3 id="método-3-compilación-manual-con-gcc-linuxmacoswindows">Método 3: Compilación Manual con GCC (Linux/macOS/Windows)</h3>
 <p>Para usuarios avanzados que prefieren control total sobre la compilación:</p>
 <h4 id="linux-macos">Linux / macOS</h4>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Clonar o descargar el repositorio</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /ruta/al/proyecto/MiFutbolC</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Compilar todos los archivos fuente</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c <span class="dt">\</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    estadisticas.c estadisticas_generales.c estadisticas_anio.c <span class="dt">\</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c <span class="dt">\</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    analisis.c cancha.c logros.c lesion.c temporada.c <span class="dt">\</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    financiamiento.c settings.c entrenador_ia.c <span class="dt">\</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    records_rankings.c export.c export_all.c export_all_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    export_camisetas.c export_camisetas_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    export_lesiones.c export_lesiones_mejorado.c <span class="dt">\</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    export_partidos.c export_estadisticas.c <span class="dt">\</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    export_estadisticas_generales.c export_records_rankings.c <span class="dt">\</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    import.c utils.c sqlite3.c cJSON.c <span class="dt">\</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">-I.</span> <span class="at">-lm</span> <span class="at">-lpthread</span> <span class="at">-ldl</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Ejecutar el programa</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ex">./MiFutbolC</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 1. Clonar o descargar el repositorio</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="bu">cd</span> /ruta/al/proyecto/MiFutbolC</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 2. Compilar todos los archivos fuente</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1">&nbsp;</a>    main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c <span class="dt">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1">&nbsp;</a>    estadisticas.c estadisticas_generales.c estadisticas_anio.c <span class="dt">\</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1">&nbsp;</a>    estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c <span class="dt">\</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1">&nbsp;</a>    analisis.c cancha.c logros.c lesion.c temporada.c <span class="dt">\</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1">&nbsp;</a>    financiamiento.c settings.c entrenador_ia.c <span class="dt">\</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1">&nbsp;</a>    records_rankings.c export.c export_all.c export_all_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_camisetas.c export_camisetas_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_lesiones.c export_lesiones_mejorado.c <span class="dt">\</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_partidos.c export_estadisticas.c <span class="dt">\</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1">&nbsp;</a>    export_estadisticas_generales.c export_records_rankings.c <span class="dt">\</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1">&nbsp;</a>    import.c utils.c sqlite3.c cJSON.c <span class="dt">\</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="at">-I.</span> <span class="at">-lm</span> <span class="at">-lpthread</span> <span class="at">-ldl</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 3. Ejecutar el programa</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./MiFutbolC</span></span></code></pre></div>
 <h4 id="windows-con-mingw">Windows (con MinGW)</h4>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Abrir terminal (PowerShell o CMD)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> D:<span class="dt">\A</span>NIME<span class="dt">\L</span>ibros<span class="dt">\L</span>enguaje C<span class="dt">\P</span>royectos<span class="dt">\M</span>iFutbolC</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Definir librerias de Windows (MinGW/Git Bash)</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">WIN_LIBS</span><span class="op">=</span><span class="st">&quot;-lcomdlg32 -lshell32 -lbcrypt&quot;</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Compilar</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c <span class="at">-I.</span> <span class="va">$WIN_LIBS</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Ejecutar</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">.</span><span class="dt">\M</span>iFutbolC.exe</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 1. Abrir terminal (PowerShell o CMD)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="bu">cd</span> D:<span class="dt">\A</span>NIME<span class="dt">\L</span>ibros<span class="dt">\L</span>enguaje C<span class="dt">\P</span>royectos<span class="dt">\M</span>iFutbolC</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 2. Definir librerias de Windows (MinGW/Git Bash)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="va">WIN_LIBS</span><span class="op">=</span><span class="st">&quot;-lcomdlg32 -lshell32 -lbcrypt&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 3. Compilar</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">gcc</span> <span class="at">-o</span> MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c <span class="at">-I.</span> <span class="va">$WIN_LIBS</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># 4. Ejecutar</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="bu">.</span><span class="dt">\M</span>iFutbolC.exe</span></code></pre></div>
 <h3 id="método-4-script-del-proyecto-para-linuxmacos">Método 4: Script del Proyecto para Linux/macOS</h3>
 <p>El proyecto incluye un instalador/compilador para terminal:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x Instalador-Linux.sh</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Debug</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span> <span class="at">--debug</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Compilar y ejecutar</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./Instalador-Linux.sh</span> run</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="fu">chmod</span> +x Instalador-Linux.sh</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Debug</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span> <span class="at">--debug</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Compilar y ejecutar</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">./Instalador-Linux.sh</span> run</span></code></pre></div>
 <p><code>Instalador-Linux.sh</code> puede verificar dependencias, compilar y opcionalmente agregar launcher a <code>PATH</code>.</p>
 <h3 id="método-5-instalación-por-consola-en-windows-powershell">Método 5: Instalación por Consola en Windows (PowerShell)</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Instalación estándar (compila + instala)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Instalación Debug</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>BuildType Debug</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Usar un .exe ya compilado</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>SkipBuild</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Instalación estándar (compila + instala)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Instalación Debug</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>BuildType Debug</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co"># Usar un .exe ya compilado</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1">&nbsp;</a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File <span class="op">.</span>\install<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>SkipBuild</span></code></pre></div>
 <p>El script <code>install.ps1</code> instala en <code>%LOCALAPPDATA%\Programs\MiFutbolC</code>, crea launcher de consola (<code>MiFutbolC.cmd</code>) y puede agregar el directorio al <code>PATH</code> de usuario.</p>
 <h3 id="notas-importantes">📝 Notas Importantes</h3>
 <ul>
@@ -551,7 +553,7 @@ lesiones por tipo/estado, historial de rachas y distribución de estado de ánim
 <h4 id="caracteres-extraños-en-la-consola-windows">Caracteres extraños en la consola (Windows)</h4>
 <ul>
 <li><p><strong>Solución</strong>: El programa configura automáticamente UTF-8. Si persiste, ejecuta:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">chcp</span> 65001</span></code></pre></div></li>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="ex">chcp</span> 65001</span></code></pre></div></li>
 </ul>
 <h4 id="no-se-crea-la-base-de-datos">No se crea la base de datos</h4>
 <ul>
@@ -815,11 +817,11 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <ul>
 <li><p><strong>Descripción</strong>: Sistema de menús con estructura <code>MenuItem</code></p></li>
 <li><p><strong>Implementación</strong>:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> opcion<span class="op">;</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">const</span> <span class="dt">char</span><span class="op">*</span> texto<span class="op">;</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">(*</span>accion<span class="op">)(</span><span class="dt">void</span><span class="op">);</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> MenuItem<span class="op">;</span></span></code></pre></div></li>
+<div class="sourceCode" id="cb17"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="dt">int</span> opcion<span class="op">;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="dt">const</span> <span class="dt">char</span><span class="op">*</span> texto<span class="op">;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="dt">void</span> <span class="op">(*</span>accion<span class="op">)(</span><span class="dt">void</span><span class="op">);</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="op">}</span> MenuItem<span class="op">;</span></span></code></pre></div></li>
 <li><p><strong>Beneficios</strong>: Fácil agregar nuevas opciones, navegación flexible</p></li>
 </ul>
 <h4 id="patrón-repository-capa-de-acceso-a-datos">3. <strong>Patrón Repository (Capa de Acceso a Datos)</strong></h4>
@@ -1313,41 +1315,41 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Aplicar migraciones simples</strong> (<code>ALTER TABLE</code>) si faltan columnas</li>
 <li><strong>Inicializar directorios de importación y exportación</strong></li>
 </ol>
-<div class="sourceCode" id="cb20"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Ejemplo simplificado</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> db_init<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(!</span>setup_database_paths<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(!</span>create_database_connection<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(!</span>create_database_schema<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  add_missing_columns<span class="op">();</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  get_import_dir<span class="op">();</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  get_export_dir<span class="op">();</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Ejemplo simplificado</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="dt">bool</span> db_init<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="cf">if</span> <span class="op">(!</span>setup_database_paths<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="cf">if</span> <span class="op">(!</span>create_database_connection<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="cf">if</span> <span class="op">(!</span>create_database_schema<span class="op">())</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1">&nbsp;</a>  add_missing_columns<span class="op">();</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1">&nbsp;</a>  get_import_dir<span class="op">();</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1">&nbsp;</a>  get_export_dir<span class="op">();</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="op">}</span></span></code></pre></div>
 <h3 id="consultas-comunes">Consultas Comunes</h3>
 <h4 id="estadísticas-por-camiseta">Estadísticas por Camiseta</h4>
-<div class="sourceCode" id="cb21"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> </span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    c.nombre,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">COUNT</span>(p.<span class="kw">id</span>) <span class="kw">as</span> partidos,</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">SUM</span>(p.goles) <span class="kw">as</span> goles_totales,</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">SUM</span>(p.asistencias) <span class="kw">as</span> asistencias_totales,</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">AVG</span>(p.rendimiento_general) <span class="kw">as</span> rendimiento_promedio</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> camiseta c</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> partido p <span class="kw">ON</span> c.<span class="kw">id</span> <span class="op">=</span> p.camiseta_id</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="kw">GROUP</span> <span class="kw">BY</span> c.<span class="kw">id</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> goles_totales <span class="kw">DESC</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">SELECT</span> </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1">&nbsp;</a>    c.nombre,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="fu">COUNT</span>(p.<span class="kw">id</span>) <span class="kw">as</span> partidos,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="fu">SUM</span>(p.goles) <span class="kw">as</span> goles_totales,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="fu">SUM</span>(p.asistencias) <span class="kw">as</span> asistencias_totales,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="fu">AVG</span>(p.rendimiento_general) <span class="kw">as</span> rendimiento_promedio</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">FROM</span> camiseta c</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">LEFT</span> <span class="kw">JOIN</span> partido p <span class="kw">ON</span> c.<span class="kw">id</span> <span class="op">=</span> p.camiseta_id</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">GROUP</span> <span class="kw">BY</span> c.<span class="kw">id</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">ORDER</span> <span class="kw">BY</span> goles_totales <span class="kw">DESC</span>;</span></code></pre></div>
 <h4 id="récords-históricos">Récords Históricos</h4>
-<div class="sourceCode" id="cb22"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> </span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">MAX</span>(goles) <span class="kw">as</span> max_goles,</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">MAX</span>(asistencias) <span class="kw">as</span> max_asistencias,</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">MAX</span>(rendimiento_general) <span class="kw">as</span> mejor_rendimiento</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> partido;</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">SELECT</span> </span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="fu">MAX</span>(goles) <span class="kw">as</span> max_goles,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="fu">MAX</span>(asistencias) <span class="kw">as</span> max_asistencias,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="fu">MAX</span>(rendimiento_general) <span class="kw">as</span> mejor_rendimiento</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">FROM</span> partido;</span></code></pre></div>
 <h4 id="análisis-de-lesiones">Análisis de Lesiones</h4>
-<div class="sourceCode" id="cb23"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> </span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    tipo,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">as</span> cantidad</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> lesion</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="kw">GROUP</span> <span class="kw">BY</span> tipo</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> cantidad <span class="kw">DESC</span>;</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">SELECT</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1">&nbsp;</a>    tipo,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1">&nbsp;</a>  <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">as</span> cantidad</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">FROM</span> lesion</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">GROUP</span> <span class="kw">BY</span> tipo</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">ORDER</span> <span class="kw">BY</span> cantidad <span class="kw">DESC</span>;</span></code></pre></div>
 <h2 id="módulo-de-estadísticas">Módulo de Estadísticas</h2>
 <p>El módulo de estadísticas proporciona información agregada sobre el rendimiento de las camisetas en los partidos:</p>
 <ul>
@@ -1550,30 +1552,30 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Comentarios</strong>: En español para consistencia con el proyecto</li>
 </ul>
 <h4 id="estructura-de-archivos">Estructura de Archivos</h4>
-<div class="sourceCode" id="cb24"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Ejemplo de estructura de archivo .h</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef MODULO_H</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MODULO_H</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Includes necesarios</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;db.h&quot;</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Constantes</span></span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MAX_NOMBRE </span><span class="dv">100</span></span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Estructuras</span></span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> id<span class="op">;</span></span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> nombre<span class="op">[</span>MAX_NOMBRE<span class="op">];</span></span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> MiEstructura<span class="op">;</span></span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Declaraciones de funciones</span></span>
-<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> crear_elemento<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
-<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> listar_elementos<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
-<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> modificar_elemento<span class="op">(</span><span class="dt">int</span> id<span class="op">);</span></span>
-<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> eliminar_elemento<span class="op">(</span><span class="dt">int</span> id<span class="op">);</span></span>
-<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif </span><span class="co">// MODULO_H</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Ejemplo de estructura de archivo .h</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#ifndef MODULO_H</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#define MODULO_H</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Includes necesarios</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#include </span><span class="im">&quot;db.h&quot;</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Constantes</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#define MAX_NOMBRE </span><span class="dv">100</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Estructuras</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="dt">int</span> id<span class="op">;</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1">&nbsp;</a>    <span class="dt">char</span> nombre<span class="op">[</span>MAX_NOMBRE<span class="op">];</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="op">}</span> MiEstructura<span class="op">;</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="co">// Declaraciones de funciones</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="dt">void</span> crear_elemento<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="dt">void</span> listar_elementos<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="dt">void</span> modificar_elemento<span class="op">(</span><span class="dt">int</span> id<span class="op">);</span></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="dt">void</span> eliminar_elemento<span class="op">(</span><span class="dt">int</span> id<span class="op">);</span></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1">&nbsp;</a></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1">&nbsp;</a><span class="pp">#endif </span><span class="co">// MODULO_H</span></span></code></pre></div>
 <h3 id="agregar-nuevas-funcionalidades">Agregar Nuevas Funcionalidades</h3>
 <h4 id="paso-1-planificación">Paso 1: Planificación</h4>
 <ol type="1">
