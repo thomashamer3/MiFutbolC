@@ -15,7 +15,6 @@
 #else
 #include "compat_windows.h"
 #include "direct.h"
-#include "shlobj.h"
 #endif
 
 #ifdef _WIN32

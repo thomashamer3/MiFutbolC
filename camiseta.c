@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 #ifndef _WIN32
 #include <spawn.h>
 #include <sys/wait.h>
