@@ -6,6 +6,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include <unistd.h>
 #endif
 
 #define LANG_DIR "langs"
@@ -31,7 +32,7 @@ static int load_file(const char *path)
     }
 #else
     file = fopen(path, "rb");
-    if (!f)
+    if (!file)
         return 0;
 #endif
 

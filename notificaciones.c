@@ -256,7 +256,7 @@ static void cumpleanos_jugadores(void)
         int anio;
         int mes;
         int dia;
-        if (sscanf_s(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
+        if (sscanf(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
         {
             count++;
             int dias = dia - dia_actual;

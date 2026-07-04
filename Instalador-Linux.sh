@@ -143,7 +143,7 @@ check_deps() {
 
   command -v "$CC" >/dev/null 2>&1 || missing+=("$CC")
   command -v pkg-config >/dev/null 2>&1 || missing+=(pkg-config)
-  pkg-config --exists libharu 2>/dev/null || missing+=(libhpdf-dev)
+  pkg-config --exists libharu 2>/dev/null || pkg-config --exists libhpdf 2>/dev/null || missing+=(libhpdf-dev)
   pkg-config --exists zlib 2>/dev/null || missing+=(zlib1g-dev)
   pkg-config --exists libpng 2>/dev/null || missing+=(libpng-dev)
 
@@ -434,68 +434,22 @@ warn_sqlite_windows_macros
 step_progress "Preparando herramientas opcionales de imagen"
 install_optional_image_tools
 
-# Source files
-SRC=(
-  analisis.c
-  bienestar.c
-  cJSON.c
-  camiseta.c
-  colecciones.c
-  cancha.c
-  db.c
-  estadisticas.c
-  estadisticas_meta.c
-  estadisticas_anio.c
-  estadisticas_generales.c
-  estadisticas_lesiones.c
-  estadisticas_mes.c
-  export.c
-  export_all.c
-  export_all_mejorado.c
-  export_camisetas.c
-  export_camisetas_mejorado.c
-  export_estadisticas.c
-  export_estadisticas_generales.c
-  export_lesiones.c
-  export_lesiones_mejorado.c
-  export_partidos.c
-  export_records_rankings.c
-  export_pdf.c
-  import.c
-  lesion.c
-  logros.c
-  main.c
-  menu.c
-  partido.c
-  records_rankings.c
-  pdfgen.c
-  sqlite3.c
-  utils.c
-  equipo.c
-  torneo.c
-  temporada.c
-  financiamiento.c
-  settings.c
-  entrenador_ia.c
-  carrera.c
-  dashboard.c
-  busqueda.c
-  calendario.c
-  atajos.c
-  musica.c
-  musica_helpers.c
-  random_utils.c
-  recordatorios.c
-  sqlite3_exports.c
-)
+# Source files (auto-discover all .c files, excluding tests/)
+SRC=()
+for f in *.c; do
+  case "$f" in
+    test_*) ;;
+    *) SRC+=("$f") ;;
+  esac
+done
 
 OUT="MiFutbolC"
 
 # Resolve compiler/linker flags from pkg-config when available
 step_progress "Resolviendo flags de compilacion"
 if command -v pkg-config >/dev/null 2>&1; then
-  PKG_CFLAGS="$(pkg-config --cflags libharu zlib libpng 2>/dev/null || true)"
-  PKG_LIBS="$(pkg-config --libs libharu zlib libpng 2>/dev/null || true)"
+  PKG_CFLAGS="$(pkg-config --cflags libharu 2>/dev/null || pkg-config --cflags libhpdf 2>/dev/null || true) $(pkg-config --cflags zlib libpng 2>/dev/null || true)"
+  PKG_LIBS="$(pkg-config --libs libharu 2>/dev/null || pkg-config --libs libhpdf 2>/dev/null || true) $(pkg-config --libs zlib libpng 2>/dev/null || true)"
   if [[ -n "${PKG_CFLAGS}" ]]; then
     CFLAGS+=" ${PKG_CFLAGS}"
   fi
