@@ -83,7 +83,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1782108991 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1783186790 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -99,7 +99,6 @@
 	<windows.h>
 	"compat_windows.h"
 	"direct.h"
-	"shlobj.h"
 	<sys/stat.h>
 
 1782268761 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
@@ -148,7 +147,7 @@
 	<io.h>
 	<process.h>
 
-1782271988 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1783186789 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"db.h"
 	"menu.h"
@@ -159,12 +158,13 @@
 	<stdlib.h>
 	<string.h>
 	<time.h>
+	<ctype.h>
 	<spawn.h>
 	<sys/wait.h>
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1782500455 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1783363603 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -2890,7 +2890,7 @@
 
 1780555176 d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.h
 
-1782269948 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.c
+1783188729 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.c
 	"notificaciones.h"
 	"menu.h"
 	"db.h"
@@ -2932,13 +2932,14 @@
 	"utils.h"
 	<stdio.h>
 
-1782270411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
+1783188728 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.c
 	"lang.h"
 	"cJSON.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<windows.h>
+	<unistd.h>
 
 1781130387 d:\anime\libros\lenguaje c\proyectos\mifutbolc\lang.h
 
@@ -3019,7 +3020,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1782498883 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1783363008 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"
@@ -3029,7 +3030,7 @@
 	<string.h>
 	<time.h>
 
-1782276046 d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.h
+1783362980 d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.h
 
 1782268770 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\botin.c
 	"botin.h"

@@ -249,6 +249,11 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     out_result->wind_kmh = 0.0;
     out_result->weather_code = 0;
     out_result->clima_json = NULL;
+    out_result->has_sun_data = 0;
+    out_result->sunrise_hour = 0;
+    out_result->sunrise_minute = 0;
+    out_result->sunset_hour = 0;
+    out_result->sunset_minute = 0;
 
     if (!son_parametros_validos(params)) return 0;
     if (es_fecha_futura(params)) return 0;
@@ -272,6 +277,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     snprintf(cmd, sizeof(cmd),
              "curl.exe -s --compressed --max-time 15 \"%s?latitude=%s&longitude=%s"
              "&start_date=%s&end_date=%s"
+             "&daily=sunrise,sunset"
              "&hourly=temperature_2m,apparent_temperature,"
              "precipitation,weather_code,wind_speed_10m"
              "&timezone=auto\" 2>&1",
@@ -295,6 +301,31 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
     if (ok)
     {
+        cJSON const *daily = cJSON_GetObjectItem(root, "daily");
+        if (daily)
+        {
+            cJSON const *sunrise_arr = cJSON_GetObjectItem(daily, "sunrise");
+            cJSON const *sunset_arr = cJSON_GetObjectItem(daily, "sunset");
+            if (sunrise_arr && cJSON_IsArray(sunrise_arr) && sunset_arr && cJSON_IsArray(sunset_arr))
+            {
+                cJSON const *sr = cJSON_GetArrayItem(sunrise_arr, 0);
+                cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
+                if (sr && cJSON_IsString(sr) && ss && cJSON_IsString(ss))
+                {
+                    int sh, sm, sshi, ssmi;
+                    if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
+                            sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
+                    {
+                        out_result->has_sun_data = 1;
+                        out_result->sunrise_hour = sh;
+                        out_result->sunrise_minute = sm;
+                        out_result->sunset_hour = sshi;
+                        out_result->sunset_minute = ssmi;
+                    }
+                }
+            }
+        }
+
         char *clima_str = cJSON_PrintUnformatted(root);
         if (clima_str) out_result->clima_json = clima_str;
     }

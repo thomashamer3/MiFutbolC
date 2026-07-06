@@ -105,56 +105,6 @@ static const char *tipo_partido_to_text(int tipo_partido)
     }
 }
 
-static const char *dia_to_text_por_hora(int hora)
-{
-    if (hora < 6)
-    {
-        return "Madrugada";
-    }
-    if (hora < 12)
-    {
-        return "Manana";
-    }
-    if (hora < 15)
-    {
-        return "Mediodia";
-    }
-    if (hora < 19)
-    {
-        return "Tarde";
-    }
-    if (hora < 21)
-    {
-        return "Atardecer";
-    }
-    return "Noche";
-}
-
-static int dia_codigo_por_hora(int hora)
-{
-    if (hora < 6)
-    {
-        return 1;
-    }
-    if (hora < 12)
-    {
-        return 2;
-    }
-    if (hora < 15)
-    {
-        return 3;
-    }
-    if (hora < 19)
-    {
-        return 4;
-    }
-    if (hora < 21)
-    {
-        return 5;
-    }
-    return 6;
-}
-
 static int obtener_hora_desde_fecha_hora(const char *fecha_hora, int *hora_out)
 {
     int hora = -1;
@@ -192,6 +142,51 @@ static int obtener_hora_desde_fecha_hora(const char *fecha_hora, int *hora_out)
     return 1;
 }
 
+static int obtener_mes_desde_fecha(const char *fecha_hora)
+{
+    if (!fecha_hora || !*fecha_hora)
+        return 0;
+
+    size_t len = strnlen_s(fecha_hora, 64);
+
+    /* Storage format: yyyy-mm-dd HH:MM */
+    if (len >= 7 && fecha_hora[4] == '-')
+    {
+        char buf[3] = {fecha_hora[5], fecha_hora[6], '\0'};
+        return atoi(buf);
+    }
+    /* Display format: dd/mm/yyyy HH:MM */
+    if (len >= 10 && fecha_hora[2] == '/')
+    {
+        char buf[3] = {fecha_hora[3], fecha_hora[4], '\0'};
+        return atoi(buf);
+    }
+    return 0;
+}
+
+static void obtener_limites_tarde_atardecer(int mes, int *tarde_fin, int *atardecer_fin)
+{
+    /* Fallback para Buenos Aires (~34.6°S) sin conexion a internet:
+     * Verano (Nov-Feb):  atardecer ~19:50-20:10 → Atardecer 19-21
+     * Otono  (Mar, Sep-Oct): atardecer ~19:10-19:30 → Atardecer 18-20
+     * Invierno (Abr-Ago): atardecer ~17:40-18:20 → Atardecer 17-19 */
+    if (mes >= 4 && mes <= 8)
+    {
+        *tarde_fin = 17;
+        *atardecer_fin = 19;
+    }
+    else if (mes == 3 || mes == 9 || mes == 10)
+    {
+        *tarde_fin = 18;
+        *atardecer_fin = 20;
+    }
+    else
+    {
+        *tarde_fin = 19;
+        *atardecer_fin = 21;
+    }
+}
+
 static int calcular_dia_desde_fecha_hora(const char *fecha_hora, int *dia_out)
 {
     int hora = 0;
@@ -201,7 +196,35 @@ static int calcular_dia_desde_fecha_hora(const char *fecha_hora, int *dia_out)
         return 0;
     }
 
-    *dia_out = dia_codigo_por_hora(hora);
+    int mes = obtener_mes_desde_fecha(fecha_hora);
+    int tarde_fin;
+    int atardecer_fin;
+    obtener_limites_tarde_atardecer(mes, &tarde_fin, &atardecer_fin);
+
+    if (hora < 6)
+    {
+        *dia_out = 1;
+    }
+    else if (hora < 12)
+    {
+        *dia_out = 2;
+    }
+    else if (hora < 15)
+    {
+        *dia_out = 3;
+    }
+    else if (hora < tarde_fin)
+    {
+        *dia_out = 4;
+    }
+    else if (hora < atardecer_fin)
+    {
+        *dia_out = 5;
+    }
+    else
+    {
+        *dia_out = 6;
+    }
     return 1;
 }
 
@@ -244,14 +267,29 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
 
 static const char *dia_partido_para_listado(const char *fecha_hora, int dia_codigo)
 {
-    int hora = 0;
-
-    if (obtener_hora_desde_fecha_hora(fecha_hora, &hora))
+    /* Preferir valor almacenado en BD (puede venir de Open-Meteo o ajuste manual) */
+    if (dia_codigo >= 1 && dia_codigo <= 6)
     {
-        return dia_to_text_por_hora(hora);
+        return dia_to_text(dia_codigo);
     }
 
-    return dia_to_text(dia_codigo);
+    /* Fallback: calcular desde la hora si el almacenado no es valido */
+    int hora = 0;
+    if (obtener_hora_desde_fecha_hora(fecha_hora, &hora))
+    {
+        int mes = obtener_mes_desde_fecha(fecha_hora);
+        int tarde_fin, atardecer_fin;
+        obtener_limites_tarde_atardecer(mes, &tarde_fin, &atardecer_fin);
+
+        if (hora < 6) return "Madrugada";
+        if (hora < 12) return "Manana";
+        if (hora < 15) return "Mediodia";
+        if (hora < tarde_fin) return "Tarde";
+        if (hora < atardecer_fin) return "Atardecer";
+        return "Noche";
+    }
+
+    return "Desconocido";
 }
 
 static void imprimir_marcador_global_si_disponible(sqlite3_stmt *stmt)
@@ -2973,6 +3011,17 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
         return;
     }
 
+    /* Extraer hora del partido (formato "YYYY-MM-DD HH:MM") */
+    int match_hora = 12, match_minuto = 0;
+    if (fecha && strlen(fecha) >= 16 && fecha[4] == '-' && fecha[10] == ' ')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        sscanf_s(fecha + 11, "%d:%d", &match_hora, &match_minuto);
+#else
+        sscanf(fecha + 11, "%d:%d", &match_hora, &match_minuto);
+#endif
+    }
+
     OpenMeteoParams omp;
     omp.latitud = lat;
     omp.longitud = lon;
@@ -2988,10 +3037,44 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
         return;
     }
 
+    /* Calcular dia desde datos solares reales si estan disponibles */
+    int dia_calculado = 0;
+    if (res.has_sun_data)
+    {
+        int total_minutos = match_hora * 60 + match_minuto;
+        int sunrise_min = res.sunrise_hour * 60 + res.sunrise_minute;
+        int sunset_min = res.sunset_hour * 60 + res.sunset_minute;
+
+        if (total_minutos < sunrise_min)
+        {
+            dia_calculado = 1; /* Madrugada */
+        }
+        else if (total_minutos < 12 * 60)
+        {
+            dia_calculado = 2; /* Manana */
+        }
+        else if (total_minutos < 15 * 60)
+        {
+            dia_calculado = 3; /* Mediodia */
+        }
+        else if (total_minutos < sunset_min - 60)
+        {
+            dia_calculado = 4; /* Tarde */
+        }
+        else if (total_minutos < sunset_min + 60)
+        {
+            dia_calculado = 5; /* Atardecer */
+        }
+        else
+        {
+            dia_calculado = 6; /* Noche */
+        }
+    }
+
     sqlite3_stmt *u = NULL;
     if (!db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
                          "precip_mm=?, wind_kmh=?, "
-                         "weather_code=?, clima_json=? WHERE id=?"))
+                         "weather_code=?, clima_json=?, dia=? WHERE id=?"))
     {
         openmeteo_result_free(&res);
         return;
@@ -3003,13 +3086,19 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
     sqlite3_bind_double(u, 4, res.wind_kmh);
     sqlite3_bind_int(u, 5, res.weather_code);
     sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
-    sqlite3_bind_int64(u, 7, id);
+    sqlite3_bind_int(u, 7, dia_calculado);
+    sqlite3_bind_int64(u, 8, id);
     sqlite3_step(u);
     db_stmt_release(u);
 
     printf("Clima registrado: %.1f°C (sensacion %.1f°C), %.1fmm precip, %.1f "
            "km/h viento\n",
            res.temp_c, res.apparent_temp_c, res.precip_mm, res.wind_kmh);
+    if (dia_calculado > 0)
+    {
+        printf("Franja horaria ajustada segun horario solar real: %s\n",
+               dia_to_text(dia_calculado));
+    }
     openmeteo_result_free(&res);
 }
 
@@ -5809,13 +5898,13 @@ void reordenar_partidos_por_fecha(void)
 {
     int total = 0;
     sqlite3_stmt *stmt = NULL;
-    if (db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM partido") &&
-            sqlite3_step(stmt) == SQLITE_ROW)
+    if (db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM partido") && sqlite3_step(stmt) == SQLITE_ROW)
     {
         total = sqlite3_column_int(stmt, 0);
     }
     db_stmt_release(stmt);
-    if (total < 2) return;
+    if (total < 2)
+        return;
 
     printf("Reordenando IDs de partidos por fecha...\n");
 
@@ -5848,7 +5937,8 @@ void reordenar_partidos_por_fecha(void)
         return;
     }
 
-    const char *sql_assign = "UPDATE partido SET id = (SELECT new_id FROM _pr WHERE old_id = -partido.id)";
+    const char *sql_assign =
+        "UPDATE partido SET id = (SELECT new_id FROM _pr WHERE old_id = -partido.id)";
     if (sqlite3_exec(db, sql_assign, NULL, NULL, &err) != SQLITE_OK)
     {
         printf("Error al reasignar IDs: %s\n", err);
@@ -5861,17 +5951,21 @@ void reordenar_partidos_por_fecha(void)
     {
         "UPDATE equipo SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE bienestar_sesion_mental SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "UPDATE bienestar_sesion_mental SET partido_id = (SELECT new_id FROM _pr WHERE old_id = "
+        "partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE carrera_partido_hito SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "UPDATE carrera_partido_hito SET partido_id = (SELECT new_id FROM _pr WHERE old_id = "
+        "partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE tactica_diagrama SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "UPDATE tactica_diagrama SET partido_id = (SELECT new_id FROM _pr WHERE old_id = "
+        "partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
         "UPDATE media SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
         "UPDATE lesion SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE quimica_jugador_estadistica SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
+        "UPDATE quimica_jugador_estadistica SET partido_id = (SELECT new_id FROM _pr WHERE old_id "
+        "= partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",
         "UPDATE partido_meta SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
         "WHERE partido_id IN (SELECT old_id FROM _pr)",

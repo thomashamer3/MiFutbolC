@@ -26,6 +26,11 @@ typedef struct
     int humidity;
     int weather_code;
     char *clima_json;
+    int has_sun_data;
+    int sunrise_hour;
+    int sunrise_minute;
+    int sunset_hour;
+    int sunset_minute;
 } OpenMeteoResult;
 
 int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result);
