@@ -705,7 +705,8 @@ enum
     DB_VERSION_PARTIDO_ATAJASTE_FIX = 10,
     DB_VERSION_CANCHA_CLIMA_REAL = 11,
     DB_VERSION_BOTIN = 12,
-    DB_VERSION_CURRENT = 12
+    DB_VERSION_CANCHA_MARCADOR = 13,
+    DB_VERSION_CURRENT = 13
 };
 
 static int get_user_version(int *out_version)
@@ -829,6 +830,7 @@ static void backfill_mes_anio_once(void)
 #define COL_CANCHA_TIENE_GRABACION "tiene_grabacion INTEGER DEFAULT 0"
 #define COL_CANCHA_LATITUD "latitud REAL DEFAULT NULL"
 #define COL_CANCHA_LONGITUD "longitud REAL DEFAULT NULL"
+#define COL_CANCHA_TIENE_MARCADOR "tiene_marcador INTEGER DEFAULT 2"
 
 #define COL_PARTIDO_RESULTADO "resultado INTEGER DEFAULT 0"
 #define COL_PARTIDO_RENDIMIENTO_GENERAL "rendimiento_general INTEGER DEFAULT 0"
@@ -969,7 +971,8 @@ static int create_database_schema(void)
         " " COL_CANCHA_CONTACTO_ALT ","
         " " COL_CANCHA_IMAGEN_RUTA ","
         " " COL_CANCHA_TIENE_GRABACION ","
-        " " COL_CANCHA_ACTIVA ");",
+        " " COL_CANCHA_ACTIVA ","
+        " " COL_CANCHA_TIENE_MARCADOR ");",
 
         "CREATE TABLE IF NOT EXISTS partido ("
         " id INTEGER PRIMARY KEY,"
@@ -1713,6 +1716,15 @@ static void add_botin_columns(void)
     ejecutar_alter_table_group(alter_statements, "botin");
 }
 
+static void add_cancha_marcador_column(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE cancha ADD COLUMN " COL_CANCHA_TIENE_MARCADOR ";", NULL
+    };
+    ejecutar_alter_table_group(alter_statements, "cancha_marcador");
+}
+
 static void add_missing_columns(void)
 {
     int current_version = 0;
@@ -1758,6 +1770,10 @@ static void add_missing_columns(void)
     if (current_version < DB_VERSION_BOTIN)
     {
         add_botin_columns();
+    }
+    if (current_version < DB_VERSION_CANCHA_MARCADOR)
+    {
+        add_cancha_marcador_column();
     }
 }
 

@@ -108,42 +108,47 @@ static void write_partido_html(FILE *file, sqlite3_stmt *stmt)
 
 /**
  * Export all partidos to CSV format.
- * Uses helper functions to keep the main function concise.
+ * Asks user for limit when there are many records.
  */
 void exportar_partidos_csv(void)
 {
-    export_partidos_generic("partidos.csv", write_partido_csv);
+    int limit = obtener_limite_exportacion_partidos();
+    export_partidos_generic("partidos.csv", write_partido_csv, limit);
 }
 
 /**
  * Export all partidos to TXT format.
- * Uses helper functions to keep the main function concise.
+ * Asks user for limit when there are many records.
  */
 void exportar_partidos_txt(void)
 {
-    export_partidos_generic("partidos.txt", write_partido_txt);
+    int limit = obtener_limite_exportacion_partidos();
+    export_partidos_generic("partidos.txt", write_partido_txt, limit);
 }
 
 /**
  * Export all partidos to JSON format.
- * Uses helper functions to keep the main function concise.
+ * Asks user for limit when there are many records.
  */
 void exportar_partidos_json(void)
 {
-    export_partidos_generic("partidos.json", write_partido_json);
+    int limit = obtener_limite_exportacion_partidos();
+    export_partidos_generic("partidos.json", write_partido_json, limit);
 }
 
 /**
  * Export all partidos to HTML format.
- * Uses helper functions to keep the main function concise.
+ * Asks user for limit when there are many records.
  */
 void exportar_partidos_html(void)
 {
-    export_partidos_generic("partidos.html", write_partido_html);
+    int limit = obtener_limite_exportacion_partidos();
+    export_partidos_generic("partidos.html", write_partido_html, limit);
 }
 
 /**
  * Export all partidos to all 4 formats using one SQL query.
+ * Asks user once for the limit.
  */
 void exportar_partidos_all(void)
 {
@@ -153,7 +158,14 @@ void exportar_partidos_all(void)
         return;
     }
 
-    sqlite3_stmt *stmt = prepare_partido_query(NULL);
+    int limit = obtener_limite_exportacion_partidos();
+    char order_by[64];
+    if (limit > 0)
+        snprintf(order_by, sizeof(order_by), "ORDER BY p.fecha_hora DESC LIMIT %d", limit);
+    else
+        snprintf(order_by, sizeof(order_by), "ORDER BY p.fecha_hora DESC");
+
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (!stmt)
     {
         return;

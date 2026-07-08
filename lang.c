@@ -132,6 +132,7 @@ static int try_load(const char *code)
     ssize_t r = readlink("/proc/self/exe", self, sizeof(self) - 1);
     if (r > 0)
     {
+        self[r] = '\0';
         char *p = strrchr(self, '/');
         while (p)
         {

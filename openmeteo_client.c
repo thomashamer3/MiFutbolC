@@ -239,21 +239,52 @@ static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result
     return 1;
 }
 
+static void openmeteo_result_init(OpenMeteoResult *r)
+{
+    if (!r) return;
+    r->temp_c = 0.0;
+    r->apparent_temp_c = 0.0;
+    r->precip_mm = 0.0;
+    r->wind_kmh = 0.0;
+    r->weather_code = 0;
+    r->clima_json = NULL;
+    r->has_sun_data = 0;
+    r->sunrise_hour = 0;
+    r->sunrise_minute = 0;
+    r->sunset_hour = 0;
+    r->sunset_minute = 0;
+}
+
+static void parse_sun_data(cJSON *root, OpenMeteoResult *out)
+{
+    if (!root || !out) return;
+    cJSON const *daily = cJSON_GetObjectItem(root, "daily");
+    if (!daily) return;
+    cJSON const *sunrise_arr = cJSON_GetObjectItem(daily, "sunrise");
+    cJSON const *sunset_arr = cJSON_GetObjectItem(daily, "sunset");
+    if (!sunrise_arr || !cJSON_IsArray(sunrise_arr) || !sunset_arr || !cJSON_IsArray(sunset_arr))
+        return;
+    cJSON const *sr = cJSON_GetArrayItem(sunrise_arr, 0);
+    cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
+    if (!sr || !cJSON_IsString(sr) || !ss || !cJSON_IsString(ss))
+        return;
+    int sh, sm, sshi, ssmi;
+    if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
+            sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
+    {
+        out->has_sun_data = 1;
+        out->sunrise_hour = sh;
+        out->sunrise_minute = sm;
+        out->sunset_hour = sshi;
+        out->sunset_minute = ssmi;
+    }
+}
+
 int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 {
     if (!params || !out_result) return 0;
 
-    out_result->temp_c = 0.0;
-    out_result->apparent_temp_c = 0.0;
-    out_result->precip_mm = 0.0;
-    out_result->wind_kmh = 0.0;
-    out_result->weather_code = 0;
-    out_result->clima_json = NULL;
-    out_result->has_sun_data = 0;
-    out_result->sunrise_hour = 0;
-    out_result->sunrise_minute = 0;
-    out_result->sunset_hour = 0;
-    out_result->sunset_minute = 0;
+    openmeteo_result_init(out_result);
 
     if (!son_parametros_validos(params)) return 0;
     if (es_fecha_futura(params)) return 0;
@@ -301,30 +332,7 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 
     if (ok)
     {
-        cJSON const *daily = cJSON_GetObjectItem(root, "daily");
-        if (daily)
-        {
-            cJSON const *sunrise_arr = cJSON_GetObjectItem(daily, "sunrise");
-            cJSON const *sunset_arr = cJSON_GetObjectItem(daily, "sunset");
-            if (sunrise_arr && cJSON_IsArray(sunrise_arr) && sunset_arr && cJSON_IsArray(sunset_arr))
-            {
-                cJSON const *sr = cJSON_GetArrayItem(sunrise_arr, 0);
-                cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
-                if (sr && cJSON_IsString(sr) && ss && cJSON_IsString(ss))
-                {
-                    int sh, sm, sshi, ssmi;
-                    if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
-                            sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
-                    {
-                        out_result->has_sun_data = 1;
-                        out_result->sunrise_hour = sh;
-                        out_result->sunrise_minute = sm;
-                        out_result->sunset_hour = sshi;
-                        out_result->sunset_minute = ssmi;
-                    }
-                }
-            }
-        }
+        parse_sun_data(root, out_result);
 
         char *clima_str = cJSON_PrintUnformatted(root);
         if (clima_str) out_result->clima_json = clima_str;

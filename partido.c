@@ -2964,6 +2964,60 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     }
 }
 
+static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, int *dia,
+                                      int *hora, int *minuto)
+{
+    if (!fecha) return 0;
+    *anio = 0;
+    *mes = 0;
+    *dia = 0;
+    *hora = 12;
+    *minuto = 0;
+    if (fecha[4] == '-' && fecha[7] == '-')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(fecha, "%d-%d-%d", anio, mes, dia) < 3) return 0;
+#else
+        if (sscanf(fecha, "%d-%d-%d", anio, mes, dia) < 3) return 0;
+#endif
+    }
+    else if (fecha[2] == '/' && fecha[5] == '/')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        if (sscanf_s(fecha, "%d/%d/%d", dia, mes, anio) < 3) return 0;
+#else
+        if (sscanf(fecha, "%d/%d/%d", dia, mes, anio) < 3) return 0;
+#endif
+    }
+    else
+    {
+        return 0;
+    }
+    if (strlen(fecha) >= 16 && fecha[4] == '-' && fecha[10] == ' ')
+    {
+#if defined(_WIN32) && defined(_MSC_VER)
+        sscanf_s(fecha + 11, "%d:%d", hora, minuto);
+#else
+        sscanf(fecha + 11, "%d:%d", hora, minuto);
+#endif
+    }
+    return 1;
+}
+
+static int calcular_franja_horaria(int hora, int minuto, const OpenMeteoResult *res)
+{
+    if (!res->has_sun_data) return 0;
+    int total_minutos = hora * 60 + minuto;
+    int sunrise_min = res->sunrise_hour * 60 + res->sunrise_minute;
+    int sunset_min = res->sunset_hour * 60 + res->sunset_minute;
+    if (total_minutos < sunrise_min) return 1;
+    if (total_minutos < 12 * 60) return 2;
+    if (total_minutos < 15 * 60) return 3;
+    if (total_minutos < sunset_min - 60) return 4;
+    if (total_minutos < sunset_min + 60) return 5;
+    return 6;
+}
+
 static void registrar_clima_partido(long long id, int cancha_id, const char *fecha)
 {
     double lat = 0.0;
@@ -2983,43 +3037,11 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
     {
         return;
     }
-    int anio = 0;
-    int mes = 0;
-    int dia = 0;
-    if (fecha && fecha[4] == '-' && fecha[7] == '-')
-    {
-#if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(fecha, "%d-%d-%d", &anio, &mes, &dia) < 3)
-            return;
-#else
-        if (sscanf(fecha, "%d-%d-%d", &anio, &mes, &dia) < 3)
-            return;
-#endif
-    }
-    else if (fecha && fecha[2] == '/' && fecha[5] == '/')
-    {
-#if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
-            return;
-#else
-        if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) < 3)
-            return;
-#endif
-    }
-    else
+
+    int anio, mes, dia, match_hora, match_minuto;
+    if (!parsear_fecha_hora_partido(fecha, &anio, &mes, &dia, &match_hora, &match_minuto))
     {
         return;
-    }
-
-    /* Extraer hora del partido (formato "YYYY-MM-DD HH:MM") */
-    int match_hora = 12, match_minuto = 0;
-    if (fecha && strlen(fecha) >= 16 && fecha[4] == '-' && fecha[10] == ' ')
-    {
-#if defined(_WIN32) && defined(_MSC_VER)
-        sscanf_s(fecha + 11, "%d:%d", &match_hora, &match_minuto);
-#else
-        sscanf(fecha + 11, "%d:%d", &match_hora, &match_minuto);
-#endif
     }
 
     OpenMeteoParams omp;
@@ -3037,39 +3059,7 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
         return;
     }
 
-    /* Calcular dia desde datos solares reales si estan disponibles */
-    int dia_calculado = 0;
-    if (res.has_sun_data)
-    {
-        int total_minutos = match_hora * 60 + match_minuto;
-        int sunrise_min = res.sunrise_hour * 60 + res.sunrise_minute;
-        int sunset_min = res.sunset_hour * 60 + res.sunset_minute;
-
-        if (total_minutos < sunrise_min)
-        {
-            dia_calculado = 1; /* Madrugada */
-        }
-        else if (total_minutos < 12 * 60)
-        {
-            dia_calculado = 2; /* Manana */
-        }
-        else if (total_minutos < 15 * 60)
-        {
-            dia_calculado = 3; /* Mediodia */
-        }
-        else if (total_minutos < sunset_min - 60)
-        {
-            dia_calculado = 4; /* Tarde */
-        }
-        else if (total_minutos < sunset_min + 60)
-        {
-            dia_calculado = 5; /* Atardecer */
-        }
-        else
-        {
-            dia_calculado = 6; /* Noche */
-        }
-    }
+    int dia_calculado = calcular_franja_horaria(match_hora, match_minuto, &res);
 
     sqlite3_stmt *u = NULL;
     if (!db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "

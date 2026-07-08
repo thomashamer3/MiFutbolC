@@ -16,7 +16,41 @@
 #define EXPORT_PARTIDOS_HELPERS_UNUSED
 #endif
 
+#define PARTIDO_EXPORT_LIMIT 50
+
 /* ===================== DATABASE HELPERS ===================== */
+
+/**
+ * Counts total partido records in the database.
+ */
+static EXPORT_PARTIDOS_HELPERS_UNUSED int contar_partidos_total(void)
+{
+    sqlite3_stmt *stmt;
+    int total = 0;
+    if (sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM partido", -1, &stmt, NULL) == SQLITE_OK)
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            total = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
+    }
+    return total;
+}
+
+/**
+ * Asks the user if they want to limit export to last 50 or export all.
+ * Returns PARTIDO_EXPORT_LIMIT for limited, 0 for all.
+ */
+static EXPORT_PARTIDOS_HELPERS_UNUSED int obtener_limite_exportacion_partidos(void)
+{
+    int total = contar_partidos_total();
+    if (total <= PARTIDO_EXPORT_LIMIT)
+        return 0;
+
+    printf("Hay %d partidos registrados.\n", total);
+    if (confirmar("Desea exportar solo los ultimos 50?"))
+        return PARTIDO_EXPORT_LIMIT;
+    return 0;
+}
 
 /**
  * Checks if there are any partido records in the database.
@@ -86,7 +120,7 @@ static void close_export_file(FILE* file)
  * Generic export function for handling common export patterns.
  * Takes a filename and a write function pointer to handle format-specific writing.
  */
-static EXPORT_PARTIDOS_HELPERS_UNUSED void export_partidos_generic(const char* filename, void (*write_function)(FILE*, sqlite3_stmt*))
+static EXPORT_PARTIDOS_HELPERS_UNUSED void export_partidos_generic(const char* filename, void (*write_function)(FILE*, sqlite3_stmt*), int limit)
 {
     if (!check_partido_records())
     {
@@ -98,7 +132,13 @@ static EXPORT_PARTIDOS_HELPERS_UNUSED void export_partidos_generic(const char* f
     if (!f)
         return;
 
-    sqlite3_stmt *stmt = prepare_partido_query(NULL);
+    char order_by[64];
+    if (limit > 0)
+        snprintf(order_by, sizeof(order_by), "ORDER BY p.fecha_hora DESC LIMIT %d", limit);
+    else
+        snprintf(order_by, sizeof(order_by), "ORDER BY p.fecha_hora DESC");
+
+    sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (!stmt)
     {
         close_export_file(f);
