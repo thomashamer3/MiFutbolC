@@ -1501,10 +1501,30 @@ void crear_cancha(void)
 {
     CanchaInfoDetalle info = {0};
     long long id = obtener_siguiente_id("cancha");
+    int modo = 0;
+
+    while (modo < 1 || modo > 2)
+    {
+        clear_screen();
+        print_header("CREAR CANCHA");
+        printf("Seleccione el modo de carga:\n");
+        printf("1. Simple (Nombre y Direccion)\n");
+        printf("2. Completo (Todos los datos)\n");
+        printf("0. Volver\n");
+        modo = input_int("Opcion: ");
+        if (modo == 0)
+        {
+            return;
+        }
+    }
 
     solicitar_nombre_cancha("Nombre de la cancha: ", info.nombre, sizeof(info.nombre));
 
-    if (settings_get()->mode != MODE_SIMPLE)
+    if (modo == 1)
+    {
+        solicitar_campo_no_vacio("Direccion: ", info.direccion, sizeof(info.direccion));
+    }
+    else
     {
         solicitar_telefono_no_vacio("Numero de telefono: ", info.telefono, sizeof(info.telefono));
         solicitar_campo_no_vacio("Direccion: ", info.direccion, sizeof(info.direccion));
