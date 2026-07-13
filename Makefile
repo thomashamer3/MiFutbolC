@@ -41,7 +41,8 @@ endif
 # Auto-discover all .c files in the project root so new files are picked up
 # automatically (e.g. export_common.c, undo.c, backup.c, filtros.c, etc.).
 # Files under tests/, sqlite/, and unity/ are excluded explicitly below.
-SRC = $(filter-out $(wildcard tests/*.c) $(wildcard sqlite/*.c) tests/unity/unity.c, $(wildcard *.c))
+# benchmark_export.c is excluded because it has its own main() (standalone tool).
+SRC = $(filter-out $(wildcard tests/*.c) $(wildcard sqlite/*.c) tests/unity/unity.c benchmark_export.c, $(wildcard *.c))
 
 OUT = MiFutbolC
 
