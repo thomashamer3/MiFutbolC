@@ -21,19 +21,7 @@ static struct termios old_term;
 
 static void set_nonblocking_mode(void)
 {
-    struct termios new_term;
-
     tcgetattr(STDIN_FILENO, &old_term);
-    new_term = old_term;
-
-    new_term.c_lflag &= ~(ICANON | ECHO);
-    new_term.c_cc[VMIN] = 0;
-    new_term.c_cc[VTIME] = 0;
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
-
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 }
 
 static void restore_terminal_mode(void)
