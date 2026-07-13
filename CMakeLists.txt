@@ -34,8 +34,6 @@ foreach(_f ${ALL_C_SOURCES})
         list(APPEND TEST_SOURCES "${_f}")
     elseif(_name STREQUAL "main.c")
         set(MAIN_SOURCE "${_f}")
-    elseif(_name STREQUAL "benchmark_export.c")
-        # Standalone benchmark tool with its own main() — exclude from core
     else()
         list(APPEND CORE_SOURCES "${_f}")
     endif()
