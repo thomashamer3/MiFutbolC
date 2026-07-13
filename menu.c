@@ -6,11 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 #ifdef _WIN32
-#ifdef _WIN32
 #include <windows.h>
 #else
 #include "compat_windows.h"
-#endif
 #endif
 #include "analisis.h"
 #include "bienestar.h"

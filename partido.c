@@ -278,14 +278,20 @@ static const char *dia_partido_para_listado(const char *fecha_hora, int dia_codi
     if (obtener_hora_desde_fecha_hora(fecha_hora, &hora))
     {
         int mes = obtener_mes_desde_fecha(fecha_hora);
-        int tarde_fin, atardecer_fin;
+        int tarde_fin;
+        int atardecer_fin;
         obtener_limites_tarde_atardecer(mes, &tarde_fin, &atardecer_fin);
 
-        if (hora < 6) return "Madrugada";
-        if (hora < 12) return "Manana";
-        if (hora < 15) return "Mediodia";
-        if (hora < tarde_fin) return "Tarde";
-        if (hora < atardecer_fin) return "Atardecer";
+        if (hora < 6)
+            return "Madrugada";
+        if (hora < 12)
+            return "Manana";
+        if (hora < 15)
+            return "Mediodia";
+        if (hora < tarde_fin)
+            return "Tarde";
+        if (hora < atardecer_fin)
+            return "Atardecer";
         return "Noche";
     }
 
@@ -2964,10 +2970,11 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     }
 }
 
-static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, int *dia,
-                                      int *hora, int *minuto)
+static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, int *dia, int *hora,
+                                      int *minuto)
 {
-    if (!fecha) return 0;
+    if (!fecha)
+        return 0;
     *anio = 0;
     *mes = 0;
     *dia = 0;
@@ -2976,17 +2983,21 @@ static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, in
     if (fecha[4] == '-' && fecha[7] == '-')
     {
 #if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(fecha, "%d-%d-%d", anio, mes, dia) < 3) return 0;
+        if (sscanf_s(fecha, "%d-%d-%d", anio, mes, dia) < 3)
+            return 0;
 #else
-        if (sscanf(fecha, "%d-%d-%d", anio, mes, dia) < 3) return 0;
+        if (sscanf(fecha, "%d-%d-%d", anio, mes, dia) < 3)
+            return 0;
 #endif
     }
     else if (fecha[2] == '/' && fecha[5] == '/')
     {
 #if defined(_WIN32) && defined(_MSC_VER)
-        if (sscanf_s(fecha, "%d/%d/%d", dia, mes, anio) < 3) return 0;
+        if (sscanf_s(fecha, "%d/%d/%d", dia, mes, anio) < 3)
+            return 0;
 #else
-        if (sscanf(fecha, "%d/%d/%d", dia, mes, anio) < 3) return 0;
+        if (sscanf(fecha, "%d/%d/%d", dia, mes, anio) < 3)
+            return 0;
 #endif
     }
     else
@@ -3006,15 +3017,21 @@ static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, in
 
 static int calcular_franja_horaria(int hora, int minuto, const OpenMeteoResult *res)
 {
-    if (!res->has_sun_data) return 0;
+    if (!res->has_sun_data)
+        return 0;
     int total_minutos = hora * 60 + minuto;
     int sunrise_min = res->sunrise_hour * 60 + res->sunrise_minute;
     int sunset_min = res->sunset_hour * 60 + res->sunset_minute;
-    if (total_minutos < sunrise_min) return 1;
-    if (total_minutos < 12 * 60) return 2;
-    if (total_minutos < 15 * 60) return 3;
-    if (total_minutos < sunset_min - 60) return 4;
-    if (total_minutos < sunset_min + 60) return 5;
+    if (total_minutos < sunrise_min)
+        return 1;
+    if (total_minutos < 12 * 60)
+        return 2;
+    if (total_minutos < 15 * 60)
+        return 3;
+    if (total_minutos < sunset_min - 60)
+        return 4;
+    if (total_minutos < sunset_min + 60)
+        return 5;
     return 6;
 }
 
@@ -3038,7 +3055,11 @@ static void registrar_clima_partido(long long id, int cancha_id, const char *fec
         return;
     }
 
-    int anio, mes, dia, match_hora, match_minuto;
+    int anio;
+    int mes;
+    int dia;
+    int match_hora;
+    int match_minuto;
     if (!parsear_fecha_hora_partido(fecha, &anio, &mes, &dia, &match_hora, &match_minuto))
     {
         return;

@@ -3777,41 +3777,6 @@ void extraer_estadistica_anio(sqlite3_stmt *stmt, EstadisticaAnio *stats)
     stats->avg_asistencias = sqlite3_column_double(stmt, 6);
 }
 
-#if defined(_WIN32)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void app_escape_single_quotes_ps(const char *src, char *dst, size_t dst_size)
-{
-    if (!src || !dst || dst_size == 0)
-    {
-        return;
-    }
-
-    size_t j = 0;
-    const char *p = src;
-    while (*p != '\0' && j + 1 < dst_size)
-    {
-        if (*p == '\'')
-        {
-            if (j + 2 >= dst_size)
-            {
-                break;
-            }
-            dst[j++] = '\'';
-            dst[j++] = '\'';
-        }
-        else
-        {
-            dst[j++] = *p;
-        }
-        p++;
-    }
-    dst[j] = '\0';
-}
-
-#pragma GCC diagnostic pop
-#endif
-
 static int app_command_has_safe_chars(const char *cmd)
 {
     if (!cmd || cmd[0] == '\0')

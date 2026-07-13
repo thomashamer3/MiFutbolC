@@ -59,11 +59,13 @@ static int es_fecha_futura(const OpenMeteoParams *params)
 
 static bool contiene_shell_metachar(const char *s)
 {
-    if (!s) return true;
+    if (!s)
+        return true;
     while (*s)
     {
         unsigned char c = (unsigned char)*s;
-        if (c <= 0x1F || c == 0x7F) return true;
+        if (c <= 0x1F || c == 0x7F)
+            return true;
         switch (c)
         {
         case ';':
@@ -100,11 +102,16 @@ static bool contiene_shell_metachar(const char *s)
 
 static bool son_parametros_validos(const OpenMeteoParams *params)
 {
-    if (params->latitud < -90.0 || params->latitud > 90.0) return false;
-    if (params->longitud < -180.0 || params->longitud > 180.0) return false;
-    if (params->anio < 1900 || params->anio > 2100) return false;
-    if (params->mes < 1 || params->mes > 12) return false;
-    if (params->dia < 1 || params->dia > 31) return false;
+    if (params->latitud < -90.0 || params->latitud > 90.0)
+        return false;
+    if (params->longitud < -180.0 || params->longitud > 180.0)
+        return false;
+    if (params->anio < 1900 || params->anio > 2100)
+        return false;
+    if (params->mes < 1 || params->mes > 12)
+        return false;
+    if (params->dia < 1 || params->dia > 31)
+        return false;
     return true;
 }
 
@@ -167,11 +174,13 @@ static char *descargar_json_clima(const char *cmd)
 
 static double acumular_array(cJSON const *arr, int i, int *count)
 {
-    if (!arr || !cJSON_IsArray(arr)) return 0.0;
+    if (!arr || !cJSON_IsArray(arr))
+        return 0.0;
     cJSON const *item = cJSON_GetArrayItem(arr, i);
     if (item && cJSON_IsNumber(item))
     {
-        if (count) (*count)++;
+        if (count)
+            (*count)++;
         return item->valuedouble;
     }
     return 0.0;
@@ -179,7 +188,8 @@ static double acumular_array(cJSON const *arr, int i, int *count)
 
 static int obtener_codigo_weather(cJSON const *code_arr, int i)
 {
-    if (!code_arr || !cJSON_IsArray(code_arr)) return -1;
+    if (!code_arr || !cJSON_IsArray(code_arr))
+        return -1;
     cJSON const *c = cJSON_GetArrayItem(code_arr, i);
     return (c && cJSON_IsNumber(c)) ? (int)c->valuedouble : -1;
 }
@@ -219,7 +229,8 @@ static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result
     int valid_count = 0;
     int apparent_count = 0;
     int *wcodes = (int *)malloc((size_t)count * sizeof(int));
-    if (!wcodes) return 0;
+    if (!wcodes)
+        return 0;
 
     for (int i = 0; i < count; i++)
     {
@@ -241,7 +252,8 @@ static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result
 
 static void openmeteo_result_init(OpenMeteoResult *r)
 {
-    if (!r) return;
+    if (!r)
+        return;
     r->temp_c = 0.0;
     r->apparent_temp_c = 0.0;
     r->precip_mm = 0.0;
@@ -255,11 +267,13 @@ static void openmeteo_result_init(OpenMeteoResult *r)
     r->sunset_minute = 0;
 }
 
-static void parse_sun_data(cJSON *root, OpenMeteoResult *out)
+static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
 {
-    if (!root || !out) return;
+    if (!root || !out)
+        return;
     cJSON const *daily = cJSON_GetObjectItem(root, "daily");
-    if (!daily) return;
+    if (!daily)
+        return;
     cJSON const *sunrise_arr = cJSON_GetObjectItem(daily, "sunrise");
     cJSON const *sunset_arr = cJSON_GetObjectItem(daily, "sunset");
     if (!sunrise_arr || !cJSON_IsArray(sunrise_arr) || !sunset_arr || !cJSON_IsArray(sunset_arr))
@@ -268,8 +282,17 @@ static void parse_sun_data(cJSON *root, OpenMeteoResult *out)
     cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
     if (!sr || !cJSON_IsString(sr) || !ss || !cJSON_IsString(ss))
         return;
-    int sh, sm, sshi, ssmi;
+    int sh;
+    int sm;
+    int sshi;
+    int ssmi;
+#ifdef _MSC_VER
+#pragma warning(suppress: 4996)
+#endif
     if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
+#ifdef _MSC_VER
+#pragma warning(suppress: 4996)
+#endif
             sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
     {
         out->has_sun_data = 1;
@@ -282,12 +305,15 @@ static void parse_sun_data(cJSON *root, OpenMeteoResult *out)
 
 int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
 {
-    if (!params || !out_result) return 0;
+    if (!params || !out_result)
+        return 0;
 
     openmeteo_result_init(out_result);
 
-    if (!son_parametros_validos(params)) return 0;
-    if (es_fecha_futura(params)) return 0;
+    if (!son_parametros_validos(params))
+        return 0;
+    if (es_fecha_futura(params))
+        return 0;
 
     char date_str[11];
     snprintf(date_str, sizeof(date_str), "%04d-%02d-%02d", params->anio, params->mes, params->dia);
@@ -315,7 +341,8 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
              OWM_ARCHIVE_URL_BASE, lat_str, lon_str, date_str, date_str);
 
     char *json_data = descargar_json_clima(cmd);
-    if (!json_data) return 0;
+    if (!json_data)
+        return 0;
 
     cJSON *root = cJSON_Parse(json_data);
     free(json_data);
@@ -323,8 +350,10 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     if (!root)
     {
         const char *err = cJSON_GetErrorPtr();
-        if (err) printf("Error parseando JSON cerca de:\n%s\n", err);
-        else printf("Error: JSON invalido (razon desconocida)\n");
+        if (err)
+            printf("Error parseando JSON cerca de:\n%s\n", err);
+        else
+            printf("Error: JSON invalido (razon desconocida)\n");
         return 0;
     }
 
@@ -335,7 +364,8 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
         parse_sun_data(root, out_result);
 
         char *clima_str = cJSON_PrintUnformatted(root);
-        if (clima_str) out_result->clima_json = clima_str;
+        if (clima_str)
+            out_result->clima_json = clima_str;
     }
 
     cJSON_Delete(root);

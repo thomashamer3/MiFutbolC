@@ -109,7 +109,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1782341925 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1783972904 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"atajos.h"
@@ -164,7 +164,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1783547123 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1783972192 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -224,7 +224,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1782270411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1783972895 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"settings.h"
 	"utils.h"
@@ -347,7 +347,7 @@
 	<stdio.h>
 	<string.h>
 
-1783547813 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1783971988 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"cancha.h"
 	"cJSON.h"
 	"db.h"
@@ -361,6 +361,7 @@
 	<math.h>
 	<stdio.h>
 	<stdlib.h>
+	<stdint.h>
 	<string.h>
 
 1780797361 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cjson.c
@@ -2890,7 +2891,7 @@
 
 1780555176 d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.h
 
-1783188729 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.c
+1783972080 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\notificaciones.c
 	"notificaciones.h"
 	"menu.h"
 	"db.h"
@@ -3020,7 +3021,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1783546812 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1783972192 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"

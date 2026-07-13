@@ -256,6 +256,9 @@ static void cumpleanos_jugadores(void)
         int anio;
         int mes;
         int dia;
+#ifdef _MSC_VER
+#pragma warning(suppress: 4996)
+#endif
         if (sscanf(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
         {
             count++;

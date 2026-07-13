@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 static double parse_double_c_locale(const char *str)
@@ -773,6 +774,13 @@ typedef struct
     double longitud;
 } CanchaCoordenadas;
 
+enum
+{
+    CANCHA_FLAG_ACTIVADA     = 1 << 0,
+    CANCHA_FLAG_GRABACION    = 1 << 1,
+    CANCHA_FLAG_MARCADOR     = 1 << 2,
+};
+
 typedef struct
 {
     char nombre[100];
@@ -792,9 +800,7 @@ typedef struct
     char estado[50];
     char descripcion[200];
     char contacto_alt[120];
-    int activa;
-    int tiene_grabacion;
-    int tiene_marcador;
+    uint8_t flags;
     CanchaCoordenadas coordenadas;
 } CanchaInfoDetalle;
 
@@ -838,9 +844,11 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
     trim_whitespace(info->descripcion);
     solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt,
                              sizeof(info->contacto_alt));
-    info->tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
-    info->tiene_marcador = input_int("Tiene marcador? (1=SI, 2=NO): ");
-    if (info->tiene_marcador != 1) info->tiene_marcador = 2;
+    if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
+        info->flags |= CANCHA_FLAG_GRABACION;
+    int marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
+    if (marcador_val == 1)
+        info->flags |= CANCHA_FLAG_MARCADOR;
 
     if (settings_get()->mode != MODE_SIMPLE)
     {
@@ -938,10 +946,13 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
              (const char *)sqlite3_column_text(stmt, 18));
     snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s",
              (const char *)sqlite3_column_text(stmt, 19));
-    info->activa = sqlite3_column_int(stmt, 20) == 1;
-    info->tiene_grabacion = sqlite3_column_int(stmt, 21) ? 1 : 0;
-    info->tiene_marcador = sqlite3_column_int(stmt, 22);
-    if (info->tiene_marcador != 1) info->tiene_marcador = 2;
+    info->flags = 0;
+    if (sqlite3_column_int(stmt, 20) == 1)
+        info->flags |= CANCHA_FLAG_ACTIVADA;
+    if (sqlite3_column_int(stmt, 21))
+        info->flags |= CANCHA_FLAG_GRABACION;
+    if (sqlite3_column_int(stmt, 22) == 1)
+        info->flags |= CANCHA_FLAG_MARCADOR;
     info->coordenadas.latitud = sqlite3_column_double(stmt, 23);
     info->coordenadas.longitud = sqlite3_column_double(stmt, 24);
 
@@ -985,9 +996,9 @@ static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
         format_double_es(info->coordenadas.longitud, lon_str, sizeof(lon_str), 6);
         printf("Coordenadas        : %s, %s\n", lat_str, lon_str);
     }
-    printf("Grabacion Partido  : %s\n", info->tiene_grabacion ? "SI" : "NO");
-    printf("Marcador           : %s\n", info->tiene_marcador == 1 ? "SI" : "NO");
-    printf("Estado             : %s\n", info->activa ? "ACTIVA" : "INACTIVA");
+    printf("Grabacion Partido  : %s\n", (info->flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
+    printf("Marcador           : %s\n", (info->flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
+    printf("Estado             : %s\n", (info->flags & CANCHA_FLAG_ACTIVADA) ? "ACTIVA" : "INACTIVA");
     printf("========================================\n");
 }
 
@@ -1018,7 +1029,7 @@ static int cancha_necesita_completar_info(const CanchaInfoDetalle *info)
         info->precio_hora_dia_centavos == 0, info->precio_hora_noche_centavos == 0,
         info->servicios.vestuarios == 0,     info->servicios.duchas == 0,
         info->servicios.buffet == 0,         info->servicios.estacionamiento == 0,
-        info->cantidad_canchas <= 1,         info->tiene_marcador == 2
+        info->cantidad_canchas <= 1,         !(info->flags & CANCHA_FLAG_MARCADOR)
     };
 
     for (size_t i = 0; i < sizeof(condiciones) / sizeof(condiciones[0]); i++)
@@ -1110,8 +1121,8 @@ static int completar_informacion_cancha(int id)
     sqlite3_bind_text(stmt, 17, info.estado, -1, DB_TRANSIENT);
     sqlite3_bind_text(stmt, 18, info.descripcion, -1, DB_TRANSIENT);
     sqlite3_bind_text(stmt, 19, info.contacto_alt, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 20, info.tiene_grabacion);
-    sqlite3_bind_int(stmt, 21, info.tiene_marcador);
+    sqlite3_bind_int(stmt, 20, (info.flags & CANCHA_FLAG_GRABACION) ? 1 : 0);
+    sqlite3_bind_int(stmt, 21, (info.flags & CANCHA_FLAG_MARCADOR) ? 1 : 2);
     sqlite3_bind_int(stmt, 22, id);
 
     int ok = sqlite3_step(stmt) == SQLITE_DONE;
@@ -1561,9 +1572,11 @@ void crear_cancha(void)
         trim_whitespace(info.descripcion);
         solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info.contacto_alt,
                                  sizeof(info.contacto_alt));
-        info.tiene_grabacion = solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): ");
-        info.tiene_marcador = input_int("Tiene marcador? (1=SI, 2=NO): ");
-        if (info.tiene_marcador != 1) info.tiene_marcador = 2;
+        if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
+            info.flags |= CANCHA_FLAG_GRABACION;
+        int marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
+        if (marcador_val == 1)
+            info.flags |= CANCHA_FLAG_MARCADOR;
         {
             char coords[128];
             input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
@@ -1627,7 +1640,7 @@ void crear_cancha(void)
     sqlite3_bind_text(stmt, 21, info.contacto_alt, -1, DB_TRANSIENT);
     sqlite3_bind_double(stmt, 22, info.coordenadas.latitud);
     sqlite3_bind_double(stmt, 23, info.coordenadas.longitud);
-    sqlite3_bind_int(stmt, 24, info.tiene_marcador);
+    sqlite3_bind_int(stmt, 24, (info.flags & CANCHA_FLAG_MARCADOR) ? 1 : 2);
     int result = sqlite3_step(stmt);
     db_stmt_release(stmt);
 
@@ -1951,8 +1964,8 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info,
     printf("18) Estado: %s\n", texto_o_defecto(info->estado, "(sin dato)"));
     printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
     printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
-    printf("21) Grabacion Partido: %s\n", info->tiene_grabacion ? "SI" : "NO");
-    printf("22) Marcador: %s\n", info->tiene_marcador == 1 ? "SI" : "NO");
+    printf("21) Grabacion Partido: %s\n", (info->flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
+    printf("22) Marcador: %s\n", (info->flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
     if (info->coordenadas.latitud != 0.0 || info->coordenadas.longitud != 0.0)
     {
         char lat_str[32];
@@ -2486,10 +2499,13 @@ static void cancha_export_cargar_desde_stmt(sqlite3_stmt *stmt, int *out_id,
     snprintf(info->descripcion, sizeof(info->descripcion), "%s", cancha_export_col_text(stmt, 19));
     snprintf(info->contacto_alt, sizeof(info->contacto_alt), "%s",
              cancha_export_col_text(stmt, 20));
-    info->activa = sqlite3_column_int(stmt, 21) == 1;
-    info->tiene_grabacion = sqlite3_column_int(stmt, 22) ? 1 : 0;
-    info->tiene_marcador = sqlite3_column_int(stmt, 23);
-    if (info->tiene_marcador != 1) info->tiene_marcador = 2;
+    info->flags = 0;
+    if (sqlite3_column_int(stmt, 21) == 1)
+        info->flags |= CANCHA_FLAG_ACTIVADA;
+    if (sqlite3_column_int(stmt, 22))
+        info->flags |= CANCHA_FLAG_GRABACION;
+    if (sqlite3_column_int(stmt, 23) == 1)
+        info->flags |= CANCHA_FLAG_MARCADOR;
 }
 
 static void cancha_export_generar_nombre_archivo(char *dest, size_t size, const char *ext,
@@ -2618,9 +2634,9 @@ static int cancha_export_info_txt(int exportar_todas, int cancha_id)
         fprintf(file, "Descripcion        : %s\n", texto_o_defecto(info.descripcion, "(sin dato)"));
         fprintf(file, "Contacto Alterno   : %s\n",
                 texto_o_defecto(info.contacto_alt, "(sin dato)"));
-        fprintf(file, "Grabacion Partido  : %s\n", info.tiene_grabacion ? "SI" : "NO");
-        fprintf(file, "Marcador           : %s\n", info.tiene_marcador == 1 ? "SI" : "NO");
-        fprintf(file, "Estado             : %s\n", cancha_export_estado_texto(info.activa));
+        fprintf(file, "Grabacion Partido  : %s\n", (info.flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
+        fprintf(file, "Marcador           : %s\n", (info.flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
+        fprintf(file, "Estado             : %s\n", cancha_export_estado_texto((info.flags & CANCHA_FLAG_ACTIVADA) ? 1 : 0));
         fprintf(file, "========================================\n\n");
         total++;
     }
@@ -2706,11 +2722,11 @@ static int cancha_export_info_csv(int exportar_todas, int cancha_id)
         fprintf(file, ",");
         cancha_export_write_csv_field(file, texto_o_defecto(info.contacto_alt, ""));
         fprintf(file, ",");
-        cancha_export_write_csv_field(file, info.tiene_grabacion ? "SI" : "NO");
+        cancha_export_write_csv_field(file, (info.flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
         fprintf(file, ",");
-        cancha_export_write_csv_field(file, info.tiene_marcador == 1 ? "SI" : "NO");
+        cancha_export_write_csv_field(file, (info.flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
         fprintf(file, ",");
-        cancha_export_write_csv_field(file, cancha_export_estado_texto(info.activa));
+        cancha_export_write_csv_field(file, cancha_export_estado_texto((info.flags & CANCHA_FLAG_ACTIVADA) ? 1 : 0));
         fprintf(file, "\n");
 
         total++;
@@ -2768,9 +2784,9 @@ static cJSON *cancha_export_json_build_item(sqlite3_stmt *stmt)
     cJSON_AddStringToObject(item, "estado_pasto", texto_o_defecto(info.estado, ""));
     cJSON_AddStringToObject(item, "descripcion", texto_o_defecto(info.descripcion, ""));
     cJSON_AddStringToObject(item, "contacto_alterno", texto_o_defecto(info.contacto_alt, ""));
-    cJSON_AddBoolToObject(item, "tiene_grabacion", info.tiene_grabacion);
-    cJSON_AddBoolToObject(item, "tiene_marcador", info.tiene_marcador == 1);
-    cJSON_AddStringToObject(item, "estado", cancha_export_estado_texto(info.activa));
+    cJSON_AddBoolToObject(item, "tiene_grabacion", (info.flags & CANCHA_FLAG_GRABACION) != 0);
+    cJSON_AddBoolToObject(item, "tiene_marcador", (info.flags & CANCHA_FLAG_MARCADOR) != 0);
+    cJSON_AddStringToObject(item, "estado", cancha_export_estado_texto((info.flags & CANCHA_FLAG_ACTIVADA) ? 1 : 0));
 
     return item;
 }
@@ -2940,9 +2956,9 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         cancha_export_write_html_text(file, texto_o_defecto(info.descripcion, ""));
         fprintf(file, "</td><td>");
         cancha_export_write_html_text(file, texto_o_defecto(info.contacto_alt, ""));
-        fprintf(file, "</td><td>%s</td>", info.tiene_grabacion ? "SI" : "NO");
-        fprintf(file, "<td>%s</td>", info.tiene_marcador == 1 ? "SI" : "NO");
-        fprintf(file, "<td>%s</td></tr>\n", cancha_export_estado_texto(info.activa));
+        fprintf(file, "</td><td>%s</td>", (info.flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
+        fprintf(file, "<td>%s</td>", (info.flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
+        fprintf(file, "<td>%s</td></tr>\n", cancha_export_estado_texto((info.flags & CANCHA_FLAG_ACTIVADA) ? 1 : 0));
 
         total++;
     }
@@ -3075,9 +3091,9 @@ static CanchaExportPdfCtx cancha_export_pdf_print_fila(CanchaExportPdfCtx ctx, i
     snprintf(line, sizeof(line), "Contacto Alterno: %s",
              texto_o_defecto(detalle->contacto_alt, "(sin dato)"));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Grabacion Partido: %s", detalle->tiene_grabacion ? "SI" : "NO");
+    snprintf(line, sizeof(line), "Grabacion Partido: %s", (detalle->flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 12.0f);
-    snprintf(line, sizeof(line), "Estado: %s", cancha_export_estado_texto(detalle->activa));
+    snprintf(line, sizeof(line), "Estado: %s", cancha_export_estado_texto((detalle->flags & CANCHA_FLAG_ACTIVADA) ? 1 : 0));
     ctx = cancha_export_pdf_add_line(ctx, line, 10.0f, 14.0f);
 
     return ctx;
