@@ -188,15 +188,15 @@ void exportar_lesiones_html_mejorado(void)
         return;
     }
 
+    export_write_html_begin(file, "Lesiones con Analisis de Impacto");
     fprintf(file,
-            "<html><body><h1>Lesiones con Analisis de Impacto</h1><table border='1'>"
-            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</"
+            "<table>\n<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</"
             "th><th>Camiseta</th><th>Partidos Antes</th><th>Partidos Despues</th><th>Rendimiento "
             "Antes</th><th>Rendimiento Despues</th><th>Impacto %%</th></tr>");
 
     write_lesiones_html(file);
 
-    fprintf(file, "</table></body></html>");
+    export_write_html_table_footer(file, NULL);
 
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("lesiones_mejorado.html"));

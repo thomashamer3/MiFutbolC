@@ -231,6 +231,10 @@ const char * get_menu_back(void);
 const char * get_menu_tiendas(void);
 const char * get_menu_reclutamiento(void);
 const char * get_menu_media(void);
+const char * get_menu_tutorial(void);
+const char * get_menu_atajos_config(void);
+const char * get_menu_resumen_compartible(void);
+const char * get_menu_ranking_amigos(void);
 
 /**
  * @brief Menú para configurar menús personalizados en modo Custom

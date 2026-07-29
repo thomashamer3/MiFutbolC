@@ -146,48 +146,42 @@ static void generar_reporte_general_html(void)
         return;
     }
 
-    fprintf(f, "<html><head><meta charset='UTF-8'>"
-            "<title>Reporte General MiFutbolC</title>"
-            "<style>body{font-family:Arial;margin:20px}"
-            "table{border-collapse:collapse;width:100%%;margin:10px 0}"
-            "th,td{border:1px solid #ccc;padding:8px;text-align:left}"
-            "th{background:#4CAF50;color:white}"
-            "h2{color:#333}</style></head><body>");
-    fprintf(f, "<h1>Reporte General MiFutbolC</h1>");
+    export_write_html_begin(f, "Reporte General MiFutbolC");
 
     time_t t = time(NULL);
     struct tm tm_struct;
     localtime_s(&tm_struct, &t);
     char fecha_str[64];
     strftime(fecha_str, sizeof(fecha_str), "%d/%m/%Y %H:%M", &tm_struct);
-    fprintf(f, "<p>Generado: %s</p>", fecha_str);
+    fprintf(f, "<div class=\"content\"><p>Generado: %s</p></div>", fecha_str);
 
     if (preparar_stmt("SELECT COUNT(*) FROM partido", &stmt))
     {
         int total = (sqlite3_step(stmt) == SQLITE_ROW) ? sqlite3_column_int(stmt, 0) : 0;
         sqlite3_finalize(stmt);
-        fprintf(f, "<h2>Partidos</h2><p>Total: %d</p>", total);
+        fprintf(f, "<div class=\"section-card\"><h2>Partidos</h2><div class=\"content\"><p>Total: <strong>%d</strong></p></div></div>", total);
     }
 
     if (preparar_stmt("SELECT resultado, COUNT(*) FROM partido WHERE resultado > 0 GROUP BY resultado", &stmt))
     {
-        fprintf(f, "<h2>Resultados</h2><table><tr><th>Resultado</th><th>Cantidad</th></tr>");
+        fprintf(f, "<div class=\"section-card\"><h2>Resultados</h2><table><tr><th>Resultado</th><th>Cantidad</th></tr>");
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             const char *r = resultado_to_text(sqlite3_column_int(stmt, 0));
             fprintf(f, "<tr><td>%s</td><td>%d</td></tr>", r, sqlite3_column_int(stmt, 1));
         }
         sqlite3_finalize(stmt);
-        fprintf(f, "</table>");
+        fprintf(f, "</table></div>");
     }
 
     if (preparar_stmt("SELECT COALESCE(SUM(goles),0), COALESCE(SUM(asistencias),0) FROM partido", &stmt))
     {
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            fprintf(f, "<h2>Goles y Asistencias</h2>");
-            fprintf(f, "<p>Goles: %d | Asistencias: %d</p>",
+            fprintf(f, "<div class=\"section-card\"><h2>Goles y Asistencias</h2><div class=\"content\">");
+            fprintf(f, "<p>Goles: <strong>%d</strong> | Asistencias: <strong>%d</strong></p>",
                     sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 1));
+            fprintf(f, "</div></div>");
         }
         sqlite3_finalize(stmt);
     }
@@ -196,17 +190,17 @@ static void generar_reporte_general_html(void)
     {
         int total = (sqlite3_step(stmt) == SQLITE_ROW) ? sqlite3_column_int(stmt, 0) : 0;
         sqlite3_finalize(stmt);
-        fprintf(f, "<h2>Torneos</h2><p>Total: %d</p>", total);
+        fprintf(f, "<div class=\"section-card\"><h2>Torneos</h2><div class=\"content\"><p>Total: <strong>%d</strong></p></div></div>", total);
     }
 
     if (preparar_stmt("SELECT COUNT(*) FROM lesion WHERE fecha >= date('now', '-30 days')", &stmt))
     {
         int recientes = (sqlite3_step(stmt) == SQLITE_ROW) ? sqlite3_column_int(stmt, 0) : 0;
         sqlite3_finalize(stmt);
-        fprintf(f, "<h2>Lesiones (ultimos 30 dias)</h2><p>Total: %d</p>", recientes);
+        fprintf(f, "<div class=\"section-card\"><h2>Lesiones (ultimos 30 dias)</h2><div class=\"content\"><p>Total: <strong>%d</strong></p></div></div>", recientes);
     }
 
-    fprintf(f, "</body></html>");
+    export_write_html_footer(f, NULL);
     fclose(f);
     printf("Reporte generado: %s\n", path);
 

@@ -6005,6 +6005,150 @@ void reordenar_partidos_por_fecha(void)
     printf("IDs reordenados correctamente (%d partidos).\n", total);
 }
 
+void mostrar_ultimo_partido(void)
+{
+    sqlite3_stmt *stmt;
+
+    if (!preparar_stmt(
+                "SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
+    {
+        printf("Error consultando partidos.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        printf("\nNo hay partidos registrados.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
+    if (!fecha || strlen(fecha) < 16)
+    {
+        printf("\nFecha del ultimo partido invalida.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    /* Parsear YYYY-MM-DD HH:MM manualmente */
+    int anio = 0, mes = 0, dia = 0, hora = 0, minuto = 0;
+    if (sscanf(fecha, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto) != 5)
+    {
+        printf("\nError parseando fecha: %s\n", fecha);
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+    sqlite3_finalize(stmt);
+
+    /* Convertir a time_t */
+    struct tm tm_partido = {0};
+    tm_partido.tm_year = anio - 1900;
+    tm_partido.tm_mon = mes - 1;
+    tm_partido.tm_mday = dia;
+    tm_partido.tm_hour = hora;
+    tm_partido.tm_min = minuto;
+    tm_partido.tm_sec = 0;
+    tm_partido.tm_isdst = -1;
+
+    time_t t_partido = mktime(&tm_partido);
+    time_t t_ahora = time(NULL);
+
+    if (t_partido == (time_t)-1)
+    {
+        printf("\nError procesando la fecha del partido.\n");
+        pause_console();
+        return;
+    }
+
+    double segundos = difftime(t_ahora, t_partido);
+    if (segundos < 0)
+    {
+        printf("\nEl partido es en el futuro.\n");
+        pause_console();
+        return;
+    }
+
+    long total_minutos = (long)(segundos / 60.0);
+    long total_horas = total_minutos / 60;
+
+    /* Calcular meses y anios */
+    int anios = 0, meses = 0, dias_restantes = 0;
+    struct tm tm_ahora;
+#ifdef _WIN32
+    localtime_s(&tm_ahora, &t_ahora);
+#else
+    localtime_r(&t_ahora, &tm_ahora);
+#endif
+
+    anios = tm_ahora.tm_year - tm_partido.tm_year;
+    meses = tm_ahora.tm_mon - tm_partido.tm_mon;
+    dias_restantes = tm_ahora.tm_mday - tm_partido.tm_mday;
+
+    if (dias_restantes < 0)
+    {
+        meses--;
+        /* Obtener dias del mes anterior */
+        struct tm tm_temp = tm_ahora;
+        tm_temp.tm_mon--;
+        if (tm_temp.tm_mon < 0)
+        {
+            tm_temp.tm_mon = 11;
+            tm_temp.tm_year--;
+        }
+        /* Dias en el mes anterior de la fecha actual */
+        tm_temp.tm_mday = 1;
+        mktime(&tm_temp);
+        /* El ultimo dia del mes es el dia antes del dia 1 del siguiente mes */
+        tm_temp.tm_mon++;
+        if (tm_temp.tm_mon > 11)
+        {
+            tm_temp.tm_mon = 0;
+            tm_temp.tm_year++;
+        }
+        tm_temp.tm_mday = 0; /* ultimo dia del mes anterior */
+        mktime(&tm_temp);
+        dias_restantes += tm_temp.tm_mday + 1;
+    }
+
+    if (meses < 0)
+    {
+        anios--;
+        meses += 12;
+    }
+
+    /* Calcular semanas y dias restantes */
+    int semanas = dias_restantes / 7;
+    int dias = dias_restantes % 7;
+    int horas = (int)(total_horas % 24);
+    int minutos = (int)(total_minutos % 60);
+
+    clear_screen();
+    print_header("Ultimo Partido");
+
+    printf("  Fecha: %02d/%02d/%02d %02d:%02d\n\n", dia, mes, anio, hora, minuto);
+
+    if (anios > 0)
+        printf("  %d anio%s", anios, anios == 1 ? "" : "s");
+    if (meses > 0)
+        printf(" %d mes%s", meses, meses == 1 ? "" : "es");
+    if (semanas > 0)
+        printf(" %d semana%s", semanas, semanas == 1 ? "" : "s");
+    if (dias > 0)
+        printf(" %d dia%s", dias, dias == 1 ? "" : "s");
+    if (horas > 0)
+        printf(" %d hora%s", horas, horas == 1 ? "" : "s");
+    printf(" %d minuto%s\n", minutos, minutos == 1 ? "" : "s");
+
+    printf("\n  Tiempo total: %ld minutos\n", total_minutos);
+
+    pause_console();
+}
+
 void menu_partidos(void)
 {
     MenuItem items[] = {{1, "Crear", &crear_partido},
@@ -6016,8 +6160,9 @@ void menu_partidos(void)
         {7, "Favoritos", &menu_marcar_favorito_partido},
         {8, "Etiquetas (Tags)", &menu_gestion_tags_partido},
         {9, "Obtener Clima Historico", &obtener_clima_partidos_historicos},
+        {10, "Ultimo Partido", &mostrar_ultimo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("PARTIDOS", items, 10);
+    ejecutar_menu("PARTIDOS", items, 11);
 }

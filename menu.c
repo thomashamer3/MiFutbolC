@@ -35,6 +35,10 @@
 #include "temporada.h"
 #include "tienda.h"
 #include "torneo.h"
+#include "tutorial.h"
+#include "atajos_config.h"
+#include "resumen_compartible.h"
+#include "ranking_amigos.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -188,6 +192,30 @@ static void abrir_menu_media(void)
     menu_media();
 }
 
+static void abrir_menu_tutorial(void)
+{
+    app_log_event("TUTORIAL", "Ingreso al modulo Tutorial");
+    menu_tutorial();
+}
+
+static void abrir_menu_atajos_config(void)
+{
+    app_log_event("ATAJOS_CONFIG", "Ingreso al modulo Atajos Config");
+    menu_atajos_config();
+}
+
+static void abrir_menu_resumen_compartible(void)
+{
+    app_log_event("RESUMEN_COMPARTIBLE", "Ingreso al modulo Resumen Compartible");
+    menu_resumen_compartible();
+}
+
+static void abrir_menu_ranking_amigos(void)
+{
+    app_log_event("RANKING_AMIGOS", "Ingreso al modulo Ranking Amigos");
+    menu_ranking_amigos();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Dashboard", &abrir_dashboard},
@@ -213,7 +241,11 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {21, "Tiendas", &abrir_menu_tiendas},
     {22, "Reclutamiento", &abrir_menu_reclutamiento},
     {23, "Referencias Multimedia", &abrir_menu_media},
-    {24, "Ajustes", &abrir_menu_settings},
+    {24, "Tutorial", &abrir_menu_tutorial},
+    {25, "Atajos Config", &abrir_menu_atajos_config},
+    {26, "Resumen Compartible", &abrir_menu_resumen_compartible},
+    {27, "Ranking Amigos", &abrir_menu_ranking_amigos},
+    {28, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -353,7 +385,11 @@ MenuItem *create_filtered_menu(int *count)
                                       &get_menu_recordatorios,  &get_menu_colecciones,
                                       &get_menu_musica,         &get_menu_records_rankings,
                                       &get_menu_tiendas,        &get_menu_reclutamiento,
-                                      &get_menu_media,          &get_menu_settings
+                                      &get_menu_media,
+                                      &get_menu_tutorial,
+                                      &get_menu_atajos_config,
+                                      &get_menu_resumen_compartible,
+                                      &get_menu_ranking_amigos, &get_menu_settings
                                      };
 
     int out = 0;

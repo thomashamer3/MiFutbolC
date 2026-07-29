@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "export.h"
 
 #ifdef _WIN32
 #define PATH_SEP "\\"
@@ -1345,10 +1346,10 @@ static void preparar_archivos_exportacion(ExportPrepParams *params)
         abrir_archivo(params->html_file, params->html_filename, "w", "HTML");
         if (*params->html_file)
         {
-            fprintf(*params->html_file, "<html><body><h1>Transacciones Financieras</h1>");
+            export_write_html_begin(*params->html_file, "Transacciones Financieras");
             fprintf(*params->html_file,
-                    "<table "
-                    "border='1'><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</"
+                    "<div class=\"section-card\"><h2>Transacciones</h2><table>\n"
+                    "<tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Categoria</"
                     "th><th>Descripcion</th><th>Monto</th><th>Item Especifico</th></tr>");
         }
         else
@@ -1524,9 +1525,8 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
     // HTML
     if (params->html_file)
     {
-        fprintf(params->html_file, "</table>");
-        fprintf(params->html_file, "<h2>Resumen General</h2>");
-        fprintf(params->html_file, "<table border='1'>");
+        fprintf(params->html_file, "</table></div>");
+        fprintf(params->html_file, "<div class=\"section-card\"><h2>Resumen General</h2><table>\n");
         fprintf(params->html_file, "<tr><th>Total Transacciones</th><td>%d</td></tr>",
                 params->count);
         fprintf(params->html_file, "<tr><th>Total Ingresos</th><td>$%s</td></tr>",
@@ -1535,7 +1535,8 @@ static void finalizar_archivos_exportacion(ExportFinalizeParams *params)
                 formato_monto(params->total_gastos));
         fprintf(params->html_file, "<tr><th>Balance Neto</th><td>$%s</td></tr>",
                 formato_monto(params->total_ingresos - params->total_gastos));
-        fprintf(params->html_file, "</table></body></html>");
+        fprintf(params->html_file, "</table></div>");
+        export_write_html_footer(params->html_file, NULL);
         fclose(params->html_file);
         printf("HTML exportado: %s\n", params->html_filename);
     }

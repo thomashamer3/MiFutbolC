@@ -73,10 +73,107 @@ void export_write_json_footer(FILE *file, void *context)
     cJSON_Delete(root);
 }
 
+void export_write_html_begin(FILE *f, const char *title)
+{
+    fprintf(f,
+            "<!DOCTYPE html>\n"
+            "<html lang=\"es\">\n"
+            "<head>\n"
+            "<meta charset=\"UTF-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
+            "<title>%s - MiFutbolC</title>\n"
+            "<style>\n"
+            ":root{--bg:#f0f2f5;--surface:#fff;--text:#1a1a2e;--text2:#4a5568;--accent:#2563eb;--accent2:#0f3460;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--border:#e0e7ef;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.08)}\n"
+            "@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--surface:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--accent2:#60a5fa;--border:#334155;--shadow:0 4px 24px rgba(0,0,0,.4)}}\n"
+            "*{margin:0;padding:0;box-sizing:border-box}\n"
+            "body{font-family:Inter,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:24px;line-height:1.6}\n"
+            ".container{max-width:1200px;margin:0 auto;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}\n"
+            "h1{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;margin:0;padding:24px 32px;font-size:1.5em;font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:8px}\n"
+            "h1::before{font-size:1.2em}\n"
+            "@media(prefers-color-scheme:dark){h1{background:linear-gradient(135deg,#0f172a,#1e293b,#2563eb)}}\n"
+            "h2{color:var(--accent2);border-bottom:2px solid var(--border);padding:20px 24px 12px;margin:0;font-size:1.15em;font-weight:600}\n"
+            ".section-card{margin:16px 24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}\n"
+            ".section-card table{border:0;border-radius:0}\n"
+            ".section-card h2{margin:0;border-bottom:1px solid var(--border);padding:14px 20px;font-size:1.05em}\n"
+            "table{width:100%%;border-collapse:collapse;font-size:.9em;border:1px solid var(--border)}\n"
+            "th{background:var(--accent2);color:#fff;padding:12px;text-align:left;font-weight:600;white-space:nowrap}\n"
+            "th:first-child{padding-left:24px}\n"
+            "th:last-child{padding-right:24px}\n"
+            "td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}\n"
+            "td:first-child{padding-left:24px;font-weight:600;color:var(--accent2)}\n"
+            "td:last-child{padding-right:24px}\n"
+            "tr:hover td{background:rgba(37,99,235,.06)}\n"
+            "tr:nth-child(even) td{background:rgba(0,0,0,.02)}\n"
+            "tr:nth-child(even):hover td{background:rgba(37,99,235,.08)}\n"
+            ".stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;padding:20px 24px}\n"
+            ".stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;transition:box-shadow .2s}\n"
+            ".stat-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}\n"
+            ".stat-card h3{font-size:.82em;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}\n"
+            ".stat-card .stat-value{font-size:1.6em;font-weight:700;color:var(--accent)}\n"
+            ".stat-card .stat-meta{font-size:.85em;color:var(--text2);margin-top:4px}\n"
+            ".stat-card .stat-label{font-weight:600;color:var(--text2)}\n"
+            ".badge{display:inline-block;font-size:.78em;padding:2px 10px;border-radius:20px;font-weight:600}\n"
+            ".badge-blue{background:rgba(37,99,235,.12);color:#2563eb}\n"
+            ".badge-green{background:rgba(34,197,94,.12);color:#16a34a}\n"
+            ".badge-red{background:rgba(239,68,68,.12);color:#dc2626}\n"
+            ".badge-yellow{background:rgba(245,158,11,.12);color:#d97706}\n"
+            ".alert{padding:12px 20px;border-radius:8px;margin:12px 24px;font-size:.9em}\n"
+            ".alert-info{background:rgba(37,99,235,.08);border-left:4px solid var(--accent);color:var(--text)}\n"
+            ".alert-warn{background:rgba(245,158,11,.1);border-left:4px solid var(--warn);color:var(--text)}\n"
+            ".alert-empty{text-align:center;padding:32px 20px;color:var(--text2);font-style:italic}\n"
+            ".content{padding:16px 24px}\n"
+            ".content p{padding:6px 0}\n"
+            ".content strong{color:var(--accent2)}\n"
+            "@media(max-width:768px){\n"
+            "body{padding:12px}\n"
+            ".container{border-radius:8px}\n"
+            "h1{font-size:1.15em;padding:16px 20px}\n"
+            "h2{font-size:1em;padding:14px 16px 10px}\n"
+            "th,td{padding:8px 6px;font-size:.82em}\n"
+            "th:first-child,td:first-child{padding-left:12px}\n"
+            "th:last-child,td:last-child{padding-right:12px}\n"
+            "table{font-size:.78em}\n"
+            ".stat-grid{grid-template-columns:1fr;padding:12px 16px}\n"
+            ".section-card{margin:12px 16px}\n"
+            ".content{padding:12px 16px}\n"
+            ".alert{margin:8px 16px}\n"
+            "}\n"
+            "@media print{\n"
+            "body{background:#fff;padding:0;color:#000}\n"
+            ".container{box-shadow:none;border:1px solid #ddd;border-radius:4px}\n"
+            "h1{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
+            "th{background:#0f3460!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
+            ".stat-card{break-inside:avoid}\n"
+            "}\n"
+            "</style>\n"
+            "</head>\n"
+            "<body>\n"
+            "<div class=\"container\">\n"
+            "<h1>%s</h1>\n",
+            title, title);
+}
+
 void export_write_html_footer(FILE *file, void *context)
 {
     (void)context;
-    fprintf(file, "</table></body></html>");
+    fprintf(file,
+            "\n<div style=\"text-align:center;padding:16px 24px;border-top:1px solid var(--border);"
+            "font-size:.8em;color:var(--text2)\">"
+            "Generado por <strong>MiFutbolC</strong> &mdash; &copy; %d</div>\n"
+            "</div>\n</body>\n</html>\n",
+            2026);
+}
+
+void export_write_html_table_footer(FILE *file, void *context)
+{
+    (void)context;
+    fprintf(file,
+            "</table>\n"
+            "<div style=\"text-align:center;padding:16px 24px;border-top:1px solid var(--border);"
+            "font-size:.8em;color:var(--text2)\">"
+            "Generado por <strong>MiFutbolC</strong> &mdash; &copy; %d</div>\n"
+            "</div>\n</body>\n</html>\n",
+            2026);
 }
 
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
@@ -592,35 +689,31 @@ static void write_analisis_json(FILE *file, const Estadisticas *generales,
     cJSON_Delete(root);
 }
 
+static void write_analisis_table(FILE *file, const char *titulo, const Estadisticas *stats)
+{
+    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", titulo);
+    fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", stats->total_partidos);
+    fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", stats->avg_goles);
+    fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", stats->avg_asistencias);
+    fprintf(file, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", stats->avg_rendimiento);
+    fprintf(file, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", stats->avg_cansancio);
+    fprintf(file, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", stats->avg_animo);
+    fprintf(file, "</table></div>\n");
+}
+
 static void write_analisis_html(FILE *file, const Estadisticas *generales,
                                 const Estadisticas *ultimos5, int mejor_racha_v, int peor_racha_d,
                                 const char *msg)
 {
-    fprintf(file, "<html><body><h1>Analisis de Rendimiento</h1>");
-    fprintf(file, "<h2>Estadisticas Generales</h2><table border='1'>");
-    fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", generales->total_partidos);
-    fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", generales->avg_goles);
-    fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>",
-            generales->avg_asistencias);
-    fprintf(file, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>",
-            generales->avg_rendimiento);
-    fprintf(file, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", generales->avg_cansancio);
-    fprintf(file, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", generales->avg_animo);
-    fprintf(file, "</table>");
-    fprintf(file, "<h2>Ultimos 5 Partidos</h2><table border='1'>");
-    fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", ultimos5->total_partidos);
-    fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", ultimos5->avg_goles);
-    fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", ultimos5->avg_asistencias);
-    fprintf(file, "<tr><th>Promedio Rendimiento</th><td>%.2f</td></tr>", ultimos5->avg_rendimiento);
-    fprintf(file, "<tr><th>Promedio Cansancio</th><td>%.2f</td></tr>", ultimos5->avg_cansancio);
-    fprintf(file, "<tr><th>Promedio Estado Animo</th><td>%.2f</td></tr>", ultimos5->avg_animo);
-    fprintf(file, "</table>");
-    fprintf(file, "<h2>Rachas</h2><table border='1'>");
+    export_write_html_begin(file, "Analisis de Rendimiento");
+    write_analisis_table(file, "Estadisticas Generales", generales);
+    write_analisis_table(file, "Ultimos 5 Partidos", ultimos5);
+    fprintf(file, "<div class=\"section-card\"><h2>Rachas</h2><table>");
     fprintf(file, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
     fprintf(file, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
-    fprintf(file, "</table>");
-    fprintf(file, "<h2>Analisis Motivacional</h2><p>%s</p>", msg);
-    fprintf(file, "</body></html>");
+    fprintf(file, "</table></div>\n");
+    fprintf(file, "<div class=\"section-card\"><h2>Analisis Motivacional</h2><div class=\"content\"><p>%s</p></div></div>\n", msg);
+    export_write_html_footer(file, NULL);
 }
 
 /** @} */

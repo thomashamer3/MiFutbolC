@@ -195,7 +195,7 @@ void escribir_seccion_html(FILE *file, const char *titulo, const char *sql, cons
     {
         return;
     }
-    fprintf(file, "<h2>%s</h2><table border='1'><tr>", titulo);
+    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table><tr>", titulo);
     for (int i = 0; cabeceras[i] != NULL; i++)
     {
         fprintf(file, "<th>%s</th>", cabeceras[i]);
@@ -206,6 +206,6 @@ void escribir_seccion_html(FILE *file, const char *titulo, const char *sql, cons
     {
         escribir_fila(file, stmt);
     }
-    fprintf(file, "</table><br>\n");
+    fprintf(file, "</table></div>\n");
     sqlite3_finalize(stmt);
 }

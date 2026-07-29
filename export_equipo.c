@@ -168,8 +168,8 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(file, "<html><body><h1>Equipos</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Tipo de Futbol</th>"
+    export_write_html_begin(file, "Equipos");
+    fprintf(file, "<table>\n<tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Tipo de Futbol</th>"
             "<th>Numero de Jugadores</th><th>Posiciones</th></tr>");
 }
 
@@ -206,7 +206,7 @@ EXPORT_FORMAT_ROWS(exportar_equipos_txt, obtener_datos_equipos, "equipos.txt", N
 EXPORT_FORMAT_ROWS(exportar_equipos_json, obtener_datos_equipos, "equipos.json",
                    cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_equipos_html, obtener_datos_equipos, "equipos.html", NULL,
-                   write_html_header, write_html_row, export_write_html_footer)
+                   write_html_header, write_html_row, export_write_html_table_footer)
 
 void exportar_equipos_all(void)
 {
@@ -215,7 +215,7 @@ void exportar_equipos_all(void)
         {"equipos.csv", NULL, write_csv_header, write_csv_row, NULL},
         {"equipos.txt", NULL, write_txt_header, write_txt_row, NULL},
         {"equipos.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer},
-        {"equipos.html", NULL, write_html_header, write_html_row, export_write_html_footer}
+        {"equipos.html", NULL, write_html_header, write_html_row, export_write_html_table_footer}
     };
     export_all_formats(obtener_datos_equipos, configs, 4);
 }

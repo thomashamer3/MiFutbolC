@@ -705,6 +705,10 @@ DEFINE_GET_MENU_TEXT(menu_back, "menu_back")
 DEFINE_GET_MENU_TEXT(menu_tiendas, "menu_tiendas")
 DEFINE_GET_MENU_TEXT(menu_reclutamiento, "menu_reclutamiento")
 DEFINE_GET_MENU_TEXT(menu_media, "menu_media")
+DEFINE_GET_MENU_TEXT(menu_tutorial, "menu_tutorial")
+DEFINE_GET_MENU_TEXT(menu_atajos_config, "menu_atajos_config")
+DEFINE_GET_MENU_TEXT(menu_resumen_compartible, "menu_resumen_compartible")
+DEFINE_GET_MENU_TEXT(menu_ranking_amigos, "menu_ranking_amigos")
 
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)

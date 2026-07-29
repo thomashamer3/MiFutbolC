@@ -183,13 +183,12 @@ void exportar_lesiones_html(void)
         return;
     }
 
-    fprintf(file,
-            "<html><body><h1>Lesiones</h1><table border='1'>"
-            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
+    export_write_html_begin(file, "Lesiones");
+    fprintf(file, "<table>\n<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
 
     write_lesiones_html(file);
 
-    fprintf(file, "</table></body></html>");
+    export_write_html_table_footer(file, NULL);
 
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("lesiones.html"));
@@ -250,12 +249,10 @@ void exportar_lesiones_all(void)
     file = abrir_archivo_exportacion("lesiones.html", "Error al crear HTML");
     if (file)
     {
-        fprintf(
-            file,
-            "<html><body><h1>Lesiones</h1><table border='1'>"
-            "<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
+        export_write_html_begin(file, "Lesiones");
+        fprintf(file, "<table>\n<tr><th>ID</th><th>Jugador</th><th>Tipo</th><th>Descripcion</th><th>Fecha</th></tr>");
         write_lesiones_html_rows(file, stmt);
-        fprintf(file, "</table></body></html>");
+        export_write_html_table_footer(file, NULL);
         printf("Archivo exportado a: %s\n", get_export_path("lesiones.html"));
         fclose(file);
     }

@@ -210,7 +210,7 @@ void exportar_carrera_html(void)
         return;
     }
 
-    fprintf(file, "<html><body><h1>Carrera Futbolistica</h1>\n");
+    export_write_html_begin(file, "Carrera Futbolistica");
 
     const char *cab_identidad[] = {"ID", "Nombre/Apodo", "Posicion", "Club Inicios", NULL};
     escribir_seccion_html(file, "Identidad", SQL_IDENTIDAD, cab_identidad,
@@ -223,7 +223,7 @@ void exportar_carrera_html(void)
     escribir_seccion_html(file, "Resumenes Narrativos", SQL_RESUMENES, cab_resumenes,
                           escribir_fila_resumen_html);
 
-    fprintf(file, "</body></html>");
+    export_write_html_footer(file, NULL);
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("carrera.html"));
 }
@@ -464,27 +464,30 @@ static void carrera_json_section(cJSON *root, sqlite3_stmt *sid, sqlite3_stmt *s
 static void carrera_html_section(FILE *file, sqlite3_stmt *sid, sqlite3_stmt *shit,
                                  sqlite3_stmt *sres)
 {
-    fprintf(file, "<html><body><h1>Carrera Futbolistica</h1>\n");
-    fprintf(file, "<h2>Identidad</h2><table "
-            "border='1'><tr><th>ID</th><th>Nombre/Apodo</th><th>Posicion</th><th>Club "
+    export_write_html_begin(file, "Carrera Futbolistica");
+    fprintf(file, "<div class=\"section-card\"><h2>Identidad</h2><table>"
+            "<tr><th>ID</th><th>Nombre/Apodo</th><th>Posicion</th><th>Club "
             "Inicios</th></tr>");
     while (sqlite3_step(sid) == SQLITE_ROW)
     {
         escribir_fila_identidad_html(file, sid);
     }
-    fprintf(file, "</table><br>\n<h2>Hitos</h2><table "
-            "border='1'><tr><th>ID</th><th>Tipo</th><th>Descripcion</th></tr>");
+    fprintf(file, "</table></div>\n");
+    fprintf(file, "<div class=\"section-card\"><h2>Hitos</h2><table>"
+            "<tr><th>ID</th><th>Tipo</th><th>Descripcion</th></tr>");
     while (sqlite3_step(shit) == SQLITE_ROW)
     {
         escribir_fila_hito_html(file, shit);
     }
-    fprintf(file, "</table><br>\n<h2>Resumenes Narrativos</h2><table "
-            "border='1'><tr><th>ID</th><th>Anio</th><th>Resumen</th></tr>");
+    fprintf(file, "</table></div>\n");
+    fprintf(file, "<div class=\"section-card\"><h2>Resumenes Narrativos</h2><table>"
+            "<tr><th>ID</th><th>Anio</th><th>Resumen</th></tr>");
     while (sqlite3_step(sres) == SQLITE_ROW)
     {
         escribir_fila_resumen_html(file, sres);
     }
-    fprintf(file, "</table></body></html>\n");
+    fprintf(file, "</table></div>\n");
+    export_write_html_footer(file, NULL);
 }
 
 void exportar_carrera_all(void)

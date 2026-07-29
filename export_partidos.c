@@ -90,8 +90,8 @@ static void write_partido_json(FILE *file, sqlite3_stmt *stmt)
  */
 static void write_partido_html(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(file, "<html><body><h1>PARTIDOS</h1><table border='1'>"
-            "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
+    export_write_html_begin(file, "PARTIDOS");
+    fprintf(file, "<table>\n<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
             "th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</"
             "th><th>Rendimiento General</th><th>Cansancio</th><th>Estado "
             "Animo</th><th>Comentario Personal</th><th>Atajaste Todo el Partido</th></tr>");
@@ -101,7 +101,7 @@ static void write_partido_html(FILE *file, sqlite3_stmt *stmt)
         write_partido_html_row(file, stmt);
     }
 
-    fprintf(file, "</table></body></html>");
+    export_write_html_table_footer(file, NULL);
 }
 
 /* ===================== PARTIDOS ===================== */

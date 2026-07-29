@@ -3573,13 +3573,12 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
     {
         return;
     }
-    fprintf(f,
-            "<html><body><h1>%s</h1><table border='1'>"
+    export_write_html_begin(f, title);
+    fprintf(f, "<div class=\"section-card\"><h2>Partidos</h2><table>\n"
             "<tr><th>Cancha</th><th>Fecha</th><th>Goles</th><th>Asistencias</"
             "th><th>Camiseta</th><th>Resultado</th><th>Clima</th><th>Dia</"
             "th><th>Rendimiento General</th><th>Cansancio</th><th>Estado "
-            "Animo</th><th>Comentario Personal</th></tr>",
-            title);
+            "Animo</th><th>Comentario Personal</th></tr>");
     sqlite3_stmt *stmt = prepare_partido_query(order_by);
     if (stmt)
     {
@@ -3589,7 +3588,7 @@ void exportar_partido_especifico_html(const char *order_by, const char *filename
         }
         db_stmt_release(stmt);
     }
-    fprintf(f, "</table></body></html>");
+    export_write_html_table_footer(f, NULL);
     printf("Archivo exportado a: %s\n", get_export_path(filename));
     fclose(f);
 }

@@ -1552,6 +1552,24 @@ static int create_database_schema(void)
         "CREATE INDEX IF NOT EXISTS idx_media_tipo ON media(tipo);",
         "CREATE INDEX IF NOT EXISTS idx_media_partido ON media(partido_id);",
 
+        "CREATE TABLE IF NOT EXISTS atajo_config ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " tecla TEXT NOT NULL,"
+        " accion TEXT NOT NULL,"
+        " descripcion TEXT NOT NULL DEFAULT '');",
+
+        "CREATE TABLE IF NOT EXISTS amigo ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " nombre TEXT NOT NULL,"
+        " posicion TEXT DEFAULT '',"
+        " goles_total INTEGER DEFAULT 0,"
+        " asistencias_total INTEGER DEFAULT 0,"
+        " partidos_total INTEGER DEFAULT 0,"
+        " mejor_rendimiento REAL DEFAULT 0,"
+        " notas TEXT DEFAULT '');",
+
+        "CREATE INDEX IF NOT EXISTS idx_atajo_config_tecla ON atajo_config(tecla);",
+
         NULL
     };
 

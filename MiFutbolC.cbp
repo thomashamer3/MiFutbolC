@@ -116,6 +116,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="atajos.h" />
+		<Unit filename="atajos_config.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="atajos_config.h" />
 		<Unit filename="backup.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -395,6 +399,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="records_rankings.h" />
+		<Unit filename="ranking_amigos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ranking_amigos.h" />
 		<Unit filename="recurso.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
@@ -402,6 +410,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="reportes.h" />
+		<Unit filename="resumen_compartible.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="resumen_compartible.h" />
 		<Unit filename="settings.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -422,6 +434,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="torneo.h" />
+		<Unit filename="tutorial.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="tutorial.h" />
 		<Unit filename="undo.c">
 			<Option compilerVar="CC" />
 		</Unit>

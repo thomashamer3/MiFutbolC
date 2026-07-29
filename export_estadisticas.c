@@ -149,7 +149,7 @@ static void write_stats_anio_html_header(FILE *file, const char *anio, int hay)
     {
         fprintf(file, "</table><br>");
     }
-    fprintf(file, "<h2>Anio: %s</h2><table border='1'>", anio);
+    fprintf(file, "<div class=\"section-card\"><h2>Anio: %s</h2><table>", anio);
     fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/"
             "P</th><th>A/P</th></tr>");
 }
@@ -165,7 +165,7 @@ static void write_stats_anio_html_footer(FILE *file, int hay)
 {
     if (hay)
     {
-        fprintf(file, "</table>");
+        fprintf(file, "</table></div>\n");
     }
 }
 
@@ -387,13 +387,13 @@ void exportar_estadisticas_html(void)
         return;
     }
 
-    fprintf(file, "<html><body><h1>Estadisticas</h1><table border='1'>"
-            "<tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</"
+    export_write_html_begin(file, "Estadisticas");
+    fprintf(file, "<table>\n<tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</"
             "th><th>Victorias</th><th>Empates</th><th>Derrotas</th></tr>");
 
     write_stats_html(file);
 
-    fprintf(file, "</table></body></html>");
+    export_write_html_table_footer(file, NULL);
 
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
@@ -505,11 +505,11 @@ void exportar_estadisticas_por_anio_html(void)
         return;
     }
 
-    fprintf(file, "<html><body><h1>Estadisticas por Anio</h1>");
+    export_write_html_begin(file, "Estadisticas por Anio");
 
     write_stats_anio_html(file);
 
-    fprintf(file, "</body></html>");
+    export_write_html_footer(file, NULL);
 
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.html"));
@@ -720,12 +720,11 @@ void exportar_estadisticas_all(void)
     file = abrir_archivo_exportacion("estadisticas.html", "Error al crear HTML");
     if (file)
     {
-        fprintf(file,
-                "<html><body><h1>Estadisticas</h1><table "
-                "border='1'><tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</"
+        export_write_html_begin(file, "Estadisticas");
+        fprintf(file, "<table>\n<tr><th>Camiseta</th><th>Goles</th><th>Asistencias</th><th>Partidos</"
                 "th><th>Victorias</th><th>Empates</th><th>Derrotas</th></tr>");
         stats_camiseta_html_rows(file, stmt);
-        fprintf(file, "</table></body></html>");
+        export_write_html_table_footer(file, NULL);
         printf("Archivo exportado a: %s\n", get_export_path("estadisticas.html"));
         fclose(file);
     }
@@ -789,9 +788,9 @@ void exportar_estadisticas_por_anio_all(void)
     file = abrir_archivo_exportacion("estadisticas_por_anio.html", "Error al crear HTML");
     if (file)
     {
-        fprintf(file, "<html><body><h1>Estadisticas por Anio</h1>");
+        export_write_html_begin(file, "Estadisticas por Anio");
         stats_anio_html_rows(file, stmt);
-        fprintf(file, "</body></html>");
+        export_write_html_footer(file, NULL);
         printf("Archivo exportado a: %s\n", get_export_path("estadisticas_por_anio.html"));
         fclose(file);
     }

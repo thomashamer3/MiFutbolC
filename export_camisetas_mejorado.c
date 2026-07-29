@@ -260,9 +260,8 @@ void exportar_camisetas_html_mejorado(void)
         return;
     }
 
-    // Escribir encabezado HTML y estructura de tabla con metricas avanzadas
-    fprintf(file, "<html><body><h1>Camisetas con Estadisticas Avanzadas</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias "
+    export_write_html_begin(file, "Camisetas con Estadisticas Avanzadas");
+    fprintf(file, "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias "
             "Totales</th><th>Partidos Totales</th><th>Victorias</th><th>%% "
             "Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones Totales</th><th>%% "
             "Lesiones</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado "
@@ -285,8 +284,7 @@ void exportar_camisetas_html_mejorado(void)
                 data.relacion_goles_asistencias);
     }
 
-    // Cerrar estructura HTML
-    fprintf(file, "</table></body></html>");
+    export_write_html_footer(file, NULL);
     sqlite3_finalize(stmt);
     printf("Archivo exportado a: %s\n", get_export_path("camisetas_mejorado.html"));
     fclose(file);

@@ -265,7 +265,25 @@ EstadoJugador evaluar_estado_jugador(void)
     estado.derrotas_consecutivas = derrotas_consecutivas;
 
     // Evaluar riesgo de lesion basado en cansancio y partidos consecutivos
-    estado.riesgo_lesion = (estado.cansancio_promedio / 10.0F) +
+    // Factor de descanso: reducir cansancio efectivo segun dias sin jugar
+    // 7 dias = 50% reduccion, 14+ dias = cansancio descartado
+    float factor_descanso = 1.0F;
+    if (estado.dias_descanso >= 14)
+    {
+        factor_descanso = 0.0F;
+    }
+    else if (estado.dias_descanso >= 7)
+    {
+        factor_descanso = 0.5F;
+    }
+    else if (estado.dias_descanso > 0)
+    {
+        factor_descanso = 1.0F - ((float)estado.dias_descanso / 14.0F);
+    }
+
+    float cansancio_efectivo = estado.cansancio_promedio * factor_descanso;
+
+    estado.riesgo_lesion = (cansancio_efectivo / 10.0F) +
                            ((float)estado.partidos_consecutivos / 3.0F) +
                            ((float)estado.derrotas_consecutivas / 2.0F);
 
@@ -974,7 +992,17 @@ void activar_ia_antes_partido(void)
     // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
 
-    if ((estado.riesgo_lesion > 2.5 || estado.cansancio_promedio > 8) &&
+    float factor_descanso_trigger = 1.0F;
+    if (estado.dias_descanso >= 14)
+        factor_descanso_trigger = 0.0F;
+    else if (estado.dias_descanso >= 7)
+        factor_descanso_trigger = 0.5F;
+    else if (estado.dias_descanso > 0)
+        factor_descanso_trigger = 1.0F - ((float)estado.dias_descanso / 14.0F);
+
+    float cansancio_trigger = estado.cansancio_promedio * factor_descanso_trigger;
+
+    if ((estado.riesgo_lesion > 2.5 || cansancio_trigger > 8) &&
             leer_confirmacion_sn(
                 "\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
     {

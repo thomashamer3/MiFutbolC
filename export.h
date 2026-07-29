@@ -308,6 +308,25 @@ void export_write_json_footer(FILE *f, void *context);
  */
 void export_write_html_footer(FILE *f, void *context);
 
+/**
+ * @brief Callback de pie para exportacion HTML con tabla: cierra tabla, contenedor y documento.
+ *
+ * @param f Archivo de salida.
+ * @param context No utilizado.
+ */
+void export_write_html_table_footer(FILE *f, void *context);
+
+/**
+ * @brief Escribe la cabecera HTML completa con CSS moderno.
+ *
+ * Incluye DOCTYPE, meta charset/viewport, CSS responsivo, y abre
+ * la estructura del documento: container + h1 (sin <table>).
+ *
+ * @param f Archivo de salida.
+ * @param title Titulo de la pagina (se usa en <title> y <h1>).
+ */
+void export_write_html_begin(FILE *f, const char *title);
+
 /** @} */
 
 #endif

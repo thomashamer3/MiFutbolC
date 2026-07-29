@@ -1,4 +1,4 @@
-﻿
+
 #include "cJSON.h"
 #include "db.h"
 #include "export.h"
@@ -268,8 +268,8 @@ void exportar_estadisticas_generales_html(void)
         return;
     }
 
-    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
-    fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
+    export_write_html_begin(file, "Estadisticas Generales");
+    fprintf(file, "<table>\n");
     fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
     {
         for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
@@ -278,7 +278,7 @@ void exportar_estadisticas_generales_html(void)
         }
     }
 
-    fprintf(file, "</table>\n</body>\n</html>\n");
+    export_write_html_table_footer(file, NULL);
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_generales.html"));
 }
@@ -517,8 +517,8 @@ static void write_cached_json(FILE *file)
 
 static void write_cached_html(FILE *file)
 {
-    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas</title></head>\n");
-    fprintf(file, "<body>\n<h1>Estadisticas Generales</h1>\n<table border='1'>\n");
+    export_write_html_begin(file, "Estadisticas Generales");
+    fprintf(file, "<table>\n");
     fprintf(file, "<tr><th>Categoria</th><th>Camiseta</th><th>Valor</th></tr>\n");
     for (size_t i = 0; i < STAT_DEFS_COUNT; ++i)
     {
@@ -528,7 +528,7 @@ static void write_cached_html(FILE *file)
                     g_cached_stats[i].nombre, g_cached_stats[i].valor);
         }
     }
-    fprintf(file, "</table>\n</body>\n</html>\n");
+    export_write_html_table_footer(file, NULL);
 }
 
 static void write_cached_md(FILE *file)
@@ -616,8 +616,7 @@ static void stats_mes_json_rows(FILE *file, sqlite3_stmt *stmt)
 
 static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(file, "<!DOCTYPE html>\n<html>\n<head><title>Estadisticas por Mes</title></head>\n");
-    fprintf(file, "<body>\n<h1>Estadisticas por Mes</h1>\n");
+    export_write_html_begin(file, "Estadisticas por Mes");
     char current[8] = "";
     int hay = 0;
     month_stat_row_t row;
@@ -630,7 +629,7 @@ static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt)
             {
                 fprintf(file, "</table><br>");
             }
-            fprintf(file, "<h2>%s</h2><table border='1'>", row.month);
+            fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", row.month);
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</"
                     "th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
             strcpy_s(current, sizeof(current), row.month);
@@ -643,9 +642,9 @@ static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt)
     }
     if (hay)
     {
-        fprintf(file, "</table>");
+        fprintf(file, "</table></div>\n");
     }
-    fprintf(file, "</body></html>\n");
+    export_write_html_footer(file, NULL);
 }
 
 /* ============================================================================

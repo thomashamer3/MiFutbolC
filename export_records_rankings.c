@@ -87,21 +87,24 @@ static void write_temporada_json(FILE *file, const char *key, const char *sql)
 
 static void write_record_section_html(FILE *file, const char *title, const char *sql)
 {
-    fprintf(file, "<h2>%s</h2>\n", title);
     sqlite3_stmt *stmt = execute_records_query(sql);
     int valor;
     const char *camiseta;
     const char *fecha;
 
+    fprintf(file, "<div class=\"stat-card\"><h3>%s</h3>", title);
     if (stmt && get_record_data(stmt, &valor, &camiseta, &fecha))
     {
-        fprintf(file, "<p><strong>%d</strong> (Camiseta: %s, Fecha: %s)</p>\n", valor, camiseta,
-                fecha);
+        fprintf(file,
+                "<div class=\"stat-value\">%d</div>"
+                "<div class=\"stat-meta\">Camiseta: <span class=\"stat-label\">%s</span> &middot; Fecha: %s</div>\n",
+                valor, camiseta, fecha);
     }
     else
     {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
+        fprintf(file, "<div class=\"alert alert-empty\">Sin registros disponibles</div>\n");
     }
+    fprintf(file, "</div>\n");
     if (stmt)
     {
         sqlite3_finalize(stmt);
@@ -110,24 +113,26 @@ static void write_record_section_html(FILE *file, const char *title, const char 
 
 static void write_combinacion_section_html(FILE *file, const char *title, const char *sql)
 {
-    fprintf(file, "<h2>%s</h2>\n", title);
     sqlite3_stmt *stmt = execute_records_query(sql);
     const char *cancha;
     const char *camiseta;
     double rendimiento;
     int partidos;
 
+    fprintf(file, "<div class=\"stat-card\"><h3>%s</h3>", title);
     if (stmt && get_combinacion_data(stmt, &cancha, &camiseta, &rendimiento, &partidos))
     {
         fprintf(file,
-                "<p>Cancha: <strong>%s</strong>, Camiseta: <strong>%s</strong>, Rendimiento "
-                "Promedio: <strong>%.2f</strong>, Partidos: <strong>%d</strong></p>\n",
-                cancha, camiseta, rendimiento, partidos);
+                "<div class=\"stat-value\">%.2f</div>"
+                "<div class=\"stat-meta\">Cancha: <span class=\"stat-label\">%s</span> &middot; "
+                "Camiseta: <span class=\"stat-label\">%s</span> &middot; Partidos: %d</div>\n",
+                rendimiento, cancha, camiseta, partidos);
     }
     else
     {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
+        fprintf(file, "<div class=\"alert alert-empty\">Sin registros disponibles</div>\n");
     }
+    fprintf(file, "</div>\n");
     if (stmt)
     {
         sqlite3_finalize(stmt);
@@ -135,23 +140,24 @@ static void write_combinacion_section_html(FILE *file, const char *title, const 
 }
 static void write_temporada_section_html(FILE *file, const char *title, const char *sql)
 {
-    fprintf(file, "<h2>%s</h2>\n", title);
     sqlite3_stmt *stmt = execute_records_query(sql);
     const char *anio;
     double rendimiento;
     int partidos;
 
+    fprintf(file, "<div class=\"stat-card\"><h3>%s</h3>", title);
     if (stmt && get_temporada_data(stmt, &anio, &rendimiento, &partidos))
     {
         fprintf(file,
-                "<p>Anio: <strong>%s</strong>, Rendimiento Promedio: <strong>%.2f</strong>, "
-                "Partidos: <strong>%d</strong></p>\n",
-                anio, rendimiento, partidos);
+                "<div class=\"stat-value\">%.2f</div>"
+                "<div class=\"stat-meta\">Anio: <span class=\"stat-label\">%s</span> &middot; Partidos: %d</div>\n",
+                rendimiento, anio, partidos);
     }
     else
     {
-        fprintf(file, "<p>No hay registros disponibles</p>\n");
+        fprintf(file, "<div class=\"alert alert-empty\">Sin registros disponibles</div>\n");
     }
+    fprintf(file, "</div>\n");
     if (stmt)
     {
         sqlite3_finalize(stmt);
@@ -544,13 +550,9 @@ void exportar_records_rankings_html(void)
         return;
     }
 
-    fprintf(file, "<!DOCTYPE html>\n");
-    fprintf(file, "<html>\n");
-    fprintf(file, "<head><title>Records & Rankings</title></head>\n");
-    fprintf(file, "<body>\n");
-    fprintf(file, "<h1>RECORDS & RANKINGS</h1>\n");
+    export_write_html_begin(file, "RECORDS & RANKINGS");
 
-    // Write all sections
+    fprintf(file, "<div class=\"stat-grid\">\n");
     write_record_section_html(file, "Record de Goles en un Partido",
                               "SELECT p.goles, c.nombre, p.fecha_hora FROM partido p JOIN camiseta "
                               "c ON p.camiseta_id = c.id ORDER BY p.goles DESC LIMIT 1");
@@ -578,9 +580,9 @@ void exportar_records_rankings_html(void)
         "SELECT substr(p.fecha_hora, 7, 4), ROUND(AVG(p.rendimiento_general), 2), COUNT(*) FROM "
         "partido p WHERE p.fecha_hora IS NOT NULL AND p.fecha_hora != '' GROUP BY "
         "substr(p.fecha_hora, 7, 4) ORDER BY AVG(p.rendimiento_general) ASC LIMIT 1");
+    fprintf(file, "</div>\n");
 
-    fprintf(file, "</body>\n");
-    fprintf(file, "</html>\n");
+    export_write_html_footer(file, NULL);
 
     fclose(file);
     printf("Exportado a %s\n", get_export_path("records_rankings.html"));

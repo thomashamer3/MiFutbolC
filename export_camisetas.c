@@ -108,8 +108,8 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(file, "<html><body><h1>Camisetas con Estadisticas</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias "
+    export_write_html_begin(file, "Camisetas con Estadisticas");
+    fprintf(file, "<table>\n<tr><th>ID</th><th>Nombre</th><th>Goles Totales</th><th>Asistencias "
             "Totales</th><th>Partidos "
             "Totales</th><th>Victorias</th><th>Empates</th><th>Derrotas</th><th>Lesiones "
             "Totales</th><th>Rendimiento Promedio</th><th>Cansancio Promedio</th><th>Estado "
@@ -141,7 +141,7 @@ EXPORT_FORMAT_ROWS(exportar_camisetas_txt, obtener_datos_camisetas, "camisetas.t
 EXPORT_FORMAT_ROWS(exportar_camisetas_json, obtener_datos_camisetas, "camisetas.json",
                    cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_camisetas_html, obtener_datos_camisetas, "camisetas.html", NULL,
-                   write_html_header, write_html_row, export_write_html_footer)
+                   write_html_header, write_html_row, export_write_html_table_footer)
 
 void exportar_camisetas_all(void)
 {
@@ -150,7 +150,7 @@ void exportar_camisetas_all(void)
         {"camisetas.csv", NULL, write_csv_header, write_csv_row, NULL},
         {"camisetas.txt", NULL, write_txt_header, write_txt_row, NULL},
         {"camisetas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer},
-        {"camisetas.html", NULL, write_html_header, write_html_row, export_write_html_footer}
+        {"camisetas.html", NULL, write_html_header, write_html_row, export_write_html_table_footer}
     };
     export_all_formats(obtener_datos_camisetas, configs, 4);
 }

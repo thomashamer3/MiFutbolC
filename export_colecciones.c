@@ -213,7 +213,7 @@ void exportar_colecciones_html(void)
         return;
     }
 
-    fprintf(file, "<html><body><h1>Colecciones e Inventario</h1>\n");
+    export_write_html_begin(file, "Colecciones e Inventario");
 
     const char *cab_colecciones[] = {"ID", "Nombre", "Descripcion", NULL};
     escribir_seccion_html(file, "Colecciones", SQL_COLECCIONES, cab_colecciones,
@@ -226,7 +226,7 @@ void exportar_colecciones_html(void)
     escribir_seccion_html(file, "Inventario", SQL_INVENTARIO, cab_inv,
                           escribir_fila_inventario_html);
 
-    fprintf(file, "</body></html>");
+    export_write_html_footer(file, NULL);
     fclose(file);
     printf("Archivo exportado a: %s\n", get_export_path("colecciones.html"));
 }
@@ -284,29 +284,31 @@ static void colecciones_txt_section(FILE *file, sqlite3_stmt *stmt_colec, sqlite
 static void colecciones_html_section(FILE *file, sqlite3_stmt *stmt_colec, sqlite3_stmt *stmt_items,
                                      sqlite3_stmt *stmt_inv)
 {
-    fprintf(file, "<html><body><h1>Colecciones e Inventario</h1>\n");
-    fprintf(file, "<h2>Colecciones</h2><table "
-            "border='1'><tr><th>ID</th><th>Nombre</th><th>Descripcion</th></tr>");
+    export_write_html_begin(file, "Colecciones e Inventario");
+    fprintf(file, "<div class=\"section-card\"><h2>Colecciones</h2><table>"
+            "<tr><th>ID</th><th>Nombre</th><th>Descripcion</th></tr>");
     while (sqlite3_step(stmt_colec) == SQLITE_ROW)
     {
         escribir_fila_coleccion_html(file, stmt_colec);
     }
-    fprintf(file, "</table><br>\n");
-    fprintf(file, "<h2>Items</h2><table "
-            "border='1'><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Rareza</"
+    fprintf(file, "</table></div>\n");
+    fprintf(file, "<div class=\"section-card\"><h2>Items</h2><table>"
+            "<tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Rareza</"
             "th><th>Coleccion ID</th></tr>");
     while (sqlite3_step(stmt_items) == SQLITE_ROW)
     {
         escribir_fila_item_html(file, stmt_items);
     }
-    fprintf(file, "</table><br>\n");
-    fprintf(file, "<h2>Inventario</h2><table border='1'><tr><th>ID</th><th>Coleccion "
+    fprintf(file, "</table></div>\n");
+    fprintf(file, "<div class=\"section-card\"><h2>Inventario</h2><table>"
+            "<tr><th>ID</th><th>Coleccion "
             "ID</th><th>Item ID</th><th>Cantidad</th></tr>");
     while (sqlite3_step(stmt_inv) == SQLITE_ROW)
     {
         escribir_fila_inventario_html(file, stmt_inv);
     }
-    fprintf(file, "</table></body></html>\n");
+    fprintf(file, "</table></div>\n");
+    export_write_html_footer(file, NULL);
 }
 
 static void colecciones_json_section(cJSON *root, sqlite3_stmt *stmt_colec,

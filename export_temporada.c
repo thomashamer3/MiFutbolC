@@ -94,8 +94,8 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(file, "<html><body><h1>Temporadas</h1><table border='1'>"
-            "<tr><th>ID</th><th>Nombre</th><th>Fecha Inicio</th><th>Fecha Fin</th>"
+    export_write_html_begin(file, "Temporadas");
+    fprintf(file, "<table>\n<tr><th>ID</th><th>Nombre</th><th>Fecha Inicio</th><th>Fecha Fin</th>"
             "<th>Presupuesto Total</th><th>Estado</th><th>Objetivos Cumplidos</th></tr>");
 }
 
@@ -123,7 +123,7 @@ EXPORT_FORMAT_ROWS(exportar_temporadas_txt, obtener_datos_temporadas, "temporada
 EXPORT_FORMAT_ROWS(exportar_temporadas_json, obtener_datos_temporadas, "temporadas.json",
                    cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_ROWS(exportar_temporadas_html, obtener_datos_temporadas, "temporadas.html", NULL,
-                   write_html_header, write_html_row, export_write_html_footer)
+                   write_html_header, write_html_row, export_write_html_table_footer)
 
 void exportar_temporadas_all(void)
 {
@@ -132,7 +132,7 @@ void exportar_temporadas_all(void)
         {"temporadas.csv", NULL, write_csv_header, write_csv_row, NULL},
         {"temporadas.txt", NULL, write_txt_header, write_txt_row, NULL},
         {"temporadas.json", cJSON_CreateArray(), NULL, write_json_row, export_write_json_footer},
-        {"temporadas.html", NULL, write_html_header, write_html_row, export_write_html_footer}
+        {"temporadas.html", NULL, write_html_header, write_html_row, export_write_html_table_footer}
     };
     export_all_formats(obtener_datos_temporadas, configs, 4);
 }

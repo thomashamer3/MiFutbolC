@@ -248,8 +248,8 @@ void exportar_recordatorios_html(void)
         return;
     }
 
-    fprintf(file, "<html><body><h1>Recordatorios</h1><table border='1'>"
-            "<tr><th>ID</th><th>Fecha</th><th>Tematica</th><th>Nota</th></tr>");
+    export_write_html_begin(file, "Recordatorios");
+    fprintf(file, "<table>\n<tr><th>ID</th><th>Fecha</th><th>Tematica</th><th>Nota</th></tr>");
 
     for (int i = 0; i < count; i++)
     {
@@ -257,7 +257,7 @@ void exportar_recordatorios_html(void)
                 arr[i].fecha, arr[i].tematica, arr[i].nota);
     }
 
-    fprintf(file, "</table></body></html>");
+    export_write_html_table_footer(file, NULL);
     fclose(file);
     free(arr);
     printf("Archivo exportado a: %s\n", get_export_path("recordatorios.html"));

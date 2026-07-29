@@ -2899,16 +2899,8 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         return 0;
     }
 
-    fprintf(file, "<!doctype html>\n");
-    fprintf(file, "<html><head><meta charset=\"utf-8\"><title>Canchas</title>");
-    fprintf(
-        file,
-        "<style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;"
-        "width:100%%;}th,td{border:1px solid "
-        "#ccc;padding:6px;text-align:left;}th{background:#f0f0f0;}h1{margin-bottom:16px;}</style>");
-    fprintf(file, "</head><body>\n");
-    fprintf(file, "<h1>Informacion de Canchas</h1>\n");
-    fprintf(file, "<table><thead><tr>");
+    export_write_html_begin(file, "Informacion de Canchas");
+    fprintf(file, "<div class=\"section-card\"><h2>Canchas Registradas</h2><table><thead><tr>");
     fprintf(file, "<th>ID</th><th>Nombre</th><th>Telefono</th><th>Direccion</th><th>Localidad</"
             "th><th>Tipo</th><th>Superficie</th><th>Techada</th><th>Iluminacion</"
             "th><th>Apertura</th><th>Cierre</th><th>Precio Dia</th><th>Precio "
@@ -2965,7 +2957,8 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
 
     db_stmt_release(stmt);
 
-    fprintf(file, "</tbody></table></body></html>\n");
+    fprintf(file, "</tbody></table></div>");
+    export_write_html_footer(file, NULL);
     fclose(file);
 
     if (total == 0)

@@ -90,9 +90,8 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 static void write_html_header(FILE *file, void *context)
 {
     (void)context;
-    fprintf(file, "<html><body><h1>Dashboard - Resumen de Metricas</h1>"
-            "<table border='1'>"
-            "<tr><th>Metrica</th><th>Valor</th></tr>");
+    export_write_html_begin(file, "Dashboard - Resumen de Metricas");
+    fprintf(file, "<table>\n<tr><th>Metrica</th><th>Valor</th></tr>");
 }
 
 static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
@@ -121,7 +120,7 @@ EXPORT_FORMAT_SINGLE(exportar_dashboard_txt, obtener_datos_dashboard, "dashboard
 EXPORT_FORMAT_SINGLE(exportar_dashboard_json, obtener_datos_dashboard, "dashboard.json",
                      cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer)
 EXPORT_FORMAT_SINGLE(exportar_dashboard_html, obtener_datos_dashboard, "dashboard.html", NULL,
-                     write_html_header, write_html_row, export_write_html_footer)
+                     write_html_header, write_html_row, export_write_html_table_footer)
 
 void exportar_dashboard_all(void)
 {
@@ -130,7 +129,7 @@ void exportar_dashboard_all(void)
         {"dashboard.csv", NULL, write_csv_header, write_csv_row, NULL},
         {"dashboard.txt", NULL, write_txt_header, write_txt_row, NULL},
         {"dashboard.json", cJSON_CreateObject(), NULL, write_json_row, export_write_json_footer},
-        {"dashboard.html", NULL, write_html_header, write_html_row, export_write_html_footer}
+        {"dashboard.html", NULL, write_html_header, write_html_row, export_write_html_table_footer}
     };
     export_all_formats(obtener_datos_dashboard, configs, 4);
 }
