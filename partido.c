@@ -6005,47 +6005,8 @@ void reordenar_partidos_por_fecha(void)
     printf("IDs reordenados correctamente (%d partidos).\n", total);
 }
 
-void mostrar_ultimo_partido(void)
+static void mostrar_tiempo_desde_partido(int anio, int mes, int dia, int hora, int minuto)
 {
-    sqlite3_stmt *stmt;
-
-    if (!preparar_stmt(
-                "SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
-    {
-        printf("Error consultando partidos.\n");
-        pause_console();
-        return;
-    }
-
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        printf("\nNo hay partidos registrados.\n");
-        sqlite3_finalize(stmt);
-        pause_console();
-        return;
-    }
-
-    const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
-    if (!fecha || strlen(fecha) < 16)
-    {
-        printf("\nFecha del ultimo partido invalida.\n");
-        sqlite3_finalize(stmt);
-        pause_console();
-        return;
-    }
-
-    /* Parsear YYYY-MM-DD HH:MM manualmente */
-    int anio = 0, mes = 0, dia = 0, hora = 0, minuto = 0;
-    if (sscanf(fecha, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto) != 5)
-    {
-        printf("\nError parseando fecha: %s\n", fecha);
-        sqlite3_finalize(stmt);
-        pause_console();
-        return;
-    }
-    sqlite3_finalize(stmt);
-
-    /* Convertir a time_t */
     struct tm tm_partido = {0};
     tm_partido.tm_year = anio - 1900;
     tm_partido.tm_mon = mes - 1;
@@ -6076,8 +6037,9 @@ void mostrar_ultimo_partido(void)
     long total_minutos = (long)(segundos / 60.0);
     long total_horas = total_minutos / 60;
 
-    /* Calcular meses y anios */
-    int anios = 0, meses = 0, dias_restantes = 0;
+    int anios = 0;
+    int meses = 0;
+    int dias_restantes = 0;
     struct tm tm_ahora;
 #ifdef _WIN32
     localtime_s(&tm_ahora, &t_ahora);
@@ -6092,7 +6054,6 @@ void mostrar_ultimo_partido(void)
     if (dias_restantes < 0)
     {
         meses--;
-        /* Obtener dias del mes anterior */
         struct tm tm_temp = tm_ahora;
         tm_temp.tm_mon--;
         if (tm_temp.tm_mon < 0)
@@ -6100,17 +6061,15 @@ void mostrar_ultimo_partido(void)
             tm_temp.tm_mon = 11;
             tm_temp.tm_year--;
         }
-        /* Dias en el mes anterior de la fecha actual */
         tm_temp.tm_mday = 1;
         mktime(&tm_temp);
-        /* El ultimo dia del mes es el dia antes del dia 1 del siguiente mes */
         tm_temp.tm_mon++;
         if (tm_temp.tm_mon > 11)
         {
             tm_temp.tm_mon = 0;
             tm_temp.tm_year++;
         }
-        tm_temp.tm_mday = 0; /* ultimo dia del mes anterior */
+        tm_temp.tm_mday = 0;
         mktime(&tm_temp);
         dias_restantes += tm_temp.tm_mday + 1;
     }
@@ -6121,7 +6080,6 @@ void mostrar_ultimo_partido(void)
         meses += 12;
     }
 
-    /* Calcular semanas y dias restantes */
     int semanas = dias_restantes / 7;
     int dias = dias_restantes % 7;
     int horas = (int)(total_horas % 24);
@@ -6147,6 +6105,56 @@ void mostrar_ultimo_partido(void)
     printf("\n  Tiempo total: %ld minutos\n", total_minutos);
 
     pause_console();
+}
+
+void mostrar_ultimo_partido(void)
+{
+    sqlite3_stmt *stmt;
+
+    if (!preparar_stmt(
+                "SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
+    {
+        printf("Error consultando partidos.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        printf("\nNo hay partidos registrados.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
+    if (!fecha || strlen(fecha) < 16)
+    {
+        printf("\nFecha del ultimo partido invalida.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    int anio = 0;
+    int mes = 0;
+    int dia = 0;
+    int hora = 0;
+    int minuto = 0;
+#ifdef _WIN32
+    if (sscanf_s(fecha, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto) != 5)
+#else
+    if (sscanf(fecha, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto) != 5)
+#endif
+    {
+        printf("\nError parseando fecha: %s\n", fecha);
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+    sqlite3_finalize(stmt);
+
+    mostrar_tiempo_desde_partido(anio, mes, dia, hora, minuto);
 }
 
 void menu_partidos(void)

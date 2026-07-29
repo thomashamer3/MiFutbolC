@@ -286,14 +286,13 @@ static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
     int sm;
     int sshi;
     int ssmi;
-#ifdef _MSC_VER
-#pragma warning(suppress: 4996)
-#endif
+#ifdef _WIN32
+    if (sscanf_s(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
+            sscanf_s(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
+#else
     if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
-#ifdef _MSC_VER
-#pragma warning(suppress: 4996)
-#endif
             sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
+#endif
     {
         out->has_sun_data = 1;
         out->sunrise_hour = sh;

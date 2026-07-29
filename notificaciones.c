@@ -256,10 +256,11 @@ static void cumpleanos_jugadores(void)
         int anio;
         int mes;
         int dia;
-#ifdef _MSC_VER
-#pragma warning(suppress: 4996)
-#endif
+#ifdef _WIN32
+        if (sscanf_s(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
+#else
         if (sscanf(fnac, "%d-%d-%d", &anio, &mes, &dia) >= 2 && mes == mes_actual)
+#endif
         {
             count++;
             int dias = dia - dia_actual;

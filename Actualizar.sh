@@ -38,10 +38,10 @@ else
   NC=''
 fi
 
-info()    { printf "${CYAN}[INFO]${NC} %s\n" "$1"; }
-success() { printf "${GREEN}[OK]${NC} %s\n" "$1"; }
-warn()    { printf "${YELLOW}[AVISO]${NC} %s\n" "$1"; }
-error()   { printf "${RED}[ERROR]${NC} %s\n" "$1"; }
+info()    { local msg="$1"; printf "${CYAN}[INFO]${NC} %s\n" "$msg"; }
+success() { local msg="$1"; printf "${GREEN}[OK]${NC} %s\n" "$msg"; }
+warn()    { local msg="$1"; printf "${YELLOW}[AVISO]${NC} %s\n" "$msg"; }
+error()   { local msg="$1"; printf "${RED}[ERROR]${NC} %s\n" "$msg"; }
 
 # Parse args
 while [[ "$#" -gt 0 ]]; do

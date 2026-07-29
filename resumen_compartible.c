@@ -583,19 +583,23 @@ void generar_resumen_html(void)
     int racha_longitud = calcular_racha_actual(&tipo_racha);
     const char *racha_texto;
     const char *racha_desc;
+    const char *racha_class;
     switch (tipo_racha)
     {
     case 'P':
         racha_texto = "Positiva";
         racha_desc = "Rendimiento destacado en los ultimos partidos";
+        racha_class = "positiva";
         break;
     case 'N':
         racha_texto = "Negativa";
         racha_desc = "Momento dificil, pero siempre se puede dar la vuelta";
+        racha_class = "negativa";
         break;
     default:
         racha_texto = "Neutral";
         racha_desc = "Resultados mixtos en los ultimos partidos";
+        racha_class = "neutral";
         break;
     }
 
@@ -619,14 +623,19 @@ void generar_resumen_html(void)
     char rival_fav[128];
     obtener_rival_favorito(rival_fav, sizeof(rival_fav));
 
-    int victorias = 0, empates = 0, derrotas = 0;
+    int victorias = 0;
+    int empates = 0;
+    int derrotas = 0;
     contar_resultados(&victorias, &empates, &derrotas);
 
     char mejor_posicion[128];
     obtener_mejor_posicion(mejor_posicion, sizeof(mejor_posicion));
 
-    char ultimo_fecha[64], ultimo_rival[128];
-    int ult_goles, ult_asistencias, ult_resultado;
+    char ultimo_fecha[64];
+    char ultimo_rival[128];
+    int ult_goles = 0;
+    int ult_asistencias = 0;
+    int ult_resultado = 0;
     obtener_ultimo_partido(ultimo_fecha, sizeof(ultimo_fecha),
                            ultimo_rival, sizeof(ultimo_rival),
                            &ult_goles, &ult_asistencias, &ult_resultado);
@@ -671,7 +680,8 @@ void generar_resumen_html(void)
     }
 
     char *filepath = get_export_path("resumen_compartible.html");
-    FILE *f = fopen(filepath, "w");
+    FILE *f = NULL;
+    fopen_s(&f, filepath, "w");
     if (!f)
     {
         printf("Error al crear el archivo HTML: %s\n", filepath);
@@ -899,7 +909,7 @@ void generar_resumen_html(void)
             "    <div class=\"racha-desc\">%s</div>\n"
             "  </div>\n"
             "</div>\n",
-            (tipo_racha == 'P') ? "positiva" : (tipo_racha == 'N') ? "negativa" : "neutral",
+            racha_class,
             racha_texto, racha_longitud,
             (racha_longitud == 1) ? "" : "s",
             (racha_longitud == 1) ? "" : "s",
@@ -1036,14 +1046,19 @@ void generar_resumen_markdown(void)
     char rival_fav[128];
     obtener_rival_favorito(rival_fav, sizeof(rival_fav));
 
-    int victorias = 0, empates = 0, derrotas = 0;
+    int victorias = 0;
+    int empates = 0;
+    int derrotas = 0;
     contar_resultados(&victorias, &empates, &derrotas);
 
     char mejor_posicion[128];
     obtener_mejor_posicion(mejor_posicion, sizeof(mejor_posicion));
 
-    char ultimo_fecha[64], ultimo_rival[128];
-    int ult_goles, ult_asistencias, ult_resultado;
+    char ultimo_fecha[64];
+    char ultimo_rival[128];
+    int ult_goles = 0;
+    int ult_asistencias = 0;
+    int ult_resultado = 0;
     obtener_ultimo_partido(ultimo_fecha, sizeof(ultimo_fecha),
                            ultimo_rival, sizeof(ultimo_rival),
                            &ult_goles, &ult_asistencias, &ult_resultado);
@@ -1083,7 +1098,8 @@ void generar_resumen_markdown(void)
     }
 
     char *filepath = get_export_path("resumen_compartible.md");
-    FILE *f = fopen(filepath, "w");
+    FILE *f = NULL;
+    fopen_s(&f, filepath, "w");
     if (!f)
     {
         printf("Error al crear el archivo Markdown: %s\n", filepath);
@@ -1282,6 +1298,86 @@ void generar_resumen_estadisticas(void)
     pause_console();
 }
 
+static void mostrar_mejor_temporada_fallback(void)
+{
+    sqlite3_stmt *stmt;
+
+    ui_printf("\n=== MEJOR TEMPORADA POR RENDIMIENTO ===\n\n");
+
+    if (!preparar_stmt(
+                "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) as anio, "
+                "ROUND(AVG(p.rendimiento_general), 2) as rendimiento, "
+                "COUNT(*) as partidos, "
+                "SUM(p.goles) as goles, "
+                "SUM(p.asistencias) as asistencias "
+                "FROM partido p "
+                "WHERE p.fecha_hora IS NOT NULL "
+                "GROUP BY anio "
+                "ORDER BY rendimiento DESC LIMIT 1;",
+                &stmt))
+    {
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *anio = (const char *)sqlite3_column_text(stmt, 0);
+        double rendimiento = sqlite3_column_double(stmt, 1);
+        int partidos = sqlite3_column_int(stmt, 2);
+        int goles = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+
+        ui_printf("Anio: %s\n", anio ? anio : "Desconocido");
+        ui_printf("Rendimiento promedio: %.2f/10\n", rendimiento);
+        ui_printf("Partidos jugados: %d\n", partidos);
+        ui_printf("Goles totales: %d\n", goles);
+        ui_printf("Asistencias totales: %d\n", asistencias);
+    }
+    else
+    {
+        mostrar_no_hay_registros("temporadas con datos");
+    }
+    sqlite3_finalize(stmt);
+}
+
+static void mostrar_mejor_temporada_victorias(void)
+{
+    sqlite3_stmt *stmt;
+
+    ui_printf("\n=== MEJOR TEMPORADA POR VICTORIAS ===\n\n");
+
+    if (!preparar_stmt(
+                "SELECT t.nombre, "
+                "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
+                "COUNT(*) as total "
+                "FROM partido p "
+                "JOIN temporada t ON substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) = t.nombre "
+                "WHERE p.fecha_hora IS NOT NULL "
+                "GROUP BY t.nombre "
+                "ORDER BY victorias DESC LIMIT 1;",
+                &stmt))
+    {
+        return;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre_temp = (const char *)sqlite3_column_text(stmt, 0);
+        int victorias = sqlite3_column_int(stmt, 1);
+        int total = sqlite3_column_int(stmt, 2);
+
+        ui_printf("Temporada: %s\n", nombre_temp ? nombre_temp : "Sin nombre");
+        ui_printf("Victorias: %d de %d partidos\n", victorias, total);
+        double porcentaje = total > 0 ? ((double)victorias / total) * 100.0 : 0.0;
+        ui_printf("Porcentaje de victorias: %.1f%%\n", porcentaje);
+    }
+    else
+    {
+        mostrar_no_hay_registros("temporadas con victorias");
+    }
+    sqlite3_finalize(stmt);
+}
+
 void generar_resumen_mejor_temporada(void)
 {
     clear_screen();
@@ -1289,7 +1385,6 @@ void generar_resumen_mejor_temporada(void)
 
     sqlite3_stmt *stmt;
 
-    /* Intentar primero con temporada_resumen */
     if (preparar_stmt(
                 "SELECT t.nombre, tr.total_partidos, tr.total_goles, "
                 "tr.promedio_goles_partido, "
@@ -1317,80 +1412,16 @@ void generar_resumen_mejor_temporada(void)
             ui_printf("Promedio goles/partido: %.2f\n", promedio);
             ui_printf("Equipo campeon: %s\n", campeon ? campeon : "No determinado");
             ui_printf("Lesiones: %d\n", lesiones);
-        }
-        else
-        {
-            /* Sin datos en temporada_resumen, intentar con datos de partidos por anio */
             sqlite3_finalize(stmt);
-
-            ui_printf("\n=== MEJOR TEMPORADA POR RENDIMIENTO ===\n\n");
-
-            if (preparar_stmt(
-                        "SELECT substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) as anio, "
-                        "ROUND(AVG(p.rendimiento_general), 2) as rendimiento, "
-                        "COUNT(*) as partidos, "
-                        "SUM(p.goles) as goles, "
-                        "SUM(p.asistencias) as asistencias "
-                        "FROM partido p "
-                        "WHERE p.fecha_hora IS NOT NULL "
-                        "GROUP BY anio "
-                        "ORDER BY rendimiento DESC LIMIT 1;",
-                        &stmt))
-            {
-                if (sqlite3_step(stmt) == SQLITE_ROW)
-                {
-                    const char *anio = (const char *)sqlite3_column_text(stmt, 0);
-                    double rendimiento = sqlite3_column_double(stmt, 1);
-                    int partidos = sqlite3_column_int(stmt, 2);
-                    int goles = sqlite3_column_int(stmt, 3);
-                    int asistencias = sqlite3_column_int(stmt, 4);
-
-                    ui_printf("Anio: %s\n", anio ? anio : "Desconocido");
-                    ui_printf("Rendimiento promedio: %.2f/10\n", rendimiento);
-                    ui_printf("Partidos jugados: %d\n", partidos);
-                    ui_printf("Goles totales: %d\n", goles);
-                    ui_printf("Asistencias totales: %d\n", asistencias);
-                }
-                else
-                {
-                    mostrar_no_hay_registros("temporadas con datos");
-                }
-                sqlite3_finalize(stmt);
-            }
-        }
-    }
-
-    /* Mostrar tambien la mejor temporada por numero de victorias */
-    ui_printf("\n=== MEJOR TEMPORADA POR VICTORIAS ===\n\n");
-
-    if (preparar_stmt(
-                "SELECT t.nombre, "
-                "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
-                "COUNT(*) as total "
-                "FROM partido p "
-                "JOIN temporada t ON substr(p.fecha_hora, instr(p.fecha_hora, '/') + 4, 4) = t.nombre "
-                "WHERE p.fecha_hora IS NOT NULL "
-                "GROUP BY t.nombre "
-                "ORDER BY victorias DESC LIMIT 1;",
-                &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            const char *nombre_temp = (const char *)sqlite3_column_text(stmt, 0);
-            int victorias = sqlite3_column_int(stmt, 1);
-            int total = sqlite3_column_int(stmt, 2);
-
-            ui_printf("Temporada: %s\n", nombre_temp ? nombre_temp : "Sin nombre");
-            ui_printf("Victorias: %d de %d partidos\n", victorias, total);
-            double porcentaje = total > 0 ? ((double)victorias / total) * 100.0 : 0.0;
-            ui_printf("Porcentaje de victorias: %.1f%%\n", porcentaje);
         }
         else
         {
-            mostrar_no_hay_registros("temporadas con victorias");
+            sqlite3_finalize(stmt);
+            mostrar_mejor_temporada_fallback();
         }
-        sqlite3_finalize(stmt);
     }
+
+    mostrar_mejor_temporada_victorias();
 
     ui_printf("\n");
     app_log_event("RESUMEN_COMPARTIBLE", "Mejor temporada mostrada");
