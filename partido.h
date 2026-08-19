@@ -88,4 +88,17 @@ void obtener_clima_partidos_historicos(void);
 
 void reordenar_partidos_por_fecha(void);
 
+/**
+ * @brief Muestra el submenu de ultimos partidos
+ *
+ * Presenta un menu con opciones para ver:
+ * - Ultimo partido jugado
+ * - Ultima victoria
+ * - Ultima derrota
+ * - Ultimo empate
+ * - Ultimo partido con goles
+ * - Ultimo partido con asistencias
+ */
+void menu_ultimo(void);
+
 #endif

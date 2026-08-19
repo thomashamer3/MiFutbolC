@@ -1668,6 +1668,51 @@ static void partido_listado_abrir_filtros(PartidoListadoFiltros *filtros, int *p
     *pagina_actual = 1;
 }
 
+static void partido_listado_buscar_por_id(void)
+{
+    sqlite3_stmt *stmt;
+    char sql[4096];
+
+    print_header("BUSCAR PARTIDO POR NUMERO");
+
+    if (!hay_registros("partido"))
+    {
+        mostrar_no_hay_registros("partidos");
+        pause_console();
+        return;
+    }
+
+    int id = input_int("Numero de Partido (0 para cancelar): ");
+
+    if (id == 0)
+    {
+        return;
+    }
+
+    snprintf(sql, sizeof(sql),
+             PARTIDO_SELECT_COLUMNS " WHERE p.id = ?");
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        mostrar_error_operacion("Partido", "buscar");
+        pause_console();
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    clear_screen();
+    print_header("DETALLE DEL PARTIDO");
+
+    if (!mostrar_partidos_desde_stmt(stmt))
+    {
+        ui_printf_centered_line("No se encontro el partido con numero %d.", id);
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 static int partido_listado_manejar_opcion(int opcion, int total_partidos, int total_paginas,
         int *pagina_actual, int *partidos_por_pagina,
         int *orden_desc, PartidoListadoFiltros *filtros)
@@ -1693,6 +1738,9 @@ static int partido_listado_manejar_opcion(int opcion, int total_partidos, int to
         return 1;
     case 6:
         partido_listado_cambiar_orden(orden_desc, pagina_actual);
+        return 1;
+    case 7:
+        partido_listado_buscar_por_id();
         return 1;
     default:
         ui_printf_centered_line("Opcion invalida.");
@@ -3270,6 +3318,7 @@ static void partido_listado_imprimir_menu(int paginacion_todos)
     ui_printf_centered_line("4) Paginacion");
     ui_printf_centered_line("5) Filtros");
     ui_printf_centered_line("6) Orden");
+    ui_printf_centered_line("7) Buscar Partido");
     ui_printf_centered_line("0) Volver");
 }
 
@@ -6107,12 +6156,111 @@ static void mostrar_tiempo_desde_partido(int anio, int mes, int dia, int hora, i
     pause_console();
 }
 
+static void mostrar_detalle_partido_reciente(const char *titulo, const char *where_extra)
+{
+    char sql[2048];
+    sqlite3_stmt *stmt;
+
+    snprintf(sql, sizeof(sql),
+             "SELECT p.id, can.nombre, p.fecha_hora, p.goles, p.asistencias, "
+             "IFNULL(c.nombre, 'N/A'), p.resultado "
+             "FROM partido p "
+             "JOIN cancha can ON p.cancha_id = can.id "
+             "JOIN camiseta c ON p.camiseta_id = c.id "
+             "%s "
+             "ORDER BY p.fecha_hora DESC LIMIT 1",
+             where_extra);
+
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("Error consultando partidos.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        printf("\nNo hay partidos registrados con ese criterio.\n");
+        sqlite3_finalize(stmt);
+        pause_console();
+        return;
+    }
+
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        const char *cancha = stmt_text_or_default(stmt, 1, "N/A");
+        const char *fecha = stmt_text_or_default(stmt, 2, "N/A");
+        int goles = sqlite3_column_int(stmt, 3);
+        int asistencias = sqlite3_column_int(stmt, 4);
+        const char *camiseta = stmt_text_or_default(stmt, 5, "N/A");
+        int resultado = sqlite3_column_int(stmt, 6);
+        char fecha_con_dia[48];
+
+        clear_screen();
+        print_header(titulo);
+        format_date_with_weekday_for_display(fecha, fecha_con_dia, sizeof(fecha_con_dia));
+        printf("  Partido ID: %d\n\n", id);
+        ui_printf_centered_line("Fecha: %s", fecha_con_dia);
+        ui_printf_centered_line("Cancha: %s", cancha);
+        ui_printf_centered_line("Camiseta: %s", camiseta);
+        ui_printf_centered_line("Goles: %d", goles);
+        ui_printf_centered_line("Asistencias: %d", asistencias);
+        ui_printf_centered_line("Resultado: %s", resultado_to_text(resultado));
+    }
+
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
+static void ultimo_partido(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMO PARTIDO", "");
+}
+
+static void ultima_victoria(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMA VICTORIA", "WHERE p.resultado = 1");
+}
+
+static void ultima_derrota(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMA DERROTA", "WHERE p.resultado = 3");
+}
+
+static void ultimo_empate(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMO EMPATE", "WHERE p.resultado = 2");
+}
+
+static void ultimo_gol(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMO GOL", "WHERE p.goles > 0");
+}
+
+static void ultima_asistencia(void)
+{
+    mostrar_detalle_partido_reciente("ULTIMA ASISTENCIA", "WHERE p.asistencias > 0");
+}
+
+void menu_ultimo(void)
+{
+    MenuItem items[] = {{1, "Ultimo Partido", &ultimo_partido},
+        {2, "Ultima Victoria", &ultima_victoria},
+        {3, "Ultima Derrota", &ultima_derrota},
+        {4, "Ultimo Empate", &ultimo_empate},
+        {5, "Ultimo Gol", &ultimo_gol},
+        {6, "Ultima Asistencia", &ultima_asistencia},
+        {0, "Volver", NULL}
+    };
+
+    ejecutar_menu("ULTIMOS", items, 7);
+}
+
 void mostrar_ultimo_partido(void)
 {
     sqlite3_stmt *stmt;
 
-    if (!preparar_stmt(
-                "SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
+    if (!preparar_stmt("SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
     {
         printf("Error consultando partidos.\n");
         pause_console();
@@ -6168,7 +6316,7 @@ void menu_partidos(void)
         {7, "Favoritos", &menu_marcar_favorito_partido},
         {8, "Etiquetas (Tags)", &menu_gestion_tags_partido},
         {9, "Obtener Clima Historico", &obtener_clima_partidos_historicos},
-        {10, "Ultimo Partido", &mostrar_ultimo_partido},
+        {10, "Ultimo", &menu_ultimo},
         {0, "Volver", NULL}
     };
 

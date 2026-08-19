@@ -164,7 +164,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1785289997 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1787171020 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -187,7 +187,7 @@
 	<stdlib.h>
 	<time.h>
 
-1782499470 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
+1787170466 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
 
 1782012639 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.c
 	"estadisticas.h"
