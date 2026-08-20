@@ -687,28 +687,28 @@ DEFINE_GET_MENU(torneos, "menu_torneos", NULL, 0, 1, 0)
 DEFINE_GET_MENU(temporada, "menu_temporada", "temporada", 0, 1, 1)
 DEFINE_GET_MENU(entrenador_ia, "menu_entrenador_ia", "entrenador_ia", 0, 1, 1)
 DEFINE_GET_MENU(records_rankings, "menu_records_rankings", "records_rankings", 0, 1, 1)
+DEFINE_GET_MENU(dashboard, "menu_dashboard", "dashboard", 1, 1, 1)
+DEFINE_GET_MENU(calendario, "menu_calendario", "calendario", 1, 1, 1)
+DEFINE_GET_MENU(carrera, "menu_carrera", "carrera", 0, 1, 1)
+DEFINE_GET_MENU(recordatorios, "menu_recordatorios", "recordatorios", 0, 1, 1)
+DEFINE_GET_MENU(colecciones, "menu_colecciones", "colecciones", 0, 1, 1)
+DEFINE_GET_MENU(musica, "menu_musica", "musica", 0, 1, 1)
+DEFINE_GET_MENU(tiendas, "menu_tiendas", "tiendas", 0, 1, 1)
+DEFINE_GET_MENU(reclutamiento, "menu_reclutamiento", "reclutamiento", 0, 1, 1)
+DEFINE_GET_MENU(media, "menu_media", "media", 0, 1, 1)
+DEFINE_GET_MENU(tutorial, "menu_tutorial", "tutorial", 1, 1, 1)
+DEFINE_GET_MENU(atajos_config, "menu_atajos_config", "atajos_config", 0, 1, 1)
+DEFINE_GET_MENU(resumen_compartible, "menu_resumen_compartible", "resumen_compartible", 0, 1, 1)
+DEFINE_GET_MENU(ranking_amigos, "menu_ranking_amigos", "ranking_amigos", 0, 1, 1)
 DEFINE_GET_MENU_TEXT(menu_settings, "menu_settings")
 DEFINE_GET_MENU_TEXT(menu_exit, "menu_exit")
 DEFINE_GET_MENU_TEXT(menu_title, "menu_title")
 DEFINE_GET_MENU_TEXT(menu_usuario, "menu_usuario")
-DEFINE_GET_MENU_TEXT(menu_dashboard, "menu_dashboard")
-DEFINE_GET_MENU_TEXT(menu_calendario, "menu_calendario")
-DEFINE_GET_MENU_TEXT(menu_carrera, "menu_carrera")
-DEFINE_GET_MENU_TEXT(menu_recordatorios, "menu_recordatorios")
-DEFINE_GET_MENU_TEXT(menu_colecciones, "menu_colecciones")
-DEFINE_GET_MENU_TEXT(menu_musica, "menu_musica")
 DEFINE_GET_MENU_TEXT(settings_theme, "settings_theme")
 DEFINE_GET_MENU_TEXT(settings_language, "settings_language")
 DEFINE_GET_MENU_TEXT(show_current, "show_current")
 DEFINE_GET_MENU_TEXT(reset_defaults, "reset_defaults")
 DEFINE_GET_MENU_TEXT(menu_back, "menu_back")
-DEFINE_GET_MENU_TEXT(menu_tiendas, "menu_tiendas")
-DEFINE_GET_MENU_TEXT(menu_reclutamiento, "menu_reclutamiento")
-DEFINE_GET_MENU_TEXT(menu_media, "menu_media")
-DEFINE_GET_MENU_TEXT(menu_tutorial, "menu_tutorial")
-DEFINE_GET_MENU_TEXT(menu_atajos_config, "menu_atajos_config")
-DEFINE_GET_MENU_TEXT(menu_resumen_compartible, "menu_resumen_compartible")
-DEFINE_GET_MENU_TEXT(menu_ranking_amigos, "menu_ranking_amigos")
 
 #ifdef _WIN32
 static void obtener_nombre_repo(const char *owner_repo, char *repo_name, size_t repo_name_size)
@@ -1506,20 +1506,34 @@ void menu_custom_menus(void)
 
     printf("Selecciona los menus que deseas habilitar/deshabilitar:\n\n");
 
-    // Lista de menus disponibles (excluyendo exit que siempre esta)
-    struct MenuOption options[] = {{1, "camisetas", get_text("menu_camisetas")},
-        {2, "canchas", get_text("menu_canchas")},
-        {3, "partidos", get_text("menu_partidos")},
-        {4, "equipos", get_text("menu_equipos")},
-        {5, "estadisticas", get_text("menu_estadisticas")},
-        {6, "logros", get_text("menu_logros")},
-        {8, "analisis", get_text("menu_analisis")},
-        {9, "bienestar", get_text("menu_bienestar")},
-        {10, "lesiones", get_text("menu_lesiones")},
+    struct MenuOption options[] = {{1, "dashboard", get_text("menu_dashboard")},
+        {2, "calendario", get_text("menu_calendario")},
+        {3, "camisetas", get_text("menu_camisetas")},
+        {4, "canchas", get_text("menu_canchas")},
+        {5, "botines", get_text("menu_botines")},
+        {6, "equipos", get_text("menu_equipos")},
+        {7, "partidos", get_text("menu_partidos")},
+        {8, "lesiones", get_text("menu_lesiones")},
+        {9, "estadisticas", get_text("menu_estadisticas")},
+        {10, "logros", get_text("menu_logros")},
         {11, "financiamiento", get_text("menu_financiamiento")},
         {12, "torneos", get_text("menu_torneos")},
         {13, "temporada", get_text("menu_temporada")},
-        {14, "settings", get_text("menu_settings")},
+        {14, "analisis", get_text("menu_analisis")},
+        {15, "bienestar", get_text("menu_bienestar")},
+        {16, "carrera", get_text("menu_carrera")},
+        {17, "recordatorios", get_text("menu_recordatorios")},
+        {18, "colecciones", get_text("menu_colecciones")},
+        {19, "musica", get_text("menu_musica")},
+        {20, "records_rankings", get_text("menu_records_rankings")},
+        {21, "tiendas", get_text("menu_tiendas")},
+        {22, "reclutamiento", get_text("menu_reclutamiento")},
+        {23, "media", get_text("menu_media")},
+        {24, "tutorial", get_text("menu_tutorial")},
+        {25, "atajos_config", get_text("menu_atajos_config")},
+        {26, "resumen_compartible", get_text("menu_resumen_compartible")},
+        {27, "ranking_amigos", get_text("menu_ranking_amigos")},
+        {28, "settings", get_text("menu_settings")},
         {0, NULL, NULL}
     };
 
