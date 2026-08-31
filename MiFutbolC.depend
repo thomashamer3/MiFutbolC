@@ -83,7 +83,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1785289417 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1788217363 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -164,7 +164,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1787171020 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1788219949 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"

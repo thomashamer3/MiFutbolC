@@ -51,7 +51,7 @@
     "IFNULL(p.goles_detalle, ''), IFNULL(p.asistencias_detalle, ''), "                             \
     "p.atajaste_todo_el_partido, "                                                                 \
     "p.precip_mm, p.wind_kmh, p.weather_code, IFNULL(p.clima_json, ''), "                          \
-    "p.apparent_temp_c, b.nombre, p.botin_id "                                                     \
+    "p.apparent_temp_c, b.nombre, p.botin_id, IFNULL(p.diferencia_gol, 0) "                \
     "FROM partido p JOIN camiseta c ON p.camiseta_id = c.id "                                      \
     "JOIN cancha can ON p.cancha_id = can.id "                                                     \
     "LEFT JOIN botin b ON p.botin_id = b.id"
@@ -308,6 +308,29 @@ static void imprimir_marcador_global_si_disponible(sqlite3_stmt *stmt)
     }
 }
 
+static void imprimir_diferencia_gol(sqlite3_stmt *stmt)
+{
+    int dif = 0;
+
+    if (sqlite3_column_count(stmt) > 49 && sqlite3_column_type(stmt, 49) != SQLITE_NULL)
+    {
+        dif = sqlite3_column_int(stmt, 49);
+    }
+
+    if (dif > 0)
+    {
+        ui_printf_centered_line("Diferencia de Gol: +%d", dif);
+    }
+    else if (dif < 0)
+    {
+        ui_printf_centered_line("Diferencia de Gol: %d", dif);
+    }
+    else
+    {
+        ui_printf_centered_line("Diferencia de Gol: 0");
+    }
+}
+
 static const char *wmo_code_to_text(int code)
 {
     static const struct
@@ -404,6 +427,7 @@ static void imprimir_bloque_base_partido(sqlite3_stmt *stmt, const char *fecha_c
     {
         ui_printf_centered_line("Resultado: %s", resultado_to_text(sqlite3_column_int(stmt, 6)));
     }
+    imprimir_diferencia_gol(stmt);
 
     ui_printf_centered_line("Rendimiento General: %d/10", sqlite3_column_int(stmt, 7));
     ui_printf_centered_line("Cansancio: %d/10", sqlite3_column_int(stmt, 8));
@@ -1755,6 +1779,7 @@ typedef struct
     int goles_rival;
     int tarjeta;
     int goles_en_contra;
+    int diferencia_gol;
 } DatosPartidoFormalMarcador;
 
 typedef struct
@@ -2753,6 +2778,24 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
         datos->resultado = 0;
     }
 
+    datos->formal.marcador.diferencia_gol =
+        pedir_entero_minimo("Diferencia de Gol: ", 0, "Diferencia invalida. Ingrese 0 o mas: ");
+    if (datos->resultado == 1)
+    {
+        datos->formal.marcador.diferencia_gol =
+            (datos->formal.marcador.diferencia_gol > 0) ? datos->formal.marcador.diferencia_gol : 0;
+    }
+    else if (datos->resultado == 3)
+    {
+        datos->formal.marcador.diferencia_gol =
+            -((datos->formal.marcador.diferencia_gol > 0) ? datos->formal.marcador.diferencia_gol
+              : 0);
+    }
+    else
+    {
+        datos->formal.marcador.diferencia_gol = 0;
+    }
+
     listar_entidades_con_nueva("camiseta", "Camisetas disponibles", "Nueva Camiseta");
     datos->camiseta = pedir_camiseta_o_nueva();
 
@@ -2823,9 +2866,9 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
                        "estado_cancha,goles_equipo,goles_rival,formato_partido,tarjeta,"
                        "goles_en_contra,dolor_fisico,temperatura_c,arbitraje_score,lo_mejor,"
                        "que_mejorar,tags,goles_detalle,asistencias_detalle,"
-                       "atajaste_todo_el_partido,botin_id)"
+                       "atajaste_todo_el_partido,botin_id,diferencia_gol)"
                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?"
-                       ",?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                       ",?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        &stmt))
     {
         printf("Error al preparar insercion de partido: %s\n", sqlite3_errmsg(db));
@@ -2898,6 +2941,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     {
         sqlite3_bind_null(stmt, 44);
     }
+    sqlite3_bind_int(stmt, 45, datos->formal.marcador.diferencia_gol);
     int result = sqlite3_step(stmt);
     if (result == SQLITE_DONE)
     {
@@ -3626,6 +3670,50 @@ static void modificar_resultado_partido(void)
                             "Resultado modificado correctamente", 1, 3, NULL);
 }
 
+static void modificar_diferencia_gol_partido(void)
+{
+    int diferencia = pedir_entero_minimo("Nueva diferencia de gol (0 o mas): ", 0,
+                                         "Diferencia invalida. Ingrese 0 o mas: ");
+
+    int resultado = 0;
+    sqlite3_stmt *stmt_res;
+    if (preparar_stmt("SELECT resultado FROM partido WHERE id=?", &stmt_res))
+    {
+        sqlite3_bind_int(stmt_res, 1, current_partido_id);
+        if (sqlite3_step(stmt_res) == SQLITE_ROW)
+        {
+            resultado = sqlite3_column_int(stmt_res, 0);
+        }
+        sqlite3_finalize(stmt_res);
+    }
+
+    int valor = 0;
+    if (resultado == 1 && diferencia > 0)
+    {
+        valor = diferencia;
+    }
+    else if (resultado == 3 && diferencia > 0)
+    {
+        valor = -diferencia;
+    }
+    else
+    {
+        valor = 0;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("UPDATE partido SET diferencia_gol=? WHERE id=?", &stmt))
+    {
+        pause_console();
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_bind_int(stmt, 2, current_partido_id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    mostrar_alerta_operacion("Partido", "Diferencia de Gol Modificada", NULL);
+}
+
 static void modificar_camiseta_partido(void)
 {
     listar_camisetas_disponibles();
@@ -4207,7 +4295,7 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
                        "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, "
                        "camiseta_id=?, resultado=?, clima=?, dia=?, precio=?, "
                        "goles_detalle=?, asistencias_detalle=?, "
-                       "atajaste_todo_el_partido=? "
+                       "atajaste_todo_el_partido=?, diferencia_gol=? "
                        "WHERE id=?",
                        &stmt))
     {
@@ -4229,7 +4317,8 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_text(stmt, 10, datos->goles_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_text(stmt, 11, datos->asistencias_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 12, datos->atajaste_todo_el_partido);
-    sqlite3_bind_int(stmt, 13, current_partido_id);
+    sqlite3_bind_int(stmt, 13, datos->formal.marcador.diferencia_gol);
+    sqlite3_bind_int(stmt, 14, current_partido_id);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     mostrar_alerta_operacion("Partido", "Modificado", NULL);
@@ -4287,19 +4376,20 @@ void modificar_partido(void)
         {3, "Goles", &modificar_goles_partido},
         {4, "Asistencias", &modificar_asistencias_partido},
         {5, "Resultado", &modificar_resultado_partido},
-        {6, "Camiseta", &modificar_camiseta_partido},
-        {7, "Clima", &modificar_clima_partido},
-        {8, "Dia", &modificar_dia_partido},
-        {9, "Comentario", &modificar_comentario_partido},
-        {10, "Precio", &modificar_precio_partido},
-        {11, "Rendimiento y Estado", &menu_modificar_rendimiento_y_estado_partido},
-        {12, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
-        {13, "Atajaste Todo el Partido", &modificar_atajaste_partido},
-        {14, "Modificar Todo", &modificar_todo_partido},
+        {6, "Diferencia de Gol", &modificar_diferencia_gol_partido},
+        {7, "Camiseta", &modificar_camiseta_partido},
+        {8, "Clima", &modificar_clima_partido},
+        {9, "Dia", &modificar_dia_partido},
+        {10, "Comentario", &modificar_comentario_partido},
+        {11, "Precio", &modificar_precio_partido},
+        {12, "Rendimiento y Estado", &menu_modificar_rendimiento_y_estado_partido},
+        {13, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
+        {14, "Atajaste Todo el Partido", &modificar_atajaste_partido},
+        {15, "Modificar Todo", &modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("MODIFICAR PARTIDO", items, 15);
+    ejecutar_menu("MODIFICAR PARTIDO", items, 16);
 }
 
 static void buscar_por_camiseta(void)
