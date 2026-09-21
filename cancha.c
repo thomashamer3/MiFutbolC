@@ -1666,54 +1666,46 @@ void crear_cancha(void)
     }
 }
 
+static void render_cancha_fila(sqlite3_stmt *stmt, void *ctx)
+{
+    const char *sep = (const char *)ctx;
+    int id = sqlite3_column_int(stmt, 0);
+    const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+    int partidos = sqlite3_column_int(stmt, 2);
+    int goles = sqlite3_column_int(stmt, 3);
+    int asistencias = sqlite3_column_int(stmt, 4);
+
+    ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d", id,
+                            nombre ? nombre : "(sin nombre)", sep, partidos, sep, goles, sep,
+                            asistencias);
+}
+
 void listar_canchas(void)
 {
-    clear_screen();
-    print_header("LISTADO DE CANCHAS");
     app_log_event("CANCHA", "Listado de canchas consultado");
-
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT c.id, c.nombre, "
-                      "COUNT(p.id), "
-                      "IFNULL(SUM(p.goles), 0), "
-                      "IFNULL(SUM(p.asistencias), 0) "
-                      "FROM cancha c "
-                      "LEFT JOIN partido p ON c.id = p.cancha_id "
-                      "WHERE IFNULL(c.activa, 1) = 1 "
-                      "GROUP BY c.id, c.nombre "
-                      "ORDER BY c.id;";
-
-    if (!db_prepare_stmt(&stmt, sql))
-    {
-        printf("Error al consultar la base de datos.\n");
-        pause_console();
-        return;
-    }
 
     int usar_unicode = consola_soporta_unicode();
     const char *sep = usar_unicode ? " \u2502 " : " | ";
 
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);
-        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
-        int partidos = sqlite3_column_int(stmt, 2);
-        int goles = sqlite3_column_int(stmt, 3);
-        int asistencias = sqlite3_column_int(stmt, 4);
+    int filas = listado_paginado(
+                    "LISTADO DE CANCHAS",
+                    "SELECT COUNT(*) FROM cancha WHERE IFNULL(activa, 1) = 1;",
+                    "SELECT c.id, c.nombre, "
+                    "COUNT(p.id), "
+                    "IFNULL(SUM(p.goles), 0), "
+                    "IFNULL(SUM(p.asistencias), 0) "
+                    "FROM cancha c "
+                    "LEFT JOIN partido p ON c.id = p.cancha_id "
+                    "WHERE IFNULL(c.activa, 1) = 1 "
+                    "GROUP BY c.id, c.nombre "
+                    "ORDER BY c.id LIMIT ? OFFSET ?",
+                    render_cancha_fila, (void *)sep);
 
-        ui_printf_centered_line("%2d - %-24s%sPartidos: %2d%sGoles: %2d%sAsistencias: %2d", id,
-                                nombre ? nombre : "(sin nombre)", sep, partidos, sep, goles, sep,
-                                asistencias);
-        hay = 1;
-    }
-
-    if (!hay)
+    if (filas == 0)
     {
         mostrar_no_hay_registros("canchas cargadas");
     }
 
-    db_stmt_release(stmt);
     pause_console();
 }
 

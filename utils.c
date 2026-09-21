@@ -856,6 +856,129 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
     return 1;
 }
 
+/* Cantidad de filas mostradas por pagina en los listados paginados. */
+#define LISTADO_POR_PAGINA 20
+
+int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
+                     ListadoFilaFn render_fila, void *ctx)
+{
+    if (!titulo || !sql_conteo || !sql_pagina || !render_fila)
+    {
+        return 0;
+    }
+
+    clear_screen();
+    print_header(titulo);
+
+    sqlite3_stmt *stmt = NULL;
+    int total = 0;
+
+    if (db_prepare_stmt(&stmt, sql_conteo))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            total = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (total <= 0)
+    {
+        return 0;
+    }
+
+    int total_paginas = (total + LISTADO_POR_PAGINA - 1) / LISTADO_POR_PAGINA;
+    int pagina_actual = 1;
+
+    int filas_ultima_pagina = 0;
+
+    while (1)
+    {
+        clear_screen();
+        print_header(titulo);
+        ui_printf_centered_line("Pagina %d de %d | Total: %d", pagina_actual, total_paginas, total);
+
+        int offset = (pagina_actual - 1) * LISTADO_POR_PAGINA;
+        int filas_pagina = 0;
+
+        if (db_prepare_stmt(&stmt, sql_pagina))
+        {
+            sqlite3_bind_int(stmt, 1, LISTADO_POR_PAGINA);
+            sqlite3_bind_int(stmt, 2, offset);
+
+            while (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                render_fila(stmt, ctx);
+                filas_pagina++;
+            }
+            sqlite3_finalize(stmt);
+        }
+
+        filas_ultima_pagina = filas_pagina;
+
+        ui_printf_centered_line("1) Pagina anterior");
+        ui_printf_centered_line("2) Pagina siguiente");
+        ui_printf_centered_line("3) Ir a pagina");
+        ui_printf_centered_line("0) Volver");
+
+        int opcion = input_int("Opcion: ");
+
+        if (opcion == 0 || opcion == -1)
+        {
+            break;
+        }
+
+        if (opcion == 1)
+        {
+            if (pagina_actual > 1)
+            {
+                pagina_actual--;
+            }
+            else
+            {
+                ui_printf_centered_line("Ya esta en la primera pagina.");
+                pause_console();
+            }
+        }
+        else if (opcion == 2)
+        {
+            if (pagina_actual < total_paginas)
+            {
+                pagina_actual++;
+            }
+            else
+            {
+                ui_printf_centered_line("Ya esta en la ultima pagina.");
+                pause_console();
+            }
+        }
+        else if (opcion == 3)
+        {
+            int destino = input_int("Numero de pagina: ");
+            if (destino == -1)
+            {
+                break;
+            }
+            if (destino >= 1 && destino <= total_paginas)
+            {
+                pagina_actual = destino;
+            }
+            else
+            {
+                ui_printf_centered_line("Pagina invalida.");
+                pause_console();
+            }
+        }
+        else
+        {
+            ui_printf_centered_line("Opcion invalida.");
+            pause_console();
+        }
+    }
+
+    return filas_ultima_pagina;
+}
+
 static int ui_readline(char *buffer, int size)
 {
     if (!buffer || size <= 0)

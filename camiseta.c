@@ -1268,49 +1268,42 @@ static int cargar_imagen_para_camiseta_id(int id)
     return app_cargar_imagen_entidad(id, "camiseta", "mifutbol_imagen_sel.txt");
 }
 
+static void render_camiseta_fila(sqlite3_stmt *stmt, void *ctx)
+{
+    const char *sep = (const char *)ctx;
+    ui_print_stats_row_from_stmt(stmt, sep);
+}
+
 static void listar_camisetas_con_stats(void)
 {
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
-                      "COUNT(p.id), "
-                      "IFNULL(SUM(p.goles), 0), "
-                      "IFNULL(SUM(p.asistencias), 0), "
-                      "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
-                      "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
-                      "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) "
-                      "FROM camiseta c "
-                      "LEFT JOIN partido p ON c.id = p.camiseta_id "
-                      "WHERE IFNULL(c.activa, 1) = 1 "
-                      "GROUP BY c.id, c.nombre "
-                      "ORDER BY c.id;";
-
-    if (!preparar_stmt(&stmt, sql))
-    {
-        printf("Error al consultar la base de datos.\n");
-        return;
-    }
-
     int usar_unicode = consola_soporta_unicode();
     const char *sep = usar_unicode ? " \u2502 " : " | ";
 
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        hay |= ui_print_stats_row_from_stmt(stmt, sep);
-    }
+    int filas = listado_paginado(
+                    "LISTADO DE CAMISETAS",
+                    "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1;",
+                    "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
+                    "COUNT(p.id), "
+                    "IFNULL(SUM(p.goles), 0), "
+                    "IFNULL(SUM(p.asistencias), 0), "
+                    "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
+                    "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
+                    "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) "
+                    "FROM camiseta c "
+                    "LEFT JOIN partido p ON c.id = p.camiseta_id "
+                    "WHERE IFNULL(c.activa, 1) = 1 "
+                    "GROUP BY c.id, c.nombre "
+                    "ORDER BY c.id LIMIT ? OFFSET ?",
+                    render_camiseta_fila, (void *)sep);
 
-    if (!hay)
+    if (filas == 0)
     {
         mostrar_no_hay_registros("camisetas cargadas");
     }
-    sqlite3_finalize(stmt);
 }
 
 void listar_camisetas(void)
 {
-    clear_screen();
-    print_header("LISTADO DE CAMISETAS");
-
     app_log_event("CAMISETA", "Listado de camisetas consultado");
 
     listar_camisetas_con_stats();

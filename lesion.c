@@ -213,57 +213,51 @@ void crear_lesion(void)
     mostrar_alerta_operacion("Lesión", "Creada", info);
 }
 
+static void render_lesion_fila(sqlite3_stmt *stmt, void *ctx)
+{
+    (void)ctx;
+
+    const char *estado = (const char *)sqlite3_column_text(stmt, 6);
+    const char *estado_display = estado ? estado : "ACTIVA";
+    const char *camiseta_nombre = (const char *)sqlite3_column_text(stmt, 8);
+    const char *cancha_nombre = (const char *)sqlite3_column_text(stmt, 10);
+    const char *camiseta_display = camiseta_nombre ? camiseta_nombre : "Sin camiseta";
+    const char *cancha_display = cancha_nombre ? cancha_nombre : "Sin cancha";
+    char fecha_con_dia[48];
+    format_date_with_weekday_for_display((const char *)sqlite3_column_text(stmt, 4),
+                                         fecha_con_dia, sizeof(fecha_con_dia));
+
+    ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
+    ui_printf_centered_line("Jugador: %s", sqlite3_column_text(stmt, 1));
+    ui_printf_centered_line("Tipo: %s", sqlite3_column_text(stmt, 2));
+    ui_printf_centered_line("Descripcion: %s", sqlite3_column_text(stmt, 3));
+    ui_printf_centered_line("Fecha: %s", fecha_con_dia);
+    ui_printf_centered_line("Camiseta: %s", camiseta_display);
+    ui_printf_centered_line("Estado: %s", estado_display);
+    ui_printf_centered_line("Cancha: %s", cancha_display);
+    ui_printf_centered_line("----------------------------------------");
+}
+
 void listar_lesiones(void)
 {
-    mostrar_pantalla("LISTADO DE LESIONES");
+    int filas = listado_paginado(
+                    "LISTADO DE LESIONES",
+                    "SELECT COUNT(*) FROM lesion;",
+                    "SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, l.camiseta_id, "
+                    "l.estado, l.partido_id, "
+                    "c.nombre, p.fecha_hora, can.nombre "
+                    "FROM lesion l "
+                    "LEFT JOIN camiseta c ON l.camiseta_id = c.id "
+                    "LEFT JOIN partido p ON l.partido_id = p.id "
+                    "LEFT JOIN cancha can ON p.cancha_id = can.id "
+                    "ORDER BY l.id ASC LIMIT ? OFFSET ?",
+                    render_lesion_fila, NULL);
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("SELECT l.id, l.jugador, l.tipo, l.descripcion, l.fecha, l.camiseta_id, "
-                       "l.estado, l.partido_id, "
-                       "c.nombre, p.fecha_hora, can.nombre "
-                       "FROM lesion l "
-                       "LEFT JOIN camiseta c ON l.camiseta_id = c.id "
-                       "LEFT JOIN partido p ON l.partido_id = p.id "
-                       "LEFT JOIN cancha can ON p.cancha_id = can.id "
-                       "ORDER BY l.id ASC",
-                       &stmt))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *estado = (const char *)sqlite3_column_text(stmt, 6);
-        const char *estado_display = estado ? estado : "ACTIVA";
-        const char *camiseta_nombre = (const char *)sqlite3_column_text(stmt, 8);
-        const char *cancha_nombre = (const char *)sqlite3_column_text(stmt, 10);
-        const char *camiseta_display = camiseta_nombre ? camiseta_nombre : "Sin camiseta";
-        const char *cancha_display = cancha_nombre ? cancha_nombre : "Sin cancha";
-        char fecha_con_dia[48];
-        format_date_with_weekday_for_display((const char *)sqlite3_column_text(stmt, 4),
-                                             fecha_con_dia, sizeof(fecha_con_dia));
-
-        ui_printf_centered_line("ID: %d", sqlite3_column_int(stmt, 0));
-        ui_printf_centered_line("Jugador: %s", sqlite3_column_text(stmt, 1));
-        ui_printf_centered_line("Tipo: %s", sqlite3_column_text(stmt, 2));
-        ui_printf_centered_line("Descripcion: %s", sqlite3_column_text(stmt, 3));
-        ui_printf_centered_line("Fecha: %s", fecha_con_dia);
-        ui_printf_centered_line("Camiseta: %s", camiseta_display);
-        ui_printf_centered_line("Estado: %s", estado_display);
-        ui_printf_centered_line("Cancha: %s", cancha_display);
-        ui_printf_centered_line("----------------------------------------");
-        hay = 1;
-    }
-
-    if (!hay)
+    if (filas == 0)
     {
         mostrar_no_hay_registros("lesiones");
     }
 
-    sqlite3_finalize(stmt);
     pause_console();
 }
 

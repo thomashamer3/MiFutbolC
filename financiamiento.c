@@ -2051,88 +2051,82 @@ void eliminar_transaccion(void)
     pause_console();
 }
 
-void listar_transacciones(void)
+static void render_transaccion_fila(sqlite3_stmt *stmt, void *ctx)
 {
-    clear_screen();
-    print_header("LISTAR TRANSACCIONES FINANCIERAS");
+    (void)ctx;
 
-    // Listar todas las transacciones sin filtros
-    const char *sql = "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM "
-                      "financiamiento ORDER BY fecha DESC, id DESC;";
+    TransaccionFinanciera transaccion;
 
-    sqlite3_stmt *stmt;
-    if (preparar_stmt(sql, &stmt))
+    transaccion.id = sqlite3_column_int(stmt, 0);
+    strncpy_s(transaccion.fecha, sizeof(transaccion.fecha),
+              (const char *)sqlite3_column_text(stmt, 1), sizeof(transaccion.fecha) - 1);
+    transaccion.tipo = sqlite3_column_int(stmt, 2);
+    transaccion.categoria = sqlite3_column_int(stmt, 3);
+    strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion),
+              (const char *)sqlite3_column_text(stmt, 4),
+              sizeof(transaccion.descripcion) - 1);
+    transaccion.monto = sqlite3_column_int(stmt, 5);
+    const char *item = (const char *)sqlite3_column_text(stmt, 6);
+    if (item)
     {
-        ui_printf_centered_line("=== TODAS LAS TRANSACCIONES FINANCIERAS ===");
-        ui_printf("\n");
-
-        int total_ingresos = 0;
-        int total_gastos = 0;
-        int count = 0;
-
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count++;
-            TransaccionFinanciera transaccion;
-
-            transaccion.id = sqlite3_column_int(stmt, 0);
-            strncpy_s(transaccion.fecha, sizeof(transaccion.fecha),
-                      (const char *)sqlite3_column_text(stmt, 1), sizeof(transaccion.fecha) - 1);
-            transaccion.tipo = sqlite3_column_int(stmt, 2);
-            transaccion.categoria = sqlite3_column_int(stmt, 3);
-            strncpy_s(transaccion.descripcion, sizeof(transaccion.descripcion),
-                      (const char *)sqlite3_column_text(stmt, 4),
-                      sizeof(transaccion.descripcion) - 1);
-            transaccion.monto = sqlite3_column_int(stmt, 5);
-            const char *item = (const char *)sqlite3_column_text(stmt, 6);
-            if (item)
-            {
-                strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item,
-                          sizeof(transaccion.item_especifico) - 1);
-                // Truncate after the result to avoid showing Clima and Dia
-                truncar_resultado_partido(transaccion.item_especifico);
-            }
-            else
-            {
-                transaccion.item_especifico[0] = '\0';
-            }
-
-            // Acumuladores para resumen
-            if (transaccion.tipo == INGRESO)
-            {
-                total_ingresos += transaccion.monto;
-            }
-            else
-            {
-                total_gastos += transaccion.monto;
-            }
-
-            // Mostrar transaccion
-            ui_printf_centered_line("----------------------------------------");
-            mostrar_transaccion(&transaccion);
-        }
-
-        sqlite3_finalize(stmt);
-
-        if (count == 0)
-        {
-            ui_printf_centered_line("No hay transacciones registradas.");
-        }
-        else
-        {
-            ui_printf_centered_line("========================================");
-            ui_printf_centered_line("RESUMEN GENERAL:");
-            ui_printf_centered_line("Total Ingresos: $%s", formato_monto(total_ingresos));
-            ui_printf_centered_line("Total Gastos: $%s", formato_monto(total_gastos));
-            ui_printf_centered_line("Balance: $%s", formato_monto(total_ingresos - total_gastos));
-            ui_printf_centered_line("Total de transacciones: %d", count);
-        }
+        strncpy_s(transaccion.item_especifico, sizeof(transaccion.item_especifico), item,
+                  sizeof(transaccion.item_especifico) - 1);
+        // Truncate after the result to avoid showing Clima and Dia
+        truncar_resultado_partido(transaccion.item_especifico);
     }
     else
     {
-        printf("Error al preparar la consulta: %s\n", sqlite3_errmsg(db));
-        pause_console();
-        return;
+        transaccion.item_especifico[0] = '\0';
+    }
+
+    ui_printf_centered_line("----------------------------------------");
+    mostrar_transaccion(&transaccion);
+}
+
+void listar_transacciones(void)
+{
+    listado_paginado(
+        "LISTAR TRANSACCIONES FINANCIERAS",
+        "SELECT COUNT(*) FROM financiamiento;",
+        "SELECT id, fecha, tipo, categoria, descripcion, monto, item_especifico FROM "
+        "financiamiento ORDER BY fecha DESC, id DESC LIMIT ? OFFSET ?",
+        render_transaccion_fila, NULL);
+
+    // Resumen general con una unica consulta agregada (independiente de la pagina).
+    int total_transacciones = 0;
+    int total_ingresos = 0;
+    int total_gastos = 0;
+
+    sqlite3_stmt *stmt = NULL;
+    if (db_prepare_stmt(&stmt,
+                        "SELECT COUNT(*), "
+                        "IFNULL(SUM(CASE WHEN tipo = ? THEN monto ELSE 0 END), 0), "
+                        "IFNULL(SUM(CASE WHEN tipo = ? THEN 0 ELSE monto END), 0) "
+                        "FROM financiamiento;"))
+    {
+        sqlite3_bind_int(stmt, 1, INGRESO);
+        sqlite3_bind_int(stmt, 2, INGRESO);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            total_transacciones = sqlite3_column_int(stmt, 0);
+            total_ingresos = sqlite3_column_int(stmt, 1);
+            total_gastos = sqlite3_column_int(stmt, 2);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (total_transacciones == 0)
+    {
+        ui_printf_centered_line("No hay transacciones registradas.");
+    }
+    else
+    {
+        ui_printf_centered_line("========================================");
+        ui_printf_centered_line("RESUMEN GENERAL:");
+        ui_printf_centered_line("Total Ingresos: $%s", formato_monto(total_ingresos));
+        ui_printf_centered_line("Total Gastos: $%s", formato_monto(total_gastos));
+        ui_printf_centered_line("Balance: $%s", formato_monto(total_ingresos - total_gastos));
+        ui_printf_centered_line("Total de transacciones: %d", total_transacciones);
     }
 
     pause_console();

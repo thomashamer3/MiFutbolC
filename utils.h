@@ -163,6 +163,30 @@ int ui_printf_centered_line(const char *fmt, ...);
  */
 int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep);
 
+/**
+ * @brief Callback que renderiza una fila de un listado paginado.
+ * @param stmt Statement posicionado en la fila actual.
+ * @param ctx  Contexto opcional definido por el llamador.
+ */
+typedef void (*ListadoFilaFn)(sqlite3_stmt *stmt, void *ctx);
+
+/**
+ * @brief Muestra un listado con navegacion por paginas.
+ *
+ * Limpia la pantalla, imprime la cabecera, cuenta las filas con sql_conteo y
+ * renderiza la pagina actual con sql_pagina. Ofrece navegacion (anterior,
+ * siguiente, ir a pagina) y sale con 0 o con -1 (EOF).
+ *
+ * @param titulo      Titulo de la cabecera, mostrado en cada pagina.
+ * @param sql_conteo  Consulta que devuelve el total de filas (una columna).
+ * @param sql_pagina  Consulta de pagina; DEBE terminar en "LIMIT ? OFFSET ?"
+ *                    y no tener ningun otro parametro.
+ * @param render_fila Callback que imprime una fila.
+ * @param ctx         Contexto opcional para render_fila.
+ * @return Numero de filas renderizadas en la ultima pagina; 0 si no hay filas.
+ */
+int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
+                     ListadoFilaFn render_fila, void *ctx);
 
 /**
  * @brief Obtiene la fecha y hora actual en formato legible.
