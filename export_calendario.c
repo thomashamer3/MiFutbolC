@@ -164,6 +164,25 @@ static int cargar_eventos(EventoCalendario *eventos, int max)
 
 typedef void (*EscribirEventosFn)(FILE *file, const EventoCalendario *eventos, int total);
 
+/* Escribe un archivo de calendario a partir de eventos ya cargados. */
+static int calendario_escribir_archivo(const char *filename, const char *error_msg,
+                                       EscribirEventosFn write_fn,
+                                       const EventoCalendario *eventos, int total)
+{
+    FILE *file;
+    errno_t err = fopen_s(&file, get_export_path(filename), "w");
+    if (err != 0 || file == NULL)
+    {
+        printf("%s\n", error_msg);
+        return 0;
+    }
+
+    write_fn(file, eventos, total);
+    fclose(file);
+    printf("Archivo exportado a: %s\n", get_export_path(filename));
+    return 1;
+}
+
 static int exportar_calendario_base(const char *filename, const char *error_msg,
                                     EscribirEventosFn write_fn)
 {
@@ -181,20 +200,9 @@ static int exportar_calendario_base(const char *filename, const char *error_msg,
         return 0;
     }
 
-    FILE *file;
-    errno_t err = fopen_s(&file, get_export_path(filename), "w");
-    if (err != 0 || file == NULL)
-    {
-        printf("%s\n", error_msg);
-        free(eventos);
-        return 0;
-    }
-
-    write_fn(file, eventos, total);
-    fclose(file);
+    int ok = calendario_escribir_archivo(filename, error_msg, write_fn, eventos, total);
     free(eventos);
-    printf("Archivo exportado a: %s\n", get_export_path(filename));
-    return 1;
+    return ok;
 }
 
 static void write_csv(FILE *file, const EventoCalendario *eventos, int total)
@@ -274,4 +282,35 @@ void exportar_calendario_json(void)
 void exportar_calendario_html(void)
 {
     exportar_calendario_base("calendario.html", "Error al crear el archivo HTML.", write_html);
+}
+
+void exportar_calendario_all(void)
+{
+    EventoCalendario *eventos = malloc(sizeof(EventoCalendario) * MAX_EVENTOS);
+    if (!eventos)
+    {
+        printf("Error de memoria.\n");
+        return;
+    }
+
+    /* Los eventos se cargan UNA sola vez (releer recordatorios.json y consultar
+     * la tabla partido) y se reutilizan para los cuatro formatos. */
+    int total = cargar_eventos(eventos, MAX_EVENTOS);
+    if (total == 0)
+    {
+        printf("No hay eventos para exportar.\n");
+        free(eventos);
+        return;
+    }
+
+    calendario_escribir_archivo("calendario.csv", "Error al crear el archivo CSV.", write_csv,
+                                eventos, total);
+    calendario_escribir_archivo("calendario.txt", "Error al crear el archivo TXT.", write_txt,
+                                eventos, total);
+    calendario_escribir_archivo("calendario.json", "Error al crear el archivo JSON.",
+                                write_json_content, eventos, total);
+    calendario_escribir_archivo("calendario.html", "Error al crear el archivo HTML.", write_html,
+                                eventos, total);
+
+    free(eventos);
 }

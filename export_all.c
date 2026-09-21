@@ -69,7 +69,8 @@ static void exportar_records_rankings_all(void)
 /* carrera ahora usa batch en su modulo */
 /* colecciones ahora usa batch en su modulo */
 DEFINE_EXPORT_ALL_4(recordatorios)
-DEFINE_EXPORT_ALL_4(calendario)
+/* calendario define exportar_calendario_all() en su modulo: carga los eventos
+ * una sola vez en lugar de reejecutar la lectura por cada formato. */
 
 DEFINE_EXPORT_TODO(equipos, "equipos")
 DEFINE_EXPORT_TODO(temporadas, "temporadas")

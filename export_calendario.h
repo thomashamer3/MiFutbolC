@@ -26,4 +26,12 @@ void exportar_calendario_json(void);
  */
 void exportar_calendario_html(void);
 
+/**
+ * @brief Exporta el calendario a los cuatro formatos cargando los eventos una sola vez
+ *
+ * Los cuatro archivos comparten una unica lectura de recordatorios.json y una
+ * unica consulta a la tabla partido.
+ */
+void exportar_calendario_all(void);
+
 #endif /* EXPORT_CALENDARIO_H */
