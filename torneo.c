@@ -1219,6 +1219,18 @@ void generar_fixture(int torneo_id)
         return;
     }
 
+    /* El borrado del fixture anterior y su regeneracion deben ser atomicos: si
+     * la generacion falla se restaura el fixture previo en vez de dejarlo vacio. */
+    char *err_tx = NULL;
+    if (sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, &err_tx) != SQLITE_OK)
+    {
+        printf("No se pudo iniciar la transaccion del fixture: %s\n",
+               err_tx ? err_tx : sqlite3_errmsg(db));
+        sqlite3_free(err_tx);
+        pause_console();
+        return;
+    }
+
     const char *sql_del = "DELETE FROM partido_torneo WHERE torneo_id = ?;";
     if (preparar_stmt(sql_del, &stmt))
     {
@@ -1230,6 +1242,23 @@ void generar_fixture(int torneo_id)
     int jornadas_ida = (n % 2 == 0) ? n - 1 : n;
     int max_jornadas = (tipo_torneo == IDA_Y_VUELTA) ? jornadas_ida * 2 : jornadas_ida;
     int num_matches = generate_round_robin_fixture(torneo_id, equipos, n, tipo_torneo);
+
+    if (num_matches <= 0)
+    {
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        printf("No se pudo generar el fixture; el torneo quedo sin cambios.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_exec(db, "COMMIT", NULL, NULL, &err_tx) != SQLITE_OK)
+    {
+        printf("No se pudo confirmar el fixture: %s\n", err_tx ? err_tx : sqlite3_errmsg(db));
+        sqlite3_free(err_tx);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        pause_console();
+        return;
+    }
 
     printf("Fixture generado exitosamente con %d partidos en %d jornadas.\n", num_matches,
            max_jornadas);
@@ -1346,26 +1375,56 @@ void ingresar_resultado(int torneo_id)
     sqlite3_stmt *stmt;
     const char *sql_upd = "UPDATE partido_torneo SET goles_equipo1 = ?, goles_equipo2 = ?, estado "
                           "= 'Jugado' WHERE id = ? AND torneo_id = ?;";
+
+    /* Una sola transaccion cubre el resultado y las tres actualizaciones de
+     * agregados: sin ella cada sentencia paga su propia escritura de journal y
+     * un fallo intermedio dejaria la tabla de posiciones a medias. */
+    char *err_tx = NULL;
+    if (sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, &err_tx) != SQLITE_OK)
+    {
+        printf("No se pudo iniciar la transaccion: %s\n", err_tx ? err_tx : sqlite3_errmsg(db));
+        sqlite3_free(err_tx);
+        pause_console();
+        return;
+    }
+
+    int registrado = 0;
     if (preparar_stmt(sql_upd, &stmt))
     {
         sqlite3_bind_int(stmt, 1, goles1);
         sqlite3_bind_int(stmt, 2, goles2);
         sqlite3_bind_int(stmt, 3, partido_id);
         sqlite3_bind_int(stmt, 4, torneo_id);
-        if (sqlite3_step(stmt) == SQLITE_DONE)
-        {
-            printf("Resultado registrado: %s %d - %d %s\n", get_equipo_nombre(equipo1_id), goles1,
-                   goles2, get_equipo_nombre(equipo2_id));
-            actualizar_tabla_posiciones(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
-            actualizar_estadisticas_jugadores(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
-            actualizar_fase_torneo(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
-        }
-        else
+        registrado = (sqlite3_step(stmt) == SQLITE_DONE);
+        if (!registrado)
         {
             printf("Error al registrar resultado: %s\n", sqlite3_errmsg(db));
         }
         sqlite3_finalize(stmt);
     }
+
+    if (!registrado)
+    {
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        pause_console();
+        return;
+    }
+
+    actualizar_tabla_posiciones(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
+    actualizar_estadisticas_jugadores(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
+    actualizar_fase_torneo(torneo_id, equipo1_id, equipo2_id, goles1, goles2);
+
+    if (sqlite3_exec(db, "COMMIT", NULL, NULL, &err_tx) != SQLITE_OK)
+    {
+        printf("No se pudo confirmar el resultado: %s\n", err_tx ? err_tx : sqlite3_errmsg(db));
+        sqlite3_free(err_tx);
+        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+        pause_console();
+        return;
+    }
+
+    printf("Resultado registrado: %s %d - %d %s\n", get_equipo_nombre(equipo1_id), goles1, goles2,
+           get_equipo_nombre(equipo2_id));
     pause_console();
 }
 
