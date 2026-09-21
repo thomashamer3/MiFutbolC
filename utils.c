@@ -3839,7 +3839,7 @@ int has_records(const char *table_name)
     /* "SELECT 1 ... LIMIT 1" se detiene en la primera fila: es O(1), frente al
      * COUNT(*) que recorre la tabla entera. Se invoca decenas de veces por
      * exportacion completa, y la semantica ("hay al menos una fila") no cambia.
-     * Si la tabla no existe, el step falla y se devuelve 0, igual que antes. */
+     * Si la tabla no existe, el prepare falla y se devuelve 0, igual que antes. */
     snprintf(sql, sizeof(sql), "SELECT 1 FROM %s LIMIT 1", table_name);
 
     if (preparar_stmt_export(&stmt, sql))
