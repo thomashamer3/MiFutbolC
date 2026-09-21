@@ -62,25 +62,30 @@ static void write_partido_txt(FILE *file, sqlite3_stmt *stmt)
  */
 static void write_partido_json(FILE *file, sqlite3_stmt *stmt)
 {
-    /* Una sola serializacion para todo el listado: antes se creaba, imprimia y
-     * liberaba un objeto cJSON por fila, con N recorridos de arbol y N cadenas.
-     * El archivo queda compacto en una linea; es el mismo JSON. */
-    cJSON *root = cJSON_CreateArray();
+    /* Serializacion por fila a proposito: mantiene la memoria acotada al tamano
+     * de UN objeto. Acumular un array cJSON y serializarlo de una vez haria el
+     * mismo trabajo total de serializacion pero retendria todo el listado mas la
+     * cadena completa en RAM, sin limite. NO cambiar a batch. */
+    fprintf(file, "[\n");
+    int first = 1;
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        if (!first)
+        {
+            fprintf(file, ",\n");
+        }
+        first = 0;
+
         cJSON *item = cJSON_CreateObject();
         write_partido_json_object(item, stmt);
-        cJSON_AddItemToArray(root, item);
+        char *s = cJSON_PrintUnformatted(item);
+        fprintf(file, "  %s", s);
+        free(s);
+        cJSON_Delete(item);
     }
 
-    char *s = cJSON_PrintUnformatted(root);
-    if (s)
-    {
-        fprintf(file, "%s\n", s);
-        free(s);
-    }
-    cJSON_Delete(root);
+    fprintf(file, "\n]\n");
 }
 
 /**
