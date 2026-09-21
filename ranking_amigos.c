@@ -627,6 +627,41 @@ static void cargar_amigos(AmigoTemp *amigos, int *total, int max)
 }
 
 /**
+ * @brief Entrada del ranking de amigos en memoria
+ */
+typedef struct
+{
+    const char *nombre;
+    int goles;
+    int asistencias;
+    int partidos;
+    double mejor_rendimiento;
+    int es_local;
+    int orden; /**< Indice de insercion; desempata los empates de goles. */
+} RankingEntry;
+
+/**
+ * @brief Compara dos entradas del ranking por goles descendente
+ *
+ * qsort no es estable, por lo que el indice de insercion desempata y el
+ * resultado es identico al del ordenamiento estable que se usaba antes.
+ *
+ * @return Negativo si `a` va antes que `b`, positivo si va despues.
+ */
+static int comparar_ranking_por_goles(const void *a, const void *b)
+{
+    const RankingEntry *entrada_a = (const RankingEntry *)a;
+    const RankingEntry *entrada_b = (const RankingEntry *)b;
+
+    if (entrada_a->goles != entrada_b->goles)
+    {
+        return (entrada_a->goles < entrada_b->goles) ? 1 : -1;
+    }
+
+    return (entrada_a->orden > entrada_b->orden) - (entrada_a->orden < entrada_b->orden);
+}
+
+/**
  * @brief Muestra el ranking completo de amigos
  *
  * Carga todos los amigos y las estadisticas del usuario local
@@ -667,16 +702,6 @@ void mostrar_ranking(void)
         return;
     }
 
-    typedef struct
-    {
-        const char *nombre;
-        int goles;
-        int asistencias;
-        int partidos;
-        double mejor_rendimiento;
-        int es_local;
-    } RankingEntry;
-
     RankingEntry *entries = (RankingEntry *)calloc((size_t)total_entries, sizeof(RankingEntry));
     if (!entries)
     {
@@ -694,6 +719,7 @@ void mostrar_ranking(void)
         entries[idx].partidos = amigos[i].partidos_total;
         entries[idx].mejor_rendimiento = amigos[i].mejor_rendimiento;
         entries[idx].es_local = 0;
+        entries[idx].orden = idx;
         idx++;
     }
 
@@ -705,21 +731,11 @@ void mostrar_ranking(void)
         entries[idx].partidos = local_partidos;
         entries[idx].mejor_rendimiento = local_rendimiento;
         entries[idx].es_local = 1;
+        entries[idx].orden = idx;
         idx++;
     }
 
-    for (int i = 0; i < total_entries - 1; i++)
-    {
-        for (int j = 0; j < total_entries - i - 1; j++)
-        {
-            if (entries[j].goles < entries[j + 1].goles)
-            {
-                RankingEntry tmp = entries[j];
-                entries[j] = entries[j + 1];
-                entries[j + 1] = tmp;
-            }
-        }
-    }
+    qsort(entries, (size_t)total_entries, sizeof(RankingEntry), comparar_ranking_por_goles);
 
     printf("\n%-4s %-22s %-7s %-7s %-7s %-10s\n",
            "#", "Nombre", "Goles", "Asist.", "Partidos", "Mej.Rend.");
