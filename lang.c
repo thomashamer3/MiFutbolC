@@ -261,18 +261,29 @@ void lang_set(const char *lang_code)
         return;
     }
 
-    LangPair backup[LANG_MAX_KEYS];
+    /* El respaldo va al heap: LANG_MAX_KEYS claves ocupan ~1.25 MB y no caben
+     * de forma segura en la pila por defecto de Windows. Si no hay memoria se
+     * conserva el idioma actual sin dejarlo a medias. */
+    size_t backup_bytes = (size_t)s_count * sizeof(LangPair);
+    LangPair *backup = (LangPair *)malloc(backup_bytes > 0 ? backup_bytes : 1);
+    if (!backup)
+    {
+        return;
+    }
+
     int backup_count = s_count;
-    memcpy(backup, s_pairs, (size_t)s_count * sizeof(LangPair));
+    memcpy(backup, s_pairs, backup_bytes);
 
     s_count = 0;
     if (!try_load(lang_code))
     {
-        memcpy(s_pairs, backup, (size_t)backup_count * sizeof(LangPair));
+        memcpy(s_pairs, backup, backup_bytes);
         s_count = backup_count;
+        free(backup);
         return;
     }
 
+    free(backup);
     strncpy_s(s_current, sizeof(s_current), lang_code, _TRUNCATE);
 }
 
