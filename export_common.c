@@ -28,10 +28,11 @@ static FILE *open_export_file(const char *filename, sqlite3_stmt *stmt)
 
 void export_generic_rows(ExportConfig *config, sqlite3_stmt *stmt)
 {
+    /* open_export_file ya finaliza el stmt cuando no puede abrir el archivo;
+     * volver a finalizarlo aqui seria un doble free sobre el mismo puntero. */
     FILE *file = open_export_file(config->filename, stmt);
     if (!file)
     {
-        sqlite3_finalize(stmt);
         return;
     }
 
@@ -71,6 +72,12 @@ void export_all_formats(ExportDataFn data_fn, ExportConfig configs[], int num_fo
         if (err != 0 || file == NULL)
         {
             printf("Error: No se pudo crear %s\n", configs[i].filename);
+            /* El pie de JSON es quien libera el root cJSON del contexto. Sin
+             * archivo el pie no se ejecuta, asi que se libera aqui. */
+            if (configs[i].write_footer == export_write_json_footer)
+            {
+                cJSON_Delete((cJSON *)configs[i].context);
+            }
             continue;
         }
 
