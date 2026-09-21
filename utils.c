@@ -3834,19 +3834,18 @@ int has_records(const char *table_name)
 {
     sqlite3_stmt *stmt;
     char sql[256];
-    int count = 0;
     int result = 0;
 
-    snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s", table_name);
+    /* "SELECT 1 ... LIMIT 1" se detiene en la primera fila: es O(1), frente al
+     * COUNT(*) que recorre la tabla entera. Se invoca decenas de veces por
+     * exportacion completa, y la semantica ("hay al menos una fila") no cambia.
+     * Si la tabla no existe, el step falla y se devuelve 0, igual que antes. */
+    snprintf(sql, sizeof(sql), "SELECT 1 FROM %s LIMIT 1", table_name);
 
     if (preparar_stmt_export(&stmt, sql))
     {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            count = sqlite3_column_int(stmt, 0);
-        }
+        result = (sqlite3_step(stmt) == SQLITE_ROW);
         db_stmt_release(stmt);
-        result = count > 0;
     }
 
     return result;
