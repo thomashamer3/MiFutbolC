@@ -62,26 +62,25 @@ static void write_partido_txt(FILE *file, sqlite3_stmt *stmt)
  */
 static void write_partido_json(FILE *file, sqlite3_stmt *stmt)
 {
-    fprintf(file, "[\n");
-    int first = 1;
+    /* Una sola serializacion para todo el listado: antes se creaba, imprimia y
+     * liberaba un objeto cJSON por fila, con N recorridos de arbol y N cadenas.
+     * El archivo queda compacto en una linea; es el mismo JSON. */
+    cJSON *root = cJSON_CreateArray();
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (!first)
-        {
-            fprintf(file, ",\n");
-        }
-        first = 0;
-
         cJSON *item = cJSON_CreateObject();
         write_partido_json_object(item, stmt);
-        char *s = cJSON_PrintUnformatted(item);
-        fprintf(file, "  %s", s);
-        free(s);
-        cJSON_Delete(item);
+        cJSON_AddItemToArray(root, item);
     }
 
-    fprintf(file, "\n]\n");
+    char *s = cJSON_PrintUnformatted(root);
+    if (s)
+    {
+        fprintf(file, "%s\n", s);
+        free(s);
+    }
+    cJSON_Delete(root);
 }
 
 /**
