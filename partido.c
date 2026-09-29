@@ -531,7 +531,39 @@ typedef struct
     char tag[64];
     int solo_favoritos;
     int presencia_flags;
+    /* 0 = orden normal por fecha, 1 = Top 5 mas frios, 2 = Top 5 mas calurosos */
+    int orden_temperatura;
 } PartidoListadoFiltros;
+
+#define PARTIDO_TEMP_ORDEN_FECHA 0
+#define PARTIDO_TEMP_MAS_FRIOS 1
+#define PARTIDO_TEMP_MAS_CALIDOS 2
+#define PARTIDO_TEMP_TOP 5
+
+static int partido_listado_es_modo_temperatura(const PartidoListadoFiltros *filtros)
+{
+    return filtros && filtros->orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA;
+}
+
+static const char *partido_listado_texto_modo_temperatura(const PartidoListadoFiltros *filtros)
+{
+    if (!filtros)
+    {
+        return "No";
+    }
+
+    if (filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+    {
+        return "Mas frios";
+    }
+
+    if (filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+    {
+        return "Mas calurosos";
+    }
+
+    return "No";
+}
 
 #define PARTIDO_PRESENCIA_TODOS 0
 #define PARTIDO_PRESENCIA_CON_DATOS 1
@@ -709,6 +741,7 @@ static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
     filtros->tag[0] = '\0';
     filtros->solo_favoritos = 0;
     filtros->presencia_flags = 0;
+    filtros->orden_temperatura = PARTIDO_TEMP_ORDEN_FECHA;
 }
 
 static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
@@ -888,6 +921,12 @@ static void partido_listado_construir_where_clause(const PartidoListadoFiltros *
     partido_listado_append_filtros_rendimiento(filtros, where_clause, where_size);
     partido_listado_append_filtros_contexto(filtros, where_clause, where_size);
     partido_listado_append_filtros_opcionales(filtros, where_clause, where_size);
+
+    /* Los rankings por temperatura solo consideran partidos con clima registrado */
+    if (partido_listado_es_modo_temperatura(filtros))
+    {
+        partido_listado_append_clause(where_clause, where_size, " AND p.temperatura_c IS NOT NULL");
+    }
 }
 
 static int partido_listado_bind_int_si(sqlite3_stmt *stmt, int indice, int condicion, int valor)
@@ -997,26 +1036,44 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual, int partidos
 {
     char where_clause[2048];
     char sql[4096];
-    const char *orden_sql = orden_desc ? "DESC" : "ASC";
+    const char *order_by_sql;
     int indice_bind;
     int offset = 0;
     int limite = partidos_por_pagina;
     int hay = 0;
+    int modo_temperatura = partido_listado_es_modo_temperatura(filtros);
     sqlite3_stmt *stmt;
 
     partido_listado_construir_where_clause(filtros, where_clause, sizeof(where_clause));
 
-    snprintf(sql, sizeof(sql),
-             PARTIDO_SELECT_COLUMNS " %s "
-             "ORDER BY p.fecha_hora %s LIMIT ? OFFSET ?",
-             where_clause, orden_sql);
+    if (filtros && filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+    {
+        order_by_sql = "ORDER BY p.temperatura_c ASC, p.fecha_hora DESC LIMIT ? OFFSET ?";
+    }
+    else if (filtros && filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+    {
+        order_by_sql = "ORDER BY p.temperatura_c DESC, p.fecha_hora DESC LIMIT ? OFFSET ?";
+    }
+    else
+    {
+        order_by_sql = orden_desc ? "ORDER BY p.fecha_hora DESC LIMIT ? OFFSET ?"
+                       : "ORDER BY p.fecha_hora ASC LIMIT ? OFFSET ?";
+    }
+
+    snprintf(sql, sizeof(sql), PARTIDO_SELECT_COLUMNS " %s %s", where_clause, order_by_sql);
 
     if (!preparar_stmt(sql, &stmt))
     {
         return 0;
     }
 
-    if (partidos_por_pagina == 0)
+    if (modo_temperatura)
+    {
+        /* Los rankings muestran siempre el Top 5 completo, sin paginar */
+        limite = PARTIDO_TEMP_TOP;
+        offset = 0;
+    }
+    else if (partidos_por_pagina == 0)
     {
         limite = total_partidos;
         offset = 0;
@@ -1089,7 +1146,8 @@ static int partido_listado_contar_filtros_activos(const PartidoListadoFiltros *f
            (filtros->cansancio_min >= 0 || filtros->cansancio_max >= 0) +
            (filtros->estado_animo_min >= 0 || filtros->estado_animo_max >= 0) +
            (filtros->clima >= 1) + (filtros->dia >= 1) + (filtros->tag[0] != '\0') +
-           (filtros->solo_favoritos ? 1 : 0);
+           (filtros->solo_favoritos ? 1 : 0) +
+           (filtros->orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA ? 1 : 0);
 }
 
 static int partido_listado_menu_paginacion(int valor_actual)
@@ -1434,6 +1492,10 @@ static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros
                             partido_listado_texto_presencia_goles(modo_goles));
     ui_printf_centered_line("16) Presencia de asistencias: %s",
                             partido_listado_texto_presencia_asistencias(modo_asistencias));
+    ui_printf_centered_line("17) Top %d partidos mas frios: %s", PARTIDO_TEMP_TOP,
+                            filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS ? "Si" : "No");
+    ui_printf_centered_line("18) Top %d partidos mas calurosos: %s", PARTIDO_TEMP_TOP,
+                            filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS ? "Si" : "No");
 }
 
 static int partido_listado_aplicar_opcion_filtro_identidad(PartidoListadoFiltros *filtros,
@@ -1540,6 +1602,16 @@ static int partido_listado_aplicar_opcion_filtro_extra(PartidoListadoFiltros *fi
     case 16:
         modo = (partido_listado_get_modo_presencia_asistencias(filtros) + 1) % 3;
         partido_listado_set_modo_presencia_asistencias(filtros, modo);
+        return 1;
+    case 17:
+        filtros->orden_temperatura = (filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+                                     ? PARTIDO_TEMP_ORDEN_FECHA
+                                     : PARTIDO_TEMP_MAS_FRIOS;
+        return 1;
+    case 18:
+        filtros->orden_temperatura = (filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+                                     ? PARTIDO_TEMP_ORDEN_FECHA
+                                     : PARTIDO_TEMP_MAS_CALIDOS;
         return 1;
     default:
         return 0;
@@ -3326,6 +3398,13 @@ static void partido_listado_imprimir_estado(int pagina_actual, int total_paginas
     }
 
     ui_printf_centered_line("Orden: %s", partido_listado_texto_orden(orden_desc));
+
+    if (partido_listado_es_modo_temperatura(filtros))
+    {
+        ui_printf_centered_line("Ranking: Top %d partidos (%s)", PARTIDO_TEMP_TOP,
+                                partido_listado_texto_modo_temperatura(filtros));
+    }
+
     ui_printf_centered_line("Filtros activos: %d", partido_listado_contar_filtros_activos(filtros));
     ui_printf_centered_line("----------------------------------------");
 }
@@ -3370,7 +3449,7 @@ static int partido_listado_navegacion_deshabilitada(int paginacion_todos, int op
 {
     if (paginacion_todos && (opcion == 1 || opcion == 2 || opcion == 3))
     {
-        ui_printf_centered_line("Navegacion por pagina deshabilitada en modo Todos.");
+        ui_printf_centered_line("Navegacion por pagina deshabilitada en este modo.");
         pause_console();
         return 1;
     }
@@ -3389,10 +3468,18 @@ void listar_partidos(void)
 
     while (1)
     {
+        int modo_temperatura = partido_listado_es_modo_temperatura(&filtros);
         int total_partidos = partido_listado_contar_total(&filtros);
+
+        /* Los rankings por temperatura muestran solo el Top 5, sin paginar */
+        if (modo_temperatura && total_partidos > PARTIDO_TEMP_TOP)
+        {
+            total_partidos = PARTIDO_TEMP_TOP;
+        }
+
         int total_paginas =
             partido_listado_calcular_total_paginas(total_partidos, partidos_por_pagina);
-        int paginacion_todos = (partidos_por_pagina == 0);
+        int paginacion_todos = (partidos_por_pagina == 0) || modo_temperatura;
 
         partido_listado_normalizar_pagina_actual(&pagina_actual, total_paginas);
         partido_listado_imprimir_estado(pagina_actual, total_paginas, total_partidos,
@@ -6144,6 +6231,129 @@ void reordenar_partidos_por_fecha(void)
     printf("IDs reordenados correctamente (%d partidos).\n", total);
 }
 
+static void dias_del_mes_anio(int anio, int mes, int *dias)
+{
+    static const int tabla[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    if (!dias)
+    {
+        return;
+    }
+
+    if (mes < 1 || mes > 12)
+    {
+        *dias = 30;
+        return;
+    }
+
+    if (mes == 2 && ((anio % 4 == 0 && anio % 100 != 0) || (anio % 400 == 0)))
+    {
+        *dias = 29;
+        return;
+    }
+
+    *dias = tabla[mes - 1];
+}
+
+/*
+ * Escribe en "buffer" el tiempo transcurrido desde el partido con el formato
+ * "X anios, Y meses, Z dias, H horas y M minutos".
+ * Devuelve 0 si la fecha es invalida o si el partido todavia no se jugo.
+ */
+static int formatear_tiempo_transcurrido(int anio, int mes, int dia, int hora, int minuto,
+        char *buffer, size_t tam)
+{
+    struct tm tm_partido = {0};
+    struct tm tm_ahora;
+    time_t t_ahora;
+
+    if (!buffer || tam == 0)
+    {
+        return 0;
+    }
+    buffer[0] = '\0';
+
+    tm_partido.tm_year = anio - 1900;
+    tm_partido.tm_mon = mes - 1;
+    tm_partido.tm_mday = dia;
+    tm_partido.tm_hour = hora;
+    tm_partido.tm_min = minuto;
+    tm_partido.tm_sec = 0;
+    tm_partido.tm_isdst = -1;
+
+    time_t t_partido = mktime(&tm_partido);
+    if (t_partido == (time_t)-1)
+    {
+        return 0;
+    }
+
+    t_ahora = time(NULL);
+    if (difftime(t_ahora, t_partido) < 0)
+    {
+        return 0; /* El partido esta programado en el futuro */
+    }
+
+#ifdef _WIN32
+    localtime_s(&tm_ahora, &t_ahora);
+#else
+    localtime_r(&t_ahora, &tm_ahora);
+#endif
+
+    int anios = tm_ahora.tm_year - tm_partido.tm_year;
+    int meses = tm_ahora.tm_mon - tm_partido.tm_mon;
+    int dias = tm_ahora.tm_mday - tm_partido.tm_mday;
+    int horas = tm_ahora.tm_hour - tm_partido.tm_hour;
+    int minutos = tm_ahora.tm_min - tm_partido.tm_min;
+
+    if (minutos < 0)
+    {
+        minutos += 60;
+        horas--;
+    }
+
+    if (horas < 0)
+    {
+        horas += 24;
+        dias--;
+    }
+
+    if (dias < 0)
+    {
+        int mes_anterior = tm_ahora.tm_mon; /* 0..11, equivale al mes anterior en base 1 */
+        int anio_anterior = tm_ahora.tm_year + 1900;
+        int dias_mes = 30;
+
+        if (mes_anterior == 0)
+        {
+            mes_anterior = 12;
+            anio_anterior--;
+        }
+
+        dias_del_mes_anio(anio_anterior, mes_anterior, &dias_mes);
+        dias += dias_mes;
+        meses--;
+    }
+
+    if (meses < 0)
+    {
+        meses += 12;
+        anios--;
+    }
+
+    if (anios < 0)
+    {
+        return 0;
+    }
+
+    snprintf(buffer, tam, "%d %s, %d %s, %d %s, %d %s y %d %s",
+             anios, anios == 1 ? "anio" : "anios",
+             meses, meses == 1 ? "mes" : "meses",
+             dias, dias == 1 ? "dia" : "dias",
+             horas, horas == 1 ? "hora" : "horas",
+             minutos, minutos == 1 ? "minuto" : "minutos");
+    return 1;
+}
+
 static void mostrar_tiempo_desde_partido(int anio, int mes, int dia, int hora, int minuto)
 {
     struct tm tm_partido = {0};
@@ -6154,6 +6364,10 @@ static void mostrar_tiempo_desde_partido(int anio, int mes, int dia, int hora, i
     tm_partido.tm_min = minuto;
     tm_partido.tm_sec = 0;
     tm_partido.tm_isdst = -1;
+
+    clear_screen();
+    print_header("Ultimo Partido");
+    printf("  Fecha: %02d/%02d/%02d %02d:%02d\n\n", dia, mes, anio, hora, minuto);
 
     time_t t_partido = mktime(&tm_partido);
     time_t t_ahora = time(NULL);
@@ -6174,72 +6388,13 @@ static void mostrar_tiempo_desde_partido(int anio, int mes, int dia, int hora, i
     }
 
     long total_minutos = (long)(segundos / 60.0);
-    long total_horas = total_minutos / 60;
 
-    int anios = 0;
-    int meses = 0;
-    int dias_restantes = 0;
-    struct tm tm_ahora;
-#ifdef _WIN32
-    localtime_s(&tm_ahora, &t_ahora);
-#else
-    localtime_r(&t_ahora, &tm_ahora);
-#endif
-
-    anios = tm_ahora.tm_year - tm_partido.tm_year;
-    meses = tm_ahora.tm_mon - tm_partido.tm_mon;
-    dias_restantes = tm_ahora.tm_mday - tm_partido.tm_mday;
-
-    if (dias_restantes < 0)
+    char tiempo_transcurrido[160] = "";
+    if (formatear_tiempo_transcurrido(anio, mes, dia, hora, minuto, tiempo_transcurrido,
+                                      sizeof(tiempo_transcurrido)))
     {
-        meses--;
-        struct tm tm_temp = tm_ahora;
-        tm_temp.tm_mon--;
-        if (tm_temp.tm_mon < 0)
-        {
-            tm_temp.tm_mon = 11;
-            tm_temp.tm_year--;
-        }
-        tm_temp.tm_mday = 1;
-        mktime(&tm_temp);
-        tm_temp.tm_mon++;
-        if (tm_temp.tm_mon > 11)
-        {
-            tm_temp.tm_mon = 0;
-            tm_temp.tm_year++;
-        }
-        tm_temp.tm_mday = 0;
-        mktime(&tm_temp);
-        dias_restantes += tm_temp.tm_mday + 1;
+        printf("  %s\n", tiempo_transcurrido);
     }
-
-    if (meses < 0)
-    {
-        anios--;
-        meses += 12;
-    }
-
-    int semanas = dias_restantes / 7;
-    int dias = dias_restantes % 7;
-    int horas = (int)(total_horas % 24);
-    int minutos = (int)(total_minutos % 60);
-
-    clear_screen();
-    print_header("Ultimo Partido");
-
-    printf("  Fecha: %02d/%02d/%02d %02d:%02d\n\n", dia, mes, anio, hora, minuto);
-
-    if (anios > 0)
-        printf("  %d anio%s", anios, anios == 1 ? "" : "s");
-    if (meses > 0)
-        printf(" %d mes%s", meses, meses == 1 ? "" : "es");
-    if (semanas > 0)
-        printf(" %d semana%s", semanas, semanas == 1 ? "" : "s");
-    if (dias > 0)
-        printf(" %d dia%s", dias, dias == 1 ? "" : "s");
-    if (horas > 0)
-        printf(" %d hora%s", horas, horas == 1 ? "" : "s");
-    printf(" %d minuto%s\n", minutos, minutos == 1 ? "" : "s");
 
     printf("\n  Tiempo total: %ld minutos\n", total_minutos);
 
@@ -6296,6 +6451,27 @@ static void mostrar_detalle_partido_reciente(const char *titulo, const char *whe
         ui_printf_centered_line("Goles: %d", goles);
         ui_printf_centered_line("Asistencias: %d", asistencias);
         ui_printf_centered_line("Resultado: %s", resultado_to_text(resultado));
+
+        int anio_partido = 0;
+        int mes_partido = 0;
+        int dia_partido = 0;
+        int hora_partido = 0;
+        int minuto_partido = 0;
+        char tiempo_transcurrido[160] = "";
+
+        int fecha_ok = parsear_fecha_hora_partido(fecha, &anio_partido, &mes_partido, &dia_partido,
+                       &hora_partido, &minuto_partido);
+
+        if (fecha_ok && formatear_tiempo_transcurrido(anio_partido, mes_partido, dia_partido,
+                hora_partido, minuto_partido, tiempo_transcurrido,
+                sizeof(tiempo_transcurrido)))
+        {
+            ui_printf_centered_line("Tiempo transcurrido: %s", tiempo_transcurrido);
+        }
+        else if (fecha_ok)
+        {
+            ui_printf_centered_line("Tiempo transcurrido: el partido aun no se jugo");
+        }
     }
 
     sqlite3_finalize(stmt);

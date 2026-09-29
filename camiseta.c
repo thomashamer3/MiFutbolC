@@ -1809,6 +1809,53 @@ static void reiniciar_sorteo(void)
     printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
 }
 
+/* Permite al usuario reiniciar manualmente el ciclo de sorteo (opcion 2 del submenu) */
+static void reiniciar_sorteo_camiseta(void)
+{
+    clear_screen();
+    print_header("REINICIAR SORTEO");
+
+    int activas = obtener_total("SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1");
+    if (activas == 0)
+    {
+        printf("No hay camisetas activas para reiniciar el sorteo.\n");
+        pause_console();
+        return;
+    }
+
+    int sorteadas = obtener_total("SELECT COUNT(*) FROM camiseta WHERE sorteada = 1 "
+                                  "AND IFNULL(activa, 1) = 1");
+
+    printf("Camisetas activas  : %d\n", activas);
+    printf("Camisetas sorteadas: %d\n\n", sorteadas);
+
+    if (sorteadas == 0)
+    {
+        printf("El sorteo ya esta en su estado inicial: todas las camisetas estan disponibles.\n");
+        pause_console();
+        return;
+    }
+
+    if (!confirmar("Desea reiniciar el sorteo? Todas las camisetas volveran a estar disponibles."))
+    {
+        printf("Operacion cancelada. El sorteo continua como estaba.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0) !=
+            SQLITE_OK)
+    {
+        printf("No se pudo reiniciar el sorteo: %s\n", sqlite3_errmsg(db));
+        app_log_event("CAMISETA", "Error al reiniciar el sorteo");
+        pause_console();
+        return;
+    }
+
+    app_log_event("CAMISETA", "Sorteo de camisetas reiniciado");
+    mostrar_alerta_operacion("Sorteo", "Reiniciado", NULL);
+}
+
 static void marcar_camiseta_sorteada(int id)
 {
     sqlite3_stmt *stmt;
@@ -1833,7 +1880,7 @@ static char *obtener_nombre_camiseta(int id)
     return strdup("Desconocida");
 }
 
-void sortear_camiseta(void)
+static void realizar_sorteo_camiseta(void)
 {
     clear_screen();
     print_header("SORTEO DE CAMISETAS");
@@ -1885,8 +1932,26 @@ void sortear_camiseta(void)
     printf("La camiseta seleccionada es: %s\n", nombre);
     printf("Quedan %d camisetas por sortear.\n", disponibles - 1);
 
+    if (disponibles - 1 == 0)
+    {
+        printf("Todas las camisetas fueron sorteadas. Puedes reiniciar el sorteo con la opcion 2.\n");
+    }
+
     free(nombre);
     pause_console();
+}
+
+/*
+ * Punto de entrada del menu (opcion 5). Muestra un submenu que permite
+ * sortear una camiseta o reiniciar el sorteo para habilitar todas de nuevo.
+ */
+void sortear_camiseta(void)
+{
+    MenuItem items[] = {{1, "Sortear camiseta", &realizar_sorteo_camiseta},
+        {2, "Reiniciar sorteo", &reiniciar_sorteo_camiseta},
+        {0, "Volver", NULL}
+    };
+    ejecutar_menu("SORTEO DE CAMISETAS", items, 3);
 }
 
 void menu_camisetas(void)

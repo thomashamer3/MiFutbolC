@@ -287,7 +287,7 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 - **2. Listar**: ver camisetas activas/inactivas y sus datos.
 - **3. Modificar**: actualizar nombre u otra información.
 - **4. Eliminar**: eliminar, reasignar historial o retirar camiseta.
-- **5. Sortear**: elegir aleatoriamente una camiseta para jugar.
+- **5. Sortear**: abrir el submenú de sorteo (sortear una camiseta o reiniciar el sorteo).
 - **6. Cargar Imagen**: asociar una imagen al registro.
 - **7. Ver Camiseta**: abrir la imagen asignada.
 - **8. Ajustes Imagen**: configurar/previsualizar visor de imágenes.
@@ -344,10 +344,18 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 ### Sortear Camiseta
 
+Al elegir "5" se abre el submenú de sorteo con estas opciones:
+
 1. Selecciona "3" en el menú principal
-2. Elige "5" para sortear una camiseta
-3. El sistema seleccionará una camiseta disponible al azar
-4. Si todas ya fueron sorteadas, reinicia automáticamente el ciclo
+2. Elige "5" para abrir el submenú de sorteo
+3. Elige "1" (**Sortear camiseta**): el sistema selecciona una camiseta disponible al azar y te indica
+   cuántas quedan pendientes de sortear
+4. Elige "2" (**Reiniciar sorteo**): el sistema muestra cuántas camisetas están activas y cuántas ya
+   fueron sorteadas, pide confirmación y, si aceptas, vuelve a habilitar todas las camisetas activas
+   para comenzar un ciclo nuevo
+5. Si todas las camisetas ya fueron sorteadas, el sistema reinicia el ciclo automáticamente al
+   intentar sortear de nuevo
+6. Elige "0" (**Volver**) para regresar al menú de Camisetas
 
 ### Cargar Imagen de Camiseta
 
@@ -451,10 +459,14 @@ Selecciona "5" en el menú principal para acceder a la gestión de botines de f�
 - **2. Listar**: consultar todos los botines registrados.
 - **3. Modificar**: editar el nombre de un botín.
 - **4. Eliminar**: eliminar un botín de la base de datos.
-- **5. Fijar Predeterminado**: definir el botín que se usará por defecto al cargar partidos.
-- **6. Sortear**: elegir aleatoriamente un botín disponible.
-- **7. Cargar Imagen**: asociar una imagen al botín.
-- **8. Ver Imagen**: abrir la imagen asociada.
+- **5. Sortear**: abrir el submenú de sorteo (sortear un botín o reiniciar el sorteo).
+- **6. Cargar Imagen**: asociar una imagen al botín.
+- **7. Ver Botín**: abrir la imagen asociada.
+- **8. Ajustes Imagen**: configurar y probar el visor de imágenes.
+- **9. Ver Información**: consultar detalles ampliados.
+- **10. Cargar Información**: completar o actualizar metadatos.
+- **11. Reactivar/Desactivar**: habilitar o retirar un botín.
+- **12. Fijar Predeterminado**: definir el botín que se usará por defecto al cargar partidos.
 
 ### Crear un Botín
 
@@ -472,15 +484,23 @@ Selecciona "5" en el menú principal para acceder a la gestión de botines de f�
 ### Fijar Botín Predeterminado
 
 1. Selecciona "5" en el menú principal
-2. Elige "5" para fijar el botín predeterminado
+2. Elige "12" para fijar el botín predeterminado
 3. Selecciona el botín deseado de la lista
 4. Se usará automáticamente al crear nuevos partidos
 
 ### Sortear Botín
 
+Al elegir "5" se abre el submenú de sorteo con estas opciones:
+
 1. Selecciona "5" en el menú principal
-2. Elige "6" para sortear un botín
-3. El sistema seleccionará un botín al azar
+2. Elige "5" para abrir el submenú de sorteo
+3. Elige "1" (**Sortear botín**): el sistema elige un botín pendiente al azar y te indica cuántos
+   quedan por sortear; un botín ya sorteado no vuelve a salir hasta completar el ciclo
+4. Elige "2" (**Reiniciar sorteo**): el sistema muestra cuántos botines están activos y cuántos ya
+   fueron sorteados, pide confirmación y, si aceptas, vuelve a habilitar todos los botines activos
+5. Si todos los botines ya fueron sorteados, el sistema reinicia el ciclo automáticamente al
+   intentar sortear de nuevo
+6. Elige "0" (**Volver**) para regresar al menú de Botines
 
 ![Gestión de botines](images/menubotines.png)
 
@@ -552,6 +572,8 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 - **6. Análisis Táctico**: crear/consultar diagramas tácticos.
 - **7. Favoritos**: marcar partidos destacados para consulta rápida.
 - **8. Etiquetas (Tags)**: clasificar partidos con etiquetas.
+- **9. Obtener Clima Histórico**: completar la temperatura y el clima de partidos anteriores.
+- **10. Último**: ver el último partido, victoria, derrota, empate, gol o asistencia.
 
 ### Crear un Partido
 
@@ -587,6 +609,31 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 2. Elige "2" para listar todos los partidos
 3. Se mostrarán con todas las estadísticas y fecha con día de semana
 4. Ejemplo: `Fecha: Domingo 03/05/2026 19:00`
+
+#### Filtros de Partidos
+
+Dentro del listado, la opción **5) Filtros** abre el menú **FILTROS DE PARTIDOS**, donde puedes
+combinar cancha, camiseta, tipo, rangos de goles/asistencias/precio/rendimiento/cansancio/estado de
+ánimo, clima, franja horaria, tag, favoritos y presencia de datos. Entre las opciones disponibles
+están también los rankings por temperatura:
+
+- **17) Top 5 partidos más fríos**: ordena los 5 partidos con temperatura registrada de más frío a
+  menos frío (el más frío primero)
+- **18) Top 5 partidos más calurosos**: ordena los 5 partidos con temperatura registrada de más
+  caluroso a menos caluroso
+
+Cada opción se activa y se desactiva volviendo a elegirla (o con **14) Limpiar filtros**). Mientras un
+ranking está activo, el listado muestra solo esos 5 partidos y la navegación por páginas queda
+deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obtener Clima Histórico").
+
+### Último Partido, Victoria, Derrota, Empate, Gol y Asistencia
+
+1. Selecciona "7" en el menú principal
+2. Elige "10" para abrir el submenú **ULTIMOS**
+3. Elige la opción deseada (1 a 6)
+4. Además de los datos del partido, se muestra el **tiempo transcurrido** desde ese partido con
+   años, meses, días, horas y minutos
+5. Ejemplo: `Tiempo transcurrido: 1 anio, 2 meses, 5 dias, 3 horas y 40 minutos`
 
 ### Modificar un Partido
 
@@ -1144,6 +1191,15 @@ Selecciona "16" en el menú principal para acceder al módulo de carrera futbol�
 - **8. Hall of Fame Personal**: ver mejores hitos y récords.
 - **9. Resumen Narrativo Automático**: generar y consultar resúmenes de carrera.
 - **10. Modo Retro: Hoy en tu Historia**: revivir recuerdos de la fecha actual en años anteriores.
+- **11. Mejor Once Histórico**: ver la mejor formación registrada.
+- **12. Vitrina de Trofeos**: ver los torneos finalizados en los que terminaste en el podio, con
+  medalla de oro (1er puesto), plata (2do puesto) o bronce (3er puesto) y el resumen de títulos.
+- **13. Estadísticas por Temporada**: partidos jugados, goles, asistencias, victorias/empates/derrotas
+  y rendimiento promedio calculados dentro del período de cada temporada.
+- **14. Timeline de Hitos**: línea temporal cronológica de los partidos marcados como hito, con tipo,
+  nota y rendimiento.
+- **15. Logros de Carrera**: progreso de logros de trayectoria (partidos, goles, asistencias,
+  victorias, mejor racha, títulos, podios, hitos y temporadas) con su avance y estado.
 
 Este módulo te ayuda a llevar seguimiento longitudinal de tu desarrollo deportivo con foco en trayectoria y metas personales.
 Además, al iniciar la aplicación puede aparecer una sugerencia opcional para abrir Modo Retro si hay recuerdos del día.
@@ -1542,15 +1598,24 @@ Selecciona "14" en el menú principal, luego **Entrenador IA** (opción 4) dentr
 1. Selecciona "14" en el menú principal
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "4" para configurar el nivel de intervención
-4. Ajusta qué tan frecuentes y detallados quieres los consejos
+4. Selecciona el nivel (0-3):
+   - **0. Silencioso**: la IA no interrumpe automáticamente al crear partidos
+   - **1. Conservador**: solo avisa ante riesgo de lesión crítico
+   - **2. Moderado**: avisa ante riesgo alto (nivel por defecto)
+   - **3. Agresivo**: avisa ante el menor indicio de riesgo
+5. El nivel se guarda en la base de datos y se mantiene entre sesiones
 
 #### Activación Automática
 
 El Entrenador IA se activa automáticamente:
-- Antes de un partido importante
+- Antes de un partido, solo si el riesgo de lesión supera el umbral del nivel configurado
 - Antes de un torneo
 - Al revisar estadísticas
 - Cuando detecta situaciones de riesgo
+
+Para no interrumpir en cada partido, el aviso previo al partido se muestra como máximo una vez cada
+24 horas, salvo que el riesgo sea crítico. Si prefieres que no aparezca nunca, elige el nivel
+**0. Silencioso** en "Configurar Nivel de Intervención".
 
 ## Recordatorios
 

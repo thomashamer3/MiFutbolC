@@ -707,7 +707,8 @@ enum
     DB_VERSION_BOTIN = 12,
     DB_VERSION_CANCHA_MARCADOR = 13,
     DB_VERSION_PARTIDO_DIFERENCIA = 14,
-    DB_VERSION_CURRENT = 14
+    DB_VERSION_BOTIN_SORTEADA = 15,
+    DB_VERSION_CURRENT = 15
 };
 
 static int get_user_version(int *out_version)
@@ -876,6 +877,7 @@ static void backfill_mes_anio_once(void)
 #define COL_PARTIDO_APPARENT_TEMP "apparent_temp_c REAL DEFAULT NULL"
 #define COL_PARTIDO_BOTIN_ID "botin_id INTEGER DEFAULT NULL"
 #define COL_PARTIDO_DIFERENCIA_GOL "diferencia_gol INTEGER DEFAULT 0"
+#define COL_BOTIN_SORTEADA "sorteada INTEGER DEFAULT 0"
 
 static int create_database_schema(void)
 {
@@ -903,6 +905,7 @@ static int create_database_schema(void)
         "CREATE TABLE IF NOT EXISTS botin ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
+        " " COL_BOTIN_SORTEADA ","
         " activa INTEGER DEFAULT 1);",
 
         "CREATE TABLE IF NOT EXISTS coleccion ("
@@ -1704,11 +1707,15 @@ static void add_partido_columns(void)
     ejecutar_alter_table_group(alter_statements, "partido");
 }
 
+/* Definida mas abajo; se declara aqui para el camino de migracion legacy */
+static void add_botin_sorteada_column(void);
+
 static void add_missing_columns_legacy(void)
 {
     add_camiseta_columns();
     add_cancha_columns();
     add_partido_columns();
+    add_botin_sorteada_column();
 }
 
 static void add_cancha_clima_real_columns(void)
@@ -1755,6 +1762,15 @@ static void add_partido_diferencia_gol_column(void)
     ejecutar_alter_table_group(alter_statements, "partido_diferencia");
 }
 
+static void add_botin_sorteada_column(void)
+{
+    const char *alter_statements[] =
+    {
+        "ALTER TABLE botin ADD COLUMN " COL_BOTIN_SORTEADA ";", NULL
+    };
+    ejecutar_alter_table_group(alter_statements, "botin_sorteada");
+}
+
 static void add_missing_columns(void)
 {
     int current_version = 0;
@@ -1770,6 +1786,7 @@ static void add_missing_columns(void)
         add_cancha_columns();
         add_partido_columns();
         add_botin_columns();
+        add_botin_sorteada_column();
         return;
     }
 
@@ -1808,6 +1825,10 @@ static void add_missing_columns(void)
     if (current_version < DB_VERSION_PARTIDO_DIFERENCIA)
     {
         add_partido_diferencia_gol_column();
+    }
+    if (current_version < DB_VERSION_BOTIN_SORTEADA)
+    {
+        add_botin_sorteada_column();
     }
 }
 

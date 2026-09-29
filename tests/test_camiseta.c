@@ -65,6 +65,21 @@ static void test_menu_camisetas_titulo_not_empty(void)
     TEST_ASSERT_TRUE(capture.titulo[0] != '\0');
 }
 
+static void test_submenu_sorteo_tiene_reiniciar(void)
+{
+    MenuTestCapture capture = {0};
+    menu_test_set_capture(&capture);
+
+    sortear_camiseta();
+
+    menu_test_set_capture(NULL);
+    TEST_ASSERT_NOT_NULL(capture.titulo);
+    TEST_ASSERT_EQUAL_STRING("SORTEO DE CAMISETAS", capture.titulo);
+    TEST_ASSERT_EQUAL_INT(3, capture.cantidad);
+    TEST_ASSERT_TRUE(capture.last_item.accion == NULL);
+    TEST_ASSERT_EQUAL_INT(0, capture.last_item.opcion);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -73,6 +88,7 @@ int main(void)
     RUN_TEST(test_menu_camisetas_smoke);
     RUN_TEST(test_menu_camisetas_has_crear_option);
     RUN_TEST(test_menu_camisetas_titulo_not_empty);
+    RUN_TEST(test_submenu_sorteo_tiene_reiniciar);
 
     return UNITY_END();
 }

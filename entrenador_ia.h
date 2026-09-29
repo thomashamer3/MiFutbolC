@@ -56,6 +56,20 @@ typedef enum
 } CategoriaConsejo;
 
 /**
+ * @brief Niveles de intervención automática de la IA
+ *
+ * Controla cuándo el Entrenador IA interrumpe al usuario (por ejemplo, al crear
+ * un partido) para avisar de un riesgo y ofrecer consejos.
+ */
+typedef enum
+{
+    NIVEL_IA_SILENCIOSO = 0,  /**< No interrumpe automáticamente */
+    NIVEL_IA_CONSERVADOR = 1, /**< Solo avisa ante riesgo crítico */
+    NIVEL_IA_MODERADO = 2,    /**< Avisa ante riesgo alto (nivel por defecto) */
+    NIVEL_IA_AGRESIVO = 3     /**< Avisa ante el menor indicio de riesgo */
+} NivelIntervencionIA;
+
+/**
  * @brief Estructura que representa un consejo generado por la IA
  *
  * Contiene el mensaje del consejo junto con su clasificación por nivel y categoría.
@@ -137,8 +151,11 @@ void evaluar_decision_pasada(void);
 /**
  * @brief Configura el nivel de intervención de la IA
  *
- * Permite al usuario ajustar qué tan frecuentemente y con qué intensidad
- * la IA debe intervenir con consejos.
+ * Permite elegir entre Silencioso (0), Conservador (1), Moderado (2) y
+ * Agresivo (3). El nivel se guarda en la base de datos y determina el umbral
+ * de riesgo con el que la IA avisa automáticamente antes de un partido.
+ *
+ * @see activar_ia_antes_partido()
  */
 void configurar_nivel_intervencion(void);
 
@@ -189,7 +206,13 @@ const char *categoria_a_string(CategoriaConsejo categoria);
 /**
  * @brief Activa la IA antes de un partido
  *
- * Genera consejos específicos para la preparación pre-partido.
+ * Evalúa el estado del jugador y, solo cuando el riesgo de lesión supera el
+ * umbral del nivel de intervención configurado, pregunta si desea ver consejos
+ * antes de continuar. Para no interrumpir en cada partido, el aviso se muestra
+ * como máximo una vez cada 24 horas, salvo que el riesgo sea crítico. Con el
+ * nivel Silencioso no se muestra ningún aviso.
+ *
+ * @see configurar_nivel_intervencion()
  */
 void activar_ia_antes_partido(void);
 

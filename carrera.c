@@ -1,5 +1,6 @@
 #include "carrera.h"
 #include "db.h"
+#include "logros.h"
 #include "menu.h"
 #include "progresion.h"
 #include "utils.h"
@@ -2906,119 +2907,369 @@ static void mostrar_mejor_once_historico(void)
 static void mostrar_vitrina_trofeos(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT nombre, tipo, fecha_fin, estado FROM torneo "
-                       "WHERE estado = 'Finalizado' ORDER BY fecha_fin DESC"))
-    {
-        mostrar_no_hay_registros("torneos finalizados");
-        return;
-    }
+    /*
+     * Los trofeos salen del historial que se genera al finalizar un torneo
+     * (equipo_historial.posicion_final): 1 = campeon, 2 = subcampeon, 3 = tercero.
+     */
+    const char *sql =
+        "SELECT t.nombre, IFNULL(eh.posicion_final, 0), IFNULL(e.nombre, 'Equipo desconocido'), "
+        "CASE WHEN t.tiene_equipo_fijo = 1 AND eh.equipo_id = t.equipo_fijo_id THEN 1 ELSE 0 END, "
+        "IFNULL(eh.partidos_jugados, 0), IFNULL(eh.partidos_ganados, 0), "
+        "IFNULL(eh.partidos_empatados, 0), IFNULL(eh.partidos_perdidos, 0), "
+        "IFNULL(eh.goles_favor, 0), IFNULL(eh.goles_contra, 0) "
+        "FROM equipo_historial eh "
+        "JOIN torneo t ON t.id = eh.torneo_id "
+        "LEFT JOIN equipo e ON e.id = eh.equipo_id "
+        "WHERE IFNULL(eh.posicion_final, 0) BETWEEN 1 AND 3 "
+        "ORDER BY eh.posicion_final ASC, t.nombre ASC";
 
     mostrar_pantalla("VITRINA DE TROFEOS");
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+
+    if (!preparar_stmt(&stmt, sql))
     {
-        count++;
-        printf("  Trofeo %d: %s\n", count, sqlite3_column_text(stmt, 0));
-        printf("    Tipo: %s\n", sqlite3_column_text(stmt, 1));
-        printf("    Fecha: %s\n", sqlite3_column_text(stmt, 2));
-    }
-    sqlite3_finalize(stmt);
-    if (count == 0)
-    {
-        mostrar_no_hay_registros("trofeos ganados");
+        printf("No se pudo consultar el historial de torneos.\n");
         pause_console();
         return;
     }
+
+    int total = 0;
+    int oros = 0;
+    int platas = 0;
+    int bronces = 0;
+
+    printf("\n");
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *torneo = (const char *)sqlite3_column_text(stmt, 0);
+        int posicion = sqlite3_column_int(stmt, 1);
+        const char *equipo = (const char *)sqlite3_column_text(stmt, 2);
+        int es_tu_equipo = sqlite3_column_int(stmt, 3);
+        const char *medalla = (posicion == 1) ? "ORO" : ((posicion == 2) ? "PLATA" : "BRONCE");
+
+        total++;
+        if (posicion == 1)
+        {
+            oros++;
+        }
+        else if (posicion == 2)
+        {
+            platas++;
+        }
+        else
+        {
+            bronces++;
+        }
+
+        printf("  Trofeo %d [%s] %s\n", total, medalla, torneo ? torneo : "Torneo");
+        printf("    Equipo: %s%s\n", equipo ? equipo : "N/A", es_tu_equipo ? " (tu equipo)" : "");
+        printf("    Puesto: %d | PJ:%d PG:%d PE:%d PP:%d | GF:%d GC:%d\n", posicion,
+               sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
+               sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7),
+               sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9));
+        printf("%s", SEP_MENOR);
+    }
+    sqlite3_finalize(stmt);
+
+    if (total == 0)
+    {
+        mostrar_no_hay_registros("trofeos (finaliza un torneo desde el modulo Torneos)");
+        pause_console();
+        return;
+    }
+
+    printf("\n  Resumen: %d trofeo(s) | %d oro | %d plata | %d bronce\n", total, oros, platas,
+           bronces);
     pause_console();
 }
 
 static void mostrar_estadisticas_temporada_visual(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre, anio, goles, asistencias, rendimiento_promedio "
-                       "FROM temporada ORDER BY anio DESC"))
-    {
-        mostrar_no_hay_registros("temporadas");
-        return;
-    }
+    /*
+     * La tabla temporada no guarda estadisticas propias: se calculan a partir de
+     * los partidos jugados dentro del periodo de cada temporada.
+     */
+    const char *sql =
+        "SELECT t.nombre, t.anio, IFNULL(t.estado, ''), t.fecha_inicio, t.fecha_fin, "
+        "COUNT(p.id), IFNULL(SUM(p.goles), 0), IFNULL(SUM(p.asistencias), 0), "
+        "SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), "
+        "IFNULL(ROUND(AVG(p.rendimiento_general), 2), 0) "
+        "FROM temporada t "
+        "LEFT JOIN partido p ON " SQL_FECHA_ORD("p.fecha_hora")
+        " BETWEEN t.fecha_inicio AND t.fecha_fin "
+        "GROUP BY t.id "
+        "ORDER BY t.anio DESC, t.fecha_inicio DESC";
 
     mostrar_pantalla("ESTADISTICAS POR TEMPORADA");
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+
+    if (!preparar_stmt(&stmt, sql))
     {
-        count++;
-        printf("  %d. %s (%s)\n", sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2));
-        printf("     Goles: %d | Asistencias: %d | Rend: %s\n", sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4),
-               sqlite3_column_text(stmt, 5) ? (const char *)sqlite3_column_text(stmt, 5) : "N/A");
-    }
-    sqlite3_finalize(stmt);
-    if (count == 0)
-    {
-        mostrar_no_hay_registros("temporadas");
+        printf("No se pudieron calcular las estadisticas por temporada.\n");
         pause_console();
         return;
     }
+
+    int total_temporadas = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+        int anio = sqlite3_column_int(stmt, 1);
+        const char *estado = (const char *)sqlite3_column_text(stmt, 2);
+        const char *fecha_inicio = (const char *)sqlite3_column_text(stmt, 3);
+        const char *fecha_fin = (const char *)sqlite3_column_text(stmt, 4);
+        int pj = sqlite3_column_int(stmt, 5);
+        int goles = sqlite3_column_int(stmt, 6);
+        int asistencias = sqlite3_column_int(stmt, 7);
+        int victorias = sqlite3_column_int(stmt, 8);
+        int empates = sqlite3_column_int(stmt, 9);
+        int derrotas = sqlite3_column_int(stmt, 10);
+        double rendimiento = sqlite3_column_double(stmt, 11);
+
+        total_temporadas++;
+        printf("\n  %d. %s (%d) [%s]\n", total_temporadas, nombre ? nombre : "Temporada", anio,
+               estado ? estado : "Sin estado");
+        printf("     Periodo: %s al %s\n", fecha_inicio ? fecha_inicio : "?",
+               fecha_fin ? fecha_fin : "?");
+
+        if (pj > 0)
+        {
+            printf("     PJ:%d | G:%d | A:%d | V:%d E:%d D:%d | Rend:%.2f\n", pj, goles,
+                   asistencias, victorias, empates, derrotas, rendimiento);
+        }
+        else
+        {
+            printf("     Sin partidos registrados en este periodo.\n");
+        }
+        printf("%s", SEP_MENOR);
+    }
+    sqlite3_finalize(stmt);
+
+    if (total_temporadas == 0)
+    {
+        mostrar_no_hay_registros("temporadas (crea una desde el modulo Temporada)");
+    }
+
     pause_console();
 }
 
 static void mostrar_timeline_hitos(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT cph.id, cph.fecha, cph.titulo, p.rendimiento_general "
-                       "FROM carrera_partido_hito cph "
-                       "LEFT JOIN partido p ON cph.partido_id = p.id "
-                       "ORDER BY cph.fecha DESC LIMIT 50"))
+    /*
+     * Los hitos se guardan en carrera_partido_hito (tipo_hito, nota, created_at);
+     * la fecha y el rendimiento salen del partido asociado.
+     */
+    const char *sql =
+        "SELECT h.partido_id, IFNULL(p.fecha_hora, h.created_at), h.tipo_hito, "
+        "IFNULL(h.nota, ''), IFNULL(p.goles, 0), IFNULL(p.asistencias, 0), "
+        "IFNULL(p.rendimiento_general, 0) "
+        "FROM carrera_partido_hito h "
+        "LEFT JOIN partido p ON p.id = h.partido_id "
+        "ORDER BY " SQL_FECHA_ORD("IFNULL(p.fecha_hora, h.created_at)") " ASC, h.id ASC";
+
+    mostrar_pantalla("TIMELINE DE HITOS");
+
+    if (!preparar_stmt(&stmt, sql))
     {
-        mostrar_no_hay_registros("hitos");
+        printf("No se pudieron cargar los hitos de la carrera.\n");
+        pause_console();
         return;
     }
 
-    mostrar_pantalla("TIMELINE DE HITOS");
-    int count = 0;
+    int total_hitos = 0;
+    const char *primera_fecha = NULL;
+    const char *ultima_fecha = NULL;
+
+    printf("\n");
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        count++;
-        printf("  %d. [%s] %s", count, sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
-        if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
+        int partido_id = sqlite3_column_int(stmt, 0);
+        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
+        const char *tipo_hito = (const char *)sqlite3_column_text(stmt, 2);
+        const char *nota = (const char *)sqlite3_column_text(stmt, 3);
+        int goles = sqlite3_column_int(stmt, 4);
+        int asistencias = sqlite3_column_int(stmt, 5);
+        int rendimiento = sqlite3_column_int(stmt, 6);
+
+        total_hitos++;
+        if (!primera_fecha)
         {
-            printf(" (Rend: %d)", sqlite3_column_int(stmt, 3));
+            primera_fecha = fecha;
         }
-        printf("\n");
+        ultima_fecha = fecha;
+
+        printf("  [%d] %s  %s\n", total_hitos, fecha ? fecha : "Sin fecha",
+               tipo_hito ? tipo_hito : "Hito");
+        printf("      Partido %d | G:%d A:%d R:%d\n", partido_id, goles, asistencias, rendimiento);
+        if (nota && nota[0] != '\0')
+        {
+            printf("      Nota: %s\n", nota);
+        }
+        printf("%s", SEP_MENOR);
     }
     sqlite3_finalize(stmt);
-    if (count == 0)
+
+    if (total_hitos == 0)
     {
-        mostrar_no_hay_registros("hitos en la carrera");
+        mostrar_no_hay_registros("hitos (marca partidos desde 'Partidos que Marcaron')");
+        pause_console();
+        return;
     }
+
+    printf("\n  Total: %d hito(s) | Desde %s hasta %s\n", total_hitos,
+           primera_fecha ? primera_fecha : "?", ultima_fecha ? ultima_fecha : "?");
     pause_console();
 }
+
+static int carrera_contar_sql(const char *sql)
+{
+    sqlite3_stmt *stmt;
+    int total = 0;
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static int calcular_mejor_racha_victorias(void)
+{
+    sqlite3_stmt *stmt;
+    int mejor = 0;
+    int actual = 0;
+
+    if (!preparar_stmt(&stmt, "SELECT resultado FROM partido ORDER BY fecha_hora ASC, id ASC"))
+    {
+        return 0;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        if (sqlite3_column_int(stmt, 0) == 1)
+        {
+            actual++;
+            if (actual > mejor)
+            {
+                mejor = actual;
+            }
+        }
+        else
+        {
+            actual = 0;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return mejor;
+}
+
+typedef struct
+{
+    const char *nombre;
+    const char *descripcion;
+    int progreso;
+    int objetivo;
+} LogroCarrera;
 
 static void mostrar_logros_carrera(void)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT nombre, descripcion, fecha_logro FROM logro "
-                       "ORDER BY fecha_logro DESC"))
-    {
-        mostrar_no_hay_registros("logros");
-        return;
-    }
+    int partidos = 0;
+    int goles = 0;
+    int asistencias = 0;
+    int victorias = 0;
 
     mostrar_pantalla("LOGROS DE CARRERA");
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+
+    if (preparar_stmt(&stmt, "SELECT COUNT(*), IFNULL(SUM(goles), 0), "
+                      "IFNULL(SUM(asistencias), 0), "
+                      "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) FROM partido"))
     {
-        count++;
-        printf("  %d. %s\n", count, sqlite3_column_text(stmt, 0));
-        printf("     %s (%s)\n", sqlite3_column_text(stmt, 1),
-               sqlite3_column_text(stmt, 2) ? (const char *)sqlite3_column_text(stmt, 2) : "?");
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            partidos = sqlite3_column_int(stmt, 0);
+            goles = sqlite3_column_int(stmt, 1);
+            asistencias = sqlite3_column_int(stmt, 2);
+            victorias = sqlite3_column_int(stmt, 3);
+        }
+        sqlite3_finalize(stmt);
     }
-    sqlite3_finalize(stmt);
-    if (count == 0)
+
+    int titulos =
+        carrera_contar_sql("SELECT COUNT(*) FROM equipo_historial WHERE posicion_final = 1");
+    int podios = carrera_contar_sql(
+                     "SELECT COUNT(*) FROM equipo_historial WHERE posicion_final BETWEEN 1 AND 3");
+    int hitos = carrera_contar_sql("SELECT COUNT(*) FROM carrera_partido_hito");
+    int temporadas = carrera_contar_sql("SELECT COUNT(*) FROM temporada");
+    int mejor_racha = calcular_mejor_racha_victorias();
+
+    LogroCarrera logros[] =
     {
-        mostrar_no_hay_registros("logros");
+        {"Debut", "Jugar el primer partido", partidos, 1},
+        {"Constancia", "Acumular 25 partidos", partidos, 25},
+        {"Veterano", "Acumular 100 partidos", partidos, 100},
+        {"Goleador", "Convertir 25 goles", goles, 25},
+        {"Artillero", "Convertir 100 goles", goles, 100},
+        {"Asistidor", "Dar 25 asistencias", asistencias, 25},
+        {"Ganador", "Ganar 25 partidos", victorias, 25},
+        {"Invicto", "Ganar 5 partidos seguidos", mejor_racha, 5},
+        {"Campeon", "Ganar un torneo", titulos, 1},
+        {"Multiple campeon", "Ganar 3 torneos", titulos, 3},
+        {"Podio", "Terminar en el podio de 3 torneos", podios, 3},
+        {"Narrador", "Registrar 5 hitos de carrera", hitos, 5},
+        {"Temporadas", "Registrar una temporada", temporadas, 1},
+    };
+
+    int total_logros = (int)(sizeof(logros) / sizeof(logros[0]));
+    int completados = 0;
+
+    printf("\n  Progreso de carrera: PJ:%d | G:%d | A:%d | V:%d | Mejor racha:%d\n", partidos, goles,
+           asistencias, victorias, mejor_racha);
+    printf("  Titulos:%d | Podios:%d | Hitos:%d | Temporadas:%d\n", titulos, podios, hitos,
+           temporadas);
+    printf("%s", SEP_MENOR);
+
+    for (int i = 0; i < total_logros; i++)
+    {
+        int objetivo = logros[i].objetivo;
+        int progreso = logros[i].progreso;
+        int alcanzado = (objetivo > 0 && progreso >= objetivo);
+        int mostrado = (progreso > objetivo) ? objetivo : progreso;
+
+        if (alcanzado)
+        {
+            completados++;
+        }
+
+        printf("  [%s] %-16s %s (%d/%d)\n", alcanzado ? "X" : " ", logros[i].nombre,
+               logros[i].descripcion, mostrado, objetivo);
     }
+
+    printf("%s", SEP_MENOR);
+    printf("  Logros de carrera completados: %d/%d\n", completados, total_logros);
+
+    int insignias_total = logros_get_total();
+    if (insignias_total > 0)
+    {
+        printf("  Insignias del modulo Logros: %d/%d completadas\n",
+               logros_get_completados_primera_camiseta(), insignias_total);
+    }
+
+    if (partidos == 0)
+    {
+        printf("\n  Registra partidos para empezar a desbloquear logros de carrera.\n");
+    }
+
     pause_console();
 }
 

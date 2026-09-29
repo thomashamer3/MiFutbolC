@@ -422,23 +422,77 @@ static int actualizar_estado_botin(int botin_id, int activo)
     return success;
 }
 
-void sortear_botin(void)
+static int contar_botines_pendientes_sorteo(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(sorteada, 0) = 0 "
+                       "AND IFNULL(activa, 1) = 1"))
+    {
+        return 0;
+    }
+    sqlite3_step(stmt);
+    int total = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static int contar_botines_sorteados(void)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(sorteada, 0) = 1 "
+                       "AND IFNULL(activa, 1) = 1"))
+    {
+        return 0;
+    }
+    sqlite3_step(stmt);
+    int total = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static void marcar_botin_sorteado(int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(&stmt, "UPDATE botin SET sorteada = 1 WHERE id = ?"))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+}
+
+static void reiniciar_marcas_sorteo_botin(void)
+{
+    sqlite3_exec(db, "UPDATE botin SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0);
+}
+
+static void realizar_sorteo_botin(void)
 {
     clear_screen();
     print_header("SORTEO DE BOTINES");
 
-    int disponibles = contar_total_botines_activos();
-    if (disponibles == 0)
+    int disponibles = contar_botines_pendientes_sorteo();
+    int activos = contar_total_botines_activos();
+
+    if (activos == 0)
     {
         mostrar_no_hay_registros("botines para sortear");
         pause_console();
         return;
     }
 
+    if (disponibles == 0)
+    {
+        reiniciar_marcas_sorteo_botin();
+        printf("Todos los botines ya fueron sorteados. Reiniciando sorteo...\n\n");
+        disponibles = activos;
+    }
+
     int offset = secure_rand_range(disponibles);
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt,
-                       "SELECT id, nombre FROM botin WHERE IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
+    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM botin WHERE IFNULL(sorteada, 0) = 0 "
+                       "AND IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
     {
         printf("Error al seleccionar botin aleatorio.\n");
         pause_console();
@@ -450,8 +504,16 @@ void sortear_botin(void)
     {
         int id = sqlite3_column_int(stmt, 0);
         const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        marcar_botin_sorteado(id);
         printf("BOTIN SORTEADO!\n\n");
         printf("El botin seleccionado es: %s (ID %d)\n", nombre, id);
+        printf("Quedan %d botines por sortear.\n", disponibles - 1);
+
+        if (disponibles - 1 == 0)
+        {
+            printf("Todos los botines fueron sorteados. Puedes reiniciar el sorteo con la "
+                   "opcion 2.\n");
+        }
 
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Sorteado botin id=%d nombre=%.180s", id, nombre);
@@ -463,6 +525,65 @@ void sortear_botin(void)
     }
     sqlite3_finalize(stmt);
     pause_console();
+}
+
+/* Permite al usuario reiniciar manualmente el ciclo de sorteo (opcion 2 del submenu) */
+static void reiniciar_sorteo_botin(void)
+{
+    clear_screen();
+    print_header("REINICIAR SORTEO DE BOTINES");
+
+    int activos = contar_total_botines_activos();
+    if (activos == 0)
+    {
+        mostrar_no_hay_registros("botines activos");
+        pause_console();
+        return;
+    }
+
+    int sorteados = contar_botines_sorteados();
+
+    printf("Botines activos  : %d\n", activos);
+    printf("Botines sorteados: %d\n\n", sorteados);
+
+    if (sorteados == 0)
+    {
+        printf("El sorteo ya esta en su estado inicial: todos los botines estan disponibles.\n");
+        pause_console();
+        return;
+    }
+
+    if (!confirmar("Desea reiniciar el sorteo? Todos los botines volveran a estar disponibles."))
+    {
+        printf("Operacion cancelada. El sorteo continua como estaba.\n");
+        pause_console();
+        return;
+    }
+
+    if (sqlite3_exec(db, "UPDATE botin SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0) !=
+            SQLITE_OK)
+    {
+        printf("No se pudo reiniciar el sorteo: %s\n", sqlite3_errmsg(db));
+        app_log_event("BOTIN", "Error al reiniciar el sorteo");
+        pause_console();
+        return;
+    }
+
+    app_log_event("BOTIN", "Sorteo de botines reiniciado");
+    mostrar_alerta_operacion("Sorteo", "Reiniciado", NULL);
+}
+
+/*
+ * Punto de entrada del menu (opcion 5). Muestra un submenu que permite
+ * sortear un botin o reiniciar el sorteo para habilitar todos de nuevo.
+ */
+void sortear_botin(void)
+{
+    MenuItem items[] = {{1, "Sortear botin", &realizar_sorteo_botin},
+        {2, "Reiniciar sorteo", &reiniciar_sorteo_botin},
+        {0, "Volver", NULL}
+    };
+    ejecutar_menu("SORTEO DE BOTINES", items, 3);
 }
 
 void cargar_imagen_botin(void)

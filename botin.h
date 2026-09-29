@@ -63,9 +63,13 @@ void fijar_botin_predeterminado(void);
 int botin_obtener_predeterminado(void);
 
 /**
- * @brief Realiza un sorteo aleatorio entre botines disponibles
+ * @brief Muestra el submenú de sorteo de botines
  *
- * Selecciona al azar uno de los botines registrados en el sistema.
+ * Ofrece las acciones disponibles del sorteo:
+ * - Sortear: elige al azar un botín pendiente y lo marca como sorteado, de modo
+ *   que no vuelva a salir hasta completar el ciclo.
+ * - Reiniciar sorteo: tras confirmar con el usuario, vuelve a habilitar todos
+ *   los botines activos para comenzar un nuevo ciclo de sorteo.
  */
 void sortear_botin(void);
 

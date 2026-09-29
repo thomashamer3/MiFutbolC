@@ -12,6 +12,10 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return db_prepare_stmt(stmt, sql);
 }
 
+/* Configuracion del nivel de intervencion (definidas mas abajo) */
+static int obtener_nivel_intervencion(void);
+static void guardar_nivel_intervencion(int nivel);
+
 static void iniciar_pantalla_ia(const char *titulo)
 {
     clear_screen();
@@ -73,34 +77,68 @@ static void ejecutar_upsert_perfil(const char *sql, int aceptados, int ignorados
     }
 }
 
-static int parsear_fecha_ddmmaa(const char *fecha_str, struct tm *tm_fecha)
+/*
+ * Interpreta las fechas de partido. En la base se guardan como "YYYY-MM-DD" o
+ * "YYYY-MM-DD HH:MM" (convert_display_date_to_storage), aunque tambien se acepta
+ * el formato de presentacion "DD/MM/YYYY".
+ */
+static int parsear_fecha_partido(const char *fecha_str, struct tm *tm_fecha)
 {
-    if (!fecha_str)
+    if (!fecha_str || fecha_str[0] == '\0')
+    {
+        return 0;
+    }
+
+    // Longitud minima esperada: "YYYY-MM-DD" o "DD/MM/YYYY"
+    if (strlen(fecha_str) < 8)
     {
         return 0;
     }
 
     memset(tm_fecha, 0, sizeof(*tm_fecha));
+
+    int anio = 0;
+    int mes = 0;
+    int dia = 0;
+    int hora = 0;
+    int minuto = 0;
+    int leidos;
+
+    if (fecha_str[4] == '-')
+    {
 #ifdef _WIN32
-    if (sscanf_s(fecha_str, "%d/%d/%d", &tm_fecha->tm_mday, &tm_fecha->tm_mon,
-                 &tm_fecha->tm_year) != 3)
+        leidos = sscanf_s(fecha_str, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto);
 #else
-    if (sscanf(fecha_str, "%d/%d/%d", &tm_fecha->tm_mday, &tm_fecha->tm_mon, &tm_fecha->tm_year) !=
-            3)
+        leidos = sscanf(fecha_str, "%d-%d-%d %d:%d", &anio, &mes, &dia, &hora, &minuto);
 #endif
+    }
+    else
+    {
+#ifdef _WIN32
+        leidos = sscanf_s(fecha_str, "%d/%d/%d %d:%d", &dia, &mes, &anio, &hora, &minuto);
+#else
+        leidos = sscanf(fecha_str, "%d/%d/%d %d:%d", &dia, &mes, &anio, &hora, &minuto);
+#endif
+    }
+
+    if (leidos < 3 || anio < 1900 || mes < 1 || mes > 12 || dia < 1 || dia > 31)
     {
         return 0;
     }
 
-    tm_fecha->tm_year -= 1900;
-    tm_fecha->tm_mon -= 1;
+    tm_fecha->tm_year = anio - 1900;
+    tm_fecha->tm_mon = mes - 1;
+    tm_fecha->tm_mday = dia;
+    tm_fecha->tm_hour = hora;
+    tm_fecha->tm_min = minuto;
+    tm_fecha->tm_isdst = -1;
     return 1;
 }
 
 static int dias_desde_fecha(const char *fecha_str, time_t ahora)
 {
     struct tm tm_fecha;
-    if (!parsear_fecha_ddmmaa(fecha_str, &tm_fecha))
+    if (!parsear_fecha_partido(fecha_str, &tm_fecha))
     {
         return 0;
     }
@@ -144,11 +182,33 @@ static const char *CREATE_PERFIL_TABLE = "CREATE TABLE IF NOT EXISTS perfil_usua
         "consejos_ignorados INTEGER DEFAULT 0,"
         "indice_prudencia REAL DEFAULT 0.5);";
 
+// Tabla para configuracion de la IA (nivel de intervencion y control de frecuencia)
+static const char *CREATE_IA_CONFIG_TABLE = "CREATE TABLE IF NOT EXISTS ia_config ("
+        "id INTEGER PRIMARY KEY,"
+        "nivel_intervencion INTEGER NOT NULL DEFAULT 2,"
+        "ultima_alerta INTEGER NOT NULL DEFAULT 0,"
+        "ultimo_riesgo REAL NOT NULL DEFAULT 0);";
+
+// Fila unica de configuracion con los valores por defecto (nivel Moderado, sin avisos previos)
+static const char *SQL_IA_CONFIG_DEFAULT =
+    "INSERT OR IGNORE INTO ia_config (id, nivel_intervencion, ultima_alerta, ultimo_riesgo) "
+    "VALUES (1, 2, 0, 0);";
+
+// Horas minimas entre dos avisos automaticos consecutivos cuando el riesgo no es critico
+#define IA_HORAS_ENFRIAMIENTO 24
+#define IA_SEGUNDOS_ENFRIAMIENTO ((time_t)IA_HORAS_ENFRIAMIENTO * 60 * 60)
+
+// Margen sobre el umbral del nivel a partir del cual el aviso se considera critico
+// y no espera al periodo de enfriamiento
+#define IA_MARGEN_RIESGO_CRITICO 1.0F
+
 // Inicializar tablas de IA
 void init_ia_tables(void)
 {
     sqlite3_exec(db, CREATE_CONSEJOS_TABLE, 0, 0, 0);
     sqlite3_exec(db, CREATE_PERFIL_TABLE, 0, 0, 0);
+    sqlite3_exec(db, CREATE_IA_CONFIG_TABLE, 0, 0, 0);
+    sqlite3_exec(db, SQL_IA_CONFIG_DEFAULT, 0, 0, 0);
 }
 
 // Funciones auxiliares para strings
@@ -873,17 +933,42 @@ void configurar_nivel_intervencion(void)
 {
     iniciar_pantalla_ia("Configurar Nivel de Intervencion IA");
 
-    printf("\nNiveles de intervencion disponibles:\n");
-    printf("1. Conservador - Solo consejos criticos\n");
-    printf("2. Moderado - Consejos de advertencia y criticos\n");
-    printf("3. Agresivo - Todos los consejos\n\n");
+    int nivel_actual = obtener_nivel_intervencion();
 
-    printf("Selecciona nivel (1-3): ");
+    printf("\nNiveles de intervencion disponibles:\n");
+    printf("0. Silencioso  - No interrumpe automaticamente al crear partidos\n");
+    printf("1. Conservador - Solo avisa ante riesgo de lesion critico\n");
+    printf("2. Moderado    - Avisa ante riesgo alto (maximo una vez por dia)\n");
+    printf("3. Agresivo    - Avisa ante el menor indicio de riesgo\n\n");
+
+    printf("Nivel actual: %d\n\n", nivel_actual);
+
+    printf("Selecciona nivel (0-3): ");
     int nivel = input_int("");
 
-    // Por ahora solo mostrar seleccion, se implementara en futuras versiones
+    if (nivel < NIVEL_IA_SILENCIOSO || nivel > NIVEL_IA_AGRESIVO)
+    {
+        printf("\nNivel no valido. No se realizaron cambios.\n");
+        pause_console();
+        return;
+    }
+
+    guardar_nivel_intervencion(nivel);
+
+    char log_msg[128];
+    snprintf(log_msg, sizeof(log_msg), "Nivel de intervencion IA actualizado a %d", nivel);
+    app_log_event("IA", log_msg);
+
     printf("\nNivel configurado: %d\n", nivel);
-    printf("Esta funcionalidad se implementara completamente en futuras versiones.\n");
+    if (nivel == NIVEL_IA_SILENCIOSO)
+    {
+        printf("La IA ya no avisara automaticamente antes de los partidos.\n");
+    }
+    else
+    {
+        printf("La IA avisara como maximo una vez cada %d horas "
+               "(de inmediato si el riesgo es critico).\n", IA_HORAS_ENFRIAMIENTO);
+    }
 
     pause_console();
 }
@@ -986,9 +1071,101 @@ void actualizar_perfil_usuario(int consejo_seguido)
     }
 }
 
+// Umbral de riesgo de lesion que dispara el aviso segun el nivel configurado
+static float umbral_riesgo_para_nivel(int nivel)
+{
+    switch (nivel)
+    {
+    case NIVEL_IA_CONSERVADOR:
+        return 4.0F;
+    case NIVEL_IA_AGRESIVO:
+        return 2.0F;
+    case NIVEL_IA_MODERADO:
+    default:
+        return 3.0F;
+    }
+}
+
+// Nivel de intervencion configurado (Moderado por defecto)
+static int obtener_nivel_intervencion(void)
+{
+    sqlite3_stmt *stmt;
+    int nivel = NIVEL_IA_MODERADO;
+
+    if (preparar_stmt(&stmt, "SELECT nivel_intervencion FROM ia_config WHERE id = 1;"))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            nivel = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (nivel < NIVEL_IA_SILENCIOSO || nivel > NIVEL_IA_AGRESIVO)
+    {
+        nivel = NIVEL_IA_MODERADO;
+    }
+
+    return nivel;
+}
+
+static void guardar_nivel_intervencion(int nivel)
+{
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt, "UPDATE ia_config SET nivel_intervencion = ? WHERE id = 1;"))
+    {
+        sqlite3_bind_int(stmt, 1, nivel);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
+
+// Fecha y riesgo del ultimo aviso automatico mostrado (0 si nunca se mostro)
+static void obtener_ultima_alerta_ia(time_t *ultima_alerta, float *ultimo_riesgo)
+{
+    sqlite3_stmt *stmt;
+
+    *ultima_alerta = (time_t)0;
+    *ultimo_riesgo = 0.0F;
+
+    if (preparar_stmt(&stmt, "SELECT ultima_alerta, ultimo_riesgo FROM ia_config WHERE id = 1;"))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            *ultima_alerta = (time_t)sqlite3_column_int64(stmt, 0);
+            *ultimo_riesgo = (float)sqlite3_column_double(stmt, 1);
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
+static void registrar_alerta_ia(time_t cuando, float riesgo)
+{
+    sqlite3_stmt *stmt;
+    if (preparar_stmt(&stmt,
+                      "UPDATE ia_config SET ultima_alerta = ?, ultimo_riesgo = ? WHERE id = 1;"))
+    {
+        sqlite3_bind_int64(stmt, 1, (sqlite3_int64)cuando);
+        sqlite3_bind_double(stmt, 2, (double)riesgo);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
+
 // Funciones de activacion
 void activar_ia_antes_partido(void)
 {
+#ifndef UNIT_TEST
+    // Garantiza que la tabla de configuracion exista (tambien en bases ya creadas)
+    init_ia_tables();
+#endif
+
+    int nivel = obtener_nivel_intervencion();
+    if (nivel == NIVEL_IA_SILENCIOSO)
+    {
+        return;
+    }
+
     // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
 
@@ -1002,8 +1179,39 @@ void activar_ia_antes_partido(void)
 
     float cansancio_trigger = estado.cansancio_promedio * factor_descanso_trigger;
 
-    if ((estado.riesgo_lesion > 2.5 || cansancio_trigger > 8) &&
-            leer_confirmacion_sn(
+    float umbral = umbral_riesgo_para_nivel(nivel);
+    int riesgo_alto = estado.riesgo_lesion > umbral;
+    int fatiga_extrema = cansancio_trigger > 8.5F;
+
+    if (!riesgo_alto && !fatiga_extrema)
+    {
+        return;
+    }
+
+    time_t ultima_alerta = (time_t)0;
+    float ultimo_riesgo = 0.0F;
+    obtener_ultima_alerta_ia(&ultima_alerta, &ultimo_riesgo);
+
+    time_t ahora = time(NULL);
+    int riesgo_critico = estado.riesgo_lesion >= (umbral + IA_MARGEN_RIESGO_CRITICO);
+
+    // No repetir el aviso en cada partido: como maximo una vez cada 24 horas,
+    // salvo que el riesgo sea critico.
+    if (!riesgo_critico && ultima_alerta > (time_t)0 &&
+            (ahora - ultima_alerta) < IA_SEGUNDOS_ENFRIAMIENTO)
+    {
+        return;
+    }
+
+    char log_msg[160];
+    snprintf(log_msg, sizeof(log_msg),
+             "Aviso IA antes de partido: riesgo %.2f (umbral %.2f, nivel %d, aviso previo %.2f)",
+             estado.riesgo_lesion, umbral, nivel, ultimo_riesgo);
+    app_log_event("IA", log_msg);
+
+    registrar_alerta_ia(ahora, estado.riesgo_lesion);
+
+    if (leer_confirmacion_sn(
                 "\nIA: Alto riesgo detectado. Deseas ver consejos antes de continuar? (s/n): "))
     {
         mostrar_consejos_actuales();

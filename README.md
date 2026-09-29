@@ -1125,6 +1125,7 @@ El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos.
 Campos clave (selección, no exhaustivo):
 
 - `camiseta`: `id`, `nombre`, `sorteada`
+- `botin`: `id`, `nombre`, `sorteada`, `activa`
 - `cancha`: `id`, `nombre`
 - `partido`: `id`, `cancha_id`, `fecha_hora`, `goles`, `asistencias`, `camiseta_id`, `resultado`, `rendimiento_general`, `cansancio`, `estado_animo`, `comentario_personal`, `clima`, `dia`, `precio`, `estado_cancha`, `goles_equipo`, `goles_rival`, `formato_partido`, `tarjeta`, `goles_en_contra`, `dolor_fisico`, `temperatura_c`, `arbitraje_score`, `lo_mejor`, `que_mejorar`, `tags`
 - `lesion`: `id`, `jugador`, `tipo`, `descripcion`, `fecha`, `camiseta_id`, `estado`, `partido_id`
@@ -1243,7 +1244,8 @@ El módulo de gestión de botines (`botin.c / botin.h`) permite administrar el c
 
 - **Operaciones CRUD**: Crear, listar, modificar y eliminar botines con validación.
 - **Botín Predeterminado**: Permite fijar un botín que se usará automáticamente al cargar nuevos partidos.
-- **Sorteo Aleatorio**: Selecciona al azar un botín de la lista de disponibles.
+- **Sorteo Aleatorio**: Selecciona al azar un botín pendiente del ciclo; los ya sorteados no vuelven a
+  salir hasta agotar la lista, y el submenú de sorteo permite reiniciar el ciclo cuando quieras.
 - **Gestión de Imágenes**: Carga y visualización de imágenes asociadas a cada botín.
 - **Exportación Integrada**: Los botines se incluyen en las exportaciones completas del sistema.
 

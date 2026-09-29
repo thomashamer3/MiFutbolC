@@ -64,6 +64,21 @@ static void test_menu_partidos_titulo_not_empty(void)
     TEST_ASSERT_TRUE(capture.titulo[0] != '\0');
 }
 
+static void test_submenu_ultimo_tiene_tiempo_transcurrido(void)
+{
+    MenuTestCapture capture = {0};
+    menu_test_set_capture(&capture);
+
+    menu_ultimo();
+
+    menu_test_set_capture(NULL);
+    TEST_ASSERT_NOT_NULL(capture.titulo);
+    TEST_ASSERT_EQUAL_STRING("ULTIMOS", capture.titulo);
+    TEST_ASSERT_TRUE(capture.cantidad >= 6);
+    TEST_ASSERT_TRUE(capture.last_item.accion == NULL);
+    TEST_ASSERT_EQUAL_INT(0, capture.last_item.opcion);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -72,6 +87,7 @@ int main(void)
     RUN_TEST(test_menu_partidos_smoke);
     RUN_TEST(test_menu_partidos_has_options);
     RUN_TEST(test_menu_partidos_titulo_not_empty);
+    RUN_TEST(test_submenu_ultimo_tiene_tiempo_transcurrido);
 
     return UNITY_END();
 }

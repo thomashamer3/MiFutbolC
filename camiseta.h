@@ -51,10 +51,16 @@ void editar_camiseta(void);
 void eliminar_camiseta(void);
 
 /**
- * @brief Realiza un sorteo aleatorio entre camisetas disponibles
+ * @brief Muestra el submenú de sorteo de camisetas
  *
- * Selecciona al azar una de las camisetas registradas en el sistema.
- * Útil para decidir qué indumentaria usar en un partido.
+ * Ofrece las acciones disponibles del sorteo:
+ * - Sortear: selecciona al azar una camiseta pendiente y la marca como sorteada.
+ *   Útil para decidir qué indumentaria usar en un partido.
+ * - Reiniciar sorteo: tras confirmar con el usuario, vuelve a habilitar todas
+ *   las camisetas activas para comenzar un nuevo ciclo de sorteo.
+ *
+ * @see realizar_sorteo_camiseta()
+ * @see reiniciar_sorteo_camiseta()
  */
 void sortear_camiseta(void);
 

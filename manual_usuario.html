@@ -359,7 +359,7 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>2. Listar</strong>: ver camisetas activas/inactivas y sus datos.</li>
 <li><strong>3. Modificar</strong>: actualizar nombre u otra información.</li>
 <li><strong>4. Eliminar</strong>: eliminar, reasignar historial o retirar camiseta.</li>
-<li><strong>5. Sortear</strong>: elegir aleatoriamente una camiseta para jugar.</li>
+<li><strong>5. Sortear</strong>: abrir el submenú de sorteo (sortear una camiseta o reiniciar el sorteo).</li>
 <li><strong>6. Cargar Imagen</strong>: asociar una imagen al registro.</li>
 <li><strong>7. Ver Camiseta</strong>: abrir la imagen asignada.</li>
 <li><strong>8. Ajustes Imagen</strong>: configurar/previsualizar visor de imágenes.</li>
@@ -419,11 +419,14 @@ También se crea automáticamente el archivo de log de actividad:
 <li>Confirma para volver a marcarla como activa</li>
 </ol>
 <h3 id="sortear-camiseta">Sortear Camiseta</h3>
+<p>Al elegir "5" se abre el submenú de sorteo con estas opciones:</p>
 <ol type="1">
 <li>Selecciona "3" en el menú principal</li>
-<li>Elige "5" para sortear una camiseta</li>
-<li>El sistema seleccionará una camiseta disponible al azar</li>
-<li>Si todas ya fueron sorteadas, reinicia automáticamente el ciclo</li>
+<li>Elige "5" para abrir el submenú de sorteo</li>
+<li>Elige "1" (<strong>Sortear camiseta</strong>): el sistema selecciona una camiseta disponible al azar y te indica cuántas quedan pendientes de sortear</li>
+<li>Elige "2" (<strong>Reiniciar sorteo</strong>): el sistema muestra cuántas camisetas están activas y cuántas ya fueron sorteadas, pide confirmación y, si aceptas, vuelve a habilitar todas las camisetas activas para comenzar un ciclo nuevo</li>
+<li>Si todas las camisetas ya fueron sorteadas, el sistema reinicia el ciclo automáticamente al intentar sortear de nuevo</li>
+<li>Elige "0" (<strong>Volver</strong>) para regresar al menú de Camisetas</li>
 </ol>
 <h3 id="cargar-imagen-de-camiseta">Cargar Imagen de Camiseta</h3>
 <p>Cuando uses la opción de cargar imagen para una camiseta:</p>
@@ -532,10 +535,14 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>2. Listar</strong>: consultar todos los botines registrados.</li>
 <li><strong>3. Modificar</strong>: editar el nombre de un botín.</li>
 <li><strong>4. Eliminar</strong>: eliminar un botín de la base de datos.</li>
-<li><strong>5. Fijar Predeterminado</strong>: definir el botín que se usará por defecto al cargar partidos.</li>
-<li><strong>6. Sortear</strong>: elegir aleatoriamente un botín disponible.</li>
-<li><strong>7. Cargar Imagen</strong>: asociar una imagen al botín.</li>
-<li><strong>8. Ver Imagen</strong>: abrir la imagen asociada.</li>
+<li><strong>5. Sortear</strong>: abrir el submenú de sorteo (sortear un botín o reiniciar el sorteo).</li>
+<li><strong>6. Cargar Imagen</strong>: asociar una imagen al botín.</li>
+<li><strong>7. Ver Botín</strong>: abrir la imagen asociada.</li>
+<li><strong>8. Ajustes Imagen</strong>: configurar y probar el visor de imágenes.</li>
+<li><strong>9. Ver Información</strong>: consultar detalles ampliados.</li>
+<li><strong>10. Cargar Información</strong>: completar o actualizar metadatos.</li>
+<li><strong>11. Reactivar/Desactivar</strong>: habilitar o retirar un botín.</li>
+<li><strong>12. Fijar Predeterminado</strong>: definir el botín que se usará por defecto al cargar partidos.</li>
 </ul>
 <h3 id="crear-un-botín">Crear un Botín</h3>
 <ol type="1">
@@ -553,15 +560,19 @@ También se crea automáticamente el archivo de log de actividad:
 <h3 id="fijar-botín-predeterminado">Fijar Botín Predeterminado</h3>
 <ol type="1">
 <li>Selecciona "5" en el menú principal</li>
-<li>Elige "5" para fijar el botín predeterminado</li>
+<li>Elige "12" para fijar el botín predeterminado</li>
 <li>Selecciona el botín deseado de la lista</li>
 <li>Se usará automáticamente al crear nuevos partidos</li>
 </ol>
 <h3 id="sortear-botín">Sortear Botín</h3>
+<p>Al elegir "5" se abre el submenú de sorteo con estas opciones:</p>
 <ol type="1">
 <li>Selecciona "5" en el menú principal</li>
-<li>Elige "6" para sortear un botín</li>
-<li>El sistema seleccionará un botín al azar</li>
+<li>Elige "5" para abrir el submenú de sorteo</li>
+<li>Elige "1" (<strong>Sortear botín</strong>): el sistema elige un botín pendiente al azar y te indica cuántos quedan por sortear; un botín ya sorteado no vuelve a salir hasta completar el ciclo</li>
+<li>Elige "2" (<strong>Reiniciar sorteo</strong>): el sistema muestra cuántos botines están activos y cuántos ya fueron sorteados, pide confirmación y, si aceptas, vuelve a habilitar todos los botines activos</li>
+<li>Si todos los botines ya fueron sorteados, el sistema reinicia el ciclo automáticamente al intentar sortear de nuevo</li>
+<li>Elige "0" (<strong>Volver</strong>) para regresar al menú de Botines</li>
 </ol>
 <figure>
 <img src="images/menubotines.png" alt="Gestión de botines" />
@@ -641,6 +652,8 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>6. Análisis Táctico</strong>: crear/consultar diagramas tácticos.</li>
 <li><strong>7. Favoritos</strong>: marcar partidos destacados para consulta rápida.</li>
 <li><strong>8. Etiquetas (Tags)</strong>: clasificar partidos con etiquetas.</li>
+<li><strong>9. Obtener Clima Histórico</strong>: completar la temperatura y el clima de partidos anteriores.</li>
+<li><strong>10. Último</strong>: ver el último partido, victoria, derrota, empate, gol o asistencia.</li>
 </ul>
 <h3 id="crear-un-partido">Crear un Partido</h3>
 <ol type="1">
@@ -682,6 +695,21 @@ También se crea automáticamente el archivo de log de actividad:
 <li>Elige "2" para listar todos los partidos</li>
 <li>Se mostrarán con todas las estadísticas y fecha con día de semana</li>
 <li>Ejemplo: <code>Fecha: Domingo 03/05/2026 19:00</code></li>
+</ol>
+<h4 id="filtros-de-partidos">Filtros de Partidos</h4>
+<p>Dentro del listado, la opción <strong>5) Filtros</strong> abre el menú <strong>FILTROS DE PARTIDOS</strong>, donde puedes combinar cancha, camiseta, tipo, rangos de goles/asistencias/precio/rendimiento/cansancio/estado de ánimo, clima, franja horaria, tag, favoritos y presencia de datos. Entre las opciones disponibles están también los rankings por temperatura:</p>
+<ul>
+<li><strong>17) Top 5 partidos más fríos</strong>: ordena los 5 partidos con temperatura registrada de más frío a menos frío (el más frío primero)</li>
+<li><strong>18) Top 5 partidos más calurosos</strong>: ordena los 5 partidos con temperatura registrada de más caluroso a menos caluroso</li>
+</ul>
+<p>Cada opción se activa y se desactiva volviendo a elegirla (o con <strong>14) Limpiar filtros</strong>). Mientras un ranking está activo, el listado muestra solo esos 5 partidos y la navegación por páginas queda deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obtener Clima Histórico").</p>
+<h3 id="último-partido-victoria-derrota-empate-gol-y-asistencia">Último Partido, Victoria, Derrota, Empate, Gol y Asistencia</h3>
+<ol type="1">
+<li>Selecciona "7" en el menú principal</li>
+<li>Elige "10" para abrir el submenú <strong>ULTIMOS</strong></li>
+<li>Elige la opción deseada (1 a 6)</li>
+<li>Además de los datos del partido, se muestra el <strong>tiempo transcurrido</strong> desde ese partido con años, meses, días, horas y minutos</li>
+<li>Ejemplo: <code>Tiempo transcurrido: 1 anio, 2 meses, 5 dias, 3 horas y 40 minutos</code></li>
 </ol>
 <h3 id="modificar-un-partido">Modificar un Partido</h3>
 <ol type="1">
@@ -1251,6 +1279,11 @@ Desde este menú puedes acceder a <strong>Análisis Básico</strong>, <strong>Co
 <li><strong>8. Hall of Fame Personal</strong>: ver mejores hitos y récords.</li>
 <li><strong>9. Resumen Narrativo Automático</strong>: generar y consultar resúmenes de carrera.</li>
 <li><strong>10. Modo Retro: Hoy en tu Historia</strong>: revivir recuerdos de la fecha actual en años anteriores.</li>
+<li><strong>11. Mejor Once Histórico</strong>: ver la mejor formación registrada.</li>
+<li><strong>12. Vitrina de Trofeos</strong>: ver los torneos finalizados en los que terminaste en el podio, con medalla de oro (1er puesto), plata (2do puesto) o bronce (3er puesto) y el resumen de títulos.</li>
+<li><strong>13. Estadísticas por Temporada</strong>: partidos jugados, goles, asistencias, victorias/empates/derrotas y rendimiento promedio calculados dentro del período de cada temporada.</li>
+<li><strong>14. Timeline de Hitos</strong>: línea temporal cronológica de los partidos marcados como hito, con tipo, nota y rendimiento.</li>
+<li><strong>15. Logros de Carrera</strong>: progreso de logros de trayectoria (partidos, goles, asistencias, victorias, mejor racha, títulos, podios, hitos y temporadas) con su avance y estado.</li>
 </ul>
 <p>Este módulo te ayuda a llevar seguimiento longitudinal de tu desarrollo deportivo con foco en trayectoria y metas personales.
 Además, al iniciar la aplicación puede aparecer una sugerencia opcional para abrir Modo Retro si hay recuerdos del día.</p>
@@ -1782,14 +1815,25 @@ Automáticamente: al volver al reproductor tras salir con <code>[0]</code>, el s
 <li>Selecciona "14" en el menú principal</li>
 <li>Elige "4" para entrar a Entrenador IA</li>
 <li>Elige "4" para configurar el nivel de intervención</li>
-<li>Ajusta qué tan frecuentes y detallados quieres los consejos</li>
+<li>Selecciona el nivel (0-3):
+<ul>
+<li><strong>0. Silencioso</strong>: la IA no interrumpe automáticamente al crear partidos</li>
+<li><strong>1. Conservador</strong>: solo avisa ante riesgo de lesión crítico</li>
+<li><strong>2. Moderado</strong>: avisa ante riesgo alto (nivel por defecto)</li>
+<li><strong>3. Agresivo</strong>: avisa ante el menor indicio de riesgo</li>
+</ul>
+</li>
+<li>El nivel se guarda en la base de datos y se mantiene entre sesiones</li>
 </ol>
 <h4 id="activación-automática">Activación Automática</h4>
-<p>El Entrenador IA se activa automáticamente:
-- Antes de un partido importante
-- Antes de un torneo
-- Al revisar estadísticas
-- Cuando detecta situaciones de riesgo</p>
+<p>El Entrenador IA se activa automáticamente:</p>
+<ul>
+<li>Antes de un partido, solo si el riesgo de lesión supera el umbral del nivel configurado</li>
+<li>Antes de un torneo</li>
+<li>Al revisar estadísticas</li>
+<li>Cuando detecta situaciones de riesgo</li>
+</ul>
+<p>Para no interrumpir en cada partido, el aviso previo al partido se muestra como máximo una vez cada 24 horas, salvo que el riesgo sea crítico. Si prefieres que no aparezca nunca, elige el nivel <strong>0. Silencioso</strong> en "Configurar Nivel de Intervención".</p>
 <h2 id="recordatorios">Recordatorios</h2>
 <p>Selecciona "17" en el menú principal para acceder al módulo de recordatorios.</p>
 <h3 id="qué-puedes-hacer-en-recordatorios">Qué puedes hacer en Recordatorios</h3>
