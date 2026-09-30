@@ -107,8 +107,8 @@ int undo_ejecutar(void);
 void undo_mostrar_historial(void);
 
 /**
- * @brief Limpia todo el historial de undo
- * Elimina todas las entradas registradas y guarda el archivo vacio.
+ * @brief Limpia el historial de undo completo
+ * Elimina las entradas registradas y guarda el archivo vacio.
  * Solicita confirmacion antes de limpiar.
  */
 void undo_limpiar(void);

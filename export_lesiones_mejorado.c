@@ -102,9 +102,12 @@ static void write_lesiones_html(FILE *file)
         fprintf(file,
                 "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%d</"
                 "td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f%%</td></tr>",
-                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4), sqlite3_column_text(stmt, 5),
+                sqlite3_column_int(stmt, 0),
+                html_texto((const char *)sqlite3_column_text(stmt, 1)),
+                html_texto((const char *)sqlite3_column_text(stmt, 2)),
+                html_texto((const char *)sqlite3_column_text(stmt, 3)),
+                html_texto((const char *)sqlite3_column_text(stmt, 4)),
+                html_texto((const char *)sqlite3_column_text(stmt, 5)),
                 sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7),
                 sqlite3_column_double(stmt, 8), sqlite3_column_double(stmt, 9),
                 sqlite3_column_double(stmt, 10));

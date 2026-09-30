@@ -530,9 +530,13 @@ typedef struct
     int dia;
     char tag[64];
     int solo_favoritos;
-    int presencia_flags;
-    /* 0 = orden normal por fecha, 1 = Top 5 mas frios, 2 = Top 5 mas calurosos */
-    int orden_temperatura;
+    /* Estado de visualizacion del listado: modos de presencia y ranking por temperatura */
+    struct
+    {
+        int presencia_flags;
+        /* 0 = orden normal por fecha, 1 = Top 5 mas frios, 2 = Top 5 mas calurosos */
+        int orden_temperatura;
+    } vista;
 } PartidoListadoFiltros;
 
 #define PARTIDO_TEMP_ORDEN_FECHA 0
@@ -542,7 +546,7 @@ typedef struct
 
 static int partido_listado_es_modo_temperatura(const PartidoListadoFiltros *filtros)
 {
-    return filtros && filtros->orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA;
+    return filtros && filtros->vista.orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA;
 }
 
 static const char *partido_listado_texto_modo_temperatura(const PartidoListadoFiltros *filtros)
@@ -552,12 +556,12 @@ static const char *partido_listado_texto_modo_temperatura(const PartidoListadoFi
         return "No";
     }
 
-    if (filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+    if (filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
     {
         return "Mas frios";
     }
 
-    if (filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+    if (filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
     {
         return "Mas calurosos";
     }
@@ -573,13 +577,13 @@ static const char *partido_listado_texto_modo_temperatura(const PartidoListadoFi
 
 static int partido_listado_get_modo_presencia_goles(const PartidoListadoFiltros *filtros)
 {
-    return filtros ? (filtros->presencia_flags & PARTIDO_PRESENCIA_GOLES_MASK)
+    return filtros ? (filtros->vista.presencia_flags & PARTIDO_PRESENCIA_GOLES_MASK)
            : PARTIDO_PRESENCIA_TODOS;
 }
 
 static int partido_listado_get_modo_presencia_asistencias(const PartidoListadoFiltros *filtros)
 {
-    return filtros ? ((filtros->presencia_flags & PARTIDO_PRESENCIA_ASIST_MASK) >> 2)
+    return filtros ? ((filtros->vista.presencia_flags & PARTIDO_PRESENCIA_ASIST_MASK) >> 2)
            : PARTIDO_PRESENCIA_TODOS;
 }
 
@@ -590,8 +594,8 @@ static void partido_listado_set_modo_presencia_goles(PartidoListadoFiltros *filt
         return;
     }
 
-    filtros->presencia_flags &= ~PARTIDO_PRESENCIA_GOLES_MASK;
-    filtros->presencia_flags |= (modo & PARTIDO_PRESENCIA_GOLES_MASK);
+    filtros->vista.presencia_flags &= ~PARTIDO_PRESENCIA_GOLES_MASK;
+    filtros->vista.presencia_flags |= (modo & PARTIDO_PRESENCIA_GOLES_MASK);
 }
 
 static void partido_listado_set_modo_presencia_asistencias(PartidoListadoFiltros *filtros, int modo)
@@ -601,8 +605,8 @@ static void partido_listado_set_modo_presencia_asistencias(PartidoListadoFiltros
         return;
     }
 
-    filtros->presencia_flags &= ~PARTIDO_PRESENCIA_ASIST_MASK;
-    filtros->presencia_flags |= ((modo & PARTIDO_PRESENCIA_GOLES_MASK) << 2);
+    filtros->vista.presencia_flags &= ~PARTIDO_PRESENCIA_ASIST_MASK;
+    filtros->vista.presencia_flags |= ((modo & PARTIDO_PRESENCIA_GOLES_MASK) << 2);
 }
 
 static const char *partido_listado_texto_presencia_goles(int modo)
@@ -740,8 +744,8 @@ static void partido_listado_limpiar_filtros(PartidoListadoFiltros *filtros)
     filtros->dia = -1;
     filtros->tag[0] = '\0';
     filtros->solo_favoritos = 0;
-    filtros->presencia_flags = 0;
-    filtros->orden_temperatura = PARTIDO_TEMP_ORDEN_FECHA;
+    filtros->vista.presencia_flags = 0;
+    filtros->vista.orden_temperatura = PARTIDO_TEMP_ORDEN_FECHA;
 }
 
 static size_t partido_listado_strnlen_seguro(const char *texto, size_t max_len)
@@ -1046,11 +1050,11 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual, int partidos
 
     partido_listado_construir_where_clause(filtros, where_clause, sizeof(where_clause));
 
-    if (filtros && filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+    if (filtros && filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
     {
         order_by_sql = "ORDER BY p.temperatura_c ASC, p.fecha_hora DESC LIMIT ? OFFSET ?";
     }
-    else if (filtros && filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+    else if (filtros && filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
     {
         order_by_sql = "ORDER BY p.temperatura_c DESC, p.fecha_hora DESC LIMIT ? OFFSET ?";
     }
@@ -1147,7 +1151,7 @@ static int partido_listado_contar_filtros_activos(const PartidoListadoFiltros *f
            (filtros->estado_animo_min >= 0 || filtros->estado_animo_max >= 0) +
            (filtros->clima >= 1) + (filtros->dia >= 1) + (filtros->tag[0] != '\0') +
            (filtros->solo_favoritos ? 1 : 0) +
-           (filtros->orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA ? 1 : 0);
+           (filtros->vista.orden_temperatura != PARTIDO_TEMP_ORDEN_FECHA ? 1 : 0);
 }
 
 static int partido_listado_menu_paginacion(int valor_actual)
@@ -1493,9 +1497,9 @@ static void partido_listado_imprimir_resumen_filtros(const PartidoListadoFiltros
     ui_printf_centered_line("16) Presencia de asistencias: %s",
                             partido_listado_texto_presencia_asistencias(modo_asistencias));
     ui_printf_centered_line("17) Top %d partidos mas frios: %s", PARTIDO_TEMP_TOP,
-                            filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS ? "Si" : "No");
+                            filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_FRIOS ? "Si" : "No");
     ui_printf_centered_line("18) Top %d partidos mas calurosos: %s", PARTIDO_TEMP_TOP,
-                            filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS ? "Si" : "No");
+                            filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS ? "Si" : "No");
 }
 
 static int partido_listado_aplicar_opcion_filtro_identidad(PartidoListadoFiltros *filtros,
@@ -1604,14 +1608,14 @@ static int partido_listado_aplicar_opcion_filtro_extra(PartidoListadoFiltros *fi
         partido_listado_set_modo_presencia_asistencias(filtros, modo);
         return 1;
     case 17:
-        filtros->orden_temperatura = (filtros->orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
-                                     ? PARTIDO_TEMP_ORDEN_FECHA
-                                     : PARTIDO_TEMP_MAS_FRIOS;
+        filtros->vista.orden_temperatura = (filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_FRIOS)
+                                           ? PARTIDO_TEMP_ORDEN_FECHA
+                                           : PARTIDO_TEMP_MAS_FRIOS;
         return 1;
     case 18:
-        filtros->orden_temperatura = (filtros->orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
-                                     ? PARTIDO_TEMP_ORDEN_FECHA
-                                     : PARTIDO_TEMP_MAS_CALIDOS;
+        filtros->vista.orden_temperatura = (filtros->vista.orden_temperatura == PARTIDO_TEMP_MAS_CALIDOS)
+                                           ? PARTIDO_TEMP_ORDEN_FECHA
+                                           : PARTIDO_TEMP_MAS_CALIDOS;
         return 1;
     default:
         return 0;
@@ -3137,7 +3141,11 @@ static void crear_transaccion_partido(long long partido_id, int precio)
 static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, int *dia, int *hora,
                                       int *minuto)
 {
-    if (!fecha)
+    /*
+     * La fecha puede llegar vacia o con rellenos cortos como "N/A", asi que se
+     * comprueba la longitud antes de indexar (S3519: acceso fuera del literal).
+     */
+    if (!fecha || strnlen_s(fecha, 16) < 8)
         return 0;
     *anio = 0;
     *mes = 0;
@@ -6020,7 +6028,14 @@ static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
     int mes = 0;
     int dia = 0;
     int parsed = 0;
-    if (fecha_hora && fecha_hora[4] == '-' && fecha_hora[7] == '-')
+
+    /* Igual que en parsear_fecha_hora_partido: sin longitud minima no se indexa. */
+    if (!fecha_hora || strnlen_s(fecha_hora, 16) < 8)
+    {
+        return 0;
+    }
+
+    if (fecha_hora[4] == '-' && fecha_hora[7] == '-')
     {
 #if defined(_WIN32) && defined(_MSC_VER)
         parsed = (sscanf_s(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
@@ -6028,7 +6043,7 @@ static int procesar_clima_partido_historico(long long partido_id, int cancha_id,
         parsed = (sscanf(fecha_hora, "%d-%d-%d", &anio, &mes, &dia) >= 3);
 #endif
     }
-    else if (fecha_hora && fecha_hora[2] == '/' && fecha_hora[5] == '/')
+    else if (fecha_hora[2] == '/' && fecha_hora[5] == '/')
     {
 #if defined(_WIN32) && defined(_MSC_VER)
         parsed = (sscanf_s(fecha_hora, "%d/%d/%d", &dia, &mes, &anio) >= 3);

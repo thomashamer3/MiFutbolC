@@ -136,7 +136,7 @@ static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
         snprintf(equipo_fijo_str, sizeof(equipo_fijo_str), "No");
     }
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>",
-            sqlite3_column_int(stmt, 0), nombre_limpio, equipo_fijo_str,
+            sqlite3_column_int(stmt, 0), html_texto(nombre_limpio), equipo_fijo_str,
             sqlite3_column_int(stmt, 4), get_nombre_tipo_torneo((TipoTorneos)tipo),
             get_nombre_formato_torneo((FormatoTorneos)formato));
 }

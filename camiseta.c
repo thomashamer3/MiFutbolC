@@ -1,7 +1,6 @@
 #include "camiseta.h"
 #include "db.h"
 #include "menu.h"
-#include "random_utils.h"
 #include "settings.h"
 #include "utils.h"
 #include <stdio.h>
@@ -464,21 +463,6 @@ static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
     return db_prepare_stmt(stmt, sql);
 }
 
-static int obtener_total(const char *sql)
-{
-    sqlite3_stmt *stmt;
-
-    if (!preparar_stmt(&stmt, sql))
-    {
-        return 0;
-    }
-
-    sqlite3_step(stmt);
-    int total = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return total;
-}
-
 static int contar_partidos_por_camiseta(int camiseta_id)
 {
     sqlite3_stmt *stmt;
@@ -495,23 +479,6 @@ static int contar_partidos_por_camiseta(int camiseta_id)
     }
     sqlite3_finalize(stmt);
     return count;
-}
-
-static int contar_total_camisetas_activas(void)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1"))
-    {
-        return -1;
-    }
-
-    int total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        total = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return total;
 }
 
 static int camiseta_esta_activa(int camiseta_id)
@@ -1277,7 +1244,9 @@ static void render_camiseta_fila(sqlite3_stmt *stmt, void *ctx)
 static void listar_camisetas_con_stats(void)
 {
     int usar_unicode = consola_soporta_unicode();
-    const char *sep = usar_unicode ? " \u2502 " : " | ";
+    /* Buffer mutable: se pasa como contexto sin descartar el const (S859) */
+    char sep[8];
+    snprintf(sep, sizeof(sep), "%s", usar_unicode ? " \u2502 " : " | ");
 
     int filas = listado_paginado(
                     "LISTADO DE CAMISETAS",
@@ -1294,7 +1263,7 @@ static void listar_camisetas_con_stats(void)
                     "WHERE IFNULL(c.activa, 1) = 1 "
                     "GROUP BY c.id, c.nombre "
                     "ORDER BY c.id LIMIT ? OFFSET ?",
-                    render_camiseta_fila, (void *)sep);
+                    render_camiseta_fila, sep);
 
     if (filas == 0)
     {
@@ -1421,7 +1390,7 @@ void ver_imagen_camiseta(void)
 
 static void procesar_eliminacion_reasignando_partidos(int id, int partidos_asociados)
 {
-    int total_camisetas = contar_total_camisetas_activas();
+    int total_camisetas = contar_registros_activos("camiseta");
     if (total_camisetas <= 1)
     {
         printf("No hay otra camiseta activa disponible para reasignar partidos.\n");
@@ -1803,19 +1772,13 @@ static void cargar_informacion_camiseta(void)
     mostrar_alerta_operacion("Camiseta", "Informacion Cargada", info.nombre);
 }
 
-static void reiniciar_sorteo(void)
-{
-    sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0);
-    printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
-}
-
 /* Permite al usuario reiniciar manualmente el ciclo de sorteo (opcion 2 del submenu) */
 static void reiniciar_sorteo_camiseta(void)
 {
     clear_screen();
     print_header("REINICIAR SORTEO");
 
-    int activas = obtener_total("SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1");
+    int activas = contar_registros_activos("camiseta");
     if (activas == 0)
     {
         printf("No hay camisetas activas para reiniciar el sorteo.\n");
@@ -1823,8 +1786,7 @@ static void reiniciar_sorteo_camiseta(void)
         return;
     }
 
-    int sorteadas = obtener_total("SELECT COUNT(*) FROM camiseta WHERE sorteada = 1 "
-                                  "AND IFNULL(activa, 1) = 1");
+    int sorteadas = sorteo_contar("camiseta", 1);
 
     printf("Camisetas activas  : %d\n", activas);
     printf("Camisetas sorteadas: %d\n\n", sorteadas);
@@ -1843,8 +1805,7 @@ static void reiniciar_sorteo_camiseta(void)
         return;
     }
 
-    if (sqlite3_exec(db, "UPDATE camiseta SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0) !=
-            SQLITE_OK)
+    if (sorteo_reiniciar("camiseta") < 0)
     {
         printf("No se pudo reiniciar el sorteo: %s\n", sqlite3_errmsg(db));
         app_log_event("CAMISETA", "Error al reiniciar el sorteo");
@@ -1856,77 +1817,37 @@ static void reiniciar_sorteo_camiseta(void)
     mostrar_alerta_operacion("Sorteo", "Reiniciado", NULL);
 }
 
-static void marcar_camiseta_sorteada(int id)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "UPDATE camiseta SET sorteada = 1 WHERE id = ?"))
-    {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-}
-
-static char *obtener_nombre_camiseta(int id)
-{
-    char nombre_buffer[256];
-
-    if (obtener_nombre_entidad("camiseta", id, nombre_buffer, sizeof(nombre_buffer)))
-    {
-        return strdup(nombre_buffer);
-    }
-
-    return strdup("Desconocida");
-}
-
 static void realizar_sorteo_camiseta(void)
 {
     clear_screen();
     print_header("SORTEO DE CAMISETAS");
 
-    int disponibles = obtener_total("SELECT COUNT(*) FROM camiseta WHERE "
-                                    "sorteada = 0 AND IFNULL(activa, 1) = 1");
-
-    if (disponibles == 0)
-    {
-        reiniciar_sorteo();
-        disponibles = obtener_total("SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1");
-    }
-
-    if (disponibles == 0)
+    int activas = contar_registros_activos("camiseta");
+    if (activas == 0)
     {
         printf("No hay camisetas para sortear.\n");
         pause_console();
         return;
     }
 
-    sqlite3_stmt *stmt_sel;
-    int offset = secure_rand_range(disponibles);
-    if (!preparar_stmt(&stmt_sel, "SELECT id FROM camiseta WHERE sorteada = 0 "
-                       "AND IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
+    int disponibles = sorteo_contar("camiseta", 0);
+
+    if (disponibles == 0)
+    {
+        sorteo_reiniciar("camiseta");
+        printf("Todas las camisetas han sido sorteadas. Reiniciando sorteo...\n\n");
+        disponibles = activas;
+    }
+
+    char nombre[256] = "";
+    int seleccionado = sorteo_tomar_pendiente("camiseta", nombre, (int)sizeof(nombre));
+
+    if (seleccionado < 0)
     {
         printf("Error al seleccionar camiseta aleatoria.\n");
         pause_console();
         return;
     }
-    int seleccionado = -1;
-    sqlite3_bind_int(stmt_sel, 1, offset);
-    if (sqlite3_step(stmt_sel) == SQLITE_ROW)
-    {
-        seleccionado = sqlite3_column_int(stmt_sel, 0);
-    }
-    sqlite3_finalize(stmt_sel);
-
-    if (seleccionado == -1)
-    {
-        printf("Error al seleccionar camiseta aleatoria.\n");
-        pause_console();
-        return;
-    }
-
-    marcar_camiseta_sorteada(seleccionado);
-    char *nombre = obtener_nombre_camiseta(seleccionado);
 
     printf("CAMISETA SORTEADA!\n\n");
     printf("La camiseta seleccionada es: %s\n", nombre);
@@ -1937,7 +1858,10 @@ static void realizar_sorteo_camiseta(void)
         printf("Todas las camisetas fueron sorteadas. Puedes reiniciar el sorteo con la opcion 2.\n");
     }
 
-    free(nombre);
+    char log_msg[320];
+    snprintf(log_msg, sizeof(log_msg), "Sorteada camiseta id=%d nombre=%.180s", seleccionado, nombre);
+    app_log_event("CAMISETA", log_msg);
+
     pause_console();
 }
 

@@ -132,7 +132,8 @@ static void write_stats_html(FILE *file, const stat_def_t *def)
     int valor;
     if (get_top_camiseta(def->metric, def->order, nombre, sizeof(nombre), &valor))
     {
-        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", def->label, nombre, valor);
+        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", html_texto(def->label),
+                html_texto(nombre), valor);
     }
 }
 
@@ -524,8 +525,9 @@ static void write_cached_html(FILE *file)
     {
         if (g_cached_stats[i].found)
         {
-            fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n", STAT_DEFS[i].label,
-                    g_cached_stats[i].nombre, g_cached_stats[i].valor);
+            fprintf(file, "<tr><td>%s</td><td>%s</td><td>%d</td></tr>\n",
+                    html_texto(STAT_DEFS[i].label), html_texto(g_cached_stats[i].nombre),
+                    g_cached_stats[i].valor);
         }
     }
     export_write_html_table_footer(file, NULL);
@@ -629,14 +631,14 @@ static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt)
             {
                 fprintf(file, "</table><br>");
             }
-            fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", row.month);
+            fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", html_texto(row.month));
             fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</"
                     "th><th>Avg Goles</th><th>Avg Asistencias</th></tr>");
             strcpy_s(current, sizeof(current), row.month);
         }
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-                row.camiseta, row.partidos, row.goles, row.asistencias, row.avg_goles,
+                html_texto(row.camiseta), row.partidos, row.goles, row.asistencias, row.avg_goles,
                 row.avg_asistencias);
         hay = 1;
     }

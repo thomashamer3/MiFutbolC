@@ -1453,9 +1453,9 @@ static void procesar_transaccion_exportacion(sqlite3_stmt *stmt, ExportParams *p
         fprintf(params->html_file,
                 "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>$%s</td><td>%s</"
                 "td></tr>",
-                id, fecha, get_nombre_tipo_transaccion(tipo), get_nombre_categoria(categoria),
-                descripcion, formato_monto(monto),
-                (item && safe_strnlen(item, 65536) > 0) ? item : "");
+                id, html_texto(fecha), get_nombre_tipo_transaccion(tipo),
+                get_nombre_categoria(categoria), html_texto(descripcion), formato_monto(monto),
+                html_texto((item && safe_strnlen(item, 65536) > 0) ? item : ""));
     }
 
     // JSON

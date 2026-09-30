@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #define PATH_SEP "\\"
@@ -73,95 +74,162 @@ void export_write_json_footer(FILE *file, void *context)
     cJSON_Delete(root);
 }
 
+/*
+ * Hoja de estilos embebida del reporte HTML. El archivo es autocontenido: no
+ * referencia hojas, fuentes ni scripts externos, asi que se abre igual sin
+ * conexion. Se imprime con fputs para no tener que escapar los signos %.
+ */
+static const char *const EXPORT_HTML_CSS =
+    "<style>\n"
+    ":root{--bg:#eef2f7;--surface:#fff;--surface-2:#f7f9fc;--text:#101828;--text2:#5b6b83;--accent:#2563eb;--accent2:#0f3460;--success:#16a34a;--warn:#d97706;--danger:#dc2626;--border:#dfe6ef;--radius:16px;--shadow:0 12px 32px rgba(15,23,42,.10)}\n"
+    "@media(prefers-color-scheme:dark){:root{--bg:#0b1220;--surface:#131c2e;--surface-2:#182238;--text:#e6edf7;--text2:#93a4bd;--accent:#60a5fa;--accent2:#93c5fd;--border:#26324a;--shadow:0 12px 32px rgba(0,0,0,.45)}}\n"
+    "*{margin:0;padding:0;box-sizing:border-box}\n"
+    "body{font-family:Inter,'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:28px 18px;-webkit-font-smoothing:antialiased}\n"
+    ".container{max-width:1240px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}\n"
+    ".page-head{position:relative;padding:26px 32px 22px;background:linear-gradient(135deg,#0f172a 0%,#16213e 55%,#1d4ed8 100%);color:#fff;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}\n"
+    ".page-head::after{content:\"\";position:absolute;right:-70px;bottom:-140px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,.35),transparent 65%)}\n"
+    ".brand{display:flex;align-items:center;gap:10px;font-size:.74em;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.85}\n"
+    ".brand::before{content:\"\";width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.22)}\n"
+    "h1{font-size:1.65em;font-weight:700;letter-spacing:.2px;margin-top:8px;position:relative;z-index:1}\n"
+    ".page-meta{font-size:.82em;opacity:.78;margin-top:6px;position:relative;z-index:1}\n"
+    ".page-body{padding:4px 0 0}\n"
+    "h2{color:var(--accent2);font-size:1.05em;font-weight:700}\n"
+    ".section-card{margin:18px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px}\n"
+    ".section-card>h2{margin:0;padding:14px 20px;background:var(--surface-2);border-left:4px solid var(--accent);border-bottom:1px solid var(--border);border-radius:11px 11px 0 0}\n"
+    ".section-card table{border:0;border-radius:0}\n"
+    "table{width:100%;border-collapse:collapse;font-size:.9em}\n"
+    "th{position:sticky;top:0;z-index:2;background:var(--accent2);color:#fff;text-align:left;font-weight:600;padding:12px 14px;white-space:normal}\n"
+    "td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;overflow-wrap:anywhere}\n"
+    "tr:nth-child(even) td{background:var(--surface-2)}\n"
+    "tr:hover td{background:rgba(37,99,235,.08)}\n"
+    "td:first-child{font-weight:600;color:var(--accent2)}\n"
+    ".stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;padding:18px 24px}\n"
+    ".stat-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:10px;padding:18px;transition:transform .15s ease,box-shadow .15s ease}\n"
+    ".stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.12)}\n"
+    ".stat-card h3{font-size:.76em;text-transform:uppercase;letter-spacing:.09em;color:var(--text2);margin-bottom:6px}\n"
+    ".stat-card .stat-value{font-size:1.7em;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}\n"
+    ".stat-card .stat-meta{font-size:.84em;color:var(--text2);margin-top:4px}\n"
+    ".stat-card .stat-label{font-weight:600;color:var(--text2)}\n"
+    ".badge{display:inline-block;font-size:.76em;font-weight:700;padding:3px 10px;border-radius:999px}\n"
+    ".badge-blue{background:rgba(37,99,235,.14);color:#1d4ed8}\n"
+    ".badge-green{background:rgba(22,163,74,.14);color:#15803d}\n"
+    ".badge-red{background:rgba(220,38,38,.14);color:#b91c1c}\n"
+    ".badge-yellow{background:rgba(217,119,6,.16);color:#b45309}\n"
+    ".badge-gray{background:rgba(100,116,139,.16);color:#475569}\n"
+    "@media(prefers-color-scheme:dark){.badge-blue{color:#93c5fd}.badge-green{color:#86efac}.badge-red{color:#fca5a5}.badge-yellow{color:#fcd34d}.badge-gray{color:#cbd5e1}}\n"
+    ".alert{padding:14px 18px;border-radius:10px;margin:14px 24px;font-size:.9em;border-left:4px solid var(--accent);background:var(--surface-2)}\n"
+    ".alert-info{background:rgba(37,99,235,.08)}\n"
+    ".alert-warn{background:rgba(217,119,6,.10);border-left-color:var(--warn)}\n"
+    ".alert-empty{text-align:center;padding:34px 18px;color:var(--text2);font-style:italic}\n"
+    ".content{padding:16px 24px}\n"
+    ".content p{padding:6px 0}\n"
+    ".content strong{color:var(--accent2)}\n"
+    ".page-foot{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;margin-top:8px;padding:16px 32px;background:var(--surface-2);border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);color:var(--text2);font-size:.8em}\n"
+    ".page-foot strong{color:var(--text)}\n"
+    "@media(max-width:820px){\n"
+    "body{padding:0}\n"
+    ".container{border:0;border-radius:0;box-shadow:none}\n"
+    ".page-head{padding:20px 18px 16px;border-radius:0}\n"
+    "h1{font-size:1.25em}\n"
+    ".section-card{margin:12px}\n"
+    ".section-card>h2{padding:12px 14px}\n"
+    "th,td{padding:9px 10px}\n"
+    "table{font-size:.82em}\n"
+    ".stat-grid{grid-template-columns:1fr;padding:12px}\n"
+    ".content{padding:12px 14px}\n"
+    ".page-foot{padding:14px 18px;border-radius:0}\n"
+    "}\n"
+    "@media print{\n"
+    "@page{margin:14mm}\n"
+    "body{background:#fff;padding:0;color:#000}\n"
+    ".container{max-width:none;border:0;border-radius:0;box-shadow:none}\n"
+    ".page-head{background:#0f172a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
+    "th{position:static;background:#0f3460!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
+    "tr,.stat-card{break-inside:avoid}\n"
+    ".page-foot{border-top:1px solid #ccc}\n"
+    "}\n"
+    "@media(prefers-reduced-motion:reduce){*{transition:none!important}}\n"
+    "</style>\n";
+
+static void export_html_fecha(char *buffer, size_t size)
+{
+    time_t ahora = time(NULL);
+    struct tm tm_ahora;
+
+    if (!buffer || size == 0)
+    {
+        return;
+    }
+
+#ifdef _WIN32
+    localtime_s(&tm_ahora, &ahora);
+#else
+    localtime_r(&ahora, &tm_ahora);
+#endif
+
+    if (strftime(buffer, size, "%d/%m/%Y %H:%M", &tm_ahora) == 0)
+    {
+        buffer[0] = '\0';
+    }
+}
+
+static int export_html_anio(void)
+{
+    time_t ahora = time(NULL);
+    struct tm tm_ahora;
+
+#ifdef _WIN32
+    localtime_s(&tm_ahora, &ahora);
+#else
+    localtime_r(&ahora, &tm_ahora);
+#endif
+
+    return tm_ahora.tm_year + 1900;
+}
+
 void export_write_html_begin(FILE *f, const char *title)
 {
+    char fecha[32];
+
+    if (!f)
+    {
+        return;
+    }
+
+    export_html_fecha(fecha, sizeof(fecha));
+
     fprintf(f,
             "<!DOCTYPE html>\n"
             "<html lang=\"es\">\n"
             "<head>\n"
             "<meta charset=\"UTF-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
+            "<meta name=\"generator\" content=\"MiFutbolC\">\n"
             "<title>%s - MiFutbolC</title>\n"
-            "<style>\n"
-            ":root{--bg:#f0f2f5;--surface:#fff;--text:#1a1a2e;--text2:#4a5568;--accent:#2563eb;--accent2:#0f3460;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--border:#e0e7ef;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.08)}\n"
-            "@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--surface:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--accent2:#60a5fa;--border:#334155;--shadow:0 4px 24px rgba(0,0,0,.4)}}\n"
-            "*{margin:0;padding:0;box-sizing:border-box}\n"
-            "body{font-family:Inter,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:24px;line-height:1.6}\n"
-            ".container{max-width:1200px;margin:0 auto;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}\n"
-            "h1{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#fff;margin:0;padding:24px 32px;font-size:1.5em;font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:8px}\n"
-            "h1::before{font-size:1.2em}\n"
-            "@media(prefers-color-scheme:dark){h1{background:linear-gradient(135deg,#0f172a,#1e293b,#2563eb)}}\n"
-            "h2{color:var(--accent2);border-bottom:2px solid var(--border);padding:20px 24px 12px;margin:0;font-size:1.15em;font-weight:600}\n"
-            ".section-card{margin:16px 24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}\n"
-            ".section-card table{border:0;border-radius:0}\n"
-            ".section-card h2{margin:0;border-bottom:1px solid var(--border);padding:14px 20px;font-size:1.05em}\n"
-            "table{width:100%%;border-collapse:collapse;font-size:.9em;border:1px solid var(--border)}\n"
-            "th{background:var(--accent2);color:#fff;padding:12px;text-align:left;font-weight:600;white-space:nowrap}\n"
-            "th:first-child{padding-left:24px}\n"
-            "th:last-child{padding-right:24px}\n"
-            "td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}\n"
-            "td:first-child{padding-left:24px;font-weight:600;color:var(--accent2)}\n"
-            "td:last-child{padding-right:24px}\n"
-            "tr:hover td{background:rgba(37,99,235,.06)}\n"
-            "tr:nth-child(even) td{background:rgba(0,0,0,.02)}\n"
-            "tr:nth-child(even):hover td{background:rgba(37,99,235,.08)}\n"
-            ".stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;padding:20px 24px}\n"
-            ".stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;transition:box-shadow .2s}\n"
-            ".stat-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}\n"
-            ".stat-card h3{font-size:.82em;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}\n"
-            ".stat-card .stat-value{font-size:1.6em;font-weight:700;color:var(--accent)}\n"
-            ".stat-card .stat-meta{font-size:.85em;color:var(--text2);margin-top:4px}\n"
-            ".stat-card .stat-label{font-weight:600;color:var(--text2)}\n"
-            ".badge{display:inline-block;font-size:.78em;padding:2px 10px;border-radius:20px;font-weight:600}\n"
-            ".badge-blue{background:rgba(37,99,235,.12);color:#2563eb}\n"
-            ".badge-green{background:rgba(34,197,94,.12);color:#16a34a}\n"
-            ".badge-red{background:rgba(239,68,68,.12);color:#dc2626}\n"
-            ".badge-yellow{background:rgba(245,158,11,.12);color:#d97706}\n"
-            ".alert{padding:12px 20px;border-radius:8px;margin:12px 24px;font-size:.9em}\n"
-            ".alert-info{background:rgba(37,99,235,.08);border-left:4px solid var(--accent);color:var(--text)}\n"
-            ".alert-warn{background:rgba(245,158,11,.1);border-left:4px solid var(--warn);color:var(--text)}\n"
-            ".alert-empty{text-align:center;padding:32px 20px;color:var(--text2);font-style:italic}\n"
-            ".content{padding:16px 24px}\n"
-            ".content p{padding:6px 0}\n"
-            ".content strong{color:var(--accent2)}\n"
-            "@media(max-width:768px){\n"
-            "body{padding:12px}\n"
-            ".container{border-radius:8px}\n"
-            "h1{font-size:1.15em;padding:16px 20px}\n"
-            "h2{font-size:1em;padding:14px 16px 10px}\n"
-            "th,td{padding:8px 6px;font-size:.82em}\n"
-            "th:first-child,td:first-child{padding-left:12px}\n"
-            "th:last-child,td:last-child{padding-right:12px}\n"
-            "table{font-size:.78em}\n"
-            ".stat-grid{grid-template-columns:1fr;padding:12px 16px}\n"
-            ".section-card{margin:12px 16px}\n"
-            ".content{padding:12px 16px}\n"
-            ".alert{margin:8px 16px}\n"
-            "}\n"
-            "@media print{\n"
-            "body{background:#fff;padding:0;color:#000}\n"
-            ".container{box-shadow:none;border:1px solid #ddd;border-radius:4px}\n"
-            "h1{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
-            "th{background:#0f3460!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}\n"
-            ".stat-card{break-inside:avoid}\n"
-            "}\n"
-            "</style>\n"
+            "%s"
             "</head>\n"
             "<body>\n"
             "<div class=\"container\">\n"
-            "<h1>%s</h1>\n",
-            title, title);
+            "<header class=\"page-head\">\n"
+            "<div class=\"brand\">MiFutbolC</div>\n"
+            "<h1>%s</h1>\n"
+            "<p class=\"page-meta\">Reporte generado el %s</p>\n"
+            "</header>\n"
+            "<main class=\"page-body\">\n",
+            html_texto(title), EXPORT_HTML_CSS, html_texto(title), fecha);
 }
 
 void export_write_html_footer(FILE *file, void *context)
 {
     (void)context;
     fprintf(file,
-            "\n<div style=\"text-align:center;padding:16px 24px;border-top:1px solid var(--border);"
-            "font-size:.8em;color:var(--text2)\">"
-            "Generado por <strong>MiFutbolC</strong> &mdash; &copy; %d</div>\n"
+            "</main>\n"
+            "<footer class=\"page-foot\">\n"
+            "<span>Generado por <strong>MiFutbolC</strong></span>\n"
+            "<span>Reporte local &mdash; &copy; %d MiFutbolC</span>\n"
+            "</footer>\n"
             "</div>\n</body>\n</html>\n",
-            2026);
+            export_html_anio());
 }
 
 void export_write_html_table_footer(FILE *file, void *context)
@@ -169,11 +237,13 @@ void export_write_html_table_footer(FILE *file, void *context)
     (void)context;
     fprintf(file,
             "</table>\n"
-            "<div style=\"text-align:center;padding:16px 24px;border-top:1px solid var(--border);"
-            "font-size:.8em;color:var(--text2)\">"
-            "Generado por <strong>MiFutbolC</strong> &mdash; &copy; %d</div>\n"
+            "</main>\n"
+            "<footer class=\"page-foot\">\n"
+            "<span>Generado por <strong>MiFutbolC</strong></span>\n"
+            "<span>Reporte local &mdash; &copy; %d MiFutbolC</span>\n"
+            "</footer>\n"
             "</div>\n</body>\n</html>\n",
-            2026);
+            export_html_anio());
 }
 
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt)
@@ -691,7 +761,7 @@ static void write_analisis_json(FILE *file, const Estadisticas *generales,
 
 static void write_analisis_table(FILE *file, const char *titulo, const Estadisticas *stats)
 {
-    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", titulo);
+    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", html_texto(titulo));
     fprintf(file, "<tr><th>Total Partidos</th><td>%d</td></tr>", stats->total_partidos);
     fprintf(file, "<tr><th>Promedio Goles</th><td>%.2f</td></tr>", stats->avg_goles);
     fprintf(file, "<tr><th>Promedio Asistencias</th><td>%.2f</td></tr>", stats->avg_asistencias);
@@ -712,7 +782,7 @@ static void write_analisis_html(FILE *file, const Estadisticas *generales,
     fprintf(file, "<tr><th>Mejor Racha Victorias</th><td>%d partidos</td></tr>", mejor_racha_v);
     fprintf(file, "<tr><th>Peor Racha Derrotas</th><td>%d partidos</td></tr>", peor_racha_d);
     fprintf(file, "</table></div>\n");
-    fprintf(file, "<div class=\"section-card\"><h2>Analisis Motivacional</h2><div class=\"content\"><p>%s</p></div></div>\n", msg);
+    fprintf(file, "<div class=\"section-card\"><h2>Analisis Motivacional</h2><div class=\"content\"><p>%s</p></div></div>\n", html_texto(msg));
     export_write_html_footer(file, NULL);
 }
 

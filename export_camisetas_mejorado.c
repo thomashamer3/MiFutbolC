@@ -276,7 +276,8 @@ void exportar_camisetas_html_mejorado(void)
                 "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</"
                 "td><td>%d</td><td>%d</td><td>%d</td><td>%.2f%%</td><td>%.2f</td><td>%.2f</"
                 "td><td>%.2f</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
-                data.id, data.nombre, data.total_goles, data.total_asistencias, data.total_partidos,
+                data.id, html_texto(data.nombre), data.total_goles, data.total_asistencias,
+                data.total_partidos,
                 data.victorias, data.porcentaje_victorias, data.empates, data.derrotas,
                 data.total_lesiones, data.porcentaje_lesiones_por_partido,
                 data.rendimiento_promedio, data.cansancio_promedio, data.estado_animo_promedio,

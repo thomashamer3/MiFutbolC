@@ -146,9 +146,11 @@ static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
 {
     (void)context;
     fprintf(file, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-            sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1),
-            sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
-            sqlite3_column_text(stmt, 4));
+            html_texto((const char *)sqlite3_column_text(stmt, 0)),
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            html_texto((const char *)sqlite3_column_text(stmt, 2)),
+            html_texto((const char *)sqlite3_column_text(stmt, 3)),
+            html_texto((const char *)sqlite3_column_text(stmt, 4)));
 }
 
 /** @} */

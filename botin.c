@@ -1,7 +1,6 @@
 #include "botin.h"
 #include "db.h"
 #include "menu.h"
-#include "random_utils.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -378,19 +377,6 @@ static int pedir_imagen_botin_y_resolver_ruta(char *ruta_absoluta, size_t size)
     return 1;
 }
 
-static int contar_total_botines_activos(void)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(activa, 1) = 1"))
-    {
-        return 0;
-    }
-    sqlite3_step(stmt);
-    int total = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return total;
-}
-
 static int botin_esta_activo(int botin_id)
 {
     sqlite3_stmt *stmt;
@@ -422,58 +408,12 @@ static int actualizar_estado_botin(int botin_id, int activo)
     return success;
 }
 
-static int contar_botines_pendientes_sorteo(void)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(sorteada, 0) = 0 "
-                       "AND IFNULL(activa, 1) = 1"))
-    {
-        return 0;
-    }
-    sqlite3_step(stmt);
-    int total = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return total;
-}
-
-static int contar_botines_sorteados(void)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT COUNT(*) FROM botin WHERE IFNULL(sorteada, 0) = 1 "
-                       "AND IFNULL(activa, 1) = 1"))
-    {
-        return 0;
-    }
-    sqlite3_step(stmt);
-    int total = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return total;
-}
-
-static void marcar_botin_sorteado(int id)
-{
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "UPDATE botin SET sorteada = 1 WHERE id = ?"))
-    {
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-}
-
-static void reiniciar_marcas_sorteo_botin(void)
-{
-    sqlite3_exec(db, "UPDATE botin SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0);
-}
-
 static void realizar_sorteo_botin(void)
 {
     clear_screen();
     print_header("SORTEO DE BOTINES");
 
-    int disponibles = contar_botines_pendientes_sorteo();
-    int activos = contar_total_botines_activos();
+    int activos = contar_registros_activos("botin");
 
     if (activos == 0)
     {
@@ -482,48 +422,38 @@ static void realizar_sorteo_botin(void)
         return;
     }
 
+    int disponibles = sorteo_contar("botin", 0);
+
     if (disponibles == 0)
     {
-        reiniciar_marcas_sorteo_botin();
+        sorteo_reiniciar("botin");
         printf("Todos los botines ya fueron sorteados. Reiniciando sorteo...\n\n");
         disponibles = activos;
     }
 
-    int offset = secure_rand_range(disponibles);
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "SELECT id, nombre FROM botin WHERE IFNULL(sorteada, 0) = 0 "
-                       "AND IFNULL(activa, 1) = 1 LIMIT 1 OFFSET ?"))
+    char nombre[256] = "";
+    int id = sorteo_tomar_pendiente("botin", nombre, (int)sizeof(nombre));
+
+    if (id < 0)
     {
         printf("Error al seleccionar botin aleatorio.\n");
         pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, offset);
 
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    printf("BOTIN SORTEADO!\n\n");
+    printf("El botin seleccionado es: %s (ID %d)\n", nombre, id);
+    printf("Quedan %d botines por sortear.\n", disponibles - 1);
+
+    if (disponibles - 1 == 0)
     {
-        int id = sqlite3_column_int(stmt, 0);
-        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
-        marcar_botin_sorteado(id);
-        printf("BOTIN SORTEADO!\n\n");
-        printf("El botin seleccionado es: %s (ID %d)\n", nombre, id);
-        printf("Quedan %d botines por sortear.\n", disponibles - 1);
-
-        if (disponibles - 1 == 0)
-        {
-            printf("Todos los botines fueron sorteados. Puedes reiniciar el sorteo con la "
-                   "opcion 2.\n");
-        }
-
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Sorteado botin id=%d nombre=%.180s", id, nombre);
-        app_log_event("BOTIN", log_msg);
+        printf("Todos los botines fueron sorteados. Puedes reiniciar el sorteo con la opcion 2.\n");
     }
-    else
-    {
-        printf("Error al seleccionar botin aleatorio.\n");
-    }
-    sqlite3_finalize(stmt);
+
+    char log_msg[320];
+    snprintf(log_msg, sizeof(log_msg), "Sorteado botin id=%d nombre=%.180s", id, nombre);
+    app_log_event("BOTIN", log_msg);
+
     pause_console();
 }
 
@@ -533,7 +463,7 @@ static void reiniciar_sorteo_botin(void)
     clear_screen();
     print_header("REINICIAR SORTEO DE BOTINES");
 
-    int activos = contar_total_botines_activos();
+    int activos = contar_registros_activos("botin");
     if (activos == 0)
     {
         mostrar_no_hay_registros("botines activos");
@@ -541,7 +471,7 @@ static void reiniciar_sorteo_botin(void)
         return;
     }
 
-    int sorteados = contar_botines_sorteados();
+    int sorteados = sorteo_contar("botin", 1);
 
     printf("Botines activos  : %d\n", activos);
     printf("Botines sorteados: %d\n\n", sorteados);
@@ -560,8 +490,7 @@ static void reiniciar_sorteo_botin(void)
         return;
     }
 
-    if (sqlite3_exec(db, "UPDATE botin SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", 0, 0, 0) !=
-            SQLITE_OK)
+    if (sorteo_reiniciar("botin") < 0)
     {
         printf("No se pudo reiniciar el sorteo: %s\n", sqlite3_errmsg(db));
         app_log_event("BOTIN", "Error al reiniciar el sorteo");

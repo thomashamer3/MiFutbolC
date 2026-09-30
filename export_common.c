@@ -74,7 +74,7 @@ void export_all_formats(ExportDataFn data_fn, ExportConfig configs[], int num_fo
             printf("Error: No se pudo crear %s\n", configs[i].filename);
             /* El pie de JSON es quien libera el root cJSON del contexto. Sin
              * archivo el pie no se ejecuta, asi que se libera aqui. */
-            if (configs[i].write_footer == export_write_json_footer)
+            if (configs[i].write_footer == &export_write_json_footer)
             {
                 cJSON_Delete((cJSON *)configs[i].context);
             }
@@ -198,21 +198,30 @@ void escribir_seccion_html(FILE *file, const char *titulo, const char *sql, cons
                            void (*escribir_fila)(FILE *file, sqlite3_stmt *stmt))
 {
     sqlite3_stmt *stmt;
+    if (!file || !titulo || !sql || !escribir_fila)
+    {
+        return;
+    }
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
     {
         return;
     }
-    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table><tr>", titulo);
-    for (int i = 0; cabeceras[i] != NULL; i++)
+    fprintf(file, "<div class=\"section-card\"><h2>%s</h2><table>", html_texto(titulo));
+    if (cabeceras)
     {
-        fprintf(file, "<th>%s</th>", cabeceras[i]);
+        fputs("<thead><tr>", file);
+        for (int i = 0; cabeceras[i] != NULL; i++)
+        {
+            fprintf(file, "<th>%s</th>", html_texto(cabeceras[i]));
+        }
+        fputs("</tr></thead><tbody>", file);
     }
-    fprintf(file, "</tr>");
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         escribir_fila(file, stmt);
     }
-    fprintf(file, "</table></div>\n");
+    fputs("</tbody></table></div>\n", file);
     sqlite3_finalize(stmt);
 }

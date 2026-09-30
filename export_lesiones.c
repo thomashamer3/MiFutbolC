@@ -62,9 +62,11 @@ static void write_lesiones_html(FILE *file)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+                sqlite3_column_int(stmt, 0),
+                html_texto((const char *)sqlite3_column_text(stmt, 1)),
+                html_texto((const char *)sqlite3_column_text(stmt, 2)),
+                html_texto((const char *)sqlite3_column_text(stmt, 3)),
+                html_texto((const char *)sqlite3_column_text(stmt, 4)));
     }
 
     sqlite3_finalize(stmt);
@@ -124,9 +126,11 @@ static void write_lesiones_html_rows(FILE *file, sqlite3_stmt *stmt)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
-                sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
-                sqlite3_column_text(stmt, 4));
+                sqlite3_column_int(stmt, 0),
+                html_texto((const char *)sqlite3_column_text(stmt, 1)),
+                html_texto((const char *)sqlite3_column_text(stmt, 2)),
+                html_texto((const char *)sqlite3_column_text(stmt, 3)),
+                html_texto((const char *)sqlite3_column_text(stmt, 4)));
     }
 }
 

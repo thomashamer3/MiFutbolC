@@ -188,7 +188,8 @@ static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
     }
 
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td></tr>",
-            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1),
+            sqlite3_column_int(stmt, 0),
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
             tipo_equipo_to_text(sqlite3_column_int(stmt, 2)),
             tipo_futbol_to_text(sqlite3_column_int(stmt, 3)), sqlite3_column_int(stmt, 5),
             pos_etiquetas);

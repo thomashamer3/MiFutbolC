@@ -33,8 +33,10 @@ static void escribir_objeto_identidad(cJSON *item, sqlite3_stmt *stmt)
 static void escribir_fila_identidad_html(FILE *file, sqlite3_stmt *stmt)
 {
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2),
-            sqlite3_column_text(stmt, 3));
+            sqlite3_column_int(stmt, 0),
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            html_texto((const char *)sqlite3_column_text(stmt, 2)),
+            html_texto((const char *)sqlite3_column_text(stmt, 3)));
 }
 
 static void escribir_fila_hito_csv(FILE *file, sqlite3_stmt *stmt)
@@ -62,7 +64,8 @@ static void escribir_objeto_hito(cJSON *item, sqlite3_stmt *stmt)
 static void escribir_fila_hito_html(FILE *file, sqlite3_stmt *stmt)
 {
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td></tr>", sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            html_texto((const char *)sqlite3_column_text(stmt, 2)));
 }
 
 static void escribir_fila_resumen_csv(FILE *file, sqlite3_stmt *stmt)
@@ -90,7 +93,8 @@ static void escribir_objeto_resumen(cJSON *item, sqlite3_stmt *stmt)
 static void escribir_fila_resumen_html(FILE *file, sqlite3_stmt *stmt)
 {
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td></tr>", sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            html_texto((const char *)sqlite3_column_text(stmt, 2)));
 }
 
 static const char *SQL_IDENTIDAD =

@@ -859,6 +859,98 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
 /* Cantidad de filas mostradas por pagina en los listados paginados. */
 #define LISTADO_POR_PAGINA 20
 
+/**
+ * Renderiza la pagina indicada y devuelve cuantas filas mostro.
+ */
+static int listado_render_pagina(const char *sql_pagina, ListadoFilaFn render_fila, void *ctx,
+                                 int pagina_actual)
+{
+    sqlite3_stmt *stmt = NULL;
+    int filas_pagina = 0;
+    int offset = (pagina_actual - 1) * LISTADO_POR_PAGINA;
+
+    if (!db_prepare_stmt(&stmt, sql_pagina))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, LISTADO_POR_PAGINA);
+    sqlite3_bind_int(stmt, 2, offset);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        render_fila(stmt, ctx);
+        filas_pagina++;
+    }
+
+    sqlite3_finalize(stmt);
+    return filas_pagina;
+}
+
+/**
+ * Aplica la opcion elegida sobre la pagina actual.
+ * Devuelve 1 para seguir en el listado y 0 para salir.
+ */
+static int listado_procesar_opcion(int opcion, int total_paginas, int *pagina_actual)
+{
+    if (!pagina_actual || opcion == 0 || opcion == -1)
+    {
+        return 0;
+    }
+
+    if (opcion == 1)
+    {
+        if (*pagina_actual > 1)
+        {
+            (*pagina_actual)--;
+        }
+        else
+        {
+            ui_printf_centered_line("Ya esta en la primera pagina.");
+            pause_console();
+        }
+        return 1;
+    }
+
+    if (opcion == 2)
+    {
+        if (*pagina_actual < total_paginas)
+        {
+            (*pagina_actual)++;
+        }
+        else
+        {
+            ui_printf_centered_line("Ya esta en la ultima pagina.");
+            pause_console();
+        }
+        return 1;
+    }
+
+    if (opcion == 3)
+    {
+        int destino = input_int("Numero de pagina: ");
+        if (destino == -1)
+        {
+            return 0;
+        }
+
+        if (destino >= 1 && destino <= total_paginas)
+        {
+            *pagina_actual = destino;
+        }
+        else
+        {
+            ui_printf_centered_line("Pagina invalida.");
+            pause_console();
+        }
+        return 1;
+    }
+
+    ui_printf_centered_line("Opcion invalida.");
+    pause_console();
+    return 1;
+}
+
 int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
                      ListadoFilaFn render_fila, void *ctx)
 {
@@ -889,7 +981,6 @@ int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql
 
     int total_paginas = (total + LISTADO_POR_PAGINA - 1) / LISTADO_POR_PAGINA;
     int pagina_actual = 1;
-
     int filas_ultima_pagina = 0;
 
     while (1)
@@ -898,23 +989,7 @@ int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql
         print_header(titulo);
         ui_printf_centered_line("Pagina %d de %d | Total: %d", pagina_actual, total_paginas, total);
 
-        int offset = (pagina_actual - 1) * LISTADO_POR_PAGINA;
-        int filas_pagina = 0;
-
-        if (db_prepare_stmt(&stmt, sql_pagina))
-        {
-            sqlite3_bind_int(stmt, 1, LISTADO_POR_PAGINA);
-            sqlite3_bind_int(stmt, 2, offset);
-
-            while (sqlite3_step(stmt) == SQLITE_ROW)
-            {
-                render_fila(stmt, ctx);
-                filas_pagina++;
-            }
-            sqlite3_finalize(stmt);
-        }
-
-        filas_ultima_pagina = filas_pagina;
+        filas_ultima_pagina = listado_render_pagina(sql_pagina, render_fila, ctx, pagina_actual);
 
         ui_printf_centered_line("1) Pagina anterior");
         ui_printf_centered_line("2) Pagina siguiente");
@@ -923,56 +998,9 @@ int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql
 
         int opcion = input_int("Opcion: ");
 
-        if (opcion == 0 || opcion == -1)
+        if (!listado_procesar_opcion(opcion, total_paginas, &pagina_actual))
         {
             break;
-        }
-
-        if (opcion == 1)
-        {
-            if (pagina_actual > 1)
-            {
-                pagina_actual--;
-            }
-            else
-            {
-                ui_printf_centered_line("Ya esta en la primera pagina.");
-                pause_console();
-            }
-        }
-        else if (opcion == 2)
-        {
-            if (pagina_actual < total_paginas)
-            {
-                pagina_actual++;
-            }
-            else
-            {
-                ui_printf_centered_line("Ya esta en la ultima pagina.");
-                pause_console();
-            }
-        }
-        else if (opcion == 3)
-        {
-            int destino = input_int("Numero de pagina: ");
-            if (destino == -1)
-            {
-                break;
-            }
-            if (destino >= 1 && destino <= total_paginas)
-            {
-                pagina_actual = destino;
-            }
-            else
-            {
-                ui_printf_centered_line("Pagina invalida.");
-                pause_console();
-            }
-        }
-        else
-        {
-            ui_printf_centered_line("Opcion invalida.");
-            pause_console();
         }
     }
 
@@ -2932,6 +2960,82 @@ void sanitizar_ascii_basico(const char *src, char *dst, size_t dst_size)
     dst[limit] = '\0';
 }
 
+/* Cantidad de buffers del anillo usado por html_texto(). */
+#define HTML_ESCAPE_SLOTS 16
+/* Longitud maxima por celda escapada. */
+#define HTML_ESCAPE_LEN 512
+
+void html_escape_a(char *dest, size_t tam, const char *src)
+{
+    size_t usado = 0;
+
+    if (!dest || tam == 0)
+    {
+        return;
+    }
+
+    dest[0] = '\0';
+    if (!src)
+    {
+        return;
+    }
+
+    for (const char *p = src; *p != '\0' && usado + 1 < tam; p++)
+    {
+        const char *entidad = NULL;
+
+        switch (*p)
+        {
+        case '&':
+            entidad = "&amp;";
+            break;
+        case '<':
+            entidad = "&lt;";
+            break;
+        case '>':
+            entidad = "&gt;";
+            break;
+        case '"':
+            entidad = "&quot;";
+            break;
+        case '\'':
+            entidad = "&#39;";
+            break;
+        default:
+            break;
+        }
+
+        if (!entidad)
+        {
+            dest[usado++] = *p;
+            continue;
+        }
+
+        size_t largo = safe_strnlen(entidad, 8);
+        if (usado + largo >= tam)
+        {
+            break;
+        }
+
+        memcpy(dest + usado, entidad, largo);
+        usado += largo;
+    }
+
+    dest[usado] = '\0';
+}
+
+const char *html_texto(const char *texto)
+{
+    static char slots[HTML_ESCAPE_SLOTS][HTML_ESCAPE_LEN];
+    static unsigned siguiente = 0;
+
+    unsigned slot = siguiente % HTML_ESCAPE_SLOTS;
+    siguiente = (siguiente + 1) % HTML_ESCAPE_SLOTS;
+
+    html_escape_a(slots[slot], HTML_ESCAPE_LEN, texto);
+    return slots[slot];
+}
+
 /**
  * Convierte un valor de resultado a texto
  *
@@ -3135,6 +3239,140 @@ int hay_registros(const char *tabla)
     db_stmt_release(stmt);
 
     return count > 0;
+}
+
+int contar_registros_activos(const char *tabla)
+{
+    sqlite3_stmt *stmt;
+    char sql[256];
+    int total = 0;
+
+    if (!tabla)
+    {
+        return 0;
+    }
+
+    snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM %s WHERE IFNULL(activa, 1) = 1", tabla);
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+    db_stmt_release(stmt);
+
+    return total;
+}
+
+int sorteo_contar(const char *tabla, int sorteados)
+{
+    sqlite3_stmt *stmt;
+    char sql[256];
+    int total = 0;
+
+    if (!tabla)
+    {
+        return 0;
+    }
+
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*) FROM %s WHERE IFNULL(sorteada, 0) = ? AND IFNULL(activa, 1) = 1",
+             tabla);
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, sorteados ? 1 : 0);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+    db_stmt_release(stmt);
+
+    return total;
+}
+
+int sorteo_reiniciar(const char *tabla)
+{
+    sqlite3_stmt *stmt;
+    char sql[256];
+    int cambios = -1;
+
+    if (!tabla)
+    {
+        return -1;
+    }
+
+    snprintf(sql, sizeof(sql), "UPDATE %s SET sorteada = 0 WHERE IFNULL(activa, 1) = 1", tabla);
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return -1;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_DONE)
+    {
+        cambios = sqlite3_changes(db);
+    }
+    db_stmt_release(stmt);
+
+    return cambios;
+}
+
+int sorteo_tomar_pendiente(const char *tabla, char *nombre_out, int nombre_size)
+{
+    sqlite3_stmt *stmt;
+    char sql[320];
+    int id = -1;
+    int pendientes;
+
+    if (!tabla || !nombre_out || nombre_size <= 0)
+    {
+        return -1;
+    }
+
+    nombre_out[0] = '\0';
+
+    pendientes = sorteo_contar(tabla, 0);
+    if (pendientes <= 0)
+    {
+        return -1;
+    }
+
+    snprintf(sql, sizeof(sql),
+             "SELECT id, nombre FROM %s WHERE IFNULL(sorteada, 0) = 0 AND IFNULL(activa, 1) = 1 "
+             "LIMIT 1 OFFSET ?", tabla);
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return -1;
+    }
+
+    sqlite3_bind_int(stmt, 1, secure_rand_range(pendientes));
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+        id = sqlite3_column_int(stmt, 0);
+        snprintf(nombre_out, (size_t)nombre_size, "%s", nombre ? nombre : "");
+    }
+    db_stmt_release(stmt);
+
+    if (id < 0)
+    {
+        return -1;
+    }
+
+    snprintf(sql, sizeof(sql), "UPDATE %s SET sorteada = 1 WHERE id = ?", tabla);
+    if (db_prepare_stmt(&stmt, sql))
+    {
+        sqlite3_bind_int(stmt, 1, id);
+        sqlite3_step(stmt);
+        db_stmt_release(stmt);
+    }
+
+    return id;
 }
 
 int obtener_id_por_nombre(const char *tabla, const char *nombre)
@@ -3460,6 +3698,22 @@ void write_partido_json_object(cJSON *item, sqlite3_stmt *stmt)
     free(cancha_trimmed);
 }
 
+/* Resultado como insignia de color, solo para el reporte HTML. */
+static const char *resultado_badge_html(int resultado)
+{
+    switch (resultado)
+    {
+    case 1:
+        return "<span class=\"badge badge-green\">Victoria</span>";
+    case 2:
+        return "<span class=\"badge badge-yellow\">Empate</span>";
+    case 3:
+        return "<span class=\"badge badge-red\">Derrota</span>";
+    default:
+        return "<span class=\"badge badge-gray\">N/A</span>";
+    }
+}
+
 void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
 {
     char *cancha_trimmed = get_trimmed_cancha_from_stmt(stmt);
@@ -3477,12 +3731,13 @@ void write_partido_html_row(FILE *f, sqlite3_stmt *stmt)
             "<tr><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%s</td><td>%s</"
             "td><td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</"
             "td><td>%s</td></tr>",
-            cancha_trimmed, sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-            sqlite3_column_int(stmt, 3), sqlite3_column_text(stmt, 4),
-            resultado_to_text(sqlite3_column_int(stmt, 5)),
+            html_texto(cancha_trimmed), html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+            html_texto((const char *)sqlite3_column_text(stmt, 4)),
+            resultado_badge_html(sqlite3_column_int(stmt, 5)),
             clima_to_text(sqlite3_column_int(stmt, 6)), dia_to_text(sqlite3_column_int(stmt, 7)),
             sqlite3_column_int(stmt, 8), sqlite3_column_int(stmt, 9), sqlite3_column_int(stmt, 10),
-            sqlite3_column_text(stmt, 11), atajaste_html);
+            html_texto((const char *)sqlite3_column_text(stmt, 11)), atajaste_html);
     free(cancha_trimmed);
 }
 

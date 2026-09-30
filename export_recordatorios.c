@@ -254,7 +254,7 @@ void exportar_recordatorios_html(void)
     for (int i = 0; i < count; i++)
     {
         fprintf(file, "<tr><td>%lld</td><td>%s</td><td>%s</td><td>%s</td></tr>", arr[i].id,
-                arr[i].fecha, arr[i].tematica, arr[i].nota);
+                html_texto(arr[i].fecha), html_texto(arr[i].tematica), html_texto(arr[i].nota));
     }
 
     export_write_html_table_footer(file, NULL);

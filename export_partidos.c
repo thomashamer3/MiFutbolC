@@ -64,8 +64,8 @@ static void write_partido_json(FILE *file, sqlite3_stmt *stmt)
 {
     /* Serializacion por fila a proposito: mantiene la memoria acotada al tamano
      * de UN objeto. Acumular un array cJSON y serializarlo de una vez haria el
-     * mismo trabajo total de serializacion pero retendria todo el listado mas la
-     * cadena completa en RAM, sin limite. NO cambiar a batch. */
+     * mismo trabajo total de serializacion, pero retendria el listado entero mas
+     * la cadena completa en RAM, sin limite. NO cambiar a batch. */
     fprintf(file, "[\n");
     int first = 1;
 

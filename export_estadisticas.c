@@ -86,7 +86,7 @@ static void write_stats_html(FILE *file)
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</"
                 "td></tr>",
-                sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1),
+                html_texto((const char *)sqlite3_column_text(stmt, 0)), sqlite3_column_int(stmt, 1),
                 sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
                 sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
                 sqlite3_column_int(stmt, 6));
@@ -149,7 +149,7 @@ static void write_stats_anio_html_header(FILE *file, const char *anio, int hay)
     {
         fprintf(file, "</table><br>");
     }
-    fprintf(file, "<div class=\"section-card\"><h2>Anio: %s</h2><table>", anio);
+    fprintf(file, "<div class=\"section-card\"><h2>Anio: %s</h2><table>", html_texto(anio));
     fprintf(file, "<tr><th>Camiseta</th><th>Partidos</th><th>Goles</th><th>Asistencias</th><th>G/"
             "P</th><th>A/P</th></tr>");
 }
@@ -157,8 +157,8 @@ static void write_stats_anio_html_header(FILE *file, const char *anio, int hay)
 static void write_stats_anio_html_row(FILE *file, const EstadisticaAnio *stats)
 {
     fprintf(file, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td></tr>",
-            stats->camiseta, stats->partidos, stats->total_goles, stats->total_asistencias,
-            stats->avg_goles, stats->avg_asistencias);
+            html_texto(stats->camiseta), stats->partidos, stats->total_goles,
+            stats->total_asistencias, stats->avg_goles, stats->avg_asistencias);
 }
 
 static void write_stats_anio_html_footer(FILE *file, int hay)
@@ -549,7 +549,7 @@ static void stats_camiseta_html_rows(FILE *file, sqlite3_stmt *stmt)
         fprintf(file,
                 "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</"
                 "td></tr>",
-                sqlite3_column_text(stmt, 0), sqlite3_column_int(stmt, 1),
+                html_texto((const char *)sqlite3_column_text(stmt, 0)), sqlite3_column_int(stmt, 1),
                 sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
                 sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
                 sqlite3_column_int(stmt, 6));

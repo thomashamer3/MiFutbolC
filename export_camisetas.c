@@ -1,4 +1,4 @@
-﻿
+
 #include "cJSON.h"
 #include "db.h"
 #include "export.h"
@@ -122,7 +122,8 @@ static void write_html_row(FILE *file, sqlite3_stmt *stmt, void *context)
     fprintf(file,
             "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</"
             "td><td>%d</td><td>%d</td><td>%.2f</td><td>%.2f</td><td>%.2f</td></tr>",
-            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
+            sqlite3_column_int(stmt, 0),
+            html_texto((const char *)sqlite3_column_text(stmt, 1)), sqlite3_column_int(stmt, 2),
             sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
             sqlite3_column_int(stmt, 6), sqlite3_column_int(stmt, 7), sqlite3_column_int(stmt, 8),
             sqlite3_column_double(stmt, 9), sqlite3_column_double(stmt, 10),

@@ -477,6 +477,75 @@ long long obtener_siguiente_id(const char *tabla);
 int hay_registros(const char *tabla);
 
 /**
+ * @brief Escapa texto para HTML en un buffer propio
+ *
+ * Convierte &, <, >, " y ' en sus entidades, para que los datos con
+ * simbolos (por ejemplo "Pena & Cia") no rompan el marcado del reporte.
+ *
+ * @param dest Buffer de salida
+ * @param tam Tamano del buffer de salida
+ * @param src Texto de entrada (NULL se trata como cadena vacia)
+ */
+void html_escape_a(char *dest, size_t tam, const char *src);
+
+/**
+ * @brief Devuelve el texto escapado listo para usar en un fprintf de HTML
+ *
+ * Usa un anillo interno de buffers para poder escapar varias celdas dentro de
+ * la misma llamada a fprintf sin que se pisen entre si. El puntero devuelto es
+ * valido hasta que se agoten los buffers del anillo (16 usos) o hasta el
+ * siguiente uso del mismo slot, por lo que debe consumirse en la misma
+ * expresion y no guardarse.
+ *
+ * @param texto Texto de entrada (NULL se trata como cadena vacia)
+ * @return Puntero a un buffer interno con el texto escapado
+ */
+const char *html_texto(const char *texto);
+
+/**
+ * @brief Cuenta los registros activos de una tabla
+ *
+ * Cuenta las filas con IFNULL(activa, 1) = 1. Reemplaza contadores locales
+ * como contar_total_camisetas_activas() o contar_total_botines_activos().
+ *
+ * @param tabla Nombre de la tabla
+ * @return Cantidad de registros activos, 0 si la consulta falla
+ */
+int contar_registros_activos(const char *tabla);
+
+/**
+ * @brief Cuenta los registros de una tabla segun su estado de sorteo
+ *
+ * Requiere que la tabla tenga la columna "sorteada".
+ *
+ * @param tabla Nombre de la tabla (camiseta, botin, ...)
+ * @param sorteados 1 para contar los ya sorteados, 0 para los pendientes
+ * @return Cantidad de registros, 0 si la consulta falla
+ */
+int sorteo_contar(const char *tabla, int sorteados);
+
+/**
+ * @brief Reinicia el sorteo habilitando de nuevo todos los registros activos
+ *
+ * @param tabla Nombre de la tabla (camiseta, botin, ...)
+ * @return Cantidad de registros habilitados, o -1 si falla la consulta
+ * @see sorteo_tomar_pendiente()
+ */
+int sorteo_reiniciar(const char *tabla);
+
+/**
+ * @brief Elige al azar un registro pendiente de sorteo y lo marca como sorteado
+ *
+ * La eleccion es aleatoria entre las filas activas con sorteada = 0.
+ *
+ * @param tabla Nombre de la tabla (camiseta, botin, ...)
+ * @param nombre_out Buffer donde se copia el nombre del registro elegido
+ * @param nombre_size Tamano de nombre_out
+ * @return ID del registro elegido, o -1 si no hay pendientes o falla la consulta
+ */
+int sorteo_tomar_pendiente(const char *tabla, char *nombre_out, int nombre_size);
+
+/**
  * @brief Obtiene el ID de una entidad buscándola por nombre
  *
  * Función genérica para obtener un ID cuando se conoce el nombre.

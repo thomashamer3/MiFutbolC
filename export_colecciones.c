@@ -33,7 +33,8 @@ static void escribir_objeto_coleccion(cJSON *item, sqlite3_stmt *stmt)
 static void escribir_fila_coleccion_html(FILE *file, sqlite3_stmt *stmt)
 {
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%s</td></tr>", sqlite3_column_int(stmt, 0),
-            sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2));
+            html_texto((const char *)sqlite3_column_text(stmt, 1)),
+            html_texto((const char *)sqlite3_column_text(stmt, 2)));
 }
 
 static void escribir_fila_item_csv(FILE *file, sqlite3_stmt *stmt)
@@ -63,7 +64,8 @@ static void escribir_objeto_item(cJSON *item, sqlite3_stmt *stmt)
 static void escribir_fila_item_html(FILE *file, sqlite3_stmt *stmt)
 {
     fprintf(file, "<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td></tr>",
-            sqlite3_column_int(stmt, 0), sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 3),
+            sqlite3_column_int(stmt, 0),
+            html_texto((const char *)sqlite3_column_text(stmt, 1)), sqlite3_column_int(stmt, 3),
             sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 4));
 }
 

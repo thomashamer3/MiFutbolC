@@ -1685,7 +1685,9 @@ void listar_canchas(void)
     app_log_event("CANCHA", "Listado de canchas consultado");
 
     int usar_unicode = consola_soporta_unicode();
-    const char *sep = usar_unicode ? " \u2502 " : " | ";
+    /* Buffer mutable: se pasa como contexto sin descartar el const (S859) */
+    char sep[8];
+    snprintf(sep, sizeof(sep), "%s", usar_unicode ? " \u2502 " : " | ");
 
     int filas = listado_paginado(
                     "LISTADO DE CANCHAS",
@@ -1699,7 +1701,7 @@ void listar_canchas(void)
                     "WHERE IFNULL(c.activa, 1) = 1 "
                     "GROUP BY c.id, c.nombre "
                     "ORDER BY c.id LIMIT ? OFFSET ?",
-                    render_cancha_fila, (void *)sep);
+                    render_cancha_fila, sep);
 
     if (filas == 0)
     {
@@ -2539,31 +2541,7 @@ static void cancha_export_write_csv_field(FILE *file, const char *value)
 
 static void cancha_export_write_html_text(FILE *file, const char *value)
 {
-    const char *safe = value ? value : "";
-    while (*safe)
-    {
-        if (*safe == '&')
-        {
-            fputs("&amp;", file);
-        }
-        else if (*safe == '<')
-        {
-            fputs("&lt;", file);
-        }
-        else if (*safe == '>')
-        {
-            fputs("&gt;", file);
-        }
-        else if (*safe == '"')
-        {
-            fputs("&quot;", file);
-        }
-        else
-        {
-            fputc(*safe, file);
-        }
-        safe++;
-    }
+    fputs(html_texto(value), file);
 }
 
 static const char *cancha_export_estado_texto(int activa)
@@ -2928,7 +2906,8 @@ static int cancha_export_info_html(int exportar_todas, int cancha_id)
         fprintf(file, "</td><td>");
         cancha_export_write_html_text(file, texto_estado_techada(info.techada_estado));
         fprintf(file, "</td><td>%s</td>", info.tiene_iluminacion ? "SI" : "NO");
-        fprintf(file, "<td>%s</td><td>%s</td>", hora_apertura, hora_cierre);
+        fprintf(file, "<td>%s</td><td>%s</td>", html_texto(hora_apertura),
+                html_texto(hora_cierre));
         fprintf(file, "<td>%.2f</td><td>%.2f</td>", (double)info.precio_hora_dia_centavos / 100.0,
                 (double)info.precio_hora_noche_centavos / 100.0);
         fprintf(file, "<td>%s</td><td>%s</td><td>%s</td><td>%s</td>",

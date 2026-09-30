@@ -257,8 +257,9 @@ static void write_html(FILE *file, const EventoCalendario *eventos, int total)
     fprintf(file, "<table>\n<tr><th>Fecha</th><th>Tipo</th><th>Titulo</th><th>Detalle</th></tr>");
     for (int i = 0; i < total; i++)
     {
-        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", eventos[i].fecha,
-                eventos[i].tipo, eventos[i].titulo, eventos[i].detalle);
+        fprintf(file, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                html_texto(eventos[i].fecha), html_texto(eventos[i].tipo),
+                html_texto(eventos[i].titulo), html_texto(eventos[i].detalle));
     }
     export_write_html_table_footer(file, NULL);
 }

@@ -2944,15 +2944,17 @@ static void mostrar_vitrina_trofeos(void)
         int posicion = sqlite3_column_int(stmt, 1);
         const char *equipo = (const char *)sqlite3_column_text(stmt, 2);
         int es_tu_equipo = sqlite3_column_int(stmt, 3);
-        const char *medalla = (posicion == 1) ? "ORO" : ((posicion == 2) ? "PLATA" : "BRONCE");
+        const char *medalla = "BRONCE";
 
         total++;
         if (posicion == 1)
         {
+            medalla = "ORO";
             oros++;
         }
         else if (posicion == 2)
         {
+            medalla = "PLATA";
             platas++;
         }
         else
