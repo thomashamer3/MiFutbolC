@@ -64,6 +64,13 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Catálogo climático ampliado**: nuevos climas (frío, calor, llovizna, lluvia moderada/fuerte, cancha inundada) en carga, análisis y exportación.
 - **Esquema de BD evolucionado**: nuevas columnas en `partido` y nuevas tablas para carrera, botines, tiendas, reclutamiento, referencias multimedia, metas, notificaciones y más.
 - **Mejoras de robustez previas mantenidas**: rutas de BD con `snprintf`, logs más consistentes, flujo de imágenes reforzado y script `install.ps1` para instalación por consola en Windows.
+- **Sorteo con reinicio (Camisetas y Botines)**: la opción "Sortear" abre un submenú con **Sortear** y **Reiniciar sorteo**; lo ya sorteado no vuelve a salir hasta agotar la lista, el ciclo se reinicia solo al terminarse y el reinicio manual pide confirmación.
+- **Partidos → "Último" con tiempo transcurrido**: cada opción del submenú muestra cuánto pasó desde ese partido en **años, meses, días, horas y minutos**.
+- **Rankings por temperatura en los filtros de partidos**: nuevas opciones **Top 5 partidos más fríos** y **Top 5 más calurosos** (solo partidos con clima registrado y sin paginar).
+- **Carrera Futbolística 12-15 completadas**: **Vitrina de Trofeos**, **Estadísticas por Temporada**, **Timeline de Hitos** y **Logros de Carrera** ahora se calculan con datos reales (antes consultaban tablas inexistentes).
+- **Entrenador IA configurable**: niveles **0 Silencioso / 1 Conservador / 2 Moderado / 3 Agresivo** persistidos en la tabla `ia_config`, aviso previo al partido con **enfriamiento de 24 horas** y corrección del parseo de fechas que hacía que el aviso saliera en cada partido.
+- **Reportes HTML rediseñados**: cabecera con marca y fecha de generación, encabezados de tabla fijos al hacer scroll, filas cebra, insignias de color para el resultado del partido, modo oscuro automático, reglas de impresión y **escapado de datos** para que un nombre con `&` o `<` no rompa el documento.
+- **Mantenibilidad interna**: helpers compartidos nuevos (`html_texto`, `html_escape_a`, `contar_registros_activos`, `sorteo_contar`, `sorteo_reiniciar`, `sorteo_tomar_pendiente`) y refactor de `evaluar_estado_jugador`, `formatear_tiempo_transcurrido`, `listado_paginado` y de los generadores de resumen compartible (HTML y Markdown comparten ahora la preparación de datos).
 
 ## ✨ Características Principales
 
@@ -186,6 +193,11 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Hall of Fame Personal**: mejores momentos y récords destacados
 - **Resumen Narrativo Automático**: síntesis textual automática basada en métricas
 - **Modo Retro**: recuerdos del mismo día en años anteriores (opcional al iniciar)
+- **Mejor Once Histórico**: la mejor formación registrada
+- **Vitrina de Trofeos**: podios de los torneos finalizados (oro/plata/bronce) con marca del equipo y resumen de títulos, leídos de `equipo_historial`
+- **Estadísticas por Temporada**: partidos, goles, asistencias, V/E/D y rendimiento promedio calculados dentro del período de cada temporada
+- **Timeline de Hitos**: recorrido cronológico de los partidos marcados como hito, con tipo, nota y rendimiento
+- **Logros de Carrera**: progreso de logros de trayectoria (partidos, goles, asistencias, victorias, mejor racha, títulos, podios, hitos y temporadas)
 
 ### ⏰ Recordatorios
 
@@ -255,6 +267,10 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Recomendaciones Inteligentes**: Sugerencias basadas en análisis de datos históricos
 - **Optimización de Formaciones**: Consejos para mejorar el rendimiento del equipo
 - **Análisis Predictivo**: Predicciones basadas en tendencias y patrones
+- **Nivel de intervención configurable**: **0 Silencioso**, **1 Conservador** (solo riesgo crítico), **2 Moderado** (por defecto) y **3 Agresivo**, persistido en la tabla `ia_config`
+- **Aviso antes del partido con control de frecuencia**: solo aparece si el riesgo de lesión supera el umbral del nivel elegido y, como máximo, **una vez cada 24 horas** (inmediato si el riesgo es crítico)
+- **Ajuste del riesgo con datos reales**: cansancio efectivo, partidos de la última semana y derrotas consecutivas, con descuento por días de descanso
+- **Perfil de usuario**: índice de prudencia calculado según los consejos aceptados e ignorados
 > Accesible desde **Análisis → Entrenador IA**.
 
 ### 📤 Exportación e Importación de Datos
@@ -270,6 +286,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Informe PDF Total**: Reporte integral con portada, secciones y análisis completos
 - **TXT adicionales**: finanzas por mes/año, ranking de canchas, partidos por clima,
   lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
+- **Reportes HTML autocontenidos**: cada HTML exportado incluye su CSS embebido (sin recursos ni fuentes externas), cabecera con la marca y la **fecha de generación**, encabezados de tabla **fijos al hacer scroll**, filas cebra, **insignias de color** para el resultado del partido, **modo oscuro** automático y reglas de impresión
+- **Datos escapados en HTML**: los textos de la base se convierten a entidades (`&`, `<`, `>`, `"`), así un nombre o comentario con símbolos no rompe el documento
+- **Resumen compartible**: HTML con diseño propio (tarjeta oscura, animaciones y meta etiquetas `og:` para la previsualización al compartir) y su equivalente en Markdown
 
 #### Importación de Datos
 - **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
@@ -1015,7 +1034,8 @@ MiFutbolC/
 │   ├── README.md                                # Este archivo
 │   ├── README.pdf                               # Versión PDF del README
 │   ├── LICENSE                                  # Licencia del proyecto
-│   ├── manual_usuario.md                        # Manual de usuario
+│   ├── Manual_Usuario_MiFutbolC.md              # Manual de usuario (fuente Markdown)
+│   ├── manual_usuario.html                      # Manual de usuario (version HTML)
 │   └── Manual_Usuario_MiFutbolC.pdf             # Manual de usuario PDF
 │
 ├── 🏗️ DIRECTORIOS DE COMPILACIÓN
@@ -1081,7 +1101,11 @@ Conteo referencial (puede variar según cambios y scripts de build).
 | **IA** | `entrenador_ia.c/.h` | Entrenador con recomendaciones inteligentes |
 | **Infraestructura** | `backup.c`, `db_integridad.c`, `undo.c`, `filtros.c`, `notificaciones.c`, `busqueda.c` | Servicios del sistema |
 | **Perfil** | `jugador_perfil.c/.h`, `progresion.c/.h`, `reportes.c/.h` | Perfil, progresión y reportes |
-| **Extras** | `logros.c`, `financiamiento.c`, `atajos.c`, `ascii_charts.c` | Funcionalidades transversales |
+| **Extras** | `logros.c`, `financiamiento.c`, `ascii_charts.c` | Funcionalidades transversales |
+| **Compartir y Social** | `resumen_compartible.c/.h`, `ranking_amigos.c/.h` | Resumen del perfil (HTML/Markdown) y ranking de amigos |
+| **Ayuda y Atajos** | `tutorial.c/.h`, `atajos_config.c/.h`, `atajos.c` | Tutorial guiado y configuración de teclado |
+| **Servicios Externos** | `openmeteo_client.c/.h` | Clima real de los partidos (Open-Meteo) |
+| **Internacionalización** | `lang.c/.h`, `langs/es.json`, `langs/en.json` | Textos en español e inglés |
 
 ## 🗄️ Base de Datos
 
@@ -1121,6 +1145,7 @@ El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos.
 - **Infraestructura**: `backup_registry`, `undo_log`, `notificaciones`, `filtros_guardados`, `reportes_config`
 - **Perfil**: `jugador_perfil`, `progresion_*`
 - **Servicios**: `dashboard_config`, `calendario_eventos`, `atajos_teclado`, `formaciones`, `posiciones`
+- **Entrenador IA**: `consejos_historial`, `perfil_usuario_ia`, `ia_config` (nivel de intervención y control de frecuencia del aviso)
 
 Campos clave (selección, no exhaustivo):
 
@@ -1131,8 +1156,14 @@ Campos clave (selección, no exhaustivo):
 - `lesion`: `id`, `jugador`, `tipo`, `descripcion`, `fecha`, `camiseta_id`, `estado`, `partido_id`
 - `equipo`: `id`, `nombre`, `tipo`, `tipo_futbol`, `num_jugadores`, `partido_id`
 - `torneo`: `id`, `nombre`, `tiene_equipo_fijo`, `equipo_fijo_id`, `cantidad_equipos`, `tipo_torneo`, `formato_torneo`, `fase_actual`
+- `equipo_historial`: `equipo_id`, `torneo_id`, `posicion_final`, `partidos_jugados`, `goles_favor`, `goles_contra` (base de la **Vitrina de Trofeos**)
+- `ia_config`: `id`, `nivel_intervencion`, `ultima_alerta`, `ultimo_riesgo`
 
 Para el detalle completo, ver la creación del esquema en [db.c](db.c).
+
+El esquema está versionado con `PRAGMA user_version`: **`DB_VERSION_CURRENT = 15`**. Cada versión agrupa
+migraciones que se aplican solas al abrir la aplicación (por ejemplo la **15** añade `botin.sorteada`,
+la **12** `partido.botin_id` y `settings.botin_predeterminado`, y la **14** `partido.diferencia_gol`).
 
 ### Inicialización de la Base de Datos
 
@@ -1370,6 +1401,10 @@ El proyecto incluye un módulo de utilidades (`utils.c / utils.h`) que proporcio
 - **Validación de Datos**: `existe_id()` para verificar si un ID existe en una tabla de la base de datos.
 - **Confirmaciones**: `confirmar()` para solicitar confirmación del usuario antes de operaciones destructivas.
 - **Gestión de Exportaciones**: `get_export_dir()` para determinar y crear el directorio de exportación (Documents en Windows, `./exportaciones` en Unix/Linux).
+- **Consultas genéricas por tabla**: `hay_registros()`, `contar_registros_activos()`, `existe_id()`, `obtener_siguiente_id()`, `obtener_id_por_nombre()`, `obtener_nombre_entidad()` y `listado_paginado()` (listados paginados con un render por fila), reutilizadas por todos los módulos.
+- **Sorteos**: `sorteo_contar()`, `sorteo_reiniciar()` y `sorteo_tomar_pendiente()` implementan el ciclo completo (pendientes, reinicio y elección aleatoria con marcado) para cualquier tabla con las columnas `nombre`, `sorteada` y `activa`; los usan Camisetas y Botines.
+- **Texto seguro para HTML**: `html_escape_a()` y `html_texto()` convierten `&`, `<`, `>`, `"` y `'` en entidades; `html_texto()` usa un anillo de 16 buffers para poder escapar varias celdas dentro de la misma llamada a `fprintf`.
+- **Sentencias preparadas**: `db_prepare_stmt()`, `db_prepare_stmt_with_error()`, `db_prepare_cached()` y `db_stmt_release()` centralizan la preparación y liberación de consultas.
 
 Estas utilidades promueven la reutilización de código y mantienen una interfaz consistente en todo el programa.
 
@@ -1377,7 +1412,8 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: 24 opciones organizadas (1-24 más 0 para Salir): Dashboard, Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Música, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia y Ajustes.
+- **Menú Principal**: 28 opciones organizadas (1-28 más 0 para Salir): Dashboard, Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Música, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Tutorial, Atajos Config, Resumen Compartible, Ranking Amigos y Ajustes.
+- **Menús personalizados (modo Custom)**: desde Ajustes → Modo se puede habilitar u ocultar cualquiera de esos 28 módulos del menú principal.
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis, las **Metas Personales** desde Dashboard, y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
@@ -1414,7 +1450,7 @@ El repositorio incluye documentación técnica y de usuario en formato Markdown 
 
 - [README.md](README.md): Documentación técnica general del proyecto.
 - [README.pdf](README.pdf): Versión PDF del README.
-- [manual_usuario.md](manual_usuario.md): Manual de usuario con flujos y pantallas.
+- [Manual_Usuario_MiFutbolC.md](Manual_Usuario_MiFutbolC.md): Manual de usuario con flujos y pantallas (versión HTML en [manual_usuario.html](manual_usuario.html)).
 - [Manual_Usuario_MiFutbolC.pdf](Manual_Usuario_MiFutbolC.pdf): Manual de usuario en PDF.
 
 Nota: Los PDF se generan a partir de los `.md` (por ejemplo con Pandoc) si necesitas regenerarlos.
@@ -1496,6 +1532,23 @@ void eliminar_elemento(int id);
 - ✅ Verificar relaciones entre tablas
 - ✅ Probar flujos completos (crear torneo → agregar equipos → jugar partidos)
 
+### Análisis Estático y Calidad
+
+El proyecto se revisa con **SonarQube/SonarCloud** y **Cppcheck**. Los informes quedan en la raíz del repositorio para poder comparar entre revisiones:
+
+- `duplications.json` — líneas y bloques duplicados por archivo, con densidad
+- `maintainability-open.json`, `reliability-open.json`, `security-open.json` — incidencias abiertas por calidad
+- `CppCheckInput.txt` — listado de archivos analizados por Cppcheck
+
+Estado tras la última revisión y los arreglos aplicados:
+
+- **Fiabilidad**: sin incidencias abiertas. El último BLOCKER (lectura fuera de rango al indexar fechas cortas como `"N/A"`) se resolvió validando la longitud antes de leer `fecha[4]`/`fecha[7]`.
+- **Seguridad**: sin incidencias abiertas.
+- **Mantenibilidad**: los métodos complejos se van dividiendo en funciones de responsabilidad única —`calcular_tiempo_transcurrido`, `factor_descanso_por_dias`, `acumular_ultimos_partidos`, `contar_derrotas_consecutivas`, `listado_render_pagina`, `listado_procesar_opcion`— y los generadores de resumen compartible comparten la preparación de datos en lugar de duplicarla.
+- **Duplicación**: alrededor del 2% de las líneas, concentrada en `db.c` (esquema y migraciones) y `resumen_compartible.c`.
+
+Reglas que vigila el análisis: nada de `scanf`/`gets` para entrada del usuario (se usan `input_int`/`input_string`), nada de `strcpy`/`sprintf` sin límites, nada de `system()`, sin arrays de longitud variable y sin `goto`. Las sentencias se preparan con los helpers de `utils.h` y se liberan con `db_stmt_release`/`sqlite3_finalize`.
+
 ### Herramientas de Desarrollo Recomendadas
 
 - **IDE**: CodeBlocks, VS Code, CLion
@@ -1563,7 +1616,7 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 
 ## 🔗 Enlaces Útiles
 
-- 📖 [Manual de Usuario](manual_usuario.md)
+- 📖 [Manual de Usuario (Markdown)](Manual_Usuario_MiFutbolC.md) · [Manual de Usuario (HTML)](manual_usuario.html)
 - 📘 [README (técnico)](README.md)
 - 🐛 [Reportar un Bug](https://github.com/thomashamer3/MiFutbolC/issues)
 - 💡 [Solicitar una Funcionalidad](https://github.com/thomashamer3/MiFutbolC/issues)
@@ -1574,8 +1627,11 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 
 Referencial y sujeto a cambios:
 
-- **Tamaño del código**: proyecto C modular (ver árbol del proyecto).
-- **Tablas de BD**: esquema definido en `db.c`.
+- **Archivos**: 85 módulos `.c` en la raíz con sus cabeceras (94 `.c` si se cuentan los 9 archivos de `tests/`).
+- **Esquema**: `DB_VERSION_CURRENT = 15` y 54 índices `CREATE INDEX` en `db.c`.
+- **Duplicación**: alrededor del 2% de las líneas, según `duplications.json`.
+- **Calidad**: sin incidencias abiertas de fiabilidad ni de seguridad (`reliability-open.json`, `security-open.json`).
+- **Tablas de BD**: esquema y migraciones definidos en `db.c`.
 - **Formatos de exportación**: CSV, JSON, HTML, TXT, PDF, ODS.
 - **Estado**: proyecto educativo en evolución.
 

@@ -6275,6 +6275,64 @@ static void dias_del_mes_anio(int anio, int mes, int *dias)
  * "X anios, Y meses, Z dias, H horas y M minutos".
  * Devuelve 0 si la fecha es invalida o si el partido todavia no se jugo.
  */
+typedef struct
+{
+    int anios;
+    int meses;
+    int dias;
+    int horas;
+    int minutos;
+} TiempoTranscurrido;
+
+/* Descompone la diferencia entre dos fechas en anios, meses, dias, horas y minutos. */
+static TiempoTranscurrido calcular_tiempo_transcurrido(const struct tm *desde,
+        const struct tm *hasta)
+{
+    TiempoTranscurrido t;
+    t.anios = hasta->tm_year - desde->tm_year;
+    t.meses = hasta->tm_mon - desde->tm_mon;
+    t.dias = hasta->tm_mday - desde->tm_mday;
+    t.horas = hasta->tm_hour - desde->tm_hour;
+    t.minutos = hasta->tm_min - desde->tm_min;
+
+    if (t.minutos < 0)
+    {
+        t.minutos += 60;
+        t.horas--;
+    }
+
+    if (t.horas < 0)
+    {
+        t.horas += 24;
+        t.dias--;
+    }
+
+    if (t.dias < 0)
+    {
+        int mes_anterior = hasta->tm_mon; /* 0..11, equivale al mes anterior en base 1 */
+        int anio_anterior = hasta->tm_year + 1900;
+        int dias_mes = 30;
+
+        if (mes_anterior == 0)
+        {
+            mes_anterior = 12;
+            anio_anterior--;
+        }
+
+        dias_del_mes_anio(anio_anterior, mes_anterior, &dias_mes);
+        t.dias += dias_mes;
+        t.meses--;
+    }
+
+    if (t.meses < 0)
+    {
+        t.meses += 12;
+        t.anios--;
+    }
+
+    return t;
+}
+
 static int formatear_tiempo_transcurrido(int anio, int mes, int dia, int hora, int minuto,
         char *buffer, size_t tam)
 {
@@ -6314,58 +6372,18 @@ static int formatear_tiempo_transcurrido(int anio, int mes, int dia, int hora, i
     localtime_r(&t_ahora, &tm_ahora);
 #endif
 
-    int anios = tm_ahora.tm_year - tm_partido.tm_year;
-    int meses = tm_ahora.tm_mon - tm_partido.tm_mon;
-    int dias = tm_ahora.tm_mday - tm_partido.tm_mday;
-    int horas = tm_ahora.tm_hour - tm_partido.tm_hour;
-    int minutos = tm_ahora.tm_min - tm_partido.tm_min;
-
-    if (minutos < 0)
-    {
-        minutos += 60;
-        horas--;
-    }
-
-    if (horas < 0)
-    {
-        horas += 24;
-        dias--;
-    }
-
-    if (dias < 0)
-    {
-        int mes_anterior = tm_ahora.tm_mon; /* 0..11, equivale al mes anterior en base 1 */
-        int anio_anterior = tm_ahora.tm_year + 1900;
-        int dias_mes = 30;
-
-        if (mes_anterior == 0)
-        {
-            mes_anterior = 12;
-            anio_anterior--;
-        }
-
-        dias_del_mes_anio(anio_anterior, mes_anterior, &dias_mes);
-        dias += dias_mes;
-        meses--;
-    }
-
-    if (meses < 0)
-    {
-        meses += 12;
-        anios--;
-    }
-
-    if (anios < 0)
+    TiempoTranscurrido t = calcular_tiempo_transcurrido(&tm_partido, &tm_ahora);
+    if (t.anios < 0)
     {
         return 0;
     }
 
     snprintf(buffer, tam, "%d %s, %d %s, %d %s, %d %s y %d %s",
-             anios, anios == 1 ? "anio" : "anios",
-             meses, meses == 1 ? "mes" : "meses",
-             dias, dias == 1 ? "dia" : "dias",
-             horas, horas == 1 ? "hora" : "horas",
-             minutos, minutos == 1 ? "minuto" : "minutos");
+             t.anios, t.anios == 1 ? "anio" : "anios",
+             t.meses, t.meses == 1 ? "mes" : "meses",
+             t.dias, t.dias == 1 ? "dia" : "dias",
+             t.horas, t.horas == 1 ? "hora" : "horas",
+             t.minutos, t.minutos == 1 ? "minuto" : "minutos");
     return 1;
 }
 

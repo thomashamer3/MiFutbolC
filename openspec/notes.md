@@ -60,12 +60,12 @@ A stale `build/debug/MiFutbolC_tests.exe` exists but is **not** registered in `C
 | Test sources | 8 under `tests/` + vendored `tests/unity/unity.c` |
 | `CREATE INDEX` occurrences in `db.c` | 54 |
 | Connection-setup PRAGMAs in `db.c` | 8, at `db.c:644-651` |
-| `DB_VERSION_CURRENT` | 14 (`db.c:710`) |
+| `DB_VERSION_CURRENT` | 15 (`db.c:711`) |
 | Coupling | `utils.h` included by 79 `.c`, `db.h` by 72 `.c`, `menu.h` by 42 `.c` |
 
-Largest non-vendored modules: `partido.c` (6414 lines), `utils.c` (4567), `pdfgen.c` (4486),
-`bienestar.c` (3737), `cancha.c` (3398), `musica.c` (3141), `carrera.c` (3050),
-`equipo.c` (2777), `db.c` (2580).
+Largest non-vendored modules: `partido.c` (6605 lines), `utils.c` (4927), `pdfgen.c` (4486),
+`bienestar.c` (3737), `cancha.c` (3369), `carrera.c` (3310), `musica.c` (3141),
+`equipo.c` (2777), `db.c` (2601).
 
 ## Stale internal documentation - do not trust without re-verification
 
@@ -77,8 +77,8 @@ These project skills are useful for style/structure but contain incorrect concre
   is lowercase `build/debug`.
 - `mifutbolc-architecture`: documents 5 PRAGMAs with `cache_size = -16384`; the real code has 8
   connection-setup PRAGMAs at `db.c:644-651` with `cache_size = -32768` and `mmap_size = 268435456`.
-  Documents 27 indexes (real: 54). Documents `DB_VERSION_CURRENT = 5` (real: 14). States "56 source
-  files" and "all tests in `tests/test_utils.c`" (real: 8 test files). States `sqlite3 *db` at
+  Documents 27 indexes (real: 54). Documents `DB_VERSION_CURRENT = 5` (real: 15). States "56 source
+  files" and "all tests in `tests/test_utils.c`" (real: 9 test files). States `sqlite3 *db` at
   `db.c:95` (real: `db.c:91`). Lists `.github/workflows/`, `codeql-custom-queries-cpp/`, and
   `Importaciones/` as present; none of them exist in the working tree.
 - `c-unit-test-unity`: test build command repeats the invalid `--preset mingw-debug` build form.

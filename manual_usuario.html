@@ -144,6 +144,12 @@
 <li><strong>Estadísticas de rendimiento extendidas</strong>: nuevos análisis por intensidad, dolor físico, arbitraje y temperatura.</li>
 <li><strong>Exportación a ODS</strong>: nuevo formato de hoja de cálculo OpenDocument compatible con LibreOffice y Excel.</li>
 <li><strong>Catálogo climático ampliado</strong>: se agregaron nuevos climas para carga, análisis e importación/exportación.</li>
+<li><strong>Sorteo con reinicio</strong>: en Camisetas y Botines, la opción "Sortear" abre un submenú con <strong>Sortear</strong> y <strong>Reiniciar sorteo</strong>; lo ya sorteado no vuelve a salir hasta agotar la lista.</li>
+<li><strong>Tiempo transcurrido en "Último"</strong>: el submenú de partidos muestra años, meses, días, horas y minutos desde ese partido.</li>
+<li><strong>Rankings por temperatura</strong>: en los filtros de partidos hay <strong>Top 5 más fríos</strong> y <strong>Top 5 más calurosos</strong>.</li>
+<li><strong>Carrera Futbolística completa</strong>: Vitrina de Trofeos, Estadísticas por Temporada, Timeline de Hitos y Logros de Carrera ya funcionan con datos reales.</li>
+<li><strong>Entrenador IA configurable</strong>: niveles 0 Silencioso / 1 Conservador / 2 Moderado / 3 Agresivo y aviso previo al partido como máximo una vez cada 24 horas.</li>
+<li><strong>Reportes HTML más claros</strong>: cabecera con fecha de generación, encabezados fijos, filas cebra, insignias de color, modo oscuro e impresión cuidada.</li>
 </ul>
 <h2 id="requisitos-del-sistema">Requisitos del Sistema</h2>
 <ul>
@@ -1887,8 +1893,41 @@ Automáticamente: al volver al reproductor tras salir con <code>[0]</code>, el s
 <img src="images/menucolecciones.png" alt="Colecciones e inventario" />
 <figcaption aria-hidden="true">Colecciones e inventario</figcaption>
 </figure>
+<h2 id="tutorial">Tutorial</h2>
+<p>Selecciona "24" en el menú principal (Tutorial).</p>
+<ul>
+<li><strong>1. Iniciar tutorial</strong>: recorre la guía paso a paso.</li>
+<li><strong>2. Ver paso específico</strong>: salta directamente a un paso concreto.</li>
+<li><strong>3. Reiniciar tutorial</strong>: devuelve el tutorial a su estado inicial.</li>
+</ul>
+<h2 id="atajos-config">Atajos Config</h2>
+<p>Selecciona "25" en el menú principal (Atajos Config) para revisar y personalizar el teclado.</p>
+<ul>
+<li><strong>1. Listar atajos</strong>: muestra las teclas configuradas y la acción de cada una.</li>
+<li><strong>2. Modificar atajo</strong>: cambia la tecla asignada a una acción.</li>
+<li><strong>3. Restaurar defaults</strong>: devuelve todos los atajos a sus valores originales.</li>
+</ul>
+<h2 id="resumen-compartible">Resumen Compartible</h2>
+<p>Selecciona "26" en el menú principal (Resumen Compartible). Genera un resumen de tu perfil listo para compartir.</p>
+<ul>
+<li><strong>1. Generar Resumen HTML</strong>: crea <code>resumen_compartible.html</code> con una tarjeta visual (estadísticas generales, rendimiento destacado, resultados, último partido, racha, perfil de juego y logros) y meta etiquetas <code>og:</code> para la previsualización al compartir el enlace.</li>
+<li><strong>2. Generar Resumen Markdown</strong>: la misma información en <code>resumen_compartible.md</code>, ideal para pegar en un chat o en un README.</li>
+<li><strong>3. Estadísticas Destacadas</strong>: resumen de las métricas más relevantes.</li>
+<li><strong>4. Mejor Temporada</strong>: la temporada con mejores números.</li>
+</ul>
+<p>Los dos formatos comparten la preparación de datos, así que los números que muestran son idénticos.</p>
+<h2 id="ranking-de-amigos">Ranking de Amigos</h2>
+<p>Selecciona "27" en el menú principal (Ranking Amigos).</p>
+<ul>
+<li><strong>1. Agregar amigo</strong>: registrar un amigo para comparar.</li>
+<li><strong>2. Listar amigos</strong>: ver los amigos registrados.</li>
+<li><strong>3. Modificar amigo</strong>: editar sus datos.</li>
+<li><strong>4. Eliminar amigo</strong>: quitarlo de la lista.</li>
+<li><strong>5. Ver ranking</strong>: tabla ordenada por goles, con tus propias estadísticas incluidas.</li>
+<li><strong>6. Comparar conmigo</strong>: comparación directa entre un amigo y tu perfil.</li>
+</ul>
 <h2 id="exportar-datos">Exportar Datos</h2>
-<p>Selecciona "24" en el menú principal (Ajustes) y luego <strong>Exportar</strong> (opción 8) para acceder al menú de exportación.</p>
+<p>Selecciona "28" en el menú principal (Ajustes) y luego <strong>Exportar</strong> (opción 8) para acceder al menú de exportación.</p>
 <h3 id="opciones-de-exportación">Opciones de Exportación</h3>
 <ol type="1">
 <li><strong>Camisetas</strong> - Exportar datos de camisetas</li>
@@ -1909,7 +1948,10 @@ Automáticamente: al volver al reproductor tras salir con <code>[0]</code>, el s
 - <strong>CSV</strong>: Valores separados por comas (ideal para Excel)
 - <strong>TXT</strong>: Texto plano formateado
 - <strong>JSON</strong>: Formato estructurado (ideal para integración)
-- <strong>HTML</strong>: Página web con tablas
+- <strong>HTML</strong>: Reporte web autocontenido (sin archivos ni fuentes externas) con cabecera y fecha de
+  generación, tablas de encabezado fijo, filas cebra, insignias de color para el resultado del partido,
+  modo oscuro automático y estilos de impresión; los textos se escapan, así un nombre con <code>&amp;</code>
+  o <code>&lt;</code> no rompe la página
 - <strong>PDF</strong>: Informe PDF con portada, secciones y datos completos
 - <strong>ODS</strong>: Hoja de cálculo OpenDocument (compatible con LibreOffice, Excel)</p>
 <p>El informe PDF total incluye secciones adicionales con resúmenes financieros, ranking de canchas,
@@ -1968,7 +2010,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 <p><strong>Nota</strong>: no hay captura dedicada del submenú de exportación en la carpeta <code>images/</code>; el acceso visual está integrado en el menú de <strong>Ajustes</strong>.</p>
 </div>
 <h2 id="importar-datos">Importar Datos</h2>
-<p>Selecciona "24" en el menú principal (Ajustes) y luego <strong>Importar</strong> (opción 9) para acceder a la importación de datos.</p>
+<p>Selecciona "28" en el menú principal (Ajustes) y luego <strong>Importar</strong> (opción 9) para acceder a la importación de datos.</p>
 <h3 id="preparación-para-importar">Preparación para Importar</h3>
 <ol type="1">
 <li>Los archivos pueden estar en formato JSON, TXT, CSV o HTML</li>
@@ -1981,7 +2023,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="proceso-de-importación">Proceso de Importación</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal y luego <strong>Importar</strong></li>
+<li>Selecciona "28" en el menú principal y luego <strong>Importar</strong></li>
 <li>Elige una opción del menú de importación:
 <ul>
 <li>"1" Importar desde JSON</li>
@@ -2021,7 +2063,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </div>
 <details>
 <summary><h2 id="configuración-ajustes">Configuración (Ajustes)</h2></summary>
-<p>Selecciona "24" en el menú principal para acceder al menú de configuración del sistema.</p>
+<p>Selecciona "28" en el menú principal para acceder al menú de configuración del sistema.</p>
 <h3 id="qué-puedes-hacer-en-ajustes">Qué puedes hacer en Ajustes</h3>
 <ul>
 <li><strong>1. Tema de Interfaz</strong>: cambiar apariencia.</li>
@@ -2039,7 +2081,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ul>
 <h3 id="cambiar-tema-de-interfaz">Cambiar Tema de Interfaz</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "1" para cambiar el tema</li>
 <li>Selecciona uno de los temas disponibles:
 <ul>
@@ -2057,7 +2099,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="cambiar-idioma">Cambiar Idioma</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "2" para cambiar el idioma</li>
 <li>Selecciona entre:
 <ul>
@@ -2069,13 +2111,13 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="accesibilidad">Accesibilidad</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "3" para abrir accesibilidad</li>
 <li>Ajusta el tamaño del texto o activa alto contraste</li>
 </ol>
 <h3 id="gestión-de-usuario-y-seguridad">Gestión de Usuario y Seguridad</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "4" para abrir <strong>Usuario</strong></li>
 <li>Desde este menú puedes:
 <ul>
@@ -2090,7 +2132,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="ver-configuración-actual">Ver Configuración Actual</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "5" para ver la configuración actual</li>
 <li>Se mostrará:
 <ul>
@@ -2103,7 +2145,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="restablecer-valores-por-defecto">Restablecer Valores por Defecto</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "6" para restablecer configuración por defecto</li>
 <li>Confirma la acción</li>
 <li>Se restaurarán:
@@ -2115,30 +2157,30 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 </ol>
 <h3 id="modo-de-menú">Modo de Menú</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "7" para configurar el modo</li>
 <li>Selecciona modo Simple, Avanzado o Personalizado</li>
 </ol>
 <h3 id="exportar-importar-desde-ajustes">Exportar / Importar desde Ajustes</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "8" para <strong>Exportar</strong> o "9" para <strong>Importar</strong></li>
 </ol>
 <h3 id="búsqueda-global">Búsqueda Global</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "10" para abrir la búsqueda global</li>
 <li>Escribe el término a buscar para localizar contenido entre módulos</li>
 </ol>
 <h3 id="actualizar-aplicación">Actualizar aplicación</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "11" para abrir el flujo de actualización</li>
 <li>En Windows, podrás buscar y ejecutar la actualización</li>
 </ol>
 <h3 id="música-al-iniciar-desde-ajustes">Música al iniciar desde Ajustes</h3>
 <ol type="1">
-<li>Selecciona "24" en el menú principal</li>
+<li>Selecciona "28" en el menú principal</li>
 <li>Elige "12" para activar o desactivar reproducción automática al iniciar</li>
 <li>El valor se guarda y persiste entre sesiones</li>
 </ol>

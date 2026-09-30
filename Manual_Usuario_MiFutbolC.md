@@ -55,6 +55,12 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Estadísticas de rendimiento extendidas**: nuevos análisis por intensidad, dolor físico, arbitraje y temperatura.
 - **Exportación a ODS**: nuevo formato de hoja de cálculo OpenDocument compatible con LibreOffice y Excel.
 - **Catálogo climático ampliado**: se agregaron nuevos climas para carga, análisis e importación/exportación.
+- **Sorteo con reinicio**: en Camisetas y Botines, la opción "Sortear" abre un submenú con **Sortear** y **Reiniciar sorteo**; lo ya sorteado no vuelve a salir hasta agotar la lista.
+- **Tiempo transcurrido en "Último"**: el submenú de partidos muestra años, meses, días, horas y minutos desde ese partido.
+- **Rankings por temperatura**: en los filtros de partidos hay **Top 5 más fríos** y **Top 5 más calurosos**.
+- **Carrera Futbolística completa**: Vitrina de Trofeos, Estadísticas por Temporada, Timeline de Hitos y Logros de Carrera ya funcionan con datos reales.
+- **Entrenador IA configurable**: niveles 0 Silencioso / 1 Conservador / 2 Moderado / 3 Agresivo y aviso previo al partido como máximo una vez cada 24 horas.
+- **Reportes HTML más claros**: cabecera con fecha de generación, encabezados fijos, filas cebra, insignias de color, modo oscuro e impresión cuidada.
 
 ## Requisitos del Sistema
 
@@ -204,7 +210,11 @@ El menú principal ofrece las siguientes opciones:
 21. **Tiendas** - Gestionar tiendas deportivas
 22. **Reclutamiento** - Gestionar reclutamiento de jugadores
 23. **Referencias Multimedia** - Gestionar referencias multimedia
-24. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
+24. **Tutorial** - Guía paso a paso para empezar
+25. **Atajos Config** - Ver, editar y restaurar los atajos de teclado
+26. **Resumen Compartible** - Generar un resumen del perfil en HTML o Markdown, con estadísticas destacadas y mejor temporada
+27. **Ranking Amigos** - Gestionar amigos y comparar estadísticas con ellos
+28. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
@@ -234,7 +244,11 @@ El menú principal ofrece las siguientes opciones:
 - **21. Tiendas**: gestionar tiendas deportivas con información de contacto, productos y rango de precio.
 - **22. Reclutamiento**: gestionar pipeline de reclutamiento (Visto → Prospecto → Seguimiento → Contactado → Reclutado/Descartado).
 - **23. Referencias Multimedia**: almacenar enlaces a videos, fotos, artículos y audio sobre la carrera futbolística.
-- **24. Ajustes**: personalizar tema, idioma, accesibilidad, usuario, modo, exportación/importación, búsqueda global y actualización.
+- **24. Tutorial**: iniciar el tutorial, ver un paso concreto o reiniciarlo.
+- **25. Atajos Config**: listar los atajos, modificar uno y restaurar los valores por defecto.
+- **26. Resumen Compartible**: generar el resumen del perfil en HTML (tarjeta visual con meta etiquetas para compartir) o Markdown, ver estadísticas destacadas y la mejor temporada.
+- **27. Ranking Amigos**: agregar, listar, modificar y eliminar amigos, ver el ranking y comparar sus estadísticas con las tuyas.
+- **28. Ajustes**: personalizar tema, idioma, accesibilidad, usuario, modo, exportación/importación, búsqueda global y actualización.
 
 ## Dashboard
 
@@ -1670,9 +1684,47 @@ Selecciona "18" en el menú principal para abrir el módulo de colecciones e inv
 
 ![Colecciones e inventario](images/menucolecciones.png)
 
+## Tutorial
+
+Selecciona "24" en el menú principal (Tutorial).
+
+- **1. Iniciar tutorial**: recorre la guía paso a paso.
+- **2. Ver paso específico**: salta directamente a un paso concreto.
+- **3. Reiniciar tutorial**: devuelve el tutorial a su estado inicial.
+
+## Atajos Config
+
+Selecciona "25" en el menú principal (Atajos Config) para revisar y personalizar el teclado.
+
+- **1. Listar atajos**: muestra las teclas configuradas y la acción de cada una.
+- **2. Modificar atajo**: cambia la tecla asignada a una acción.
+- **3. Restaurar defaults**: devuelve todos los atajos a sus valores originales.
+
+## Resumen Compartible
+
+Selecciona "26" en el menú principal (Resumen Compartible). Genera un resumen de tu perfil listo para compartir.
+
+- **1. Generar Resumen HTML**: crea `resumen_compartible.html` con una tarjeta visual (estadísticas generales, rendimiento destacado, resultados, último partido, racha, perfil de juego y logros) y meta etiquetas `og:` para la previsualización al compartir el enlace.
+- **2. Generar Resumen Markdown**: la misma información en `resumen_compartible.md`, ideal para pegar en un chat o en un README.
+- **3. Estadísticas Destacadas**: resumen de las métricas más relevantes.
+- **4. Mejor Temporada**: la temporada con mejores números.
+
+Los dos formatos comparten la preparación de datos, así que los números que muestran son idénticos.
+
+## Ranking de Amigos
+
+Selecciona "27" en el menú principal (Ranking Amigos).
+
+- **1. Agregar amigo**: registrar un amigo para comparar.
+- **2. Listar amigos**: ver los amigos registrados.
+- **3. Modificar amigo**: editar sus datos.
+- **4. Eliminar amigo**: quitarlo de la lista.
+- **5. Ver ranking**: tabla ordenada por goles, con tus propias estadísticas incluidas.
+- **6. Comparar conmigo**: comparación directa entre un amigo y tu perfil.
+
 ## Exportar Datos
 
-Selecciona "24" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
+Selecciona "28" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
@@ -1695,7 +1747,7 @@ Para cada módulo puedes elegir el formato:
 - **CSV**: Valores separados por comas (ideal para Excel)
 - **TXT**: Texto plano formateado
 - **JSON**: Formato estructurado (ideal para integración)
-- **HTML**: Página web con tablas
+- **HTML**: Reporte web autocontenido (sin archivos ni fuentes externas) con cabecera y fecha de generación, tablas de encabezado fijo, filas cebra, insignias de color para el resultado del partido, modo oscuro automático y estilos de impresión; los textos se escapan, así un nombre con `&` o `<` no rompe la página
 - **PDF**: Informe PDF con portada, secciones y datos completos
 - **ODS**: Hoja de cálculo OpenDocument (compatible con LibreOffice, Excel)
 
@@ -1757,7 +1809,7 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "24" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
+Selecciona "28" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
 
 ### Preparación para Importar
 
@@ -1769,7 +1821,7 @@ Selecciona "24" en el menú principal (Ajustes) y luego **Importar** (opción 9)
 
 ### Proceso de Importación
 
-1. Selecciona "24" en el menú principal y luego **Importar**
+1. Selecciona "28" en el menú principal y luego **Importar**
 2. Elige una opción del menú de importación:
    - "1" Importar desde JSON
    - "2" Importar desde TXT
@@ -1806,7 +1858,7 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "24" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "28" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Qué puedes hacer en Ajustes
 
@@ -1825,7 +1877,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -1841,7 +1893,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -1851,13 +1903,13 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Accesibilidad
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
 ### Gestión de Usuario y Seguridad
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Desde este menú puedes:
    - Mostrar nombre actual
@@ -1870,7 +1922,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Ver Configuración Actual
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
@@ -1881,7 +1933,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
@@ -1891,30 +1943,30 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 
 ### Modo de Menú
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "7" para configurar el modo
 3. Selecciona modo Simple, Avanzado o Personalizado
 
 ### Exportar / Importar desde Ajustes
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "8" para **Exportar** o "9" para **Importar**
 
 ### Búsqueda Global
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "10" para abrir la búsqueda global
 3. Escribe el término a buscar para localizar contenido entre módulos
 
 ### Actualizar aplicación
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "11" para abrir el flujo de actualización
 3. En Windows, podrás buscar y ejecutar la actualización
 
 ### Música al iniciar desde Ajustes
 
-1. Selecciona "24" en el menú principal
+1. Selecciona "28" en el menú principal
 2. Elige "12" para activar o desactivar reproducción automática al iniciar
 3. El valor se guarda y persiste entre sesiones
 

@@ -246,47 +246,68 @@ const char *categoria_a_string(CategoriaConsejo categoria)
     }
 }
 
-// Evaluar estado del jugador basado en datos historicos
-EstadoJugador evaluar_estado_jugador(void)
+/*
+ * Factor de descanso aplicado al cansancio segun los dias sin jugar:
+ * 7 dias equivalen a 50% de reduccion y 14 o mas descartan el cansancio.
+ */
+static float factor_descanso_por_dias(int dias_descanso)
 {
-    EstadoJugador estado = {0};
+    if (dias_descanso >= 14)
+    {
+        return 0.0F;
+    }
+    if (dias_descanso >= 7)
+    {
+        return 0.5F;
+    }
+    if (dias_descanso > 0)
+    {
+        return 1.0F - ((float)dias_descanso / 14.0F);
+    }
+    return 1.0F;
+}
+
+/*
+ * Acumula los promedios de los ultimos 10 partidos, los dias de descanso y los
+ * partidos jugados en la ultima semana.
+ */
+static void acumular_ultimos_partidos(EstadoJugador *estado, int *partidos_consecutivos)
+{
     sqlite3_stmt *stmt;
     const char *sql = "SELECT rendimiento_general, cansancio, estado_animo, fecha_hora "
                       "FROM partido "
-                      "ORDER BY fecha_hora DESC LIMIT 10;"; // ultimos 10 partidos
+                      "ORDER BY fecha_hora DESC LIMIT 10;";
+
+    *partidos_consecutivos = 0;
 
     if (!preparar_stmt(&stmt, sql))
     {
-        return estado;
+        return;
     }
 
     int count = 0;
-    int partidos_consecutivos = 0;
-    int derrotas_consecutivas = 0;
-    time_t now = time(NULL);
-    int dias_sin_jugar = 0;
+    time_t ahora = time(NULL);
 
     while (sqlite3_step(stmt) == SQLITE_ROW && count < 10)
     {
-        int rendimiento = sqlite3_column_int(stmt, 0);
-        int cansancio = sqlite3_column_int(stmt, 1);
-        int animo = sqlite3_column_int(stmt, 2);
-        const char *fecha_str = (const char *)sqlite3_column_text(stmt, 3);
+        const char *fecha_str;
 
-        estado.rendimiento_promedio += (float)rendimiento;
-        estado.cansancio_promedio += (float)cansancio;
-        estado.estado_animo_promedio += (float)animo;
+        estado->rendimiento_promedio += (float)sqlite3_column_int(stmt, 0);
+        estado->cansancio_promedio += (float)sqlite3_column_int(stmt, 1);
+        estado->estado_animo_promedio += (float)sqlite3_column_int(stmt, 2);
 
-        // Calcular dias desde ultimo partido
+        fecha_str = (const char *)sqlite3_column_text(stmt, 3);
+
+        /* Dias desde el ultimo partido */
         if (count == 0 && fecha_str)
         {
-            dias_sin_jugar = dias_desde_fecha(fecha_str, now);
+            estado->dias_descanso = dias_desde_fecha(fecha_str, ahora);
         }
 
-        // Contar partidos consecutivos (ultimos 7 dias)
-        if (fecha_str && count < 7 && dias_desde_fecha(fecha_str, now) <= 7)
+        /* Partidos jugados en los ultimos 7 dias */
+        if (fecha_str && count < 7 && dias_desde_fecha(fecha_str, ahora) <= 7)
         {
-            partidos_consecutivos++;
+            (*partidos_consecutivos)++;
         }
 
         count++;
@@ -296,52 +317,48 @@ EstadoJugador evaluar_estado_jugador(void)
 
     if (count > 0)
     {
-        estado.rendimiento_promedio /= (float)count;
-        estado.cansancio_promedio /= (float)count;
-        estado.estado_animo_promedio /= (float)count;
+        estado->rendimiento_promedio /= (float)count;
+        estado->cansancio_promedio /= (float)count;
+        estado->estado_animo_promedio /= (float)count;
+    }
+}
+
+/* Cuenta las derrotas consecutivas mas recientes (resultado = 0). */
+static int contar_derrotas_consecutivas(void)
+{
+    sqlite3_stmt *stmt;
+    int derrotas = 0;
+
+    if (!preparar_stmt(&stmt, "SELECT resultado FROM partido ORDER BY fecha_hora DESC LIMIT 5;"))
+    {
+        return 0;
     }
 
-    estado.partidos_consecutivos = partidos_consecutivos;
-    estado.dias_descanso = dias_sin_jugar;
-
-    // Evaluar derrotas consecutivas
-    const char *sql_derrotas = "SELECT resultado FROM partido ORDER BY fecha_hora DESC LIMIT 5;";
-    if (preparar_stmt(&stmt, sql_derrotas))
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        while (sqlite3_step(stmt) == SQLITE_ROW)
+        if (sqlite3_column_int(stmt, 0) != 0)
         {
-            int resultado = sqlite3_column_int(stmt, 0);
-            if (resultado == 0) // Derrota
-            {
-                derrotas_consecutivas++;
-            }
-            else
-            {
-                break; // Si no es derrota, salir
-            }
+            break;
         }
-        sqlite3_finalize(stmt);
-    }
-    estado.derrotas_consecutivas = derrotas_consecutivas;
-
-    // Evaluar riesgo de lesion basado en cansancio y partidos consecutivos
-    // Factor de descanso: reducir cansancio efectivo segun dias sin jugar
-    // 7 dias = 50% reduccion, 14+ dias = cansancio descartado
-    float factor_descanso = 1.0F;
-    if (estado.dias_descanso >= 14)
-    {
-        factor_descanso = 0.0F;
-    }
-    else if (estado.dias_descanso >= 7)
-    {
-        factor_descanso = 0.5F;
-    }
-    else if (estado.dias_descanso > 0)
-    {
-        factor_descanso = 1.0F - ((float)estado.dias_descanso / 14.0F);
+        derrotas++;
     }
 
-    float cansancio_efectivo = estado.cansancio_promedio * factor_descanso;
+    sqlite3_finalize(stmt);
+    return derrotas;
+}
+
+// Evaluar estado del jugador basado en datos historicos
+EstadoJugador evaluar_estado_jugador(void)
+{
+    EstadoJugador estado = {0};
+    int partidos_consecutivos = 0;
+
+    acumular_ultimos_partidos(&estado, &partidos_consecutivos);
+    estado.partidos_consecutivos = partidos_consecutivos;
+    estado.derrotas_consecutivas = contar_derrotas_consecutivas();
+
+    float cansancio_efectivo =
+        estado.cansancio_promedio * factor_descanso_por_dias(estado.dias_descanso);
 
     estado.riesgo_lesion = (cansancio_efectivo / 10.0F) +
                            ((float)estado.partidos_consecutivos / 3.0F) +
@@ -1169,15 +1186,8 @@ void activar_ia_antes_partido(void)
     // Esta funcion se llamaria antes de crear un partido
     EstadoJugador estado = evaluar_estado_jugador();
 
-    float factor_descanso_trigger = 1.0F;
-    if (estado.dias_descanso >= 14)
-        factor_descanso_trigger = 0.0F;
-    else if (estado.dias_descanso >= 7)
-        factor_descanso_trigger = 0.5F;
-    else if (estado.dias_descanso > 0)
-        factor_descanso_trigger = 1.0F - ((float)estado.dias_descanso / 14.0F);
-
-    float cansancio_trigger = estado.cansancio_promedio * factor_descanso_trigger;
+    float cansancio_trigger =
+        estado.cansancio_promedio * factor_descanso_por_dias(estado.dias_descanso);
 
     float umbral = umbral_riesgo_para_nivel(nivel);
     int riesgo_alto = estado.riesgo_lesion > umbral;

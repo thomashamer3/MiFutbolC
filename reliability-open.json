@@ -1,19 +1,7 @@
 {
-  "exportedAt": "2026-09-29T20:35:07Z",
+  "exportedAt": "2026-09-29T21:25:50Z",
   "project": "thomashamer3_MiFutbolC",
   "quality": "RELIABILITY",
-  "total": 1,
-  "issues": [
-    {
-      "rule": "c:S3519",
-      "severity": "BLOCKER",
-      "message": "Access of the string literal at index 4, while it holds only 4 'char' elements",
-      "file": "partido.c",
-      "line": 3147,
-      "status": "OPEN",
-      "quality": "RELIABILITY",
-      "effort": "5min",
-      "tags": "cert, cwe, symbolic-execution"
-    }
-  ]
+  "total": 0,
+  "issues": []
 }

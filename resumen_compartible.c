@@ -539,10 +539,15 @@ void menu_resumen_compartible(void)
     ejecutar_menu("RESUMEN COMPARTIBLE", items, 5);
 }
 
-void generar_resumen_html(void)
+/*
+ * Prepara los datos del perfil una sola vez y escribe el resumen en el formato
+ * pedido: Markdown cuando es_markdown es distinto de 0, HTML en caso contrario.
+ * Los dos formatos comparten toda la preparacion de datos.
+ */
+static void generar_resumen_formato(int es_markdown)
 {
     clear_screen();
-    print_header("RESUMEN HTML COMPARTIBLE");
+    print_header(es_markdown ? "RESUMEN MARKDOWN COMPARTIBLE" : "RESUMEN HTML COMPARTIBLE");
 
     if (!hay_registros("partido"))
     {
@@ -679,8 +684,107 @@ void generar_resumen_html(void)
         break;
     }
 
-    char *filepath = get_export_path("resumen_compartible.html");
-    FILE *f = NULL;
+    char *filepath;
+    FILE *f;
+
+    if (es_markdown)
+    {
+        filepath = get_export_path("resumen_compartible.md");
+        f = NULL;
+        fopen_s(&f, filepath, "w");
+        if (!f)
+        {
+            printf("Error al crear el archivo Markdown: %s\n", filepath);
+            pause_console();
+            return;
+        }
+
+        fprintf(f,
+                "# &#9917; Perfil Futbolistico de %s\n\n"
+                "> Generado por **MiFutbolC** v4.3 &mdash; %s\n\n"
+                "---\n\n"
+                "## &#128202; Estadisticas Generales\n\n"
+                "| Metrica | Valor |\n"
+                "|---------|-------|\n"
+                "| Partidos jugados | **%d** |\n"
+                "| Goles totales | **%d** |\n"
+                "| Asistencias totales | **%d** |\n"
+                "| Promedio goles/partido | **%.2f** |\n"
+                "| Promedio asistencias/partido | **%.2f** |\n\n"
+                "---\n\n"
+                "## &#127942; Rendimiento Destacado\n\n"
+                "| Detalle | Valor |\n"
+                "|---------|-------|\n"
+                "| Mejor rendimiento | **%d/10** |\n"
+                "| Fecha del mejor partido | %s |\n"
+                "| Camiseta favorita | %s |\n"
+                "| Cancha mas jugada | %s |\n"
+                "| Rival mas enfrentado | %s |\n"
+                "| Mejor posicion jugada | %s |\n\n"
+                "---\n\n"
+                "## &#128200; Resultados\n\n"
+                "| Resultado | Cantidad | Porcentaje |\n"
+                "|-----------|----------|------------|\n"
+                "| Victorias | **%d** | %.1f%% |\n"
+                "| Empates | **%d** | %.1f%% |\n"
+                "| Derrotas | **%d** | %.1f%% |\n\n"
+                "---\n\n"
+                "## &#127942; Ultimo Partido\n\n"
+                "| Detalle | Valor |\n"
+                "|---------|-------|\n"
+                "| Resultado | **%s** |\n"
+                "| Fecha | %s |\n"
+                "| Rival | %s |\n"
+                "| Goles | %d |\n"
+                "| Asistencias | %d |\n\n"
+                "---\n\n"
+                "## &#128200; Racha Actual\n\n"
+                "**%s**: %d partido%s consecutivo%s\n\n"
+                "_%s_\n\n"
+                "---\n\n"
+                "## &#127941; Perfil de Juego\n\n"
+                "| Detalle | Valor |\n"
+                "|---------|-------|\n"
+                "| Clima frecuente | %s |\n"
+                "| Torneo mas participado | %s |\n"
+                "| Lesiones registradas | **%s** |\n\n"
+                "---\n\n"
+                "## &#127919; Logros Desbloqueados\n\n"
+                "**%d** logros disponibles para desbloquear\n\n"
+                "---\n\n"
+                "*Generado el %s*\n",
+                jugador,
+                fecha_gen,
+                total_partidos, total_goles, total_asistencias,
+                promedio_goles, promedio_asistencias,
+                mejor_rendimiento,
+                mejor_fecha,
+                camiseta_fav, cancha_fav,
+                rival_fav, mejor_posicion,
+                victorias, total_partidos > 0 ? (double)victorias / total_partidos * 100.0 : 0.0,
+                empates, total_partidos > 0 ? (double)empates / total_partidos * 100.0 : 0.0,
+                derrotas, total_partidos > 0 ? (double)derrotas / total_partidos * 100.0 : 0.0,
+                ult_res_texto, ultimo_fecha, ultimo_rival, ult_goles, ult_asistencias,
+                racha_texto, racha_longitud,
+                (racha_longitud == 1) ? "" : "s",
+                (racha_longitud == 1) ? "" : "s",
+                racha_desc,
+                clima_fav, torneo_fav, lesiones_str,
+                logros_total,
+                fecha_gen);
+
+        fclose(f);
+
+        ui_printf("\nResumen Markdown generado correctamente.\n");
+        ui_printf("Archivo: %s\n\n", filepath);
+        mostrar_detalle_racha();
+        app_log_event("RESUMEN_COMPARTIBLE", "Resumen Markdown generado");
+        pause_console();
+        return;
+    }
+
+    filepath = get_export_path("resumen_compartible.html");
+    f = NULL;
     fopen_s(&f, filepath, "w");
     if (!f)
     {
@@ -966,228 +1070,14 @@ void generar_resumen_html(void)
     pause_console();
 }
 
+void generar_resumen_html(void)
+{
+    generar_resumen_formato(0);
+}
+
 void generar_resumen_markdown(void)
 {
-    clear_screen();
-    print_header("RESUMEN MARKDOWN COMPARTIBLE");
-
-    if (!hay_registros("partido"))
-    {
-        mostrar_no_hay_registros("partidos");
-        pause_console();
-        return;
-    }
-
-    char jugador[128];
-    obtener_nombre_jugador(jugador, sizeof(jugador));
-
-    int total_partidos = contar_total_partidos();
-    int total_goles = contar_total_goles();
-    int total_asistencias = contar_total_asistencias();
-
-    sqlite3_stmt *stmt;
-    int mejor_rendimiento = 0;
-    char mejor_fecha[64] = "N/A";
-
-    if (preparar_stmt(
-                "SELECT rendimiento_general, fecha_hora FROM partido "
-                "ORDER BY rendimiento_general DESC LIMIT 1;",
-                &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            mejor_rendimiento = sqlite3_column_int(stmt, 0);
-            const char *fecha_raw = (const char *)sqlite3_column_text(stmt, 1);
-            if (fecha_raw)
-            {
-                snprintf(mejor_fecha, sizeof(mejor_fecha), "%s", fecha_raw);
-            }
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    char tipo_racha;
-    int racha_longitud = calcular_racha_actual(&tipo_racha);
-    const char *racha_texto;
-    const char *racha_desc;
-    switch (tipo_racha)
-    {
-    case 'P':
-        racha_texto = "Positiva";
-        racha_desc = "Rendimiento destacado en los ultimos partidos";
-        break;
-    case 'N':
-        racha_texto = "Negativa";
-        racha_desc = "Momento dificil, pero siempre se puede dar la vuelta";
-        break;
-    default:
-        racha_texto = "Neutral";
-        racha_desc = "Resultados mixtos en los ultimos partidos";
-        break;
-    }
-
-    int logros_total = 0;
-    int logros_completados = 0;
-    obtener_progreso_logros(&logros_completados, &logros_total);
-
-    char fecha_gen[64];
-    get_datetime(fecha_gen, sizeof(fecha_gen));
-
-    char camiseta_fav[128];
-    obtener_camiseta_favorita(camiseta_fav, sizeof(camiseta_fav));
-
-    char cancha_fav[128];
-    obtener_cancha_favorita(cancha_fav, sizeof(cancha_fav));
-
-    double promedio_goles = total_partidos > 0 ? (double)total_goles / total_partidos : 0.0;
-    double promedio_asistencias =
-        total_partidos > 0 ? (double)total_asistencias / total_partidos : 0.0;
-
-    char rival_fav[128];
-    obtener_rival_favorito(rival_fav, sizeof(rival_fav));
-
-    int victorias = 0;
-    int empates = 0;
-    int derrotas = 0;
-    contar_resultados(&victorias, &empates, &derrotas);
-
-    char mejor_posicion[128];
-    obtener_mejor_posicion(mejor_posicion, sizeof(mejor_posicion));
-
-    char ultimo_fecha[64];
-    char ultimo_rival[128];
-    int ult_goles = 0;
-    int ult_asistencias = 0;
-    int ult_resultado = 0;
-    obtener_ultimo_partido(ultimo_fecha, sizeof(ultimo_fecha),
-                           ultimo_rival, sizeof(ultimo_rival),
-                           &ult_goles, &ult_asistencias, &ult_resultado);
-
-    char clima_fav[128];
-    obtener_clima_favorito(clima_fav, sizeof(clima_fav));
-
-    char torneo_fav[128];
-    obtener_torneo_favorito(torneo_fav, sizeof(torneo_fav));
-
-    int total_lesiones = contar_lesiones();
-    char lesiones_str[32];
-    if (total_lesiones == 0)
-    {
-        snprintf(lesiones_str, sizeof(lesiones_str), "Ninguna lesion registrada");
-    }
-    else
-    {
-        snprintf(lesiones_str, sizeof(lesiones_str), "%d lesion%s", total_lesiones, total_lesiones == 1 ? "" : "es");
-    }
-
-    const char *ult_res_texto;
-    switch (ult_resultado)
-    {
-    case 1:
-        ult_res_texto = "Victoria";
-        break;
-    case 2:
-        ult_res_texto = "Empate";
-        break;
-    case 3:
-        ult_res_texto = "Derrota";
-        break;
-    default:
-        ult_res_texto = "Sin datos";
-        break;
-    }
-
-    char *filepath = get_export_path("resumen_compartible.md");
-    FILE *f = NULL;
-    fopen_s(&f, filepath, "w");
-    if (!f)
-    {
-        printf("Error al crear el archivo Markdown: %s\n", filepath);
-        pause_console();
-        return;
-    }
-
-    fprintf(f,
-            "# &#9917; Perfil Futbolistico de %s\n\n"
-            "> Generado por **MiFutbolC** v4.3 &mdash; %s\n\n"
-            "---\n\n"
-            "## &#128202; Estadisticas Generales\n\n"
-            "| Metrica | Valor |\n"
-            "|---------|-------|\n"
-            "| Partidos jugados | **%d** |\n"
-            "| Goles totales | **%d** |\n"
-            "| Asistencias totales | **%d** |\n"
-            "| Promedio goles/partido | **%.2f** |\n"
-            "| Promedio asistencias/partido | **%.2f** |\n\n"
-            "---\n\n"
-            "## &#127942; Rendimiento Destacado\n\n"
-            "| Detalle | Valor |\n"
-            "|---------|-------|\n"
-            "| Mejor rendimiento | **%d/10** |\n"
-            "| Fecha del mejor partido | %s |\n"
-            "| Camiseta favorita | %s |\n"
-            "| Cancha mas jugada | %s |\n"
-            "| Rival mas enfrentado | %s |\n"
-            "| Mejor posicion jugada | %s |\n\n"
-            "---\n\n"
-            "## &#128200; Resultados\n\n"
-            "| Resultado | Cantidad | Porcentaje |\n"
-            "|-----------|----------|------------|\n"
-            "| Victorias | **%d** | %.1f%% |\n"
-            "| Empates | **%d** | %.1f%% |\n"
-            "| Derrotas | **%d** | %.1f%% |\n\n"
-            "---\n\n"
-            "## &#127942; Ultimo Partido\n\n"
-            "| Detalle | Valor |\n"
-            "|---------|-------|\n"
-            "| Resultado | **%s** |\n"
-            "| Fecha | %s |\n"
-            "| Rival | %s |\n"
-            "| Goles | %d |\n"
-            "| Asistencias | %d |\n\n"
-            "---\n\n"
-            "## &#128200; Racha Actual\n\n"
-            "**%s**: %d partido%s consecutivo%s\n\n"
-            "_%s_\n\n"
-            "---\n\n"
-            "## &#127941; Perfil de Juego\n\n"
-            "| Detalle | Valor |\n"
-            "|---------|-------|\n"
-            "| Clima frecuente | %s |\n"
-            "| Torneo mas participado | %s |\n"
-            "| Lesiones registradas | **%s** |\n\n"
-            "---\n\n"
-            "## &#127919; Logros Desbloqueados\n\n"
-            "**%d** logros disponibles para desbloquear\n\n"
-            "---\n\n"
-            "*Generado el %s*\n",
-            jugador,
-            fecha_gen,
-            total_partidos, total_goles, total_asistencias,
-            promedio_goles, promedio_asistencias,
-            mejor_rendimiento,
-            mejor_fecha,
-            camiseta_fav, cancha_fav,
-            rival_fav, mejor_posicion,
-            victorias, total_partidos > 0 ? (double)victorias / total_partidos * 100.0 : 0.0,
-            empates, total_partidos > 0 ? (double)empates / total_partidos * 100.0 : 0.0,
-            derrotas, total_partidos > 0 ? (double)derrotas / total_partidos * 100.0 : 0.0,
-            ult_res_texto, ultimo_fecha, ultimo_rival, ult_goles, ult_asistencias,
-            racha_texto, racha_longitud,
-            (racha_longitud == 1) ? "" : "s",
-            (racha_longitud == 1) ? "" : "s",
-            racha_desc,
-            clima_fav, torneo_fav, lesiones_str,
-            logros_total,
-            fecha_gen);
-
-    fclose(f);
-
-    ui_printf("\nResumen Markdown generado correctamente.\n");
-    ui_printf("Archivo: %s\n\n", filepath);
-    mostrar_detalle_racha();
-    app_log_event("RESUMEN_COMPARTIBLE", "Resumen Markdown generado");
-    pause_console();
+    generar_resumen_formato(1);
 }
 
 void generar_resumen_estadisticas(void)

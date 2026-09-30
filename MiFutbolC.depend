@@ -163,7 +163,7 @@
 
 1790719046 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1790725629 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1790728217 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -2107,7 +2107,7 @@
 	<stdlib.h>
 	<string.h>
 
-1790722191 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
+1790728225 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\entrenador_ia.c
 	"entrenador_ia.h"
 	"db.h"
 	"menu.h"
@@ -3080,7 +3080,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1785290206 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1790728572 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"
