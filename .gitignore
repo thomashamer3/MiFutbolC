@@ -57,3 +57,5 @@ compile_commands.json
 cppcheck_report.txt
 .atl/
 .codegraph/
+duplications.json
+maintainability-open.json
