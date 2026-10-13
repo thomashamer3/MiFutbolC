@@ -863,7 +863,8 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep)
  * Renderiza la pagina indicada y devuelve cuantas filas mostro.
  */
 static int listado_render_pagina(const char *sql_pagina, ListadoFilaFn render_fila, void *ctx,
-                                 int pagina_actual)
+                                 int pagina_actual, int *ids_pagina, int ids_capacidad,
+                                 const char *filtro_texto)
 {
     sqlite3_stmt *stmt = NULL;
     int filas_pagina = 0;
@@ -874,11 +875,20 @@ static int listado_render_pagina(const char *sql_pagina, ListadoFilaFn render_fi
         return 0;
     }
 
-    sqlite3_bind_int(stmt, 1, LISTADO_POR_PAGINA);
-    sqlite3_bind_int(stmt, 2, offset);
+    int indice = 1;
+    if (filtro_texto)
+    {
+        sqlite3_bind_text(stmt, indice++, filtro_texto, -1, DB_TRANSIENT);
+    }
+    sqlite3_bind_int(stmt, indice++, LISTADO_POR_PAGINA);
+    sqlite3_bind_int(stmt, indice++, offset);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        if (ids_pagina && filas_pagina < ids_capacidad)
+        {
+            ids_pagina[filas_pagina] = sqlite3_column_int(stmt, 0);
+        }
         render_fila(stmt, ctx);
         filas_pagina++;
     }
@@ -954,19 +964,29 @@ static int listado_procesar_opcion(int opcion, int total_paginas, int *pagina_ac
 int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
                      ListadoFilaFn render_fila, void *ctx)
 {
-    if (!titulo || !sql_conteo || !sql_pagina || !render_fila)
+    ListadoConfig cfg = {titulo, sql_conteo, sql_pagina, render_fila, NULL, NULL, NULL, ctx, NULL};
+    return listado_paginado_config(&cfg);
+}
+
+int listado_paginado_config(const ListadoConfig *cfg)
+{
+    if (!cfg || !cfg->titulo || !cfg->sql_conteo || !cfg->sql_pagina || !cfg->render_fila)
     {
         return 0;
     }
 
     clear_screen();
-    print_header(titulo);
+    print_header(cfg->titulo);
 
     sqlite3_stmt *stmt = NULL;
     int total = 0;
 
-    if (db_prepare_stmt(&stmt, sql_conteo))
+    if (db_prepare_stmt(&stmt, cfg->sql_conteo))
     {
+        if (cfg->filtro_texto)
+        {
+            sqlite3_bind_text(stmt, 1, cfg->filtro_texto, -1, DB_TRANSIENT);
+        }
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             total = sqlite3_column_int(stmt, 0);
@@ -986,17 +1006,56 @@ int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql
     while (1)
     {
         clear_screen();
-        print_header(titulo);
+        print_header(cfg->titulo);
         ui_printf_centered_line("Pagina %d de %d | Total: %d", pagina_actual, total_paginas, total);
 
-        filas_ultima_pagina = listado_render_pagina(sql_pagina, render_fila, ctx, pagina_actual);
+        int ids_pagina[LISTADO_POR_PAGINA];
+        filas_ultima_pagina = listado_render_pagina(cfg->sql_pagina, cfg->render_fila, cfg->ctx,
+                              pagina_actual, ids_pagina, LISTADO_POR_PAGINA, cfg->filtro_texto);
 
+        if (cfg->resumen)
+        {
+            cfg->resumen(cfg->ctx);
+        }
+
+        ui_printf_centered_line("0) Volver");
         ui_printf_centered_line("1) Pagina anterior");
         ui_printf_centered_line("2) Pagina siguiente");
         ui_printf_centered_line("3) Ir a pagina");
-        ui_printf_centered_line("0) Volver");
+        if (cfg->detalle)
+        {
+            ui_printf_centered_line("4) Ver detalle de una fila");
+        }
+        if (cfg->exportar)
+        {
+            ui_printf_centered_line("5) Exportar este listado");
+        }
 
         int opcion = input_int("Opcion: ");
+
+        if (cfg->detalle && opcion == 4)
+        {
+            int fila = input_int("Numero de fila: ");
+            if (fila >= 1 && fila <= filas_ultima_pagina)
+            {
+                if (!cfg->detalle(ids_pagina[fila - 1], cfg->ctx))
+                {
+                    break;
+                }
+            }
+            else
+            {
+                ui_printf_centered_line("Fila invalida.");
+                pause_console();
+            }
+            continue;
+        }
+
+        if (cfg->exportar && opcion == 5)
+        {
+            cfg->exportar(cfg->ctx);
+            continue;
+        }
 
         if (!listado_procesar_opcion(opcion, total_paginas, &pagina_actual))
         {

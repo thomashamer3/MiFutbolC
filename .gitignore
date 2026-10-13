@@ -59,3 +59,4 @@ cppcheck_report.txt
 .codegraph/
 duplications.json
 maintainability-open.json
+SDD.md

@@ -4,6 +4,7 @@
 
 #include "unity/unity.h"
 #include "camiseta.h"
+#include "export_camisetas.h"
 #include "menu.h"
 
 void setUp(void) { /* No setup needed */ }
@@ -18,6 +19,7 @@ static void test_camiseta_functions_exist(void)
     TEST_ASSERT_NOT_NULL(sortear_camiseta);
     TEST_ASSERT_NOT_NULL(cargar_imagen_camiseta);
     TEST_ASSERT_NOT_NULL(ver_imagen_camiseta);
+    TEST_ASSERT_NOT_NULL(exportar_camisetas_filtrado_all);
 }
 
 typedef void (*MenuFunc)(void);
@@ -65,6 +67,19 @@ static void test_menu_camisetas_titulo_not_empty(void)
     TEST_ASSERT_TRUE(capture.titulo[0] != '\0');
 }
 
+static void test_menu_camisetas_has_grafico_uso(void)
+{
+    MenuTestCapture capture = {0};
+    menu_test_set_capture(&capture);
+
+    menu_camisetas();
+
+    menu_test_set_capture(NULL);
+    TEST_ASSERT_NOT_NULL(capture.titulo);
+    TEST_ASSERT_TRUE(capture.cantidad >= 13);
+    TEST_ASSERT_TRUE(capture.last_item.accion == NULL);
+}
+
 static void test_submenu_sorteo_tiene_reiniciar(void)
 {
     MenuTestCapture capture = {0};
@@ -88,6 +103,7 @@ int main(void)
     RUN_TEST(test_menu_camisetas_smoke);
     RUN_TEST(test_menu_camisetas_has_crear_option);
     RUN_TEST(test_menu_camisetas_titulo_not_empty);
+    RUN_TEST(test_menu_camisetas_has_grafico_uso);
     RUN_TEST(test_submenu_sorteo_tiene_reiniciar);
 
     return UNITY_END();

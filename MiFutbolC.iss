@@ -4,13 +4,13 @@
 ; ================================
 
 #define MyAppName "MiFutbolC"
-#define MyAppVersion "4.3.1"
+#define MyAppVersion "4.5"
 #define MyAppPublisher "Thomas Hamer"
 #define MyAppURL "https://github.com/thomashamer3/MiFutbolC"
 #define MyAppExeName "MiFutbolC.exe"
 
 [Setup]
-AppId={{B8F7E2E3-AD8C-5D9F-C8DA-234567890BCD}}
+AppId={{B8F7E2E3-AD8C-5D9F-C8DA-234567890BCD}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 
@@ -38,6 +38,12 @@ InternalCompressLevel=max
 
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64os
+ArchitecturesAllowed=x64compatible
+
+; Cerrar la app si está en ejecución antes de reemplazar archivos,
+; pero no reabrirla automáticamente al terminar.
+CloseApplications=yes
+RestartApplications=no
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
@@ -63,7 +69,9 @@ Source: "langs\*"; DestDir: "{app}\langs"; Flags: ignoreversion recursesubdirs c
 ; ================================
 
 [Dirs]
-Name: "{localappdata}\MiFutbolC\data"
+; La carpeta de datos del usuario (bases .db y users.db) NUNCA se borra al
+; desinstalar para no perder partidos, camisetas, perfiles ni estadísticas.
+Name: "{localappdata}\MiFutbolC\data"; Flags: uninsneveruninstall
 Name: "{app}\Musica"
 
 ; ================================
@@ -93,7 +101,6 @@ Filename: "{app}\{#MyAppExeName}"; Description: "Ejecutar MiFutbolC"; Flags: now
 ; ================================
 ; LIMPIEZA AL DESINSTALAR
 ; ================================
-
-[UninstallDelete]
-
-Type: filesandordirs; Name: "{localappdata}\MiFutbolC"
+; El bloque [UninstallDelete] se eliminó a propósito: la carpeta
+; "{localappdata}\MiFutbolC" contiene la base de datos del usuario y no debe
+; borrarse al desinstalar. Solo se elimina lo instalado en {app}.

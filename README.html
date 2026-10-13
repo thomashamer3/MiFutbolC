@@ -21,13 +21,13 @@
   <h1 id="mifutbolc---sistema-integral-de-gestión-de-fútbol">⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol</h1>
   <p class="subtitle"><strong>Sistema completo de gestión, análisis y simulación de datos futbolísticos desarrollado en C</strong></p>
   <div class="meta">
-    <span>Versión: 4.3</span>
-    <span>Julio 2026</span>
+    <span>Versión: 4.5</span>
+    <span>Octubre 2026</span>
     <span>Autor: Thomas Hamer</span>
     <span><a href="https://github.com/thomashamer3/MiFutbolC">github.com/thomashamer3/MiFutbolC</a></span>
   </div>
   <p>
-    <img src="https://img.shields.io/badge/version-4.3-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/version-4.5-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/language-C-orange.svg" alt="Language" />
     <img src="https://img.shields.io/badge/database-SQLite3-green.svg" alt="Database" />
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg" alt="Platform" />
@@ -47,7 +47,7 @@
 
 <div class="card-grid">
   <div class="card">
-    <div class="card-value">158</div>
+    <div class="card-value">160</div>
     <div class="card-label">Archivos .c + .h</div>
   </div>
   <div class="card card-info">
@@ -59,7 +59,7 @@
     <div class="card-label">Formatos Exportación</div>
   </div>
   <div class="card card-warning">
-    <div class="card-value">v4.3</div>
+    <div class="card-value">v4.5</div>
     <div class="card-label">Versión</div>
   </div>
 </div>
@@ -68,7 +68,7 @@
   <h2>Tabla de Contenidos</h2>
   <ul>
     <li><a href="#descripción">📋 Descripción</a></li>
-    <li><a href="#últimos-cambios-v4.3">🆕 Últimos Cambios (v4.3)</a></li>
+    <li><a href="#últimos-cambios-v4.5">🆕 Últimos Cambios (v4.5)</a></li>
     <li><a href="#características-principales">✨ Características Principales</a></li>
     <li><a href="#tecnologías-utilizadas">🛠️ Tecnologías Utilizadas</a></li>
     <li><a href="#instalación-y-compilación">🚀 Instalación y Compilación</a></li>
@@ -77,6 +77,7 @@
     <li><a href="#estructura-del-proyecto">📁 Estructura del Proyecto</a></li>
     <li><a href="#base-de-datos">🗄️ Base de Datos</a></li>
     <li><a href="#módulo-de-estadísticas">📊 Módulo de Estadísticas</a></li>
+    <li><a href="#módulo-de-estadísticas-de-canchas">🏟️ Módulo de Estadísticas de Canchas</a></li>
     <li><a href="#módulo-de-análisis-de-rendimiento">📈 Módulo de Análisis de Rendimiento</a></li>
     <li><a href="#sistema-de-logros-y-badges">🏅 Sistema de Logros y Badges</a></li>
     <li><a href="#módulo-de-gestión-de-equipos">👥 Módulo de Gestión de Equipos</a></li>
@@ -134,9 +135,15 @@
 <p>El sistema utiliza <strong>SQLite3</strong> como base de datos para almacenamiento persistente y eficiente, <strong>cJSON</strong> para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.</p>
 </section>
 
-<section id="últimos-cambios-v4.3">
-<h2>🆕 Últimos Cambios (v4.3) <span class="badge badge-info">v4.3</span></h2>
+<section id="últimos-cambios-v4.5">
+<h2>🆕 Últimos Cambios (v4.5) <span class="badge badge-info">v4.5</span></h2>
 <ul>
+<li><strong>Estadísticas de Canchas (módulo nuevo)</strong>: <code>estadisticas_canchas.c/.h</code> con 10 reportes — <strong>Resumen General</strong>, <strong>Canchas Más Usadas</strong>, <strong>Canchas Menos Usadas</strong>, <strong>Rendimiento por Cancha</strong>, <strong>Goles y Asistencias por Cancha</strong>, <strong>Rendimiento por Tipo</strong>, <strong>Rendimiento por Superficie</strong>, <strong>Techadas vs Descubiertas</strong>, <strong>Partidos por Localidad</strong> y <strong>Partidos por Franja Horaria</strong>. Acceso: Menú principal → <strong>Estadísticas</strong> → <strong>Canchas</strong>.</li>
+<li><strong>Listado de Canchas renovado</strong>: filtro previo (<strong>Todas / Solo activas / Solo inactivas</strong>), columnas de <strong>Victorias/Empates/Derrotas con porcentaje</strong>, separador por cancha, <strong>resumen al pie</strong>, <strong>"Ver detalle de una fila"</strong> y <strong>"Exportar este listado"</strong> respetando el filtro (TXT/CSV/JSON/HTML/PDF).</li>
+<li><strong>Listado de Camisetas renovado</strong>: filtro por estado y <strong>orden configurable</strong> (por ID, nombre, partidos jugados, goles o victorias); cada fila muestra <strong>Victorias/Empates/Derrotas con porcentaje</strong> y <strong>Prom (Goles+Asist)/Partido</strong>; marca camisetas <strong><code>[INACTIVA]</code></strong>, <strong><code>(sin uso)</code></strong> y <strong><code>&gt;&gt;&gt; MAS EFECTIVA &lt;&lt;&lt;</code></strong>; incluye resumen al pie, detalle de una fila y exportación del listado.</li>
+<li><strong>Gráfico de Uso de Camisetas (ASCII)</strong>: nuevo ítem <strong>"Grafico de Uso"</strong> en el menú Camisetas que dibuja un gráfico de barras con los partidos jugados por camiseta (motor <code>ascii_charts</code>).</li>
+<li><strong>Listados reutilizables mejorados</strong>: el helper compartido <code>listado_paginado_config()</code> admite resumen al pie, apertura de detalle, exportación del listado y filtro de texto parametrizado (<code>LIKE</code>); la opción <strong><code>0) Volver</code></strong> aparece primero y al elegirla vuelve al menú sin el mensaje "Presione ENTER para continuar...".</li>
+<li><strong>Exportación filtrada de Camisetas</strong>: <code>exportar_camisetas_filtrado_all()</code> exporta solo el conjunto listado (estado y búsqueda) reutilizando los formatos y columnas de la exportación completa.</li>
 <li><strong>Nuevos módulos independientes</strong>: Botines, Records &amp; Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central con calendario integrado.</li>
 <li><strong>Carrera Futbolística ampliada</strong>: nueva ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y <strong>Modo Retro: Hoy en tu Historia</strong>.</li>
 <li><strong>Canchas con exportación avanzada</strong>: exportación de información de canchas en <strong>TXT, CSV, JSON, HTML y PDF</strong> desde el propio módulo.</li>
@@ -233,6 +240,14 @@
 <li>Partidos especiales y extremos</li>
 <li>Top 5 mejores partidos por rendimiento</li>
 <li>Ranking de camisetas (partidos, victorias/empates/derrotas, winrate)</li>
+</ul>
+<h4 id="estadísticas-de-canchas">Estadísticas de Canchas</h4>
+<ul>
+<li><strong>Resumen General</strong>: canchas registradas, activas/inactivas, canchas físicas, uso y partidos</li>
+<li><strong>Ranking de Canchas</strong>: más usadas y menos usadas (incluye canchas sin uso)</li>
+<li><strong>Rendimiento por Cancha</strong>: rendimiento general promedio y goles/asistencias por cancha</li>
+<li><strong>Segmentación</strong>: rendimiento por <strong>tipo</strong> de cancha, por <strong>superficie</strong> y <strong>techadas vs descubiertas</strong></li>
+<li><strong>Distribución</strong>: partidos por <strong>localidad</strong> y por <strong>franja horaria</strong></li>
 </ul>
 <h4 id="química-entre-jugadores">Química entre Jugadores</h4>
 <ul>
@@ -1425,6 +1440,23 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Camiseta con más Goles + Asistencias</strong>: Combina goles y asistencias para determinar la camiseta con mejor rendimiento global.</li>
 </ul>
 <p>Las estadísticas se calculan en tiempo real mediante consultas SQL que unen las tablas de partidos y camisetas.</p>
+</details>
+
+<details id="módulo-de-estadísticas-de-canchas">
+<summary><h2>🏟️ Módulo de Estadísticas de Canchas <span class="badge badge-ok">Nuevo v4.5</span></h2></summary>
+<p>El módulo <code>estadisticas_canchas.c/.h</code> (nuevo en v4.5) analiza el uso y el rendimiento de las canchas combinando las tablas <code>cancha</code> y <code>partido</code>. Se accede desde <strong>Estadísticas → Canchas</strong>:</p>
+<ul>
+<li><strong>Resumen General</strong>: canchas registradas, activas e inactivas, canchas físicas, con/sin uso y partidos registrados.</li>
+<li><strong>Canchas Más Usadas</strong>: ranking (top 10) por partidos jugados, con goles, asistencias y rendimiento promedio.</li>
+<li><strong>Canchas Menos Usadas</strong>: incluye canchas sin partidos registrados.</li>
+<li><strong>Rendimiento por Cancha</strong>: rendimiento general promedio agrupado por cancha.</li>
+<li><strong>Goles y Asistencias por Cancha</strong>: totales y promedio (goles+asistencias) por partido.</li>
+<li><strong>Rendimiento por Tipo de Cancha</strong>: agrupado por código de tipo (F5/F7/F8/F11/Otro).</li>
+<li><strong>Rendimiento por Superficie</strong>: grupo natural, sintético, cemento u otra.</li>
+<li><strong>Techadas vs Descubiertas</strong>: comparativa de uso y rendimiento.</li>
+<li><strong>Partidos por Localidad</strong>: distribución por zona de la cancha.</li>
+<li><strong>Partidos por Franja Horaria</strong>: distribución de partidos por hora.</li>
+</ul>
 </details>
 
 <details id="módulo-de-análisis-de-rendimiento">

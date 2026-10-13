@@ -1,13 +1,16 @@
 #include "camiseta.h"
+#include "ascii_charts.h"
 #include "db.h"
+#include "export_camisetas.h"
 #include "menu.h"
 #include "settings.h"
 #include "utils.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
+
 #ifndef _WIN32
 #include <spawn.h>
 #include <sys/wait.h>
@@ -1070,7 +1073,8 @@ static void crear_camiseta_simple(void)
                  nombre);
         app_log_event("CAMISETA", log_msg);
 
-        if (confirmar("Desea cargar imagen para esta camiseta ahora?") && !cargar_imagen_para_camiseta_id((int)id))
+        if (confirmar("Desea cargar imagen para esta camiseta ahora?") &&
+                !cargar_imagen_para_camiseta_id((int)id))
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }
@@ -1235,39 +1239,312 @@ static int cargar_imagen_para_camiseta_id(int id)
     return app_cargar_imagen_entidad(id, "camiseta", "mifutbol_imagen_sel.txt");
 }
 
+typedef struct
+{
+    const char *sep;
+    int filtro_estado;
+    int mejor_id;
+    const char *where;
+    const char *filtro_texto;
+} CamisetaListadoCtx;
+
+static const char *camiseta_order_clause(int orden)
+{
+    switch (orden)
+    {
+    case 2:
+        return "ORDER BY c.nombre ASC, c.id ASC";
+    case 3:
+        return "ORDER BY total_partidos DESC, c.id ASC";
+    case 4:
+        return "ORDER BY total_goles DESC, c.id ASC";
+    case 5:
+        return "ORDER BY victorias DESC, c.id ASC";
+    default:
+        return "ORDER BY c.id ASC";
+    }
+}
+
+static int camiseta_mejor_efectiva_id(const char *where_clause, const char *filtro_texto)
+{
+    char sql[1024];
+    sqlite3_stmt *stmt = NULL;
+    int id = -1;
+
+    snprintf(sql, sizeof(sql),
+             "SELECT c.id FROM camiseta c LEFT JOIN partido p ON c.id = p.camiseta_id %s"
+             "GROUP BY c.id HAVING COUNT(p.id) > 0 "
+             "ORDER BY (IFNULL(SUM(p.goles), 0) + IFNULL(SUM(p.asistencias), 0)) DESC LIMIT 1",
+             where_clause);
+
+    if (!preparar_stmt(&stmt, sql))
+    {
+        return -1;
+    }
+
+    if (filtro_texto)
+    {
+        sqlite3_bind_text(stmt, 1, filtro_texto, -1, DB_TRANSIENT);
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        id = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return id;
+}
+
 static void render_camiseta_fila(sqlite3_stmt *stmt, void *ctx)
 {
-    const char *sep = (const char *)ctx;
-    ui_print_stats_row_from_stmt(stmt, sep);
+    const CamisetaListadoCtx *lista = (const CamisetaListadoCtx *)ctx;
+    const char *sep = lista && lista->sep ? lista->sep : " | ";
+    int id = sqlite3_column_int(stmt, 0);
+    const char *nombre = (const char *)sqlite3_column_text(stmt, 1);
+    int activa = sqlite3_column_int(stmt, 2);
+    int partidos = sqlite3_column_int(stmt, 3);
+    int goles = sqlite3_column_int(stmt, 4);
+    int asistencias = sqlite3_column_int(stmt, 5);
+    int victorias = sqlite3_column_int(stmt, 6);
+    int empates = sqlite3_column_int(stmt, 7);
+    int derrotas = sqlite3_column_int(stmt, 8);
+    double pv = partidos > 0 ? (double)victorias * 100.0 / partidos : 0.0;
+    double pe = partidos > 0 ? (double)empates * 100.0 / partidos : 0.0;
+    double pd = partidos > 0 ? (double)derrotas * 100.0 / partidos : 0.0;
+    double prom = partidos > 0 ? (double)(goles + asistencias) / partidos : 0.0;
+    const char *etiqueta = "";
+
+    if (!activa)
+    {
+        etiqueta = " [INACTIVA]";
+    }
+    else if (partidos == 0)
+    {
+        etiqueta = " (sin uso)";
+    }
+
+    ui_printf_centered_line("%2d - %-22s%s%sPartidos: %2d%sGoles: %2d%sAsist: %2d", id,
+                            nombre ? nombre : "(sin nombre)", etiqueta, sep, partidos, sep, goles,
+                            sep, asistencias);
+    ui_printf_centered_line("Victoria: %2d (%.1f%%)%sEmpate: %2d (%.1f%%)%sDerrota: %2d "
+                            "(%.1f%%)%sProm (Goles+Asist)/Partido: %.2f",
+                            victorias, pv, sep, empates, pe, sep, derrotas, pd, sep, prom);
+    if (lista && id == lista->mejor_id)
+    {
+        ui_printf_centered_line("     >>> MAS EFECTIVA (mayor goles+asistencias) <<<");
+    }
+    ui_printf_centered_line("======================================================================"
+                            "==========================");
+}
+
+static int camiseta_listado_resumen(void *ctx)
+{
+    const CamisetaListadoCtx *lista = (const CamisetaListadoCtx *)ctx;
+    sqlite3_stmt *stmt = NULL;
+    char sql[1200];
+
+    if (!lista)
+    {
+        return 1;
+    }
+
+    printf("\n");
+    ui_printf_centered_line("---- RESUMEN ----");
+
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*), IFNULL(SUM(tp), 0), IFNULL(SUM(tg), 0), IFNULL(SUM(ta), 0), "
+             "IFNULL(SUM(v), 0), IFNULL(SUM(e), 0), IFNULL(SUM(d), 0) FROM ("
+             "SELECT COUNT(p.id) AS tp, IFNULL(SUM(p.goles), 0) AS tg, "
+             "IFNULL(SUM(p.asistencias), 0) AS ta, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0) AS v, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0) AS e, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) AS d "
+             "FROM camiseta c LEFT JOIN partido p ON c.id = p.camiseta_id %s GROUP BY c.id)",
+             lista->where);
+
+    if (db_prepare_stmt(&stmt, sql))
+    {
+        if (lista->filtro_texto)
+        {
+            sqlite3_bind_text(stmt, 1, lista->filtro_texto, -1, DB_TRANSIENT);
+        }
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            int camisetas = sqlite3_column_int(stmt, 0);
+            int partidos = sqlite3_column_int(stmt, 1);
+            int goles = sqlite3_column_int(stmt, 2);
+            int asistencias = sqlite3_column_int(stmt, 3);
+            int victorias = sqlite3_column_int(stmt, 4);
+            int empates = sqlite3_column_int(stmt, 5);
+            int derrotas = sqlite3_column_int(stmt, 6);
+            ui_printf_centered_line("Camisetas: %d | Partidos: %d | Goles: %d | Asistencias: %d",
+                                    camisetas, partidos, goles, asistencias);
+            ui_printf_centered_line(
+                "V: %d (%.1f%%) | E: %d (%.1f%%) | D: %d (%.1f%%)", victorias,
+                partidos > 0 ? (double)victorias * 100.0 / partidos : 0.0, empates,
+                partidos > 0 ? (double)empates * 100.0 / partidos : 0.0, derrotas,
+                partidos > 0 ? (double)derrotas * 100.0 / partidos : 0.0);
+        }
+        db_stmt_release(stmt);
+    }
+
+    return 1;
+}
+
+static int camiseta_listado_detalle(int id, void *ctx)
+{
+    (void)ctx;
+
+    if (!existe_id("camiseta", id))
+    {
+        mostrar_no_existe("camiseta");
+        pause_console();
+        return 1;
+    }
+
+    CamisetaInfoDetalle info;
+    if (!cargar_info_camiseta_detalle(id, &info))
+    {
+        printf("No se pudo recuperar la informacion de la camiseta.\n");
+        pause_console();
+        return 1;
+    }
+
+    clear_screen();
+    print_header("INFORMACION DE CAMISETA");
+    imprimir_info_camiseta_detalle(id, &info);
+    pause_console();
+    return 1;
+}
+
+static int camiseta_listado_exportar(void *ctx)
+{
+    const CamisetaListadoCtx *lista = (const CamisetaListadoCtx *)ctx;
+    int filtro_estado = lista ? lista->filtro_estado : 0;
+    const char *filtro_texto = lista ? lista->filtro_texto : NULL;
+
+    exportar_camisetas_filtrado_all(filtro_estado, filtro_texto);
+    mostrar_alerta_operacion("Camiseta", "Listado Exportado", NULL);
+    return 1;
 }
 
 static void listar_camisetas_con_stats(void)
 {
+    if (!hay_registros("camiseta"))
+    {
+        mostrar_no_hay_registros("camisetas cargadas");
+        pause_console();
+        return;
+    }
+
+    mostrar_pantalla("FILTRAR CAMISETAS");
+    printf("1) Todas las camisetas\n");
+    printf("2) Solo activas\n");
+    printf("3) Solo inactivas\n");
+    printf("0) Cancelar\n");
+
+    int opcion_estado = input_int("Opcion: ");
+    if (opcion_estado == 0 || opcion_estado == -1)
+    {
+        return;
+    }
+    if (opcion_estado < 1 || opcion_estado > 3)
+    {
+        printf("Opcion invalida.\n");
+        pause_console();
+        return;
+    }
+    int filtro_estado = opcion_estado - 1;
+
+    mostrar_pantalla("ORDENAR CAMISETAS");
+    printf("1) Por ID\n");
+    printf("2) Por nombre\n");
+    printf("3) Por partidos jugados\n");
+    printf("4) Por goles\n");
+    printf("5) Por victorias\n");
+    printf("0) Cancelar\n");
+
+    int orden = input_int("Opcion: ");
+    if (orden == 0 || orden == -1)
+    {
+        return;
+    }
+    if (orden < 1 || orden > 5)
+    {
+        printf("Opcion invalida.\n");
+        pause_console();
+        return;
+    }
+
+    char where_cond[512];
+    char where_clause[600];
+    size_t usados = 0;
+    where_cond[0] = '\0';
+
+    if (filtro_estado == 1)
+    {
+        usados += (size_t)snprintf(where_cond + usados, sizeof(where_cond) - usados,
+                                   "IFNULL(c.activa, 1) = 1");
+    }
+    else if (filtro_estado == 2)
+    {
+        usados += (size_t)snprintf(where_cond + usados, sizeof(where_cond) - usados,
+                                   "IFNULL(c.activa, 1) = 0");
+    }
+
+    const char *filtro_texto = NULL;
+
+    if (where_cond[0] != '\0')
+    {
+        snprintf(where_clause, sizeof(where_clause), "WHERE %s ", where_cond);
+    }
+    else
+    {
+        where_clause[0] = '\0';
+    }
+
     int usar_unicode = consola_soporta_unicode();
-    /* Buffer mutable: se pasa como contexto sin descartar el const (S859) */
     char sep[8];
     snprintf(sep, sizeof(sep), "%s", usar_unicode ? " \u2502 " : " | ");
 
-    int filas = listado_paginado(
-                    "LISTADO DE CAMISETAS",
-                    "SELECT COUNT(*) FROM camiseta WHERE IFNULL(activa, 1) = 1;",
-                    "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
-                    "COUNT(p.id), "
-                    "IFNULL(SUM(p.goles), 0), "
-                    "IFNULL(SUM(p.asistencias), 0), "
-                    "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
-                    "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
-                    "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) "
-                    "FROM camiseta c "
-                    "LEFT JOIN partido p ON c.id = p.camiseta_id "
-                    "WHERE IFNULL(c.activa, 1) = 1 "
-                    "GROUP BY c.id, c.nombre "
-                    "ORDER BY c.id LIMIT ? OFFSET ?",
-                    render_camiseta_fila, sep);
+    CamisetaListadoCtx lista = {sep, filtro_estado,
+                                camiseta_mejor_efectiva_id(where_clause, filtro_texto),
+                                where_clause, filtro_texto
+                               };
 
+    char sql_conteo[700];
+    char sql_pagina[1600];
+    snprintf(sql_conteo, sizeof(sql_conteo), "SELECT COUNT(*) FROM camiseta c %s;", where_clause);
+    snprintf(sql_pagina, sizeof(sql_pagina),
+             "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
+             "COUNT(p.id) AS total_partidos, "
+             "IFNULL(SUM(p.goles), 0) AS total_goles, "
+             "IFNULL(SUM(p.asistencias), 0) AS total_asistencias, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0) AS victorias, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0) AS empates, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) AS derrotas "
+             "FROM camiseta c LEFT JOIN partido p ON c.id = p.camiseta_id %s"
+             "GROUP BY c.id, c.nombre %s LIMIT ? OFFSET ?",
+             where_clause, camiseta_order_clause(orden));
+
+    ListadoConfig cfg = {"LISTADO DE CAMISETAS",
+                         sql_conteo,
+                         sql_pagina,
+                         render_camiseta_fila,
+                         camiseta_listado_resumen,
+                         camiseta_listado_detalle,
+                         camiseta_listado_exportar,
+                         &lista,
+                         filtro_texto
+                        };
+
+    int filas = listado_paginado_config(&cfg);
     if (filas == 0)
     {
-        mostrar_no_hay_registros("camisetas cargadas");
+        mostrar_no_hay_registros("camisetas con ese filtro");
+        pause_console();
     }
 }
 
@@ -1276,6 +1553,52 @@ void listar_camisetas(void)
     app_log_event("CAMISETA", "Listado de camisetas consultado");
 
     listar_camisetas_con_stats();
+}
+
+static void mostrar_grafico_uso_camisetas(void)
+{
+    enum
+    {
+        CAMISETA_GRAFICO_MAX = 12
+    };
+    double valores[CAMISETA_GRAFICO_MAX];
+    const char *etiquetas[CAMISETA_GRAFICO_MAX];
+    static char etiquetas_buf[CAMISETA_GRAFICO_MAX][40];
+    sqlite3_stmt *stmt = NULL;
+    int n = 0;
+
+    clear_screen();
+    print_header("GRAFICO DE USO DE CAMISETAS");
+
+    if (!preparar_stmt(&stmt, "SELECT c.nombre, COUNT(p.id) AS uso "
+                       "FROM camiseta c LEFT JOIN partido p ON c.id = p.camiseta_id "
+                       "GROUP BY c.id, c.nombre ORDER BY uso DESC, c.nombre ASC LIMIT 12"))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    while (n < CAMISETA_GRAFICO_MAX && sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
+        snprintf(etiquetas_buf[n], sizeof(etiquetas_buf[n]), "%s",
+                 nombre ? nombre : "(sin nombre)");
+        etiquetas[n] = etiquetas_buf[n];
+        valores[n] = (double)sqlite3_column_int(stmt, 1);
+        n++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (n == 0)
+    {
+        mostrar_no_hay_registros("camisetas");
+        pause_console();
+        return;
+    }
+
+    printf("\n");
+    dibujar_grafico_barras(valores, etiquetas, n, "Partidos por camiseta", 40);
     pause_console();
 }
 
@@ -1855,11 +2178,13 @@ static void realizar_sorteo_camiseta(void)
 
     if (disponibles - 1 == 0)
     {
-        printf("Todas las camisetas fueron sorteadas. Puedes reiniciar el sorteo con la opcion 2.\n");
+        printf(
+            "Todas las camisetas fueron sorteadas. Puedes reiniciar el sorteo con la opcion 2.\n");
     }
 
     char log_msg[320];
-    snprintf(log_msg, sizeof(log_msg), "Sorteada camiseta id=%d nombre=%.180s", seleccionado, nombre);
+    snprintf(log_msg, sizeof(log_msg), "Sorteada camiseta id=%d nombre=%.180s", seleccionado,
+             nombre);
     app_log_event("CAMISETA", log_msg);
 
     pause_console();
@@ -1891,7 +2216,8 @@ void menu_camisetas(void)
         {9, "Ver Informacion", &ver_informacion_camiseta},
         {10, "Cargar Informacion", &cargar_informacion_camiseta},
         {11, "Reactivar/Desactivar", &reactivar_camiseta},
+        {12, "Grafico de Uso", &mostrar_grafico_uso_camisetas},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("CAMISETAS", items, 12);
+    ejecutar_menu("CAMISETAS", items, 13);
 }

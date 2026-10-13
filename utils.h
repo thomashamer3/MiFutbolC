@@ -171,6 +171,53 @@ int ui_print_stats_row_from_stmt(sqlite3_stmt *stmt, const char *sep);
 typedef void (*ListadoFilaFn)(sqlite3_stmt *stmt, void *ctx);
 
 /**
+ * @brief Callback que imprime un resumen/totales al pie de cada pagina.
+ * @param ctx Contexto opcional definido por el llamador.
+ * @return 1 para continuar el listado.
+ */
+typedef int (*ListadoResumenFn)(void *ctx);
+
+/**
+ * @brief Callback que abre el detalle de la fila seleccionada.
+ * @param id  Id (primera columna) de la fila elegida.
+ * @param ctx Contexto opcional definido por el llamador.
+ * @return 1 para continuar el listado; 0 para salir.
+ */
+typedef int (*ListadoDetalleFn)(int id, void *ctx);
+
+/**
+ * @brief Callback que exporta el listado actual (respetando filtros).
+ * @param ctx Contexto opcional definido por el llamador.
+ * @return 1 para continuar el listado.
+ */
+typedef int (*ListadoExportarFn)(void *ctx);
+
+/**
+ * @brief Configuracion de un listado paginado enriquecido.
+ *
+ * Los campos resumen, detalle y exportar son opcionales (NULL los desactiva).
+ * Si detalle no es NULL, la primera columna de sql_pagina debe ser el id de la
+ * fila, para poder abrir su detalle por numero de fila.
+ */
+typedef struct
+{
+    const char *titulo;
+    const char *sql_conteo;
+    const char *sql_pagina;
+    ListadoFilaFn render_fila;
+    ListadoResumenFn resumen;
+    ListadoDetalleFn detalle;
+    ListadoExportarFn exportar;
+    void *ctx;
+    /**
+     * Filtro de texto opcional (LIKE). Cuando no es NULL, sql_conteo debe
+     * contener un unico '?' y sql_pagina debe contener el '?' del filtro antes
+     * de "LIMIT ? OFFSET ?". Se bindea como parametro 1.
+     */
+    const char *filtro_texto;
+} ListadoConfig;
+
+/**
  * @brief Muestra un listado con navegacion por paginas.
  *
  * Limpia la pantalla, imprime la cabecera, cuenta las filas con sql_conteo y
@@ -187,6 +234,19 @@ typedef void (*ListadoFilaFn)(sqlite3_stmt *stmt, void *ctx);
  */
 int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
                      ListadoFilaFn render_fila, void *ctx);
+
+/**
+ * @brief Listado paginado con resumen al pie, apertura de detalle y exportacion.
+ *
+ * Version extendida de listado_paginado que, ademas de la paginacion, permite:
+ *  - imprimir totales/resumen al pie de cada pagina (resumen);
+ *  - abrir el detalle de una fila por numero (detalle);
+ *  - exportar exactamente lo listado, respetando el filtro activo (exportar).
+ *
+ * @param cfg Configuracion del listado. Los callbacks opcionales pueden ser NULL.
+ * @return Numero de filas renderizadas en la ultima pagina; 0 si no hay filas.
+ */
+int listado_paginado_config(const ListadoConfig *cfg);
 
 /**
  * @brief Obtiene la fecha y hora actual en formato legible.

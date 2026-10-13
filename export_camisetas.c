@@ -156,4 +156,106 @@ void exportar_camisetas_all(void)
     export_all_formats(obtener_datos_camisetas, configs, 4);
 }
 
+static int g_cam_filtro_estado = 0;
+static int g_cam_con_nombre = 0;
+static char g_cam_nombre[128] = {0};
+
+static sqlite3_stmt *obtener_datos_camisetas_filtrado(int *count)
+{
+    char cond[256];
+    char where[320];
+    char sql[1400];
+    sqlite3_stmt *stmt = NULL;
+    size_t usados = 0;
+
+    cond[0] = '\0';
+    if (g_cam_filtro_estado == 1)
+    {
+        usados += (size_t)snprintf(cond + usados, sizeof(cond) - usados, "IFNULL(c.activa, 1) = 1");
+    }
+    else if (g_cam_filtro_estado == 2)
+    {
+        usados += (size_t)snprintf(cond + usados, sizeof(cond) - usados, "IFNULL(c.activa, 1) = 0");
+    }
+
+    if (g_cam_con_nombre && usados < sizeof(cond))
+    {
+        if (usados > 0)
+        {
+            usados += (size_t)snprintf(cond + usados, sizeof(cond) - usados, " AND ");
+        }
+        if (usados < sizeof(cond))
+        {
+            snprintf(cond + usados, sizeof(cond) - usados, "c.nombre LIKE '%%' || ? || '%%'");
+        }
+    }
+
+    if (cond[0] != '\0')
+    {
+        snprintf(where, sizeof(where), "WHERE %s", cond);
+    }
+    else
+    {
+        where[0] = '\0';
+    }
+
+    snprintf(sql, sizeof(sql),
+             "SELECT c.id, c.nombre, "
+             "COALESCE(SUM(p.goles), 0) as total_goles, "
+             "COALESCE(SUM(p.asistencias), 0) as total_asistencias, "
+             "COUNT(p.id) as total_partidos, "
+             "COUNT(CASE WHEN p.resultado = 1 THEN 1 END) as victorias, "
+             "COUNT(CASE WHEN p.resultado = 2 THEN 1 END) as empates, "
+             "COUNT(CASE WHEN p.resultado = 3 THEN 1 END) as derrotas, "
+             "COALESCE((SELECT COUNT(*) FROM lesion l INNER JOIN partido p2 ON l.partido_id = p2.id "
+             "WHERE p2.camiseta_id = c.id), 0) as total_lesiones, "
+             "COALESCE(AVG(p.rendimiento_general), 0) as rendimiento_promedio, "
+             "COALESCE(AVG(p.cansancio), 0) as cansancio_promedio, "
+             "COALESCE(AVG(p.estado_animo), 0) as estado_animo_promedio "
+             "FROM camiseta c "
+             "LEFT JOIN partido p ON c.id = p.camiseta_id %s "
+             "GROUP BY c.id, c.nombre "
+             "ORDER BY c.id",
+             where);
+
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return NULL;
+    }
+
+    if (g_cam_con_nombre)
+    {
+        sqlite3_bind_text(stmt, 1, g_cam_nombre, -1, DB_TRANSIENT);
+    }
+
+    if (count)
+    {
+        *count = 0;
+    }
+    return stmt;
+}
+
+void exportar_camisetas_filtrado_all(int filtro_estado, const char *nombre_like)
+{
+    ExportConfig configs[] =
+    {
+        {"camisetas_listado.csv", NULL, write_csv_header, write_csv_row, NULL},
+        {"camisetas_listado.txt", NULL, write_txt_header, write_txt_row, NULL},
+        {
+            "camisetas_listado.json", cJSON_CreateArray(), NULL, write_json_row,
+            export_write_json_footer
+        },
+        {
+            "camisetas_listado.html", NULL, write_html_header, write_html_row,
+            export_write_html_table_footer
+        }
+    };
+
+    g_cam_filtro_estado = filtro_estado;
+    g_cam_con_nombre = (nombre_like && nombre_like[0] != '\0') ? 1 : 0;
+    snprintf(g_cam_nombre, sizeof(g_cam_nombre), "%s", g_cam_con_nombre ? nombre_like : "");
+
+    export_all_formats(obtener_datos_camisetas_filtrado, configs, 4);
+}
+
 /** @} */ /* End of Doxygen group */

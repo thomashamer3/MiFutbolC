@@ -26,6 +26,7 @@ MiFutbolC es una herramienta integral diseñada para:
 - Definir metas personales con progreso automático
 - Visualizar dashboard interactivo con métricas clave
 - Planificar con calendario de eventos y partidos
+- Analizar canchas con estadísticas dedicadas (uso, rendimiento, tipo, superficie y franjas horarias)
 
 ### Beneficios Clave
 
@@ -46,7 +47,13 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Gestión de imágenes optimizada**: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
 - **Mejor feedback en herramientas opcionales**: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.
 
-### Novedades recientes (v4.3)
+### Novedades recientes (v4.5)
+
+- **Estadísticas de Canchas**: nuevo módulo dentro de **Estadísticas → Canchas** con **Resumen General**, **Canchas Más/Menos Usadas**, **Rendimiento por Cancha**, **Goles y Asistencias por Cancha**, **Rendimiento por Tipo**, **Rendimiento por Superficie**, **Techadas vs Descubiertas**, **Partidos por Localidad** y **Partidos por Franja Horaria**.
+- **Listado de Canchas renovado**: al listar puedes filtrar por **Todas / Solo activas / Solo inactivas**; cada cancha muestra **Victorias/Empates/Derrotas con su porcentaje** y un **separador** entre canchas; incluye **resumen de totales al pie**, **"Ver detalle de una fila"** y **"Exportar este listado"** respetando el filtro.
+- **Listado de Camisetas renovado**: filtro por estado y **orden configurable** (por ID, nombre, partidos jugados, goles o victorias); cada camiseta muestra **Victorias/Empates/Derrotas con porcentaje** y **Prom (Goles+Asist)/Partido**; se marcan las camisetas **`[INACTIVA]`**, **`(sin uso)`** y la **`>>> MAS EFECTIVA <<<`**; incluye **resumen al pie**, **detalle de una fila** y **exportación del listado**.
+- **Gráfico de Uso de Camisetas**: nuevo ítem **"Grafico de Uso"** en el menú Camisetas (gráfico de barras ASCII con los partidos jugados por camiseta).
+- **Listados más ágiles**: la opción **`0) Volver`** aparece primero y, al elegirla, vuelves al menú sin el mensaje "Presione ENTER para continuar...".
 
 - **Nuevos módulos independientes**: Botines, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central.
 - **Carrera Futbolística ampliada**: ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y Modo Retro.
@@ -308,6 +315,7 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 - **9. Ver Información**: consultar detalles ampliados.
 - **10. Cargar Información**: completar o actualizar metadatos.
 - **11. Reactivar/Desactivar**: cambiar estado operativo.
+- **12. Grafico de Uso**: ver un gráfico de barras ASCII con los partidos jugados por camiseta.
 
 ### Crear una Camiseta
 
@@ -319,8 +327,18 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 ### Listar Camisetas
 
 1. Selecciona "3" en el menú principal
-2. Elige "2" para listar todas las camisetas
-3. Se mostrarán todas las camisetas con sus estadísticas de uso
+2. Elige "2" para listar las camisetas
+3. Elige el **filtro**: `1) Todas`, `2) Solo activas` o `3) Solo inactivas`
+4. Elige el **orden**: por ID, por nombre, por partidos jugados, por goles o por victorias
+5. Cada camiseta se muestra con partidos, goles, asistencias, **Prom (Goles+Asist)/Partido** y **Victorias/Empates/Derrotas con su porcentaje**
+6. Las camisetas **inactivas** se marcan con `[INACTIVA]`, las que no tienen partidos con `(sin uso)` y la de mejor desempeño con `>>> MAS EFECTIVA <<<`
+7. Al pie del listado verás un **RESUMEN** con los totales
+8. Dentro del listado puedes usar:
+   - `4) Ver detalle de una fila`: abre la ficha completa de la camiseta sin salir del listado
+   - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro)
+   - `0) Volver`: regresa al menú de Camisetas
+
+> **Tip:** el **Grafico de Uso** (opción `12`) muestra de un vistazo qué camisetas acumulan más partidos.
 
 ### Editar una Camiseta
 
@@ -423,8 +441,15 @@ Para obtener las coordenadas de tu cancha:
 ### Listar Canchas
 
 1. Selecciona "4" en el menú principal
-2. Elige "2" para listar todas las canchas
-3. Se mostrarán solo canchas activas con estadísticas de uso
+2. Elige "2" para listar las canchas
+3. Elige el **filtro**: `1) Todas`, `2) Solo activas` o `3) Solo inactivas`
+4. Cada cancha se muestra con partidos, goles y asistencias, y una segunda línea con **Victorias/Empates/Derrotas con su porcentaje**
+5. Cada cancha se separa con `========================================`
+6. Al pie del listado verás un **RESUMEN** (canchas activas/inactivas, partidos, goles, asistencias, V/E/D y promedio de goles por partido)
+7. Dentro del listado puedes usar:
+   - `4) Ver detalle de una fila`: abre la ficha completa de la cancha sin salir del listado
+   - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro) en TXT/CSV/JSON/HTML/PDF
+   - `0) Volver`: regresa al menú de Canchas
 
 ### Editar una Cancha
 
@@ -743,6 +768,9 @@ Selecciona "9" en el menú principal para acceder al menú de estadísticas. Est
 - **3. Goles**: evaluar producción goleadora.
 - **4. Asistencias**: medir contribución en asistencias.
 - **5. Rendimiento**: revisar tendencias y promedios de rendimiento.
+- **6. Canchas**: analizar uso y rendimiento de las canchas.
+- **7. Reportes Automaticos**: generar reportes del sistema.
+- **8. Filtros Avanzados**: combinar filtros sobre los partidos.
 
 ### Estadísticas Generales
 
@@ -816,6 +844,21 @@ Sistema completo de récords históricos:
 - **Combinaciones**: Partidos con mejor combinación de goles + asistencias
 - **Partidos Especiales**: Sin goles, sin asistencias, rachas goleadoras
 - **Rachas**: Mejor racha goleadora y peor racha (sin goles)
+
+### Estadísticas de Canchas
+
+Desde **Estadísticas → 6. Canchas** puedes analizar el uso y el rendimiento de tus canchas:
+
+- **1. Resumen General**: canchas registradas, activas/inactivas, canchas físicas, uso y partidos
+- **2. Canchas Mas Usadas**: ranking (top 10) por partidos jugados
+- **3. Canchas Menos Usadas**: incluye canchas sin partidos registrados
+- **4. Rendimiento por Cancha**: rendimiento general promedio por cancha
+- **5. Goles y Asistencias por Cancha**: totales y promedio por partido
+- **6. Rendimiento por Tipo**: agrupado por tipo de cancha (F5/F7/F8/F11/Otro)
+- **7. Rendimiento por Superficie**: natural, sintético, cemento u otra
+- **8. Techadas vs Descubiertas**: comparativa de uso y rendimiento
+- **9. Partidos por Localidad**: distribución por zona de la cancha
+- **10. Partidos por Franja Horaria**: distribución de partidos por hora
 
 ### Estadísticas de Lesiones
 

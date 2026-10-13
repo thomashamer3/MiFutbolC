@@ -62,4 +62,25 @@ void cargar_imagen_cancha(void);
  */
 void ver_imagen_cancha(void);
 
+/**
+ * @brief Devuelve el texto legible del tipo de cancha a partir de su codigo.
+ * @param codigo Codigo de tipo de cancha almacenado en base de datos.
+ * @return Cadena de texto estatica con la descripcion del tipo.
+ */
+const char *cancha_texto_tipo(int codigo);
+
+/**
+ * @brief Devuelve el texto legible de la superficie a partir de su codigo.
+ * @param codigo Codigo de superficie almacenado en base de datos.
+ * @return Cadena de texto estatica con la descripcion de la superficie.
+ */
+const char *cancha_texto_superficie(int codigo);
+
+/**
+ * @brief Devuelve el texto legible del estado techada a partir de su codigo.
+ * @param estado 1 techada, 0 descubierta, 2 no especificado.
+ * @return Cadena de texto estatica con el estado.
+ */
+const char *cancha_texto_techada(int estado);
+
 #endif

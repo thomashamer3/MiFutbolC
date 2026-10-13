@@ -2,6 +2,7 @@
 #include "estadisticas.h"
 #include "entrenador_ia.h"
 #include "estadisticas_anio.h"
+#include "estadisticas_canchas.h"
 #include "estadisticas_generales.h"
 #include "estadisticas_mes.h"
 #include "estadisticas_meta.h"
@@ -24,12 +25,13 @@ void menu_estadisticas(void)
         {3, "Goles", &menu_estadisticas_goles},
         {4, "Asistencias", &menu_estadisticas_asistencias},
         {5, "Rendimiento", &menu_estadisticas_rendimiento},
-        {6, "Reportes Automaticos", &menu_reportes},
-        {7, "Filtros Avanzados", &menu_filtros_avanzados},
+        {6, "Canchas", &menu_estadisticas_canchas},
+        {7, "Reportes Automaticos", &menu_reportes},
+        {8, "Filtros Avanzados", &menu_filtros_avanzados},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS", items, 8);
+    ejecutar_menu("ESTADISTICAS", items, 9);
 }
 
 void menu_estadisticas_generales(void)

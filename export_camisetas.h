@@ -32,4 +32,15 @@ void exportar_camisetas_html(void);
  */
 void exportar_camisetas_all(void);
 
+/**
+ * @brief Exporta el listado filtrado de camisetas a los 4 formatos.
+ *
+ * Reutiliza el mismo formato/conjunto de datos que exportar_camisetas_all(),
+ * pero permite filtrar por estado y por texto de nombre (LIKE).
+ *
+ * @param filtro_estado 0 = todas, 1 = solo activas, 2 = solo inactivas.
+ * @param nombre_like   Texto a buscar en el nombre (NULL o "" = sin filtro).
+ */
+void exportar_camisetas_filtrado_all(int filtro_estado, const char *nombre_like);
+
 #endif /* EXPORT_CAMISETAS_H */

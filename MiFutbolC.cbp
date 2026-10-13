@@ -195,6 +195,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="estadisticas_anio.h" />
+		<Unit filename="estadisticas_canchas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="estadisticas_canchas.h" />
 		<Unit filename="estadisticas_generales.c">
 			<Option compilerVar="CC" />
 		</Unit>

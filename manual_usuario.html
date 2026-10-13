@@ -23,8 +23,8 @@
 <h1>Manual de Usuario - MiFutbolC</h1>
 <p class="subtitle">Sistema Integral de Gestión de Fútbol</p>
 <div class="meta">
-  <span>Versión 4.3</span>
-  <span>Última actualización: 25/06/2026</span>
+  <span>Versión 4.5</span>
+  <span>Última actualización: 13/10/2026</span>
   <span>Desarrollado por: Thomas Hamer</span>
   <span>Licencia: Open Source</span>
 </div>
@@ -40,7 +40,7 @@
   <div class="card-label">Formatos Exportación</div>
 </div>
 <div class="card card-warning">
-  <div class="card-value">v4.3</div>
+  <div class="card-value">v4.5</div>
   <div class="card-label">Versión</div>
 </div>
 <div class="card card-success">
@@ -135,8 +135,13 @@
 - <strong>Logs más confiables</strong>: ajustes en el formateo de mensajes para evitar inconsistencias en salidas de diagnóstico.
 - <strong>Gestión de imágenes optimizada</strong>: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
 - <strong>Mejor feedback en herramientas opcionales</strong>: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.</p>
-<h3 id="novedades-recientes-v4.3">Novedades recientes (v4.3) <span class="badge badge-info">Nuevo en v4.3</span></h3>
+<h3 id="novedades-recientes-v4.5">Novedades recientes (v4.5) <span class="badge badge-info">Nuevo en v4.5</span></h3>
 <ul>
+<li><strong>Estadísticas de Canchas (módulo nuevo)</strong>: en <strong>Estadísticas → Canchas</strong> encontrarás <strong>Resumen General</strong>, <strong>Canchas Más/Menos Usadas</strong>, <strong>Rendimiento por Cancha</strong>, <strong>Goles y Asistencias por Cancha</strong>, <strong>Rendimiento por Tipo</strong>, <strong>Rendimiento por Superficie</strong>, <strong>Techadas vs Descubiertas</strong>, <strong>Partidos por Localidad</strong> y <strong>Partidos por Franja Horaria</strong>.</li>
+<li><strong>Listado de Canchas renovado</strong>: filtro por estado (<strong>Todas / Solo activas / Solo inactivas</strong>), <strong>Victorias/Empates/Derrotas con porcentaje</strong>, separador por cancha, <strong>resumen al pie</strong>, <strong>"Ver detalle de una fila"</strong> y <strong>"Exportar este listado"</strong> respetando el filtro.</li>
+<li><strong>Listado de Camisetas renovado</strong>: filtro por estado y <strong>orden configurable</strong>; cada camiseta muestra <strong>Victorias/Empates/Derrotas con porcentaje</strong> y <strong>Prom (Goles+Asist)/Partido</strong>; se marcan <strong>[INACTIVA]</strong>, <strong>(sin uso)</strong> y la <strong>&gt;&gt;&gt; MAS EFECTIVA &lt;&lt;&lt;</strong>; incluye resumen al pie, detalle de una fila y exportación del listado.</li>
+<li><strong>Grafico de Uso de Camisetas</strong>: nuevo ítem en el menú Camisetas con un gráfico de barras ASCII de partidos por camiseta.</li>
+<li><strong>Listados más ágiles</strong>: la opción <strong>0) Volver</strong> aparece primero y al elegirla vuelves al menú sin el mensaje "Presione ENTER para continuar...".</li>
 <li><strong>Nuevos módulos independientes</strong>: Botines, Records &amp; Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central.</li>
 <li><strong>Carrera Futbolística ampliada</strong>: ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y Modo Retro.</li>
 <li><strong>Partidos más completos</strong>: nuevos modos (Amistoso, Torneo, Entrenamiento) y nuevas métricas contextuales (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).</li>
@@ -372,6 +377,7 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>9. Ver Información</strong>: consultar detalles ampliados.</li>
 <li><strong>10. Cargar Información</strong>: completar o actualizar metadatos.</li>
 <li><strong>11. Reactivar/Desactivar</strong>: cambiar estado operativo.</li>
+<li><strong>12. Grafico de Uso</strong>: ver un gráfico de barras ASCII con los partidos jugados por camiseta.</li>
 </ul>
 <h3 id="crear-una-camiseta">Crear una Camiseta</h3>
 <ol type="1">
@@ -383,9 +389,17 @@ También se crea automáticamente el archivo de log de actividad:
 <h3 id="listar-camisetas">Listar Camisetas</h3>
 <ol type="1">
 <li>Selecciona "3" en el menú principal</li>
-<li>Elige "2" para listar todas las camisetas</li>
-<li>Se mostrarán todas las camisetas con sus estadísticas de uso</li>
+<li>Elige "2" para listar las camisetas</li>
+<li>Elige el <strong>filtro</strong>: <code>1) Todas</code>, <code>2) Solo activas</code> o <code>3) Solo inactivas</code></li>
+<li>Elige el <strong>orden</strong>: por ID, nombre, partidos jugados, goles o victorias</li>
+<li>Cada camiseta muestra partidos, goles, asistencias, <strong>Prom (Goles+Asist)/Partido</strong> y <strong>Victorias/Empates/Derrotas con su porcentaje</strong></li>
+<li>Las camisetas <strong>inactivas</strong> se marcan con <code>[INACTIVA]</code>, las sin partidos con <code>(sin uso)</code> y la mejor con <code>&gt;&gt;&gt; MAS EFECTIVA &lt;&lt;&lt;</code></li>
+<li>Al pie verás un <strong>RESUMEN</strong> con los totales</li>
+<li>Dentro del listado: <code>4) Ver detalle de una fila</code>, <code>5) Exportar este listado</code> (respeta el filtro) y <code>0) Volver</code></li>
 </ol>
+<blockquote>
+<p><strong>Tip:</strong> el <strong>Grafico de Uso</strong> (opción <code>12</code>) muestra qué camisetas acumulan más partidos.</p>
+</blockquote>
 <h3 id="editar-una-camiseta">Editar una Camiseta</h3>
 <ol type="1">
 <li>Selecciona "3" en el menú principal</li>
@@ -487,8 +501,12 @@ También se crea automáticamente el archivo de log de actividad:
 <h3 id="listar-canchas">Listar Canchas</h3>
 <ol type="1">
 <li>Selecciona "4" en el menú principal</li>
-<li>Elige "2" para listar todas las canchas</li>
-<li>Se mostrarán solo canchas activas con estadísticas de uso</li>
+<li>Elige "2" para listar las canchas</li>
+<li>Elige el <strong>filtro</strong>: <code>1) Todas</code>, <code>2) Solo activas</code> o <code>3) Solo inactivas</code></li>
+<li>Cada cancha muestra partidos, goles y asistencias, y una segunda línea con <strong>Victorias/Empates/Derrotas con su porcentaje</strong></li>
+<li>Cada cancha se separa con <code>========================================</code></li>
+<li>Al pie verás un <strong>RESUMEN</strong> (activas/inactivas, partidos, goles, asistencias, V/E/D y promedio de goles por partido)</li>
+<li>Dentro del listado: <code>4) Ver detalle de una fila</code>, <code>5) Exportar este listado</code> (respeta el filtro) y <code>0) Volver</code></li>
 </ol>
 <h3 id="editar-una-cancha">Editar una Cancha</h3>
 <ol type="1">
@@ -816,6 +834,9 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>3. Goles</strong>: evaluar producción goleadora.</li>
 <li><strong>4. Asistencias</strong>: medir contribución en asistencias.</li>
 <li><strong>5. Rendimiento</strong>: revisar tendencias y promedios de rendimiento.</li>
+<li><strong>6. Canchas</strong>: analizar uso y rendimiento de las canchas.</li>
+<li><strong>7. Reportes Automaticos</strong>: generar reportes del sistema.</li>
+<li><strong>8. Filtros Avanzados</strong>: combinar filtros sobre los partidos.</li>
 </ul>
 <h3 id="estadísticas-generales">Estadísticas Generales</h3>
 <p>Análisis completo del rendimiento de camisetas:</p>
@@ -886,6 +907,20 @@ También se crea automáticamente el archivo de log de actividad:
 <li><strong>Combinaciones</strong>: Partidos con mejor combinación de goles + asistencias</li>
 <li><strong>Partidos Especiales</strong>: Sin goles, sin asistencias, rachas goleadoras</li>
 <li><strong>Rachas</strong>: Mejor racha goleadora y peor racha (sin goles)</li>
+</ul>
+<h3 id="estadísticas-de-canchas">Estadísticas de Canchas</h3>
+<p>Desde <strong>Estadísticas → 6. Canchas</strong> puedes analizar el uso y el rendimiento de tus canchas:</p>
+<ul>
+<li><strong>1. Resumen General</strong>: canchas registradas, activas/inactivas, canchas físicas, uso y partidos</li>
+<li><strong>2. Canchas Mas Usadas</strong>: ranking (top 10) por partidos jugados</li>
+<li><strong>3. Canchas Menos Usadas</strong>: incluye canchas sin partidos registrados</li>
+<li><strong>4. Rendimiento por Cancha</strong>: rendimiento general promedio por cancha</li>
+<li><strong>5. Goles y Asistencias por Cancha</strong>: totales y promedio por partido</li>
+<li><strong>6. Rendimiento por Tipo</strong>: agrupado por tipo de cancha (F5/F7/F8/F11/Otro)</li>
+<li><strong>7. Rendimiento por Superficie</strong>: natural, sintético, cemento u otra</li>
+<li><strong>8. Techadas vs Descubiertas</strong>: comparativa de uso y rendimiento</li>
+<li><strong>9. Partidos por Localidad</strong>: distribución por zona de la cancha</li>
+<li><strong>10. Partidos por Franja Horaria</strong>: distribución de partidos por hora</li>
 </ul>
 <h3 id="estadísticas-de-lesiones">Estadísticas de Lesiones</h3>
 <p>Análisis completo de lesiones:</p>
@@ -2349,14 +2384,14 @@ ideal para análisis avanzados en programas de hoja de cálculo.</p>
 <p>¡Disfruta usando MiFutbolC y mejora tu gestión deportiva!</p>
 <hr />
 <p><strong>Desarrollado por</strong>: Thomas Hamer<br />
-<strong>Versión</strong>: 4.3<br />
-<strong>Última actualización</strong>: 25/06/2026<br />
+<strong>Versión</strong>: 4.5<br />
+<strong>Última actualización</strong>: 13/10/2026<br />
 <strong>Licencia</strong>: Open Source</p>
 <p><em>Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol</em></p>
 </main>
 
 <footer>
-  <p><strong>Desarrollado por</strong>: Thomas Hamer &nbsp;|&nbsp; <strong>Versión</strong>: 4.3 &nbsp;|&nbsp; <strong>Última actualización</strong>: 25/06/2026 &nbsp;|&nbsp; <strong>Licencia</strong>: Open Source</p>
+  <p><strong>Desarrollado por</strong>: Thomas Hamer &nbsp;|&nbsp; <strong>Versión</strong>: 4.5 &nbsp;|&nbsp; <strong>Última actualización</strong>: 13/10/2026 &nbsp;|&nbsp; <strong>Licencia</strong>: Open Source</p>
   <p><em>Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol</em></p>
 </footer>
 

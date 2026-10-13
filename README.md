@@ -10,7 +10,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.3-blue.svg)
+![Version](https://img.shields.io/badge/version-4.5-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -53,8 +53,14 @@
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
 
-## 🆕 Últimos Cambios (v4.3)
+## 🆕 Últimos Cambios (v4.5)
 
+- **Estadísticas de Canchas (módulo nuevo)**: `estadisticas_canchas.c/.h` con 10 reportes: **Resumen general**, **Canchas más usadas**, **Canchas menos usadas**, **Rendimiento promedio por cancha**, **Goles y asistencias por cancha**, **Rendimiento por tipo de cancha**, **Rendimiento por superficie**, **Techadas vs descubiertas**, **Partidos por localidad** y **Partidos por franja horaria**. Acceso: Menú principal → **Estadísticas** → **Canchas**.
+- **Listado de Canchas renovado**: filtro previo (**Todas / Solo activas / Solo inactivas**), columna de **Victorias / Empates / Derrotas con porcentaje**, **separador por cancha**, **resumen al pie** con totales, opción **"Ver detalle de una fila"** para abrir la ficha completa sin salir del listado y opción **"Exportar este listado"** que respeta el filtro activo (TXT/CSV/JSON/HTML/PDF).
+- **Listado de Camisetas renovado**: filtro (**Todas / Solo activas / Solo inactivas**) y **orden configurable** (por ID, nombre, partidos jugados, goles o victorias); cada fila muestra **Victorias/Empates/Derrotas con porcentaje** y **Prom (Goles+Asist)/Partido**; se marcan las camisetas **`[INACTIVA]`**, las que están **`(sin uso)`** y la **`>>> MAS EFECTIVA <<<`**; incluye **resumen al pie**, **detalle de una fila** y **exportación del listado** respetando el filtro.
+- **Gráfico de Uso de Camisetas (ASCII)**: nuevo ítem **"Grafico de Uso"** en el menú Camisetas que dibuja un gráfico de barras con los partidos jugados por camiseta (usa el motor `ascii_charts`).
+- **Listados reutilizables mejorados**: el helper compartido `listado_paginado_config()` ahora admite **resumen al pie**, **apertura de detalle**, **exportación del listado** y **filtro de texto parametrizado (`LIKE`)**; además la opción **`0) Volver`** aparece primero y, al elegirla, se vuelve al menú sin el mensaje "Presione ENTER para continuar...".
+- **Exportación filtrada de Camisetas**: `exportar_camisetas_filtrado_all()` exporta solo el conjunto listado (estado y búsqueda) reutilizando los mismos formatos y columnas que la exportación completa.
 - **Nuevos módulos independientes**: Botines, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central con calendario integrado.
 - **Carrera Futbolística ampliada**: nueva ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y **Modo Retro: Hoy en tu Historia**.
 - **Canchas con exportación avanzada**: exportación de información de canchas en **TXT, CSV, JSON, HTML y PDF** desde el propio módulo.
@@ -80,7 +86,9 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Ciclo Activa/Inactiva en Camisetas**: retirar y reactivar camisetas para preservar historial
 - **Imágenes de Camisetas**: carga, apertura y ajustes de visor (incluye prueba de visor y previsualización en consola)
 - **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada). Al crear o editar una cancha puedes ingresar sus **coordenadas geográficas** (latitud, longitud) para que el sistema consulte el clima automáticamente vía Open-Meteo al registrar un partido.
-- **Análisis de Uso**: Estadísticas de rendimiento por camiseta y cancha
+- **Listado de Canchas con estadísticas**: filtro por estado, **Victorias/Empates/Derrotas con porcentaje**, resumen de totales al pie, apertura de la ficha completa desde el listado y exportación del listado filtrado.
+- **Listado de Camisetas con estadísticas y orden**: filtro por estado, orden configurable, **Victorias/Empates/Derrotas con porcentaje**, **promedio (Goles+Asistencias) por partido**, marcas de camisetas inactivas/sin uso/más efectiva y **gráfico ASCII de uso**.
+- **Análisis de Uso**: Estadísticas de rendimiento por camiseta y por cancha, incluyendo el módulo dedicado de **Estadísticas de Canchas**.
 
 ### 👥 Administración de Equipos y Jugadores
 
@@ -146,6 +154,13 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - Partidos especiales y extremos
 - Top 5 mejores partidos por rendimiento
 - Ranking de camisetas (partidos, victorias/empates/derrotas, winrate)
+
+#### Estadísticas de Canchas
+- **Resumen General**: canchas registradas, activas/inactivas, canchas físicas, uso y partidos
+- **Ranking de Canchas**: más usadas y menos usadas (incluye canchas sin uso)
+- **Rendimiento por Cancha**: rendimiento general promedio y goles/asistencias por cancha
+- **Segmentación**: rendimiento por **tipo** de cancha, por **superficie** y **techadas vs descubiertas**
+- **Distribución**: partidos por **localidad** y por **franja horaria**
 
 #### Química entre Jugadores
 - **Mejor combinación de jugadores** con cálculo de winrate
@@ -406,6 +421,7 @@ gcc -o MiFutbolC \
     main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c \
     estadisticas.c estadisticas_generales.c estadisticas_anio.c \
     estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c \
+    estadisticas_canchas.c \
     analisis.c cancha.c logros.c lesion.c temporada.c \
     financiamiento.c settings.c entrenador_ia.c \
     records_rankings.c export.c export_all.c export_all_mejorado.c \
@@ -430,7 +446,7 @@ cd D:\ANIME\Libros\Lenguaje C\Proyectos\MiFutbolC
 WIN_LIBS="-lcomdlg32 -lshell32 -lbcrypt"
 
 # 3. Compilar
-gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I. $WIN_LIBS
+gcc -o MiFutbolC.exe main.c db.c menu.c camiseta.c partido.c equipo.c torneo.c estadisticas.c estadisticas_generales.c estadisticas_anio.c estadisticas_mes.c estadisticas_meta.c estadisticas_lesiones.c estadisticas_canchas.c analisis.c cancha.c logros.c lesion.c temporada.c financiamiento.c settings.c entrenador_ia.c records_rankings.c export.c export_all.c export_all_mejorado.c export_camisetas.c export_camisetas_mejorado.c export_lesiones.c export_lesiones_mejorado.c export_partidos.c export_estadisticas.c export_estadisticas_generales.c export_records_rankings.c import.c utils.c sqlite3.c cJSON.c -I. $WIN_LIBS
 
 # 4. Ejecutar
 .\MiFutbolC.exe
@@ -950,6 +966,7 @@ MiFutbolC/
 │   ├── estadisticas_mes.c / .h                  # Estadísticas por mes
 │   ├── estadisticas_meta.c / .h                 # Meta-análisis avanzado
 │   ├── estadisticas_lesiones.c / .h             # Estadísticas de lesiones
+│   ├── estadisticas_canchas.c / .h              # Estadísticas de canchas
 │   ├── analisis.c / analisis.h                  # Análisis de rendimiento
 │   └── records_rankings.c / .h                  # Récords y rankings
 │
@@ -1074,7 +1091,7 @@ Conteo referencial (puede variar según cambios y scripts de build).
 | Gestión Deportiva | 12 | 12 | 24 |
 | Dashboard y Calendario | 2 | 2 | 4 |
 | Gestión Comercial | 3 | 3 | 6 |
-| Análisis y Estadísticas | 10 | 10 | 20 |
+| Análisis y Estadísticas | 11 | 11 | 22 |
 | Exportación | 22 | 22 | 44 |
 | Importación | 1 | 1 | 2 |
 | Infraestructura y Servicios | 6 | 6 | 12 |
@@ -1084,7 +1101,7 @@ Conteo referencial (puede variar según cambios y scripts de build).
 | Inteligencia Artificial | 1 | 1 | 2 |
 | Extras | 3 | 3 | 6 |
 | Bibliotecas | 4 | 4 | 8 |
-| **TOTAL** | **79** | **79** | **158** |
+| **TOTAL** | **80** | **80** | **160** |
 
 ### Módulos Principales
 
@@ -1233,6 +1250,21 @@ El módulo de estadísticas proporciona información agregada sobre el rendimien
 - **Camiseta con más Goles + Asistencias**: Combina goles y asistencias para determinar la camiseta con mejor rendimiento global.
 
 Las estadísticas se calculan en tiempo real mediante consultas SQL que unen las tablas de partidos y camisetas.
+
+## Módulo de Estadísticas de Canchas
+
+El módulo `estadisticas_canchas.c/.h` (nuevo en v4.5) analiza el uso y el rendimiento de las canchas combinando las tablas `cancha` y `partido`. Se accede desde **Estadísticas → Canchas** y ofrece:
+
+- **Resumen General**: canchas registradas, activas e inactivas, canchas físicas, con/sin uso y partidos registrados.
+- **Canchas Más Usadas**: ranking (top 10) por partidos jugados, con goles, asistencias y rendimiento promedio.
+- **Canchas Menos Usadas**: incluye canchas sin partidos registrados.
+- **Rendimiento por Cancha**: rendimiento general promedio agrupado por cancha.
+- **Goles y Asistencias por Cancha**: totales y promedio (goles+asistencias) por partido.
+- **Rendimiento por Tipo de Cancha**: agrupado por código de tipo (F5/F7/F8/F11/Otro).
+- **Rendimiento por Superficie**: agrupado por superficie (natural, sintético, cemento, otra).
+- **Techadas vs Descubiertas**: comparativa de uso y rendimiento.
+- **Partidos por Localidad**: distribución por zona de la cancha.
+- **Partidos por Franja Horaria**: distribución de partidos por hora.
 
 ## Módulo de Análisis de Rendimiento
 
