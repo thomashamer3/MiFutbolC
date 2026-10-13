@@ -1480,18 +1480,18 @@ static void listar_camisetas_con_stats(void)
 
     char where_cond[512];
     char where_clause[600];
-    size_t usados = 0;
-    where_cond[0] = '\0';
 
     if (filtro_estado == 1)
     {
-        usados += (size_t)snprintf(where_cond + usados, sizeof(where_cond) - usados,
-                                   "IFNULL(c.activa, 1) = 1");
+        snprintf(where_cond, sizeof(where_cond), "IFNULL(c.activa, 1) = 1");
     }
     else if (filtro_estado == 2)
     {
-        usados += (size_t)snprintf(where_cond + usados, sizeof(where_cond) - usados,
-                                   "IFNULL(c.activa, 1) = 0");
+        snprintf(where_cond, sizeof(where_cond), "IFNULL(c.activa, 1) = 0");
+    }
+    else
+    {
+        where_cond[0] = '\0';
     }
 
     const char *filtro_texto = NULL;

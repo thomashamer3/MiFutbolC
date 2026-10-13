@@ -109,7 +109,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1791931651 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1791935077 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"atajos.h"
@@ -147,7 +147,7 @@
 	<io.h>
 	<process.h>
 
-1791932794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1791935091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"ascii_charts.h"
 	"db.h"
@@ -3083,7 +3083,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1790728572 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1791935034 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"

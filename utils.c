@@ -968,6 +968,64 @@ int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql
     return listado_paginado_config(&cfg);
 }
 
+static int listado_contar_filas(const char *sql_conteo, const char *filtro_texto)
+{
+    sqlite3_stmt *stmt = NULL;
+    int total = 0;
+
+    if (!db_prepare_stmt(&stmt, sql_conteo))
+    {
+        return 0;
+    }
+
+    if (filtro_texto)
+    {
+        sqlite3_bind_text(stmt, 1, filtro_texto, -1, DB_TRANSIENT);
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        total = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+    return total;
+}
+
+static void listado_mostrar_opciones(const ListadoConfig *cfg)
+{
+    ui_printf_centered_line("0) Volver");
+    ui_printf_centered_line("1) Pagina anterior");
+    ui_printf_centered_line("2) Pagina siguiente");
+    ui_printf_centered_line("3) Ir a pagina");
+    if (cfg->detalle)
+    {
+        ui_printf_centered_line("4) Ver detalle de una fila");
+    }
+    if (cfg->exportar)
+    {
+        ui_printf_centered_line("5) Exportar este listado");
+    }
+}
+
+/**
+ * Ejecuta la opcion de ver el detalle de una fila.
+ * @return 1 para continuar en el listado, 0 para salir.
+ */
+static int listado_ejecutar_detalle(const ListadoConfig *cfg, const int *ids, int filas)
+{
+    int fila = input_int("Numero de fila: ");
+
+    if (fila < 1 || fila > filas)
+    {
+        ui_printf_centered_line("Fila invalida.");
+        pause_console();
+        return 1;
+    }
+
+    return cfg->detalle(ids[fila - 1], cfg->ctx) ? 1 : 0;
+}
+
 int listado_paginado_config(const ListadoConfig *cfg)
 {
     if (!cfg || !cfg->titulo || !cfg->sql_conteo || !cfg->sql_pagina || !cfg->render_fila)
@@ -978,22 +1036,7 @@ int listado_paginado_config(const ListadoConfig *cfg)
     clear_screen();
     print_header(cfg->titulo);
 
-    sqlite3_stmt *stmt = NULL;
-    int total = 0;
-
-    if (db_prepare_stmt(&stmt, cfg->sql_conteo))
-    {
-        if (cfg->filtro_texto)
-        {
-            sqlite3_bind_text(stmt, 1, cfg->filtro_texto, -1, DB_TRANSIENT);
-        }
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            total = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-    }
-
+    int total = listado_contar_filas(cfg->sql_conteo, cfg->filtro_texto);
     if (total <= 0)
     {
         return 0;
@@ -1018,35 +1061,15 @@ int listado_paginado_config(const ListadoConfig *cfg)
             cfg->resumen(cfg->ctx);
         }
 
-        ui_printf_centered_line("0) Volver");
-        ui_printf_centered_line("1) Pagina anterior");
-        ui_printf_centered_line("2) Pagina siguiente");
-        ui_printf_centered_line("3) Ir a pagina");
-        if (cfg->detalle)
-        {
-            ui_printf_centered_line("4) Ver detalle de una fila");
-        }
-        if (cfg->exportar)
-        {
-            ui_printf_centered_line("5) Exportar este listado");
-        }
+        listado_mostrar_opciones(cfg);
 
         int opcion = input_int("Opcion: ");
 
         if (cfg->detalle && opcion == 4)
         {
-            int fila = input_int("Numero de fila: ");
-            if (fila >= 1 && fila <= filas_ultima_pagina)
+            if (!listado_ejecutar_detalle(cfg, ids_pagina, filas_ultima_pagina))
             {
-                if (!cfg->detalle(ids_pagina[fila - 1], cfg->ctx))
-                {
-                    break;
-                }
-            }
-            else
-            {
-                ui_printf_centered_line("Fila invalida.");
-                pause_console();
+                break;
             }
             continue;
         }
