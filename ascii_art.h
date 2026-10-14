@@ -28,7 +28,7 @@
     "|__|  |__| |__| |__|      \\______/      |__|     |______/   \\______/  "                     \
     "|_______| \\______|\n"                                                                        \
     "Sistema de Gestion Futbolistica\n"                                                            \
-    "MiFutbolC v4.3\n\n"
+    "MiFutbolC v4.5\n\n"
 
 /**
  * @brief Título artístico para el módulo de Camisetas
@@ -201,7 +201,7 @@
  * @brief Título artístico para el módulo de Recordatorios
  */
 #define ASCII_RECORDATORIOS                                                                        \
-    "  ____                         _       _             _           \n"                        \
+    "  ____                         _       _             _           \n"                          \
     " |  _ \\ ___  ___ ___  _ __ __| | __ _| |_ ___  _ __(_) ___  ___ \n"                          \
     " | |_) / _ \\/ __/ _ \\| '__/ _` |/ _` | __/ _ \\| '__| |/ _ \\/ __|\n"                       \
     " |  _ <  __/ (_| (_) | | | (_| | (_| | || (_) | |  | | (_) \\__ \\\n"                         \
@@ -333,7 +333,7 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
  * @brief Título artístico para el módulo de Botines
  */
 #define ASCII_BOTINES                                                                              \
-    " ____        _   _                 \n"                                                         \
+    " ____        _   _                 \n"                                                        \
     "| __ )  ___ | |_(_)_ __   ___  ___ \n"                                                        \
     "|  _ \\ / _ \\| __| | '_ \\ / _ \\/ __|\n"                                                    \
     "| |_) | (_) | |_| | | | |  __/\\__ \\\n"                                                      \
@@ -343,7 +343,7 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
  * @brief Título artístico para el módulo de Records & Rankings
  */
 #define ASCII_RECORDS_RANKINGS                                                                     \
-    " ____                        _     \n"                                                         \
+    " ____                        _     \n"                                                        \
     "|  _ \\ ___  ___ ___  _ __ __| |___ \n"                                                       \
     "| |_) / _ \\/ __/ _ \\| '__/ _` / __|\n"                                                      \
     "|  _ <  __/ (_| (_) | | | (_| \\__ \\\n"                                                      \
@@ -353,7 +353,7 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
  * @brief Título artístico para el módulo de Reclutamiento
  */
 #define ASCII_RECLUTAMIENTO                                                                        \
-    " ____           _       _                  _            _        \n"                           \
+    " ____           _       _                  _            _        \n"                          \
     "|  _ \\ ___  ___| |_   _| |_ __ _ _ __ ___ (_) ___ _ __ | |_ ___  \n"                         \
     "| |_) / _ \\/ __| | | | | __/ _` | '_ ` _ \\| |/ _ \\ '_ \\| __/ _ \\ \n"                     \
     "|  _ <  __/ (__| | |_| | || (_| | | | | | | |  __/ | | | || (_) |\n"                          \
