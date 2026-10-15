@@ -105,7 +105,7 @@ static void mostrar_contenido_paso(int paso)
         ui_printf("  - Estadisticas generales (goles, asistencias, promedios)\n");
         ui_printf("  - Estadisticas por mes o por anio\n");
         ui_printf("  - Estadisticas por lesiones\n");
-        ui_printf("  - Metas personales y progresion\n");
+        ui_printf("  - Progresion de jugadores\n");
         ui_printf("\n");
         ui_printf("Mientras mas partidos registres, mas precisas seran\n");
         ui_printf("las graficas y comparativas.\n");

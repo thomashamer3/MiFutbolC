@@ -116,10 +116,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="atajos.h" />
-		<Unit filename="atajos_config.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="atajos_config.h" />
 		<Unit filename="backup.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -162,10 +158,6 @@
 		<Unit filename="colecciones.h" />
 		<Unit filename="compat_port.h" />
 		<Unit filename="compat_windows.h" />
-		<Unit filename="dashboard.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="dashboard.h" />
 		<Unit filename="db.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -254,10 +246,6 @@
 		<Unit filename="export_common.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="export_dashboard.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="export_dashboard.h" />
 		<Unit filename="export_equipo.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -314,18 +302,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="financiamiento.h" />
-		<Unit filename="formaciones.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="formaciones.h" />
 		<Unit filename="import.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="import.h" />
-		<Unit filename="jugador_perfil.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="jugador_perfil.h" />
 		<Unit filename="lang.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -349,19 +329,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="menu.h" />
-		<Unit filename="metas.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="metas.h" />
 		<Unit filename="models.h" />
-		<Unit filename="musica.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="musica.h" />
-		<Unit filename="musica_helpers.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="musica_helpers.h" />
 		<Unit filename="notificaciones.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -391,10 +359,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="random_utils.h" />
-		<Unit filename="reclutamiento.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="reclutamiento.h" />
 		<Unit filename="recordatorios.c">
 			<Option compilerVar="CC" />
 		</Unit>

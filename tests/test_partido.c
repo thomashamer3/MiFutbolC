@@ -16,7 +16,6 @@ static void test_partido_functions_exist(void)
     TEST_ASSERT_NOT_NULL(modificar_partido);
     TEST_ASSERT_NOT_NULL(eliminar_partido);
     TEST_ASSERT_NOT_NULL(buscar_partidos);
-    TEST_ASSERT_NOT_NULL(menu_tacticas_partido);
 }
 
 typedef void (*MenuFunc)(void);

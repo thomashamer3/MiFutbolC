@@ -2,9 +2,7 @@
 #include "menu.h"
 #include "utils.h"
 #include "settings.h"
-#include "dashboard.h"
 #include "atajos.h"
-#include "musica.h"
 #include "carrera.h"
 #include "undo.h"
 
@@ -94,22 +92,10 @@ int main(void)
     }
 
     initialize_application();
-    musica_asegurar_directorio();
-
-    if (settings_get_music_autoplay())
-    {
-        musica_iniciar_automatica();
-    }
     handle_user_name();
 
     // Verificar actualizaciones al inicio (modo silencioso - solo muestra si hay actualización)
     verificar_actualizacion_disponible(0);
-
-    // Mostrar Dashboard inicial con resumen de actividades (si esta habilitado en ajustes)
-    if (settings_get_dashboard_enabled())
-    {
-        mostrar_dashboard();
-    }
 
     // Aviso opcional de recuerdos historicos para abrir Modo Retro
     carrera_notificar_modo_retro_inicio();

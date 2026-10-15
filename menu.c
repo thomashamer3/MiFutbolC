@@ -18,7 +18,6 @@
 #include "cancha.h"
 #include "carrera.h"
 #include "colecciones.h"
-#include "dashboard.h"
 #include "db.h"
 #include "equipo.h"
 #include "estadisticas.h"
@@ -27,16 +26,13 @@
 #include "lesion.h"
 #include "logros.h"
 #include "media.h"
-#include "musica.h"
 #include "partido.h"
-#include "reclutamiento.h"
 #include "recordatorios.h"
 #include "records_rankings.h"
 #include "temporada.h"
 #include "tienda.h"
 #include "torneo.h"
 #include "tutorial.h"
-#include "atajos_config.h"
 #include "resumen_compartible.h"
 #include "ranking_amigos.h"
 
@@ -150,22 +146,10 @@ static void abrir_menu_recordatorios(void)
     menu_recordatorios();
 }
 
-static void abrir_dashboard(void)
-{
-    app_log_event("DASHBOARD", "Ingreso al Dashboard");
-    mostrar_dashboard();
-}
-
 static void abrir_calendario(void)
 {
     app_log_event("CALENDARIO", "Ingreso al Calendario");
     menu_calendario();
-}
-
-static void abrir_menu_musica(void)
-{
-    app_log_event("MUSICA", "Ingreso al Reproductor de Musica");
-    menu_musica();
 }
 
 static void abrir_menu_records_rankings(void)
@@ -180,12 +164,6 @@ static void abrir_menu_tiendas(void)
     menu_tiendas();
 }
 
-static void abrir_menu_reclutamiento(void)
-{
-    app_log_event("RECLUTAMIENTO", "Ingreso al modulo Reclutamiento");
-    menu_reclutamiento();
-}
-
 static void abrir_menu_media(void)
 {
     app_log_event("MEDIA", "Ingreso al modulo Referencias Multimedia");
@@ -196,12 +174,6 @@ static void abrir_menu_tutorial(void)
 {
     app_log_event("TUTORIAL", "Ingreso al modulo Tutorial");
     menu_tutorial();
-}
-
-static void abrir_menu_atajos_config(void)
-{
-    app_log_event("ATAJOS_CONFIG", "Ingreso al modulo Atajos Config");
-    menu_atajos_config();
 }
 
 static void abrir_menu_resumen_compartible(void)
@@ -218,34 +190,30 @@ static void abrir_menu_ranking_amigos(void)
 
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
-    {1, "Dashboard", &abrir_dashboard},
-    {2, "Calendario", &abrir_calendario},
-    {3, "Camisetas", &abrir_menu_camisetas},
-    {4, "Canchas", &abrir_menu_canchas},
-    {5, "Botines", &abrir_menu_botines},
-    {6, "Equipos", &abrir_menu_equipos},
-    {7, "Partidos", &abrir_menu_partidos},
-    {8, "Lesiones", &abrir_menu_lesiones},
-    {9, "Estadisticas", &abrir_menu_estadisticas},
-    {10, "Logros", &abrir_menu_logros},
-    {11, "Financiamiento", &abrir_menu_financiamiento},
-    {12, "Torneos", &abrir_menu_torneos},
-    {13, "Temporada", &abrir_menu_temporadas},
-    {14, "Analisis", &abrir_menu_analisis},
-    {15, "Bienestar", &abrir_menu_bienestar},
-    {16, "Carrera Futbolistica", &abrir_menu_carrera},
-    {17, "Recordatorios", &abrir_menu_recordatorios},
-    {18, "Colecciones", &abrir_menu_colecciones},
-    {19, "Musica", &abrir_menu_musica},
-    {20, "Records & Rankings", &abrir_menu_records_rankings},
-    {21, "Tiendas", &abrir_menu_tiendas},
-    {22, "Reclutamiento", &abrir_menu_reclutamiento},
-    {23, "Referencias Multimedia", &abrir_menu_media},
-    {24, "Tutorial", &abrir_menu_tutorial},
-    {25, "Atajos Config", &abrir_menu_atajos_config},
-    {26, "Resumen Compartible", &abrir_menu_resumen_compartible},
-    {27, "Ranking Amigos", &abrir_menu_ranking_amigos},
-    {28, "Ajustes", &abrir_menu_settings},
+    {1, "Calendario", &abrir_calendario},
+    {2, "Camisetas", &abrir_menu_camisetas},
+    {3, "Canchas", &abrir_menu_canchas},
+    {4, "Botines", &abrir_menu_botines},
+    {5, "Equipos", &abrir_menu_equipos},
+    {6, "Partidos", &abrir_menu_partidos},
+    {7, "Lesiones", &abrir_menu_lesiones},
+    {8, "Estadisticas", &abrir_menu_estadisticas},
+    {9, "Logros", &abrir_menu_logros},
+    {10, "Financiamiento", &abrir_menu_financiamiento},
+    {11, "Torneos", &abrir_menu_torneos},
+    {12, "Temporada", &abrir_menu_temporadas},
+    {13, "Analisis", &abrir_menu_analisis},
+    {14, "Bienestar", &abrir_menu_bienestar},
+    {15, "Carrera Futbolistica", &abrir_menu_carrera},
+    {16, "Recordatorios", &abrir_menu_recordatorios},
+    {17, "Colecciones", &abrir_menu_colecciones},
+    {18, "Records & Rankings", &abrir_menu_records_rankings},
+    {19, "Tiendas", &abrir_menu_tiendas},
+    {20, "Referencias Multimedia", &abrir_menu_media},
+    {21, "Tutorial", &abrir_menu_tutorial},
+    {22, "Resumen Compartible", &abrir_menu_resumen_compartible},
+    {23, "Ranking Amigos", &abrir_menu_ranking_amigos},
+    {24, "Ajustes", &abrir_menu_settings},
     {0, "Salir", NULL}
 };
 
@@ -374,20 +342,17 @@ MenuItem *create_filtered_menu(int *count)
     }
 
     // Getters definidos en settings.h — en el mismo orden lógico que MENU_ITEMS
-    const char *(*getters[])(void) = {&get_menu_dashboard,      &get_menu_calendario,
-                                      &get_menu_camisetas,      &get_menu_canchas,
-                                      &get_menu_botines,        &get_menu_equipos,
-                                      &get_menu_partidos,       &get_menu_lesiones,
-                                      &get_menu_estadisticas,   &get_menu_logros,
-                                      &get_menu_financiamiento, &get_menu_torneos,
-                                      &get_menu_temporada,      &get_menu_analisis,
-                                      &get_menu_bienestar,      &get_menu_carrera,
-                                      &get_menu_recordatorios,  &get_menu_colecciones,
-                                      &get_menu_musica,         &get_menu_records_rankings,
-                                      &get_menu_tiendas,        &get_menu_reclutamiento,
-                                      &get_menu_media,
+    const char *(*getters[])(void) = {&get_menu_calendario,      &get_menu_camisetas,
+                                      &get_menu_canchas,        &get_menu_botines,
+                                      &get_menu_equipos,        &get_menu_partidos,
+                                      &get_menu_lesiones,       &get_menu_estadisticas,
+                                      &get_menu_logros,         &get_menu_financiamiento,
+                                      &get_menu_torneos,        &get_menu_temporada,
+                                      &get_menu_analisis,       &get_menu_bienestar,
+                                      &get_menu_carrera,        &get_menu_recordatorios,
+                                      &get_menu_colecciones,    &get_menu_records_rankings,
+                                      &get_menu_tiendas,        &get_menu_media,
                                       &get_menu_tutorial,
-                                      &get_menu_atajos_config,
                                       &get_menu_resumen_compartible,
                                       &get_menu_ranking_amigos, &get_menu_settings
                                      };

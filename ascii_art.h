@@ -28,7 +28,7 @@
     "|__|  |__| |__| |__|      \\______/      |__|     |______/   \\______/  "                     \
     "|_______| \\______|\n"                                                                        \
     "Sistema de Gestion Futbolistica\n"                                                            \
-    "MiFutbolC v4.5\n\n"
+    "MiFutbolC v4.5.1\n\n"
 
 /**
  * @brief Título artístico para el módulo de Camisetas
@@ -276,17 +276,6 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
     "                                             \n"
 
 /**
- * @brief Título artístico para el Dashboard principal
- */
-#define ASCII_DASHBOARD                                                                            \
-    "  ____            _     _                         _ \n"                                       \
-    " |  _ \\  __ _ ___| |__ | |__   ___   __ _ _ __ __| |\n"                                      \
-    " | | | |/ _` / __| '_ \\| '_ \\ / _ \\ / _` | '__/ _` |\n"                                    \
-    " | |_| | (_| \\__ \\ | | | |_) | (_) | (_| | | | (_| |\n"                                     \
-    " |____/ \\__,_|___/_| |_|_.__/ \\___/ \\__,_|_|  \\__,_|\n"                                   \
-    "                                                    \n"
-
-/**
  * @brief Título artístico para el módulo de Calendario
  */
 #define ASCII_CALENDARIO                                                                           \
@@ -296,17 +285,6 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
     " | |__| (_| | |  __/ | | | (_| | (_| | |  | | (_) |\n"                                        \
     "  \\____\\__,_|_|\\___|_| |_|\\__,_|\\__,_|_|  |_|\\___/ \n"                                  \
     "                                                   \n"
-
-/**
- * @brief Título artístico para el módulo de Música
- */
-#define ASCII_MUSICA                                                                               \
-    "  __  __           _           \n"                                                            \
-    " |  \\/  |_   _ ___(_) ___ __ _  \n"                                                          \
-    " | |\\/| | | | / __| |/ __/ _` |\n"                                                           \
-    " | |  | | |_| \\__ \\ | (_| (_| |\n"                                                          \
-    " |_|  |_|\\__,_|___/_|\\___\\__,_|\n"                                                         \
-    "                               \n"
 
 /**                                                                                                \
  * @brief Título artístico para el módulo de Tiendas                                            \
@@ -318,16 +296,6 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
     "   | |  | |  __/| | | | (_| | (_| \\__ \\\n"                                                  \
     "   |_|  |_|\\___||_| |_|\\__,_|\\__,_|___/\n"                                                 \
     "                                       \n"
-
-/**
- * @brief Título artístico para el módulo de Metas
- */
-#define ASCII_METAS                                                                                \
-    " __  __      _            \n"                                                                 \
-    "|  \\/  | ___| |_ __ _ ___ \n"                                                                \
-    "| |\\/| |/ _ \\ __/ _` / __|\n"                                                               \
-    "| |  | |  __/ || (_| \\__ \\\n"                                                               \
-    "|_|  |_|\\___|\\__\\__,_|___/\n"
 
 /**
  * @brief Título artístico para el módulo de Botines
@@ -348,16 +316,6 @@ void mostrar_cancha_animada(int minuto, int evento_tipo);
     "| |_) / _ \\/ __/ _ \\| '__/ _` / __|\n"                                                      \
     "|  _ <  __/ (_| (_) | | | (_| \\__ \\\n"                                                      \
     "|_| \\_\\___|\\___\\___/|_|  \\__,_|___/\n"
-
-/**
- * @brief Título artístico para el módulo de Reclutamiento
- */
-#define ASCII_RECLUTAMIENTO                                                                        \
-    " ____           _       _                  _            _        \n"                          \
-    "|  _ \\ ___  ___| |_   _| |_ __ _ _ __ ___ (_) ___ _ __ | |_ ___  \n"                         \
-    "| |_) / _ \\/ __| | | | | __/ _` | '_ ` _ \\| |/ _ \\ '_ \\| __/ _ \\ \n"                     \
-    "|  _ <  __/ (__| | |_| | || (_| | | | | | | |  __/ | | | || (_) |\n"                          \
-    "|_| \\_\\___|\\___|_|\\__,_|\\__\\__,_|_| |_| |_|_|\\___|_| |_|\\__\\___/ \n"
 
 /**
  * @brief Título artístico para el módulo de Referencias Multimedia

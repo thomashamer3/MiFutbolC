@@ -108,9 +108,6 @@ static char IMPORT_DIR[1024];
 /** Directorio de imagenes */
 static char IMAGES_DIR[1024];
 
-/** Directorio de musica */
-static char MUSIC_DIR[1024];
-
 /** Usuario local activo para enrutar la base por perfil */
 static char ACTIVE_USER[128];
 
@@ -708,7 +705,9 @@ enum
     DB_VERSION_CANCHA_MARCADOR = 13,
     DB_VERSION_PARTIDO_DIFERENCIA = 14,
     DB_VERSION_BOTIN_SORTEADA = 15,
-    DB_VERSION_CURRENT = 15
+    DB_VERSION_DROP_MUSIC_COLS = 16,
+    DB_VERSION_DROP_REMOVED_MODULES = 17,
+    DB_VERSION_CURRENT = 17
 };
 
 static int get_user_version(int *out_version)
@@ -1455,14 +1454,6 @@ static int create_database_schema(void)
         " perfil_dinamico TEXT DEFAULT '',"
         " resumen TEXT NOT NULL);",
 
-        "CREATE TABLE IF NOT EXISTS tactica_diagrama ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " partido_id INTEGER NOT NULL,"
-        " nombre TEXT NOT NULL,"
-        " fecha TEXT NOT NULL,"
-        " grid TEXT NOT NULL,"
-        " FOREIGN KEY(partido_id) REFERENCES partido(id));",
-
         "CREATE TABLE IF NOT EXISTS entrenamiento_plan ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " nombre TEXT NOT NULL,"
@@ -1509,26 +1500,6 @@ static int create_database_schema(void)
         " proximo_backup TEXT,"
         " activo INTEGER DEFAULT 0);",
 
-        "CREATE TABLE IF NOT EXISTS reclutamiento ("
-        " id INTEGER PRIMARY KEY,"
-        " nombre TEXT NOT NULL,"
-        " estado INTEGER NOT NULL DEFAULT 1,"
-        " posicion TEXT DEFAULT '',"
-        " equipo_origen TEXT DEFAULT '',"
-        " fecha_visto TEXT DEFAULT '',"
-        " notas TEXT DEFAULT '');",
-
-        "CREATE TABLE IF NOT EXISTS meta ("
-        " id INTEGER PRIMARY KEY,"
-        " nombre TEXT NOT NULL,"
-        " tipo INTEGER NOT NULL,"
-        " valor_objetivo REAL NOT NULL,"
-        " valor_inicial REAL DEFAULT 0,"
-        " fecha_inicio TEXT DEFAULT '',"
-        " fecha_fin TEXT DEFAULT '',"
-        " estado TEXT DEFAULT 'Activa',"
-        " created_at TEXT DEFAULT (datetime('now','localtime')));",
-
         "CREATE TABLE IF NOT EXISTS equipamiento_historial ("
         " id INTEGER PRIMARY KEY,"
         " tipo INTEGER NOT NULL DEFAULT 1,"
@@ -1551,8 +1522,6 @@ static int create_database_schema(void)
         " descripcion TEXT,"
         " fecha TEXT DEFAULT (datetime('now','localtime')));",
 
-        "CREATE INDEX IF NOT EXISTS idx_reclutamiento_estado ON reclutamiento(estado);",
-        "CREATE INDEX IF NOT EXISTS idx_meta_estado ON meta(estado);",
         "CREATE INDEX IF NOT EXISTS idx_equipamiento_tipo ON equipamiento_historial(tipo);",
         "CREATE INDEX IF NOT EXISTS idx_equipamiento_activo ON equipamiento_historial(activo);",
         "CREATE INDEX IF NOT EXISTS idx_media_tipo ON media(tipo);",
@@ -1771,6 +1740,61 @@ static void add_botin_sorteada_column(void)
     ejecutar_alter_table_group(alter_statements, "botin_sorteada");
 }
 
+static void drop_settings_music_columns(void)
+{
+    const char *drop_statements[] =
+    {
+        "ALTER TABLE settings DROP COLUMN music_autoplay;",
+        "ALTER TABLE settings DROP COLUMN music_volume;",
+        "ALTER TABLE settings DROP COLUMN music_repeat_mode;",
+        "ALTER TABLE settings DROP COLUMN music_eq_enabled;",
+        "ALTER TABLE settings DROP COLUMN music_eq_bass_db;",
+        "ALTER TABLE settings DROP COLUMN music_eq_mid_db;",
+        "ALTER TABLE settings DROP COLUMN music_eq_treble_db;",
+        "ALTER TABLE settings DROP COLUMN music_volume_step;",
+        NULL
+    };
+    const char *no_col_msg = "no such column";
+    const char *no_table_msg = "no such table";
+    for (int i = 0; drop_statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int flag = sqlite3_exec(db, drop_statements[i], NULL, NULL, &errmsg);
+        int error_esperado = (errmsg != NULL) && ((strstr(errmsg, no_col_msg) != NULL) ||
+                             (strstr(errmsg, no_table_msg) != NULL));
+        if (flag != SQLITE_OK && errmsg != NULL && !error_esperado)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion drop_music con error: %.320s | %.520s",
+                     drop_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
+        }
+        sqlite3_free(errmsg);
+    }
+}
+
+static void drop_removed_module_tables(void)
+{
+    const char *drop_statements[] =
+    {
+        "DROP TABLE IF EXISTS tactica_diagrama;",
+        "DROP TABLE IF EXISTS reclutamiento;",
+        "DROP TABLE IF EXISTS meta;",
+        NULL
+    };
+    for (int i = 0; drop_statements[i] != NULL; i++)
+    {
+        char *errmsg = NULL;
+        int flag = sqlite3_exec(db, drop_statements[i], NULL, NULL, &errmsg);
+        if (flag != SQLITE_OK && errmsg != NULL)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Migracion drop_removed con error: %.320s | %.520s",
+                     drop_statements[i], errmsg);
+            app_log_write("WARN", "DB", log_buf_);
+        }
+        sqlite3_free(errmsg);
+    }
+}
+
 static void add_missing_columns(void)
 {
     int current_version = 0;
@@ -1829,6 +1853,14 @@ static void add_missing_columns(void)
     if (current_version < DB_VERSION_BOTIN_SORTEADA)
     {
         add_botin_sorteada_column();
+    }
+    if (current_version < DB_VERSION_DROP_MUSIC_COLS)
+    {
+        drop_settings_music_columns();
+    }
+    if (current_version < DB_VERSION_DROP_REMOVED_MODULES)
+    {
+        drop_removed_module_tables();
     }
 }
 
@@ -2062,7 +2094,6 @@ int db_init(void)
     get_import_dir();
     get_export_dir();
     get_images_dir();
-    get_music_dir();
 
     app_log_write("INFO", "APP", "Inicializacion de base de datos completada");
 
@@ -2276,10 +2307,6 @@ static const DirCfg DIR_CFG_IMAGES = {"./Imagenes", NULL,       NULL,       NULL
                                       "Imagenes",   "Imagenes", IMAGES_DIR, sizeof(IMAGES_DIR)
                                      };
 
-static const DirCfg DIR_CFG_MUSIC = {NULL,     NULL,     "./Musica", NULL,
-                                     "Musica", "Musica", MUSIC_DIR,  sizeof(MUSIC_DIR)
-                                    };
-
 const char *get_export_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_EXPORT);
@@ -2293,11 +2320,6 @@ const char *get_import_dir(void)
 const char *get_images_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMAGES);
-}
-
-const char *get_music_dir(void)
-{
-    return resolver_directorio_config(&DIR_CFG_MUSIC);
 }
 
 int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)

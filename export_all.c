@@ -9,7 +9,6 @@
 #include "export_camisetas.h"
 #include "export_carrera.h"
 #include "export_colecciones.h"
-#include "export_dashboard.h"
 #include "export_equipo.h"
 #include "export_estadisticas.h"
 #include "export_estadisticas_generales.h"
@@ -79,7 +78,6 @@ DEFINE_EXPORT_TODO(bienestar, "bienestar")
 DEFINE_EXPORT_TODO(carrera, "carrera")
 DEFINE_EXPORT_TODO(colecciones, "colecciones")
 DEFINE_EXPORT_TODO(recordatorios, "recordatorios")
-DEFINE_EXPORT_TODO(dashboard, "dashboard")
 DEFINE_EXPORT_TODO(calendario, "calendario")
 
 static void exportar_todo_json(void)
@@ -262,7 +260,6 @@ static void exportar_todo(void)
     exportar_carrera_all();
     exportar_colecciones_all();
     exportar_recordatorios_all();
-    exportar_dashboard_all();
     exportar_calendario_all();
 
     printf("Exportacion de todo completada.\n");
@@ -483,16 +480,15 @@ void menu_exportar(void)
         {12, "Carrera", &exportar_carrera_todo},
         {13, "Colecciones", &exportar_colecciones_todo},
         {14, "Recordatorios", &exportar_recordatorios_todo},
-        {15, "Dashboard", &exportar_dashboard_todo},
-        {16, "Calendario", &exportar_calendario_todo},
-        {17, "Base de Datos", &exportar_base_datos},
-        {18, "Exportar Todo", &exportar_todo},
-        {19, "Exportar Todo (JSON)", &exportar_todo_json},
-        {20, "Exportar Todo (CSV)", &exportar_todo_csv},
-        {21, "Informe Total PDF", &exportar_informe_total_pdf},
-        {22, "Exportar Todo (Markdown)", &exportar_todo_md},
-        {23, "Exportar a XLSX", &menu_exportar_xlsx},
+        {15, "Calendario", &exportar_calendario_todo},
+        {16, "Base de Datos", &exportar_base_datos},
+        {17, "Exportar Todo", &exportar_todo},
+        {18, "Exportar Todo (JSON)", &exportar_todo_json},
+        {19, "Exportar Todo (CSV)", &exportar_todo_csv},
+        {20, "Informe Total PDF", &exportar_informe_total_pdf},
+        {21, "Exportar Todo (Markdown)", &exportar_todo_md},
+        {22, "Exportar a XLSX", &menu_exportar_xlsx},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 24);
+    ejecutar_menu("EXPORTAR DATOS", items, 23);
 }

@@ -148,7 +148,6 @@ $installCmdPath = Join-Path $resolvedInstallDir "MiFutbolC.cmd"
 
 Write-Step "Copiando archivos a $resolvedInstallDir"
 New-DirectoryIfMissing -Path $resolvedInstallDir
-New-DirectoryIfMissing -Path (Join-Path $resolvedInstallDir "Musica")
 
 Copy-Item -LiteralPath $exePath -Destination $installExePath -Force
 
@@ -165,12 +164,6 @@ if (Test-Path -LiteralPath $langsSourceDir) {
     New-DirectoryIfMissing -Path $langsTargetDir
     Copy-Item -Path (Join-Path $langsSourceDir "*") -Destination $langsTargetDir -Recurse -Force -ErrorAction SilentlyContinue
     Write-Output "Archivos de idioma copiados a $langsTargetDir"
-}
-
-$musicSourceDir = Join-Path $repoRoot "Musica"
-$musicTargetDir = Join-Path $resolvedInstallDir "Musica"
-if (Test-Path -LiteralPath $musicSourceDir) {
-    Copy-Item -Path (Join-Path $musicSourceDir "*") -Destination $musicTargetDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # Launcher para ejecutar desde consola y forzar working directory del instalador.

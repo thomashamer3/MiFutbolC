@@ -5,7 +5,6 @@ db.h
 busqueda.h
 models.h
 export_estadisticas_generales.h
-dashboard.c
 torneo.c
 export_torneo.c
 estadisticas_mes.c
@@ -28,7 +27,6 @@ camiseta.c
 reportes.h
 export_temporada.c
 export_calendario.c
-dashboard.h
 logros.c
 export_ods.c
 colecciones.h
@@ -41,17 +39,14 @@ temporada.c
 export_torneo.h
 export.h
 cJSON.h
-musica_helpers.h
 export_equipo.c
 carrera.h
 records_rankings.c
 filtros.h
 export_all_mejorado.c
 db_integridad.h
-musica.h
 export_partidos.c
 carrera.c
-jugador_perfil.c
 estadisticas_meta.h
 equipo.c
 lesion.h
@@ -64,11 +59,9 @@ partido.c
 export_estadisticas.c
 analisis.c
 sqlite3.c
-jugador_perfil.h
 estadisticas_lesiones.h
 entrenador_ia.c
 notificaciones.h
-export_dashboard.h
 compat_windows.h
 tienda.c
 filtros.c
@@ -87,11 +80,9 @@ sqlite3.h
 export_pdf.h
 estadisticas_generales.h
 cJSON.c
-musica_helpers.c
 export_lesiones_mejorado.h
 cancha.c
 reportes.c
-formaciones.h
 estadisticas_anio.c
 estadisticas.c
 posiciones.h
@@ -119,7 +110,6 @@ menu.h
 export_ods.h
 camiseta.h
 version.h
-formaciones.c
 export_all.h
 atajos.c
 logros.h
@@ -143,8 +133,6 @@ lesion.c
 estadisticas_meta.c
 equipo.h
 ShlObj.h
-musica.c
-export_dashboard.c
 undo.c
 financiamiento.c
 estadisticas.h

@@ -172,16 +172,6 @@ const char* get_import_dir(void);
 const char* get_images_dir(void);
 
 /**
- * @brief Determina ubicacion canónica para archivos de musica
- *
- * Configura directorio accesible al usuario para almacenar pistas,
- * playlists y estado de reanudacion del reproductor.
- *
- * @return Puntero constante a string con path del directorio de musica
- */
-const char* get_music_dir(void);
-
-/**
  * @brief Obtiene la ruta de imagen almacenada para una entidad por ID
  *
  * Consulta la columna `imagen_ruta` en la tabla indicada y copia

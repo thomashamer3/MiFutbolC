@@ -26,18 +26,6 @@ else
   LDFLAGS ?= -lhpdf -lz -lpng -lm
 endif
 
-# Platform-specific audio flags required by miniaudio
-ifeq ($(OS),Windows_NT)
-  AUDIO_LDFLAGS :=
-else
-  UNAME_S := $(shell uname -s)
-  ifeq ($(UNAME_S),Darwin)
-    AUDIO_LDFLAGS := -framework CoreAudio -framework AudioToolbox -framework CoreFoundation
-  else
-    AUDIO_LDFLAGS := -lpthread -ldl
-  endif
-endif
-
 # Auto-discover all .c files in the project root so new files are picked up
 # automatically (e.g. export_common.c, undo.c, backup.c, filtros.c, etc.).
 # Files under tests/, sqlite/, and unity/ are excluded explicitly below.
@@ -50,7 +38,7 @@ OUT = MiFutbolC
 all: $(OUT)
 
 $(OUT): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) $(AUDIO_LDFLAGS) -o $(OUT)
+	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS) -o $(OUT)
 	cp -rn langs . 2>/dev/null; true
 
 run: $(OUT)

@@ -16,8 +16,6 @@
 #include "sqlite3.h"
 #include <limits.h>
 
-#include "formaciones.h"
-#include "jugador_perfil.h"
 #include "random_utils.h"
 
 static int preparar_stmt(sqlite3_stmt **stmt, const char *sql)
@@ -2768,10 +2766,8 @@ void menu_equipos(void)
         {5, "Cargar Imagen", &cargar_imagen_equipo},
         {6, "Ver Imagen", &ver_imagen_equipo},
         {7, "Reactivar/Desactivar Equipo", &reactivar_equipo},
-        {8, "Analisis Formaciones", &menu_analisis_formaciones},
-        {9, "Perfil de Jugador", &menu_perfil_jugador},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("EQUIPOS", items, 10);
+    ejecutar_menu("EQUIPOS", items, 8);
 }

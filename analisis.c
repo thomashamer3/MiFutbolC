@@ -1222,13 +1222,12 @@ void mostrar_analisis(void)
 
     MenuItem items[] = {{1, "Analisis Basico", &mostrar_analisis_basico},
         {2, "Comparador Avanzado", &mostrar_comparador_avanzado},
-        {3, "Analisis Tactico (Diagramas)", &menu_tacticas_partido},
-        {4, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
-        {5, "Quimica Entre Jugadores", &analizar_quimica_jugadores},
+        {3, get_text("menu_entrenador_ia"), &menu_entrenador_ia},
+        {4, "Quimica Entre Jugadores", &analizar_quimica_jugadores},
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ANALISIS Y COMPARADOR", items, 6);
+    ejecutar_menu("ANALISIS Y COMPARADOR", items, 5);
 }
 
 typedef struct

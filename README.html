@@ -21,13 +21,13 @@
   <h1 id="mifutbolc---sistema-integral-de-gestión-de-fútbol">⚽ MiFutbolC - Sistema Integral de Gestión de Fútbol</h1>
   <p class="subtitle"><strong>Sistema completo de gestión, análisis y simulación de datos futbolísticos desarrollado en C</strong></p>
   <div class="meta">
-    <span>Versión: 4.5</span>
+    <span>Versión: 4.5.1</span>
     <span>Octubre 2026</span>
     <span>Autor: Thomas Hamer</span>
     <span><a href="https://github.com/thomashamer3/MiFutbolC">github.com/thomashamer3/MiFutbolC</a></span>
   </div>
   <p>
-    <img src="https://img.shields.io/badge/version-4.5-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/version-4.5.1-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/language-C-orange.svg" alt="Language" />
     <img src="https://img.shields.io/badge/database-SQLite3-green.svg" alt="Database" />
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg" alt="Platform" />
@@ -39,6 +39,7 @@
     <a href="#descripción">Características</a> •
     <a href="#instalación-y-compilación">Instalación</a> •
     <a href="#uso">Uso</a> •
+    <a href="VIDEOS.md">Videos</a> •
     <a href="#documentación">Documentación</a> •
     <a href="#arquitectura-y-diseño">Arquitectura</a> •
     <a href="https://deepwiki.com/thomashamer3/MiFutbolC/1.1-getting-started-installation-and-build">DeepWiki</a>
@@ -59,7 +60,7 @@
     <div class="card-label">Formatos Exportación</div>
   </div>
   <div class="card card-warning">
-    <div class="card-value">v4.5</div>
+    <div class="card-value">v4.5.1</div>
     <div class="card-label">Versión</div>
   </div>
 </div>
@@ -68,6 +69,7 @@
   <h2>Tabla de Contenidos</h2>
   <ul>
     <li><a href="#descripción">📋 Descripción</a></li>
+    <li><a href="#últimos-cambios-v4.5.1">🆕 Últimos Cambios (v4.5.1)</a></li>
     <li><a href="#últimos-cambios-v4.5">🆕 Últimos Cambios (v4.5)</a></li>
     <li><a href="#características-principales">✨ Características Principales</a></li>
     <li><a href="#tecnologías-utilizadas">🛠️ Tecnologías Utilizadas</a></li>
@@ -86,9 +88,7 @@
     <li><a href="#módulo-de-gestión-financiera">💰 Módulo de Gestión Financiera</a></li>
     <li><a href="#módulo-de-récords-y-rankings">🏅 Módulo de Récords y Rankings</a></li>
     <li><a href="#módulo-de-gestión-de-tiendas">🏪 Módulo de Gestión de Tiendas</a></li>
-    <li><a href="#módulo-de-reclutamiento">🔍 Módulo de Reclutamiento</a></li>
     <li><a href="#módulo-de-referencias-multimedia">🎬 Módulo de Referencias Multimedia</a></li>
-    <li><a href="#módulo-de-metas-personales">🎯 Módulo de Metas Personales</a></li>
     <li><a href="#módulo-de-estadísticas-por-año">📅 Módulo de Estadísticas por Año</a></li>
     <li><a href="#módulo-de-estadísticas-por-mes">📆 Módulo de Estadísticas por Mes</a></li>
     <li><a href="#módulo-de-meta-análisis">🔬 Módulo de Meta-Análisis</a></li>
@@ -117,7 +117,7 @@
 <li>🎽 <strong>Gestión de equipamiento</strong> (camisetas con seguimiento de uso)</li>
 <li>🏟️ <strong>Infraestructura deportiva</strong> (canchas)</li>
 <li>⚽ <strong>Registro de partidos</strong> (con estadísticas detalladas)</li>
-<li>👥 <strong>Administración de equipos</strong> (jugadores, formaciones, posiciones)</li>
+<li>👥 <strong>Administración de equipos</strong> (jugadores, posiciones)</li>
 <li>🏆 <strong>Organización de torneos</strong> (múltiples formatos y estructuras)</li>
 <li>📊 <strong>Análisis avanzado</strong> (rendimiento, tendencias, química entre jugadores, meta-análisis)</li>
 <li>🏥 <strong>Gestión de salud</strong> (lesiones y recuperación)</li>
@@ -135,6 +135,15 @@
 <p>El sistema utiliza <strong>SQLite3</strong> como base de datos para almacenamiento persistente y eficiente, <strong>cJSON</strong> para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.</p>
 </section>
 
+<section id="últimos-cambios-v4.5.1">
+<h2>🆕 Últimos Cambios (v4.5.1) <span class="badge badge-info">v4.5.1</span></h2>
+<ul>
+<li><strong>Documentación en video</strong>: nueva página <a href="VIDEOS.md">VIDEOS.md</a> con la <strong>Presentación</strong> del sistema y el <strong>Tutorial</strong> paso a paso, disponibles en <code>videos/presentacion.mp4</code> y <code>videos/tutorial.mp4</code>, enlazada desde el README (barra de navegación, Documentación y Enlaces Útiles).</li>
+<li><strong>Correcciones de calidad (SonarQube)</strong>: simplificación y división de funciones en <code>resumen_compartible.c</code> y <code>utils.c</code>, y ajuste en <code>camiseta.c</code> para reducir complejidad y duplicación.</li>
+<li><strong>Instalador actualizado</strong>: regeneración de <code>MiFutbolC_Setup.exe</code> y ajustes menores en <code>index.html</code> y <code>ascii_art.h</code>.</li>
+</ul>
+</section>
+
 <section id="últimos-cambios-v4.5">
 <h2>🆕 Últimos Cambios (v4.5) <span class="badge badge-info">v4.5</span></h2>
 <ul>
@@ -144,14 +153,14 @@
 <li><strong>Gráfico de Uso de Camisetas (ASCII)</strong>: nuevo ítem <strong>"Grafico de Uso"</strong> en el menú Camisetas que dibuja un gráfico de barras con los partidos jugados por camiseta (motor <code>ascii_charts</code>).</li>
 <li><strong>Listados reutilizables mejorados</strong>: el helper compartido <code>listado_paginado_config()</code> admite resumen al pie, apertura de detalle, exportación del listado y filtro de texto parametrizado (<code>LIKE</code>); la opción <strong><code>0) Volver</code></strong> aparece primero y al elegirla vuelve al menú sin el mensaje "Presione ENTER para continuar...".</li>
 <li><strong>Exportación filtrada de Camisetas</strong>: <code>exportar_camisetas_filtrado_all()</code> exporta solo el conjunto listado (estado y búsqueda) reutilizando los formatos y columnas de la exportación completa.</li>
-<li><strong>Nuevos módulos independientes</strong>: Botines, Records &amp; Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central con calendario integrado.</li>
+<li><strong>Nuevos módulos independientes</strong>: Botines, Records &amp; Rankings, Tiendas y Referencias Multimedia con calendario integrado.</li>
 <li><strong>Carrera Futbolística ampliada</strong>: nueva ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y <strong>Modo Retro: Hoy en tu Historia</strong>.</li>
 <li><strong>Canchas con exportación avanzada</strong>: exportación de información de canchas en <strong>TXT, CSV, JSON, HTML y PDF</strong> desde el propio módulo.</li>
 <li><strong>Partidos más completos</strong>: nuevos modos de carga (<strong>Amistoso, Torneo y Entrenamiento</strong>) y más contexto del partido (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).</li>
 <li><strong>Estadísticas de rendimiento extendidas</strong>: métricas nuevas por <strong>intensidad, dolor físico, arbitraje y temperatura</strong>.</li>
 <li><strong>Exportación a ODS</strong>: nuevo formato de hoja de cálculo OpenDocument compatible con LibreOffice y Excel.</li>
 <li><strong>Catálogo climático ampliado</strong>: nuevos climas (frío, calor, llovizna, lluvia moderada/fuerte, cancha inundada) en carga, análisis y exportación.</li>
-<li><strong>Esquema de BD evolucionado</strong>: nuevas columnas en <code>partido</code> y nuevas tablas para carrera, botines, tiendas, reclutamiento, referencias multimedia, metas, notificaciones y más.</li>
+<li><strong>Esquema de BD evolucionado</strong>: nuevas columnas en <code>partido</code> y nuevas tablas para carrera, botines, tiendas, referencias multimedia, notificaciones y más.</li>
 <li><strong>Mejoras de robustez previas mantenidas</strong>: rutas de BD con <code>snprintf</code>, logs más consistentes, flujo de imágenes reforzado y script <code>install.ps1</code> para instalación por consola en Windows.</li>
 <li><strong>Sorteo con reinicio (Camisetas y Botines)</strong>: la opción "Sortear" abre un submenú con <strong>Sortear</strong> y <strong>Reiniciar sorteo</strong>; lo ya sorteado no vuelve a salir hasta agotar la lista, el ciclo se reinicia solo al terminarse y el reinicio manual pide confirmación.</li>
 <li><strong>Partidos → "Último" con tiempo transcurrido</strong>: cada opción del submenú muestra cuánto pasó desde ese partido en <strong>años, meses, días, horas y minutos</strong>.</li>
@@ -178,9 +187,7 @@
 <li><strong>Equipos Personalizables</strong>: Crear equipos fijos o momentáneos con información completa</li>
 <li><strong>Modalidades Múltiples</strong>: Soporte para Fútbol 5, 7, 8 y 11</li>
 <li><strong>Posiciones Definidas</strong>: Arqueros, Defensores, Mediocampistas, Delanteros</li>
-<li><strong>Formaciones Tácticas</strong>: Configuración de formaciones y designación de capitanes</li>
 <li><strong>Gestión de Plantillas</strong>: Hasta 11 jugadores por equipo con datos completos</li>
-<li><strong>Reclutamiento</strong>: Pipeline completo de captación de jugadores (Visto → Reclutado/Descartado)</li>
 </ul>
 <h3 id="gestión-de-botines">👟 Gestión de Botines</h3>
 <ul>
@@ -289,18 +296,17 @@
 </ul>
 <h3 id="carrera-futbolística-avanzada">📈 Carrera Futbolística Avanzada</h3>
 <ul>
+<li><strong>Resumen de Carrera</strong>: totales (partidos, V/E/D, goles, asistencias), inicio y años jugando, promedios por año, mejor año y desglose anual</li>
 <li><strong>Ficha de Identidad del Jugador</strong>: perfil personal editable para contextualizar tu evolución</li>
 <li><strong>Perfil Dinámico</strong>: clasificación automática del estilo de juego según datos reales</li>
 <li><strong>Partidos que Marcaron</strong>: marcado y gestión de hitos relevantes por partido</li>
-<li><strong>Timeline de Carrera</strong>: línea temporal de eventos deportivos importantes</li>
-<li><strong>Hall of Fame Personal</strong>: mejores momentos y récords destacados</li>
+<li><strong>Timeline de Carrera</strong>: línea temporal de eventos deportivos importantes (incluye los hitos marcados)</li>
+<li><strong>Hall of Fame Personal</strong>: mejores momentos y récords destacados, top de rendimientos, vitrina de trofeos (oro/plata/bronce desde <code>equipo_historial</code>) y camiseta legendaria</li>
 <li><strong>Resumen Narrativo Automático</strong>: síntesis textual automática basada en métricas</li>
 <li><strong>Modo Retro</strong>: recuerdos del mismo día en años anteriores (opcional al iniciar)</li>
-<li><strong>Mejor Once Histórico</strong>: la mejor formación registrada</li>
-<li><strong>Vitrina de Trofeos</strong>: podios de los torneos finalizados (oro/plata/bronce) con marca del equipo y resumen de títulos, leídos de <code>equipo_historial</code></li>
 <li><strong>Estadísticas por Temporada</strong>: partidos, goles, asistencias, V/E/D y rendimiento promedio calculados dentro del período de cada temporada</li>
-<li><strong>Timeline de Hitos</strong>: recorrido cronológico de los partidos marcados como hito, con tipo, nota y rendimiento</li>
 <li><strong>Logros de Carrera</strong>: progreso de logros de trayectoria (partidos, goles, asistencias, victorias, mejor racha, títulos, podios, hitos y temporadas)</li>
+<li><strong>Entrenamiento y Progresión</strong>: planes de entrenamiento y progresión de atributos por jugador</li>
 </ul>
 <h3 id="recordatorios">⏰ Recordatorios</h3>
 <ul>
@@ -316,34 +322,8 @@
 <li><strong>Colecciones Personalizadas</strong>: Crear colecciones y agregar/quitar items</li>
 <li><strong>Respaldo del Módulo</strong>: Exportación e importación de backup en JSON</li>
 </ul>
-<h3 id="reproductor-de-música">🎵 Reproductor de Música</h3>
+<h3 id="calendario">📊 Calendario</h3>
 <ul>
-<li><strong>Formatos de audio</strong>: <code>.mp3</code>, <code>.wav</code>, <code>.flac</code>, <code>.ogg</code> desde la carpeta <code>Musica/</code></li>
-<li><strong>Controles completos</strong>: Reproducir, pausar, detener, pista anterior/siguiente, seleccionar pista de la lista</li>
-<li><strong>Barra de progreso</strong>: tiempo actual y duración total en tiempo real (<code>mm:ss / mm:ss</code>)</li>
-<li><strong>Tiempo restante</strong>: visualización del tiempo que queda en la pista</li>
-<li><strong>Control de volumen configurable</strong>: paso dinámico ajustable (1 %, 5 %, 10 %, 20 %) con barra visual; persiste entre sesiones</li>
-<li><strong>Modos de repetición</strong>: Sin repetición, Repetir pista, Repetir lista, Aleatorio (shuffle)</li>
-<li><strong>Historial shuffle</strong>: al retroceder en modo aleatorio, vuelve a la pista anterior del historial</li>
-<li><strong>Ecualizador 3 Bandas</strong>: graves (200 Hz), medios (1 kHz) y agudos (8 kHz) de ±12 dB con paso de 3 dB</li>
-<li><strong>Playlists</strong>: crear, cargar y eliminar listas de reproducción personalizadas</li>
-<li><strong>Exportar catálogo como playlist</strong>: guarda todas las pistas del catálogo (o las filtradas) como un archivo <code>.txt</code></li>
-<li><strong>Gestión de archivos</strong>: agregar y eliminar canciones directamente desde el menú</li>
-<li><strong>Búsqueda y filtro</strong>: buscar pistas por nombre con filtro activo persistente; limpiar filtro con [18]</li>
-<li><strong>Retroceder / Avanzar</strong>: salto de ±10 segundos dentro de la pista ([16]/[17])</li>
-<li><strong>Saltar a tiempo exacto</strong>: ir a un momento específico en formato <code>MM:SS</code> ([20])</li>
-<li><strong>Sleep timer</strong>: apagado automático tras N minutos configurables ([19])</li>
-<li><strong>Información de pista</strong>: muestra nombre, duración, formato, sample rate y canales de la pista activa ([21])</li>
-<li><strong>Renombrar pista</strong>: cambia el nombre de cualquier pista del catálogo en disco y en memoria ([22])</li>
-<li><strong>Inicio automático</strong>: reproducción al arrancar la aplicación, configurable desde el menú o desde Ajustes</li>
-<li><strong>Reanudar posición</strong>: al salir y volver al reproductor, retoma la pista y el instante exacto donde se dejó</li>
-<li><strong>Fade In/Out</strong>: transiciones suaves entre pistas (400 ms entrada, 250 ms salida)</li>
-<li><strong>Multiplataforma</strong>: Windows y Linux/macOS vía miniaudio (header-only, sin dependencias externas)</li>
-</ul>
-<h3 id="dashboard-y-calendario">📊 Dashboard y Calendario</h3>
-<ul>
-<li><strong>Dashboard Central</strong>: Vista consolidada con resumen de partidos, estadísticas rápidas, logros recientes y alertas</li>
-<li><strong>Metas Personales</strong>: Define objetivos deportivos con progreso automático contra datos reales</li>
 <li><strong>Calendario Integrado</strong>: Vista mensual de eventos, partidos agendados y recordatorios</li>
 <li><strong>Navegación Temporal</strong>: Cambio entre meses y retorno al día actual</li>
 </ul>
@@ -352,12 +332,6 @@
 <li><strong>CRUD Completo</strong>: Crear, listar, modificar y eliminar tiendas deportivas</li>
 <li><strong>Información Detallada</strong>: Nombre, tipo, contacto, productos y rango de precio</li>
 <li><strong>Clasificación</strong>: Tiendas físicas, online y otros comercios relacionados al fútbol</li>
-</ul>
-<h3 id="reclutamiento-de-jugadores">🔍 Reclutamiento de Jugadores</h3>
-<ul>
-<li><strong>Pipeline de 6 Etapas</strong>: Visto → Prospecto → En Seguimiento → Contactado → Reclutado / Descartado</li>
-<li><strong>Gestión de Prospectos</strong>: CRUD completo con seguimiento por etapa</li>
-<li><strong>Estadísticas</strong>: Métricas de conversión y distribución del pipeline</li>
 </ul>
 <h3 id="referencias-multimedia">🎬 Referencias Multimedia</h3>
 <ul>
@@ -368,7 +342,6 @@
 <h3 id="entrenador-ia">🤖 Entrenador IA</h3>
 <ul>
 <li><strong>Recomendaciones Inteligentes</strong>: Sugerencias basadas en análisis de datos históricos</li>
-<li><strong>Optimización de Formaciones</strong>: Consejos para mejorar el rendimiento del equipo</li>
 <li><strong>Análisis Predictivo</strong>: Predicciones basadas en tendencias y patrones
 &gt; Accesible desde <strong>Análisis → Entrenador IA</strong>.</li>
 <li><strong>Nivel de intervención configurable</strong>: <strong>0 Silencioso</strong>, <strong>1 Conservador</strong> (solo riesgo crítico), <strong>2 Moderado</strong> (por defecto) y <strong>3 Agresivo</strong>, persistido en la tabla <code>ia_config</code></li>
@@ -381,7 +354,7 @@
 <ul>
 <li><strong>Formatos Disponibles</strong>: CSV, JSON, HTML, TXT, PDF, ODS</li>
 <li><strong>Acceso desde Ajustes</strong>: Ruta de navegación Ajustes -&gt; Exportar</li>
-<li><strong>Exportación por Módulo</strong>: Camisetas, partidos, lesiones, estadísticas, análisis, canchas, dashboard, bienestar, calendario, carrera, colecciones, equipos, records, recordatorios, temporada, torneo y base de datos</li>
+<li><strong>Exportación por Módulo</strong>: Camisetas, partidos, lesiones, estadísticas, análisis, canchas, bienestar, calendario, carrera, colecciones, equipos, records, recordatorios, temporada, torneo y base de datos</li>
 <li><strong>Exportación Completa</strong>: Backup total del sistema en todos los formatos</li>
 <li><strong>Exportación Mejorada</strong>: Con análisis integrado y métricas adicionales</li>
 <li><strong>Exportación Selectiva</strong>: Partidos con características específicas</li>
@@ -446,13 +419,6 @@ lesiones por tipo/estado, historial de rachas y distribución de estado de ánim
 <li><strong>Propósito</strong>: Generación de informes PDF del sistema</li>
 <li><strong>Dependencias externas</strong>: No requiere dependencias adicionales para PDF</li>
 </ul>
-<h4 id="miniaudio-incluida---dominio-público-mit-0">miniaudio (Incluida - Dominio Público / MIT-0)</h4>
-<ul>
-<li><strong>Archivo</strong>: <code>miniaudio.h</code></li>
-<li><strong>Propósito</strong>: Motor de audio multiplataforma para reproducción de archivos MP3</li>
-<li><strong>Características</strong>: Header-only, sin dependencias externas, soporta Windows y Linux/macOS</li>
-<li><strong>Uso</strong>: Streaming de audio, grafo de nodos DSP para ecualizador, fade in/out y control de volumen</li>
-</ul>
 <h3 id="herramientas-de-desarrollo">Herramientas de Desarrollo</h3>
 <ul>
 <li><strong>CodeBlocks</strong>: IDE recomendado para desarrollo (incluye proyecto <code>.cbp</code>)</li>
@@ -464,7 +430,6 @@ lesiones por tipo/estado, historial de rachas y distribución de estado de ánim
 <p>✅ <strong>SQLite3</strong>: Biblioteca completa incluida en el proyecto<br />
 ✅ <strong>cJSON</strong>: Biblioteca completa incluida en el proyecto<br />
 ✅ <strong>pdfgen</strong>: Motor PDF incluido en el proyecto<br />
-✅ <strong>miniaudio</strong>: Motor de audio incluido en el proyecto<br />
 ✅ <strong>Runtime sin DLLs</strong>: El proyecto no requiere DLLs adicionales para ejecutarse</p>
 </details>
 
@@ -614,29 +579,29 @@ lesiones por tipo/estado, historial de rachas y distribución de estado de ánim
         MIFUTBOLC - MENÚ PRINCIPAL
 ═══════════════════════════════════════
 
-1. Dashboard
-2. Calendario
-3. Camisetas
-4. Canchas
-5. Botines
-6. Equipos
-7. Partidos
-8. Lesiones
-9. Estadisticas
-10. Logros
-11. Financiamiento
-12. Torneos
-13. Temporada
-14. Analisis
-15. Bienestar
-16. Carrera Futbolistica
-17. Recordatorios
-18. Colecciones
-19. Musica
-20. Records &amp; Rankings
-21. Tiendas
-22. Reclutamiento
-23. Referencias Multimedia
+1. Calendario
+2. Camisetas
+3. Canchas
+4. Botines
+5. Equipos
+6. Partidos
+7. Lesiones
+8. Estadisticas
+9. Logros
+10. Financiamiento
+11. Torneos
+12. Temporada
+13. Analisis
+14. Bienestar
+15. Carrera Futbolistica
+16. Recordatorios
+17. Colecciones
+18. Records &amp; Rankings
+19. Tiendas
+20. Referencias Multimedia
+21. Tutorial
+22. Resumen Compartible
+23. Ranking Amigos
 24. Ajustes
 0. Salir
 &gt;</code></pre>
@@ -941,7 +906,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │   │   ├── cancha.c / cancha.h                  # Gestión de canchas
 │   │   ├── botin.c / botin.h                    # Gestión de botines
 │   │   ├── equipo.c / equipo.h                  # Gestión de equipos
-│   │   ├── formaciones.c / formaciones.h        # Análisis táctico de formaciones
 │   │   └── posiciones.c / posiciones.h          # Gestión de posiciones
 │   │
 │   ├── ⚽ Gestión de Partidos y Torneos
@@ -966,16 +930,13 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │   │   ├── carrera.c / carrera.h                # Carrera futbolística
 │   │   ├── recordatorios.c / recordatorios.h    # Agenda y recordatorios
 │   │   ├── colecciones.c / colecciones.h        # Inventario y colecciones
-│   │   ├── metas.c / metas.h                    # Metas personales
 │   │   └── progresion.c / progresion.h          # Progresión y entrenamiento
 │   │
 │   ├── 🖥️ Interfaz de Soporte
-│   │   ├── dashboard.c / dashboard.h            # Dashboard del sistema
 │   │   └── calendario.c / calendario.h          # Calendario y eventos
 │   │
 │   ├── 🏪 Gestión Comercial
 │   │   ├── tienda.c / tienda.h                  # Gestión de tiendas
-│   │   ├── reclutamiento.c / reclutamiento.h    # Reclutamiento de jugadores
 │   │   └── media.c / media.h                    # Referencias multimedia
 │   │
 │   ├── 🔧 Infraestructura y Servicios
@@ -986,13 +947,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │   │   ├── notificaciones.c / notificaciones.h  # Notificaciones del sistema
 │   │   ├── busqueda.c / busqueda.h              # Búsqueda global
 │   │   └── reportes.c / reportes.h              # Reportes automáticos
-│   │
-│   ├── 👤 Perfil de Jugador
-│   │   └── jugador_perfil.c / jugador_perfil.h  # Perfil detallado del jugador
-│   │
-│   ├── 🎵 Audio
-│   │   ├── musica.c / musica.h                  # Reproductor de música
-│   │   └── musica_helpers.c / musica_helpers.h  # Helpers de audio
 │   │
 │   ├── ⚙️ Configuración
 │   │   └── settings.c / settings.h              # Sistema de configuración
@@ -1032,7 +986,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │       ├── export_calendario.c / .h             # Exportación de calendario
 │       ├── export_carrera.c / .h                # Exportación de carrera
 │       ├── export_colecciones.c / .h            # Exportación de colecciones
-│       ├── export_dashboard.c / .h              # Exportación de dashboard
 │       ├── export_equipo.c / .h                 # Exportación de equipos
 │       ├── export_ods.c / .h                    # Exportación a ODS
 │       ├── export_pdf.c / .h                    # Exportación a PDF
@@ -1044,7 +997,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │   ├── sqlite3.c / sqlite3.h                    # SQLite embebido
 │   ├── cJSON.c / cJSON.h                        # Biblioteca cJSON (MIT License)
 │   ├── pdfgen.c / pdfgen.h                      # Motor PDF interno
-│   └── miniaudio.h                              # Motor de audio (header-only)
 │
 ├── 🔧 ARCHIVOS DE CONFIGURACIÓN Y BUILD
 │   ├── MiFutbolC.cbp                            # Proyecto CodeBlocks
@@ -1061,7 +1013,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │   ├── MiFutbolC.ico                            # Icono del programa
 │   └── images/                                  # Imágenes y capturas (28 PNG)
 │       ├── menu.png                             # Menú principal
-│       ├── dashboard.png                        # Dashboard
 │       ├── calendario.png                       # Calendario
 │       ├── bienvenido.png                       # Pantalla de bienvenida
 │       ├── menucamisetas.png                    # Gestión de camisetas
@@ -1080,13 +1031,10 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 │       ├── menucarrerafutbolistica.png          # Carrera futbolística
 │       ├── menurecordatorios.png               # Recordatorios
 │       ├── menucolecciones.png                 # Colecciones
-│       ├── menumusica.png                       # Música
 │       ├── menurecordsyrankings.png             # Records &amp; Rankings
 │       ├── menutiendas.png                      # Tiendas
-│       ├── menureclutamiento.png                # Reclutamiento
 │       ├── menumultimedia.png                   # Referencias Multimedia
-│       ├── menuajustes.png                      # Ajustes
-│       └── menumetas.png                        # Metas personales
+│       └── menuajustes.png                      # Ajustes
 │
 ├── 📖 DOCUMENTACIÓN
 │   ├── README.md                                # Este archivo
@@ -1146,16 +1094,16 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <td>24</td>
 </tr>
 <tr>
-<td>Dashboard y Calendario</td>
+<td>Calendario</td>
+<td>1</td>
+<td>1</td>
 <td>2</td>
-<td>2</td>
-<td>4</td>
 </tr>
 <tr>
 <td>Gestión Comercial</td>
-<td>3</td>
-<td>3</td>
-<td>6</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
 </tr>
 <tr>
 <td>Análisis y Estadísticas</td>
@@ -1165,9 +1113,9 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td>Exportación</td>
-<td>22</td>
-<td>22</td>
-<td>44</td>
+<td>21</td>
+<td>21</td>
+<td>42</td>
 </tr>
 <tr>
 <td>Importación</td>
@@ -1177,27 +1125,21 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td>Infraestructura y Servicios</td>
-<td>6</td>
-<td>6</td>
-<td>12</td>
-</tr>
-<tr>
-<td>Perfil y Progresión</td>
-<td>3</td>
-<td>3</td>
-<td>6</td>
-</tr>
-<tr>
-<td>Bienestar y Productividad</td>
 <td>5</td>
 <td>5</td>
 <td>10</td>
 </tr>
 <tr>
-<td>Audio</td>
+<td>Perfil y Progresión</td>
 <td>2</td>
 <td>2</td>
 <td>4</td>
+</tr>
+<tr>
+<td>Bienestar y Productividad</td>
+<td>4</td>
+<td>4</td>
+<td>8</td>
 </tr>
 <tr>
 <td>Inteligencia Artificial</td>
@@ -1219,9 +1161,9 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td><strong>TOTAL</strong></td>
-<td><strong>79</strong></td>
-<td><strong>79</strong></td>
-<td><strong>158</strong></td>
+<td><strong>71</strong></td>
+<td><strong>71</strong></td>
+<td><strong>142</strong></td>
 </tr>
 </tbody>
 </table>
@@ -1248,8 +1190,8 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <td>Núcleo del sistema e interfaz base</td>
 </tr>
 <tr>
-<td><strong>Dashboard</strong></td>
-<td><code>dashboard.c/.h</code>, <code>calendario.c/.h</code></td>
+<td><strong>Calendario</strong></td>
+<td><code>calendario.c/.h</code></td>
 <td>Visualización y planificación</td>
 </tr>
 <tr>
@@ -1259,28 +1201,23 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td><strong>Análisis</strong></td>
-<td><code>estadisticas*.c</code>, <code>analisis.c</code>, <code>records_rankings.c</code>, <code>formaciones.c</code>, <code>posiciones.c</code></td>
-<td>Análisis, estadísticas y formaciones</td>
+<td><code>estadisticas*.c</code>, <code>analisis.c</code>, <code>records_rankings.c</code>, <code>posiciones.c</code></td>
+<td>Análisis, estadísticas y posiciones</td>
 </tr>
 <tr>
 <td><strong>I/O</strong></td>
-<td><code>export*.c</code> (22 módulos), <code>import.c</code></td>
+<td><code>export*.c</code> (21 módulos), <code>import.c</code></td>
 <td>Importación/Exportación multiformato</td>
 </tr>
 <tr>
 <td><strong>Gestión Comercial</strong></td>
-<td><code>tienda.c/.h</code>, <code>reclutamiento.c/.h</code>, <code>media.c/.h</code></td>
-<td>Tiendas, reclutamiento y multimedia</td>
+<td><code>tienda.c/.h</code>, <code>media.c/.h</code></td>
+<td>Tiendas y multimedia</td>
 </tr>
 <tr>
 <td><strong>Bienestar y Productividad</strong></td>
-<td><code>bienestar.c/.h</code>, <code>carrera.c/.h</code>, <code>recordatorios.c/.h</code>, <code>colecciones.c/.h</code>, <code>metas.c/.h</code></td>
+<td><code>bienestar.c/.h</code>, <code>carrera.c/.h</code>, <code>recordatorios.c/.h</code>, <code>colecciones.c/.h</code></td>
 <td>Bienestar, agenda y colecciones</td>
-</tr>
-<tr>
-<td><strong>Audio</strong></td>
-<td><code>musica.c/.h</code>, <code>musica_helpers.c/.h</code></td>
-<td>Reproductor y procesamiento de audio</td>
 </tr>
 <tr>
 <td><strong>IA</strong></td>
@@ -1294,8 +1231,8 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td><strong>Perfil</strong></td>
-<td><code>jugador_perfil.c/.h</code>, <code>progresion.c/.h</code>, <code>reportes.c/.h</code></td>
-<td>Perfil, progresión y reportes</td>
+<td><code>progresion.c/.h</code>, <code>reportes.c/.h</code></td>
+<td>Progresión y reportes</td>
 </tr>
 <tr>
 <td><strong>Extras</strong></td>
@@ -1309,8 +1246,8 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </tr>
 <tr>
 <td><strong>Ayuda y Atajos</strong></td>
-<td><code>tutorial.c/.h</code>, <code>atajos_config.c/.h</code>, <code>atajos.c</code></td>
-<td>Tutorial guiado y configuración de teclado</td>
+<td><code>tutorial.c/.h</code>, <code>atajos.c</code></td>
+<td>Tutorial guiado y atajos de teclado</td>
 </tr>
 <tr>
 <td><strong>Servicios Externos</strong></td>
@@ -1364,11 +1301,10 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Temporadas</strong>: <code>temporada</code>, <code>temporada_fase</code>, <code>torneo_temporada</code>, <code>equipo_temporada_fatiga</code>, <code>jugador_temporada_fatiga</code>, <code>equipo_temporada_evolucion</code>, <code>temporada_resumen</code>, <code>mensual_resumen</code></li>
 <li><strong>Configuración/Finanzas</strong>: <code>settings</code>, <code>financiamiento</code>, <code>presupuesto_mensual</code>, <code>comparacion_historial</code></li>
 <li><strong>Carrera avanzada</strong>: <code>carrera_identidad</code>, <code>carrera_partido_hito</code>, <code>carrera_resumen_narrativo</code>, <code>carrera_hitos</code>, <code>carrera_timeline</code></li>
-<li><strong>Comercial</strong>: <code>tienda</code>, <code>reclutamiento_prospecto</code>, <code>media_referencias</code></li>
-<li><strong>Metas</strong>: <code>metas</code></li>
+<li><strong>Comercial</strong>: <code>tienda</code>, <code>media_referencias</code></li>
 <li><strong>Infraestructura</strong>: <code>backup_registry</code>, <code>undo_log</code>, <code>notificaciones</code>, <code>filtros_guardados</code>, <code>reportes_config</code></li>
-<li><strong>Perfil</strong>: <code>jugador_perfil</code>, <code>progresion_*</code></li>
-<li><strong>Servicios</strong>: <code>dashboard_config</code>, <code>calendario_eventos</code>, <code>atajos_teclado</code>, <code>formaciones</code>, <code>posiciones</code></li>
+<li><strong>Perfil</strong>: <code>progresion_*</code></li>
+<li><strong>Servicios</strong>: <code>calendario_eventos</code>, <code>atajos_teclado</code>, <code>posiciones</code></li>
 <li><strong>Entrenador IA</strong>: <code>consejos_historial</code>, <code>perfil_usuario_ia</code>, <code>ia_config</code> (nivel de intervención y control de frecuencia del aviso)</li>
 </ul>
 <p>Campos clave (selección, no exhaustivo):</p>
@@ -1561,17 +1497,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 </ul>
 </details>
 
-<details id="módulo-de-reclutamiento">
-<summary><h2>🔍 Módulo de Reclutamiento <span class="badge badge-ok">Implementado</span></h2></summary>
-<p>El módulo de reclutamiento (<code>reclutamiento.c / reclutamiento.h</code>) gestiona el pipeline completo de captación de jugadores:</p>
-<ul>
-<li><strong>Pipeline de 6 Etapas</strong>: Visto → Prospecto → En Seguimiento → Contactado → Reclutado / Descartado.</li>
-<li><strong>Operaciones CRUD</strong>: Crear, listar, editar y eliminar prospectos en cualquier etapa.</li>
-<li><strong>Avance y Retroceso</strong>: Permite mover prospectos hacia adelante o atrás en el pipeline.</li>
-<li><strong>Estadísticas del Pipeline</strong>: Métricas de conversión y distribución por etapa.</li>
-</ul>
-</details>
-
 <details id="módulo-de-referencias-multimedia">
 <summary><h2>🎬 Módulo de Referencias Multimedia <span class="badge badge-ok">Implementado</span></h2></summary>
 <p>El módulo de referencias multimedia (<code>media.c / media.h</code>) permite almacenar enlaces a contenido externo relacionado con la carrera futbolística:</p>
@@ -1580,17 +1505,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li><strong>Almacenamiento de URLs</strong>: Guarda enlaces a YouTube, Google Drive y otras plataformas.</li>
 <li><strong>Filtro por Tipo</strong>: Permite consultar referencias filtradas por categoría.</li>
 <li><strong>Operaciones CRUD</strong>: Crear, listar, editar y eliminar referencias multimedia.</li>
-</ul>
-</details>
-
-<details id="módulo-de-metas-personales">
-<summary><h2>🎯 Módulo de Metas Personales <span class="badge badge-ok">Implementado</span></h2></summary>
-<p>El módulo de metas personales (<code>metas.c / metas.h</code>) permite definir objetivos deportivos con seguimiento automático de progreso:</p>
-<ul>
-<li><strong>Creación de Metas</strong>: Define objetivos cuantificables (ej: "10 goles en la temporada").</li>
-<li><strong>Progreso Automático</strong>: El sistema calcula el avance contra los datos reales de partidos.</li>
-<li><strong>Dashboard de Metas</strong>: Visualización consolidada del progreso de todas las metas.</li>
-<li><strong>Recálculo Bajo Demanda</strong>: Recalcula el progreso de todas las metas contra la BD.</li>
 </ul>
 </details>
 
@@ -1657,9 +1571,9 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <h2>📋 Sistema de Menús <span class="badge badge-ok">Implementado</span></h2>
 <p>El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en <code>menu.c / menu.h</code>:</p>
 <ul>
-<li><strong>Menú Principal</strong>: 28 opciones organizadas (1-28 más 0 para Salir): Dashboard, Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Música, Records &amp; Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Tutorial, Atajos Config, Resumen Compartible, Ranking Amigos y Ajustes.</li>
+<li><strong>Menú Principal</strong>: 24 opciones organizadas (1-24 más 0 para Salir): Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Records &amp; Rankings, Tiendas, Referencias Multimedia, Tutorial, Resumen Compartible, Ranking Amigos y Ajustes.</li>
 <li><strong>Menús personalizados (modo Custom)</strong>: desde Ajustes → Modo se puede habilitar u ocultar cualquiera de esos 28 módulos del menú principal.</li>
-<li><strong>Accesos internos</strong>: El <strong>Entrenador IA</strong> se abre desde Análisis, las <strong>Metas Personales</strong> desde Dashboard, y <strong>Exportar/Importar</strong> desde Ajustes.</li>
+<li><strong>Accesos internos</strong>: El <strong>Entrenador IA</strong> se abre desde Análisis, y <strong>Exportar/Importar</strong> desde Ajustes.</li>
 <li><strong>Submenús</strong>: Cada módulo principal tiene su propio menú (ej. <code>menu_camisetas()</code>, <code>menu_canchas()</code>, <code>menu_partidos()</code>, <code>menu_logros()</code>, <code>menu_lesiones()</code>, <code>menu_financiamiento()</code>).</li>
 <li><strong>Estructura de Menú</strong>: Utiliza la estructura <code>MenuItem</code> definida en <code>menu.h</code> para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.</li>
 <li><strong>Navegación</strong>: La función <code>ejecutar_menu()</code> maneja la lógica de mostrar opciones, leer selección del usuario y ejecutar la acción correspondiente.</li>
@@ -1699,6 +1613,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <p>El repositorio incluye documentación técnica y de usuario en formato Markdown y PDF:</p>
 <ul>
 <li><a href="README.md">README.md</a>: Documentación técnica general del proyecto.</li>
+<li><a href="VIDEOS.md">VIDEOS.md</a>: Presentación y tutorial en video del sistema (ver carpeta <code>videos/</code>).</li>
 <li><a href="README.pdf">README.pdf</a>: Versión PDF del README.</li>
 <li><a href="Manual_Usuario_MiFutbolC.md">Manual_Usuario_MiFutbolC.md</a>: Manual de usuario con flujos y pantallas (versión HTML en <a href="manual_usuario.html">manual_usuario.html</a>).</li>
 <li><a href="Manual_Usuario_MiFutbolC.pdf">Manual_Usuario_MiFutbolC.pdf</a>: Manual de usuario en PDF.</li>
@@ -1860,7 +1775,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <li>✅ <strong>Manejo de Errores</strong>: El programa valida entradas y solicita confirmaciones para operaciones destructivas</li>
 <li>✅ <strong>Compatibilidad</strong>: Probado en Windows 11, Ubuntu 22.04, macOS 12+</li>
 <li>✅ <strong>Interfaz Textual</strong>: No requiere GUI, funciona en cualquier terminal con soporte UTF-8</li>
-<li>✅ <strong>Dependencias incluidas</strong>: SQLite3, cJSON, pdfgen y miniaudio están incluidos en el repositorio</li>
+<li>✅ <strong>Dependencias incluidas</strong>: SQLite3, cJSON y pdfgen están incluidos en el repositorio</li>
 <li>✅ <strong>Sin DLLs</strong>: No utiliza DLLs externas para ejecución</li>
 </ul>
 <h3 id="limitaciones-conocidas">Limitaciones Conocidas</h3>
@@ -1874,6 +1789,7 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 <section id="enlaces-útiles">
 <h2>🔗 Enlaces Útiles <span class="badge badge-info">Links</span></h2>
 <ul>
+<li>🎬 <a href="VIDEOS.md">Videos: Presentación y Tutorial</a></li>
 <li>📖 <a href="Manual_Usuario_MiFutbolC.md">Manual de Usuario (Markdown)</a> · <a href="manual_usuario.html">Manual de Usuario (HTML)</a></li>
 <li>📘 <a href="README.md">README (técnico)</a></li>
 <li>🐛 <a href="https://github.com/thomashamer3/MiFutbolC/issues">Reportar un Bug</a></li>

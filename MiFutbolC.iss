@@ -4,7 +4,7 @@
 ; ================================
 
 #define MyAppName "MiFutbolC"
-#define MyAppVersion "4.5"
+#define MyAppVersion "4.5.1"
 #define MyAppPublisher "Thomas Hamer"
 #define MyAppURL "https://github.com/thomashamer3/MiFutbolC"
 #define MyAppExeName "MiFutbolC.exe"
@@ -61,7 +61,6 @@ Source: "MiFutbolC.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Manual_Usuario_MiFutbolC.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.pdf"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Musica\*"; DestDir: "{app}\Musica"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "langs\*"; DestDir: "{app}\langs"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; ================================
@@ -72,7 +71,6 @@ Source: "langs\*"; DestDir: "{app}\langs"; Flags: ignoreversion recursesubdirs c
 ; La carpeta de datos del usuario (bases .db y users.db) NUNCA se borra al
 ; desinstalar para no perder partidos, camisetas, perfiles ni estadísticas.
 Name: "{localappdata}\MiFutbolC\data"; Flags: uninsneveruninstall
-Name: "{app}\Musica"
 
 ; ================================
 ; ACCESOS DIRECTOS

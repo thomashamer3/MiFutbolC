@@ -154,7 +154,6 @@ static void load_fallback(void)
         const char *key;
         const char *val;
     } fb_pairs[] = {{"menu_title", "MI FUTBOL C"},
-        {"menu_dashboard", "Dashboard"},
         {"menu_calendario", "Calendar"},
         {"menu_camisetas", "Shirts"},
         {"menu_canchas", "Fields"},
@@ -177,10 +176,8 @@ static void load_fallback(void)
         {"menu_carrera", "Career"},
         {"menu_recordatorios", "Reminders"},
         {"menu_colecciones", "Collections"},
-        {"menu_musica", "Music"},
         {"menu_records_rankings", "Records & Rankings"},
         {"menu_tiendas", "Tiendas"},
-        {"menu_reclutamiento", "Recruitment"},
         {"menu_media", "Media References"},
         {"menu_exportar_ods", "Export to ODS"},
         {"menu_busqueda_global", "Global Search"},
@@ -212,8 +209,6 @@ static void load_fallback(void)
         {"text_size_small", "Small"},
         {"text_size_medium", "Medium"},
         {"text_size_large", "Large"},
-        {"settings_music_autoplay", "Music on startup"},
-        {"settings_dashboard_enabled", "Dashboard on startup"},
         {"state_enabled", "Enabled"},
         {"state_disabled", "Disabled"},
         {"state_on", "On"},

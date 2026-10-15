@@ -123,14 +123,6 @@ CFLAGS+=" -I. -include compat_port.h"
 
 LDFLAGS="${LDFLAGS:-}"
 
-# Platform-specific audio flags required by miniaudio
-AUDIO_LDFLAGS=""
-if [[ "${OS_NAME}" = "${OS_DARWIN}" ]]; then
-  AUDIO_LDFLAGS="-framework CoreAudio -framework AudioToolbox -framework CoreFoundation"
-else
-  AUDIO_LDFLAGS="-lpthread -ldl"
-fi
-
 # Optional native tuning for release builds (disabled by default for portability)
 if [[ "${BUILD_TYPE}" = "Release" ]] && [[ "${ENABLE_NATIVE}" = "1" ]]; then
   CFLAGS+=" -march=native"
@@ -475,11 +467,11 @@ fi
 # Build
 # -----
 # This script is intended for Unix-like environments (Linux/macOS).
-# It compiles the project with gcc/clang and links against libharu, zlib, libm and miniaudio platform libs.
+# It compiles the project with gcc/clang and links against libharu, zlib and libm.
 
 step_progress "Compilando proyecto"
 echo "Building (BUILD_TYPE=${BUILD_TYPE}) with $CC..."
-"$CC" $CFLAGS "${SRC[@]}" $LDFLAGS $AUDIO_LDFLAGS -o "$OUT"
+"$CC" $CFLAGS "${SRC[@]}" $LDFLAGS -o "$OUT"
 
 echo "Compilation successful: $OUT"
 

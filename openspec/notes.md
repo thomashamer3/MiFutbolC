@@ -11,7 +11,7 @@ Persistence mode: **hybrid** (Engram topic `sdd-init/mifutbolc` + this `openspec
 | Primary build | CMake >= 3.20 + Ninja | `CMakeLists.txt:1`, `CMakePresets.json` |
 | Secondary build | GNU Make | `Makefile` |
 | Legacy build | Code::Blocks | `MiFutbolC.cbp` |
-| Vendored libs | `sqlite3.c`/`sqlite3.h`, `cJSON.c`/`cJSON.h`, `miniaudio.h`, `pdfgen.c`/`pdfgen.h` | repo root |
+| Vendored libs | `sqlite3.c`/`sqlite3.h`, `cJSON.c`/`cJSON.h`, `pdfgen.c`/`pdfgen.h` | repo root |
 | Debug flags | `-O0 -g3 -fstack-protector -fsanitize=address -fsanitize=undefined` | `CMakeLists.txt:82-88` |
 | Release flags | `-O2 -DNDEBUG -fomit-frame-pointer` | `CMakeLists.txt:91-95` |
 | App version | 4.3 | `README.md:13` |
@@ -64,7 +64,7 @@ A stale `build/debug/MiFutbolC_tests.exe` exists but is **not** registered in `C
 | Coupling | `utils.h` included by 79 `.c`, `db.h` by 72 `.c`, `menu.h` by 42 `.c` |
 
 Largest non-vendored modules: `partido.c` (6605 lines), `utils.c` (4927), `pdfgen.c` (4486),
-`bienestar.c` (3737), `cancha.c` (3369), `carrera.c` (3310), `musica.c` (3141),
+`bienestar.c` (3737), `cancha.c` (3369), `carrera.c` (3310),
 `equipo.c` (2777), `db.c` (2601).
 
 ## Stale internal documentation - do not trust without re-verification

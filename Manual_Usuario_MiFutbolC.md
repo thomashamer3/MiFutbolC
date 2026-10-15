@@ -21,10 +21,8 @@ MiFutbolC es una herramienta integral diseñada para:
 - Administrar colecciones e inventario de ítems
 - Recibir recomendaciones inteligentes del Entrenador IA
 - Consultar récords históricos y rankings de rendimiento
-- Gestionar tiendas deportivas y reclutamiento de jugadores
+- Gestionar tiendas deportivas
 - Almacenar referencias multimedia (videos, fotos, artículos)
-- Definir metas personales con progreso automático
-- Visualizar dashboard interactivo con métricas clave
 - Planificar con calendario de eventos y partidos
 - Analizar canchas con estadísticas dedicadas (uso, rendimiento, tipo, superficie y franjas horarias)
 
@@ -47,6 +45,12 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Gestión de imágenes optimizada**: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
 - **Mejor feedback en herramientas opcionales**: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.
 
+### Novedades recientes (v4.5.1)
+
+- **Documentación en video**: nueva página [VIDEOS.md](VIDEOS.md) con la **Presentación** del sistema y el **Tutorial** paso a paso (`videos/presentacion.mp4` y `videos/tutorial.mp4`), enlazada desde el README.
+- **Correcciones de calidad (SonarQube)**: simplificación y división de funciones en `resumen_compartible.c` y `utils.c`, y ajuste en `camiseta.c`.
+- **Instalador actualizado**: regeneración de `MiFutbolC_Setup.exe` y ajustes menores en `index.html` y `ascii_art.h`.
+
 ### Novedades recientes (v4.5)
 
 - **Estadísticas de Canchas**: nuevo módulo dentro de **Estadísticas → Canchas** con **Resumen General**, **Canchas Más/Menos Usadas**, **Rendimiento por Cancha**, **Goles y Asistencias por Cancha**, **Rendimiento por Tipo**, **Rendimiento por Superficie**, **Techadas vs Descubiertas**, **Partidos por Localidad** y **Partidos por Franja Horaria**.
@@ -55,7 +59,7 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Gráfico de Uso de Camisetas**: nuevo ítem **"Grafico de Uso"** en el menú Camisetas (gráfico de barras ASCII con los partidos jugados por camiseta).
 - **Listados más ágiles**: la opción **`0) Volver`** aparece primero y, al elegirla, vuelves al menú sin el mensaje "Presione ENTER para continuar...".
 
-- **Nuevos módulos independientes**: Botines, Records & Rankings, Tiendas, Reclutamiento, Referencias Multimedia, Metas Personales y Dashboard central.
+- **Nuevos módulos independientes**: Botines, Records & Rankings, Tiendas y Referencias Multimedia.
 - **Carrera Futbolística ampliada**: ficha de identidad, perfil dinámico, partidos que marcaron, timeline, Hall of Fame, resumen narrativo y Modo Retro.
 - **Partidos más completos**: nuevos modos (Amistoso, Torneo, Entrenamiento) y nuevas métricas contextuales (estado de cancha, marcador global, formato F5/F7/F8/F11, tarjeta, goles en contra, dolor físico, temperatura, arbitraje score, tags, lo mejor/qué mejorar).
 - **Canchas con exportación dedicada**: ahora puedes exportar información de canchas en TXT, CSV, JSON, HTML y PDF desde el módulo.
@@ -194,100 +198,64 @@ Al ejecutar el programa por primera vez:
 
 El menú principal ofrece las siguientes opciones:
 
-1. **Dashboard** - Ver resumen general del sistema
-2. **Calendario** - Ver eventos, partidos y recordatorios
-3. **Camisetas** - Gestionar camisetas de fútbol
-4. **Canchas** - Gestionar canchas de fútbol
-5. **Botines** - Gestionar botines de fútbol
-6. **Equipos** - Gestionar equipos (fijos y momentáneos)
-7. **Partidos** - Gestionar partidos
-8. **Lesiones** - Gestionar lesiones de jugadores
-9. **Estadísticas** - Ver estadísticas por categorías y rendimiento
-10. **Logros** - Gestionar logros y badges
-11. **Financiamiento** - Gestionar finanzas del equipo
-12. **Torneos** - Gestionar torneos de fútbol
-13. **Temporada** - Gestionar temporadas y ciclos deportivos
-14. **Análisis** - Ver análisis de rendimiento, comparador y Entrenador IA
-15. **Bienestar** - Planificación, hábitos, salud y reportes personales
-16. **Carrera Futbolística** - Seguimiento de progreso y objetivos de carrera
-17. **Recordatorios** - Gestionar recordatorios, agenda y exportación/importación del módulo
-18. **Colecciones** - Administrar ítems, colecciones y backups JSON
-19. **Música** - Reproductor integrado con soporte MP3/WAV/FLAC/OGG, ecualizador 3 bandas, playlists, filtro de búsqueda, sleep timer, seek exacto, información técnica de pista, renombrar pista, exportar catálogo y paso de volumen configurable
-20. **Records & Rankings** - Ver récords, rankings y estadísticas históricas
-21. **Tiendas** - Gestionar tiendas deportivas
-22. **Reclutamiento** - Gestionar reclutamiento de jugadores
-23. **Referencias Multimedia** - Gestionar referencias multimedia
-24. **Tutorial** - Guía paso a paso para empezar
-25. **Atajos Config** - Ver, editar y restaurar los atajos de teclado
-26. **Resumen Compartible** - Generar un resumen del perfil en HTML o Markdown, con estadísticas destacadas y mejor temporada
-27. **Ranking Amigos** - Gestionar amigos y comparar estadísticas con ellos
-28. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
+1. **Calendario** - Ver eventos, partidos y recordatorios
+2. **Camisetas** - Gestionar camisetas de fútbol
+3. **Canchas** - Gestionar canchas de fútbol
+4. **Botines** - Gestionar botines de fútbol
+5. **Equipos** - Gestionar equipos (fijos y momentáneos)
+6. **Partidos** - Gestionar partidos
+7. **Lesiones** - Gestionar lesiones de jugadores
+8. **Estadísticas** - Ver estadísticas por categorías y rendimiento
+9. **Logros** - Gestionar logros y badges
+10. **Financiamiento** - Gestionar finanzas del equipo
+11. **Torneos** - Gestionar torneos de fútbol
+12. **Temporada** - Gestionar temporadas y ciclos deportivos
+13. **Análisis** - Ver análisis de rendimiento, comparador y Entrenador IA
+14. **Bienestar** - Planificación, hábitos, salud y reportes personales
+15. **Carrera Futbolística** - Seguimiento de progreso y objetivos de carrera
+16. **Recordatorios** - Gestionar recordatorios, agenda y exportación/importación del módulo
+17. **Colecciones** - Administrar ítems, colecciones y backups JSON
+18. **Records & Rankings** - Ver récords, rankings y estadísticas históricas
+19. **Tiendas** - Gestionar tiendas deportivas
+20. **Referencias Multimedia** - Gestionar referencias multimedia
+21. **Tutorial** - Guía paso a paso para empezar
+22. **Resumen Compartible** - Generar un resumen del perfil en HTML o Markdown, con estadísticas destacadas y mejor temporada
+23. **Ranking Amigos** - Gestionar amigos y comparar estadísticas con ellos
+24. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
 0. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
 
 ### ¿Qué puedes hacer en cada menú?
 
-- **1. Dashboard**: ver resumen general de actividad, logros, balance, alertas rápidas y metas personales con progreso automático.
-- **2. Calendario**: navegar por meses, revisar eventos de un día y volver al día actual.
-- **3. Camisetas**: crear, listar, editar, eliminar, sortear, gestionar imágenes e información de camisetas.
-- **4. Canchas**: crear, listar, editar, eliminar, asociar imagen, activar/desactivar y exportar información.
-- **5. Botines**: crear, listar, modificar, eliminar, fijar predeterminado, sortear y gestionar imágenes de botines.
-- **6. Equipos**: crear, listar, editar, eliminar, cargar/ver imagen y activar/desactivar equipos.
-- **7. Partidos**: crear (amistoso/torneo/entrenamiento), listar, editar, eliminar, simular, usar análisis táctico y trabajar con tags.
-- **8. Lesiones**: crear, listar, editar, eliminar, consultar estadísticas y actualizar estados.
-- **9. Estadísticas**: revisar generales, partidos, goles, asistencias y rendimiento (incluye intensidad, dolor físico, arbitraje y temperatura).
-- **10. Logros**: ver logros totales, completados, en progreso y no completados.
-- **11. Financiamiento**: registrar transacciones, ver resúmenes, balance, exportar y gestionar presupuestos.
-- **12. Torneos**: crear, listar, modificar y eliminar torneos.
-- **13. Temporada**: crear, listar, modificar, eliminar, administrar y comparar temporadas.
-- **14. Análisis**: usar análisis básico, comparador avanzado, diagramas tácticos, Entrenador IA y química.
-- **15. Bienestar**: registrar planificación, hábitos, entrenamiento, alimentación, mental y salud.
-- **16. Carrera Futbolística**: gestionar trayectoria, identidad, hitos, timeline, Hall of Fame, narrativa y modo retro.
-- **17. Recordatorios**: listar, agregar, editar, eliminar, filtrar, exportar/importar y abrir agenda.
-- **18. Colecciones**: administrar inventario, colecciones, sincronización y backups JSON.
-- **19. Música**: controlar reproducción, EQ, playlists, búsqueda, temporizador y gestión de archivos de audio.
-- **20. Records & Rankings**: consultar récords individuales, mejores/peores combinaciones, rankings temporales y rachas históricas.
-- **21. Tiendas**: gestionar tiendas deportivas con información de contacto, productos y rango de precio.
-- **22. Reclutamiento**: gestionar pipeline de reclutamiento (Visto → Prospecto → Seguimiento → Contactado → Reclutado/Descartado).
-- **23. Referencias Multimedia**: almacenar enlaces a videos, fotos, artículos y audio sobre la carrera futbolística.
-- **24. Tutorial**: iniciar el tutorial, ver un paso concreto o reiniciarlo.
-- **25. Atajos Config**: listar los atajos, modificar uno y restaurar los valores por defecto.
-- **26. Resumen Compartible**: generar el resumen del perfil en HTML (tarjeta visual con meta etiquetas para compartir) o Markdown, ver estadísticas destacadas y la mejor temporada.
-- **27. Ranking Amigos**: agregar, listar, modificar y eliminar amigos, ver el ranking y comparar sus estadísticas con las tuyas.
-- **28. Ajustes**: personalizar tema, idioma, accesibilidad, usuario, modo, exportación/importación, búsqueda global y actualización.
-
-## Dashboard
-
-Selecciona "1" en el menú principal para acceder al Dashboard.
-
-### Funcionalidades del Dashboard
-
-El Dashboard ofrece una vista consolidada del sistema:
-
-- **Resumen de partidos**: total, victorias, empates y derrotas
-- **Últimos partidos**: los partidos más recientes con resultado y rendimiento
-- **Estadísticas rápidas**: goles y asistencias totales, rendimiento promedio
-- **Estado de logros**: logros recientes y progreso activo
-- **Alertas y recordatorios próximos**: eventos cercanos destacados
-
-### Metas Personales
-
-Dentro del Dashboard, puedes acceder al submódulo de **Metas Personales** para definir objetivos deportivos con seguimiento automático de progreso:
-
-- **Crear Meta**: define objetivos como "10 goles en la temporada" con métricas específicas
-- **Listar Metas**: consulta todas tus metas con su progreso actual
-- **Editar/Eliminar**: modifica o elimina metas existentes
-- **Dashboard de Metas**: visualiza el progreso general de todas tus metas
-- **Recálculo Automático**: el sistema actualiza el progreso automáticamente contra los datos de partidos
-
-![Metas personales](images/menumetas.png)
-
-![Dashboard](images/dashboard.png)
+- **1. Calendario**: navegar por meses, revisar eventos de un día y volver al día actual.
+- **2. Camisetas**: crear, listar, editar, eliminar, sortear, gestionar imágenes e información de camisetas.
+- **3. Canchas**: crear, listar, editar, eliminar, asociar imagen, activar/desactivar y exportar información.
+- **4. Botines**: crear, listar, modificar, eliminar, fijar predeterminado, sortear y gestionar imágenes de botines.
+- **5. Equipos**: crear, listar, editar, eliminar, cargar/ver imagen y activar/desactivar equipos.
+- **6. Partidos**: crear (amistoso/torneo/entrenamiento), listar, editar, eliminar, simular y trabajar con tags.
+- **7. Lesiones**: crear, listar, editar, eliminar, consultar estadísticas y actualizar estados.
+- **8. Estadísticas**: revisar generales, partidos, goles, asistencias y rendimiento (incluye intensidad, dolor físico, arbitraje y temperatura).
+- **9. Logros**: ver logros totales, completados, en progreso y no completados.
+- **10. Financiamiento**: registrar transacciones, ver resúmenes, balance, exportar y gestionar presupuestos.
+- **11. Torneos**: crear, listar, modificar y eliminar torneos.
+- **12. Temporada**: crear, listar, modificar, eliminar, administrar y comparar temporadas.
+- **13. Análisis**: usar análisis básico, comparador avanzado, Entrenador IA y química.
+- **14. Bienestar**: registrar planificación, hábitos, entrenamiento, alimentación, mental y salud.
+- **15. Carrera Futbolística**: gestionar trayectoria, identidad, hitos, timeline, Hall of Fame, narrativa y modo retro.
+- **16. Recordatorios**: listar, agregar, editar, eliminar, filtrar, exportar/importar y abrir agenda.
+- **17. Colecciones**: administrar inventario, colecciones, sincronización y backups JSON.
+- **18. Records & Rankings**: consultar récords individuales, mejores/peores combinaciones, rankings temporales y rachas históricas.
+- **19. Tiendas**: gestionar tiendas deportivas con información de contacto, productos y rango de precio.
+- **20. Referencias Multimedia**: almacenar enlaces a videos, fotos, artículos y audio sobre la carrera futbolística.
+- **21. Tutorial**: iniciar el tutorial, ver un paso concreto o reiniciarlo.
+- **22. Resumen Compartible**: generar el resumen del perfil en HTML (tarjeta visual con meta etiquetas para compartir) o Markdown, ver estadísticas destacadas y la mejor temporada.
+- **23. Ranking Amigos**: agregar, listar, modificar y eliminar amigos, ver el ranking y comparar sus estadísticas con las tuyas.
+- **24. Ajustes**: personalizar tema, idioma, accesibilidad, usuario, modo, exportación/importación, búsqueda global y actualización.
 
 ## Calendario
 
-Selecciona "2" en el menú principal para acceder al Calendario.
+Selecciona "1" en el menú principal para acceder al Calendario.
 
 ### Funcionalidades del Calendario
 
@@ -319,14 +287,14 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 ### Crear una Camiseta
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "1" para crear una nueva camiseta
 3. Ingresa el nombre de la camiseta
 4. La camiseta se guardará en la base de datos con ID único
 
 ### Listar Camisetas
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "2" para listar las camisetas
 3. Elige el **filtro**: `1) Todas`, `2) Solo activas` o `3) Solo inactivas`
 4. Elige el **orden**: por ID, por nombre, por partidos jugados, por goles o por victorias
@@ -342,14 +310,14 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 ### Editar una Camiseta
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "3" para editar una camiseta
 3. Ingresa el ID de la camiseta a editar
 4. Modifica el nombre según sea necesario
 
 ### Eliminar una Camiseta
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "4" para eliminar una camiseta
 3. Ingresa el ID de la camiseta a eliminar
 4. Si la camiseta tiene partidos asociados, el sistema ofrece:
@@ -360,7 +328,7 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 ### Ajustes de Imagen de Camiseta
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "8" (**Ajustes Imagen**)
 3. Opciones disponibles:
    - Configurar visor preferido
@@ -369,7 +337,7 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 ### Reactivar Camiseta
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "11" (**Reactivar**)
 3. Ingresa el ID de la camiseta inactiva
 4. Confirma para volver a marcarla como activa
@@ -378,7 +346,7 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 
 Al elegir "5" se abre el submenú de sorteo con estas opciones:
 
-1. Selecciona "3" en el menú principal
+1. Selecciona "2" en el menú principal
 2. Elige "5" para abrir el submenú de sorteo
 3. Elige "1" (**Sortear camiseta**): el sistema selecciona una camiseta disponible al azar y te indica
    cuántas quedan pendientes de sortear
@@ -417,7 +385,7 @@ Cuando uses la opción de cargar imagen para una camiseta:
 
 ### Crear una Cancha
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "1" para crear una nueva cancha
 3. Ingresa el nombre de la cancha
 
@@ -440,7 +408,7 @@ Para obtener las coordenadas de tu cancha:
 
 ### Listar Canchas
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "2" para listar las canchas
 3. Elige el **filtro**: `1) Todas`, `2) Solo activas` o `3) Solo inactivas`
 4. Cada cancha se muestra con partidos, goles y asistencias, y una segunda línea con **Victorias/Empates/Derrotas con su porcentaje**
@@ -453,14 +421,14 @@ Para obtener las coordenadas de tu cancha:
 
 ### Editar una Cancha
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "3" para editar una cancha
 3. Ingresa el ID de la cancha a editar
 4. Modifica el nombre según sea necesario
 
 ### Eliminar una Cancha
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "4" para eliminar una cancha
 3. Ingresa el ID de la cancha a eliminar
 4. Si la cancha tiene partidos asociados, podrás:
@@ -471,14 +439,14 @@ Para obtener las coordenadas de tu cancha:
 
 ### Reactivar una Cancha
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "9" (**Reactivar Cancha**)
 3. Ingresa el ID de la cancha inactiva
 4. Confirma para volver a marcarla como activa
 
 ### Exportar Información de Canchas
 
-1. Selecciona "4" en el menú principal
+1. Selecciona "3" en el menú principal
 2. Elige "10" (**Exportar Información**)
 3. Define el alcance:
    - Todas las canchas
@@ -490,7 +458,7 @@ Para obtener las coordenadas de tu cancha:
 
 ## Gestión de Botines
 
-Selecciona "5" en el menú principal para acceder a la gestión de botines de fútbol. Este módulo permite administrar el calzado deportivo.
+Selecciona "4" en el menú principal para acceder a la gestión de botines de fútbol. Este módulo permite administrar el calzado deportivo.
 
 ### Qué puedes hacer en Botines
 
@@ -509,20 +477,20 @@ Selecciona "5" en el menú principal para acceder a la gestión de botines de f�
 
 ### Crear un Botín
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "1" para crear un nuevo botín
 3. Ingresa el nombre del botín
 4. El botín se guardará en la base de datos
 
 ### Listar Botines
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "2" para listar todos los botines
 3. Se mostrarán todos los botines registrados
 
 ### Fijar Botín Predeterminado
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "12" para fijar el botín predeterminado
 3. Selecciona el botín deseado de la lista
 4. Se usará automáticamente al crear nuevos partidos
@@ -531,7 +499,7 @@ Selecciona "5" en el menú principal para acceder a la gestión de botines de f�
 
 Al elegir "5" se abre el submenú de sorteo con estas opciones:
 
-1. Selecciona "5" en el menú principal
+1. Selecciona "4" en el menú principal
 2. Elige "5" para abrir el submenú de sorteo
 3. Elige "1" (**Sortear botín**): el sistema elige un botín pendiente al azar y te indica cuántos
    quedan por sortear; un botín ya sorteado no vuelve a salir hasta completar el ciclo
@@ -545,12 +513,12 @@ Al elegir "5" se abre el submenú de sorteo con estas opciones:
 
 ## Gestión de Equipos
 
-Selecciona "6" en el menú principal para acceder al menú de gestión de equipos. Este módulo permite crear y administrar equipos de fútbol con diferentes configuraciones.
+Selecciona "5" en el menú principal para acceder al menú de gestión de equipos. Este módulo permite crear y administrar equipos de fútbol con diferentes configuraciones.
 
 ### Qué puedes hacer en Equipos
 
 - **1. Crear**: crear equipos fijos o momentáneos.
-- **2. Listar**: consultar planteles y formaciones.
+- **2. Listar**: consultar planteles.
 - **3. Modificar**: editar datos del equipo y jugadores.
 - **4. Eliminar**: borrar equipos.
 - **5. Cargar Imagen**: asociar imagen al equipo.
@@ -559,7 +527,7 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 
 ### Crear un Equipo
 
-1. Selecciona "6" en el menú principal
+1. Selecciona "5" en el menú principal
 2. Elige "1" para crear un nuevo equipo
 3. Selecciona el tipo de equipo:
    - **Fijo**: Se guarda permanentemente en la base de datos
@@ -579,20 +547,20 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 
 ### Listar Equipos
 
-1. Selecciona "6" en el menú principal
+1. Selecciona "5" en el menú principal
 2. Elige "2" para listar todos los equipos
-3. Se mostrarán todos los equipos con sus jugadores y formaciones
+3. Se mostrarán todos los equipos con sus jugadores
 
 ### Modificar un Equipo
 
-1. Selecciona "6" en el menú principal
+1. Selecciona "5" en el menú principal
 2. Elige "3" para modificar un equipo
 3. Ingresa el ID del equipo a modificar
 4. Actualiza la información del equipo y sus jugadores
 
 ### Eliminar un Equipo
 
-1. Selecciona "6" en el menú principal
+1. Selecciona "5" en el menú principal
 2. Elige "4" para eliminar un equipo
 3. Ingresa el ID del equipo a eliminar
 4. Confirma la eliminación
@@ -608,15 +576,14 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 - **3. Modificar**: editar partido existente.
 - **4. Eliminar**: borrar partido.
 - **5. Simular con Equipos Guardados**: ejecutar simulación de encuentro.
-- **6. Análisis Táctico**: crear/consultar diagramas tácticos.
-- **7. Favoritos**: marcar partidos destacados para consulta rápida.
-- **8. Etiquetas (Tags)**: clasificar partidos con etiquetas.
-- **9. Obtener Clima Histórico**: completar la temperatura y el clima de partidos anteriores.
-- **10. Último**: ver el último partido, victoria, derrota, empate, gol o asistencia.
+- **6. Favoritos**: marcar partidos destacados para consulta rápida.
+- **7. Etiquetas (Tags)**: clasificar partidos con etiquetas.
+- **8. Obtener Clima Histórico**: completar la temperatura y el clima de partidos anteriores.
+- **9. Último**: ver el último partido, victoria, derrota, empate, gol o asistencia.
 
 ### Crear un Partido
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "1" para crear un nuevo partido
 3. Elige el modo de carga:
    - **Amistoso**
@@ -644,7 +611,7 @@ Selecciona "6" en el menú principal para acceder al menú de gestión de equipo
 
 ### Listar Partidos
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "2" para listar todos los partidos
 3. Se mostrarán con todas las estadísticas y fecha con día de semana
 4. Ejemplo: `Fecha: Domingo 03/05/2026 19:00`
@@ -663,12 +630,12 @@ están también los rankings por temperatura:
 
 Cada opción se activa y se desactiva volviendo a elegirla (o con **14) Limpiar filtros**). Mientras un
 ranking está activo, el listado muestra solo esos 5 partidos y la navegación por páginas queda
-deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obtener Clima Histórico").
+deshabilitada. Solo se consideran partidos con clima registrado (opción "8. Obtener Clima Histórico").
 
 ### Último Partido, Victoria, Derrota, Empate, Gol y Asistencia
 
-1. Selecciona "7" en el menú principal
-2. Elige "10" para abrir el submenú **ULTIMOS**
+1. Selecciona "6" en el menú principal
+2. Elige "9" para abrir el submenú **ULTIMOS**
 3. Elige la opción deseada (1 a 6)
 4. Además de los datos del partido, se muestra el **tiempo transcurrido** desde ese partido con
    años, meses, días, horas y minutos
@@ -676,29 +643,23 @@ deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obt
 
 ### Modificar un Partido
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "3" para modificar un partido
 3. Ingresa el ID del partido a modificar
 4. Actualiza los datos según sea necesario
 
 ### Eliminar un Partido
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "4" para eliminar un partido
 3. Ingresa el ID del partido a eliminar
 4. Confirma la eliminación
 
 ### Simular con Equipos Guardados
 
-1. Selecciona "7" en el menú principal
+1. Selecciona "6" en el menú principal
 2. Elige "5" para simular un partido con equipos guardados
 3. Sigue el flujo para elegir los equipos y ejecutar la simulación
-
-### Análisis Táctico
-
-1. Selecciona "7" en el menú principal
-2. Elige "6" para abrir análisis táctico
-3. Podrás crear y visualizar diagramas tácticos
 
 ![Gestión de partidos](images/menupartidos.png)
 
@@ -716,7 +677,7 @@ deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obt
 
 ### Registrar una Lesión
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "1" para registrar una nueva lesión
 3. Ingresa el nombre del jugador
 4. Selecciona el tipo de lesión (Muscular, Articular, Ósea, etc.)
@@ -728,28 +689,28 @@ deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obt
 
 ### Listar Lesiones
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "2" para listar todas las lesiones
 3. Se mostrarán con detalles completos, estado y fecha con día de semana
 4. Ejemplo: `Fecha: Domingo 01/02/2026 21:40`
 
 ### Editar una Lesión
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "3" para editar una lesión
 3. Ingresa el ID de la lesión a editar
 4. Modifica los datos según sea necesario
 
 ### Eliminar una Lesión
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Elige "4" para eliminar una lesión
 3. Ingresa el ID de la lesión a eliminar
 4. Confirma la eliminación
 
 ### Estadísticas y Herramientas de Lesiones
 
-1. Selecciona "8" en el menú principal
+1. Selecciona "7" en el menú principal
 2. Usa opciones adicionales del menú de lesiones:
    - "5" Estadísticas
    - "6" Diferencias entre lesiones
@@ -759,7 +720,7 @@ deshabilitada. Solo se consideran partidos con clima registrado (opción "9. Obt
 
 ## Estadísticas
 
-Selecciona "9" en el menú principal para acceder al menú de estadísticas. Este menú ofrece una amplia variedad de análisis estadísticos.
+Selecciona "8" en el menú principal para acceder al menú de estadísticas. Este menú ofrece una amplia variedad de análisis estadísticos.
 
 ### Qué puedes hacer en Estadísticas
 
@@ -876,7 +837,7 @@ Análisis completo de lesiones:
 
 ## Logros
 
-Selecciona "10" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
+Selecciona "9" en el menú principal para acceder al sistema de logros y badges. Los logros están organizados por categorías y niveles de dificultad.
 
 ### Categorías de Logros
 
@@ -890,25 +851,25 @@ Selecciona "10" en el menú principal para acceder al sistema de logros y badges
 
 ### Ver Todos los Logros
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "1" para ver todos los logros
 3. Se mostrarán todos los logros con su progreso actual
 
 ### Ver Logros Completados
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "2" para ver logros completados
 3. Se mostrarán solo los logros que has alcanzado
 
 ### Ver Logros en Progreso
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "3" para ver logros en progreso
 3. Se mostrarán los logros que estás cerca de completar
 
 ### Ver Logros No Completados
 
-1. Selecciona "10" en el menú principal
+1. Selecciona "9" en el menú principal
 2. Elige "4" para ver logros no completados
 3. Se mostrará el listado pendiente con su progreso
 
@@ -916,7 +877,7 @@ Selecciona "10" en el menú principal para acceder al sistema de logros y badges
 
 ## Gestión Financiera
 
-Selecciona "11" en el menú principal para acceder al módulo de gestión financiera del equipo.
+Selecciona "10" en el menú principal para acceder al módulo de gestión financiera del equipo.
 
 ### Qué puedes hacer en Financiamiento
 
@@ -931,7 +892,7 @@ Selecciona "11" en el menú principal para acceder al módulo de gestión financ
 
 ### Agregar Transacción Financiera
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "1" para agregar una nueva transacción
 3. Selecciona el tipo:
    - **Ingreso**: Cuotas, sponsors, premios, etc.
@@ -951,28 +912,28 @@ Selecciona "11" en el menú principal para acceder al módulo de gestión financ
 
 ### Listar Transacciones
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "2" para ver todas las transacciones financieras
 3. Se mostrarán ordenadas por fecha y con día de semana en la fecha
 4. Ejemplo: `Fecha: Martes 06/05/2026`
 
 ### Modificar Transacción
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "3" para modificar una transacción existente
 3. Ingresa el ID de la transacción a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar Transacción
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "4" para eliminar una transacción
 3. Ingresa el ID de la transacción
 4. Confirma la eliminación
 
 ### Ver Resumen Financiero
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "5" para ver un resumen completo
 3. Se mostrará:
    - Total de ingresos
@@ -982,19 +943,19 @@ Selecciona "11" en el menú principal para acceder al módulo de gestión financ
 
 ### Ver Balance de Gastos
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "6" para analizar el balance por categorías
 3. Se mostrará el desglose de gastos por tipo
 
 ### Exportar Datos Financieros
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "7" para exportar las transacciones financieras
 3. Selecciona el formato deseado (CSV, JSON, HTML, TXT)
 
 ### Presupuestos Mensuales
 
-1. Selecciona "11" en el menú principal
+1. Selecciona "10" en el menú principal
 2. Elige "8" para abrir el menú de presupuestos mensuales
 3. Configura límites y seguimiento por mes
 
@@ -1002,7 +963,7 @@ Selecciona "11" en el menú principal para acceder al módulo de gestión financ
 
 ## Gestión de Torneos
 
-Selecciona "12" en el menú principal para acceder al menú de gestión de torneos.
+Selecciona "11" en el menú principal para acceder al menú de gestión de torneos.
 
 ### Qué puedes hacer en Torneos
 
@@ -1013,7 +974,7 @@ Selecciona "12" en el menú principal para acceder al menú de gestión de torne
 
 ### Crear un Torneo
 
-1. Selecciona "12" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "1" para crear un nuevo torneo
 3. Ingresa el nombre del torneo
 4. Selecciona si tiene equipo fijo
@@ -1031,20 +992,20 @@ Selecciona "12" en el menú principal para acceder al menú de gestión de torne
 
 ### Listar Torneos
 
-1. Selecciona "12" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "2" para listar todos los torneos
 3. Se mostrarán con su estado actual
 
 ### Modificar un Torneo
 
-1. Selecciona "12" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "3" para modificar un torneo
 3. Ingresa el ID del torneo a modificar
 4. Actualiza la configuración del torneo
 
 ### Eliminar un Torneo
 
-1. Selecciona "12" en el menú principal
+1. Selecciona "11" en el menú principal
 2. Elige "4" para eliminar un torneo
 3. Ingresa el ID del torneo a eliminar
 4. Confirma la eliminación
@@ -1053,7 +1014,7 @@ Selecciona "12" en el menú principal para acceder al menú de gestión de torne
 
 ## Gestión de Temporadas
 
-Selecciona "13" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
+Selecciona "12" en el menú principal para acceder al sistema de gestión de temporadas y ciclos deportivos.
 
 ### Qué puedes hacer en Temporadas
 
@@ -1066,7 +1027,7 @@ Selecciona "13" en el menú principal para acceder al sistema de gestión de tem
 
 ### Crear una Temporada
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "1" para crear una nueva temporada
 3. Ingresa el nombre de la temporada (ej: "Temporada 2026")
 4. Especifica el año
@@ -1084,27 +1045,27 @@ Selecciona "13" en el menú principal para acceder al sistema de gestión de tem
 
 ### Listar Temporadas
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "2" para listar todas las temporadas
 3. Se mostrarán con sus fechas y estado
 
 ### Modificar una Temporada
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "3" para modificar una temporada
 3. Ingresa el ID de la temporada a modificar
 4. Actualiza los datos necesarios
 
 ### Eliminar una Temporada
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "4" para eliminar una temporada
 3. Ingresa el ID de la temporada
 4. Confirma la eliminación
 
 ### Administrar una Temporada
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "5" para administrar una temporada
 3. Selecciona la temporada a administrar
 4. Accede a funciones avanzadas:
@@ -1119,7 +1080,7 @@ Selecciona "13" en el menú principal para acceder al sistema de gestión de tem
 
 ### Comparar Temporadas
 
-1. Selecciona "13" en el menú principal
+1. Selecciona "12" en el menú principal
 2. Elige "6" para comparar dos temporadas
 3. Selecciona los IDs a comparar para ver diferencias
 
@@ -1162,16 +1123,15 @@ Análisis mensual automático:
 
 ## Análisis de Rendimiento
 
-Selecciona "14" en el menú principal para ver el análisis de rendimiento.
-Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**, **Análisis Táctico (Diagramas)**, **Entrenador IA** y **Química Entre Jugadores**.
+Selecciona "13" en el menú principal para ver el análisis de rendimiento.
+Desde este menú puedes acceder a **Análisis Básico**, **Comparador Avanzado**, **Entrenador IA** y **Química Entre Jugadores**.
 
 ### Qué puedes hacer en Análisis
 
 - **1. Análisis Básico**: revisar indicadores clave de forma directa.
 - **2. Comparador Avanzado**: comparar periodos, camisetas y contexto.
-- **3. Análisis Táctico (Diagramas)**: crear y consultar esquemas tácticos.
-- **4. Entrenador Virtual (IA)**: recibir consejos inteligentes.
-- **5. Química Entre Jugadores**: medir sinergia y rendimiento combinado.
+- **3. Entrenador Virtual (IA)**: recibir consejos inteligentes.
+- **4. Química Entre Jugadores**: medir sinergia y rendimiento combinado.
 
 ### Funcionalidades del Análisis
 
@@ -1207,7 +1167,7 @@ En la selección de partido para química:
 
 ## Bienestar
 
-Selecciona "15" en el menú principal para acceder a las herramientas de bienestar.
+Selecciona "14" en el menú principal para acceder a las herramientas de bienestar.
 
 ### Qué puedes hacer en Bienestar
 
@@ -1234,254 +1194,33 @@ Selecciona "15" en el menú principal para acceder a las herramientas de bienest
 
 ## Carrera Futbolística
 
-Selecciona "16" en el menú principal para acceder al módulo de carrera futbolística.
+Selecciona "15" en el menú principal para acceder al módulo de carrera futbolística.
 
 ### Qué puedes hacer en Carrera Futbolística
 
-- **1. Carrera Futbolística**: ver resumen base de trayectoria.
-- **2. Tu Historia Futbolística**: consultar narrativa/historial personal.
-- **3. Resumen General de Carrera**: ver consolidado global de evolución.
-- **4. Ficha de Identidad del Jugador**: crear/editar perfil personal.
-- **5. Perfil Dinámico de Jugador**: analizar estilo de juego automáticamente.
-- **6. Partidos que Marcaron**: marcar y gestionar hitos.
-- **7. Timeline de Carrera**: línea temporal de eventos clave.
-- **8. Hall of Fame Personal**: ver mejores hitos y récords.
-- **9. Resumen Narrativo Automático**: generar y consultar resúmenes de carrera.
-- **10. Modo Retro: Hoy en tu Historia**: revivir recuerdos de la fecha actual en años anteriores.
-- **11. Mejor Once Histórico**: ver la mejor formación registrada.
-- **12. Vitrina de Trofeos**: ver los torneos finalizados en los que terminaste en el podio, con
-  medalla de oro (1er puesto), plata (2do puesto) o bronce (3er puesto) y el resumen de títulos.
-- **13. Estadísticas por Temporada**: partidos jugados, goles, asistencias, victorias/empates/derrotas
+- **1. Resumen de Carrera**: totales (partidos, victorias/empates/derrotas, goles, asistencias),
+  inicio y años jugando, promedios por año, mejor año y desglose anual.
+- **2. Ficha de Identidad del Jugador**: crear/editar perfil personal.
+- **3. Perfil Dinámico de Jugador**: analizar estilo de juego automáticamente.
+- **4. Partidos que Marcaron**: marcar y gestionar hitos.
+- **5. Timeline de Carrera**: línea temporal de eventos clave (incluye los hitos marcados).
+- **6. Hall of Fame Personal**: mejores momentos y récords, top de rendimientos, vitrina de trofeos y camiseta legendaria.
+- **7. Resumen Narrativo Automático**: generar y consultar resúmenes de carrera.
+- **8. Modo Retro: Hoy en tu Historia**: revivir recuerdos de la fecha actual en años anteriores.
+- **9. Estadísticas por Temporada**: partidos jugados, goles, asistencias, victorias/empates/derrotas
   y rendimiento promedio calculados dentro del período de cada temporada.
-- **14. Timeline de Hitos**: línea temporal cronológica de los partidos marcados como hito, con tipo,
-  nota y rendimiento.
-- **15. Logros de Carrera**: progreso de logros de trayectoria (partidos, goles, asistencias,
+- **10. Logros de Carrera**: progreso de logros de trayectoria (partidos, goles, asistencias,
   victorias, mejor racha, títulos, podios, hitos y temporadas) con su avance y estado.
+- **11. Entrenamiento y Progresión**: planes de entrenamiento y progresión de atributos por jugador.
 
-Este módulo te ayuda a llevar seguimiento longitudinal de tu desarrollo deportivo con foco en trayectoria y metas personales.
+Este módulo te ayuda a llevar seguimiento longitudinal de tu desarrollo deportivo con foco en trayectoria y evolución personal.
 Además, al iniciar la aplicación puede aparecer una sugerencia opcional para abrir Modo Retro si hay recuerdos del día.
 
 ![Carrera futbolística](images/menucarrerafutbolistica.png)
 
-## Reproductor de Música
-
-Selecciona "19" en el menú principal para acceder al reproductor de música integrado.
-
-El reproductor utiliza la biblioteca **miniaudio** y detecta automáticamente los archivos de audio de la carpeta `Musica/` ubicada junto al ejecutable. Soporta los formatos `.mp3`, `.wav`, `.flac` y `.ogg`.
-
-### Qué puedes hacer en Música
-
-- Reproducir, pausar, detener y navegar pistas.
-- Gestionar volumen con paso configurable.
-- Aplicar ecualizador de 3 bandas.
-- Crear/cargar/eliminar playlists.
-- Buscar y filtrar pistas por nombre.
-- Usar temporizador de apagado y saltos temporales.
-- Ver información técnica y renombrar pistas.
-- Exportar catálogo como playlist.
-
-![Reproductor de música](images/menumusica.png)
-
-### Configuración Inicial
-
-1. Crea la carpeta `Musica/` junto al ejecutable (el programa la crea automáticamente si no existe).
-2. Copia tus archivos de audio (`.mp3`, `.wav`, `.flac`, `.ogg`) dentro de esa carpeta.
-3. Abre el reproductor desde el menú principal (opción **19**).
-4. La lista de pistas se cargará automáticamente.
-
-### Controles del Reproductor
-
-| Opción | Acción |
-|--------|--------|
-| **1** | Reproducir / Pausar la pista actual |
-| **2** | Detener (rebobina al inicio) |
-| **3** | Pista anterior |
-| **4** | Pista siguiente |
-| **5** | Seleccionar una pista de la lista |
-| **6** | Subir volumen (paso configurable, ver [24]) |
-| **7** | Bajar volumen (paso configurable, ver [24]) |
-| **8** | Cambiar modo de repetición / shuffle |
-| **9** | Actualizar lista (reescanear carpeta `Musica/`) |
-| **10** | Agregar canción a la carpeta |
-| **11** | Eliminar canción de la carpeta |
-| **12** | Ecualizador de 3 bandas |
-| **13** | Playlists |
-| **14** | Música al iniciar (ON/OFF) |
-| **15** | Buscar pista por nombre (activa filtro) |
-| **16** | Retroceder 10 segundos |
-| **17** | Avanzar 10 segundos |
-| **18** | Limpiar filtro de búsqueda |
-| **19** | Temporizador de apagado (sleep timer) |
-| **20** | Saltar a tiempo exacto (formato MM:SS) |
-| **21** | Información técnica de la pista activa |
-| **22** | Renombrar pista |
-| **23** | Exportar catálogo como playlist |
-| **24** | Configurar paso de volumen |
-| **0** | Volver al menú principal |
-
-### Interfaz Visual
-
-El reproductor muestra en pantalla:
-
-- **Pista actual**: nombre del archivo y posición en la lista (ej. `[2/8]`).
-- **Barra de progreso**: tiempo actual y duración total (`mm:ss / mm:ss`) con tiempo restante.
-- **Barra de volumen**: nivel visual de 0 % a 100 %.
-- **Estado**: `REPRODUCIENDO`, `PAUSADO` o `DETENIDO`.
-- **Modo de repetición**: Sin repetición, Repetir pista, Repetir lista o Aleatorio.
-- **Filtro activo**: muestra el término de búsqueda si hay un filtro aplicado.
-- **Estado del ecualizador**: activo/desactivado con niveles de cada banda en dB.
-- **Inicio automático**: indica si la música arrancará al abrir la aplicación.
-
-### Modos de Repetición
-
-| Modo | Comportamiento |
-|------|----------------|
-| **Sin repetición** | Avanza pista a pista; al terminar la última se detiene |
-| **Repetir pista** | Repite la misma pista indefinidamente |
-| **Repetir lista** | Al terminar la última vuelve a la primera |
-| **Aleatorio (shuffle)** | Elige la siguiente pista de forma aleatoria |
-
-Pulsa la opción **8** repetidamente para ciclar entre los cuatro modos.  
-En modo **Aleatorio**, la opción **[3] Pista anterior** retrocede por el historial de pistas ya escuchadas.
-
-### Ecualizador (3 Bandas)
-
-Accede con la opción **12**.
-
-| Banda | Frecuencia central | Rango de ajuste |
-|-------|-------------------|------------------|
-| **Graves** | 200 Hz | −12 dB a +12 dB |
-| **Medios** | 1 000 Hz | −12 dB a +12 dB |
-| **Agudos** | 8 000 Hz | −12 dB a +12 dB |
-
-- Cada pulsación ajusta **3 dB** hacia arriba o hacia abajo.
-- El ecualizador puede activarse o desactivarse sin perder los ajustes.
-- Los cambios se aplican en tiempo real.
-
-### Playlists
-
-Accede con la opción **13**.
-
-- **Crear playlist**: asigna un nombre y añade las pistas deseadas.
-- **Cargar playlist**: activa una playlist guardada como lista de reproducción.
-- **Eliminar playlist**: borra una playlist guardada.
-
-### Exportar Catálogo como Playlist (opción 23)
-
-Genera un archivo `.txt` en `Musica/` con la lista de pistas del catálogo actual.
-
-1. Selecciona **23**.
-2. Si hay un filtro de búsqueda activo, solo se exportarán las pistas que coincidan.
-3. Ingresa el nombre de la playlist (sin extensión).
-4. El archivo se guarda en la carpeta `Musica/` y puede cargarse desde **Playlists**.
-
-### Búsqueda y Filtro (opciones 15 y 18)
-
-- **[15] Buscar pista**: ingresa una parte del nombre; el reproductor filtra la lista y solo muestra coincidencias.
-- El filtro permanece activo hasta que lo limpies con **[18]** o dejes el campo vacío al buscar.
-- La lista principal, la selección de pista ([5]) y la exportación de catálogo ([23]) respetan el filtro activo.
-
-### Navegación Temporal (opciones 16, 17 y 20)
-
-- **[16] Retroceder 10 s**: salta 10 segundos hacia atrás dentro de la pista actual.
-- **[17] Avanzar 10 s**: salta 10 segundos hacia adelante.
-- **[20] Saltar a tiempo exacto**: ingresa el momento en formato `MM:SS` (ej. `1:20` para 1 min 20 s) o solo segundos (ej. `80`). El reproductor se posiciona exactamente en ese instante.
-
-### Temporizador de Apagado — Sleep Timer (opción 19)
-
-1. Selecciona **19**.
-2. Ingresa los minutos tras los cuales deseas que se detenga la reproducción.
-3. El countdown corre en segundo plano; cuando se agota, la música se detiene con fade-out suave.
-4. Selecciona **19** de nuevo y pon `0` para cancelar el temporizador.
-
-### Información de Pista Activa (opción 21)
-
-Muestra los datos técnicos de la pista que está cargada:
-
-- Nombre del archivo.
-- Duración total (`MM:SS` y frames PCM).
-- Formato (extensión del archivo).
-- Sample rate en Hz.
-- Número de canales.
-- Ruta completa en disco.
-
-### Renombrar Pista (opción 22)
-
-1. Selecciona **22**.
-2. Elige el número de la pista de la lista (la pista en reproducción no puede renombrarse; pausa primero).
-3. Ingresa el nuevo nombre **incluyendo la extensión** (ej. `Mi Cancion.mp3`).
-4. El archivo se renombra en disco y la lista se actualiza de inmediato.
-
-### Configurar Paso de Volumen (opción 24)
-
-Permite elegir cuánto sube o baja el volumen con las opciones **[6]** y **[7]**.
-
-| Opción | Paso | Descripción |
-|--------|------|-------------|
-| **1** | 1 % | Ajuste fino |
-| **2** | 5 % | Ajuste moderado |
-| **3** | 10 % | Ajuste rápido (valor por defecto) |
-| **4** | 20 % | Ajuste máximo |
-
-El paso elegido se guarda en la base de datos y persiste entre sesiones. Las etiquetas de `[6]` y `[7]` en el menú muestran dinámicamente el porcentaje activo.
-
-### Reanudar Posición Automáticamente
-
-Al salir del reproductor (opción **0**), el programa guarda automáticamente:
-- El nombre de la pista que estaba activa.
-- El instante exacto (frame PCM) donde se encontraba.
-
-La próxima vez que entres al reproductor, la pista se cargará y el cursor se posicionará donde lo dejaste. Esta función se activa una sola vez por sesión.
-
-### Música al Iniciar
-
-La opción **14** activa o desactiva la reproducción automática al arrancar MiFutbolC.
-
-- Cuando está **activada**, la primera pista comenzará a reproducirse al iniciar la aplicación.
-- La preferencia se guarda en la base de datos y persiste entre sesiones.
-- También puede configurarse desde **Ajustes**.
-
-### Gestión de Archivos de Audio
-
-#### Agregar una canción (opción 10)
-
-1. Selecciona **10** en el reproductor.
-2. Ingresa la ruta completa del archivo de audio que deseas agregar.
-3. El programa copiará el archivo a la carpeta `Musica/`.
-4. La lista se actualizará automáticamente.
-
-#### Eliminar una canción (opción 11)
-
-1. Selecciona **11** en el reproductor.
-2. Elige la pista de la lista numerada.
-3. Confirma la eliminación.
-
-> ⚠️ Esta acción **elimina el archivo físicamente** de la carpeta `Musica/`. No se puede deshacer.
-
-#### Actualizar lista (opción 9)
-
-Si agregas o eliminas archivos de audio manualmente desde el explorador, usa la opción **9** para que el reproductor reescanee la carpeta.
-
-### Preguntas Frecuentes del Reproductor
-
-**¿Qué formatos de audio soporta?**  
-`.mp3`, `.wav`, `.flac` y `.ogg` (cuando el compilador incluye soporte Vorbis). Otros formatos no serán detectados aunque se copien en la carpeta.
-
-**¿Dónde se almacenan las canciones?**  
-En la subcarpeta `Musica/` junto al ejecutable del programa.
-
-**¿El volumen se guarda entre sesiones?**  
-Sí. El nivel de volumen y el paso de volumen configurado persisten en la base de datos.
-
-**¿La música continúa al navegar por otros menús?**  
-Sí, la reproducción continúa en segundo plano mientras usas el resto de la aplicación.
-
-**¿Cómo retomo la pista donde la dejé?**  
-Automáticamente: al volver al reproductor tras salir con `[0]`, el sistema restaura la pista y el instante exacto de la sesión anterior.
-
 ## Records & Rankings
 
-Selecciona "20" en el menú principal para acceder al módulo de récords y rankings. Este módulo ofrece análisis comparativo de desempeño histórico.
+Selecciona "18" en el menú principal para acceder al módulo de récords y rankings. Este módulo ofrece análisis comparativo de desempeño histórico.
 
 ### Qué puedes hacer en Records & Rankings
 
@@ -1494,7 +1233,7 @@ Selecciona "20" en el menú principal para acceder al módulo de récords y rank
 
 ### Consultar Récords
 
-1. Selecciona "20" en el menú principal
+1. Selecciona "18" en el menú principal
 2. Explora las opciones disponibles para consultar récords de goles, asistencias y combinaciones
 3. El sistema mostrará los valores máximos históricos con contexto completo
 
@@ -1510,7 +1249,7 @@ El módulo permite comparar:
 
 ## Tiendas
 
-Selecciona "21" en el menú principal para acceder a la gestión de tiendas deportivas. Este módulo permite almacenar información de locales, tiendas online o cualquier comercio relacionado al fútbol (botines, camisetas, indumentaria, etc.).
+Selecciona "19" en el menú principal para acceder a la gestión de tiendas deportivas. Este módulo permite almacenar información de locales, tiendas online o cualquier comercio relacionado al fútbol (botines, camisetas, indumentaria, etc.).
 
 ### Qué puedes hacer en Tiendas
 
@@ -1521,62 +1260,22 @@ Selecciona "21" en el menú principal para acceder a la gestión de tiendas depo
 
 ### Crear una Tienda
 
-1. Selecciona "21" en el menú principal
+1. Selecciona "19" en el menú principal
 2. Elige "1" para crear una nueva tienda
 3. Completa los datos solicitados (nombre, tipo, contacto, productos, rango de precio)
 4. La tienda se guardará en la base de datos
 
 ### Listar Tiendas
 
-1. Selecciona "21" en el menú principal
+1. Selecciona "19" en el menú principal
 2. Elige "2" para listar todas las tiendas
 3. Se mostrarán con sus datos completos
 
 ![Gestión de tiendas](images/menutiendas.png)
 
-## Reclutamiento
-
-Selecciona "22" en el menú principal para acceder al pipeline de reclutamiento de jugadores. Gestiona el proceso completo desde que un jugador es identificado hasta que es reclutado o descartado.
-
-### Pipeline de Reclutamiento
-
-El proceso sigue estas etapas:
-1. **Visto** — Jugador identificado como potencial candidato
-2. **Prospecto** — Se recopila información básica
-3. **En Seguimiento** — Se monitorea su rendimiento
-4. **Contactado** — Se establece comunicación
-5. **Reclutado** — Se incorpora al equipo
-6. **Descartado** — Se descarta como candidato
-
-### Qué puedes hacer en Reclutamiento
-
-- **1. Crear**: registrar un nuevo prospecto en el pipeline.
-- **2. Listar**: ver todos los prospectos y su etapa actual.
-- **3. Editar**: modificar datos de un prospecto.
-- **4. Avanzar**: mover un prospecto a la siguiente etapa.
-- **5. Retroceder**: regresar un prospecto a la etapa anterior.
-- **6. Eliminar**: eliminar un prospecto del pipeline.
-- **7. Estadísticas**: ver métricas del pipeline de reclutamiento.
-
-### Crear un Prospecto
-
-1. Selecciona "22" en el menú principal
-2. Elige "1" para crear un nuevo prospecto
-3. Ingresa los datos del jugador (nombre, posición, etc.)
-4. El prospecto se registra en la etapa inicial "Visto"
-
-### Avanzar en el Pipeline
-
-1. Selecciona "22" en el menú principal
-2. Elige "4" para avanzar un prospecto
-3. Selecciona el prospecto de la lista
-4. El sistema lo moverá a la siguiente etapa disponible
-
-![Reclutamiento](images/menureclutamiento.png)
-
 ## Referencias Multimedia
 
-Selecciona "23" en el menú principal para acceder a la gestión de referencias a medios externos. Este módulo almacena enlaces (URLs) a YouTube, Google Drive y otras plataformas para documentar la carrera futbolística.
+Selecciona "20" en el menú principal para acceder a la gestión de referencias a medios externos. Este módulo almacena enlaces (URLs) a YouTube, Google Drive y otras plataformas para documentar la carrera futbolística.
 
 ### Qué puedes hacer en Referencias Multimedia
 
@@ -1588,7 +1287,7 @@ Selecciona "23" en el menú principal para acceder a la gestión de referencias 
 
 ### Crear una Referencia
 
-1. Selecciona "23" en el menú principal
+1. Selecciona "20" en el menú principal
 2. Elige "1" para agregar una nueva referencia
 3. Selecciona el tipo (Video, Foto, Artículo o Audio)
 4. Ingresa la URL y una descripción
@@ -1596,7 +1295,7 @@ Selecciona "23" en el menú principal para acceder a la gestión de referencias 
 
 ### Filtrar por Tipo
 
-1. Selecciona "23" en el menú principal
+1. Selecciona "20" en el menú principal
 2. Elige "5" para filtrar por tipo
 3. Selecciona el tipo deseado
 4. Se mostrarán solo las referencias de esa categoría
@@ -1605,13 +1304,13 @@ Selecciona "23" en el menú principal para acceder a la gestión de referencias 
 
 ## Entrenador IA
 
-Selecciona "14" en el menú principal, luego **Entrenador IA** (opción 4) dentro de Análisis.
+Selecciona "13" en el menú principal, luego **Entrenador IA** (opción 4) dentro de Análisis.
 
 ### Funcionalidades del Entrenador IA
 
 #### Consejos Actuales
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "1" para ver consejos actuales
 4. El sistema evaluará tu estado actual:
@@ -1637,7 +1336,7 @@ Selecciona "14" en el menú principal, luego **Entrenador IA** (opción 4) dentr
 
 #### Historial de Consejos
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "2" para ver historial de consejos
 4. Se mostrarán todos los consejos anteriores
@@ -1645,14 +1344,14 @@ Selecciona "14" en el menú principal, luego **Entrenador IA** (opción 4) dentr
 
 #### Evaluar Decisión Pasada
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "3" para evaluar decisiones pasadas
 4. El sistema analizará el impacto de seguir o ignorar consejos
 
 #### Configurar Nivel de Intervención
 
-1. Selecciona "14" en el menú principal
+1. Selecciona "13" en el menú principal
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "4" para configurar el nivel de intervención
 4. Selecciona el nivel (0-3):
@@ -1676,7 +1375,7 @@ Para no interrumpir en cada partido, el aviso previo al partido se muestra como 
 
 ## Recordatorios
 
-Selecciona "17" en el menú principal para acceder al módulo de recordatorios.
+Selecciona "16" en el menú principal para acceder al módulo de recordatorios.
 
 ### Qué puedes hacer en Recordatorios
 
@@ -1701,7 +1400,7 @@ Selecciona "17" en el menú principal para acceder al módulo de recordatorios.
 
 ## Colecciones e Inventario
 
-Selecciona "18" en el menú principal para abrir el módulo de colecciones e inventario.
+Selecciona "17" en el menú principal para abrir el módulo de colecciones e inventario.
 
 ### Qué puedes hacer en Colecciones e Inventario
 
@@ -1729,23 +1428,15 @@ Selecciona "18" en el menú principal para abrir el módulo de colecciones e inv
 
 ## Tutorial
 
-Selecciona "24" en el menú principal (Tutorial).
+Selecciona "21" en el menú principal (Tutorial).
 
 - **1. Iniciar tutorial**: recorre la guía paso a paso.
 - **2. Ver paso específico**: salta directamente a un paso concreto.
 - **3. Reiniciar tutorial**: devuelve el tutorial a su estado inicial.
 
-## Atajos Config
-
-Selecciona "25" en el menú principal (Atajos Config) para revisar y personalizar el teclado.
-
-- **1. Listar atajos**: muestra las teclas configuradas y la acción de cada una.
-- **2. Modificar atajo**: cambia la tecla asignada a una acción.
-- **3. Restaurar defaults**: devuelve todos los atajos a sus valores originales.
-
 ## Resumen Compartible
 
-Selecciona "26" en el menú principal (Resumen Compartible). Genera un resumen de tu perfil listo para compartir.
+Selecciona "22" en el menú principal (Resumen Compartible). Genera un resumen de tu perfil listo para compartir.
 
 - **1. Generar Resumen HTML**: crea `resumen_compartible.html` con una tarjeta visual (estadísticas generales, rendimiento destacado, resultados, último partido, racha, perfil de juego y logros) y meta etiquetas `og:` para la previsualización al compartir el enlace.
 - **2. Generar Resumen Markdown**: la misma información en `resumen_compartible.md`, ideal para pegar en un chat o en un README.
@@ -1756,7 +1447,7 @@ Los dos formatos comparten la preparación de datos, así que los números que m
 
 ## Ranking de Amigos
 
-Selecciona "27" en el menú principal (Ranking Amigos).
+Selecciona "23" en el menú principal (Ranking Amigos).
 
 - **1. Agregar amigo**: registrar un amigo para comparar.
 - **2. Listar amigos**: ver los amigos registrados.
@@ -1767,7 +1458,7 @@ Selecciona "27" en el menú principal (Ranking Amigos).
 
 ## Exportar Datos
 
-Selecciona "28" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
+Selecciona "24" en el menú principal (Ajustes) y luego **Exportar** (opción 8) para acceder al menú de exportación.
 
 ### Opciones de Exportación
 
@@ -1852,7 +1543,7 @@ Los archivos se guardan con nombres descriptivos como:
 
 ## Importar Datos
 
-Selecciona "28" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
+Selecciona "24" en el menú principal (Ajustes) y luego **Importar** (opción 9) para acceder a la importación de datos.
 
 ### Preparación para Importar
 
@@ -1864,7 +1555,7 @@ Selecciona "28" en el menú principal (Ajustes) y luego **Importar** (opción 9)
 
 ### Proceso de Importación
 
-1. Selecciona "28" en el menú principal y luego **Importar**
+1. Selecciona "24" en el menú principal y luego **Importar**
 2. Elige una opción del menú de importación:
    - "1" Importar desde JSON
    - "2" Importar desde TXT
@@ -1901,7 +1592,7 @@ Si hay errores durante la importación:
 
 ## Configuración (Ajustes)
 
-Selecciona "28" en el menú principal para acceder al menú de configuración del sistema.
+Selecciona "24" en el menú principal para acceder al menú de configuración del sistema.
 
 ### Qué puedes hacer en Ajustes
 
@@ -1920,7 +1611,7 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Tema de Interfaz
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
    - **Claro**: Fondo claro, texto oscuro
@@ -1936,7 +1627,7 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Cambiar Idioma
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
    - **Español**: Idioma por defecto
@@ -1946,13 +1637,13 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Accesibilidad
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "3" para abrir accesibilidad
 3. Ajusta el tamaño del texto o activa alto contraste
 
 ### Gestión de Usuario y Seguridad
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Desde este menú puedes:
    - Mostrar nombre actual
@@ -1965,7 +1656,7 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Ver Configuración Actual
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
    - Tema actual
@@ -1976,7 +1667,7 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Restablecer Valores por Defecto
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
@@ -1986,30 +1677,30 @@ Selecciona "28" en el menú principal para acceder al menú de configuración de
 
 ### Modo de Menú
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "7" para configurar el modo
 3. Selecciona modo Simple, Avanzado o Personalizado
 
 ### Exportar / Importar desde Ajustes
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "8" para **Exportar** o "9" para **Importar**
 
 ### Búsqueda Global
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "10" para abrir la búsqueda global
 3. Escribe el término a buscar para localizar contenido entre módulos
 
 ### Actualizar aplicación
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "11" para abrir el flujo de actualización
 3. En Windows, podrás buscar y ejecutar la actualización
 
 ### Música al iniciar desde Ajustes
 
-1. Selecciona "28" en el menú principal
+1. Selecciona "24" en el menú principal
 2. Elige "12" para activar o desactivar reproducción automática al iniciar
 3. El valor se guarda y persiste entre sesiones
 
@@ -2175,16 +1866,8 @@ Sí, el Entrenador IA mantiene un historial de consejos y evalúa si los seguist
 - **Meta-Análisis**: Análisis estadístico avanzado de múltiples variables
 - **Outlier**: Dato atípico que se desvía significativamente del promedio
 - **Fixture**: Calendario de partidos de un torneo
-- **Dashboard**: Panel de control con información resumida
 - **Entrenador IA**: Sistema de inteligencia artificial que proporciona consejos
-- **miniaudio**: Biblioteca de audio multiplataforma usada internamente para el reproductor MP3
-- **Playlist**: Lista de reproducción personalizada dentro del reproductor de música
-- **EQ / Ecualizador**: Herramienta que ajusta el perfil de frecuencias del audio (graves, medios, agudos)
-- **Fade**: Transición suave de volumen al comenzar o cambiar pista de audio
 - **Botín**: Calzado deportivo registrado como equipamiento para partidos
-- **Pipeline**: Flujo de etapas en el proceso de reclutamiento (Visto → Reclutado/Descartado)
-- **Prospecto**: Jugador identificado como candidato potencial en el pipeline de reclutamiento
-- **Meta Personal**: Objetivo deportivo definido por el usuario con seguimiento automático de progreso
 - **ODS**: OpenDocument Spreadsheet, formato de hoja de cálculo estándar abierto
 
 ## Conclusión
@@ -2200,7 +1883,6 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ✅ **Flexibilidad**: Múltiples formatos de exportación e importación (CSV, TXT, JSON, HTML, PDF, ODS)  
 ✅ **Personalización**: Temas, idiomas y configuraciones adaptables  
 ✅ **Organización**: Torneos y temporadas completas  
-✅ **Reproductor de Música**: MP3 integrado con ecualizador 3 bandas y playlists  
 
 ### Próximos Pasos
 
@@ -2216,7 +1898,7 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 ---
 
 **Desarrollado por**: Thomas Hamer  
-**Versión**: 4.5
+**Versión**: 4.5.1
 **Última actualización**: 13/10/2026  
 **Licencia**: Open Source  
 

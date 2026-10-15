@@ -72,13 +72,6 @@ void modificar_partido(void);
 void buscar_partidos(void);
 
 /**
- * @brief Menú de análisis táctico con diagramas
- *
- * Permite crear, ver y guardar diagramas tácticos asociados a partidos.
- */
-void menu_tacticas_partido(void);
-
-/**
  * @brief Obtiene datos climáticos para partidos históricos sin temperatura
  *
  * Recorre todos los partidos con temperatura_c IS NULL y cuya cancha tenga
