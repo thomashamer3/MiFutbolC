@@ -14,14 +14,12 @@
 
 Recorrido general por el sistema: qué hace MiFutbolC, cómo se ve la interfaz de consola y un panorama de sus módulos principales.
 
-<video src="https://files.catbox.moe/fb1mq4.mp4" controls preload="metadata" width="100%">
-  Tu visor no admite video incrustado. <a href="https://files.catbox.moe/fb1mq4.mp4">Ver la presentación</a>.
-</video>
-
-- 🎬 **Video**: [videos/presentacion.mp4](videos/presentacion.mp4) · [espejo online](https://files.catbox.moe/fb1mq4.mp4)
+- 🎬 **Video**: [videos/presentacion.mp4](videos/presentacion.mp4)
 - 📝 **Contenido**: visión general, menú principal, gestión de recursos y análisis.
 
-> GitHub no renderiza etiquetas `<video>` en Markdown: el enlace al `.mp4` abre el reproductor. El espejo online sirve para webs y otros renderizadores.
+https://github.com/user-attachments/assets/79d4bdab-9dca-4e04-a864-53a610d36566
+
+> Si tu visor no reproduce el video incrustado, usa el enlace **videos/presentacion.mp4** de arriba para abrirlo o descargarlo.
 
 ---
 
@@ -29,12 +27,10 @@ Recorrido general por el sistema: qué hace MiFutbolC, cómo se ve la interfaz d
 
 Guía paso a paso para empezar a usar MiFutbolC: crear camisetas y canchas, registrar un partido y consultar estadísticas, análisis y exportaciones.
 
-<video src="videos/tutorial.mp4" controls preload="metadata" width="100%">
-  Tu visor no admite video incrustado. <a href="videos/tutorial.mp4">Ver el tutorial</a>.
-</video>
-
 - 🎬 **Video**: [videos/tutorial.mp4](videos/tutorial.mp4)
 - 📝 **Contenido**: flujo de trabajo típico de principio a fin.
+
+https://github.com/user-attachments/assets/4d77e4d7-f6f9-47f8-8d9c-c5966849127f
 
 > Si tu visor no reproduce el video incrustado, usa el enlace **videos/tutorial.mp4** de arriba para abrirlo o descargarlo.
 
