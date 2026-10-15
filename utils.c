@@ -1046,7 +1046,9 @@ int listado_paginado_config(const ListadoConfig *cfg)
     int pagina_actual = 1;
     int filas_ultima_pagina = 0;
 
-    while (1)
+    int salir = 0;
+
+    while (!salir)
     {
         clear_screen();
         print_header(cfg->titulo);
@@ -1067,10 +1069,7 @@ int listado_paginado_config(const ListadoConfig *cfg)
 
         if (cfg->detalle && opcion == 4)
         {
-            if (!listado_ejecutar_detalle(cfg, ids_pagina, filas_ultima_pagina))
-            {
-                break;
-            }
+            salir = !listado_ejecutar_detalle(cfg, ids_pagina, filas_ultima_pagina);
             continue;
         }
 
@@ -1080,10 +1079,7 @@ int listado_paginado_config(const ListadoConfig *cfg)
             continue;
         }
 
-        if (!listado_procesar_opcion(opcion, total_paginas, &pagina_actual))
-        {
-            break;
-        }
+        salir = !listado_procesar_opcion(opcion, total_paginas, &pagina_actual);
     }
 
     return filas_ultima_pagina;

@@ -546,36 +546,66 @@ void menu_resumen_compartible(void)
  */
 typedef struct
 {
+    const char *texto;
+    const char *desc;
+    const char *clase;
+    int longitud;
+} ResumenRacha;
+
+typedef struct
+{
+    int victorias;
+    int empates;
+    int derrotas;
+} ResumenResultados;
+
+typedef struct
+{
+    int rendimiento;
+    char fecha[64];
+} ResumenMejorPartido;
+
+typedef struct
+{
+    char camiseta[128];
+    char cancha[128];
+    char rival[128];
+    char posicion[128];
+} ResumenFavoritos;
+
+typedef struct
+{
+    char fecha[64];
+    char rival[128];
+    int goles;
+    int asistencias;
+    const char *texto;
+    const char *color;
+} ResumenUltimoPartido;
+
+typedef struct
+{
+    char clima[128];
+    char torneo[128];
+    char lesiones[32];
+} ResumenPerfilJuego;
+
+typedef struct
+{
     char jugador[128];
     int total_partidos;
     int total_goles;
     int total_asistencias;
-    int mejor_rendimiento;
-    char mejor_fecha[64];
-    const char *racha_texto;
-    const char *racha_desc;
-    const char *racha_class;
-    int racha_longitud;
-    int logros_total;
-    char fecha_gen[64];
-    char camiseta_fav[128];
-    char cancha_fav[128];
     double promedio_goles;
     double promedio_asistencias;
-    char rival_fav[128];
-    int victorias;
-    int empates;
-    int derrotas;
-    char mejor_posicion[128];
-    char ultimo_fecha[64];
-    char ultimo_rival[128];
-    int ult_goles;
-    int ult_asistencias;
-    const char *ult_res_texto;
-    const char *ult_res_color;
-    char clima_fav[128];
-    char torneo_fav[128];
-    char lesiones_str[32];
+    char fecha_gen[64];
+    int logros_total;
+    ResumenMejorPartido mejor;
+    ResumenRacha racha;
+    ResumenFavoritos favoritos;
+    ResumenResultados resultados;
+    ResumenUltimoPartido ultimo;
+    ResumenPerfilJuego perfil;
 } DatosResumen;
 
 static void resumen_describir_racha(char tipo, const char **texto, const char **desc,
@@ -661,44 +691,44 @@ static void resumen_formatear_lesiones(int total, char *buffer, size_t size)
 static void recolectar_datos_resumen(DatosResumen *d)
 {
     memset(d, 0, sizeof(*d));
-    snprintf(d->mejor_fecha, sizeof(d->mejor_fecha), "N/A");
+    snprintf(d->mejor.fecha, sizeof(d->mejor.fecha), "N/A");
 
     obtener_nombre_jugador(d->jugador, sizeof(d->jugador));
     d->total_partidos = contar_total_partidos();
     d->total_goles = contar_total_goles();
     d->total_asistencias = contar_total_asistencias();
 
-    resumen_obtener_mejor_rendimiento(&d->mejor_rendimiento, d->mejor_fecha,
-                                      sizeof(d->mejor_fecha));
+    resumen_obtener_mejor_rendimiento(&d->mejor.rendimiento, d->mejor.fecha,
+                                      sizeof(d->mejor.fecha));
 
     char tipo_racha;
-    d->racha_longitud = calcular_racha_actual(&tipo_racha);
-    resumen_describir_racha(tipo_racha, &d->racha_texto, &d->racha_desc, &d->racha_class);
+    d->racha.longitud = calcular_racha_actual(&tipo_racha);
+    resumen_describir_racha(tipo_racha, &d->racha.texto, &d->racha.desc, &d->racha.clase);
 
     int logros_completados = 0;
     obtener_progreso_logros(&logros_completados, &d->logros_total);
 
     get_datetime(d->fecha_gen, sizeof(d->fecha_gen));
-    obtener_camiseta_favorita(d->camiseta_fav, sizeof(d->camiseta_fav));
-    obtener_cancha_favorita(d->cancha_fav, sizeof(d->cancha_fav));
+    obtener_camiseta_favorita(d->favoritos.camiseta, sizeof(d->favoritos.camiseta));
+    obtener_cancha_favorita(d->favoritos.cancha, sizeof(d->favoritos.cancha));
 
     d->promedio_goles = d->total_partidos > 0 ? (double)d->total_goles / d->total_partidos : 0.0;
     d->promedio_asistencias =
         d->total_partidos > 0 ? (double)d->total_asistencias / d->total_partidos : 0.0;
 
-    obtener_rival_favorito(d->rival_fav, sizeof(d->rival_fav));
-    contar_resultados(&d->victorias, &d->empates, &d->derrotas);
-    obtener_mejor_posicion(d->mejor_posicion, sizeof(d->mejor_posicion));
+    obtener_rival_favorito(d->favoritos.rival, sizeof(d->favoritos.rival));
+    contar_resultados(&d->resultados.victorias, &d->resultados.empates, &d->resultados.derrotas);
+    obtener_mejor_posicion(d->favoritos.posicion, sizeof(d->favoritos.posicion));
 
     int ult_resultado = 0;
-    obtener_ultimo_partido(d->ultimo_fecha, sizeof(d->ultimo_fecha),
-                           d->ultimo_rival, sizeof(d->ultimo_rival),
-                           &d->ult_goles, &d->ult_asistencias, &ult_resultado);
-    resumen_describir_resultado(ult_resultado, &d->ult_res_texto, &d->ult_res_color);
+    obtener_ultimo_partido(d->ultimo.fecha, sizeof(d->ultimo.fecha),
+                           d->ultimo.rival, sizeof(d->ultimo.rival),
+                           &d->ultimo.goles, &d->ultimo.asistencias, &ult_resultado);
+    resumen_describir_resultado(ult_resultado, &d->ultimo.texto, &d->ultimo.color);
 
-    obtener_clima_favorito(d->clima_fav, sizeof(d->clima_fav));
-    obtener_torneo_favorito(d->torneo_fav, sizeof(d->torneo_fav));
-    resumen_formatear_lesiones(contar_lesiones(), d->lesiones_str, sizeof(d->lesiones_str));
+    obtener_clima_favorito(d->perfil.clima, sizeof(d->perfil.clima));
+    obtener_torneo_favorito(d->perfil.torneo, sizeof(d->perfil.torneo));
+    resumen_formatear_lesiones(contar_lesiones(), d->perfil.lesiones, sizeof(d->perfil.lesiones));
 }
 
 static void resumen_escribir_markdown(FILE *f, const DatosResumen *d)
@@ -761,22 +791,22 @@ static void resumen_escribir_markdown(FILE *f, const DatosResumen *d)
             d->fecha_gen,
             d->total_partidos, d->total_goles, d->total_asistencias,
             d->promedio_goles, d->promedio_asistencias,
-            d->mejor_rendimiento,
-            d->mejor_fecha,
-            d->camiseta_fav, d->cancha_fav,
-            d->rival_fav, d->mejor_posicion,
-            d->victorias,
-            d->total_partidos > 0 ? (double)d->victorias / d->total_partidos * 100.0 : 0.0,
-            d->empates,
-            d->total_partidos > 0 ? (double)d->empates / d->total_partidos * 100.0 : 0.0,
-            d->derrotas,
-            d->total_partidos > 0 ? (double)d->derrotas / d->total_partidos * 100.0 : 0.0,
-            d->ult_res_texto, d->ultimo_fecha, d->ultimo_rival, d->ult_goles, d->ult_asistencias,
-            d->racha_texto, d->racha_longitud,
-            (d->racha_longitud == 1) ? "" : "s",
-            (d->racha_longitud == 1) ? "" : "s",
-            d->racha_desc,
-            d->clima_fav, d->torneo_fav, d->lesiones_str,
+            d->mejor.rendimiento,
+            d->mejor.fecha,
+            d->favoritos.camiseta, d->favoritos.cancha,
+            d->favoritos.rival, d->favoritos.posicion,
+            d->resultados.victorias,
+            d->total_partidos > 0 ? (double)d->resultados.victorias / d->total_partidos * 100.0 : 0.0,
+            d->resultados.empates,
+            d->total_partidos > 0 ? (double)d->resultados.empates / d->total_partidos * 100.0 : 0.0,
+            d->resultados.derrotas,
+            d->total_partidos > 0 ? (double)d->resultados.derrotas / d->total_partidos * 100.0 : 0.0,
+            d->ultimo.texto, d->ultimo.fecha, d->ultimo.rival, d->ultimo.goles, d->ultimo.asistencias,
+            d->racha.texto, d->racha.longitud,
+            (d->racha.longitud == 1) ? "" : "s",
+            (d->racha.longitud == 1) ? "" : "s",
+            d->racha.desc,
+            d->perfil.clima, d->perfil.torneo, d->perfil.lesiones,
             d->logros_total,
             d->fecha_gen);
 }
@@ -946,10 +976,10 @@ static void resumen_escribir_html(FILE *f, const DatosResumen *d)
             "    <span class=\"detail-value\">%s</span>\n"
             "  </div>\n"
             "</div>\n",
-            d->mejor_rendimiento, d->mejor_fecha,
+            d->mejor.rendimiento, d->mejor.fecha,
             d->promedio_goles, d->promedio_asistencias,
-            d->camiseta_fav, d->cancha_fav,
-            d->rival_fav, d->mejor_posicion);
+            d->favoritos.camiseta, d->favoritos.cancha,
+            d->favoritos.rival, d->favoritos.posicion);
 
     fprintf(f,
             "<div class=\"section animate d4\">\n"
@@ -965,12 +995,12 @@ static void resumen_escribir_html(FILE *f, const DatosResumen *d)
             "    <span><span class=\"dot dot-d\"></span> Derrotas</span>\n"
             "  </div>\n"
             "</div>\n",
-            d->total_partidos > 0 ? (double)d->victorias / d->total_partidos * 100.0 : 0.0,
-            d->victorias,
-            d->total_partidos > 0 ? (double)d->empates / d->total_partidos * 100.0 : 0.0,
-            d->empates,
-            d->total_partidos > 0 ? (double)d->derrotas / d->total_partidos * 100.0 : 0.0,
-            d->derrotas);
+            d->total_partidos > 0 ? (double)d->resultados.victorias / d->total_partidos * 100.0 : 0.0,
+            d->resultados.victorias,
+            d->total_partidos > 0 ? (double)d->resultados.empates / d->total_partidos * 100.0 : 0.0,
+            d->resultados.empates,
+            d->total_partidos > 0 ? (double)d->resultados.derrotas / d->total_partidos * 100.0 : 0.0,
+            d->resultados.derrotas);
 
     fprintf(f,
             "<div class=\"section animate d5\">\n"
@@ -995,8 +1025,8 @@ static void resumen_escribir_html(FILE *f, const DatosResumen *d)
             "    <span class=\"detail-value\">%d</span>\n"
             "  </div>\n"
             "</div>\n",
-            d->ult_res_color, d->ult_res_color, d->ult_res_color, d->ult_res_texto,
-            d->ultimo_fecha, d->ultimo_rival, d->ult_goles, d->ult_asistencias);
+            d->ultimo.color, d->ultimo.color, d->ultimo.color, d->ultimo.texto,
+            d->ultimo.fecha, d->ultimo.rival, d->ultimo.goles, d->ultimo.asistencias);
 
     fprintf(f,
             "<div class=\"section animate d6\">\n"
@@ -1006,11 +1036,11 @@ static void resumen_escribir_html(FILE *f, const DatosResumen *d)
             "    <div class=\"racha-desc\">%s</div>\n"
             "  </div>\n"
             "</div>\n",
-            d->racha_class,
-            d->racha_texto, d->racha_longitud,
-            (d->racha_longitud == 1) ? "" : "s",
-            (d->racha_longitud == 1) ? "" : "s",
-            d->racha_desc);
+            d->racha.clase,
+            d->racha.texto, d->racha.longitud,
+            (d->racha.longitud == 1) ? "" : "s",
+            (d->racha.longitud == 1) ? "" : "s",
+            d->racha.desc);
 
     fprintf(f,
             "<div class=\"section animate d7\">\n"
@@ -1028,7 +1058,7 @@ static void resumen_escribir_html(FILE *f, const DatosResumen *d)
             "    <span class=\"detail-value\">%s</span>\n"
             "  </div>\n"
             "</div>\n",
-            d->clima_fav, d->torneo_fav, d->lesiones_str);
+            d->perfil.clima, d->perfil.torneo, d->perfil.lesiones);
 
     fprintf(f,
             "<div class=\"section animate d8\">\n"
