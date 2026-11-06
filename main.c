@@ -4,7 +4,9 @@
 #include "settings.h"
 #include "atajos.h"
 #include "carrera.h"
+#include "import.h"
 #include "undo.h"
+#include "sync.h"
 
 #ifndef _WIN32
 #include <errno.h>
@@ -105,6 +107,21 @@ int main(void)
 
     // Inicializar sistema de deshacer
     undo_init();
+
+    // Sincronizacion incremental desde el movil (si esta activada).
+    sincronizar_partidos_pendientes();
+
+    // Cola local + envio automatico a PocketBase (si esta configurado).
+    sync_init_db();
+    {
+        SyncConfig sync_cfg;
+        sync_config_load(&sync_cfg);
+        if (sync_cfg.auto_sync && sync_cfg.token[0])
+        {
+            SyncResultado sync_resultado;
+            sync_ejecutar(&sync_resultado);
+        }
+    }
 
     int count;
     MenuItem* filtered_items = create_filtered_menu(&count);

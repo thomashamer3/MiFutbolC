@@ -938,6 +938,72 @@ int verificar_backup_programado(void)
     return 0;
 }
 
+static void importar_db_externa(void)
+{
+    mostrar_pantalla("IMPORTAR DB EXTERNA");
+    printf("  Permite restaurar una base .db exportada por MiFutbolMobile\n");
+    printf("  (o cualquier backup SQLite compatible) en este perfil.\n\n");
+
+    char ruta[MAX_BUFFER];
+    input_string("Ruta completa del archivo .db: ", ruta, sizeof(ruta));
+    if (ruta[0] == '\0')
+    {
+        printf("Importacion cancelada.\n");
+        pause_console();
+        return;
+    }
+    if (!file_exists_regular(ruta))
+    {
+        printf("Error: el archivo no existe:\n  %s\n", ruta);
+        pause_console();
+        return;
+    }
+
+    char db_path[MAX_BUFFER];
+    if (!construir_ruta_db(db_path, sizeof(db_path)))
+    {
+        printf("Error: no se pudo determinar la ruta de la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    printf("\nADVERTENCIA: se reemplazara la base actual:\n  %s\n", db_path);
+    printf("  por el archivo:\n  %s\n", ruta);
+    printf("  Se creara un backup de seguridad antes de continuar.\n");
+    if (!confirmar("  Desea continuar"))
+    {
+        printf("Importacion cancelada.\n");
+        app_log_event("BACKUP", "Importacion de DB externa cancelada");
+        pause_console();
+        return;
+    }
+
+    if (!crear_backup("Antes de importar DB externa"))
+    {
+        printf("Error: no se pudo crear el backup de seguridad.\n");
+        pause_console();
+        return;
+    }
+    if (!app_copy_binary_file(ruta, db_path))
+    {
+        printf("Error: no se pudo copiar la base externa.\n");
+        app_log_event("BACKUP", "Fallo importacion de DB externa");
+        pause_console();
+        return;
+    }
+
+    char sidecar[MAX_BUFFER];
+    snprintf_s(sidecar, sizeof(sidecar), "%s-wal", db_path);
+    remove(sidecar);
+    snprintf_s(sidecar, sizeof(sidecar), "%s-shm", db_path);
+    remove(sidecar);
+
+    printf("\nBase de datos importada correctamente.\n");
+    printf("IMPORTANTE: reinicie MiFutbolC para usar los datos importados.\n");
+    app_log_event("BACKUP", "DB externa importada correctamente");
+    pause_console();
+}
+
 void menu_backup_restore(void)
 {
     MenuItem items[] = {{1, "Crear backup", &pedir_y_crear_backup},
@@ -945,7 +1011,8 @@ void menu_backup_restore(void)
         {3, "Restaurar backup", &pedir_y_restaurar_backup},
         {4, "Eliminar backup", &pedir_y_eliminar_backup},
         {5, "Auto-Backup", &menu_auto_backup},
+        {6, "Importar DB externa (PC/Movil)", &importar_db_externa},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("BACKUP Y RESTAURACION", items, 6);
+    ejecutar_menu("BACKUP Y RESTAURACION", items, 7);
 }

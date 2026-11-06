@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #define PATH_SEP "\\"
@@ -1136,6 +1137,152 @@ void importar_partidos_json(void)
     printf("Importacion de partidos completada. %d partidos importados\n", imported);
 }
 
+int importar_partidos_desde_ruta(const char *ruta)
+{
+    if (!ruta || ruta[0] == '\0')
+    {
+        return -1;
+    }
+    char *content = read_file_content(ruta);
+    if (!content)
+    {
+        return -1;
+    }
+    cJSON *json = cJSON_Parse(content);
+    free(content);
+    if (!json || !cJSON_IsArray(json))
+    {
+        printf("Error: el archivo no contiene un array JSON de partidos.\n");
+        cJSON_Delete(json);
+        return -1;
+    }
+
+    int count = cJSON_GetArraySize(json);
+    int imported = 0;
+    for (int i = 0; i < count; i++)
+    {
+        cJSON const *item = cJSON_GetArrayItem(json, i);
+        if (procesar_partido_json_item(item))
+        {
+            imported++;
+        }
+    }
+    cJSON_Delete(json);
+    printf("Sincronizacion completada: %d de %d partidos importados.\n", imported, count);
+    return imported;
+}
+
+static int archivo_existe(const char *ruta)
+{
+    FILE *f = NULL;
+#ifdef _WIN32
+    if (fopen_s(&f, ruta, "rb") != 0)
+    {
+        f = NULL;
+    }
+#else
+    f = fopen(ruta, "rb");
+#endif
+    if (f)
+    {
+        fclose(f);
+        return 1;
+    }
+    return 0;
+}
+
+static void ruta_partidos_pendientes(char *buffer, size_t size)
+{
+    snprintf_s(buffer, size, "%s%s%s", get_import_dir(), PATH_SEP, "partidos.json");
+}
+
+static void ruta_marcador_auto_sync(char *buffer, size_t size)
+{
+    snprintf_s(buffer, size, "%s%s%s", get_import_dir(), PATH_SEP, ".sync_partidos_auto");
+}
+
+int sincronizacion_automatica_activa(void)
+{
+    char marcador[1024];
+    ruta_marcador_auto_sync(marcador, sizeof(marcador));
+    return archivo_existe(marcador);
+}
+
+void alternar_sincronizacion_automatica(void)
+{
+    char marcador[1024];
+    ruta_marcador_auto_sync(marcador, sizeof(marcador));
+    if (sincronizacion_automatica_activa())
+    {
+        remove(marcador);
+        printf("Sincronizacion automatica al iniciar: DESACTIVADA.\n");
+    }
+    else
+    {
+        FILE *f = NULL;
+#ifdef _WIN32
+        fopen_s(&f, marcador, "w");
+#else
+        f = fopen(marcador, "w");
+#endif
+        if (f)
+        {
+            fputs("activo\n", f);
+            fclose(f);
+            printf("Sincronizacion automatica al iniciar: ACTIVADA.\n");
+            printf("Al abrir MiFutbolC se importara Importaciones%spartidos.json.\n", PATH_SEP);
+        }
+        else
+        {
+            printf("Error: no se pudo crear el marcador de auto-sync.\n");
+        }
+    }
+    pause_console();
+}
+
+int sincronizar_partidos_pendientes(void)
+{
+    if (!sincronizacion_automatica_activa())
+    {
+        return 0;
+    }
+    char ruta[1024];
+    ruta_partidos_pendientes(ruta, sizeof(ruta));
+    if (!archivo_existe(ruta))
+    {
+        return 0;
+    }
+    printf("\n[Sincronizacion] Importando partidos desde %s\n", ruta);
+    int importados = importar_partidos_desde_ruta(ruta);
+    if (importados <= 0)
+    {
+        return 0;
+    }
+
+    // Renombrar el archivo procesado para no reimportarlo en cada inicio.
+    char marca[32];
+    time_t ahora = time(NULL);
+    struct tm *tm_ahora = localtime(&ahora);
+    if (tm_ahora)
+    {
+        strftime(marca, sizeof(marca), "%Y%m%d_%H%M%S", tm_ahora);
+    }
+    else
+    {
+        snprintf_s(marca, sizeof(marca), "%s", "procesado");
+    }
+    char destino[1024];
+    snprintf_s(destino, sizeof(destino), "%s%spartidos_importados_%s.json",
+               get_import_dir(), PATH_SEP, marca);
+    if (rename(ruta, destino) != 0)
+    {
+        remove(ruta);
+    }
+    printf("[Sincronizacion] %d partidos importados. Archivo movido a %s\n",
+           importados, destino);
+    return importados;
+}
+
 void importar_lesiones_json(void)
 {
     int count;
@@ -2244,6 +2391,52 @@ static void importar_base_datos_con_backup(void)
     importar_base_datos();
 }
 
+static void importar_partidos_pendientes_menu(void)
+{
+    char ruta[1024];
+    ruta_partidos_pendientes(ruta, sizeof(ruta));
+    printf("Importando desde: %s\n", ruta);
+    importar_partidos_desde_ruta(ruta);
+    pause_console();
+}
+
+static void importar_partidos_archivo_menu(void)
+{
+    char ruta[1024];
+    input_string("Ruta completa del partidos.json exportado por el movil: ", ruta,
+                 sizeof(ruta));
+    if (ruta[0] == '\0')
+    {
+        printf("Importacion cancelada.\n");
+        pause_console();
+        return;
+    }
+    if (!archivo_existe(ruta))
+    {
+        printf("Error: el archivo no existe.\n");
+        pause_console();
+        return;
+    }
+    importar_partidos_desde_ruta(ruta);
+    pause_console();
+}
+
+static void menu_sincronizar_movil(void)
+{
+    char estado[64];
+    snprintf_s(estado, sizeof(estado), "%s",
+               sincronizacion_automatica_activa() ? "ACTIVADA" : "DESACTIVADA");
+    printf("Auto-sync al iniciar: %s\n\n", estado);
+    MenuItem items[] =
+    {
+        {1, get_text("import_sync_now"), &importar_partidos_pendientes_menu},
+        {2, get_text("import_sync_path"), &importar_partidos_archivo_menu},
+        {3, get_text("import_sync_auto"), &alternar_sincronizacion_automatica},
+        {0, get_text("menu_back"), NULL}
+    };
+    ejecutar_menu(get_text("import_sync_title"), items, 4);
+}
+
 void menu_importar(void)
 {
     MenuItem items[] = {{1, get_text("import_from_json"), &menu_importar_json_con_backup},
@@ -2253,7 +2446,8 @@ void menu_importar(void)
         {5, get_text("import_todo_json_rapido"), &importar_todo_json_rapido},
         {6, get_text("import_todo_csv_rapido"), &importar_todo_csv_rapido},
         {7, get_text("import_from_db"), &importar_base_datos_con_backup},
+        {8, get_text("import_sync_mobile"), &menu_sincronizar_movil},
         {0, get_text("menu_back"), NULL}
     };
-    ejecutar_menu(get_text("import_menu_title"), items, 8);
+    ejecutar_menu(get_text("import_menu_title"), items, 9);
 }

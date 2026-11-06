@@ -488,7 +488,8 @@ void menu_exportar(void)
         {20, "Informe Total PDF", &exportar_informe_total_pdf},
         {21, "Exportar Todo (Markdown)", &exportar_todo_md},
         {22, "Exportar a XLSX", &menu_exportar_xlsx},
+        {23, "Exportar para MiFutbolMobile", &exportar_para_mifutbolmobile},
         {0, "Volver", NULL}
     };
-    ejecutar_menu("EXPORTAR DATOS", items, 23);
+    ejecutar_menu("EXPORTAR DATOS", items, 24);
 }

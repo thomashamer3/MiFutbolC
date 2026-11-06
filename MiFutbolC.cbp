@@ -359,6 +359,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="random_utils.h" />
+		<Unit filename="ranking_amigos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ranking_amigos.h" />
 		<Unit filename="recordatorios.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -367,10 +371,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="records_rankings.h" />
-		<Unit filename="ranking_amigos.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="ranking_amigos.h" />
 		<Unit filename="recurso.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
@@ -390,6 +390,21 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="sqlite3.h" />
+		<Unit filename="sync.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sync.h" />
+		<Unit filename="sync_entidades.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sync_entidades.h" />
+		<Unit filename="sync_http.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sync_internal.h" />
+		<Unit filename="sync_queue.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="temporada.c">
 			<Option compilerVar="CC" />
 		</Unit>

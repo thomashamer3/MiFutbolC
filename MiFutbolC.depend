@@ -1,12 +1,14 @@
 # depslib dependency file v1.0
-1792011279 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1792448968 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"db.h"
 	"menu.h"
 	"utils.h"
 	"settings.h"
 	"atajos.h"
 	"carrera.h"
+	"import.h"
 	"undo.h"
+	"sync.h"
 	<errno.h>
 	<stdio.h>
 	<stdlib.h>
@@ -107,7 +109,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1792011579 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1792102979 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"atajos.h"
@@ -205,17 +207,20 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1790726647 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1792706410 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
+	"cancha.h"
 	"cJSON.h"
 	"db.h"
 	"utils.h"
+	<math.h>
+	<stdbool.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<time.h>
 
-1790726704 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
+1792706410 d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.h
 	<stdio.h>
 
 1766433484 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.c
@@ -225,7 +230,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1792011265 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1792448959 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"settings.h"
 	"utils.h"
@@ -260,6 +265,7 @@
 	"tutorial.h"
 	"resumen_compartible.h"
 	"ranking_amigos.h"
+	"sync.h"
 
 1782013812 d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.h
 
@@ -276,7 +282,7 @@
 
 1766518203 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido_menu.h
 
-1792011292 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
+1792702220 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export_all.c
 	"export_all.h"
 	"ascii_art.h"
 	"db.h"
@@ -394,9 +400,9 @@
 1767412039 d:\anime\libros\lenguaje c\proyectos\mifutbolc\cjson_utils.h
 	"cJSON.h"
 
-1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
+1792446543 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1782499508 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1792452364 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -411,6 +417,7 @@
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	<time.h>
 
 1766777361 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sfd.c
 	<stdio.h>
@@ -2563,7 +2570,7 @@
 
 1780553070 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_charts.h
 
-1782012639 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
+1792445644 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\backup.c
 	"backup.h"
 	"cJSON.h"
 	"db.h"
@@ -2861,7 +2868,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1791935034 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1792103002 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"
@@ -2898,4 +2905,61 @@
 	"sqlite3.h"
 	"utils.h"
 	<stdio.h>
+
+1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
+	<stddef.h>
+
+1792785626 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+	"sync.h"
+	"sync_internal.h"
+	"sync_entidades.h"
+	"db.h"
+	"menu.h"
+	"utils.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<process.h>
+
+1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_internal.h
+	"cJSON.h"
+	"sqlite3.h"
+	"sync.h"
+	<stddef.h>
+
+1792452364 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
+	"sync_internal.h"
+	"utils.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<process.h>
+	<unistd.h>
+
+1792784893 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c
+	"sync_internal.h"
+	"sync_entidades.h"
+	"db.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1793973903 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.h
+	"sync.h"
+
+1793973903 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
+	"sync_entidades.h"
+	"sync_internal.h"
+	"cJSON.h"
+	"db.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
 

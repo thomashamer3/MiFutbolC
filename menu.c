@@ -35,6 +35,7 @@
 #include "tutorial.h"
 #include "resumen_compartible.h"
 #include "ranking_amigos.h"
+#include "sync.h"
 
 // Definir items del menu principal directamente con inicializacion static
 struct MenuItemDefinition
@@ -188,6 +189,12 @@ static void abrir_menu_ranking_amigos(void)
     menu_ranking_amigos();
 }
 
+static void abrir_menu_sincronizacion(void)
+{
+    app_log_event("SYNC", "Ingreso al modulo Sincronizacion PocketBase");
+    menu_sincronizacion();
+}
+
 static const struct MenuItemDefinition MENU_ITEMS[] =
 {
     {1, "Calendario", &abrir_calendario},
@@ -214,6 +221,7 @@ static const struct MenuItemDefinition MENU_ITEMS[] =
     {22, "Resumen Compartible", &abrir_menu_resumen_compartible},
     {23, "Ranking Amigos", &abrir_menu_ranking_amigos},
     {24, "Ajustes", &abrir_menu_settings},
+    {25, "Sincronizacion (PocketBase)", &abrir_menu_sincronizacion},
     {0, "Salir", NULL}
 };
 

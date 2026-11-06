@@ -33,6 +33,26 @@ void importar_camisetas_json(void);
 void importar_partidos_json(void);
 
 /**
+ * @brief Importa partidos desde una ruta arbitraria de `partidos.json`.
+ *
+ * Devuelve la cantidad importada o -1 si el archivo/JSON es invalido.
+ */
+int importar_partidos_desde_ruta(const char *ruta);
+
+/** @brief Indica si la auto-sincronizacion al iniciar esta activa. */
+int sincronizacion_automatica_activa(void);
+
+/** @brief Activa o desactiva la auto-sincronizacion al iniciar. */
+void alternar_sincronizacion_automatica(void);
+
+/**
+ * @brief Importa `Importaciones/partidos.json` si la auto-sync esta activa.
+ *
+ * Devuelve la cantidad importada (0 si no habia nada pendiente).
+ */
+int sincronizar_partidos_pendientes(void);
+
+/**
  * @brief Importa lesiones desde archivo JSON
  *
  * Lee el archivo JSON de lesiones y las inserta en la base de datos.

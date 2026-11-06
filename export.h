@@ -331,4 +331,13 @@ void export_write_html_begin(FILE *f, const char *title);
 
 /** @} */
 
+/**
+ * @brief Exporta un JSON combinado listo para importar en MiFutbolMobile.
+ *
+ * Incluye perfil, canchas, camisetas, equipos, botines, partidos, lesiones,
+ * financiamiento y recordatorios con los nombres y codigos que espera la app
+ * movil. Se guarda como mifutbolmobile_import.json en Exportaciones.
+ */
+void exportar_para_mifutbolmobile(void);
+
 #endif
