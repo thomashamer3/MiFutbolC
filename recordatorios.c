@@ -652,7 +652,8 @@ static int merge_and_save_reminders(Reminder *newarr, int new_count)
         return 0;
     }
 
-    Reminder *merged = (Reminder*)malloc(sizeof(Reminder) * merged_count);
+    /* calloc: deja los elementos a cero antes de rellenarlos (c:S836). */
+    Reminder *merged = (Reminder*)calloc(merged_count, sizeof(Reminder));
     if (!merged)
     {
         free(exist);
@@ -971,7 +972,8 @@ static void verificar_recordatorios_recurrentes(void)
 
     int nuevos = 0;
     int capacidad = count + 16;
-    Reminder *expandido = (Reminder*)malloc(sizeof(Reminder) * (size_t)capacidad);
+    Reminder *expandido =
+        (Reminder*)calloc((size_t)capacidad, sizeof(Reminder));
     if (!expandido)
     {
         mostrar_error_operacion("recordatorios", "memoria");

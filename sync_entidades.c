@@ -742,7 +742,8 @@ static int subir_tombstones(const char *base, const SyncConfig *cfg,
     return 1;
 }
 
-int sync_entidades_subir(const char *base, SyncConfig *cfg, SyncResultado *res)
+int sync_entidades_subir(const char *base, const SyncConfig *cfg,
+                         SyncResultado *res)
 {
     if (!base || !cfg || !res || !db)
     {
@@ -1284,7 +1285,8 @@ static int bajar_coleccion(const char *base, const SyncConfig *cfg,
     return 1;
 }
 
-int sync_entidades_bajar(const char *base, SyncConfig *cfg, SyncResultado *res)
+int sync_entidades_bajar(const char *base, const SyncConfig *cfg,
+                         SyncResultado *res)
 {
     if (!base || !cfg || !res || !db)
     {

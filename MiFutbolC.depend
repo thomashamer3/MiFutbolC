@@ -2441,7 +2441,7 @@
 
 1774970153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.h
 
-1794428218 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
+1794429687 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
 	"recordatorios.h"
 	"utils.h"
 	"menu.h"
@@ -2953,10 +2953,10 @@
 	<stdlib.h>
 	<string.h>
 
-1793973903 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.h
+1794429657 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.h
 	"sync.h"
 
-1794428535 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
+1794429660 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
 	"sync_entidades.h"
 	"sync_internal.h"
 	"cJSON.h"

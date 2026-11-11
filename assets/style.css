@@ -685,13 +685,15 @@ html[data-theme="dark"] .sourceCode .wa { color: #d29922; font-weight: bold; fon
 
 /* ─── ACCESIBILIDAD: MOVIMIENTO REDUCIDO ─── */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  a,
+  .theme-toggle,
+  .card,
+  .menu-card,
+  .btn,
+  details summary,
+  .toc a,
+  .feature-list li {
+    transition: none;
   }
 
   .card:hover,
