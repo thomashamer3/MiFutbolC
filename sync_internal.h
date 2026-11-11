@@ -14,6 +14,17 @@ typedef struct
     char *error;  /* Error de red/curl (puede ser NULL) */
 } SyncHttp;
 
+/** Destino de los datos que devuelve una autenticacion correcta. */
+typedef struct
+{
+    char *token;      /* Buffer del token de sesion */
+    size_t token_tam; /* Capacidad del buffer del token */
+    char *user_id;    /* Buffer del id de usuario */
+    size_t user_tam;  /* Capacidad del buffer del id */
+    char *error;      /* Buffer del mensaje de error (opcional) */
+    size_t error_tam; /* Capacidad del buffer de error */
+} SyncAuthDestino;
+
 /** Ejecuta una peticion HTTP con curl.exe. Devuelve 1 si hubo respuesta. */
 int sync_http_request(const char *metodo, const char *url, const char *token,
                       const char *body, SyncHttp *salida);
@@ -22,8 +33,7 @@ void sync_http_free(SyncHttp *respuesta);
 
 /** Autentica contra PocketBase y devuelve token + id de usuario. */
 int sync_http_auth(const char *base, const char *email, const char *password,
-                   char *token, size_t token_tam, char *user_id, size_t user_tam,
-                   char *error, size_t error_tam);
+                   SyncAuthDestino *destino);
 
 /* Utilidades compartidas. */
 int sync_columna_existe(sqlite3 *conexion, const char *tabla, const char *columna);

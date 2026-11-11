@@ -285,19 +285,23 @@ int sync_entidades_init_db(void)
 
 /* --------------------------------------------------------------- HTTP comun */
 
+/** Datos del registro remoto que corresponde a un uuid. */
+typedef struct
+{
+    char id[64];
+    char actualizado[64];
+} SyncRemoto;
+
 static int buscar_remoto(const char *base, const char *token,
                          const char *coleccion, const char *uuid,
-                         char *remoto_id, size_t remoto_id_tam,
-                         char *remoto_updated, size_t remoto_updated_tam)
+                         SyncRemoto *remoto)
 {
-    if (remoto_id && remoto_id_tam)
+    if (!remoto)
     {
-        remoto_id[0] = '\0';
+        return -1;
     }
-    if (remoto_updated && remoto_updated_tam)
-    {
-        remoto_updated[0] = '\0';
-    }
+    remoto->id[0] = '\0';
+    remoto->actualizado[0] = '\0';
     char url[SYNC_URL_SIZE + 512];
     snprintf(url, sizeof(url),
              "%s/api/collections/%s/records?perPage=1&filter=uuid='%s'", base,
@@ -329,9 +333,9 @@ static int buscar_remoto(const char *base, const char *token,
     if (cJSON_IsArray(items) && cJSON_GetArraySize(items) > 0)
     {
         const cJSON *item = cJSON_GetArrayItem(items, 0);
-        copiar(remoto_id, remoto_id_tam,
+        copiar(remoto->id, sizeof(remoto->id),
                sync_json_texto(item, "id"));
-        copiar(remoto_updated, remoto_updated_tam,
+        copiar(remoto->actualizado, sizeof(remoto->actualizado),
                sync_json_texto(item, "updated_at_client"));
         encontrado = cJSON_IsObject(item) ? 1 : 0;
     }
@@ -404,7 +408,98 @@ static cJSON *crear_registro(const char *uuid, const char *owner,
 
 /* ------------------------------------------------------------------ Subida */
 
-static int subir_camisetas(const char *base, SyncConfig *cfg, SyncResultado *res)
+/* Sube una fila de camisetas. Devuelve 1 si se proceso, -1 si fallo la
+   creacion del payload y -2 si la sesion ya no es valida. */
+static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
+                               const SyncConfig *cfg, SyncResultado *res)
+{
+    const char *uuid = texto_columna(stmt, 0);
+    if (!uuid || !*uuid)
+    {
+        return 1;
+    }
+    SyncRemoto remoto_datos;
+    int remoto = buscar_remoto(base, cfg->token, COL_CAMISETAS, uuid,
+                               &remoto_datos);
+    if (remoto == -2)
+    {
+        return -2;
+    }
+    const char *actualizado = texto_columna(stmt, 15);
+    if (remoto < 0)
+    {
+        res->errores++;
+        return 1;
+    }
+    if (remoto == 1 &&
+            comparar_fechas(remoto_datos.actualizado, actualizado) >= 0)
+    {
+        return 1;
+    }
+
+    cJSON *payload = cJSON_CreateObject();
+    if (!payload)
+    {
+        return -1;
+    }
+    cJSON_AddStringToObject(payload, "nombre",
+                            texto_columna(stmt, 1));
+    cJSON_AddStringToObject(payload, "color_principal",
+                            texto_columna(stmt, 2));
+    cJSON_AddStringToObject(payload, "color_secundario",
+                            texto_columna(stmt, 3));
+    cJSON_AddStringToObject(payload, "marca",
+                            texto_columna(stmt, 4));
+    cJSON_AddStringToObject(payload, "modelo",
+                            texto_columna(stmt, 5));
+    cJSON_AddStringToObject(payload, "temporada",
+                            texto_columna(stmt, 6));
+    cJSON_AddStringToObject(payload, "estado_fisico",
+                            texto_columna(stmt, 7));
+    cJSON_AddStringToObject(payload, "fecha_compra",
+                            texto_columna(stmt, 8));
+    cJSON_AddNumberToObject(payload, "costo_centavos",
+                            sqlite3_column_int(stmt, 9));
+    cJSON_AddStringToObject(payload, "observaciones",
+                            texto_columna(stmt, 10));
+    cJSON_AddStringToObject(payload, "proveedor",
+                            texto_columna(stmt, 11));
+    cJSON_AddBoolToObject(payload, "fue_regalo",
+                          sqlite3_column_int(stmt, 12) != 0);
+    cJSON_AddStringToObject(payload, "regalo_de",
+                            texto_columna(stmt, 13));
+    cJSON_AddBoolToObject(payload, "activa",
+                          sqlite3_column_int(stmt, 14) != 0);
+
+    cJSON *registro = crear_registro(
+                          uuid, cfg->user_id, texto_columna(stmt, 1),
+                          payload, actualizado);
+    cJSON_Delete(payload);
+    int envio = -1;
+    if (registro)
+    {
+        const char *remoto_ref = remoto == 1 ? remoto_datos.id : NULL;
+        envio = enviar_registro(base, cfg->token, COL_CAMISETAS, remoto_ref,
+                                registro);
+    }
+    cJSON_Delete(registro);
+    if (envio == -2)
+    {
+        return -2;
+    }
+    if (envio > 0)
+    {
+        res->enviados++;
+    }
+    else
+    {
+        res->errores++;
+    }
+    return 1;
+}
+
+static int subir_camisetas(const char *base, const SyncConfig *cfg,
+                           SyncResultado *res)
 {
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(
@@ -421,95 +516,102 @@ static int subir_camisetas(const char *base, SyncConfig *cfg, SyncResultado *res
     int resultado = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *uuid = texto_columna(stmt, 0);
-        if (!uuid || !*uuid)
-        {
-            continue;
-        }
-        char remoto_id[64];
-        char remoto_updated[64];
-        int remoto = buscar_remoto(base, cfg->token, COL_CAMISETAS, uuid,
-                                   remoto_id, sizeof(remoto_id),
-                                   remoto_updated, sizeof(remoto_updated));
-        if (remoto == -2)
+        int estado = subir_fila_camiseta(stmt, base, cfg, res);
+        if (estado == -2)
         {
             resultado = -2;
             break;
         }
-        const char *actualizado = texto_columna(stmt, 15);
-        if (remoto < 0)
-        {
-            res->errores++;
-            continue;
-        }
-        if (remoto == 1 && comparar_fechas(remoto_updated, actualizado) >= 0)
-        {
-            continue;
-        }
-
-        cJSON *payload = cJSON_CreateObject();
-        if (!payload)
+        if (estado == -1)
         {
             resultado = -1;
-            continue;
-        }
-        cJSON_AddStringToObject(payload, "nombre",
-                                texto_columna(stmt, 1));
-        cJSON_AddStringToObject(payload, "color_principal",
-                                texto_columna(stmt, 2));
-        cJSON_AddStringToObject(payload, "color_secundario",
-                                texto_columna(stmt, 3));
-        cJSON_AddStringToObject(payload, "marca",
-                                texto_columna(stmt, 4));
-        cJSON_AddStringToObject(payload, "modelo",
-                                texto_columna(stmt, 5));
-        cJSON_AddStringToObject(payload, "temporada",
-                                texto_columna(stmt, 6));
-        cJSON_AddStringToObject(payload, "estado_fisico",
-                                texto_columna(stmt, 7));
-        cJSON_AddStringToObject(payload, "fecha_compra",
-                                texto_columna(stmt, 8));
-        cJSON_AddNumberToObject(payload, "costo_centavos",
-                                sqlite3_column_int(stmt, 9));
-        cJSON_AddStringToObject(payload, "observaciones",
-                                texto_columna(stmt, 10));
-        cJSON_AddStringToObject(payload, "proveedor",
-                                texto_columna(stmt, 11));
-        cJSON_AddBoolToObject(payload, "fue_regalo",
-                              sqlite3_column_int(stmt, 12) != 0);
-        cJSON_AddStringToObject(payload, "regalo_de",
-                                texto_columna(stmt, 13));
-        cJSON_AddBoolToObject(payload, "activa",
-                              sqlite3_column_int(stmt, 14) != 0);
-
-        cJSON *registro = crear_registro(
-                              uuid, cfg->user_id, texto_columna(stmt, 1),
-                              payload, actualizado);
-        cJSON_Delete(payload);
-        int envio = registro
-                    ? enviar_registro(base, cfg->token, COL_CAMISETAS,
-                                      remoto == 1 ? remoto_id : NULL, registro)
-                    : -1;
-        cJSON_Delete(registro);
-        if (envio == -2)
-        {
-            resultado = -2;
-            break;
-        }
-        if (envio > 0)
-        {
-            res->enviados++;
-        }
-        else
-        {
-            res->errores++;
         }
     }
     sqlite3_finalize(stmt);
     return resultado;
 }
 
-static int subir_botines(const char *base, SyncConfig *cfg, SyncResultado *res)
+/* Sube una fila de botines. Mismo contrato que subir_fila_camiseta. */
+static int subir_fila_botin(sqlite3_stmt *stmt, const char *base,
+                            const SyncConfig *cfg, SyncResultado *res)
+{
+    const char *uuid = texto_columna(stmt, 0);
+    if (!uuid || !*uuid)
+    {
+        return 1;
+    }
+    SyncRemoto remoto_datos;
+    int remoto = buscar_remoto(base, cfg->token, COL_BOTINES, uuid,
+                               &remoto_datos);
+    if (remoto == -2)
+    {
+        return -2;
+    }
+    const char *actualizado = texto_columna(stmt, 10);
+    if (remoto < 0)
+    {
+        res->errores++;
+        return 1;
+    }
+    if (remoto == 1 &&
+            comparar_fechas(remoto_datos.actualizado, actualizado) >= 0)
+    {
+        return 1;
+    }
+
+    cJSON *payload = cJSON_CreateObject();
+    if (!payload)
+    {
+        return -1;
+    }
+    cJSON_AddStringToObject(payload, "nombre",
+                            texto_columna(stmt, 1));
+    cJSON_AddStringToObject(payload, "marca",
+                            texto_columna(stmt, 2));
+    cJSON_AddStringToObject(payload, "modelo",
+                            texto_columna(stmt, 3));
+    cJSON_AddStringToObject(payload, "talla",
+                            texto_columna(stmt, 4));
+    cJSON_AddStringToObject(payload, "superficie",
+                            texto_columna(stmt, 5));
+    cJSON_AddStringToObject(payload, "estado_fisico",
+                            texto_columna(stmt, 6));
+    cJSON_AddStringToObject(payload, "fecha_compra",
+                            texto_columna(stmt, 7));
+    cJSON_AddNumberToObject(payload, "costo_centavos",
+                            sqlite3_column_int(stmt, 8));
+    cJSON_AddBoolToObject(payload, "activa",
+                          sqlite3_column_int(stmt, 9) != 0);
+
+    cJSON *registro = crear_registro(
+                          uuid, cfg->user_id, texto_columna(stmt, 1),
+                          payload, actualizado);
+    cJSON_Delete(payload);
+    int envio = -1;
+    if (registro)
+    {
+        const char *remoto_ref = remoto == 1 ? remoto_datos.id : NULL;
+        envio = enviar_registro(base, cfg->token, COL_BOTINES, remoto_ref,
+                                registro);
+    }
+    cJSON_Delete(registro);
+    if (envio == -2)
+    {
+        return -2;
+    }
+    if (envio > 0)
+    {
+        res->enviados++;
+    }
+    else
+    {
+        res->errores++;
+    }
+    return 1;
+}
+
+static int subir_botines(const char *base, const SyncConfig *cfg,
+                         SyncResultado *res)
 {
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(
@@ -525,85 +627,65 @@ static int subir_botines(const char *base, SyncConfig *cfg, SyncResultado *res)
     int resultado = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *uuid = texto_columna(stmt, 0);
-        if (!uuid || !*uuid)
-        {
-            continue;
-        }
-        char remoto_id[64];
-        char remoto_updated[64];
-        int remoto = buscar_remoto(base, cfg->token, COL_BOTINES, uuid,
-                                   remoto_id, sizeof(remoto_id),
-                                   remoto_updated, sizeof(remoto_updated));
-        if (remoto == -2)
+        int estado = subir_fila_botin(stmt, base, cfg, res);
+        if (estado == -2)
         {
             resultado = -2;
             break;
         }
-        const char *actualizado = texto_columna(stmt, 10);
-        if (remoto < 0)
-        {
-            res->errores++;
-            continue;
-        }
-        if (remoto == 1 && comparar_fechas(remoto_updated, actualizado) >= 0)
-        {
-            continue;
-        }
-
-        cJSON *payload = cJSON_CreateObject();
-        if (!payload)
+        if (estado == -1)
         {
             resultado = -1;
-            continue;
-        }
-        cJSON_AddStringToObject(payload, "nombre",
-                                texto_columna(stmt, 1));
-        cJSON_AddStringToObject(payload, "marca",
-                                texto_columna(stmt, 2));
-        cJSON_AddStringToObject(payload, "modelo",
-                                texto_columna(stmt, 3));
-        cJSON_AddStringToObject(payload, "talla",
-                                texto_columna(stmt, 4));
-        cJSON_AddStringToObject(payload, "superficie",
-                                texto_columna(stmt, 5));
-        cJSON_AddStringToObject(payload, "estado_fisico",
-                                texto_columna(stmt, 6));
-        cJSON_AddStringToObject(payload, "fecha_compra",
-                                texto_columna(stmt, 7));
-        cJSON_AddNumberToObject(payload, "costo_centavos",
-                                sqlite3_column_int(stmt, 8));
-        cJSON_AddBoolToObject(payload, "activa",
-                              sqlite3_column_int(stmt, 9) != 0);
-
-        cJSON *registro = crear_registro(
-                              uuid, cfg->user_id, texto_columna(stmt, 1),
-                              payload, actualizado);
-        cJSON_Delete(payload);
-        int envio = registro
-                    ? enviar_registro(base, cfg->token, COL_BOTINES,
-                                      remoto == 1 ? remoto_id : NULL, registro)
-                    : -1;
-        cJSON_Delete(registro);
-        if (envio == -2)
-        {
-            resultado = -2;
-            break;
-        }
-        if (envio > 0)
-        {
-            res->enviados++;
-        }
-        else
-        {
-            res->errores++;
         }
     }
     sqlite3_finalize(stmt);
     return resultado;
 }
 
-static int subir_tombstones(const char *base, SyncConfig *cfg,
+/* Envia un tombstone al servidor. Devuelve -2 si la sesion ya no vale,
+   1 si quedo resuelto y 0 si hay que reintentarlo. */
+static int enviar_tombstone(sqlite3_stmt *stmt, const char *base,
+                            const SyncConfig *cfg, const char *entidad,
+                            const char *uuid)
+{
+    const char *coleccion =
+        strcmp(entidad, "botin") == 0 ? COL_BOTINES : COL_CAMISETAS;
+    SyncRemoto remoto_datos;
+    int remoto = buscar_remoto(base, cfg->token, coleccion, uuid,
+                               &remoto_datos);
+    if (remoto == -2)
+    {
+        return -2;
+    }
+    if (remoto < 0)
+    {
+        return 0;
+    }
+    if (remoto != 1)
+    {
+        return 1;
+    }
+
+    const char *creado = texto_columna(stmt, 3);
+    cJSON *registro = cJSON_CreateObject();
+    if (!registro)
+    {
+        return 0;
+    }
+    cJSON_AddBoolToObject(registro, "deleted", 1);
+    cJSON_AddStringToObject(registro, "updated_at_client",
+                            creado ? creado : "");
+    int envio = enviar_registro(base, cfg->token, coleccion, remoto_datos.id,
+                                registro);
+    cJSON_Delete(registro);
+    if (envio == -2)
+    {
+        return -2;
+    }
+    return envio > 0 ? 1 : 0;
+}
+
+static int subir_tombstones(const char *base, const SyncConfig *cfg,
                             SyncResultado *res)
 {
     sqlite3_stmt *stmt = NULL;
@@ -622,67 +704,27 @@ static int subir_tombstones(const char *base, SyncConfig *cfg,
     {
         const char *entidad = texto_columna(stmt, 1);
         const char *uuid = texto_columna(stmt, 2);
-        const char *creado = texto_columna(stmt, 3);
+        int id_fila = sqlite3_column_int(stmt, 0);
         if (!entidad || !uuid || !*uuid)
         {
-            snprintf(ids[total], sizeof(ids[total]), "%d",
-                     sqlite3_column_int(stmt, 0));
+            snprintf(ids[total], sizeof(ids[total]), "%d", id_fila);
             total++;
             continue;
         }
-        const char *coleccion =
-            strcmp(entidad, "botin") == 0 ? COL_BOTINES : COL_CAMISETAS;
-        char remoto_id[64];
-        char remoto_updated[64];
-        int remoto = buscar_remoto(base, cfg->token, coleccion, uuid,
-                                   remoto_id, sizeof(remoto_id),
-                                   remoto_updated, sizeof(remoto_updated));
-        if (remoto == -2)
+        int estado = enviar_tombstone(stmt, base, cfg, entidad, uuid);
+        if (estado == -2)
         {
             sqlite3_finalize(stmt);
             return -2;
         }
-        if (remoto < 0)
+        if (estado == 0)
         {
             res->errores++;
             continue;
         }
-
-        int ok = 1;
-        if (remoto == 1)
-        {
-            cJSON *registro = cJSON_CreateObject();
-            if (registro)
-            {
-                cJSON_AddBoolToObject(registro, "deleted", 1);
-                cJSON_AddStringToObject(registro, "updated_at_client",
-                                        creado ? creado : "");
-                int envio = enviar_registro(base, cfg->token, coleccion,
-                                            remoto_id, registro);
-                ok = envio > 0;
-                cJSON_Delete(registro);
-                if (envio == -2)
-                {
-                    sqlite3_finalize(stmt);
-                    return -2;
-                }
-            }
-            else
-            {
-                ok = 0;
-            }
-        }
-        if (ok)
-        {
-            snprintf(ids[total], sizeof(ids[total]), "%d",
-                     sqlite3_column_int(stmt, 0));
-            total++;
-            res->enviados++;
-        }
-        else
-        {
-            res->errores++;
-        }
+        snprintf(ids[total], sizeof(ids[total]), "%d", id_fila);
+        total++;
+        res->enviados++;
     }
     sqlite3_finalize(stmt);
 
@@ -805,7 +847,7 @@ static int existe_local(const char *tabla, const char *uuid,
 static int aplicar_camiseta(const cJSON *item, const char *uuid,
                             const char *actualizado, const char *creado)
 {
-    const cJSON *payload = cJSON_GetObjectItemCaseSensitive(item, "payload");
+    cJSON *payload = cJSON_GetObjectItemCaseSensitive(item, "payload");
     if (!cJSON_IsObject(payload))
     {
         payload = cJSON_CreateObject();
@@ -848,7 +890,7 @@ static int aplicar_camiseta(const cJSON *item, const char *uuid,
     }
     if (existe && comparar_fechas(local_actualizado, actualizado) > 0)
     {
-        cJSON_Delete((cJSON *)payload);
+        cJSON_Delete(payload);
         return 1;
     }
     int ok = 0;
@@ -955,14 +997,14 @@ static int aplicar_camiseta(const cJSON *item, const char *uuid,
             sqlite3_finalize(stmt);
         }
     }
-    cJSON_Delete((cJSON *)payload);
+    cJSON_Delete(payload);
     return ok;
 }
 
 static int aplicar_botin(const cJSON *item, const char *uuid,
                          const char *actualizado, const char *creado)
 {
-    const cJSON *payload = cJSON_GetObjectItemCaseSensitive(item, "payload");
+    cJSON *payload = cJSON_GetObjectItemCaseSensitive(item, "payload");
     if (!cJSON_IsObject(payload))
     {
         payload = cJSON_CreateObject();
@@ -1005,7 +1047,7 @@ static int aplicar_botin(const cJSON *item, const char *uuid,
     }
     if (existe && comparar_fechas(local_actualizado, actualizado) > 0)
     {
-        cJSON_Delete((cJSON *)payload);
+        cJSON_Delete(payload);
         return 1;
     }
     int ok = 0;
@@ -1081,132 +1123,164 @@ static int aplicar_botin(const cJSON *item, const char *uuid,
             sqlite3_finalize(stmt);
         }
     }
-    cJSON_Delete((cJSON *)payload);
+    cJSON_Delete(payload);
     return ok;
 }
 
-static int bajar_coleccion(const char *base, SyncConfig *cfg,
+/* Aplica un borrado remoto. Devuelve 1 si el registro era un borrado,
+   0 si no lo era. */
+static int aplicar_borrado(const cJSON *item, const char *uuid,
+                           const char *actualizado, int es_camiseta,
+                           SyncResultado *res)
+{
+    const cJSON *borrado = cJSON_GetObjectItemCaseSensitive(item, "deleted");
+    if (!cJSON_IsTrue(borrado))
+    {
+        return 0;
+    }
+    char local_actualizado[64];
+    int existe = existe_local(es_camiseta ? "camiseta" : "botin", uuid,
+                              local_actualizado, sizeof(local_actualizado));
+    if (existe && comparar_fechas(local_actualizado, actualizado) > 0)
+    {
+        return 1;
+    }
+    char sql[256];
+    snprintf(sql, sizeof(sql), "DELETE FROM %s WHERE uuid=?;",
+             es_camiseta ? "camiseta" : "botin");
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, uuid, -1, SQLITE_TRANSIENT);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        res->eliminados++;
+    }
+    return 1;
+}
+
+/* Aplica un registro recibido del servidor a la base local. */
+static void procesar_item_descarga(const cJSON *item, int es_camiseta,
+                                   SyncResultado *res)
+{
+    const char *uuid = sync_json_texto(item, "uuid");
+    if (!uuid || !*uuid)
+    {
+        return;
+    }
+    const char *updated = sync_json_texto(item, "updated_at_client");
+    char actualizado[64];
+    if (updated && *updated)
+    {
+        copiar(actualizado, sizeof(actualizado), updated);
+    }
+    else
+    {
+        ahora_iso(actualizado, sizeof(actualizado));
+    }
+    char creado[64];
+    copiar(creado, sizeof(creado), actualizado);
+
+    if (aplicar_borrado(item, uuid, actualizado, es_camiseta, res))
+    {
+        return;
+    }
+
+    char local_actualizado[64];
+    int existe = existe_local(es_camiseta ? "camiseta" : "botin", uuid,
+                              local_actualizado, sizeof(local_actualizado));
+    if (existe && comparar_fechas(local_actualizado, actualizado) >= 0)
+    {
+        return;
+    }
+
+    int aplicado = es_camiseta
+                   ? aplicar_camiseta(item, uuid, actualizado, creado)
+                   : aplicar_botin(item, uuid, actualizado, creado);
+    if (aplicado)
+    {
+        res->importados++;
+    }
+    else
+    {
+        res->errores++;
+    }
+}
+
+/* Descarga una pagina. Devuelve -2 sin sesion, -1 error, 0 fin de paginacion
+   y 1 si hay mas paginas que procesar. */
+static int bajar_pagina(const char *base, const SyncConfig *cfg,
+                        SyncResultado *res, const char *coleccion,
+                        int es_camiseta, int pagina, int *total_paginas)
+{
+    char url[SYNC_URL_SIZE + 512];
+    snprintf(url, sizeof(url),
+             "%s/api/collections/%s/records?page=%d&perPage=100&"
+             "sort=updated",
+             base, coleccion, pagina);
+    SyncHttp respuesta;
+    if (!sync_http_request("GET", url, cfg->token, NULL, &respuesta))
+    {
+        sync_http_free(&respuesta);
+        return -1;
+    }
+    if (respuesta.status == 401 || respuesta.status == 403)
+    {
+        sync_http_free(&respuesta);
+        return -2;
+    }
+    if (respuesta.status < 200 || respuesta.status >= 300 ||
+            !respuesta.body)
+    {
+        sync_http_free(&respuesta);
+        return -1;
+    }
+    cJSON *json = cJSON_Parse(respuesta.body);
+    sync_http_free(&respuesta);
+    if (!json)
+    {
+        return -1;
+    }
+    *total_paginas = sync_entero_desde_json(json, "totalPages", 1);
+    const cJSON *items = cJSON_GetObjectItemCaseSensitive(json, "items");
+    if (!cJSON_IsArray(items))
+    {
+        cJSON_Delete(json);
+        return 0;
+    }
+    const cJSON *item = NULL;
+    cJSON_ArrayForEach(item, items)
+    {
+        procesar_item_descarga(item, es_camiseta, res);
+    }
+    cJSON_Delete(json);
+    return 1;
+}
+
+static int bajar_coleccion(const char *base, const SyncConfig *cfg,
                            SyncResultado *res, const char *coleccion,
                            int es_camiseta)
 {
     int pagina = 1;
     int total_paginas = 1;
-    do
+    while (pagina <= total_paginas)
     {
-        char url[SYNC_URL_SIZE + 512];
-        snprintf(url, sizeof(url),
-                 "%s/api/collections/%s/records?page=%d&perPage=100&"
-                 "sort=updated",
-                 base, coleccion, pagina);
-        SyncHttp respuesta;
-        if (!sync_http_request("GET", url, cfg->token, NULL, &respuesta))
+        int estado = bajar_pagina(base, cfg, res, coleccion, es_camiseta,
+                                  pagina, &total_paginas);
+        if (estado == -2)
         {
-            sync_http_free(&respuesta);
-            return -1;
-        }
-        if (respuesta.status == 401 || respuesta.status == 403)
-        {
-            sync_http_free(&respuesta);
             return -2;
         }
-        if (respuesta.status < 200 || respuesta.status >= 300 ||
-                !respuesta.body)
-        {
-            sync_http_free(&respuesta);
-            return -1;
-        }
-        cJSON *json = cJSON_Parse(respuesta.body);
-        sync_http_free(&respuesta);
-        if (!json)
+        if (estado == -1)
         {
             return -1;
         }
-        total_paginas = sync_entero_desde_json(json, "totalPages", 1);
-        const cJSON *items = cJSON_GetObjectItemCaseSensitive(json, "items");
-        if (!cJSON_IsArray(items))
+        if (estado == 0)
         {
-            cJSON_Delete(json);
             break;
         }
-
-        const cJSON *item = NULL;
-        cJSON_ArrayForEach(item, items)
-        {
-            const char *uuid = sync_json_texto(item, "uuid");
-            if (!uuid || !*uuid)
-            {
-                continue;
-            }
-            const char *updated =
-                sync_json_texto(item, "updated_at_client");
-            char actualizado[64];
-            if (updated && *updated)
-            {
-                copiar(actualizado, sizeof(actualizado), updated);
-            }
-            else
-            {
-                ahora_iso(actualizado, sizeof(actualizado));
-            }
-            char creado[64];
-            copiar(creado, sizeof(creado), actualizado);
-
-            const cJSON *borrado =
-                cJSON_GetObjectItemCaseSensitive(item, "deleted");
-            if (cJSON_IsTrue(borrado))
-            {
-                char local_actualizado[64];
-                int existe =
-                    existe_local(es_camiseta ? "camiseta" : "botin", uuid,
-                                 local_actualizado,
-                                 sizeof(local_actualizado));
-                if (existe &&
-                        comparar_fechas(local_actualizado, actualizado) > 0)
-                {
-                    continue;
-                }
-                char sql[256];
-                snprintf(sql, sizeof(sql),
-                         "DELETE FROM %s WHERE uuid=?;",
-                         es_camiseta ? "camiseta" : "botin");
-                sqlite3_stmt *stmt = NULL;
-                if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) ==
-                        SQLITE_OK)
-                {
-                    sqlite3_bind_text(stmt, 1, uuid, -1, SQLITE_TRANSIENT);
-                    sqlite3_step(stmt);
-                    sqlite3_finalize(stmt);
-                    res->eliminados++;
-                }
-                continue;
-            }
-
-            char local_actualizado[64];
-            int existe = existe_local(es_camiseta ? "camiseta" : "botin",
-                                      uuid, local_actualizado,
-                                      sizeof(local_actualizado));
-            if (existe &&
-                    comparar_fechas(local_actualizado, actualizado) >= 0)
-            {
-                continue;
-            }
-
-            int aplicado = es_camiseta
-                           ? aplicar_camiseta(item, uuid, actualizado, creado)
-                           : aplicar_botin(item, uuid, actualizado, creado);
-            if (aplicado)
-            {
-                res->importados++;
-            }
-            else
-            {
-                res->errores++;
-            }
-        }
-        cJSON_Delete(json);
         pagina++;
     }
-    while (pagina <= total_paginas);
     return 1;
 }
 

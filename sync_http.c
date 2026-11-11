@@ -1,5 +1,6 @@
 #include "sync_internal.h"
 
+#include "compat_port.h"
 #include "random_utils.h"
 #include "utils.h"
 
@@ -11,7 +12,7 @@
 
 #ifdef _WIN32
 #include <process.h>
-#include <windows.h>
+#include <Windows.h>
 #define SYNC_CURL "curl.exe"
 #else
 #include <unistd.h>
@@ -102,8 +103,8 @@ static char *escribir_temporal(const char *contenido)
     snprintf(ruta, capacidad, "%s%cmifutbol_sync_%lu_%u.json", base, separador,
              pid, nonce);
 
-    FILE *f = fopen(ruta, "wb");
-    if (!f)
+    FILE *f = NULL;
+    if (fopen_s(&f, ruta, "wb") != 0 || !f)
     {
         free(ruta);
         return NULL;
@@ -162,6 +163,79 @@ static char *leer_popen(FILE *fp, int *codigo_salida)
     return datos;
 }
 
+static void liberar_temporal(char *temporal)
+{
+    if (temporal)
+    {
+        remove(temporal);
+        free(temporal);
+    }
+}
+
+static int construir_comando_curl(const char *metodo, const char *url,
+                                  const char *token, const char *temporal,
+                                  char *cmd, size_t tam)
+{
+    int usados = snprintf(cmd, tam,
+                          "%s --silent --show-error --location --max-time 25 "
+                          "--compressed -X %s -H \"Accept: application/json\" ",
+                          SYNC_CURL, metodo);
+    if (usados < 0 || (size_t)usados >= tam)
+    {
+        return 0;
+    }
+    if (token && *token)
+    {
+        int n = snprintf(cmd + usados, tam - (size_t)usados,
+                         "-H \"Authorization: %s\" ", token);
+        if (n < 0 || (size_t)n >= tam - (size_t)usados)
+        {
+            return 0;
+        }
+        usados += n;
+    }
+    if (temporal)
+    {
+        int n = snprintf(cmd + usados, tam - (size_t)usados,
+                         "-H \"Content-Type: application/json\" "
+                         "--data-binary \"@%s\" ", temporal);
+        if (n < 0 || (size_t)n >= tam - (size_t)usados)
+        {
+            return 0;
+        }
+        usados += n;
+    }
+    int resto = snprintf(cmd + usados, tam - (size_t)usados,
+                         "-w \"\\n%s%%{http_code}\" \"%s\" 2>&1", SYNC_MARCA, url);
+    return resto > 0 && (size_t)resto < tam - (size_t)usados;
+}
+
+static int parsear_respuesta_http(char *datos, int rc, SyncHttp *salida)
+{
+    char *marca = strstr(datos, SYNC_MARCA);
+    if (!marca)
+    {
+        salida->error = rc == 0 ? strdup("Respuesta HTTP invalida")
+                        : strdup("No se pudo conectar al servidor");
+        return 0;
+    }
+    salida->status = atoi(marca + strlen(SYNC_MARCA));
+    *marca = '\0';
+    size_t len = strlen(datos);
+    while (len > 0 && (datos[len - 1] == '\n' || datos[len - 1] == '\r'))
+    {
+        datos[--len] = '\0';
+    }
+    salida->body = datos;
+    if (salida->status == 0)
+    {
+        salida->error = (salida->body && *salida->body)
+                        ? strdup(salida->body)
+                        : strdup("No se pudo conectar al servidor");
+    }
+    return 1;
+}
+
 int sync_http_request(const char *metodo, const char *url, const char *token,
                       const char *body, SyncHttp *salida)
 {
@@ -193,37 +267,9 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
     }
 
     char cmd[SYNC_BUF * 2];
-    int usados = snprintf(cmd, sizeof(cmd),
-                          "%s --silent --show-error --location --max-time 25 "
-                          "--compressed -X %s -H \"Accept: application/json\" ",
-                          SYNC_CURL, metodo);
-    if (usados < 0 || (size_t)usados >= sizeof(cmd))
+    if (!construir_comando_curl(metodo, url, token, temporal, cmd, sizeof(cmd)))
     {
-        free(temporal);
-        salida->error = strdup("Peticion HTTP demasiado larga");
-        return 0;
-    }
-    if (token && *token)
-    {
-        usados += snprintf(cmd + usados, sizeof(cmd) - (size_t)usados,
-                           "-H \"Authorization: %s\" ", token);
-    }
-    if (temporal)
-    {
-        usados += snprintf(cmd + usados, sizeof(cmd) - (size_t)usados,
-                           "-H \"Content-Type: application/json\" "
-                           "--data-binary \"@%s\" ",
-                           temporal);
-    }
-    usados += snprintf(cmd + usados, sizeof(cmd) - (size_t)usados,
-                       "-w \"\\n%s%%{http_code}\" \"%s\" 2>&1", SYNC_MARCA, url);
-    if (usados < 0 || (size_t)usados >= sizeof(cmd))
-    {
-        if (temporal)
-        {
-            remove(temporal);
-            free(temporal);
-        }
+        liberar_temporal(temporal);
         salida->error = strdup("Peticion HTTP demasiado larga");
         return 0;
     }
@@ -231,57 +277,22 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
     FILE *fp = popen(cmd, "r");
     if (!fp)
     {
-        if (temporal)
-        {
-            remove(temporal);
-            free(temporal);
-        }
+        liberar_temporal(temporal);
         salida->error = strdup("No se pudo ejecutar curl");
         return 0;
     }
     int rc = 0;
     char *datos = leer_popen(fp, &rc);
-    if (temporal)
-    {
-        remove(temporal);
-        free(temporal);
-    }
+    liberar_temporal(temporal);
     if (!datos)
     {
         salida->error = strdup("No se pudo leer la respuesta HTTP");
         return 0;
     }
-
-    char *marca = strstr(datos, SYNC_MARCA);
-    if (marca)
-    {
-        salida->status = atoi(marca + strlen(SYNC_MARCA));
-        *marca = '\0';
-        size_t len = strlen(datos);
-        while (len > 0 && (datos[len - 1] == '\n' || datos[len - 1] == '\r'))
-        {
-            datos[--len] = '\0';
-        }
-        salida->body = datos;
-    }
-    else
+    if (!parsear_respuesta_http(datos, rc, salida))
     {
         free(datos);
-        salida->error = rc == 0 ? strdup("Respuesta HTTP invalida")
-                        : strdup("No se pudo conectar al servidor");
         return 0;
-    }
-
-    if (salida->status == 0)
-    {
-        if (salida->body && *salida->body)
-        {
-            salida->error = strdup(salida->body);
-        }
-        else
-        {
-            salida->error = strdup("No se pudo conectar al servidor");
-        }
     }
     return 1;
 }
@@ -298,26 +309,84 @@ void sync_http_free(SyncHttp *respuesta)
     respuesta->error = NULL;
 }
 
-int sync_http_auth(const char *base, const char *email, const char *password,
-                   char *token, size_t token_tam, char *user_id, size_t user_tam,
-                   char *error, size_t error_tam)
+static void auth_error(SyncAuthDestino *destino, const char *mensaje)
 {
-    if (!base || !email || !password || !token || !user_id)
+    if (destino && destino->error && destino->error_tam)
     {
-        return 0;
+        snprintf(destino->error, destino->error_tam, "%s", mensaje);
     }
-    token[0] = '\0';
-    user_id[0] = '\0';
+}
 
+static void auth_error_status(SyncAuthDestino *destino, int status)
+{
+    if (!destino || !destino->error || !destino->error_tam)
+    {
+        return;
+    }
+    if (status == 400 || status == 401)
+    {
+        snprintf(destino->error, destino->error_tam,
+                 "Correo o contrasena incorrectos");
+    }
+    else
+    {
+        snprintf(destino->error, destino->error_tam,
+                 "El servidor rechazo el inicio de sesion (%d)", status);
+    }
+}
+
+static char *auth_cuerpo_json(const char *email, const char *password)
+{
     cJSON *cuerpo = cJSON_CreateObject();
     if (!cuerpo)
     {
-        return 0;
+        return NULL;
     }
     cJSON_AddStringToObject(cuerpo, "identity", email);
     cJSON_AddStringToObject(cuerpo, "password", password);
     char *json = sync_json_imprimir(cuerpo);
     cJSON_Delete(cuerpo);
+    return json;
+}
+
+static int auth_extraer_campos(const char *body, SyncAuthDestino *destino)
+{
+    cJSON *raiz = body ? cJSON_Parse(body) : NULL;
+    if (!raiz)
+    {
+        auth_error(destino, "Respuesta de autenticacion invalida");
+        return 0;
+    }
+    const char *tok = sync_json_texto(raiz, "token");
+    const cJSON *record = cJSON_GetObjectItemCaseSensitive(raiz, "record");
+    const char *uid = record ? sync_json_texto(record, "id") : NULL;
+    int ok = 0;
+    if (!tok || !uid)
+    {
+        auth_error(destino, "El servidor no devolvio token/usuario");
+    }
+    else
+    {
+        snprintf(destino->token, destino->token_tam, "%s", tok);
+        snprintf(destino->user_id, destino->user_tam, "%s", uid);
+        ok = 1;
+    }
+    cJSON_Delete(raiz);
+    return ok;
+}
+
+int sync_http_auth(const char *base, const char *email, const char *password,
+                   SyncAuthDestino *destino)
+{
+    if (!base || !email || !password || !destino || !destino->token ||
+            !destino->user_id)
+    {
+        return 0;
+    }
+    destino->token[0] = '\0';
+    destino->user_id[0] = '\0';
+
+    char *json = auth_cuerpo_json(email, password);
     if (!json)
     {
         return 0;
@@ -331,62 +400,19 @@ int sync_http_auth(const char *base, const char *email, const char *password,
     free(json);
     if (!ok)
     {
-        if (error && error_tam)
-        {
-            snprintf(error, error_tam, "%s",
-                     respuesta.error ? respuesta.error : "Error de red");
-        }
+        auth_error(destino, respuesta.error ? respuesta.error : "Error de red");
         sync_http_free(&respuesta);
         return 0;
     }
 
     if (respuesta.status < 200 || respuesta.status >= 300)
     {
-        if (error && error_tam)
-        {
-            if (respuesta.status == 400 || respuesta.status == 401)
-            {
-                snprintf(error, error_tam,
-                         "Correo o contrasena incorrectos");
-            }
-            else
-            {
-                snprintf(error, error_tam,
-                         "El servidor rechazo el inicio de sesion (%d)",
-                         respuesta.status);
-            }
-        }
+        auth_error_status(destino, respuesta.status);
         sync_http_free(&respuesta);
         return 0;
     }
 
-    cJSON *raiz = respuesta.body ? cJSON_Parse(respuesta.body) : NULL;
-    if (!raiz)
-    {
-        if (error && error_tam)
-        {
-            snprintf(error, error_tam, "Respuesta de autenticacion invalida");
-        }
-        sync_http_free(&respuesta);
-        return 0;
-    }
-    const char *tok = sync_json_texto(raiz, "token");
-    const cJSON *record = cJSON_GetObjectItemCaseSensitive(raiz, "record");
-    const char *uid = record ? sync_json_texto(record, "id") : NULL;
-    if (!tok || !uid)
-    {
-        if (error && error_tam)
-        {
-            snprintf(error, error_tam, "El servidor no devolvio token/usuario");
-        }
-    }
-    else
-    {
-        snprintf(token, token_tam, "%s", tok);
-        snprintf(user_id, user_tam, "%s", uid);
-        ok = 1;
-    }
-    cJSON_Delete(raiz);
+    ok = auth_extraer_campos(respuesta.body, destino);
     sync_http_free(&respuesta);
     return ok;
 }

@@ -1262,10 +1262,16 @@ int sincronizar_partidos_pendientes(void)
     // Renombrar el archivo procesado para no reimportarlo en cada inicio.
     char marca[32];
     time_t ahora = time(NULL);
-    struct tm *tm_ahora = localtime(&ahora);
-    if (tm_ahora)
+    struct tm tm_ahora;
+    int tm_ok = 0;
+#ifdef _WIN32
+    tm_ok = localtime_s(&tm_ahora, &ahora) == 0;
+#else
+    tm_ok = localtime_r(&ahora, &tm_ahora) != NULL;
+#endif
+    if (tm_ok)
     {
-        strftime(marca, sizeof(marca), "%Y%m%d_%H%M%S", tm_ahora);
+        strftime(marca, sizeof(marca), "%Y%m%d_%H%M%S", &tm_ahora);
     }
     else
     {

@@ -1010,7 +1010,7 @@ static void mm_fecha_hora_iso(const char *origen, char *destino, size_t tamano)
     size_t largo = strlen(destino);
     if (largo == 16 && largo + 3 < tamano)
     {
-        strcat(destino, ":00");
+        snprintf(destino + largo, tamano - largo, "%s", ":00");
     }
 }
 
@@ -1425,15 +1425,15 @@ static void mm_exportar_recordatorios(cJSON *root)
     int total = cJSON_GetArraySize(json);
     for (int i = 0; i < total; i++)
     {
-        cJSON *origen = cJSON_GetArrayItem(json, i);
+        const cJSON *origen = cJSON_GetArrayItem(json, i);
         if (!cJSON_IsObject(origen))
         {
             continue;
         }
 
-        cJSON *fecha = cJSON_GetObjectItemCaseSensitive(origen, "fecha");
-        cJSON *tematica = cJSON_GetObjectItemCaseSensitive(origen, "tematica");
-        cJSON *nota = cJSON_GetObjectItemCaseSensitive(origen, "nota");
+        const cJSON *fecha = cJSON_GetObjectItemCaseSensitive(origen, "fecha");
+        const cJSON *tematica = cJSON_GetObjectItemCaseSensitive(origen, "tematica");
+        const cJSON *nota = cJSON_GetObjectItemCaseSensitive(origen, "nota");
         char fecha_iso[64];
 
         cJSON *item = cJSON_CreateObject();

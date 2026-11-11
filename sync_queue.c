@@ -48,19 +48,15 @@ static int asegurar_tablas(void)
     {
         return 0;
     }
-    if (!sync_columna_existe(db, "partido", "uuid"))
+    if (!sync_columna_existe(db, "partido", "uuid") &&
+            !ejecutar("ALTER TABLE partido ADD COLUMN uuid TEXT;"))
     {
-        if (!ejecutar("ALTER TABLE partido ADD COLUMN uuid TEXT;"))
-        {
-            return 0;
-        }
+        return 0;
     }
-    if (!sync_columna_existe(db, "partido", "actualizado_en"))
+    if (!sync_columna_existe(db, "partido", "actualizado_en") &&
+            !ejecutar("ALTER TABLE partido ADD COLUMN actualizado_en TEXT;"))
     {
-        if (!ejecutar("ALTER TABLE partido ADD COLUMN actualizado_en TEXT;"))
-        {
-            return 0;
-        }
+        return 0;
     }
 
     const char *sql =
@@ -168,21 +164,17 @@ int sync_init_db(void)
     }
 
     char valor[SYNC_URL_SIZE];
-    if (sync_config_get("url_local", valor, sizeof(valor)) != 1 || !valor[0])
+    if ((sync_config_get("url_local", valor, sizeof(valor)) != 1 || !valor[0]) &&
+            utils_get_env_var_copy("MIFUTBOL_SYNC_URL", valor, sizeof(valor)) &&
+            valor[0])
     {
-        if (utils_get_env_var_copy("MIFUTBOL_SYNC_URL", valor, sizeof(valor)) &&
-                valor[0])
-        {
-            sync_config_set("url_local", valor);
-        }
+        sync_config_set("url_local", valor);
     }
-    if (sync_config_get("email", valor, sizeof(valor)) != 1 || !valor[0])
+    if ((sync_config_get("email", valor, sizeof(valor)) != 1 || !valor[0]) &&
+            utils_get_env_var_copy("MIFUTBOL_SYNC_EMAIL", valor, sizeof(valor)) &&
+            valor[0])
     {
-        if (utils_get_env_var_copy("MIFUTBOL_SYNC_EMAIL", valor, sizeof(valor)) &&
-                valor[0])
-        {
-            sync_config_set("email", valor);
-        }
+        sync_config_set("email", valor);
     }
     return 1;
 }

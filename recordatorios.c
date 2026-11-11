@@ -214,22 +214,14 @@ static int write_reminders_to_file(const Reminder *arr, int count, const char *p
 
     for (int i = 0; i < count; i++)
     {
-        long long id_value = 0;
-        const char *fecha = "";
-        const char *nota = "";
-        const char *tematica = "";
-        int periodicidad = PERIODICIDAD_UNA_VEZ;
-        const char *fecha_fin = "";
-
-        if (arr)
-        {
-            id_value = arr[i].id;
-            fecha = arr[i].fecha;
-            nota = arr[i].nota;
-            tematica = arr[i].tematica;
-            periodicidad = arr[i].periodicidad;
-            fecha_fin = arr[i].fecha_fin;
-        }
+        /* count > 0 garantiza arr != NULL (ver guarda al inicio). */
+        const Reminder *r = &arr[i];
+        long long id_value = r->id;
+        const char *fecha = r->fecha;
+        const char *nota = r->nota;
+        const char *tematica = r->tematica;
+        int periodicidad = r->periodicidad;
+        const char *fecha_fin = r->fecha_fin;
 
         cJSON *obj = cJSON_CreateObject();
         if (!obj)

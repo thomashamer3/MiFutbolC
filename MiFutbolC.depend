@@ -207,7 +207,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.h
 
-1792706410 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
+1794428238 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\export.c
 	"export.h"
 	"cancha.h"
 	"cJSON.h"
@@ -402,7 +402,7 @@
 
 1792446543 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1792452364 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1794428228 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2441,7 +2441,7 @@
 
 1774970153 d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.h
 
-1782269958 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
+1794428218 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\recordatorios.c
 	"recordatorios.h"
 	"utils.h"
 	"menu.h"
@@ -2909,7 +2909,7 @@
 1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
 	<stddef.h>
 
-1794424556 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+1794429339 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
 	"sync.h"
 	"sync_internal.h"
 	"sync_entidades.h"
@@ -2924,14 +2924,15 @@
 	<time.h>
 	<process.h>
 
-1794423478 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_internal.h
+1794428351 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_internal.h
 	"cJSON.h"
 	"sqlite3.h"
 	"sync.h"
 	<stddef.h>
 
-1794424217 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
+1794428358 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
 	"sync_internal.h"
+	"compat_port.h"
 	"random_utils.h"
 	"utils.h"
 	<ctype.h>
@@ -2940,10 +2941,10 @@
 	<string.h>
 	<time.h>
 	<process.h>
-	<windows.h>
+	<Windows.h>
 	<unistd.h>
 
-1792784893 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c
+1794428370 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c
 	"sync_internal.h"
 	"sync_entidades.h"
 	"db.h"
@@ -2955,7 +2956,7 @@
 1793973903 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.h
 	"sync.h"
 
-1793973903 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
+1794428535 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
 	"sync_entidades.h"
 	"sync_internal.h"
 	"cJSON.h"

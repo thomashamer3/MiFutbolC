@@ -167,7 +167,7 @@ li { margin: 0.3em 0; }
   font: 600 13px/1.2 "Inter", sans-serif;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
 .theme-toggle:hover {
@@ -439,7 +439,7 @@ details > :not(summary) {
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow-sm);
-  transition: all 0.25s;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s, color 0.25s;
 }
 
 .menu-card:hover {
@@ -536,7 +536,7 @@ details > :not(summary) {
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .btn:hover {
@@ -681,4 +681,22 @@ html[data-theme="dark"] .sourceCode .wa { color: #d29922; font-weight: bold; fon
   details[open] { break-inside: avoid; }
   .card, .menu-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
   .toc { break-after: page; }
+}
+
+/* ─── ACCESIBILIDAD: MOVIMIENTO REDUCIDO ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .card:hover,
+  .menu-card:hover,
+  .btn:hover {
+    transform: none;
+  }
 }
