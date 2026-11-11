@@ -33,6 +33,7 @@ int sync_json_copiar_texto(const cJSON *obj, const char *clave, char *salida,
 char *sync_json_imprimir(const cJSON *obj);
 void sync_recortar(char *texto);
 int sync_texto_seguro(const char *texto);
+int sync_url_esquema_permitido(const char *url);
 int sync_entero_desde_json(const cJSON *obj, const char *clave, int defecto);
 double sync_double_desde_json(const cJSON *obj, const char *clave, double defecto);
 

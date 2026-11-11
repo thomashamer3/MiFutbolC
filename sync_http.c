@@ -1,5 +1,6 @@
 #include "sync_internal.h"
 
+#include "random_utils.h"
 #include "utils.h"
 
 #include <ctype.h>
@@ -10,6 +11,7 @@
 
 #ifdef _WIN32
 #include <process.h>
+#include <windows.h>
 #define SYNC_CURL "curl.exe"
 #else
 #include <unistd.h>
@@ -25,7 +27,7 @@ static int caracteres_seguros_url(const char *url)
     {
         return 0;
     }
-    if (strncmp(url, "http://", 7) != 0 && strncmp(url, "https://", 8) != 0)
+    if (!sync_url_esquema_permitido(url))
     {
         return 0;
     }
@@ -65,36 +67,40 @@ static int token_seguro(const char *token)
 
 static char *escribir_temporal(const char *contenido)
 {
-    const char *base = getenv("TEMP");
-    if (!base || !*base)
-    {
-        base = getenv("TMP");
-    }
+    char base[1024] = {0};
 #ifdef _WIN32
-    if (!base || !*base)
+    if (GetTempPathA((DWORD)sizeof(base), base) == 0)
     {
-        base = ".";
+        base[0] = '\0';
     }
     unsigned long pid = (unsigned long)_getpid();
+    const char separador = '\\';
 #else
-    if (!base || !*base)
-    {
-        base = "/tmp";
-    }
+    snprintf(base, sizeof(base), "%s", P_tmpdir);
     unsigned long pid = (unsigned long)getpid();
+    const char separador = '/';
 #endif
-    char *ruta = (char *)malloc(1024);
+    if (!base[0])
+    {
+        base[0] = '.';
+        base[1] = '\0';
+    }
+    size_t capacidad = sizeof(base) + 128;
+    char *ruta = (char *)malloc(capacidad);
     if (!ruta)
     {
         return NULL;
     }
-    snprintf(ruta, 1024, "%s%cmifutbol_sync_%lu_%lu.json", base,
-#ifdef _WIN32
-             '\\',
-#else
-             '/',
-#endif
-             pid, (unsigned long)time(NULL) ^ (unsigned long)rand());
+    unsigned int nonce = (unsigned int)time(NULL);
+    unsigned char aleatorio[4];
+    if (secure_random_bytes(aleatorio, sizeof(aleatorio)) == 0)
+    {
+        nonce = ((unsigned int)aleatorio[0] << 24) |
+                ((unsigned int)aleatorio[1] << 16) |
+                ((unsigned int)aleatorio[2] << 8) | (unsigned int)aleatorio[3];
+    }
+    snprintf(ruta, capacidad, "%s%cmifutbol_sync_%lu_%u.json", base, separador,
+             pid, nonce);
 
     FILE *f = fopen(ruta, "wb");
     if (!f)

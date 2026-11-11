@@ -2909,12 +2909,13 @@
 1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
 	<stddef.h>
 
-1792785626 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+1794424556 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
 	"sync.h"
 	"sync_internal.h"
 	"sync_entidades.h"
 	"db.h"
 	"menu.h"
+	"random_utils.h"
 	"utils.h"
 	<ctype.h>
 	<stdio.h>
@@ -2923,14 +2924,15 @@
 	<time.h>
 	<process.h>
 
-1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_internal.h
+1794423478 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_internal.h
 	"cJSON.h"
 	"sqlite3.h"
 	"sync.h"
 	<stddef.h>
 
-1792452364 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
+1794424217 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
 	"sync_internal.h"
+	"random_utils.h"
 	"utils.h"
 	<ctype.h>
 	<stdio.h>
@@ -2938,6 +2940,7 @@
 	<string.h>
 	<time.h>
 	<process.h>
+	<windows.h>
 	<unistd.h>
 
 1792784893 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c

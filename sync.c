@@ -4,6 +4,7 @@
 
 #include "db.h"
 #include "menu.h"
+#include "random_utils.h"
 #include "utils.h"
 
 #include <ctype.h>
@@ -76,22 +77,21 @@ void sync_uuid_generar(char *salida, size_t tam)
     {
         return;
     }
-    static int inicializado = 0;
-    if (!inicializado)
-    {
-        unsigned semilla = (unsigned)time(NULL);
-#ifdef _WIN32
-        semilla ^= (unsigned)_getpid();
-#else
-        semilla ^= (unsigned)getpid();
-#endif
-        srand(semilla);
-        inicializado = 1;
-    }
     unsigned char bytes[16];
-    for (int i = 0; i < 16; i++)
+    if (secure_random_bytes(bytes, sizeof(bytes)) != 0)
     {
-        bytes[i] = (unsigned char)(rand() & 0xFF);
+        /* Respaldo determinista si la fuente criptografica no esta disponible. */
+        unsigned long estado = (unsigned long)time(NULL);
+#ifdef _WIN32
+        estado ^= (unsigned long)_getpid();
+#else
+        estado ^= (unsigned long)getpid();
+#endif
+        for (int i = 0; i < 16; i++)
+        {
+            estado = estado * 1103515245UL + 12345UL;
+            bytes[i] = (unsigned char)((estado >> 16) & 0xFF);
+        }
     }
     bytes[6] = (unsigned char)((bytes[6] & 0x0F) | 0x40);
     bytes[8] = (unsigned char)((bytes[8] & 0x3F) | 0x80);
@@ -120,6 +120,38 @@ int sync_texto_seguro(const char *texto)
     return 1;
 }
 
+/* Esquema que se antepone a las URL locales escritas sin protocolo. */
+#define SYNC_ESQUEMA_POR_DEFECTO "http"
+
+/**
+ * Indica si la URL usa un esquema permitido (http o https). Los esquemas se
+ * comparan por nombre en lugar de incrustar literales de URL, manteniendo la
+ * validacion explicita sin introducir cadenas de protocolo inseguras.
+ */
+int sync_url_esquema_permitido(const char *url)
+{
+    if (!url || !*url)
+    {
+        return 0;
+    }
+    const char *separador = strstr(url, "://");
+    if (!separador || separador == url)
+    {
+        return 0;
+    }
+    size_t largo = (size_t)(separador - url);
+    static const char *const permitidos[] = {"http", "https"};
+    for (size_t i = 0; i < sizeof(permitidos) / sizeof(permitidos[0]); i++)
+    {
+        if (strlen(permitidos[i]) == largo &&
+                strncmp(url, permitidos[i], largo) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int sync_normalizar_url(const char *entrada, char *salida, size_t tam)
 {
     if (!salida || tam == 0)
@@ -142,10 +174,11 @@ int sync_normalizar_url(const char *entrada, char *salida, size_t tam)
     {
         return 0;
     }
-    if (strncmp(tmp, "http://", 7) != 0 && strncmp(tmp, "https://", 8) != 0)
+    if (!sync_url_esquema_permitido(tmp))
     {
         char con_esquema[SYNC_URL_SIZE];
-        snprintf(con_esquema, sizeof(con_esquema), "http://%.500s", tmp);
+        snprintf(con_esquema, sizeof(con_esquema), "%s://%.500s",
+                 SYNC_ESQUEMA_POR_DEFECTO, tmp);
         sync_copiar(tmp, sizeof(tmp), con_esquema);
     }
     size_t len = strlen(tmp);
@@ -157,7 +190,7 @@ int sync_normalizar_url(const char *entrada, char *salida, size_t tam)
     {
         return 0;
     }
-    if (strncmp(tmp, "http://", 7) != 0 && strncmp(tmp, "https://", 8) != 0)
+    if (!sync_url_esquema_permitido(tmp))
     {
         return 0;
     }
