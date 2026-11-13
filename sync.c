@@ -8,7 +8,6 @@
 #include "utils.h"
 
 #include <ctype.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1228,28 +1227,90 @@ static void sync_columnas_agregar_fijas(SyncColumnas *columnas, int botin_id,
     }
 }
 
-/** Agrega texto formateado al final de @p destino sin desbordar el buffer. */
+/** Copia un fragmento ya formateado al final del SQL sin desbordarlo. */
 static int sync_agregar_texto(char *destino, size_t tam, size_t *usados,
-                              const char *formato, ...)
+                              const char *texto)
 {
-    va_list args;
-    int escrito;
-    size_t disponible;
+    size_t largo;
 
-    if (*usados >= tam)
+    if (!destino || !usados || !texto)
     {
         return 0;
     }
-    disponible = tam - *usados;
-    va_start(args, formato);
-    escrito = vsnprintf(destino + *usados, disponible, formato, args);
-    va_end(args);
-    if (escrito < 0 || (size_t)escrito >= disponible)
+    largo = strlen(texto);
+    if (*usados >= tam || largo >= tam - *usados)
     {
         return 0;
     }
-    *usados += (size_t)escrito;
+    memcpy(destino + *usados, texto, largo);
+    *usados += largo;
+    destino[*usados] = '\0';
     return 1;
+}
+
+/** Agrega una columna entre comillas con su separador y sufijo. */
+static int sync_agregar_columna_sql(char *sql, size_t tam, size_t *usados,
+                                    int primero, const char *nombre,
+                                    const char *sufijo)
+{
+    char fragmento[288];
+    int escrito = snprintf(fragmento, sizeof(fragmento), "%s\"%s\"%s",
+                           primero ? "" : ", ", nombre, sufijo);
+
+    if (escrito < 0 || (size_t)escrito >= sizeof(fragmento))
+    {
+        return 0;
+    }
+    return sync_agregar_texto(sql, tam, usados, fragmento);
+}
+
+/** Arma la sentencia UPDATE con las columnas del payload. */
+static int sync_sql_update(const SyncColumnas *columnas, char *sql,
+                           size_t tam, size_t *usados)
+{
+    if (!sync_agregar_texto(sql, tam, usados, "UPDATE partido SET "))
+    {
+        return 0;
+    }
+    for (int i = 0; i < columnas->total; i++)
+    {
+        if (!sync_agregar_columna_sql(sql, tam, usados, i == 0,
+                                      columnas->nombres[i], "=?"))
+        {
+            return 0;
+        }
+    }
+    return sync_agregar_texto(sql, tam, usados, " WHERE id=?;");
+}
+
+/** Arma la sentencia INSERT con las columnas del payload. */
+static int sync_sql_insert(const SyncColumnas *columnas, char *sql,
+                           size_t tam, size_t *usados)
+{
+    if (!sync_agregar_texto(sql, tam, usados, "INSERT INTO partido ("))
+    {
+        return 0;
+    }
+    for (int i = 0; i < columnas->total; i++)
+    {
+        if (!sync_agregar_columna_sql(sql, tam, usados, i == 0,
+                                      columnas->nombres[i], ""))
+        {
+            return 0;
+        }
+    }
+    if (!sync_agregar_texto(sql, tam, usados, ") VALUES ("))
+    {
+        return 0;
+    }
+    for (int i = 0; i < columnas->total; i++)
+    {
+        if (!sync_agregar_texto(sql, tam, usados, i == 0 ? "?" : ", ?"))
+        {
+            return 0;
+        }
+    }
+    return sync_agregar_texto(sql, tam, usados, ");");
 }
 
 static int sync_sql_guardar(const SyncColumnas *columnas, int id_local,
@@ -1257,47 +1318,15 @@ static int sync_sql_guardar(const SyncColumnas *columnas, int id_local,
 {
     size_t usados = 0;
 
+    if (!columnas || !sql || tam == 0 || columnas->total <= 0)
+    {
+        return 0;
+    }
     if (id_local > 0)
     {
-        if (!sync_agregar_texto(sql, tam, &usados, "UPDATE partido SET "))
-        {
-            return 0;
-        }
-        for (int i = 0; i < columnas->total; i++)
-        {
-            if (!sync_agregar_texto(sql, tam, &usados, "%s\"%s\"=?",
-                                    i == 0 ? "" : ", ", columnas->nombres[i]))
-            {
-                return 0;
-            }
-        }
-        return sync_agregar_texto(sql, tam, &usados, " WHERE id=?;");
+        return sync_sql_update(columnas, sql, tam, &usados);
     }
-
-    if (!sync_agregar_texto(sql, tam, &usados, "INSERT INTO partido ("))
-    {
-        return 0;
-    }
-    for (int i = 0; i < columnas->total; i++)
-    {
-        if (!sync_agregar_texto(sql, tam, &usados, "%s\"%s\"",
-                                i == 0 ? "" : ", ", columnas->nombres[i]))
-        {
-            return 0;
-        }
-    }
-    if (!sync_agregar_texto(sql, tam, &usados, ") VALUES ("))
-    {
-        return 0;
-    }
-    for (int i = 0; i < columnas->total; i++)
-    {
-        if (!sync_agregar_texto(sql, tam, &usados, "%s?", i == 0 ? "" : ", "))
-        {
-            return 0;
-        }
-    }
-    return sync_agregar_texto(sql, tam, &usados, ");");
+    return sync_sql_insert(columnas, sql, tam, &usados);
 }
 
 /** Texto que se guarda en la columna `formato_partido`. */

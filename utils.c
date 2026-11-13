@@ -4515,12 +4515,163 @@ int app_open_with_command(const char *command, const char *path)
 #endif
 }
 
+/** Amplia el buffer de lectura de la captura al doble de su capacidad. */
+static int app_captura_ampliar(char **datos, size_t *capacidad)
+{
+    char *ampliado = (char *)realloc(*datos, *capacidad * 2);
+
+    if (!ampliado)
+    {
+        return 0;
+    }
+    *datos = ampliado;
+    *capacidad *= 2;
+    return 1;
+}
+
+/** Lee el archivo temporal completo con la salida del comando. */
+static char *app_captura_leer_archivo(const char *ruta, size_t *total)
+{
+    FILE *lectura = NULL;
+    size_t capacidad = 8192;
+    char *datos;
+
+    if (fopen_s(&lectura, ruta, "rb") != 0 || !lectura)
+    {
+        return NULL;
+    }
+    datos = (char *)malloc(capacidad);
+    while (datos)
+    {
+        size_t leidos = fread(datos + *total, 1, capacidad - *total - 1, lectura);
+
+        *total += leidos;
+        if (leidos == 0)
+        {
+            break;
+        }
+        if (capacidad - *total - 1 == 0 && !app_captura_ampliar(&datos, &capacidad))
+        {
+            free(datos);
+            datos = NULL;
+        }
+    }
+    fclose(lectura);
+    return datos;
+}
+
+#ifdef _WIN32
+/** Ejecuta el comando en Windows redirigiendo su salida a @p ruta. */
+static int app_captura_ejecutar(const char *const argv[], char *ruta,
+                                int *estado)
+{
+    char directorio[MAX_PATH];
+    DWORD largo = GetTempPathA(MAX_PATH, directorio);
+    FILE *archivo = NULL;
+    int guardado;
+
+    if (largo == 0 || largo >= MAX_PATH ||
+            GetTempFileNameA(directorio, "mfc", 0, ruta) == 0)
+    {
+        return 0;
+    }
+
+    guardado = _dup(_fileno(stdout));
+    if (guardado < 0 || fopen_s(&archivo, ruta, "wb") != 0 || !archivo)
+    {
+        if (archivo)
+        {
+            fclose(archivo);
+        }
+        if (guardado >= 0)
+        {
+            _close(guardado);
+        }
+        remove(ruta);
+        return 0;
+    }
+
+    fflush(stdout);
+    if (_dup2(_fileno(archivo), _fileno(stdout)) != 0)
+    {
+        fclose(archivo);
+        _close(guardado);
+        remove(ruta);
+        return 0;
+    }
+
+    *estado = (int)_spawnvp(_P_WAIT, argv[0], (const char *const *)argv);
+    fflush(stdout);
+    _dup2(guardado, _fileno(stdout));
+    _close(guardado);
+    fclose(archivo);
+
+    if (*estado < 0)
+    {
+        remove(ruta);
+        return 0;
+    }
+    return 1;
+}
+#else
+/** Ejecuta el comando en POSIX redirigiendo su salida a @p ruta. */
+static int app_captura_ejecutar(const char *const argv[], char *ruta,
+                                size_t tam, int *estado)
+{
+    posix_spawn_file_actions_t acciones;
+    pid_t pid = (pid_t)0;
+    int descriptor;
+    int espera = 0;
+    int lanzado;
+
+    if (snprintf(ruta, tam, "%s/mifutbol_captura_XXXXXX", P_tmpdir) <= 0)
+    {
+        return 0;
+    }
+    descriptor = mkstemp(ruta);
+    if (descriptor < 0)
+    {
+        return 0;
+    }
+    close(descriptor);
+
+    if (posix_spawn_file_actions_init(&acciones) != 0)
+    {
+        remove(ruta);
+        return 0;
+    }
+    if (posix_spawn_file_actions_addopen(&acciones, STDOUT_FILENO, ruta,
+                                         O_WRONLY | O_TRUNC, 0600) != 0)
+    {
+        posix_spawn_file_actions_destroy(&acciones);
+        remove(ruta);
+        return 0;
+    }
+    lanzado = posix_spawnp(&pid, argv[0], &acciones, NULL,
+                           (char *const *)argv, environ);
+    posix_spawn_file_actions_destroy(&acciones);
+    if (lanzado != 0)
+    {
+        remove(ruta);
+        return 0;
+    }
+    if (waitpid(pid, &espera, 0) < 0)
+    {
+        remove(ruta);
+        return 0;
+    }
+    *estado = WIFEXITED(espera) ? WEXITSTATUS(espera) : -1;
+    return 1;
+}
+#endif
+
 int app_executar_captura(const char *const argv[], char **salida, int *codigo_salida)
 {
     char ruta[1024];
-    char *datos = NULL;
+    char *datos;
     size_t total = 0;
     int estado = -1;
+    int ejecutado;
 
     if (!argv || !argv[0] || argv[0][0] == '\0' || !salida)
     {
@@ -4534,128 +4685,16 @@ int app_executar_captura(const char *const argv[], char **salida, int *codigo_sa
     }
 
 #ifdef _WIN32
-    {
-        char directorio[MAX_PATH];
-        DWORD largo = GetTempPathA(MAX_PATH, directorio);
-
-        if (largo == 0 || largo >= MAX_PATH ||
-                GetTempFileNameA(directorio, "mfc", 0, ruta) == 0)
-        {
-            return 0;
-        }
-
-        int guardado = _dup(_fileno(stdout));
-        FILE *archivo = fopen(ruta, "wb");
-        if (guardado < 0 || !archivo)
-        {
-            if (archivo)
-            {
-                fclose(archivo);
-            }
-            if (guardado >= 0)
-            {
-                _close(guardado);
-            }
-            remove(ruta);
-            return 0;
-        }
-
-        fflush(stdout);
-        if (_dup2(_fileno(archivo), _fileno(stdout)) != 0)
-        {
-            fclose(archivo);
-            _close(guardado);
-            remove(ruta);
-            return 0;
-        }
-
-        estado = (int)_spawnvp(_P_WAIT, argv[0], (const char *const *)argv);
-        fflush(stdout);
-        _dup2(guardado, _fileno(stdout));
-        _close(guardado);
-        fclose(archivo);
-
-        if (estado < 0)
-        {
-            remove(ruta);
-            return 0;
-        }
-    }
+    ejecutado = app_captura_ejecutar(argv, ruta, &estado);
 #else
-    {
-        snprintf(ruta, sizeof(ruta), "%s/mifutbol_captura_XXXXXX", P_tmpdir);
-        int descriptor = mkstemp(ruta);
-        if (descriptor < 0)
-        {
-            return 0;
-        }
-        close(descriptor);
-
-        posix_spawn_file_actions_t acciones;
-        if (posix_spawn_file_actions_init(&acciones) != 0)
-        {
-            remove(ruta);
-            return 0;
-        }
-        if (posix_spawn_file_actions_addopen(&acciones, STDOUT_FILENO, ruta,
-                                             O_WRONLY | O_TRUNC, 0600) != 0)
-        {
-            posix_spawn_file_actions_destroy(&acciones);
-            remove(ruta);
-            return 0;
-        }
-
-        pid_t pid = (pid_t)0;
-        int lanzado = posix_spawnp(&pid, argv[0], &acciones, NULL,
-                                   (char *const *)argv, environ);
-        posix_spawn_file_actions_destroy(&acciones);
-        if (lanzado != 0)
-        {
-            remove(ruta);
-            return 0;
-        }
-
-        int espera = 0;
-        if (waitpid(pid, &espera, 0) < 0)
-        {
-            remove(ruta);
-            return 0;
-        }
-        estado = WIFEXITED(espera) ? WEXITSTATUS(espera) : -1;
-    }
+    ejecutado = app_captura_ejecutar(argv, ruta, sizeof(ruta), &estado);
 #endif
 
-    FILE *lectura = fopen(ruta, "rb");
-    if (lectura)
+    datos = ejecutado ? app_captura_leer_archivo(ruta, &total) : NULL;
+    if (ejecutado)
     {
-        size_t capacidad = 8192;
-
-        datos = (char *)malloc(capacidad);
-        while (datos)
-        {
-            size_t leidos = fread(datos + total, 1, capacidad - total - 1, lectura);
-            total += leidos;
-            if (leidos == 0)
-            {
-                break;
-            }
-            if (capacidad - total - 1 == 0)
-            {
-                char *ampliado = (char *)realloc(datos, capacidad * 2);
-                if (!ampliado)
-                {
-                    free(datos);
-                    datos = NULL;
-                    break;
-                }
-                datos = ampliado;
-                capacidad *= 2;
-            }
-        }
-        fclose(lectura);
+        remove(ruta);
     }
-    remove(ruta);
-
     if (codigo_salida)
     {
         *codigo_salida = estado;

@@ -178,8 +178,6 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
 static int abrir_con_visor_configurado_windows(const char *ruta)
 {
     char viewer[64] = {0};
-    const char *formato;
-    char mensaje[256];
 
     obtener_visor_preferido(viewer, sizeof(viewer));
     if (viewer[0] == '\0' || _stricmp(viewer, "auto") == 0)
@@ -191,17 +189,12 @@ static int abrir_con_visor_configurado_windows(const char *ruta)
         return app_open_with_command("mspaint", ruta);
     }
 
-    formato = get_text("camiseta_visor_no_soportado_windows");
-    snprintf(mensaje, sizeof(mensaje), formato, viewer);
-    printf("%s", mensaje);
+    printf("%s %s\n", get_text("camiseta_visor_no_soportado_windows"), viewer);
     return 0;
 }
 #else
 static const char *resolver_visor_configurado(const char *viewer)
 {
-    const char *formato;
-    char mensaje[256];
-
     if (viewer[0] == '\0' || strcmp(viewer, "auto") == 0)
     {
         return NULL;
@@ -211,9 +204,7 @@ static const char *resolver_visor_configurado(const char *viewer)
         return viewer;
     }
 
-    formato = get_text("camiseta_visor_no_instalado");
-    snprintf(mensaje, sizeof(mensaje), formato, viewer);
-    printf("%s", mensaje);
+    printf("%s %s\n", get_text("camiseta_visor_no_instalado"), viewer);
     return NULL;
 }
 
@@ -303,12 +294,8 @@ static void configurar_visor_preferido_imagen(void)
 
     char actual[64] = {0};
     obtener_visor_preferido(actual, sizeof(actual));
-    {
-        const char *cfmt = get_text("camiseta_visor_actual");
-        char cbuf[320];
-        snprintf(cbuf, sizeof(cbuf), cfmt, actual[0] ? actual : "auto");
-        printf("%s", cbuf);
-    }
+    printf("%s %s\n", get_text("camiseta_visor_actual"),
+           actual[0] ? actual : "auto");
 
     fputs(get_text("camiseta_visor_escribir"), stdout);
 #ifdef _WIN32

@@ -108,7 +108,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"cJSON.h"
@@ -148,7 +148,7 @@
 	<io.h>
 	<process.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"ascii_charts.h"
 	"db.h"
@@ -2911,7 +2911,7 @@
 1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
 	<stddef.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
 	"sync.h"
 	"sync_internal.h"
 	"sync_entidades.h"
@@ -2920,7 +2920,6 @@
 	"random_utils.h"
 	"utils.h"
 	<ctype.h>
-	<stdarg.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
