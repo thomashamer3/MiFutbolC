@@ -174,107 +174,124 @@ static int construir_ruta_absoluta_imagen_por_id(int id, char *ruta_absoluta, si
     return db_resolve_image_absolute_path(ruta_db, ruta_absoluta, size);
 }
 
+#ifdef _WIN32
+static int abrir_con_visor_configurado_windows(const char *ruta)
+{
+    char viewer[64] = {0};
+    const char *formato;
+    char mensaje[256];
+
+    obtener_visor_preferido(viewer, sizeof(viewer));
+    if (viewer[0] == '\0' || _stricmp(viewer, "auto") == 0)
+    {
+        return 0;
+    }
+    if (_stricmp(viewer, "mspaint") == 0)
+    {
+        return app_open_with_command("mspaint", ruta);
+    }
+
+    formato = get_text("camiseta_visor_no_soportado_windows");
+    snprintf(mensaje, sizeof(mensaje), formato, viewer);
+    printf("%s", mensaje);
+    return 0;
+}
+#else
+static const char *resolver_visor_configurado(const char *viewer)
+{
+    const char *formato;
+    char mensaje[256];
+
+    if (viewer[0] == '\0' || strcmp(viewer, "auto") == 0)
+    {
+        return NULL;
+    }
+    if (app_command_exists(viewer))
+    {
+        return viewer;
+    }
+
+    formato = get_text("camiseta_visor_no_instalado");
+    snprintf(mensaje, sizeof(mensaje), formato, viewer);
+    printf("%s", mensaje);
+    return NULL;
+}
+
+static const char *elegir_visor_disponible(void)
+{
+    static const char *const visores[] = {"xdg-open", "gio", "feh", "eog", "gwenview", NULL};
+
+    for (int i = 0; visores[i] != NULL; i++)
+    {
+        if (app_command_exists(visores[i]))
+        {
+            return visores[i];
+        }
+    }
+    return NULL;
+}
+
+static const char *instalar_visor_alternativo(const char *viewer)
+{
+    if (!confirmar(get_text("camiseta_instalar_visor_prompt")))
+    {
+        return NULL;
+    }
+
+    printf("%s", get_text("camiseta_instalando_visor"));
+    if (!instalar_paquete_linux("feh"))
+    {
+        printf("%s", get_text("camiseta_no_instalar_visor"));
+        return NULL;
+    }
+
+    if (viewer[0] == '\0' || strcmp(viewer, "auto") == 0)
+    {
+        guardar_visor_preferido("feh");
+    }
+    return "feh";
+}
+#endif
+
 static int abrir_imagen_en_sistema(const char *ruta)
 {
     if (!ruta || ruta[0] == '\0')
     {
         return 0;
     }
-
     if (!app_validate_file_exists(ruta))
     {
         return 0;
     }
 
 #ifdef _WIN32
-    char viewer[64] = {0};
-    obtener_visor_preferido(viewer, sizeof(viewer));
-
-    if (viewer[0] != '\0' && _stricmp(viewer, "auto") != 0)
+    if (abrir_con_visor_configurado_windows(ruta))
     {
-        if (_stricmp(viewer, "mspaint") == 0)
-        {
-            if (app_open_with_command("mspaint", ruta))
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            {
-                const char *cfmt = get_text("camiseta_visor_no_soportado_windows");
-                char cbuf[256];
-                snprintf(cbuf, sizeof(cbuf), cfmt, viewer);
-                printf("%s", cbuf);
-            }
-        }
+        return 1;
     }
-
     if (app_open_with_default_app(ruta))
     {
         return 1;
     }
-
     return app_open_with_command("mspaint", ruta);
 #else
     char viewer[64] = {0};
+    const char *visor;
+
     obtener_visor_preferido(viewer, sizeof(viewer));
-
-    const char *visores[] = {"xdg-open", "gio", "feh", "eog", "gwenview", NULL};
-    const char *visor = NULL;
-
-    if (viewer[0] != '\0' && strcmp(viewer, "auto") != 0)
-    {
-        if (app_command_exists(viewer))
-        {
-            visor = viewer;
-        }
-        else
-        {
-            {
-                const char *cfmt = get_text("camiseta_visor_no_instalado");
-                char cbuf[256];
-                snprintf(cbuf, sizeof(cbuf), cfmt, viewer);
-                printf("%s", cbuf);
-            }
-        }
-    }
-
-    for (int i = 0; visores[i] != NULL; i++)
-    {
-        if (visor)
-        {
-            break;
-        }
-
-        if (app_command_exists(visores[i]))
-        {
-            visor = visores[i];
-            break;
-        }
-    }
-
+    visor = resolver_visor_configurado(viewer);
     if (!visor)
     {
-        if (!confirmar(get_text("camiseta_instalar_visor_prompt")))
-        {
-            return 0;
-        }
-
-        printf("%s", get_text("camiseta_instalando_visor"));
-        if (!instalar_paquete_linux("feh"))
-        {
-            printf("%s", get_text("camiseta_no_instalar_visor"));
-            return 0;
-        }
-
-        visor = "feh";
-        if (viewer[0] == '\0' || strcmp(viewer, "auto") == 0)
-        {
-            guardar_visor_preferido("feh");
-        }
+        visor = elegir_visor_disponible();
     }
-
+    if (!visor)
+    {
+        visor = instalar_visor_alternativo(viewer);
+    }
+    if (!visor)
+    {
+        return 0;
+    }
     return app_open_with_command(visor, ruta);
 #endif
 }
@@ -1430,14 +1447,9 @@ static int camiseta_listado_exportar(void *ctx)
     return 1;
 }
 
-static void listar_camisetas_con_stats(void)
+static int camiseta_pedir_filtro_estado(int *filtro_estado)
 {
-    if (!hay_registros("camiseta"))
-    {
-        mostrar_no_hay_registros("camisetas cargadas");
-        pause_console();
-        return;
-    }
+    int opcion;
 
     mostrar_pantalla("FILTRAR CAMISETAS");
     printf("1) Todas las camisetas\n");
@@ -1445,18 +1457,25 @@ static void listar_camisetas_con_stats(void)
     printf("3) Solo inactivas\n");
     printf("0) Cancelar\n");
 
-    int opcion_estado = input_int("Opcion: ");
-    if (opcion_estado == 0 || opcion_estado == -1)
+    opcion = input_int("Opcion: ");
+    if (opcion == 0 || opcion == -1)
     {
-        return;
+        return 0;
     }
-    if (opcion_estado < 1 || opcion_estado > 3)
+    if (opcion < 1 || opcion > 3)
     {
         printf("Opcion invalida.\n");
         pause_console();
-        return;
+        return 0;
     }
-    int filtro_estado = opcion_estado - 1;
+
+    *filtro_estado = opcion - 1;
+    return 1;
+}
+
+static int camiseta_pedir_orden(int *orden)
+{
+    int opcion;
 
     mostrar_pantalla("ORDENAR CAMISETAS");
     printf("1) Por ID\n");
@@ -1466,58 +1485,43 @@ static void listar_camisetas_con_stats(void)
     printf("5) Por victorias\n");
     printf("0) Cancelar\n");
 
-    int orden = input_int("Opcion: ");
-    if (orden == 0 || orden == -1)
+    opcion = input_int("Opcion: ");
+    if (opcion == 0 || opcion == -1)
     {
-        return;
+        return 0;
     }
-    if (orden < 1 || orden > 5)
+    if (opcion < 1 || opcion > 5)
     {
         printf("Opcion invalida.\n");
         pause_console();
-        return;
+        return 0;
     }
 
-    char where_cond[512];
-    char where_clause[600];
+    *orden = opcion;
+    return 1;
+}
 
+static void camiseta_construir_where(int filtro_estado, char *where_clause, size_t tam)
+{
     if (filtro_estado == 1)
     {
-        snprintf(where_cond, sizeof(where_cond), "IFNULL(c.activa, 1) = 1");
+        snprintf(where_clause, tam, "WHERE IFNULL(c.activa, 1) = 1 ");
     }
     else if (filtro_estado == 2)
     {
-        snprintf(where_cond, sizeof(where_cond), "IFNULL(c.activa, 1) = 0");
-    }
-    else
-    {
-        where_cond[0] = '\0';
-    }
-
-    const char *filtro_texto = NULL;
-
-    if (where_cond[0] != '\0')
-    {
-        snprintf(where_clause, sizeof(where_clause), "WHERE %s ", where_cond);
+        snprintf(where_clause, tam, "WHERE IFNULL(c.activa, 1) = 0 ");
     }
     else
     {
         where_clause[0] = '\0';
     }
+}
 
-    int usar_unicode = consola_soporta_unicode();
-    char sep[8];
-    snprintf(sep, sizeof(sep), "%s", usar_unicode ? " \u2502 " : " | ");
-
-    CamisetaListadoCtx lista = {sep, filtro_estado,
-                                camiseta_mejor_efectiva_id(where_clause, filtro_texto),
-                                where_clause, filtro_texto
-                               };
-
-    char sql_conteo[700];
-    char sql_pagina[1600];
-    snprintf(sql_conteo, sizeof(sql_conteo), "SELECT COUNT(*) FROM camiseta c %s;", where_clause);
-    snprintf(sql_pagina, sizeof(sql_pagina),
+static void camiseta_construir_sql(const char *where_clause, int orden, char *sql_conteo,
+                                   size_t conteo_tam, char *sql_pagina, size_t pagina_tam)
+{
+    snprintf(sql_conteo, conteo_tam, "SELECT COUNT(*) FROM camiseta c %s;", where_clause);
+    snprintf(sql_pagina, pagina_tam,
              "SELECT c.id, c.nombre, IFNULL(c.activa, 1), "
              "COUNT(p.id) AS total_partidos, "
              "IFNULL(SUM(p.goles), 0) AS total_goles, "
@@ -1528,6 +1532,44 @@ static void listar_camisetas_con_stats(void)
              "FROM camiseta c LEFT JOIN partido p ON c.id = p.camiseta_id %s"
              "GROUP BY c.id, c.nombre %s LIMIT ? OFFSET ?",
              where_clause, camiseta_order_clause(orden));
+}
+
+static void listar_camisetas_con_stats(void)
+{
+    char where_clause[600];
+    char sql_conteo[700];
+    char sql_pagina[1600];
+    char sep[8];
+    int filtro_estado;
+    int orden;
+    int filas;
+
+    if (!hay_registros("camiseta"))
+    {
+        mostrar_no_hay_registros("camisetas cargadas");
+        pause_console();
+        return;
+    }
+
+    if (!camiseta_pedir_filtro_estado(&filtro_estado))
+    {
+        return;
+    }
+    if (!camiseta_pedir_orden(&orden))
+    {
+        return;
+    }
+
+    camiseta_construir_where(filtro_estado, where_clause, sizeof(where_clause));
+    camiseta_construir_sql(where_clause, orden, sql_conteo, sizeof(sql_conteo), sql_pagina,
+                           sizeof(sql_pagina));
+
+    snprintf(sep, sizeof(sep), "%s", consola_soporta_unicode() ? " \u2502 " : " | ");
+
+    CamisetaListadoCtx lista = {sep, filtro_estado,
+                                camiseta_mejor_efectiva_id(where_clause, NULL),
+                                where_clause, NULL
+                               };
 
     ListadoConfig cfg = {"LISTADO DE CAMISETAS",
                          sql_conteo,
@@ -1537,10 +1579,10 @@ static void listar_camisetas_con_stats(void)
                          camiseta_listado_detalle,
                          camiseta_listado_exportar,
                          &lista,
-                         filtro_texto
+                         NULL
                         };
 
-    int filas = listado_paginado_config(&cfg);
+    filas = listado_paginado_config(&cfg);
     if (filas == 0)
     {
         mostrar_no_hay_registros("camisetas con ese filtro");

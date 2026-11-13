@@ -315,82 +315,90 @@ static int modificar_amigo_string(int id, const char *nombre_actual, int campo)
     return 1;
 }
 
-static int modificar_amigo_numerico(int id, const char *nombre_actual, int campo)
+static void amigo_reportar_modificado(int id, const char *nombre_actual, const char *campo_sql)
+{
+    char log_msg[256];
+
+    snprintf(log_msg, sizeof(log_msg), "Modificado amigo id=%d campo=%s", id, campo_sql);
+    app_log_event("RANKING_AMIGOS", log_msg);
+    mostrar_alerta_operacion("Amigo", "Modificado", nombre_actual);
+}
+
+static int amigo_error_modificacion(void)
+{
+    printf("Error al modificar el amigo.\n");
+    pause_console();
+    return 0;
+}
+
+static int amigo_actualizar_notas(int id, const char *nombre_actual)
 {
     sqlite3_stmt *stmt;
+    char nuevo_valor[300];
+    int result;
 
-    if (campo == 7)
+    input_string("Nuevas notas: ", nuevo_valor, sizeof(nuevo_valor));
+    if (!db_prepare_stmt(&stmt, "UPDATE amigo SET notas = ? WHERE id = ?"))
     {
-        char nuevo_valor[300];
-        input_string("Nuevas notas: ", nuevo_valor, sizeof(nuevo_valor));
-
-        if (!db_prepare_stmt(&stmt,
-                             "UPDATE amigo SET notas = ? WHERE id = ?"))
-        {
-            printf("Error al actualizar el amigo.\n");
-            pause_console();
-            return 0;
-        }
-
-        sqlite3_bind_text(stmt, 1, nuevo_valor, -1, DB_TRANSIENT);
-        sqlite3_bind_int(stmt, 2, id);
-        int result = sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-
-        if (result == SQLITE_DONE)
-        {
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg),
-                     "Modificado amigo id=%d campo=notas", id);
-            app_log_event("RANKING_AMIGOS", log_msg);
-            mostrar_alerta_operacion("Amigo", "Modificado", nombre_actual);
-        }
-        else
-        {
-            printf("Error al modificar el amigo.\n");
-            pause_console();
-            return 0;
-        }
-        return 1;
+        return amigo_error_modificacion();
     }
+    sqlite3_bind_text(stmt, 1, nuevo_valor, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if (result != SQLITE_DONE)
+    {
+        return amigo_error_modificacion();
+    }
+    amigo_reportar_modificado(id, nombre_actual, "notas");
+    return 1;
+}
 
-    int nuevo_int = 0;
-    double nuevo_double = 0.0;
-    const char *campo_sql = NULL;
-
+static int amigo_leer_campo_numerico(int campo, const char **campo_sql, int *nuevo_int,
+                                     double *nuevo_double)
+{
     switch (campo)
     {
     case 3:
-        campo_sql = "goles_total";
-        nuevo_int = input_int("Nuevos goles totales: ");
-        break;
+        *campo_sql = "goles_total";
+        *nuevo_int = input_int("Nuevos goles totales: ");
+        return 1;
     case 4:
-        campo_sql = "asistencias_total";
-        nuevo_int = input_int("Nuevas asistencias totales: ");
-        break;
+        *campo_sql = "asistencias_total";
+        *nuevo_int = input_int("Nuevas asistencias totales: ");
+        return 1;
     case 5:
-        campo_sql = "partidos_total";
-        nuevo_int = input_int("Nuevos partidos totales: ");
-        break;
+        *campo_sql = "partidos_total";
+        *nuevo_int = input_int("Nuevos partidos totales: ");
+        return 1;
     case 6:
-        campo_sql = "mejor_rendimiento";
-        nuevo_double = input_double("Nuevo mejor rendimiento: ");
-        break;
+        *campo_sql = "mejor_rendimiento";
+        *nuevo_double = input_double("Nuevo mejor rendimiento: ");
+        return 1;
     default:
         return 0;
     }
+}
 
+static int amigo_actualizar_numerico(int id, const char *nombre_actual, int campo)
+{
+    const char *campo_sql = NULL;
+    int nuevo_int = 0;
+    double nuevo_double = 0.0;
+    sqlite3_stmt *stmt;
     char sql[256];
-    snprintf(sql, sizeof(sql),
-             "UPDATE amigo SET %s = ? WHERE id = ?", campo_sql);
+    int result;
 
-    if (!db_prepare_stmt(&stmt, sql))
+    if (!amigo_leer_campo_numerico(campo, &campo_sql, &nuevo_int, &nuevo_double))
     {
-        printf("Error al actualizar el amigo.\n");
-        pause_console();
         return 0;
     }
 
+    snprintf(sql, sizeof(sql), "UPDATE amigo SET %s = ? WHERE id = ?", campo_sql);
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return amigo_error_modificacion();
+    }
     if (campo == 6)
     {
         sqlite3_bind_double(stmt, 1, nuevo_double);
@@ -400,24 +408,23 @@ static int modificar_amigo_numerico(int id, const char *nombre_actual, int campo
         sqlite3_bind_int(stmt, 1, nuevo_int);
     }
     sqlite3_bind_int(stmt, 2, id);
-    int result = sqlite3_step(stmt);
+    result = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-
-    if (result == SQLITE_DONE)
+    if (result != SQLITE_DONE)
     {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg),
-                 "Modificado amigo id=%d campo=%s", id, campo_sql);
-        app_log_event("RANKING_AMIGOS", log_msg);
-        mostrar_alerta_operacion("Amigo", "Modificado", nombre_actual);
+        return amigo_error_modificacion();
     }
-    else
-    {
-        printf("Error al modificar el amigo.\n");
-        pause_console();
-        return 0;
-    }
+    amigo_reportar_modificado(id, nombre_actual, campo_sql);
     return 1;
+}
+
+static int modificar_amigo_numerico(int id, const char *nombre_actual, int campo)
+{
+    if (campo == 7)
+    {
+        return amigo_actualizar_notas(id, nombre_actual);
+    }
+    return amigo_actualizar_numerico(id, nombre_actual, campo);
 }
 
 /**

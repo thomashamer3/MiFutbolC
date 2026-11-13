@@ -57,49 +57,6 @@ static int es_fecha_futura(const OpenMeteoParams *params)
     return 0;
 }
 
-static bool contiene_shell_metachar(const char *s)
-{
-    if (!s)
-        return true;
-    while (*s)
-    {
-        unsigned char c = (unsigned char)*s;
-        if (c <= 0x1F || c == 0x7F)
-            return true;
-        switch (c)
-        {
-        case ';':
-        case '|':
-        case '&':
-        case '`':
-        case '$':
-        case '(':
-        case ')':
-        case '{':
-        case '}':
-        case '<':
-        case '>':
-        case '!':
-        case '#':
-        case '~':
-        case '%':
-        case '*':
-        case '?':
-        case '\\':
-        case '\'':
-        case '"':
-        case '^':
-        case '[':
-        case ']':
-            return true;
-        default:
-            break;
-        }
-        s++;
-    }
-    return false;
-}
-
 static bool son_parametros_validos(const OpenMeteoParams *params)
 {
     if (params->latitud < -90.0 || params->latitud > 90.0)
@@ -113,63 +70,6 @@ static bool son_parametros_validos(const OpenMeteoParams *params)
     if (params->dia < 1 || params->dia > 31)
         return false;
     return true;
-}
-
-static char *descargar_json_clima(const char *cmd)
-{
-    /* cmd is validated upstream: built from snprintf'd doubles/ints + compile-time constant */
-    FILE *fp = popen(cmd, "r"); /* NOSONAR */
-    if (!fp)
-    {
-        printf("Error: popen() fallo\n");
-        return NULL;
-    }
-
-    size_t capacity = READ_BUF_SIZE;
-    size_t total = 0;
-    char *data = (char *)malloc(capacity);
-    if (!data)
-    {
-        pclose(fp);
-        return NULL;
-    }
-
-    size_t nread;
-    while ((nread = fread(data + total, 1, capacity - total, fp)) > 0)
-    {
-        total += nread;
-        if (capacity - total < 1024)
-        {
-            capacity *= 2;
-            char *tmp = (char *)realloc(data, capacity);
-            if (!tmp)
-            {
-                free(data);
-                pclose(fp);
-                return NULL;
-            }
-            data = tmp;
-        }
-    }
-
-    int exit_code = pclose(fp);
-
-    if (total == 0)
-    {
-        printf("Error: curl no devolvio datos (exit code %d)\n", exit_code);
-        free(data);
-        return NULL;
-    }
-
-    data[total] = '\0';
-
-    /* Saltar BOM UTF-8 si existe */
-    if ((unsigned char)data[0] == 0xEF && (unsigned char)data[1] == 0xBB &&
-            (unsigned char)data[2] == 0xBF)
-    {
-        memmove(data, data + 3, total - 2);
-    }
-    return data;
 }
 
 static double acumular_array(cJSON const *arr, int i, int *count)
@@ -322,26 +222,23 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     snprintf(lat_str, sizeof(lat_str), "%.6f", params->latitud);
     snprintf(lon_str, sizeof(lon_str), "%.6f", params->longitud);
 
-    if (contiene_shell_metachar(lat_str) || contiene_shell_metachar(lon_str) ||
-            contiene_shell_metachar(date_str))
-    {
-        printf("Error: parametros invalidos detectados\n");
-        return 0;
-    }
-
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd),
-             "curl.exe -s --compressed --max-time 15 \"%s?latitude=%s&longitude=%s"
-             "&start_date=%s&end_date=%s"
+    char url[1536];
+    snprintf(url, sizeof(url),
+             "%s?latitude=%s&longitude=%s&start_date=%s&end_date=%s"
              "&daily=sunrise,sunset"
              "&hourly=temperature_2m,apparent_temperature,"
              "precipitation,weather_code,wind_speed_10m"
-             "&timezone=auto\" 2>&1",
+             "&timezone=auto",
              OWM_ARCHIVE_URL_BASE, lat_str, lon_str, date_str, date_str);
 
-    char *json_data = descargar_json_clima(cmd);
-    if (!json_data)
+    const char *argv[] = {"curl.exe", "-s", "--compressed", "--max-time", "15", url, NULL};
+    char *json_data = NULL;
+    int codigo_salida = 0;
+    if (!app_executar_captura(argv, &json_data, &codigo_salida))
+    {
+        printf("Error: curl no devolvio datos (exit code %d)\n", codigo_salida);
         return 0;
+    }
 
     cJSON *root = cJSON_Parse(json_data);
     free(json_data);

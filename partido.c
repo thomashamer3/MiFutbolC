@@ -2805,16 +2805,8 @@ static void recopilar_datos_entrenamiento(DatosPartido *datos)
     recopilar_notas_y_ratings_formales(datos, "Lo mejor del entrenamiento: ");
 }
 
-static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_resultado,
-                                        int tipo_partido)
+static int recopilar_entorno_partido(DatosPartido *datos)
 {
-    if (!datos)
-    {
-        return 0;
-    }
-
-    inicializar_datos_partido(datos);
-
     listar_entidades_con_nueva("cancha", "Canchas disponibles", "Nueva Cancha");
     datos->cancha_id = pedir_cancha_o_nueva(1);
     if (datos->cancha_id == 0)
@@ -2829,17 +2821,18 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
              sizeof(datos->formal.contexto.condicion_cancha), "%s",
              estado_cancha_to_text(datos->formal.contexto.estado_cancha));
 
-    if (!solicitar_futbol_partido(datos->formal.formato_partido,
-                                  (int)sizeof(datos->formal.formato_partido), 1))
-    {
-        return 0;
-    }
+    return solicitar_futbol_partido(datos->formal.formato_partido,
+                                    (int)sizeof(datos->formal.formato_partido), 1);
+}
 
+static void recopilar_eventos_partido(DatosPartido *datos)
+{
     datos->goles = pedir_entero_minimo("Goles: ", 0, "Goles invalidos. Ingrese 0 o mas: ");
     if (datos->goles > 0 && confirmar("Desea agregar el detalle de los goles?"))
     {
         pedir_detalle_evento(datos->goles, 0, datos->goles_detalle, sizeof(datos->goles_detalle));
     }
+
     datos->asistencias =
         pedir_entero_minimo("Asistencias: ", 0, "Asistencias invalidas. Ingrese 0 o mas: ");
     if (datos->asistencias > 0 && confirmar("Desea agregar el detalle de las asistencias?"))
@@ -2847,11 +2840,12 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
         pedir_detalle_evento(datos->asistencias, 1, datos->asistencias_detalle,
                              sizeof(datos->asistencias_detalle));
     }
-    if (tipo_partido == 1)
-    {
-        datos->formal.marcador.goles_en_contra =
-            pedir_entero_minimo("Goles en contra: ", 0, "Valor invalido. Ingrese 0 o mas: ");
-    }
+}
+
+static void recopilar_marcador_partido(DatosPartido *datos, int solicita_resultado)
+{
+    int diferencia;
+
     if (solicita_resultado)
     {
         datos->resultado =
@@ -2863,30 +2857,38 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
         datos->resultado = 0;
     }
 
-    datos->formal.marcador.diferencia_gol =
-        pedir_entero_minimo("Diferencia de Gol: ", 0, "Diferencia invalida. Ingrese 0 o mas: ");
+    diferencia = pedir_entero_minimo("Diferencia de Gol: ", 0,
+                                     "Diferencia invalida. Ingrese 0 o mas: ");
+    if (diferencia < 0)
+    {
+        diferencia = 0;
+    }
+
     if (datos->resultado == 1)
     {
-        datos->formal.marcador.diferencia_gol =
-            (datos->formal.marcador.diferencia_gol > 0) ? datos->formal.marcador.diferencia_gol : 0;
+        datos->formal.marcador.diferencia_gol = diferencia;
     }
     else if (datos->resultado == 3)
     {
-        datos->formal.marcador.diferencia_gol =
-            -((datos->formal.marcador.diferencia_gol > 0) ? datos->formal.marcador.diferencia_gol
-              : 0);
+        datos->formal.marcador.diferencia_gol = -diferencia;
     }
     else
     {
         datos->formal.marcador.diferencia_gol = 0;
     }
+}
 
+static void recopilar_equipamiento_partido(DatosPartido *datos)
+{
     listar_entidades_con_nueva("camiseta", "Camisetas disponibles", "Nueva Camiseta");
     datos->camiseta = pedir_camiseta_o_nueva();
 
     listar_entidades_con_nueva("botin", "Botines disponibles", "Nuevo Botin");
     datos->botin = pedir_botin_o_nueva();
+}
 
+static void recopilar_valoracion_partido(DatosPartido *datos)
+{
     datos->rendimiento_general = pedir_entero_en_rango(
                                      "Rendimiento general (1-10): ", 1, 10, "Rendimiento invalido. Ingrese entre 1 y 10: ");
     datos->cansancio = pedir_entero_en_rango("Cansancio (1-10): ", 1, 10,
@@ -2906,6 +2908,32 @@ static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_result
     printf("  2) NO\n");
     datos->atajaste_todo_el_partido = pedir_entero_en_rango(
                                           "Opcion (0-2): ", 0, 2, "Opcion invalida. Ingrese 0 (No esp.), 1 (SI) o 2 (NO): ");
+}
+
+static int recopilar_datos_partido_base(DatosPartido *datos, int solicita_resultado,
+                                        int tipo_partido)
+{
+    if (!datos)
+    {
+        return 0;
+    }
+
+    inicializar_datos_partido(datos);
+
+    if (!recopilar_entorno_partido(datos))
+    {
+        return 0;
+    }
+
+    recopilar_eventos_partido(datos);
+    if (tipo_partido == 1)
+    {
+        datos->formal.marcador.goles_en_contra =
+            pedir_entero_minimo("Goles en contra: ", 0, "Valor invalido. Ingrese 0 o mas: ");
+    }
+    recopilar_marcador_partido(datos, solicita_resultado);
+    recopilar_equipamiento_partido(datos);
+    recopilar_valoracion_partido(datos);
     datos->tipo_partido = tipo_partido;
 
     return 1;

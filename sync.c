@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +50,8 @@ static int sync_strcasecmp(const char *a, const char *b)
 
 static void sync_copiar(char *destino, size_t tam, const char *origen)
 {
+    size_t largo;
+
     if (!destino || tam == 0)
     {
         return;
@@ -58,8 +61,9 @@ static void sync_copiar(char *destino, size_t tam, const char *origen)
         destino[0] = '\0';
         return;
     }
-    /* snprintf acota siempre la copia al tamano del destino y termina en '\0'. */
-    snprintf(destino, tam, "%s", origen);
+    largo = strnlen_s(origen, tam - 1);
+    memcpy(destino, origen, largo);
+    destino[largo] = '\0';
 }
 
 static void sync_ahora(char *salida, size_t tam)
@@ -600,6 +604,108 @@ static void sync_leer_ids_relacionados(sqlite3_stmt *stmt, const char *nombre,
 }
 
 /**
+ * Agrega al payload un texto obtenido de una enumeracion. Si el texto no
+ * existe solo se agrega cuando hay un valor de respaldo.
+ */
+static void sync_agregar_texto_enum(cJSON *payload, const char *nombre,
+                                    const char *valor, const char *respaldo)
+{
+    if (!valor)
+    {
+        valor = respaldo;
+    }
+    if (valor)
+    {
+        cJSON_AddStringToObject(payload, nombre, valor);
+    }
+}
+
+/** Agrega los campos de texto que provienen de una enumeracion. */
+static int sync_payload_campo_enum(cJSON *payload, sqlite3_stmt *stmt, int i,
+                                   const char *nombre)
+{
+    if (strcmp(nombre, "resultado") == 0)
+    {
+        sync_agregar_texto_enum(payload, nombre,
+                                resultado_texto(sqlite3_column_int(stmt, i)),
+                                NULL);
+        return 1;
+    }
+    if (strcmp(nombre, "clima") == 0)
+    {
+        sync_agregar_texto_enum(payload, nombre,
+                                clima_texto(sqlite3_column_int(stmt, i)), NULL);
+        return 1;
+    }
+    if (strcmp(nombre, "tipo_partido") == 0)
+    {
+        sync_agregar_texto_enum(payload, nombre,
+                                tipo_texto(sqlite3_column_int(stmt, i)),
+                                "amistoso");
+        return 1;
+    }
+    if (strcmp(nombre, "tarjeta") == 0)
+    {
+        sync_agregar_texto_enum(payload, nombre,
+                                tarjeta_texto(sqlite3_column_int(stmt, i)),
+                                NULL);
+        return 1;
+    }
+    if (strcmp(nombre, "estado_cancha") == 0)
+    {
+        sync_agregar_texto_enum(
+            payload, nombre, estado_cancha_texto(sqlite3_column_int(stmt, i)),
+            NULL);
+        return 1;
+    }
+    return 0;
+}
+
+/** Agrega los campos especiales que no dependen del tipo de la columna. */
+static int sync_payload_campo_especial(cJSON *payload, const char *nombre,
+                                       const char *texto, char *uuid_salida,
+                                       size_t uuid_tam)
+{
+    if (strcmp(nombre, "formato_partido") == 0)
+    {
+        cJSON_AddNumberToObject(payload, "formato_partido",
+                                formato_numero(texto));
+        cJSON_AddStringToObject(payload, "formato_partido_texto",
+                                texto ? texto : "");
+        return 1;
+    }
+    if (strcmp(nombre, "fecha_hora") == 0)
+    {
+        char iso[64];
+        sync_copiar(iso, sizeof(iso), texto ? texto : "");
+        sync_fecha_espacio_a_iso(iso);
+        cJSON_AddStringToObject(payload, nombre, iso);
+        return 1;
+    }
+    if (strcmp(nombre, "uuid") == 0)
+    {
+        sync_copiar(uuid_salida, uuid_tam, texto);
+        return 1;
+    }
+    return 0;
+}
+
+/** Agrega un campo entero; omite los marcadores negativos de goles. */
+static void sync_payload_campo_entero(cJSON *payload, sqlite3_stmt *stmt,
+                                      int i, const char *nombre)
+{
+    const int valor = sqlite3_column_int(stmt, i);
+
+    if ((strcmp(nombre, "goles_equipo") == 0 ||
+            strcmp(nombre, "goles_rival") == 0) && valor < 0)
+    {
+        /* El escritorio usa -1 como "sin marcador". */
+        return;
+    }
+    cJSON_AddNumberToObject(payload, nombre, (double)valor);
+}
+
+/**
  * Convierte una columna del partido y la agrega al payload. Cada campo aplica
  * su propia representacion (enumeraciones, fechas y texto libre).
  */
@@ -608,74 +714,19 @@ static void sync_payload_agregar_columna(cJSON *payload, sqlite3_stmt *stmt,
         char *uuid_salida, size_t uuid_tam)
 {
     const char *texto = (const char *)sqlite3_column_text(stmt, i);
-    if (strcmp(nombre, "resultado") == 0)
+
+    if (sync_payload_campo_enum(payload, stmt, i, nombre))
     {
-        const char *valor = resultado_texto(sqlite3_column_int(stmt, i));
-        if (valor)
-        {
-            cJSON_AddStringToObject(payload, nombre, valor);
-        }
         return;
     }
-    if (strcmp(nombre, "clima") == 0)
+    if (sync_payload_campo_especial(payload, nombre, texto, uuid_salida,
+                                    uuid_tam))
     {
-        const char *valor = clima_texto(sqlite3_column_int(stmt, i));
-        if (valor)
-        {
-            cJSON_AddStringToObject(payload, nombre, valor);
-        }
-        return;
-    }
-    if (strcmp(nombre, "tipo_partido") == 0)
-    {
-        const char *valor_tipo = tipo_texto(sqlite3_column_int(stmt, i));
-        cJSON_AddStringToObject(payload, nombre,
-                                valor_tipo ? valor_tipo : "amistoso");
-        return;
-    }
-    if (strcmp(nombre, "tarjeta") == 0)
-    {
-        cJSON_AddStringToObject(payload, nombre,
-                                tarjeta_texto(sqlite3_column_int(stmt, i)));
-        return;
-    }
-    if (strcmp(nombre, "estado_cancha") == 0)
-    {
-        cJSON_AddStringToObject(
-            payload, nombre, estado_cancha_texto(sqlite3_column_int(stmt, i)));
-        return;
-    }
-    if (strcmp(nombre, "formato_partido") == 0)
-    {
-        cJSON_AddNumberToObject(payload, "formato_partido",
-                                formato_numero(texto));
-        cJSON_AddStringToObject(payload, "formato_partido_texto",
-                                texto ? texto : "");
-        return;
-    }
-    if (strcmp(nombre, "fecha_hora") == 0)
-    {
-        char iso[64];
-        sync_copiar(iso, sizeof(iso), texto ? texto : "");
-        sync_fecha_espacio_a_iso(iso);
-        cJSON_AddStringToObject(payload, nombre, iso);
-        return;
-    }
-    if (strcmp(nombre, "uuid") == 0)
-    {
-        sync_copiar(uuid_salida, uuid_tam, texto);
         return;
     }
     if (tipo == SQLITE_INTEGER)
     {
-        int valor = sqlite3_column_int(stmt, i);
-        if ((strcmp(nombre, "goles_equipo") == 0 ||
-                strcmp(nombre, "goles_rival") == 0) && valor < 0)
-        {
-            /* El escritorio usa -1 como "sin marcador". */
-            return;
-        }
-        cJSON_AddNumberToObject(payload, nombre, (double)valor);
+        sync_payload_campo_entero(payload, stmt, i, nombre);
         return;
     }
     if (tipo == SQLITE_FLOAT)
@@ -737,29 +788,14 @@ static void sync_preparar_actualizado(cJSON *payload)
     }
 }
 
-/**
- * Construye el payload local de un partido. `por_uuid` elige el criterio de
- * busqueda. Devuelve un objeto cJSON que el llamador debe liberar.
- */
-static cJSON *sync_payload_local(const char *uuid, int partido_id,
-                                 char *uuid_salida, size_t uuid_tam,
-                                 char *error, size_t error_tam)
+/** Prepara la consulta del partido local segun el criterio de busqueda. */
+static sqlite3_stmt *sync_preparar_consulta_partido(const char *uuid,
+        int partido_id)
 {
-    if (error && error_tam)
-    {
-        error[0] = '\0';
-    }
-    if (uuid_salida && uuid_tam)
-    {
-        uuid_salida[0] = '\0';
-    }
-    if (!db)
-    {
-        return NULL;
-    }
     sqlite3_stmt *stmt = NULL;
     const char *sql = uuid ? "SELECT * FROM partido WHERE uuid=? LIMIT 1;"
                       : "SELECT * FROM partido WHERE id=? LIMIT 1;";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
     {
         return NULL;
@@ -777,32 +813,36 @@ static cJSON *sync_payload_local(const char *uuid, int partido_id,
         sqlite3_finalize(stmt);
         return NULL;
     }
+    return stmt;
+}
 
-    cJSON *payload = cJSON_CreateObject();
-    if (!payload)
-    {
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-
-    int cancha_id = 0;
-    int camiseta_id = 0;
-    int botin_id = 0;
+/**
+ * Recorre las columnas de la fila, agrega cada valor al payload y recoge los
+ * identificadores relacionados.
+ */
+static void sync_agregar_columnas_partido(cJSON *payload, sqlite3_stmt *stmt,
+        char *uuid_salida, size_t uuid_tam,
+        int *cancha_id, int *camiseta_id,
+        int *botin_id)
+{
     const int columnas = sqlite3_column_count(stmt);
+
     for (int i = 0; i < columnas; i++)
     {
         const char *nombre = sqlite3_column_name(stmt, i);
+        int tipo = 0;
+
         if (!nombre)
         {
             continue;
         }
         if (sync_columna_es_id(nombre))
         {
-            sync_leer_ids_relacionados(stmt, nombre, i, &cancha_id,
-                                       &camiseta_id, &botin_id);
+            sync_leer_ids_relacionados(stmt, nombre, i, cancha_id,
+                                       camiseta_id, botin_id);
             continue;
         }
-        int tipo = sqlite3_column_type(stmt, i);
+        tipo = sqlite3_column_type(stmt, i);
         if (tipo == SQLITE_NULL)
         {
             continue;
@@ -810,20 +850,66 @@ static cJSON *sync_payload_local(const char *uuid, int partido_id,
         sync_payload_agregar_columna(payload, stmt, i, nombre, tipo,
                                      uuid_salida, uuid_tam);
     }
-    sqlite3_finalize(stmt);
+}
 
-    sync_asegurar_uuid(payload, uuid_salida, uuid_tam, partido_id);
-
+/** Agrega al payload los nombres de las entidades relacionadas. */
+static void sync_agregar_nombres_relacionados(cJSON *payload, int cancha_id,
+        int camiseta_id, int botin_id)
+{
     char cancha[256];
     char camiseta[256];
     char botin[256];
+
     sync_nombre_por_id("cancha", cancha_id, cancha, sizeof(cancha));
     sync_nombre_por_id("camiseta", camiseta_id, camiseta, sizeof(camiseta));
     sync_nombre_por_id("botin", botin_id, botin, sizeof(botin));
     cJSON_AddStringToObject(payload, "cancha_nombre", cancha);
     cJSON_AddStringToObject(payload, "camiseta_nombre", camiseta);
     cJSON_AddStringToObject(payload, "botin_nombre", botin);
+}
 
+/**
+ * Construye el payload local de un partido. `por_uuid` elige el criterio de
+ * busqueda. Devuelve un objeto cJSON que el llamador debe liberar.
+ */
+static cJSON *sync_payload_local(const char *uuid, int partido_id,
+                                 char *uuid_salida, size_t uuid_tam,
+                                 char *error, size_t error_tam)
+{
+    cJSON *payload = NULL;
+    sqlite3_stmt *stmt = NULL;
+    int cancha_id = 0;
+    int camiseta_id = 0;
+    int botin_id = 0;
+
+    if (error && error_tam)
+    {
+        error[0] = '\0';
+    }
+    if (uuid_salida && uuid_tam)
+    {
+        uuid_salida[0] = '\0';
+    }
+    if (!db)
+    {
+        return NULL;
+    }
+    stmt = sync_preparar_consulta_partido(uuid, partido_id);
+    if (!stmt)
+    {
+        return NULL;
+    }
+    payload = cJSON_CreateObject();
+    if (!payload)
+    {
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+    sync_agregar_columnas_partido(payload, stmt, uuid_salida, uuid_tam,
+                                  &cancha_id, &camiseta_id, &botin_id);
+    sqlite3_finalize(stmt);
+    sync_asegurar_uuid(payload, uuid_salida, uuid_tam, partido_id);
+    sync_agregar_nombres_relacionados(payload, cancha_id, camiseta_id, botin_id);
     sync_preparar_actualizado(payload);
     if (error && error_tam)
     {
@@ -1142,40 +1228,76 @@ static void sync_columnas_agregar_fijas(SyncColumnas *columnas, int botin_id,
     }
 }
 
-/** Genera el SQL de insercion o actualizacion y comprueba que quepa. */
+/** Agrega texto formateado al final de @p destino sin desbordar el buffer. */
+static int sync_agregar_texto(char *destino, size_t tam, size_t *usados,
+                              const char *formato, ...)
+{
+    va_list args;
+    int escrito;
+    size_t disponible;
+
+    if (*usados >= tam)
+    {
+        return 0;
+    }
+    disponible = tam - *usados;
+    va_start(args, formato);
+    escrito = vsnprintf(destino + *usados, disponible, formato, args);
+    va_end(args);
+    if (escrito < 0 || (size_t)escrito >= disponible)
+    {
+        return 0;
+    }
+    *usados += (size_t)escrito;
+    return 1;
+}
+
 static int sync_sql_guardar(const SyncColumnas *columnas, int id_local,
                             char *sql, size_t tam)
 {
-    int usados = 0;
+    size_t usados = 0;
+
     if (id_local > 0)
     {
-        usados = snprintf(sql, tam, "UPDATE partido SET ");
+        if (!sync_agregar_texto(sql, tam, &usados, "UPDATE partido SET "))
+        {
+            return 0;
+        }
         for (int i = 0; i < columnas->total; i++)
         {
-            usados += snprintf(sql + usados, tam - (size_t)usados,
-                               "%s\"%s\"=?", i == 0 ? "" : ", ",
-                               columnas->nombres[i]);
+            if (!sync_agregar_texto(sql, tam, &usados, "%s\"%s\"=?",
+                                    i == 0 ? "" : ", ", columnas->nombres[i]))
+            {
+                return 0;
+            }
         }
-        usados += snprintf(sql + usados, tam - (size_t)usados, " WHERE id=?;");
+        return sync_agregar_texto(sql, tam, &usados, " WHERE id=?;");
     }
-    else
+
+    if (!sync_agregar_texto(sql, tam, &usados, "INSERT INTO partido ("))
     {
-        usados = snprintf(sql, tam, "INSERT INTO partido (");
-        for (int i = 0; i < columnas->total; i++)
-        {
-            usados += snprintf(sql + usados, tam - (size_t)usados,
-                               "%s\"%s\"", i == 0 ? "" : ", ",
-                               columnas->nombres[i]);
-        }
-        usados += snprintf(sql + usados, tam - (size_t)usados, ") VALUES (");
-        for (int i = 0; i < columnas->total; i++)
-        {
-            usados += snprintf(sql + usados, tam - (size_t)usados, "%s?",
-                               i == 0 ? "" : ", ");
-        }
-        usados += snprintf(sql + usados, tam - (size_t)usados, ");");
+        return 0;
     }
-    return usados >= 0 && (size_t)usados < tam;
+    for (int i = 0; i < columnas->total; i++)
+    {
+        if (!sync_agregar_texto(sql, tam, &usados, "%s\"%s\"",
+                                i == 0 ? "" : ", ", columnas->nombres[i]))
+        {
+            return 0;
+        }
+    }
+    if (!sync_agregar_texto(sql, tam, &usados, ") VALUES ("))
+    {
+        return 0;
+    }
+    for (int i = 0; i < columnas->total; i++)
+    {
+        if (!sync_agregar_texto(sql, tam, &usados, "%s?", i == 0 ? "" : ", "))
+        {
+            return 0;
+        }
+    }
+    return sync_agregar_texto(sql, tam, &usados, ");");
 }
 
 /** Texto que se guarda en la columna `formato_partido`. */
@@ -1992,23 +2114,13 @@ static int sync_enviar_payload(SyncSubidaContexto *ctx, const char *uuid,
     return envio;
 }
 
-/** Procesa una entrada de la cola de subida. */
-static int sync_subir_pendiente(SyncSubidaContexto *ctx,
-                                const SyncDirty *pendiente)
+/** Traduce el resultado de la busqueda remota al estado de la cola. */
+static int sync_cerrar_busqueda_pendiente(SyncSubidaContexto *ctx,
+        const SyncDirty *pendiente,
+        int busqueda)
 {
-    if (!pendiente->uuid[0])
-    {
-        sync_queue_mark_done(pendiente->uuid);
-        return 1;
-    }
-
-    cJSON *remoto = NULL;
-    int busqueda = sync_buscar_remoto(ctx->base, ctx->cfg->token,
-                                      pendiente->uuid, &remoto, ctx->error,
-                                      sizeof(ctx->error));
     if (busqueda == -2)
     {
-        cJSON_Delete(remoto);
         if (sync_refrescar_token(ctx->cfg))
         {
             return 1;
@@ -2019,42 +2131,39 @@ static int sync_subir_pendiente(SyncSubidaContexto *ctx,
     }
     if (busqueda < 0)
     {
-        cJSON_Delete(remoto);
         sync_queue_mark_error(pendiente->id,
                               ctx->error[0] ? ctx->error : "Error de red");
         ctx->res->errores++;
         return -1;
     }
+    return 0;
+}
 
-    const char *record_id = remoto ? sync_json_texto(remoto, "id") : NULL;
-    if (strcmp(pendiente->operacion, "eliminar") == 0)
-    {
-        int estado = sync_subir_eliminar(ctx, pendiente, record_id, remoto);
-        cJSON_Delete(remoto);
-        return estado;
-    }
-
-    char uuid[SYNC_UUID_SIZE] = {0};
-    cJSON *payload = sync_payload_local(pendiente->uuid, 0, uuid, sizeof(uuid),
-                                        ctx->error, sizeof(ctx->error));
-    if (!payload)
-    {
-        /* El partido ya no existe: propagar borrado logico. */
-        int estado = sync_subir_sin_payload(ctx, pendiente, record_id, remoto);
-        cJSON_Delete(remoto);
-        return estado;
-    }
-    sync_copiar(uuid, sizeof(uuid), pendiente->uuid);
+/**
+ * Sobrescribe el uuid del payload con el de la cola y aplica la marca de
+ * creacion cuando existe.
+ */
+static void sync_ajustar_payload_pendiente(cJSON *payload,
+        const SyncDirty *pendiente,
+        const char *uuid)
+{
     cJSON_DeleteItemFromObjectCaseSensitive(payload, "uuid");
     cJSON_AddStringToObject(payload, "uuid", uuid);
     if (pendiente->creado_en[0])
     {
         char marca[64];
+
         sync_marca_iso(pendiente->creado_en, marca, sizeof(marca));
         cJSON_DeleteItemFromObjectCaseSensitive(payload, "actualizado_en");
         cJSON_AddStringToObject(payload, "actualizado_en", marca);
     }
+}
 
+/** Registra un conflicto de actualizacion cuando el remoto es mas nuevo. */
+static int sync_conflicto_pendiente(SyncSubidaContexto *ctx,
+                                    const cJSON *payload, const cJSON *remoto,
+                                    const char *uuid)
+{
     const cJSON *actualizado =
         cJSON_GetObjectItemCaseSensitive(payload, "actualizado_en");
     const char *local_updated =
@@ -2063,20 +2172,23 @@ static int sync_subir_pendiente(SyncSubidaContexto *ctx,
         : "";
     const char *remoto_updated =
         remoto ? sync_json_texto(remoto, "updated_at_client") : NULL;
+
     if (remoto_updated && local_updated[0] &&
             sync_comparar_fechas(remoto_updated, local_updated) > 0)
     {
         sync_guardar_conflicto(uuid, payload, remoto);
         sync_queue_mark_conflict(uuid);
         ctx->res->conflictos++;
-        cJSON_Delete(payload);
-        cJSON_Delete(remoto);
         return 1;
     }
+    return 0;
+}
 
-    int envio = sync_enviar_payload(ctx, uuid, record_id, payload);
-    cJSON_Delete(payload);
-    cJSON_Delete(remoto);
+/** Registra el resultado del envio del payload en la cola de subida. */
+static int sync_cerrar_envio_payload(SyncSubidaContexto *ctx,
+                                     const SyncDirty *pendiente,
+                                     const char *uuid, int envio)
+{
     if (envio == -2)
     {
         if (!sync_refrescar_token(ctx->cfg))
@@ -2096,6 +2208,64 @@ static int sync_subir_pendiente(SyncSubidaContexto *ctx,
     sync_queue_mark_done(uuid);
     ctx->res->enviados++;
     return 1;
+}
+
+/** Procesa una entrada de la cola de subida. */
+static int sync_subir_pendiente(SyncSubidaContexto *ctx,
+                                const SyncDirty *pendiente)
+{
+    cJSON *remoto = NULL;
+    cJSON *payload = NULL;
+    int busqueda = 0;
+    int estado = 0;
+    int envio = 0;
+    const char *record_id = NULL;
+    char uuid[SYNC_UUID_SIZE] = {0};
+
+    if (!pendiente->uuid[0])
+    {
+        sync_queue_mark_done(pendiente->uuid);
+        return 1;
+    }
+
+    busqueda = sync_buscar_remoto(ctx->base, ctx->cfg->token, pendiente->uuid,
+                                  &remoto, ctx->error, sizeof(ctx->error));
+    if (busqueda < 0)
+    {
+        cJSON_Delete(remoto);
+        return sync_cerrar_busqueda_pendiente(ctx, pendiente, busqueda);
+    }
+
+    record_id = remoto ? sync_json_texto(remoto, "id") : NULL;
+    if (strcmp(pendiente->operacion, "eliminar") == 0)
+    {
+        estado = sync_subir_eliminar(ctx, pendiente, record_id, remoto);
+        cJSON_Delete(remoto);
+        return estado;
+    }
+
+    payload = sync_payload_local(pendiente->uuid, 0, uuid, sizeof(uuid),
+                                 ctx->error, sizeof(ctx->error));
+    if (!payload)
+    {
+        /* El partido ya no existe: propagar borrado logico. */
+        estado = sync_subir_sin_payload(ctx, pendiente, record_id, remoto);
+        cJSON_Delete(remoto);
+        return estado;
+    }
+    sync_copiar(uuid, sizeof(uuid), pendiente->uuid);
+    sync_ajustar_payload_pendiente(payload, pendiente, uuid);
+    if (sync_conflicto_pendiente(ctx, payload, remoto, uuid))
+    {
+        cJSON_Delete(payload);
+        cJSON_Delete(remoto);
+        return 1;
+    }
+
+    envio = sync_enviar_payload(ctx, uuid, record_id, payload);
+    cJSON_Delete(payload);
+    cJSON_Delete(remoto);
+    return sync_cerrar_envio_payload(ctx, pendiente, uuid, envio);
 }
 
 static int sync_subir(const char *base, SyncConfig *cfg, SyncResultado *res)

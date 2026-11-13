@@ -117,52 +117,6 @@ static char *escribir_temporal(const char *contenido)
     return ruta;
 }
 
-static char *leer_popen(FILE *fp, int *codigo_salida)
-{
-    size_t capacidad = SYNC_BUF;
-    size_t total = 0;
-    char *datos = (char *)malloc(capacidad);
-    if (!datos)
-    {
-        pclose(fp);
-        return NULL;
-    }
-    size_t n;
-    while ((n = fread(datos + total, 1, capacidad - total, fp)) > 0)
-    {
-        total += n;
-        if (capacidad - total < 1024)
-        {
-            capacidad *= 2;
-            char *tmp = (char *)realloc(datos, capacidad);
-            if (!tmp)
-            {
-                free(datos);
-                pclose(fp);
-                return NULL;
-            }
-            datos = tmp;
-        }
-    }
-    int rc = pclose(fp);
-    if (codigo_salida)
-    {
-        *codigo_salida = rc;
-    }
-    if (total + 1 >= capacidad)
-    {
-        char *tmp = (char *)realloc(datos, total + 2);
-        if (!tmp)
-        {
-            free(datos);
-            return NULL;
-        }
-        datos = tmp;
-    }
-    datos[total] = '\0';
-    return datos;
-}
-
 static void liberar_temporal(char *temporal)
 {
     if (temporal)
@@ -170,44 +124,6 @@ static void liberar_temporal(char *temporal)
         remove(temporal);
         free(temporal);
     }
-}
-
-static int construir_comando_curl(const char *metodo, const char *url,
-                                  const char *token, const char *temporal,
-                                  char *cmd, size_t tam)
-{
-    int usados = snprintf(cmd, tam,
-                          "%s --silent --show-error --location --max-time 25 "
-                          "--compressed -X %s -H \"Accept: application/json\" ",
-                          SYNC_CURL, metodo);
-    if (usados < 0 || (size_t)usados >= tam)
-    {
-        return 0;
-    }
-    if (token && *token)
-    {
-        int n = snprintf(cmd + usados, tam - (size_t)usados,
-                         "-H \"Authorization: %s\" ", token);
-        if (n < 0 || (size_t)n >= tam - (size_t)usados)
-        {
-            return 0;
-        }
-        usados += n;
-    }
-    if (temporal)
-    {
-        int n = snprintf(cmd + usados, tam - (size_t)usados,
-                         "-H \"Content-Type: application/json\" "
-                         "--data-binary \"@%s\" ", temporal);
-        if (n < 0 || (size_t)n >= tam - (size_t)usados)
-        {
-            return 0;
-        }
-        usados += n;
-    }
-    int resto = snprintf(cmd + usados, tam - (size_t)usados,
-                         "-w \"\\n%s%%{http_code}\" \"%s\" 2>&1", SYNC_MARCA, url);
-    return resto > 0 && (size_t)resto < tam - (size_t)usados;
 }
 
 static int parsear_respuesta_http(char *datos, int rc, SyncHttp *salida)
@@ -266,29 +182,52 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
         }
     }
 
-    char cmd[SYNC_BUF * 2];
-    if (!construir_comando_curl(metodo, url, token, temporal, cmd, sizeof(cmd)))
-    {
-        liberar_temporal(temporal);
-        salida->error = strdup("Peticion HTTP demasiado larga");
-        return 0;
-    }
+    char encabezado_auth[SYNC_BUF];
+    char argumento_datos[SYNC_BUF];
+    char formato_salida[64];
+    const char *argv[24];
+    int argc = 0;
 
-    FILE *fp = popen(cmd, "r");
-    if (!fp)
+    argv[argc++] = SYNC_CURL;
+    argv[argc++] = "--silent";
+    argv[argc++] = "--show-error";
+    argv[argc++] = "--location";
+    argv[argc++] = "--max-time";
+    argv[argc++] = "25";
+    argv[argc++] = "--compressed";
+    argv[argc++] = "-X";
+    argv[argc++] = metodo;
+    argv[argc++] = "-H";
+    argv[argc++] = "Accept: application/json";
+    if (token && *token)
+    {
+        snprintf(encabezado_auth, sizeof(encabezado_auth), "Authorization: %s", token);
+        argv[argc++] = "-H";
+        argv[argc++] = encabezado_auth;
+    }
+    if (temporal)
+    {
+        snprintf(argumento_datos, sizeof(argumento_datos), "@%s", temporal);
+        argv[argc++] = "-H";
+        argv[argc++] = "Content-Type: application/json";
+        argv[argc++] = "--data-binary";
+        argv[argc++] = argumento_datos;
+    }
+    snprintf(formato_salida, sizeof(formato_salida), "\n%s%%{http_code}", SYNC_MARCA);
+    argv[argc++] = "-w";
+    argv[argc++] = formato_salida;
+    argv[argc++] = url;
+    argv[argc] = NULL;
+
+    char *datos = NULL;
+    int rc = 0;
+    if (!app_executar_captura(argv, &datos, &rc))
     {
         liberar_temporal(temporal);
         salida->error = strdup("No se pudo ejecutar curl");
         return 0;
     }
-    int rc = 0;
-    char *datos = leer_popen(fp, &rc);
     liberar_temporal(temporal);
-    if (!datos)
-    {
-        salida->error = strdup("No se pudo leer la respuesta HTTP");
-        return 0;
-    }
     if (!parsear_respuesta_http(datos, rc, salida))
     {
         free(datos);

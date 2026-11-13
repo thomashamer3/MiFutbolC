@@ -108,7 +108,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"cJSON.h"
@@ -130,7 +130,10 @@
 	<commdlg.h>
 	<conio.h>
 	<direct.h>
+	<io.h>
+	<process.h>
 	<shellapi.h>
+	<fcntl.h>
 	<spawn.h>
 	<sys/stat.h>
 	<sys/wait.h>
@@ -138,14 +141,14 @@
 	<unistd.h>
 	"random_utils.h"
 
-1791931340 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1794595794 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	<stddef.h>
 	<stdio.h>
 	<stdarg.h>
 	<io.h>
 	<process.h>
 
-1791935091 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"ascii_charts.h"
 	"db.h"
@@ -163,7 +166,7 @@
 
 1790719046 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -351,7 +354,7 @@
 	<stdio.h>
 	<string.h>
 
-1791931651 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"cancha.h"
 	"cJSON.h"
 	"db.h"
@@ -2825,7 +2828,7 @@
 
 1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.h
 
-1785290170 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"
@@ -2854,7 +2857,7 @@
 
 1785289417 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ranking_amigos.h
 
-1790024999 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ranking_amigos.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\ranking_amigos.c
 	"ranking_amigos.h"
 	"menu.h"
 	"db.h"
@@ -2865,7 +2868,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1794585482 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"
@@ -2908,7 +2911,7 @@
 1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
 	<stddef.h>
 
-1794429339 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
 	"sync.h"
 	"sync_internal.h"
 	"sync_entidades.h"
@@ -2917,6 +2920,7 @@
 	"random_utils.h"
 	"utils.h"
 	<ctype.h>
+	<stdarg.h>
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -2929,7 +2933,7 @@
 	"sync.h"
 	<stddef.h>
 
-1794428358 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
 	"sync_internal.h"
 	"compat_port.h"
 	"random_utils.h"
@@ -2955,7 +2959,7 @@
 1794429657 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.h
 	"sync.h"
 
-1794429660 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
+1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_entidades.c
 	"sync_entidades.h"
 	"sync_internal.h"
 	"cJSON.h"

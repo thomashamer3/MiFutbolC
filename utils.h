@@ -886,6 +886,21 @@ int app_open_with_default_app(const char *path);
 int app_open_with_command(const char *command, const char *path);
 
 /**
+ * @brief Ejecuta un programa sin intérprete de comandos y captura su stdout.
+ *
+ * Evita construir una linea de comandos con datos externos: los argumentos
+ * viajan en un arreglo terminado en NULL, por lo que no hay riesgo de
+ * inyeccion de comandos (CWE-78). La salida se escribe en un archivo
+ * temporal y se devuelve en @p salida (liberar con free()).
+ *
+ * @param argv Arreglo de argumentos terminado en NULL (argv[0] = programa).
+ * @param salida Recibe el stdout del programa; NULL si falla.
+ * @param codigo_salida Recibe el codigo de salida (opcional).
+ * @return 1 si se lanzo y se leyo la salida, 0 si fallo.
+ */
+int app_executar_captura(const char *const argv[], char **salida, int *codigo_salida);
+
+/**
  * @brief Formatea un double en un buffer usando siempre punto como separador
  *        decimal (locale "C"/en_US), independientemente del locale del sistema.
  *

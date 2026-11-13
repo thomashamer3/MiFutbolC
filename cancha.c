@@ -1536,10 +1536,8 @@ void ver_imagen_cancha(void)
     pause_console();
 }
 
-void crear_cancha(void)
+static int cancha_elegir_modo(void)
 {
-    CanchaInfoDetalle info = {0};
-    long long id = obtener_siguiente_id("cancha");
     int modo = 0;
 
     while (modo < 1 || modo > 2)
@@ -1553,73 +1551,86 @@ void crear_cancha(void)
         modo = input_int("Opcion: ");
         if (modo == 0)
         {
-            return;
+            return 0;
         }
     }
 
-    solicitar_nombre_cancha("Nombre de la cancha: ", info.nombre, sizeof(info.nombre));
+    return modo;
+}
 
-    if (modo == 1)
+static void cancha_pedir_coordenadas(CanchaInfoDetalle *info)
+{
+    char coords[128];
+    char *comma;
+
+    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+    comma = strchr(coords, ',');
+    if (!comma)
     {
-        solicitar_campo_no_vacio("Direccion: ", info.direccion, sizeof(info.direccion));
-    }
-    else
-    {
-        solicitar_telefono_no_vacio("Numero de telefono: ", info.telefono, sizeof(info.telefono));
-        solicitar_campo_no_vacio("Direccion: ", info.direccion, sizeof(info.direccion));
-        solicitar_campo_no_vacio("Localidad/Zona: ", info.localidad, sizeof(info.localidad));
-        info.tipo_cancha_codigo = solicitar_tipo_cancha_codigo();
-        info.superficie_codigo = solicitar_superficie_codigo();
-        info.techada_estado = solicitar_estado_techada_codigo();
-        info.tiene_iluminacion = solicitar_si_no("Tiene iluminacion?");
-        info.horario_apertura_min = solicitar_hora_minutos("Horario de apertura (HH:MM): ");
-        info.horario_cierre_min = solicitar_hora_minutos("Horario de cierre (HH:MM): ");
-        info.precio_hora_dia_centavos = solicitar_precio_centavos("Precio por hora (Dia): ");
-        info.precio_hora_noche_centavos = solicitar_precio_centavos("Precio por hora (Noche): ");
-        info.servicios.vestuarios = solicitar_si_no("Tiene vestuarios?");
-        info.servicios.duchas = solicitar_si_no("Tiene duchas?");
-        info.servicios.buffet = solicitar_si_no("Tiene buffet?");
-        info.servicios.estacionamiento = solicitar_si_no("Tiene estacionamiento?");
-        info.cantidad_canchas = input_int("Cantidad de canchas del complejo: ");
-        if (info.cantidad_canchas <= 0)
-        {
-            info.cantidad_canchas = 1;
-        }
-        solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info.estado,
-                                 sizeof(info.estado));
-        input_string("Descripcion breve: ", info.descripcion, sizeof(info.descripcion));
-        trim_whitespace(info.descripcion);
-        solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info.contacto_alt,
-                                 sizeof(info.contacto_alt));
-        if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
-            info.flags |= CANCHA_FLAG_GRABACION;
-        int marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
-        if (marcador_val == 1)
-            info.flags |= CANCHA_FLAG_MARCADOR;
-        {
-            char coords[128];
-            input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
-                                  sizeof(coords));
-            char *comma = strchr(coords, ',');
-            if (comma)
-            {
-                *comma = '\0';
-                char *lat_str = coords;
-                char *lon_str = comma + 1;
-                trim_whitespace(lat_str);
-                trim_whitespace(lon_str);
-                info.coordenadas.latitud = parse_double_c_locale(lat_str);
-                info.coordenadas.longitud = parse_double_c_locale(lon_str);
-            }
-            else
-            {
-                info.coordenadas.latitud = ROUND6(input_double("Latitud: "));
-                info.coordenadas.longitud = ROUND6(input_double("Longitud: "));
-            }
-        }
+        info->coordenadas.latitud = ROUND6(input_double("Latitud: "));
+        info->coordenadas.longitud = ROUND6(input_double("Longitud: "));
+        return;
     }
 
+    *comma = '\0';
+    trim_whitespace(coords);
+    trim_whitespace(comma + 1);
+    info->coordenadas.latitud = parse_double_c_locale(coords);
+    info->coordenadas.longitud = parse_double_c_locale(comma + 1);
+}
+
+static void cancha_pedir_datos_simples(CanchaInfoDetalle *info)
+{
+    solicitar_campo_no_vacio("Direccion: ", info->direccion, sizeof(info->direccion));
+}
+
+static void cancha_pedir_datos_completos(CanchaInfoDetalle *info)
+{
+    int marcador_val;
+
+    solicitar_telefono_no_vacio("Numero de telefono: ", info->telefono, sizeof(info->telefono));
+    solicitar_campo_no_vacio("Direccion: ", info->direccion, sizeof(info->direccion));
+    solicitar_campo_no_vacio("Localidad/Zona: ", info->localidad, sizeof(info->localidad));
+    info->tipo_cancha_codigo = solicitar_tipo_cancha_codigo();
+    info->superficie_codigo = solicitar_superficie_codigo();
+    info->techada_estado = solicitar_estado_techada_codigo();
+    info->tiene_iluminacion = solicitar_si_no("Tiene iluminacion?");
+    info->horario_apertura_min = solicitar_hora_minutos("Horario de apertura (HH:MM): ");
+    info->horario_cierre_min = solicitar_hora_minutos("Horario de cierre (HH:MM): ");
+    info->precio_hora_dia_centavos = solicitar_precio_centavos("Precio por hora (Dia): ");
+    info->precio_hora_noche_centavos = solicitar_precio_centavos("Precio por hora (Noche): ");
+    info->servicios.vestuarios = solicitar_si_no("Tiene vestuarios?");
+    info->servicios.duchas = solicitar_si_no("Tiene duchas?");
+    info->servicios.buffet = solicitar_si_no("Tiene buffet?");
+    info->servicios.estacionamiento = solicitar_si_no("Tiene estacionamiento?");
+    info->cantidad_canchas = input_int("Cantidad de canchas del complejo: ");
+    if (info->cantidad_canchas <= 0)
+    {
+        info->cantidad_canchas = 1;
+    }
+    solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info->estado,
+                             sizeof(info->estado));
+    input_string("Descripcion breve: ", info->descripcion, sizeof(info->descripcion));
+    trim_whitespace(info->descripcion);
+    solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt,
+                             sizeof(info->contacto_alt));
+    if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
+    {
+        info->flags |= CANCHA_FLAG_GRABACION;
+    }
+    marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
+    if (marcador_val == 1)
+    {
+        info->flags |= CANCHA_FLAG_MARCADOR;
+    }
+    cancha_pedir_coordenadas(info);
+}
+
+static int cancha_guardar(const CanchaInfoDetalle *info, long long id)
+{
     sqlite3_stmt *stmt;
+    int resultado;
+
     if (!db_prepare_stmt(
                 &stmt,
                 "INSERT INTO cancha(id, nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
@@ -1631,58 +1642,84 @@ void crear_cancha(void)
                 "latitud, longitud, tiene_marcador) "
                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))
     {
-        printf("Error al crear la cancha.\n");
-        pause_console();
-        return;
+        return 0;
     }
 
     sqlite3_bind_int(stmt, 1, (int)id);
-    sqlite3_bind_text(stmt, 2, info.nombre, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, info.telefono, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, info.direccion, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, info.localidad, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 6, info.tipo_cancha_codigo);
-    sqlite3_bind_int(stmt, 7, info.superficie_codigo);
-    sqlite3_bind_int(stmt, 8, info.techada_estado);
-    sqlite3_bind_int(stmt, 9, info.tiene_iluminacion);
-    sqlite3_bind_int(stmt, 10, info.horario_apertura_min);
-    sqlite3_bind_int(stmt, 11, info.horario_cierre_min);
-    sqlite3_bind_int(stmt, 12, info.precio_hora_dia_centavos);
-    sqlite3_bind_int(stmt, 13, info.precio_hora_noche_centavos);
-    sqlite3_bind_int(stmt, 14, info.servicios.vestuarios);
-    sqlite3_bind_int(stmt, 15, info.servicios.duchas);
-    sqlite3_bind_int(stmt, 16, info.servicios.buffet);
-    sqlite3_bind_int(stmt, 17, info.servicios.estacionamiento);
-    sqlite3_bind_int(stmt, 18, info.cantidad_canchas);
-    sqlite3_bind_text(stmt, 19, info.estado, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 20, info.descripcion, -1, DB_TRANSIENT);
-    sqlite3_bind_text(stmt, 21, info.contacto_alt, -1, DB_TRANSIENT);
-    sqlite3_bind_double(stmt, 22, info.coordenadas.latitud);
-    sqlite3_bind_double(stmt, 23, info.coordenadas.longitud);
-    sqlite3_bind_int(stmt, 24, (info.flags & CANCHA_FLAG_MARCADOR) ? 1 : 2);
-    int result = sqlite3_step(stmt);
-    db_stmt_release(stmt);
+    sqlite3_bind_text(stmt, 2, info->nombre, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, info->telefono, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, info->direccion, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, info->localidad, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 6, info->tipo_cancha_codigo);
+    sqlite3_bind_int(stmt, 7, info->superficie_codigo);
+    sqlite3_bind_int(stmt, 8, info->techada_estado);
+    sqlite3_bind_int(stmt, 9, info->tiene_iluminacion);
+    sqlite3_bind_int(stmt, 10, info->horario_apertura_min);
+    sqlite3_bind_int(stmt, 11, info->horario_cierre_min);
+    sqlite3_bind_int(stmt, 12, info->precio_hora_dia_centavos);
+    sqlite3_bind_int(stmt, 13, info->precio_hora_noche_centavos);
+    sqlite3_bind_int(stmt, 14, info->servicios.vestuarios);
+    sqlite3_bind_int(stmt, 15, info->servicios.duchas);
+    sqlite3_bind_int(stmt, 16, info->servicios.buffet);
+    sqlite3_bind_int(stmt, 17, info->servicios.estacionamiento);
+    sqlite3_bind_int(stmt, 18, info->cantidad_canchas);
+    sqlite3_bind_text(stmt, 19, info->estado, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 20, info->descripcion, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 21, info->contacto_alt, -1, DB_TRANSIENT);
+    sqlite3_bind_double(stmt, 22, info->coordenadas.latitud);
+    sqlite3_bind_double(stmt, 23, info->coordenadas.longitud);
+    sqlite3_bind_int(stmt, 24, (info->flags & CANCHA_FLAG_MARCADOR) ? 1 : 2);
 
-    if (result == SQLITE_DONE)
+    resultado = sqlite3_step(stmt);
+    db_stmt_release(stmt);
+    return resultado == SQLITE_DONE;
+}
+
+static void cancha_informar_creacion(const CanchaInfoDetalle *info, long long id, int creada)
+{
+    char log_msg[256];
+
+    if (creada)
     {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Creada cancha id=%lld nombre=%.180s", id, info.nombre);
+        snprintf(log_msg, sizeof(log_msg), "Creada cancha id=%lld nombre=%.180s", id, info->nombre);
         app_log_event("CANCHA", log_msg);
         if (confirmar("Desea cargar imagen para esta cancha ahora?") &&
                 !cargar_imagen_para_cancha_id((int)id))
         {
             printf("No se pudo cargar la imagen en este momento.\n");
         }
-        mostrar_alerta_operacion("Cancha", "Creada", info.nombre);
+        mostrar_alerta_operacion("Cancha", "Creada", info->nombre);
+        return;
+    }
+
+    snprintf(log_msg, sizeof(log_msg), "Error al crear cancha nombre=%.180s", info->nombre);
+    app_log_event("CANCHA", log_msg);
+    printf("Error al crear la cancha.\n");
+    pause_console();
+}
+
+void crear_cancha(void)
+{
+    CanchaInfoDetalle info = {0};
+    long long id = obtener_siguiente_id("cancha");
+    int modo = cancha_elegir_modo();
+
+    if (modo == 0)
+    {
+        return;
+    }
+
+    solicitar_nombre_cancha("Nombre de la cancha: ", info.nombre, sizeof(info.nombre));
+    if (modo == 1)
+    {
+        cancha_pedir_datos_simples(&info);
     }
     else
     {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Error al crear cancha nombre=%.180s", info.nombre);
-        app_log_event("CANCHA", log_msg);
-        printf("Error al crear la cancha.\n");
-        pause_console();
+        cancha_pedir_datos_completos(&info);
     }
+
+    cancha_informar_creacion(&info, id, cancha_guardar(&info, id));
 }
 
 typedef struct

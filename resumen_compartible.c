@@ -1402,19 +1402,20 @@ void generar_resumen_mejor_temporada(void)
  */
 typedef struct
 {
-    int id;
-    char fecha_hora[64];
-    char rival[128];
-    char tipo_rival[64];
-    int resultado;
-    int goles;
-    int asistencias;
     char goles_detalle[512];
     char asistencias_detalle[512];
-    int goles_equipo;
-    int goles_rival;
-    int diferencia_gol;
-    int rendimiento_general;
+    char posicion_jugada[64];
+    char formato_partido[64];
+    char arbitraje[64];
+    char comentario[512];
+    char lo_mejor[512];
+    char que_mejorar[512];
+    char tags[256];
+    char eventos_clave[512];
+} ResumenAnioPartidoTextos;
+
+typedef struct
+{
     int rating_tecnico;
     int rating_fisico;
     int rating_mental;
@@ -1424,13 +1425,11 @@ typedef struct
     int cansancio;
     int estado_animo;
     int dolor_fisico;
-    char posicion_jugada[64];
-    char formato_partido[64];
-    int tipo_partido;
-    int tarjeta;
-    char cancha[128];
-    char camiseta[128];
-    int clima;
+} ResumenAnioPartidoFisico;
+
+typedef struct
+{
+    int codigo;
     int tiene_temperatura;
     double temperatura_c;
     int tiene_precipitacion;
@@ -1441,14 +1440,48 @@ typedef struct
     double apparent_temp_c;
     char condicion_cancha[64];
     int estado_cancha;
-    char arbitraje[64];
+} ResumenAnioPartidoMeteo;
+
+typedef struct
+{
+    int id;
+    char fecha_hora[64];
+    char rival[128];
+    char tipo_rival[64];
+    int resultado;
+    int goles;
+    int asistencias;
+    int goles_equipo;
+    int goles_rival;
+    int diferencia_gol;
+    int rendimiento_general;
+    int tipo_partido;
+    int tarjeta;
+    char cancha[128];
+    char camiseta[128];
     int arbitraje_score;
-    char comentario[512];
-    char lo_mejor[512];
-    char que_mejorar[512];
-    char tags[256];
-    char eventos_clave[512];
+    ResumenAnioPartidoFisico fisico;
+    ResumenAnioPartidoMeteo meteo;
+    ResumenAnioPartidoTextos textos;
 } ResumenAnioPartido;
+
+typedef struct
+{
+    int partidos;
+    int goles;
+    int asistencias;
+    int victorias;
+    int empates;
+    int derrotas;
+} ResumenAnioMes;
+
+typedef struct
+{
+    int activas;
+    int usadas;
+    char top[128];
+    int top_partidos;
+} ResumenAnioGrupo;
 
 typedef struct
 {
@@ -1466,20 +1499,9 @@ typedef struct
     int partidos_con_marcador;
     int mejor_id;
     ResumenAnioPartido mejor;
-    int mes_partidos[RESUMEN_ANIO_MESES];
-    int mes_goles[RESUMEN_ANIO_MESES];
-    int mes_asistencias[RESUMEN_ANIO_MESES];
-    int mes_victorias[RESUMEN_ANIO_MESES];
-    int mes_empates[RESUMEN_ANIO_MESES];
-    int mes_derrotas[RESUMEN_ANIO_MESES];
-    int camisetas_activas;
-    int camisetas_usadas;
-    char camiseta_top[128];
-    int camiseta_top_partidos;
-    int canchas_activas;
-    int canchas_usadas;
-    char cancha_top[128];
-    int cancha_top_partidos;
+    ResumenAnioMes meses[RESUMEN_ANIO_MESES];
+    ResumenAnioGrupo camiseta;
+    ResumenAnioGrupo cancha;
     int lesiones;
     int lesiones_activas;
 } ResumenAnio;
@@ -1491,9 +1513,8 @@ typedef struct
 static int resumen_anio_digitos(const char *texto, size_t inicio, int cantidad)
 {
     int valor = 0;
-    int i;
 
-    for (i = 0; i < cantidad; i++)
+    for (int i = 0; i < cantidad; i++)
     {
         char c = texto[inicio + (size_t)i];
         if (c < '0' || c > '9')
@@ -1673,9 +1694,8 @@ static void resumen_anio_nombre_por_id(const char *sql, int id, char *buffer, si
  */
 static int resumen_anio_indice_grupo(int *ids, int *cuentas, int *total, int id)
 {
-    int i;
 
-    for (i = 0; i < *total; i++)
+    for (int i = 0; i < *total; i++)
     {
         if (ids[i] == id)
         {
@@ -1697,11 +1717,9 @@ static int resumen_anio_indice_grupo(int *ids, int *cuentas, int *total, int id)
 static void resumen_anio_top_grupo(const int *ids, const int *cuentas, int total,
                                    int *id_top, int *partidos_top)
 {
-    int i;
-
     *id_top = -1;
     *partidos_top = 0;
-    for (i = 0; i < total; i++)
+    for (int i = 0; i < total; i++)
     {
         if (cuentas[i] > *partidos_top)
         {
@@ -1739,6 +1757,7 @@ static void resumen_anio_copiar_texto(char *destino, size_t tam, sqlite3_stmt *s
  */
 static void resumen_anio_append(char *buffer, size_t tam, int *usados, const char *texto)
 {
+    size_t restante;
     int escrito;
 
     if (!buffer || tam == 0 || !usados || !texto || texto[0] == '\0' ||
@@ -1749,28 +1768,20 @@ static void resumen_anio_append(char *buffer, size_t tam, int *usados, const cha
 
     if (*usados > 0)
     {
-        escrito = snprintf(buffer + *usados, tam - (size_t)*usados, " | ");
-        if (escrito > 0)
+        restante = tam - (size_t)*usados;
+        escrito = snprintf(buffer + *usados, restante, " | ");
+        if (escrito < 0 || (size_t)escrito >= restante)
         {
-            *usados += escrito;
+            return;
         }
-    }
-
-    if (*usados < 0 || (size_t)*usados >= tam)
-    {
-        *usados = (int)tam - 1;
-        return;
-    }
-
-    escrito = snprintf(buffer + *usados, tam - (size_t)*usados, "%s", texto);
-    if (escrito > 0)
-    {
         *usados += escrito;
     }
 
-    if (*usados < 0 || (size_t)*usados >= tam)
+    restante = tam - (size_t)*usados;
+    escrito = snprintf(buffer + *usados, restante, "%s", texto);
+    if (escrito > 0 && (size_t)escrito < restante)
     {
-        *usados = (int)tam - 1;
+        *usados += escrito;
     }
 }
 
@@ -1906,42 +1917,42 @@ static void resumen_anio_cargar_partido(int id, ResumenAnioPartido *p)
         p->resultado = sqlite3_column_int(stmt, 3);
         p->goles = sqlite3_column_int(stmt, 4);
         p->asistencias = sqlite3_column_int(stmt, 5);
-        resumen_anio_copiar_texto(p->goles_detalle, sizeof(p->goles_detalle), stmt, 6);
-        resumen_anio_copiar_texto(p->asistencias_detalle, sizeof(p->asistencias_detalle), stmt, 7);
+        resumen_anio_copiar_texto(p->textos.goles_detalle, sizeof(p->textos.goles_detalle), stmt, 6);
+        resumen_anio_copiar_texto(p->textos.asistencias_detalle, sizeof(p->textos.asistencias_detalle), stmt, 7);
         p->rendimiento_general = sqlite3_column_int(stmt, 8);
-        p->rating_tecnico = sqlite3_column_int(stmt, 9);
-        p->rating_fisico = sqlite3_column_int(stmt, 10);
-        p->rating_mental = sqlite3_column_int(stmt, 11);
-        p->minutos_jugados = sqlite3_column_int(stmt, 12);
-        p->intensidad = sqlite3_column_int(stmt, 13);
-        p->esfuerzo_percibido = sqlite3_column_int(stmt, 14);
-        p->cansancio = sqlite3_column_int(stmt, 15);
-        p->estado_animo = sqlite3_column_int(stmt, 16);
-        p->dolor_fisico = sqlite3_column_int(stmt, 17);
-        resumen_anio_copiar_texto(p->posicion_jugada, sizeof(p->posicion_jugada), stmt, 18);
-        resumen_anio_copiar_texto(p->formato_partido, sizeof(p->formato_partido), stmt, 19);
+        p->fisico.rating_tecnico = sqlite3_column_int(stmt, 9);
+        p->fisico.rating_fisico = sqlite3_column_int(stmt, 10);
+        p->fisico.rating_mental = sqlite3_column_int(stmt, 11);
+        p->fisico.minutos_jugados = sqlite3_column_int(stmt, 12);
+        p->fisico.intensidad = sqlite3_column_int(stmt, 13);
+        p->fisico.esfuerzo_percibido = sqlite3_column_int(stmt, 14);
+        p->fisico.cansancio = sqlite3_column_int(stmt, 15);
+        p->fisico.estado_animo = sqlite3_column_int(stmt, 16);
+        p->fisico.dolor_fisico = sqlite3_column_int(stmt, 17);
+        resumen_anio_copiar_texto(p->textos.posicion_jugada, sizeof(p->textos.posicion_jugada), stmt, 18);
+        resumen_anio_copiar_texto(p->textos.formato_partido, sizeof(p->textos.formato_partido), stmt, 19);
         p->tipo_partido = sqlite3_column_int(stmt, 20);
         p->tarjeta = sqlite3_column_int(stmt, 21);
         resumen_anio_copiar_texto(p->cancha, sizeof(p->cancha), stmt, 22);
         resumen_anio_copiar_texto(p->camiseta, sizeof(p->camiseta), stmt, 23);
-        p->clima = sqlite3_column_int(stmt, 24);
-        p->tiene_temperatura = sqlite3_column_type(stmt, 25) != SQLITE_NULL;
-        p->temperatura_c = sqlite3_column_double(stmt, 25);
-        p->tiene_precipitacion = sqlite3_column_type(stmt, 26) != SQLITE_NULL;
-        p->precip_mm = sqlite3_column_double(stmt, 26);
-        p->tiene_viento = sqlite3_column_type(stmt, 27) != SQLITE_NULL;
-        p->wind_kmh = sqlite3_column_double(stmt, 27);
-        p->tiene_sensacion = sqlite3_column_type(stmt, 28) != SQLITE_NULL;
-        p->apparent_temp_c = sqlite3_column_double(stmt, 28);
-        resumen_anio_copiar_texto(p->condicion_cancha, sizeof(p->condicion_cancha), stmt, 29);
-        p->estado_cancha = sqlite3_column_int(stmt, 30);
-        resumen_anio_copiar_texto(p->arbitraje, sizeof(p->arbitraje), stmt, 31);
+        p->meteo.codigo = sqlite3_column_int(stmt, 24);
+        p->meteo.tiene_temperatura = sqlite3_column_type(stmt, 25) != SQLITE_NULL;
+        p->meteo.temperatura_c = sqlite3_column_double(stmt, 25);
+        p->meteo.tiene_precipitacion = sqlite3_column_type(stmt, 26) != SQLITE_NULL;
+        p->meteo.precip_mm = sqlite3_column_double(stmt, 26);
+        p->meteo.tiene_viento = sqlite3_column_type(stmt, 27) != SQLITE_NULL;
+        p->meteo.wind_kmh = sqlite3_column_double(stmt, 27);
+        p->meteo.tiene_sensacion = sqlite3_column_type(stmt, 28) != SQLITE_NULL;
+        p->meteo.apparent_temp_c = sqlite3_column_double(stmt, 28);
+        resumen_anio_copiar_texto(p->meteo.condicion_cancha, sizeof(p->meteo.condicion_cancha), stmt, 29);
+        p->meteo.estado_cancha = sqlite3_column_int(stmt, 30);
+        resumen_anio_copiar_texto(p->textos.arbitraje, sizeof(p->textos.arbitraje), stmt, 31);
         p->arbitraje_score = sqlite3_column_int(stmt, 32);
-        resumen_anio_copiar_texto(p->comentario, sizeof(p->comentario), stmt, 33);
-        resumen_anio_copiar_texto(p->lo_mejor, sizeof(p->lo_mejor), stmt, 34);
-        resumen_anio_copiar_texto(p->que_mejorar, sizeof(p->que_mejorar), stmt, 35);
-        resumen_anio_copiar_texto(p->tags, sizeof(p->tags), stmt, 36);
-        resumen_anio_copiar_texto(p->eventos_clave, sizeof(p->eventos_clave), stmt, 37);
+        resumen_anio_copiar_texto(p->textos.comentario, sizeof(p->textos.comentario), stmt, 33);
+        resumen_anio_copiar_texto(p->textos.lo_mejor, sizeof(p->textos.lo_mejor), stmt, 34);
+        resumen_anio_copiar_texto(p->textos.que_mejorar, sizeof(p->textos.que_mejorar), stmt, 35);
+        resumen_anio_copiar_texto(p->textos.tags, sizeof(p->textos.tags), stmt, 36);
+        resumen_anio_copiar_texto(p->textos.eventos_clave, sizeof(p->textos.eventos_clave), stmt, 37);
         p->goles_equipo = sqlite3_column_int(stmt, 38);
         p->goles_rival = sqlite3_column_int(stmt, 39);
 
@@ -1960,10 +1971,10 @@ static void resumen_anio_texto_rendimiento(const ResumenAnioPartido *p, char *bu
     int usados = 0;
 
     buffer[0] = '\0';
-    if (p->rating_tecnico > 0 || p->rating_fisico > 0 || p->rating_mental > 0)
+    if (p->fisico.rating_tecnico > 0 || p->fisico.rating_fisico > 0 || p->fisico.rating_mental > 0)
     {
         snprintf(temp, sizeof(temp), "%d/10 (tecnico %d, fisico %d, mental %d)",
-                 p->rendimiento_general, p->rating_tecnico, p->rating_fisico, p->rating_mental);
+                 p->rendimiento_general, p->fisico.rating_tecnico, p->fisico.rating_fisico, p->fisico.rating_mental);
     }
     else
     {
@@ -2011,29 +2022,29 @@ static void resumen_anio_texto_clima(const ResumenAnioPartido *p, char *buffer, 
     int usados = 0;
 
     buffer[0] = '\0';
-    if (p->clima >= 1 && p->clima <= 12)
+    if (p->meteo.codigo >= 1 && p->meteo.codigo <= 12)
     {
-        resumen_anio_append(buffer, tam, &usados, clima_to_text(p->clima));
+        resumen_anio_append(buffer, tam, &usados, clima_to_text(p->meteo.codigo));
     }
 
-    if (p->tiene_temperatura)
+    if (p->meteo.tiene_temperatura)
     {
-        snprintf(temp, sizeof(temp), "%.1f C", p->temperatura_c);
+        snprintf(temp, sizeof(temp), "%.1f C", p->meteo.temperatura_c);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->tiene_sensacion)
+    if (p->meteo.tiene_sensacion)
     {
-        snprintf(temp, sizeof(temp), "sensacion %.1f C", p->apparent_temp_c);
+        snprintf(temp, sizeof(temp), "sensacion %.1f C", p->meteo.apparent_temp_c);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->tiene_viento)
+    if (p->meteo.tiene_viento)
     {
-        snprintf(temp, sizeof(temp), "viento %.1f km/h", p->wind_kmh);
+        snprintf(temp, sizeof(temp), "viento %.1f km/h", p->meteo.wind_kmh);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->tiene_precipitacion)
+    if (p->meteo.tiene_precipitacion)
     {
-        snprintf(temp, sizeof(temp), "lluvia %.1f mm", p->precip_mm);
+        snprintf(temp, sizeof(temp), "lluvia %.1f mm", p->meteo.precip_mm);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
 }
@@ -2044,34 +2055,34 @@ static void resumen_anio_texto_fisico(const ResumenAnioPartido *p, char *buffer,
     int usados = 0;
 
     buffer[0] = '\0';
-    if (p->minutos_jugados > 0)
+    if (p->fisico.minutos_jugados > 0)
     {
-        snprintf(temp, sizeof(temp), "Duracion %d min", p->minutos_jugados);
+        snprintf(temp, sizeof(temp), "Duracion %d min", p->fisico.minutos_jugados);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->intensidad > 0)
+    if (p->fisico.intensidad > 0)
     {
-        snprintf(temp, sizeof(temp), "Intensidad %d", p->intensidad);
+        snprintf(temp, sizeof(temp), "Intensidad %d", p->fisico.intensidad);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->esfuerzo_percibido > 0)
+    if (p->fisico.esfuerzo_percibido > 0)
     {
-        snprintf(temp, sizeof(temp), "Esfuerzo %d", p->esfuerzo_percibido);
+        snprintf(temp, sizeof(temp), "Esfuerzo %d", p->fisico.esfuerzo_percibido);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->cansancio > 0)
+    if (p->fisico.cansancio > 0)
     {
-        snprintf(temp, sizeof(temp), "Cansancio %d", p->cansancio);
+        snprintf(temp, sizeof(temp), "Cansancio %d", p->fisico.cansancio);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->estado_animo > 0)
+    if (p->fisico.estado_animo > 0)
     {
-        snprintf(temp, sizeof(temp), "Animo %d", p->estado_animo);
+        snprintf(temp, sizeof(temp), "Animo %d", p->fisico.estado_animo);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->dolor_fisico > 0)
+    if (p->fisico.dolor_fisico > 0)
     {
-        snprintf(temp, sizeof(temp), "Dolor %s", resumen_anio_dolor_texto(p->dolor_fisico));
+        snprintf(temp, sizeof(temp), "Dolor %s", resumen_anio_dolor_texto(p->fisico.dolor_fisico));
         resumen_anio_append(buffer, tam, &usados, temp);
     }
 }
@@ -2085,9 +2096,9 @@ static void resumen_anio_texto_contexto(const ResumenAnioPartido *p, char *buffe
     snprintf(temp, sizeof(temp), "%s", resumen_anio_tipo_partido_texto(p->tipo_partido));
     resumen_anio_append(buffer, tam, &usados, temp);
 
-    if (p->formato_partido[0] != '\0')
+    if (p->textos.formato_partido[0] != '\0')
     {
-        snprintf(temp, sizeof(temp), "Formato %s", p->formato_partido);
+        snprintf(temp, sizeof(temp), "Formato %s", p->textos.formato_partido);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
     if (p->tarjeta > 1)
@@ -2095,9 +2106,9 @@ static void resumen_anio_texto_contexto(const ResumenAnioPartido *p, char *buffe
         snprintf(temp, sizeof(temp), "Tarjeta %s", resumen_anio_tarjeta_texto(p->tarjeta));
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    if (p->posicion_jugada[0] != '\0')
+    if (p->textos.posicion_jugada[0] != '\0')
     {
-        snprintf(temp, sizeof(temp), "Posicion %s", p->posicion_jugada);
+        snprintf(temp, sizeof(temp), "Posicion %s", p->textos.posicion_jugada);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
 }
@@ -2108,14 +2119,14 @@ static void resumen_anio_texto_arbitraje(const ResumenAnioPartido *p, char *buff
     int usados = 0;
 
     buffer[0] = '\0';
-    if (p->arbitraje[0] != '\0' && p->arbitraje_score > 0)
+    if (p->textos.arbitraje[0] != '\0' && p->arbitraje_score > 0)
     {
-        snprintf(temp, sizeof(temp), "%s (%d/5)", p->arbitraje, p->arbitraje_score);
+        snprintf(temp, sizeof(temp), "%s (%d/5)", p->textos.arbitraje, p->arbitraje_score);
         resumen_anio_append(buffer, tam, &usados, temp);
     }
-    else if (p->arbitraje[0] != '\0')
+    else if (p->textos.arbitraje[0] != '\0')
     {
-        resumen_anio_append(buffer, tam, &usados, p->arbitraje);
+        resumen_anio_append(buffer, tam, &usados, p->textos.arbitraje);
     }
     else if (p->arbitraje_score > 0)
     {
@@ -2128,17 +2139,140 @@ static void resumen_anio_texto_arbitraje(const ResumenAnioPartido *p, char *buff
 /**
  * @brief Recorre los partidos del año y acumula totales, meses y favoritos.
  */
+/**
+ * @brief Conteo de apariciones de un grupo (cancha o camiseta) en el año.
+ */
+typedef struct
+{
+    int ids[RESUMEN_ANIO_MAX_GRUPOS];
+    int cuentas[RESUMEN_ANIO_MAX_GRUPOS];
+    int total;
+} ResumenAnioGrupoConteo;
+
+/**
+ * @brief Estado de trabajo mientras se recorre la tabla partido.
+ */
+typedef struct
+{
+    ResumenAnioGrupoConteo canchas;
+    ResumenAnioGrupoConteo camisetas;
+    int mejor_rendimiento;
+    int mejor_id;
+} ResumenAnioRecorrido;
+
+static void resumen_anio_contar_resultado(int resultado, int *victorias, int *empates,
+        int *derrotas)
+{
+    if (resultado == 1)
+    {
+        (*victorias)++;
+    }
+    else if (resultado == 2)
+    {
+        (*empates)++;
+    }
+    else if (resultado == 3)
+    {
+        (*derrotas)++;
+    }
+}
+
+static void resumen_anio_acumular_mes(ResumenAnio *r, int mes, int goles, int asistencias,
+                                      int resultado)
+{
+    ResumenAnioMes *fila;
+
+    if (mes < 1 || mes > RESUMEN_ANIO_MESES)
+    {
+        return;
+    }
+
+    fila = &r->meses[mes - 1];
+    fila->partidos++;
+    fila->goles += goles;
+    fila->asistencias += asistencias;
+    resumen_anio_contar_resultado(resultado, &fila->victorias, &fila->empates, &fila->derrotas);
+}
+
+static void resumen_anio_acumular_grupo(ResumenAnioGrupoConteo *grupo, int id)
+{
+    int indice;
+
+    if (id <= 0)
+    {
+        return;
+    }
+
+    indice = resumen_anio_indice_grupo(grupo->ids, grupo->cuentas, &grupo->total, id);
+    if (indice >= 0)
+    {
+        grupo->cuentas[indice]++;
+    }
+}
+
+static void resumen_anio_resolver_grupo(ResumenAnioGrupo *destino,
+                                        const ResumenAnioGrupoConteo *grupo,
+                                        const char *sql)
+{
+    int id_top = -1;
+
+    destino->usadas = grupo->total;
+    resumen_anio_top_grupo(grupo->ids, grupo->cuentas, grupo->total, &id_top,
+                           &destino->top_partidos);
+    if (id_top >= 0)
+    {
+        resumen_anio_nombre_por_id(sql, id_top, destino->top, sizeof(destino->top));
+    }
+}
+
+static void resumen_anio_procesar_fila(ResumenAnio *r, sqlite3_stmt *stmt,
+                                       ResumenAnioRecorrido *rec)
+{
+    const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
+    int goles = sqlite3_column_int(stmt, 1);
+    int asistencias = sqlite3_column_int(stmt, 2);
+    int resultado = sqlite3_column_int(stmt, 3);
+    int rendimiento = sqlite3_column_int(stmt, 4);
+    int cancha_id = sqlite3_column_int(stmt, 6);
+    int camiseta_id = sqlite3_column_int(stmt, 7);
+    int goles_equipo = sqlite3_column_int(stmt, 8);
+    int goles_rival = sqlite3_column_int(stmt, 9);
+    int partido_id = sqlite3_column_int(stmt, 10);
+
+    if (resumen_anio_desde_fecha(fecha) != r->anio)
+    {
+        return;
+    }
+
+    r->partidos++;
+    r->goles += goles;
+    r->asistencias += asistencias;
+    resumen_anio_contar_resultado(resultado, &r->victorias, &r->empates, &r->derrotas);
+
+    if (goles_equipo >= 0 && goles_rival >= 0)
+    {
+        r->goles_favor += goles_equipo;
+        r->goles_contra += goles_rival;
+        r->partidos_con_marcador++;
+    }
+
+    resumen_anio_acumular_mes(r, resumen_anio_mes_desde_fecha(fecha), goles, asistencias,
+                              resultado);
+
+    if (rec->mejor_id <= 0 || rendimiento > rec->mejor_rendimiento)
+    {
+        rec->mejor_rendimiento = rendimiento;
+        rec->mejor_id = partido_id;
+    }
+
+    resumen_anio_acumular_grupo(&rec->canchas, cancha_id);
+    resumen_anio_acumular_grupo(&rec->camisetas, camiseta_id);
+}
+
 static void resumen_anio_leer_partidos(ResumenAnio *r)
 {
     sqlite3_stmt *stmt = NULL;
-    int ids_cancha[RESUMEN_ANIO_MAX_GRUPOS];
-    int cuentas_cancha[RESUMEN_ANIO_MAX_GRUPOS];
-    int ids_camiseta[RESUMEN_ANIO_MAX_GRUPOS];
-    int cuentas_camiseta[RESUMEN_ANIO_MAX_GRUPOS];
-    int total_canchas = 0;
-    int total_camisetas = 0;
-    int id_top = -1;
-    int mejor_rendimiento = -1;
+    ResumenAnioRecorrido rec = {0};
     const char *sql =
         "SELECT fecha_hora, goles, asistencias, resultado, rendimiento_general, "
         "rival_nombre, cancha_id, camiseta_id, goles_equipo, goles_rival, id "
@@ -2151,117 +2285,18 @@ static void resumen_anio_leer_partidos(ResumenAnio *r)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *fecha = (const char *)sqlite3_column_text(stmt, 0);
-        int goles = sqlite3_column_int(stmt, 1);
-        int asistencias = sqlite3_column_int(stmt, 2);
-        int resultado = sqlite3_column_int(stmt, 3);
-        int rendimiento = sqlite3_column_int(stmt, 4);
-        int cancha_id = sqlite3_column_int(stmt, 6);
-        int camiseta_id = sqlite3_column_int(stmt, 7);
-        int goles_equipo = sqlite3_column_int(stmt, 8);
-        int goles_rival = sqlite3_column_int(stmt, 9);
-        int partido_id = sqlite3_column_int(stmt, 10);
-        int mes = resumen_anio_mes_desde_fecha(fecha);
-        int indice;
-
-        if (resumen_anio_desde_fecha(fecha) != r->anio)
-        {
-            continue;
-        }
-
-        r->partidos++;
-        r->goles += goles;
-        r->asistencias += asistencias;
-
-        if (resultado == 1)
-        {
-            r->victorias++;
-        }
-        else if (resultado == 2)
-        {
-            r->empates++;
-        }
-        else if (resultado == 3)
-        {
-            r->derrotas++;
-        }
-
-        if (goles_equipo >= 0 && goles_rival >= 0)
-        {
-            r->goles_favor += goles_equipo;
-            r->goles_contra += goles_rival;
-            r->partidos_con_marcador++;
-        }
-
-        if (mes >= 1 && mes <= RESUMEN_ANIO_MESES)
-        {
-            int idx = mes - 1;
-
-            r->mes_partidos[idx]++;
-            r->mes_goles[idx] += goles;
-            r->mes_asistencias[idx] += asistencias;
-            if (resultado == 1)
-            {
-                r->mes_victorias[idx]++;
-            }
-            else if (resultado == 2)
-            {
-                r->mes_empates[idx]++;
-            }
-            else if (resultado == 3)
-            {
-                r->mes_derrotas[idx]++;
-            }
-        }
-
-        if (r->partidos == 1 || rendimiento > mejor_rendimiento)
-        {
-            mejor_rendimiento = rendimiento;
-            r->mejor_id = partido_id;
-        }
-
-        if (cancha_id > 0)
-        {
-            indice = resumen_anio_indice_grupo(ids_cancha, cuentas_cancha, &total_canchas,
-                                               cancha_id);
-            if (indice >= 0)
-            {
-                cuentas_cancha[indice]++;
-            }
-        }
-
-        if (camiseta_id > 0)
-        {
-            indice = resumen_anio_indice_grupo(ids_camiseta, cuentas_camiseta, &total_camisetas,
-                                               camiseta_id);
-            if (indice >= 0)
-            {
-                cuentas_camiseta[indice]++;
-            }
-        }
+        resumen_anio_procesar_fila(r, stmt, &rec);
     }
     sqlite3_finalize(stmt);
 
-    r->canchas_usadas = total_canchas;
-    resumen_anio_top_grupo(ids_cancha, cuentas_cancha, total_canchas, &id_top,
-                           &r->cancha_top_partidos);
-    if (id_top >= 0)
-    {
-        resumen_anio_nombre_por_id("SELECT nombre FROM cancha WHERE id = ?;", id_top,
-                                   r->cancha_top, sizeof(r->cancha_top));
-    }
+    resumen_anio_resolver_grupo(&r->cancha, &rec.canchas,
+                                "SELECT nombre FROM cancha WHERE id = ?;");
+    resumen_anio_resolver_grupo(&r->camiseta, &rec.camisetas,
+                                "SELECT nombre FROM camiseta WHERE id = ?;");
 
-    r->camisetas_usadas = total_camisetas;
-    resumen_anio_top_grupo(ids_camiseta, cuentas_camiseta, total_camisetas, &id_top,
-                           &r->camiseta_top_partidos);
-    if (id_top >= 0)
+    if (rec.mejor_id > 0)
     {
-        resumen_anio_nombre_por_id("SELECT nombre FROM camiseta WHERE id = ?;", id_top,
-                                   r->camiseta_top, sizeof(r->camiseta_top));
-    }
-
-    if (r->mejor_id > 0)
-    {
+        r->mejor_id = rec.mejor_id;
         resumen_anio_cargar_partido(r->mejor_id, &r->mejor);
     }
 }
@@ -2302,8 +2337,8 @@ static void resumen_anio_recolectar(ResumenAnio *r, int anio)
     memset(r, 0, sizeof(*r));
     r->anio = anio;
     r->mejor_id = 0;
-    snprintf(r->cancha_top, sizeof(r->cancha_top), "Sin datos");
-    snprintf(r->camiseta_top, sizeof(r->camiseta_top), "Sin datos");
+    snprintf(r->cancha.top, sizeof(r->cancha.top), "Sin datos");
+    snprintf(r->camiseta.top, sizeof(r->camiseta.top), "Sin datos");
 
     obtener_nombre_jugador(r->jugador, sizeof(r->jugador));
     get_datetime(r->fecha_gen, sizeof(r->fecha_gen));
@@ -2311,8 +2346,8 @@ static void resumen_anio_recolectar(ResumenAnio *r, int anio)
     resumen_anio_leer_partidos(r);
     resumen_anio_leer_lesiones(r);
 
-    r->camisetas_activas = resumen_anio_contar("SELECT COUNT(*) FROM camiseta WHERE activa = 1;");
-    r->canchas_activas = resumen_anio_contar("SELECT COUNT(*) FROM cancha WHERE activa = 1;");
+    r->camiseta.activas = resumen_anio_contar("SELECT COUNT(*) FROM camiseta WHERE activa = 1;");
+    r->cancha.activas = resumen_anio_contar("SELECT COUNT(*) FROM cancha WHERE activa = 1;");
 }
 
 /* ── Formato TXT ──────────────────────────────────────────────────────────── */
@@ -2362,16 +2397,14 @@ static void resumen_anio_txt_partidos(FILE *f, const ResumenAnio *r)
 
 static void resumen_anio_txt_meses(FILE *f, const ResumenAnio *r)
 {
-    int i;
-
     fprintf(f, "--- MES A MES ---\n");
     fprintf(f, "%-12s %4s %4s %4s %4s %4s %4s\n", "Mes", "PJ", "G", "A", "V", "E", "D");
-    for (i = 0; i < RESUMEN_ANIO_MESES; i++)
+    for (int i = 0; i < RESUMEN_ANIO_MESES; i++)
     {
         fprintf(f, "%-12s %4d %4d %4d %4d %4d %4d\n",
                 resumen_anio_mes_nombre(i),
-                r->mes_partidos[i], r->mes_goles[i], r->mes_asistencias[i],
-                r->mes_victorias[i], r->mes_empates[i], r->mes_derrotas[i]);
+                r->meses[i].partidos, r->meses[i].goles, r->meses[i].asistencias,
+                r->meses[i].victorias, r->meses[i].empates, r->meses[i].derrotas);
     }
     fprintf(f, "\n");
 }
@@ -2379,10 +2412,10 @@ static void resumen_anio_txt_meses(FILE *f, const ResumenAnio *r)
 static void resumen_anio_txt_equipamiento(FILE *f, const ResumenAnio *r)
 {
     fprintf(f, "--- EQUIPAMIENTO ---\n");
-    fprintf(f, "Camisetas activas  : %d\n", r->camisetas_activas);
-    fprintf(f, "Camisetas usadas   : %d\n", r->camisetas_usadas);
+    fprintf(f, "Camisetas activas  : %d\n", r->camiseta.activas);
+    fprintf(f, "Camisetas usadas   : %d\n", r->camiseta.usadas);
     fprintf(f, "Camiseta mas usada : %s (%d partidos)\n",
-            r->camiseta_top, r->camiseta_top_partidos);
+            r->camiseta.top, r->camiseta.top_partidos);
     fprintf(f, "\n");
 
     fprintf(f, "--- LESIONES ---\n");
@@ -2391,26 +2424,18 @@ static void resumen_anio_txt_equipamiento(FILE *f, const ResumenAnio *r)
     fprintf(f, "\n");
 
     fprintf(f, "--- CANCHAS ---\n");
-    fprintf(f, "Canchas activas    : %d\n", r->canchas_activas);
-    fprintf(f, "Canchas usadas     : %d\n", r->canchas_usadas);
+    fprintf(f, "Canchas activas    : %d\n", r->cancha.activas);
+    fprintf(f, "Canchas usadas     : %d\n", r->cancha.usadas);
     fprintf(f, "Cancha mas usada   : %s (%d partidos)\n",
-            r->cancha_top, r->cancha_top_partidos);
+            r->cancha.top, r->cancha.top_partidos);
     fprintf(f, "\n");
 }
 
-static void resumen_anio_txt_mejor(FILE *f, const ResumenAnio *r)
+static void resumen_anio_txt_mejor_cabecera(FILE *f, const ResumenAnioPartido *p)
 {
-    const ResumenAnioPartido *p = &r->mejor;
     char texto[768];
-    char temp[160];
-    int usados;
 
     fprintf(f, "--- MEJOR PARTIDO DEL AÑO ---\n");
-    if (r->mejor_id <= 0)
-    {
-        fprintf(f, "Sin partidos destacados en el año.\n\n");
-        return;
-    }
 
     resumen_anio_texto_rendimiento(p, texto, sizeof(texto));
     fprintf(f, "Rendimiento  : %s\n", texto);
@@ -2428,36 +2453,42 @@ static void resumen_anio_txt_mejor(FILE *f, const ResumenAnio *r)
         fprintf(f, "Marcador     : %s\n", texto);
     }
 
-    if (p->goles_detalle[0] != '\0')
+    if (p->textos.goles_detalle[0] != '\0')
     {
-        fprintf(f, "Goles        : %d [%s]\n", p->goles, p->goles_detalle);
+        fprintf(f, "Goles        : %d [%s]\n", p->goles, p->textos.goles_detalle);
     }
     else if (p->goles > 0)
     {
         fprintf(f, "Goles        : %d\n", p->goles);
     }
 
-    if (p->asistencias_detalle[0] != '\0')
+    if (p->textos.asistencias_detalle[0] != '\0')
     {
-        fprintf(f, "Asistencias  : %d [%s]\n", p->asistencias, p->asistencias_detalle);
+        fprintf(f, "Asistencias  : %d [%s]\n", p->asistencias, p->textos.asistencias_detalle);
     }
     else if (p->asistencias > 0)
     {
         fprintf(f, "Asistencias  : %d\n", p->asistencias);
     }
+}
 
-    usados = 0;
+static void resumen_anio_txt_mejor_cancha(FILE *f, const ResumenAnioPartido *p)
+{
+    char texto[768];
+    char temp[160];
+    int usados = 0;
+
     texto[0] = '\0';
     resumen_anio_append(texto, sizeof(texto), &usados, p->cancha);
-    if (p->estado_cancha > 0)
+    if (p->meteo.estado_cancha > 0)
     {
         snprintf(temp, sizeof(temp), "estado %s",
-                 resumen_anio_estado_cancha_texto(p->estado_cancha));
+                 resumen_anio_estado_cancha_texto(p->meteo.estado_cancha));
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
-    if (p->condicion_cancha[0] != '\0')
+    if (p->meteo.condicion_cancha[0] != '\0')
     {
-        snprintf(temp, sizeof(temp), "condicion %s", p->condicion_cancha);
+        snprintf(temp, sizeof(temp), "condicion %s", p->meteo.condicion_cancha);
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
     if (texto[0] != '\0')
@@ -2469,6 +2500,11 @@ static void resumen_anio_txt_mejor(FILE *f, const ResumenAnio *r)
     {
         fprintf(f, "Camiseta     : %s\n", p->camiseta);
     }
+}
+
+static void resumen_anio_txt_mejor_sensaciones(FILE *f, const ResumenAnioPartido *p)
+{
+    char texto[768];
 
     resumen_anio_texto_clima(p, texto, sizeof(texto));
     if (texto[0] != '\0')
@@ -2493,27 +2529,47 @@ static void resumen_anio_txt_mejor(FILE *f, const ResumenAnio *r)
     {
         fprintf(f, "Arbitraje    : %s\n", texto);
     }
+}
 
-    if (p->lo_mejor[0] != '\0')
+static void resumen_anio_txt_mejor_notas(FILE *f, const ResumenAnioPartido *p)
+{
+    if (p->textos.lo_mejor[0] != '\0')
     {
-        fprintf(f, "Lo mejor     : %s\n", p->lo_mejor);
+        fprintf(f, "Lo mejor     : %s\n", p->textos.lo_mejor);
     }
-    if (p->que_mejorar[0] != '\0')
+    if (p->textos.que_mejorar[0] != '\0')
     {
-        fprintf(f, "A mejorar    : %s\n", p->que_mejorar);
+        fprintf(f, "A mejorar    : %s\n", p->textos.que_mejorar);
     }
-    if (p->comentario[0] != '\0')
+    if (p->textos.comentario[0] != '\0')
     {
-        fprintf(f, "Comentario   : %s\n", p->comentario);
+        fprintf(f, "Comentario   : %s\n", p->textos.comentario);
     }
-    if (p->tags[0] != '\0')
+    if (p->textos.tags[0] != '\0')
     {
-        fprintf(f, "Tags         : %s\n", p->tags);
+        fprintf(f, "Tags         : %s\n", p->textos.tags);
     }
-    if (p->eventos_clave[0] != '\0')
+    if (p->textos.eventos_clave[0] != '\0')
     {
-        fprintf(f, "Eventos clave: %s\n", p->eventos_clave);
+        fprintf(f, "Eventos clave: %s\n", p->textos.eventos_clave);
     }
+}
+
+static void resumen_anio_txt_mejor(FILE *f, const ResumenAnio *r)
+{
+    const ResumenAnioPartido *p = &r->mejor;
+
+    if (r->mejor_id <= 0)
+    {
+        fprintf(f, "--- MEJOR PARTIDO DEL AÑO ---\n");
+        fprintf(f, "Sin partidos destacados en el año.\n\n");
+        return;
+    }
+
+    resumen_anio_txt_mejor_cabecera(f, p);
+    resumen_anio_txt_mejor_cancha(f, p);
+    resumen_anio_txt_mejor_sensaciones(f, p);
+    resumen_anio_txt_mejor_notas(f, p);
 
     fprintf(f, "\n");
 }
@@ -2616,19 +2672,17 @@ static void resumen_anio_html_ofensiva(FILE *f, const ResumenAnio *r)
 
 static void resumen_anio_html_meses(FILE *f, const ResumenAnio *r)
 {
-    int i;
-
     fprintf(f, "<div class=\"section-card\">\n");
     fprintf(f, "<h2>Partidos mes a mes</h2>\n");
     fprintf(f, "<table>\n<thead><tr><th>Mes</th><th>PJ</th><th>Goles</th>"
             "<th>Asist.</th><th>V</th><th>E</th><th>D</th></tr></thead>\n<tbody>\n");
-    for (i = 0; i < RESUMEN_ANIO_MESES; i++)
+    for (int i = 0; i < RESUMEN_ANIO_MESES; i++)
     {
         fprintf(f, "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td>"
                 "<td>%d</td><td>%d</td></tr>\n",
                 html_texto(resumen_anio_mes_nombre(i)),
-                r->mes_partidos[i], r->mes_goles[i], r->mes_asistencias[i],
-                r->mes_victorias[i], r->mes_empates[i], r->mes_derrotas[i]);
+                r->meses[i].partidos, r->meses[i].goles, r->meses[i].asistencias,
+                r->meses[i].victorias, r->meses[i].empates, r->meses[i].derrotas);
     }
     fprintf(f, "</tbody>\n</table>\n</div>\n");
 }
@@ -2641,11 +2695,11 @@ static void resumen_anio_html_equipamiento(FILE *f, const ResumenAnio *r)
     fprintf(f, "<h2>Equipamiento, lesiones y canchas</h2>\n");
     fprintf(f, "<table>\n<thead><tr><th>Concepto</th><th>Valor</th></tr></thead>\n<tbody>\n");
 
-    snprintf(buffer, sizeof(buffer), "%d", r->camisetas_activas);
+    snprintf(buffer, sizeof(buffer), "%d", r->camiseta.activas);
     resumen_anio_html_fila(f, "Camisetas activas", buffer);
-    snprintf(buffer, sizeof(buffer), "%d", r->camisetas_usadas);
+    snprintf(buffer, sizeof(buffer), "%d", r->camiseta.usadas);
     resumen_anio_html_fila(f, "Camisetas usadas en el año", buffer);
-    snprintf(buffer, sizeof(buffer), "%s (%d partidos)", r->camiseta_top, r->camiseta_top_partidos);
+    snprintf(buffer, sizeof(buffer), "%s (%d partidos)", r->camiseta.top, r->camiseta.top_partidos);
     resumen_anio_html_fila(f, "Camiseta mas usada", buffer);
 
     snprintf(buffer, sizeof(buffer), "%d", r->lesiones);
@@ -2653,11 +2707,11 @@ static void resumen_anio_html_equipamiento(FILE *f, const ResumenAnio *r)
     snprintf(buffer, sizeof(buffer), "%d", r->lesiones_activas);
     resumen_anio_html_fila(f, "Lesiones activas", buffer);
 
-    snprintf(buffer, sizeof(buffer), "%d", r->canchas_activas);
+    snprintf(buffer, sizeof(buffer), "%d", r->cancha.activas);
     resumen_anio_html_fila(f, "Canchas activas", buffer);
-    snprintf(buffer, sizeof(buffer), "%d", r->canchas_usadas);
+    snprintf(buffer, sizeof(buffer), "%d", r->cancha.usadas);
     resumen_anio_html_fila(f, "Canchas usadas en el año", buffer);
-    snprintf(buffer, sizeof(buffer), "%s (%d partidos)", r->cancha_top, r->cancha_top_partidos);
+    snprintf(buffer, sizeof(buffer), "%s (%d partidos)", r->cancha.top, r->cancha.top_partidos);
     resumen_anio_html_fila(f, "Cancha mas usada", buffer);
 
     fprintf(f, "</tbody>\n</table>\n</div>\n");
@@ -2704,9 +2758,9 @@ static void resumen_anio_html_mejor(FILE *f, const ResumenAnio *r)
     resumen_anio_texto_marcador(p, texto, sizeof(texto));
     resumen_anio_html_detalle(f, "Marcador", texto);
 
-    if (p->goles_detalle[0] != '\0')
+    if (p->textos.goles_detalle[0] != '\0')
     {
-        snprintf(texto, sizeof(texto), "%d [%s]", p->goles, p->goles_detalle);
+        snprintf(texto, sizeof(texto), "%d [%s]", p->goles, p->textos.goles_detalle);
         resumen_anio_html_detalle(f, "Goles", texto);
     }
     else if (p->goles > 0)
@@ -2715,9 +2769,9 @@ static void resumen_anio_html_mejor(FILE *f, const ResumenAnio *r)
         resumen_anio_html_detalle(f, "Goles", texto);
     }
 
-    if (p->asistencias_detalle[0] != '\0')
+    if (p->textos.asistencias_detalle[0] != '\0')
     {
-        snprintf(texto, sizeof(texto), "%d [%s]", p->asistencias, p->asistencias_detalle);
+        snprintf(texto, sizeof(texto), "%d [%s]", p->asistencias, p->textos.asistencias_detalle);
         resumen_anio_html_detalle(f, "Asistencias", texto);
     }
     else if (p->asistencias > 0)
@@ -2729,15 +2783,15 @@ static void resumen_anio_html_mejor(FILE *f, const ResumenAnio *r)
     usados = 0;
     texto[0] = '\0';
     resumen_anio_append(texto, sizeof(texto), &usados, p->cancha);
-    if (p->estado_cancha > 0)
+    if (p->meteo.estado_cancha > 0)
     {
         snprintf(temp, sizeof(temp), "estado %s",
-                 resumen_anio_estado_cancha_texto(p->estado_cancha));
+                 resumen_anio_estado_cancha_texto(p->meteo.estado_cancha));
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
-    if (p->condicion_cancha[0] != '\0')
+    if (p->meteo.condicion_cancha[0] != '\0')
     {
-        snprintf(temp, sizeof(temp), "condicion %s", p->condicion_cancha);
+        snprintf(temp, sizeof(temp), "condicion %s", p->meteo.condicion_cancha);
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
     resumen_anio_html_detalle(f, "Cancha", texto);
@@ -2756,11 +2810,11 @@ static void resumen_anio_html_mejor(FILE *f, const ResumenAnio *r)
     resumen_anio_texto_arbitraje(p, texto, sizeof(texto));
     resumen_anio_html_detalle(f, "Arbitraje", texto);
 
-    resumen_anio_html_detalle(f, "Lo mejor", p->lo_mejor);
-    resumen_anio_html_detalle(f, "A mejorar", p->que_mejorar);
-    resumen_anio_html_detalle(f, "Comentario", p->comentario);
-    resumen_anio_html_detalle(f, "Tags", p->tags);
-    resumen_anio_html_detalle(f, "Eventos clave", p->eventos_clave);
+    resumen_anio_html_detalle(f, "Lo mejor", p->textos.lo_mejor);
+    resumen_anio_html_detalle(f, "A mejorar", p->textos.que_mejorar);
+    resumen_anio_html_detalle(f, "Comentario", p->textos.comentario);
+    resumen_anio_html_detalle(f, "Tags", p->textos.tags);
+    resumen_anio_html_detalle(f, "Eventos clave", p->textos.eventos_clave);
 
     fprintf(f, "</tbody>\n</table>\n");
     fprintf(f, "</div>\n</div>\n");
@@ -2906,18 +2960,17 @@ static ResumenAnioPdfCtx resumen_anio_pdf_partidos(ResumenAnioPdfCtx ctx, const 
 static ResumenAnioPdfCtx resumen_anio_pdf_meses(ResumenAnioPdfCtx ctx, const ResumenAnio *r)
 {
     char linea[128];
-    int i;
 
     ctx = resumen_anio_pdf_linea(ctx, "PARTIDOS MES A MES", 13.0f, 16.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "%-12s %4s %4s %4s %4s %4s %4s",
              "Mes", "PJ", "G", "A", "V", "E", "D");
     ctx = resumen_anio_pdf_linea(ctx, linea, 9.0f, 12.0f, "Courier");
-    for (i = 0; i < RESUMEN_ANIO_MESES; i++)
+    for (int i = 0; i < RESUMEN_ANIO_MESES; i++)
     {
         snprintf(linea, sizeof(linea), "%-12s %4d %4d %4d %4d %4d %4d",
                  resumen_anio_mes_nombre(i),
-                 r->mes_partidos[i], r->mes_goles[i], r->mes_asistencias[i],
-                 r->mes_victorias[i], r->mes_empates[i], r->mes_derrotas[i]);
+                 r->meses[i].partidos, r->meses[i].goles, r->meses[i].asistencias,
+                 r->meses[i].victorias, r->meses[i].empates, r->meses[i].derrotas);
         ctx = resumen_anio_pdf_linea(ctx, linea, 9.0f, 12.0f, "Courier");
     }
 
@@ -2930,19 +2983,19 @@ static ResumenAnioPdfCtx resumen_anio_pdf_equipamiento(ResumenAnioPdfCtx ctx, co
 
     ctx = resumen_anio_pdf_linea(ctx, "EQUIPAMIENTO, LESIONES Y CANCHAS", 13.0f, 16.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "Camisetas activas: %d    Camisetas usadas: %d",
-             r->camisetas_activas, r->camisetas_usadas);
+             r->camiseta.activas, r->camiseta.usadas);
     ctx = resumen_anio_pdf_linea(ctx, linea, 10.0f, 13.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "Camiseta mas usada: %s (%d partidos)",
-             r->camiseta_top, r->camiseta_top_partidos);
+             r->camiseta.top, r->camiseta.top_partidos);
     ctx = resumen_anio_pdf_linea(ctx, linea, 10.0f, 13.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "Lesiones en el año: %d    Lesiones activas: %d",
              r->lesiones, r->lesiones_activas);
     ctx = resumen_anio_pdf_linea(ctx, linea, 10.0f, 13.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "Canchas activas: %d    Canchas usadas: %d",
-             r->canchas_activas, r->canchas_usadas);
+             r->cancha.activas, r->cancha.usadas);
     ctx = resumen_anio_pdf_linea(ctx, linea, 10.0f, 13.0f, "Helvetica");
     snprintf(linea, sizeof(linea), "Cancha mas usada: %s (%d partidos)",
-             r->cancha_top, r->cancha_top_partidos);
+             r->cancha.top, r->cancha.top_partidos);
     ctx = resumen_anio_pdf_linea(ctx, linea, 10.0f, 16.0f, "Helvetica");
 
     return ctx;
@@ -3025,9 +3078,9 @@ static ResumenAnioPdfCtx resumen_anio_pdf_mejor(ResumenAnioPdfCtx ctx, const Res
     resumen_anio_texto_marcador(p, texto, sizeof(texto));
     ctx = resumen_anio_pdf_detalle(ctx, "Marcador", texto);
 
-    if (p->goles_detalle[0] != '\0')
+    if (p->textos.goles_detalle[0] != '\0')
     {
-        snprintf(texto, sizeof(texto), "%d [%s]", p->goles, p->goles_detalle);
+        snprintf(texto, sizeof(texto), "%d [%s]", p->goles, p->textos.goles_detalle);
         ctx = resumen_anio_pdf_detalle(ctx, "Goles", texto);
     }
     else if (p->goles > 0)
@@ -3036,9 +3089,9 @@ static ResumenAnioPdfCtx resumen_anio_pdf_mejor(ResumenAnioPdfCtx ctx, const Res
         ctx = resumen_anio_pdf_detalle(ctx, "Goles", texto);
     }
 
-    if (p->asistencias_detalle[0] != '\0')
+    if (p->textos.asistencias_detalle[0] != '\0')
     {
-        snprintf(texto, sizeof(texto), "%d [%s]", p->asistencias, p->asistencias_detalle);
+        snprintf(texto, sizeof(texto), "%d [%s]", p->asistencias, p->textos.asistencias_detalle);
         ctx = resumen_anio_pdf_detalle(ctx, "Asistencias", texto);
     }
     else if (p->asistencias > 0)
@@ -3050,15 +3103,15 @@ static ResumenAnioPdfCtx resumen_anio_pdf_mejor(ResumenAnioPdfCtx ctx, const Res
     usados = 0;
     texto[0] = '\0';
     resumen_anio_append(texto, sizeof(texto), &usados, p->cancha);
-    if (p->estado_cancha > 0)
+    if (p->meteo.estado_cancha > 0)
     {
         snprintf(temp, sizeof(temp), "estado %s",
-                 resumen_anio_estado_cancha_texto(p->estado_cancha));
+                 resumen_anio_estado_cancha_texto(p->meteo.estado_cancha));
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
-    if (p->condicion_cancha[0] != '\0')
+    if (p->meteo.condicion_cancha[0] != '\0')
     {
-        snprintf(temp, sizeof(temp), "condicion %s", p->condicion_cancha);
+        snprintf(temp, sizeof(temp), "condicion %s", p->meteo.condicion_cancha);
         resumen_anio_append(texto, sizeof(texto), &usados, temp);
     }
     ctx = resumen_anio_pdf_detalle(ctx, "Cancha", texto);
@@ -3077,11 +3130,11 @@ static ResumenAnioPdfCtx resumen_anio_pdf_mejor(ResumenAnioPdfCtx ctx, const Res
     resumen_anio_texto_arbitraje(p, texto, sizeof(texto));
     ctx = resumen_anio_pdf_detalle(ctx, "Arbitraje", texto);
 
-    ctx = resumen_anio_pdf_detalle(ctx, "Lo mejor", p->lo_mejor);
-    ctx = resumen_anio_pdf_detalle(ctx, "A mejorar", p->que_mejorar);
-    ctx = resumen_anio_pdf_detalle(ctx, "Comentario", p->comentario);
-    ctx = resumen_anio_pdf_detalle(ctx, "Tags", p->tags);
-    ctx = resumen_anio_pdf_detalle(ctx, "Eventos clave", p->eventos_clave);
+    ctx = resumen_anio_pdf_detalle(ctx, "Lo mejor", p->textos.lo_mejor);
+    ctx = resumen_anio_pdf_detalle(ctx, "A mejorar", p->textos.que_mejorar);
+    ctx = resumen_anio_pdf_detalle(ctx, "Comentario", p->textos.comentario);
+    ctx = resumen_anio_pdf_detalle(ctx, "Tags", p->textos.tags);
+    ctx = resumen_anio_pdf_detalle(ctx, "Eventos clave", p->textos.eventos_clave);
 
     return ctx;
 }
@@ -3211,7 +3264,7 @@ static void resumen_anio_mostrar_resumen(const ResumenAnio *r)
     ui_printf("Victorias: %d | Empates: %d | Derrotas: %d\n",
               r->victorias, r->empates, r->derrotas);
     ui_printf("Camisetas usadas: %d | Lesiones: %d | Canchas usadas: %d\n",
-              r->camisetas_usadas, r->lesiones, r->canchas_usadas);
+              r->camiseta.usadas, r->lesiones, r->cancha.usadas);
 }
 
 /**
