@@ -2,7 +2,6 @@
 #include "menu.h"
 #include "utils.h"
 #include "settings.h"
-#include "atajos.h"
 #include "carrera.h"
 #include "import.h"
 #include "undo.h"
@@ -101,9 +100,6 @@ int main(void)
 
     // Aviso opcional de recuerdos historicos para abrir Modo Retro
     carrera_notificar_modo_retro_inicio();
-    
-    // Inicializar sistema de atajos de teclado
-    inicializar_atajos();
 
     // Inicializar sistema de deshacer
     undo_init();
@@ -127,9 +123,6 @@ int main(void)
     MenuItem* filtered_items = create_filtered_menu(&count);
 
     run_menu(filtered_items, count);
-
-    // Finalizar sistema de atajos de teclado
-    finalizar_atajos();
 
     app_log_event("APP", "Aplicacion finalizada");
     db_close();

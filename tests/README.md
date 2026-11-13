@@ -1,8 +1,8 @@
 # Pruebas unitarias (Unity minimal)
 
 Este directorio contiene un *runner* de pruebas unitarias estilo Unity y un conjunto de pruebas de
-humo por módulo: `utils`, `camiseta`, `cancha`, `lesion`, `partido`, `temporada`, `torneo`, `equipo`
-y `botin`.
+humo por módulo: `utils`, `camiseta`, `cancha`, `lesion`, `partido`, `temporada`, `torneo`, `equipo`,
+`botin`, `estadisticas_canchas` y `resumen_compartible` (once archivos de prueba en total).
 
 ## Ejecutar en Windows (CMake + Ninja)
 

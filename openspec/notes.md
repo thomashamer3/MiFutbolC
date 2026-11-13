@@ -36,6 +36,8 @@ ctest --test-dir build/debug --output-on-failure
 
 `build/debug/CTestTestfile.cmake` registers 8 tests: `test_camiseta`, `test_cancha`,
 `test_equipo`, `test_lesion`, `test_partido`, `test_temporada`, `test_torneo`, `test_utils`.
+Una configuración actual (por ejemplo `build/verify`) registra 11: las ocho anteriores más
+`test_botin`, `test_estadisticas_canchas` y `test_resumen_compartible`.
 A stale `build/debug/MiFutbolC_tests.exe` exists but is **not** registered in `CTestTestfile.cmake`
 (artifact of an older configuration).
 
@@ -78,7 +80,7 @@ These project skills are useful for style/structure but contain incorrect concre
 - `mifutbolc-architecture`: documents 5 PRAGMAs with `cache_size = -16384`; the real code has 8
   connection-setup PRAGMAs at `db.c:644-651` with `cache_size = -32768` and `mmap_size = 268435456`.
   Documents 27 indexes (real: 54). Documents `DB_VERSION_CURRENT = 5` (real: 15). States "56 source
-  files" and "all tests in `tests/test_utils.c`" (real: 9 test files). States `sqlite3 *db` at
+  files" and "all tests in `tests/test_utils.c`" (real: 11 test files). States `sqlite3 *db` at
   `db.c:95` (real: `db.c:91`). Lists `.github/workflows/`, `codeql-custom-queries-cpp/`, and
   `Importaciones/` as present; none of them exist in the working tree.
 - `c-unit-test-unity`: test build command repeats the invalid `--preset mingw-debug` build form.

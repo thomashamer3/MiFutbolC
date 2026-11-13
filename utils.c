@@ -1,6 +1,5 @@
 #include "utils.h"
 #include "ascii_art.h"
-#include "atajos.h"
 #include "cJSON.h"
 #include "db.h"
 #include "export.h"
@@ -2805,7 +2804,6 @@ static void eliminar_mi_cuenta_local(void)
 
     auth_get_user_data_paths(username, user_db_path, sizeof(user_db_path), user_log_path,
                              sizeof(user_log_path));
-    finalizar_atajos();
     db_close();
     remove(user_db_path);
     remove(user_log_path);

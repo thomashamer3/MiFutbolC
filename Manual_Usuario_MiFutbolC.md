@@ -9,6 +9,7 @@ Bienvenido a **MiFutbolC**, el sistema completo de gestión y análisis de datos
 ### ¿Qué es MiFutbolC?
 
 MiFutbolC es una herramienta integral diseñada para:
+
 - Gestionar camisetas, canchas, botines, equipos y partidos de fútbol
 - Analizar estadísticas y rendimiento de manera profesional
 - Realizar seguimiento de lesiones y salud de jugadores
@@ -28,24 +29,25 @@ MiFutbolC es una herramienta integral diseñada para:
 
 ### Beneficios Clave
 
-**Gestión Completa**: Todo lo relacionado con el fútbol en un solo lugar  
-**Análisis Profesional**: Estadísticas avanzadas y meta-análisis  
-**Seguimiento de Salud**: Gestión detallada de lesiones  
-**Control Financiero**: Registro de ingresos y gastos por categorías  
-**Gestión de Temporadas**: Seguimiento de ciclos deportivos completos  
-**Exportación Flexible**: Múltiples formatos (CSV, JSON, HTML, TXT, PDF, ODS)  
-**Informe PDF Mejorado**: Portada, secciones y más datos  
-**Exportación ODS**: Hojas de cálculo compatibles con LibreOffice y Excel  
-**Sistema Gamificado**: Logros y badges para motivar el uso continuo  
-**Bienestar Integral**: Hábitos, salud y reportes personales  
-**Entrenador IA**: Recomendaciones inteligentes basadas en datos  
-**Personalización**: Configuración de temas, idioma y preferencias  
+**Gestión Completa**: Todo lo relacionado con el fútbol en un solo lugar
+**Análisis Profesional**: Estadísticas avanzadas y meta-análisis
+**Seguimiento de Salud**: Gestión detallada de lesiones
+**Control Financiero**: Registro de ingresos y gastos por categorías
+**Gestión de Temporadas**: Seguimiento de ciclos deportivos completos
+**Exportación Flexible**: Múltiples formatos (CSV, JSON, HTML, TXT, PDF, ODS)
+**Informe PDF Mejorado**: Portada, secciones y más datos
+**Exportación ODS**: Hojas de cálculo compatibles con LibreOffice y Excel
+**Sistema Gamificado**: Logros y badges para motivar el uso continuo
+**Bienestar Integral**: Hábitos, salud y reportes personales
+**Entrenador IA**: Recomendaciones inteligentes basadas en datos
+**Personalización**: Configuración de temas, idioma y preferencias
+
 - **Rutas de base de datos más robustas**: mejora interna en la construcción de rutas usando `snprintf`.
 - **Logs más confiables**: ajustes en el formateo de mensajes para evitar inconsistencias en salidas de diagnóstico.
 - **Gestión de imágenes optimizada**: mejoras en selección, resolución y actualización de rutas de imágenes de camisetas.
 - **Mejor feedback en herramientas opcionales**: mensajes de éxito/advertencia más claros al configurar utilidades de imagen.
 
-### Novedades recientes (v4.5.1)
+### Novedades recientes (v4.5.2)
 
 - **Documentación en video**: nueva página [VIDEOS.md](VIDEOS.md) con la **Presentación** del sistema y el **Tutorial** paso a paso (`videos/presentacion.mp4` y `videos/tutorial.mp4`), enlazada desde el README.
 - **Correcciones de calidad (SonarQube)**: simplificación y división de funciones en `resumen_compartible.c` y `utils.c`, y ajuste en `camiseta.c`.
@@ -78,8 +80,8 @@ MiFutbolC es una herramienta integral diseñada para:
 - **Sistema Operativo**: Windows, Linux o macOS
 - **Compilador C**: GCC o MinGW
 - **Herramientas Adicionales**:
-  - CodeBlocks (recomendado para desarrollo)
-  - Pandoc (opcional, para generar este manual en PDF)
+    - CodeBlocks (recomendado para desarrollo)
+    - Pandoc (opcional, para generar este manual en PDF)
 
 ## Instalación y Compilación
 
@@ -178,16 +180,16 @@ Al ejecutar el programa por primera vez:
 1. Se abrirá el flujo de **inicio de sesión multiusuario local**
 2. Podrás crear tu primer usuario local (o elegir uno existente)
 3. Cada perfil usará su propia base de datos SQLite
-   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
-   - **Linux/macOS**: `./data/mifutbol_<usuario>.db`
+    - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
+    - **Linux/macOS**: `./data/mifutbol_<usuario>.db`
 
-   Además, se utiliza un registro de usuarios locales:
-   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
-   - **Linux/macOS**: `./data/users.db`
+    Además, se utiliza un registro de usuarios locales:
+    - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
+    - **Linux/macOS**: `./data/users.db`
 
-   También se crea automáticamente el archivo de log de actividad:
-   - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
-   - **Linux/macOS**: `./data/mifutbol_<usuario>.log`
+    También se crea automáticamente el archivo de log de actividad:
+    - **Windows**: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
+    - **Linux/macOS**: `./data/mifutbol_<usuario>.log`
 
 4. Podrás definir contraseña opcional para tu perfil
 5. Se mostrarán los directorios de exportación e importación
@@ -222,7 +224,7 @@ El menú principal ofrece las siguientes opciones:
 22. **Resumen Compartible** - Generar un resumen del perfil en HTML o Markdown, con estadísticas destacadas y mejor temporada
 23. **Ranking Amigos** - Gestionar amigos y comparar estadísticas con ellos
 24. **Ajustes** - Configurar temas, idioma, accesibilidad y herramientas
-0. **Salir** - Cerrar el programa
+25. **Salir** - Cerrar el programa
 
 ![Menú principal](images/menu.png)
 
@@ -302,9 +304,9 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 6. Las camisetas **inactivas** se marcan con `[INACTIVA]`, las que no tienen partidos con `(sin uso)` y la de mejor desempeño con `>>> MAS EFECTIVA <<<`
 7. Al pie del listado verás un **RESUMEN** con los totales
 8. Dentro del listado puedes usar:
-   - `4) Ver detalle de una fila`: abre la ficha completa de la camiseta sin salir del listado
-   - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro)
-   - `0) Volver`: regresa al menú de Camisetas
+    - `4) Ver detalle de una fila`: abre la ficha completa de la camiseta sin salir del listado
+    - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro)
+    - `0) Volver`: regresa al menú de Camisetas
 
 > **Tip:** el **Grafico de Uso** (opción `12`) muestra de un vistazo qué camisetas acumulan más partidos.
 
@@ -321,9 +323,9 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 2. Elige "4" para eliminar una camiseta
 3. Ingresa el ID de la camiseta a eliminar
 4. Si la camiseta tiene partidos asociados, el sistema ofrece:
-   - Reasignar partidos a otra camiseta activa y eliminar la original
-   - Eliminar la camiseta junto con todos sus partidos asociados
-   - Retirar camiseta (marcar inactiva y conservar historial)
+    - Reasignar partidos a otra camiseta activa y eliminar la original
+    - Eliminar la camiseta junto con todos sus partidos asociados
+    - Retirar camiseta (marcar inactiva y conservar historial)
 5. Confirma la operación escribiendo la frase de validación solicitada
 
 ### Ajustes de Imagen de Camiseta
@@ -331,9 +333,9 @@ El Calendario permite visualizar y gestionar la agenda deportiva:
 1. Selecciona "2" en el menú principal
 2. Elige "8" (**Ajustes Imagen**)
 3. Opciones disponibles:
-   - Configurar visor preferido
-   - Probar visor actual
-   - Previsualizar imagen en consola
+    - Configurar visor preferido
+    - Probar visor actual
+    - Previsualizar imagen en consola
 
 ### Reactivar Camiseta
 
@@ -415,9 +417,9 @@ Para obtener las coordenadas de tu cancha:
 5. Cada cancha se separa con `========================================`
 6. Al pie del listado verás un **RESUMEN** (canchas activas/inactivas, partidos, goles, asistencias, V/E/D y promedio de goles por partido)
 7. Dentro del listado puedes usar:
-   - `4) Ver detalle de una fila`: abre la ficha completa de la cancha sin salir del listado
-   - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro) en TXT/CSV/JSON/HTML/PDF
-   - `0) Volver`: regresa al menú de Canchas
+    - `4) Ver detalle de una fila`: abre la ficha completa de la cancha sin salir del listado
+    - `5) Exportar este listado`: exporta solo lo listado (respetando el filtro) en TXT/CSV/JSON/HTML/PDF
+    - `0) Volver`: regresa al menú de Canchas
 
 ### Editar una Cancha
 
@@ -432,9 +434,9 @@ Para obtener las coordenadas de tu cancha:
 2. Elige "4" para eliminar una cancha
 3. Ingresa el ID de la cancha a eliminar
 4. Si la cancha tiene partidos asociados, podrás:
-   - Reasignar partidos a otra cancha activa y eliminar la original
-   - Eliminar la cancha junto con todos sus partidos asociados
-   - Retirar cancha (marcar inactiva y conservar historial)
+    - Reasignar partidos a otra cancha activa y eliminar la original
+    - Eliminar la cancha junto con todos sus partidos asociados
+    - Retirar cancha (marcar inactiva y conservar historial)
 5. Confirma la operación escribiendo la frase de validación solicitada
 
 ### Reactivar una Cancha
@@ -449,8 +451,8 @@ Para obtener las coordenadas de tu cancha:
 1. Selecciona "3" en el menú principal
 2. Elige "10" (**Exportar Información**)
 3. Define el alcance:
-   - Todas las canchas
-   - Una cancha específica
+    - Todas las canchas
+    - Una cancha específica
 4. Elige formato único o exportación completa en todos los formatos
 5. Los archivos se guardan en el directorio de exportaciones configurado
 
@@ -530,18 +532,18 @@ Selecciona "5" en el menú principal para acceder al menú de gestión de equipo
 1. Selecciona "5" en el menú principal
 2. Elige "1" para crear un nuevo equipo
 3. Selecciona el tipo de equipo:
-   - **Fijo**: Se guarda permanentemente en la base de datos
-   - **Momentáneo**: Solo para uso temporal/simulación
+    - **Fijo**: Se guarda permanentemente en la base de datos
+    - **Momentáneo**: Solo para uso temporal/simulación
 4. Elige la modalidad de fútbol:
-   - Fútbol 5
-   - Fútbol 7
-   - Fútbol 8
-   - Fútbol 11
+    - Fútbol 5
+    - Fútbol 7
+    - Fútbol 8
+    - Fútbol 11
 5. Ingresa el nombre del equipo
 6. Agrega jugadores con sus datos:
-   - Nombre del jugador
-   - Número de camiseta
-   - Posición (Arquero, Defensor, Mediocampista, Delantero)
+    - Nombre del jugador
+    - Número de camiseta
+    - Posición (Arquero, Defensor, Mediocampista, Delantero)
 7. Designa un capitán si es necesario
 8. Para equipos fijos, se guardará en la base de datos
 
@@ -586,26 +588,26 @@ Selecciona "5" en el menú principal para acceder al menú de gestión de equipo
 1. Selecciona "6" en el menú principal
 2. Elige "1" para crear un nuevo partido
 3. Elige el modo de carga:
-   - **Amistoso**
-   - **Torneo**
-   - **Entrenamiento**
+    - **Amistoso**
+    - **Torneo**
+    - **Entrenamiento**
 4. Selecciona la cancha donde se jugó
 5. Ingresa la fecha y hora del partido
 6. Ingresa las estadísticas base:
-   - Goles marcados
-   - Asistencias realizadas
-   - Rendimiento general (1-10)
-   - Nivel de cansancio (1-10)
-   - Estado de ánimo (1-10)
-   - Clima (catálogo ampliado)
-   - Comentario personal (opcional)
+    - Goles marcados
+    - Asistencias realizadas
+    - Rendimiento general (1-10)
+    - Nivel de cansancio (1-10)
+    - Estado de ánimo (1-10)
+    - Clima (catálogo ampliado)
+    - Comentario personal (opcional)
 7. Para Torneo/Entrenamiento también podrás registrar contexto ampliado:
-   - Estado de cancha
-   - Marcador global (en torneo)
-   - Formato de fútbol (Fútbol 5/7/8/11)
-   - Tarjeta y goles en contra
-   - Dolor físico y temperatura (opcional)
-   - Arbitraje score, eventos clave, lo mejor, qué mejorar y tags
+    - Estado de cancha
+    - Marcador global (en torneo)
+    - Formato de fútbol (Fútbol 5/7/8/11)
+    - Tarjeta y goles en contra
+    - Dolor físico y temperatura (opcional)
+    - Arbitraje score, eventos clave, lo mejor, qué mejorar y tags
 8. Selecciona la camiseta utilizada
 9. El partido se guardará con todos los datos
 
@@ -712,9 +714,9 @@ deshabilitada. Solo se consideran partidos con clima registrado (opción "8. Obt
 
 1. Selecciona "7" en el menú principal
 2. Usa opciones adicionales del menú de lesiones:
-   - "5" Estadísticas
-   - "6" Diferencias entre lesiones
-   - "7" Actualizar estados
+    - "5" Estadísticas
+    - "6" Diferencias entre lesiones
+    - "7" Actualizar estados
 
 ![Gestión de lesiones](images/menulesiones.png)
 
@@ -895,17 +897,17 @@ Selecciona "10" en el menú principal para acceder al módulo de gestión financ
 1. Selecciona "10" en el menú principal
 2. Elige "1" para agregar una nueva transacción
 3. Selecciona el tipo:
-   - **Ingreso**: Cuotas, sponsors, premios, etc.
-   - **Gasto**: Diversos tipos de gastos
+    - **Ingreso**: Cuotas, sponsors, premios, etc.
+    - **Gasto**: Diversos tipos de gastos
 4. Elige la categoría:
-   - Transporte
-   - Equipamiento
-   - Cuotas
-   - Torneos
-   - Arbitraje
-   - Canchas
-   - Medicina
-   - Otros
+    - Transporte
+    - Equipamiento
+    - Cuotas
+    - Torneos
+    - Arbitraje
+    - Canchas
+    - Medicina
+    - Otros
 5. Ingresa la descripción detallada
 6. Especifica el monto
 7. Indica el item específico si aplica
@@ -936,10 +938,10 @@ Selecciona "10" en el menú principal para acceder al módulo de gestión financ
 1. Selecciona "10" en el menú principal
 2. Elige "5" para ver un resumen completo
 3. Se mostrará:
-   - Total de ingresos
-   - Total de gastos
-   - Balance actual
-   - Transacciones recientes
+    - Total de ingresos
+    - Total de gastos
+    - Balance actual
+    - Transacciones recientes
 
 ### Ver Balance de Gastos
 
@@ -979,15 +981,15 @@ Selecciona "11" en el menú principal para acceder al menú de gestión de torne
 3. Ingresa el nombre del torneo
 4. Selecciona si tiene equipo fijo
 5. Elige el tipo de torneo:
-   - Ida y Vuelta
-   - Solo Ida
-   - Eliminación Directa
-   - Grupos y Eliminación
+    - Ida y Vuelta
+    - Solo Ida
+    - Eliminación Directa
+    - Grupos y Eliminación
 6. Selecciona el formato:
-   - Round Robin
-   - Grupos con Final
-   - Copa Simple
-   - Eliminación Directa por Fases
+    - Round Robin
+    - Grupos con Final
+    - Copa Simple
+    - Eliminación Directa por Fases
 7. Especifica la cantidad de equipos participantes
 
 ### Listar Torneos
@@ -1034,14 +1036,14 @@ Selecciona "12" en el menú principal para acceder al sistema de gestión de tem
 5. Ingresa la fecha de inicio (formato YYYY-MM-DD)
 6. Ingresa la fecha de fin (formato YYYY-MM-DD)
 7. Selecciona el estado:
-   - Planificada
-   - Activa
-   - Finalizada
+    - Planificada
+    - Activa
+    - Finalizada
 8. Agrega una descripción (opcional)
 9. Se crearán automáticamente las fases por defecto:
-   - Pretemporada
-   - Temporada Regular
-   - Posttemporada
+    - Pretemporada
+    - Temporada Regular
+    - Posttemporada
 
 ### Listar Temporadas
 
@@ -1069,14 +1071,14 @@ Selecciona "12" en el menú principal para acceder al sistema de gestión de tem
 2. Elige "5" para administrar una temporada
 3. Selecciona la temporada a administrar
 4. Accede a funciones avanzadas:
-   - **Ver Dashboard**: Vista general de la temporada
-   - **Asociar Torneos**: Vincular torneos a la temporada
-   - **Ver Estadísticas de Fatiga**: Análisis de cansancio acumulado
-   - **Ver Evolución de Equipos**: Tendencias de rendimiento
-   - **Generar Resumen**: Resumen automático de la temporada
-   - **Comparar Temporadas**: Comparación entre diferentes temporadas
-   - **Ver Resúmenes Mensuales**: Análisis mes a mes
-   - **Exportar Resumen**: Guardar resumen en archivo
+    - **Ver Dashboard**: Vista general de la temporada
+    - **Asociar Torneos**: Vincular torneos a la temporada
+    - **Ver Estadísticas de Fatiga**: Análisis de cansancio acumulado
+    - **Ver Evolución de Equipos**: Tendencias de rendimiento
+    - **Generar Resumen**: Resumen automático de la temporada
+    - **Comparar Temporadas**: Comparación entre diferentes temporadas
+    - **Ver Resúmenes Mensuales**: Análisis mes a mes
+    - **Exportar Resumen**: Guardar resumen en archivo
 
 ### Comparar Temporadas
 
@@ -1089,6 +1091,7 @@ Selecciona "12" en el menú principal para acceder al sistema de gestión de tem
 #### Dashboard de Temporada
 
 Muestra información completa:
+
 - Total de partidos jugados
 - Goles totales
 - Promedio de goles por partido
@@ -1101,6 +1104,7 @@ Muestra información completa:
 #### Estadísticas de Fatiga
 
 Análisis de cansancio:
+
 - Fatiga acumulada por equipo
 - Fatiga acumulada por jugador
 - Partidos jugados
@@ -1111,6 +1115,7 @@ Análisis de cansancio:
 #### Resúmenes Mensuales
 
 Análisis mensual automático:
+
 - Total de partidos del mes
 - Goles del mes
 - Promedio de goles por partido
@@ -1240,6 +1245,7 @@ Selecciona "18" en el menú principal para acceder al módulo de récords y rank
 ### Análisis de Rankings
 
 El módulo permite comparar:
+
 - Temporadas por rendimiento promedio
 - Combinaciones cancha-camiseta óptimas
 - Rachas goleadoras y sequías
@@ -1314,19 +1320,19 @@ Selecciona "13" en el menú principal, luego **Entrenador IA** (opción 4) dentr
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "1" para ver consejos actuales
 4. El sistema evaluará tu estado actual:
-   - Rendimiento promedio
-   - Cansancio promedio
-   - Estado de ánimo promedio
-   - Partidos consecutivos
-   - Riesgo de lesión
-   - Derrotas consecutivas
-   - Días de descanso
+    - Rendimiento promedio
+    - Cansancio promedio
+    - Estado de ánimo promedio
+    - Partidos consecutivos
+    - Riesgo de lesión
+    - Derrotas consecutivas
+    - Días de descanso
 5. Recibirás consejos personalizados por categoría:
-   - **Físico**: Recomendaciones sobre cansancio y recuperación
-   - **Mental**: Consejos sobre estado de ánimo
-   - **Deportivo**: Sugerencias tácticas y de rendimiento
-   - **Salud**: Prevención de lesiones
-   - **Gestión**: Administración del equipo
+    - **Físico**: Recomendaciones sobre cansancio y recuperación
+    - **Mental**: Consejos sobre estado de ánimo
+    - **Deportivo**: Sugerencias tácticas y de rendimiento
+    - **Salud**: Prevención de lesiones
+    - **Gestión**: Administración del equipo
 
 #### Niveles de Consejos
 
@@ -1355,15 +1361,16 @@ Selecciona "13" en el menú principal, luego **Entrenador IA** (opción 4) dentr
 2. Elige "4" para entrar a Entrenador IA
 3. Elige "4" para configurar el nivel de intervención
 4. Selecciona el nivel (0-3):
-   - **0. Silencioso**: la IA no interrumpe automáticamente al crear partidos
-   - **1. Conservador**: solo avisa ante riesgo de lesión crítico
-   - **2. Moderado**: avisa ante riesgo alto (nivel por defecto)
-   - **3. Agresivo**: avisa ante el menor indicio de riesgo
+    - **0. Silencioso**: la IA no interrumpe automáticamente al crear partidos
+    - **1. Conservador**: solo avisa ante riesgo de lesión crítico
+    - **2. Moderado**: avisa ante riesgo alto (nivel por defecto)
+    - **3. Agresivo**: avisa ante el menor indicio de riesgo
 5. El nivel se guarda en la base de datos y se mantiene entre sesiones
 
 #### Activación Automática
 
 El Entrenador IA se activa automáticamente:
+
 - Antes de un partido, solo si el riesgo de lesión supera el umbral del nivel configurado
 - Antes de un torneo
 - Al revisar estadísticas
@@ -1442,8 +1449,30 @@ Selecciona "22" en el menú principal (Resumen Compartible). Genera un resumen d
 - **2. Generar Resumen Markdown**: la misma información en `resumen_compartible.md`, ideal para pegar en un chat o en un README.
 - **3. Estadísticas Destacadas**: resumen de las métricas más relevantes.
 - **4. Mejor Temporada**: la temporada con mejores números.
+- **5. Resumen Anual**: abre un submenú que genera el resumen del año en curso en TXT, HTML, PDF o los tres formatos a la vez.
 
 Los dos formatos comparten la preparación de datos, así que los números que muestran son idénticos.
+
+### Resumen del Año
+
+Al elegir la opción **5** se abre el submenú `RESUMEN ANUAL` (en la consola la opción se llama **Resumen Anual**, sin la letra ñ, para que se vea bien en cualquier terminal de Windows; dentro de los archivos generados sí dice «Año»).
+
+- **1. Resumen Anual en TXT**: `resumen_anio_<AAAA>.txt`, pensado para leer o pegar en un chat.
+- **2. Resumen Anual en HTML**: `resumen_anio_<AAAA>.html`, con el mismo estilo de tarjetas que el resto de reportes.
+- **3. Resumen Anual en PDF**: `resumen_anio_<AAAA>.pdf`, listo para imprimir o compartir.
+- **4. Generar los tres formatos**: crea los tres archivos en una sola pasada.
+
+El resumen toma solo los registros del año en curso y agrupa:
+
+- Partidos jugados, goles, asistencias, victorias, empates, derrotas y efectividad (puntos obtenidos sobre el máximo posible: 3 por victoria y 1 por empate).
+- Goles a favor, goles en contra y diferencia (solo de los partidos con marcador cargado).
+- Detalle mes a mes (partidos, goles, asistencias, victorias, empates, derrotas).
+- Camisetas activas, camisetas usadas y la camiseta más usada del año.
+- Lesiones registradas en el año y cuántas siguen activas.
+- Canchas activas, canchas usadas y la cancha más usada del año.
+- El mejor partido del año según el rendimiento, con su ficha completa: fecha, rival y tipo de rival, marcador y diferencia, goles y asistencias con su detalle, cancha y camiseta, clima, físico, contexto, arbitraje, comentario, tags y eventos clave.
+
+Los archivos se guardan en la misma carpeta de exportación que el resto de reportes. Si en el año todavía no hay partidos, el reporte se genera igual y avisa de que no hay actividad; el detalle del marcador aparece como "sin datos" cuando ningún partido tiene goles cargados.
 
 ## Ranking de Amigos
 
@@ -1478,6 +1507,7 @@ Selecciona "24" en el menú principal (Ajustes) y luego **Exportar** (opción 8)
 ### Formatos Disponibles
 
 Para cada módulo puedes elegir el formato:
+
 - **CSV**: Valores separados por comas (ideal para Excel)
 - **TXT**: Texto plano formateado
 - **JSON**: Formato estructurado (ideal para integración)
@@ -1511,6 +1541,7 @@ ideal para análisis avanzados en programas de hoja de cálculo.
 La opción "Análisis Avanzado" proporciona exportación con análisis integrado:
 
 #### Camisetas con Análisis Avanzado
+
 - Eficiencia de goles/asistencias
 - Porcentaje de victorias
 - Análisis de lesiones
@@ -1518,12 +1549,14 @@ La opción "Análisis Avanzado" proporciona exportación con análisis integrado
 - Tendencias de uso
 
 #### Lesiones con Análisis de Impacto
+
 - Evaluación de gravedad de lesiones
 - Comparación de rendimiento antes/después
 - Identificación de patrones de lesiones
 - Análisis de recuperación
 
 #### Todo con Análisis Avanzado
+
 - Combina todas las funcionalidades mejoradas
 - Análisis completo del sistema
 - Recomendaciones basadas en datos
@@ -1534,6 +1567,7 @@ La opción "Análisis Avanzado" proporciona exportación con análisis integrado
 - **Linux/macOS**: `./exportaciones`
 
 Los archivos se guardan con nombres descriptivos como:
+
 - `camisetas.csv`
 - `partidos.json`
 - `estadisticas.html`
@@ -1549,28 +1583,28 @@ Selecciona "24" en el menú principal (Ajustes) y luego **Importar** (opción 9)
 
 1. Los archivos pueden estar en formato JSON, TXT, CSV o HTML
 2. Deben ubicarse en el directorio de importaciones:
-   - **Windows**: `%USERPROFILE%\Documents\MiFutbolC\Importaciones`
-   - **Linux/macOS**: `./importaciones`
+    - **Windows**: `%USERPROFILE%\Documents\MiFutbolC\Importaciones`
+    - **Linux/macOS**: `./importaciones`
 3. Los archivos deben tener los nombres específicos generados por la exportación
 
 ### Proceso de Importación
 
 1. Selecciona "24" en el menú principal y luego **Importar**
 2. Elige una opción del menú de importación:
-   - "1" Importar desde JSON
-   - "2" Importar desde TXT
-   - "3" Importar desde CSV
-   - "4" Importar desde HTML
-   - "5" Todo JSON rápido
-   - "6" Todo CSV rápido
-   - "7" Importar base de datos
-4. El sistema validará la estructura del archivo
-5. Se verificará que los datos sean correctos
-6. Los datos se insertarán en la base de datos
-7. Recibirás un resumen de la importación:
-   - Registros importados exitosamente
-   - Errores encontrados (si los hay)
-   - Advertencias sobre datos duplicados
+    - "1" Importar desde JSON
+    - "2" Importar desde TXT
+    - "3" Importar desde CSV
+    - "4" Importar desde HTML
+    - "5" Todo JSON rápido
+    - "6" Todo CSV rápido
+    - "7" Importar base de datos
+3. El sistema validará la estructura del archivo
+4. Se verificará que los datos sean correctos
+5. Los datos se insertarán en la base de datos
+6. Recibirás un resumen de la importación:
+    - Registros importados exitosamente
+    - Errores encontrados (si los hay)
+    - Advertencias sobre datos duplicados
 
 ### Validaciones Realizadas
 
@@ -1583,6 +1617,7 @@ Selecciona "24" en el menú principal (Ajustes) y luego **Importar** (opción 9)
 ### Manejo de Errores
 
 Si hay errores durante la importación:
+
 - Se mostrará un mensaje detallado del error
 - Los datos no se importarán parcialmente
 - La base de datos permanecerá intacta
@@ -1614,14 +1649,14 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 1. Selecciona "24" en el menú principal
 2. Elige "1" para cambiar el tema
 3. Selecciona uno de los temas disponibles:
-   - **Claro**: Fondo claro, texto oscuro
-   - **Oscuro**: Fondo oscuro, texto claro
-   - **Azul**: Tonos azules
-   - **Verde**: Tonos verdes
-   - **Rojo**: Tonos rojos
-   - **Púrpura**: Tonos púrpuras
-   - **Clásico**: Estilo retro
-   - **Alto Contraste**: Máxima legibilidad
+    - **Claro**: Fondo claro, texto oscuro
+    - **Oscuro**: Fondo oscuro, texto claro
+    - **Azul**: Tonos azules
+    - **Verde**: Tonos verdes
+    - **Rojo**: Tonos rojos
+    - **Púrpura**: Tonos púrpuras
+    - **Clásico**: Estilo retro
+    - **Alto Contraste**: Máxima legibilidad
 4. El tema se aplicará inmediatamente
 5. La configuración se guardará para futuras sesiones
 
@@ -1630,8 +1665,8 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 1. Selecciona "24" en el menú principal
 2. Elige "2" para cambiar el idioma
 3. Selecciona entre:
-   - **Español**: Idioma por defecto
-   - **Inglés**: English language
+    - **Español**: Idioma por defecto
+    - **Inglés**: English language
 4. El idioma se aplicará inmediatamente
 5. Todos los menús y mensajes cambiarán al nuevo idioma
 
@@ -1646,12 +1681,12 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 1. Selecciona "24" en el menú principal
 2. Elige "4" para abrir **Usuario**
 3. Desde este menú puedes:
-   - Mostrar nombre actual
-   - Editar nombre visible
-   - Agregar usuario local
-   - Modificar tu contraseña
-   - Quitar tu contraseña
-   - Eliminar tu cuenta local (irreversible)
+    - Mostrar nombre actual
+    - Editar nombre visible
+    - Agregar usuario local
+    - Modificar tu contraseña
+    - Quitar tu contraseña
+    - Eliminar tu cuenta local (irreversible)
 4. Los cambios se aplican al perfil activo
 
 ### Ver Configuración Actual
@@ -1659,11 +1694,11 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 1. Selecciona "24" en el menú principal
 2. Elige "5" para ver la configuración actual
 3. Se mostrará:
-   - Tema actual
-   - Idioma actual
-   - Nombre visible del perfil
-   - Ubicación de la base de datos
-   - Directorios de exportación e importación
+    - Tema actual
+    - Idioma actual
+    - Nombre visible del perfil
+    - Ubicación de la base de datos
+    - Directorios de exportación e importación
 
 ### Restablecer Valores por Defecto
 
@@ -1671,9 +1706,9 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 2. Elige "6" para restablecer configuración por defecto
 3. Confirma la acción
 4. Se restaurarán:
-   - Tema: Claro
-   - Idioma: Español
-   - Otras configuraciones a valores iniciales
+    - Tema: Claro
+    - Idioma: Español
+    - Otras configuraciones a valores iniciales
 
 ### Modo de Menú
 
@@ -1732,6 +1767,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: El ejecutable no inicia o muestra error inmediatamente
 
 **Soluciones**:
+
 - Verifica que el archivo ejecutable existe en `bin/Debug/MiFutbolC.exe` (Windows) o `./MiFutbolC` (Linux/macOS)
 - Asegúrate de tener permisos para ejecutar archivos en el directorio
 - En Linux/macOS, verifica permisos: `chmod +x MiFutbolC`
@@ -1742,9 +1778,10 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: Mensaje de error relacionado con la base de datos
 
 **Soluciones**:
+
 - Verifica que el directorio de datos existe y tienes permisos de escritura:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\`
-  - Linux/macOS: `./data/`
+    - Windows: `%LOCALAPPDATA%\MiFutbolC\data\`
+    - Linux/macOS: `./data/`
 - El programa creará automáticamente la base de datos `mifutbol_<usuario>.db` del perfil activo si no existe
 - Verifica también que el archivo de usuarios `users.db` exista y sea accesible
 - Si la base de datos está corrupta, renómbrala y el programa creará una nueva
@@ -1755,6 +1792,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: Los cambios no persisten entre sesiones
 
 **Soluciones**:
+
 - Verifica que no hay errores en la consola al guardar
 - Revisa que la base de datos no esté en modo solo lectura
 - Comprueba que tienes permisos de escritura en el directorio de datos
@@ -1765,6 +1803,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: Caracteres especiales no se muestran correctamente
 
 **Soluciones**:
+
 - El programa configura automáticamente UTF-8
 - Si persiste, ejecuta manualmente: `chcp 65001` en la consola antes de ejecutar el programa
 - Verifica que tu terminal soporta UTF-8
@@ -1775,9 +1814,10 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: La exportación falla o no se encuentran los archivos
 
 **Soluciones**:
+
 - Verifica que el directorio de exportaciones existe:
-  - Windows: `%USERPROFILE%\Documents\MiFutbolC\Exportaciones`
-  - Linux/macOS: `./exportaciones`
+    - Windows: `%USERPROFILE%\Documents\MiFutbolC\Exportaciones`
+    - Linux/macOS: `./exportaciones`
 - Asegúrate de tener permisos de escritura en ese directorio
 - Verifica espacio disponible en disco
 - Comprueba que no haya archivos con el mismo nombre bloqueados por otra aplicación
@@ -1787,6 +1827,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: La importación falla o muestra errores de validación
 
 **Soluciones**:
+
 - Verifica que el archivo esté bien formado (JSON/TXT/CSV/HTML)
 - Asegúrate de que el archivo está en el directorio correcto de importaciones
 - Comprueba que los datos son válidos (IDs existentes, tipos correctos)
@@ -1798,6 +1839,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: El programa se vuelve lento con muchos datos
 
 **Soluciones**:
+
 - Considera archivar datos antiguos exportándolos y eliminándolos de la base de datos activa
 - Cierra otras aplicaciones que puedan estar usando recursos
 - Verifica que la base de datos no esté fragmentada (SQLite se optimiza automáticamente)
@@ -1808,6 +1850,7 @@ Selecciona "24" en el menú principal para acceder al menú de configuración de
 **Problema**: Error al generar códigos QR
 
 **Soluciones**:
+
 - Verifica que tienes permisos de escritura en el directorio de exportaciones
 - Asegúrate de que los datos del partido/camiseta/temporada existen
 - Comprueba espacio disponible en disco
@@ -1876,13 +1919,13 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 
 ### Características Destacadas
 
-✅ **Gestión Integral**: Desde equipamiento hasta finanzas  
-✅ **Análisis Avanzado**: Estadísticas profesionales y meta-análisis  
-✅ **Sistema Inteligente**: Entrenador IA con recomendaciones personalizadas  
-✅ **Gamificación**: Logros y badges para mantener la motivación  
-✅ **Flexibilidad**: Múltiples formatos de exportación e importación (CSV, TXT, JSON, HTML, PDF, ODS)  
-✅ **Personalización**: Temas, idiomas y configuraciones adaptables  
-✅ **Organización**: Torneos y temporadas completas  
+✅ **Gestión Integral**: Desde equipamiento hasta finanzas
+✅ **Análisis Avanzado**: Estadísticas profesionales y meta-análisis
+✅ **Sistema Inteligente**: Entrenador IA con recomendaciones personalizadas
+✅ **Gamificación**: Logros y badges para mantener la motivación
+✅ **Flexibilidad**: Múltiples formatos de exportación e importación (CSV, TXT, JSON, HTML, PDF, ODS)
+✅ **Personalización**: Temas, idiomas y configuraciones adaptables
+✅ **Organización**: Torneos y temporadas completas
 
 ### Próximos Pasos
 
@@ -1897,9 +1940,9 @@ MiFutbolC es una herramienta completa y profesional para el seguimiento y análi
 
 ---
 
-**Desarrollado por**: Thomas Hamer  
-**Versión**: 4.5.1
-**Última actualización**: 13/10/2026  
-**Licencia**: Open Source  
+**Desarrollado por**: Thomas Hamer
+**Versión**: 4.5.2
+**Última actualización**: 13/10/2026
+**Licencia**: Open Source
 
-*Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol*
+_Manual generado para MiFutbolC - Sistema Integral de Gestión de Fútbol_

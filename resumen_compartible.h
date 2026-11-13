@@ -34,4 +34,27 @@ void generar_resumen_estadisticas(void);
  */
 void generar_resumen_mejor_temporada(void);
 
+/**
+ * @brief Genera el resumen del año actual en formato TXT
+ *
+ * Incluye partidos, goles, asistencias, victorias, empates, derrotas,
+ * camisetas, lesiones y canchas del año en curso.
+ */
+void generar_resumen_anio_txt(void);
+
+/**
+ * @brief Genera el resumen del año actual en formato HTML
+ */
+void generar_resumen_anio_html(void);
+
+/**
+ * @brief Genera el resumen del año actual en formato PDF
+ */
+void generar_resumen_anio_pdf(void);
+
+/**
+ * @brief Genera el resumen del año actual en TXT, HTML y PDF
+ */
+void generar_resumen_anio_todos(void);
+
 #endif

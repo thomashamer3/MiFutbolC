@@ -1,10 +1,9 @@
 # depslib dependency file v1.0
-1792448968 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"db.h"
 	"menu.h"
 	"utils.h"
 	"settings.h"
-	"atajos.h"
 	"carrera.h"
 	"import.h"
 	"undo.h"
@@ -83,7 +82,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1792011549 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -109,10 +108,9 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1792102979 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
-	"atajos.h"
 	"cJSON.h"
 	"db.h"
 	"export.h"
@@ -165,7 +163,7 @@
 
 1790719046 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1792011739 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
@@ -612,7 +610,7 @@
 	<stdio.h>
 	<string.h>
 
-1792101142 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1794518709 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
 
@@ -2086,9 +2084,8 @@
 	<time.h>
 	"export.h"
 
-1792101476 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
-	"atajos.h"
 	"backup.h"
 	"busqueda.h"
 	"cJSON.h"
@@ -2853,7 +2850,7 @@
 
 1785289417 d:\anime\libros\lenguaje c\proyectos\mifutbolc\tutorial.h
 
-1785289417 d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.h
+1794517500 d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.h
 
 1785289417 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ranking_amigos.h
 
@@ -2868,23 +2865,25 @@
 	<Windows.h>
 	<unistd.h>
 
-1792103002 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1794585482 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"
 	"utils.h"
 	"export.h"
 	"logros.h"
+	"pdfgen.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	<time.h>
 	<Windows.h>
 	<unistd.h>
 
 1777509312 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3_exports.c
 	"sqlite3.h"
 
-1792011891 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\tutorial.c
+1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\tutorial.c
 	"tutorial.h"
 	"menu.h"
 	"db.h"

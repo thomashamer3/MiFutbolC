@@ -1,6 +1,4 @@
-
 #include "settings.h"
-#include "atajos.h"
 #include "backup.h"
 #include "busqueda.h"
 #include "cJSON.h"
@@ -38,12 +36,10 @@ void menu_update(void);
 
 // Version actual de la aplicacion. Debe mantenerse en sincronia con el
 // instalador (MiFutbolC.iss)
-#define APP_VERSION "4.5.1"
+#define APP_VERSION "4.5.2"
 
 // Configuracion global
-static AppSettings current_settings = {THEME_LIGHT,
-                                       LANGUAGE_SPANISH,
-                                       MODE_SIMPLE,
+static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE,
                                        TEXT_SIZE_MEDIUM
                                       };
 
@@ -208,8 +204,7 @@ static void ensure_settings_schema(void)
 #define ALTER_SETTINGS_COLUMN(column_def) "ALTER TABLE settings ADD COLUMN " column_def ";"
     const char *alter_statements[] = {ALTER_SETTINGS_COLUMN("mode INTEGER DEFAULT 0"),
                                       ALTER_SETTINGS_COLUMN("text_size INTEGER DEFAULT 1"),
-                                      ALTER_SETTINGS_COLUMN("image_viewer TEXT DEFAULT ''"),
-                                      NULL
+                                      ALTER_SETTINGS_COLUMN("image_viewer TEXT DEFAULT ''"), NULL
                                      };
 
 #undef ALTER_SETTINGS_COLUMN
@@ -247,7 +242,6 @@ static void settings_prompt_mode_selection(void)
         menu_custom_menus();
         break;
     case 0:
-        finalizar_atajos();
         db_close();
         exit(0);
     default:
@@ -1283,7 +1277,9 @@ void menu_custom_menus(void)
 
     printf("Selecciona los menus que deseas habilitar/deshabilitar:\n\n");
 
-    struct MenuOption options[] = {{1, "calendario", get_text("menu_calendario")},
+    struct MenuOption options[] =
+    {
+        {1, "calendario", get_text("menu_calendario")},
         {2, "camisetas", get_text("menu_camisetas")},
         {3, "canchas", get_text("menu_canchas")},
         {4, "botines", get_text("menu_botines")},

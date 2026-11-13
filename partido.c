@@ -2347,9 +2347,18 @@ static const char *const TIPOS_GOL[] = {"Derecha", "Izquierda",    "Cabeza",   "
                                         "Penal",   "Gol olimpico", "Jugada"
                                        };
 
-static const char *const TIPOS_ASISTENCIA[] = {"Pase corto",    "Pase filtrado", "Centro",
-                                               "Pelota parada", "Pared (1-2)",   "Pase largo"
-                                              };
+/* El detalle se persiste como texto separado por comas, no como indice:
+   se pueden agregar o reordenar tipos sin migrar datos existentes. */
+static const char *const TIPOS_ASISTENCIA[] =
+{
+    "Pase corto",              "Pase filtrado",   "Centro",
+    "Pase largo",              "Pase bombeado",   "Pase de primera",
+    "Pase de cabeza",          "Pase de pecho",   "Pase de volea o chilena",
+    "Taco",                    "Pase de rabona",  "Pase de exterior",
+    "Pase atras",              "Pase horizontal", "Pared (1-2)",
+    "Pelota parada",           "Asistencia de tiro libre", "Asistencia de corner",
+    "Pase de penal",           "Rebote"
+};
 
 static const char *detalle_tipo_to_text(int indice, int es_asistencia)
 {

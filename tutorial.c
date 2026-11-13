@@ -23,7 +23,7 @@
 /**
  * @brief Cantidad total de pasos del tutorial
  */
-#define TUTORIAL_TOTAL_PASOS 8
+#define TUTORIAL_TOTAL_PASOS 7
 
 /**
  * @brief Asegura que la columna tutorial_completed exista en settings
@@ -55,7 +55,7 @@ static void mostrar_contenido_paso(int paso)
     switch (paso)
     {
     case 1:
-        print_header("Paso 1/8: Bienvenido a MiFutbolC");
+        print_header("Paso 1/7: Bienvenido a MiFutbolC");
         ui_printf("\n");
         ui_printf("MiFutbolC es tu historial personal de futbol.\n");
         ui_printf("\n");
@@ -67,7 +67,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 2:
-        print_header("Paso 2/8: Dashboard");
+        print_header("Paso 2/7: Dashboard");
         ui_printf("\n");
         ui_printf("El Dashboard es lo primero que ves al iniciar la app.\n");
         ui_printf("\n");
@@ -82,7 +82,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 3:
-        print_header("Paso 3/8: Partidos");
+        print_header("Paso 3/7: Partidos");
         ui_printf("\n");
         ui_printf("Desde el menu Partidos puedes registrar cada partido\n");
         ui_printf("que juegues con toda la informacion relevante:\n");
@@ -96,7 +96,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 4:
-        print_header("Paso 4/8: Estadisticas");
+        print_header("Paso 4/7: Estadisticas");
         ui_printf("\n");
         ui_printf("El modulo de Estadisticas analiza tu desempeno\n");
         ui_printf("automaticamente a partir de los partidos registrados.\n");
@@ -112,7 +112,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 5:
-        print_header("Paso 5/8: Bienestar");
+        print_header("Paso 5/7: Bienestar");
         ui_printf("\n");
         ui_printf("El modulo de Bienestar te permite llevar un registro\n");
         ui_printf("integral de tu condicion fisica y mental:\n");
@@ -127,7 +127,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 6:
-        print_header("Paso 6/8: Carrera");
+        print_header("Paso 6/7: Carrera");
         ui_printf("\n");
         ui_printf("La Carrera es una linea de tiempo de tu trayectoria\n");
         ui_printf("en el futbol:\n");
@@ -141,7 +141,7 @@ static void mostrar_contenido_paso(int paso)
         break;
 
     case 7:
-        print_header("Paso 7/8: Exportar");
+        print_header("Paso 7/7: Exportar");
         ui_printf("\n");
         ui_printf("MiFutbolC te permite exportar todos tus datos en\n");
         ui_printf("diferentes formatos:\n");
@@ -154,22 +154,6 @@ static void mostrar_contenido_paso(int paso)
         ui_printf("\n");
         ui_printf("Tambien puedes exportar la base de datos completa\n");
         ui_printf("para hacer copias de seguridad.\n");
-        break;
-
-    case 8:
-        print_header("Paso 8/8: Atajos de Teclado");
-        ui_printf("\n");
-        ui_printf("MiFutbolC incluye atajos de teclado para\n");
-        ui_printf("agilizar tu navegacion:\n");
-        ui_printf("\n");
-        ui_printf("  Ctrl+D  - Abrir Dashboard rapidamente\n");
-        ui_printf("  Ctrl+B  - Busqueda global\n");
-        ui_printf("  Ctrl+E  - Exportar datos\n");
-        ui_printf("  Ctrl+S  - Guardar configuracion\n");
-        ui_printf("  Ctrl+Z  - Deshacer ultima accion\n");
-        ui_printf("\n");
-        ui_printf("Puedes personalizar los atajos desde\n");
-        ui_printf("Ajustes > Atajos de Teclado.\n");
         break;
 
     default:

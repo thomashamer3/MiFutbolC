@@ -10,7 +10,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.5.1-blue.svg)
+![Version](https://img.shields.io/badge/version-4.5.2-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -54,8 +54,9 @@
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
 
-## 🆕 Últimos Cambios (v4.5.1)
+## 🆕 Últimos Cambios (v4.5.2)
 
+- **Resumen del Año**: nueva opción **5** dentro de **Resumen Compartible** que genera un resumen del año en curso en **TXT**, **HTML** y **PDF** (o los tres a la vez). Incluye partidos, goles, asistencias, victorias, empates, derrotas y efectividad, goles a favor/en contra con diferencia, detalle **mes a mes**, camisetas y canchas más usadas, lesiones registradas y activas, y el **mejor partido del año** con su ficha completa (marcador, goles y asistencias con detalle, cancha, camiseta, clima, físico, contexto, arbitraje y notas). Los archivos se guardan como `resumen_anio_<AAAA>.txt`, `.html` y `.pdf`.
 - **Documentación en video**: nueva página [VIDEOS.md](VIDEOS.md) con la **Presentación** del sistema y el **Tutorial** paso a paso, disponibles en `videos/presentacion.mp4` y `videos/tutorial.mp4`, enlazada desde el README (barra de navegación, Documentación y Enlaces Útiles).
 - **Correcciones de calidad (SonarQube)**: simplificación y división de funciones en `resumen_compartible.c` y `utils.c`, y ajuste en `camiseta.c` para reducir complejidad y duplicación.
 - **Instalador actualizado**: regeneración de `MiFutbolC_Setup.exe` y ajustes menores en `index.html` y `ascii_art.h`.
@@ -129,17 +130,20 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### 📊 Análisis y Estadísticas Avanzadas
 
 #### Estadísticas Generales
+
 - Rendimiento agregado del sistema
 - Análisis de estados físicos y mentales
 - Estadísticas por camiseta, cancha y equipo
 
 #### Análisis Temporal
+
 - **Por Año**: Tendencias longitudinales y comparación interanual
 - **Por Mes**: Desglose mensual y análisis de estacionalidad
 - **Por Día de Semana**: Rendimiento según día de la semana
 - **Por Clima**: Análisis según condiciones climáticas
 
 #### Meta-Análisis Avanzado
+
 - **Consistencia de Rendimiento**: Evaluación de variabilidad y estabilidad
 - **Detección de Outliers**: Identificación de partidos atípicos
 - **Dependencia del Contexto**: Análisis de factores externos
@@ -152,6 +156,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Rendimiento por Temperatura**: Correlación del rendimiento con la temperatura registrada
 
 #### Récords y Rankings
+
 - Récords históricos de partidos (máximo de goles, asistencias, rendimiento)
 - Mejores y peores rachas (victorias, derrotas, goles)
 - Combinaciones óptimas (cancha + camiseta)
@@ -161,6 +166,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - Ranking de camisetas (partidos, victorias/empates/derrotas, winrate)
 
 #### Estadísticas de Canchas
+
 - **Resumen General**: canchas registradas, activas/inactivas, canchas físicas, uso y partidos
 - **Ranking de Canchas**: más usadas y menos usadas (incluye canchas sin uso)
 - **Rendimiento por Cancha**: rendimiento general promedio y goles/asistencias por cancha
@@ -168,6 +174,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Distribución**: partidos por **localidad** y por **franja horaria**
 
 #### Química entre Jugadores
+
 - **Mejor combinación de jugadores** con cálculo de winrate
 - **Modo híbrido**: combina duplas automáticas (equipos/partidos) y registros manuales
 - **CRUD de química**: alta, listado, edición y eliminación de estadísticas por jugador-partido
@@ -257,11 +264,13 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Aviso antes del partido con control de frecuencia**: solo aparece si el riesgo de lesión supera el umbral del nivel elegido y, como máximo, **una vez cada 24 horas** (inmediato si el riesgo es crítico)
 - **Ajuste del riesgo con datos reales**: cansancio efectivo, partidos de la última semana y derrotas consecutivas, con descuento por días de descanso
 - **Perfil de usuario**: índice de prudencia calculado según los consejos aceptados e ignorados
+
 > Accesible desde **Análisis → Entrenador IA**.
 
 ### 📤 Exportación e Importación de Datos
 
 #### Exportación Multiformato
+
 - **Formatos Disponibles**: CSV, JSON, HTML, TXT, PDF, ODS
 - **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Exportar
 - **Exportación por Módulo**: Camisetas, partidos, lesiones, estadísticas, análisis, canchas, bienestar, calendario, carrera, colecciones, equipos, records, recordatorios, temporada, torneo y base de datos
@@ -277,6 +286,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Resumen compartible**: HTML con diseño propio (tarjeta oscura, animaciones y meta etiquetas `og:` para la previsualización al compartir) y su equivalente en Markdown
 
 #### Importación de Datos
+
 - **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
 - **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Importar
 - **Importación rápida**: Opciones Todo JSON rápido y Todo CSV rápido
@@ -302,6 +312,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ## 🛠️ Tecnologías Utilizadas
 
 ### Lenguaje y Estándares
+
 - **Lenguaje C**: Desarrollo completo en C estándar
 - **Estándar**: Compatible con C99/C11
 - **Compiladores**: GCC, MinGW, Clang
@@ -309,17 +320,20 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 ### Bibliotecas y Dependencias
 
 #### SQLite3 (Incluida)
+
 - **Versión**: 3.53.2
 - **Archivos**: `sqlite3.c`, `sqlite3.h`
 - **Propósito**: Base de datos embebida para almacenamiento persistente
 - **Características**: Transacciones ACID, consultas SQL completas, sin servidor
 
 #### cJSON (Incluida - Licencia MIT)
+
 - **Archivos**: `cJSON.c`, `cJSON.h`
 - **Propósito**: Parsing y generación de JSON para importación/exportación
 - **Características**: Ligera, rápida, sin dependencias externas
 
 #### Motor PDF Interno (pdfgen)
+
 - **Archivos**: `pdfgen.c`, `pdfgen.h`
 - **Propósito**: Generación de informes PDF del sistema
 - **Dependencias externas**: No requiere dependencias adicionales para PDF
@@ -333,11 +347,10 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 
 ### Dependencias Incluidas
 
-✅ **SQLite3**: Biblioteca completa incluida en el proyecto  
-✅ **cJSON**: Biblioteca completa incluida en el proyecto  
-✅ **pdfgen**: Motor PDF incluido en el proyecto  
-✅ **Runtime sin DLLs**: El proyecto no requiere DLLs adicionales para ejecutarse  
-
+✅ **SQLite3**: Biblioteca completa incluida en el proyecto
+✅ **cJSON**: Biblioteca completa incluida en el proyecto
+✅ **pdfgen**: Motor PDF incluido en el proyecto
+✅ **Runtime sin DLLs**: El proyecto no requiere DLLs adicionales para ejecutarse
 
 ## 🚀 Instalación y Compilación
 
@@ -356,19 +369,19 @@ El método más sencillo para usuarios que solo desean usar el programa:
 Ideal para desarrollo, depuración y modificación del código:
 
 1. **Instalar CodeBlocks**:
-   - Descarga desde [codeblocks.org](https://www.codeblocks.org/)
-   - Asegúrate de instalar la versión con MinGW incluido
+    - Descarga desde [codeblocks.org](https://www.codeblocks.org/)
+    - Asegúrate de instalar la versión con MinGW incluido
 
 2. **Abrir el Proyecto**:
-   - Abre CodeBlocks
-   - Ve a `File` → `Open` → Selecciona `MiFutbolC.cbp`
+    - Abre CodeBlocks
+    - Ve a `File` → `Open` → Selecciona `MiFutbolC.cbp`
 
 3. **Compilar**:
-   - Selecciona `Build` → `Build` (o presiona `Ctrl+F9`)
-   - El ejecutable se generará en `bin/Debug/MiFutbolC.exe`
+    - Selecciona `Build` → `Build` (o presiona `Ctrl+F9`)
+    - El ejecutable se generará en `bin/Debug/MiFutbolC.exe`
 
 4. **Ejecutar**:
-   - Presiona `F9` o selecciona `Build` → `Build and Run`
+    - Presiona `F9` o selecciona `Build` → `Build and Run`
 
 ### Método 3: Compilación Manual con GCC (Linux/macOS/Windows)
 
@@ -453,11 +466,12 @@ El script `install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea lau
 - **Base de Datos**: Se crea automáticamente en la primera ejecución (ver sección [Base de Datos](#️-base-de-datos) para más detalles)
 
 - **Codificación**: El programa usa UTF-8 para soportar caracteres especiales
-  - En Windows, se configura automáticamente la consola
+    - En Windows, se configura automáticamente la consola
 
 - **Permisos**: En Linux/macOS, asegúrate de tener permisos de escritura en el directorio
 
 #### Cambios recientes UI/Consola (Windows)
+
 - **Limpieza de consola completa**: evita que al hacer scroll aparezcan menús anteriores.
 - **Listados con fecha + día**: Partidos, Lesiones y Transacciones muestran fecha con día de semana.
 - **Compilación MinGW**: usa `WIN_LIBS="-lcomdlg32 -lshell32 -lbcrypt"` para prevenir errores de linkeo.
@@ -465,19 +479,23 @@ El script `install.ps1` instala en `%LOCALAPPDATA%\Programs\MiFutbolC`, crea lau
 ### 🔧 Solución de Problemas Comunes
 
 #### Error: "sqlite3.h: No such file or directory"
+
 - **Solución**: SQLite3 está incluido en el proyecto. Asegúrate de compilar desde el directorio raíz.
 
 #### Error: "undefined reference to..."
+
 - **Solución**: Verifica que todos los archivos `.c` estén incluidos en el comando de compilación.
 - En Windows (MinGW), usa las librerías del bloque `WIN_LIBS` de la sección de compilación.
 
 #### Caracteres extraños en la consola (Windows)
+
 - **Solución**: El programa configura automáticamente UTF-8. Si persiste, ejecuta:
-  ```bash
-  chcp 65001
-  ```
+    ```bash
+    chcp 65001
+    ```
 
 #### No se crea la base de datos
+
 - **Solución**: Verifica permisos de escritura en el directorio `data/` o `%LOCALAPPDATA%\MiFutbolC\data\`
 
 ## 💻 Uso
@@ -523,6 +541,7 @@ Al ejecutar `MiFutbolC`, el sistema:
 22. Resumen Compartible
 23. Ranking Amigos
 24. Ajustes
+25. Sincronizacion (PocketBase)
 0. Salir
 >
 ```
@@ -674,10 +693,10 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 
 1. Ve a Analisis (opción 14)
 2. El sistema muestra:
-   - Comparación últimos 5 partidos vs promedio general
-   - Mejor racha de victorias
-   - Peor racha de derrotas
-   - Mensajes motivacionales personalizados
+    - Comparación últimos 5 partidos vs promedio general
+    - Mejor racha de victorias
+    - Peor racha de derrotas
+    - Mensajes motivacionales personalizados
 
 ### Navegación
 
@@ -685,12 +704,6 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 - **0**: Volver al menú anterior o salir
 - **Enter**: Confirmar selección
 - **Ctrl+C**: Salir del programa (en cualquier momento)
-
-### Atajos de Teclado (en desarrollo)
-
-- `Ctrl+E`: Exportar datos rápidamente
-- `Ctrl+S`: Ver estadísticas rápidas
-- `Ctrl+H`: Ayuda contextual
 
 ## 🏗️ Arquitectura y Diseño
 
@@ -778,33 +791,38 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 ### Patrones de Diseño Implementados
 
 #### 1. **Patrón Modular**
+
 - **Descripción**: Cada módulo tiene responsabilidad única y bien definida
 - **Implementación**: Archivos `.h` (interfaces) y `.c` (implementaciones) separados
 - **Beneficios**: Bajo acoplamiento, alta cohesión, fácil mantenimiento
 
 #### 2. **Patrón de Comando (Simplificado)**
+
 - **Descripción**: Sistema de menús con estructura `MenuItem`
-- **Implementación**: 
-  ```c
-  typedef struct {
-      int opcion;
-      const char* texto;
-      void (*accion)(void);
-  } MenuItem;
-  ```
+- **Implementación**:
+    ```c
+    typedef struct {
+        int opcion;
+        const char* texto;
+        void (*accion)(void);
+    } MenuItem;
+    ```
 - **Beneficios**: Fácil agregar nuevas opciones, navegación flexible
 
 #### 3. **Patrón Repository (Capa de Acceso a Datos)**
+
 - **Descripción**: `db.c/db.h` centraliza todas las operaciones de base de datos
 - **Implementación**: Funciones como `db_init()`, `db_close()`, consultas SQL encapsuladas
 - **Beneficios**: Abstracción de la persistencia, cambio de BD sin afectar lógica
 
 #### 4. **Patrón Strategy (Exportación)**
+
 - **Descripción**: Múltiples estrategias de exportación (CSV, JSON, HTML, TXT)
 - **Implementación**: Funciones especializadas por formato en módulos `export_*.c`
 - **Beneficios**: Fácil agregar nuevos formatos, código reutilizable
 
 #### 5. **Patrón Singleton (Conexión a BD)**
+
 - **Descripción**: Una única conexión a la base de datos durante toda la ejecución
 - **Implementación**: Variable global `sqlite3 *db` en `db.c`
 - **Beneficios**: Eficiencia, consistencia de datos
@@ -814,20 +832,20 @@ partidos por clima, lesiones por tipo/estado, historial de rachas y distribució
 #### SOLID Principles (Adaptados a C)
 
 - **S - Single Responsibility**: Cada módulo tiene una responsabilidad única
-  - `camiseta.c` → Solo gestión de camisetas
-  - `partido.c` → Solo gestión de partidos
-  
+    - `camiseta.c` → Solo gestión de camisetas
+    - `partido.c` → Solo gestión de partidos
+
 - **O - Open/Closed**: Abierto a extensión, cerrado a modificación
-  - Nuevos formatos de exportación sin modificar código existente
-  
+    - Nuevos formatos de exportación sin modificar código existente
+
 - **L - Liskov Substitution**: Funciones intercambiables con misma interfaz
-  - Todas las funciones de exportación tienen firma similar
-  
+    - Todas las funciones de exportación tienen firma similar
+
 - **I - Interface Segregation**: Interfaces específicas y pequeñas
-  - Headers `.h` con solo declaraciones necesarias
-  
+    - Headers `.h` con solo declaraciones necesarias
+
 - **D - Dependency Inversion**: Dependencia de abstracciones
-  - Módulos dependen de `db.h`, no de SQLite directamente
+    - Módulos dependen de `db.h`, no de SQLite directamente
 
 ### Flujo de Datos
 
@@ -907,9 +925,6 @@ MiFutbolC/
 │   │
 │   ├── ⚙️ Configuración
 │   │   └── settings.c / settings.h              # Sistema de configuración
-│   │
-│   ├── ⌨️ Atajos de Teclado
-│   │   └── atajos.c / atajos.h                  # Atajos de teclado
 │   │
 │
 ├── 📊 CAPA DE ESTADÍSTICAS Y ANÁLISIS
@@ -1032,42 +1047,42 @@ MiFutbolC/
 
 Conteo referencial (puede variar según cambios y scripts de build).
 
-| Categoría | Archivos `.c` | Archivos `.h` | Total |
-|-----------|---------------|---------------|-------|
-| Lógica de Negocio (Core) | 5 | 5 | 10 |
-| Gestión Deportiva | 12 | 12 | 24 |
-| Calendario | 1 | 1 | 2 |
-| Gestión Comercial | 2 | 2 | 4 |
-| Análisis y Estadísticas | 10 | 10 | 20 |
-| Exportación | 21 | 21 | 42 |
-| Importación | 1 | 1 | 2 |
-| Infraestructura y Servicios | 5 | 5 | 10 |
-| Perfil y Progresión | 2 | 2 | 4 |
-| Bienestar y Productividad | 4 | 4 | 8 |
-| Inteligencia Artificial | 1 | 1 | 2 |
-| Extras | 3 | 3 | 6 |
-| Bibliotecas | 4 | 4 | 8 |
-| **TOTAL** | **71** | **71** | **142** |
+| Categoría                   | Archivos `.c` | Archivos `.h` | Total   |
+| --------------------------- | ------------- | ------------- | ------- |
+| Lógica de Negocio (Core)    | 5             | 5             | 10      |
+| Gestión Deportiva           | 12            | 12            | 24      |
+| Calendario                  | 1             | 1             | 2       |
+| Gestión Comercial           | 2             | 2             | 4       |
+| Análisis y Estadísticas     | 10            | 10            | 20      |
+| Exportación                 | 21            | 21            | 42      |
+| Importación                 | 1             | 1             | 2       |
+| Infraestructura y Servicios | 5             | 5             | 10      |
+| Perfil y Progresión         | 2             | 2             | 4       |
+| Bienestar y Productividad   | 4             | 4             | 8       |
+| Inteligencia Artificial     | 1             | 1             | 2       |
+| Extras                      | 3             | 3             | 6       |
+| Bibliotecas                 | 4             | 4             | 8       |
+| **TOTAL**                   | **71**        | **71**        | **142** |
 
 ### Módulos Principales
 
-| Módulo | Archivos | Descripción |
-|--------|----------|-------------|
-| **Core** | `main.c`, `db.c`, `menu.c`, `utils.c`, `settings.c` | Núcleo del sistema e interfaz base |
-| **Calendario** | `calendario.c/.h` | Visualización y planificación |
-| **Gestión Deportiva** | `camiseta.c/.h`, `cancha.c/.h`, `botin.c/.h`, `equipo.c/.h`, `partido.c/.h`, `torneo.c/.h`, `temporada.c/.h`, `lesion.c/.h` | Gestión deportiva principal |
-| **Análisis** | `estadisticas*.c`, `analisis.c`, `records_rankings.c`, `posiciones.c` | Análisis, estadísticas y posiciones |
-| **I/O** | `export*.c` (21 módulos), `import.c` | Importación/Exportación multiformato |
-| **Gestión Comercial** | `tienda.c/.h`, `media.c/.h` | Tiendas y multimedia |
-| **Bienestar y Productividad** | `bienestar.c/.h`, `carrera.c/.h`, `recordatorios.c/.h`, `colecciones.c/.h` | Bienestar, agenda y colecciones |
-| **IA** | `entrenador_ia.c/.h` | Entrenador con recomendaciones inteligentes |
-| **Infraestructura** | `backup.c`, `db_integridad.c`, `undo.c`, `filtros.c`, `notificaciones.c`, `busqueda.c` | Servicios del sistema |
-| **Perfil** | `progresion.c/.h`, `reportes.c/.h` | Progresión y reportes |
-| **Extras** | `logros.c`, `financiamiento.c`, `ascii_charts.c` | Funcionalidades transversales |
-| **Compartir y Social** | `resumen_compartible.c/.h`, `ranking_amigos.c/.h` | Resumen del perfil (HTML/Markdown) y ranking de amigos |
-| **Ayuda y Atajos** | `tutorial.c/.h`, `atajos.c` | Tutorial guiado y atajos de teclado |
-| **Servicios Externos** | `openmeteo_client.c/.h` | Clima real de los partidos (Open-Meteo) |
-| **Internacionalización** | `lang.c/.h`, `langs/es.json`, `langs/en.json` | Textos en español e inglés |
+| Módulo                        | Archivos                                                                                                                    | Descripción                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Core**                      | `main.c`, `db.c`, `menu.c`, `utils.c`, `settings.c`                                                                         | Núcleo del sistema e interfaz base                                                     |
+| **Calendario**                | `calendario.c/.h`                                                                                                           | Visualización y planificación                                                          |
+| **Gestión Deportiva**         | `camiseta.c/.h`, `cancha.c/.h`, `botin.c/.h`, `equipo.c/.h`, `partido.c/.h`, `torneo.c/.h`, `temporada.c/.h`, `lesion.c/.h` | Gestión deportiva principal                                                            |
+| **Análisis**                  | `estadisticas*.c`, `analisis.c`, `records_rankings.c`, `posiciones.c`                                                       | Análisis, estadísticas y posiciones                                                    |
+| **I/O**                       | `export*.c` (21 módulos), `import.c`                                                                                        | Importación/Exportación multiformato                                                   |
+| **Gestión Comercial**         | `tienda.c/.h`, `media.c/.h`                                                                                                 | Tiendas y multimedia                                                                   |
+| **Bienestar y Productividad** | `bienestar.c/.h`, `carrera.c/.h`, `recordatorios.c/.h`, `colecciones.c/.h`                                                  | Bienestar, agenda y colecciones                                                        |
+| **IA**                        | `entrenador_ia.c/.h`                                                                                                        | Entrenador con recomendaciones inteligentes                                            |
+| **Infraestructura**           | `backup.c`, `db_integridad.c`, `undo.c`, `filtros.c`, `notificaciones.c`, `busqueda.c`                                      | Servicios del sistema                                                                  |
+| **Perfil**                    | `progresion.c/.h`, `reportes.c/.h`                                                                                          | Progresión y reportes                                                                  |
+| **Extras**                    | `logros.c`, `financiamiento.c`, `ascii_charts.c`                                                                            | Funcionalidades transversales                                                          |
+| **Compartir y Social**        | `resumen_compartible.c/.h`, `ranking_amigos.c/.h`                                                                           | Resumen del perfil (HTML/Markdown), resumen del año (TXT/HTML/PDF) y ranking de amigos |
+| **Ayuda**                     | `tutorial.c/.h`                                                                                                             | Tutorial guiado                                                                        |
+| **Servicios Externos**        | `openmeteo_client.c/.h`                                                                                                     | Clima real de los partidos (Open-Meteo)                                                |
+| **Internacionalización**      | `lang.c/.h`, `langs/es.json`, `langs/en.json`                                                                               | Textos en español e inglés                                                             |
 
 ## 🗄️ Base de Datos
 
@@ -1077,17 +1092,18 @@ Conteo referencial (puede variar según cambios y scripts de build).
 - **Archivos de datos por perfil**: `mifutbol_<usuario>.db`
 - **Registro de usuarios locales**: `users.db`
 - **Ubicación**:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
-  - Linux/macOS: `./data/mifutbol_<usuario>.db`
+    - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.db`
+    - Linux/macOS: `./data/mifutbol_<usuario>.db`
 - **Archivo de usuarios**:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
-  - Linux/macOS: `./data/users.db`
+    - Windows: `%LOCALAPPDATA%\MiFutbolC\data\users.db`
+    - Linux/macOS: `./data/users.db`
 - **Archivo de log**:
-  - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
-  - Linux/macOS: `./data/mifutbol_<usuario>.log`
+    - Windows: `%LOCALAPPDATA%\MiFutbolC\data\mifutbol_<usuario>.log`
+    - Linux/macOS: `./data/mifutbol_<usuario>.log`
 - **Características**: Transacciones ACID, sin servidor, archivo único
 
 **Directorios de importación/exportación**
+
 - **Exportaciones (Windows)**: `%USERPROFILE%\Documents\MiFutbolC\Exportaciones`
 - **Importaciones (Windows)**: `%USERPROFILE%\Documents\MiFutbolC\Importaciones`
 - **Exportaciones (Linux/macOS)**: `./exportaciones`
@@ -1105,7 +1121,7 @@ El esquema se crea en `db.c` y puede evolucionar con `ALTER TABLE` automáticos.
 - **Comercial**: `tienda`, `media_referencias`
 - **Infraestructura**: `backup_registry`, `undo_log`, `notificaciones`, `filtros_guardados`, `reportes_config`
 - **Perfil**: `progresion_*`
-- **Servicios**: `calendario_eventos`, `atajos_teclado`, `posiciones`
+- **Servicios**: `calendario_eventos`, `posiciones`
 - **Entrenador IA**: `consejos_historial`, `perfil_usuario_ia`, `ia_config` (nivel de intervención y control de frecuencia del aviso)
 
 Campos clave (selección, no exhaustivo):
@@ -1152,8 +1168,9 @@ bool db_init() {
 ### Consultas Comunes
 
 #### Estadísticas por Camiseta
+
 ```sql
-SELECT 
+SELECT
     c.nombre,
     COUNT(p.id) as partidos,
     SUM(p.goles) as goles_totales,
@@ -1166,8 +1183,9 @@ ORDER BY goles_totales DESC;
 ```
 
 #### Récords Históricos
+
 ```sql
-SELECT 
+SELECT
     MAX(goles) as max_goles,
     MAX(asistencias) as max_asistencias,
   MAX(rendimiento_general) as mejor_rendimiento
@@ -1175,8 +1193,9 @@ FROM partido;
 ```
 
 #### Análisis de Lesiones
+
 ```sql
-SELECT 
+SELECT
     tipo,
   COUNT(*) as cantidad
 FROM lesion
@@ -1370,8 +1389,8 @@ Estas utilidades promueven la reutilización de código y mantienen una interfaz
 
 El proyecto implementa un sistema de menús jerárquico y modular mediante las funciones en `menu.c / menu.h`:
 
-- **Menú Principal**: 24 opciones organizadas (1-24 más 0 para Salir): Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Records & Rankings, Tiendas, Referencias Multimedia, Tutorial, Resumen Compartible, Ranking Amigos y Ajustes.
-- **Menús personalizados (modo Custom)**: desde Ajustes → Modo se puede habilitar u ocultar cualquiera de esos 28 módulos del menú principal.
+- **Menú Principal**: 25 opciones organizadas (1-25 más 0 para Salir): Calendario, Camisetas, Canchas, Botines, Equipos, Partidos, Lesiones, Estadísticas, Logros, Financiamiento, Torneos, Temporada, Análisis, Bienestar, Carrera Futbolística, Recordatorios, Colecciones, Records & Rankings, Tiendas, Referencias Multimedia, Tutorial, Resumen Compartible, Ranking Amigos, Ajustes y Sincronización (PocketBase).
+- **Menús personalizados (modo Custom)**: desde Ajustes → Modo se puede habilitar u ocultar cualquiera de esos 25 módulos del menú principal.
 - **Accesos internos**: El **Entrenador IA** se abre desde Análisis, y **Exportar/Importar** desde Ajustes.
 - **Submenús**: Cada módulo principal tiene su propio menú (ej. `menu_camisetas()`, `menu_canchas()`, `menu_partidos()`, `menu_logros()`, `menu_lesiones()`, `menu_financiamiento()`).
 - **Estructura de Menú**: Utiliza la estructura `MenuItem` definida en `menu.h` para asociar opciones numéricas con textos descriptivos y funciones a ejecutar.
@@ -1399,7 +1418,6 @@ Los módulos de exportación mejorada (`export_all_mejorado.c`, `export_camiseta
 
 El módulo `import.c / import.h` permite restaurar datos desde archivos JSON, TXT, CSV o HTML exportados previamente. También incluye opciones rápidas (Todo JSON/Todo CSV) e importación de base de datos. Ver sección [Características Principales](#-características-principales) para detalles completos sobre la funcionalidad de importación.
 
-
 ## Documentación
 
 ### Documentación Disponible
@@ -1419,6 +1437,7 @@ Nota: Los PDF se generan a partir de los `.md` (por ejemplo con Pandoc) si neces
 ### Convenciones de Código
 
 #### Estilo de Código
+
 - **Estándar C**: C99/C11 compatible
 - **Indentación**: 4 espacios (no tabs)
 - **Nombres de Variables**: `snake_case` para variables y funciones
@@ -1426,6 +1445,7 @@ Nota: Los PDF se generan a partir de los `.md` (por ejemplo con Pandoc) si neces
 - **Comentarios**: En español para consistencia con el proyecto
 
 #### Estructura de Archivos
+
 ```c
 // Ejemplo de estructura de archivo .h
 #ifndef MODULO_H
@@ -1456,11 +1476,13 @@ void eliminar_elemento(int id);
 ### Agregar Nuevas Funcionalidades
 
 #### Paso 1: Planificación
+
 1. Define claramente la funcionalidad
 2. Identifica las tablas de BD necesarias
 3. Diseña la interfaz de usuario
 
 #### Paso 2: Implementación
+
 1. **Crear archivos** `.h` y `.c` para el nuevo módulo
 2. **Definir estructuras** en el header
 3. **Implementar funciones** en el archivo `.c`
@@ -1468,11 +1490,13 @@ void eliminar_elemento(int id);
 5. **Agregar al menú** en `menu.c`
 
 #### Paso 3: Integración
+
 1. Actualizar `MiFutbolC.cbp` (CodeBlocks)
 2. Actualizar flujo de build/instalación (`Makefile`, `Instalador-Linux.sh`, `install.ps1`)
 3. Agregar funciones de exportación si aplica
 
 #### Paso 4: Documentación
+
 1. Documentar funciones con comentarios Doxygen
 2. Actualizar README.md
 3. Agregar ejemplos de uso
@@ -1480,6 +1504,7 @@ void eliminar_elemento(int id);
 ### Testing
 
 #### Pruebas Manuales
+
 - ✅ Compilar sin warnings
 - ✅ Ejecutar todas las opciones del menú
 - ✅ Verificar integridad de la base de datos
@@ -1487,6 +1512,7 @@ void eliminar_elemento(int id);
 - ✅ Verificar exportación/importación
 
 #### Pruebas de Integración
+
 - ✅ Crear datos de prueba
 - ✅ Verificar relaciones entre tablas
 - ✅ Probar flujos completos (crear torneo → agregar equipos → jugar partidos)
@@ -1527,6 +1553,7 @@ Si deseas contribuir:
 5. **Crea un Pull Request**
 
 #### Lineamientos para Pull Requests
+
 - Describe claramente los cambios realizados
 - Incluye ejemplos de uso si aplica
 - Asegúrate de que el código compile sin errores
@@ -1587,7 +1614,7 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 
 Referencial y sujeto a cambios:
 
-- **Archivos**: 85 módulos `.c` en la raíz con sus cabeceras (94 `.c` si se cuentan los 9 archivos de `tests/`).
+- **Archivos**: 85 módulos `.c` en la raíz con sus cabeceras (los `.c` de `tests/` se cuentan aparte: 11 archivos de prueba más el runner `unity.c`).
 - **Esquema**: `DB_VERSION_CURRENT = 15` y 54 índices `CREATE INDEX` en `db.c`.
 - **Duplicación**: alrededor del 2% de las líneas, según `duplications.json`.
 - **Calidad**: sin incidencias abiertas de fiabilidad ni de seguridad (`reliability-open.json`, `security-open.json`).
