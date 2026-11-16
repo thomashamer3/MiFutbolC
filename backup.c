@@ -308,26 +308,8 @@ static int ejecutar_backup_db(const char *dest_path, const char *db_path)
 {
     if (db)
     {
-        sqlite3 *dest_db = NULL;
-        if (sqlite3_open(dest_path, &dest_db) != SQLITE_OK)
-        {
-            printf("Error: No se pudo crear el archivo de backup.\n");
-            app_log_event("BACKUP", "Error creando backup via SQLite");
-            sqlite3_close(dest_db);
-            return 0;
-        }
-        sqlite3_backup *backup = sqlite3_backup_init(dest_db, "main", db, "main");
-        if (!backup)
-        {
-            printf("Error: No se pudo iniciar el backup SQLite.\n");
-            sqlite3_close(dest_db);
-            return 0;
-        }
-        int step_rc = sqlite3_backup_step(backup, -1);
-        int finish_rc = sqlite3_backup_finish(backup);
-        sqlite3_close(dest_db);
-
-        if (step_rc != SQLITE_DONE || finish_rc != SQLITE_OK)
+        // Ya usaba la API de backup; ahora comparte el helper de db.c.
+        if (db_backup_a_archivo(dest_path) != SQLITE_OK)
         {
             printf("Error: Fallo la copia de seguridad SQLite.\n");
             app_log_event("BACKUP", "Fallo backup via SQLite backup API");
@@ -551,7 +533,32 @@ int restaurar_backup(const char *filename)
         return 0;
     }
 
-    if (!app_copy_binary_file(source_path, db_path))
+    /* Con la conexion abierta no se pisa el archivo: al cerrar, SQLite
+     * volcaria el WAL viejo encima y corromperia la base. Se restaura con la
+     * API de backup sobre la conexion, que valida el origen primero. */
+    int restaurado = 0;
+    if (db)
+    {
+        char detalle[256];
+        DbRestaurarResultado res =
+            db_restaurar_desde_archivo(source_path, detalle, sizeof(detalle));
+        restaurado = (res == DB_RESTAURAR_OK || res == DB_RESTAURAR_FALLO_MIGRACION);
+        if (!restaurado)
+        {
+            printf("Motivo: %s\n", detalle);
+            printf("La base de datos actual no fue modificada.\n");
+        }
+        else if (res == DB_RESTAURAR_FALLO_MIGRACION)
+        {
+            app_log_event("BACKUP", "Restauracion con migraciones pendientes");
+        }
+    }
+    else
+    {
+        restaurado = app_copy_binary_file(source_path, db_path);
+    }
+
+    if (!restaurado)
     {
         printf("Error: No se pudo restaurar la base de datos desde el backup.\n");
         snprintf_s(backup_dir, sizeof(backup_dir), "Fallo restauracion desde: %.970s", source_path);

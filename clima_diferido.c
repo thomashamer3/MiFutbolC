@@ -139,13 +139,16 @@ static void marcar_intentado(long long partido_id)
 
 static void desmarcar_intentado(long long partido_id)
 {
-    for (size_t i = 0; i < g_intentados_cant; i++)
+    size_t i = 0;
+    while (i < g_intentados_cant && g_intentados[i] != partido_id)
     {
-        if (g_intentados[i] == partido_id)
-        {
-            g_intentados[i] = g_intentados[--g_intentados_cant];
-            return;
-        }
+        i++;
+    }
+    if (i < g_intentados_cant)
+    {
+        /* El ultimo ocupa el lugar del quitado: el orden no importa. */
+        g_intentados_cant--;
+        g_intentados[i] = g_intentados[g_intentados_cant];
     }
 }
 
@@ -335,7 +338,7 @@ static void descartar_pendientes(const long long *ids, size_t cant)
 static int buscar_siguiente(ClimaTrabajo *t, double *lat, double *lon)
 {
     sqlite3_stmt *s = NULL;
-    long long descartes[32];
+    long long descartes[32] = {0};
     size_t cant_descartes = 0;
     int encontrado = 0;
 
@@ -510,6 +513,28 @@ int clima_diferido_cancha_tiene_coordenadas(int cancha_id)
     return tiene;
 }
 
+/* Consulta si el curl en curso termino. Devuelve 1 si sigue corriendo (o se
+ * acaba de cortar por tiempo) y no hay nada mas que hacer en este sondeo. */
+static int sondear_proceso_en_curso(void)
+{
+    int codigo = -1;
+    int estado = app_proceso_estado(&g_trabajo.proceso, &codigo);
+    if (estado != 0)
+    {
+        g_trabajo.terminado = 1;
+        g_trabajo.codigo_salida = estado == 1 ? codigo : -1;
+        return 0;
+    }
+    if (difftime(time(NULL), g_trabajo.inicio) > CLIMA_TIMEOUT_SEG)
+    {
+        app_proceso_terminar(&g_trabajo.proceso);
+        registrar_fallo(g_trabajo.partido_id, g_trabajo.anio, g_trabajo.mes, g_trabajo.dia,
+                        "curl excedio el tiempo");
+        limpiar_trabajo();
+    }
+    return 1;
+}
+
 void clima_diferido_procesar(void)
 {
     if (!db || settings_get()->mode == MODE_SIMPLE || !asegurar_tabla())
@@ -519,23 +544,9 @@ void clima_diferido_procesar(void)
 
     if (g_trabajo.activo)
     {
-        if (!g_trabajo.terminado)
+        if (!g_trabajo.terminado && sondear_proceso_en_curso())
         {
-            int codigo = -1;
-            int estado = app_proceso_estado(&g_trabajo.proceso, &codigo);
-            if (estado == 0)
-            {
-                if (difftime(time(NULL), g_trabajo.inicio) > CLIMA_TIMEOUT_SEG)
-                {
-                    app_proceso_terminar(&g_trabajo.proceso);
-                    registrar_fallo(g_trabajo.partido_id, g_trabajo.anio, g_trabajo.mes,
-                                    g_trabajo.dia, "curl excedio el tiempo");
-                    limpiar_trabajo();
-                }
-                return;
-            }
-            g_trabajo.terminado = 1;
-            g_trabajo.codigo_salida = estado == 1 ? codigo : -1;
+            return;
         }
         /* Dentro de una transaccion ajena el UPDATE quedaria atado a su
          * COMMIT/ROLLBACK: se posterga al siguiente sondeo. */
@@ -568,3 +579,57 @@ void clima_diferido_finalizar(void)
     g_intentados_cap = 0;
     g_tabla_lista = 0;
 }
+
+#ifdef UNIT_TEST
+int clima_diferido_test_ya_intentado(long long partido_id)
+{
+    return ya_intentado(partido_id);
+}
+
+void clima_diferido_test_marcar_intentado(long long partido_id)
+{
+    marcar_intentado(partido_id);
+}
+
+int clima_diferido_test_intentados_cant(void)
+{
+    return (int)g_intentados_cant;
+}
+
+void clima_diferido_test_registrar_fallo(long long partido_id, int anio, int mes, int dia)
+{
+    registrar_fallo(partido_id, anio, mes, dia, "prueba");
+}
+
+long long clima_diferido_test_buscar_siguiente(void)
+{
+    ClimaTrabajo t;
+    double lat = 0.0;
+    double lon = 0.0;
+
+    memset(&t, 0, sizeof(t));
+    if (!asegurar_tabla() || !buscar_siguiente(&t, &lat, &lon))
+    {
+        return 0;
+    }
+    return t.partido_id;
+}
+
+void clima_diferido_test_aplicar_archivo(long long partido_id, int cancha_id,
+        const char *fecha_hora, const char *ruta, int codigo_salida)
+{
+    ClimaTrabajo t;
+
+    memset(&t, 0, sizeof(t));
+    t.partido_id = partido_id;
+    t.cancha_id = cancha_id;
+    t.codigo_salida = codigo_salida;
+    strncpy_s(t.fecha_hora, sizeof(t.fecha_hora), fecha_hora, sizeof(t.fecha_hora) - 1);
+    strncpy_s(t.ruta, sizeof(t.ruta), ruta, sizeof(t.ruta) - 1);
+    if (!partido_parsear_fecha_hora(fecha_hora, &t.anio, &t.mes, &t.dia, &t.hora, &t.minuto))
+    {
+        return;
+    }
+    aplicar_resultado(&t);
+}
+#endif

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <time.h>
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 void setUp(void)

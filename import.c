@@ -183,8 +183,10 @@ static char *read_file_content(const char *filename)
         return NULL;
     }
 
-    fread(content, 1, length, file);
-    content[length] = '\0';
+    /* En modo texto, Windows convierte \r\n en \n: se leen menos bytes que
+     * los que indica ftell y el resto del buffer quedaria sin inicializar. */
+    size_t leidos = fread(content, 1, (size_t)length, file);
+    content[leidos] = '\0';
     fclose(file);
     return content;
 }
@@ -234,11 +236,8 @@ static cJSON *cargar_json_array(const char *json_filename, const char *entity_na
     return json;
 }
 
-static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip_header)
+static FILE *abrir_ruta_texto_importacion(const char *filename, bool skip_header)
 {
-    char filename[1024];
-    build_filename(txt_filename, filename, sizeof(filename));
-
     printf("Importando desde: %s\n", filename);
 
     FILE *file = NULL;
@@ -261,6 +260,13 @@ static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip
     }
 
     return file;
+}
+
+static FILE *abrir_archivo_texto_importacion(const char *txt_filename, bool skip_header)
+{
+    char filename[1024];
+    build_filename(txt_filename, filename, sizeof(filename));
+    return abrir_ruta_texto_importacion(filename, skip_header);
 }
 
 static int obtener_mes_anio_desde_fecha(const char *fecha, char *mes_anio, size_t size)
@@ -421,13 +427,16 @@ static void importar_todo_con_config(const ImportTodoConfig *config)
     pause_console();
 }
 
-static void importar_partidos_desde_archivo(const char *filename, const char *formato,
+/* Importa un partido por linea (salteando el encabezado) en una sola
+ * transaccion. Las lineas invalidas se omiten y las validas se confirman.
+ * Devuelve la cantidad importada o -1 si no se pudo abrir el archivo. */
+static int importar_partidos_desde_ruta_texto(const char *ruta, const char *formato,
         PartidoLineParser parser)
 {
-    FILE *file = abrir_archivo_texto_importacion(filename, true);
+    FILE *file = abrir_ruta_texto_importacion(ruta, true);
     if (!file)
     {
-        return;
+        return -1;
     }
 
     printf("Importando partidos desde %s...\n", formato);
@@ -446,6 +455,15 @@ static void importar_partidos_desde_archivo(const char *filename, const char *fo
 
     fclose(file);
     printf("Importacion de partidos desde %s completada. %d partidos importados\n", formato, count);
+    return count;
+}
+
+static void importar_partidos_desde_archivo(const char *filename, const char *formato,
+        PartidoLineParser parser)
+{
+    char ruta[1024];
+    build_filename(filename, ruta, sizeof(ruta));
+    importar_partidos_desde_ruta_texto(ruta, formato, parser);
 }
 
 static int procesar_camiseta_importada(const CamisetaData *camiseta)
@@ -1653,12 +1671,12 @@ static int procesar_partido_txt_line(const char *line)
 #else
     if (sscanf(line, " %255[^|] | %255[^|] | G:%d A:%d | %255[^|] | %511[^|] | %511[^\n]", cancha,
                fecha, &goles, &asistencias, camiseta, meta, comentario) != 7)
+#endif
     {
         return 0;
     }
-#endif
 
-        trim_whitespace(cancha);
+    trim_whitespace(cancha);
     trim_whitespace(fecha);
     trim_whitespace(camiseta);
     trim_whitespace(meta);
@@ -2458,3 +2476,15 @@ void menu_importar(void)
     };
     ejecutar_menu(get_text("import_menu_title"), items, 9);
 }
+
+#ifdef UNIT_TEST
+int import_test_partidos_csv_desde_ruta(const char *ruta)
+{
+    return importar_partidos_desde_ruta_texto(ruta, "CSV", procesar_partido_csv_line);
+}
+
+int import_test_partidos_txt_desde_ruta(const char *ruta)
+{
+    return importar_partidos_desde_ruta_texto(ruta, "TXT", procesar_partido_txt_line);
+}
+#endif

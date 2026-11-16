@@ -57,6 +57,43 @@ const char *db_get_active_user(void);
 int backup_base_datos_automatico(const char *motivo);
 
 /**
+ * @brief Copia la base abierta a un archivo con la API de backup de SQLite
+ *
+ * A diferencia de copiar el archivo, incluye lo que todavia esta en el WAL.
+ *
+ * @param dest_path Ruta del archivo destino (se crea o se reemplaza).
+ * @return SQLITE_OK si la copia termino; otro codigo SQLite si fallo.
+ */
+int db_backup_a_archivo(const char *dest_path);
+
+/** Resultado de db_restaurar_desde_archivo(). */
+typedef enum
+{
+    DB_RESTAURAR_OK = 0,
+    DB_RESTAURAR_SIN_CONEXION,   /**< No hay conexion abierta. */
+    DB_RESTAURAR_ORIGEN_NO_ABRE, /**< El origen no existe o no se pudo abrir. */
+    DB_RESTAURAR_ORIGEN_INVALIDO, /**< El origen no es una base valida de MiFutbolC. */
+    DB_RESTAURAR_FALLO_COPIA,    /**< Fallo la copia; la base actual no cambio. */
+    DB_RESTAURAR_FALLO_MIGRACION /**< Datos restaurados, pero fallaron las migraciones. */
+} DbRestaurarResultado;
+
+/**
+ * @brief Reemplaza el contenido de la base abierta con el de otro archivo
+ *
+ * Abre el origen en solo lectura, verifica `PRAGMA quick_check` y que tenga la
+ * tabla `partido`, y recien entonces lo copia sobre la conexion abierta con la
+ * API de backup (en una transaccion, respetando el WAL). Despues aplica el
+ * esquema y las migraciones. Si la validacion o la copia fallan, la base
+ * actual queda intacta.
+ *
+ * @param source_path Ruta de la base a restaurar.
+ * @param detalle Buffer opcional para el motivo del error (puede ser NULL).
+ * @param detalle_size Tamano de `detalle`.
+ */
+DbRestaurarResultado db_restaurar_desde_archivo(const char *source_path, char *detalle,
+        size_t detalle_size);
+
+/**
  * @brief Inicializa infraestructura completa de persistencia
  *
  * Ejecuta secuencia de configuración: rutas del SO, conexión SQLite,

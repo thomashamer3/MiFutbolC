@@ -985,4 +985,25 @@ void format_double_en_us(double val, char *buf, size_t size, int precision);
  */
 void format_double_es(double val, char *buf, size_t size, int precision);
 
+/**
+ * @brief Fecha de partido normalizada a "aaaa-mm-dd" para ordenar en SQL
+ *
+ * fecha_hora puede venir como "aaaa-mm-dd hh:mm" o "dd/mm/aaaa hh:mm"; ordenar
+ * por el texto crudo mezclaria los formatos.
+ */
+#define SQL_FECHA_ORD(col)                                                                         \
+    "CASE "                                                                                        \
+    "  WHEN " col " LIKE '____-__-__%' THEN substr(" col ", 1, 10) "                               \
+    "  WHEN " col " LIKE '__/__/____%' THEN substr(" col ", 7, 4) || '-' || substr(" col           \
+    ", 4, 2) || '-' || substr(" col ", 1, 2) "                                                     \
+    "  ELSE " col " "                                                                              \
+    "END"
+
+/* Orden cronologico de partidos: los IDs son estables y no siguen la fecha,
+ * asi que se ordena por fecha normalizada, luego por fecha_hora (hora) y se
+ * desempata por id. */
+#define SQL_PARTIDO_CRONO(prefijo, sentido) \
+    SQL_FECHA_ORD(prefijo "fecha_hora") " " sentido ", " prefijo "fecha_hora " sentido ", " \
+    prefijo "id " sentido
+
 #endif

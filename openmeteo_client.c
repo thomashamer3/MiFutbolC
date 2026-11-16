@@ -56,7 +56,7 @@ int openmeteo_fecha_es_futura(const OpenMeteoParams *params)
     if (!params)
         return 0;
     time_t ahora = time(NULL);
-    struct tm tm_hoy;
+    struct tm tm_hoy = {0};
 #ifdef _WIN32
     localtime_s(&tm_hoy, &ahora);
 #else

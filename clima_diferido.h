@@ -34,4 +34,20 @@ void clima_diferido_procesar(void);
 /** @brief Corta el curl en curso y borra su archivo; la fila sigue pendiente. */
 void clima_diferido_finalizar(void);
 
+#ifdef UNIT_TEST
+/* Ganchos de prueba: exponen la logica interna sin lanzar curl. */
+int clima_diferido_test_ya_intentado(long long partido_id);
+void clima_diferido_test_marcar_intentado(long long partido_id);
+int clima_diferido_test_intentados_cant(void);
+void clima_diferido_test_registrar_fallo(long long partido_id, int anio, int mes, int dia);
+/** @brief Siguiente pendiente lanzable (0 si no hay); aplica los descartes. */
+long long clima_diferido_test_buscar_siguiente(void);
+/**
+ * @brief Aplica una respuesta ya descargada en @p ruta como si la hubiera
+ *        bajado curl para ese partido, cancha y fecha (la del lanzamiento).
+ */
+void clima_diferido_test_aplicar_archivo(long long partido_id, int cancha_id,
+        const char *fecha_hora, const char *ruta, int codigo_salida);
+#endif
+
 #endif

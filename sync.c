@@ -73,7 +73,7 @@ static void sync_ahora(char *salida, size_t tam)
         return;
     }
     time_t ahora = time(NULL);
-    struct tm tm_ahora;
+    struct tm tm_ahora = {0};
 #ifdef _WIN32
     localtime_s(&tm_ahora, &ahora);
 #else
@@ -969,6 +969,28 @@ static cJSON *sync_registro_remoto(const cJSON *payload, const char *uuid,
 
 /* ----------------------------------------------------------- Aplicar remoto */
 
+/* Busca un partido con ese uuid. Devuelve 1 si lo encontro (y deja su id en
+ * @p id), 0 si no queda ninguno y -1 si fallo la consulta. */
+static int sync_buscar_partido_por_uuid(const char *uuid, long long *id)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT id FROM partido WHERE uuid=? LIMIT 1;", -1, &stmt,
+                           NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+    sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    int resultado = rc == SQLITE_DONE ? 0 : -1;
+    if (rc == SQLITE_ROW)
+    {
+        *id = sqlite3_column_int64(stmt, 0);
+        resultado = 1;
+    }
+    sqlite3_finalize(stmt);
+    return resultado;
+}
+
 static int sync_eliminar_local(const char *uuid)
 {
     if (!db || !uuid)
@@ -980,36 +1002,23 @@ static int sync_eliminar_local(const char *uuid)
      * mientras se recorre el SELECT; si no queda ninguno, no hay nada que
      * hacer y el borrado remoto igual se da por aplicado. */
     int ok = 1;
+    long long id = 0;
     if (sqlite3_exec(db, "SAVEPOINT sync_eliminar_local", NULL, NULL, NULL) != SQLITE_OK)
     {
         return 0;
     }
-    while (ok)
+    int encontrado = sync_buscar_partido_por_uuid(uuid, &id);
+    while (ok && encontrado == 1)
     {
-        sqlite3_stmt *stmt = NULL;
-        long long id = 0;
-        if (sqlite3_prepare_v2(db, "SELECT id FROM partido WHERE uuid=? LIMIT 1;", -1, &stmt,
-                               NULL) != SQLITE_OK)
-        {
-            ok = 0;
-            break;
-        }
-        sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
-        int rc = sqlite3_step(stmt);
-        if (rc == SQLITE_ROW)
-        {
-            id = sqlite3_column_int64(stmt, 0);
-        }
-        else if (rc != SQLITE_DONE)
-        {
-            ok = 0;
-        }
-        sqlite3_finalize(stmt);
-        if (!ok || id == 0)
-        {
-            break;
-        }
         ok = partido_eliminar_por_id(id);
+        if (ok)
+        {
+            encontrado = sync_buscar_partido_por_uuid(uuid, &id);
+        }
+    }
+    if (encontrado < 0)
+    {
+        ok = 0;
     }
     if (!ok)
     {
@@ -2920,3 +2929,15 @@ void menu_sincronizacion(void)
     };
     ejecutar_menu("SINCRONIZACION (POCKETBASE)", items, 9);
 }
+
+#ifdef UNIT_TEST
+int sync_test_buscar_partido_por_uuid(const char *uuid, long long *id)
+{
+    return sync_buscar_partido_por_uuid(uuid, id);
+}
+
+int sync_test_eliminar_local(const char *uuid)
+{
+    return sync_eliminar_local(uuid);
+}
+#endif

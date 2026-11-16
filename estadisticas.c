@@ -121,8 +121,12 @@ void menu_estadisticas_rendimiento(void)
         {18, "Rendimiento por Arbitraje", &mostrar_rendimiento_por_arbitraje},
         {19, "Rendimiento por Temperatura", &mostrar_rendimiento_por_temperatura},
         {20, "Tendencia (Sparkline)", &mostrar_tendencia_rendimiento_sparkline},
+        {
+            21, "Rendimiento por Condiciones Reales (Open-Meteo)",
+            &mostrar_rendimiento_por_clima_real
+        },
         {0, "Volver", NULL}
     };
 
-    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 21);
+    ejecutar_menu("ESTADISTICAS DE RENDIMIENTO", items, 22);
 }

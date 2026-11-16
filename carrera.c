@@ -37,20 +37,8 @@
     "  ELSE NULL "                                                                                 \
     "END"
 
-#define SQL_FECHA_ORD(col)                                                                         \
-    "CASE "                                                                                        \
-    "  WHEN " col " LIKE '____-__-__%' THEN substr(" col ", 1, 10) "                               \
-    "  WHEN " col " LIKE '__/__/____%' THEN substr(" col ", 7, 4) || '-' || substr(" col           \
-    ", 4, 2) || '-' || substr(" col ", 1, 2) "                                                     \
-    "  ELSE " col " "                                                                              \
-    "END"
-
-/* Orden cronologico de partidos: los IDs son estables y no siguen la fecha,
- * asi que se ordena por fecha normalizada, luego por fecha_hora (hora) y se
- * desempata por id. */
-#define SQL_PARTIDO_CRONO(prefijo, sentido) \
-    SQL_FECHA_ORD(prefijo "fecha_hora") " " sentido ", " prefijo "fecha_hora " sentido ", " \
-    prefijo "id " sentido
+/* SQL_FECHA_ORD y SQL_PARTIDO_CRONO viven en utils.h (compartidos con
+ * resumen_compartible.c). */
 
 #define SEP_MAYOR " ========================================\n"
 #define SEP_MENOR " ----------------------------------------\n"

@@ -527,6 +527,297 @@ void mostrar_rendimiento_por_temperatura(void)
     pause_console();
 }
 
+/*
+ * Rendimiento por condiciones reales de clima (columnas de Open-Meteo).
+ *
+ * Solo cuentan los partidos con weather_code no NULL: es la marca de que el
+ * clima se descargo de Open-Meteo (las columnas son DEFAULT NULL).
+ *
+ * Umbrales (los valores guardados son del dia completo del partido, ver
+ * openmeteo_client.c):
+ * - precip_mm es la SUMA de las 24 horas del dia. Open-Meteo informa con
+ *   resolucion de 0.1 mm, asi que < 0.1 es "sin lluvia"; hasta 5 mm en el dia
+ *   es lluvia leve (lloviznas o chaparrones cortos) y > 5 mm es moderada o
+ *   fuerte (cancha mojada de verdad).
+ * - wind_kmh es el PROMEDIO de las horas del dia a 10 m: < 10 calmo,
+ *   10 a 25 moderado, > 25 fuerte.
+ * - weather_code es el codigo WMO mas frecuente del dia: 0-1 despejado,
+ *   2-3 nublado, 45/48 niebla, 51-67 y 80-82 llovizna/lluvia, 71-77 y 85-86
+ *   nieve, 95-99 tormenta. Un codigo fuera de esas listas no entra en ningun
+ *   grupo de cielo (si en lluvia y viento).
+ */
+
+/* Filtro opcional por anio calendario sobre la fecha normalizada (acepta
+ * "aaaa-mm-dd" y "dd/mm/aaaa"). El parametro ?1 vale 0 para no filtrar. */
+#define CLIMA_REAL_FILTRO_ANIO \
+    "(?1 = 0 OR CAST(substr(" SQL_FECHA_ORD("fecha_hora") ", 1, 4) AS INTEGER) = ?1)"
+
+/* Columnas de cada grupo: indice, partidos, y cantidad + promedio de cada
+ * metrica (AVG y COUNT ignoran los NULL), resultados cargados y victorias. */
+#define CLIMA_REAL_SQL(expr_grupo, columna)                                                        \
+    "SELECT g, COUNT(*), COUNT(rendimiento_general), AVG(rendimiento_general), "                  \
+    "COUNT(goles), AVG(goles), COUNT(asistencias), AVG(asistencias), "                            \
+    "SUM(CASE WHEN resultado IN (1, 2, 3) THEN 1 ELSE 0 END), "                                   \
+    "SUM(CASE WHEN resultado = 1 THEN 1 ELSE 0 END) "                                             \
+    "FROM (SELECT " expr_grupo " AS g, rendimiento_general, goles, asistencias, resultado "       \
+    "FROM partido WHERE weather_code IS NOT NULL AND " columna " IS NOT NULL "      \
+    "AND " CLIMA_REAL_FILTRO_ANIO ") "                                                            \
+    "WHERE g IS NOT NULL GROUP BY g"
+
+static const char *const SQL_CLIMA_REAL_LLUVIA =
+    CLIMA_REAL_SQL("CASE WHEN precip_mm < 0.1 THEN 0 WHEN precip_mm <= 5.0 THEN 1 ELSE 2 END",
+                   "precip_mm");
+
+static const char *const SQL_CLIMA_REAL_VIENTO =
+    CLIMA_REAL_SQL("CASE WHEN wind_kmh < 10.0 THEN 0 WHEN wind_kmh <= 25.0 THEN 1 ELSE 2 END",
+                   "wind_kmh");
+
+static const char *const SQL_CLIMA_REAL_CIELO = CLIMA_REAL_SQL(
+            "CASE WHEN weather_code BETWEEN 0 AND 1 THEN 0 "
+            "WHEN weather_code BETWEEN 2 AND 3 THEN 1 "
+            "WHEN weather_code IN (45, 48) THEN 2 "
+            "WHEN weather_code BETWEEN 51 AND 67 OR weather_code BETWEEN 80 AND 82 THEN 3 "
+            "WHEN weather_code BETWEEN 71 AND 77 OR weather_code BETWEEN 85 AND 86 THEN 4 "
+            "WHEN weather_code BETWEEN 95 AND 99 THEN 5 END",
+            "weather_code");
+
+static const char *const ETIQUETAS_LLUVIA[CLIMA_REAL_GRUPOS_LLUVIA] =
+{
+    "Sin lluvia", "Lluvia leve", "Lluvia moderada/fuerte"
+};
+
+static const char *const ETIQUETAS_VIENTO[CLIMA_REAL_GRUPOS_VIENTO] =
+{
+    "Viento calmo", "Viento moderado", "Viento fuerte"
+};
+
+static const char *const ETIQUETAS_CIELO[CLIMA_REAL_GRUPOS_CIELO] =
+{
+    "Despejado", "Nublado", "Niebla", "Llovizna/Lluvia", "Nieve", "Tormenta"
+};
+
+static void iniciar_grupos_clima_real(ClimaRealGrupo *grupos, const char *const *etiquetas,
+                                      int cantidad)
+{
+    for (int i = 0; i < cantidad; i++)
+    {
+        ClimaRealGrupo vacio = {0};
+        vacio.etiqueta = etiquetas[i];
+        grupos[i] = vacio;
+    }
+}
+
+static int cargar_grupos_clima_real(const char *sql, ClimaRealGrupo *grupos, int cantidad,
+                                    int anio)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt_export(&stmt, sql))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, anio);
+
+    int rc;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        int indice = sqlite3_column_int(stmt, 0);
+        if (indice < 0 || indice >= cantidad)
+        {
+            continue;
+        }
+        ClimaRealGrupo *g = &grupos[indice];
+        g->partidos = sqlite3_column_int(stmt, 1);
+        g->con_rendimiento = sqlite3_column_int(stmt, 2);
+        g->rendimiento_promedio = sqlite3_column_double(stmt, 3);
+        g->con_goles = sqlite3_column_int(stmt, 4);
+        g->goles_promedio = sqlite3_column_double(stmt, 5);
+        g->con_asistencias = sqlite3_column_int(stmt, 6);
+        g->asistencias_promedio = sqlite3_column_double(stmt, 7);
+        g->con_resultado = sqlite3_column_int(stmt, 8);
+        int victorias = sqlite3_column_int(stmt, 9);
+        g->victorias_pct = g->con_resultado > 0 ? 100.0 * victorias / g->con_resultado : 0.0;
+    }
+
+    db_stmt_release(stmt);
+    return rc == SQLITE_DONE;
+}
+
+static int cargar_cobertura_clima_real(ClimaRealStats *stats, int anio)
+{
+    sqlite3_stmt *stmt = NULL;
+    if (!preparar_stmt_export(&stmt,
+                              "SELECT COUNT(*), "
+                              "COALESCE(SUM(CASE WHEN weather_code IS NOT NULL THEN 1 ELSE 0 END), 0) "
+                              "FROM partido WHERE " CLIMA_REAL_FILTRO_ANIO))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, anio);
+
+    int ok = sqlite3_step(stmt) == SQLITE_ROW;
+    if (ok)
+    {
+        stats->total_partidos = sqlite3_column_int(stmt, 0);
+        stats->partidos_con_datos = sqlite3_column_int(stmt, 1);
+        stats->cobertura_pct = stats->total_partidos > 0
+                               ? 100.0 * stats->partidos_con_datos / stats->total_partidos
+                               : 0.0;
+    }
+    db_stmt_release(stmt);
+    return ok;
+}
+
+/* Un grupo compite por "mejor condicion" si tiene suficientes partidos y al
+ * menos un rendimiento cargado. Empate de rendimiento: gana el de mas partidos;
+ * si tambien empatan, el primero en orden logico. */
+static void elegir_mejor_clima_real(const ClimaRealGrupo *grupos, int cantidad,
+                                    const ClimaRealGrupo **mejor)
+{
+    for (int i = 0; i < cantidad; i++)
+    {
+        const ClimaRealGrupo *g = &grupos[i];
+        if (g->partidos < CLIMA_REAL_MIN_PARTIDOS_MEJOR || g->con_rendimiento == 0)
+        {
+            continue;
+        }
+        if (!*mejor || g->rendimiento_promedio > (*mejor)->rendimiento_promedio ||
+                (g->rendimiento_promedio == (*mejor)->rendimiento_promedio &&
+                 g->partidos > (*mejor)->partidos))
+        {
+            *mejor = g;
+        }
+    }
+}
+
+int calcular_rendimiento_clima_real(ClimaRealStats *stats)
+{
+    return calcular_rendimiento_clima_real_anio(stats, 0);
+}
+
+int calcular_rendimiento_clima_real_anio(ClimaRealStats *stats, int anio)
+{
+    if (!stats || anio < 0)
+    {
+        return 0;
+    }
+
+    ClimaRealStats vacio = {0};
+    *stats = vacio;
+    iniciar_grupos_clima_real(stats->lluvia, ETIQUETAS_LLUVIA, CLIMA_REAL_GRUPOS_LLUVIA);
+    iniciar_grupos_clima_real(stats->viento, ETIQUETAS_VIENTO, CLIMA_REAL_GRUPOS_VIENTO);
+    iniciar_grupos_clima_real(stats->cielo, ETIQUETAS_CIELO, CLIMA_REAL_GRUPOS_CIELO);
+
+    if (!cargar_cobertura_clima_real(stats, anio) ||
+            !cargar_grupos_clima_real(SQL_CLIMA_REAL_LLUVIA, stats->lluvia,
+                                      CLIMA_REAL_GRUPOS_LLUVIA, anio) ||
+            !cargar_grupos_clima_real(SQL_CLIMA_REAL_VIENTO, stats->viento,
+                                      CLIMA_REAL_GRUPOS_VIENTO, anio) ||
+            !cargar_grupos_clima_real(SQL_CLIMA_REAL_CIELO, stats->cielo, CLIMA_REAL_GRUPOS_CIELO,
+                                      anio))
+    {
+        return 0;
+    }
+
+    elegir_mejor_clima_real(stats->lluvia, CLIMA_REAL_GRUPOS_LLUVIA, &stats->mejor);
+    elegir_mejor_clima_real(stats->viento, CLIMA_REAL_GRUPOS_VIENTO, &stats->mejor);
+    elegir_mejor_clima_real(stats->cielo, CLIMA_REAL_GRUPOS_CIELO, &stats->mejor);
+    return 1;
+}
+
+static void imprimir_promedio_clima_real(int cantidad, double valor)
+{
+    if (cantidad > 0)
+    {
+        printf(" %7.2f", valor);
+    }
+    else
+    {
+        printf(" %7s", "N/A");
+    }
+}
+
+static void imprimir_grupos_clima_real(const char *titulo, const ClimaRealGrupo *grupos,
+                                       int cantidad)
+{
+    printf("\n%s\n", titulo);
+    printf("----------------------------------------------------------------\n");
+    printf("%-24s %4s %7s %7s %7s %7s\n", "Condicion", "PJ", "Rend.", "Goles", "Asist.", "%Vict.");
+
+    int mostrados = 0;
+    for (int i = 0; i < cantidad; i++)
+    {
+        const ClimaRealGrupo *g = &grupos[i];
+        if (g->partidos == 0)
+        {
+            continue;
+        }
+        printf("%-24s %4d", g->etiqueta, g->partidos);
+        imprimir_promedio_clima_real(g->con_rendimiento, g->rendimiento_promedio);
+        imprimir_promedio_clima_real(g->con_goles, g->goles_promedio);
+        imprimir_promedio_clima_real(g->con_asistencias, g->asistencias_promedio);
+        if (g->con_resultado > 0)
+        {
+            printf(" %6.1f%%\n", g->victorias_pct);
+        }
+        else
+        {
+            printf(" %7s\n", "N/A");
+        }
+        mostrados++;
+    }
+
+    if (mostrados == 0)
+    {
+        printf("Sin datos para este grupo.\n");
+    }
+}
+
+void mostrar_rendimiento_por_clima_real(void)
+{
+    clear_screen();
+    print_header("RENDIMIENTO POR CONDICIONES REALES (OPEN-METEO)");
+
+    ClimaRealStats stats;
+    if (!calcular_rendimiento_clima_real(&stats))
+    {
+        printf("Error al consultar la base de datos.\n");
+        pause_console();
+        return;
+    }
+
+    printf("\nCobertura de clima real: %d de %d partidos (%.2f%%)\n", stats.partidos_con_datos,
+           stats.total_partidos, stats.cobertura_pct);
+
+    if (stats.partidos_con_datos == 0)
+    {
+        printf("\n");
+        mostrar_no_hay_registros("partidos con clima real");
+        printf("El clima se completa automaticamente al crear partidos en una cancha "
+               "geolocalizada.\n");
+        pause_console();
+        return;
+    }
+
+    imprimir_grupos_clima_real("Por Lluvia del Dia", stats.lluvia, CLIMA_REAL_GRUPOS_LLUVIA);
+    imprimir_grupos_clima_real("Por Viento Promedio del Dia", stats.viento,
+                               CLIMA_REAL_GRUPOS_VIENTO);
+    imprimir_grupos_clima_real("Por Condicion del Cielo", stats.cielo, CLIMA_REAL_GRUPOS_CIELO);
+
+    if (stats.mejor)
+    {
+        printf("\nTu mejor condicion: %s (rendimiento %.2f, %d partidos)\n", stats.mejor->etiqueta,
+               stats.mejor->rendimiento_promedio, stats.mejor->partidos);
+    }
+    else
+    {
+        printf("\nTu mejor condicion: sin datos suficientes (hace falta un grupo con al menos %d "
+               "partidos).\n",
+               CLIMA_REAL_MIN_PARTIDOS_MEJOR);
+    }
+
+    pause_console();
+}
+
 void mostrar_partidos_exigentes_bien_rendidos(void)
 {
     mostrar_partidos_con_sql(

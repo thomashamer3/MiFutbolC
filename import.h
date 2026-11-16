@@ -174,4 +174,12 @@ void importar_estadisticas_html(void);
  */
 void menu_importar(void);
 
+#ifdef UNIT_TEST
+/* Ganchos de prueba: importan partidos desde una ruta completa (con
+ * encabezado), sin pasar por la carpeta de importaciones del usuario.
+ * Devuelven la cantidad importada o -1 si no se pudo abrir el archivo. */
+int import_test_partidos_csv_desde_ruta(const char *ruta);
+int import_test_partidos_txt_desde_ruta(const char *ruta);
+#endif
+
 #endif

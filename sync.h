@@ -112,6 +112,12 @@ int sync_normalizar_url(const char *entrada, char *salida, size_t tam);
 /** Genera un UUID v4 en [salida]. */
 void sync_uuid_generar(char *salida, size_t tam);
 
+#ifdef UNIT_TEST
+/* Ganchos de prueba: exponen la parte local (sin red) de la sincronizacion. */
+int sync_test_buscar_partido_por_uuid(const char *uuid, long long *id);
+int sync_test_eliminar_local(const char *uuid);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

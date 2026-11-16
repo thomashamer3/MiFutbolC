@@ -184,14 +184,19 @@ static void backfill_uuid(void)
             ejecutar("SAVEPOINT backfill_uuid;"))
     {
         int ok = 1;
-        for (size_t i = 0; i < total && ok; i++)
+        for (size_t i = 0; i < total; i++)
         {
             char uuid[SYNC_UUID_SIZE];
             sync_uuid_generar(uuid, sizeof(uuid));
             sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
             sqlite3_bind_int(stmt, 2, ids[i]);
-            ok = sqlite3_step(stmt) == SQLITE_DONE;
+            int rc = sqlite3_step(stmt);
             sqlite3_reset(stmt);
+            if (rc != SQLITE_DONE)
+            {
+                ok = 0;
+                break;
+            }
         }
         if (!ok)
         {

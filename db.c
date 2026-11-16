@@ -782,6 +782,37 @@ static void backfill_mes_anio_once(void)
     app_log_write("INFO", "DB", "Backfill mes_anio aplicado una sola vez");
 }
 
+/* Deja user_version en DB_VERSION_CURRENT al final de la inicializacion.
+ * Las migraciones y backfills leen la version vieja antes de llegar aca, asi
+ * que corren primero; despues se marca la version para que no se repitan en
+ * el proximo arranque. */
+static void marcar_version_actual(void)
+{
+    int current_version = 0;
+    if (!get_user_version(&current_version))
+    {
+        app_log_write("WARN", "DB", "No se pudo leer PRAGMA user_version al finalizar migraciones");
+        return;
+    }
+
+    if (current_version >= DB_VERSION_CURRENT)
+    {
+        return;
+    }
+
+    if (!set_user_version(DB_VERSION_CURRENT))
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "No se pudo actualizar user_version a %d: %s",
+                 DB_VERSION_CURRENT, sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+        return;
+    }
+
+    snprintf(log_buf_, sizeof(log_buf_), "user_version actualizado de %d a %d", current_version,
+             DB_VERSION_CURRENT);
+    app_log_write("INFO", "DB", log_buf_);
+}
+
 /* Definiciones compartidas para evitar duplicar columnas entre CREATE TABLE y
  * ALTER TABLE. */
 #define COL_CAMISETA_COLOR_PRINCIPAL "color_principal TEXT DEFAULT ''"
@@ -2066,6 +2097,32 @@ static int create_performance_indexes(void)
     return 1;
 }
 
+/* Esquema, migraciones, backfills e indices sobre la conexion abierta `db`.
+ * Lo usan db_init y la restauracion (una base restaurada puede tener un
+ * esquema mas viejo). Todo es idempotente. */
+static int aplicar_esquema_y_migraciones(void)
+{
+    if (!create_database_schema())
+    {
+        app_log_write("ERROR", "APP", "Fallo create_database_schema");
+        return 0;
+    }
+
+    add_missing_columns();
+    app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
+
+    backfill_mes_anio_once();
+
+    if (!create_performance_indexes())
+    {
+        app_log_write("ERROR", "APP", "Fallo create_performance_indexes");
+        return 0;
+    }
+
+    marcar_version_actual();
+    return 1;
+}
+
 int db_init(void)
 {
     if (!setup_database_paths())
@@ -2089,20 +2146,8 @@ int db_init(void)
         return 0;
     }
 
-    if (!create_database_schema())
+    if (!aplicar_esquema_y_migraciones())
     {
-        app_log_write("ERROR", "APP", "Fallo create_database_schema");
-        return 0;
-    }
-
-    add_missing_columns();
-    app_log_write("INFO", "DB", "Migraciones de columnas aplicadas");
-
-    backfill_mes_anio_once();
-
-    if (!create_performance_indexes())
-    {
-        app_log_write("ERROR", "APP", "Fallo create_performance_indexes");
         return 0;
     }
 
@@ -2123,6 +2168,7 @@ void db_close(void)
         app_log_write("INFO", "DB", "Cerrando conexion SQLite");
         db_clear_stmt_cache();
         sqlite3_close(db);
+        db = NULL;
         app_log_write("INFO", "DB", "Conexion SQLite cerrada");
         app_log_close();
     }
@@ -2410,6 +2456,181 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
     return 1;
 }
 
+enum
+{
+    BACKUP_API_MAX_REINTENTOS = 50,
+    BACKUP_API_ESPERA_MS = 100
+};
+
+/* Copia la base 'main' de origen sobre la 'main' de destino con la API de
+ * backup de SQLite. La conexion origen lee su WAL, asi que la copia incluye
+ * las escrituras recientes, y el destino se escribe en una transaccion: si
+ * algo falla, queda como estaba. Devuelve un codigo SQLite. */
+static int copiar_bd_con_backup_api(sqlite3 *destino, sqlite3 *origen)
+{
+    sqlite3_backup *backup = sqlite3_backup_init(destino, "main", origen, "main");
+    if (!backup)
+    {
+        int rc = sqlite3_errcode(destino);
+        return (rc != SQLITE_OK) ? rc : SQLITE_ERROR;
+    }
+
+    int step_rc = sqlite3_backup_step(backup, -1);
+    int reintentos = 0;
+    while ((step_rc == SQLITE_BUSY || step_rc == SQLITE_LOCKED) &&
+            reintentos < BACKUP_API_MAX_REINTENTOS)
+    {
+        reintentos++;
+        sqlite3_sleep(BACKUP_API_ESPERA_MS);
+        step_rc = sqlite3_backup_step(backup, -1);
+    }
+
+    int finish_rc = sqlite3_backup_finish(backup);
+    return (step_rc == SQLITE_DONE) ? finish_rc : step_rc;
+}
+
+int db_backup_a_archivo(const char *dest_path)
+{
+    if (!db || !dest_path || dest_path[0] == '\0')
+    {
+        return SQLITE_MISUSE;
+    }
+
+    sqlite3 *dest_db = NULL;
+    int rc = sqlite3_open(dest_path, &dest_db);
+    if (rc == SQLITE_OK)
+    {
+        rc = copiar_bd_con_backup_api(dest_db, db);
+    }
+    sqlite3_close(dest_db);
+    return rc;
+}
+
+/* PRAGMA quick_check sobre `conn`. Devuelve 1 si el resultado es "ok" y deja
+ * en `detalle` el primer resultado o el error. */
+static int verificar_integridad_conexion(sqlite3 *conn, char *detalle, size_t detalle_size)
+{
+    sqlite3_stmt *stmt = NULL;
+    int ok = 0;
+
+    if (sqlite3_prepare_v2(conn, "PRAGMA quick_check;", -1, &stmt, NULL) != SQLITE_OK)
+    {
+        snprintf(detalle, detalle_size, "%s", sqlite3_errmsg(conn));
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const char *resultado = (const char *)sqlite3_column_text(stmt, 0);
+        ok = resultado && strcmp(resultado, "ok") == 0;
+        snprintf(detalle, detalle_size, "%s", resultado ? resultado : "(sin resultado)");
+    }
+    else
+    {
+        snprintf(detalle, detalle_size, "%s", sqlite3_errmsg(conn));
+    }
+
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+/* Una base vacia (archivo de 0 bytes) pasa quick_check: se exige la tabla
+ * principal para no reemplazar los datos por una base sin nada. */
+static int conexion_tiene_tabla_partido(sqlite3 *conn)
+{
+    sqlite3_stmt *stmt = NULL;
+    int existe = 0;
+    if (sqlite3_prepare_v2(conn,
+                           "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'partido';",
+                           -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+    existe = sqlite3_step(stmt) == SQLITE_ROW;
+    sqlite3_finalize(stmt);
+    return existe;
+}
+
+DbRestaurarResultado db_restaurar_desde_archivo(const char *source_path, char *detalle,
+        size_t detalle_size)
+{
+    char detalle_local[256] = {0};
+    if (!detalle || detalle_size == 0)
+    {
+        detalle = detalle_local;
+        detalle_size = sizeof(detalle_local);
+    }
+    detalle[0] = '\0';
+
+    if (!db)
+    {
+        snprintf(detalle, detalle_size, "No hay conexion abierta");
+        return DB_RESTAURAR_SIN_CONEXION;
+    }
+    if (!source_path || source_path[0] == '\0')
+    {
+        snprintf(detalle, detalle_size, "Ruta de origen vacia");
+        return DB_RESTAURAR_ORIGEN_NO_ABRE;
+    }
+
+    /* El origen se abre solo lectura: no se modifica ni se crea si no existe. */
+    sqlite3 *origen = NULL;
+    if (sqlite3_open_v2(source_path, &origen, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK)
+    {
+        snprintf(detalle, detalle_size, "%s", origen ? sqlite3_errmsg(origen) : "sin memoria");
+        sqlite3_close(origen);
+        return DB_RESTAURAR_ORIGEN_NO_ABRE;
+    }
+
+    /* Validar antes de tocar la base actual. */
+    if (!verificar_integridad_conexion(origen, detalle, detalle_size))
+    {
+        sqlite3_close(origen);
+        return DB_RESTAURAR_ORIGEN_INVALIDO;
+    }
+    if (!conexion_tiene_tabla_partido(origen))
+    {
+        snprintf(detalle, detalle_size, "El origen no tiene la tabla partido");
+        sqlite3_close(origen);
+        return DB_RESTAURAR_ORIGEN_INVALIDO;
+    }
+
+    /* Las sentencias cacheadas apuntan al esquema anterior. */
+    db_clear_stmt_cache();
+
+    int rc = copiar_bd_con_backup_api(db, origen);
+    if (rc == SQLITE_READONLY)
+    {
+        /* En WAL, SQLite no puede cambiar el tamano de pagina del destino: si
+         * el origen usa otro, se pasa a journal DELETE para la copia y despues
+         * se vuelve a WAL. */
+        sqlite3_exec(db, "PRAGMA journal_mode = DELETE;", NULL, NULL, NULL);
+        rc = copiar_bd_con_backup_api(db, origen);
+        sqlite3_exec(db, "PRAGMA journal_mode = WAL;", NULL, NULL, NULL);
+    }
+    sqlite3_close(origen);
+
+    if (rc != SQLITE_OK)
+    {
+        snprintf(detalle, detalle_size, "SQLite backup rc=%d (%s)", rc, sqlite3_errstr(rc));
+        return DB_RESTAURAR_FALLO_COPIA;
+    }
+
+    if (!verificar_integridad_conexion(db, detalle, detalle_size))
+    {
+        return DB_RESTAURAR_FALLO_COPIA;
+    }
+
+    /* Una base restaurada puede venir con un esquema mas viejo. */
+    if (!aplicar_esquema_y_migraciones())
+    {
+        snprintf(detalle, detalle_size, "Fallo al aplicar migraciones sobre la base restaurada");
+        return DB_RESTAURAR_FALLO_MIGRACION;
+    }
+
+    return DB_RESTAURAR_OK;
+}
+
 void exportar_base_datos(void)
 {
     app_log_write("INFO", "EXPORT", "Inicio de exportacion de base de datos");
@@ -2473,18 +2694,7 @@ void exportar_base_datos(void)
         return;
     }
 
-    sqlite3_backup *backup = sqlite3_backup_init(dest_db, "main", db, "main");
-    if (!backup)
-    {
-        LOG_ERROR_FMT("EXPORT", "Error iniciando backup SQLite: %s", sqlite3_errmsg(dest_db));
-        sqlite3_close(dest_db);
-        pause_console();
-        return;
-    }
-
-    int step_rc = sqlite3_backup_step(backup, -1);
-    int finish_rc = sqlite3_backup_finish(backup);
-    int final_rc = (step_rc == SQLITE_DONE) ? finish_rc : step_rc;
+    int final_rc = copiar_bd_con_backup_api(dest_db, db);
 
     sqlite3_close(dest_db);
 
@@ -2574,8 +2784,26 @@ int backup_base_datos_automatico(const char *motivo)
         return 0;
     }
 
-    CopyResult result = copiar_archivo(source_path, dest_path);
-    if (result != COPY_OK)
+    /* Con la conexion abierta se usa la API de backup: copiar el archivo crudo
+     * dejaria afuera lo que todavia esta en el WAL. */
+    int copia_ok = 0;
+    if (db)
+    {
+        int rc = db_backup_a_archivo(dest_path);
+        copia_ok = (rc == SQLITE_OK);
+        if (!copia_ok)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup automatico rc=%d (%s)", rc,
+                     sqlite3_errstr(rc));
+            app_log_write("ERROR", "BACKUP", log_buf_);
+        }
+    }
+    else
+    {
+        copia_ok = (copiar_archivo(source_path, dest_path) == COPY_OK);
+    }
+
+    if (!copia_ok)
     {
         LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP", get_text("backup_failed"),
                                       "Fallo copia de backup desde %.470s hacia %.470s",
@@ -2607,23 +2835,60 @@ void importar_base_datos(void)
 
     const char *dest_path = DB_PATH;
 
-    // Verificar que exista el archivo a importar
-    CopyResult result = copiar_archivo(source_path, dest_path);
-    if (result != COPY_OK)
+    if (db)
     {
-        if (result == COPY_SRC_ERROR)
+        /* Con la conexion abierta no se pisa el archivo (al cerrar, SQLite
+         * volcaria el WAL viejo encima): se restaura con la API de backup
+         * sobre la conexion, que valida el origen antes de tocar nada. */
+        FILE *probe = app_fopen(source_path, "rb");
+        if (!probe)
         {
             LOG_ERROR_CONSOLE_LOG_FMT("IMPORT",
                                       "Error: No se encontro el archivo a importar en:\n%s",
                                       "No se encontro archivo de importacion: %.983s", source_path);
+            return;
         }
-        else
+        fclose(probe);
+
+        char detalle[256];
+        DbRestaurarResultado res =
+            db_restaurar_desde_archivo(source_path, detalle, sizeof(detalle));
+        if (res != DB_RESTAURAR_OK && res != DB_RESTAURAR_FALLO_MIGRACION)
         {
-            LOG_ERROR_CONSOLE_LOG_FMT(
-                "IMPORT", "Error: No se pudo abrir la base de datos destino:\n%s",
-                "No se pudo abrir DB destino para importar: %.977s", dest_path);
+            printf("Error: No se pudo importar la base de datos (%s).\n", detalle);
+            printf("La base de datos actual no fue modificada.\n");
+            snprintf(log_buf_, sizeof(log_buf_), "Importacion rechazada (%d): %.900s", (int)res,
+                     detalle);
+            app_log_write("ERROR", "IMPORT", log_buf_);
+            return;
         }
-        return;
+        if (res == DB_RESTAURAR_FALLO_MIGRACION)
+        {
+            snprintf(log_buf_, sizeof(log_buf_), "Importacion con migraciones pendientes: %.900s",
+                     detalle);
+            app_log_write("WARN", "IMPORT", log_buf_);
+        }
+    }
+    else
+    {
+        // Sin conexion abierta se puede copiar el archivo directamente.
+        CopyResult result = copiar_archivo(source_path, dest_path);
+        if (result != COPY_OK)
+        {
+            if (result == COPY_SRC_ERROR)
+            {
+                LOG_ERROR_CONSOLE_LOG_FMT(
+                    "IMPORT", "Error: No se encontro el archivo a importar en:\n%s",
+                    "No se encontro archivo de importacion: %.983s", source_path);
+            }
+            else
+            {
+                LOG_ERROR_CONSOLE_LOG_FMT(
+                    "IMPORT", "Error: No se pudo abrir la base de datos destino:\n%s",
+                    "No se pudo abrir DB destino para importar: %.977s", dest_path);
+            }
+            return;
+        }
     }
 
     printf("Base de datos importada correctamente.\n");
