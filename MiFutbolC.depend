@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
+1794841989 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\main.c
 	"db.h"
+	"clima_diferido.h"
 	"menu.h"
 	"utils.h"
 	"settings.h"
@@ -8,6 +9,9 @@
 	"import.h"
 	"undo.h"
 	"sync.h"
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
 	<errno.h>
 	<stdio.h>
 	<stdlib.h>
@@ -82,7 +86,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1794585138 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1794842608 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -108,7 +112,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1794844176 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"cJSON.h"
@@ -134,6 +138,7 @@
 	<process.h>
 	<shellapi.h>
 	<fcntl.h>
+	<signal.h>
 	<spawn.h>
 	<sys/stat.h>
 	<sys/wait.h>
@@ -141,19 +146,20 @@
 	<unistd.h>
 	"random_utils.h"
 
-1794595794 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
+1794844174 d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.h
 	<stddef.h>
 	<stdio.h>
 	<stdarg.h>
 	<io.h>
 	<process.h>
 
-1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
+1794844196 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.c
 	"camiseta.h"
 	"ascii_charts.h"
 	"db.h"
 	"export_camisetas.h"
 	"menu.h"
+	"partido.h"
 	"settings.h"
 	"utils.h"
 	<ctype.h>
@@ -166,11 +172,12 @@
 
 1790719046 d:\anime\libros\lenguaje c\proyectos\mifutbolc\camiseta.h
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
+1794842750 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.c
 	"partido.h"
 	"ascii_art.h"
 	"botin.h"
 	"camiseta.h"
+	"clima_diferido.h"
 	"db.h"
 	"entrenador_ia.h"
 	"equipo.h"
@@ -189,7 +196,7 @@
 	<stdlib.h>
 	<time.h>
 
-1792011502 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
+1794842581 d:\anime\libros\lenguaje c\proyectos\mifutbolc\partido.h
 
 1791928714 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\estadisticas.c
 	"estadisticas.h"
@@ -231,8 +238,9 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1792448959 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1794841987 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
+	"clima_diferido.h"
 	"settings.h"
 	"utils.h"
 	<locale.h>
@@ -333,7 +341,7 @@
 
 1781840356 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.h
 
-1792011444 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
+1794842750 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\analisis.c
 	"analisis.h"
 	"db.h"
 	"entrenador_ia.h"
@@ -345,7 +353,7 @@
 	<stdlib.h>
 	<string.h>
 
-1782270411 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.c
+1794842772 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\logros.c
 	"logros.h"
 	"db.h"
 	"menu.h"
@@ -354,12 +362,13 @@
 	<stdio.h>
 	<string.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
+1794844224 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\cancha.c
 	"cancha.h"
 	"cJSON.h"
 	"db.h"
 	"export.h"
 	"menu.h"
+	"partido.h"
 	"pdfgen.h"
 	"settings.h"
 	"utils.h"
@@ -403,7 +412,7 @@
 
 1792446543 d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.h
 
-1794428228 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
+1794842599 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\import.c
 	"import.h"
 	"cJSON.h"
 	"db.h"
@@ -2416,7 +2425,7 @@
 	<unistd.h>
 	<wchar.h>
 
-1792009423 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
+1794842750 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\carrera.c
 	"carrera.h"
 	"db.h"
 	"menu.h"
@@ -2828,7 +2837,7 @@
 
 1781741235 d:\anime\libros\lenguaje c\proyectos\mifutbolc\media.h
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
+1794842089 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.c
 	"openmeteo_client.h"
 	"cJSON.h"
 	"utils.h"
@@ -2838,7 +2847,8 @@
 	<string.h>
 	<time.h>
 
-1783362980 d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.h
+1794842089 d:\anime\libros\lenguaje c\proyectos\mifutbolc\openmeteo_client.h
+	<stddef.h>
 
 1790725867 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\botin.c
 	"botin.h"
@@ -2868,7 +2878,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
+1794842750 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\resumen_compartible.c
 	"resumen_compartible.h"
 	"menu.h"
 	"db.h"
@@ -2911,12 +2921,13 @@
 1792452364 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.h
 	<stddef.h>
 
-1794597054 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
+1794842632 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync.c
 	"sync.h"
 	"sync_internal.h"
 	"sync_entidades.h"
 	"db.h"
 	"menu.h"
+	"partido.h"
 	"random_utils.h"
 	"utils.h"
 	<ctype.h>
@@ -2932,7 +2943,7 @@
 	"sync.h"
 	<stddef.h>
 
-1794595794 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
+1794783175 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_http.c
 	"sync_internal.h"
 	"compat_port.h"
 	"random_utils.h"
@@ -2946,7 +2957,7 @@
 	<Windows.h>
 	<unistd.h>
 
-1794428370 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c
+1794840881 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\sync_queue.c
 	"sync_internal.h"
 	"sync_entidades.h"
 	"db.h"
@@ -2968,4 +2979,18 @@
 	<stdlib.h>
 	<string.h>
 	<time.h>
+
+1794843454 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\clima_diferido.c
+	"clima_diferido.h"
+	"db.h"
+	"openmeteo_client.h"
+	"partido.h"
+	"settings.h"
+	"utils.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+
+1794842089 d:\anime\libros\lenguaje c\proyectos\mifutbolc\clima_diferido.h
 

@@ -49,10 +49,15 @@ typedef enum
 #define SQL_COUNT_WHERE(condicion) SQL_COUNT " AND " condicion
 #define SQL_COUNT_DISTINCT(col) "SELECT COUNT(DISTINCT " col ")" SQL_FROM_PARTIDO
 #define SQL_AVG_X10(col) "SELECT ROUND(IFNULL(AVG(" col "), 0) * 10)" SQL_FROM_PARTIDO
-#define SQL_LAST(col) "SELECT IFNULL(" col ", 0)" SQL_FROM_PARTIDO " ORDER BY id DESC LIMIT 1"
+/* Los IDs de partido son estables y no siguen la fecha: "ultimo" y las rachas
+ * se calculan en orden cronologico, con desempate por id. */
+#define SQL_ORDEN_CRONO "fecha_hora, id"
+#define SQL_LAST(col) \
+    "SELECT IFNULL(" col ", 0)" SQL_FROM_PARTIDO " ORDER BY fecha_hora DESC, id DESC LIMIT 1"
 #define SQL_RACHA_MAX(resultado)                                                                   \
-    "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY id) - ROW_NUMBER() OVER " \
-    "(PARTITION BY resultado ORDER BY id) as grp" SQL_FROM_PARTIDO                                 \
+    "SELECT COUNT(*) FROM (SELECT resultado, ROW_NUMBER() OVER (ORDER BY " SQL_ORDEN_CRONO ") - " \
+    "ROW_NUMBER() OVER (PARTITION BY resultado ORDER BY " SQL_ORDEN_CRONO ") as grp"           \
+    SQL_FROM_PARTIDO                                                                               \
     ") WHERE resultado = " #resultado " GROUP BY grp ORDER BY COUNT(*) DESC LIMIT 1"
 
 #define LOGRO_QUERY(tipo, sql) {tipo, sql}
@@ -118,6 +123,7 @@ static const LogroQuery LOGRO_QUERIES[] =
 #undef LOGRO_QUERY
 #undef SQL_RACHA_MAX
 #undef SQL_LAST
+#undef SQL_ORDEN_CRONO
 #undef SQL_AVG_X10
 #undef SQL_COUNT_DISTINCT
 #undef SQL_COUNT_WHERE

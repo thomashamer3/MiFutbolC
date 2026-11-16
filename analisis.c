@@ -125,7 +125,7 @@ static void mostrar_ultimos5_partidos(void)
     sqlite3_stmt *stmt;
     if (!preparar_stmt(&stmt,
                        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
-                       "FROM partido ORDER BY id DESC LIMIT 5"))
+                       "FROM partido ORDER BY fecha_hora DESC, id DESC LIMIT 5"))
     {
         return;
     }
@@ -278,7 +278,7 @@ static void listar_partidos_para_quimica(void)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha_hora, goles, asistencias, resultado "
                       "FROM partido "
-                      "ORDER BY id ASC";
+                      "ORDER BY fecha_hora ASC, id ASC";
 
     if (!preparar_stmt(&stmt, sql))
     {

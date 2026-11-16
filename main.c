@@ -1,4 +1,5 @@
 #include "db.h"
+#include "clima_diferido.h"
 #include "menu.h"
 #include "utils.h"
 #include "settings.h"
@@ -6,6 +7,49 @@
 #include "import.h"
 #include "undo.h"
 #include "sync.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define UPDATE_CHECK_INTERVALO_SEG (24LL * 60LL * 60LL)
+#define UPDATE_CHECK_ARCHIVO "update_check.stamp"
+
+/* La consulta de actualizaciones es una llamada de red que bloquea el
+ * arranque. Se limita a una vez por dia guardando la hora del ultimo intento
+ * en el directorio de datos; la opcion Actualizar de Ajustes consulta siempre. */
+static int actualizacion_corresponde_verificar(void)
+{
+    char ruta[1200];
+    char linea[32] = {0};
+    FILE *f = NULL;
+    long long ahora = (long long)time(NULL);
+    long long ultimo = 0;
+
+    app_build_path(ruta, sizeof(ruta), get_data_dir(), UPDATE_CHECK_ARCHIVO);
+
+    if (fopen_s(&f, ruta, "r") == 0 && f)
+    {
+        if (fgets(linea, sizeof(linea), f))
+        {
+            ultimo = strtoll(linea, NULL, 10);
+        }
+        fclose(f);
+    }
+
+    if (ultimo > 0 && ahora >= ultimo && ahora - ultimo < UPDATE_CHECK_INTERVALO_SEG)
+    {
+        return 0;
+    }
+
+    f = NULL;
+    if (fopen_s(&f, ruta, "w") == 0 && f)
+    {
+        fprintf(f, "%lld\n", ahora);
+        fclose(f);
+    }
+    return 1;
+}
 
 #ifndef _WIN32
 #include <errno.h>
@@ -96,7 +140,10 @@ int main(void)
     handle_user_name();
 
     // Verificar actualizaciones al inicio (modo silencioso - solo muestra si hay actualización)
-    verificar_actualizacion_disponible(0);
+    if (actualizacion_corresponde_verificar())
+    {
+        verificar_actualizacion_disponible(0);
+    }
 
     // Aviso opcional de recuerdos historicos para abrir Modo Retro
     carrera_notificar_modo_retro_inicio();
@@ -109,6 +156,8 @@ int main(void)
 
     // Cola local + envio automatico a PocketBase (si esta configurado).
     sync_init_db();
+    // Clima de partidos pendiente de sesiones anteriores (curl en segundo plano).
+    clima_diferido_init();
     {
         SyncConfig sync_cfg;
         sync_config_load(&sync_cfg);
@@ -124,6 +173,7 @@ int main(void)
 
     run_menu(filtered_items, count);
 
+    clima_diferido_finalizar();
     app_log_event("APP", "Aplicacion finalizada");
     db_close();
     return 0;

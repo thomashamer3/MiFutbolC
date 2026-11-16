@@ -333,9 +333,6 @@ static int procesar_e_insertar_partido(const PartidoInput *input)
     }
 
     printf("Partido en '%s' importado correctamente\n", input->cancha);
-
-    reordenar_partidos_por_fecha();
-
     return 1;
 }
 
@@ -1037,7 +1034,7 @@ static int partido_existe(sqlite3_int64 cancha_id, const char *fecha, int camise
 static int insertar_partido(PartidoData data)
 {
     sqlite3_stmt *stmt;
-    long long id = obtener_siguiente_id("partido");
+    long long id = partido_siguiente_id();
     if (!preparar_stmt("INSERT INTO partido(id, cancha_id, fecha_hora, mes_anio, goles, asistencias, "
                        "camiseta_id, resultado, clima, dia, rendimiento_general, cansancio, "
                        "estado_animo, comentario_personal) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
@@ -1114,6 +1111,24 @@ static int procesar_partido_json_item(cJSON const *item)
     return procesar_e_insertar_partido(&input);
 }
 
+/* Importa todos los partidos de un array JSON en una sola transaccion. */
+static int importar_partidos_json_array(cJSON const *json)
+{
+    int imported = 0;
+    cJSON const *item = NULL;
+
+    sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
+    cJSON_ArrayForEach(item, json)
+    {
+        if (procesar_partido_json_item(item))
+        {
+            imported++;
+        }
+    }
+    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
+    return imported;
+}
+
 void importar_partidos_json(void)
 {
     int count;
@@ -1123,15 +1138,7 @@ void importar_partidos_json(void)
         return;
     }
 
-    int imported = 0;
-    for (int i = 0; i < count; i++)
-    {
-        cJSON const *item = cJSON_GetArrayItem(json, i);
-        if (procesar_partido_json_item(item))
-        {
-            imported++;
-        }
-    }
+    int imported = importar_partidos_json_array(json);
 
     cJSON_Delete(json);
     printf("Importacion de partidos completada. %d partidos importados\n", imported);
@@ -1158,15 +1165,7 @@ int importar_partidos_desde_ruta(const char *ruta)
     }
 
     int count = cJSON_GetArraySize(json);
-    int imported = 0;
-    for (int i = 0; i < count; i++)
-    {
-        cJSON const *item = cJSON_GetArrayItem(json, i);
-        if (procesar_partido_json_item(item))
-        {
-            imported++;
-        }
-    }
+    int imported = importar_partidos_json_array(json);
     cJSON_Delete(json);
     printf("Sincronizacion completada: %d de %d partidos importados.\n", imported, count);
     return imported;
@@ -1973,6 +1972,7 @@ void importar_partidos_html(void)
     char *ptr = content;
 
     // Buscar filas de tabla
+    sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL);
     while ((ptr = strstr(ptr, "<tr>")) != NULL)
     {
         ptr += 4; // Saltar <tr>
@@ -1981,6 +1981,7 @@ void importar_partidos_html(void)
             count++;
         }
     }
+    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
 
     free(content);
     printf("Importacion de partidos desde HTML completada. %d partidos importados\n", count);

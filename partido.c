@@ -2,6 +2,7 @@
 #include "ascii_art.h"
 #include "botin.h"
 #include "camiseta.h"
+#include "clima_diferido.h"
 #include "db.h"
 #include "entrenador_ia.h"
 #include "equipo.h"
@@ -1060,8 +1061,8 @@ static int partido_listado_mostrar_pagina_actual(int pagina_actual, int partidos
     }
     else
     {
-        order_by_sql = orden_desc ? "ORDER BY p.fecha_hora DESC LIMIT ? OFFSET ?"
-                       : "ORDER BY p.fecha_hora ASC LIMIT ? OFFSET ?";
+        order_by_sql = orden_desc ? "ORDER BY p.fecha_hora DESC, p.id DESC LIMIT ? OFFSET ?"
+                       : "ORDER BY p.fecha_hora ASC, p.id ASC LIMIT ? OFFSET ?";
     }
 
     snprintf(sql, sizeof(sql), PARTIDO_SELECT_COLUMNS " %s %s", where_clause, order_by_sql);
@@ -3224,102 +3225,26 @@ static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, in
     return 1;
 }
 
-static int calcular_franja_horaria(int hora, int minuto, const OpenMeteoResult *res)
+int partido_parsear_fecha_hora(const char *fecha, int *anio, int *mes, int *dia, int *hora,
+                               int *minuto)
 {
-    if (!res->has_sun_data)
+    if (!anio || !mes || !dia || !hora || !minuto)
         return 0;
-    int total_minutos = hora * 60 + minuto;
-    int sunrise_min = res->sunrise_hour * 60 + res->sunrise_minute;
-    int sunset_min = res->sunset_hour * 60 + res->sunset_minute;
-    if (total_minutos < sunrise_min)
-        return 1;
-    if (total_minutos < 12 * 60)
-        return 2;
-    if (total_minutos < 15 * 60)
-        return 3;
-    if (total_minutos < sunset_min - 60)
-        return 4;
-    if (total_minutos < sunset_min + 60)
-        return 5;
-    return 6;
+    return parsear_fecha_hora_partido(fecha, anio, mes, dia, hora, minuto);
 }
 
-static void registrar_clima_partido(long long id, int cancha_id, const char *fecha)
+/*
+ * Deja el clima del partido recien creado pendiente para el sondeo en segundo
+ * plano. Los IDs de partido son estables, asi que se encola directamente por
+ * el id insertado.
+ */
+static void encolar_clima_partido_creado(long long id)
 {
-    double lat = 0.0;
-    double lon = 0.0;
-    sqlite3_stmt *s = NULL;
-    if (db_prepare_stmt(&s, "SELECT latitud, longitud FROM cancha WHERE id = ?"))
+    if (id > 0 && clima_diferido_encolar(id))
     {
-        sqlite3_bind_int(s, 1, cancha_id);
-        if (sqlite3_step(s) == SQLITE_ROW)
-        {
-            lat = sqlite3_column_double(s, 0);
-            lon = sqlite3_column_double(s, 1);
-        }
-        db_stmt_release(s);
+        printf("El clima se completara en segundo plano.\n");
+        clima_diferido_procesar();
     }
-    if (lat == 0.0 && lon == 0.0)
-    {
-        return;
-    }
-
-    int anio;
-    int mes;
-    int dia;
-    int match_hora;
-    int match_minuto;
-    if (!parsear_fecha_hora_partido(fecha, &anio, &mes, &dia, &match_hora, &match_minuto))
-    {
-        return;
-    }
-
-    OpenMeteoParams omp;
-    omp.latitud = lat;
-    omp.longitud = lon;
-    omp.anio = anio;
-    omp.mes = mes;
-    omp.dia = dia;
-
-    OpenMeteoResult res;
-    memset(&res, 0, sizeof(res));
-    if (!openmeteo_fetch(&omp, &res))
-    {
-        printf("No se pudo obtener datos climaticos (sin conexion?).\n");
-        return;
-    }
-
-    int dia_calculado = calcular_franja_horaria(match_hora, match_minuto, &res);
-
-    sqlite3_stmt *u = NULL;
-    if (!db_prepare_stmt(&u, "UPDATE partido SET temperatura_c=?, apparent_temp_c=?, "
-                         "precip_mm=?, wind_kmh=?, "
-                         "weather_code=?, clima_json=?, dia=? WHERE id=?"))
-    {
-        openmeteo_result_free(&res);
-        return;
-    }
-
-    sqlite3_bind_double(u, 1, res.temp_c);
-    sqlite3_bind_double(u, 2, res.apparent_temp_c);
-    sqlite3_bind_double(u, 3, res.precip_mm);
-    sqlite3_bind_double(u, 4, res.wind_kmh);
-    sqlite3_bind_int(u, 5, res.weather_code);
-    sqlite3_bind_text(u, 6, res.clima_json, -1, DB_TRANSIENT);
-    sqlite3_bind_int(u, 7, dia_calculado);
-    sqlite3_bind_int64(u, 8, id);
-    sqlite3_step(u);
-    db_stmt_release(u);
-
-    printf("Clima registrado: %.1f°C (sensacion %.1f°C), %.1fmm precip, %.1f "
-           "km/h viento\n",
-           res.temp_c, res.apparent_temp_c, res.precip_mm, res.wind_kmh);
-    if (dia_calculado > 0)
-    {
-        printf("Franja horaria ajustada segun horario solar real: %s\n",
-               dia_to_text(dia_calculado));
-    }
-    openmeteo_result_free(&res);
 }
 
 void crear_partido(void)
@@ -3377,9 +3302,10 @@ void crear_partido(void)
 
     printf("Franja horaria calculada automaticamente: %s\n", dia_to_text(datos.dia));
 
-    long long id = obtener_siguiente_id("partido");
-
     sqlite3_exec(db, "BEGIN IMMEDIATE;", NULL, NULL, NULL);
+    /* El id se calcula dentro de la transaccion para que nadie mas tome el
+     * mismo valor entre la consulta y el INSERT. */
+    long long id = partido_siguiente_id();
     insertar_partido(id, &datos, fecha);
 
     // Crear transaccion financiera si el precio es mayor a 0
@@ -3389,12 +3315,13 @@ void crear_partido(void)
     }
     sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
 
-    if (settings_get()->mode != MODE_SIMPLE)
+    /* existe_id confirma que el INSERT se guardo antes de encolar el clima. */
+    if (settings_get()->mode != MODE_SIMPLE &&
+            clima_diferido_cancha_tiene_coordenadas(datos.cancha_id) &&
+            existe_id("partido", (int)id))
     {
-        registrar_clima_partido(id, datos.cancha_id, fecha);
+        encolar_clima_partido_creado(id);
     }
-
-    reordenar_partidos_por_fecha();
 }
 
 static int partido_listado_calcular_total_paginas(int total_partidos, int partidos_por_pagina)
@@ -3575,20 +3502,16 @@ void eliminar_partido(void)
         return;
     }
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("DELETE FROM partido WHERE id = ?", &stmt))
+    /* Borra el partido y limpia sus filas dependientes en una transaccion.
+     * Los IDs de los demas partidos no cambian. */
+    if (!partido_eliminar_por_id(id))
     {
+        printf("No se pudo eliminar el partido: %s\n", sqlite3_errmsg(db));
         pause_console();
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
     mostrar_alerta_operacion("Partido", "Eliminado", NULL);
-
-    reordenar_partidos_por_fecha();
 }
 
 static int current_partido_id;
@@ -5010,7 +4933,7 @@ static UNUSED void guardar_estadisticas_equipo(Equipo const *equipo, int const *
             datos.clima = 1;
             datos.dia = 1;
 
-            long long partido_id = obtener_siguiente_id("partido");
+            long long partido_id = partido_siguiente_id();
             insertar_partido(partido_id, &datos, fecha_simulacion);
         }
     }
@@ -5758,101 +5681,165 @@ void obtener_clima_partidos_historicos(void)
     pause_console();
 }
 
-void reordenar_partidos_por_fecha(void)
+/* Tabla que guarda partido.id y que hay que limpiar al borrar un partido.
+ * "valor_sin_partido" NULL significa que la fila es del partido y se borra;
+ * si no, la fila es propia y solo se desvincula escribiendo ese valor, que es
+ * el que cada modulo interpreta como "sin partido". */
+typedef struct
 {
-    int total = 0;
+    const char *tabla;
+    const char *valor_sin_partido;
+} PartidoDependencia;
+
+static int partido_tabla_existe(const char *tabla)
+{
     sqlite3_stmt *stmt = NULL;
-    if (db_prepare_stmt(&stmt, "SELECT COUNT(*) FROM partido") && sqlite3_step(stmt) == SQLITE_ROW)
+    int existe = 0;
+    if (!db_prepare_stmt(&stmt, "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?"))
     {
-        total = sqlite3_column_int(stmt, 0);
+        return 0;
     }
+    sqlite3_bind_text(stmt, 1, tabla, -1, DB_TRANSIENT);
+    existe = (sqlite3_step(stmt) == SQLITE_ROW);
     db_stmt_release(stmt);
-    if (total < 2)
-        return;
+    return existe;
+}
 
-    printf("Reordenando IDs de partidos por fecha...\n");
+/* Solo se aceptan estas columnas de partido como filtro: se concatenan en el
+ * SQL, asi que no puede venir cualquier texto. */
+static int partido_columna_filtro_valida(const char *columna)
+{
+    return columna &&
+           (strcmp(columna, "id") == 0 || strcmp(columna, "cancha_id") == 0 ||
+            strcmp(columna, "camiseta_id") == 0);
+}
 
-    char *err = NULL;
-    if (sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &err) != SQLITE_OK)
+int partido_borrar_dependencias_por(const char *columna, long long valor)
+{
+    /* lesion y bienestar_sesion_mental guardan NULL cuando no hay partido
+     * (bind_null al editar, "Partido: N/A" al leer); media usa 0 ("0=ninguno")
+     * y equipo usa -1 (DEFAULT -1 del esquema). */
+    static const PartidoDependencia dependencias[] =
     {
-        printf("Error al iniciar transaccion: %s\n", err);
-        sqlite3_free(err);
-        return;
-    }
-
-    const char *sql_map = "DROP TABLE IF EXISTS _pr;"
-                          "CREATE TEMP TABLE _pr AS "
-                          "SELECT id AS old_id, ROW_NUMBER() OVER (ORDER BY fecha_hora) AS new_id "
-                          "FROM partido;";
-
-    if (sqlite3_exec(db, sql_map, NULL, NULL, &err) != SQLITE_OK)
-    {
-        printf("Error al crear mapeo: %s\n", err);
-        sqlite3_free(err);
-        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
-        return;
-    }
-
-    if (sqlite3_exec(db, "UPDATE partido SET id = -id", NULL, NULL, &err) != SQLITE_OK)
-    {
-        printf("Error al desplazar IDs: %s\n", err);
-        sqlite3_free(err);
-        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
-        return;
-    }
-
-    const char *sql_assign =
-        "UPDATE partido SET id = (SELECT new_id FROM _pr WHERE old_id = -partido.id)";
-    if (sqlite3_exec(db, sql_assign, NULL, NULL, &err) != SQLITE_OK)
-    {
-        printf("Error al reasignar IDs: %s\n", err);
-        sqlite3_free(err);
-        sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
-        return;
-    }
-
-    const char *sql_child[] =
-    {
-        "UPDATE equipo SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE bienestar_sesion_mental SET partido_id = (SELECT new_id FROM _pr WHERE old_id = "
-        "partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE carrera_partido_hito SET partido_id = (SELECT new_id FROM _pr WHERE old_id = "
-        "partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE media SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE lesion SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE quimica_jugador_estadistica SET partido_id = (SELECT new_id FROM _pr WHERE old_id "
-        "= partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE partido_meta SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)",
-        "UPDATE partido_tag SET partido_id = (SELECT new_id FROM _pr WHERE old_id = partido_id) "
-        "WHERE partido_id IN (SELECT old_id FROM _pr)"
+        {"partido_meta", NULL},
+        {"partido_tag", NULL},
+        {"carrera_partido_hito", NULL},
+        {"quimica_jugador_estadistica", NULL},
+        {"lesion", "NULL"},
+        {"bienestar_sesion_mental", "NULL"},
+        {"media", "0"},
+        {"equipo", "-1"}
     };
-    int n_child = (int)(sizeof(sql_child) / sizeof(sql_child[0]));
+    const int total = (int)(sizeof(dependencias) / sizeof(dependencias[0]));
 
-    for (int i = 0; i < n_child; i++)
+    if (!partido_columna_filtro_valida(columna))
     {
-        if (sqlite3_exec(db, sql_child[i], NULL, NULL, &err) != SQLITE_OK)
+        return 0;
+    }
+
+    for (int i = 0; i < total; i++)
+    {
+        const PartidoDependencia *dep = &dependencias[i];
+        char sql[384];
+        sqlite3_stmt *stmt = NULL;
+
+        /* Favoritos, etiquetas y quimica crean su tabla recien al usarse. */
+        if (!partido_tabla_existe(dep->tabla))
         {
-            printf("Error al actualizar tabla hija: %s\n", err);
-            sqlite3_free(err);
-            sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
-            return;
+            continue;
+        }
+
+        if (dep->valor_sin_partido)
+        {
+            snprintf(sql, sizeof(sql),
+                     "UPDATE %s SET partido_id = %s WHERE partido_id IN "
+                     "(SELECT id FROM partido WHERE %s = ?)",
+                     dep->tabla, dep->valor_sin_partido, columna);
+        }
+        else
+        {
+            snprintf(sql, sizeof(sql),
+                     "DELETE FROM %s WHERE partido_id IN (SELECT id FROM partido WHERE %s = ?)",
+                     dep->tabla, columna);
+        }
+
+        if (!db_prepare_stmt(&stmt, sql))
+        {
+            return 0;
+        }
+        sqlite3_bind_int64(stmt, 1, valor);
+        int ok = sqlite3_step(stmt) == SQLITE_DONE;
+        db_stmt_release(stmt);
+        if (!ok)
+        {
+            return 0;
         }
     }
+    return 1;
+}
 
-    if (sqlite3_exec(db, "DROP TABLE _pr; COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
+int partido_borrar_dependencias(long long partido_id)
+{
+    return partido_borrar_dependencias_por("id", partido_id);
+}
+
+int partido_eliminar_por_id(long long partido_id)
+{
+    sqlite3_stmt *stmt = NULL;
+    int ok = 0;
+
+    /* SAVEPOINT en lugar de BEGIN: tambien funciona dentro de una transaccion
+     * del llamador. */
+    if (sqlite3_exec(db, "SAVEPOINT partido_eliminar", NULL, NULL, NULL) != SQLITE_OK)
     {
-        sqlite3_exec(db, "ROLLBACK; DROP TABLE IF EXISTS _pr;", NULL, NULL, NULL);
-        return;
+        return 0;
     }
 
-    printf("IDs reordenados correctamente (%d partidos).\n", total);
+    if (partido_borrar_dependencias(partido_id) &&
+            db_prepare_stmt(&stmt, "DELETE FROM partido WHERE id = ?"))
+    {
+        sqlite3_bind_int64(stmt, 1, partido_id);
+        ok = sqlite3_step(stmt) == SQLITE_DONE && sqlite3_changes(db) > 0;
+        db_stmt_release(stmt);
+    }
+
+    if (!ok)
+    {
+        sqlite3_exec(db, "ROLLBACK TO partido_eliminar", NULL, NULL, NULL);
+    }
+    sqlite3_exec(db, "RELEASE partido_eliminar", NULL, NULL, NULL);
+    return ok;
+}
+
+long long partido_siguiente_id(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    long long siguiente = 1;
+
+    /* partido_id_secuencia guarda el mayor id que llego a existir (lo actualiza
+     * un trigger al borrar), asi que borrar el ultimo partido tampoco libera
+     * su id. Si la tabla no existe se usa solo MAX(id). */
+    if (db_prepare_stmt(&stmt, "SELECT MAX(COALESCE((SELECT MAX(id) FROM partido), 0),"
+                        " COALESCE((SELECT ultimo FROM partido_id_secuencia WHERE id = 1), 0))"
+                        " + 1"))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            siguiente = sqlite3_column_int64(stmt, 0);
+        }
+        db_stmt_release(stmt);
+        return siguiente;
+    }
+
+    if (db_prepare_stmt(&stmt, "SELECT COALESCE(MAX(id), 0) + 1 FROM partido"))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            siguiente = sqlite3_column_int64(stmt, 0);
+        }
+        db_stmt_release(stmt);
+    }
+    return siguiente;
 }
 
 static void dias_del_mes_anio(int anio, int mes, int *dias)
@@ -6055,7 +6042,7 @@ static void mostrar_detalle_partido_reciente(const char *titulo, const char *whe
              "JOIN cancha can ON p.cancha_id = can.id "
              "JOIN camiseta c ON p.camiseta_id = c.id "
              "%s "
-             "ORDER BY p.fecha_hora DESC LIMIT 1",
+             "ORDER BY p.fecha_hora DESC, p.id DESC LIMIT 1",
              where_extra);
 
     if (!preparar_stmt(sql, &stmt))
@@ -6168,7 +6155,8 @@ void mostrar_ultimo_partido(void)
 {
     sqlite3_stmt *stmt;
 
-    if (!preparar_stmt("SELECT fecha_hora FROM partido ORDER BY id DESC LIMIT 1", &stmt))
+    if (!preparar_stmt("SELECT fecha_hora FROM partido ORDER BY fecha_hora DESC, id DESC LIMIT 1",
+                       &stmt))
     {
         printf("Error consultando partidos.\n");
         pause_console();

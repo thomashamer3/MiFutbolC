@@ -26,6 +26,7 @@
 #define MKDIR(path) _mkdir(path)
 #else
 #include <fcntl.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -966,7 +967,9 @@ static int listado_procesar_opcion(int opcion, int total_paginas, int *pagina_ac
 int listado_paginado(const char *titulo, const char *sql_conteo, const char *sql_pagina,
                      ListadoFilaFn render_fila, void *ctx)
 {
-    ListadoConfig cfg = {titulo, sql_conteo, sql_pagina, render_fila, NULL, NULL, NULL, ctx, NULL};
+    ListadoConfig cfg = {titulo, sql_conteo, sql_pagina, render_fila, NULL, NULL, NULL, ctx, NULL,
+                         NULL
+                        };
     return listado_paginado_config(&cfg);
 }
 
@@ -1007,6 +1010,10 @@ static void listado_mostrar_opciones(const ListadoConfig *cfg)
     if (cfg->exportar)
     {
         ui_printf_centered_line("5) Exportar este listado");
+    }
+    if (cfg->reconfigurar)
+    {
+        ui_printf_centered_line("6) Cambiar filtro y orden");
     }
 }
 
@@ -1078,6 +1085,21 @@ int listado_paginado_config(const ListadoConfig *cfg)
         if (cfg->exportar && opcion == 5)
         {
             cfg->exportar(cfg->ctx);
+            continue;
+        }
+
+        if (cfg->reconfigurar && opcion == 6)
+        {
+            if (cfg->reconfigurar(cfg->ctx))
+            {
+                /* Con otro filtro cambia el total: se recuenta y se vuelve a
+                 * la primera pagina. Un filtro sin resultados deja el listado
+                 * abierto para poder elegir otro. */
+                total = listado_contar_filas(cfg->sql_conteo, cfg->filtro_texto);
+                total_paginas = total > 0 ? (total + LISTADO_POR_PAGINA - 1) / LISTADO_POR_PAGINA
+                                : 1;
+                pagina_actual = 1;
+            }
             continue;
         }
 
@@ -3264,30 +3286,31 @@ long long obtener_siguiente_id(const char *tabla)
         }
     }
 
-    snprintf(sql, sizeof(sql),
-             "SELECT COALESCE(MIN(t1.id + 1), 1) "
-             "FROM (SELECT 0 AS id UNION ALL SELECT id FROM %s) t1 "
-             "LEFT JOIN (SELECT id FROM %s) t2 ON t1.id + 1 = t2.id "
-             "WHERE t2.id IS NULL "
-             "ORDER BY t1.id LIMIT 1",
-             tabla, tabla);
+    /* Devuelve el menor ID positivo libre (reutiliza huecos). Recorre los IDs
+     * en orden y corta en el primer hueco, en lugar de un LEFT JOIN de la
+     * tabla consigo misma. */
+    snprintf(sql, sizeof(sql), "SELECT id FROM %s WHERE id > 0 ORDER BY id", tabla);
 
     if (!db_prepare_stmt(&stmt, sql))
     {
         return 1;
     }
 
-    long long id = 1;
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    long long esperado = 1;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        id = sqlite3_column_int64(stmt, 0);
-        if (id <= 0)
+        long long id = sqlite3_column_int64(stmt, 0);
+        if (id > esperado)
         {
-            id = 1;
+            break;
+        }
+        if (id == esperado)
+        {
+            esperado++;
         }
     }
     db_stmt_release(stmt);
-    return id;
+    return esperado;
 }
 
 int hay_registros(const char *tabla)
@@ -4709,6 +4732,339 @@ int app_executar_captura(const char *const argv[], char **salida, int *codigo_sa
     *salida = datos;
     return 1;
 }
+
+char *app_leer_archivo_completo(const char *ruta, size_t *tam)
+{
+    size_t total = 0;
+    char *datos;
+
+    if (tam)
+    {
+        *tam = 0;
+    }
+    if (!ruta || ruta[0] == '\0')
+    {
+        return NULL;
+    }
+    datos = app_captura_leer_archivo(ruta, &total);
+    if (!datos)
+    {
+        return NULL;
+    }
+    /* app_captura_leer_archivo siempre deja un byte libre para el terminador. */
+    datos[total] = '\0';
+    if (tam)
+    {
+        *tam = total;
+    }
+    return datos;
+}
+
+#ifdef _WIN32
+int app_ruta_temporal(char *ruta, size_t tam)
+{
+    char directorio[MAX_PATH];
+    char generada[MAX_PATH];
+    DWORD largo;
+
+    if (!ruta || tam == 0)
+    {
+        return 0;
+    }
+    ruta[0] = '\0';
+    largo = GetTempPathA(MAX_PATH, directorio);
+    if (largo == 0 || largo >= MAX_PATH || GetTempFileNameA(directorio, "mfc", 0, generada) == 0)
+    {
+        return 0;
+    }
+    if (strlen(generada) >= tam)
+    {
+        remove(generada);
+        return 0;
+    }
+    strncpy_s(ruta, tam, generada, tam - 1);
+    return 1;
+}
+
+/* Agrega @p arg a la linea de comandos con las reglas de comillas de
+ * CommandLineToArgvW: las barras previas a una comilla se duplican. */
+static int app_proceso_agregar_arg(char *linea, size_t tam, size_t *pos, const char *arg)
+{
+    size_t i = *pos;
+    int requiere = (arg[0] == '\0') || strpbrk(arg, " \t\"") != NULL;
+
+#define APP_PROC_PUT(c)              \
+    do                               \
+    {                                \
+        if (i + 1 >= tam)            \
+        {                            \
+            return 0;                \
+        }                            \
+        linea[i++] = (char)(c);      \
+    } while (0)
+
+    if (i > 0)
+    {
+        APP_PROC_PUT(' ');
+    }
+    if (!requiere)
+    {
+        for (const char *p = arg; *p; p++)
+        {
+            APP_PROC_PUT(*p);
+        }
+    }
+    else
+    {
+        size_t barras = 0;
+
+        APP_PROC_PUT('"');
+        for (const char *p = arg; *p; p++)
+        {
+            if (*p == '\\')
+            {
+                barras++;
+                continue;
+            }
+            if (*p == '"')
+            {
+                barras = barras * 2 + 1;
+            }
+            while (barras > 0)
+            {
+                APP_PROC_PUT('\\');
+                barras--;
+            }
+            APP_PROC_PUT(*p);
+        }
+        barras *= 2;
+        while (barras > 0)
+        {
+            APP_PROC_PUT('\\');
+            barras--;
+        }
+        APP_PROC_PUT('"');
+    }
+#undef APP_PROC_PUT
+    linea[i] = '\0';
+    *pos = i;
+    return 1;
+}
+
+int app_proceso_iniciar(const char *const argv[], AppProceso *p)
+{
+    char linea[4096];
+    size_t pos = 0;
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+
+    if (!p)
+    {
+        return 0;
+    }
+    memset(p, 0, sizeof(*p));
+    p->codigo_salida = -1;
+    if (!argv || !argv[0] || argv[0][0] == '\0')
+    {
+        return 0;
+    }
+    linea[0] = '\0';
+    for (int i = 0; argv[i]; i++)
+    {
+        if (!app_proceso_agregar_arg(linea, sizeof(linea), &pos, argv[i]))
+        {
+            return 0;
+        }
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    memset(&pi, 0, sizeof(pi));
+    /* CREATE_NO_WINDOW: el hijo no hereda la consola, asi no escribe en el menu. */
+    if (!CreateProcessA(NULL, linea, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+    {
+        return 0;
+    }
+    CloseHandle(pi.hThread);
+    p->handle = pi.hProcess;
+    p->pid = (long)pi.dwProcessId;
+    p->activo = 1;
+    return 1;
+}
+
+int app_proceso_estado(AppProceso *p, int *codigo_salida)
+{
+    DWORD espera;
+    DWORD codigo = 0;
+
+    if (!p)
+    {
+        return -1;
+    }
+    if (!p->activo)
+    {
+        if (codigo_salida)
+        {
+            *codigo_salida = p->codigo_salida;
+        }
+        return p->handle == NULL && p->pid != 0 ? 1 : -1;
+    }
+    espera = WaitForSingleObject((HANDLE)p->handle, 0);
+    if (espera == WAIT_TIMEOUT)
+    {
+        return 0;
+    }
+    if (espera != WAIT_OBJECT_0 || !GetExitCodeProcess((HANDLE)p->handle, &codigo))
+    {
+        CloseHandle((HANDLE)p->handle);
+        p->handle = NULL;
+        p->pid = 0;
+        p->activo = 0;
+        return -1;
+    }
+    CloseHandle((HANDLE)p->handle);
+    p->handle = NULL;
+    p->activo = 0;
+    p->codigo_salida = (int)codigo;
+    if (codigo_salida)
+    {
+        *codigo_salida = p->codigo_salida;
+    }
+    return 1;
+}
+
+void app_proceso_terminar(AppProceso *p)
+{
+    if (!p)
+    {
+        return;
+    }
+    if (p->activo && p->handle)
+    {
+        TerminateProcess((HANDLE)p->handle, 1);
+        WaitForSingleObject((HANDLE)p->handle, 2000);
+        CloseHandle((HANDLE)p->handle);
+    }
+    p->handle = NULL;
+    p->pid = 0;
+    p->activo = 0;
+}
+#else
+int app_ruta_temporal(char *ruta, size_t tam)
+{
+    int descriptor;
+
+    if (!ruta || tam == 0)
+    {
+        return 0;
+    }
+    if (snprintf(ruta, tam, "%s/mifutbol_tmp_XXXXXX", P_tmpdir) >= (int)tam)
+    {
+        ruta[0] = '\0';
+        return 0;
+    }
+    descriptor = mkstemp(ruta);
+    if (descriptor < 0)
+    {
+        ruta[0] = '\0';
+        return 0;
+    }
+    close(descriptor);
+    return 1;
+}
+
+int app_proceso_iniciar(const char *const argv[], AppProceso *p)
+{
+    posix_spawn_file_actions_t acciones;
+    pid_t pid = (pid_t)0;
+    int lanzado;
+
+    if (!p)
+    {
+        return 0;
+    }
+    memset(p, 0, sizeof(*p));
+    p->codigo_salida = -1;
+    if (!argv || !argv[0] || argv[0][0] == '\0')
+    {
+        return 0;
+    }
+    if (posix_spawn_file_actions_init(&acciones) != 0)
+    {
+        return 0;
+    }
+    /* El hijo no escribe en la consola: stdout y stderr van a /dev/null. */
+    if (posix_spawn_file_actions_addopen(&acciones, STDOUT_FILENO, "/dev/null", O_WRONLY, 0) != 0 ||
+            posix_spawn_file_actions_addopen(&acciones, STDERR_FILENO, "/dev/null", O_WRONLY, 0) !=
+            0)
+    {
+        posix_spawn_file_actions_destroy(&acciones);
+        return 0;
+    }
+    lanzado = posix_spawnp(&pid, argv[0], &acciones, NULL, (char *const *)argv, environ);
+    posix_spawn_file_actions_destroy(&acciones);
+    if (lanzado != 0)
+    {
+        return 0;
+    }
+    p->pid = (long)pid;
+    p->activo = 1;
+    return 1;
+}
+
+int app_proceso_estado(AppProceso *p, int *codigo_salida)
+{
+    int espera = 0;
+    pid_t r;
+
+    if (!p)
+    {
+        return -1;
+    }
+    if (!p->activo)
+    {
+        if (codigo_salida)
+        {
+            *codigo_salida = p->codigo_salida;
+        }
+        return p->pid != 0 ? 1 : -1;
+    }
+    r = waitpid((pid_t)p->pid, &espera, WNOHANG);
+    if (r == 0)
+    {
+        return 0;
+    }
+    p->activo = 0;
+    if (r < 0)
+    {
+        p->pid = 0;
+        return -1;
+    }
+    p->codigo_salida = WIFEXITED(espera) ? WEXITSTATUS(espera) : -1;
+    if (codigo_salida)
+    {
+        *codigo_salida = p->codigo_salida;
+    }
+    return 1;
+}
+
+void app_proceso_terminar(AppProceso *p)
+{
+    int espera = 0;
+
+    if (!p)
+    {
+        return;
+    }
+    if (p->activo && p->pid > 0)
+    {
+        kill((pid_t)p->pid, SIGTERM);
+        waitpid((pid_t)p->pid, &espera, 0);
+    }
+    p->pid = 0;
+    p->activo = 0;
+}
+#endif
 
 int app_open_with_default_app(const char *path)
 {

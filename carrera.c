@@ -45,6 +45,13 @@
     "  ELSE " col " "                                                                              \
     "END"
 
+/* Orden cronologico de partidos: los IDs son estables y no siguen la fecha,
+ * asi que se ordena por fecha normalizada, luego por fecha_hora (hora) y se
+ * desempata por id. */
+#define SQL_PARTIDO_CRONO(prefijo, sentido) \
+    SQL_FECHA_ORD(prefijo "fecha_hora") " " sentido ", " prefijo "fecha_hora " sentido ", " \
+    prefijo "id " sentido
+
 #define SEP_MAYOR " ========================================\n"
 #define SEP_MENOR " ----------------------------------------\n"
 
@@ -720,10 +727,11 @@ static int calcular_momentum_delta(double *delta)
     const char *sql_momentum =
         "SELECT "
         "  COALESCE((SELECT AVG(rendimiento_general) "
-        "            FROM (SELECT rendimiento_general FROM partido ORDER BY id DESC LIMIT 5)), 0), "
+        "            FROM (SELECT rendimiento_general FROM partido ORDER BY "
+        SQL_PARTIDO_CRONO("", "DESC") " LIMIT 5)), 0), "
         "  COALESCE((SELECT AVG(rendimiento_general) "
-        "            FROM (SELECT rendimiento_general FROM partido ORDER BY id DESC LIMIT 5 OFFSET "
-        "5)), 0)";
+        "            FROM (SELECT rendimiento_general FROM partido ORDER BY "
+        SQL_PARTIDO_CRONO("", "DESC") " LIMIT 5 OFFSET 5)), 0)";
 
     double actual = 0.0;
     double previo = 0.0;
@@ -918,7 +926,7 @@ static void listar_partidos_simple(int limite)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general, resultado "
-                      "FROM partido ORDER BY id DESC LIMIT ?";
+                      "FROM partido ORDER BY " SQL_PARTIDO_CRONO("", "DESC") " LIMIT ?";
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -1063,7 +1071,7 @@ static void listar_partidos_hito(void)
                       "p.goles, p.asistencias, p.rendimiento_general "
                       "FROM carrera_partido_hito h "
                       "JOIN partido p ON p.id = h.partido_id "
-                      "ORDER BY p.id DESC";
+                      "ORDER BY " SQL_PARTIDO_CRONO("p.", "DESC");
 
     if (!preparar_stmt(&stmt, sql))
     {
@@ -1166,7 +1174,8 @@ static void mostrar_timeline_carrera(void)
         "    'Debut' AS titulo, "
         "    'Primer partido registrado' AS detalle "
         "  FROM partido p "
-        "  WHERE p.id = (SELECT id FROM partido ORDER BY id ASC LIMIT 1) "
+        "  WHERE p.id = (SELECT id FROM partido ORDER BY " SQL_PARTIDO_CRONO("", "ASC")
+        " LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
         "    " SQL_FECHA_ORD(
@@ -1176,7 +1185,7 @@ static void mostrar_timeline_carrera(void)
         "    'Se inaugura la cuenta goleadora' AS detalle "
         "  FROM partido p "
         "  WHERE p.id = (SELECT id FROM partido WHERE "
-        "goles > 0 ORDER BY id ASC LIMIT 1) "
+        "goles > 0 ORDER BY " SQL_PARTIDO_CRONO("", "ASC") " LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
         "    " SQL_FECHA_ORD(
@@ -1190,8 +1199,8 @@ static void mostrar_timeline_carrera(void)
         "  FROM partido p "
         "  WHERE p.id = (SELECT id "
         "FROM partido WHERE "
-        "asistencias > 0 ORDER BY id "
-        "ASC LIMIT 1) "
+        "asistencias > 0 ORDER BY " SQL_PARTIDO_CRONO("", "ASC")
+        " LIMIT 1) "
         "  UNION ALL "
         "  SELECT "
         "    " SQL_FECHA_ORD(
@@ -1283,7 +1292,7 @@ static void hof_mostrar_mejor_partido(void)
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
                       "FROM partido ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, "
-                      "id DESC LIMIT 1";
+                      SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1";
 
     printf("MEJOR PARTIDO\n");
     printf("%s", SEP_MENOR);
@@ -1312,7 +1321,8 @@ static void hof_mostrar_peor_partido(void)
 {
     sqlite3_stmt *stmt;
     const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
-                      "FROM partido ORDER BY rendimiento_general ASC, id DESC LIMIT 1";
+                      "FROM partido ORDER BY rendimiento_general ASC, "
+                      SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1";
 
     printf("\nPEOR PARTIDO\n");
     printf("%s", SEP_MENOR);

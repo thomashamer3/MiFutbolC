@@ -4,6 +4,7 @@
 
 #include "db.h"
 #include "menu.h"
+#include "partido.h"
 #include "random_utils.h"
 #include "utils.h"
 
@@ -974,15 +975,47 @@ static int sync_eliminar_local(const char *uuid)
     {
         return 0;
     }
-    sqlite3_stmt *stmt = NULL;
-    if (sqlite3_prepare_v2(db, "DELETE FROM partido WHERE uuid=?;", -1, &stmt,
-                           NULL) != SQLITE_OK)
+    /* Cada partido con ese uuid se borra con partido_eliminar_por_id, que
+     * tambien limpia sus filas dependientes. Se busca de a uno para no borrar
+     * mientras se recorre el SELECT; si no queda ninguno, no hay nada que
+     * hacer y el borrado remoto igual se da por aplicado. */
+    int ok = 1;
+    if (sqlite3_exec(db, "SAVEPOINT sync_eliminar_local", NULL, NULL, NULL) != SQLITE_OK)
     {
         return 0;
     }
-    sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
-    int ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
+    while (ok)
+    {
+        sqlite3_stmt *stmt = NULL;
+        long long id = 0;
+        if (sqlite3_prepare_v2(db, "SELECT id FROM partido WHERE uuid=? LIMIT 1;", -1, &stmt,
+                               NULL) != SQLITE_OK)
+        {
+            ok = 0;
+            break;
+        }
+        sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
+        int rc = sqlite3_step(stmt);
+        if (rc == SQLITE_ROW)
+        {
+            id = sqlite3_column_int64(stmt, 0);
+        }
+        else if (rc != SQLITE_DONE)
+        {
+            ok = 0;
+        }
+        sqlite3_finalize(stmt);
+        if (!ok || id == 0)
+        {
+            break;
+        }
+        ok = partido_eliminar_por_id(id);
+    }
+    if (!ok)
+    {
+        sqlite3_exec(db, "ROLLBACK TO sync_eliminar_local", NULL, NULL, NULL);
+    }
+    sqlite3_exec(db, "RELEASE sync_eliminar_local", NULL, NULL, NULL);
     if (ok)
     {
         sync_queue_mark_done(uuid);

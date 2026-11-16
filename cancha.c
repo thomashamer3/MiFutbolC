@@ -3,6 +3,7 @@
 #include "db.h"
 #include "export.h"
 #include "menu.h"
+#include "partido.h"
 #include "pdfgen.h"
 #include "settings.h"
 #include "utils.h"
@@ -1352,6 +1353,13 @@ static int eliminar_cancha_y_partidos_asociados(int cancha_id)
     sqlite3_stmt *stmt_delete_partidos = NULL;
     sqlite3_stmt *stmt_delete_cancha = NULL;
 
+    /* Antes del DELETE: limpia las filas que dependen de esos partidos. */
+    if (!partido_borrar_dependencias_por("cancha_id", cancha_id))
+    {
+        ejecutar_sql_simple("ROLLBACK;");
+        return 0;
+    }
+
     if (!db_prepare_stmt(&stmt_delete_partidos, "DELETE FROM partido WHERE cancha_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
@@ -1726,6 +1734,12 @@ typedef struct
 {
     const char *sep;
     int filtro_estado;
+    /* Configuracion modificable con la opcion 6 del listado. */
+    int orden;
+    char *sql_conteo;
+    size_t conteo_tam;
+    char *sql_pagina;
+    size_t pagina_tam;
 } CanchaListadoCtx;
 
 static const char *cancha_filtro_where(int filtro_estado)
@@ -1873,6 +1887,109 @@ static int cancha_listado_exportar(void *ctx)
     return 1;
 }
 
+static const char *cancha_order_clause(int orden)
+{
+    switch (orden)
+    {
+    case 2:
+        return "ORDER BY c.nombre ASC, c.id ASC";
+    case 3:
+        return "ORDER BY total_partidos DESC, c.id ASC";
+    case 4:
+        return "ORDER BY total_goles DESC, c.id ASC";
+    case 5:
+        return "ORDER BY victorias DESC, c.id ASC";
+    default:
+        return "ORDER BY c.id ASC";
+    }
+}
+
+/* Reconstruye las consultas segun el filtro y el orden guardados. */
+static void cancha_listado_aplicar(CanchaListadoCtx *lista)
+{
+    const char *where = cancha_filtro_where(lista->filtro_estado);
+    snprintf(lista->sql_conteo, lista->conteo_tam, "SELECT COUNT(*) FROM cancha c %s;", where);
+    snprintf(lista->sql_pagina, lista->pagina_tam,
+             "SELECT c.id, c.nombre, COUNT(p.id) AS total_partidos, "
+             "IFNULL(SUM(p.goles), 0) AS total_goles, "
+             "IFNULL(SUM(p.asistencias), 0), "
+             "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0) AS victorias, "
+             "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
+             "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) FROM cancha c "
+             "LEFT JOIN partido p ON c.id = p.cancha_id %s"
+             "GROUP BY c.id, c.nombre %s LIMIT ? OFFSET ?",
+             where, cancha_order_clause(lista->orden));
+}
+
+static int cancha_pedir_filtro_estado(int *filtro_estado)
+{
+    mostrar_pantalla("FILTRAR CANCHAS");
+    printf("1) Todas las canchas\n");
+    printf("2) Solo activas\n");
+    printf("3) Solo inactivas\n");
+    printf("0) Cancelar\n");
+
+    int opcion = input_int("Opcion: ");
+    if (opcion == 0 || opcion == -1)
+    {
+        return 0;
+    }
+    if (opcion < 1 || opcion > 3)
+    {
+        printf("Opcion invalida.\n");
+        pause_console();
+        return 0;
+    }
+
+    *filtro_estado = opcion - 1;
+    return 1;
+}
+
+static int cancha_pedir_orden(int *orden)
+{
+    mostrar_pantalla("ORDENAR CANCHAS");
+    printf("1) Por ID\n");
+    printf("2) Por nombre\n");
+    printf("3) Por partidos jugados\n");
+    printf("4) Por goles\n");
+    printf("5) Por victorias\n");
+    printf("0) Cancelar\n");
+
+    int opcion = input_int("Opcion: ");
+    if (opcion == 0 || opcion == -1)
+    {
+        return 0;
+    }
+    if (opcion < 1 || opcion > 5)
+    {
+        printf("Opcion invalida.\n");
+        pause_console();
+        return 0;
+    }
+
+    *orden = opcion;
+    return 1;
+}
+
+/* Opcion 6 del listado: pide filtro y orden. Cancelar cualquiera de los dos
+ * deja la configuracion como estaba. */
+static int cancha_listado_reconfigurar(void *ctx)
+{
+    CanchaListadoCtx *lista = (CanchaListadoCtx *)ctx;
+    int filtro_estado;
+    int orden;
+
+    if (!lista || !cancha_pedir_filtro_estado(&filtro_estado) || !cancha_pedir_orden(&orden))
+    {
+        return 0;
+    }
+
+    lista->filtro_estado = filtro_estado;
+    lista->orden = orden;
+    cancha_listado_aplicar(lista);
+    return 1;
+}
+
 void listar_canchas(void)
 {
     app_log_event("CANCHA", "Listado de canchas consultado");
@@ -1884,45 +2001,20 @@ void listar_canchas(void)
         return;
     }
 
-    mostrar_pantalla("FILTRAR CANCHAS");
-    printf("1) Todas las canchas\n");
-    printf("2) Solo activas\n");
-    printf("3) Solo inactivas\n");
-    printf("0) Cancelar\n");
-
-    int opcion = input_int("Opcion: ");
-    if (opcion == 0 || opcion == -1)
-    {
-        return;
-    }
-
-    if (opcion < 1 || opcion > 3)
-    {
-        printf("Opcion invalida.\n");
-        pause_console();
-        return;
-    }
-
-    int filtro_estado = opcion - 1;
     int usar_unicode = consola_soporta_unicode();
     char sep[8];
     snprintf(sep, sizeof(sep), "%s", usar_unicode ? " \u2502 " : " | ");
 
-    const char *where = cancha_filtro_where(filtro_estado);
     char sql_conteo[160];
-    char sql_pagina[768];
-    snprintf(sql_conteo, sizeof(sql_conteo), "SELECT COUNT(*) FROM cancha c %s;", where);
-    snprintf(sql_pagina, sizeof(sql_pagina),
-             "SELECT c.id, c.nombre, COUNT(p.id), IFNULL(SUM(p.goles), 0), "
-             "IFNULL(SUM(p.asistencias), 0), "
-             "IFNULL(SUM(CASE WHEN p.resultado = 1 THEN 1 ELSE 0 END), 0), "
-             "IFNULL(SUM(CASE WHEN p.resultado = 2 THEN 1 ELSE 0 END), 0), "
-             "IFNULL(SUM(CASE WHEN p.resultado = 3 THEN 1 ELSE 0 END), 0) FROM cancha c "
-             "LEFT JOIN partido p ON c.id = p.cancha_id %s"
-             "GROUP BY c.id, c.nombre ORDER BY c.id LIMIT ? OFFSET ?",
-             where);
+    char sql_pagina[900];
 
-    CanchaListadoCtx lista = {sep, filtro_estado};
+    /* Siempre abre con todas las canchas ordenadas por ID; la opcion 6 del
+     * listado permite cambiar filtro y orden. */
+    CanchaListadoCtx lista = {sep, 0, 1, sql_conteo, sizeof(sql_conteo), sql_pagina,
+                              sizeof(sql_pagina)
+                             };
+    cancha_listado_aplicar(&lista);
+
     ListadoConfig cfg = {"LISTADO DE CANCHAS",
                          sql_conteo,
                          sql_pagina,
@@ -1931,7 +2023,8 @@ void listar_canchas(void)
                          cancha_listado_detalle,
                          cancha_listado_exportar,
                          &lista,
-                         NULL
+                         NULL,
+                         cancha_listado_reconfigurar
                         };
 
     int filas = listado_paginado_config(&cfg);

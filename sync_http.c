@@ -192,6 +192,8 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
     argv[argc++] = "--silent";
     argv[argc++] = "--show-error";
     argv[argc++] = "--location";
+    argv[argc++] = "--connect-timeout";
+    argv[argc++] = "5";
     argv[argc++] = "--max-time";
     argv[argc++] = "25";
     argv[argc++] = "--compressed";

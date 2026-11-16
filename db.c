@@ -1537,6 +1537,20 @@ static int create_database_schema(void)
         " mejor_rendimiento REAL DEFAULT 0,"
         " notas TEXT DEFAULT '');",
 
+        /* Mayor id de partido que llego a existir. Los IDs de partido son
+         * estables y no se reutilizan: el trigger guarda el id de cada partido
+         * borrado, asi partido_siguiente_id() no vuelve a entregarlo aunque
+         * fuera el ultimo. La fila se siembra con el MAX(id) actual. */
+        "CREATE TABLE IF NOT EXISTS partido_id_secuencia ("
+        " id INTEGER PRIMARY KEY CHECK (id = 1),"
+        " ultimo INTEGER NOT NULL DEFAULT 0);",
+        "INSERT OR IGNORE INTO partido_id_secuencia (id, ultimo)"
+        " SELECT 1, COALESCE(MAX(id), 0) FROM partido;",
+        "CREATE TRIGGER IF NOT EXISTS trg_partido_id_secuencia_delete "
+        "AFTER DELETE ON partido BEGIN "
+        " UPDATE partido_id_secuencia SET ultimo = MAX(ultimo, old.id) WHERE id = 1;"
+        " END;",
+
         NULL
     };
 
@@ -1901,6 +1915,18 @@ static int create_performance_indexes(void)
         current_version = 0;
     }
 
+    /* idx_partido_camiseta(camiseta_id) queda cubierto por
+     * idx_partido_camiseta_fecha(camiseta_id, fecha_hora): solo agregaba costo
+     * a cada escritura de partido. DROP IF EXISTS es idempotente y no depende
+     * de user_version. */
+    if (sqlite3_exec(db, "DROP INDEX IF EXISTS idx_partido_camiseta;", NULL, NULL, NULL) !=
+            SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Fallo DROP INDEX idx_partido_camiseta: %s",
+                 sqlite3_errmsg(db));
+        app_log_write("WARN", "DB", log_buf_);
+    }
+
     if (current_version >= DB_VERSION_INDEXES)
     {
         if (current_version < DB_VERSION_ADDITIONAL_INDEXES)
@@ -1991,8 +2017,6 @@ static int create_performance_indexes(void)
         "carrera_resumen_narrativo(fecha);",
         "CREATE INDEX IF NOT EXISTS idx_partido_resultado ON partido(resultado);",
         "CREATE INDEX IF NOT EXISTS idx_partido_clima ON partido(clima);",
-        "CREATE INDEX IF NOT EXISTS idx_partido_camiseta ON "
-        "partido(camiseta_id);",
         "CREATE INDEX IF NOT EXISTS idx_partido_mes_anio ON partido(mes_anio);",
         "CREATE INDEX IF NOT EXISTS idx_equipo_partido_id ON equipo(partido_id);",
         "CREATE INDEX IF NOT EXISTS idx_coleccion_inventario_coleccion ON "

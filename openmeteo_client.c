@@ -9,7 +9,24 @@
 
 #define OWM_ARCHIVE_URL_BASE "https://archive-api.open-meteo.com/v1/archive"
 #define WEATHER_CODE_COUNT 100
-#define READ_BUF_SIZE 8192
+
+/* Con el modo silencioso activo el cliente no imprime nada por consola: lo
+ * usa el sondeo de clima en segundo plano para no ensuciar el menu. */
+static int g_openmeteo_silencioso = 0;
+
+#define OM_PRINTF(...)                 \
+    do                                 \
+    {                                  \
+        if (!g_openmeteo_silencioso)   \
+        {                              \
+            printf(__VA_ARGS__);       \
+        }                              \
+    } while (0)
+
+void openmeteo_set_silencioso(int silencioso)
+{
+    g_openmeteo_silencioso = silencioso ? 1 : 0;
+}
 
 static int weather_code_mode(const int *codes, int count)
 {
@@ -34,8 +51,10 @@ static int weather_code_mode(const int *codes, int count)
     return best;
 }
 
-static int es_fecha_futura(const OpenMeteoParams *params)
+int openmeteo_fecha_es_futura(const OpenMeteoParams *params)
 {
+    if (!params)
+        return 0;
     time_t ahora = time(NULL);
     struct tm tm_hoy;
 #ifdef _WIN32
@@ -50,8 +69,17 @@ static int es_fecha_futura(const OpenMeteoParams *params)
     if (params->anio > hoy_anio || (params->anio == hoy_anio && params->mes > hoy_mes) ||
             (params->anio == hoy_anio && params->mes == hoy_mes && params->dia > hoy_dia))
     {
-        printf("Fecha futura (%04d-%02d-%02d): saltando consulta.\n", params->anio, params->mes,
-               params->dia);
+        return 1;
+    }
+    return 0;
+}
+
+static int es_fecha_futura(const OpenMeteoParams *params)
+{
+    if (openmeteo_fecha_es_futura(params))
+    {
+        OM_PRINTF("Fecha futura (%04d-%02d-%02d): saltando consulta.\n", params->anio,
+                  params->mes, params->dia);
         return 1;
     }
     return 0;
@@ -99,21 +127,21 @@ static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result
     cJSON const *hourly = cJSON_GetObjectItem(root, "hourly");
     if (!hourly)
     {
-        printf("Error: respuesta no contiene 'hourly'\n");
+        OM_PRINTF("Error: respuesta no contiene 'hourly'\n");
         return 0;
     }
 
     cJSON const *temp_arr = cJSON_GetObjectItem(hourly, "temperature_2m");
     if (!temp_arr || !cJSON_IsArray(temp_arr))
     {
-        printf("Error: 'temperature_2m' no encontrado o no es array\n");
+        OM_PRINTF("Error: 'temperature_2m' no encontrado o no es array\n");
         return 0;
     }
 
     int count = cJSON_GetArraySize(temp_arr);
     if (count == 0)
     {
-        printf("Error: array temperature_2m vacio\n");
+        OM_PRINTF("Error: array temperature_2m vacio\n");
         return 0;
     }
 
@@ -141,10 +169,19 @@ static int parsear_resultado_json(cJSON const *root, OpenMeteoResult *out_result
         wcodes[i] = obtener_codigo_weather(code_arr, i);
     }
 
-    out_result->temp_c = (valid_count > 0) ? (temp_sum / valid_count) : 0.0;
+    if (valid_count == 0)
+    {
+        /* Open-Meteo devuelve todas las horas en null cuando el dia aun no
+         * esta publicado en el archivo: no es un 0,0 C real. */
+        free(wcodes);
+        OM_PRINTF("Error: Open-Meteo aun no tiene datos de temperatura para esa fecha\n");
+        return 0;
+    }
+
+    out_result->temp_c = temp_sum / valid_count;
     out_result->apparent_temp_c = (apparent_count > 0) ? (apparent_sum / apparent_count) : 0.0;
     out_result->precip_mm = precip_sum;
-    out_result->wind_kmh = (valid_count > 0) ? (wind_sum / valid_count) : 0.0;
+    out_result->wind_kmh = wind_sum / valid_count;
     out_result->weather_code = weather_code_mode(wcodes, count);
     free(wcodes);
     return 1;
@@ -158,6 +195,7 @@ static void openmeteo_result_init(OpenMeteoResult *r)
     r->apparent_temp_c = 0.0;
     r->precip_mm = 0.0;
     r->wind_kmh = 0.0;
+    r->humidity = 0;
     r->weather_code = 0;
     r->clima_json = NULL;
     r->has_sun_data = 0;
@@ -182,6 +220,9 @@ static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
     cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
     if (!sr || !cJSON_IsString(sr) || !ss || !cJSON_IsString(ss))
         return;
+    /* Formato "AAAA-MM-DDTHH:MM": sin esa longitud no se indexa la hora. */
+    if (strlen(sr->valuestring) < 16 || strlen(ss->valuestring) < 16)
+        return;
     int sh;
     int sm;
     int sshi;
@@ -202,16 +243,12 @@ static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
     }
 }
 
-int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
+int openmeteo_build_url(const OpenMeteoParams *params, char *url, size_t tam)
 {
-    if (!params || !out_result)
+    if (!url || tam == 0)
         return 0;
-
-    openmeteo_result_init(out_result);
-
-    if (!son_parametros_validos(params))
-        return 0;
-    if (es_fecha_futura(params))
+    url[0] = '\0';
+    if (!params || !son_parametros_validos(params) || openmeteo_fecha_es_futura(params))
         return 0;
 
     char date_str[11];
@@ -222,34 +259,37 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     snprintf(lat_str, sizeof(lat_str), "%.6f", params->latitud);
     snprintf(lon_str, sizeof(lon_str), "%.6f", params->longitud);
 
-    char url[1536];
-    snprintf(url, sizeof(url),
-             "%s?latitude=%s&longitude=%s&start_date=%s&end_date=%s"
-             "&daily=sunrise,sunset"
-             "&hourly=temperature_2m,apparent_temperature,"
-             "precipitation,weather_code,wind_speed_10m"
-             "&timezone=auto",
-             OWM_ARCHIVE_URL_BASE, lat_str, lon_str, date_str, date_str);
-
-    const char *argv[] = {"curl.exe", "-s", "--compressed", "--max-time", "15", url, NULL};
-    char *json_data = NULL;
-    int codigo_salida = 0;
-    if (!app_executar_captura(argv, &json_data, &codigo_salida))
+    int escritos = snprintf(url, tam,
+                            "%s?latitude=%s&longitude=%s&start_date=%s&end_date=%s"
+                            "&daily=sunrise,sunset"
+                            "&hourly=temperature_2m,apparent_temperature,"
+                            "precipitation,weather_code,wind_speed_10m"
+                            "&timezone=auto",
+                            OWM_ARCHIVE_URL_BASE, lat_str, lon_str, date_str, date_str);
+    if (escritos < 0 || (size_t)escritos >= tam)
     {
-        printf("Error: curl no devolvio datos (exit code %d)\n", codigo_salida);
+        url[0] = '\0';
         return 0;
     }
+    return 1;
+}
 
-    cJSON *root = cJSON_Parse(json_data);
-    free(json_data);
+int openmeteo_parse(const char *json, OpenMeteoResult *out_result)
+{
+    if (!out_result)
+        return 0;
+    openmeteo_result_init(out_result);
+    if (!json || json[0] == '\0')
+        return 0;
 
+    cJSON *root = cJSON_Parse(json);
     if (!root)
     {
         const char *err = cJSON_GetErrorPtr();
         if (err)
-            printf("Error parseando JSON cerca de:\n%s\n", err);
+            OM_PRINTF("Error parseando JSON cerca de:\n%s\n", err);
         else
-            printf("Error: JSON invalido (razon desconocida)\n");
+            OM_PRINTF("Error: JSON invalido (razon desconocida)\n");
         return 0;
     }
 
@@ -265,6 +305,38 @@ int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
     }
 
     cJSON_Delete(root);
+    return ok;
+}
+
+int openmeteo_fetch(const OpenMeteoParams *params, OpenMeteoResult *out_result)
+{
+    if (!params || !out_result)
+        return 0;
+
+    openmeteo_result_init(out_result);
+
+    if (!son_parametros_validos(params))
+        return 0;
+    if (es_fecha_futura(params))
+        return 0;
+
+    char url[1536];
+    if (!openmeteo_build_url(params, url, sizeof(url)))
+        return 0;
+
+    const char *argv[] = {"curl.exe", "-s", "--compressed", "--connect-timeout", "5",
+                          "--max-time", "15", url, NULL
+                         };
+    char *json_data = NULL;
+    int codigo_salida = 0;
+    if (!app_executar_captura(argv, &json_data, &codigo_salida))
+    {
+        OM_PRINTF("Error: curl no devolvio datos (exit code %d)\n", codigo_salida);
+        return 0;
+    }
+
+    int ok = openmeteo_parse(json_data, out_result);
+    free(json_data);
     return ok;
 }
 

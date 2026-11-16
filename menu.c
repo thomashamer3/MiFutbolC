@@ -1,4 +1,5 @@
 #include "menu.h"
+#include "clima_diferido.h"
 #include "settings.h"
 #include "utils.h"
 #include <locale.h>
@@ -468,6 +469,8 @@ void ejecutar_menu(const char *titulo, const MenuItem *items, int cantidad)
 
     while (1)
     {
+        /* Sondeo no bloqueante del clima en segundo plano. */
+        clima_diferido_procesar();
         clear_screen();
         print_header(titulo);
 

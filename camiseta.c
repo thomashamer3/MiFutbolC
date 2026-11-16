@@ -3,6 +3,7 @@
 #include "db.h"
 #include "export_camisetas.h"
 #include "menu.h"
+#include "partido.h"
 #include "settings.h"
 #include "utils.h"
 #include <ctype.h>
@@ -657,6 +658,13 @@ static int eliminar_camiseta_y_partidos_asociados(int camiseta_id)
     sqlite3_stmt *stmt_delete_partidos = NULL;
     sqlite3_stmt *stmt_delete_camiseta = NULL;
 
+    /* Antes del DELETE: limpia las filas que dependen de esos partidos. */
+    if (!partido_borrar_dependencias_por("camiseta_id", camiseta_id))
+    {
+        ejecutar_sql_simple("ROLLBACK;");
+        return 0;
+    }
+
     if (!preparar_stmt(&stmt_delete_partidos, "DELETE FROM partido WHERE camiseta_id = ?"))
     {
         ejecutar_sql_simple("ROLLBACK;");
@@ -1250,6 +1258,14 @@ typedef struct
     int mejor_id;
     const char *where;
     const char *filtro_texto;
+    /* Configuracion modificable con la opcion 6 del listado. */
+    int orden;
+    char *where_buf;
+    size_t where_tam;
+    char *sql_conteo;
+    size_t conteo_tam;
+    char *sql_pagina;
+    size_t pagina_tam;
 } CamisetaListadoCtx;
 
 static const char *camiseta_order_clause(int orden)
@@ -1521,14 +1537,41 @@ static void camiseta_construir_sql(const char *where_clause, int orden, char *sq
              where_clause, camiseta_order_clause(orden));
 }
 
+/* Reconstruye el WHERE, las consultas y la mejor camiseta segun el filtro y
+ * el orden guardados en el contexto. */
+static void camiseta_listado_aplicar(CamisetaListadoCtx *lista)
+{
+    camiseta_construir_where(lista->filtro_estado, lista->where_buf, lista->where_tam);
+    camiseta_construir_sql(lista->where_buf, lista->orden, lista->sql_conteo, lista->conteo_tam,
+                           lista->sql_pagina, lista->pagina_tam);
+    lista->mejor_id = camiseta_mejor_efectiva_id(lista->where_buf, NULL);
+}
+
+/* Opcion 6 del listado: pide filtro y orden. Cancelar cualquiera de los dos
+ * deja la configuracion como estaba. */
+static int camiseta_listado_reconfigurar(void *ctx)
+{
+    CamisetaListadoCtx *lista = (CamisetaListadoCtx *)ctx;
+    int filtro_estado;
+    int orden;
+
+    if (!lista || !camiseta_pedir_filtro_estado(&filtro_estado) || !camiseta_pedir_orden(&orden))
+    {
+        return 0;
+    }
+
+    lista->filtro_estado = filtro_estado;
+    lista->orden = orden;
+    camiseta_listado_aplicar(lista);
+    return 1;
+}
+
 static void listar_camisetas_con_stats(void)
 {
     char where_clause[600];
     char sql_conteo[700];
     char sql_pagina[1600];
     char sep[8];
-    int filtro_estado;
-    int orden;
     int filas;
 
     if (!hay_registros("camiseta"))
@@ -1538,25 +1581,16 @@ static void listar_camisetas_con_stats(void)
         return;
     }
 
-    if (!camiseta_pedir_filtro_estado(&filtro_estado))
-    {
-        return;
-    }
-    if (!camiseta_pedir_orden(&orden))
-    {
-        return;
-    }
-
-    camiseta_construir_where(filtro_estado, where_clause, sizeof(where_clause));
-    camiseta_construir_sql(where_clause, orden, sql_conteo, sizeof(sql_conteo), sql_pagina,
-                           sizeof(sql_pagina));
-
     snprintf(sep, sizeof(sep), "%s", consola_soporta_unicode() ? " \u2502 " : " | ");
 
-    CamisetaListadoCtx lista = {sep, filtro_estado,
-                                camiseta_mejor_efectiva_id(where_clause, NULL),
-                                where_clause, NULL
+    /* Siempre abre con todas las camisetas ordenadas por ID; la opcion 6 del
+     * listado permite cambiar filtro y orden. */
+    CamisetaListadoCtx lista = {sep, 0, -1, where_clause, NULL, 1,
+                                where_clause, sizeof(where_clause),
+                                sql_conteo, sizeof(sql_conteo),
+                                sql_pagina, sizeof(sql_pagina)
                                };
+    camiseta_listado_aplicar(&lista);
 
     ListadoConfig cfg = {"LISTADO DE CAMISETAS",
                          sql_conteo,
@@ -1566,7 +1600,8 @@ static void listar_camisetas_con_stats(void)
                          camiseta_listado_detalle,
                          camiseta_listado_exportar,
                          &lista,
-                         NULL
+                         NULL,
+                         camiseta_listado_reconfigurar
                         };
 
     filas = listado_paginado_config(&cfg);

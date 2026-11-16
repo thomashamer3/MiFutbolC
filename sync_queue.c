@@ -42,6 +42,24 @@ static int ejecutar(const char *sql)
     return 1;
 }
 
+/* Elimina el trigger de UPDATE si fue creado sin la condicion sobre el ID. */
+static int migrar_trigger_update(void)
+{
+    sqlite3_stmt *stmt = NULL;
+    int antiguo = 0;
+    if (sqlite3_prepare_v2(db,
+                           "SELECT 1 FROM sqlite_master WHERE type = 'trigger'"
+                           " AND name = 'trg_partido_sync_update'"
+                           " AND sql NOT LIKE '%new.id = old.id%';",
+                           -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+    antiguo = sqlite3_step(stmt) == SQLITE_ROW;
+    sqlite3_finalize(stmt);
+    return antiguo ? ejecutar("DROP TRIGGER IF EXISTS trg_partido_sync_update;") : 1;
+}
+
 static int asegurar_tablas(void)
 {
     if (!db)
@@ -55,6 +73,13 @@ static int asegurar_tablas(void)
     }
     if (!sync_columna_existe(db, "partido", "actualizado_en") &&
             !ejecutar("ALTER TABLE partido ADD COLUMN actualizado_en TEXT;"))
+    {
+        return 0;
+    }
+
+    /* Las bases creadas antes de este cambio tienen el trigger de UPDATE sin
+     * la condicion sobre el ID: se elimina para que se vuelva a crear abajo. */
+    if (!migrar_trigger_update())
     {
         return 0;
     }
@@ -77,6 +102,7 @@ static int asegurar_tablas(void)
         "CREATE INDEX IF NOT EXISTS idx_sync_dirty_estado "
         "ON sync_dirty (estado, id);"
         "CREATE INDEX IF NOT EXISTS idx_sync_dirty_uuid ON sync_dirty (uuid);"
+        "CREATE INDEX IF NOT EXISTS idx_partido_uuid ON partido (uuid);"
 
         "CREATE TABLE IF NOT EXISTS sync_conflicto ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -93,8 +119,10 @@ static int asegurar_tablas(void)
         " datetime('now','localtime'));"
         " END;"
 
+        /* WHEN new.id = old.id: la renumeracion de IDs por fecha no es un
+         * cambio de datos y no debe encolar el partido para subirlo. */
         "CREATE TRIGGER IF NOT EXISTS trg_partido_sync_update "
-        "AFTER UPDATE ON partido BEGIN "
+        "AFTER UPDATE ON partido WHEN new.id = old.id BEGIN "
         " INSERT INTO sync_dirty (partido_id, uuid, operacion, estado, creado_en)"
         " VALUES (new.id, new.uuid, 'upsert', 'pendiente',"
         " datetime('now','localtime'));"
@@ -110,12 +138,17 @@ static int asegurar_tablas(void)
     return ejecutar(sql);
 }
 
+/* Asigna uuid a los partidos que no lo tienen (los creados desde la
+ * aplicacion se insertan sin uuid). Todo va en un solo SAVEPOINT: en
+ * autocommit cada UPDATE era un commit a disco (~4 ms por fila en Windows). */
 static void backfill_uuid(void)
 {
     if (!db)
     {
         return;
     }
+    /* Los IDs se leen antes de actualizar: modificar uuid mientras se recorre
+     * un SELECT que filtra por esa columna puede saltear o repetir filas. */
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db,
                            "SELECT id FROM partido "
@@ -124,26 +157,71 @@ static void backfill_uuid(void)
     {
         return;
     }
-    int ids[2048];
-    int total = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW && total < 2048)
+    int *ids = NULL;
+    size_t total = 0;
+    size_t capacidad = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        if (total == capacidad)
+        {
+            size_t nueva = capacidad ? capacidad * 2 : 64;
+            int *tmp = realloc(ids, nueva * sizeof(*ids));
+            if (!tmp)
+            {
+                break;
+            }
+            ids = tmp;
+            capacidad = nueva;
+        }
         ids[total++] = sqlite3_column_int(stmt, 0);
     }
     sqlite3_finalize(stmt);
-    for (int i = 0; i < total; i++)
+    stmt = NULL;
+
+    if (total > 0 &&
+            sqlite3_prepare_v2(db, "UPDATE partido SET uuid=? WHERE id=?;", -1,
+                               &stmt, NULL) == SQLITE_OK &&
+            ejecutar("SAVEPOINT backfill_uuid;"))
     {
-        char uuid[SYNC_UUID_SIZE];
-        sync_uuid_generar(uuid, sizeof(uuid));
-        sqlite3_stmt *upd = NULL;
-        if (sqlite3_prepare_v2(db, "UPDATE partido SET uuid=? WHERE id=?;", -1,
-                               &upd, NULL) == SQLITE_OK)
+        int ok = 1;
+        for (size_t i = 0; i < total && ok; i++)
         {
-            sqlite3_bind_text(upd, 1, uuid, -1, DB_TRANSIENT);
-            sqlite3_bind_int(upd, 2, ids[i]);
-            sqlite3_step(upd);
-            sqlite3_finalize(upd);
+            char uuid[SYNC_UUID_SIZE];
+            sync_uuid_generar(uuid, sizeof(uuid));
+            sqlite3_bind_text(stmt, 1, uuid, -1, DB_TRANSIENT);
+            sqlite3_bind_int(stmt, 2, ids[i]);
+            ok = sqlite3_step(stmt) == SQLITE_DONE;
+            sqlite3_reset(stmt);
         }
+        if (!ok)
+        {
+            ejecutar("ROLLBACK TO backfill_uuid;");
+        }
+        ejecutar("RELEASE backfill_uuid;");
+    }
+    sqlite3_finalize(stmt);
+    free(ids);
+}
+
+/* Deja en la cola una sola fila por partido, operacion y estado (la mas
+ * antigua, que es la que procesa la subida) y descarta las filas sin uuid:
+ * backfill_uuid ya volvio a encolar esos partidos con su uuid, y un borrado
+ * sin uuid corresponde a un partido que nunca se subio. */
+static void compactar_cola(void)
+{
+    if (!ejecutar("BEGIN IMMEDIATE;"))
+    {
+        return;
+    }
+    if (ejecutar("DELETE FROM sync_dirty WHERE uuid IS NULL OR TRIM(uuid) = '';") &&
+            ejecutar("DELETE FROM sync_dirty WHERE id NOT IN ("
+                     " SELECT MIN(id) FROM sync_dirty GROUP BY uuid, operacion, estado);"))
+    {
+        ejecutar("COMMIT;");
+    }
+    else
+    {
+        ejecutar("ROLLBACK;");
     }
 }
 
@@ -158,6 +236,7 @@ int sync_init_db(void)
         return 0;
     }
     backfill_uuid();
+    compactar_cola();
     if (!sync_entidades_init_db())
     {
         return 0;
@@ -315,6 +394,12 @@ int sync_queue_mark_done(const char *uuid)
     if (!db || !uuid)
     {
         return 0;
+    }
+    /* Una fila sin uuid no coincide con "uuid=?": hay que borrarla aparte o
+     * la subida la volveria a tomar indefinidamente. */
+    if (uuid[0] == '\0')
+    {
+        return ejecutar("DELETE FROM sync_dirty WHERE uuid IS NULL OR TRIM(uuid) = '';");
     }
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db, "DELETE FROM sync_dirty WHERE uuid=?;", -1,

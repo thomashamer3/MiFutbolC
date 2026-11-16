@@ -415,7 +415,7 @@ static void obtener_ultimo_partido(char *fecha, size_t fecha_size,
     sqlite3_stmt *stmt;
     const char *sql =
         "SELECT fecha_hora, rival_nombre, goles, asistencias, resultado "
-        "FROM partido ORDER BY id DESC LIMIT 1;";
+        "FROM partido ORDER BY fecha_hora DESC, id DESC LIMIT 1;";
 
     snprintf(fecha, fecha_size, "N/A");
     snprintf(rival, rival_size, "N/A");

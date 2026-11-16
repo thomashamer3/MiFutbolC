@@ -193,6 +193,17 @@ typedef int (*ListadoDetalleFn)(int id, void *ctx);
 typedef int (*ListadoExportarFn)(void *ctx);
 
 /**
+ * @brief Callback que permite cambiar el filtro y el orden del listado.
+ *
+ * Debe reescribir los buffers a los que apuntan sql_conteo y sql_pagina (los
+ * del llamador) segun la nueva configuracion guardada en ctx.
+ * @param ctx Contexto opcional definido por el llamador.
+ * @return 1 si la configuracion cambio (el listado se recuenta y vuelve a la
+ *         pagina 1), 0 si el usuario cancelo.
+ */
+typedef int (*ListadoReconfigurarFn)(void *ctx);
+
+/**
  * @brief Configuracion de un listado paginado enriquecido.
  *
  * Los campos resumen, detalle y exportar son opcionales (NULL los desactiva).
@@ -215,6 +226,8 @@ typedef struct
      * de "LIMIT ? OFFSET ?". Se bindea como parametro 1.
      */
     const char *filtro_texto;
+    /** Opcion 6 "Cambiar filtro y orden" (NULL la oculta). */
+    ListadoReconfigurarFn reconfigurar;
 } ListadoConfig;
 
 /**
@@ -899,6 +912,52 @@ int app_open_with_command(const char *command, const char *path);
  * @return 1 si se lanzo y se leyo la salida, 0 si fallo.
  */
 int app_executar_captura(const char *const argv[], char **salida, int *codigo_salida);
+
+/**
+ * @brief Proceso hijo lanzado sin esperar (sondeo desde el hilo principal).
+ *
+ * En Windows @c handle es el HANDLE del proceso; en POSIX se usa @c pid.
+ */
+typedef struct
+{
+    void *handle;
+    long pid;
+    int activo;
+    int codigo_salida;
+} AppProceso;
+
+/**
+ * @brief Lanza un programa sin interprete de comandos y sin esperar.
+ *
+ * El hijo no escribe en la consola (Windows: CREATE_NO_WINDOW; POSIX: stdout
+ * y stderr a /dev/null); si necesita dejar datos debe escribirlos a archivo.
+ *
+ * @return 1 si se lanzo, 0 si fallo.
+ */
+int app_proceso_iniciar(const char *const argv[], AppProceso *p);
+
+/**
+ * @brief Consulta sin bloquear el estado del proceso.
+ * @return 0 si sigue corriendo, 1 si termino (codigo en @p codigo_salida),
+ *         -1 si hubo error o nunca se lanzo.
+ */
+int app_proceso_estado(AppProceso *p, int *codigo_salida);
+
+/** @brief Termina el proceso si sigue corriendo y libera sus recursos. */
+void app_proceso_terminar(AppProceso *p);
+
+/**
+ * @brief Crea un archivo temporal vacio y unico, y devuelve su ruta.
+ * @return 1 si se creo, 0 si fallo. El llamador debe borrarlo con remove().
+ */
+int app_ruta_temporal(char *ruta, size_t tam);
+
+/**
+ * @brief Lee un archivo completo a un string terminado en NUL.
+ * @param tam Recibe la cantidad de bytes leidos (opcional).
+ * @return Buffer a liberar con free(), o NULL si no se pudo abrir.
+ */
+char *app_leer_archivo_completo(const char *ruta, size_t *tam);
 
 /**
  * @brief Formatea un double en un buffer usando siempre punto como separador

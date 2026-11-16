@@ -148,6 +148,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="carrera.h" />
+		<Unit filename="clima_diferido.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="clima_diferido.h" />
 		<Unit filename="colecciones.c">
 			<Option compilerVar="CC" />
 		</Unit>

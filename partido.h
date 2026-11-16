@@ -79,7 +79,47 @@ void buscar_partidos(void);
  */
 void obtener_clima_partidos_historicos(void);
 
-void reordenar_partidos_por_fecha(void);
+/**
+ * @brief Interpreta la fecha_hora de un partido ("AAAA-MM-DD HH:MM" o "DD/MM/AAAA").
+ *
+ * Sin hora explicita deja 12:00.
+ *
+ * @return 1 si la fecha es valida, 0 si no.
+ */
+int partido_parsear_fecha_hora(const char *fecha, int *anio, int *mes, int *dia, int *hora,
+                               int *minuto);
+
+/**
+ * @brief Devuelve el id para un partido nuevo.
+ *
+ * Los IDs de partido son estables (no se renumeran por fecha) y nunca se
+ * reutilizan: el valor es mayor que cualquier id existente o borrado, para que
+ * un partido nuevo no herede referencias de uno eliminado.
+ */
+long long partido_siguiente_id(void);
+
+/**
+ * @brief Limpia las filas que dependen de los partidos donde @p columna = @p valor.
+ *
+ * Borra las filas que son del partido (partido_meta, partido_tag,
+ * carrera_partido_hito, quimica_jugador_estadistica) y desvincula las
+ * entidades propias (lesion y bienestar_sesion_mental a NULL, media a 0,
+ * equipo a -1). Las tablas que no existen se saltean. Debe llamarse antes del
+ * DELETE de partido y en la misma transaccion.
+ *
+ * @param columna "id", "cancha_id" o "camiseta_id"; cualquier otra se rechaza.
+ * @return 1 si todo se aplico, 0 ante error.
+ */
+int partido_borrar_dependencias_por(const char *columna, long long valor);
+
+/** @brief Igual que partido_borrar_dependencias_por("id", partido_id). */
+int partido_borrar_dependencias(long long partido_id);
+
+/**
+ * @brief Borra un partido y sus dependencias en una transaccion (SAVEPOINT).
+ * @return 1 si el partido existia y se borro, 0 si no.
+ */
+int partido_eliminar_por_id(long long partido_id);
 
 /**
  * @brief Muestra el submenu de ultimos partidos
