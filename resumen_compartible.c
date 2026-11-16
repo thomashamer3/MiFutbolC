@@ -410,11 +410,19 @@ static int resumen_parsear_fecha(const char *txt, int *anio, int *mes, int *dia,
         return 0;
     }
 
+#ifdef _WIN32
+    leidos = sscanf_s(txt, "%4d-%2d-%2d %2d:%2d", &a, &m, &d, &h, &mi);
+#else
     leidos = sscanf(txt, "%4d-%2d-%2d %2d:%2d", &a, &m, &d, &h, &mi);
+#endif
     if (leidos < 3)
     {
         h = -1;
+#ifdef _WIN32
+        leidos = sscanf_s(txt, "%2d/%2d/%4d %2d:%2d", &d, &m, &a, &h, &mi);
+#else
         leidos = sscanf(txt, "%2d/%2d/%4d %2d:%2d", &d, &m, &a, &h, &mi);
+#endif
     }
     if (leidos < 3 || a < 1900 || m < 1 || m > 12 || d < 1 || d > 31)
     {
@@ -570,74 +578,74 @@ static void resumen_actualizar_rachas(ResumenGeneral *r, ResumenRachasEnCurso *e
     en_curso->invicto = (p->resultado == 1 || p->resultado == 2) ? en_curso->invicto + 1 : 0;
     en_curso->marcando = p->goles > 0 ? en_curso->marcando + 1 : 0;
 
-    if (en_curso->victorias > r->mejor_racha_victorias)
+    if (en_curso->victorias > r->rachas.mejor_racha_victorias)
     {
-        r->mejor_racha_victorias = en_curso->victorias;
+        r->rachas.mejor_racha_victorias = en_curso->victorias;
     }
-    if (en_curso->invicto > r->mejor_racha_invicto)
+    if (en_curso->invicto > r->rachas.mejor_racha_invicto)
     {
-        r->mejor_racha_invicto = en_curso->invicto;
+        r->rachas.mejor_racha_invicto = en_curso->invicto;
     }
-    if (en_curso->marcando > r->mejor_racha_marcando)
+    if (en_curso->marcando > r->rachas.mejor_racha_marcando)
     {
-        r->mejor_racha_marcando = en_curso->marcando;
+        r->rachas.mejor_racha_marcando = en_curso->marcando;
     }
-    r->racha_victorias_actual = en_curso->victorias;
+    r->rachas.racha_victorias_actual = en_curso->victorias;
 
     /* Racha actual: la corrida final de partidos del mismo tipo. */
-    if (r->racha_longitud > 0 && tipo == r->racha_tipo)
+    if (r->rachas.racha_longitud > 0 && tipo == r->rachas.racha_tipo)
     {
-        r->racha_longitud++;
+        r->rachas.racha_longitud++;
     }
     else
     {
-        r->racha_tipo = tipo;
-        r->racha_longitud = 1;
+        r->rachas.racha_tipo = tipo;
+        r->rachas.racha_longitud = 1;
     }
 }
 
 /* Records por partido; con ">=" gana el mas reciente en caso de empate. */
 static void resumen_actualizar_records(ResumenGeneral *r, const ResumenPartidoCorto *p)
 {
-    if (p->goles > 0 && p->goles >= r->max_goles.goles)
+    if (p->goles > 0 && p->goles >= r->records.max_goles.goles)
     {
-        r->max_goles = *p;
+        r->records.max_goles = *p;
     }
-    if (p->asistencias > 0 && p->asistencias >= r->max_asistencias.asistencias)
+    if (p->asistencias > 0 && p->asistencias >= r->records.max_asistencias.asistencias)
     {
-        r->max_asistencias = *p;
+        r->records.max_asistencias = *p;
     }
-    if (p->rendimiento > 0 && p->rendimiento >= r->mejor_rendimiento.rendimiento)
+    if (p->rendimiento > 0 && p->rendimiento >= r->records.mejor_rendimiento.rendimiento)
     {
-        r->mejor_rendimiento = *p;
+        r->records.mejor_rendimiento = *p;
     }
 }
 
 /* Contadores de ataque del partido. */
 static void resumen_sumar_ataque(ResumenGeneral *r, const ResumenPartidoCorto *p, int minutos)
 {
-    r->goles += p->goles;
-    r->asistencias += p->asistencias;
+    r->totales.goles += p->goles;
+    r->totales.asistencias += p->asistencias;
     if (p->goles > 0)
     {
-        r->partidos_con_gol++;
+        r->ataque.partidos_con_gol++;
     }
     if (p->asistencias > 0)
     {
-        r->partidos_con_asistencia++;
+        r->ataque.partidos_con_asistencia++;
     }
     if (p->goles == 2)
     {
-        r->dobletes++;
+        r->ataque.dobletes++;
     }
     if (p->goles >= 3)
     {
-        r->hat_tricks++;
+        r->ataque.hat_tricks++;
     }
     if (minutos > 0)
     {
-        r->partidos_con_minutos++;
-        r->minutos_total += minutos;
+        r->ataque.partidos_con_minutos++;
+        r->ataque.minutos_total += minutos;
     }
 }
 
@@ -646,18 +654,18 @@ static void resumen_sumar_resultado(ResumenGeneral *r, int resultado)
     switch (resultado)
     {
     case 1:
-        r->victorias++;
+        r->totales.victorias++;
         break;
     case 2:
-        r->empates++;
+        r->totales.empates++;
         break;
     case 3:
-        r->derrotas++;
+        r->totales.derrotas++;
         break;
     default:
         return;
     }
-    r->con_resultado++;
+    r->totales.con_resultado++;
 }
 
 /* Acumulador de los promedios de rendimiento, animo y cansancio. */
@@ -679,17 +687,17 @@ static void resumen_sumar_contexto(ResumenGeneral *r, ResumenSumas *s, sqlite3_s
 
     if (p->rendimiento > 0)
     {
-        r->con_rendimiento++;
+        r->promedios.con_rendimiento++;
         s->rendimiento += p->rendimiento;
     }
     if (animo > 0)
     {
-        r->con_animo++;
+        r->promedios.con_animo++;
         s->animo += animo;
     }
     if (cansancio > 0)
     {
-        r->con_cansancio++;
+        r->promedios.con_cansancio++;
         s->cansancio += cansancio;
     }
     if (minutos > 0)
@@ -736,37 +744,40 @@ static int resumen_recorrer_partidos(ResumenGeneral *r, int anio)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         ResumenPartidoCorto p;
-        int anio;
+        int anio_partido;
         int mes;
         int dia;
 
-        resumen_leer_partido(stmt, &p, &anio, &mes, &dia);
-        if (r->partidos == 0)
+        resumen_leer_partido(stmt, &p, &anio_partido, &mes, &dia);
+        if (r->totales.partidos == 0)
         {
             snprintf(r->primer_partido_fecha, sizeof(r->primer_partido_fecha), "%s", p.fecha);
         }
-        r->partidos++;
+        r->totales.partidos++;
         resumen_sumar_resultado(r, p.resultado);
-        resumen_sumar_contexto(r, &sumas, stmt, &p, anio, mes, dia);
+        resumen_sumar_contexto(r, &sumas, stmt, &p, anio_partido, mes, dia);
         resumen_actualizar_rachas(r, &en_curso, &p);
         resumen_actualizar_records(r, &p);
-        resumen_sumar_anio(r, anio, &p);
-        resumen_ventana_partido(r->ultimos, &r->ultimos_n, RESUMEN_ULTIMOS_N, &p);
+        resumen_sumar_anio(r, anio_partido, &p);
+        resumen_ventana_partido(r->forma.ultimos, &r->forma.ultimos_n, RESUMEN_ULTIMOS_N, &p);
         if (p.rendimiento > 0)
         {
-            resumen_ventana_int(r->tendencia, &r->tendencia_n, RESUMEN_TENDENCIA_N,
+            resumen_ventana_int(r->forma.tendencia, &r->forma.tendencia_n, RESUMEN_TENDENCIA_N,
                                 p.rendimiento);
         }
-        r->ultimo = p;
+        r->records.ultimo = p;
     }
     sqlite3_finalize(stmt);
 
-    r->rendimiento_prom = r->con_rendimiento ? (double)sumas.rendimiento / r->con_rendimiento : 0;
-    r->animo_prom = r->con_animo ? (double)sumas.animo / r->con_animo : 0;
-    r->cansancio_prom = r->con_cansancio ? (double)sumas.cansancio / r->con_cansancio : 0;
-    r->ga_por_90 = r->minutos_total > 0
-                   ? (double)sumas.ga_con_minutos * 90.0 / (double)r->minutos_total
-                   : 0.0;
+    r->promedios.rendimiento_prom =
+        r->promedios.con_rendimiento ? (double)sumas.rendimiento / r->promedios.con_rendimiento : 0;
+    r->promedios.animo_prom =
+        r->promedios.con_animo ? (double)sumas.animo / r->promedios.con_animo : 0;
+    r->promedios.cansancio_prom =
+        r->promedios.con_cansancio ? (double)sumas.cansancio / r->promedios.con_cansancio : 0;
+    r->ataque.ga_por_90 = r->ataque.minutos_total > 0 ? (double)sumas.ga_con_minutos * 90.0 /
+                          (double)r->ataque.minutos_total
+                          : 0.0;
     return 1;
 }
 
@@ -824,16 +835,16 @@ static void resumen_cargar_clima_real(ResumenGeneral *r, int anio)
     {
         return;
     }
-    r->clima_real_partidos = stats.partidos_con_datos;
-    r->clima_real_cobertura_pct = stats.cobertura_pct;
+    r->clima.clima_real_partidos = stats.partidos_con_datos;
+    r->clima.clima_real_cobertura_pct = stats.cobertura_pct;
     if (stats.mejor)
     {
-        r->hay_clima_mejor = 1;
-        snprintf(r->clima_mejor, sizeof(r->clima_mejor), "%s",
+        r->clima.hay_clima_mejor = 1;
+        snprintf(r->clima.clima_mejor, sizeof(r->clima.clima_mejor), "%s",
                  stats.mejor->etiqueta ? stats.mejor->etiqueta : "");
-        r->clima_mejor_partidos = stats.mejor->partidos;
-        r->clima_mejor_rendimiento = stats.mejor->rendimiento_promedio;
-        r->clima_mejor_victorias_pct = stats.mejor->victorias_pct;
+        r->clima.clima_mejor_partidos = stats.mejor->partidos;
+        r->clima.clima_mejor_rendimiento = stats.mejor->rendimiento_promedio;
+        r->clima.clima_mejor_victorias_pct = stats.mejor->victorias_pct;
     }
 }
 
@@ -849,7 +860,7 @@ int resumen_general_calcular_anio(ResumenGeneral *r, int anio)
         return 0;
     }
     memset(r, 0, sizeof(*r));
-    r->racha_tipo = 'X';
+    r->rachas.racha_tipo = 'X';
 
     obtener_nombre_jugador(r->jugador, sizeof(r->jugador));
     get_datetime(r->fecha_gen, sizeof(r->fecha_gen));
@@ -859,16 +870,17 @@ int resumen_general_calcular_anio(ResumenGeneral *r, int anio)
         return 0;
     }
 
-    if (r->con_resultado > 0)
+    if (r->totales.con_resultado > 0)
     {
-        r->efectividad_pct = (double)(r->victorias * 3 + r->empates) * 100.0 /
-                             (double)(r->con_resultado * 3);
+        r->totales.efectividad_pct = (double)(r->totales.victorias * 3 + r->totales.empates) *
+                                     100.0 / (double)(r->totales.con_resultado * 3);
     }
-    if (r->partidos > 0)
+    if (r->totales.partidos > 0)
     {
-        r->goles_pp = (double)r->goles / r->partidos;
-        r->asistencias_pp = (double)r->asistencias / r->partidos;
-        r->ga_pp = (double)(r->goles + r->asistencias) / r->partidos;
+        r->totales.goles_pp = (double)r->totales.goles / r->totales.partidos;
+        r->totales.asistencias_pp = (double)r->totales.asistencias / r->totales.partidos;
+        r->totales.ga_pp =
+            (double)(r->totales.goles + r->totales.asistencias) / r->totales.partidos;
     }
 
     resumen_cargar_rankings(r, anio);
@@ -878,12 +890,13 @@ int resumen_general_calcular_anio(ResumenGeneral *r, int anio)
         /* Datos de carrera: el Resumen Anual no los usa (tiene los suyos). */
         return 1;
     }
-    obtener_mejor_posicion(r->posicion, sizeof(r->posicion));
-    obtener_clima_favorito(r->clima_frecuente, sizeof(r->clima_frecuente));
-    obtener_torneo_favorito(r->torneo, sizeof(r->torneo));
-    r->lesiones = contar_lesiones();
-    r->logros_total = logros_get_total();
-    r->logros_completados = r->partidos > 0 ? logros_get_completados_primera_camiseta() : 0;
+    obtener_mejor_posicion(r->carrera.posicion, sizeof(r->carrera.posicion));
+    obtener_clima_favorito(r->clima.clima_frecuente, sizeof(r->clima.clima_frecuente));
+    obtener_torneo_favorito(r->carrera.torneo, sizeof(r->carrera.torneo));
+    r->carrera.lesiones = contar_lesiones();
+    r->carrera.logros_total = logros_get_total();
+    r->carrera.logros_completados =
+        r->totales.partidos > 0 ? logros_get_completados_primera_camiseta() : 0;
     return 1;
 }
 
@@ -966,8 +979,8 @@ static const char *rnum(double valor, int decimales)
 /* obtener_torneo_favorito() devuelve un aviso cuando no hay torneos. */
 static int resumen_hay_torneo(const ResumenGeneral *r)
 {
-    return r->torneo[0] && strncmp(r->torneo, "Ningun", 6) != 0 &&
-           strcmp(r->torneo, "Sin datos") != 0;
+    return r->carrera.torneo[0] && strncmp(r->carrera.torneo, "Ningun", 6) != 0 &&
+           strcmp(r->carrera.torneo, "Sin datos") != 0;
 }
 
 static int resumen_max_conteo(const ResumenConteo *c, int n)
@@ -988,7 +1001,7 @@ static int resumen_max_conteo(const ResumenConteo *c, int n)
 /*
  * Mundo visual "planilla de partido": papel tiza y tinta verde cancha en modo
  * claro, cancha de noche con reflectores en modo oscuro. El hero siempre es
- * verde cancha con las lineas del campo dibujadas en SVG. Todo autocontenido:
+ * verde cancha con las lineas del campo dibujadas en SVG. Es autocontenido:
  * fuentes del sistema (Bahnschrift en Windows para los numeros y titulos),
  * sin CDNs ni JavaScript.
  *
@@ -1293,11 +1306,11 @@ static void resumen_html_marcador_y_forma(FILE *f, const ResumenGeneral *r)
             "  <div><b>%d</b><span>Partidos</span></div>\n"
             "  <div><b>%d</b><span>Goles</span></div>\n"
             "  <div><b>%d</b><span>Asistencias</span></div>\n",
-            r->partidos, r->goles, r->asistencias);
-    if (r->con_resultado > 0)
+            r->totales.partidos, r->totales.goles, r->totales.asistencias);
+    if (r->totales.con_resultado > 0)
     {
         fprintf(f, "  <div><b>%s%%</b><span>Efectividad</span></div>\n",
-                rnum(r->efectividad_pct, 0));
+                rnum(r->totales.efectividad_pct, 0));
     }
     else
     {
@@ -1305,13 +1318,13 @@ static void resumen_html_marcador_y_forma(FILE *f, const ResumenGeneral *r)
     }
     fputs("</div>\n", f);
 
-    if (r->ultimos_n > 0)
+    if (r->forma.ultimos_n > 0)
     {
         fprintf(f, "<div class=\"forma\"><span class=\"forma-titulo\">&Uacute;ltimos %d</span>",
-                r->ultimos_n);
-        for (int i = 0; i < r->ultimos_n; i++)
+                r->forma.ultimos_n);
+        for (int i = 0; i < r->forma.ultimos_n; i++)
         {
-            const ResumenPartidoCorto *p = &r->ultimos[i];
+            const ResumenPartidoCorto *p = &r->forma.ultimos[i];
             fprintf(f,
                     "<span class=\"chip %s\" title=\"%s%s%s: %s, %d G %d A\" "
                     "aria-label=\"%s del %s\">%c</span>",
@@ -1331,12 +1344,13 @@ static void resumen_html_hero(FILE *f, const ResumenGeneral *r)
     resumen_html_campo(f);
     fprintf(f, "<h1>%s</h1>\n", html_texto(r->jugador));
 
-    if (r->partidos > 0)
+    if (r->totales.partidos > 0)
     {
         fprintf(f,
                 "<p class=\"bajada\">Perfil de carrera en MiFutbolC &middot; %d partido%s "
                 "desde el %s</p>\n",
-                r->partidos, r->partidos == 1 ? "" : "s", html_texto(r->primer_partido_fecha));
+                r->totales.partidos, r->totales.partidos == 1 ? "" : "s",
+                html_texto(r->primer_partido_fecha));
     }
     else
     {
@@ -1362,11 +1376,11 @@ static void resumen_svg_segmento(FILE *f, const char *clase, double pct, double 
 
 static void resumen_html_resultados(FILE *f, const ResumenGeneral *r)
 {
-    double pv = resumen_pct(r->victorias, r->con_resultado);
-    double pe = resumen_pct(r->empates, r->con_resultado);
-    double pd = resumen_pct(r->derrotas, r->con_resultado);
+    double pv = resumen_pct(r->totales.victorias, r->totales.con_resultado);
+    double pe = resumen_pct(r->totales.empates, r->totales.con_resultado);
+    double pd = resumen_pct(r->totales.derrotas, r->totales.con_resultado);
 
-    if (r->con_resultado == 0)
+    if (r->totales.con_resultado == 0)
     {
         return;
     }
@@ -1392,9 +1406,9 @@ static void resumen_html_resultados(FILE *f, const ResumenGeneral *r)
             "</ul>\n</div>\n"
             "<p class=\"nota\">Efectividad %s%% de los puntos en juego (3 por victoria, 1 por "
             "empate) sobre %d partido%s con resultado.</p>\n</section>\n",
-            rnum(pv, 0), r->victorias, rnum(pv, 1), r->empates, rnum(pe, 1), r->derrotas,
-            rnum(pd, 1), rnum(r->efectividad_pct, 1), r->con_resultado,
-            r->con_resultado == 1 ? "" : "s");
+            rnum(pv, 0), r->totales.victorias, rnum(pv, 1), r->totales.empates, rnum(pe, 1),
+            r->totales.derrotas, rnum(pd, 1), rnum(r->totales.efectividad_pct, 1),
+            r->totales.con_resultado, r->totales.con_resultado == 1 ? "" : "s");
 }
 
 static void resumen_html_cifra(FILE *f, const char *valor, const char *etiqueta)
@@ -1406,36 +1420,37 @@ static void resumen_html_ataque(FILE *f, const ResumenGeneral *r)
 {
     char buf[32];
 
-    if (r->partidos == 0)
+    if (r->totales.partidos == 0)
     {
         return;
     }
     fputs("<section class=\"panel\">\n<h2>Ataque</h2>\n<div class=\"cifras\">\n", f);
-    resumen_html_cifra(f, rnum(r->goles + r->asistencias, 0), "Goles + asistencias");
-    resumen_html_cifra(f, rnum(r->ga_pp, 2), "G+A por partido");
-    resumen_html_cifra(f, rnum(r->goles_pp, 2), "Goles por partido");
-    resumen_html_cifra(f, rnum(r->asistencias_pp, 2), "Asistencias por partido");
-    snprintf(buf, sizeof(buf), "%d", r->partidos_con_gol);
+    resumen_html_cifra(f, rnum(r->totales.goles + r->totales.asistencias, 0),
+                       "Goles + asistencias");
+    resumen_html_cifra(f, rnum(r->totales.ga_pp, 2), "G+A por partido");
+    resumen_html_cifra(f, rnum(r->totales.goles_pp, 2), "Goles por partido");
+    resumen_html_cifra(f, rnum(r->totales.asistencias_pp, 2), "Asistencias por partido");
+    snprintf(buf, sizeof(buf), "%d", r->ataque.partidos_con_gol);
     resumen_html_cifra(f, buf, "Partidos con gol");
-    snprintf(buf, sizeof(buf), "%d", r->dobletes);
+    snprintf(buf, sizeof(buf), "%d", r->ataque.dobletes);
     resumen_html_cifra(f, buf, "Dobletes");
-    snprintf(buf, sizeof(buf), "%d", r->hat_tricks);
+    snprintf(buf, sizeof(buf), "%d", r->ataque.hat_tricks);
     resumen_html_cifra(f, buf, "Hat-tricks o m&aacute;s");
-    if (r->partidos_con_minutos > 0)
+    if (r->ataque.partidos_con_minutos > 0)
     {
-        resumen_html_cifra(f, rnum(r->ga_por_90, 2), "G+A cada 90 minutos");
+        resumen_html_cifra(f, rnum(r->ataque.ga_por_90, 2), "G+A cada 90 minutos");
     }
     fputs("</div>\n", f);
-    if (r->partidos_con_minutos > 0)
+    if (r->ataque.partidos_con_minutos > 0)
     {
         fprintf(f,
                 "<p class=\"nota\">G+A cada 90' sobre %d partido%s con minutos cargados "
                 "(%d minutos).</p>\n",
-                r->partidos_con_minutos, r->partidos_con_minutos == 1 ? "" : "s",
-                r->minutos_total);
+                r->ataque.partidos_con_minutos, r->ataque.partidos_con_minutos == 1 ? "" : "s",
+                r->ataque.minutos_total);
     }
     fprintf(f, "<p class=\"nota\">Marcaste en el %s%% de los partidos.</p>\n</section>\n",
-            rnum(resumen_pct(r->partidos_con_gol, r->partidos), 0));
+            rnum(resumen_pct(r->ataque.partidos_con_gol, r->totales.partidos), 0));
 }
 
 /* SVG de la sparkline del rendimiento (1..10); devuelve el promedio de @p v.
@@ -1495,18 +1510,20 @@ static void resumen_html_tendencia(FILE *f, const ResumenGeneral *r)
 {
     double prom;
 
-    if (r->tendencia_n < 2)
+    if (r->forma.tendencia_n < 2)
     {
         return;
     }
     fputs("<section class=\"panel panel-ancho\">\n<h2>Tendencia de rendimiento</h2>\n", f);
-    prom = resumen_html_spark_svg(f, r->tendencia, r->tendencia_n);
-    fprintf(f,
-            "<div class=\"spark-pie\"><span>Hace %d partidos</span>"
-            "<span>Promedio %s &middot; &uacute;ltimo %d/10</span><span>&Uacute;ltimo</span></div>\n"
-            "<p class=\"nota\">Rendimiento general (1 a 10) de los &uacute;ltimos %d partidos con "
-            "dato; la linea punteada es su promedio.</p>\n</section>\n",
-            r->tendencia_n, rnum(prom, 1), r->tendencia[r->tendencia_n - 1], r->tendencia_n);
+    prom = resumen_html_spark_svg(f, r->forma.tendencia, r->forma.tendencia_n);
+    fprintf(
+        f,
+        "<div class=\"spark-pie\"><span>Hace %d partidos</span>"
+        "<span>Promedio %s &middot; &uacute;ltimo %d/10</span><span>&Uacute;ltimo</span></div>\n"
+        "<p class=\"nota\">Rendimiento general (1 a 10) de los &uacute;ltimos %d partidos con "
+        "dato; la linea punteada es su promedio.</p>\n</section>\n",
+        r->forma.tendencia_n, rnum(prom, 1), r->forma.tendencia[r->forma.tendencia_n - 1],
+        r->forma.tendencia_n);
 }
 
 static void resumen_html_fila_partido(FILE *f, const char *k, const char *valor,
@@ -1527,33 +1544,33 @@ static void resumen_html_records(FILE *f, const ResumenGeneral *r)
 {
     char buf[48];
 
-    if (r->partidos == 0)
+    if (r->totales.partidos == 0)
     {
         return;
     }
     fputs("<section class=\"panel\">\n<h2>R&eacute;cords</h2>\n<ul class=\"filas\">\n", f);
-    if (r->con_resultado > 0)
+    if (r->totales.con_resultado > 0)
     {
-        resumen_html_racha_fila(f, "Mejor racha de victorias", r->mejor_racha_victorias);
-        resumen_html_racha_fila(f, "Mejor racha invicto", r->mejor_racha_invicto);
+        resumen_html_racha_fila(f, "Mejor racha de victorias", r->rachas.mejor_racha_victorias);
+        resumen_html_racha_fila(f, "Mejor racha invicto", r->rachas.mejor_racha_invicto);
     }
-    resumen_html_racha_fila(f, "Racha m&aacute;s larga marcando", r->mejor_racha_marcando);
-    if (r->max_goles.goles > 0)
+    resumen_html_racha_fila(f, "Racha m&aacute;s larga marcando", r->rachas.mejor_racha_marcando);
+    if (r->records.max_goles.goles > 0)
     {
-        snprintf(buf, sizeof(buf), "%d gol%s", r->max_goles.goles,
-                 r->max_goles.goles == 1 ? "" : "es");
-        resumen_html_fila_partido(f, "M&aacute;s goles en un partido", buf, &r->max_goles);
+        snprintf(buf, sizeof(buf), "%d gol%s", r->records.max_goles.goles,
+                 r->records.max_goles.goles == 1 ? "" : "es");
+        resumen_html_fila_partido(f, "M&aacute;s goles en un partido", buf, &r->records.max_goles);
     }
-    if (r->max_asistencias.asistencias > 0)
+    if (r->records.max_asistencias.asistencias > 0)
     {
-        snprintf(buf, sizeof(buf), "%d asistencia%s", r->max_asistencias.asistencias,
-                 r->max_asistencias.asistencias == 1 ? "" : "s");
-        resumen_html_fila_partido(f, "M&aacute;s asistencias", buf, &r->max_asistencias);
+        snprintf(buf, sizeof(buf), "%d asistencia%s", r->records.max_asistencias.asistencias,
+                 r->records.max_asistencias.asistencias == 1 ? "" : "s");
+        resumen_html_fila_partido(f, "M&aacute;s asistencias", buf, &r->records.max_asistencias);
     }
-    if (r->mejor_rendimiento.rendimiento > 0)
+    if (r->records.mejor_rendimiento.rendimiento > 0)
     {
-        snprintf(buf, sizeof(buf), "%d/10", r->mejor_rendimiento.rendimiento);
-        resumen_html_fila_partido(f, "Mejor rendimiento", buf, &r->mejor_rendimiento);
+        snprintf(buf, sizeof(buf), "%d/10", r->records.mejor_rendimiento.rendimiento);
+        resumen_html_fila_partido(f, "Mejor rendimiento", buf, &r->records.mejor_rendimiento);
     }
     fputs("</ul>\n</section>\n", f);
 }
@@ -1564,36 +1581,47 @@ static void resumen_html_actualidad(FILE *f, const ResumenGeneral *r)
     const char *desc;
     char buf[64];
 
-    if (r->partidos == 0)
+    if (r->totales.partidos == 0)
     {
         return;
     }
-    resumen_describir_racha(r->racha_tipo, &texto, &desc);
+    resumen_describir_racha(r->rachas.racha_tipo, &texto, &desc);
     fputs("<section class=\"panel\">\n<h2>Momento actual</h2>\n<ul class=\"filas\">\n", f);
     fprintf(f,
             "<li><span class=\"k\">Racha</span><span class=\"v\">%s: %d partido%s"
             "<small>%s</small></span></li>\n",
-            texto, r->racha_longitud, r->racha_longitud == 1 ? "" : "s", desc);
-    if (r->con_resultado > 0)
+            texto, r->rachas.racha_longitud, r->rachas.racha_longitud == 1 ? "" : "s", desc);
+    if (r->totales.con_resultado > 0)
     {
-        resumen_html_racha_fila(f, "Victorias seguidas ahora", r->racha_victorias_actual);
+        resumen_html_racha_fila(f, "Victorias seguidas ahora", r->rachas.racha_victorias_actual);
     }
     snprintf(buf, sizeof(buf), "%s &middot; %d G, %d A",
-             resumen_texto_resultado(r->ultimo.resultado), r->ultimo.goles,
-             r->ultimo.asistencias);
-    resumen_html_fila_partido(f, "&Uacute;ltimo partido", buf, &r->ultimo);
+             resumen_texto_resultado(r->records.ultimo.resultado), r->records.ultimo.goles,
+             r->records.ultimo.asistencias);
+    resumen_html_fila_partido(f, "&Uacute;ltimo partido", buf, &r->records.ultimo);
     fputs("</ul>\n</section>\n", f);
+}
+
+/* Anios cargados en r->anios, acotados a la capacidad del arreglo. */
+static int resumen_cant_anios(const ResumenGeneral *r)
+{
+    if (r->num_anios <= 0)
+    {
+        return 0;
+    }
+    return r->num_anios < RESUMEN_MAX_ANIOS ? r->num_anios : RESUMEN_MAX_ANIOS;
 }
 
 static void resumen_html_anios(FILE *f, const ResumenGeneral *r)
 {
     int max = 1;
+    int n = resumen_cant_anios(r);
 
-    if (r->num_anios == 0)
+    if (n == 0)
     {
         return;
     }
-    for (int i = 0; i < r->num_anios; i++)
+    for (int i = 0; i < n && i < RESUMEN_MAX_ANIOS; i++)
     {
         int total = r->anios[i].goles + r->anios[i].asistencias;
         if (total > max)
@@ -1603,7 +1631,7 @@ static void resumen_html_anios(FILE *f, const ResumenGeneral *r)
     }
 
     fputs("<section class=\"panel\">\n<h2>A&ntilde;o por a&ntilde;o</h2>\n<ul class=\"anios\">\n", f);
-    for (int i = r->num_anios - 1; i >= 0; i--)
+    for (int i = n - 1; i >= 0 && i < RESUMEN_MAX_ANIOS; i--)
     {
         const ResumenAnioItem *a = &r->anios[i];
         double wg = (double)a->goles * 100.0 / max;
@@ -1719,24 +1747,25 @@ static void resumen_html_cuando(FILE *f, const ResumenGeneral *r)
 
 static void resumen_html_como_llegas(FILE *f, const ResumenGeneral *r)
 {
-    if (r->con_rendimiento + r->con_animo + r->con_cansancio == 0)
+    if (r->promedios.con_rendimiento + r->promedios.con_animo + r->promedios.con_cansancio == 0)
     {
         return;
     }
     fputs("<section class=\"panel\">\n<h2>C&oacute;mo lleg&aacute;s</h2>\n<ul class=\"barras\">\n", f);
-    if (r->con_rendimiento > 0)
+    if (r->promedios.con_rendimiento > 0)
     {
-        resumen_html_barra(f, "Rendimiento", r->rendimiento_prom * 10.0,
-                           rnum(r->rendimiento_prom, 1));
+        resumen_html_barra(f, "Rendimiento", r->promedios.rendimiento_prom * 10.0,
+                           rnum(r->promedios.rendimiento_prom, 1));
     }
-    if (r->con_animo > 0)
+    if (r->promedios.con_animo > 0)
     {
-        resumen_html_barra(f, "&Aacute;nimo", r->animo_prom * 10.0, rnum(r->animo_prom, 1));
+        resumen_html_barra(f, "&Aacute;nimo", r->promedios.animo_prom * 10.0,
+                           rnum(r->promedios.animo_prom, 1));
     }
-    if (r->con_cansancio > 0)
+    if (r->promedios.con_cansancio > 0)
     {
-        resumen_html_barra(f, "Cansancio", r->cansancio_prom * 10.0,
-                           rnum(r->cansancio_prom, 1));
+        resumen_html_barra(f, "Cansancio", r->promedios.cansancio_prom * 10.0,
+                           rnum(r->promedios.cansancio_prom, 1));
     }
     fputs("</ul>\n<p class=\"nota\">Promedios de 1 a 10 sobre los partidos con el dato "
           "cargado.</p>\n</section>\n",
@@ -1745,56 +1774,60 @@ static void resumen_html_como_llegas(FILE *f, const ResumenGeneral *r)
 
 static void resumen_html_clima(FILE *f, const ResumenGeneral *r)
 {
-    int hay_manual = strcmp(r->clima_frecuente, "Sin datos") != 0 && r->clima_frecuente[0];
+    int hay_manual =
+        strcmp(r->clima.clima_frecuente, "Sin datos") != 0 && r->clima.clima_frecuente[0];
 
-    if (!hay_manual && r->clima_real_partidos == 0)
+    if (!hay_manual && r->clima.clima_real_partidos == 0)
     {
         return;
     }
     fputs("<section class=\"panel\">\n<h2>Clima</h2>\n<ul class=\"filas\">\n", f);
     if (hay_manual)
     {
-        fprintf(f, "<li><span class=\"k\">Clima m&aacute;s frecuente</span><span class=\"v\">%s"
+        fprintf(f,
+                "<li><span class=\"k\">Clima m&aacute;s frecuente</span><span class=\"v\">%s"
                 "</span></li>\n",
-                html_texto(r->clima_frecuente));
+                html_texto(r->clima.clima_frecuente));
     }
-    if (r->hay_clima_mejor)
+    if (r->clima.hay_clima_mejor)
     {
         fprintf(f,
                 "<li><span class=\"k\">Tu mejor condici&oacute;n</span><span class=\"v\">%s"
                 "<small>Rendimiento %s &middot; %s%% V &middot; %d partidos</small>"
                 "</span></li>\n",
-                html_texto(r->clima_mejor), rnum(r->clima_mejor_rendimiento, 1),
-                rnum(r->clima_mejor_victorias_pct, 0), r->clima_mejor_partidos);
+                html_texto(r->clima.clima_mejor), rnum(r->clima.clima_mejor_rendimiento, 1),
+                rnum(r->clima.clima_mejor_victorias_pct, 0), r->clima.clima_mejor_partidos);
     }
-    if (r->clima_real_partidos > 0)
+    if (r->clima.clima_real_partidos > 0)
     {
         fprintf(f,
                 "<li><span class=\"k\">Con clima real</span><span class=\"v\">%d partidos"
                 "<small>%s%% del total, datos de Open-Meteo</small></span></li>\n",
-                r->clima_real_partidos, rnum(r->clima_real_cobertura_pct, 0));
+                r->clima.clima_real_partidos, rnum(r->clima.clima_real_cobertura_pct, 0));
     }
     fputs("</ul>\n</section>\n", f);
 }
 
 static void resumen_html_perfil(FILE *f, const ResumenGeneral *r)
 {
-    double pct = resumen_pct(r->logros_completados, r->logros_total);
+    double pct = resumen_pct(r->carrera.logros_completados, r->carrera.logros_total);
 
     fputs("<section class=\"panel\">\n<h2>Perfil</h2>\n<ul class=\"filas\">\n", f);
-    if (strcmp(r->posicion, "Sin datos") != 0 && r->posicion[0])
+    if (strcmp(r->carrera.posicion, "Sin datos") != 0 && r->carrera.posicion[0])
     {
-        fprintf(f, "<li><span class=\"k\">Mejor posici&oacute;n</span><span class=\"v\">%s</span>"
+        fprintf(f,
+                "<li><span class=\"k\">Mejor posici&oacute;n</span><span class=\"v\">%s</span>"
                 "</li>\n",
-                html_texto(r->posicion));
+                html_texto(r->carrera.posicion));
     }
     if (resumen_hay_torneo(r))
     {
-        fprintf(f, "<li><span class=\"k\">Torneo m&aacute;s jugado</span>"
+        fprintf(f,
+                "<li><span class=\"k\">Torneo m&aacute;s jugado</span>"
                 "<span class=\"v\">%s</span></li>\n",
-                html_texto(r->torneo));
+                html_texto(r->carrera.torneo));
     }
-    if (r->lesiones == 0)
+    if (r->carrera.lesiones == 0)
     {
         fputs("<li><span class=\"k\">Lesiones</span><span class=\"v\">Ninguna registrada"
               "</span></li>\n",
@@ -1803,16 +1836,16 @@ static void resumen_html_perfil(FILE *f, const ResumenGeneral *r)
     else
     {
         fprintf(f, "<li><span class=\"k\">Lesiones</span><span class=\"v\">%d</span></li>\n",
-                r->lesiones);
+                r->carrera.lesiones);
     }
     fputs("</ul>\n", f);
-    if (r->logros_total > 0)
+    if (r->carrera.logros_total > 0)
     {
         fprintf(f,
                 "<div class=\"logros\"><h3>Logros de la camiseta principal</h3>"
                 "<p><b>%d</b> de %d &middot; %s%%</p>\n"
                 "<div class=\"medidor alto\"><i style=\"width:%.1f%%\"></i></div></div>\n",
-                r->logros_completados, r->logros_total, rnum(pct, 0), pct);
+                r->carrera.logros_completados, r->carrera.logros_total, rnum(pct, 0), pct);
     }
     fputs("</section>\n", f);
 }
@@ -1831,14 +1864,14 @@ void resumen_general_escribir_html(FILE *f, const ResumenGeneral *r)
             "<meta property=\"og:description\" content=\"%d partidos, %d goles, %d "
             "asistencias\">\n"
             "<meta property=\"og:type\" content=\"profile\">\n<style>\n",
-            html_texto(r->jugador), html_texto(r->jugador), r->partidos, r->goles,
-            r->asistencias);
+            html_texto(r->jugador), html_texto(r->jugador), r->totales.partidos, r->totales.goles,
+            r->totales.asistencias);
     resumen_escribir_css_comun(f);
     fputs("</style>\n</head>\n<body>\n<main class=\"pagina\">\n", f);
 
     resumen_html_hero(f, r);
     fputs("<div class=\"grilla\">\n", f);
-    if (r->partidos == 0)
+    if (r->totales.partidos == 0)
     {
         fputs("<section class=\"panel panel-ancho\">\n<h2>Todav&iacute;a no hay partidos</h2>\n"
               "<p class=\"vacio\">Carg&aacute; tu primer partido en MiFutbolC y volv&eacute; a generar el "
@@ -1862,11 +1895,13 @@ void resumen_general_escribir_html(FILE *f, const ResumenGeneral *r)
 
     fprintf(f,
             "<footer class=\"pie\">Generado por MiFutbolC v4.3 el %s"
-            "<span class=\"compartir\"> &middot; <a href=\"mailto:?subject=Mi%%20perfil%%20futbolistico&amp;body=Mira%%20mi%%20"
+            "<span class=\"compartir\"> &middot; <a "
+            "href=\"mailto:?subject=Mi%%20perfil%%20futbolistico&amp;body=Mira%%20mi%%20"
             "perfil%%20en%%20MiFutbolC:%%20%d%%20partidos,%%20%d%%20goles,%%20%d%%20"
             "asistencias\">Compartir por email</a></span></footer>\n"
             "</main>\n</body>\n</html>\n",
-            html_texto(r->fecha_gen), r->partidos, r->goles, r->asistencias);
+            html_texto(r->fecha_gen), r->totales.partidos, r->totales.goles,
+            r->totales.asistencias);
 }
 
 /* ─── Resumen general: Markdown ───────────────────────────────────────────── */
@@ -1882,17 +1917,22 @@ static const char *md_celda(const char *texto)
     char *dst = slots[slot];
 
     siguiente = (siguiente + 1U) % 8U;
-    for (const char *p = texto ? texto : ""; *p && usado + 2 < sizeof(slots[slot]); p++)
+    /* Cada caracter ocupa 1 o 2 bytes: se para con lugar para 2 mas el '\0'. */
+    const char *p = texto ? texto : "";
+    while (*p && usado + 2 < sizeof(slots[slot]))
     {
         if (*p == '|')
         {
-            dst[usado++] = '\\';
-            dst[usado++] = '|';
+            dst[usado] = '\\';
+            dst[usado + 1] = '|';
+            usado += 2;
         }
         else
         {
-            dst[usado++] = (*p == '\n' || *p == '\r') ? ' ' : *p;
+            dst[usado] = (*p == '\n' || *p == '\r') ? ' ' : *p;
+            usado++;
         }
+        p++;
     }
     dst[usado] = '\0';
     return dst;
@@ -1960,17 +2000,20 @@ static void md_resultados_y_ataque(FILE *f, const ResumenGeneral *r)
             "| Goles + asistencias | %d |\n| G+A por partido | %s |\n"
             "| Goles por partido | %s |\n| Asistencias por partido | %s |\n"
             "| Partidos con gol | %d (%s%%) |\n| Dobletes | %d |\n| Hat-tricks o más | %d |\n",
-            r->partidos, r->goles, r->asistencias, r->goles + r->asistencias, rnum(r->ga_pp, 2),
-            rnum(r->goles_pp, 2), rnum(r->asistencias_pp, 2), r->partidos_con_gol,
-            rnum(resumen_pct(r->partidos_con_gol, r->partidos), 0), r->dobletes, r->hat_tricks);
-    if (r->partidos_con_minutos > 0)
+            r->totales.partidos, r->totales.goles, r->totales.asistencias,
+            r->totales.goles + r->totales.asistencias, rnum(r->totales.ga_pp, 2),
+            rnum(r->totales.goles_pp, 2), rnum(r->totales.asistencias_pp, 2),
+            r->ataque.partidos_con_gol,
+            rnum(resumen_pct(r->ataque.partidos_con_gol, r->totales.partidos), 0),
+            r->ataque.dobletes, r->ataque.hat_tricks);
+    if (r->ataque.partidos_con_minutos > 0)
     {
-        fprintf(f, "| G+A cada 90' | %s (%d partidos, %d min) |\n", rnum(r->ga_por_90, 2),
-                r->partidos_con_minutos, r->minutos_total);
+        fprintf(f, "| G+A cada 90' | %s (%d partidos, %d min) |\n", rnum(r->ataque.ga_por_90, 2),
+                r->ataque.partidos_con_minutos, r->ataque.minutos_total);
     }
     fputs("\n", f);
 
-    if (r->con_resultado > 0)
+    if (r->totales.con_resultado > 0)
     {
         fprintf(f,
                 "## Resultados\n\n| Resultado | Cantidad | %% |\n|---|---:|---:|\n"
@@ -1978,29 +2021,33 @@ static void md_resultados_y_ataque(FILE *f, const ResumenGeneral *r)
                 "| Derrotas | **%d** | %s%% |\n\n"
                 "**Efectividad: %s%%** de los puntos en juego (3 por victoria, 1 por empate), "
                 "sobre %d partidos con resultado.\n\n",
-                r->victorias, rnum(resumen_pct(r->victorias, r->con_resultado), 1), r->empates,
-                rnum(resumen_pct(r->empates, r->con_resultado), 1), r->derrotas,
-                rnum(resumen_pct(r->derrotas, r->con_resultado), 1),
-                rnum(r->efectividad_pct, 1), r->con_resultado);
+                r->totales.victorias,
+                rnum(resumen_pct(r->totales.victorias, r->totales.con_resultado), 1),
+                r->totales.empates,
+                rnum(resumen_pct(r->totales.empates, r->totales.con_resultado), 1),
+                r->totales.derrotas,
+                rnum(resumen_pct(r->totales.derrotas, r->totales.con_resultado), 1),
+                rnum(r->totales.efectividad_pct, 1), r->totales.con_resultado);
     }
 }
 
 static void md_forma(FILE *f, const ResumenGeneral *r)
 {
-    if (r->ultimos_n > 0)
+    if (r->forma.ultimos_n > 0)
     {
         fprintf(f, "## Forma reciente\n\nÚltimos %d, del más viejo al más nuevo: **",
-                r->ultimos_n);
-        for (int i = 0; i < r->ultimos_n; i++)
+                r->forma.ultimos_n);
+        for (int i = 0; i < r->forma.ultimos_n; i++)
         {
-            fprintf(f, "%s%c", i ? " " : "", resumen_letra_resultado(r->ultimos[i].resultado));
+            fprintf(f, "%s%c", i ? " " : "",
+                    resumen_letra_resultado(r->forma.ultimos[i].resultado));
         }
         fputs("**\n\n| Fecha | Rival | Resultado | G | A | Rend. |\n"
               "|---|---|---|---:|---:|---:|\n",
               f);
-        for (int i = r->ultimos_n - 1; i >= 0; i--)
+        for (int i = r->forma.ultimos_n - 1; i >= 0; i--)
         {
-            const ResumenPartidoCorto *p = &r->ultimos[i];
+            const ResumenPartidoCorto *p = &r->forma.ultimos[i];
             char rend[16] = "-";
             if (p->rendimiento > 0)
             {
@@ -2012,16 +2059,16 @@ static void md_forma(FILE *f, const ResumenGeneral *r)
         }
         fputs("\n", f);
     }
-    if (r->tendencia_n >= 2)
+    if (r->forma.tendencia_n >= 2)
     {
         double suma = 0.0;
         fputs("Tendencia de rendimiento (1 a 10), del más viejo al más nuevo: `", f);
-        for (int i = 0; i < r->tendencia_n; i++)
+        for (int i = 0; i < r->forma.tendencia_n; i++)
         {
-            fprintf(f, "%s%d", i ? " " : "", r->tendencia[i]);
-            suma += r->tendencia[i];
+            fprintf(f, "%s%d", i ? " " : "", r->forma.tendencia[i]);
+            suma += r->forma.tendencia[i];
         }
-        fprintf(f, "` (promedio %s)\n\n", rnum(suma / r->tendencia_n, 1));
+        fprintf(f, "` (promedio %s)\n\n", rnum(suma / r->forma.tendencia_n, 1));
     }
 }
 
@@ -2032,47 +2079,51 @@ static void md_records(FILE *f, const ResumenGeneral *r)
     const char *desc;
 
     fputs("## Récords y momento actual\n\n| Récord | Valor | Partido |\n|---|---|---|\n", f);
-    if (r->con_resultado > 0)
+    if (r->totales.con_resultado > 0)
     {
-        fprintf(f, "| Mejor racha de victorias | %d partidos | |\n", r->mejor_racha_victorias);
-        fprintf(f, "| Mejor racha invicto | %d partidos | |\n", r->mejor_racha_invicto);
+        fprintf(f, "| Mejor racha de victorias | %d partidos | |\n",
+                r->rachas.mejor_racha_victorias);
+        fprintf(f, "| Mejor racha invicto | %d partidos | |\n", r->rachas.mejor_racha_invicto);
     }
-    fprintf(f, "| Racha más larga marcando | %d partidos | |\n", r->mejor_racha_marcando);
-    if (r->max_goles.goles > 0)
+    fprintf(f, "| Racha más larga marcando | %d partidos | |\n", r->rachas.mejor_racha_marcando);
+    if (r->records.max_goles.goles > 0)
     {
-        snprintf(buf, sizeof(buf), "%d goles", r->max_goles.goles);
-        md_fila_partido(f, "Más goles en un partido", buf, &r->max_goles);
+        snprintf(buf, sizeof(buf), "%d goles", r->records.max_goles.goles);
+        md_fila_partido(f, "Más goles en un partido", buf, &r->records.max_goles);
     }
-    if (r->max_asistencias.asistencias > 0)
+    if (r->records.max_asistencias.asistencias > 0)
     {
-        snprintf(buf, sizeof(buf), "%d asistencias", r->max_asistencias.asistencias);
-        md_fila_partido(f, "Más asistencias", buf, &r->max_asistencias);
+        snprintf(buf, sizeof(buf), "%d asistencias", r->records.max_asistencias.asistencias);
+        md_fila_partido(f, "Más asistencias", buf, &r->records.max_asistencias);
     }
-    if (r->mejor_rendimiento.rendimiento > 0)
+    if (r->records.mejor_rendimiento.rendimiento > 0)
     {
-        snprintf(buf, sizeof(buf), "%d/10", r->mejor_rendimiento.rendimiento);
-        md_fila_partido(f, "Mejor rendimiento", buf, &r->mejor_rendimiento);
+        snprintf(buf, sizeof(buf), "%d/10", r->records.mejor_rendimiento.rendimiento);
+        md_fila_partido(f, "Mejor rendimiento", buf, &r->records.mejor_rendimiento);
     }
-    resumen_describir_racha(r->racha_tipo, &texto, &desc);
-    snprintf(buf, sizeof(buf), "%s, %d partido%s", texto, r->racha_longitud,
-             r->racha_longitud == 1 ? "" : "s");
+    resumen_describir_racha(r->rachas.racha_tipo, &texto, &desc);
+    snprintf(buf, sizeof(buf), "%s, %d partido%s", texto, r->rachas.racha_longitud,
+             r->rachas.racha_longitud == 1 ? "" : "s");
     fprintf(f, "| Racha actual | %s | %s |\n", buf, desc);
-    snprintf(buf, sizeof(buf), "%s, %d G, %d A", resumen_texto_resultado(r->ultimo.resultado),
-             r->ultimo.goles, r->ultimo.asistencias);
-    md_fila_partido(f, "Último partido", buf, &r->ultimo);
+    snprintf(buf, sizeof(buf), "%s, %d G, %d A",
+             resumen_texto_resultado(r->records.ultimo.resultado), r->records.ultimo.goles,
+             r->records.ultimo.asistencias);
+    md_fila_partido(f, "Último partido", buf, &r->records.ultimo);
     fputs("\n", f);
 }
 
 static void md_anios(FILE *f, const ResumenGeneral *r)
 {
-    if (r->num_anios == 0)
+    int n = resumen_cant_anios(r);
+
+    if (n == 0)
     {
         return;
     }
     fputs("## Año por año\n\n| Año | PJ | Goles | Asist. | Victorias |\n"
           "|---|---:|---:|---:|---:|\n",
           f);
-    for (int i = r->num_anios - 1; i >= 0; i--)
+    for (int i = n - 1; i >= 0 && i < RESUMEN_MAX_ANIOS; i--)
     {
         const ResumenAnioItem *a = &r->anios[i];
         fprintf(f, "| %d | %d | %d | %d | %d |\n", a->anio, a->partidos, a->goles,
@@ -2083,26 +2134,28 @@ static void md_anios(FILE *f, const ResumenGeneral *r)
 
 static void md_contexto(FILE *f, const ResumenGeneral *r)
 {
-    int hay_manual = strcmp(r->clima_frecuente, "Sin datos") != 0 && r->clima_frecuente[0];
+    int hay_manual =
+        strcmp(r->clima.clima_frecuente, "Sin datos") != 0 && r->clima.clima_frecuente[0];
 
-    if (r->con_rendimiento + r->con_animo + r->con_cansancio > 0)
+    if (r->promedios.con_rendimiento + r->promedios.con_animo + r->promedios.con_cansancio > 0)
     {
         fputs("## Cómo llegás\n\n| Promedio (1 a 10) | Valor | Partidos con dato |\n"
               "|---|---:|---:|\n",
               f);
-        if (r->con_rendimiento > 0)
+        if (r->promedios.con_rendimiento > 0)
         {
-            fprintf(f, "| Rendimiento | %s | %d |\n", rnum(r->rendimiento_prom, 1),
-                    r->con_rendimiento);
+            fprintf(f, "| Rendimiento | %s | %d |\n", rnum(r->promedios.rendimiento_prom, 1),
+                    r->promedios.con_rendimiento);
         }
-        if (r->con_animo > 0)
+        if (r->promedios.con_animo > 0)
         {
-            fprintf(f, "| Ánimo | %s | %d |\n", rnum(r->animo_prom, 1), r->con_animo);
+            fprintf(f, "| Ánimo | %s | %d |\n", rnum(r->promedios.animo_prom, 1),
+                    r->promedios.con_animo);
         }
-        if (r->con_cansancio > 0)
+        if (r->promedios.con_cansancio > 0)
         {
-            fprintf(f, "| Cansancio | %s | %d |\n", rnum(r->cansancio_prom, 1),
-                    r->con_cansancio);
+            fprintf(f, "| Cansancio | %s | %d |\n", rnum(r->promedios.cansancio_prom, 1),
+                    r->promedios.con_cansancio);
         }
         fputs("\n", f);
     }
@@ -2115,23 +2168,23 @@ static void md_contexto(FILE *f, const ResumenGeneral *r)
         md_conteos(f, "Franja", r->franjas, RESUMEN_FRANJAS, MD_FRANJAS);
     }
 
-    if (hay_manual || r->clima_real_partidos > 0)
+    if (hay_manual || r->clima.clima_real_partidos > 0)
     {
         fputs("## Clima\n\n| Detalle | Valor |\n|---|---|\n", f);
         if (hay_manual)
         {
-            fprintf(f, "| Clima más frecuente | %s |\n", md_celda(r->clima_frecuente));
+            fprintf(f, "| Clima más frecuente | %s |\n", md_celda(r->clima.clima_frecuente));
         }
-        if (r->hay_clima_mejor)
+        if (r->clima.hay_clima_mejor)
         {
             fprintf(f, "| Tu mejor condición | %s (rendimiento %s, %s%% V, %d partidos) |\n",
-                    md_celda(r->clima_mejor), rnum(r->clima_mejor_rendimiento, 1),
-                    rnum(r->clima_mejor_victorias_pct, 0), r->clima_mejor_partidos);
+                    md_celda(r->clima.clima_mejor), rnum(r->clima.clima_mejor_rendimiento, 1),
+                    rnum(r->clima.clima_mejor_victorias_pct, 0), r->clima.clima_mejor_partidos);
         }
-        if (r->clima_real_partidos > 0)
+        if (r->clima.clima_real_partidos > 0)
         {
             fprintf(f, "| Con clima real (Open-Meteo) | %d partidos (%s%%) |\n",
-                    r->clima_real_partidos, rnum(r->clima_real_cobertura_pct, 0));
+                    r->clima.clima_real_partidos, rnum(r->clima.clima_real_cobertura_pct, 0));
         }
         fputs("\n", f);
     }
@@ -2146,14 +2199,15 @@ void resumen_general_escribir_markdown(FILE *f, const ResumenGeneral *r)
     fprintf(f, "# Perfil futbolístico de %s\n\n> Generado por **MiFutbolC** v4.3 el %s\n\n",
             md_celda(r->jugador), md_celda(r->fecha_gen));
 
-    if (r->partidos == 0)
+    if (r->totales.partidos == 0)
     {
         fputs("Todavía no hay partidos cargados. Cargá tu primer partido en MiFutbolC y volvé "
               "a generar el resumen.\n",
               f);
         return;
     }
-    fprintf(f, "%d partidos desde el %s.\n\n", r->partidos, md_celda(r->primer_partido_fecha));
+    fprintf(f, "%d partidos desde el %s.\n\n", r->totales.partidos,
+            md_celda(r->primer_partido_fecha));
 
     md_resultados_y_ataque(f, r);
     md_forma(f, r);
@@ -2171,24 +2225,25 @@ void resumen_general_escribir_markdown(FILE *f, const ResumenGeneral *r)
     md_contexto(f, r);
 
     fputs("## Perfil\n\n| Detalle | Valor |\n|---|---|\n", f);
-    if (strcmp(r->posicion, "Sin datos") != 0 && r->posicion[0])
+    if (strcmp(r->carrera.posicion, "Sin datos") != 0 && r->carrera.posicion[0])
     {
-        fprintf(f, "| Mejor posición | %s |\n", md_celda(r->posicion));
+        fprintf(f, "| Mejor posición | %s |\n", md_celda(r->carrera.posicion));
     }
     if (resumen_hay_torneo(r))
     {
-        fprintf(f, "| Torneo más jugado | %s |\n", md_celda(r->torneo));
+        fprintf(f, "| Torneo más jugado | %s |\n", md_celda(r->carrera.torneo));
     }
-    if (r->lesiones == 0)
+    if (r->carrera.lesiones == 0)
     {
         fputs("| Lesiones | Ninguna registrada |\n", f);
     }
     else
     {
-        fprintf(f, "| Lesiones | %d |\n", r->lesiones);
+        fprintf(f, "| Lesiones | %d |\n", r->carrera.lesiones);
     }
-    fprintf(f, "| Logros (camiseta principal) | %d de %d (%s%%) |\n\n", r->logros_completados,
-            r->logros_total, rnum(resumen_pct(r->logros_completados, r->logros_total), 0));
+    fprintf(f, "| Logros (camiseta principal) | %d de %d (%s%%) |\n\n",
+            r->carrera.logros_completados, r->carrera.logros_total,
+            rnum(resumen_pct(r->carrera.logros_completados, r->carrera.logros_total), 0));
     fprintf(f, "---\n\n*Generado el %s*\n", md_celda(r->fecha_gen));
 }
 
@@ -3345,14 +3400,14 @@ static int resumen_anio_elegir_mes_goleador(const ResumenAnio *r)
 static void resumen_anio_totales(ResumenAnioTotales *t, const ResumenGeneral *g, int anio)
 {
     t->anio = anio;
-    t->partidos = g->partidos;
-    t->goles = g->goles;
-    t->asistencias = g->asistencias;
-    t->ga_pp = g->ga_pp;
-    t->con_resultado = g->con_resultado;
-    t->efectividad_pct = g->efectividad_pct;
-    t->con_rendimiento = g->con_rendimiento;
-    t->rendimiento_prom = g->rendimiento_prom;
+    t->partidos = g->totales.partidos;
+    t->goles = g->totales.goles;
+    t->asistencias = g->totales.asistencias;
+    t->ga_pp = g->totales.ga_pp;
+    t->con_resultado = g->totales.con_resultado;
+    t->efectividad_pct = g->totales.efectividad_pct;
+    t->con_rendimiento = g->promedios.con_rendimiento;
+    t->rendimiento_prom = g->promedios.rendimiento_prom;
 }
 
 /* Totales del año anterior para la comparacion (solo si tiene partidos). */
@@ -3369,7 +3424,7 @@ static void resumen_anio_cargar_anterior(ResumenAnio *r)
     {
         return;
     }
-    if (resumen_general_calcular_anio(previo, r->anio - 1) && previo->partidos > 0)
+    if (resumen_general_calcular_anio(previo, r->anio - 1) && previo->totales.partidos > 0)
     {
         r->hay_anterior = 1;
         resumen_anio_totales(&r->anterior, previo, r->anio - 1);
@@ -3407,8 +3462,9 @@ int resumen_anio_calcular(ResumenAnio *r, int anio)
     r->mes_goleador = resumen_anio_elegir_mes_goleador(r);
 
     /* Partido destacado: el de mejor rendimiento; sin rendimientos, el ultimo. */
-    destacado = r->g.mejor_rendimiento.id > 0 ? r->g.mejor_rendimiento.id : r->g.ultimo.id;
-    if (r->g.partidos > 0 && destacado > 0)
+    destacado = r->g.records.mejor_rendimiento.id > 0 ? r->g.records.mejor_rendimiento.id
+                : r->g.records.ultimo.id;
+    if (r->g.totales.partidos > 0 && destacado > 0)
     {
         r->mejor_id = destacado;
         resumen_anio_cargar_partido(destacado, &r->mejor);
@@ -3526,17 +3582,17 @@ static int resumen_anio_comparaciones(const ResumenAnio *r,
     const ResumenAnioTotales *a = &r->anterior;
     const ResumenAnioComparacion filas[RESUMEN_ANIO_COMPARACIONES] =
     {
-        {"Partidos", g->partidos, a->partidos, 0, 0, 1},
-        {"Goles", g->goles, a->goles, 0, 0, 1},
-        {"Asistencias", g->asistencias, a->asistencias, 0, 0, 1},
-        {"G+A por partido", g->ga_pp, a->ga_pp, 2, 0, 1},
+        {"Partidos", g->totales.partidos, a->partidos, 0, 0, 1},
+        {"Goles", g->totales.goles, a->goles, 0, 0, 1},
+        {"Asistencias", g->totales.asistencias, a->asistencias, 0, 0, 1},
+        {"G+A por partido", g->totales.ga_pp, a->ga_pp, 2, 0, 1},
         {
-            "Efectividad", g->efectividad_pct, a->efectividad_pct, 0, 1,
-            g->con_resultado > 0 && a->con_resultado > 0
+            "Efectividad", g->totales.efectividad_pct, a->efectividad_pct, 0, 1,
+            g->totales.con_resultado > 0 && a->con_resultado > 0
         },
         {
-            "Rendimiento", g->rendimiento_prom, a->rendimiento_prom, 1, 0,
-            g->con_rendimiento > 0 && a->con_rendimiento > 0
+            "Rendimiento", g->promedios.rendimiento_prom, a->rendimiento_prom, 1, 0,
+            g->promedios.con_rendimiento > 0 && a->con_rendimiento > 0
         },
     };
 
@@ -3547,11 +3603,20 @@ static int resumen_anio_comparaciones(const ResumenAnio *r,
 /* Signo del cambio redondeado a los decimales mostrados: 1, -1 o 0. */
 static int resumen_anio_signo_delta(const ResumenAnioComparacion *c)
 {
-    double escala = c->decimales == 2 ? 100.0 : (c->decimales == 1 ? 10.0 : 1.0);
+    double escala = 1.0;
+
+    if (c->decimales == 2)
+    {
+        escala = 100.0;
+    }
+    else if (c->decimales == 1)
+    {
+        escala = 10.0;
+    }
     long a = (long)(c->actual * escala + (c->actual >= 0 ? 0.5 : -0.5));
     long p = (long)(c->previo * escala + (c->previo >= 0 ? 0.5 : -0.5));
 
-    return a > p ? 1 : (a < p ? -1 : 0);
+    return (a > p) - (a < p);
 }
 
 static double resumen_anio_abs(double v)
@@ -3655,15 +3720,16 @@ static void resumen_anio_txt_cabecera(FILE *f, const ResumenAnio *r)
     fputs(titulo, f);
     fprintf(f, "  Jugador : %s\n", r->jugador);
     fprintf(f, "  Generado: %s\n", r->fecha_gen);
-    if (r->g.partidos > 0)
+    if (r->g.totales.partidos > 0)
     {
-        fprintf(f, "  Período : %d partido%s, del %s al %s\n", r->g.partidos,
-                r->g.partidos == 1 ? "" : "s", r->g.primer_partido_fecha, r->g.ultimo.fecha);
+        fprintf(f, "  Período : %d partido%s, del %s al %s\n", r->g.totales.partidos,
+                r->g.totales.partidos == 1 ? "" : "s", r->g.primer_partido_fecha,
+                r->g.records.ultimo.fecha);
     }
     resumen_txt_repetir(f, '=', RESUMEN_TXT_ANCHO);
     fputc('\n', f);
 
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         fprintf(f, "\n  Sin partidos registrados en %d. Se muestran el equipamiento y las\n"
                 "  lesiones del año.\n",
@@ -3679,23 +3745,24 @@ static void resumen_anio_txt_resultados(FILE *f, const ResumenGeneral *g)
     int ne;
 
     resumen_txt_seccion(f, "PARTIDOS Y RESULTADOS");
-    resumen_txt_fila_int(f, "Partidos jugados", g->partidos);
-    resumen_txt_fila_int(f, "Goles", g->goles);
-    resumen_txt_fila_int(f, "Asistencias", g->asistencias);
-    if (g->con_resultado == 0)
+    resumen_txt_fila_int(f, "Partidos jugados", g->totales.partidos);
+    resumen_txt_fila_int(f, "Goles", g->totales.goles);
+    resumen_txt_fila_int(f, "Asistencias", g->totales.asistencias);
+    if (g->totales.con_resultado == 0)
     {
         resumen_txt_fila(f, "Resultados", "sin cargar");
         return;
     }
-    snprintf(buf, sizeof(buf), "%d V  %d E  %d D", g->victorias, g->empates, g->derrotas);
+    snprintf(buf, sizeof(buf), "%d V  %d E  %d D", g->totales.victorias, g->totales.empates,
+             g->totales.derrotas);
     resumen_txt_fila(f, "Resultados", buf);
-    snprintf(buf, sizeof(buf), "%s%% (sobre %d con resultado)", rnum(g->efectividad_pct, 1),
-             g->con_resultado);
+    snprintf(buf, sizeof(buf), "%s%% (sobre %d con resultado)", rnum(g->totales.efectividad_pct, 1),
+             g->totales.con_resultado);
     resumen_txt_fila(f, "Efectividad", buf);
 
     /* Barra apilada: V, E y D sobre el ancho total. */
-    nv = (int)((double)g->victorias * ancho / g->con_resultado + 0.5);
-    ne = (int)((double)g->empates * ancho / g->con_resultado + 0.5);
+    nv = (int)((double)g->totales.victorias * ancho / g->totales.con_resultado + 0.5);
+    ne = (int)((double)g->totales.empates * ancho / g->totales.con_resultado + 0.5);
     if (nv + ne > ancho)
     {
         ne = ancho - nv;
@@ -3705,8 +3772,8 @@ static void resumen_anio_txt_resultados(FILE *f, const ResumenGeneral *g)
     fputc('[', f);
     resumen_txt_repetir(f, 'V', nv);
     resumen_txt_repetir(f, 'E', ne);
-    resumen_txt_repetir(f, 'D', g->derrotas > 0 ? ancho - nv - ne : 0);
-    resumen_txt_repetir(f, ' ', g->derrotas > 0 ? 0 : ancho - nv - ne);
+    resumen_txt_repetir(f, 'D', g->totales.derrotas > 0 ? ancho - nv - ne : 0);
+    resumen_txt_repetir(f, ' ', g->totales.derrotas > 0 ? 0 : ancho - nv - ne);
     fputs("]\n", f);
 }
 
@@ -3714,24 +3781,24 @@ static void resumen_anio_txt_ataque(FILE *f, const ResumenGeneral *g)
 {
     char buf[96];
 
-    if (g->partidos == 0)
+    if (g->totales.partidos == 0)
     {
         return;
     }
     resumen_txt_seccion(f, "ATAQUE");
-    resumen_txt_fila(f, "G+A por partido", rnum(g->ga_pp, 2));
-    resumen_txt_fila(f, "Goles por partido", rnum(g->goles_pp, 2));
-    resumen_txt_fila(f, "Asistencias por partido", rnum(g->asistencias_pp, 2));
-    snprintf(buf, sizeof(buf), "%d (%s%%)", g->partidos_con_gol,
-             rnum(resumen_pct(g->partidos_con_gol, g->partidos), 0));
+    resumen_txt_fila(f, "G+A por partido", rnum(g->totales.ga_pp, 2));
+    resumen_txt_fila(f, "Goles por partido", rnum(g->totales.goles_pp, 2));
+    resumen_txt_fila(f, "Asistencias por partido", rnum(g->totales.asistencias_pp, 2));
+    snprintf(buf, sizeof(buf), "%d (%s%%)", g->ataque.partidos_con_gol,
+             rnum(resumen_pct(g->ataque.partidos_con_gol, g->totales.partidos), 0));
     resumen_txt_fila(f, "Partidos con gol", buf);
-    resumen_txt_fila_int(f, "Partidos con asistencia", g->partidos_con_asistencia);
-    resumen_txt_fila_int(f, "Dobletes", g->dobletes);
-    resumen_txt_fila_int(f, "Hat-tricks o más", g->hat_tricks);
-    if (g->partidos_con_minutos > 0)
+    resumen_txt_fila_int(f, "Partidos con asistencia", g->ataque.partidos_con_asistencia);
+    resumen_txt_fila_int(f, "Dobletes", g->ataque.dobletes);
+    resumen_txt_fila_int(f, "Hat-tricks o más", g->ataque.hat_tricks);
+    if (g->ataque.partidos_con_minutos > 0)
     {
-        snprintf(buf, sizeof(buf), "%s (en %d partidos con minutos)", rnum(g->ga_por_90, 2),
-                 g->partidos_con_minutos);
+        snprintf(buf, sizeof(buf), "%s (en %d partidos con minutos)", rnum(g->ataque.ga_por_90, 2),
+                 g->ataque.partidos_con_minutos);
         resumen_txt_fila(f, "G+A cada 90 minutos", buf);
     }
 }
@@ -3769,7 +3836,15 @@ static void resumen_anio_txt_comparacion(FILE *f, const ResumenAnio *r)
             continue;
         }
         signo = resumen_anio_signo_delta(&c[i]);
-        flecha = signo > 0 ? "↑" : (signo < 0 ? "↓" : "=");
+        flecha = "=";
+        if (signo > 0)
+        {
+            flecha = "↑";
+        }
+        else if (signo < 0)
+        {
+            flecha = "↓";
+        }
         fputs("  ", f);
         resumen_txt_celda(f, c[i].dato, RESUMEN_TXT_ETIQUETA - 4);
         snprintf(buf, sizeof(buf), "%s%s", rnum(c[i].actual, c[i].decimales),
@@ -3799,19 +3874,19 @@ static void resumen_anio_txt_forma(FILE *f, const ResumenAnio *r)
     char etiqueta[24];
     double suma = 0.0;
 
-    if (r->g.ultimos_n == 0 && r->tendencia_n < 2)
+    if (r->g.forma.ultimos_n == 0 && r->tendencia_n < 2)
     {
         return;
     }
     resumen_txt_seccion(f, "FORMA Y TENDENCIA");
-    if (r->g.ultimos_n > 0)
+    if (r->g.forma.ultimos_n > 0)
     {
-        snprintf(etiqueta, sizeof(etiqueta), "Últimos %d", r->g.ultimos_n);
+        snprintf(etiqueta, sizeof(etiqueta), "Últimos %d", r->g.forma.ultimos_n);
         fputs("  ", f);
         resumen_txt_celda(f, etiqueta, RESUMEN_TXT_ETIQUETA);
-        for (int i = 0; i < r->g.ultimos_n; i++)
+        for (int i = 0; i < r->g.forma.ultimos_n; i++)
         {
-            fprintf(f, "%c ", resumen_letra_resultado(r->g.ultimos[i].resultado));
+            fprintf(f, "%c ", resumen_letra_resultado(r->g.forma.ultimos[i].resultado));
         }
         fputs(" (viejo -> nuevo)\n", f);
     }
@@ -3856,38 +3931,38 @@ static void resumen_anio_txt_records(FILE *f, const ResumenGeneral *g)
 {
     char buf[48];
 
-    if (g->partidos == 0)
+    if (g->totales.partidos == 0)
     {
         return;
     }
     resumen_txt_seccion(f, "RÉCORDS DEL AÑO");
-    if (g->con_resultado > 0)
+    if (g->totales.con_resultado > 0)
     {
-        snprintf(buf, sizeof(buf), "%d partido%s", g->mejor_racha_victorias,
-                 g->mejor_racha_victorias == 1 ? "" : "s");
+        snprintf(buf, sizeof(buf), "%d partido%s", g->rachas.mejor_racha_victorias,
+                 g->rachas.mejor_racha_victorias == 1 ? "" : "s");
         resumen_txt_fila(f, "Mejor racha de victorias", buf);
-        snprintf(buf, sizeof(buf), "%d partido%s", g->mejor_racha_invicto,
-                 g->mejor_racha_invicto == 1 ? "" : "s");
+        snprintf(buf, sizeof(buf), "%d partido%s", g->rachas.mejor_racha_invicto,
+                 g->rachas.mejor_racha_invicto == 1 ? "" : "s");
         resumen_txt_fila(f, "Mejor racha invicto", buf);
     }
-    snprintf(buf, sizeof(buf), "%d partido%s", g->mejor_racha_marcando,
-             g->mejor_racha_marcando == 1 ? "" : "s");
+    snprintf(buf, sizeof(buf), "%d partido%s", g->rachas.mejor_racha_marcando,
+             g->rachas.mejor_racha_marcando == 1 ? "" : "s");
     resumen_txt_fila(f, "Racha más larga marcando", buf);
-    if (g->max_goles.goles > 0)
+    if (g->records.max_goles.goles > 0)
     {
-        snprintf(buf, sizeof(buf), "%d gol%s", g->max_goles.goles,
-                 g->max_goles.goles == 1 ? "" : "es");
-        resumen_anio_txt_partido(f, "Más goles en un partido", buf, &g->max_goles);
+        snprintf(buf, sizeof(buf), "%d gol%s", g->records.max_goles.goles,
+                 g->records.max_goles.goles == 1 ? "" : "es");
+        resumen_anio_txt_partido(f, "Más goles en un partido", buf, &g->records.max_goles);
     }
-    if (g->max_asistencias.asistencias > 0)
+    if (g->records.max_asistencias.asistencias > 0)
     {
-        snprintf(buf, sizeof(buf), "%d asist.", g->max_asistencias.asistencias);
-        resumen_anio_txt_partido(f, "Más asistencias", buf, &g->max_asistencias);
+        snprintf(buf, sizeof(buf), "%d asist.", g->records.max_asistencias.asistencias);
+        resumen_anio_txt_partido(f, "Más asistencias", buf, &g->records.max_asistencias);
     }
-    if (g->mejor_rendimiento.rendimiento > 0)
+    if (g->records.mejor_rendimiento.rendimiento > 0)
     {
-        snprintf(buf, sizeof(buf), "%d/10", g->mejor_rendimiento.rendimiento);
-        resumen_anio_txt_partido(f, "Mejor rendimiento", buf, &g->mejor_rendimiento);
+        snprintf(buf, sizeof(buf), "%d/10", g->records.mejor_rendimiento.rendimiento);
+        resumen_anio_txt_partido(f, "Mejor rendimiento", buf, &g->records.mejor_rendimiento);
     }
 }
 
@@ -3896,7 +3971,7 @@ static void resumen_anio_txt_meses(FILE *f, const ResumenAnio *r)
     int max = 1;
     char buf[160];
 
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         return;
     }
@@ -3960,14 +4035,16 @@ static void resumen_anio_txt_promedio(FILE *f, const char *k, int con, double pr
 
 static void resumen_anio_txt_como_llegas(FILE *f, const ResumenGeneral *g)
 {
-    if (g->con_rendimiento + g->con_animo + g->con_cansancio == 0)
+    if (g->promedios.con_rendimiento + g->promedios.con_animo + g->promedios.con_cansancio == 0)
     {
         return;
     }
     resumen_txt_seccion(f, "CÓMO LLEGÁS (PROMEDIOS DE 1 A 10)");
-    resumen_anio_txt_promedio(f, "Rendimiento", g->con_rendimiento, g->rendimiento_prom);
-    resumen_anio_txt_promedio(f, "Ánimo", g->con_animo, g->animo_prom);
-    resumen_anio_txt_promedio(f, "Cansancio", g->con_cansancio, g->cansancio_prom);
+    resumen_anio_txt_promedio(f, "Rendimiento", g->promedios.con_rendimiento,
+                              g->promedios.rendimiento_prom);
+    resumen_anio_txt_promedio(f, "Ánimo", g->promedios.con_animo, g->promedios.animo_prom);
+    resumen_anio_txt_promedio(f, "Cansancio", g->promedios.con_cansancio,
+                              g->promedios.cansancio_prom);
 }
 
 static void resumen_anio_txt_ranking(FILE *f, const char *titulo, const ResumenTop *top)
@@ -4046,19 +4123,19 @@ static void resumen_anio_txt_clima(FILE *f, const ResumenGeneral *g)
 {
     char buf[160];
 
-    if (g->clima_real_partidos == 0)
+    if (g->clima.clima_real_partidos == 0)
     {
         return;
     }
     resumen_txt_seccion(f, "CLIMA REAL (OPEN-METEO)");
-    snprintf(buf, sizeof(buf), "%d (%s%% del año)", g->clima_real_partidos,
-             rnum(g->clima_real_cobertura_pct, 0));
+    snprintf(buf, sizeof(buf), "%d (%s%% del año)", g->clima.clima_real_partidos,
+             rnum(g->clima.clima_real_cobertura_pct, 0));
     resumen_txt_fila(f, "Partidos con clima real", buf);
-    if (g->hay_clima_mejor)
+    if (g->clima.hay_clima_mejor)
     {
-        snprintf(buf, sizeof(buf), "%s (rend. %s, %s%% V, %d PJ)", g->clima_mejor,
-                 rnum(g->clima_mejor_rendimiento, 1), rnum(g->clima_mejor_victorias_pct, 0),
-                 g->clima_mejor_partidos);
+        snprintf(buf, sizeof(buf), "%s (rend. %s, %s%% V, %d PJ)", g->clima.clima_mejor,
+                 rnum(g->clima.clima_mejor_rendimiento, 1),
+                 rnum(g->clima.clima_mejor_victorias_pct, 0), g->clima.clima_mejor_partidos);
         resumen_txt_fila(f, "Tu mejor condición", buf);
     }
 }
@@ -4120,7 +4197,7 @@ void resumen_anio_escribir_txt(FILE *f, const ResumenAnio *r)
         return;
     }
     resumen_anio_txt_cabecera(f, r);
-    if (r->g.partidos > 0)
+    if (r->g.totales.partidos > 0)
     {
         resumen_anio_txt_resultados(f, &r->g);
         resumen_anio_txt_ataque(f, &r->g);
@@ -4164,11 +4241,11 @@ static void resumen_anio_html_hero(FILE *f, const ResumenAnio *r)
     resumen_html_campo(f);
     fprintf(f, "<p class=\"antetitulo\">Resumen del a&ntilde;o &middot; %s</p>\n<h1>%d</h1>\n",
             html_texto(r->jugador), r->anio);
-    if (r->g.partidos > 0)
+    if (r->g.totales.partidos > 0)
     {
-        fprintf(f, "<p class=\"bajada\">%d partido%s entre el %s y el %s</p>\n", r->g.partidos,
-                r->g.partidos == 1 ? "" : "s", html_texto(r->g.primer_partido_fecha),
-                html_texto(r->g.ultimo.fecha));
+        fprintf(f, "<p class=\"bajada\">%d partido%s entre el %s y el %s</p>\n",
+                r->g.totales.partidos, r->g.totales.partidos == 1 ? "" : "s",
+                html_texto(r->g.primer_partido_fecha), html_texto(r->g.records.ultimo.fecha));
     }
     else
     {
@@ -4264,10 +4341,17 @@ static void resumen_anio_html_meses_lista(FILE *f, const ResumenAnio *r)
         double wg = (double)m->goles * 100.0 / max;
         double wa = (double)m->asistencias * 100.0 / max;
 
-        fprintf(f, "<li%s><span class=\"anio\">%s</span>",
-                m->partidos == 0 ? " class=\"sin\""
-                : (i == r->mejor_mes ? " class=\"destacado\"" : ""),
-                resumen_anio_mes_corto(i));
+        const char *clase = "";
+
+        if (m->partidos == 0)
+        {
+            clase = " class=\"sin\"";
+        }
+        else if (i == r->mejor_mes)
+        {
+            clase = " class=\"destacado\"";
+        }
+        fprintf(f, "<li%s><span class=\"anio\">%s</span>", clase, resumen_anio_mes_corto(i));
         fprintf(f,
                 "<svg viewBox=\"0 0 100 22\" preserveAspectRatio=\"none\" role=\"img\" "
                 "aria-label=\"%s: %d goles y %d asistencias\">"
@@ -4362,7 +4446,7 @@ static void resumen_anio_html_meses_columnas(FILE *f, const ResumenAnio *r)
 
 static void resumen_anio_html_meses(FILE *f, const ResumenAnio *r)
 {
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         return;
     }
@@ -4408,14 +4492,15 @@ static void resumen_anio_html_grupo(FILE *f, const char *k, const char *k_top,
 
 /* Paneles de media columna de la grilla (la grilla es densa: un panel de
  * media columna posterior rellena un hueco anterior). Si quedan impares el
- * equipamiento ocupa todo el ancho para no dejar un hueco. */
+ * equipamiento ocupa el ancho completo para no dejar un hueco. */
 static int resumen_anio_html_mitades(const ResumenAnio *r)
 {
     const ResumenGeneral *g = &r->g;
 
-    return (g->con_resultado > 0) + 2 * (g->partidos > 0) + r->hay_anterior +
-           (g->con_rendimiento + g->con_animo + g->con_cansancio > 0) +
-           (g->clima_real_partidos > 0) + (r->partidos_con_marcador > 0) + 1;
+    return (g->totales.con_resultado > 0) + 2 * (g->totales.partidos > 0) + r->hay_anterior +
+           (g->promedios.con_rendimiento + g->promedios.con_animo + g->promedios.con_cansancio >
+            0) +
+           (g->clima.clima_real_partidos > 0) + (r->partidos_con_marcador > 0) + 1;
 }
 
 static void resumen_anio_html_equipamiento(FILE *f, const ResumenAnio *r, int ancho)
@@ -4489,12 +4574,13 @@ static void resumen_anio_html_mejor(FILE *f, const ResumenAnio *r)
     }
     fputs("</div>\n<ul class=\"ficha\">\n", f);
     resumen_anio_recorrer_detalle(p, resumen_anio_html_detalle, f);
-    fputs(r->g.con_rendimiento > 0
-          ? "</ul>\n<p class=\"nota\">El de mejor rendimiento del a&ntilde;o (con empate, el "
-          "m&aacute;s reciente).</p>\n</section>\n"
-          : "</ul>\n<p class=\"nota\">No hay rendimientos cargados: es el &uacute;ltimo partido "
-          "del a&ntilde;o.</p>\n</section>\n",
-          f);
+    fputs(
+        r->g.promedios.con_rendimiento > 0
+        ? "</ul>\n<p class=\"nota\">El de mejor rendimiento del a&ntilde;o (con empate, el "
+        "m&aacute;s reciente).</p>\n</section>\n"
+        : "</ul>\n<p class=\"nota\">No hay rendimientos cargados: es el &uacute;ltimo partido "
+        "del a&ntilde;o.</p>\n</section>\n",
+        f);
 }
 
 void resumen_anio_escribir_html(FILE *f, const ResumenAnio *r)
@@ -4510,8 +4596,8 @@ void resumen_anio_escribir_html(FILE *f, const ResumenAnio *r)
             "<meta property=\"og:title\" content=\"Resumen %d de %s - MiFutbolC\">\n"
             "<meta property=\"og:description\" content=\"%d partidos, %d goles, %d "
             "asistencias\">\n<style>\n",
-            r->anio, html_texto(r->jugador), r->anio, html_texto(r->jugador), r->g.partidos,
-            r->g.goles, r->g.asistencias);
+            r->anio, html_texto(r->jugador), r->anio, html_texto(r->jugador), r->g.totales.partidos,
+            r->g.totales.goles, r->g.totales.asistencias);
     resumen_escribir_css_comun(f);
     fputs(".oculto { position: absolute; width: 1px; height: 1px; overflow: hidden;\n"
           "          clip: rect(0 0 0 0); white-space: nowrap; }\n"
@@ -4520,7 +4606,7 @@ void resumen_anio_escribir_html(FILE *f, const ResumenAnio *r)
 
     resumen_anio_html_hero(f, r);
     fputs("<div class=\"grilla grilla-densa\">\n", f);
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         fprintf(f, "<section class=\"panel panel-ancho\">\n<h2>Sin partidos en %d</h2>\n"
                 "<p class=\"vacio\">No hay partidos cargados con fecha de este a&ntilde;o. "
@@ -4855,11 +4941,11 @@ static void resumen_pdf_hero(ResumenAnioPdfCtx *ctx, const ResumenAnio *r)
     snprintf(texto, sizeof(texto), "%d", r->anio);
     resumen_pdf_texto(ctx, ctx->margin, alto_pag - 84.0f, texto, 46.0f, "Helvetica-Bold",
                       PDF_C_TIZA);
-    if (g->partidos > 0)
+    if (g->totales.partidos > 0)
     {
         snprintf(texto, sizeof(texto), "%d partido%s entre el %s y el %s · generado el %s",
-                 g->partidos, g->partidos == 1 ? "" : "s", g->primer_partido_fecha,
-                 g->ultimo.fecha, r->fecha_gen);
+                 g->totales.partidos, g->totales.partidos == 1 ? "" : "s", g->primer_partido_fecha,
+                 g->records.ultimo.fecha, r->fecha_gen);
     }
     else
     {
@@ -4870,30 +4956,30 @@ static void resumen_pdf_hero(ResumenAnioPdfCtx *ctx, const ResumenAnio *r)
                       PDF_C_TIZA_2);
 
     /* Forma: chips de los ultimos partidos, a la derecha del año. */
-    if (g->ultimos_n > 0)
+    if (g->forma.ultimos_n > 0)
     {
-        float x = ctx->margin + ctx->ancho - (float)g->ultimos_n * 19.0f + 3.0f;
+        float x = ctx->margin + ctx->ancho - (float)g->forma.ultimos_n * 19.0f + 3.0f;
         resumen_pdf_texto_der(ctx, x - 6.0f, alto_pag - 77.0f, "ÚLTIMOS", 7.5f,
                               "Helvetica-Bold", PDF_C_TIZA_2);
-        for (int i = 0; i < g->ultimos_n; i++)
+        for (int i = 0; i < g->forma.ultimos_n; i++)
         {
-            char letra[2] = {resumen_letra_resultado(g->ultimos[i].resultado), '\0'};
+            char letra[2] = {resumen_letra_resultado(g->forma.ultimos[i].resultado), '\0'};
             float cx = x + (float)i * 19.0f;
             resumen_pdf_rect(ctx, cx, alto_pag - 84.0f, 16.0f, 16.0f,
-                             resumen_pdf_color_chip(g->ultimos[i].resultado));
+                             resumen_pdf_color_chip(g->forma.ultimos[i].resultado));
             resumen_pdf_texto_centro(ctx, cx + 8.0f, alto_pag - 79.5f, letra, 9.0f,
                                      "Helvetica-Bold",
-                                     g->ultimos[i].resultado ? PDF_C_TINTA : PDF_C_TIZA);
+                                     g->forma.ultimos[i].resultado ? PDF_C_TINTA : PDF_C_TIZA);
         }
     }
 
     /* Marcador de cuatro numeros con separadores. */
-    snprintf(valores[0], sizeof(valores[0]), "%d", g->partidos);
-    snprintf(valores[1], sizeof(valores[1]), "%d", g->goles);
-    snprintf(valores[2], sizeof(valores[2]), "%d", g->asistencias);
-    if (g->con_resultado > 0)
+    snprintf(valores[0], sizeof(valores[0]), "%d", g->totales.partidos);
+    snprintf(valores[1], sizeof(valores[1]), "%d", g->totales.goles);
+    snprintf(valores[2], sizeof(valores[2]), "%d", g->totales.asistencias);
+    if (g->totales.con_resultado > 0)
     {
-        snprintf(valores[3], sizeof(valores[3]), "%s%%", rnum(g->efectividad_pct, 0));
+        snprintf(valores[3], sizeof(valores[3]), "%s%%", rnum(g->totales.efectividad_pct, 0));
     }
     else
     {
@@ -4922,11 +5008,11 @@ static void resumen_pdf_resultados(ResumenAnioPdfCtx *ctx, const ResumenGeneral 
     char texto[192];
     float x = ctx->margin;
     float w = ctx->ancho;
-    double pv = resumen_pct(g->victorias, g->con_resultado);
-    double pe = resumen_pct(g->empates, g->con_resultado);
-    double pd = resumen_pct(g->derrotas, g->con_resultado);
+    double pv = resumen_pct(g->totales.victorias, g->totales.con_resultado);
+    double pe = resumen_pct(g->totales.empates, g->totales.con_resultado);
+    double pd = resumen_pct(g->totales.derrotas, g->totales.con_resultado);
 
-    if (g->con_resultado == 0)
+    if (g->totales.con_resultado == 0)
     {
         return;
     }
@@ -4938,20 +5024,21 @@ static void resumen_pdf_resultados(ResumenAnioPdfCtx *ctx, const ResumenGeneral 
                      w * (float)(pd / 100.0), 14.0f, PDF_C_LOSS);
     ctx->y -= 28.0f;
 
-    snprintf(texto, sizeof(texto), "Victorias %d (%s%%)", g->victorias, rnum(pv, 0));
+    snprintf(texto, sizeof(texto), "Victorias %d (%s%%)", g->totales.victorias, rnum(pv, 0));
     resumen_pdf_rect(ctx, x, ctx->y - 1.0f, 8.0f, 8.0f, PDF_C_WIN);
     resumen_pdf_texto(ctx, x + 12.0f, ctx->y, texto, 9.0f, "Helvetica", PDF_C_TINTA);
-    snprintf(texto, sizeof(texto), "Empates %d (%s%%)", g->empates, rnum(pe, 0));
+    snprintf(texto, sizeof(texto), "Empates %d (%s%%)", g->totales.empates, rnum(pe, 0));
     resumen_pdf_rect(ctx, x + 130.0f, ctx->y - 1.0f, 8.0f, 8.0f, PDF_C_DRAW);
     resumen_pdf_texto(ctx, x + 142.0f, ctx->y, texto, 9.0f, "Helvetica", PDF_C_TINTA);
-    snprintf(texto, sizeof(texto), "Derrotas %d (%s%%)", g->derrotas, rnum(pd, 0));
+    snprintf(texto, sizeof(texto), "Derrotas %d (%s%%)", g->totales.derrotas, rnum(pd, 0));
     resumen_pdf_rect(ctx, x + 260.0f, ctx->y - 1.0f, 8.0f, 8.0f, PDF_C_LOSS);
     resumen_pdf_texto(ctx, x + 272.0f, ctx->y, texto, 9.0f, "Helvetica", PDF_C_TINTA);
     ctx->y -= 15.0f;
     snprintf(texto, sizeof(texto),
              "Efectividad %s%% de los puntos en juego (3 por victoria, 1 por empate) sobre %d "
              "partido%s con resultado.",
-             rnum(g->efectividad_pct, 1), g->con_resultado, g->con_resultado == 1 ? "" : "s");
+             rnum(g->totales.efectividad_pct, 1), g->totales.con_resultado,
+             g->totales.con_resultado == 1 ? "" : "s");
     resumen_pdf_texto(ctx, x, ctx->y, texto, 8.5f, "Helvetica", PDF_C_TINTA_2);
     ctx->y -= 18.0f;
 }
@@ -4965,20 +5052,20 @@ static void resumen_pdf_ataque(ResumenAnioPdfCtx *ctx, const ResumenGeneral *g)
                        };
     int n = 7;
 
-    if (g->partidos == 0)
+    if (g->totales.partidos == 0)
     {
         return;
     }
-    snprintf(v[0], sizeof(v[0]), "%d", g->goles + g->asistencias);
-    snprintf(v[1], sizeof(v[1]), "%s", rnum(g->ga_pp, 2));
-    snprintf(v[2], sizeof(v[2]), "%s", rnum(g->goles_pp, 2));
-    snprintf(v[3], sizeof(v[3]), "%s", rnum(g->asistencias_pp, 2));
-    snprintf(v[4], sizeof(v[4]), "%d", g->partidos_con_gol);
-    snprintf(v[5], sizeof(v[5]), "%d", g->dobletes);
-    snprintf(v[6], sizeof(v[6]), "%d", g->hat_tricks);
-    if (g->partidos_con_minutos > 0)
+    snprintf(v[0], sizeof(v[0]), "%d", g->totales.goles + g->totales.asistencias);
+    snprintf(v[1], sizeof(v[1]), "%s", rnum(g->totales.ga_pp, 2));
+    snprintf(v[2], sizeof(v[2]), "%s", rnum(g->totales.goles_pp, 2));
+    snprintf(v[3], sizeof(v[3]), "%s", rnum(g->totales.asistencias_pp, 2));
+    snprintf(v[4], sizeof(v[4]), "%d", g->ataque.partidos_con_gol);
+    snprintf(v[5], sizeof(v[5]), "%d", g->ataque.dobletes);
+    snprintf(v[6], sizeof(v[6]), "%d", g->ataque.hat_tricks);
+    if (g->ataque.partidos_con_minutos > 0)
     {
-        snprintf(v[7], sizeof(v[7]), "%s", rnum(g->ga_por_90, 2));
+        snprintf(v[7], sizeof(v[7]), "%s", rnum(g->ataque.ga_por_90, 2));
         n = 8;
     }
     resumen_pdf_titulo(ctx, "Ataque", 40.0f);
@@ -5099,8 +5186,10 @@ static void resumen_pdf_tendencia(ResumenAnioPdfCtx *ctx, const ResumenAnio *r)
     pdf_add_filled_polygon(ctx->pdf, ctx->page, px, py, n + 2, 0.0f, PDF_C_VERDE_SUAVE);
 
     y_prom = base + 6.0f + (float)(suma / n - 1.0) / 9.0f * (alto - 12.0f);
-    for (float x = x0; x < x0 + ctx->ancho; x += 8.0f)
+    /* Linea punteada del promedio: un guion de 4 pt cada 8 pt. */
+    for (int k = 0; 8.0f * (float)k < ctx->ancho; k++)
     {
+        float x = x0 + 8.0f * (float)k;
         resumen_pdf_linea(ctx, x, y_prom, x + 4.0f, y_prom, 0.6f, PDF_C_TINTA_3);
     }
     for (int i = 1; i < n; i++)
@@ -5134,40 +5223,40 @@ static void resumen_pdf_records(ResumenAnioPdfCtx *ctx, const ResumenGeneral *g)
     char buf[48];
     int n = 0;
 
-    if (g->partidos == 0)
+    if (g->totales.partidos == 0)
     {
         return;
     }
-    if (g->con_resultado > 0)
+    if (g->totales.con_resultado > 0)
     {
         k[n] = "Mejor racha de victorias";
-        snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->mejor_racha_victorias,
-                 g->mejor_racha_victorias == 1 ? "" : "s");
+        snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->rachas.mejor_racha_victorias,
+                 g->rachas.mejor_racha_victorias == 1 ? "" : "s");
         k[n] = "Mejor racha invicto";
-        snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->mejor_racha_invicto,
-                 g->mejor_racha_invicto == 1 ? "" : "s");
+        snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->rachas.mejor_racha_invicto,
+                 g->rachas.mejor_racha_invicto == 1 ? "" : "s");
     }
     k[n] = "Racha más larga marcando";
-    snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->mejor_racha_marcando,
-             g->mejor_racha_marcando == 1 ? "" : "s");
-    if (g->max_goles.goles > 0)
+    snprintf(v[n++], sizeof(v[0]), "%d partido%s", g->rachas.mejor_racha_marcando,
+             g->rachas.mejor_racha_marcando == 1 ? "" : "s");
+    if (g->records.max_goles.goles > 0)
     {
-        snprintf(buf, sizeof(buf), "%d gol%s", g->max_goles.goles,
-                 g->max_goles.goles == 1 ? "" : "es");
+        snprintf(buf, sizeof(buf), "%d gol%s", g->records.max_goles.goles,
+                 g->records.max_goles.goles == 1 ? "" : "es");
         k[n] = "Más goles";
-        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->max_goles);
+        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->records.max_goles);
     }
-    if (g->max_asistencias.asistencias > 0)
+    if (g->records.max_asistencias.asistencias > 0)
     {
-        snprintf(buf, sizeof(buf), "%d asist.", g->max_asistencias.asistencias);
+        snprintf(buf, sizeof(buf), "%d asist.", g->records.max_asistencias.asistencias);
         k[n] = "Más asistencias";
-        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->max_asistencias);
+        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->records.max_asistencias);
     }
-    if (g->mejor_rendimiento.rendimiento > 0)
+    if (g->records.mejor_rendimiento.rendimiento > 0)
     {
-        snprintf(buf, sizeof(buf), "%d/10", g->mejor_rendimiento.rendimiento);
+        snprintf(buf, sizeof(buf), "%d/10", g->records.mejor_rendimiento.rendimiento);
         k[n] = "Mejor rendimiento";
-        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->mejor_rendimiento);
+        resumen_pdf_partido_corto(v[n++], sizeof(v[0]), buf, &g->records.mejor_rendimiento);
     }
     resumen_pdf_titulo(ctx, "Récords del año", 34.0f);
     resumen_pdf_filas(ctx, k, v, n);
@@ -5182,7 +5271,7 @@ static void resumen_pdf_meses(ResumenAnioPdfCtx *ctx, const ResumenAnio *r)
     int max = 1;
     char texto[160];
 
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         return;
     }
@@ -5332,40 +5421,51 @@ static void resumen_pdf_como_llegas(ResumenAnioPdfCtx *ctx, const ResumenGeneral
 {
     float ancho = ctx->ancho * 0.6f;
 
-    if (g->con_rendimiento + g->con_animo + g->con_cansancio == 0)
+    if (g->promedios.con_rendimiento + g->promedios.con_animo + g->promedios.con_cansancio == 0)
     {
         return;
     }
     resumen_pdf_titulo(ctx, "Cómo llegás (promedios de 1 a 10)", 50.0f);
-    if (g->con_rendimiento > 0)
+    if (g->promedios.con_rendimiento > 0)
     {
         resumen_pdf_barra(ctx, ctx->margin, ancho, ctx->y, "Rendimiento",
-                          g->rendimiento_prom / 10.0, rnum(g->rendimiento_prom, 1));
+                          g->promedios.rendimiento_prom / 10.0,
+                          rnum(g->promedios.rendimiento_prom, 1));
         ctx->y -= 16.0f;
     }
-    if (g->con_animo > 0)
+    if (g->promedios.con_animo > 0)
     {
-        resumen_pdf_barra(ctx, ctx->margin, ancho, ctx->y, "Ánimo", g->animo_prom / 10.0,
-                          rnum(g->animo_prom, 1));
+        resumen_pdf_barra(ctx, ctx->margin, ancho, ctx->y, "Ánimo", g->promedios.animo_prom / 10.0,
+                          rnum(g->promedios.animo_prom, 1));
         ctx->y -= 16.0f;
     }
-    if (g->con_cansancio > 0)
+    if (g->promedios.con_cansancio > 0)
     {
-        resumen_pdf_barra(ctx, ctx->margin, ancho, ctx->y, "Cansancio", g->cansancio_prom / 10.0,
-                          rnum(g->cansancio_prom, 1));
+        resumen_pdf_barra(ctx, ctx->margin, ancho, ctx->y, "Cansancio",
+                          g->promedios.cansancio_prom / 10.0, rnum(g->promedios.cansancio_prom, 1));
         ctx->y -= 16.0f;
     }
     ctx->y -= 4.0f;
 }
 
-static float resumen_pdf_conteos(ResumenAnioPdfCtx *ctx, float x, float ancho, float y,
-                                 const char *titulo, const ResumenConteo *c, int n,
-                                 const char *const *nombres)
+/** Una serie de conteos con su titulo y el nombre de cada grupo. */
+typedef struct
 {
+    const char *titulo;
+    const ResumenConteo *c;
+    int n;
+    const char *const *nombres;
+} ResumenPdfSerieConteo;
+
+static float resumen_pdf_conteos(ResumenAnioPdfCtx *ctx, float x, float ancho, float y,
+                                 const ResumenPdfSerieConteo *serie)
+{
+    const ResumenConteo *c = serie->c;
+    int n = serie->n;
     int max = resumen_max_conteo(c, n);
     char buf[16];
 
-    resumen_pdf_texto(ctx, x, y, titulo, 7.5f, "Helvetica-Bold", PDF_C_TINTA_3);
+    resumen_pdf_texto(ctx, x, y, serie->titulo, 7.5f, "Helvetica-Bold", PDF_C_TINTA_3);
     y -= 15.0f;
     for (int i = 0; i < n && max > 0; i++)
     {
@@ -5374,7 +5474,7 @@ static float resumen_pdf_conteos(ResumenAnioPdfCtx *ctx, float x, float ancho, f
             continue;
         }
         snprintf(buf, sizeof(buf), "%d", c[i].partidos);
-        resumen_pdf_barra(ctx, x, ancho, y, nombres[i], (double)c[i].partidos / max, buf);
+        resumen_pdf_barra(ctx, x, ancho, y, serie->nombres[i], (double)c[i].partidos / max, buf);
         y -= 14.0f;
     }
     return y;
@@ -5388,6 +5488,10 @@ static void resumen_pdf_cuando(ResumenAnioPdfCtx *ctx, const ResumenGeneral *g)
     int filas_franja = 0;
     float y1;
     float y2;
+    const ResumenPdfSerieConteo dias = {"DÍA DE LA SEMANA", g->dias_semana, 7, MD_DIAS_SEMANA};
+    const ResumenPdfSerieConteo franjas = {"FRANJA HORARIA", g->franjas, RESUMEN_FRANJAS,
+                                           MD_FRANJAS
+                                          };
 
     for (int i = 0; i < 7; i++)
     {
@@ -5406,10 +5510,8 @@ static void resumen_pdf_cuando(ResumenAnioPdfCtx *ctx, const ResumenGeneral *g)
         filas = filas_franja;
     }
     resumen_pdf_titulo(ctx, "Cuándo jugás (partidos)", 15.0f + 14.0f * (float)filas);
-    y1 = resumen_pdf_conteos(ctx, ctx->margin, col, ctx->y, "DÍA DE LA SEMANA", g->dias_semana, 7,
-                             MD_DIAS_SEMANA);
-    y2 = resumen_pdf_conteos(ctx, ctx->margin + col + sep, col, ctx->y, "FRANJA HORARIA",
-                             g->franjas, RESUMEN_FRANJAS, MD_FRANJAS);
+    y1 = resumen_pdf_conteos(ctx, ctx->margin, col, ctx->y, &dias);
+    y2 = resumen_pdf_conteos(ctx, ctx->margin + col + sep, col, ctx->y, &franjas);
     ctx->y = (y1 < y2 ? y1 : y2) - 4.0f;
 }
 
@@ -5420,16 +5522,17 @@ static void resumen_pdf_contexto(ResumenAnioPdfCtx *ctx, const ResumenAnio *r)
     char v[10][192];
     int n = 0;
 
-    if (g->clima_real_partidos > 0)
+    if (g->clima.clima_real_partidos > 0)
     {
         k[n] = "Partidos con clima real";
-        snprintf(v[n++], sizeof(v[0]), "%d (%s%% del año)", g->clima_real_partidos,
-                 rnum(g->clima_real_cobertura_pct, 0));
-        if (g->hay_clima_mejor)
+        snprintf(v[n++], sizeof(v[0]), "%d (%s%% del año)", g->clima.clima_real_partidos,
+                 rnum(g->clima.clima_real_cobertura_pct, 0));
+        if (g->clima.hay_clima_mejor)
         {
             k[n] = "Tu mejor condición";
-            snprintf(v[n++], sizeof(v[0]), "%s · rend. %s · %s%% V", g->clima_mejor,
-                     rnum(g->clima_mejor_rendimiento, 1), rnum(g->clima_mejor_victorias_pct, 0));
+            snprintf(v[n++], sizeof(v[0]), "%s · rend. %s · %s%% V", g->clima.clima_mejor,
+                     rnum(g->clima.clima_mejor_rendimiento, 1),
+                     rnum(g->clima.clima_mejor_victorias_pct, 0));
         }
     }
     if (r->partidos_con_marcador > 0)
@@ -5575,7 +5678,7 @@ int resumen_anio_escribir_pdf(const ResumenAnio *r, const char *ruta)
     }
 
     resumen_pdf_hero(&ctx, r);
-    if (r->g.partidos == 0)
+    if (r->g.totales.partidos == 0)
     {
         resumen_pdf_titulo(&ctx, "Sin partidos en el año", 16.0f);
         resumen_pdf_texto(&ctx, ctx.margin, ctx.y,
@@ -5673,10 +5776,10 @@ static int resumen_anio_generar_pdf(const ResumenAnio *r)
 static void resumen_anio_mostrar_resumen(const ResumenAnio *r)
 {
     ui_printf("\nPeriodo %d\n", r->anio);
-    ui_printf("Partidos: %d | Goles: %d | Asistencias: %d\n",
-              r->g.partidos, r->g.goles, r->g.asistencias);
-    ui_printf("Victorias: %d | Empates: %d | Derrotas: %d\n",
-              r->g.victorias, r->g.empates, r->g.derrotas);
+    ui_printf("Partidos: %d | Goles: %d | Asistencias: %d\n", r->g.totales.partidos,
+              r->g.totales.goles, r->g.totales.asistencias);
+    ui_printf("Victorias: %d | Empates: %d | Derrotas: %d\n", r->g.totales.victorias,
+              r->g.totales.empates, r->g.totales.derrotas);
     ui_printf("Camisetas usadas: %d | Lesiones: %d | Canchas usadas: %d\n",
               r->camiseta.usadas, r->lesiones, r->cancha.usadas);
 }

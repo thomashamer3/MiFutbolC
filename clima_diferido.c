@@ -334,6 +334,34 @@ static void descartar_pendientes(const long long *ids, size_t cant)
     }
 }
 
+/* 1 si el pendiente de la fila actual no se puede consultar: el partido no
+ * existe, ya tiene clima, su cancha no tiene coordenadas o la fecha no se
+ * entiende. Si se puede, deja coordenadas y fecha en @p lat, @p lon y @p t. */
+static int fila_descartable(sqlite3_stmt *s, const char *fecha, ClimaTrabajo *t, double *lat,
+                            double *lon)
+{
+    if (sqlite3_column_type(s, 1) == SQLITE_NULL || sqlite3_column_int(s, 4) != 0 ||
+            sqlite3_column_type(s, 5) == SQLITE_NULL || sqlite3_column_type(s, 6) == SQLITE_NULL)
+    {
+        return 1;
+    }
+    *lat = sqlite3_column_double(s, 5);
+    *lon = sqlite3_column_double(s, 6);
+    return (*lat == 0.0 && *lon == 0.0) || !fecha ||
+           !partido_parsear_fecha_hora(fecha, &t->anio, &t->mes, &t->dia, &t->hora, &t->minuto);
+}
+
+/* 1 si la fecha del trabajo es futura (Open-Meteo todavia no tiene el dato). */
+static int trabajo_fecha_futura(const ClimaTrabajo *t)
+{
+    OpenMeteoParams omp;
+    memset(&omp, 0, sizeof(omp));
+    omp.anio = t->anio;
+    omp.mes = t->mes;
+    omp.dia = t->dia;
+    return openmeteo_fecha_es_futura(&omp);
+}
+
 /* Busca el siguiente pendiente lanzable y deja sus datos en @p t. */
 static int buscar_siguiente(ClimaTrabajo *t, double *lat, double *lon)
 {
@@ -356,27 +384,12 @@ static int buscar_siguiente(ClimaTrabajo *t, double *lat, double *lon)
     {
         long long pid = sqlite3_column_int64(s, 0);
         const char *fecha = (const char *)sqlite3_column_text(s, 3);
-        int descartar = 0;
 
         if (ya_intentado(pid))
         {
             continue;
         }
-        if (sqlite3_column_type(s, 1) == SQLITE_NULL || sqlite3_column_int(s, 4) != 0 ||
-                sqlite3_column_type(s, 5) == SQLITE_NULL || sqlite3_column_type(s, 6) == SQLITE_NULL)
-        {
-            /* No existe, ya tiene clima o su cancha no tiene coordenadas. */
-            descartar = 1;
-        }
-        else
-        {
-            *lat = sqlite3_column_double(s, 5);
-            *lon = sqlite3_column_double(s, 6);
-            descartar = (*lat == 0.0 && *lon == 0.0) || !fecha ||
-                        !partido_parsear_fecha_hora(fecha, &t->anio, &t->mes, &t->dia, &t->hora,
-                                                    &t->minuto);
-        }
-        if (descartar)
+        if (fila_descartable(s, fecha, t, lat, lon))
         {
             if (cant_descartes < sizeof(descartes) / sizeof(descartes[0]))
             {
@@ -385,12 +398,7 @@ static int buscar_siguiente(ClimaTrabajo *t, double *lat, double *lon)
             continue;
         }
 
-        OpenMeteoParams omp;
-        memset(&omp, 0, sizeof(omp));
-        omp.anio = t->anio;
-        omp.mes = t->mes;
-        omp.dia = t->dia;
-        if (openmeteo_fecha_es_futura(&omp))
+        if (trabajo_fecha_futura(t))
         {
             /* Queda pendiente sin sumar intento; se revisa en otro arranque. */
             marcar_intentado(pid);

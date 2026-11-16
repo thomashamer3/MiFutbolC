@@ -2099,7 +2099,7 @@ static int create_performance_indexes(void)
 
 /* Esquema, migraciones, backfills e indices sobre la conexion abierta `db`.
  * Lo usan db_init y la restauracion (una base restaurada puede tener un
- * esquema mas viejo). Todo es idempotente. */
+ * esquema mas viejo). Cada paso es idempotente. */
 static int aplicar_esquema_y_migraciones(void)
 {
     if (!create_database_schema())
@@ -2715,13 +2715,9 @@ void exportar_base_datos(void)
     pause_console();
 }
 
-int backup_base_datos_automatico(const char *motivo)
+/* Resuelve y crea la carpeta Backups dentro del directorio de exportacion. */
+static int preparar_directorio_backup(char *backup_dir, size_t tam)
 {
-    snprintf(log_buf_, sizeof(log_buf_), "Inicio de backup automatico. Motivo: %s",
-             (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
-    app_log_write("INFO", "BACKUP", log_buf_);
-
-    const char *source_path = DB_PATH;
     const char *export_dir = get_export_dir();
     if (!export_dir)
     {
@@ -2730,9 +2726,8 @@ int backup_base_datos_automatico(const char *motivo)
         return 0;
     }
 
-    char backup_dir[1024];
-    strcpy_s(backup_dir, sizeof(backup_dir), export_dir);
-    strcat_s(backup_dir, sizeof(backup_dir), DB_PATH_SEP "Backups");
+    strcpy_s(backup_dir, tam, export_dir);
+    strcat_s(backup_dir, tam, DB_PATH_SEP "Backups");
 
     if (!asegurar_directorio(backup_dir, "Backups"))
     {
@@ -2741,11 +2736,16 @@ int backup_base_datos_automatico(const char *motivo)
                                       backup_dir);
         return 0;
     }
+    return 1;
+}
 
+/* Arma "<dir>/mifutbol_backup_[<motivo>_]<timestamp>.db" en @p dest_path. */
+static int construir_ruta_backup(char *dest_path, size_t tam, const char *backup_dir,
+                                 const char *motivo)
+{
     char timestamp[32];
     get_timestamp(timestamp, sizeof(timestamp));
 
-    char dest_path[1024];
     const char *prefix = "mifutbol_backup_";
     const char *ext = ".db";
     char motivo_safe[64] = {0};
@@ -2759,51 +2759,70 @@ int backup_base_datos_automatico(const char *motivo)
     size_t used = 0;
     dest_path[0] = '\0';
 
-    if (!append_str(dest_path, &used, sizeof(dest_path), backup_dir) ||
-            !append_str(dest_path, &used, sizeof(dest_path), DB_PATH_SEP) ||
-            !append_str(dest_path, &used, sizeof(dest_path), prefix))
+    if (!append_str(dest_path, &used, tam, backup_dir) ||
+            !append_str(dest_path, &used, tam, DB_PATH_SEP) ||
+            !append_str(dest_path, &used, tam, prefix))
     {
         LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo construir ruta base de backup");
         return 0;
     }
 
-    if (motivo_safe[0] != '\0' && (!append_str(dest_path, &used, sizeof(dest_path), motivo_safe) ||
-                                   !append_str(dest_path, &used, sizeof(dest_path), "_")))
+    if (motivo_safe[0] != '\0' && (!append_str(dest_path, &used, tam, motivo_safe) ||
+                                   !append_str(dest_path, &used, tam, "_")))
     {
         LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo agregar motivo a ruta de backup");
         return 0;
     }
 
-    if (!append_str(dest_path, &used, sizeof(dest_path), timestamp) ||
-            !append_str(dest_path, &used, sizeof(dest_path), ext))
+    if (!append_str(dest_path, &used, tam, timestamp) ||
+            !append_str(dest_path, &used, tam, ext))
     {
         LOG_ERROR_MSG("BACKUP", get_text("backup_failed"),
                       "No se pudo completar nombre de archivo backup");
         return 0;
     }
+    return 1;
+}
 
-    /* Con la conexion abierta se usa la API de backup: copiar el archivo crudo
-     * dejaria afuera lo que todavia esta en el WAL. */
-    int copia_ok = 0;
-    if (db)
+/* Copia la base a @p dest_path. Con la conexion abierta se usa la API de
+ * backup: copiar el archivo crudo dejaria afuera lo que todavia esta en el WAL. */
+static int copiar_base_a_backup(const char *source_path, const char *dest_path)
+{
+    if (!db)
     {
-        int rc = db_backup_a_archivo(dest_path);
-        copia_ok = (rc == SQLITE_OK);
-        if (!copia_ok)
-        {
-            snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup automatico rc=%d (%s)", rc,
-                     sqlite3_errstr(rc));
-            app_log_write("ERROR", "BACKUP", log_buf_);
-        }
-    }
-    else
-    {
-        copia_ok = (copiar_archivo(source_path, dest_path) == COPY_OK);
+        return copiar_archivo(source_path, dest_path) == COPY_OK;
     }
 
-    if (!copia_ok)
+    int rc = db_backup_a_archivo(dest_path);
+    if (rc != SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Error SQLite backup automatico rc=%d (%s)", rc,
+                 sqlite3_errstr(rc));
+        app_log_write("ERROR", "BACKUP", log_buf_);
+        return 0;
+    }
+    return 1;
+}
+
+int backup_base_datos_automatico(const char *motivo)
+{
+    snprintf(log_buf_, sizeof(log_buf_), "Inicio de backup automatico. Motivo: %s",
+             (motivo && motivo[0] != '\0') ? motivo : "sin_motivo");
+    app_log_write("INFO", "BACKUP", log_buf_);
+
+    const char *source_path = DB_PATH;
+    char backup_dir[1024];
+    char dest_path[1024];
+
+    if (!preparar_directorio_backup(backup_dir, sizeof(backup_dir)) ||
+            !construir_ruta_backup(dest_path, sizeof(dest_path), backup_dir, motivo))
+    {
+        return 0;
+    }
+
+    if (!copiar_base_a_backup(source_path, dest_path))
     {
         LOG_ERROR_CONSOLE_MSG_LOG_FMT("BACKUP", get_text("backup_failed"),
                                       "Fallo copia de backup desde %.470s hacia %.470s",

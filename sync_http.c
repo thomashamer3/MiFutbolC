@@ -152,14 +152,10 @@ static int parsear_respuesta_http(char *datos, int rc, SyncHttp *salida)
     return 1;
 }
 
-int sync_http_request(const char *metodo, const char *url, const char *token,
-                      const char *body, SyncHttp *salida)
+/* Valida metodo, URL y token; si algo falla deja el motivo en @p salida. */
+static int validar_peticion(const char *metodo, const char *url, const char *token,
+                            SyncHttp *salida)
 {
-    if (!salida)
-    {
-        return 0;
-    }
-    memset(salida, 0, sizeof(*salida));
     if (!metodo || !url || !caracteres_seguros_url(url))
     {
         salida->error = strdup("URL de servidor invalida");
@@ -170,22 +166,21 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
         salida->error = strdup("Token de sesion invalido");
         return 0;
     }
+    return 1;
+}
 
-    char *temporal = NULL;
-    if (body && *body)
-    {
-        temporal = escribir_temporal(body);
-        if (!temporal)
-        {
-            salida->error = strdup("No se pudo preparar el cuerpo HTTP");
-            return 0;
-        }
-    }
-
+/* Textos de argv que se arman con snprintf: viven mientras corre curl. */
+typedef struct
+{
     char encabezado_auth[SYNC_BUF];
     char argumento_datos[SYNC_BUF];
     char formato_salida[64];
-    const char *argv[24];
+} SyncCurlBuffers;
+
+/* Arma la linea de comandos de curl en @p argv (24 lugares, termina en NULL). */
+static void armar_argv_curl(const char **argv, SyncCurlBuffers *buf, const char *metodo,
+                            const char *url, const char *token, const char *temporal)
+{
     int argc = 0;
 
     argv[argc++] = SYNC_CURL;
@@ -203,23 +198,52 @@ int sync_http_request(const char *metodo, const char *url, const char *token,
     argv[argc++] = "Accept: application/json";
     if (token && *token)
     {
-        snprintf(encabezado_auth, sizeof(encabezado_auth), "Authorization: %s", token);
+        snprintf(buf->encabezado_auth, sizeof(buf->encabezado_auth), "Authorization: %s", token);
         argv[argc++] = "-H";
-        argv[argc++] = encabezado_auth;
+        argv[argc++] = buf->encabezado_auth;
     }
     if (temporal)
     {
-        snprintf(argumento_datos, sizeof(argumento_datos), "@%s", temporal);
+        snprintf(buf->argumento_datos, sizeof(buf->argumento_datos), "@%s", temporal);
         argv[argc++] = "-H";
         argv[argc++] = "Content-Type: application/json";
         argv[argc++] = "--data-binary";
-        argv[argc++] = argumento_datos;
+        argv[argc++] = buf->argumento_datos;
     }
-    snprintf(formato_salida, sizeof(formato_salida), "\n%s%%{http_code}", SYNC_MARCA);
+    snprintf(buf->formato_salida, sizeof(buf->formato_salida), "\n%s%%{http_code}", SYNC_MARCA);
     argv[argc++] = "-w";
-    argv[argc++] = formato_salida;
+    argv[argc++] = buf->formato_salida;
     argv[argc++] = url;
     argv[argc] = NULL;
+}
+
+int sync_http_request(const char *metodo, const char *url, const char *token,
+                      const char *body, SyncHttp *salida)
+{
+    if (!salida)
+    {
+        return 0;
+    }
+    memset(salida, 0, sizeof(*salida));
+    if (!validar_peticion(metodo, url, token, salida))
+    {
+        return 0;
+    }
+
+    char *temporal = NULL;
+    if (body && *body)
+    {
+        temporal = escribir_temporal(body);
+        if (!temporal)
+        {
+            salida->error = strdup("No se pudo preparar el cuerpo HTTP");
+            return 0;
+        }
+    }
+
+    SyncCurlBuffers buf;
+    const char *argv[24];
+    armar_argv_curl(argv, &buf, metodo, url, token, temporal);
 
     char *datos = NULL;
     int rc = 0;

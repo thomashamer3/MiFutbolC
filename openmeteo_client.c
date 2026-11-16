@@ -205,6 +205,22 @@ static void openmeteo_result_init(OpenMeteoResult *r)
     r->sunset_minute = 0;
 }
 
+/* Lee la hora "HH:MM" del primer elemento de @p arr. */
+static int parse_sun_hora(const cJSON *arr, int *hora, int *minuto)
+{
+    if (!cJSON_IsArray(arr))
+        return 0;
+    cJSON const *item = cJSON_GetArrayItem(arr, 0);
+    /* Formato "AAAA-MM-DDTHH:MM": sin esa longitud no se indexa la hora. */
+    if (!cJSON_IsString(item) || strlen(item->valuestring) < 16)
+        return 0;
+#ifdef _WIN32
+    return sscanf_s(item->valuestring + 11, "%d:%d", hora, minuto) == 2;
+#else
+    return sscanf(item->valuestring + 11, "%d:%d", hora, minuto) == 2;
+#endif
+}
+
 static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
 {
     if (!root || !out)
@@ -212,28 +228,12 @@ static void parse_sun_data(const cJSON *root, OpenMeteoResult *out)
     cJSON const *daily = cJSON_GetObjectItem(root, "daily");
     if (!daily)
         return;
-    cJSON const *sunrise_arr = cJSON_GetObjectItem(daily, "sunrise");
-    cJSON const *sunset_arr = cJSON_GetObjectItem(daily, "sunset");
-    if (!sunrise_arr || !cJSON_IsArray(sunrise_arr) || !sunset_arr || !cJSON_IsArray(sunset_arr))
-        return;
-    cJSON const *sr = cJSON_GetArrayItem(sunrise_arr, 0);
-    cJSON const *ss = cJSON_GetArrayItem(sunset_arr, 0);
-    if (!sr || !cJSON_IsString(sr) || !ss || !cJSON_IsString(ss))
-        return;
-    /* Formato "AAAA-MM-DDTHH:MM": sin esa longitud no se indexa la hora. */
-    if (strlen(sr->valuestring) < 16 || strlen(ss->valuestring) < 16)
-        return;
     int sh;
     int sm;
     int sshi;
     int ssmi;
-#ifdef _WIN32
-    if (sscanf_s(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
-            sscanf_s(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
-#else
-    if (sscanf(sr->valuestring + 11, "%d:%d", &sh, &sm) == 2 &&
-            sscanf(ss->valuestring + 11, "%d:%d", &sshi, &ssmi) == 2)
-#endif
+    if (parse_sun_hora(cJSON_GetObjectItem(daily, "sunrise"), &sh, &sm) &&
+            parse_sun_hora(cJSON_GetObjectItem(daily, "sunset"), &sshi, &ssmi))
     {
         out->has_sun_data = 1;
         out->sunrise_hour = sh;

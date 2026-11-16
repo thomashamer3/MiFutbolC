@@ -152,11 +152,13 @@ static ResumenAnio *calcular(int anio)
 /* Lee el archivo de salida entero (malloc) y lo borra. */
 static char *leer_salida(long *largo_out)
 {
-    FILE *f = fopen(g_out_path, "rb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "rb"));
     TEST_ASSERT_NOT_NULL(f);
     fseek(f, 0, SEEK_END);
     long largo = ftell(f);
     fseek(f, 0, SEEK_SET);
+    TEST_ASSERT_TRUE(largo >= 0);
     char *texto = malloc((size_t)largo + 1);
     TEST_ASSERT_NOT_NULL(texto);
     size_t leidos = fread(texto, 1, (size_t)largo, f);
@@ -189,24 +191,24 @@ static void test_filtro_por_anio(void)
     ResumenAnio *r = calcular(2026);
 
     /* Solo los 7 partidos de 2026, con los dos formatos de fecha. */
-    TEST_ASSERT_EQUAL_INT(7, r->g.partidos);
-    TEST_ASSERT_EQUAL_INT(7, r->g.goles);
-    TEST_ASSERT_EQUAL_INT(6, r->g.asistencias);
-    TEST_ASSERT_EQUAL_INT(3, r->g.victorias);
-    TEST_ASSERT_EQUAL_INT(1, r->g.empates);
-    TEST_ASSERT_EQUAL_INT(3, r->g.derrotas);
-    ASSERT_CERCA(10.0 * 100.0 / 21.0, r->g.efectividad_pct);
-    ASSERT_CERCA(7.5, r->g.rendimiento_prom);
+    TEST_ASSERT_EQUAL_INT(7, r->g.totales.partidos);
+    TEST_ASSERT_EQUAL_INT(7, r->g.totales.goles);
+    TEST_ASSERT_EQUAL_INT(6, r->g.totales.asistencias);
+    TEST_ASSERT_EQUAL_INT(3, r->g.totales.victorias);
+    TEST_ASSERT_EQUAL_INT(1, r->g.totales.empates);
+    TEST_ASSERT_EQUAL_INT(3, r->g.totales.derrotas);
+    ASSERT_CERCA(10.0 * 100.0 / 21.0, r->g.totales.efectividad_pct);
+    ASSERT_CERCA(7.5, r->g.promedios.rendimiento_prom);
     TEST_ASSERT_EQUAL_STRING("05/01/2026", r->g.primer_partido_fecha);
-    TEST_ASSERT_EQUAL_INT(9, r->g.ultimo.id);
-    TEST_ASSERT_EQUAL_INT(1, r->g.dobletes);
-    TEST_ASSERT_EQUAL_INT(1, r->g.hat_tricks);
+    TEST_ASSERT_EQUAL_INT(9, r->g.records.ultimo.id);
+    TEST_ASSERT_EQUAL_INT(1, r->g.ataque.dobletes);
+    TEST_ASSERT_EQUAL_INT(1, r->g.ataque.hat_tricks);
 
     /* Records y rachas dentro del año. */
-    TEST_ASSERT_EQUAL_INT(6, r->g.max_goles.id);
-    TEST_ASSERT_EQUAL_INT(6, r->g.mejor_rendimiento.id);
-    TEST_ASSERT_EQUAL_INT(2, r->g.mejor_racha_victorias);
-    TEST_ASSERT_EQUAL_INT(4, r->g.mejor_racha_invicto);
+    TEST_ASSERT_EQUAL_INT(6, r->g.records.max_goles.id);
+    TEST_ASSERT_EQUAL_INT(6, r->g.records.mejor_rendimiento.id);
+    TEST_ASSERT_EQUAL_INT(2, r->g.rachas.mejor_racha_victorias);
+    TEST_ASSERT_EQUAL_INT(4, r->g.rachas.mejor_racha_invicto);
 
     /* Rankings filtrados: la camiseta 2 tiene 1 partido en 2026 (2 en 2025). */
     TEST_ASSERT_EQUAL_INT(2, r->g.camisetas.cantidad);
@@ -277,14 +279,15 @@ static void test_comparacion_con_anio_anterior(void)
     ASSERT_CERCA(50.0, r->anterior.efectividad_pct);
     ASSERT_CERCA(7.0, r->anterior.rendimiento_prom);
     /* Deltas que muestran los escritores. */
-    ASSERT_CERCA(5.0, r->g.partidos - r->anterior.partidos);
-    ASSERT_CERCA(10.0 * 100.0 / 21.0 - 50.0, r->g.efectividad_pct - r->anterior.efectividad_pct);
-    ASSERT_CERCA(0.5, r->g.rendimiento_prom - r->anterior.rendimiento_prom);
+    ASSERT_CERCA(5.0, r->g.totales.partidos - r->anterior.partidos);
+    ASSERT_CERCA(10.0 * 100.0 / 21.0 - 50.0,
+                 r->g.totales.efectividad_pct - r->anterior.efectividad_pct);
+    ASSERT_CERCA(0.5, r->g.promedios.rendimiento_prom - r->anterior.rendimiento_prom);
     free(r);
 
     /* 2027 compara contra 2026 completo. */
     r = calcular(2027);
-    TEST_ASSERT_EQUAL_INT(1, r->g.partidos);
+    TEST_ASSERT_EQUAL_INT(1, r->g.totales.partidos);
     TEST_ASSERT_EQUAL_INT(1, r->hay_anterior);
     TEST_ASSERT_EQUAL_INT(7, r->anterior.partidos);
     free(r);
@@ -295,13 +298,14 @@ static void test_sin_datos_del_anio_anterior(void)
     cargar_datos();
     ResumenAnio *r = calcular(2025);
 
-    TEST_ASSERT_EQUAL_INT(2, r->g.partidos);
+    TEST_ASSERT_EQUAL_INT(2, r->g.totales.partidos);
     TEST_ASSERT_EQUAL_INT(0, r->hay_anterior);
     TEST_ASSERT_EQUAL_INT(2, r->mejor_mes);
     TEST_ASSERT_EQUAL_INT(1, r->lesiones);
     TEST_ASSERT_EQUAL_INT(1, r->lesiones_activas);
 
-    FILE *f = fopen(g_out_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
@@ -316,7 +320,7 @@ static void test_anio_sin_partidos(void)
     cargar_datos();
     ResumenAnio *r = calcular(2030);
 
-    TEST_ASSERT_EQUAL_INT(0, r->g.partidos);
+    TEST_ASSERT_EQUAL_INT(0, r->g.totales.partidos);
     TEST_ASSERT_EQUAL_INT(0, r->hay_anterior);
     TEST_ASSERT_EQUAL_INT(-1, r->mejor_mes);
     TEST_ASSERT_EQUAL_INT(-1, r->mes_goleador);
@@ -324,7 +328,8 @@ static void test_anio_sin_partidos(void)
     TEST_ASSERT_EQUAL_INT(0, r->tendencia_n);
     TEST_ASSERT_EQUAL_INT(0, r->g.camisetas.cantidad);
 
-    FILE *f = fopen(g_out_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
@@ -368,7 +373,8 @@ static void test_escritores(void)
     cargar_datos();
     ResumenAnio *r = calcular(2026);
 
-    FILE *f = fopen(g_out_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
@@ -386,7 +392,7 @@ static void test_escritores(void)
     TEST_ASSERT_NOT_NULL(strstr(html, "</html>"));
     free(html);
 
-    f = fopen(g_out_path, "wb");
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_txt(f, r);
     fclose(f);

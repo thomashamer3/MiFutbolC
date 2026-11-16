@@ -126,7 +126,8 @@ static void cargar_datos(void)
 /* Escribe el resumen con el escritor pedido y devuelve el texto (malloc). */
 static char *escribir_a_texto(const ResumenGeneral *r, int es_markdown)
 {
-    FILE *f = fopen(g_out_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     if (es_markdown)
     {
@@ -138,11 +139,12 @@ static char *escribir_a_texto(const ResumenGeneral *r, int es_markdown)
     }
     fclose(f);
 
-    f = fopen(g_out_path, "rb");
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "rb"));
     TEST_ASSERT_NOT_NULL(f);
     fseek(f, 0, SEEK_END);
     long largo = ftell(f);
     fseek(f, 0, SEEK_SET);
+    TEST_ASSERT_TRUE(largo >= 0);
     char *texto = malloc((size_t)largo + 1);
     TEST_ASSERT_NOT_NULL(texto);
     size_t leidos = fread(texto, 1, (size_t)largo, f);
@@ -171,16 +173,16 @@ static void test_totales_y_efectividad(void)
     ResumenGeneral r;
     TEST_ASSERT_EQUAL_INT(1, resumen_general_calcular(&r));
 
-    TEST_ASSERT_EQUAL_INT(7, r.partidos);
-    TEST_ASSERT_EQUAL_INT(7, r.goles);
-    TEST_ASSERT_EQUAL_INT(4, r.asistencias);
-    TEST_ASSERT_EQUAL_INT(4, r.victorias);
-    TEST_ASSERT_EQUAL_INT(1, r.empates);
-    TEST_ASSERT_EQUAL_INT(1, r.derrotas);
-    TEST_ASSERT_EQUAL_INT(6, r.con_resultado);
+    TEST_ASSERT_EQUAL_INT(7, r.totales.partidos);
+    TEST_ASSERT_EQUAL_INT(7, r.totales.goles);
+    TEST_ASSERT_EQUAL_INT(4, r.totales.asistencias);
+    TEST_ASSERT_EQUAL_INT(4, r.totales.victorias);
+    TEST_ASSERT_EQUAL_INT(1, r.totales.empates);
+    TEST_ASSERT_EQUAL_INT(1, r.totales.derrotas);
+    TEST_ASSERT_EQUAL_INT(6, r.totales.con_resultado);
     /* (3 * 4 + 1) / (3 * 6): el partido sin resultado no cuenta. */
-    ASSERT_CERCA(13.0 * 100.0 / 18.0, r.efectividad_pct);
-    ASSERT_CERCA(11.0 / 7.0, r.ga_pp);
+    ASSERT_CERCA(13.0 * 100.0 / 18.0, r.totales.efectividad_pct);
+    ASSERT_CERCA(11.0 / 7.0, r.totales.ga_pp);
     TEST_ASSERT_EQUAL_STRING("01/01/2025", r.primer_partido_fecha);
 }
 
@@ -190,17 +192,17 @@ static void test_ataque_y_minutos(void)
     ResumenGeneral r;
     TEST_ASSERT_EQUAL_INT(1, resumen_general_calcular(&r));
 
-    TEST_ASSERT_EQUAL_INT(4, r.partidos_con_gol);
-    TEST_ASSERT_EQUAL_INT(1, r.dobletes);
-    TEST_ASSERT_EQUAL_INT(1, r.hat_tricks);
-    TEST_ASSERT_EQUAL_INT(2, r.partidos_con_minutos);
-    TEST_ASSERT_EQUAL_INT(150, r.minutos_total);
+    TEST_ASSERT_EQUAL_INT(4, r.ataque.partidos_con_gol);
+    TEST_ASSERT_EQUAL_INT(1, r.ataque.dobletes);
+    TEST_ASSERT_EQUAL_INT(1, r.ataque.hat_tricks);
+    TEST_ASSERT_EQUAL_INT(2, r.ataque.partidos_con_minutos);
+    TEST_ASSERT_EQUAL_INT(150, r.ataque.minutos_total);
     /* G+A solo de los partidos con minutos: (2+1) + (3+0) = 6 en 150'. */
-    ASSERT_CERCA(3.6, r.ga_por_90);
-    TEST_ASSERT_EQUAL_INT(6, r.con_rendimiento);
-    ASSERT_CERCA(6.5, r.rendimiento_prom);
-    TEST_ASSERT_EQUAL_INT(1, r.con_cansancio);
-    ASSERT_CERCA(6.0, r.cansancio_prom);
+    ASSERT_CERCA(3.6, r.ataque.ga_por_90);
+    TEST_ASSERT_EQUAL_INT(6, r.promedios.con_rendimiento);
+    ASSERT_CERCA(6.5, r.promedios.rendimiento_prom);
+    TEST_ASSERT_EQUAL_INT(1, r.promedios.con_cansancio);
+    ASSERT_CERCA(6.0, r.promedios.cansancio_prom);
 }
 
 static void test_rachas_y_records(void)
@@ -209,20 +211,20 @@ static void test_rachas_y_records(void)
     ResumenGeneral r;
     TEST_ASSERT_EQUAL_INT(1, resumen_general_calcular(&r));
 
-    TEST_ASSERT_EQUAL_INT(3, r.mejor_racha_victorias);
-    TEST_ASSERT_EQUAL_INT(3, r.mejor_racha_invicto);
-    TEST_ASSERT_EQUAL_INT(3, r.mejor_racha_marcando);
-    TEST_ASSERT_EQUAL_INT(0, r.racha_victorias_actual);
+    TEST_ASSERT_EQUAL_INT(3, r.rachas.mejor_racha_victorias);
+    TEST_ASSERT_EQUAL_INT(3, r.rachas.mejor_racha_invicto);
+    TEST_ASSERT_EQUAL_INT(3, r.rachas.mejor_racha_marcando);
+    TEST_ASSERT_EQUAL_INT(0, r.rachas.racha_victorias_actual);
     /* Ultimo partido (id 7) sin goles ni asistencias: racha negativa de 1. */
-    TEST_ASSERT_EQUAL_INT('N', r.racha_tipo);
-    TEST_ASSERT_EQUAL_INT(1, r.racha_longitud);
+    TEST_ASSERT_EQUAL_INT('N', r.rachas.racha_tipo);
+    TEST_ASSERT_EQUAL_INT(1, r.rachas.racha_longitud);
 
-    TEST_ASSERT_EQUAL_INT(4, r.max_goles.id);
-    TEST_ASSERT_EQUAL_STRING("15/01/2025", r.max_goles.fecha);
-    TEST_ASSERT_EQUAL_STRING("Tigres", r.max_goles.rival);
-    TEST_ASSERT_EQUAL_INT(3, r.max_asistencias.id);
-    TEST_ASSERT_EQUAL_INT(4, r.mejor_rendimiento.id);
-    TEST_ASSERT_EQUAL_INT(7, r.ultimo.id);
+    TEST_ASSERT_EQUAL_INT(4, r.records.max_goles.id);
+    TEST_ASSERT_EQUAL_STRING("15/01/2025", r.records.max_goles.fecha);
+    TEST_ASSERT_EQUAL_STRING("Tigres", r.records.max_goles.rival);
+    TEST_ASSERT_EQUAL_INT(3, r.records.max_asistencias.id);
+    TEST_ASSERT_EQUAL_INT(4, r.records.mejor_rendimiento.id);
+    TEST_ASSERT_EQUAL_INT(7, r.records.ultimo.id);
 }
 
 static void test_ultimos_en_orden_por_fecha(void)
@@ -233,16 +235,16 @@ static void test_ultimos_en_orden_por_fecha(void)
     ResumenGeneral r;
     TEST_ASSERT_EQUAL_INT(1, resumen_general_calcular(&r));
 
-    TEST_ASSERT_EQUAL_INT(7, r.ultimos_n);
+    TEST_ASSERT_EQUAL_INT(7, r.forma.ultimos_n);
     for (int i = 0; i < 7; i++)
     {
-        TEST_ASSERT_EQUAL_INT(esperado[i], r.ultimos[i].id);
+        TEST_ASSERT_EQUAL_INT(esperado[i], r.forma.ultimos[i].id);
     }
     /* La tendencia omite el partido sin rendimiento (id 6). */
-    TEST_ASSERT_EQUAL_INT(6, r.tendencia_n);
+    TEST_ASSERT_EQUAL_INT(6, r.forma.tendencia_n);
     for (int i = 0; i < 6; i++)
     {
-        TEST_ASSERT_EQUAL_INT(tendencia[i], r.tendencia[i]);
+        TEST_ASSERT_EQUAL_INT(tendencia[i], r.forma.tendencia[i]);
     }
 }
 
@@ -341,11 +343,11 @@ static void test_base_sin_partidos(void)
 {
     ResumenGeneral r;
     TEST_ASSERT_EQUAL_INT(1, resumen_general_calcular(&r));
-    TEST_ASSERT_EQUAL_INT(0, r.partidos);
-    TEST_ASSERT_EQUAL_INT(0, r.ultimos_n);
+    TEST_ASSERT_EQUAL_INT(0, r.totales.partidos);
+    TEST_ASSERT_EQUAL_INT(0, r.forma.ultimos_n);
     TEST_ASSERT_EQUAL_INT(0, r.num_anios);
     TEST_ASSERT_EQUAL_INT(0, r.camisetas.cantidad);
-    ASSERT_CERCA(0.0, r.efectividad_pct);
+    ASSERT_CERCA(0.0, r.totales.efectividad_pct);
 
     char *html = escribir_a_texto(&r, 0);
     TEST_ASSERT_NOT_NULL(strstr(html, "no hay partidos"));

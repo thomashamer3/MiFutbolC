@@ -15,6 +15,7 @@
 #include <string.h>
 
 #ifdef _WIN32
+#include <share.h>
 #define TEST_SEP "\\"
 #else
 #define TEST_SEP "/"
@@ -33,7 +34,17 @@ static char g_log_path[1024];
 
 static long tamano_archivo(const char *path)
 {
-    FILE *f = fopen(path, "rb");
+    FILE *f = NULL;
+#ifdef _WIN32
+    /* fopen_s abre sin compartir y SQLite tiene abierto el -wal: se pide
+     * acceso compartido como hacia fopen. */
+    f = _fsopen(path, "rb", _SH_DENYNO);
+#else
+    if (fopen_s(&f, path, "rb") != 0)
+    {
+        f = NULL;
+    }
+#endif
     if (!f)
     {
         return -1;
@@ -175,7 +186,8 @@ static void test_restaurar_rechaza_origen_invalido(void)
                                        NULL, NULL, NULL));
     insertar_filas(0, FILAS_EXTRA);
 
-    FILE *f = fopen(g_invalido_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_invalido_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     fputs("esto no es una base SQLite, solo texto de relleno para el encabezado...\n", f);
     fclose(f);

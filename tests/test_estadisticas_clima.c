@@ -74,16 +74,25 @@ static void exec_ok(const char *sql)
     TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
 }
 
+/* Clima de Open-Meteo de un partido, como texto SQL. */
+typedef struct
+{
+    const char *precip;
+    const char *viento;
+    const char *codigo;
+} ClimaSql;
+
 /* Los valores van como texto SQL para poder pasar "NULL". */
-static void insertar_partido(int id, const char *precip, const char *viento, const char *codigo,
-                             const char *rendimiento, int goles, int asistencias, int resultado)
+static void insertar_partido(int id, ClimaSql clima, const char *rendimiento, int goles,
+                             int asistencias, int resultado)
 {
     char sql[512];
     snprintf(sql, sizeof(sql),
              "INSERT INTO partido(id, cancha_id, fecha_hora, goles, asistencias, camiseta_id, "
              "mes_anio, resultado, rendimiento_general, precip_mm, wind_kmh, weather_code) "
              "VALUES(%d, 1, '2026-01-05 10:00', %d, %d, 1, '', %d, %s, %s, %s, %s);",
-             id, goles, asistencias, resultado, rendimiento, precip, viento, codigo);
+             id, goles, asistencias, resultado, rendimiento, clima.precip, clima.viento,
+             clima.codigo);
     exec_ok(sql);
 }
 
@@ -114,14 +123,14 @@ void tearDown(void)
  */
 static void cargar_datos_completos(void)
 {
-    insertar_partido(1, "0.0", "5.0", "0", "8", 2, 1, 1);
-    insertar_partido(2, "0.05", "8.0", "1", "6", 0, 1, 3);
-    insertar_partido(3, "0.0", "12.0", "2", "7", 1, 0, 1);
-    insertar_partido(4, "3.0", "20.0", "61", "5", 1, 0, 2);
-    insertar_partido(5, "12.0", "30.0", "95", "9", 3, 2, 1);
-    insertar_partido(6, "0.0", "3.0", "0", "NULL", 1, 1, 1);
-    insertar_partido(7, "NULL", "NULL", "NULL", "10", 5, 5, 1);
-    insertar_partido(8, "5.0", "25.0", "45", "4", 0, 0, 0);
+    insertar_partido(1, (ClimaSql){"0.0", "5.0", "0"}, "8", 2, 1, 1);
+    insertar_partido(2, (ClimaSql){"0.05", "8.0", "1"}, "6", 0, 1, 3);
+    insertar_partido(3, (ClimaSql){"0.0", "12.0", "2"}, "7", 1, 0, 1);
+    insertar_partido(4, (ClimaSql){"3.0", "20.0", "61"}, "5", 1, 0, 2);
+    insertar_partido(5, (ClimaSql){"12.0", "30.0", "95"}, "9", 3, 2, 1);
+    insertar_partido(6, (ClimaSql){"0.0", "3.0", "0"}, "NULL", 1, 1, 1);
+    insertar_partido(7, (ClimaSql){"NULL", "NULL", "NULL"}, "10", 5, 5, 1);
+    insertar_partido(8, (ClimaSql){"5.0", "25.0", "45"}, "4", 0, 0, 0);
 }
 
 static void test_cobertura_cuenta_solo_partidos_con_weather_code(void)
@@ -230,8 +239,8 @@ static void test_mejor_condicion_con_umbral_y_desempate(void)
  * listas (4) cuenta para lluvia y viento pero no para el cielo. */
 static void test_sin_grupo_con_tres_partidos_no_hay_mejor(void)
 {
-    insertar_partido(1, "0.0", "5.0", "4", "10", 1, 0, 1);
-    insertar_partido(2, "0.0", "5.0", "4", "9", 1, 0, 1);
+    insertar_partido(1, (ClimaSql){"0.0", "5.0", "4"}, "10", 1, 0, 1);
+    insertar_partido(2, (ClimaSql){"0.0", "5.0", "4"}, "9", 1, 0, 1);
     ClimaRealStats s;
     TEST_ASSERT_EQUAL_INT(1, calcular_rendimiento_clima_real(&s));
     TEST_ASSERT_EQUAL_INT(2, s.lluvia[LLUVIA_SIN].partidos);
@@ -243,7 +252,7 @@ static void test_sin_grupo_con_tres_partidos_no_hay_mejor(void)
     TEST_ASSERT_NULL(s.mejor);
 
     /* Un grupo con 3 partidos pero todos sin rendimiento tampoco compite. */
-    insertar_partido(3, "0.0", "5.0", "4", "NULL", 1, 0, 1);
+    insertar_partido(3, (ClimaSql){"0.0", "5.0", "4"}, "NULL", 1, 0, 1);
     exec_ok("UPDATE partido SET rendimiento_general = NULL;");
     TEST_ASSERT_EQUAL_INT(1, calcular_rendimiento_clima_real(&s));
     TEST_ASSERT_EQUAL_INT(3, s.lluvia[LLUVIA_SIN].partidos);
@@ -263,8 +272,8 @@ static void test_sin_datos(void)
     TEST_ASSERT_NULL(s.mejor);
 
     /* Partidos cargados, pero ninguno con clima de Open-Meteo. */
-    insertar_partido(1, "NULL", "NULL", "NULL", "8", 1, 0, 1);
-    insertar_partido(2, "NULL", "NULL", "NULL", "7", 1, 0, 1);
+    insertar_partido(1, (ClimaSql){"NULL", "NULL", "NULL"}, "8", 1, 0, 1);
+    insertar_partido(2, (ClimaSql){"NULL", "NULL", "NULL"}, "7", 1, 0, 1);
     TEST_ASSERT_EQUAL_INT(1, calcular_rendimiento_clima_real(&s));
     TEST_ASSERT_EQUAL_INT(2, s.total_partidos);
     TEST_ASSERT_EQUAL_INT(0, s.partidos_con_datos);

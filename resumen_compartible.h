@@ -9,6 +9,8 @@
 #ifndef RESUMEN_COMPARTIBLE_H
 #define RESUMEN_COMPARTIBLE_H
 
+#include <stdio.h>
+
 /**
  * @brief Muestra el menu de resumenes compartibles
  */
@@ -58,8 +60,6 @@ void generar_resumen_anio_pdf(void);
 void generar_resumen_anio_todos(void);
 
 /* ─── Resumen general: calculo separado de la escritura ─────────────────── */
-
-#include <stdio.h>
 
 /** Partidos que muestra la forma reciente (chips V/E/D). */
 #define RESUMEN_ULTIMOS_N 10
@@ -118,6 +118,98 @@ typedef struct
     int victorias;
 } ResumenConteo;
 
+/** Totales y efectividad de todos los partidos considerados. */
+typedef struct
+{
+    int partidos;
+    int goles;
+    int asistencias;
+    int victorias;
+    int empates;
+    int derrotas;
+    int con_resultado;
+    double efectividad_pct; /**< (3V + E) / (3 * con_resultado) */
+    double goles_pp;
+    double asistencias_pp;
+    double ga_pp;
+} ResumenGeneralTotales;
+
+/** Produccion ofensiva: minutos, partidos con gol o asistencia y multigoles. */
+typedef struct
+{
+    int partidos_con_minutos;
+    int minutos_total;
+    double ga_por_90; /**< Solo sobre partidos con minutos cargados */
+
+    int partidos_con_gol;
+    int partidos_con_asistencia;
+    int dobletes;   /**< Partidos con exactamente 2 goles */
+    int hat_tricks; /**< Partidos con 3 goles o mas */
+} ResumenGeneralAtaque;
+
+/** Mejores rachas historicas y la racha en curso. */
+typedef struct
+{
+    int mejor_racha_victorias;
+    int mejor_racha_invicto;
+    int mejor_racha_marcando;
+    int racha_victorias_actual;
+    char racha_tipo; /**< 'P' positiva, 'N' negativa, 'X' neutral */
+    int racha_longitud;
+} ResumenGeneralRachas;
+
+/** Partidos destacados y el ultimo jugado. */
+typedef struct
+{
+    ResumenPartidoCorto max_goles;
+    ResumenPartidoCorto max_asistencias;
+    ResumenPartidoCorto mejor_rendimiento;
+    ResumenPartidoCorto ultimo;
+} ResumenGeneralRecords;
+
+/** Forma reciente (chips V/E/D) y tendencia de rendimiento. */
+typedef struct
+{
+    int ultimos_n;
+    ResumenPartidoCorto ultimos[RESUMEN_ULTIMOS_N]; /**< Del mas viejo al mas nuevo */
+    int tendencia_n;
+    int tendencia[RESUMEN_TENDENCIA_N]; /**< Rendimiento, del mas viejo al mas nuevo */
+} ResumenGeneralForma;
+
+/** Promedios de rendimiento, animo y cansancio (con_* = partidos con el dato). */
+typedef struct
+{
+    int con_rendimiento;
+    double rendimiento_prom;
+    int con_animo;
+    double animo_prom;
+    int con_cansancio;
+    double cansancio_prom;
+} ResumenGeneralPromedios;
+
+/** Clima mas frecuente, cobertura de clima real y la mejor condicion. */
+typedef struct
+{
+    char clima_frecuente[128];
+    int clima_real_partidos;
+    double clima_real_cobertura_pct;
+    int hay_clima_mejor;
+    char clima_mejor[64];
+    int clima_mejor_partidos;
+    double clima_mejor_rendimiento;
+    double clima_mejor_victorias_pct;
+} ResumenGeneralClima;
+
+/** Datos de carrera que no dependen de los partidos filtrados. */
+typedef struct
+{
+    char posicion[128];
+    char torneo[128];
+    int lesiones;
+    int logros_total;
+    int logros_completados;
+} ResumenGeneralCarrera;
+
 /**
  * @brief Todos los datos del "Resumen general" (opciones 1 HTML y 2 Markdown)
  *
@@ -131,49 +223,12 @@ typedef struct
     char fecha_gen[64];
     char primer_partido_fecha[16]; /**< "dd/mm/aaaa" o "" */
 
-    int partidos;
-    int goles;
-    int asistencias;
-    int victorias;
-    int empates;
-    int derrotas;
-    int con_resultado;
-    double efectividad_pct; /**< (3V + E) / (3 * con_resultado) */
-    double goles_pp;
-    double asistencias_pp;
-    double ga_pp;
-
-    int partidos_con_minutos;
-    int minutos_total;
-    double ga_por_90; /**< Solo sobre partidos con minutos cargados */
-
-    int partidos_con_gol;
-    int partidos_con_asistencia;
-    int dobletes;   /**< Partidos con exactamente 2 goles */
-    int hat_tricks; /**< Partidos con 3 goles o mas */
-
-    int mejor_racha_victorias;
-    int mejor_racha_invicto;
-    int mejor_racha_marcando;
-    int racha_victorias_actual;
-    char racha_tipo; /**< 'P' positiva, 'N' negativa, 'X' neutral */
-    int racha_longitud;
-    ResumenPartidoCorto max_goles;
-    ResumenPartidoCorto max_asistencias;
-    ResumenPartidoCorto mejor_rendimiento;
-    ResumenPartidoCorto ultimo;
-
-    int ultimos_n;
-    ResumenPartidoCorto ultimos[RESUMEN_ULTIMOS_N]; /**< Del mas viejo al mas nuevo */
-    int tendencia_n;
-    int tendencia[RESUMEN_TENDENCIA_N]; /**< Rendimiento, del mas viejo al mas nuevo */
-
-    int con_rendimiento;
-    double rendimiento_prom;
-    int con_animo;
-    double animo_prom;
-    int con_cansancio;
-    double cansancio_prom;
+    ResumenGeneralTotales totales;
+    ResumenGeneralAtaque ataque;
+    ResumenGeneralRachas rachas;
+    ResumenGeneralRecords records;
+    ResumenGeneralForma forma;
+    ResumenGeneralPromedios promedios;
 
     int num_anios;
     ResumenAnioItem anios[RESUMEN_MAX_ANIOS]; /**< En orden ascendente */
@@ -181,24 +236,12 @@ typedef struct
     ResumenTop camisetas;
     ResumenTop canchas;
     ResumenTop rivales;
-    char posicion[128];
 
     ResumenConteo dias_semana[7]; /**< 0 Domingo .. 6 Sabado */
     ResumenConteo franjas[RESUMEN_FRANJAS]; /**< Indice dia - 1 */
 
-    char clima_frecuente[128];
-    int clima_real_partidos;
-    double clima_real_cobertura_pct;
-    int hay_clima_mejor;
-    char clima_mejor[64];
-    int clima_mejor_partidos;
-    double clima_mejor_rendimiento;
-    double clima_mejor_victorias_pct;
-
-    char torneo[128];
-    int lesiones;
-    int logros_total;
-    int logros_completados;
+    ResumenGeneralClima clima;
+    ResumenGeneralCarrera carrera;
 } ResumenGeneral;
 
 /**

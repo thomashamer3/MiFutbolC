@@ -1035,9 +1035,30 @@ static int listado_ejecutar_detalle(const ListadoConfig *cfg, const int *ids, in
     return cfg->detalle(ids[fila - 1], cfg->ctx) ? 1 : 0;
 }
 
+/* 1 si la configuracion tiene los campos obligatorios para listar. */
+static int listado_config_valida(const ListadoConfig *cfg)
+{
+    return cfg && cfg->titulo && cfg->sql_conteo && cfg->sql_pagina && cfg->render_fila;
+}
+
+/* Opcion 6: con otro filtro cambia el total, asi que se recuenta y se vuelve a
+ * la primera pagina. Un filtro sin resultados deja el listado abierto para
+ * poder elegir otro. */
+static void listado_ejecutar_reconfigurar(const ListadoConfig *cfg, int *total,
+        int *total_paginas, int *pagina_actual)
+{
+    if (!cfg->reconfigurar(cfg->ctx))
+    {
+        return;
+    }
+    *total = listado_contar_filas(cfg->sql_conteo, cfg->filtro_texto);
+    *total_paginas = *total > 0 ? (*total + LISTADO_POR_PAGINA - 1) / LISTADO_POR_PAGINA : 1;
+    *pagina_actual = 1;
+}
+
 int listado_paginado_config(const ListadoConfig *cfg)
 {
-    if (!cfg || !cfg->titulo || !cfg->sql_conteo || !cfg->sql_pagina || !cfg->render_fila)
+    if (!listado_config_valida(cfg))
     {
         return 0;
     }
@@ -1090,16 +1111,7 @@ int listado_paginado_config(const ListadoConfig *cfg)
 
         if (cfg->reconfigurar && opcion == 6)
         {
-            if (cfg->reconfigurar(cfg->ctx))
-            {
-                /* Con otro filtro cambia el total: se recuenta y se vuelve a
-                 * la primera pagina. Un filtro sin resultados deja el listado
-                 * abierto para poder elegir otro. */
-                total = listado_contar_filas(cfg->sql_conteo, cfg->filtro_texto);
-                total_paginas = total > 0 ? (total + LISTADO_POR_PAGINA - 1) / LISTADO_POR_PAGINA
-                                : 1;
-                pagina_actual = 1;
-            }
+            listado_ejecutar_reconfigurar(cfg, &total, &total_paginas, &pagina_actual);
             continue;
         }
 

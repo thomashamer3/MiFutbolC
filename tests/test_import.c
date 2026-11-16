@@ -69,7 +69,8 @@ static void exec_ok(const char *sql)
 /* Escribe el archivo de prueba en binario: el contenido llega tal cual. */
 static void escribir_archivo(const char *contenido)
 {
-    FILE *f = fopen(g_archivo_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_archivo_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     fputs(contenido, f);
     fclose(f);

@@ -128,7 +128,8 @@ static void insertar_partido(long long id, int cancha_id, const char *fecha)
 
 static void escribir_json(const char *contenido)
 {
-    FILE *f = fopen(g_json_path, "wb");
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_json_path, "wb"));
     TEST_ASSERT_NOT_NULL(f);
     fputs(contenido, f);
     fclose(f);

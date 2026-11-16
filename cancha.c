@@ -823,22 +823,36 @@ typedef struct
     CanchaCoordenadas coordenadas;
 } CanchaInfoDetalle;
 
-static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_nombre)
+static void cancha_pedir_coordenadas(CanchaInfoDetalle *info)
 {
-    if (!info)
+    char coords[128];
+    char *comma;
+
+    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
+    comma = strchr(coords, ',');
+    if (!comma)
     {
+        info->coordenadas.latitud = ROUND6(input_double("Latitud: "));
+        info->coordenadas.longitud = ROUND6(input_double("Longitud: "));
         return;
     }
 
-    if (incluir_nombre)
-    {
-        solicitar_nombre_cancha("Nombre de la cancha: ", info->nombre, sizeof(info->nombre));
-    }
+    *comma = '\0';
+    trim_whitespace(coords);
+    trim_whitespace(comma + 1);
+    info->coordenadas.latitud = parse_double_c_locale(coords);
+    info->coordenadas.longitud = parse_double_c_locale(comma + 1);
+}
+
+/* Datos de la cancha que piden el alta completa y la modificacion, salvo
+ * nombre y coordenadas. */
+static void cancha_pedir_datos_basicos(CanchaInfoDetalle *info)
+{
+    int marcador_val;
 
     solicitar_telefono_no_vacio("Numero de telefono: ", info->telefono, sizeof(info->telefono));
     solicitar_campo_no_vacio("Direccion: ", info->direccion, sizeof(info->direccion));
     solicitar_campo_no_vacio("Localidad/Zona: ", info->localidad, sizeof(info->localidad));
-
     info->tipo_cancha_codigo = solicitar_tipo_cancha_codigo();
     info->superficie_codigo = solicitar_superficie_codigo();
     info->techada_estado = solicitar_estado_techada_codigo();
@@ -856,7 +870,6 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
     {
         info->cantidad_canchas = 1;
     }
-
     solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info->estado,
                              sizeof(info->estado));
     input_string("Descripcion breve: ", info->descripcion, sizeof(info->descripcion));
@@ -864,32 +877,33 @@ static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_
     solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt,
                              sizeof(info->contacto_alt));
     if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
+    {
         info->flags |= CANCHA_FLAG_GRABACION;
-    int marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
+    }
+    marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
     if (marcador_val == 1)
+    {
         info->flags |= CANCHA_FLAG_MARCADOR;
+    }
+}
+
+static void solicitar_datos_comunes_cancha(CanchaInfoDetalle *info, int incluir_nombre)
+{
+    if (!info)
+    {
+        return;
+    }
+
+    if (incluir_nombre)
+    {
+        solicitar_nombre_cancha("Nombre de la cancha: ", info->nombre, sizeof(info->nombre));
+    }
+
+    cancha_pedir_datos_basicos(info);
 
     if (settings_get()->mode != MODE_SIMPLE)
     {
-        char coords[128];
-        input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords,
-                              sizeof(coords));
-        char *comma = strchr(coords, ',');
-        if (comma)
-        {
-            *comma = '\0';
-            char *lat_str = coords;
-            char *lon_str = comma + 1;
-            trim_whitespace(lat_str);
-            trim_whitespace(lon_str);
-            info->coordenadas.latitud = parse_double_c_locale(lat_str);
-            info->coordenadas.longitud = parse_double_c_locale(lon_str);
-        }
-        else
-        {
-            info->coordenadas.latitud = ROUND6(input_double("Latitud: "));
-            info->coordenadas.longitud = ROUND6(input_double("Longitud: "));
-        }
+        cancha_pedir_coordenadas(info);
     }
 }
 
@@ -1566,27 +1580,6 @@ static int cancha_elegir_modo(void)
     return modo;
 }
 
-static void cancha_pedir_coordenadas(CanchaInfoDetalle *info)
-{
-    char coords[128];
-    char *comma;
-
-    input_string_extended("Coordenadas (lat, lon) ej: -34.7252, -58.3941: ", coords, sizeof(coords));
-    comma = strchr(coords, ',');
-    if (!comma)
-    {
-        info->coordenadas.latitud = ROUND6(input_double("Latitud: "));
-        info->coordenadas.longitud = ROUND6(input_double("Longitud: "));
-        return;
-    }
-
-    *comma = '\0';
-    trim_whitespace(coords);
-    trim_whitespace(comma + 1);
-    info->coordenadas.latitud = parse_double_c_locale(coords);
-    info->coordenadas.longitud = parse_double_c_locale(comma + 1);
-}
-
 static void cancha_pedir_datos_simples(CanchaInfoDetalle *info)
 {
     solicitar_campo_no_vacio("Direccion: ", info->direccion, sizeof(info->direccion));
@@ -1594,43 +1587,7 @@ static void cancha_pedir_datos_simples(CanchaInfoDetalle *info)
 
 static void cancha_pedir_datos_completos(CanchaInfoDetalle *info)
 {
-    int marcador_val;
-
-    solicitar_telefono_no_vacio("Numero de telefono: ", info->telefono, sizeof(info->telefono));
-    solicitar_campo_no_vacio("Direccion: ", info->direccion, sizeof(info->direccion));
-    solicitar_campo_no_vacio("Localidad/Zona: ", info->localidad, sizeof(info->localidad));
-    info->tipo_cancha_codigo = solicitar_tipo_cancha_codigo();
-    info->superficie_codigo = solicitar_superficie_codigo();
-    info->techada_estado = solicitar_estado_techada_codigo();
-    info->tiene_iluminacion = solicitar_si_no("Tiene iluminacion?");
-    info->horario_apertura_min = solicitar_hora_minutos("Horario de apertura (HH:MM): ");
-    info->horario_cierre_min = solicitar_hora_minutos("Horario de cierre (HH:MM): ");
-    info->precio_hora_dia_centavos = solicitar_precio_centavos("Precio por hora (Dia): ");
-    info->precio_hora_noche_centavos = solicitar_precio_centavos("Precio por hora (Noche): ");
-    info->servicios.vestuarios = solicitar_si_no("Tiene vestuarios?");
-    info->servicios.duchas = solicitar_si_no("Tiene duchas?");
-    info->servicios.buffet = solicitar_si_no("Tiene buffet?");
-    info->servicios.estacionamiento = solicitar_si_no("Tiene estacionamiento?");
-    info->cantidad_canchas = input_int("Cantidad de canchas del complejo: ");
-    if (info->cantidad_canchas <= 0)
-    {
-        info->cantidad_canchas = 1;
-    }
-    solicitar_campo_no_vacio("Estado (ej: habilitada, en mantenimiento): ", info->estado,
-                             sizeof(info->estado));
-    input_string("Descripcion breve: ", info->descripcion, sizeof(info->descripcion));
-    trim_whitespace(info->descripcion);
-    solicitar_campo_no_vacio("Contacto alternativo (WhatsApp/Instagram): ", info->contacto_alt,
-                             sizeof(info->contacto_alt));
-    if (solicitar_si_no("Grabacion de Partido (1=SI, 0=NO): "))
-    {
-        info->flags |= CANCHA_FLAG_GRABACION;
-    }
-    marcador_val = input_int("Tiene marcador? (1=SI, 2=NO): ");
-    if (marcador_val == 1)
-    {
-        info->flags |= CANCHA_FLAG_MARCADOR;
-    }
+    cancha_pedir_datos_basicos(info);
     cancha_pedir_coordenadas(info);
 }
 
