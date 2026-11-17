@@ -10,7 +10,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-4.5.2-blue.svg)
+![Version](https://img.shields.io/badge/version-4.6-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
 ![Database](https://img.shields.io/badge/database-SQLite3-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
@@ -54,8 +54,15 @@
 
 El sistema utiliza **SQLite3** como base de datos para almacenamiento persistente y eficiente, **cJSON** para manejo de datos JSON, y ofrece una interfaz de consola intuitiva con menús jerárquicos y arte ASCII.
 
-## 🆕 Últimos Cambios (v4.5.2)
+## 🆕 Últimos Cambios (v4.6)
 
+- **IDs de partido estables**: el ID de un partido ya no cambia cuando se crea, se borra o se cambia de fecha otro partido (antes se renumeraban todos por fecha). El listado se sigue ordenando por fecha y hora, y para modificar o eliminar se escribe el ID que muestra. Un partido nuevo nunca reutiliza el ID de uno borrado, y al eliminar un partido se borran en una sola transacción sus datos propios (meta, tags, hitos de carrera y estadísticas de química) y se desvinculan sus lesiones, referencias multimedia, sesiones de bienestar mental y equipos. Los cálculos que dependen del orden (último partido, rachas, logros, timeline y momentum de carrera) usan la fecha y no el ID.
+- **Clima de Open-Meteo en segundo plano**: crear un partido ya no espera la respuesta de Open-Meteo (sin red podía bloquear la carga hasta 20 segundos). El partido se guarda al instante, se avisa `El clima se completara en segundo plano.` y un proceso `curl` aparte descarga el clima; la aplicación lo aplica sin bloquear en la siguiente vuelta de menú, o en el próximo arranque si se cerró antes. Cada partido tiene hasta 8 intentos fallidos (los fallos de partidos de los últimos 14 días no cuentan, porque Open-Meteo publica el histórico con demora) y, si la API todavía no tiene datos, ya no se guarda 0,0 °C como si fuera real. Sigue haciendo falta una cancha con coordenadas y un modo de menú distinto de Simple. Módulo nuevo: `clima_diferido.c/.h`.
+- **Backup, restauración e importación de la base más seguros**: los backups (manual, automático y la exportación de la base) se hacen con la API `sqlite3_backup`, así incluyen los cambios que todavía están en el WAL. **Restaurar backup** (Ajustes → Backup & Restore) e **Importar desde Base de Datos** (Ajustes → Importar → 7) validan el archivo de origen antes de tocar nada (lo abren en solo lectura, corren `PRAGMA quick_check` y exigen la tabla `partido`) y lo copian sobre la conexión abierta; si algo falla, avisan `La base de datos actual no fue modificada.` Al iniciar, `PRAGMA user_version` queda siempre en la versión actual del esquema (17).
+- **Rendimiento por Condiciones Reales (Open-Meteo)**: nueva opción **21** en **Estadísticas → Rendimiento**. Muestra la cobertura (partidos con clima real sobre el total) y, por grupo, partidos jugados, rendimiento, goles y asistencias promedio y % de victorias, agrupando por lluvia del día (sin lluvia: menos de 0,1 mm; leve: hasta 5 mm; moderada/fuerte), viento promedio (calmo: menos de 10 km/h; moderado: hasta 25 km/h; fuerte) y condición del cielo según el código WMO (despejado, nublado, niebla, llovizna/lluvia, nieve, tormenta). Cierra con **"Tu mejor condición"**: el grupo de mejor rendimiento con al menos 3 partidos.
+- **Resumen general renovado** (Resumen Compartible → **1** y **2**): el HTML y el Markdown suman efectividad, G+A total, por partido y cada 90 minutos, dobletes y hat-tricks, récords (rachas de victorias, invicto y marcando; partido con más goles, con más asistencias y de mejor rendimiento), forma de los últimos 10 partidos, tendencia de rendimiento de los últimos 20, año por año, promedios de rendimiento, ánimo y cansancio, top 3 de camisetas, canchas y rivales, partidos por día y por franja horaria, clima real de Open-Meteo y logros. El HTML es autocontenido (sin JavaScript ni recursos externos), con modo claro y oscuro, vista para celular e impresión.
+- **Resumen Anual renovado** (Resumen Compartible → **5**): pide el año (Enter = año en curso) y, con el mismo estilo que el resumen general, agrega la comparación con el año anterior, el mes a mes con rendimiento promedio, el mejor mes y el mes más goleador, la tendencia del año, el marcador del equipo, equipamiento y salud, el clima real del año y el partido del año (el de mejor rendimiento o, si no hay, el último). Se genera en TXT, HTML y PDF.
+- **Calidad interna**: correcciones señaladas por SonarCloud, CodeFactor y CodeQL; menos código duplicado (helpers compartidos en sincronización, exportaciones, tests y varios módulos); y la suite de `ctest` pasa de 11 a **19** pruebas, con nuevas para `openmeteo`, `db_integridad`, `clima_diferido`, `import`, `sync`, `estadisticas_clima`, `resumen_general` y `resumen_anio`. Los tests destaparon y corrigieron un error al leer archivos de importación con fin de línea CRLF en Windows.
 - **Resumen del Año**: nueva opción **5** dentro de **Resumen Compartible** que genera un resumen del año en curso en **TXT**, **HTML** y **PDF** (o los tres a la vez). Incluye partidos, goles, asistencias, victorias, empates, derrotas y efectividad, goles a favor/en contra con diferencia, detalle **mes a mes**, camisetas y canchas más usadas, lesiones registradas y activas, y el **mejor partido del año** con su ficha completa (marcador, goles y asistencias con detalle, cancha, camiseta, clima, físico, contexto, arbitraje y notas). Los archivos se guardan como `resumen_anio_<AAAA>.txt`, `.html` y `.pdf`.
 - **Documentación en video**: nueva página [VIDEOS.md](VIDEOS.md) con la **Presentación** del sistema y el **Tutorial** paso a paso, disponibles en `videos/presentacion.mp4` y `videos/tutorial.mp4`, enlazada desde el README (barra de navegación, Documentación y Enlaces Útiles).
 - **Correcciones de calidad (SonarQube)**: simplificación y división de funciones en `resumen_compartible.c` y `utils.c`, y ajuste en `camiseta.c` para reducir complejidad y duplicación.
@@ -93,7 +100,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Camisetas Inteligentes**: Crear, editar, eliminar y listar camisetas con seguimiento automático de uso y rendimiento
 - **Ciclo Activa/Inactiva en Camisetas**: retirar y reactivar camisetas para preservar historial
 - **Imágenes de Camisetas**: carga, apertura y ajustes de visor (incluye prueba de visor y previsualización en consola)
-- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada). Al crear o editar una cancha puedes ingresar sus **coordenadas geográficas** (latitud, longitud) para que el sistema consulte el clima automáticamente vía Open-Meteo al registrar un partido.
+- **Gestión de Canchas**: administrar infraestructura deportiva (crear, listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar información detallada). Al crear o editar una cancha puedes ingresar sus **coordenadas geográficas** (latitud, longitud) para que el sistema complete el clima de cada partido automáticamente vía Open-Meteo, en segundo plano y sin demorar la carga.
 - **Listado de Canchas con estadísticas**: filtro por estado, **Victorias/Empates/Derrotas con porcentaje**, resumen de totales al pie, apertura de la ficha completa desde el listado y exportación del listado filtrado.
 - **Listado de Camisetas con estadísticas y orden**: filtro por estado, orden configurable, **Victorias/Empates/Derrotas con porcentaje**, **promedio (Goles+Asistencias) por partido**, marcas de camisetas inactivas/sin uso/más efectiva y **gráfico ASCII de uso**.
 - **Análisis de Uso**: Estadísticas de rendimiento por camiseta y por cancha, incluyendo el módulo dedicado de **Estadísticas de Canchas**.
@@ -117,7 +124,8 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Modos de carga**: Amistoso, Torneo y Entrenamiento
 - **Partidos Detallados**: Registro completo con fecha/hora, cancha, camisetas, resultados y franja horaria
 - **Métricas Avanzadas**: Goles, asistencias, rendimiento, estado físico y mental, dolor físico, temperatura y arbitraje
-- **Contexto ampliado**: estado de cancha, marcador global, formato de fútbol, tarjeta, goles en contra, eventos clave y tags. El clima y la temperatura se obtienen automáticamente desde las coordenadas de la cancha vía API Open-Meteo.
+- **Contexto ampliado**: estado de cancha, marcador global, formato de fútbol, tarjeta, goles en contra, eventos clave y tags. El clima y la temperatura se obtienen automáticamente desde las coordenadas de la cancha vía API Open-Meteo, en segundo plano: el partido se guarda al instante y el clima se completa después.
+- **IDs estables**: el ID de cada partido no cambia al crear, borrar o editar otros partidos y no se reutiliza; los listados se ordenan por fecha y hora.
 - **Simulación de Partidos**: Simulador con cancha ASCII animada y eventos aleatorios
 - **Historial Completo**: Consulta de partidos pasados con filtros avanzados (incluye búsqueda por tag)
 
@@ -154,6 +162,7 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
 - **Rendimiento por Dolor Físico**: Impacto de molestias físicas sobre el desempeño
 - **Rendimiento por Arbitraje**: Comportamiento del rendimiento según calidad arbitral
 - **Rendimiento por Temperatura**: Correlación del rendimiento con la temperatura registrada
+- **Rendimiento por Condiciones Reales (Open-Meteo)**: Rendimiento, goles, asistencias y % de victorias según la lluvia, el viento y el cielo reales del día del partido
 
 #### Récords y Rankings
 
@@ -283,14 +292,14 @@ El sistema utiliza **SQLite3** como base de datos para almacenamiento persistent
   lesiones por tipo/estado, historial de rachas y distribución de estado de ánimo/cansancio
 - **Reportes HTML autocontenidos**: cada HTML exportado incluye su CSS embebido (sin recursos ni fuentes externas), cabecera con la marca y la **fecha de generación**, encabezados de tabla **fijos al hacer scroll**, filas cebra, **insignias de color** para el resultado del partido, **modo oscuro** automático y reglas de impresión
 - **Datos escapados en HTML**: los textos de la base se convierten a entidades (`&`, `<`, `>`, `"`), así un nombre o comentario con símbolos no rompe el documento
-- **Resumen compartible**: HTML con diseño propio (tarjeta oscura, animaciones y meta etiquetas `og:` para la previsualización al compartir) y su equivalente en Markdown
+- **Resumen compartible**: HTML autocontenido con diseño propio (sin JavaScript ni recursos externos, modo claro y oscuro, vista para celular, impresión y meta etiquetas `og:` para la previsualización al compartir) y su equivalente en Markdown; el Resumen Anual se genera además en TXT y PDF
 
 #### Importación de Datos
 
 - **Restauración multiformato**: Importación completa de datos desde archivos JSON, TXT, CSV o HTML
 - **Acceso desde Ajustes**: Ruta de navegación Ajustes -> Importar
 - **Importación rápida**: Opciones Todo JSON rápido y Todo CSV rápido
-- **Importación de base de datos**: Restauración directa de archivo SQLite
+- **Importación de base de datos**: Restauración de un archivo SQLite que se valida antes (`PRAGMA quick_check` y tabla `partido`) y se copia con `sqlite3_backup`; si no pasa la validación, la base actual no se modifica
 - **Validación de Datos**: Verificación de estructura antes de importar
 - **Manejo de Errores**: Feedback detallado en caso de problemas
 
@@ -1081,7 +1090,7 @@ Conteo referencial (puede variar según cambios y scripts de build).
 | **Extras**                    | `logros.c`, `financiamiento.c`, `ascii_charts.c`                                                                            | Funcionalidades transversales                                                          |
 | **Compartir y Social**        | `resumen_compartible.c/.h`, `ranking_amigos.c/.h`                                                                           | Resumen del perfil (HTML/Markdown), resumen del año (TXT/HTML/PDF) y ranking de amigos |
 | **Ayuda**                     | `tutorial.c/.h`                                                                                                             | Tutorial guiado                                                                        |
-| **Servicios Externos**        | `openmeteo_client.c/.h`                                                                                                     | Clima real de los partidos (Open-Meteo)                                                |
+| **Servicios Externos**        | `openmeteo_client.c/.h`, `clima_diferido.c/.h`                                                                              | Clima real de los partidos (Open-Meteo), completado en segundo plano                   |
 | **Internacionalización**      | `lang.c/.h`, `langs/es.json`, `langs/en.json`                                                                               | Textos en español e inglés                                                             |
 
 ## 🗄️ Base de Datos
@@ -1138,9 +1147,10 @@ Campos clave (selección, no exhaustivo):
 
 Para el detalle completo, ver la creación del esquema en [db.c](db.c).
 
-El esquema está versionado con `PRAGMA user_version`: **`DB_VERSION_CURRENT = 15`**. Cada versión agrupa
+El esquema está versionado con `PRAGMA user_version`: **`DB_VERSION_CURRENT = 17`**. Cada versión agrupa
 migraciones que se aplican solas al abrir la aplicación (por ejemplo la **15** añade `botin.sorteada`,
 la **12** `partido.botin_id` y `settings.botin_predeterminado`, y la **14** `partido.diferencia_gol`).
+Al terminar las migraciones, `user_version` queda en la versión actual.
 
 ### Inicialización de la Base de Datos
 
@@ -1364,6 +1374,7 @@ El módulo de meta-análisis (`estadisticas_meta.c / estadisticas_meta.h`) reali
 - **Rendimiento por Dolor Físico**: Impacto de la molestia física sobre rendimiento y contribución.
 - **Rendimiento por Arbitraje**: Relación entre calidad arbitral percibida y desempeño.
 - **Rendimiento por Temperatura**: Correlación entre temperatura ambiente y rendimiento.
+- **Rendimiento por Condiciones Reales (Open-Meteo)**: Agrupa los partidos por lluvia, viento y condición del cielo reales (`precip_mm`, `wind_kmh`, `weather_code`) y marca la mejor condición del jugador.
 - **Análisis de Situaciones**: Partidos exigentes bien jugados y partidos fáciles mal jugados.
 
 Este módulo proporciona insights profundos para la optimización del rendimiento y la toma de decisiones tácticas.
@@ -1503,6 +1514,16 @@ void eliminar_elemento(int id);
 
 ### Testing
 
+#### Pruebas Automatizadas
+
+La carpeta `tests/` tiene **19** pruebas unitarias (Unity) que `ctest` registra solas: pruebas de humo por módulo y pruebas sobre una base SQLite real (`db_integridad`, `clima_diferido`, `import`, `sync`, `estadisticas_clima`, `resumen_general` y `resumen_anio`). Detalle en [tests/README.md](tests/README.md).
+
+```bash
+cmake --preset mingw-debug -DMIFUTBOLC_BUILD_TESTS=ON
+cmake --build --preset build-debug
+ctest --test-dir build/debug --output-on-failure
+```
+
 #### Pruebas Manuales
 
 - ✅ Compilar sin warnings
@@ -1519,7 +1540,7 @@ void eliminar_elemento(int id);
 
 ### Análisis Estático y Calidad
 
-El proyecto se revisa con **SonarQube/SonarCloud** y **Cppcheck**. Los informes quedan en la raíz del repositorio para poder comparar entre revisiones:
+El proyecto se revisa con **SonarQube/SonarCloud**, **CodeFactor**, **CodeQL** y **Cppcheck**. Los informes quedan en la raíz del repositorio para poder comparar entre revisiones:
 
 - `duplications.json` — líneas y bloques duplicados por archivo, con densidad
 - `maintainability-open.json`, `reliability-open.json`, `security-open.json` — incidencias abiertas por calidad
@@ -1614,8 +1635,8 @@ Proyecto desarrollado como ejemplo educativo y de uso personal de programación 
 
 Referencial y sujeto a cambios:
 
-- **Archivos**: 85 módulos `.c` en la raíz con sus cabeceras (los `.c` de `tests/` se cuentan aparte: 11 archivos de prueba más el runner `unity.c`).
-- **Esquema**: `DB_VERSION_CURRENT = 15` y 54 índices `CREATE INDEX` en `db.c`.
+- **Archivos**: 81 módulos `.c` en la raíz con sus cabeceras (los `.c` de `tests/` se cuentan aparte: 19 archivos de prueba más el runner `unity.c`).
+- **Esquema**: `DB_VERSION_CURRENT = 17` y 50 índices `CREATE INDEX` en `db.c`.
 - **Duplicación**: alrededor del 2% de las líneas, según `duplications.json`.
 - **Calidad**: sin incidencias abiertas de fiabilidad ni de seguridad (`reliability-open.json`, `security-open.json`).
 - **Tablas de BD**: esquema y migraciones definidos en `db.c`.

@@ -36,7 +36,7 @@ void menu_update(void);
 
 // Version actual de la aplicacion. Debe mantenerse en sincronia con el
 // instalador (MiFutbolC.iss)
-#define APP_VERSION "4.5.2"
+#define APP_VERSION "4.6"
 
 // Configuracion global
 static AppSettings current_settings = {THEME_LIGHT, LANGUAGE_SPANISH, MODE_SIMPLE,

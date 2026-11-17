@@ -21,7 +21,7 @@ static const long REVISION = 0;
 static const long BUILDS_COUNT = 1;
 #define RC_FILEVERSION 4, 5, 2, 0
 #define RC_FILEVERSION_STRING "4, 5, 2, 0\0"
-static const char FULLVERSION_STRING[] = "4.5.2.0";
+static const char FULLVERSION_STRING[] = "4.6.0";
 
 // These values are to keep track of your versioning state, don't modify them.
 static const long BUILD_HISTORY = 0;

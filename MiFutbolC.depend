@@ -622,7 +622,7 @@
 	<stdio.h>
 	<string.h>
 
-1794518709 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
+1794923898 d:\anime\libros\lenguaje c\proyectos\mifutbolc\ascii_art.h
 
 1767851601 d:\anime\libros\lenguaje c\proyectos\mifutbolc\futbol_mundial.h
 
@@ -2096,7 +2096,7 @@
 	<time.h>
 	"export.h"
 
-1794861544 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
+1794924045 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\settings.c
 	"settings.h"
 	"backup.h"
 	"busqueda.h"

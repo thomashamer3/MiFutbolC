@@ -27,7 +27,7 @@
                         >
                     </p>
                     <div class="meta">
-                        <span>Versión: 4.5.2</span>
+                        <span>Versión: 4.6</span>
                         <span>Noviembre 2026</span>
                         <span>Autor: Thomas Hamer</span>
                         <span
@@ -37,7 +37,7 @@
                         >
                     </div>
                     <p>
-                        <img src="https://img.shields.io/badge/version-4.5.2-blue.svg" alt="Version" />
+                        <img src="https://img.shields.io/badge/version-4.6-blue.svg" alt="Version" />
                         <img src="https://img.shields.io/badge/language-C-orange.svg" alt="Language" />
                         <img src="https://img.shields.io/badge/database-SQLite3-green.svg" alt="Database" />
                         <img
@@ -81,7 +81,7 @@
                         <div class="card-label">Formatos Exportación</div>
                     </div>
                     <div class="card card-warning">
-                        <div class="card-value">v4.5.2</div>
+                        <div class="card-value">v4.6</div>
                         <div class="card-label">Versión</div>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                     <h2>Tabla de Contenidos</h2>
                     <ul>
                         <li><a href="#descripción">📋 Descripción</a></li>
-                        <li><a href="#últimos-cambios-v4.5.2">🆕 Últimos Cambios (v4.5.2)</a></li>
+                        <li><a href="#últimos-cambios-v4.6">🆕 Últimos Cambios (v4.6)</a></li>
                         <li><a href="#últimos-cambios-v4.5">🆕 Últimos Cambios (v4.5)</a></li>
                         <li><a href="#características-principales">✨ Características Principales</a></li>
                         <li><a href="#tecnologías-utilizadas">🛠️ Tecnologías Utilizadas</a></li>
@@ -177,9 +177,84 @@
                         </p>
                     </section>
 
-                    <section id="últimos-cambios-v4.5.2">
-                        <h2>🆕 Últimos Cambios (v4.5.2) <span class="badge badge-info">v4.5.2</span></h2>
+                    <section id="últimos-cambios-v4.6">
+                        <h2>🆕 Últimos Cambios (v4.6) <span class="badge badge-info">v4.6</span></h2>
                         <ul>
+                            <li>
+                                <strong>IDs de partido estables</strong>: el ID de un partido ya no cambia cuando se
+                                crea, se borra o se cambia de fecha otro partido (antes se renumeraban todos por fecha).
+                                El listado se sigue ordenando por fecha y hora, y para modificar o eliminar se escribe
+                                el ID que muestra. Un partido nuevo nunca reutiliza el ID de uno borrado, y al eliminar
+                                un partido se borran en una sola transacción sus datos propios (meta, tags, hitos de
+                                carrera y estadísticas de química) y se desvinculan sus lesiones, referencias
+                                multimedia, sesiones de bienestar mental y equipos. Los cálculos que dependen del orden
+                                (último partido, rachas, logros, timeline y momentum de carrera) usan la fecha y no el
+                                ID.
+                            </li>
+                            <li>
+                                <strong>Clima de Open-Meteo en segundo plano</strong>: crear un partido ya no espera la
+                                respuesta de Open-Meteo (sin red podía bloquear la carga hasta 20 segundos). El partido
+                                se guarda al instante, se avisa <code>El clima se completara en segundo plano.</code> y
+                                un proceso <code>curl</code> aparte descarga el clima; la aplicación lo aplica sin
+                                bloquear en la siguiente vuelta de menú, o en el próximo arranque si se cerró antes.
+                                Cada partido tiene hasta 8 intentos fallidos (los fallos de partidos de los últimos 14
+                                días no cuentan, porque Open-Meteo publica el histórico con demora) y, si la API todavía
+                                no tiene datos, ya no se guarda 0,0 °C como si fuera real. Sigue haciendo falta una
+                                cancha con coordenadas y un modo de menú distinto de Simple. Módulo nuevo:
+                                <code>clima_diferido.c/.h</code>.
+                            </li>
+                            <li>
+                                <strong>Backup, restauración e importación de la base más seguros</strong>: los backups
+                                (manual, automático y la exportación de la base) se hacen con la API
+                                <code>sqlite3_backup</code>, así incluyen los cambios que todavía están en el WAL.
+                                <strong>Restaurar backup</strong> (Ajustes → Backup &amp; Restore) e
+                                <strong>Importar desde Base de Datos</strong> (Ajustes → Importar → 7) validan el
+                                archivo de origen antes de tocar nada (lo abren en solo lectura, corren
+                                <code>PRAGMA quick_check</code> y exigen la tabla <code>partido</code>) y lo copian
+                                sobre la conexión abierta; si algo falla, avisan
+                                <code>La base de datos actual no fue modificada.</code> Al iniciar,
+                                <code>PRAGMA user_version</code> queda siempre en la versión actual del esquema (17).
+                            </li>
+                            <li>
+                                <strong>Rendimiento por Condiciones Reales (Open-Meteo)</strong>: nueva opción
+                                <strong>21</strong> en <strong>Estadísticas → Rendimiento</strong>. Muestra la cobertura
+                                (partidos con clima real sobre el total) y, por grupo, partidos jugados, rendimiento,
+                                goles y asistencias promedio y % de victorias, agrupando por lluvia del día (sin lluvia:
+                                menos de 0,1 mm; leve: hasta 5 mm; moderada/fuerte), viento promedio (calmo: menos de 10
+                                km/h; moderado: hasta 25 km/h; fuerte) y condición del cielo según el código WMO
+                                (despejado, nublado, niebla, llovizna/lluvia, nieve, tormenta). Cierra con
+                                <strong>"Tu mejor condición"</strong>: el grupo de mejor rendimiento con al menos 3
+                                partidos.
+                            </li>
+                            <li>
+                                <strong>Resumen general renovado</strong> (Resumen Compartible → <strong>1</strong> y
+                                <strong>2</strong>): el HTML y el Markdown suman efectividad, G+A total, por partido y
+                                cada 90 minutos, dobletes y hat-tricks, récords (rachas de victorias, invicto y
+                                marcando; partido con más goles, con más asistencias y de mejor rendimiento), forma de
+                                los últimos 10 partidos, tendencia de rendimiento de los últimos 20, año por año,
+                                promedios de rendimiento, ánimo y cansancio, top 3 de camisetas, canchas y rivales,
+                                partidos por día y por franja horaria, clima real de Open-Meteo y logros. El HTML es
+                                autocontenido (sin JavaScript ni recursos externos), con modo claro y oscuro, vista para
+                                celular e impresión.
+                            </li>
+                            <li>
+                                <strong>Resumen Anual renovado</strong> (Resumen Compartible → <strong>5</strong>): pide
+                                el año (Enter = año en curso) y, con el mismo estilo que el resumen general, agrega la
+                                comparación con el año anterior, el mes a mes con rendimiento promedio, el mejor mes y
+                                el mes más goleador, la tendencia del año, el marcador del equipo, equipamiento y salud,
+                                el clima real del año y el partido del año (el de mejor rendimiento o, si no hay, el
+                                último). Se genera en TXT, HTML y PDF.
+                            </li>
+                            <li>
+                                <strong>Calidad interna</strong>: correcciones señaladas por SonarCloud, CodeFactor y
+                                CodeQL; menos código duplicado (helpers compartidos en sincronización, exportaciones,
+                                tests y varios módulos); y la suite de <code>ctest</code> pasa de 11 a
+                                <strong>19</strong> pruebas, con nuevas para <code>openmeteo</code>,
+                                <code>db_integridad</code>, <code>clima_diferido</code>, <code>import</code>,
+                                <code>sync</code>, <code>estadisticas_clima</code>, <code>resumen_general</code> y
+                                <code>resumen_anio</code>. Los tests destaparon y corrigieron un error al leer archivos
+                                de importación con fin de línea CRLF en Windows.
+                            </li>
                             <li>
                                 <strong>Resumen del Año</strong>: nueva opción <strong>5</strong> dentro de
                                 <strong>Resumen Compartible</strong> que genera un resumen del año en curso en
@@ -188,9 +263,9 @@
                                 goles a favor/en contra con diferencia, detalle <strong>mes a mes</strong>, camisetas y
                                 canchas más usadas, lesiones registradas y activas, y el
                                 <strong>mejor partido del año</strong> con su ficha completa (marcador, goles y
-                                asistencias con detalle, cancha, camiseta, clima, físico, contexto, arbitraje y
-                                notas). Los archivos se guardan como
-                                <code>resumen_anio_&lt;AAAA&gt;.txt</code>, <code>.html</code> y <code>.pdf</code>.
+                                asistencias con detalle, cancha, camiseta, clima, físico, contexto, arbitraje y notas).
+                                Los archivos se guardan como <code>resumen_anio_&lt;AAAA&gt;.txt</code>,
+                                <code>.html</code> y <code>.pdf</code>.
                             </li>
                             <li>
                                 <strong>Documentación en video</strong>: nueva página
@@ -374,7 +449,8 @@
                                 listar, modificar, retirar/reactivar, eliminar con opciones seguras y exportar
                                 información detallada). Al crear o editar una cancha puedes ingresar sus
                                 <strong>coordenadas geográficas</strong> (latitud, longitud) para que el sistema
-                                consulte el clima automáticamente vía Open-Meteo al registrar un partido.
+                                complete el clima de cada partido automáticamente vía Open-Meteo, en segundo plano y sin
+                                demorar la carga.
                             </li>
                             <li><strong>Análisis de Uso</strong>: Estadísticas de rendimiento por camiseta y cancha</li>
                         </ul>
@@ -419,7 +495,12 @@
                             <li>
                                 <strong>Contexto ampliado</strong>: estado de cancha, marcador global, formato de
                                 fútbol, tarjeta, goles en contra, eventos clave y tags. El clima y la temperatura se
-                                obtienen automáticamente desde las coordenadas de la cancha vía API Open-Meteo.
+                                obtienen automáticamente desde las coordenadas de la cancha vía API Open-Meteo, en
+                                segundo plano: el partido se guarda al instante y el clima se completa después.
+                            </li>
+                            <li>
+                                <strong>IDs estables</strong>: el ID de cada partido no cambia al crear, borrar o editar
+                                otros partidos y no se reutiliza; los listados se ordenan por fecha y hora.
                             </li>
                             <li>
                                 <strong>Simulación de Partidos</strong>: Simulador con cancha ASCII animada y eventos
@@ -485,6 +566,11 @@
                             <li>
                                 <strong>Rendimiento por Temperatura</strong>: Correlación del rendimiento con la
                                 temperatura registrada
+                            </li>
+                            <li>
+                                <strong>Rendimiento por Condiciones Reales (Open-Meteo)</strong>: Rendimiento, goles,
+                                asistencias y % de victorias según la lluvia, el viento y el cielo reales del día del
+                                partido
                             </li>
                         </ul>
                         <h4 id="récords-y-rankings">Récords y Rankings</h4>
@@ -779,9 +865,10 @@
                                 así un nombre o comentario con símbolos no rompe el documento
                             </li>
                             <li>
-                                <strong>Resumen compartible</strong>: HTML con diseño propio (tarjeta oscura,
-                                animaciones y meta etiquetas <code>og:</code> para la previsualización al compartir) y
-                                su equivalente en Markdown
+                                <strong>Resumen compartible</strong>: HTML autocontenido con diseño propio (sin
+                                JavaScript ni recursos externos, modo claro y oscuro, vista para celular, impresión y
+                                meta etiquetas <code>og:</code> para la previsualización al compartir) y su equivalente
+                                en Markdown; el Resumen Anual se genera además en TXT y PDF
                             </li>
                         </ul>
                         <h4 id="importación-de-datos">Importación de Datos</h4>
@@ -793,7 +880,9 @@
                             <li><strong>Acceso desde Ajustes</strong>: Ruta de navegación Ajustes -&gt; Importar</li>
                             <li><strong>Importación rápida</strong>: Opciones Todo JSON rápido y Todo CSV rápido</li>
                             <li>
-                                <strong>Importación de base de datos</strong>: Restauración directa de archivo SQLite
+                                <strong>Importación de base de datos</strong>: Restauración de un archivo SQLite que se
+                                valida antes (<code>PRAGMA quick_check</code> y tabla <code>partido</code>) y se copia
+                                con <code>sqlite3_backup</code>; si no pasa la validación, la base actual no se modifica
                             </li>
                             <li><strong>Validación de Datos</strong>: Verificación de estructura antes de importar</li>
                             <li><strong>Manejo de Errores</strong>: Feedback detallado en caso de problemas</li>
@@ -1886,8 +1975,8 @@ Menú Principal → Bienestar (15)
                                     </tr>
                                     <tr>
                                         <td><strong>Servicios Externos</strong></td>
-                                        <td><code>openmeteo_client.c/.h</code></td>
-                                        <td>Clima real de los partidos (Open-Meteo)</td>
+                                        <td><code>openmeteo_client.c/.h</code>, <code>clima_diferido.c/.h</code></td>
+                                        <td>Clima real de los partidos (Open-Meteo), completado en segundo plano</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Internacionalización</strong></td>
@@ -2042,11 +2131,12 @@ Menú Principal → Bienestar (15)
                         <p>Para el detalle completo, ver la creación del esquema en <a href="db.c">db.c</a>.</p>
                         <p>
                             El esquema está versionado con <code>PRAGMA user_version</code>:
-                            <strong><code>DB_VERSION_CURRENT = 15</code></strong
+                            <strong><code>DB_VERSION_CURRENT = 17</code></strong
                             >. Cada versión agrupa migraciones que se aplican solas al abrir la aplicación (por ejemplo
                             la <strong>15</strong> añade <code>botin.sorteada</code>, la <strong>12</strong>
                             <code>partido.botin_id</code> y <code>settings.botin_predeterminado</code>, y la
-                            <strong>14</strong> <code>partido.diferencia_gol</code>).
+                            <strong>14</strong> <code>partido.diferencia_gol</code>). Al terminar las migraciones,
+                            <code>user_version</code> queda en la versión actual.
                         </p>
                         <h3 id="inicialización-de-la-base-de-datos">Inicialización de la Base de Datos</h3>
                         <p>La función <code>db_init()</code> en <code>db.c</code> se encarga de:</p>
@@ -2598,6 +2688,12 @@ Menú Principal → Bienestar (15)
                                 rendimiento.
                             </li>
                             <li>
+                                <strong>Rendimiento por Condiciones Reales (Open-Meteo)</strong>: Agrupa los partidos
+                                por lluvia, viento y condición del cielo reales (<code>precip_mm</code>,
+                                <code>wind_kmh</code>, <code>weather_code</code>) y marca la mejor condición del
+                                jugador.
+                            </li>
+                            <li>
                                 <strong>Análisis de Situaciones</strong>: Partidos exigentes bien jugados y partidos
                                 fáciles mal jugados.
                             </li>
@@ -2881,6 +2977,17 @@ Menú Principal → Bienestar (15)
                             <li>Agregar ejemplos de uso</li>
                         </ol>
                         <h3 id="testing">Testing</h3>
+                        <h4 id="pruebas-automatizadas">Pruebas Automatizadas</h4>
+                        <p>
+                            La carpeta <code>tests/</code> tiene <strong>19</strong> pruebas unitarias (Unity) que
+                            <code>ctest</code> registra solas: pruebas de humo por módulo y pruebas sobre una base
+                            SQLite real (<code>db_integridad</code>, <code>clima_diferido</code>, <code>import</code>,
+                            <code>sync</code>, <code>estadisticas_clima</code>, <code>resumen_general</code> y
+                            <code>resumen_anio</code>). Detalle en <a href="tests/README.md">tests/README.md</a>.
+                        </p>
+                        <pre><code>cmake --preset mingw-debug -DMIFUTBOLC_BUILD_TESTS=ON
+cmake --build --preset build-debug
+ctest --test-dir build/debug --output-on-failure</code></pre>
                         <h4 id="pruebas-manuales">Pruebas Manuales</h4>
                         <ul>
                             <li>✅ Compilar sin warnings</li>
@@ -2897,8 +3004,9 @@ Menú Principal → Bienestar (15)
                         </ul>
                         <h3 id="análisis-estático-y-calidad">Análisis Estático y Calidad</h3>
                         <p>
-                            El proyecto se revisa con <strong>SonarQube/SonarCloud</strong> y <strong>Cppcheck</strong>.
-                            Los informes quedan en la raíz del repositorio para poder comparar entre revisiones:
+                            El proyecto se revisa con <strong>SonarQube/SonarCloud</strong>,
+                            <strong>CodeFactor</strong>, <strong>CodeQL</strong> y <strong>Cppcheck</strong>. Los
+                            informes quedan en la raíz del repositorio para poder comparar entre revisiones:
                         </p>
                         <ul>
                             <li>
@@ -3075,12 +3183,12 @@ Menú Principal → Bienestar (15)
                         <p>Referencial y sujeto a cambios:</p>
                         <ul>
                             <li>
-                                <strong>Archivos</strong>: 85 módulos <code>.c</code> en la raíz con sus cabeceras (los
-                                <code>.c</code> de <code>tests/</code> se cuentan aparte: 11 archivos de prueba más el
+                                <strong>Archivos</strong>: 81 módulos <code>.c</code> en la raíz con sus cabeceras (los
+                                <code>.c</code> de <code>tests/</code> se cuentan aparte: 19 archivos de prueba más el
                                 runner <code>unity.c</code>).
                             </li>
                             <li>
-                                <strong>Esquema</strong>: <code>DB_VERSION_CURRENT = 15</code> y 54 índices
+                                <strong>Esquema</strong>: <code>DB_VERSION_CURRENT = 17</code> y 50 índices
                                 <code>CREATE INDEX</code> en <code>db.c</code>.
                             </li>
                             <li>

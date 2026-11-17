@@ -20,7 +20,7 @@
                     <h1>Manual de Usuario - MiFutbolC</h1>
                     <p class="subtitle">Sistema Integral de Gestión de Fútbol</p>
                     <div class="meta">
-                        <span>Versión 4.5.2</span>
+                        <span>Versión 4.6</span>
                         <span>Última actualización: 13/10/2026</span>
                         <span>Desarrollado por: Thomas Hamer</span>
                         <span>Licencia: Open Source</span>
@@ -37,7 +37,7 @@
                         <div class="card-label">Formatos Exportación</div>
                     </div>
                     <div class="card card-warning">
-                        <div class="card-value">v4.5.2</div>
+                        <div class="card-value">v4.6</div>
                         <div class="card-label">Versión</div>
                     </div>
                     <div class="card card-success">
@@ -133,10 +133,53 @@
                         <strong>Mejor feedback en herramientas opcionales</strong>: mensajes de éxito/advertencia más
                         claros al configurar utilidades de imagen.
                     </p>
-                    <h3 id="novedades-recientes-v4.5.2">
-                        Novedades recientes (v4.5.2) <span class="badge badge-info">Nuevo en v4.5.2</span>
+                    <h3 id="novedades-recientes-v4.6">
+                        Novedades recientes (v4.6) <span class="badge badge-info">Nuevo en v4.6</span>
                     </h3>
                     <ul>
+                        <li>
+                            <strong>IDs de partido fijos</strong>: el ID de un partido ya no cambia cuando cargas,
+                            borras o cambias la fecha de otro partido, y un partido nuevo nunca reutiliza el ID de uno
+                            borrado. El listado se sigue ordenando por fecha y hora; para modificar o eliminar, escribe
+                            el ID que muestra el listado.
+                        </li>
+                        <li>
+                            <strong>Clima sin esperas</strong>: al crear un partido en una cancha con coordenadas ya no
+                            hay que esperar a Open-Meteo. El partido se guarda al instante, verás
+                            <code>El clima se completara en segundo plano.</code> y la temperatura y el clima real se
+                            completan solos mientras sigues usando el programa (o en el próximo inicio, si lo cerraste
+                            antes o no había conexión). Si Open-Meteo todavía no publicó datos de ese día, se vuelve a
+                            intentar más tarde en lugar de guardar 0,0 °C.
+                        </li>
+                        <li>
+                            <strong>Backup y restauración más seguros</strong>: los backups incluyen siempre los últimos
+                            cambios, y <strong>Restaurar backup</strong> e
+                            <strong>Importar desde Base de Datos</strong> revisan el archivo antes de reemplazar nada;
+                            si el archivo está dañado o no es una base de MiFutbolC, verás
+                            <code>La base de datos actual no fue modificada.</code>
+                        </li>
+                        <li>
+                            <strong>Rendimiento por Condiciones Reales (Open-Meteo)</strong>: nueva opción
+                            <strong>21</strong> en <strong>Estadísticas → Rendimiento</strong> que muestra cómo rindes
+                            según la lluvia, el viento y el cielo reales del día de cada partido, y cuál es tu mejor
+                            condición.
+                        </li>
+                        <li>
+                            <strong>Resumen general renovado</strong> (Resumen Compartible → <strong>1</strong> y
+                            <strong>2</strong>): muchos más datos (efectividad, G+A cada 90 minutos, récords y rachas,
+                            forma de los últimos 10 partidos, tendencia, año por año, top 3 de camisetas, canchas y
+                            rivales, días y franjas horarias, clima real y logros) y un diseño nuevo que se ve bien en
+                            el celular, en modo claro y oscuro, y al imprimir.
+                        </li>
+                        <li>
+                            <strong>Resumen Anual renovado</strong> (Resumen Compartible → <strong>5</strong>): ahora
+                            pide el año y suma la comparación con el año anterior, el mejor mes, el mes más goleador, la
+                            tendencia del año y el partido del año, en TXT, HTML y PDF.
+                        </li>
+                        <li>
+                            <strong>Calidad interna</strong>: correcciones de SonarCloud, CodeFactor y CodeQL, menos
+                            código duplicado y 19 suites de pruebas automáticas (<code>ctest</code>).
+                        </li>
                         <li>
                             <strong>Documentación en video</strong>: nueva página <a href="VIDEOS.md">VIDEOS.md</a> con
                             la <strong>Presentación</strong> del sistema y el <strong>Tutorial</strong> paso a paso
@@ -515,7 +558,8 @@
                         </li>
                         <li>
                             <strong>24. Ajustes</strong>: personalizar tema, idioma, accesibilidad, usuario, modo,
-                            exportación/importación, búsqueda global y actualización.
+                            exportación/importación (incluida ODS), búsqueda global, actualización, backup, integridad
+                            de la base, deshacer y notificaciones.
                         </li>
                     </ul>
                     <h2 id="calendario">Calendario</h2>
@@ -700,8 +744,10 @@
                     </ol>
                     <h3 id="coordenadas-de-la-cancha">Coordenadas de la Cancha</h3>
                     <p>
-                        Las coordenadas geográficas (latitud y longitud) son necesarias para que el sistema pueda
-                        consultar el clima automáticamente a través de la API Open-Meteo al registrar un partido.
+                        Las coordenadas geográficas (latitud y longitud) son necesarias para que el sistema complete el
+                        clima de cada partido automáticamente a través de la API Open-Meteo. La consulta se hace en
+                        segundo plano: el partido se guarda al instante y el clima se completa poco después, o en el
+                        próximo inicio si no había conexión.
                     </p>
                     <p>Para obtener las coordenadas de tu cancha:</p>
                     <ol type="1">
@@ -1010,13 +1056,25 @@
                             </li>
                             <li>Selecciona la camiseta utilizada</li>
                             <li>El partido se guardará con todos los datos</li>
+                            <li>
+                                Si la cancha tiene coordenadas y el modo de menú no es <strong>Simple</strong>, verás
+                                <code>El clima se completara en segundo plano.</code>: la temperatura y el clima real se
+                                completan solos desde Open-Meteo, sin que tengas que esperar
+                            </li>
                         </ol>
                         <h3 id="listar-partidos">Listar Partidos</h3>
                         <ol type="1">
                             <li>Selecciona "6" en el menú principal</li>
                             <li>Elige "2" para listar todos los partidos</li>
-                            <li>Se mostrarán con todas las estadísticas y fecha con día de semana</li>
+                            <li>
+                                Se mostrarán con todas las estadísticas y fecha con día de semana, ordenados por fecha y
+                                hora
+                            </li>
                             <li>Ejemplo: <code>Fecha: Domingo 03/05/2026 19:00</code></li>
+                            <li>
+                                El ID de cada partido es fijo: no cambia aunque cargues, borres o cambies la fecha de
+                                otros partidos
+                            </li>
                         </ol>
                         <h4 id="filtros-de-partidos">Filtros de Partidos</h4>
                         <p>
@@ -1040,14 +1098,14 @@
                             Cada opción se activa y se desactiva volviendo a elegirla (o con
                             <strong>14) Limpiar filtros</strong>). Mientras un ranking está activo, el listado muestra
                             solo esos 5 partidos y la navegación por páginas queda deshabilitada. Solo se consideran
-                            partidos con clima registrado (opción "9. Obtener Clima Histórico").
+                            partidos con clima registrado (opción "8. Obtener Clima Histórico").
                         </p>
                         <h3 id="último-partido-victoria-derrota-empate-gol-y-asistencia">
                             Último Partido, Victoria, Derrota, Empate, Gol y Asistencia
                         </h3>
                         <ol type="1">
                             <li>Selecciona "6" en el menú principal</li>
-                            <li>Elige "10" para abrir el submenú <strong>ULTIMOS</strong></li>
+                            <li>Elige "9" para abrir el submenú <strong>ULTIMOS</strong></li>
                             <li>Elige la opción deseada (1 a 6)</li>
                             <li>
                                 Además de los datos del partido, se muestra el
@@ -1062,15 +1120,21 @@
                         <ol type="1">
                             <li>Selecciona "6" en el menú principal</li>
                             <li>Elige "3" para modificar un partido</li>
-                            <li>Ingresa el ID del partido a modificar</li>
+                            <li>Ingresa el ID del partido a modificar (el que aparece en el listado)</li>
                             <li>Actualiza los datos según sea necesario</li>
                         </ol>
                         <h3 id="eliminar-un-partido">Eliminar un Partido</h3>
                         <ol type="1">
                             <li>Selecciona "6" en el menú principal</li>
                             <li>Elige "4" para eliminar un partido</li>
-                            <li>Ingresa el ID del partido a eliminar</li>
+                            <li>Ingresa el ID del partido a eliminar (el que aparece en el listado)</li>
                             <li>Confirma la eliminación</li>
+                            <li>
+                                Se borran también los datos propios del partido (metadatos como el favorito, tags, hitos
+                                de carrera y estadísticas de química) y sus lesiones, referencias multimedia, sesiones
+                                de bienestar y equipos quedan sin partido asociado. Los IDs de los demás partidos no
+                                cambian
+                            </li>
                         </ol>
                         <h3 id="simular-con-equipos-guardados">Simular con Equipos Guardados</h3>
                         <ol type="1">
@@ -1284,6 +1348,34 @@
                             <li><strong>Goles Promedio por Día</strong>: Producción por día de la semana</li>
                             <li><strong>Asistencias Promedio por Día</strong>: Asistencias por día</li>
                             <li><strong>Rendimiento Promedio por Día</strong>: Rendimiento general por día</li>
+                            <li>
+                                <strong>Rendimiento por Condiciones Reales (Open-Meteo)</strong> (Estadísticas →
+                                Rendimiento → <strong>21</strong>): usa el clima real que Open-Meteo guardó para cada
+                                partido. Muestra la cobertura (cuántos partidos tienen clima real) y, para cada grupo,
+                                partidos jugados, rendimiento, goles y asistencias promedio y porcentaje de victorias:
+                                <ul>
+                                    <li>
+                                        <strong>Por lluvia del día</strong>: sin lluvia (menos de 0,1 mm), lluvia leve
+                                        (hasta 5 mm) y lluvia moderada/fuerte
+                                    </li>
+                                    <li>
+                                        <strong>Por viento promedio del día</strong>: calmo (menos de 10 km/h), moderado
+                                        (hasta 25 km/h) y fuerte
+                                    </li>
+                                    <li>
+                                        <strong>Por condición del cielo</strong>: despejado, nublado, niebla,
+                                        llovizna/lluvia, nieve y tormenta
+                                    </li>
+                                    <li>
+                                        <strong>Tu mejor condición</strong>: el grupo con mejor rendimiento entre los
+                                        que tienen al menos 3 partidos
+                                    </li>
+                                    <li>
+                                        Si todavía no hay partidos con clima real, se avisa que el clima se completa
+                                        automáticamente al crear partidos en una cancha geolocalizada
+                                    </li>
+                                </ul>
+                            </li>
                         </ul>
                         <h3 id="récords-y-rankings">Récords y Rankings</h3>
                         <p>Sistema completo de récords históricos:</p>
@@ -2087,10 +2179,15 @@
                     </p>
                     <ul>
                         <li>
-                            <strong>1. Generar Resumen HTML</strong>: crea <code>resumen_compartible.html</code> con una
-                            tarjeta visual (estadísticas generales, rendimiento destacado, resultados, último partido,
-                            racha, perfil de juego y logros) y meta etiquetas <code>og:</code> para la previsualización
-                            al compartir el enlace.
+                            <strong>1. Generar Resumen HTML</strong>: crea <code>resumen_compartible.html</code> con el
+                            perfil de toda tu carrera: resultados y efectividad, ataque (G+A total, por partido y cada
+                            90 minutos, dobletes y hat-tricks), tendencia de rendimiento de los últimos 20 partidos,
+                            récords y rachas, momento actual (racha y último partido), forma de los últimos 10, año por
+                            año, top 3 de camisetas, canchas y rivales, cuándo juegas (día y franja horaria), cómo
+                            llegas (rendimiento, ánimo y cansancio promedio), clima real de Open-Meteo y perfil con
+                            logros. Es un archivo autocontenido (sin JavaScript ni recursos externos) que se ve bien en
+                            el celular, en modo claro y oscuro y al imprimir, e incluye meta etiquetas
+                            <code>og:</code> para la previsualización al compartir el enlace.
                         </li>
                         <li>
                             <strong>2. Generar Resumen Markdown</strong>: la misma información en
@@ -2099,7 +2196,7 @@
                         <li><strong>3. Estadísticas Destacadas</strong>: resumen de las métricas más relevantes.</li>
                         <li><strong>4. Mejor Temporada</strong>: la temporada con mejores números.</li>
                         <li>
-                            <strong>5. Resumen Anual</strong>: abre un submenú que genera el resumen del año en curso
+                            <strong>5. Resumen Anual</strong>: abre un submenú que genera el resumen del año que elijas
                             en TXT, HTML, PDF o los tres formatos a la vez.
                         </li>
                     </ul>
@@ -2119,19 +2216,29 @@
                             pensado para leer o pegar en un chat.
                         </li>
                         <li>
-                            <strong>2. Resumen Anual en HTML</strong>: <code>resumen_anio_&lt;AAAA&gt;.html</code>,
-                            con el mismo estilo de tarjetas que el resto de reportes.
+                            <strong>2. Resumen Anual en HTML</strong>: <code>resumen_anio_&lt;AAAA&gt;.html</code>, con
+                            el mismo diseño que el resumen general (celular, modo claro y oscuro, impresión).
                         </li>
                         <li>
-                            <strong>3. Resumen Anual en PDF</strong>: <code>resumen_anio_&lt;AAAA&gt;.pdf</code>,
-                            listo para imprimir o compartir.
+                            <strong>3. Resumen Anual en PDF</strong>: <code>resumen_anio_&lt;AAAA&gt;.pdf</code>, listo
+                            para imprimir o compartir.
                         </li>
                         <li>
                             <strong>4. Generar los tres formatos</strong>: crea los tres archivos en una sola pasada.
                         </li>
                     </ul>
-                    <p>El resumen toma solo los registros del año en curso y agrupa:</p>
+                    <p>
+                        Al generarlo, el sistema pide el año (<code>Año del resumen</code>; con Enter queda el año en
+                        curso) y toma solo los registros de ese año. Además de las secciones del resumen general
+                        calculadas para ese año (resultados, ataque, récords, rankings, cómo llegas, cuándo juegas y
+                        clima real), agrupa:
+                    </p>
                     <ul>
+                        <li>Comparación con el año anterior (solo si ese año tiene partidos).</li>
+                        <li>
+                            Tendencia de rendimiento del año, mejor mes (mayor rendimiento promedio) y mes más goleador
+                            (más goles + asistencias).
+                        </li>
                         <li>
                             Partidos jugados, goles, asistencias, victorias, empates, derrotas y efectividad (puntos
                             obtenidos sobre el máximo posible: 3 por victoria y 1 por empate).
@@ -2139,16 +2246,25 @@
                         <li>
                             Goles a favor, goles en contra y diferencia (solo de los partidos con marcador cargado).
                         </li>
-                        <li>Detalle mes a mes (partidos, goles, asistencias, victorias, empates, derrotas).</li>
+                        <li>
+                            Detalle mes a mes (partidos, goles, asistencias, victorias, empates, derrotas y rendimiento
+                            promedio).
+                        </li>
                         <li>Camisetas activas, camisetas usadas y la camiseta más usada del año.</li>
                         <li>Lesiones registradas en el año y cuántas siguen activas.</li>
                         <li>Canchas activas, canchas usadas y la cancha más usada del año.</li>
-                        <li>El mejor partido del año según el rendimiento, con su ficha completa: fecha, rival y tipo de rival, marcador y diferencia, goles y asistencias con su detalle, cancha y camiseta, clima, físico, contexto, arbitraje, comentario, tags y eventos clave.</li>
+                        <li>
+                            El partido del año (el de mejor rendimiento o, si ninguno lo tiene cargado, el último), con
+                            su ficha completa: fecha, rival y tipo de rival, marcador y diferencia, goles y asistencias
+                            con su detalle, cancha y camiseta, clima, físico, contexto, arbitraje, comentario, tags y
+                            eventos clave.
+                        </li>
                     </ul>
                     <p>
                         Los archivos se guardan en la misma carpeta de exportación que el resto de reportes. Si en el
-                        año todavía no hay partidos, el reporte se genera igual y avisa de que no hay actividad; el
-                        detalle del marcador aparece como "sin datos" cuando ningún partido tiene goles cargados.
+                        año todavía no hay partidos, el reporte se genera igual y avisa «Sin partidos registrados en
+                        &lt;AAAA&gt;»; las secciones sin datos no se muestran (por ejemplo, el marcador del equipo
+                        cuando ningún partido tiene goles cargados).
                     </p>
                     <h2 id="ranking-de-amigos">Ranking de Amigos</h2>
                     <p>Selecciona "23" en el menú principal (Ranking Amigos).</p>
@@ -2320,11 +2436,21 @@
                         <li>Duplicados (se evita la importación de duplicados)</li>
                     </ul>
                     <h3 id="manejo-de-errores">Manejo de Errores</h3>
-                    <p>
-                        Si hay errores durante la importación: - Se mostrará un mensaje detallado del error - Los datos
-                        no se importarán parcialmente - La base de datos permanecerá intacta - Podrás corregir el
-                        archivo y reintentar
-                    </p>
+                    <p>Si hay errores durante la importación:</p>
+                    <ul>
+                        <li>Se mostrará un mensaje detallado del error</li>
+                        <li>
+                            En la importación de partidos (JSON, TXT o CSV), las líneas o ítems inválidos (formato roto
+                            o camiseta inexistente) se omiten y el resto se importa; volver a importar el mismo archivo
+                            no duplica partidos
+                        </li>
+                        <li>
+                            Al importar una base de datos (opción 7), el archivo se revisa antes de reemplazar nada; si
+                            no pasa la revisión, verás <code>La base de datos actual no fue modificada.</code> y tus
+                            datos quedan intactos
+                        </li>
+                        <li>Podrás corregir el archivo y reintentar</li>
+                    </ul>
                     <div class="alert alert-info">
                         <p>
                             <strong>Nota</strong>: no hay captura dedicada del submenú de importación en la carpeta
@@ -2346,12 +2472,19 @@
                             <li><strong>7. Modo</strong>: definir modo de uso.</li>
                             <li><strong>8. Exportar</strong>: abrir submenú de exportación.</li>
                             <li><strong>9. Importar</strong>: abrir submenú de importación.</li>
-                            <li><strong>10. Búsqueda Global</strong>: buscar rápidamente dentro del sistema.</li>
-                            <li><strong>11. Actualizar</strong>: ejecutar flujo de actualización.</li>
                             <li>
-                                <strong>12. Música al iniciar</strong>: activar/desactivar auto-reproducción al iniciar
-                                app.
+                                <strong>10. Exportar a ODS</strong>: exportar los datos a una hoja de cálculo
+                                OpenDocument.
                             </li>
+                            <li><strong>11. Búsqueda Global</strong>: buscar rápidamente dentro del sistema.</li>
+                            <li><strong>12. Actualizar</strong>: ejecutar flujo de actualización.</li>
+                            <li>
+                                <strong>13. Backup &amp; Restore</strong>: crear y restaurar copias de seguridad de la
+                                base de datos.
+                            </li>
+                            <li><strong>14. Integridad BD</strong>: verificar la integridad de la base de datos.</li>
+                            <li><strong>15. Deshacer (Undo)</strong>: revertir operaciones recientes.</li>
+                            <li><strong>16. Notificaciones</strong>: ver las notificaciones del sistema.</li>
                         </ul>
                         <h3 id="cambiar-tema-de-interfaz">Cambiar Tema de Interfaz</h3>
                         <ol type="1">
@@ -2453,20 +2586,14 @@
                         <h3 id="búsqueda-global">Búsqueda Global</h3>
                         <ol type="1">
                             <li>Selecciona "24" en el menú principal</li>
-                            <li>Elige "10" para abrir la búsqueda global</li>
+                            <li>Elige "11" para abrir la búsqueda global</li>
                             <li>Escribe el término a buscar para localizar contenido entre módulos</li>
                         </ol>
                         <h3 id="actualizar-aplicación">Actualizar aplicación</h3>
                         <ol type="1">
                             <li>Selecciona "24" en el menú principal</li>
-                            <li>Elige "11" para abrir el flujo de actualización</li>
+                            <li>Elige "12" para abrir el flujo de actualización</li>
                             <li>En Windows, podrás buscar y ejecutar la actualización</li>
-                        </ol>
-                        <h3 id="música-al-iniciar-desde-ajustes">Música al iniciar desde Ajustes</h3>
-                        <ol type="1">
-                            <li>Selecciona "24" en el menú principal</li>
-                            <li>Elige "12" para activar o desactivar reproducción automática al iniciar</li>
-                            <li>El valor se guarda y persiste entre sesiones</li>
                         </ol>
                         <figure>
                             <img src="images/menuajustes.png" alt="Menú de ajustes" />
@@ -2628,6 +2755,13 @@
                         <li>Guarda el archivo en un lugar seguro</li>
                         <li>Para restaurar, usa <strong>Ajustes → Importar</strong> (opción 9 dentro de Ajustes)</li>
                     </ol>
+                    <p>
+                        Para guardar una copia de la base de datos completa, usa
+                        <strong>Ajustes → Backup &amp; Restore</strong> (opción 13 dentro de Ajustes) →
+                        <strong>1. Crear backup</strong>. Para volver a ella, elige
+                        <strong>3. Restaurar backup</strong>: el backup se revisa antes de reemplazar la base actual y,
+                        al terminar, hay que reiniciar MiFutbolC.
+                    </p>
                     <h3 id="puedo-usar-mifutbolc-para-múltiples-equipos">
                         ¿Puedo usar MiFutbolC para múltiples equipos?
                     </h3>
@@ -2720,7 +2854,7 @@
                     <hr />
                     <p>
                         <strong>Desarrollado por</strong>: Thomas Hamer<br />
-                        <strong>Versión</strong>: 4.5.2<br />
+                        <strong>Versión</strong>: 4.6<br />
                         <strong>Última actualización</strong>: 13/10/2026<br />
                         <strong>Licencia</strong>: Open Source
                     </p>
@@ -2729,7 +2863,7 @@
 
                 <footer>
                     <p>
-                        <strong>Desarrollado por</strong>: Thomas Hamer &nbsp;|&nbsp; <strong>Versión</strong>: 4.5.2
+                        <strong>Desarrollado por</strong>: Thomas Hamer &nbsp;|&nbsp; <strong>Versión</strong>: 4.6
                         &nbsp;|&nbsp; <strong>Última actualización</strong>: 13/10/2026 &nbsp;|&nbsp;
                         <strong>Licencia</strong>: Open Source
                     </p>
