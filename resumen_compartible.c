@@ -2307,6 +2307,29 @@ void generar_resumen_markdown(void)
     generar_resumen_formato(1);
 }
 
+/* Mejor y peor partido solo difieren en el titulo y el orden de la consulta. */
+static void mostrar_partido_destacado(const char *titulo, const char *sql)
+{
+    sqlite3_stmt *stmt;
+    ui_printf("%s", titulo);
+    if (preparar_stmt(sql, &stmt))
+    {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            ui_printf("Fecha: %s\n", sqlite3_column_text(stmt, 0));
+            ui_printf("Camiseta: %s\n", sqlite3_column_text(stmt, 1));
+            ui_printf("Goles: %d | Asistencias: %d\n",
+                      sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3));
+            ui_printf("Rendimiento: %d/10\n", sqlite3_column_int(stmt, 4));
+        }
+        else
+        {
+            mostrar_no_hay_registros("datos disponibles");
+        }
+        sqlite3_finalize(stmt);
+    }
+}
+
 void generar_resumen_estadisticas(void)
 {
     clear_screen();
@@ -2321,53 +2344,16 @@ void generar_resumen_estadisticas(void)
 
     sqlite3_stmt *stmt;
 
-    /* Mejor partido */
-    ui_printf("\n=== MEJOR PARTIDO ===\n");
-    if (preparar_stmt(
-                "SELECT p.fecha_hora, c.nombre, p.goles, p.asistencias, p.rendimiento_general "
-                "FROM partido p "
-                "JOIN camiseta c ON p.camiseta_id = c.id "
-                "ORDER BY p.rendimiento_general DESC LIMIT 1;",
-                &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            ui_printf("Fecha: %s\n", sqlite3_column_text(stmt, 0));
-            ui_printf("Camiseta: %s\n", sqlite3_column_text(stmt, 1));
-            ui_printf("Goles: %d | Asistencias: %d\n",
-                      sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3));
-            ui_printf("Rendimiento: %d/10\n", sqlite3_column_int(stmt, 4));
-        }
-        else
-        {
-            mostrar_no_hay_registros("datos disponibles");
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    /* Peor partido */
-    ui_printf("\n=== PEOR PARTIDO ===\n");
-    if (preparar_stmt(
-                "SELECT p.fecha_hora, c.nombre, p.goles, p.asistencias, p.rendimiento_general "
-                "FROM partido p "
-                "JOIN camiseta c ON p.camiseta_id = c.id "
-                "ORDER BY p.rendimiento_general ASC LIMIT 1;",
-                &stmt))
-    {
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            ui_printf("Fecha: %s\n", sqlite3_column_text(stmt, 0));
-            ui_printf("Camiseta: %s\n", sqlite3_column_text(stmt, 1));
-            ui_printf("Goles: %d | Asistencias: %d\n",
-                      sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3));
-            ui_printf("Rendimiento: %d/10\n", sqlite3_column_int(stmt, 4));
-        }
-        else
-        {
-            mostrar_no_hay_registros("datos disponibles");
-        }
-        sqlite3_finalize(stmt);
-    }
+    mostrar_partido_destacado("\n=== MEJOR PARTIDO ===\n",
+                              "SELECT p.fecha_hora, c.nombre, p.goles, p.asistencias, "
+                              "p.rendimiento_general FROM partido p "
+                              "JOIN camiseta c ON p.camiseta_id = c.id "
+                              "ORDER BY p.rendimiento_general DESC LIMIT 1;");
+    mostrar_partido_destacado("\n=== PEOR PARTIDO ===\n",
+                              "SELECT p.fecha_hora, c.nombre, p.goles, p.asistencias, "
+                              "p.rendimiento_general FROM partido p "
+                              "JOIN camiseta c ON p.camiseta_id = c.id "
+                              "ORDER BY p.rendimiento_general ASC LIMIT 1;");
 
     /* Promedios generales */
     ui_printf("\n=== PROMEDIOS GENERALES ===\n");

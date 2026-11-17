@@ -31,6 +31,11 @@ typedef void (*anio_header_writer_t)(FILE *file, const char *anio, int hay);
 typedef void (*anio_row_writer_t)(FILE *file, const EstadisticaAnio *stats);
 typedef void (*anio_footer_writer_t)(FILE *file, int hay);
 
+/* Definidas mas abajo; las exportaciones sueltas y la batch comparten el volcado de filas. */
+static void stats_camiseta_txt_rows(FILE *file, sqlite3_stmt *stmt);
+static void stats_camiseta_html_rows(FILE *file, sqlite3_stmt *stmt);
+static void stats_camiseta_json_rows(FILE *file, sqlite3_stmt *stmt);
+
 /* ============================================================================
  * HELPER ESTaTICOS
  * ============================================================================ */
@@ -62,14 +67,7 @@ static void write_stats_txt(FILE *file)
         return;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "%s | G:%d A:%d P:%d V:%d E:%d D:%d\n", sqlite3_column_text(stmt, 0),
-                sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
-                sqlite3_column_int(stmt, 5), sqlite3_column_int(stmt, 6));
-    }
-
+    stats_camiseta_txt_rows(file, stmt);
     sqlite3_finalize(stmt);
 }
 
@@ -81,48 +79,19 @@ static void write_stats_html(FILE *file)
         return;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file,
-                "<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</"
-                "td></tr>",
-                html_texto((const char *)sqlite3_column_text(stmt, 0)), sqlite3_column_int(stmt, 1),
-                sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-                sqlite3_column_int(stmt, 4), sqlite3_column_int(stmt, 5),
-                sqlite3_column_int(stmt, 6));
-    }
-
+    stats_camiseta_html_rows(file, stmt);
     sqlite3_finalize(stmt);
 }
 
 static void write_stats_json(FILE *file)
 {
-    cJSON *root = cJSON_CreateArray();
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, SQL_STATS_BY_CAMISETA))
     {
-        cJSON_Delete(root);
         return;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddStringToObject(item, "camiseta", (const char *)sqlite3_column_text(stmt, 0));
-        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
-        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(item, "partidos", sqlite3_column_int(stmt, 3));
-        cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 4));
-        cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 5));
-        cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 6));
-        cJSON_AddItemToArray(root, item);
-    }
-
-    char *json_string = cJSON_PrintUnformatted(root);
-    fprintf(file, "%s", json_string);
-
-    free(json_string);
-    cJSON_Delete(root);
+    stats_camiseta_json_rows(file, stmt);
     sqlite3_finalize(stmt);
 }
 

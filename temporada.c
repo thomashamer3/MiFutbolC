@@ -1641,6 +1641,22 @@ void generar_resumen_mensual(int temporada_id, const char *mes_anio)
     mostrar_alerta_operacion("Resumen Mensual", "Generado", mes_anio);
 }
 
+/* Columnas de mensual_resumen que comparten la vista y la exportacion. */
+static void leer_mensual_resumen(sqlite3_stmt *stmt, MensualResumen *res)
+{
+    res->total_partidos = sqlite3_column_int(stmt, 3);
+    res->total_goles = sqlite3_column_int(stmt, 4);
+    res->promedio_goles_partido = (float)sqlite3_column_double(stmt, 5);
+    res->partidos_ganados = sqlite3_column_int(stmt, 6);
+    res->partidos_empatados = sqlite3_column_int(stmt, 7);
+    res->partidos_perdidos = sqlite3_column_int(stmt, 8);
+    res->total_lesiones = sqlite3_column_int(stmt, 9);
+    res->total_gastos = (float)sqlite3_column_double(stmt, 10);
+    res->total_ingresos = (float)sqlite3_column_double(stmt, 11);
+    res->mejor_equipo_mes = sqlite3_column_int(stmt, 12);
+    res->peor_equipo_mes = sqlite3_column_int(stmt, 13);
+}
+
 void mostrar_resumen_mensual(int temporada_id, const char *mes_anio)
 {
     clear_screen();
@@ -1664,42 +1680,33 @@ void mostrar_resumen_mensual(int temporada_id, const char *mes_anio)
             printf("MES: %s\n", mes_anio);
             printf("═══════════════════════════════════════════════════════════════\n\n");
 
-            int total_partidos = sqlite3_column_int(stmt, 3);
-            int total_goles = sqlite3_column_int(stmt, 4);
-            float promedio_goles = (float)sqlite3_column_double(stmt, 5);
-            int partidos_ganados = sqlite3_column_int(stmt, 6);
-            int partidos_empatados = sqlite3_column_int(stmt, 7);
-            int partidos_perdidos = sqlite3_column_int(stmt, 8);
-            int total_lesiones = sqlite3_column_int(stmt, 9);
-            float total_gastos = (float)sqlite3_column_double(stmt, 10);
-            float total_ingresos = (float)sqlite3_column_double(stmt, 11);
-            int mejor_equipo_mes = sqlite3_column_int(stmt, 12);
-            int peor_equipo_mes = sqlite3_column_int(stmt, 13);
+            MensualResumen res = {0};
+            leer_mensual_resumen(stmt, &res);
 
             printf("📊 PARTIDOS:\n");
-            printf("   Total jugados: %d\n", total_partidos);
-            printf("   Ganados: %d\n", partidos_ganados);
-            printf("   Empatados: %d\n", partidos_empatados);
-            printf("   Perdidos: %d\n", partidos_perdidos);
-            printf("   Goles totales: %d\n", total_goles);
-            printf("   Promedio de goles por partido: %.2f\n\n", promedio_goles);
+            printf("   Total jugados: %d\n", res.total_partidos);
+            printf("   Ganados: %d\n", res.partidos_ganados);
+            printf("   Empatados: %d\n", res.partidos_empatados);
+            printf("   Perdidos: %d\n", res.partidos_perdidos);
+            printf("   Goles totales: %d\n", res.total_goles);
+            printf("   Promedio de goles por partido: %.2f\n\n", res.promedio_goles_partido);
 
             printf("🏥 LESIONES:\n");
-            printf("   Total registradas: %d\n\n", total_lesiones);
+            printf("   Total registradas: %d\n\n", res.total_lesiones);
 
             printf("💰 FINANZAS:\n");
-            printf("   Gastos totales: $%.2f\n", total_gastos);
-            printf("   Ingresos totales: $%.2f\n", total_ingresos);
-            printf("   Balance: $%.2f\n\n", total_ingresos - total_gastos);
+            printf("   Gastos totales: $%.2f\n", res.total_gastos);
+            printf("   Ingresos totales: $%.2f\n", res.total_ingresos);
+            printf("   Balance: $%.2f\n\n", res.total_ingresos - res.total_gastos);
 
             printf("🏆 EQUIPOS DESTACADOS:\n");
-            if (mejor_equipo_mes > 0)
+            if (res.mejor_equipo_mes > 0)
             {
-                printf("   Mejor equipo del mes: %s\n", get_equipo_nombre(mejor_equipo_mes));
+                printf("   Mejor equipo del mes: %s\n", get_equipo_nombre(res.mejor_equipo_mes));
             }
-            if (peor_equipo_mes > 0)
+            if (res.peor_equipo_mes > 0)
             {
-                printf("   Peor equipo del mes: %s\n", get_equipo_nombre(peor_equipo_mes));
+                printf("   Peor equipo del mes: %s\n", get_equipo_nombre(res.peor_equipo_mes));
             }
         }
         else
@@ -1828,42 +1835,34 @@ void exportar_resumen_mensual(int temporada_id, const char *mes_anio)
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            int total_partidos = sqlite3_column_int(stmt, 3);
-            int total_goles = sqlite3_column_int(stmt, 4);
-            float promedio_goles = (float)sqlite3_column_double(stmt, 5);
-            int partidos_ganados = sqlite3_column_int(stmt, 6);
-            int partidos_empatados = sqlite3_column_int(stmt, 7);
-            int partidos_perdidos = sqlite3_column_int(stmt, 8);
-            int total_lesiones = sqlite3_column_int(stmt, 9);
-            float total_gastos = (float)sqlite3_column_double(stmt, 10);
-            float total_ingresos = (float)sqlite3_column_double(stmt, 11);
-            int mejor_equipo_mes = sqlite3_column_int(stmt, 12);
-            int peor_equipo_mes = sqlite3_column_int(stmt, 13);
+            MensualResumen res = {0};
+            leer_mensual_resumen(stmt, &res);
 
             fprintf(file, "ESTADISTICAS DE PARTIDOS:\n");
-            fprintf(file, "Partidos jugados: %d\n", total_partidos);
-            fprintf(file, "Partidos ganados: %d\n", partidos_ganados);
-            fprintf(file, "Partidos empatados: %d\n", partidos_empatados);
-            fprintf(file, "Partidos perdidos: %d\n", partidos_perdidos);
-            fprintf(file, "Goles totales: %d\n", total_goles);
-            fprintf(file, "Promedio de goles por partido: %.2f\n\n", promedio_goles);
+            fprintf(file, "Partidos jugados: %d\n", res.total_partidos);
+            fprintf(file, "Partidos ganados: %d\n", res.partidos_ganados);
+            fprintf(file, "Partidos empatados: %d\n", res.partidos_empatados);
+            fprintf(file, "Partidos perdidos: %d\n", res.partidos_perdidos);
+            fprintf(file, "Goles totales: %d\n", res.total_goles);
+            fprintf(file, "Promedio de goles por partido: %.2f\n\n", res.promedio_goles_partido);
 
             fprintf(file, "LESIONES:\n");
-            fprintf(file, "Total registradas: %d\n\n", total_lesiones);
+            fprintf(file, "Total registradas: %d\n\n", res.total_lesiones);
 
             fprintf(file, "FINANZAS:\n");
-            fprintf(file, "Gastos totales: $%.2f\n", total_gastos);
-            fprintf(file, "Ingresos totales: $%.2f\n", total_ingresos);
-            fprintf(file, "Balance: $%.2f\n\n", total_ingresos - total_gastos);
+            fprintf(file, "Gastos totales: $%.2f\n", res.total_gastos);
+            fprintf(file, "Ingresos totales: $%.2f\n", res.total_ingresos);
+            fprintf(file, "Balance: $%.2f\n\n", res.total_ingresos - res.total_gastos);
 
             fprintf(file, "EQUIPOS DESTACADOS:\n");
-            if (mejor_equipo_mes > 0)
+            if (res.mejor_equipo_mes > 0)
             {
-                fprintf(file, "Mejor equipo del mes: %s\n", get_equipo_nombre(mejor_equipo_mes));
+                fprintf(file, "Mejor equipo del mes: %s\n",
+                        get_equipo_nombre(res.mejor_equipo_mes));
             }
-            if (peor_equipo_mes > 0)
+            if (res.peor_equipo_mes > 0)
             {
-                fprintf(file, "Peor equipo del mes: %s\n", get_equipo_nombre(peor_equipo_mes));
+                fprintf(file, "Peor equipo del mes: %s\n", get_equipo_nombre(res.peor_equipo_mes));
             }
         }
         sqlite3_finalize(stmt);

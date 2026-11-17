@@ -259,6 +259,17 @@ int exportar_archivo_si_hay_registros(const char *tabla,
  */
 void export_json_add_lesion_base_fields(cJSON *item, sqlite3_stmt *stmt);
 
+/**
+ * @brief Crea un objeto JSON con "id" (columna 0), "nombre" (columna 1) y
+ *        las columnas enteras consecutivas desde la 2.
+ *
+ * @param stmt Fila actual.
+ * @param claves Claves JSON de las columnas 2 .. 2 + cantidad - 1, en orden.
+ * @param cantidad Cantidad de claves.
+ * @return Objeto nuevo; el llamador lo agrega a su arreglo.
+ */
+cJSON *export_json_item_id_nombre(sqlite3_stmt *stmt, const char *const claves[], int cantidad);
+
 /** @name Funciones de escritura de secciones (multi-seccion) */
 /** @{ */
 

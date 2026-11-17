@@ -37,6 +37,8 @@ typedef struct
     double avg_asistencias;
 } month_stat_row_t;
 
+static void stats_mes_csv_rows(FILE *file, sqlite3_stmt *stmt);
+static void stats_mes_txt_rows(FILE *file, sqlite3_stmt *stmt);
 static void stats_mes_json_rows(FILE *file, sqlite3_stmt *stmt);
 static void stats_mes_html_rows(FILE *file, sqlite3_stmt *stmt);
 
@@ -330,23 +332,16 @@ void exportar_estadisticas_por_mes_csv(void)
         return;
     }
 
-    fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
-
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
+        /* Si falla la consulta el archivo queda solo con el encabezado, como antes. */
+        fprintf(file, "Mes,Camiseta,Partidos,Goles,Asist,AvgG,AvgA\n");
         fclose(file);
         return;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        fprintf(file, "%s,%s,%d,%d,%d,%.2f,%.2f\n", sqlite3_column_text(stmt, 0),
-                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
-    }
-
+    stats_mes_csv_rows(file, stmt);
     sqlite3_finalize(stmt);
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.csv"));
@@ -366,31 +361,16 @@ void exportar_estadisticas_por_mes_txt(void)
         return;
     }
 
-    fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
-
     sqlite3_stmt *stmt;
     if (!preparar_stmt_export(&stmt, SQL_STATS_MONTH))
     {
+        /* Si falla la consulta el archivo queda solo con el encabezado, como antes. */
+        fprintf(file, "ESTADISTICAS POR MES\n====================\n\n");
         fclose(file);
         return;
     }
 
-    char current[8] = "";
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *month = (const char *)sqlite3_column_text(stmt, 0);
-        if (strcmp(current, month) != 0)
-        {
-            strcpy_s(current, sizeof(current), month);
-            fprintf(file, "\n%s:\n", month);
-        }
-
-        fprintf(file, "  %s: %d partidos, %d goles, %d asistencias (Avg: %.2f/%.2f)\n",
-                sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2),
-                sqlite3_column_int(stmt, 3), sqlite3_column_int(stmt, 4),
-                sqlite3_column_double(stmt, 5), sqlite3_column_double(stmt, 6));
-    }
-
+    stats_mes_txt_rows(file, stmt);
     sqlite3_finalize(stmt);
     fclose(file);
     printf("Exportado: %s\n", get_export_path("estadisticas_por_mes.txt"));

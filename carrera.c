@@ -1275,14 +1275,12 @@ static void mostrar_timeline_carrera(void)
     pause_console();
 }
 
-static void hof_mostrar_mejor_partido(void)
+/* Mejor y peor partido solo difieren en el titulo y el ORDER BY de la consulta. */
+static void hof_mostrar_partido_destacado(const char *titulo, const char *sql)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
-                      "FROM partido ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, "
-                      SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1";
 
-    printf("MEJOR PARTIDO\n");
+    printf("%s", titulo);
     printf("%s", SEP_MENOR);
 
     if (!preparar_stmt(&stmt, sql))
@@ -1305,34 +1303,22 @@ static void hof_mostrar_mejor_partido(void)
     sqlite3_finalize(stmt);
 }
 
+static void hof_mostrar_mejor_partido(void)
+{
+    hof_mostrar_partido_destacado(
+        "MEJOR PARTIDO\n",
+        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
+        "FROM partido ORDER BY rendimiento_general DESC, (goles + asistencias) DESC, "
+        SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1");
+}
+
 static void hof_mostrar_peor_partido(void)
 {
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
-                      "FROM partido ORDER BY rendimiento_general ASC, "
-                      SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1";
-
-    printf("\nPEOR PARTIDO\n");
-    printf("%s", SEP_MENOR);
-
-    if (!preparar_stmt(&stmt, sql))
-    {
-        return;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *fecha = (const char *)sqlite3_column_text(stmt, 1);
-        printf("Partido %d | Fecha %s | G:%d A:%d | Rend:%d\n", sqlite3_column_int(stmt, 0),
-               fecha ? fecha : "N/A", sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4));
-    }
-    else
-    {
-        printf("Sin datos de partidos.\n");
-    }
-
-    sqlite3_finalize(stmt);
+    hof_mostrar_partido_destacado(
+        "\nPEOR PARTIDO\n",
+        "SELECT id, fecha_hora, goles, asistencias, rendimiento_general "
+        "FROM partido ORDER BY rendimiento_general ASC, "
+        SQL_PARTIDO_CRONO("", "DESC") " LIMIT 1");
 }
 
 static void hof_mostrar_mejor_temporada(void)
@@ -2188,25 +2174,30 @@ static void retro_cargar_hito_primer_gol(RetroRecuerdo *recuerdos, int *count, i
     sqlite3_finalize(stmt);
 }
 
-static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count, int max_count,
-        int dia_actual, int mes_actual, int anio_actual)
+/* Hito "primera vez que...": la consulta devuelve (nombre, fecha) ordenado por fecha. */
+typedef struct
+{
+    const char *sql;
+    const char *accion;
+    const char *nombre_vacio;
+    const char *titulo;
+} RetroHitoPrimeraVez;
+
+static void retro_cargar_hito_primera_vez(RetroRecuerdo *recuerdos, int *count, int max_count,
+        int dia_actual, int mes_actual, int anio_actual,
+        const RetroHitoPrimeraVez *hito)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT TRIM(IFNULL(rival_nombre, '')) AS rival, MIN(fecha_hora) "
-                      "FROM partido "
-                      "WHERE TRIM(IFNULL(rival_nombre, '')) <> '' "
-                      "GROUP BY TRIM(IFNULL(rival_nombre, '')) "
-                      "ORDER BY MIN(fecha_hora) ASC";
     int agregados = 0;
 
-    if (!preparar_stmt(&stmt, sql))
+    if (!preparar_stmt(&stmt, hito->sql))
     {
         return;
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        const char *rival = (const char *)sqlite3_column_text(stmt, 0);
+        const char *nombre = (const char *)sqlite3_column_text(stmt, 0);
         const char *fecha_raw = (const char *)sqlite3_column_text(stmt, 1);
         int dia = 0;
         int mes = 0;
@@ -2227,11 +2218,11 @@ static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count,
             continue;
         }
 
-        snprintf(detalle, sizeof(detalle), "Primera vez que jugaste contra %s.",
-                 (rival && rival[0] != '\0') ? rival : "ese rival");
+        snprintf(detalle, sizeof(detalle), "Primera vez que %s %s.", hito->accion,
+                 (nombre && nombre[0] != '\0') ? nombre : hito->nombre_vacio);
 
-        if (retro_append_hito(recuerdos, count, max_count, anio_actual, fecha_raw,
-                              "Primer cruce con un rival", detalle))
+        if (retro_append_hito(recuerdos, count, max_count, anio_actual, fecha_raw, hito->titulo,
+                              detalle))
         {
             agregados++;
         }
@@ -2240,56 +2231,36 @@ static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count,
     sqlite3_finalize(stmt);
 }
 
+static void retro_cargar_hito_primer_rival(RetroRecuerdo *recuerdos, int *count, int max_count,
+        int dia_actual, int mes_actual, int anio_actual)
+{
+    static const RetroHitoPrimeraVez hito =
+    {
+        "SELECT TRIM(IFNULL(rival_nombre, '')) AS rival, MIN(fecha_hora) "
+        "FROM partido "
+        "WHERE TRIM(IFNULL(rival_nombre, '')) <> '' "
+        "GROUP BY TRIM(IFNULL(rival_nombre, '')) "
+        "ORDER BY MIN(fecha_hora) ASC",
+        "jugaste contra", "ese rival", "Primer cruce con un rival"
+    };
+    retro_cargar_hito_primera_vez(recuerdos, count, max_count, dia_actual, mes_actual,
+                                  anio_actual, &hito);
+}
+
 static void retro_cargar_hito_primera_camiseta(RetroRecuerdo *recuerdos, int *count, int max_count,
         int dia_actual, int mes_actual, int anio_actual)
 {
-    sqlite3_stmt *stmt;
-    const char *sql = "SELECT IFNULL(c.nombre, ''), MIN(p.fecha_hora) "
-                      "FROM partido p "
-                      "JOIN camiseta c ON c.id = p.camiseta_id "
-                      "GROUP BY p.camiseta_id, c.nombre "
-                      "ORDER BY MIN(p.fecha_hora) ASC";
-    int agregados = 0;
-
-    if (!preparar_stmt(&stmt, sql))
+    static const RetroHitoPrimeraVez hito =
     {
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *camiseta = (const char *)sqlite3_column_text(stmt, 0);
-        const char *fecha_raw = (const char *)sqlite3_column_text(stmt, 1);
-        int dia = 0;
-        int mes = 0;
-        int anio = 0;
-        char detalle[180];
-
-        if (*count >= max_count || agregados >= 2)
-        {
-            break;
-        }
-
-        if (!retro_parse_fecha(fecha_raw, &dia, &mes, &anio))
-        {
-            continue;
-        }
-        if (anio >= anio_actual || dia != dia_actual || mes != mes_actual)
-        {
-            continue;
-        }
-
-        snprintf(detalle, sizeof(detalle), "Primera vez que usaste la camiseta %s.",
-                 (camiseta && camiseta[0] != '\0') ? camiseta : "seleccionada");
-
-        if (retro_append_hito(recuerdos, count, max_count, anio_actual, fecha_raw,
-                              "Debut de camiseta", detalle))
-        {
-            agregados++;
-        }
-    }
-
-    sqlite3_finalize(stmt);
+        "SELECT IFNULL(c.nombre, ''), MIN(p.fecha_hora) "
+        "FROM partido p "
+        "JOIN camiseta c ON c.id = p.camiseta_id "
+        "GROUP BY p.camiseta_id, c.nombre "
+        "ORDER BY MIN(p.fecha_hora) ASC",
+        "usaste la camiseta", "seleccionada", "Debut de camiseta"
+    };
+    retro_cargar_hito_primera_vez(recuerdos, count, max_count, dia_actual, mes_actual,
+                                  anio_actual, &hito);
 }
 
 static void retro_cargar_hito_mejor_racha(RetroRecuerdo *recuerdos, int *count, int max_count,

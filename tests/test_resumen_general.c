@@ -11,54 +11,16 @@
  * directorio de datos) y lo borra al terminar.
  */
 
-#include "unity/unity.h"
-#include "db.h"
+#include "test_db_fixture.h"
 #include "resumen_compartible.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#define TEST_SEP "\\"
-#else
-#define TEST_SEP "/"
-#endif
-
 #define PERFIL_TEST "test_resumen_general"
-#define DELTA 0.001
 
-static char g_db_path[1024];
-static char g_log_path[1024];
 static char g_out_path[1024];
-
-/* Este Unity se compila sin precision double: comparacion propia. */
-#define ASSERT_CERCA(esperado, real) assert_cerca((esperado), (real), __LINE__)
-
-static void assert_cerca(double esperado, double real, int linea)
-{
-    if (fabs(esperado - real) > DELTA)
-    {
-        static char mensaje[128];
-        snprintf(mensaje, sizeof(mensaje), "Esperado %.4f, obtenido %.4f", esperado, real);
-        UNITY_TEST_FAIL(linea, mensaje);
-    }
-}
-
-static void borrar_base(const char *path)
-{
-    char aux[1100];
-    remove(path);
-    snprintf(aux, sizeof(aux), "%s-wal", path);
-    remove(aux);
-    snprintf(aux, sizeof(aux), "%s-shm", path);
-    remove(aux);
-}
-
-static void exec_ok(const char *sql)
-{
-    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
-}
 
 typedef struct
 {
@@ -139,32 +101,17 @@ static char *escribir_a_texto(const ResumenGeneral *r, int es_markdown)
     }
     fclose(f);
 
-    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "rb"));
-    TEST_ASSERT_NOT_NULL(f);
-    fseek(f, 0, SEEK_END);
-    long largo = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    TEST_ASSERT_TRUE(largo >= 0);
-    char *texto = malloc((size_t)largo + 1);
-    TEST_ASSERT_NOT_NULL(texto);
-    size_t leidos = fread(texto, 1, (size_t)largo, f);
-    texto[leidos] = '\0';
-    fclose(f);
-    remove(g_out_path);
-    return texto;
+    return leer_y_borrar(g_out_path, NULL);
 }
 
 void setUp(void)
 {
-    borrar_base(g_db_path);
-    TEST_ASSERT_TRUE(db_init());
-    TEST_ASSERT_NOT_NULL(db);
+    abrir_base_limpia();
 }
 
 void tearDown(void)
 {
-    db_close();
-    borrar_base(g_db_path);
+    cerrar_y_borrar_base();
 }
 
 static void test_totales_y_efectividad(void)
@@ -358,28 +305,10 @@ static void test_base_sin_partidos(void)
 
 int main(void)
 {
-    if (!db_set_active_user(PERFIL_TEST))
+    if (!fixture_iniciar(PERFIL_TEST, g_out_path, sizeof(g_out_path), "_salida.txt"))
     {
-        fprintf(stderr, "No se pudo seleccionar el perfil de prueba\n");
         return 1;
     }
-    if (!db_init())
-    {
-        fprintf(stderr, "db_init fallo\n");
-        return 1;
-    }
-    const char *data_dir = get_data_dir();
-    if (!data_dir)
-    {
-        fprintf(stderr, "Sin directorio de datos\n");
-        return 1;
-    }
-    snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, PERFIL_TEST);
-    snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
-             PERFIL_TEST);
-    snprintf(g_out_path, sizeof(g_out_path), "%s" TEST_SEP "%s_salida.txt", data_dir,
-             PERFIL_TEST);
-    db_close();
 
     UNITY_BEGIN();
 
@@ -393,7 +322,5 @@ int main(void)
     RUN_TEST(test_markdown_escapa_barras_y_no_usa_html);
     RUN_TEST(test_base_sin_partidos);
 
-    int fallos = UNITY_END();
-    remove(g_log_path);
-    return fallos;
+    return fixture_terminar();
 }

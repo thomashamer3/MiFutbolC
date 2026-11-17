@@ -26,6 +26,18 @@ static FILE *open_export_file(const char *filename, sqlite3_stmt *stmt)
     return file;
 }
 
+cJSON *export_json_item_id_nombre(sqlite3_stmt *stmt, const char *const claves[], int cantidad)
+{
+    cJSON *item = cJSON_CreateObject();
+    cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
+    cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
+    for (int i = 0; i < cantidad; i++)
+    {
+        cJSON_AddNumberToObject(item, claves[i], sqlite3_column_int(stmt, 2 + i));
+    }
+    return item;
+}
+
 void export_generic_rows(ExportConfig *config, sqlite3_stmt *stmt)
 {
     /* open_export_file ya finaliza el stmt cuando no puede abrir el archivo;

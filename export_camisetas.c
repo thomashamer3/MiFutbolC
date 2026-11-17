@@ -89,16 +89,11 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 {
     (void)file;
     cJSON *root = (cJSON *)context;
-    cJSON *item = cJSON_CreateObject();
-    cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
-    cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
-    cJSON_AddNumberToObject(item, "total_goles", sqlite3_column_int(stmt, 2));
-    cJSON_AddNumberToObject(item, "total_asistencias", sqlite3_column_int(stmt, 3));
-    cJSON_AddNumberToObject(item, "total_partidos", sqlite3_column_int(stmt, 4));
-    cJSON_AddNumberToObject(item, "victorias", sqlite3_column_int(stmt, 5));
-    cJSON_AddNumberToObject(item, "empates", sqlite3_column_int(stmt, 6));
-    cJSON_AddNumberToObject(item, "derrotas", sqlite3_column_int(stmt, 7));
-    cJSON_AddNumberToObject(item, "total_lesiones", sqlite3_column_int(stmt, 8));
+    static const char *const enteros[] = {"total_goles", "total_asistencias", "total_partidos",
+                                          "victorias",   "empates",           "derrotas",
+                                          "total_lesiones"
+                                         };
+    cJSON *item = export_json_item_id_nombre(stmt, enteros, 7);
     cJSON_AddNumberToObject(item, "rendimiento_promedio", sqlite3_column_double(stmt, 9));
     cJSON_AddNumberToObject(item, "cansancio_promedio", sqlite3_column_double(stmt, 10));
     cJSON_AddNumberToObject(item, "estado_animo_promedio", sqlite3_column_double(stmt, 11));

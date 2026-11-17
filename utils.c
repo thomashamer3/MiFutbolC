@@ -196,6 +196,22 @@ int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql, const char 
     return 0;
 }
 
+int db_actualizar_texto_por_id(const char *sql, const char *texto, int id)
+{
+    sqlite3_stmt *stmt;
+    if (!db_prepare_stmt(&stmt, sql))
+    {
+        return 0;
+    }
+
+    sqlite3_bind_text(stmt, 1, texto, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, id);
+    /* Igual que los llamadores originales: el resultado del paso no se reporta. */
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
 float utils_clamp_float(float value, float minv, float maxv)
 {
     if (value < minv)
@@ -3546,6 +3562,31 @@ void listar_entidades(const char *tabla, const char *titulo, const char *mensaje
 
     db_stmt_release(stmt);
     pause_console();
+}
+
+int seleccionar_id_existente(const char *tabla, const char *entidad_plural, const char *titulo,
+                             const char *mensaje_vacio, const char *prompt, const char *entidad)
+{
+    if (!hay_registros(tabla))
+    {
+        mostrar_no_hay_registros(entidad_plural);
+        pause_console();
+        return 0;
+    }
+
+    listar_entidades(tabla, titulo, mensaje_vacio);
+
+    int id = input_int(prompt);
+    if (id <= 0 || !existe_id(tabla, id))
+    {
+        if (id > 0)
+        {
+            mostrar_no_existe(entidad);
+        }
+        pause_console();
+        return 0;
+    }
+    return id;
 }
 
 int input_int_rango(const char *msg, int min, int max)

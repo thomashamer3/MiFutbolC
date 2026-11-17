@@ -10,27 +10,18 @@
  * (mifutbol_test_clima.db en el directorio de datos) y lo borra al terminar.
  */
 
-#include "unity/unity.h"
+#include "test_db_fixture.h"
 #include "clima_diferido.h"
-#include "db.h"
 #include "openmeteo_client.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-#define TEST_SEP "\\"
-#else
-#define TEST_SEP "/"
-#endif
-
 #define PERFIL_TEST "test_clima"
 #define MAX_INTENTOS 8
 #define FECHA_VIEJA "2025-10-01 10:00"
 
-static char g_db_path[1024];
 static char g_json_path[1024];
-static char g_log_path[1024];
 
 /* Respuesta de ejemplo (la misma de test_openmeteo): 20 C de promedio, salida
  * del sol 06:15 y puesta 19:40. */
@@ -45,37 +36,6 @@ static const char *JSON_CON_DATOS =
     "\"wind_speed_10m\":[10.0,20.0,30.0]},"
     "\"daily\":{\"time\":[\"2025-10-01\"],"
     "\"sunrise\":[\"2025-10-01T06:15\"],\"sunset\":[\"2025-10-01T19:40\"]}}";
-
-static void borrar_base(const char *path)
-{
-    char aux[1100];
-    remove(path);
-    snprintf(aux, sizeof(aux), "%s-wal", path);
-    remove(aux);
-    snprintf(aux, sizeof(aux), "%s-shm", path);
-    remove(aux);
-}
-
-static int consultar_int(const char *sql)
-{
-    sqlite3_stmt *stmt = NULL;
-    int valor = -1;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return -1;
-    }
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        valor = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return valor;
-}
-
-static void exec_ok(const char *sql)
-{
-    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
-}
 
 static int intentos_de(long long partido_id)
 {
@@ -334,28 +294,10 @@ static void test_aplicar_respuesta_partido_cambiado_o_fallida(void)
 
 int main(void)
 {
-    if (!db_set_active_user(PERFIL_TEST))
+    if (!fixture_iniciar(PERFIL_TEST, g_json_path, sizeof(g_json_path), "_respuesta.json"))
     {
-        fprintf(stderr, "No se pudo seleccionar el perfil de prueba\n");
         return 1;
     }
-    if (!db_init())
-    {
-        fprintf(stderr, "db_init fallo\n");
-        return 1;
-    }
-    const char *data_dir = get_data_dir();
-    if (!data_dir)
-    {
-        fprintf(stderr, "Sin directorio de datos\n");
-        return 1;
-    }
-    snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, PERFIL_TEST);
-    snprintf(g_json_path, sizeof(g_json_path), "%s" TEST_SEP "%s_respuesta.json", data_dir,
-             PERFIL_TEST);
-    snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
-             PERFIL_TEST);
-    db_close();
 
     UNITY_BEGIN();
 
@@ -367,7 +309,5 @@ int main(void)
     RUN_TEST(test_aplicar_respuesta_guarda_clima);
     RUN_TEST(test_aplicar_respuesta_partido_cambiado_o_fallida);
 
-    int fallos = UNITY_END();
-    remove(g_log_path);
-    return fallos;
+    return fixture_terminar();
 }

@@ -491,7 +491,8 @@ static int parse_camiseta_data(int id, char *nombre, CamisetaData *out)
     return 1;
 }
 
-static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
+/* TXT y CSV solo difieren en el formato; fmt siempre es un literal de este archivo. */
+static int parse_camiseta_line_fmt(const char *line, const char *fmt, CamisetaData *out)
 {
     int id = 0;
     char nombre[256] = {0};
@@ -501,12 +502,12 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
         return 0;
     }
 #if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%d - %255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
+    if (sscanf_s(line, fmt, &id, nombre, (unsigned)_countof(nombre)) != 2)
     {
         return 0;
     }
 #else
-    if (sscanf(line, "%d - %255s", &id, nombre) != 2)
+    if (sscanf(line, fmt, &id, nombre) != 2)
     {
         return 0;
     }
@@ -514,28 +515,14 @@ static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
     return parse_camiseta_data(id, nombre, out);
 }
 
+static int parse_camiseta_txt_line(const char *line, CamisetaData *out)
+{
+    return parse_camiseta_line_fmt(line, "%d - %255s", out);
+}
+
 static int parse_camiseta_csv_line(const char *line, CamisetaData *out)
 {
-    int id = 0;
-    char nombre[256] = {0};
-
-    if (!line)
-    {
-        return 0;
-    }
-#if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%d,%255s", &id, nombre, (unsigned)_countof(nombre)) != 2)
-    {
-        return 0;
-    }
-#else
-    if (sscanf(line, "%d,%255s", &id, nombre) != 2)
-    {
-        return 0;
-    }
-#endif
-
-    return parse_camiseta_data(id, nombre, out);
+    return parse_camiseta_line_fmt(line, "%d,%255s", out);
 }
 
 static void importar_camisetas_desde_archivo(const char *filename, const char *formato,
@@ -831,7 +818,8 @@ static int parse_estadistica_data(const EstadisticaData *parsed, EstadisticaData
     return 1;
 }
 
-static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
+/* TXT y CSV solo difieren en el formato; fmt siempre es un literal de este archivo. */
+static int parse_estadistica_line_fmt(const char *line, const char *fmt, EstadisticaData *out)
 {
     EstadisticaData parsed;
 
@@ -840,13 +828,12 @@ static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
         return 0;
     }
 #if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", parsed.camiseta,
-                 (unsigned)_countof(parsed.camiseta), &parsed.goles, &parsed.asistencias,
-                 &parsed.partidos, &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
+    if (sscanf_s(line, fmt, parsed.camiseta, (unsigned)_countof(parsed.camiseta), &parsed.goles,
+                 &parsed.asistencias, &parsed.partidos, &parsed.victorias, &parsed.empates,
+                 &parsed.derrotas) != 7)
 #else
-    if (sscanf(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", parsed.camiseta, &parsed.goles,
-               &parsed.asistencias, &parsed.partidos, &parsed.victorias, &parsed.empates,
-               &parsed.derrotas) != 7)
+    if (sscanf(line, fmt, parsed.camiseta, &parsed.goles, &parsed.asistencias, &parsed.partidos,
+               &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
 #endif
     {
         return 0;
@@ -855,28 +842,14 @@ static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
     return parse_estadistica_data(&parsed, out);
 }
 
+static int parse_estadistica_txt_line(const char *line, EstadisticaData *out)
+{
+    return parse_estadistica_line_fmt(line, "%255[^|] | G:%d A:%d P:%d V:%d E:%d D:%d", out);
+}
+
 static int parse_estadistica_csv_line(const char *line, EstadisticaData *out)
 {
-    EstadisticaData parsed;
-
-    if (!line)
-    {
-        return 0;
-    }
-#if defined(_WIN32) && defined(_MSC_VER)
-    if (sscanf_s(line, "%255[^,],%d,%d,%d,%d,%d,%d", parsed.camiseta,
-                 (unsigned)_countof(parsed.camiseta), &parsed.goles, &parsed.asistencias,
-                 &parsed.partidos, &parsed.victorias, &parsed.empates, &parsed.derrotas) != 7)
-#else
-    if (sscanf(line, "%255[^,],%d,%d,%d,%d,%d,%d", parsed.camiseta, &parsed.goles,
-               &parsed.asistencias, &parsed.partidos, &parsed.victorias, &parsed.empates,
-               &parsed.derrotas) != 7)
-#endif
-    {
-        return 0;
-    }
-
-    return parse_estadistica_data(&parsed, out);
+    return parse_estadistica_line_fmt(line, "%255[^,],%d,%d,%d,%d,%d,%d", out);
 }
 
 static void importar_estadisticas_desde_archivo(const char *filename, const char *formato,

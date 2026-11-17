@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void copiar(char *destino, size_t tam, const char *origen)
+void sync_texto_copiar(char *destino, size_t tam, const char *origen)
 {
     if (!destino || tam == 0)
     {
@@ -22,7 +22,7 @@ static void copiar(char *destino, size_t tam, const char *origen)
     snprintf(destino, tam, "%s", origen);
 }
 
-static int ejecutar(const char *sql)
+int sync_sql_ejecutar(const char *sql, const char *modulo_log)
 {
     if (!db || !sql)
     {
@@ -34,12 +34,17 @@ static int ejecutar(const char *sql)
     {
         if (error)
         {
-            app_log_event("SYNC", error);
+            app_log_event(modulo_log, error);
             sqlite3_free(error);
         }
         return 0;
     }
     return 1;
+}
+
+static int ejecutar(const char *sql)
+{
+    return sync_sql_ejecutar(sql, "SYNC");
 }
 
 /* Elimina el trigger de UPDATE si fue creado sin la condicion sobre el ID. */
@@ -284,7 +289,7 @@ int sync_config_get(const char *clave, char *salida, size_t tam)
     int ok = 0;
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        copiar(salida, tam, (const char *)sqlite3_column_text(stmt, 0));
+        sync_texto_copiar(salida, tam, (const char *)sqlite3_column_text(stmt, 0));
         ok = 1;
     }
     sqlite3_finalize(stmt);
@@ -378,16 +383,16 @@ int sync_queue_next(SyncDirty *salida)
     {
         salida->id = sqlite3_column_int(stmt, 0);
         salida->partido_id = sqlite3_column_int(stmt, 1);
-        copiar(salida->uuid, sizeof(salida->uuid),
-               (const char *)sqlite3_column_text(stmt, 2));
-        copiar(salida->operacion, sizeof(salida->operacion),
-               (const char *)sqlite3_column_text(stmt, 3));
-        copiar(salida->estado, sizeof(salida->estado),
-               (const char *)sqlite3_column_text(stmt, 4));
-        copiar(salida->ultimo_error, sizeof(salida->ultimo_error),
-               (const char *)sqlite3_column_text(stmt, 5));
-        copiar(salida->creado_en, sizeof(salida->creado_en),
-               (const char *)sqlite3_column_text(stmt, 6));
+        sync_texto_copiar(salida->uuid, sizeof(salida->uuid),
+                          (const char *)sqlite3_column_text(stmt, 2));
+        sync_texto_copiar(salida->operacion, sizeof(salida->operacion),
+                          (const char *)sqlite3_column_text(stmt, 3));
+        sync_texto_copiar(salida->estado, sizeof(salida->estado),
+                          (const char *)sqlite3_column_text(stmt, 4));
+        sync_texto_copiar(salida->ultimo_error, sizeof(salida->ultimo_error),
+                          (const char *)sqlite3_column_text(stmt, 5));
+        sync_texto_copiar(salida->creado_en, sizeof(salida->creado_en),
+                          (const char *)sqlite3_column_text(stmt, 6));
         ok = 1;
     }
     sqlite3_finalize(stmt);
@@ -535,8 +540,8 @@ int sync_conflict_first(SyncConflicto *salida)
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         salida->id = sqlite3_column_int(stmt, 0);
-        copiar(salida->uuid, sizeof(salida->uuid),
-               (const char *)sqlite3_column_text(stmt, 1));
+        sync_texto_copiar(salida->uuid, sizeof(salida->uuid),
+                          (const char *)sqlite3_column_text(stmt, 1));
         const char *local = (const char *)sqlite3_column_text(stmt, 2);
         const char *remoto = (const char *)sqlite3_column_text(stmt, 3);
         salida->local_json = local ? strdup(local) : NULL;

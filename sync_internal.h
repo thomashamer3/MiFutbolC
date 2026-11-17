@@ -46,5 +46,8 @@ int sync_texto_seguro(const char *texto);
 int sync_url_esquema_permitido(const char *url);
 int sync_entero_desde_json(const cJSON *obj, const char *clave, int defecto);
 double sync_double_desde_json(const cJSON *obj, const char *clave, double defecto);
+/* Definidas en sync_queue.c; las comparte sync_entidades.c. */
+void sync_texto_copiar(char *destino, size_t tam, const char *origen);
+int sync_sql_ejecutar(const char *sql, const char *modulo_log);
 
 #endif /* SYNC_INTERNAL_H */

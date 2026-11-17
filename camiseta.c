@@ -1697,19 +1697,12 @@ void editar_camiseta(void)
     char nombre[100];
     solicitar_nombre_camiseta("Nuevo nombre: ", nombre, sizeof(nombre));
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "UPDATE camiseta SET nombre=? WHERE id=?"))
+    if (!db_actualizar_texto_por_id("UPDATE camiseta SET nombre=? WHERE id=?", nombre, id))
     {
         printf("Error al actualizar la camiseta.\n");
         pause_console();
         return;
     }
-
-    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
 
     char log_msg[256];
     snprintf(log_msg, sizeof(log_msg), "Editada camiseta id=%d nuevo_nombre=%.180s", id, nombre);

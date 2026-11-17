@@ -10,50 +10,14 @@
  * al terminar. No configura servidores ni hace llamadas HTTP.
  */
 
-#include "unity/unity.h"
-#include "db.h"
+#include "test_db_fixture.h"
 #include "sync.h"
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _WIN32
-#define TEST_SEP "\\"
-#else
-#define TEST_SEP "/"
-#endif
-
 #define PERFIL_TEST "test_sync"
 #define UUID_DUPLICADO "11111111-1111-4111-8111-111111111111"
 #define UUID_OTRO "22222222-2222-4222-8222-222222222222"
-
-static char g_db_path[1024];
-static char g_log_path[1024];
-
-static void borrar_base(const char *path)
-{
-    char aux[1100];
-    remove(path);
-    snprintf(aux, sizeof(aux), "%s-wal", path);
-    remove(aux);
-    snprintf(aux, sizeof(aux), "%s-shm", path);
-    remove(aux);
-}
-
-static int consultar_int(const char *sql)
-{
-    sqlite3_stmt *stmt = NULL;
-    int valor = -1;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return -1;
-    }
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        valor = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return valor;
-}
 
 /* Copia el primer valor de texto de la consulta (vacio si no hay fila). */
 static void consultar_texto(const char *sql, char *salida, size_t tam)
@@ -69,11 +33,6 @@ static void consultar_texto(const char *sql, char *salida, size_t tam)
         snprintf(salida, tam, "%s", (const char *)sqlite3_column_text(stmt, 0));
     }
     sqlite3_finalize(stmt);
-}
-
-static void exec_ok(const char *sql)
-{
-    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
 }
 
 /* Inserta un partido; @p uuid NULL lo deja sin uuid, como la aplicacion. */
@@ -264,26 +223,10 @@ static void test_eliminar_local_dentro_de_transaccion(void)
 
 int main(void)
 {
-    if (!db_set_active_user(PERFIL_TEST))
+    if (!fixture_iniciar(PERFIL_TEST, NULL, 0, NULL))
     {
-        fprintf(stderr, "No se pudo seleccionar el perfil de prueba\n");
         return 1;
     }
-    if (!db_init())
-    {
-        fprintf(stderr, "db_init fallo\n");
-        return 1;
-    }
-    const char *data_dir = get_data_dir();
-    if (!data_dir)
-    {
-        fprintf(stderr, "Sin directorio de datos\n");
-        return 1;
-    }
-    snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, PERFIL_TEST);
-    snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
-             PERFIL_TEST);
-    db_close();
 
     UNITY_BEGIN();
 
@@ -294,7 +237,5 @@ int main(void)
     RUN_TEST(test_eliminar_local_borra_duplicados_y_dependencias);
     RUN_TEST(test_eliminar_local_dentro_de_transaccion);
 
-    int fallos = UNITY_END();
-    remove(g_log_path);
-    return fallos;
+    return fixture_terminar();
 }

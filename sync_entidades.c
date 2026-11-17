@@ -13,38 +13,9 @@
 #define COL_CAMISETAS "camisetas_sync"
 #define COL_BOTINES "botines_sync"
 
-static void copiar(char *destino, size_t tam, const char *origen)
-{
-    if (!destino || tam == 0)
-    {
-        return;
-    }
-    if (!origen)
-    {
-        destino[0] = '\0';
-        return;
-    }
-    snprintf(destino, tam, "%s", origen);
-}
-
 static int ejecutar(const char *sql)
 {
-    if (!db || !sql)
-    {
-        return 0;
-    }
-    char *error = NULL;
-    int rc = sqlite3_exec(db, sql, NULL, NULL, &error);
-    if (rc != SQLITE_OK)
-    {
-        if (error)
-        {
-            app_log_event("SYNC-ENTIDADES", error);
-            sqlite3_free(error);
-        }
-        return 0;
-    }
-    return 1;
+    return sync_sql_ejecutar(sql, "SYNC-ENTIDADES");
 }
 
 static void ahora_iso(char *salida, size_t tam)
@@ -75,8 +46,8 @@ static int comparar_fechas(const char *a, const char *b)
     }
     char izquierda[64];
     char derecha[64];
-    copiar(izquierda, sizeof(izquierda), a);
-    copiar(derecha, sizeof(derecha), b);
+    sync_texto_copiar(izquierda, sizeof(izquierda), a);
+    sync_texto_copiar(derecha, sizeof(derecha), b);
     for (char *p = izquierda; *p; p++)
     {
         if (*p == ' ')
@@ -361,10 +332,10 @@ static int buscar_remoto(const char *base, const char *token,
     if (cJSON_IsArray(items) && cJSON_GetArraySize(items) > 0)
     {
         const cJSON *item = cJSON_GetArrayItem(items, 0);
-        copiar(remoto->id, sizeof(remoto->id),
-               sync_json_texto(item, "id"));
-        copiar(remoto->actualizado, sizeof(remoto->actualizado),
-               sync_json_texto(item, "updated_at_client"));
+        sync_texto_copiar(remoto->id, sizeof(remoto->id),
+                          sync_json_texto(item, "id"));
+        sync_texto_copiar(remoto->actualizado, sizeof(remoto->actualizado),
+                          sync_json_texto(item, "updated_at_client"));
         encontrado = cJSON_IsObject(item) ? 1 : 0;
     }
     cJSON_Delete(json);
@@ -434,12 +405,109 @@ static cJSON *crear_registro(const char *uuid, const char *owner,
     return registro;
 }
 
+/* Camisetas y botines solo difieren en sus columnas: una tabla por entidad
+   alimenta la subida, la actualizacion y la insercion. */
+typedef enum
+{
+    CAMPO_TEXTO,
+    CAMPO_ENTERO,
+    CAMPO_BOOL
+} TipoCampoSync;
+
+typedef struct
+{
+    const char *clave;
+    TipoCampoSync tipo;
+    int defecto; /* Valor al bajar si el payload no trae el campo numerico */
+} CampoSync;
+
+typedef struct
+{
+    const char *tabla;
+    const char *coleccion;
+    const char *sql_subida;     /* uuid, nombre, campos, actualizado_en */
+    const char *sql_actualizar; /* nombre, campos, actualizado_en, uuid */
+    const char *sql_insertar;   /* uuid, nombre, campos, creado, actualizado */
+    const CampoSync *campos;    /* Columnas posteriores a nombre, en orden */
+    int total_campos;
+} EntidadSync;
+
+static const CampoSync CAMPOS_CAMISETA[] =
+{
+    {"color_principal", CAMPO_TEXTO, 0},
+    {"color_secundario", CAMPO_TEXTO, 0},
+    {"marca", CAMPO_TEXTO, 0},
+    {"modelo", CAMPO_TEXTO, 0},
+    {"temporada", CAMPO_TEXTO, 0},
+    {"estado_fisico", CAMPO_TEXTO, 0},
+    {"fecha_compra", CAMPO_TEXTO, 0},
+    {"costo_centavos", CAMPO_ENTERO, 0},
+    {"observaciones", CAMPO_TEXTO, 0},
+    {"proveedor", CAMPO_TEXTO, 0},
+    {"fue_regalo", CAMPO_BOOL, 0},
+    {"regalo_de", CAMPO_TEXTO, 0},
+    {"activa", CAMPO_BOOL, 1},
+};
+
+static const CampoSync CAMPOS_BOTIN[] =
+{
+    {"marca", CAMPO_TEXTO, 0},
+    {"modelo", CAMPO_TEXTO, 0},
+    {"talla", CAMPO_TEXTO, 0},
+    {"superficie", CAMPO_TEXTO, 0},
+    {"estado_fisico", CAMPO_TEXTO, 0},
+    {"fecha_compra", CAMPO_TEXTO, 0},
+    {"costo_centavos", CAMPO_ENTERO, 0},
+    {"activa", CAMPO_BOOL, 1},
+};
+
+static const EntidadSync ENTIDAD_CAMISETA =
+{
+    "camiseta",
+    COL_CAMISETAS,
+    "SELECT uuid, nombre, color_principal, color_secundario, marca,"
+    " modelo, temporada, estado_fisico, fecha_compra,"
+    " costo_centavos, observaciones, proveedor, fue_regalo,"
+    " regalo_de, activa, actualizado_en FROM camiseta;",
+    "UPDATE camiseta SET nombre=?, color_principal=?,"
+    " color_secundario=?, marca=?, modelo=?, temporada=?,"
+    " estado_fisico=?, fecha_compra=?, costo_centavos=?,"
+    " observaciones=?, proveedor=?, fue_regalo=?, regalo_de=?,"
+    " activa=?, actualizado_en=? WHERE uuid=?;",
+    "INSERT INTO camiseta (uuid, nombre, color_principal,"
+    " color_secundario, marca, modelo, temporada, estado_fisico,"
+    " fecha_compra, costo_centavos, observaciones, proveedor,"
+    " fue_regalo, regalo_de, activa, creado_en, actualizado_en)"
+    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+    CAMPOS_CAMISETA,
+    (int)(sizeof(CAMPOS_CAMISETA) / sizeof(CAMPOS_CAMISETA[0])),
+};
+
+static const EntidadSync ENTIDAD_BOTIN =
+{
+    "botin",
+    COL_BOTINES,
+    "SELECT uuid, nombre, marca, modelo, talla, superficie,"
+    " estado_fisico, fecha_compra, costo_centavos, activa,"
+    " actualizado_en FROM botin;",
+    "UPDATE botin SET nombre=?, marca=?, modelo=?, talla=?,"
+    " superficie=?, estado_fisico=?, fecha_compra=?,"
+    " costo_centavos=?, activa=?, actualizado_en=? WHERE uuid=?;",
+    "INSERT INTO botin (uuid, nombre, marca, modelo, talla,"
+    " superficie, estado_fisico, fecha_compra, costo_centavos,"
+    " activa, creado_en, actualizado_en)"
+    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+    CAMPOS_BOTIN,
+    (int)(sizeof(CAMPOS_BOTIN) / sizeof(CAMPOS_BOTIN[0])),
+};
+
 /* ------------------------------------------------------------------ Subida */
 
-/* Sube una fila de camisetas. Devuelve 1 si se proceso, -1 si fallo la
+/* Sube una fila de la entidad. Devuelve 1 si se proceso, -1 si fallo la
    creacion del payload y -2 si la sesion ya no es valida. */
-static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
-                               const SyncConfig *cfg, SyncResultado *res)
+static int subir_fila(sqlite3_stmt *stmt, const char *base,
+                      const SyncConfig *cfg, SyncResultado *res,
+                      const EntidadSync *entidad)
 {
     const char *uuid = texto_columna(stmt, 0);
     if (!uuid || !*uuid)
@@ -447,13 +515,14 @@ static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
         return 1;
     }
     SyncRemoto remoto_datos;
-    int remoto = buscar_remoto(base, cfg->token, COL_CAMISETAS, uuid,
+    int remoto = buscar_remoto(base, cfg->token, entidad->coleccion, uuid,
                                &remoto_datos);
     if (remoto == -2)
     {
         return -2;
     }
-    const char *actualizado = texto_columna(stmt, 15);
+    const char *actualizado =
+        texto_columna(stmt, entidad->total_campos + 2);
     if (remoto < 0)
     {
         res->errores++;
@@ -470,34 +539,27 @@ static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
     {
         return -1;
     }
-    cJSON_AddStringToObject(payload, "nombre",
-                            texto_columna(stmt, 1));
-    cJSON_AddStringToObject(payload, "color_principal",
-                            texto_columna(stmt, 2));
-    cJSON_AddStringToObject(payload, "color_secundario",
-                            texto_columna(stmt, 3));
-    cJSON_AddStringToObject(payload, "marca",
-                            texto_columna(stmt, 4));
-    cJSON_AddStringToObject(payload, "modelo",
-                            texto_columna(stmt, 5));
-    cJSON_AddStringToObject(payload, "temporada",
-                            texto_columna(stmt, 6));
-    cJSON_AddStringToObject(payload, "estado_fisico",
-                            texto_columna(stmt, 7));
-    cJSON_AddStringToObject(payload, "fecha_compra",
-                            texto_columna(stmt, 8));
-    cJSON_AddNumberToObject(payload, "costo_centavos",
-                            sqlite3_column_int(stmt, 9));
-    cJSON_AddStringToObject(payload, "observaciones",
-                            texto_columna(stmt, 10));
-    cJSON_AddStringToObject(payload, "proveedor",
-                            texto_columna(stmt, 11));
-    cJSON_AddBoolToObject(payload, "fue_regalo",
-                          sqlite3_column_int(stmt, 12) != 0);
-    cJSON_AddStringToObject(payload, "regalo_de",
-                            texto_columna(stmt, 13));
-    cJSON_AddBoolToObject(payload, "activa",
-                          sqlite3_column_int(stmt, 14) != 0);
+    cJSON_AddStringToObject(payload, "nombre", texto_columna(stmt, 1));
+    for (int i = 0; i < entidad->total_campos; i++)
+    {
+        const CampoSync *campo = &entidad->campos[i];
+        int columna = i + 2;
+        if (campo->tipo == CAMPO_TEXTO)
+        {
+            cJSON_AddStringToObject(payload, campo->clave,
+                                    texto_columna(stmt, columna));
+        }
+        else if (campo->tipo == CAMPO_ENTERO)
+        {
+            cJSON_AddNumberToObject(payload, campo->clave,
+                                    sqlite3_column_int(stmt, columna));
+        }
+        else
+        {
+            cJSON_AddBoolToObject(payload, campo->clave,
+                                  sqlite3_column_int(stmt, columna) != 0);
+        }
+    }
 
     cJSON *registro = crear_registro(
                           uuid, cfg->user_id, texto_columna(stmt, 1),
@@ -507,8 +569,8 @@ static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
     if (registro)
     {
         const char *remoto_ref = remoto == 1 ? remoto_datos.id : NULL;
-        envio = enviar_registro(base, cfg->token, COL_CAMISETAS, remoto_ref,
-                                registro);
+        envio = enviar_registro(base, cfg->token, entidad->coleccion,
+                                remoto_ref, registro);
     }
     cJSON_Delete(registro);
     if (envio == -2)
@@ -526,17 +588,12 @@ static int subir_fila_camiseta(sqlite3_stmt *stmt, const char *base,
     return 1;
 }
 
-static int subir_camisetas(const char *base, const SyncConfig *cfg,
-                           SyncResultado *res)
+static int subir_entidad(const char *base, const SyncConfig *cfg,
+                         SyncResultado *res, const EntidadSync *entidad)
 {
     sqlite3_stmt *stmt = NULL;
-    if (sqlite3_prepare_v2(
-                db,
-                "SELECT uuid, nombre, color_principal, color_secundario, marca,"
-                " modelo, temporada, estado_fisico, fecha_compra,"
-                " costo_centavos, observaciones, proveedor, fue_regalo,"
-                " regalo_de, activa, actualizado_en FROM camiseta;",
-                -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db, entidad->sql_subida, -1, &stmt, NULL) !=
+            SQLITE_OK)
     {
         return -1;
     }
@@ -544,118 +601,7 @@ static int subir_camisetas(const char *base, const SyncConfig *cfg,
     int resultado = 1;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int estado = subir_fila_camiseta(stmt, base, cfg, res);
-        if (estado == -2)
-        {
-            resultado = -2;
-            break;
-        }
-        if (estado == -1)
-        {
-            resultado = -1;
-        }
-    }
-    sqlite3_finalize(stmt);
-    return resultado;
-}
-
-/* Sube una fila de botines. Mismo contrato que subir_fila_camiseta. */
-static int subir_fila_botin(sqlite3_stmt *stmt, const char *base,
-                            const SyncConfig *cfg, SyncResultado *res)
-{
-    const char *uuid = texto_columna(stmt, 0);
-    if (!uuid || !*uuid)
-    {
-        return 1;
-    }
-    SyncRemoto remoto_datos;
-    int remoto = buscar_remoto(base, cfg->token, COL_BOTINES, uuid,
-                               &remoto_datos);
-    if (remoto == -2)
-    {
-        return -2;
-    }
-    const char *actualizado = texto_columna(stmt, 10);
-    if (remoto < 0)
-    {
-        res->errores++;
-        return 1;
-    }
-    if (remoto == 1 &&
-            comparar_fechas(remoto_datos.actualizado, actualizado) >= 0)
-    {
-        return 1;
-    }
-
-    cJSON *payload = cJSON_CreateObject();
-    if (!payload)
-    {
-        return -1;
-    }
-    cJSON_AddStringToObject(payload, "nombre",
-                            texto_columna(stmt, 1));
-    cJSON_AddStringToObject(payload, "marca",
-                            texto_columna(stmt, 2));
-    cJSON_AddStringToObject(payload, "modelo",
-                            texto_columna(stmt, 3));
-    cJSON_AddStringToObject(payload, "talla",
-                            texto_columna(stmt, 4));
-    cJSON_AddStringToObject(payload, "superficie",
-                            texto_columna(stmt, 5));
-    cJSON_AddStringToObject(payload, "estado_fisico",
-                            texto_columna(stmt, 6));
-    cJSON_AddStringToObject(payload, "fecha_compra",
-                            texto_columna(stmt, 7));
-    cJSON_AddNumberToObject(payload, "costo_centavos",
-                            sqlite3_column_int(stmt, 8));
-    cJSON_AddBoolToObject(payload, "activa",
-                          sqlite3_column_int(stmt, 9) != 0);
-
-    cJSON *registro = crear_registro(
-                          uuid, cfg->user_id, texto_columna(stmt, 1),
-                          payload, actualizado);
-    cJSON_Delete(payload);
-    int envio = -1;
-    if (registro)
-    {
-        const char *remoto_ref = remoto == 1 ? remoto_datos.id : NULL;
-        envio = enviar_registro(base, cfg->token, COL_BOTINES, remoto_ref,
-                                registro);
-    }
-    cJSON_Delete(registro);
-    if (envio == -2)
-    {
-        return -2;
-    }
-    if (envio > 0)
-    {
-        res->enviados++;
-    }
-    else
-    {
-        res->errores++;
-    }
-    return 1;
-}
-
-static int subir_botines(const char *base, const SyncConfig *cfg,
-                         SyncResultado *res)
-{
-    sqlite3_stmt *stmt = NULL;
-    if (sqlite3_prepare_v2(
-                db,
-                "SELECT uuid, nombre, marca, modelo, talla, superficie,"
-                " estado_fisico, fecha_compra, costo_centavos, activa,"
-                " actualizado_en FROM botin;",
-                -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return -1;
-    }
-
-    int resultado = 1;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int estado = subir_fila_botin(stmt, base, cfg, res);
+        int estado = subir_fila(stmt, base, cfg, res, entidad);
         if (estado == -2)
         {
             resultado = -2;
@@ -777,12 +723,12 @@ int sync_entidades_subir(const char *base, const SyncConfig *cfg,
     {
         return 0;
     }
-    int camisetas = subir_camisetas(base, cfg, res);
+    int camisetas = subir_entidad(base, cfg, res, &ENTIDAD_CAMISETA);
     if (camisetas == -2)
     {
         return -2;
     }
-    int botines = subir_botines(base, cfg, res);
+    int botines = subir_entidad(base, cfg, res, &ENTIDAD_BOTIN);
     if (botines == -2)
     {
         return -2;
@@ -823,8 +769,8 @@ static int id_por_nombre(const char *tabla, const char *nombre,
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         id = sqlite3_column_int(stmt, 0);
-        copiar(actualizado, actualizado_tam,
-               (const char *)sqlite3_column_text(stmt, 1));
+        sync_texto_copiar(actualizado, actualizado_tam,
+                          (const char *)sqlite3_column_text(stmt, 1));
     }
     sqlite3_finalize(stmt);
     return id;
@@ -867,7 +813,7 @@ static int existe_local(const char *tabla, const char *uuid,
     {
         existe = 1;
         const char *valor = texto_columna(stmt, 0);
-        copiar(actualizado, actualizado_tam, valor);
+        sync_texto_copiar(actualizado, actualizado_tam, valor);
     }
     sqlite3_finalize(stmt);
     return existe;
@@ -902,110 +848,68 @@ static const char *sync_nombre_resuelto(const cJSON *payload,
     return nombre;
 }
 
-/** Actualiza la camiseta existente con los valores del payload. */
-static int camiseta_actualizar(const cJSON *payload, const char *nombre,
-                               const char *uuid, const char *actualizado)
+/* Enlaza los campos del payload desde el parametro `primero` en adelante. */
+static void enlazar_campos(sqlite3_stmt *stmt, const cJSON *payload,
+                           const EntidadSync *entidad, int primero)
 {
-    static const char *sql =
-        "UPDATE camiseta SET nombre=?, color_principal=?,"
-        " color_secundario=?, marca=?, modelo=?, temporada=?,"
-        " estado_fisico=?, fecha_compra=?, costo_centavos=?,"
-        " observaciones=?, proveedor=?, fue_regalo=?, regalo_de=?,"
-        " activa=?, actualizado_en=? WHERE uuid=?;";
+    for (int i = 0; i < entidad->total_campos; i++)
+    {
+        const CampoSync *campo = &entidad->campos[i];
+        if (campo->tipo == CAMPO_TEXTO)
+        {
+            sqlite3_bind_text(stmt, primero + i,
+                              json_texto(payload, campo->clave), -1,
+                              SQLITE_TRANSIENT);
+        }
+        else
+        {
+            sqlite3_bind_int(stmt, primero + i,
+                             sync_entero_desde_json(payload, campo->clave,
+                                                    campo->defecto));
+        }
+    }
+}
+
+/** Actualiza la fila existente o inserta una nueva con el payload. */
+static int guardar_local(const EntidadSync *entidad, int existe,
+                         const cJSON *payload, const char *nombre,
+                         const char *uuid, const char *actualizado,
+                         const char *creado)
+{
+    const int total = entidad->total_campos;
     sqlite3_stmt *stmt = NULL;
     int ok = 0;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db,
+                           existe ? entidad->sql_actualizar
+                           : entidad->sql_insertar,
+                           -1, &stmt, NULL) != SQLITE_OK)
     {
         return 0;
     }
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, json_texto(payload, "color_principal"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, json_texto(payload, "color_secundario"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, json_texto(payload, "marca"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, json_texto(payload, "modelo"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, json_texto(payload, "temporada"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, json_texto(payload, "estado_fisico"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, json_texto(payload, "fecha_compra"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 9,
-                     sync_entero_desde_json(payload, "costo_centavos", 0));
-    sqlite3_bind_text(stmt, 10, json_texto(payload, "observaciones"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 11, json_texto(payload, "proveedor"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 12,
-                     sync_entero_desde_json(payload, "fue_regalo", 0));
-    sqlite3_bind_text(stmt, 13, json_texto(payload, "regalo_de"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 14, sync_entero_desde_json(payload, "activa", 1));
-    sqlite3_bind_text(stmt, 15, actualizado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 16, uuid, -1, SQLITE_TRANSIENT);
+    if (existe)
+    {
+        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
+        enlazar_campos(stmt, payload, entidad, 2);
+        sqlite3_bind_text(stmt, total + 2, actualizado, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, total + 3, uuid, -1, SQLITE_TRANSIENT);
+    }
+    else
+    {
+        sqlite3_bind_text(stmt, 1, uuid, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
+        enlazar_campos(stmt, payload, entidad, 3);
+        sqlite3_bind_text(stmt, total + 3, creado, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, total + 4, actualizado, -1, SQLITE_TRANSIENT);
+    }
     ok = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
     return ok;
 }
 
-/** Inserta una camiseta nueva con los valores del payload. */
-static int camiseta_insertar(const cJSON *payload, const char *nombre,
-                             const char *uuid, const char *actualizado,
-                             const char *creado)
-{
-    static const char *sql =
-        "INSERT INTO camiseta (uuid, nombre, color_principal,"
-        " color_secundario, marca, modelo, temporada, estado_fisico,"
-        " fecha_compra, costo_centavos, observaciones, proveedor,"
-        " fue_regalo, regalo_de, activa, creado_en, actualizado_en)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    sqlite3_stmt *stmt = NULL;
-    int ok = 0;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return 0;
-    }
-    sqlite3_bind_text(stmt, 1, uuid, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, json_texto(payload, "color_principal"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, json_texto(payload, "color_secundario"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, json_texto(payload, "marca"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, json_texto(payload, "modelo"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, json_texto(payload, "temporada"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, json_texto(payload, "estado_fisico"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 9, json_texto(payload, "fecha_compra"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 10,
-                     sync_entero_desde_json(payload, "costo_centavos", 0));
-    sqlite3_bind_text(stmt, 11, json_texto(payload, "observaciones"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 12, json_texto(payload, "proveedor"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 13,
-                     sync_entero_desde_json(payload, "fue_regalo", 0));
-    sqlite3_bind_text(stmt, 14, json_texto(payload, "regalo_de"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 15, sync_entero_desde_json(payload, "activa", 1));
-    sqlite3_bind_text(stmt, 16, creado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 17, actualizado, -1, SQLITE_TRANSIENT);
-    ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
-    return ok;
-}
-
-static int aplicar_camiseta(const cJSON *item, const char *uuid,
-                            const char *actualizado, const char *creado)
+static int aplicar_entidad(const cJSON *item, const char *uuid,
+                           const char *actualizado, const char *creado,
+                           const EntidadSync *entidad)
 {
     cJSON *payload = sync_payload_duplicado(item);
     const char *nombre = NULL;
@@ -1019,13 +923,13 @@ static int aplicar_camiseta(const cJSON *item, const char *uuid,
         return 0;
     }
     nombre = sync_nombre_resuelto(payload, item);
-    existe = existe_local("camiseta", uuid, local_actualizado,
+    existe = existe_local(entidad->tabla, uuid, local_actualizado,
                           sizeof(local_actualizado));
     if (!existe)
     {
-        local_id = id_por_nombre("camiseta", nombre, local_actualizado,
+        local_id = id_por_nombre(entidad->tabla, nombre, local_actualizado,
                                  sizeof(local_actualizado));
-        if (local_id > 0 && adoptar_uuid("camiseta", local_id, uuid))
+        if (local_id > 0 && adoptar_uuid(entidad->tabla, local_id, uuid))
         {
             existe = 1;
         }
@@ -1035,136 +939,8 @@ static int aplicar_camiseta(const cJSON *item, const char *uuid,
         cJSON_Delete(payload);
         return 1;
     }
-    if (existe)
-    {
-        ok = camiseta_actualizar(payload, nombre, uuid, actualizado);
-    }
-    else
-    {
-        ok = camiseta_insertar(payload, nombre, uuid, actualizado, creado);
-    }
-    cJSON_Delete(payload);
-    return ok;
-}
-
-/** Actualiza un botin existente con los valores del payload. */
-static int botin_actualizar(const cJSON *payload, const char *nombre,
-                            const char *uuid, const char *actualizado)
-{
-    static const char *sql =
-        "UPDATE botin SET nombre=?, marca=?, modelo=?, talla=?,"
-        " superficie=?, estado_fisico=?, fecha_compra=?,"
-        " costo_centavos=?, activa=?, actualizado_en=? WHERE uuid=?;";
-    sqlite3_stmt *stmt = NULL;
-    int ok = 0;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return 0;
-    }
-    sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, json_texto(payload, "marca"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, json_texto(payload, "modelo"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, json_texto(payload, "talla"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, json_texto(payload, "superficie"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, json_texto(payload, "estado_fisico"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, json_texto(payload, "fecha_compra"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 8,
-                     sync_entero_desde_json(payload, "costo_centavos", 0));
-    sqlite3_bind_int(stmt, 9, sync_entero_desde_json(payload, "activa", 1));
-    sqlite3_bind_text(stmt, 10, actualizado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 11, uuid, -1, SQLITE_TRANSIENT);
-    ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
-    return ok;
-}
-
-/** Inserta un botin nuevo con los valores del payload. */
-static int botin_insertar(const cJSON *payload, const char *nombre,
-                          const char *uuid, const char *actualizado,
-                          const char *creado)
-{
-    static const char *sql =
-        "INSERT INTO botin (uuid, nombre, marca, modelo, talla,"
-        " superficie, estado_fisico, fecha_compra, costo_centavos,"
-        " activa, creado_en, actualizado_en)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-    sqlite3_stmt *stmt = NULL;
-    int ok = 0;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return 0;
-    }
-    sqlite3_bind_text(stmt, 1, uuid, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, json_texto(payload, "marca"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, json_texto(payload, "modelo"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, json_texto(payload, "talla"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, json_texto(payload, "superficie"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, json_texto(payload, "estado_fisico"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 8, json_texto(payload, "fecha_compra"), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 9,
-                     sync_entero_desde_json(payload, "costo_centavos", 0));
-    sqlite3_bind_int(stmt, 10, sync_entero_desde_json(payload, "activa", 1));
-    sqlite3_bind_text(stmt, 11, creado, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 12, actualizado, -1, SQLITE_TRANSIENT);
-    ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
-    return ok;
-}
-
-static int aplicar_botin(const cJSON *item, const char *uuid,
-                         const char *actualizado, const char *creado)
-{
-    cJSON *payload = sync_payload_duplicado(item);
-    const char *nombre = NULL;
-    char local_actualizado[64];
-    int existe = 0;
-    int local_id = 0;
-    int ok = 0;
-
-    if (!payload)
-    {
-        return 0;
-    }
-    nombre = sync_nombre_resuelto(payload, item);
-    existe = existe_local("botin", uuid, local_actualizado,
-                          sizeof(local_actualizado));
-    if (!existe)
-    {
-        local_id = id_por_nombre("botin", nombre, local_actualizado,
-                                 sizeof(local_actualizado));
-        if (local_id > 0 && adoptar_uuid("botin", local_id, uuid))
-        {
-            existe = 1;
-        }
-    }
-    if (existe && comparar_fechas(local_actualizado, actualizado) > 0)
-    {
-        cJSON_Delete(payload);
-        return 1;
-    }
-    if (existe)
-    {
-        ok = botin_actualizar(payload, nombre, uuid, actualizado);
-    }
-    else
-    {
-        ok = botin_insertar(payload, nombre, uuid, actualizado, creado);
-    }
+    ok = guardar_local(entidad, existe, payload, nombre, uuid, actualizado,
+                       creado);
     cJSON_Delete(payload);
     return ok;
 }
@@ -1214,14 +990,14 @@ static void procesar_item_descarga(const cJSON *item, int es_camiseta,
     char actualizado[64];
     if (updated && *updated)
     {
-        copiar(actualizado, sizeof(actualizado), updated);
+        sync_texto_copiar(actualizado, sizeof(actualizado), updated);
     }
     else
     {
         ahora_iso(actualizado, sizeof(actualizado));
     }
     char creado[64];
-    copiar(creado, sizeof(creado), actualizado);
+    sync_texto_copiar(creado, sizeof(creado), actualizado);
 
     if (aplicar_borrado(item, uuid, actualizado, es_camiseta, res))
     {
@@ -1236,9 +1012,9 @@ static void procesar_item_descarga(const cJSON *item, int es_camiseta,
         return;
     }
 
-    int aplicado = es_camiseta
-                   ? aplicar_camiseta(item, uuid, actualizado, creado)
-                   : aplicar_botin(item, uuid, actualizado, creado);
+    int aplicado = aplicar_entidad(item, uuid, actualizado, creado,
+                                   es_camiseta ? &ENTIDAD_CAMISETA
+                                   : &ENTIDAD_BOTIN);
     if (aplicado)
     {
         res->importados++;

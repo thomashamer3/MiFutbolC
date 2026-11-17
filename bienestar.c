@@ -1292,41 +1292,58 @@ static void listar_sesiones_mentales(void)
     pause_console();
 }
 
-static void listar_sesiones_mentales_simple(void)
+/* Listado compacto (id, fecha, dos textos) comun a sesiones y controles; solo cambia el formato. */
+static void listar_id_fecha_textos(const char *sql, const char *error, const char *cabecera,
+                                   const char *separador, const char *vacio,
+                                   void (*imprimir_fila)(int id, const char *fecha,
+                                           const char *texto1, const char *texto2))
 {
-    const char *sql = "SELECT id, fecha, tipo, momento "
-                      "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 20";
-
     sqlite3_stmt *stmt;
-    if (!preparar_consulta(&stmt, sql, "Error consultando sesiones.", 0))
+    if (!preparar_consulta(&stmt, sql, error, 0))
     {
         return;
     }
 
-    ui_printf_centered_line("ID | Fecha | Tipo | Momento");
-    ui_printf_centered_line("-----------------------------------------");
+    ui_printf_centered_line("%s", cabecera);
+    ui_printf_centered_line("%s", separador);
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         int ent_id = sqlite3_column_int(stmt, 0);
         const char *fecha_iso = (const char *)sqlite3_column_text(stmt, 1);
-        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
-        const char *momento = (const char *)sqlite3_column_text(stmt, 3);
+        const char *texto1 = (const char *)sqlite3_column_text(stmt, 2);
+        const char *texto2 = (const char *)sqlite3_column_text(stmt, 3);
 
         char fecha_disp[32];
         format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
 
-        ui_printf_centered_line("%d | %s | %s | %s", ent_id, fecha_disp, tipo, momento);
+        imprimir_fila(ent_id, fecha_disp, texto1, texto2);
         count++;
     }
 
     if (count == 0)
     {
-        ui_printf_centered_line("No hay sesiones registradas.");
+        ui_printf_centered_line("%s", vacio);
     }
 
     sqlite3_finalize(stmt);
+}
+
+static void imprimir_fila_sesion_simple(int id, const char *fecha, const char *tipo,
+                                        const char *momento)
+{
+    ui_printf_centered_line("%d | %s | %s | %s", id, fecha, tipo, momento);
+}
+
+static void listar_sesiones_mentales_simple(void)
+{
+    const char *sql = "SELECT id, fecha, tipo, momento "
+                      "FROM bienestar_sesion_mental ORDER BY fecha DESC, id DESC LIMIT 20";
+
+    listar_id_fecha_textos(sql, "Error consultando sesiones.", "ID | Fecha | Tipo | Momento",
+                           "-----------------------------------------",
+                           "No hay sesiones registradas.", imprimir_fila_sesion_simple);
 }
 
 static void ver_detalle_sesion_mental(void)
@@ -2881,42 +2898,22 @@ static int estudio_arch_seleccionar_archivo(char *ruta, size_t size)
     return app_select_existing_file(ruta, size, "Ruta del archivo: ", filter, "\\Downloads");
 }
 
+static void imprimir_fila_control_id(int id, const char *fecha, const char *tipo,
+                                     const char *prof)
+{
+    ui_printf_centered_line("%-4d| %-10s | %-20s | %s", id, fecha, tipo ? tipo : "",
+                            prof ? prof : "");
+}
+
 static void listar_controles_medicos_ids(void)
 {
     const char *sql = "SELECT id, fecha, tipo, profesional "
                       "FROM bienestar_control_medico ORDER BY fecha DESC, id DESC LIMIT 30";
 
-    sqlite3_stmt *stmt;
-    if (!preparar_consulta(&stmt, sql, "Error consultando controles.", 0))
-    {
-        return;
-    }
-
-    ui_printf_centered_line("ID  | Fecha      | Tipo                 | Profesional");
-    ui_printf_centered_line("---------------------------------------------------------");
-
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int ent_id = sqlite3_column_int(stmt, 0);
-        const char *fecha_iso = (const char *)sqlite3_column_text(stmt, 1);
-        const char *tipo = (const char *)sqlite3_column_text(stmt, 2);
-        const char *prof = (const char *)sqlite3_column_text(stmt, 3);
-
-        char fecha_disp[32];
-        format_fecha_mostrar(fecha_iso, fecha_disp, sizeof(fecha_disp));
-
-        ui_printf_centered_line("%-4d| %-10s | %-20s | %s", ent_id, fecha_disp, tipo ? tipo : "",
-                                prof ? prof : "");
-        count++;
-    }
-
-    if (count == 0)
-    {
-        ui_printf_centered_line("No hay controles registrados.");
-    }
-
-    sqlite3_finalize(stmt);
+    listar_id_fecha_textos(sql, "Error consultando controles.",
+                           "ID  | Fecha      | Tipo                 | Profesional",
+                           "---------------------------------------------------------",
+                           "No hay controles registrados.", imprimir_fila_control_id);
 }
 
 static void adjuntar_archivo_control(void)

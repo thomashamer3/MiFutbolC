@@ -290,23 +290,11 @@ void media_editar(void)
 
 void media_eliminar(void)
 {
-    if (!hay_registros("media"))
+    int id = seleccionar_id_existente("media", "referencias multimedia", "ELIMINAR REFERENCIA",
+                                      "No hay referencias", "ID a eliminar (0=cancelar): ",
+                                      "Referencia");
+    if (id == 0)
     {
-        mostrar_no_hay_registros("referencias multimedia");
-        pause_console();
-        return;
-    }
-
-    listar_entidades("media", "ELIMINAR REFERENCIA", "No hay referencias");
-
-    int id = input_int("ID a eliminar (0=cancelar): ");
-    if (id <= 0 || !existe_id("media", id))
-    {
-        if (id > 0)
-        {
-            mostrar_no_existe("Referencia");
-        }
-        pause_console();
         return;
     }
 

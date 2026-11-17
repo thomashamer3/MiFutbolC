@@ -11,17 +11,10 @@
  * directorio de datos) y no toca la carpeta de importaciones del usuario.
  */
 
-#include "unity/unity.h"
-#include "db.h"
+#include "test_db_fixture.h"
 #include "import.h"
 #include <stdio.h>
 #include <string.h>
-
-#ifdef _WIN32
-#define TEST_SEP "\\"
-#else
-#define TEST_SEP "/"
-#endif
 
 #define PERFIL_TEST "test_import"
 
@@ -31,40 +24,7 @@
 #define CSV_FILA_1 "Club Norte,2025-03-10 20:00,2,1,Titular,VICTORIA,Despejado,Noche,8,4,7,Buen partido\n"
 #define CSV_FILA_2 "Club Sur,2025-03-17 19:00,0,2,Titular,DERROTA,Lluvia,Tarde,5,6,4,Mucho barro\n"
 
-static char g_db_path[1024];
 static char g_archivo_path[1024];
-static char g_log_path[1024];
-
-static void borrar_base(const char *path)
-{
-    char aux[1100];
-    remove(path);
-    snprintf(aux, sizeof(aux), "%s-wal", path);
-    remove(aux);
-    snprintf(aux, sizeof(aux), "%s-shm", path);
-    remove(aux);
-}
-
-static int consultar_int(const char *sql)
-{
-    sqlite3_stmt *stmt = NULL;
-    int valor = -1;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return -1;
-    }
-    if (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        valor = sqlite3_column_int(stmt, 0);
-    }
-    sqlite3_finalize(stmt);
-    return valor;
-}
-
-static void exec_ok(const char *sql)
-{
-    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
-}
 
 /* Escribe el archivo de prueba en binario: el contenido llega tal cual. */
 static void escribir_archivo(const char *contenido)
@@ -247,28 +207,10 @@ static void test_json_entradas_malformadas(void)
 
 int main(void)
 {
-    if (!db_set_active_user(PERFIL_TEST))
+    if (!fixture_iniciar(PERFIL_TEST, g_archivo_path, sizeof(g_archivo_path), "_entrada.txt"))
     {
-        fprintf(stderr, "No se pudo seleccionar el perfil de prueba\n");
         return 1;
     }
-    if (!db_init())
-    {
-        fprintf(stderr, "db_init fallo\n");
-        return 1;
-    }
-    const char *data_dir = get_data_dir();
-    if (!data_dir)
-    {
-        fprintf(stderr, "Sin directorio de datos\n");
-        return 1;
-    }
-    snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, PERFIL_TEST);
-    snprintf(g_archivo_path, sizeof(g_archivo_path), "%s" TEST_SEP "%s_entrada.txt", data_dir,
-             PERFIL_TEST);
-    snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
-             PERFIL_TEST);
-    db_close();
 
     UNITY_BEGIN();
 
@@ -281,7 +223,5 @@ int main(void)
     RUN_TEST(test_json_importa_items_validos);
     RUN_TEST(test_json_entradas_malformadas);
 
-    int fallos = UNITY_END();
-    remove(g_log_path);
-    return fallos;
+    return fixture_terminar();
 }

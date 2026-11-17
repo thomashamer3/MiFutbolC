@@ -76,19 +76,17 @@ void mostrar_resumen_canchas(void)
     pause_console();
 }
 
-void mostrar_ranking_canchas_mas_usadas(void)
+typedef void (*CanchaStatsFilaFn)(sqlite3_stmt *stmt);
+
+/* Esqueleto comun de los listados: cada reporte solo aporta su consulta y el formato de fila. */
+static void cancha_stats_listar(const char *titulo, const char *sql, CanchaStatsFilaFn imprimir_fila,
+                                const char *sin_datos)
 {
     clear_screen();
-    print_header("CANCHAS MAS USADAS");
+    print_header(titulo);
 
     sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.id, c.nombre, COUNT(p.id) AS partidos, "
-                            "IFNULL(SUM(p.goles), 0), IFNULL(SUM(p.asistencias), 0), "
-                            "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
-                            "FROM cancha c JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.id, c.nombre "
-                            "ORDER BY partidos DESC, c.nombre ASC LIMIT 10"))
+    if (!cancha_stats_abrir(&stmt, sql))
     {
         pause_console();
         return;
@@ -97,305 +95,186 @@ void mostrar_ranking_canchas_mas_usadas(void)
     int hay = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        printf("%2d - %-22s Partidos: %3d | Goles: %3d | Asist: %3d | Rend: %.2f\n",
-               sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5));
+        imprimir_fila(stmt);
         hay = 1;
     }
     db_stmt_release(stmt);
 
     if (!hay)
     {
-        mostrar_no_hay_registros("partidos con cancha asignada");
+        mostrar_no_hay_registros(sin_datos);
     }
 
     pause_console();
+}
+
+static void cancha_stats_fila_mas_usadas(sqlite3_stmt *stmt)
+{
+    printf("%2d - %-22s Partidos: %3d | Goles: %3d | Asist: %3d | Rend: %.2f\n",
+           sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
+           sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+           sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5));
+}
+
+void mostrar_ranking_canchas_mas_usadas(void)
+{
+    cancha_stats_listar("CANCHAS MAS USADAS",
+                        "SELECT c.id, c.nombre, COUNT(p.id) AS partidos, "
+                        "IFNULL(SUM(p.goles), 0), IFNULL(SUM(p.asistencias), 0), "
+                        "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
+                        "FROM cancha c JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.id, c.nombre "
+                        "ORDER BY partidos DESC, c.nombre ASC LIMIT 10",
+                        cancha_stats_fila_mas_usadas, "partidos con cancha asignada");
+}
+
+static void cancha_stats_fila_menos_usadas(sqlite3_stmt *stmt)
+{
+    printf("%2d - %-22s Partidos: %3d | Goles: %3d\n", sqlite3_column_int(stmt, 0),
+           cancha_stats_texto(stmt, 1), sqlite3_column_int(stmt, 2),
+           sqlite3_column_int(stmt, 3));
 }
 
 void mostrar_canchas_menos_usadas(void)
 {
-    clear_screen();
-    print_header("CANCHAS MENOS USADAS");
+    cancha_stats_listar("CANCHAS MENOS USADAS",
+                        "SELECT c.id, c.nombre, COUNT(p.id) AS partidos, "
+                        "IFNULL(SUM(p.goles), 0) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.id, c.nombre "
+                        "ORDER BY partidos ASC, c.nombre ASC LIMIT 10",
+                        cancha_stats_fila_menos_usadas, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.id, c.nombre, COUNT(p.id) AS partidos, "
-                            "IFNULL(SUM(p.goles), 0) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.id, c.nombre "
-                            "ORDER BY partidos ASC, c.nombre ASC LIMIT 10"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%2d - %-22s Partidos: %3d | Goles: %3d\n", sqlite3_column_int(stmt, 0),
-               cancha_stats_texto(stmt, 1), sqlite3_column_int(stmt, 2),
-               sqlite3_column_int(stmt, 3));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_rendimiento(sqlite3_stmt *stmt)
+{
+    printf("%2d - %-22s Partidos: %3d | Rendimiento promedio: %.2f\n",
+           sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
+           sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
 }
 
 void mostrar_rendimiento_por_cancha(void)
 {
-    clear_screen();
-    print_header("RENDIMIENTO PROMEDIO POR CANCHA");
+    cancha_stats_listar("RENDIMIENTO PROMEDIO POR CANCHA",
+                        "SELECT c.id, c.nombre, COUNT(p.id), "
+                        "ROUND(AVG(p.rendimiento_general), 2) "
+                        "FROM cancha c JOIN partido p ON p.cancha_id = c.id "
+                        "WHERE p.rendimiento_general IS NOT NULL "
+                        "GROUP BY c.id, c.nombre "
+                        "ORDER BY AVG(p.rendimiento_general) DESC, c.nombre ASC",
+                        cancha_stats_fila_rendimiento, "partidos con rendimiento cargado");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.id, c.nombre, COUNT(p.id), "
-                            "ROUND(AVG(p.rendimiento_general), 2) "
-                            "FROM cancha c JOIN partido p ON p.cancha_id = c.id "
-                            "WHERE p.rendimiento_general IS NOT NULL "
-                            "GROUP BY c.id, c.nombre "
-                            "ORDER BY AVG(p.rendimiento_general) DESC, c.nombre ASC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%2d - %-22s Partidos: %3d | Rendimiento promedio: %.2f\n",
-               sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("partidos con rendimiento cargado");
-    }
-
-    pause_console();
+static void cancha_stats_fila_goles_asistencias(sqlite3_stmt *stmt)
+{
+    printf("%2d - %-22s Partidos: %3d | Goles: %3d | Asist: %3d | Prom: %.2f\n",
+           sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
+           sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
+           sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5));
 }
 
 void mostrar_goles_asistencias_por_cancha(void)
 {
-    clear_screen();
-    print_header("GOLES Y ASISTENCIAS POR CANCHA");
+    cancha_stats_listar("GOLES Y ASISTENCIAS POR CANCHA",
+                        "SELECT c.id, c.nombre, COUNT(p.id), IFNULL(SUM(p.goles), 0), "
+                        "IFNULL(SUM(p.asistencias), 0), "
+                        "ROUND(CASE WHEN COUNT(p.id) > 0 "
+                        "THEN (IFNULL(SUM(p.goles), 0) + IFNULL(SUM(p.asistencias), 0)) * 1.0 "
+                        "/ COUNT(p.id) ELSE 0 END, 2) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.id, c.nombre "
+                        "ORDER BY (IFNULL(SUM(p.goles), 0) + IFNULL(SUM(p.asistencias), 0)) DESC",
+                        cancha_stats_fila_goles_asistencias, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.id, c.nombre, COUNT(p.id), IFNULL(SUM(p.goles), 0), "
-                            "IFNULL(SUM(p.asistencias), 0), "
-                            "ROUND(CASE WHEN COUNT(p.id) > 0 "
-                            "THEN (IFNULL(SUM(p.goles), 0) + IFNULL(SUM(p.asistencias), 0)) * 1.0 "
-                            "/ COUNT(p.id) ELSE 0 END, 2) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.id, c.nombre "
-                            "ORDER BY (IFNULL(SUM(p.goles), 0) + IFNULL(SUM(p.asistencias), 0)) DESC"))
-    {
-        pause_console();
-        return;
-    }
+/* Tipo y superficie comparten formato; solo cambia como se traduce el codigo. */
+static void cancha_stats_imprimir_por_codigo(sqlite3_stmt *stmt, const char *texto_codigo)
+{
+    printf("%-22s Canchas: %3d | Partidos: %3d | Rend: %.2f\n", texto_codigo,
+           sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2),
+           sqlite3_column_double(stmt, 3));
+}
 
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%2d - %-22s Partidos: %3d | Goles: %3d | Asist: %3d | Prom: %.2f\n",
-               sqlite3_column_int(stmt, 0), cancha_stats_texto(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_int(stmt, 3),
-               sqlite3_column_int(stmt, 4), sqlite3_column_double(stmt, 5));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_tipo(sqlite3_stmt *stmt)
+{
+    cancha_stats_imprimir_por_codigo(stmt, cancha_texto_tipo(sqlite3_column_int(stmt, 0)));
 }
 
 void mostrar_rendimiento_por_tipo_cancha(void)
 {
-    clear_screen();
-    print_header("RENDIMIENTO POR TIPO DE CANCHA");
+    cancha_stats_listar("RENDIMIENTO POR TIPO DE CANCHA",
+                        "SELECT c.tipo_cancha_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
+                        "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.tipo_cancha_codigo "
+                        "ORDER BY AVG(p.rendimiento_general) DESC",
+                        cancha_stats_fila_tipo, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.tipo_cancha_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
-                            "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.tipo_cancha_codigo "
-                            "ORDER BY AVG(p.rendimiento_general) DESC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int codigo = sqlite3_column_int(stmt, 0);
-        printf("%-22s Canchas: %3d | Partidos: %3d | Rend: %.2f\n",
-               cancha_texto_tipo(codigo), sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_superficie(sqlite3_stmt *stmt)
+{
+    cancha_stats_imprimir_por_codigo(stmt, cancha_texto_superficie(sqlite3_column_int(stmt, 0)));
 }
 
 void mostrar_rendimiento_por_superficie(void)
 {
-    clear_screen();
-    print_header("RENDIMIENTO POR SUPERFICIE");
+    cancha_stats_listar("RENDIMIENTO POR SUPERFICIE",
+                        "SELECT c.superficie_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
+                        "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.superficie_codigo "
+                        "ORDER BY AVG(p.rendimiento_general) DESC",
+                        cancha_stats_fila_superficie, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.superficie_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
-                            "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.superficie_codigo "
-                            "ORDER BY AVG(p.rendimiento_general) DESC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int codigo = sqlite3_column_int(stmt, 0);
-        printf("%-22s Canchas: %3d | Partidos: %3d | Rend: %.2f\n",
-               cancha_texto_superficie(codigo), sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_techada(sqlite3_stmt *stmt)
+{
+    printf("Techada: %-8s Canchas: %3d | Partidos: %3d | Rend: %.2f\n",
+           cancha_texto_techada(sqlite3_column_int(stmt, 0)), sqlite3_column_int(stmt, 1),
+           sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
 }
 
 void mostrar_canchas_techadas_vs_descubiertas(void)
 {
-    clear_screen();
-    print_header("TECHADAS VS DESCUBIERTAS");
+    cancha_stats_listar("TECHADAS VS DESCUBIERTAS",
+                        "SELECT c.techada_estado_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
+                        "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY c.techada_estado_codigo "
+                        "ORDER BY COUNT(p.id) DESC",
+                        cancha_stats_fila_techada, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT c.techada_estado_codigo, COUNT(DISTINCT c.id), COUNT(p.id), "
-                            "ROUND(IFNULL(AVG(p.rendimiento_general), 0), 2) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY c.techada_estado_codigo "
-                            "ORDER BY COUNT(p.id) DESC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        int codigo = sqlite3_column_int(stmt, 0);
-        printf("Techada: %-8s Canchas: %3d | Partidos: %3d | Rend: %.2f\n",
-               cancha_texto_techada(codigo), sqlite3_column_int(stmt, 1),
-               sqlite3_column_int(stmt, 2), sqlite3_column_double(stmt, 3));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_localidad(sqlite3_stmt *stmt)
+{
+    printf("%-24s Canchas: %3d | Partidos: %3d\n", cancha_stats_texto(stmt, 0),
+           sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2));
 }
 
 void mostrar_partidos_por_localidad(void)
 {
-    clear_screen();
-    print_header("PARTIDOS POR LOCALIDAD");
+    cancha_stats_listar("PARTIDOS POR LOCALIDAD",
+                        "SELECT IFNULL(NULLIF(c.localidad, ''), '(sin localidad)') AS zona, "
+                        "COUNT(DISTINCT c.id), COUNT(p.id) "
+                        "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
+                        "GROUP BY zona "
+                        "ORDER BY COUNT(p.id) DESC",
+                        cancha_stats_fila_localidad, "canchas");
+}
 
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT IFNULL(NULLIF(c.localidad, ''), '(sin localidad)') AS zona, "
-                            "COUNT(DISTINCT c.id), COUNT(p.id) "
-                            "FROM cancha c LEFT JOIN partido p ON p.cancha_id = c.id "
-                            "GROUP BY zona "
-                            "ORDER BY COUNT(p.id) DESC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        printf("%-24s Canchas: %3d | Partidos: %3d\n", cancha_stats_texto(stmt, 0),
-               sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("canchas");
-    }
-
-    pause_console();
+static void cancha_stats_fila_franja(sqlite3_stmt *stmt)
+{
+    printf("%s:00 h | Partidos: %d\n", cancha_stats_texto(stmt, 0), sqlite3_column_int(stmt, 1));
 }
 
 void mostrar_partidos_por_franja_horaria(void)
 {
-    clear_screen();
-    print_header("PARTIDOS POR FRANJA HORARIA");
-
-    sqlite3_stmt *stmt = NULL;
-    if (!cancha_stats_abrir(&stmt,
-                            "SELECT substr(fecha_hora, 12, 2) AS hora, COUNT(*) "
-                            "FROM partido "
-                            "WHERE length(fecha_hora) >= 13 AND substr(fecha_hora, 12, 2) != '' "
-                            "GROUP BY hora ORDER BY hora ASC"))
-    {
-        pause_console();
-        return;
-    }
-
-    int hay = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        const char *hora = cancha_stats_texto(stmt, 0);
-        printf("%s:00 h | Partidos: %d\n", hora, sqlite3_column_int(stmt, 1));
-        hay = 1;
-    }
-    db_stmt_release(stmt);
-
-    if (!hay)
-    {
-        mostrar_no_hay_registros("partidos con fecha valida");
-    }
-
-    pause_console();
+    cancha_stats_listar("PARTIDOS POR FRANJA HORARIA",
+                        "SELECT substr(fecha_hora, 12, 2) AS hora, COUNT(*) "
+                        "FROM partido "
+                        "WHERE length(fecha_hora) >= 13 AND substr(fecha_hora, 12, 2) != '' "
+                        "GROUP BY hora ORDER BY hora ASC",
+                        cancha_stats_fila_franja, "partidos con fecha valida");
 }
 
 void menu_estadisticas_canchas(void)

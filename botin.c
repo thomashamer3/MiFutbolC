@@ -182,18 +182,12 @@ void editar_botin(void)
         return;
     }
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(&stmt, "UPDATE botin SET nombre=? WHERE id=?"))
+    if (!db_actualizar_texto_por_id("UPDATE botin SET nombre=? WHERE id=?", nombre, id))
     {
         printf("Error al actualizar el botin.\n");
         pause_console();
         return;
     }
-
-    sqlite3_bind_text(stmt, 1, nombre, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
 
     char log_msg[256];
     snprintf(log_msg, sizeof(log_msg), "Editado botin id=%d nuevo_nombre=%.180s", id, nombre);

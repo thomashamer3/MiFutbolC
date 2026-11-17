@@ -1082,10 +1082,64 @@ static int mm_tipo_futbol_mobile(int tipo)
     }
 }
 
+/* Esqueleto comun de las tablas exportadas; el arreglo se agrega aunque falle la consulta. */
+static void mm_exportar_filas(cJSON *root, const char *clave, const char *sql,
+                              void (*llenar_item)(cJSON *item, sqlite3_stmt *stmt))
+{
+    cJSON *arr = cJSON_AddArrayToObject(root, clave);
+    sqlite3_stmt *stmt = NULL;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        return;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        cJSON *item = cJSON_CreateObject();
+        llenar_item(item, stmt);
+        cJSON_AddItemToArray(arr, item);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+static void mm_item_canchas(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "nombre", stmt, 0);
+    mm_add_text(item, "telefono", stmt, 1);
+    mm_add_text(item, "direccion", stmt, 2);
+    mm_add_text(item, "localidad", stmt, 3);
+    cJSON_AddStringToObject(item, "tipoCancha",
+                            cancha_texto_tipo(sqlite3_column_int(stmt, 4)));
+    cJSON_AddStringToObject(item, "superficie",
+                            cancha_texto_superficie(sqlite3_column_int(stmt, 5)));
+    cJSON_AddStringToObject(item, "techadaEstado",
+                            cancha_texto_techada(sqlite3_column_int(stmt, 6)));
+    cJSON_AddBoolToObject(item, "tieneIluminacion", sqlite3_column_int(stmt, 7) != 0);
+    cJSON_AddNumberToObject(item, "horarioAperturaMin", sqlite3_column_int(stmt, 8));
+    cJSON_AddNumberToObject(item, "horarioCierreMin", sqlite3_column_int(stmt, 9));
+    cJSON_AddNumberToObject(item, "precioHoraDiaCentavos",
+                            sqlite3_column_int(stmt, 10));
+    cJSON_AddNumberToObject(item, "precioHoraNocheCentavos",
+                            sqlite3_column_int(stmt, 11));
+    cJSON_AddBoolToObject(item, "tieneVestuarios", sqlite3_column_int(stmt, 12) != 0);
+    cJSON_AddBoolToObject(item, "tieneDuchas", sqlite3_column_int(stmt, 13) != 0);
+    cJSON_AddBoolToObject(item, "tieneBuffet", sqlite3_column_int(stmt, 14) != 0);
+    cJSON_AddBoolToObject(item, "tieneEstacionamiento",
+                          sqlite3_column_int(stmt, 15) != 0);
+    cJSON_AddNumberToObject(item, "cantidadCanchas", sqlite3_column_int(stmt, 16));
+    mm_add_text(item, "estado", stmt, 17);
+    mm_add_text(item, "descripcion", stmt, 18);
+    mm_add_text(item, "imagenRuta", stmt, 19);
+    cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 20) != 0);
+    cJSON_AddBoolToObject(item, "tieneGrabacion", sqlite3_column_int(stmt, 21) != 0);
+    mm_add_nullable_number(item, "latitud", stmt, 22);
+    mm_add_nullable_number(item, "longitud", stmt, 23);
+}
+
 static void mm_exportar_canchas(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "canchas");
-    sqlite3_stmt *stmt = NULL;
     const char *sql =
         "SELECT nombre, telefono, direccion, localidad, tipo_cancha_codigo, "
         "superficie_codigo, techada_estado_codigo, tiene_iluminacion, "
@@ -1093,146 +1147,139 @@ static void mm_exportar_canchas(cJSON *root)
         "precio_hora_noche_centavos, tiene_vestuarios, tiene_duchas, tiene_buffet, "
         "tiene_estacionamiento, cantidad_canchas, estado, descripcion, imagen_ruta, "
         "activa, tiene_grabacion, latitud, longitud FROM cancha ORDER BY id;";
+    mm_exportar_filas(root, "canchas", sql, mm_item_canchas);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "nombre", stmt, 0);
-        mm_add_text(item, "telefono", stmt, 1);
-        mm_add_text(item, "direccion", stmt, 2);
-        mm_add_text(item, "localidad", stmt, 3);
-        cJSON_AddStringToObject(item, "tipoCancha",
-                                cancha_texto_tipo(sqlite3_column_int(stmt, 4)));
-        cJSON_AddStringToObject(item, "superficie",
-                                cancha_texto_superficie(sqlite3_column_int(stmt, 5)));
-        cJSON_AddStringToObject(item, "techadaEstado",
-                                cancha_texto_techada(sqlite3_column_int(stmt, 6)));
-        cJSON_AddBoolToObject(item, "tieneIluminacion", sqlite3_column_int(stmt, 7) != 0);
-        cJSON_AddNumberToObject(item, "horarioAperturaMin", sqlite3_column_int(stmt, 8));
-        cJSON_AddNumberToObject(item, "horarioCierreMin", sqlite3_column_int(stmt, 9));
-        cJSON_AddNumberToObject(item, "precioHoraDiaCentavos",
-                                sqlite3_column_int(stmt, 10));
-        cJSON_AddNumberToObject(item, "precioHoraNocheCentavos",
-                                sqlite3_column_int(stmt, 11));
-        cJSON_AddBoolToObject(item, "tieneVestuarios", sqlite3_column_int(stmt, 12) != 0);
-        cJSON_AddBoolToObject(item, "tieneDuchas", sqlite3_column_int(stmt, 13) != 0);
-        cJSON_AddBoolToObject(item, "tieneBuffet", sqlite3_column_int(stmt, 14) != 0);
-        cJSON_AddBoolToObject(item, "tieneEstacionamiento",
-                              sqlite3_column_int(stmt, 15) != 0);
-        cJSON_AddNumberToObject(item, "cantidadCanchas", sqlite3_column_int(stmt, 16));
-        mm_add_text(item, "estado", stmt, 17);
-        mm_add_text(item, "descripcion", stmt, 18);
-        mm_add_text(item, "imagenRuta", stmt, 19);
-        cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 20) != 0);
-        cJSON_AddBoolToObject(item, "tieneGrabacion", sqlite3_column_int(stmt, 21) != 0);
-        mm_add_nullable_number(item, "latitud", stmt, 22);
-        mm_add_nullable_number(item, "longitud", stmt, 23);
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
+static void mm_item_camisetas(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "nombre", stmt, 0);
+    mm_add_text(item, "colorPrincipal", stmt, 1);
+    mm_add_text(item, "colorSecundario", stmt, 2);
+    mm_add_text(item, "marca", stmt, 3);
+    mm_add_text(item, "modelo", stmt, 4);
+    mm_add_text(item, "temporada", stmt, 5);
+    mm_add_text(item, "estadoFisico", stmt, 6);
+    mm_add_text(item, "fechaCompra", stmt, 7);
+    cJSON_AddNumberToObject(item, "costoCentavos", sqlite3_column_int(stmt, 8));
+    mm_add_text(item, "observaciones", stmt, 9);
+    mm_add_text(item, "proveedor", stmt, 10);
+    cJSON_AddBoolToObject(item, "fueRegalo", sqlite3_column_int(stmt, 11) != 0);
+    mm_add_text(item, "regaloDe", stmt, 12);
+    mm_add_text(item, "imagenRuta", stmt, 13);
+    cJSON_AddBoolToObject(item, "sorteada", sqlite3_column_int(stmt, 14) != 0);
+    cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 15) != 0);
 }
 
 static void mm_exportar_camisetas(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "camisetas");
-    sqlite3_stmt *stmt = NULL;
     const char *sql =
         "SELECT nombre, color_principal, color_secundario, marca, modelo, temporada, "
         "estado_fisico, fecha_compra, costo_centavos, observaciones, proveedor, "
         "fue_regalo, regalo_de, imagen_ruta, sorteada, activa "
         "FROM camiseta ORDER BY id;";
+    mm_exportar_filas(root, "camisetas", sql, mm_item_camisetas);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "nombre", stmt, 0);
-        mm_add_text(item, "colorPrincipal", stmt, 1);
-        mm_add_text(item, "colorSecundario", stmt, 2);
-        mm_add_text(item, "marca", stmt, 3);
-        mm_add_text(item, "modelo", stmt, 4);
-        mm_add_text(item, "temporada", stmt, 5);
-        mm_add_text(item, "estadoFisico", stmt, 6);
-        mm_add_text(item, "fechaCompra", stmt, 7);
-        cJSON_AddNumberToObject(item, "costoCentavos", sqlite3_column_int(stmt, 8));
-        mm_add_text(item, "observaciones", stmt, 9);
-        mm_add_text(item, "proveedor", stmt, 10);
-        cJSON_AddBoolToObject(item, "fueRegalo", sqlite3_column_int(stmt, 11) != 0);
-        mm_add_text(item, "regaloDe", stmt, 12);
-        mm_add_text(item, "imagenRuta", stmt, 13);
-        cJSON_AddBoolToObject(item, "sorteada", sqlite3_column_int(stmt, 14) != 0);
-        cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 15) != 0);
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
+static void mm_item_equipos(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "nombre", stmt, 0);
+    cJSON_AddNumberToObject(item, "tipo",
+                            sqlite3_column_int(stmt, 1) == 0 ? 1 : 2);
+    cJSON_AddNumberToObject(item, "tipoFutbol",
+                            mm_tipo_futbol_mobile(sqlite3_column_int(stmt, 2)));
+    mm_add_text(item, "imagenRuta", stmt, 3);
+    cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 4) != 0);
 }
 
 static void mm_exportar_equipos(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "equipos");
-    sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT nombre, tipo, tipo_futbol, imagen_ruta, activa "
                       "FROM equipo ORDER BY id;";
+    mm_exportar_filas(root, "equipos", sql, mm_item_equipos);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "nombre", stmt, 0);
-        cJSON_AddNumberToObject(item, "tipo",
-                                sqlite3_column_int(stmt, 1) == 0 ? 1 : 2);
-        cJSON_AddNumberToObject(item, "tipoFutbol",
-                                mm_tipo_futbol_mobile(sqlite3_column_int(stmt, 2)));
-        mm_add_text(item, "imagenRuta", stmt, 3);
-        cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 4) != 0);
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
+static void mm_item_botines(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "nombre", stmt, 0);
+    cJSON_AddBoolToObject(item, "sorteada", sqlite3_column_int(stmt, 1) != 0);
+    cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 2) != 0);
 }
 
 static void mm_exportar_botines(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "botines");
-    sqlite3_stmt *stmt = NULL;
     const char *sql = "SELECT nombre, sorteada, activa FROM botin ORDER BY id;";
+    mm_exportar_filas(root, "botines", sql, mm_item_botines);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+static void mm_item_partidos(cJSON *item, sqlite3_stmt *stmt)
+{
+    char fecha_iso[64];
+    mm_fecha_hora_iso((const char *)sqlite3_column_text(stmt, 0), fecha_iso,
+                      sizeof(fecha_iso));
+    cJSON_AddStringToObject(item, "fechaHora", fecha_iso);
+    cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
+    cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
+    cJSON_AddNumberToObject(item, "resultado", sqlite3_column_int(stmt, 3));
+    cJSON_AddNumberToObject(item, "rendimientoGeneral", sqlite3_column_int(stmt, 4));
+    cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 5));
+    cJSON_AddNumberToObject(item, "estadoAnimo", sqlite3_column_int(stmt, 6));
+    mm_add_text(item, "comentarioPersonal", stmt, 7);
+    cJSON_AddNumberToObject(item, "clima",
+                            mm_clima_mobile(sqlite3_column_int(stmt, 8)));
+    cJSON_AddNumberToObject(item, "dia", sqlite3_column_int(stmt, 9));
+    cJSON_AddNumberToObject(item, "precioCentavos",
+                            sqlite3_column_int(stmt, 10) * 100);
+    cJSON_AddNumberToObject(item, "tipoPartido", sqlite3_column_int(stmt, 11));
+    mm_add_text(item, "rivalNombre", stmt, 12);
+    mm_add_text(item, "tipoRival", stmt, 13);
+    mm_add_text(item, "posicionJugada", stmt, 14);
+    cJSON_AddNumberToObject(item, "minutosJugados", sqlite3_column_int(stmt, 15));
+    cJSON_AddNumberToObject(item, "intensidad", sqlite3_column_int(stmt, 16));
+    cJSON_AddNumberToObject(item, "esfuerzoPercibido", sqlite3_column_int(stmt, 17));
+    mm_add_text(item, "condicionCancha", stmt, 18);
+    mm_add_text(item, "arbitraje", stmt, 19);
+    mm_add_text(item, "eventosClave", stmt, 20);
+    cJSON_AddNumberToObject(item, "ratingTecnico", sqlite3_column_int(stmt, 21));
+    cJSON_AddNumberToObject(item, "ratingFisico", sqlite3_column_int(stmt, 22));
+    cJSON_AddNumberToObject(item, "ratingMental", sqlite3_column_int(stmt, 23));
+    cJSON_AddNumberToObject(item, "estadoCancha", sqlite3_column_int(stmt, 24));
+    cJSON_AddNumberToObject(item, "golesEquipo", sqlite3_column_int(stmt, 25));
+    cJSON_AddNumberToObject(item, "golesRival", sqlite3_column_int(stmt, 26));
+    mm_add_text(item, "formatoPartido", stmt, 27);
+    cJSON_AddNumberToObject(item, "tarjeta", sqlite3_column_int(stmt, 28));
+    cJSON_AddNumberToObject(item, "golesEnContra", sqlite3_column_int(stmt, 29));
+    cJSON_AddNumberToObject(item, "dolorFisico", sqlite3_column_int(stmt, 30));
+    mm_add_nullable_number(item, "temperaturaC", stmt, 31);
+    cJSON_AddNumberToObject(item, "arbitrajeScore", sqlite3_column_int(stmt, 32));
+    mm_add_text(item, "loMejor", stmt, 33);
+    mm_add_text(item, "queMejorar", stmt, 34);
+    mm_add_text(item, "tags", stmt, 35);
+    mm_add_text(item, "golesDetalle", stmt, 36);
+    mm_add_text(item, "asistenciasDetalle", stmt, 37);
+    cJSON_AddBoolToObject(item, "atajasteTodoElPartido",
+                          sqlite3_column_int(stmt, 38) != 2);
+    mm_add_nullable_number(item, "precipMm", stmt, 39);
+    mm_add_nullable_number(item, "windKmh", stmt, 40);
+    mm_add_nullable_number(item, "weatherCode", stmt, 41);
+    mm_add_nullable_number(item, "apparentTempC", stmt, 42);
+    mm_add_text(item, "climaJson", stmt, 43);
+    cJSON_AddNumberToObject(item, "diferenciaGol", sqlite3_column_int(stmt, 44));
+    mm_add_text(item, "cancha", stmt, 45);
+    mm_add_text(item, "camiseta", stmt, 46);
+    if (sqlite3_column_type(stmt, 47) != SQLITE_NULL)
     {
-        return;
+        mm_add_text(item, "botin", stmt, 47);
     }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+    if (sqlite3_column_type(stmt, 48) != SQLITE_NULL)
     {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "nombre", stmt, 0);
-        cJSON_AddBoolToObject(item, "sorteada", sqlite3_column_int(stmt, 1) != 0);
-        cJSON_AddBoolToObject(item, "activa", sqlite3_column_int(stmt, 2) != 0);
-        cJSON_AddItemToArray(arr, item);
+        mm_add_text(item, "equipo", stmt, 48);
     }
-
-    sqlite3_finalize(stmt);
+    cJSON_AddStringToObject(item, "estado", "finalizado");
+    cJSON_AddBoolToObject(item, "favorito", false);
 }
 
 static void mm_exportar_partidos(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "partidos");
-    sqlite3_stmt *stmt = NULL;
     const char *sql =
         "SELECT p.fecha_hora, p.goles, p.asistencias, p.resultado, "
         "p.rendimiento_general, p.cansancio, p.estado_animo, p.comentario_personal, "
@@ -1251,146 +1298,51 @@ static void mm_exportar_partidos(cJSON *root)
         "FROM partido p JOIN cancha can ON can.id = p.cancha_id "
         "JOIN camiseta c ON c.id = p.camiseta_id "
         "ORDER BY p.fecha_hora DESC, p.id DESC;";
+    mm_exportar_filas(root, "partidos", sql, mm_item_partidos);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+static void mm_item_lesiones(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "tipo", stmt, 0);
+    mm_add_text(item, "descripcion", stmt, 1);
+    mm_add_text(item, "fecha", stmt, 2);
+    if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
     {
-        return;
+        mm_add_text(item, "camiseta", stmt, 3);
     }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        char fecha_iso[64];
-        mm_fecha_hora_iso((const char *)sqlite3_column_text(stmt, 0), fecha_iso,
-                          sizeof(fecha_iso));
-        cJSON_AddStringToObject(item, "fechaHora", fecha_iso);
-        cJSON_AddNumberToObject(item, "goles", sqlite3_column_int(stmt, 1));
-        cJSON_AddNumberToObject(item, "asistencias", sqlite3_column_int(stmt, 2));
-        cJSON_AddNumberToObject(item, "resultado", sqlite3_column_int(stmt, 3));
-        cJSON_AddNumberToObject(item, "rendimientoGeneral", sqlite3_column_int(stmt, 4));
-        cJSON_AddNumberToObject(item, "cansancio", sqlite3_column_int(stmt, 5));
-        cJSON_AddNumberToObject(item, "estadoAnimo", sqlite3_column_int(stmt, 6));
-        mm_add_text(item, "comentarioPersonal", stmt, 7);
-        cJSON_AddNumberToObject(item, "clima",
-                                mm_clima_mobile(sqlite3_column_int(stmt, 8)));
-        cJSON_AddNumberToObject(item, "dia", sqlite3_column_int(stmt, 9));
-        cJSON_AddNumberToObject(item, "precioCentavos",
-                                sqlite3_column_int(stmt, 10) * 100);
-        cJSON_AddNumberToObject(item, "tipoPartido", sqlite3_column_int(stmt, 11));
-        mm_add_text(item, "rivalNombre", stmt, 12);
-        mm_add_text(item, "tipoRival", stmt, 13);
-        mm_add_text(item, "posicionJugada", stmt, 14);
-        cJSON_AddNumberToObject(item, "minutosJugados", sqlite3_column_int(stmt, 15));
-        cJSON_AddNumberToObject(item, "intensidad", sqlite3_column_int(stmt, 16));
-        cJSON_AddNumberToObject(item, "esfuerzoPercibido", sqlite3_column_int(stmt, 17));
-        mm_add_text(item, "condicionCancha", stmt, 18);
-        mm_add_text(item, "arbitraje", stmt, 19);
-        mm_add_text(item, "eventosClave", stmt, 20);
-        cJSON_AddNumberToObject(item, "ratingTecnico", sqlite3_column_int(stmt, 21));
-        cJSON_AddNumberToObject(item, "ratingFisico", sqlite3_column_int(stmt, 22));
-        cJSON_AddNumberToObject(item, "ratingMental", sqlite3_column_int(stmt, 23));
-        cJSON_AddNumberToObject(item, "estadoCancha", sqlite3_column_int(stmt, 24));
-        cJSON_AddNumberToObject(item, "golesEquipo", sqlite3_column_int(stmt, 25));
-        cJSON_AddNumberToObject(item, "golesRival", sqlite3_column_int(stmt, 26));
-        mm_add_text(item, "formatoPartido", stmt, 27);
-        cJSON_AddNumberToObject(item, "tarjeta", sqlite3_column_int(stmt, 28));
-        cJSON_AddNumberToObject(item, "golesEnContra", sqlite3_column_int(stmt, 29));
-        cJSON_AddNumberToObject(item, "dolorFisico", sqlite3_column_int(stmt, 30));
-        mm_add_nullable_number(item, "temperaturaC", stmt, 31);
-        cJSON_AddNumberToObject(item, "arbitrajeScore", sqlite3_column_int(stmt, 32));
-        mm_add_text(item, "loMejor", stmt, 33);
-        mm_add_text(item, "queMejorar", stmt, 34);
-        mm_add_text(item, "tags", stmt, 35);
-        mm_add_text(item, "golesDetalle", stmt, 36);
-        mm_add_text(item, "asistenciasDetalle", stmt, 37);
-        cJSON_AddBoolToObject(item, "atajasteTodoElPartido",
-                              sqlite3_column_int(stmt, 38) != 2);
-        mm_add_nullable_number(item, "precipMm", stmt, 39);
-        mm_add_nullable_number(item, "windKmh", stmt, 40);
-        mm_add_nullable_number(item, "weatherCode", stmt, 41);
-        mm_add_nullable_number(item, "apparentTempC", stmt, 42);
-        mm_add_text(item, "climaJson", stmt, 43);
-        cJSON_AddNumberToObject(item, "diferenciaGol", sqlite3_column_int(stmt, 44));
-        mm_add_text(item, "cancha", stmt, 45);
-        mm_add_text(item, "camiseta", stmt, 46);
-        if (sqlite3_column_type(stmt, 47) != SQLITE_NULL)
-        {
-            mm_add_text(item, "botin", stmt, 47);
-        }
-        if (sqlite3_column_type(stmt, 48) != SQLITE_NULL)
-        {
-            mm_add_text(item, "equipo", stmt, 48);
-        }
-        cJSON_AddStringToObject(item, "estado", "finalizado");
-        cJSON_AddBoolToObject(item, "favorito", false);
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
+    mm_add_text(item, "estado", stmt, 4);
 }
 
 static void mm_exportar_lesiones(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "lesiones");
-    sqlite3_stmt *stmt = NULL;
     const char *sql =
         "SELECT l.tipo, l.descripcion, l.fecha, c.nombre, l.estado "
         "FROM lesion l LEFT JOIN camiseta c ON c.id = l.camiseta_id ORDER BY l.id;";
+    mm_exportar_filas(root, "lesiones", sql, mm_item_lesiones);
+}
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+static void mm_item_financiamiento(cJSON *item, sqlite3_stmt *stmt)
+{
+    mm_add_text(item, "fecha", stmt, 0);
+    cJSON_AddNumberToObject(item, "tipo",
+                            sqlite3_column_int(stmt, 1) == 0 ? 2 : 1);
+    cJSON_AddNumberToObject(item, "categoria",
+                            mm_categoria_mobile(sqlite3_column_int(stmt, 2)));
+    mm_add_text(item, "descripcion", stmt, 3);
+    cJSON_AddNumberToObject(item, "montoCentavos",
+                            (double)llround(sqlite3_column_double(stmt, 4) * 100.0));
+    if (sqlite3_column_type(stmt, 5) != SQLITE_NULL)
     {
-        return;
+        mm_add_text(item, "itemEspecifico", stmt, 5);
     }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "tipo", stmt, 0);
-        mm_add_text(item, "descripcion", stmt, 1);
-        mm_add_text(item, "fecha", stmt, 2);
-        if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
-        {
-            mm_add_text(item, "camiseta", stmt, 3);
-        }
-        mm_add_text(item, "estado", stmt, 4);
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
 }
 
 static void mm_exportar_financiamiento(cJSON *root)
 {
-    cJSON *arr = cJSON_AddArrayToObject(root, "financiamiento");
-    sqlite3_stmt *stmt = NULL;
     const char *sql =
         "SELECT fecha, tipo, categoria, descripcion, monto, item_especifico "
         "FROM financiamiento ORDER BY id;";
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
-    {
-        return;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        cJSON *item = cJSON_CreateObject();
-        mm_add_text(item, "fecha", stmt, 0);
-        cJSON_AddNumberToObject(item, "tipo",
-                                sqlite3_column_int(stmt, 1) == 0 ? 2 : 1);
-        cJSON_AddNumberToObject(item, "categoria",
-                                mm_categoria_mobile(sqlite3_column_int(stmt, 2)));
-        mm_add_text(item, "descripcion", stmt, 3);
-        cJSON_AddNumberToObject(item, "montoCentavos",
-                                (double)llround(sqlite3_column_double(stmt, 4) * 100.0));
-        if (sqlite3_column_type(stmt, 5) != SQLITE_NULL)
-        {
-            mm_add_text(item, "itemEspecifico", stmt, 5);
-        }
-        cJSON_AddItemToArray(arr, item);
-    }
-
-    sqlite3_finalize(stmt);
+    mm_exportar_filas(root, "financiamiento", sql, mm_item_financiamiento);
 }
 
 static void mm_exportar_recordatorios(cJSON *root)

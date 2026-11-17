@@ -5038,17 +5038,11 @@ static void tactica_trim_newline(char *s)
     }
 }
 
-static void tactica_mostrar_partidos_disponibles(void)
+/* Imprime filas (id, cancha, fecha) de un stmt ya preparado y lo finaliza; devuelve las filas. */
+static int partido_imprimir_lista_id_cancha_fecha(sqlite3_stmt *stmt, const char *titulo,
+        const char *mensaje_vacio)
 {
-    const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
-                      "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.fecha_hora ASC";
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql, &stmt))
-    {
-        return;
-    }
-
-    ui_printf_centered_line("--- Partidos disponibles ---");
+    ui_printf_centered_line("%s", titulo);
     ui_printf_centered_line("ID | Cancha | Fecha");
     ui_printf_centered_line("---------------------------");
 
@@ -5066,9 +5060,24 @@ static void tactica_mostrar_partidos_disponibles(void)
 
     if (count == 0)
     {
-        ui_printf_centered_line("No hay partidos registrados.");
+        ui_printf_centered_line("%s", mensaje_vacio);
     }
     ui_printf("\n");
+    return count;
+}
+
+static void tactica_mostrar_partidos_disponibles(void)
+{
+    const char *sql = "SELECT p.id, can.nombre, p.fecha_hora FROM partido p "
+                      "JOIN cancha can ON p.cancha_id = can.id ORDER BY p.fecha_hora ASC";
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return;
+    }
+
+    partido_imprimir_lista_id_cancha_fecha(stmt, "--- Partidos disponibles ---",
+                                           "No hay partidos registrados.");
 }
 
 /* ------------------- Favoritos y Etiquetas (Tags) para partidos
@@ -5345,41 +5354,47 @@ static int partido_mostrar_favoritos(void)
         return 0;
     }
 
-    ui_printf_centered_line("--- Partidos favoritos ---");
-    ui_printf_centered_line("ID | Cancha | Fecha");
-    ui_printf_centered_line("---------------------------");
+    return partido_imprimir_lista_id_cancha_fecha(stmt, "--- Partidos favoritos ---",
+            "No hay partidos favoritos.");
+}
 
-    int count = 0;
-    char fecha_fmt[20];
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        format_date_for_display((const char *)sqlite3_column_text(stmt, 2), fecha_fmt,
-                                sizeof(fecha_fmt));
-        ui_printf_centered_line("%d | %s | %s", sqlite3_column_int(stmt, 0),
-                                (const char *)sqlite3_column_text(stmt, 1), fecha_fmt);
-        count++;
-    }
-    sqlite3_finalize(stmt);
+/* Cabecera comun de los submenus de favoritos y etiquetas; devuelve la opcion leida. */
+static int partido_submenu_leer_opcion(const char *titulo, const char *opcion1,
+                                       const char *opcion2)
+{
+    clear_screen();
+    print_header(titulo);
 
-    if (count == 0)
+    ui_printf("%s", opcion1);
+    ui_printf("%s", opcion2);
+    ui_printf("0) Volver\n");
+    return input_int("Opcion: ");
+}
+
+/* Lista los partidos y pide un ID; 0 si se cancela o no existe (ya avisado). */
+static int partido_pedir_id_listado(void)
+{
+    tactica_mostrar_partidos_disponibles();
+    int id = input_int("ID de partido (0 para cancelar): ");
+    if (id == 0)
     {
-        ui_printf_centered_line("No hay partidos favoritos.");
+        return 0;
     }
-    ui_printf("\n");
-    return count;
+    if (!existe_id("partido", id))
+    {
+        printf("Partido no encontrado.\n");
+        pause_console();
+        return 0;
+    }
+    return id;
 }
 
 static void menu_marcar_favorito_partido(void)
 {
     for (;;)
     {
-        clear_screen();
-        print_header("FAVORITOS");
-
-        ui_printf("1) Marcar/Desmarcar favorito\n");
-        ui_printf("2) Listar solo favoritos\n");
-        ui_printf("0) Volver\n");
-        int opt = input_int("Opcion: ");
+        int opt = partido_submenu_leer_opcion("FAVORITOS", "1) Marcar/Desmarcar favorito\n",
+                                              "2) Listar solo favoritos\n");
         if (opt == 0)
         {
             return;
@@ -5389,16 +5404,9 @@ static void menu_marcar_favorito_partido(void)
         {
         case 1:
         {
-            tactica_mostrar_partidos_disponibles();
-            int id = input_int("ID de partido (0 para cancelar): ");
+            int id = partido_pedir_id_listado();
             if (id == 0)
             {
-                break;
-            }
-            if (!existe_id("partido", id))
-            {
-                printf("Partido no encontrado.\n");
-                pause_console();
                 break;
             }
             int fav = partido_obtener_favorito(id);
@@ -5496,13 +5504,9 @@ static void menu_gestion_tags_partido(void)
 {
     for (;;)
     {
-        clear_screen();
-        print_header("GESTIONAR ETIQUETAS (TAGS)");
-
-        ui_printf("1) Gestionar etiquetas de un partido\n");
-        ui_printf("2) Listar partidos con etiquetas\n");
-        ui_printf("0) Volver\n");
-        int opt = input_int("Opcion: ");
+        int opt = partido_submenu_leer_opcion("GESTIONAR ETIQUETAS (TAGS)",
+                                              "1) Gestionar etiquetas de un partido\n",
+                                              "2) Listar partidos con etiquetas\n");
         if (opt == 0)
         {
             return;
@@ -5512,19 +5516,11 @@ static void menu_gestion_tags_partido(void)
         {
         case 1:
         {
-            tactica_mostrar_partidos_disponibles();
-            int id = input_int("ID de partido (0 para cancelar): ");
-            if (id == 0)
+            int id = partido_pedir_id_listado();
+            if (id != 0)
             {
-                break;
+                partido_manage_tags_for_id(id);
             }
-            if (!existe_id("partido", id))
-            {
-                printf("Partido no encontrado.\n");
-                pause_console();
-                break;
-            }
-            partido_manage_tags_for_id(id);
             break;
         }
         case 2:

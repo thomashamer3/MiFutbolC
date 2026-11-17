@@ -343,23 +343,11 @@ void equipamiento_historial_editar(void)
 
 void equipamiento_historial_eliminar(void)
 {
-    if (!hay_registros("equipamiento_historial"))
+    int id = seleccionar_id_existente("equipamiento_historial", "equipamiento",
+                                      "ELIMINAR EQUIPAMIENTO", "No hay items",
+                                      "ID del item a eliminar (0=cancelar): ", "Item");
+    if (id == 0)
     {
-        mostrar_no_hay_registros("equipamiento");
-        pause_console();
-        return;
-    }
-
-    listar_entidades("equipamiento_historial", "ELIMINAR EQUIPAMIENTO", "No hay items");
-
-    int id = input_int("ID del item a eliminar (0=cancelar): ");
-    if (id <= 0 || !existe_id("equipamiento_historial", id))
-    {
-        if (id > 0)
-        {
-            mostrar_no_existe("Item");
-        }
-        pause_console();
         return;
     }
 

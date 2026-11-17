@@ -154,13 +154,8 @@ static void write_json_row(FILE *file, sqlite3_stmt *stmt, void *context) /* NOS
 {
     (void)file;
     cJSON *root = (cJSON *)context;
-    cJSON *item = cJSON_CreateObject();
-    cJSON_AddNumberToObject(item, "id", sqlite3_column_int(stmt, 0));
-    cJSON_AddStringToObject(item, "nombre", (const char *)sqlite3_column_text(stmt, 1));
-    cJSON_AddNumberToObject(item, "tipo", sqlite3_column_int(stmt, 2));
-    cJSON_AddNumberToObject(item, "tipo_futbol", sqlite3_column_int(stmt, 3));
-    cJSON_AddNumberToObject(item, "partido_id", sqlite3_column_int(stmt, 4));
-    cJSON_AddNumberToObject(item, "num_jugadores", sqlite3_column_int(stmt, 5));
+    static const char *const enteros[] = {"tipo", "tipo_futbol", "partido_id", "num_jugadores"};
+    cJSON *item = export_json_item_id_nombre(stmt, enteros, 4);
     cJSON_AddStringToObject(item, "posiciones", (const char *)sqlite3_column_text(stmt, 6));
     cJSON_AddItemToArray(root, item);
 }

@@ -12,8 +12,7 @@
  * al terminar.
  */
 
-#include "unity/unity.h"
-#include "db.h"
+#include "test_db_fixture.h"
 #include "estadisticas_meta.h"
 #include "resumen_compartible.h"
 #include <math.h>
@@ -21,46 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#define TEST_SEP "\\"
-#else
-#define TEST_SEP "/"
-#endif
-
 #define PERFIL_TEST "test_resumen_anio"
-#define DELTA 0.001
 
-static char g_db_path[1024];
-static char g_log_path[1024];
 static char g_out_path[1024];
-
-/* Este Unity se compila sin precision double: comparacion propia. */
-#define ASSERT_CERCA(esperado, real) assert_cerca((esperado), (real), __LINE__)
-
-static void assert_cerca(double esperado, double real, int linea)
-{
-    if (fabs(esperado - real) > DELTA)
-    {
-        static char mensaje[128];
-        snprintf(mensaje, sizeof(mensaje), "Esperado %.4f, obtenido %.4f", esperado, real);
-        UNITY_TEST_FAIL(linea, mensaje);
-    }
-}
-
-static void borrar_base(const char *path)
-{
-    char aux[1100];
-    remove(path);
-    snprintf(aux, sizeof(aux), "%s-wal", path);
-    remove(aux);
-    snprintf(aux, sizeof(aux), "%s-shm", path);
-    remove(aux);
-}
-
-static void exec_ok(const char *sql)
-{
-    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
-}
 
 typedef struct
 {
@@ -149,40 +111,14 @@ static ResumenAnio *calcular(int anio)
     return r;
 }
 
-/* Lee el archivo de salida entero (malloc) y lo borra. */
-static char *leer_salida(long *largo_out)
-{
-    FILE *f = NULL;
-    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_out_path, "rb"));
-    TEST_ASSERT_NOT_NULL(f);
-    fseek(f, 0, SEEK_END);
-    long largo = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    TEST_ASSERT_TRUE(largo >= 0);
-    char *texto = malloc((size_t)largo + 1);
-    TEST_ASSERT_NOT_NULL(texto);
-    size_t leidos = fread(texto, 1, (size_t)largo, f);
-    texto[leidos] = '\0';
-    fclose(f);
-    remove(g_out_path);
-    if (largo_out)
-    {
-        *largo_out = (long)leidos;
-    }
-    return texto;
-}
-
 void setUp(void)
 {
-    borrar_base(g_db_path);
-    TEST_ASSERT_TRUE(db_init());
-    TEST_ASSERT_NOT_NULL(db);
+    abrir_base_limpia();
 }
 
 void tearDown(void)
 {
-    db_close();
-    borrar_base(g_db_path);
+    cerrar_y_borrar_base();
 }
 
 static void test_filtro_por_anio(void)
@@ -309,7 +245,7 @@ static void test_sin_datos_del_anio_anterior(void)
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
-    char *html = leer_salida(NULL);
+    char *html = leer_y_borrar(g_out_path, NULL);
     TEST_ASSERT_NULL(strstr(html, "class=\"comparar\""));
     free(html);
     free(r);
@@ -333,7 +269,7 @@ static void test_anio_sin_partidos(void)
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
-    char *html = leer_salida(NULL);
+    char *html = leer_y_borrar(g_out_path, NULL);
     TEST_ASSERT_NOT_NULL(strstr(html, "Sin partidos en 2030"));
     TEST_ASSERT_NULL(strstr(html, "class=\"donut\""));
     TEST_ASSERT_NULL(strstr(html, "class=\"spark\""));
@@ -378,7 +314,7 @@ static void test_escritores(void)
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_html(f, r);
     fclose(f);
-    char *html = leer_salida(NULL);
+    char *html = leer_y_borrar(g_out_path, NULL);
     TEST_ASSERT_NOT_NULL(strstr(html, "Roja &lt;b&gt;&amp;"));
     TEST_ASSERT_NULL(strstr(html, "Roja <b>"));
     TEST_ASSERT_NULL(strstr(html, "http://"));
@@ -396,7 +332,7 @@ static void test_escritores(void)
     TEST_ASSERT_NOT_NULL(f);
     resumen_anio_escribir_txt(f, r);
     fclose(f);
-    char *txt = leer_salida(NULL);
+    char *txt = leer_y_borrar(g_out_path, NULL);
     TEST_ASSERT_NOT_NULL(strstr(txt, "RESUMEN DEL AÑO 2026"));
     TEST_ASSERT_NOT_NULL(strstr(txt, "COMPARACIÓN CON 2025"));
     TEST_ASSERT_NOT_NULL(strstr(txt, "<- mejor mes"));
@@ -404,7 +340,7 @@ static void test_escritores(void)
     free(txt);
 
     TEST_ASSERT_EQUAL_INT(1, resumen_anio_escribir_pdf(r, g_out_path));
-    char *pdf = leer_salida(&largo);
+    char *pdf = leer_y_borrar(g_out_path, &largo);
     TEST_ASSERT_TRUE(largo > 1000);
     TEST_ASSERT_EQUAL_INT(0, strncmp(pdf, "%PDF", 4));
     TEST_ASSERT_NOT_NULL(strstr(pdf, "%%EOF"));
@@ -414,28 +350,10 @@ static void test_escritores(void)
 
 int main(void)
 {
-    if (!db_set_active_user(PERFIL_TEST))
+    if (!fixture_iniciar(PERFIL_TEST, g_out_path, sizeof(g_out_path), "_salida.tmp"))
     {
-        fprintf(stderr, "No se pudo seleccionar el perfil de prueba\n");
         return 1;
     }
-    if (!db_init())
-    {
-        fprintf(stderr, "db_init fallo\n");
-        return 1;
-    }
-    const char *data_dir = get_data_dir();
-    if (!data_dir)
-    {
-        fprintf(stderr, "Sin directorio de datos\n");
-        return 1;
-    }
-    snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, PERFIL_TEST);
-    snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
-             PERFIL_TEST);
-    snprintf(g_out_path, sizeof(g_out_path), "%s" TEST_SEP "%s_salida.tmp", data_dir,
-             PERFIL_TEST);
-    db_close();
 
     UNITY_BEGIN();
 
@@ -447,7 +365,5 @@ int main(void)
     RUN_TEST(test_clima_real_por_anio);
     RUN_TEST(test_escritores);
 
-    int fallos = UNITY_END();
-    remove(g_log_path);
-    return fallos;
+    return fixture_terminar();
 }

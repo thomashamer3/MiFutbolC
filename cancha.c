@@ -156,6 +156,21 @@ static void agregar_texto_tipo_en_buffer(char *buffer, size_t size, const char *
     (void)strncat_s(buffer, size, texto, _TRUNCATE);
 }
 
+/* Une los nombres de los bits activos; NULL si ninguno aplica, para caer al codigo simple. */
+static const char *texto_desde_mask(int mask, const char *const *nombres, size_t cantidad,
+                                    char *buffer, size_t size)
+{
+    buffer[0] = '\0';
+    for (size_t i = 0; i < cantidad; i++)
+    {
+        if (mask & (1 << i))
+        {
+            agregar_texto_tipo_en_buffer(buffer, size, nombres[i]);
+        }
+    }
+    return buffer[0] != '\0' ? buffer : NULL;
+}
+
 static int es_separador_lista(int separador)
 {
     return separador == ' ' || separador == ',' || separador == ';' || separador == '/' ||
@@ -276,34 +291,16 @@ static const char *texto_tipo_cancha(int codigo)
 {
     if (codigo >= TIPO_CANCHA_MULTI_BASE)
     {
-        int mask = codigo - TIPO_CANCHA_MULTI_BASE;
+        static const char *const nombres[] = {"Futbol 5", "Futbol 7", "Futbol 8", "Futbol 11",
+                                              "Otro"
+                                             };
         static char buffer[100];
-        buffer[0] = '\0';
-
-        if (mask & (1 << 0))
+        const char *texto = texto_desde_mask(codigo - TIPO_CANCHA_MULTI_BASE, nombres,
+                                             sizeof(nombres) / sizeof(nombres[0]), buffer,
+                                             sizeof(buffer));
+        if (texto)
         {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Futbol 5");
-        }
-        if (mask & (1 << 1))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Futbol 7");
-        }
-        if (mask & (1 << 2))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Futbol 8");
-        }
-        if (mask & (1 << 3))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Futbol 11");
-        }
-        if (mask & (1 << 4))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Otro");
-        }
-
-        if (buffer[0] != '\0')
-        {
-            return buffer;
+            return texto;
         }
     }
 
@@ -530,30 +527,14 @@ static const char *texto_superficie(int codigo)
 {
     if (codigo >= SUPERFICIE_MULTI_BASE)
     {
-        int mask = codigo - SUPERFICIE_MULTI_BASE;
+        static const char *const nombres[] = {"Natural", "Sintetico", "Cemento", "Otra"};
         static char buffer[80];
-        buffer[0] = '\0';
-
-        if (mask & (1 << 0))
+        const char *texto = texto_desde_mask(codigo - SUPERFICIE_MULTI_BASE, nombres,
+                                             sizeof(nombres) / sizeof(nombres[0]), buffer,
+                                             sizeof(buffer));
+        if (texto)
         {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Natural");
-        }
-        if (mask & (1 << 1))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Sintetico");
-        }
-        if (mask & (1 << 2))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Cemento");
-        }
-        if (mask & (1 << 3))
-        {
-            agregar_texto_tipo_en_buffer(buffer, sizeof(buffer), "Otra");
-        }
-
-        if (buffer[0] != '\0')
-        {
-            return buffer;
+            return texto;
         }
     }
 
@@ -993,6 +974,22 @@ static int cargar_info_cancha_detalle(int id, CanchaInfoDetalle *info)
     return 1;
 }
 
+/* El detalle y el menu de modificar muestran los mismos campos; solo cambia el rotulo. */
+static void imprimir_precios_servicios_cancha(const CanchaInfoDetalle *info,
+        const char *const etiquetas[10])
+{
+    printf("%s%.2f\n", etiquetas[0], (double)info->precio_hora_dia_centavos / 100.0);
+    printf("%s%.2f\n", etiquetas[1], (double)info->precio_hora_noche_centavos / 100.0);
+    printf("%s%s\n", etiquetas[2], info->servicios.vestuarios ? "SI" : "NO");
+    printf("%s%s\n", etiquetas[3], info->servicios.duchas ? "SI" : "NO");
+    printf("%s%s\n", etiquetas[4], info->servicios.buffet ? "SI" : "NO");
+    printf("%s%s\n", etiquetas[5], info->servicios.estacionamiento ? "SI" : "NO");
+    printf("%s%d\n", etiquetas[6], info->cantidad_canchas);
+    printf("%s%s\n", etiquetas[7], texto_o_defecto(info->estado, "(sin dato)"));
+    printf("%s%s\n", etiquetas[8], texto_o_defecto(info->descripcion, "(sin dato)"));
+    printf("%s%s\n", etiquetas[9], texto_o_defecto(info->contacto_alt, "(sin dato)"));
+}
+
 static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
 {
     char hora_apertura[16];
@@ -1011,16 +1008,14 @@ static void imprimir_info_cancha_detalle(int id, const CanchaInfoDetalle *info)
     printf("Techada            : %s\n", texto_estado_techada(info->techada_estado));
     printf("Iluminacion        : %s\n", info->tiene_iluminacion ? "SI" : "NO");
     printf("Horario            : %s - %s\n", hora_apertura, hora_cierre);
-    printf("Precio Hora Dia    : %.2f\n", (double)info->precio_hora_dia_centavos / 100.0);
-    printf("Precio Hora Noche  : %.2f\n", (double)info->precio_hora_noche_centavos / 100.0);
-    printf("Vestuarios         : %s\n", info->servicios.vestuarios ? "SI" : "NO");
-    printf("Duchas             : %s\n", info->servicios.duchas ? "SI" : "NO");
-    printf("Buffet             : %s\n", info->servicios.buffet ? "SI" : "NO");
-    printf("Estacionamiento    : %s\n", info->servicios.estacionamiento ? "SI" : "NO");
-    printf("Cantidad Canchas   : %d\n", info->cantidad_canchas);
-    printf("Estado Pasto       : %s\n", texto_o_defecto(info->estado, "(sin dato)"));
-    printf("Descripcion        : %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
-    printf("Contacto Alterno   : %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    static const char *const etiquetas[] =
+    {
+        "Precio Hora Dia    : ", "Precio Hora Noche  : ", "Vestuarios         : ",
+        "Duchas             : ", "Buffet             : ", "Estacionamiento    : ",
+        "Cantidad Canchas   : ", "Estado Pasto       : ", "Descripcion        : ",
+        "Contacto Alterno   : "
+    };
+    imprimir_precios_servicios_cancha(info, etiquetas);
     if (info->coordenadas.latitud != 0.0 || info->coordenadas.longitud != 0.0)
     {
         char lat_str[32];
@@ -2229,16 +2224,14 @@ static void imprimir_menu_modificar_cancha(const CanchaInfoDetalle *info,
     printf("8) Iluminacion: %s\n", info->tiene_iluminacion ? "SI" : "NO");
     printf("9) Horario apertura: %s\n", hora_apertura);
     printf("10) Horario cierre: %s\n", hora_cierre);
-    printf("11) Precio hora (Dia): %.2f\n", (double)info->precio_hora_dia_centavos / 100.0);
-    printf("12) Precio hora (Noche): %.2f\n", (double)info->precio_hora_noche_centavos / 100.0);
-    printf("13) Tiene vestuarios: %s\n", info->servicios.vestuarios ? "SI" : "NO");
-    printf("14) Tiene duchas: %s\n", info->servicios.duchas ? "SI" : "NO");
-    printf("15) Tiene buffet: %s\n", info->servicios.buffet ? "SI" : "NO");
-    printf("16) Tiene estacionamiento: %s\n", info->servicios.estacionamiento ? "SI" : "NO");
-    printf("17) Cantidad de canchas: %d\n", info->cantidad_canchas);
-    printf("18) Estado: %s\n", texto_o_defecto(info->estado, "(sin dato)"));
-    printf("19) Descripcion: %s\n", texto_o_defecto(info->descripcion, "(sin dato)"));
-    printf("20) Contacto alternativo: %s\n", texto_o_defecto(info->contacto_alt, "(sin dato)"));
+    static const char *const etiquetas[] =
+    {
+        "11) Precio hora (Dia): ", "12) Precio hora (Noche): ", "13) Tiene vestuarios: ",
+        "14) Tiene duchas: ",      "15) Tiene buffet: ",        "16) Tiene estacionamiento: ",
+        "17) Cantidad de canchas: ", "18) Estado: ",            "19) Descripcion: ",
+        "20) Contacto alternativo: "
+    };
+    imprimir_precios_servicios_cancha(info, etiquetas);
     printf("21) Grabacion Partido: %s\n", (info->flags & CANCHA_FLAG_GRABACION) ? "SI" : "NO");
     printf("22) Marcador: %s\n", (info->flags & CANCHA_FLAG_MARCADOR) ? "SI" : "NO");
     if (info->coordenadas.latitud != 0.0 || info->coordenadas.longitud != 0.0)

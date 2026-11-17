@@ -427,6 +427,58 @@ static int modificar_amigo_numerico(int id, const char *nombre_actual, int campo
     return amigo_actualizar_numerico(id, nombre_actual, campo);
 }
 
+/* Pantalla comun de modificar/eliminar/comparar: devuelve el ID elegido o 0 si no hay
+   amigos, se cancelo o no existe (los avisos ya se mostraron). */
+static int amigo_seleccionar(const char *titulo, const char *contexto_vacio, const char *prompt)
+{
+    clear_screen();
+    print_header(titulo);
+
+    if (!hay_registros("amigo"))
+    {
+        mostrar_no_hay_registros(contexto_vacio);
+        pause_console();
+        return 0;
+    }
+
+    listar_amigos_simple();
+
+    int id = input_int(prompt);
+    if (id == 0)
+    {
+        return 0;
+    }
+
+    if (!existe_id("amigo", id))
+    {
+        mostrar_no_existe("Amigo");
+        pause_console();
+        return 0;
+    }
+    return id;
+}
+
+/* Deja stmt posicionado en la fila del amigo; en error ya avisa, pausa y finaliza. */
+static int amigo_consultar(int id, const char *sql, sqlite3_stmt **stmt)
+{
+    if (!db_prepare_stmt(stmt, sql))
+    {
+        printf("Error al consultar el amigo.\n");
+        pause_console();
+        return 0;
+    }
+
+    sqlite3_bind_int(*stmt, 1, id);
+    if (sqlite3_step(*stmt) != SQLITE_ROW)
+    {
+        sqlite3_finalize(*stmt);
+        mostrar_no_existe("Amigo");
+        pause_console();
+        return 0;
+    }
+    return 1;
+}
+
 /**
  * @brief Modifica un amigo existente en la base de datos
  *
@@ -435,52 +487,24 @@ static int modificar_amigo_numerico(int id, const char *nombre_actual, int campo
  */
 void modificar_amigo(void)
 {
-    clear_screen();
-    print_header("MODIFICAR AMIGO");
-
-    if (!hay_registros("amigo"))
-    {
-        mostrar_no_hay_registros("amigos para modificar");
-        pause_console();
-        return;
-    }
-
-    listar_amigos_simple();
-
-    int id = input_int("\nID del amigo a modificar (0 para cancelar): ");
+    int id = amigo_seleccionar("MODIFICAR AMIGO", "amigos para modificar",
+                               "\nID del amigo a modificar (0 para cancelar): ");
     if (id == 0)
     {
         return;
     }
 
-    if (!existe_id("amigo", id))
-    {
-        mostrar_no_existe("Amigo");
-        pause_console();
-        return;
-    }
-
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt,
+    if (!amigo_consultar(id,
                          "SELECT nombre, IFNULL(posicion, ''), "
                          "IFNULL(goles_total, 0), "
                          "IFNULL(asistencias_total, 0), "
                          "IFNULL(partidos_total, 0), "
                          "IFNULL(mejor_rendimiento, 0), "
                          "IFNULL(notas, '') "
-                         "FROM amigo WHERE id = ?"))
+                         "FROM amigo WHERE id = ?",
+                         &stmt))
     {
-        printf("Error al consultar el amigo.\n");
-        pause_console();
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        sqlite3_finalize(stmt);
-        mostrar_no_existe("Amigo");
-        pause_console();
         return;
     }
 
@@ -534,28 +558,10 @@ void modificar_amigo(void)
  */
 void eliminar_amigo(void)
 {
-    clear_screen();
-    print_header("ELIMINAR AMIGO");
-
-    if (!hay_registros("amigo"))
-    {
-        mostrar_no_hay_registros("amigos para eliminar");
-        pause_console();
-        return;
-    }
-
-    listar_amigos_simple();
-
-    int id = input_int("\nID del amigo a eliminar (0 para cancelar): ");
+    int id = amigo_seleccionar("ELIMINAR AMIGO", "amigos para eliminar",
+                               "\nID del amigo a eliminar (0 para cancelar): ");
     if (id == 0)
     {
-        return;
-    }
-
-    if (!existe_id("amigo", id))
-    {
-        mostrar_no_existe("Amigo");
-        pause_console();
         return;
     }
 
@@ -776,51 +782,23 @@ void mostrar_ranking(void)
  */
 void comparar_con_amigo(void)
 {
-    clear_screen();
-    print_header("COMPARAR CON AMIGO");
-
-    if (!hay_registros("amigo"))
-    {
-        mostrar_no_hay_registros("amigos para comparar");
-        pause_console();
-        return;
-    }
-
-    listar_amigos_simple();
-
-    int id = input_int("\nID del amigo a comparar (0 para cancelar): ");
+    int id = amigo_seleccionar("COMPARAR CON AMIGO", "amigos para comparar",
+                               "\nID del amigo a comparar (0 para cancelar): ");
     if (id == 0)
     {
         return;
     }
 
-    if (!existe_id("amigo", id))
-    {
-        mostrar_no_existe("Amigo");
-        pause_console();
-        return;
-    }
-
     sqlite3_stmt *stmt;
-    if (!db_prepare_stmt(&stmt,
+    if (!amigo_consultar(id,
                          "SELECT nombre, IFNULL(posicion, ''), "
                          "IFNULL(goles_total, 0), "
                          "IFNULL(asistencias_total, 0), "
                          "IFNULL(partidos_total, 0), "
                          "IFNULL(mejor_rendimiento, 0) "
-                         "FROM amigo WHERE id = ?"))
+                         "FROM amigo WHERE id = ?",
+                         &stmt))
     {
-        printf("Error al consultar el amigo.\n");
-        pause_console();
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        sqlite3_finalize(stmt);
-        mostrar_no_existe("Amigo");
-        pause_console();
         return;
     }
 

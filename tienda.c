@@ -73,81 +73,163 @@ static const char *rango_precio_str(int rango)
     }
 }
 
+typedef struct
+{
+    char nombre[100];
+    int tipo;
+    char url[300];
+    char direccion[300];
+    char telefono[50];
+    char whatsapp[50];
+    char instagram[100];
+    char email[100];
+    int vende_botines;
+    int vende_camisetas;
+    int vende_pelotas;
+    int vende_equipamiento;
+    int vende_accesorios;
+    int rango_precio;
+    int tiene_envio;
+    int mercadopago;
+    int rating;
+    int favorito;
+    char notas[500];
+} TiendaDatos;
+
+/* Textos que cambian entre alta y modificacion; el resto del formulario es comun. */
+typedef struct
+{
+    const char *nombre;
+    const char *menu_tipo;
+    const char *url;
+    const char *direccion;
+    const char *telefono;
+    const char *whatsapp;
+    const char *instagram;
+    const char *email;
+    const char *equipamiento;
+    const char *accesorios;
+    const char *menu_rango;
+    const char *notas;
+} TiendaPrompts;
+
+static const TiendaPrompts TIENDA_PROMPTS_CREAR =
+{
+    "Nombre de la tienda: ",
+    "\nTipo de tienda:\n1. Online\n2. Fisica\n3. Ambas\n",
+    "URL: ",
+    "Direccion: ",
+    "Telefono: ",
+    "WhatsApp: ",
+    "Instagram: ",
+    "Email: ",
+    "  Equipamiento (canilleras, medias, etc): ",
+    "  Accesorios (bolsos, porta-botines, etc): ",
+    "\nRango de precio:\n0. Sin informacion\n1. Economico\n2. Medio\n3. Premium\n",
+    "Notas (opcional): ",
+};
+
+static const TiendaPrompts TIENDA_PROMPTS_MODIFICAR =
+{
+    "Nuevo nombre: ",
+    "\nNuevo tipo de tienda:\n1. Online\n2. Fisica\n3. Ambas\n",
+    "Nueva URL: ",
+    "Nueva direccion: ",
+    "Nuevo telefono: ",
+    "Nuevo WhatsApp: ",
+    "Nuevo Instagram: ",
+    "Nuevo Email: ",
+    "  Equipamiento: ",
+    "  Accesorios: ",
+    "\nRango de precio (0=Sin info, 1=Economico, 2=Medio, 3=Premium):\n",
+    "Nuevas notas: ",
+};
+
+/* Devuelve 0 si el nombre queda vacio (ya avisado al usuario). */
+static int tienda_leer_datos(TiendaDatos *t, const TiendaPrompts *p)
+{
+    input_string(p->nombre, t->nombre, sizeof(t->nombre));
+    if (t->nombre[0] == '\0')
+    {
+        printf("El nombre no puede estar vacio.\n");
+        pause_console();
+        return 0;
+    }
+
+    printf("%s", p->menu_tipo);
+    t->tipo = input_int_rango("Seleccione (1-3): ", 1, 3);
+
+    if (t->tipo == 1 || t->tipo == 3)
+    {
+        input_string(p->url, t->url, sizeof(t->url));
+    }
+
+    if (t->tipo == 2 || t->tipo == 3)
+    {
+        input_string(p->direccion, t->direccion, sizeof(t->direccion));
+    }
+
+    input_string(p->telefono, t->telefono, sizeof(t->telefono));
+    input_string(p->whatsapp, t->whatsapp, sizeof(t->whatsapp));
+    input_string(p->instagram, t->instagram, sizeof(t->instagram));
+    input_string(p->email, t->email, sizeof(t->email));
+
+    printf("\nProductos que vende (0=No, 1=Si):\n");
+    t->vende_botines = input_int("  Botines: ");
+    t->vende_camisetas = input_int("  Camisetas: ");
+    t->vende_pelotas = input_int("  Pelotas: ");
+    t->vende_equipamiento = input_int(p->equipamiento);
+    t->vende_accesorios = input_int(p->accesorios);
+
+    printf("%s", p->menu_rango);
+    t->rango_precio = input_int_rango("Seleccione (0-3): ", 0, 3);
+
+    t->tiene_envio = input_int("Tiene envio? (0=No, 1=Si): ");
+    t->mercadopago = input_int("Acepta MercadoPago? (0=No, 1=Si): ");
+    t->rating = input_int_rango("Rating (1-10): ", 1, 10);
+    t->favorito = input_int("Es favorito? (0=No, 1=Si): ");
+
+    input_string(p->notas, t->notas, sizeof(t->notas));
+    return 1;
+}
+
+/* INSERT y UPDATE listan los campos en el mismo orden; solo cambia el primer indice. */
+static void tienda_bind_datos(sqlite3_stmt *stmt, const TiendaDatos *t, int i)
+{
+    sqlite3_bind_text(stmt, i++, t->nombre, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, i++, t->tipo);
+    sqlite3_bind_text(stmt, i++, t->url, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, i++, t->direccion, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, i++, t->telefono, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, i++, t->whatsapp, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, i++, t->instagram, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, i++, t->email, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, i++, t->vende_botines);
+    sqlite3_bind_int(stmt, i++, t->vende_camisetas);
+    sqlite3_bind_int(stmt, i++, t->vende_pelotas);
+    sqlite3_bind_int(stmt, i++, t->vende_equipamiento);
+    sqlite3_bind_int(stmt, i++, t->vende_accesorios);
+    sqlite3_bind_int(stmt, i++, t->rango_precio);
+    sqlite3_bind_int(stmt, i++, t->tiene_envio);
+    sqlite3_bind_int(stmt, i++, t->mercadopago);
+    sqlite3_bind_int(stmt, i++, t->rating);
+    sqlite3_bind_int(stmt, i++, t->favorito);
+    sqlite3_bind_text(stmt, i, t->notas, -1, SQLITE_STATIC);
+}
+
 void crear_tienda(void)
 {
     clear_screen();
     print_header("CREAR TIENDA");
 
     int id = (int)obtener_siguiente_id("tienda");
-    char nombre[100] = {0};
-    int tipo = 1;
-    char url[300] = {0};
-    char direccion[300] = {0};
-    char telefono[50] = {0};
-    char whatsapp[50] = {0};
-    char instagram[100] = {0};
-    char email[100] = {0};
-    int vende_botines = 0;
-    int vende_camisetas = 0;
-    int vende_pelotas = 0;
-    int vende_equipamiento = 0;
-    int vende_accesorios = 0;
-    int rango_precio = 0;
-    int tiene_envio = 0;
-    int mercadopago = 0;
-    int rating = 0;
-    int favorito = 0;
-    char notas[500] = {0};
+    TiendaDatos t = {0};
+    t.tipo = 1;
 
-    input_string("Nombre de la tienda: ", nombre, sizeof(nombre));
-    if (nombre[0] == '\0')
+    if (!tienda_leer_datos(&t, &TIENDA_PROMPTS_CREAR))
     {
-        printf("El nombre no puede estar vacio.\n");
-        pause_console();
         return;
     }
-
-    printf("\nTipo de tienda:\n");
-    printf("1. Online\n");
-    printf("2. Fisica\n");
-    printf("3. Ambas\n");
-    tipo = input_int_rango("Seleccione (1-3): ", 1, 3);
-
-    if (tipo == 1 || tipo == 3)
-    {
-        input_string("URL: ", url, sizeof(url));
-    }
-
-    if (tipo == 2 || tipo == 3)
-    {
-        input_string("Direccion: ", direccion, sizeof(direccion));
-    }
-
-    input_string("Telefono: ", telefono, sizeof(telefono));
-    input_string("WhatsApp: ", whatsapp, sizeof(whatsapp));
-    input_string("Instagram: ", instagram, sizeof(instagram));
-    input_string("Email: ", email, sizeof(email));
-
-    printf("\nProductos que vende (0=No, 1=Si):\n");
-    vende_botines = input_int("  Botines: ");
-    vende_camisetas = input_int("  Camisetas: ");
-    vende_pelotas = input_int("  Pelotas: ");
-    vende_equipamiento = input_int("  Equipamiento (canilleras, medias, etc): ");
-    vende_accesorios = input_int("  Accesorios (bolsos, porta-botines, etc): ");
-
-    printf("\nRango de precio:\n");
-    printf("0. Sin informacion\n");
-    printf("1. Economico\n");
-    printf("2. Medio\n");
-    printf("3. Premium\n");
-    rango_precio = input_int_rango("Seleccione (0-3): ", 0, 3);
-
-    tiene_envio = input_int("Tiene envio? (0=No, 1=Si): ");
-    mercadopago = input_int("Acepta MercadoPago? (0=No, 1=Si): ");
-    rating = input_int_rango("Rating (1-10): ", 1, 10);
-    favorito = input_int("Es favorito? (0=No, 1=Si): ");
-
-    input_string("Notas (opcional): ", notas, sizeof(notas));
 
     sqlite3_stmt *stmt = NULL;
     const char *sql =
@@ -160,29 +242,11 @@ void crear_tienda(void)
     if (preparar_stmt(&stmt, sql))
     {
         sqlite3_bind_int(stmt, 1, id);
-        sqlite3_bind_text(stmt, 2, nombre, -1, SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 3, tipo);
-        sqlite3_bind_text(stmt, 4, url, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 5, direccion, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 6, telefono, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 7, whatsapp, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 8, instagram, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 9, email, -1, SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 10, vende_botines);
-        sqlite3_bind_int(stmt, 11, vende_camisetas);
-        sqlite3_bind_int(stmt, 12, vende_pelotas);
-        sqlite3_bind_int(stmt, 13, vende_equipamiento);
-        sqlite3_bind_int(stmt, 14, vende_accesorios);
-        sqlite3_bind_int(stmt, 15, rango_precio);
-        sqlite3_bind_int(stmt, 16, tiene_envio);
-        sqlite3_bind_int(stmt, 17, mercadopago);
-        sqlite3_bind_int(stmt, 18, rating);
-        sqlite3_bind_int(stmt, 19, favorito);
-        sqlite3_bind_text(stmt, 20, notas, -1, SQLITE_STATIC);
+        tienda_bind_datos(stmt, &t, 2);
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            mostrar_alerta_operacion("Tienda", "Creada", nombre);
+            mostrar_alerta_operacion("Tienda", "Creada", t.nombre);
         }
         else
         {
@@ -328,63 +392,13 @@ void modificar_tienda(void)
         return;
     }
 
-    char nombre[100] = {0};
-    int tipo = 1;
-    char url[300] = {0};
-    char direccion[300] = {0};
-    char telefono[50] = {0};
-    char whatsapp[50] = {0};
-    char instagram[100] = {0};
-    char email[100] = {0};
-    int vende_botines = 0;
-    int vende_camisetas = 0;
-    int vende_pelotas = 0;
-    int vende_equipamiento = 0;
-    int vende_accesorios = 0;
-    int rango_precio = 0;
-    int tiene_envio = 0;
-    int mercadopago = 0;
-    int rating = 0;
-    int favorito = 0;
-    char notas[500] = {0};
+    TiendaDatos t = {0};
+    t.tipo = 1;
 
-    input_string("Nuevo nombre: ", nombre, sizeof(nombre));
-    if (nombre[0] == '\0')
+    if (!tienda_leer_datos(&t, &TIENDA_PROMPTS_MODIFICAR))
     {
-        printf("El nombre no puede estar vacio.\n");
-        pause_console();
         return;
     }
-
-    printf("\nNuevo tipo de tienda:\n");
-    printf("1. Online\n2. Fisica\n3. Ambas\n");
-    tipo = input_int_rango("Seleccione (1-3): ", 1, 3);
-
-    if (tipo == 1 || tipo == 3)
-        input_string("Nueva URL: ", url, sizeof(url));
-    if (tipo == 2 || tipo == 3)
-        input_string("Nueva direccion: ", direccion, sizeof(direccion));
-
-    input_string("Nuevo telefono: ", telefono, sizeof(telefono));
-    input_string("Nuevo WhatsApp: ", whatsapp, sizeof(whatsapp));
-    input_string("Nuevo Instagram: ", instagram, sizeof(instagram));
-    input_string("Nuevo Email: ", email, sizeof(email));
-
-    printf("\nProductos que vende (0=No, 1=Si):\n");
-    vende_botines = input_int("  Botines: ");
-    vende_camisetas = input_int("  Camisetas: ");
-    vende_pelotas = input_int("  Pelotas: ");
-    vende_equipamiento = input_int("  Equipamiento: ");
-    vende_accesorios = input_int("  Accesorios: ");
-
-    printf("\nRango de precio (0=Sin info, 1=Economico, 2=Medio, 3=Premium):\n");
-    rango_precio = input_int_rango("Seleccione (0-3): ", 0, 3);
-
-    tiene_envio = input_int("Tiene envio? (0=No, 1=Si): ");
-    mercadopago = input_int("Acepta MercadoPago? (0=No, 1=Si): ");
-    rating = input_int_rango("Rating (1-10): ", 1, 10);
-    favorito = input_int("Es favorito? (0=No, 1=Si): ");
-    input_string("Nuevas notas: ", notas, sizeof(notas));
 
     sqlite3_stmt *stmt = NULL;
     const char *sql = "UPDATE tienda SET "
@@ -396,30 +410,12 @@ void modificar_tienda(void)
 
     if (preparar_stmt(&stmt, sql))
     {
-        sqlite3_bind_text(stmt, 1, nombre, -1, SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 2, tipo);
-        sqlite3_bind_text(stmt, 3, url, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 4, direccion, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 5, telefono, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 6, whatsapp, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 7, instagram, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 8, email, -1, SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 9, vende_botines);
-        sqlite3_bind_int(stmt, 10, vende_camisetas);
-        sqlite3_bind_int(stmt, 11, vende_pelotas);
-        sqlite3_bind_int(stmt, 12, vende_equipamiento);
-        sqlite3_bind_int(stmt, 13, vende_accesorios);
-        sqlite3_bind_int(stmt, 14, rango_precio);
-        sqlite3_bind_int(stmt, 15, tiene_envio);
-        sqlite3_bind_int(stmt, 16, mercadopago);
-        sqlite3_bind_int(stmt, 17, rating);
-        sqlite3_bind_int(stmt, 18, favorito);
-        sqlite3_bind_text(stmt, 19, notas, -1, SQLITE_STATIC);
+        tienda_bind_datos(stmt, &t, 1);
         sqlite3_bind_int(stmt, 20, id);
 
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
-            mostrar_alerta_operacion("Tienda", "Modificada", nombre);
+            mostrar_alerta_operacion("Tienda", "Modificada", t.nombre);
         }
         else
         {

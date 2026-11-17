@@ -112,6 +112,16 @@ int db_prepare_stmt_with_error(sqlite3_stmt **stmt, const char *sql,
                                const char *error_message);
 
 /**
+ * @brief Ejecuta un UPDATE de la forma "... SET campo=? WHERE id=?".
+ *
+ * @param sql Sentencia con el texto como parametro 1 y el id como parametro 2.
+ * @param texto Valor de texto a asignar.
+ * @param id ID del registro.
+ * @return 1 si la sentencia se pudo preparar; 0 en caso contrario.
+ */
+int db_actualizar_texto_por_id(const char *sql, const char *texto, int id);
+
+/**
  * @brief Copia una variable de entorno al buffer de salida si existe.
  *
  * @param name Nombre de la variable de entorno.
@@ -641,6 +651,23 @@ int obtener_id_por_nombre(const char *tabla, const char *nombre);
  * @param mensaje_vacio Mensaje si la tabla está vacía
  */
 void listar_entidades(const char *tabla, const char *titulo, const char *mensaje_vacio);
+
+/**
+ * @brief Lista una tabla y pide el ID de un registro existente
+ *
+ * Si la tabla esta vacia, el usuario cancela o el ID no existe, informa, pausa
+ * y devuelve 0.
+ *
+ * @param tabla Tabla a consultar
+ * @param entidad_plural Texto para "no hay registros"
+ * @param titulo Encabezado del listado
+ * @param mensaje_vacio Mensaje del listado vacio
+ * @param prompt Pregunta del ID
+ * @param entidad Texto para "no existe"
+ * @return ID valido (> 0) o 0 si no hay seleccion
+ */
+int seleccionar_id_existente(const char *tabla, const char *entidad_plural, const char *titulo,
+                             const char *mensaje_vacio, const char *prompt, const char *entidad);
 
 /**
  * @brief Solicita un entero validado dentro de un rango
