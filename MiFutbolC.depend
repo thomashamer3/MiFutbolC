@@ -86,7 +86,7 @@
 	<sys/uio.h>
 	<math.h>
 
-1794861768 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
+1795110772 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.c
 	"db.h"
 	"export.h"
 	"settings.h"
@@ -96,15 +96,15 @@
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	<sys/stat.h>
 	<time.h>
 	<ShlObj.h>
 	<direct.h>
 	<windows.h>
 	"compat_windows.h"
 	"direct.h"
-	<sys/stat.h>
 
-1794852976 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
+1795110782 d:\anime\libros\lenguaje c\proyectos\mifutbolc\db.h
 	<stddef.h>
 	"compat_port.h"
 	"sqlite3.h"
@@ -112,7 +112,7 @@
 1780610096 d:\anime\libros\lenguaje c\proyectos\mifutbolc\sqlite3.h
 	<stdarg.h>
 
-1794921632 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
+1795110819 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\utils.c
 	"utils.h"
 	"ascii_art.h"
 	"cJSON.h"
@@ -238,7 +238,7 @@
 
 1766433484 d:\anime\libros\lenguaje c\proyectos\mifutbolc\logger.h
 
-1794861544 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
+1795110797 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\menu.c
 	"menu.h"
 	"clima_diferido.h"
 	"settings.h"
@@ -2290,7 +2290,7 @@
 1742192003 c:\msys64\mingw64\include\hpdf_outline.h
 	"hpdf_objects.h"
 
-1794922149 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
+1795110835 source:d:\anime\libros\lenguaje c\proyectos\mifutbolc\bienestar.c
 	"bienestar.h"
 	"db.h"
 	"export_pdf.h"
