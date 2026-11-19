@@ -3128,19 +3128,14 @@ static void ver_archivos_control(void)
         return;
     }
 
-    char nombre_archivo[260] = {0};
-    app_get_file_name_from_path(ruta_relativa, nombre_archivo, sizeof(nombre_archivo));
-
-    const char *images_dir = get_images_dir();
-    if (!images_dir)
+    /* Resuelve en Documentos y, si es un archivo viejo, en ./Imagenes. */
+    char ruta_absoluta[1200] = {0};
+    if (!db_resolve_image_absolute_path(ruta_relativa, ruta_absoluta, sizeof(ruta_absoluta)))
     {
-        printf("No se pudo obtener la carpeta de imagenes.\n");
+        printf("Archivo no encontrado en la carpeta de imagenes.\n");
         pause_console();
         return;
     }
-
-    char ruta_absoluta[1200] = {0};
-    app_build_path(ruta_absoluta, sizeof(ruta_absoluta), images_dir, nombre_archivo);
 
     if (!menuimg_abrir_imagen_en_sistema(ruta_absoluta))
     {

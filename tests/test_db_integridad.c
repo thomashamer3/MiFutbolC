@@ -13,11 +13,26 @@
 #include "db.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
 #include <share.h>
+#include <sys/utime.h>
+#define test_utime _utime
+#define test_utimbuf _utimbuf
+#define test_mkdir(p) _mkdir(p)
+#define test_rmdir(p) RemoveDirectoryA(p)
 #define TEST_SEP "\\"
 #else
+#include <sys/stat.h>
+#include <unistd.h>
+#include <utime.h>
+#define test_utime utime
+#define test_utimbuf utimbuf
+#define test_mkdir(p) mkdir(p, 0755)
+#define test_rmdir(p) rmdir(p)
 #define TEST_SEP "/"
 #endif
 
@@ -29,6 +44,7 @@
 static char g_db_path[1024];
 static char g_backup_path[1024];
 static char g_inicio_path[1100]; /* backup de inicio de db_init en Backups */
+static char g_historial_fmt[1100]; /* Backups/Historial/mifutbol_<perfil>.%d.db */
 static char g_invalido_path[1024];
 static char g_wal_path[1100];
 static char g_log_path[1024];
@@ -109,6 +125,11 @@ static void insertar_filas(int desde, int cantidad)
     }
 }
 
+static void exec_ok_integ(const char *sql)
+{
+    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, sql, NULL, NULL, NULL));
+}
+
 static void reabrir(void)
 {
     db_close();
@@ -131,7 +152,18 @@ void tearDown(void)
     borrar_base(g_db_path);
     borrar_base(g_backup_path);
     borrar_base(g_inicio_path);
+    for (int i = 1; i <= 7; i++)
+    {
+        char hist[1200];
+        snprintf(hist, sizeof(hist), g_historial_fmt, i);
+        remove(hist);
+    }
     remove(g_invalido_path);
+}
+
+static void ruta_historial(char *out, size_t tam, int n)
+{
+    snprintf(out, tam, g_historial_fmt, n);
 }
 
 /* (a) Un backup hecho con filas que todavia estan en el WAL las contiene. */
@@ -174,6 +206,77 @@ static void test_backup_de_inicio_solo_con_datos(void)
                           sqlite3_open_v2(inicio_path, &copia, SQLITE_OPEN_READONLY, NULL));
     TEST_ASSERT_EQUAL_INT(1, consultar_int(copia, "SELECT COUNT(*) FROM camiseta;"));
     sqlite3_close(copia);
+}
+
+/* (a3) Tras reinstalar (base vacia) se ofrece el backup de inicio si tiene
+ * datos; con datos en la base, o sin backup, no se ofrece. */
+static void test_ofrece_restaurar_backup_de_inicio(void)
+{
+    char ruta[1200];
+    int partidos = -1;
+    TEST_ASSERT_EQUAL_INT(0, db_backup_inicio_para_restaurar(ruta, sizeof(ruta), &partidos));
+
+    exec_ok_integ("INSERT INTO camiseta(id, nombre) VALUES(1, 'X');");
+    exec_ok_integ("INSERT INTO cancha(id, nombre) VALUES(1, 'C');");
+    exec_ok_integ("INSERT INTO partido(id, cancha_id, fecha_hora, goles, asistencias, camiseta_id)"
+                  " VALUES(1, 1, '2026-01-01 10:00', 0, 0, 1);");
+    reabrir(); /* escribe el backup de inicio */
+    TEST_ASSERT_EQUAL_INT(0, db_backup_inicio_para_restaurar(ruta, sizeof(ruta), &partidos));
+
+    db_close();
+    borrar_base(g_db_path); /* la "reinstalacion": base nueva y vacia */
+    TEST_ASSERT_TRUE(db_init());
+    TEST_ASSERT_EQUAL_INT(1, db_backup_inicio_para_restaurar(ruta, sizeof(ruta), &partidos));
+    TEST_ASSERT_EQUAL_INT(1, partidos);
+    TEST_ASSERT_EQUAL_STRING(g_inicio_path, ruta);
+}
+
+/* (a4) La copia de un dia anterior pasa a Historial\<base>.1.db; reabrir el
+ * mismo dia no rota de nuevo. */
+static void test_historial_rota_una_vez_por_dia(void)
+{
+    char hist1[1200];
+    char hist2[1200];
+    ruta_historial(hist1, sizeof(hist1), 1);
+    ruta_historial(hist2, sizeof(hist2), 2);
+
+    exec_ok_integ("INSERT INTO camiseta(nombre) VALUES('X');");
+    reabrir();
+    TEST_ASSERT_TRUE(tamano_archivo(g_inicio_path) > 0);
+    TEST_ASSERT_EQUAL_INT(-1, tamano_archivo(hist1)); /* mismo dia: sin rotar */
+
+    struct test_utimbuf ayer;
+    ayer.actime = ayer.modtime = time(NULL) - 26 * 60 * 60;
+    TEST_ASSERT_EQUAL_INT(0, test_utime(g_inicio_path, &ayer));
+    reabrir();
+    TEST_ASSERT_TRUE(tamano_archivo(hist1) > 0);
+    TEST_ASSERT_TRUE(tamano_archivo(g_inicio_path) > 0);
+
+    reabrir();
+    TEST_ASSERT_EQUAL_INT(-1, tamano_archivo(hist2));
+}
+
+/* (a5) Una imagen guardada antes en ./Imagenes se sigue encontrando aunque la
+ * carpeta de imagenes ahora sea otra. */
+static void test_imagen_vieja_se_resuelve_en_carpeta_local(void)
+{
+    int creo_dir = test_mkdir("." TEST_SEP "Imagenes") == 0;
+    const char *archivo = "." TEST_SEP "Imagenes" TEST_SEP "test_integ_img_vieja.png";
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, archivo, "wb"));
+    fputs("x", f);
+    fclose(f);
+
+    char ruta[1200];
+    int ok = db_resolve_image_absolute_path("Imagenes/test_integ_img_vieja.png", ruta,
+                                            sizeof(ruta));
+    remove(archivo);
+    if (creo_dir)
+    {
+        test_rmdir("." TEST_SEP "Imagenes");
+    }
+    TEST_ASSERT_EQUAL_INT(1, ok);
+    TEST_ASSERT_EQUAL_STRING(archivo, ruta);
 }
 
 /* (b) Restaurar sobre la conexion abierta deja los datos del backup y la base
@@ -292,6 +395,9 @@ int main(void)
     snprintf(g_wal_path, sizeof(g_wal_path), "%s-wal", g_db_path);
     snprintf(g_inicio_path, sizeof(g_inicio_path), "%s" TEST_SEP "mifutbol_%s.db",
              get_backups_dir(), PERFIL_TEST);
+    snprintf(g_historial_fmt, sizeof(g_historial_fmt),
+             "%s" TEST_SEP "Historial" TEST_SEP "mifutbol_%s.%%d.db", get_backups_dir(),
+             PERFIL_TEST);
     snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
              PERFIL_TEST);
     db_close();
@@ -300,6 +406,9 @@ int main(void)
 
     RUN_TEST(test_backup_incluye_filas_del_wal);
     RUN_TEST(test_backup_de_inicio_solo_con_datos);
+    RUN_TEST(test_ofrece_restaurar_backup_de_inicio);
+    RUN_TEST(test_historial_rota_una_vez_por_dia);
+    RUN_TEST(test_imagen_vieja_se_resuelve_en_carpeta_local);
     RUN_TEST(test_restaurar_deja_datos_del_backup);
     RUN_TEST(test_restaurar_rechaza_origen_invalido);
     RUN_TEST(test_user_version_avanza_y_backfill_no_se_repite);

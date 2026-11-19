@@ -218,6 +218,15 @@ const char* get_images_dir(void);
 const char* get_backups_dir(void);
 
 /**
+ * @brief Indica si conviene ofrecer restaurar el backup de inicio
+ *
+ * Devuelve 1 cuando la base abierta no tiene datos del usuario (p. ej. tras
+ * reinstalar) y en get_backups_dir() hay una copia de esta misma base que si
+ * los tiene. Deja en @p ruta su ruta y en @p partidos cuantos partidos guarda.
+ */
+int db_backup_inicio_para_restaurar(char *ruta, size_t tam, int *partidos);
+
+/**
  * @brief Obtiene la ruta de imagen almacenada para una entidad por ID
  *
  * Consulta la columna `imagen_ruta` en la tabla indicada y copia

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #ifdef _WIN32
 #include <ShlObj.h>
@@ -33,7 +34,6 @@ static int directorio_existe(const char *path)
     return (attrs != INVALID_FILE_ATTRIBUTES) && (attrs & FILE_ATTRIBUTE_DIRECTORY);
 }
 #else
-#include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0755)
 #define STRDUP strdup
 #define DB_PATH_SEP "/"
@@ -2376,8 +2376,11 @@ static const DirCfg DIR_CFG_IMPORT = {NULL,
                                       sizeof(IMPORT_DIR)
                                      };
 
-static const DirCfg DIR_CFG_IMAGES = {"./Imagenes", NULL,       NULL,       NULL,
-                                      "Imagenes",   "Imagenes", IMAGES_DIR, sizeof(IMAGES_DIR)
+/* En Windows va a Documentos\MiFutbolC\Imagenes: la carpeta del programa la
+ * puede borrar un desinstalador. Las viejas en ./Imagenes se siguen leyendo
+ * (ver db_resolve_image_absolute_path). */
+static const DirCfg DIR_CFG_IMAGES = {NULL,       NULL,       "./Imagenes", NULL,
+                                      "Imagenes", "Imagenes", IMAGES_DIR,   sizeof(IMAGES_DIR)
                                      };
 
 const char *get_export_dir(void)
@@ -2406,7 +2409,7 @@ const char *get_backups_dir(void)
 
 /* Hay datos del usuario si alguna tabla principal tiene filas. Evita que una
  * base recien creada (app reinstalada) pise el backup bueno con uno vacio. */
-static int db_tiene_datos_usuario(void)
+static int db_tiene_datos_usuario(sqlite3 *conn)
 {
     static const char *const tablas[] = {"partido", "camiseta", "botin", "cancha", "lesion",
                                          "equipo", "torneo", "financiamiento", "temporada",
@@ -2418,7 +2421,7 @@ static int db_tiene_datos_usuario(void)
         snprintf(sql, sizeof(sql), "SELECT 1 FROM %s LIMIT 1;", tablas[i]);
         sqlite3_stmt *stmt = NULL;
         int hay = 0;
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+        if (sqlite3_prepare_v2(conn, sql, -1, &stmt, NULL) == SQLITE_OK)
         {
             hay = sqlite3_step(stmt) == SQLITE_ROW;
         }
@@ -2431,12 +2434,76 @@ static int db_tiene_datos_usuario(void)
     return 0;
 }
 
+static int mismo_dia(time_t a, time_t b)
+{
+    struct tm ta;
+    struct tm tb;
+    if (localtime_s(&ta, &a) != 0 || localtime_s(&tb, &b) != 0)
+    {
+        return 1; /* ante la duda no rota */
+    }
+    return ta.tm_year == tb.tm_year && ta.tm_yday == tb.tm_yday;
+}
+
+enum
+{
+    BACKUP_HISTORIAL_MAX = 7
+};
+
+/* Si la copia de inicio es de otro dia, la pasa a Historial\<base>.1.db y corre
+ * las anteriores (.1 -> .2 ... hasta .7, que se descarta). Asi quedan los
+ * ultimos 7 dias distintos en que se abrio la app, aunque haya dias sin abrirla. */
+static void rotar_historial_backup(const char *dir, const char *nombre, const char *ultimo)
+{
+    struct stat st;
+    if (stat(ultimo, &st) != 0 || mismo_dia(st.st_mtime, time(NULL)))
+    {
+        return;
+    }
+
+    char hist_dir[1024];
+    app_build_path(hist_dir, sizeof(hist_dir), dir, "Historial");
+    if (!asegurar_directorio(hist_dir, "Historial"))
+    {
+        return;
+    }
+
+    char base[260] = {0};
+    strncpy_s(base, sizeof(base), nombre, _TRUNCATE);
+    char *ext = strrchr(base, '.');
+    if (ext)
+    {
+        *ext = '\0';
+    }
+
+    char origen[1100];
+    char destino[1100];
+    for (int i = BACKUP_HISTORIAL_MAX; i >= 1; i--)
+    {
+        char archivo[300];
+        snprintf(archivo, sizeof(archivo), "%s.%d.db", base, i);
+        app_build_path(destino, sizeof(destino), hist_dir, archivo);
+        remove(destino); /* rename no pisa un destino existente en Windows */
+        if (i == 1)
+        {
+            strncpy_s(origen, sizeof(origen), ultimo, _TRUNCATE);
+        }
+        else
+        {
+            snprintf(archivo, sizeof(archivo), "%s.%d.db", base, i - 1);
+            app_build_path(origen, sizeof(origen), hist_dir, archivo);
+        }
+        rename(origen, destino);
+    }
+    app_log_write("INFO", "BACKUP", "Historial de backups rotado");
+}
+
 /* Copia la base completa a Documentos\MiFutbolC\Backups\<nombre de la base>,
  * sobrescribiendo la anterior, por si el usuario desinstala la app y pierde
  * AppData. No interrumpe el inicio si falla. */
 static void backup_al_iniciar(void)
 {
-    if (!db_tiene_datos_usuario())
+    if (!db_tiene_datos_usuario(db))
     {
         app_log_write("INFO", "BACKUP", "Backup de inicio omitido: la base no tiene datos");
         return;
@@ -2452,6 +2519,7 @@ static void backup_al_iniciar(void)
 
     char dest[1024];
     app_build_path(dest, sizeof(dest), dir, nombre);
+    rotar_historial_backup(dir, nombre, dest);
 
     int rc = db_backup_a_archivo(dest);
     if (rc == SQLITE_OK)
@@ -2465,6 +2533,40 @@ static void backup_al_iniciar(void)
                  sqlite3_errstr(rc), dest);
         app_log_write("ERROR", "BACKUP", log_buf_);
     }
+}
+
+int db_backup_inicio_para_restaurar(char *ruta, size_t tam, int *partidos)
+{
+    if (!db || !ruta || tam == 0 || db_tiene_datos_usuario(db))
+    {
+        return 0;
+    }
+
+    const char *dir = get_backups_dir();
+    char nombre[260] = {0};
+    if (!dir || !app_get_file_name_from_path(DB_PATH, nombre, sizeof(nombre)))
+    {
+        return 0;
+    }
+    app_build_path(ruta, tam, dir, nombre);
+
+    sqlite3 *copia = NULL;
+    int ok = sqlite3_open_v2(ruta, &copia, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK &&
+             db_tiene_datos_usuario(copia);
+    if (ok && partidos)
+    {
+        sqlite3_stmt *stmt = NULL;
+        *partidos = 0;
+        if (sqlite3_prepare_v2(copia, "SELECT COUNT(*) FROM partido;", -1, &stmt, NULL) ==
+                SQLITE_OK &&
+                sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            *partidos = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    sqlite3_close(copia);
+    return ok;
 }
 
 int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)
@@ -2530,6 +2632,12 @@ int db_resolve_image_absolute_path(const char *ruta_db, char *ruta_absoluta, siz
     app_build_path(ruta_absoluta, size, images_dir, nombre_archivo);
 
     FILE *file = app_fopen(ruta_absoluta, "rb");
+    if (!file)
+    {
+        /* Imagenes guardadas antes de pasar a Documentos (solo lectura). */
+        app_build_path(ruta_absoluta, size, "." DB_PATH_SEP "Imagenes", nombre_archivo);
+        file = app_fopen(ruta_absoluta, "rb");
+    }
     if (!file)
     {
         return 0;

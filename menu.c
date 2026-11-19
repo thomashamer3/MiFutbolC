@@ -266,6 +266,40 @@ void menu_test_set_capture(MenuTestCapture *capture)
 }
 #endif
 
+/* Tras reinstalar la base arranca vacia: si hay una copia de inicio con datos
+ * en Documentos, se ofrece recuperarla antes de que el usuario empiece de cero. */
+static void ofrecer_restaurar_backup_inicio(void)
+{
+#ifndef UNIT_TEST
+    char ruta[1024];
+    int partidos = 0;
+    if (!db_backup_inicio_para_restaurar(ruta, sizeof(ruta), &partidos))
+    {
+        return;
+    }
+
+    printf("Se encontro una copia de seguridad con %d partidos en:\n%s\n", partidos, ruta);
+    printf("¿Restaurarla? (S/N): ");
+    char input[16];
+    if (!fgets(input, sizeof(input), stdin) || (input[0] != 's' && input[0] != 'S'))
+    {
+        printf("No se restauro la copia.\n");
+        return;
+    }
+
+    char detalle[512] = {0};
+    DbRestaurarResultado res = db_restaurar_desde_archivo(ruta, detalle, sizeof(detalle));
+    if (res == DB_RESTAURAR_OK)
+    {
+        printf("Copia restaurada correctamente.\n");
+    }
+    else
+    {
+        printf("No se pudo restaurar la copia (codigo %d): %s\n", (int)res, detalle);
+    }
+#endif
+}
+
 void initialize_application(void)
 {
 #ifdef _WIN32
@@ -280,6 +314,8 @@ void initialize_application(void)
         printf("Error inicializando base de datos\n");
         exit(1);
     }
+
+    ofrecer_restaurar_backup_inicio();
 
     if (db_get_active_user()[0] != '\0')
     {

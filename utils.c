@@ -5510,9 +5510,11 @@ int app_seleccionar_y_copiar_imagen(const char *config_file, const char *prefijo
     const char *pref = prefijo ? prefijo : "imagen";
     snprintf(dest_nombre, sizeof(dest_nombre), "%s_%s.%s", pref, timestamp_str, nombre_archivo);
 
-    char app_dir[512] = {0};
-    app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
-    MKDIR(app_dir);
+    const char *app_dir = get_images_dir();
+    if (!app_dir)
+    {
+        return 0;
+    }
 
     char dest_ruta[600];
     app_build_path(dest_ruta, sizeof(dest_ruta), app_dir, dest_nombre);
@@ -5560,9 +5562,11 @@ int app_cargar_imagen_entidad(int id, const char *tabla, const char *config_file
     snprintf(dest_nombre, sizeof(dest_nombre), "%s_%d_%s.%s", tabla, id, timestamp_str,
              nombre_archivo);
 
-    char app_dir[512] = {0};
-    app_build_path(app_dir, sizeof(app_dir), NULL, "imagenes");
-    MKDIR(app_dir);
+    const char *app_dir = get_images_dir();
+    if (!app_dir)
+    {
+        return 0;
+    }
 
     char dest_ruta[600];
     app_build_path(dest_ruta, sizeof(dest_ruta), app_dir, dest_nombre);
