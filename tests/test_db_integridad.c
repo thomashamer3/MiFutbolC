@@ -17,7 +17,7 @@
 
 #ifdef _WIN32
 #include <direct.h>
-#include <windows.h>
+#include <Windows.h>
 #include <share.h>
 #include <sys/utime.h>
 #define test_utime _utime
@@ -44,7 +44,7 @@
 static char g_db_path[1024];
 static char g_backup_path[1024];
 static char g_inicio_path[1100]; /* backup de inicio de db_init en Backups */
-static char g_historial_fmt[1100]; /* Backups/Historial/mifutbol_<perfil>.%d.db */
+static char g_historial_base[1100]; /* Backups/Historial/mifutbol_<perfil> */
 static char g_invalido_path[1024];
 static char g_wal_path[1100];
 static char g_log_path[1024];
@@ -146,6 +146,11 @@ void setUp(void)
     TEST_ASSERT_NOT_NULL(db);
 }
 
+static void ruta_historial(char *out, size_t tam, int n)
+{
+    snprintf(out, tam, "%s.%d.db", g_historial_base, n);
+}
+
 void tearDown(void)
 {
     db_close();
@@ -155,15 +160,10 @@ void tearDown(void)
     for (int i = 1; i <= 7; i++)
     {
         char hist[1200];
-        snprintf(hist, sizeof(hist), g_historial_fmt, i);
+        ruta_historial(hist, sizeof(hist), i);
         remove(hist);
     }
     remove(g_invalido_path);
-}
-
-static void ruta_historial(char *out, size_t tam, int n)
-{
-    snprintf(out, tam, g_historial_fmt, n);
 }
 
 /* (a) Un backup hecho con filas que todavia estan en el WAL las contiene. */
@@ -246,7 +246,8 @@ static void test_historial_rota_una_vez_por_dia(void)
     TEST_ASSERT_EQUAL_INT(-1, tamano_archivo(hist1)); /* mismo dia: sin rotar */
 
     struct test_utimbuf ayer;
-    ayer.actime = ayer.modtime = time(NULL) - 26 * 60 * 60;
+    ayer.modtime = time(NULL) - 26 * 60 * 60;
+    ayer.actime = ayer.modtime;
     TEST_ASSERT_EQUAL_INT(0, test_utime(g_inicio_path, &ayer));
     reabrir();
     TEST_ASSERT_TRUE(tamano_archivo(hist1) > 0);
@@ -395,8 +396,8 @@ int main(void)
     snprintf(g_wal_path, sizeof(g_wal_path), "%s-wal", g_db_path);
     snprintf(g_inicio_path, sizeof(g_inicio_path), "%s" TEST_SEP "mifutbol_%s.db",
              get_backups_dir(), PERFIL_TEST);
-    snprintf(g_historial_fmt, sizeof(g_historial_fmt),
-             "%s" TEST_SEP "Historial" TEST_SEP "mifutbol_%s.%%d.db", get_backups_dir(),
+    snprintf(g_historial_base, sizeof(g_historial_base),
+             "%s" TEST_SEP "Historial" TEST_SEP "mifutbol_%s", get_backups_dir(),
              PERFIL_TEST);
     snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
              PERFIL_TEST);
