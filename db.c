@@ -108,6 +108,9 @@ static char IMPORT_DIR[1024];
 /** Directorio de imagenes */
 static char IMAGES_DIR[1024];
 
+/** Directorio del backup automatico de inicio (Documentos\MiFutbolC\Backups) */
+static char BACKUPS_DIR[1024];
+
 /** Usuario local activo para enrutar la base por perfil */
 static char ACTIVE_USER[128];
 
@@ -1206,6 +1209,10 @@ static int create_database_schema(void)
         " image_viewer TEXT DEFAULT '',"
         " botin_predeterminado INTEGER DEFAULT 0);",
 
+        "CREATE TABLE IF NOT EXISTS custom_menus ("
+        " menu_name TEXT PRIMARY KEY,"
+        " enabled INTEGER NOT NULL DEFAULT 0);",
+
         "CREATE TABLE IF NOT EXISTS financiamiento ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " fecha TEXT NOT NULL,"
@@ -2123,6 +2130,8 @@ static int aplicar_esquema_y_migraciones(void)
     return 1;
 }
 
+static void backup_al_iniciar(void);
+
 int db_init(void)
 {
     if (!setup_database_paths())
@@ -2155,6 +2164,8 @@ int db_init(void)
     get_import_dir();
     get_export_dir();
     get_images_dir();
+
+    backup_al_iniciar();
 
     app_log_write("INFO", "APP", "Inicializacion de base de datos completada");
 
@@ -2382,6 +2393,78 @@ const char *get_import_dir(void)
 const char *get_images_dir(void)
 {
     return resolver_directorio_config(&DIR_CFG_IMAGES);
+}
+
+static const DirCfg DIR_CFG_BACKUPS = {NULL,      NULL,      "./Backups", NULL,
+                                       "Backups", "Backups", BACKUPS_DIR, sizeof(BACKUPS_DIR)
+                                      };
+
+const char *get_backups_dir(void)
+{
+    return resolver_directorio_config(&DIR_CFG_BACKUPS);
+}
+
+/* Hay datos del usuario si alguna tabla principal tiene filas. Evita que una
+ * base recien creada (app reinstalada) pise el backup bueno con uno vacio. */
+static int db_tiene_datos_usuario(void)
+{
+    static const char *const tablas[] = {"partido", "camiseta", "botin", "cancha", "lesion",
+                                         "equipo", "torneo", "financiamiento", "temporada",
+                                         "bienestar_entrenamiento", "media", NULL
+                                        };
+    for (int i = 0; tablas[i] != NULL; i++)
+    {
+        char sql[128];
+        snprintf(sql, sizeof(sql), "SELECT 1 FROM %s LIMIT 1;", tablas[i]);
+        sqlite3_stmt *stmt = NULL;
+        int hay = 0;
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK)
+        {
+            hay = sqlite3_step(stmt) == SQLITE_ROW;
+        }
+        sqlite3_finalize(stmt);
+        if (hay)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Copia la base completa a Documentos\MiFutbolC\Backups\<nombre de la base>,
+ * sobrescribiendo la anterior, por si el usuario desinstala la app y pierde
+ * AppData. No interrumpe el inicio si falla. */
+static void backup_al_iniciar(void)
+{
+    if (!db_tiene_datos_usuario())
+    {
+        app_log_write("INFO", "BACKUP", "Backup de inicio omitido: la base no tiene datos");
+        return;
+    }
+
+    const char *dir = get_backups_dir();
+    char nombre[260] = {0};
+    if (!dir || !app_get_file_name_from_path(DB_PATH, nombre, sizeof(nombre)))
+    {
+        app_log_write("ERROR", "BACKUP", "Backup de inicio: no se pudo resolver la ruta");
+        return;
+    }
+
+    char dest[1024];
+    app_build_path(dest, sizeof(dest), dir, nombre);
+
+    int rc = db_backup_a_archivo(dest);
+    if (rc == SQLITE_OK)
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Backup de inicio guardado en %.990s", dest);
+        app_log_write("INFO", "BACKUP", log_buf_);
+    }
+    else
+    {
+        snprintf(log_buf_, sizeof(log_buf_), "Backup de inicio fallo rc=%d (%.200s): %.700s", rc,
+                 sqlite3_errstr(rc), dest);
+        app_log_write("ERROR", "BACKUP", log_buf_);
+    }
 }
 
 int db_get_image_path_by_id(const char *table_name, int id, char *ruta, size_t size)

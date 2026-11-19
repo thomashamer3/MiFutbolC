@@ -28,6 +28,7 @@
 
 static char g_db_path[1024];
 static char g_backup_path[1024];
+static char g_inicio_path[1100]; /* backup de inicio de db_init en Backups */
 static char g_invalido_path[1024];
 static char g_wal_path[1100];
 static char g_log_path[1024];
@@ -129,6 +130,7 @@ void tearDown(void)
     db_close();
     borrar_base(g_db_path);
     borrar_base(g_backup_path);
+    borrar_base(g_inicio_path);
     remove(g_invalido_path);
 }
 
@@ -150,6 +152,27 @@ static void test_backup_incluye_filas_del_wal(void)
                           sqlite3_open_v2(g_backup_path, &copia, SQLITE_OPEN_READONLY, NULL));
     TEST_ASSERT_EQUAL_INT(FILAS_BACKUP, consultar_int(copia, "SELECT COUNT(*) FROM integ_t;"));
     TEST_ASSERT_TRUE(integridad_ok(copia));
+    sqlite3_close(copia);
+}
+
+/* (a2) db_init copia la base a Backups al arrancar, pero solo si tiene datos:
+ * una base recien creada (app reinstalada) no debe pisar el backup bueno. */
+static void test_backup_de_inicio_solo_con_datos(void)
+{
+    const char *inicio_path = g_inicio_path;
+    borrar_base(inicio_path);
+
+    reabrir(); /* base vacia */
+    TEST_ASSERT_EQUAL_INT(-1, tamano_archivo(inicio_path));
+
+    TEST_ASSERT_EQUAL_INT(SQLITE_OK, sqlite3_exec(db, "INSERT INTO camiseta(nombre) VALUES('X');",
+                          NULL, NULL, NULL));
+    reabrir(); /* ahora hay datos: se escribe el backup */
+
+    sqlite3 *copia = NULL;
+    TEST_ASSERT_EQUAL_INT(SQLITE_OK,
+                          sqlite3_open_v2(inicio_path, &copia, SQLITE_OPEN_READONLY, NULL));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int(copia, "SELECT COUNT(*) FROM camiseta;"));
     sqlite3_close(copia);
 }
 
@@ -267,6 +290,8 @@ int main(void)
     snprintf(g_invalido_path, sizeof(g_invalido_path), "%s" TEST_SEP "%s_invalido.db", data_dir,
              PERFIL_TEST);
     snprintf(g_wal_path, sizeof(g_wal_path), "%s-wal", g_db_path);
+    snprintf(g_inicio_path, sizeof(g_inicio_path), "%s" TEST_SEP "mifutbol_%s.db",
+             get_backups_dir(), PERFIL_TEST);
     snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir,
              PERFIL_TEST);
     db_close();
@@ -274,6 +299,7 @@ int main(void)
     UNITY_BEGIN();
 
     RUN_TEST(test_backup_incluye_filas_del_wal);
+    RUN_TEST(test_backup_de_inicio_solo_con_datos);
     RUN_TEST(test_restaurar_deja_datos_del_backup);
     RUN_TEST(test_restaurar_rechaza_origen_invalido);
     RUN_TEST(test_user_version_avanza_y_backfill_no_se_repite);

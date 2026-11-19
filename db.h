@@ -209,6 +209,15 @@ const char* get_import_dir(void);
 const char* get_images_dir(void);
 
 /**
+ * @brief Carpeta del backup automatico de inicio (Documentos\\MiFutbolC\\Backups)
+ *
+ * Al mismo nivel que Exportaciones e Importaciones. db_init() copia ahi la base
+ * activa en cada arranque, sobrescribiendo la copia anterior, para que los datos
+ * sobrevivan a una desinstalacion (que borra AppData).
+ */
+const char* get_backups_dir(void);
+
+/**
  * @brief Obtiene la ruta de imagen almacenada para una entidad por ID
  *
  * Consulta la columna `imagen_ruta` en la tabla indicada y copia

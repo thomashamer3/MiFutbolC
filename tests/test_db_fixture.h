@@ -22,6 +22,7 @@
 
 static char g_db_path[1024];
 static char g_log_path[1024];
+static char g_backup_inicio_path[1100]; /* copia que db_init deja en Backups */
 
 /* Este Unity se compila sin precision double (TEST_ASSERT_DOUBLE_WITHIN
  * falla con "Double Precision Disabled"): comparacion propia con tolerancia. */
@@ -103,6 +104,7 @@ static inline void cerrar_y_borrar_base(void)
 {
     db_close();
     borrar_base(g_db_path);
+    borrar_base(g_backup_inicio_path);
 }
 
 /*
@@ -131,6 +133,8 @@ static inline int fixture_iniciar(const char *perfil, char *extra, size_t tam_ex
     }
     snprintf(g_db_path, sizeof(g_db_path), "%s" TEST_SEP "mifutbol_%s.db", data_dir, perfil);
     snprintf(g_log_path, sizeof(g_log_path), "%s" TEST_SEP "mifutbol_%s.log", data_dir, perfil);
+    snprintf(g_backup_inicio_path, sizeof(g_backup_inicio_path), "%s" TEST_SEP "mifutbol_%s.db",
+             get_backups_dir(), perfil);
     if (extra)
     {
         snprintf(extra, tam_extra, "%s" TEST_SEP "%s%s", data_dir, perfil, sufijo);
