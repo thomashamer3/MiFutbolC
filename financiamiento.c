@@ -319,32 +319,14 @@ static int verificar_partido_precio_asignado(int id_partido)
 
 static int verificar_partido_transaccion_asociada(int id_partido)
 {
-    sqlite3_stmt *stmt_check;
-    const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 AND categoria = 6 "
-                            "AND item_especifico LIKE ?";
-    char item_pattern[256];
-    snprintf(item_pattern, sizeof(item_pattern), "Partido ID: %d%%", id_partido);
-
-    if (!preparar_stmt(sql_check, &stmt_check))
+    /* Con -1 (error de base) se deja seguir, como cuando fallaba el preparar. */
+    if (partido_buscar_transaccion(id_partido) > 0)
     {
-        return 1;
+        printf("El partido ya tiene una transaccion financiera asociada (precio ya asignado).\n");
+        printf("No se puede agregar otra transaccion para este partido.\n");
+        pause_console();
+        return 0;
     }
-
-    sqlite3_bind_text(stmt_check, 1, item_pattern, -1, DB_TRANSIENT);
-    if (sqlite3_step(stmt_check) == SQLITE_ROW)
-    {
-        int count = sqlite3_column_int(stmt_check, 0);
-        if (count > 0)
-        {
-            printf(
-                "El partido ya tiene una transaccion financiera asociada (precio ya asignado).\n");
-            printf("No se puede agregar otra transaccion para este partido.\n");
-            sqlite3_finalize(stmt_check);
-            pause_console();
-            return 0;
-        }
-    }
-    sqlite3_finalize(stmt_check);
     return 1;
 }
 

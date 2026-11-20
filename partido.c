@@ -3082,7 +3082,7 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
  * "Partido ID: N" y "Partido ID: N (...)"; los delimitadores evitan que el
  * partido 1 coincida con el 10.
  */
-static long long buscar_transaccion_partido(long long partido_id)
+long long partido_buscar_transaccion(long long partido_id)
 {
     char normal[48];
     char respaldo[48];
@@ -3120,7 +3120,7 @@ static long long buscar_transaccion_partido(long long partido_id)
 /* Devuelve 1 si creo la transaccion. */
 static int crear_transaccion_partido(long long partido_id, int precio)
 {
-    long long existente = buscar_transaccion_partido(partido_id);
+    long long existente = partido_buscar_transaccion(partido_id);
     if (existente != 0)
     {
         if (existente > 0)
@@ -3215,7 +3215,7 @@ static int crear_transaccion_partido(long long partido_id, int precio)
 
 int partido_sincronizar_transaccion(long long partido_id, int precio)
 {
-    long long transaccion_id = buscar_transaccion_partido(partido_id);
+    long long transaccion_id = partido_buscar_transaccion(partido_id);
     if (transaccion_id < 0)
     {
         return 0;

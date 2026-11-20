@@ -238,6 +238,25 @@ static void test_reencolar_clima(void)
     TEST_ASSERT_EQUAL_INT(0, partido_reencolar_clima(99));
 }
 
+/* El texto que arma Finanzas a mano (construir_item_partido, con Clima y Dia)
+ * tambien se encuentra; otro tipo/categoria o el partido 40 no cuentan. */
+static void test_buscar_transaccion_formato_finanzas(void)
+{
+    TEST_ASSERT_EQUAL_INT(0, (int)partido_buscar_transaccion(4));
+    exec_ok("INSERT INTO financiamiento(id, fecha, tipo, categoria, descripcion, monto, "
+            "item_especifico) VALUES(7, '2025-10-01', 0, 5, 'x', 100, '(4 |Cancha:A)');");
+    exec_ok("INSERT INTO financiamiento(id, fecha, tipo, categoria, descripcion, monto, "
+            "item_especifico) VALUES(8, '2025-10-01', 1, 5, 'x', 100, '(40 |Cancha:A)');");
+    TEST_ASSERT_EQUAL_INT(0, (int)partido_buscar_transaccion(4));
+
+    exec_ok("INSERT INTO financiamiento(id, fecha, tipo, categoria, descripcion, monto, "
+            "item_especifico) VALUES(9, '2025-10-01', 1, 5, 'x', 100, "
+            "'(4 |Cancha:Con GPS |Fecha:01/10/2025 10:00 | G:1 A:0 |Camiseta:Titular | "
+            "VICTORIA |Clima:Soleado |Dia:Tarde)');");
+    TEST_ASSERT_EQUAL_INT(9, (int)partido_buscar_transaccion(4));
+    TEST_ASSERT_EQUAL_INT(8, (int)partido_buscar_transaccion(40));
+}
+
 int main(void)
 {
     if (!fixture_iniciar(PERFIL_TEST, NULL, 0, NULL))
@@ -254,6 +273,7 @@ int main(void)
     RUN_TEST(test_sincronizar_transaccion_texto_de_respaldo);
     RUN_TEST(test_crear_transaccion_no_duplica);
     RUN_TEST(test_reencolar_clima);
+    RUN_TEST(test_buscar_transaccion_formato_finanzas);
 
     return fixture_terminar();
 }

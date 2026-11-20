@@ -130,6 +130,14 @@ int partido_eliminar_por_id(long long partido_id);
 int partido_diferencia_con_signo(int resultado, int diferencia);
 
 /**
+ * @brief Id de la transaccion de cancha (GASTO, CANCHAS) del partido en financiamiento.
+ *
+ * Reconoce "(N |..." y los respaldos "Partido ID: N" y "Partido ID: N (...)".
+ * @return el id, 0 si no tiene, -1 ante error de base de datos.
+ */
+long long partido_buscar_transaccion(long long partido_id);
+
+/**
  * @brief Deja la transaccion de cancha del partido (financiamiento) acorde al precio.
  *
  * Si existe y @p precio > 0 actualiza el monto; si no existe y @p precio > 0 la
