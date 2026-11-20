@@ -3724,10 +3724,30 @@ static int pedir_entero_cancelable(const char *prompt, int min_val, int max_val,
     return 1;
 }
 
+static void mostrar_valor_actual_partido(const char *campo)
+{
+    char sql[160];
+    snprintf(sql, sizeof(sql), "SELECT %s FROM partido WHERE id=?", campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, current_partido_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *actual = sqlite3_column_text(stmt, 0);
+        printf("Actual: %s\n", actual && actual[0] ? (const char *)actual : "(vacio)");
+    }
+    sqlite3_finalize(stmt);
+}
+
 /* Pide y guarda un campo entero del partido actual, sin pausar. */
 static int guardar_campo_partido(const char *campo, const char *prompt, int min_val, int max_val,
                                  int *valor)
 {
+    mostrar_valor_actual_partido(campo);
     return pedir_entero_cancelable(prompt, min_val, max_val, valor) &&
            actualizar_int_partido(current_partido_id, campo, *valor);
 }
@@ -3765,6 +3785,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
         return;
     }
 
+    mostrar_valor_actual_partido(campo);
     printf("%s", prompt);
     size_t valor_size = (size_t)buffer_size;
     if (valor_size > (size_t)INT_MAX)
@@ -4738,6 +4759,51 @@ static void modificar_todo_partido(void)
     mostrar_alerta_operacion("Partido", "Modificado", NULL);
 }
 
+/* ejecutar_menu limpia la pantalla, asi que la ficha se muestra antes y con pausa. */
+static void mostrar_ficha_partido(int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("SELECT IFNULL(can.nombre, 'N/A'), p.fecha_hora, p.goles, p.asistencias, "
+                       "p.resultado, IFNULL(p.diferencia_gol, 0), IFNULL(cam.nombre, 'N/A'), "
+                       "p.clima, p.dia, p.precio, IFNULL(p.comentario_personal, ''), "
+                       "p.temperatura_c, p.weather_code "
+                       "FROM partido p LEFT JOIN cancha can ON can.id = p.cancha_id "
+                       "LEFT JOIN camiseta cam ON cam.id = p.camiseta_id WHERE p.id = ?",
+                       &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char fecha[32] = "N/A";
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 1), fecha,
+                                (int)sizeof(fecha));
+
+        printf("\n--- Partido %d (valores actuales) ---\n", id);
+        printf("Cancha: %s\n", (const char *)sqlite3_column_text(stmt, 0));
+        printf("Fecha y hora: %s\n", fecha);
+        printf("Goles: %d | Asistencias: %d\n", sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3));
+        printf("Resultado: %s | Diferencia de gol: %+d\n",
+               resultado_to_text(sqlite3_column_int(stmt, 4)), sqlite3_column_int(stmt, 5));
+        printf("Camiseta: %s\n", (const char *)sqlite3_column_text(stmt, 6));
+        printf("Clima percibido: %s\n", clima_to_text(sqlite3_column_int(stmt, 7)));
+        if (sqlite3_column_type(stmt, 11) != SQLITE_NULL)
+        {
+            printf("Clima real: %.1f C, %s\n", sqlite3_column_double(stmt, 11),
+                   sqlite3_column_type(stmt, 12) != SQLITE_NULL
+                   ? wmo_code_to_text(sqlite3_column_int(stmt, 12))
+                   : "N/A");
+        }
+        printf("Franja: %s\n", dia_to_text(sqlite3_column_int(stmt, 8)));
+        printf("Precio: %d\n", sqlite3_column_int(stmt, 9));
+        printf("Comentario: %s\n", (const char *)sqlite3_column_text(stmt, 10));
+    }
+    sqlite3_finalize(stmt);
+    pause_console();
+}
+
 void modificar_partido(void)
 {
     print_header("MODIFICAR PARTIDO");
@@ -4767,6 +4833,7 @@ void modificar_partido(void)
     }
 
     current_partido_id = id;
+    mostrar_ficha_partido(id);
 
     MenuItem items[] = {{1, "Cancha", &modificar_cancha_partido},
         {2, "Fecha y Hora", &modificar_fecha_hora_partido},
