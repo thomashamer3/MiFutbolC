@@ -41,7 +41,7 @@ ctest --test-dir build/linux-release --output-on-failure
 - Nunca `git push --force` ni `gh pr merge`.
 - `git add` con archivos explícitos. Nunca agregar `MiFutbolC.layout` ni `.cache/` (cambios locales del IDE).
 - Commits Conventional (`feat(partido): ...`, `fix(finanzas): ...`), en español.
-- Cada cambio terminado lleva su entrada en `CHANGELOG.md`, sección "Sin publicar" (Agregado / Cambiado / Corregido), escrita para el usuario de la app.
+- Cada cambio terminado lleva su entrada en `CHANGELOG.md`, sección "Sin publicar" (Agregado / Cambiado / Corregido), escrita para el usuario de la app. Lo que no cambia la app (CI, agentes, build) va en "Desarrollo".
 
 ## Memoria
 

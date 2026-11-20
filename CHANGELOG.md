@@ -26,7 +26,6 @@ La última versión publicada es la 4.6.0.
 - **Revisión de PRs con IA** (`.github/workflows/ai-pr.yml`): DeepSeek (OpenCode, agente `reviewer`) comenta cada PR. Claude Code revisa además los PRs de riesgo (más de 400 líneas o archivos que tocan datos del usuario) y responde a `@claude` cuando lo escribe el dueño del repo. Los agentes nunca hacen merge ni tocan `master`.
 - **Agentes de OpenCode** (`.opencode/agents/`): `architect`, `developer` y `reviewer` ahora usan `deepseek-v4-pro` y tienen permisos reales. El revisor y el arquitecto no pueden editar; el desarrollador pide permiso para hacer push y crear PRs, y tiene bloqueados el merge, el push forzado y el push a `master`. Se versionan en el repo.
 - **Memoria para agentes**: `AGENTS.md` (comandos y reglas del proyecto), `CLAUDE.md` y `docs/ai-memory/` (estándares, lecciones de revisión y bugs que se repiten).
-
 - Se borró `process.h` de la raíz: tapaba al header del sistema y, con mingw-w64 más nuevo, `utils.c` no compilaba (`_spawnvp` y `_P_WAIT` sin declarar).
 
 ### Corregido
