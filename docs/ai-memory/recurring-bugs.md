@@ -7,6 +7,9 @@ Errores que ya aparecieron en MiFutbolC. Revisar cada cambio contra esta lista.
 - **Rango 0,0 como "sin validar".** En `modificar_campo_partido` dejaba guardar negativos y el -1 de error.
 - **`fgets` sin validar** guardado tal cual (la fecha del partido aceptaba cualquier texto).
 
+## Build
+- **Headers propios con nombre de header del sistema:** con `-I` de la raíz, un `process.h` del proyecto tapaba al de mingw-w64. Compilaba de casualidad con mingw-w64 14 y falló con uno más nuevo. No crear archivos con nombres de headers del sistema (`process.h`, `io.h`, `time.h`...).
+
 ## SQLite
 - **`sqlite3_step` sin revisar:** se informaba "modificado correctamente" aunque el UPDATE fallara. Revisar `SQLITE_DONE` y, en UPDATE/DELETE por id, `sqlite3_changes(db) > 0`.
 - **`sqlite3_errmsg` leído después de un ROLLBACK:** el ROLLBACK lo pisa con "not an error". Guardar el mensaje antes.
