@@ -122,6 +122,13 @@ int partido_borrar_dependencias(long long partido_id);
 int partido_eliminar_por_id(long long partido_id);
 
 /**
+ * @brief Igual que partido_eliminar_por_id y, si @p borrar_gasto, tambien borra la
+ *        transaccion de cancha del partido en financiamiento, todo en un SAVEPOINT.
+ * @return 1 si se borro el partido (y el gasto pedido); 0 si no, sin cambios.
+ */
+int partido_eliminar_con_transaccion(long long partido_id, int borrar_gasto);
+
+/**
  * @brief Diferencia de gol con el signo que corresponde al resultado.
  *
  * Victoria (1) da +|diferencia|, derrota (3) da -|diferencia| y cualquier otro

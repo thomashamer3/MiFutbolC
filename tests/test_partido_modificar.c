@@ -257,6 +257,41 @@ static void test_buscar_transaccion_formato_finanzas(void)
     TEST_ASSERT_EQUAL_INT(8, (int)partido_buscar_transaccion(40));
 }
 
+/* Con borrar_gasto se van el partido y su transaccion; sin el, el gasto queda. */
+static void test_eliminar_con_y_sin_gasto(void)
+{
+    insertar_partido(1, 1, 1, 0);
+    insertar_partido(2, 1, 1, 0);
+    insertar_transaccion(1, 500);
+    insertar_transaccion(2, 700);
+
+    TEST_ASSERT_EQUAL_INT(1, partido_eliminar_con_transaccion(1, 1));
+    TEST_ASSERT_EQUAL_INT(0, consultar_int("SELECT COUNT(*) FROM partido WHERE id = 1;"));
+    TEST_ASSERT_EQUAL_INT(0, transacciones_de(1));
+
+    TEST_ASSERT_EQUAL_INT(1, partido_eliminar_con_transaccion(2, 0));
+    TEST_ASSERT_EQUAL_INT(0, consultar_int("SELECT COUNT(*) FROM partido WHERE id = 2;"));
+    TEST_ASSERT_EQUAL_INT(700, monto_de(2));
+}
+
+/* Si el borrado del partido falla, el gasto vuelve con el ROLLBACK. */
+static void test_eliminar_fallido_conserva_gasto(void)
+{
+    insertar_partido(1, 1, 1, 0);
+    insertar_transaccion(1, 500);
+    exec_ok("CREATE TRIGGER trg_test_no_borrar BEFORE DELETE ON partido "
+            "BEGIN SELECT RAISE(ABORT, 'rechazado'); END;");
+
+    TEST_ASSERT_EQUAL_INT(0, partido_eliminar_con_transaccion(1, 1));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT COUNT(*) FROM partido WHERE id = 1;"));
+    TEST_ASSERT_EQUAL_INT(500, monto_de(1));
+
+    /* Un partido inexistente tampoco se lleva su gasto huerfano. */
+    insertar_transaccion(5, 900);
+    TEST_ASSERT_EQUAL_INT(0, partido_eliminar_con_transaccion(5, 1));
+    TEST_ASSERT_EQUAL_INT(900, monto_de(5));
+}
+
 int main(void)
 {
     if (!fixture_iniciar(PERFIL_TEST, NULL, 0, NULL))
@@ -274,6 +309,8 @@ int main(void)
     RUN_TEST(test_crear_transaccion_no_duplica);
     RUN_TEST(test_reencolar_clima);
     RUN_TEST(test_buscar_transaccion_formato_finanzas);
+    RUN_TEST(test_eliminar_con_y_sin_gasto);
+    RUN_TEST(test_eliminar_fallido_conserva_gasto);
 
     return fixture_terminar();
 }

@@ -79,6 +79,7 @@ static void modificar_detalle_evento_partido(const char *campo, const char *etiq
 
 // Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
+extern char *formato_monto(int monto);
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
@@ -3546,6 +3547,22 @@ void listar_partidos(void)
     }
 }
 
+static int monto_transaccion_partido(long long transaccion_id)
+{
+    sqlite3_stmt *stmt;
+    int monto = 0;
+    if (preparar_stmt("SELECT monto FROM financiamiento WHERE id = ?", &stmt))
+    {
+        sqlite3_bind_int64(stmt, 1, transaccion_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            monto = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    return monto;
+}
+
 void eliminar_partido(void)
 {
     print_header("ELIMINAR PARTIDO");
@@ -3562,9 +3579,15 @@ void eliminar_partido(void)
 
     int id = input_int("ID Partido a Eliminar (0 para cancelar): ");
 
+    if (id == 0)
+    {
+        return;
+    }
+
     if (!existe_id("partido", id))
     {
         printf("El Partido no Existe\n");
+        pause_console();
         return;
     }
 
@@ -3573,9 +3596,21 @@ void eliminar_partido(void)
         return;
     }
 
+    /* El gasto de la cancha queda en Finanzas salvo que el usuario diga que no. */
+    int borrar_gasto = 0;
+    long long transaccion_id = partido_buscar_transaccion(id);
+    if (transaccion_id > 0)
+    {
+        char pregunta[128];
+        snprintf(pregunta, sizeof(pregunta),
+                 "Tambien desea borrar el gasto de $%s asociado en Finanzas?",
+                 formato_monto(monto_transaccion_partido(transaccion_id)));
+        borrar_gasto = confirmar(pregunta);
+    }
+
     /* Borra el partido y limpia sus filas dependientes en una transaccion.
      * Los IDs de los demas partidos no cambian. */
-    if (!partido_eliminar_por_id(id))
+    if (!partido_eliminar_con_transaccion(id, borrar_gasto))
     {
         printf("No se pudo eliminar el partido: %s\n", sqlite3_errmsg(db));
         pause_console();
@@ -6213,6 +6248,38 @@ int partido_eliminar_por_id(long long partido_id)
         sqlite3_exec(db, "ROLLBACK TO partido_eliminar", NULL, NULL, NULL);
     }
     sqlite3_exec(db, "RELEASE partido_eliminar", NULL, NULL, NULL);
+    return ok;
+}
+
+int partido_eliminar_con_transaccion(long long partido_id, int borrar_gasto)
+{
+    long long transaccion_id = borrar_gasto ? partido_buscar_transaccion(partido_id) : 0;
+    if (transaccion_id < 0 ||
+            sqlite3_exec(db, "SAVEPOINT partido_eliminar_gasto", NULL, NULL, NULL) != SQLITE_OK)
+    {
+        return 0;
+    }
+
+    int ok = 1;
+    if (transaccion_id > 0)
+    {
+        sqlite3_stmt *stmt = NULL;
+        ok = db_prepare_stmt(&stmt, "DELETE FROM financiamiento WHERE id = ?");
+        if (ok)
+        {
+            sqlite3_bind_int64(stmt, 1, transaccion_id);
+            ok = sqlite3_step(stmt) == SQLITE_DONE;
+            db_stmt_release(stmt);
+        }
+    }
+    /* Si el partido no se borra, el gasto vuelve con el ROLLBACK. */
+    ok = ok && partido_eliminar_por_id(partido_id);
+
+    if (!ok)
+    {
+        sqlite3_exec(db, "ROLLBACK TO partido_eliminar_gasto", NULL, NULL, NULL);
+    }
+    sqlite3_exec(db, "RELEASE partido_eliminar_gasto", NULL, NULL, NULL);
     return ok;
 }
 
