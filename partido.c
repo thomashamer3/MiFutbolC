@@ -79,6 +79,7 @@ static void modificar_detalle_evento_partido(const char *campo, const char *etiq
 
 // Declaracion externa para funcion de financiamiento
 extern void obtener_fecha_actual(char *fecha);
+extern char *formato_monto(int monto);
 
 static int preparar_stmt(const char *sql, sqlite3_stmt **stmt)
 {
@@ -229,7 +230,8 @@ static int calcular_dia_desde_fecha_hora(const char *fecha_hora, int *dia_out)
     return 1;
 }
 
-static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
+/* Deja la fecha en formato de almacenamiento. Devuelve 0 en EOF (fecha vacia). */
+static int solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
 {
     while (1)
     {
@@ -237,7 +239,11 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
 
         printf("\nFecha y Hora del partido (dd/mm/yyyy hh:mm):\n");
         printf("(Presione Enter para usar fecha/hora actual): ");
-        fgets(fecha, (int)fecha_size, stdin);
+        if (!fgets(fecha, (int)fecha_size, stdin))
+        {
+            fecha[0] = '\0';
+            return 0;
+        }
         fecha[strcspn(fecha, "\n")] = 0;
 
         if (fecha[0] == '\0' || (fecha[0] == ' ' && fecha[1] == '\0'))
@@ -249,7 +255,7 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
                 strncpy_s(fecha, fecha_size, iso, fecha_size - 1);
             }
             printf("Usando fecha/hora actual: %s\n", fecha);
-            return;
+            return 1;
         }
 
         trim_whitespace(fecha);
@@ -259,7 +265,7 @@ static void solicitar_fecha_hora_partido(char *fecha, size_t fecha_size)
             convert_display_date_to_storage(fecha, iso, sizeof(iso));
             strncpy_s(fecha, fecha_size, iso, fecha_size - 1);
             printf("Fecha/hora ingresada: %s\n", fecha);
-            return;
+            return 1;
         }
 
         printf("Formato invalido. Debe incluir hora (ejemplo: 25/05/2026 22:20).\n");
@@ -2327,6 +2333,12 @@ static int pedir_entero_minimo(const char *prompt_inicial, int minimo, const cha
     int valor = input_int(prompt_inicial);
     while (valor < minimo)
     {
+        /* shortcut: con stdin cerrado se usa el minimo en vez de cancelar la carga;
+         * cambiar a cancelable si estos flujos de crear pasan a poder abortar. */
+        if (feof(stdin))
+        {
+            return minimo;
+        }
         valor = input_int(prompt_error);
     }
     return valor;
@@ -2338,6 +2350,11 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max,
     int valor = input_int(prompt_inicial);
     while (valor < min || valor > max)
     {
+        /* shortcut: igual que pedir_entero_minimo, en EOF devuelve min. */
+        if (feof(stdin))
+        {
+            return min;
+        }
         valor = input_int(prompt_error);
     }
     return valor;
@@ -3071,29 +3088,58 @@ static void insertar_partido(long long id, DatosPartido const *datos, char const
     sqlite3_finalize(stmt);
 }
 
-static void crear_transaccion_partido(long long partido_id, int precio)
+/*
+ * Id de la transaccion (GASTO, CANCHAS) del partido: 0 si no tiene, -1 ante
+ * error. Reconoce el texto normal "(N |Cancha:..." y los de respaldo
+ * "Partido ID: N" y "Partido ID: N (...)"; los delimitadores evitan que el
+ * partido 1 coincida con el 10.
+ */
+long long partido_buscar_transaccion(long long partido_id)
 {
-    // Verificar si el partido ya tiene una transaccion asociada
-    sqlite3_stmt *stmt_check;
-    const char *sql_check = "SELECT COUNT(*) FROM financiamiento WHERE tipo = 1 "
-                            "AND categoria = 6 AND item_especifico LIKE ?";
-    char item_pattern[256];
-    snprintf(item_pattern, sizeof(item_pattern), "Partido ID: %lld%%", partido_id);
+    char normal[48];
+    char respaldo[48];
+    char respaldo_extendido[48];
+    snprintf(normal, sizeof(normal), "(%lld |%%", partido_id);
+    snprintf(respaldo, sizeof(respaldo), "Partido ID: %lld", partido_id);
+    snprintf(respaldo_extendido, sizeof(respaldo_extendido), "Partido ID: %lld (%%", partido_id);
 
-    if (preparar_stmt(sql_check, &stmt_check))
+    /* Los mismos valores de enum que inserta crear_transaccion_partido (CANCHAS es 5, no 6). */
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("SELECT id FROM financiamiento WHERE tipo = ?4 AND categoria = ?5 "
+                       "AND (item_especifico LIKE ?1 OR item_especifico = ?2 "
+                       "OR item_especifico LIKE ?3) ORDER BY id LIMIT 1",
+                       &stmt))
     {
-        sqlite3_bind_text(stmt_check, 1, item_pattern, -1, DB_TRANSIENT);
-        if (sqlite3_step(stmt_check) == SQLITE_ROW)
+        printf("No se pudo buscar la transaccion del partido: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+    sqlite3_bind_text(stmt, 1, normal, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, respaldo, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, respaldo_extendido, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, GASTO);
+    sqlite3_bind_int(stmt, 5, CANCHAS);
+    int rc = sqlite3_step(stmt);
+    long long id = rc == SQLITE_ROW ? sqlite3_column_int64(stmt, 0) : 0;
+    if (rc != SQLITE_ROW && rc != SQLITE_DONE)
+    {
+        printf("No se pudo buscar la transaccion del partido: %s\n", sqlite3_errmsg(db));
+        id = -1;
+    }
+    sqlite3_finalize(stmt);
+    return id;
+}
+
+/* Devuelve 1 si creo la transaccion. */
+static int crear_transaccion_partido(long long partido_id, int precio)
+{
+    long long existente = partido_buscar_transaccion(partido_id);
+    if (existente != 0)
+    {
+        if (existente > 0)
         {
-            int count = sqlite3_column_int(stmt_check, 0);
-            if (count > 0)
-            {
-                printf("El partido ya tiene una transaccion financiera asociada.\n");
-                sqlite3_finalize(stmt_check);
-                return;
-            }
+            printf("El partido ya tiene una transaccion financiera asociada.\n");
         }
-        sqlite3_finalize(stmt_check);
+        return 0;
     }
 
     // Crear la transaccion financiera
@@ -3149,6 +3195,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO financiamiento (id, fecha, tipo, categoria, descripcion, "
                       "monto, item_especifico) VALUES (?, ?, ?, ?, ?, ?, ?);";
+    int creada = 0;
 
     if (preparar_stmt(sql, &stmt))
     {
@@ -3163,6 +3210,7 @@ static void crear_transaccion_partido(long long partido_id, int precio)
         if (sqlite3_step(stmt) == SQLITE_DONE)
         {
             printf("Transaccion financiera creada para el partido con ID %lld\n", partido_id);
+            creada = 1;
         }
         else
         {
@@ -3174,6 +3222,41 @@ static void crear_transaccion_partido(long long partido_id, int precio)
     {
         printf("Error al preparar la consulta de transaccion: %s\n", sqlite3_errmsg(db));
     }
+    return creada;
+}
+
+int partido_sincronizar_transaccion(long long partido_id, int precio)
+{
+    long long transaccion_id = partido_buscar_transaccion(partido_id);
+    if (transaccion_id < 0)
+    {
+        return 0;
+    }
+    if (transaccion_id == 0)
+    {
+        return precio <= 0 || crear_transaccion_partido(partido_id, precio);
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(precio > 0 ? "UPDATE financiamiento SET monto=?1 WHERE id=?2"
+                       : "DELETE FROM financiamiento WHERE id=?2",
+                       &stmt))
+    {
+        printf("No se pudo actualizar la transaccion del partido: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    if (precio > 0)
+    {
+        sqlite3_bind_int(stmt, 1, precio);
+    }
+    sqlite3_bind_int64(stmt, 2, transaccion_id);
+    int ok = sqlite3_step(stmt) == SQLITE_DONE;
+    if (!ok)
+    {
+        printf("No se pudo actualizar la transaccion del partido: %s\n", sqlite3_errmsg(db));
+    }
+    sqlite3_finalize(stmt);
+    return ok;
 }
 
 static int parsear_fecha_hora_partido(const char *fecha, int *anio, int *mes, int *dia, int *hora,
@@ -3462,6 +3545,12 @@ void listar_partidos(void)
 
         int opcion = input_int("Opcion: ");
 
+        /* Con la entrada cerrada no hay quien elija: se sale en vez de repetir. */
+        if (opcion == -1 && feof(stdin))
+        {
+            return;
+        }
+
         if (partido_listado_navegacion_deshabilitada(paginacion_todos, opcion))
         {
             continue;
@@ -3473,6 +3562,34 @@ void listar_partidos(void)
             return;
         }
     }
+}
+
+/* Motivo del ultimo borrado fallido: se guarda antes del ROLLBACK, que pisa
+ * el mensaje de sqlite3_errmsg con "not an error". */
+static char g_error_eliminar[256];
+
+static void anotar_error_eliminar(const char *motivo)
+{
+    if (!g_error_eliminar[0])
+    {
+        snprintf(g_error_eliminar, sizeof(g_error_eliminar), "%s", motivo);
+    }
+}
+
+static int monto_transaccion_partido(long long transaccion_id)
+{
+    sqlite3_stmt *stmt;
+    int monto = 0;
+    if (preparar_stmt("SELECT monto FROM financiamiento WHERE id = ?", &stmt))
+    {
+        sqlite3_bind_int64(stmt, 1, transaccion_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            monto = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    return monto;
 }
 
 void eliminar_partido(void)
@@ -3491,9 +3608,15 @@ void eliminar_partido(void)
 
     int id = input_int("ID Partido a Eliminar (0 para cancelar): ");
 
+    if (id == 0)
+    {
+        return;
+    }
+
     if (!existe_id("partido", id))
     {
         printf("El Partido no Existe\n");
+        pause_console();
         return;
     }
 
@@ -3502,11 +3625,24 @@ void eliminar_partido(void)
         return;
     }
 
+    /* El gasto de la cancha queda en Finanzas salvo que el usuario diga que no. */
+    int borrar_gasto = 0;
+    long long transaccion_id = partido_buscar_transaccion(id);
+    if (transaccion_id > 0)
+    {
+        char pregunta[128];
+        snprintf(pregunta, sizeof(pregunta),
+                 "Tambien desea borrar el gasto de $%s asociado en Finanzas?",
+                 formato_monto(monto_transaccion_partido(transaccion_id)));
+        borrar_gasto = confirmar(pregunta);
+    }
+
     /* Borra el partido y limpia sus filas dependientes en una transaccion.
      * Los IDs de los demas partidos no cambian. */
-    if (!partido_eliminar_por_id(id))
+    if (!partido_eliminar_con_transaccion(id, borrar_gasto))
     {
-        printf("No se pudo eliminar el partido: %s\n", sqlite3_errmsg(db));
+        printf("No se pudo eliminar el partido: %s\n",
+               g_error_eliminar[0] ? g_error_eliminar : "error desconocido");
         pause_console();
         return;
     }
@@ -3515,6 +3651,171 @@ void eliminar_partido(void)
 }
 
 static int current_partido_id;
+
+int partido_diferencia_con_signo(int resultado, int diferencia)
+{
+    int d = abs(diferencia);
+    if (resultado == 1)
+    {
+        return d;
+    }
+    if (resultado == 3)
+    {
+        return -d;
+    }
+    return 0;
+}
+
+/*
+ * Ejecuta un UPDATE de partido ya enlazado y lo libera. Devuelve 1 solo si
+ * guardo la fila; si no, muestra el motivo real.
+ */
+static int ejecutar_update_partido(sqlite3_stmt *stmt)
+{
+    int ok = sqlite3_step(stmt) == SQLITE_DONE;
+    if (!ok)
+    {
+        printf("No se pudo guardar el cambio: %s\n", sqlite3_errmsg(db));
+    }
+    else if (sqlite3_changes(db) == 0)
+    {
+        ok = 0;
+        printf("No se pudo guardar el cambio: el partido ya no existe.\n");
+    }
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+static int preparar_update_partido(const char *sql, sqlite3_stmt **stmt)
+{
+    if (preparar_stmt(sql, stmt))
+    {
+        return 1;
+    }
+    printf("No se pudo guardar el cambio: %s\n", sqlite3_errmsg(db));
+    return 0;
+}
+
+static int actualizar_int_partido(long long partido_id, const char *campo, int valor)
+{
+    char sql[256];
+    snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_update_partido(sql, &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, valor);
+    sqlite3_bind_int64(stmt, 2, partido_id);
+    return ejecutar_update_partido(stmt);
+}
+
+static int leer_int_partido(long long partido_id, const char *campo, int *valor)
+{
+    char sql[160];
+    snprintf(sql, sizeof(sql), "SELECT IFNULL(%s, 0) FROM partido WHERE id=?", campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        printf("No se pudo leer el partido: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    sqlite3_bind_int64(stmt, 1, partido_id);
+    int rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        *valor = sqlite3_column_int(stmt, 0);
+    }
+    else
+    {
+        printf("No se pudo leer el partido: %s\n",
+               rc == SQLITE_DONE ? "el partido ya no existe" : sqlite3_errmsg(db));
+    }
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_ROW;
+}
+
+int partido_reencolar_clima(long long partido_id)
+{
+    int cancha_id = 0;
+    /* Sin coordenadas el clima no se puede volver a pedir: se conserva el actual. */
+    if (!leer_int_partido(partido_id, "cancha_id", &cancha_id) ||
+            !clima_diferido_cancha_tiene_coordenadas(cancha_id))
+    {
+        return 0;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_update_partido("UPDATE partido SET temperatura_c=NULL, apparent_temp_c=NULL, "
+                                 "precip_mm=NULL, wind_kmh=NULL, weather_code=NULL, "
+                                 "clima_json=NULL WHERE id=?",
+                                 &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_int64(stmt, 1, partido_id);
+    return ejecutar_update_partido(stmt) && clima_diferido_encolar(partido_id);
+}
+
+/* Tras cambiar fecha o cancha: el clima real guardado ya no corresponde. */
+static void reencolar_clima_partido_modificado(void)
+{
+    if (settings_get()->mode != MODE_SIMPLE && partido_reencolar_clima(current_partido_id))
+    {
+        printf("El clima real se volvera a consultar en segundo plano.\n");
+        clima_diferido_procesar();
+    }
+}
+
+/* input_int devuelve -1 en EOF o tras agotar intentos: eso cancela. */
+static int pedir_entero_cancelable(const char *prompt, int min_val, int max_val, int *valor)
+{
+    int v = input_int(prompt);
+    while (v != -1 && (v < min_val || v > max_val))
+    {
+        char prompt_error[128];
+        snprintf(prompt_error, sizeof(prompt_error), "Valor invalido. Ingrese entre %d y %d: ",
+                 min_val, max_val);
+        v = input_int(prompt_error);
+    }
+    if (v == -1)
+    {
+        printf("Operacion cancelada\n");
+        return 0;
+    }
+    *valor = v;
+    return 1;
+}
+
+static void mostrar_valor_actual_partido(const char *campo)
+{
+    char sql[160];
+    snprintf(sql, sizeof(sql), "SELECT %s FROM partido WHERE id=?", campo);
+
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt(sql, &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, current_partido_id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        const unsigned char *actual = sqlite3_column_text(stmt, 0);
+        printf("Actual: %s\n", actual && actual[0] ? (const char *)actual : "(vacio)");
+    }
+    sqlite3_finalize(stmt);
+}
+
+/* Pide y guarda un campo entero del partido actual, sin pausar. */
+static int guardar_campo_partido(const char *campo, const char *prompt, int min_val, int max_val,
+                                 int *valor)
+{
+    mostrar_valor_actual_partido(campo);
+    return pedir_entero_cancelable(prompt, min_val, max_val, valor) &&
+           actualizar_int_partido(current_partido_id, campo, *valor);
+}
 
 static void modificar_campo_partido(const char *campo, const char *prompt,
                                     const char *mensaje_exito, int min_val, int max_val,
@@ -3525,33 +3826,11 @@ static void modificar_campo_partido(const char *campo, const char *prompt,
         mostrar_lista();
     }
 
-    int valor = input_int(prompt);
-
-    if (min_val != 0 || max_val != 0)
+    int valor = 0;
+    if (guardar_campo_partido(campo, prompt, min_val, max_val, &valor))
     {
-        while (valor < min_val || valor > max_val)
-        {
-            char prompt_error[256];
-            snprintf(prompt_error, sizeof(prompt_error),
-                     "Valor invalido. Ingrese entre %d y %d: ", min_val, max_val);
-            valor = input_int(prompt_error);
-        }
+        printf("%s\n", mensaje_exito);
     }
-
-    char sql[256];
-    snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql, &stmt))
-    {
-        pause_console();
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, valor);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("%s\n", mensaje_exito);
     pause_console();
 }
 
@@ -3571,6 +3850,7 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
         return;
     }
 
+    mostrar_valor_actual_partido(campo);
     printf("%s", prompt);
     size_t valor_size = (size_t)buffer_size;
     if (valor_size > (size_t)INT_MAX)
@@ -3579,20 +3859,21 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
         return;
     }
 
+    /* En EOF se cancela: guardar "" borraria el texto actual. */
     if (fgets(valor, (int)valor_size, stdin) == NULL)
     {
-        valor[0] = '\0';
+        printf("Operacion cancelada\n");
+        free(valor);
+        pause_console();
+        return;
     }
-    else
-    {
-        valor[strcspn(valor, "\n")] = '\0';
-    }
+    valor[strcspn(valor, "\n")] = '\0';
 
     char sql[256];
     snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt(sql, &stmt))
+    if (!preparar_update_partido(sql, &stmt))
     {
         free(valor);
         pause_console();
@@ -3600,9 +3881,10 @@ static void modificar_campo_texto_partido(const char *campo, const char *prompt,
     }
     sqlite3_bind_text(stmt, 1, valor, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    printf("%s\n", mensaje_exito);
+    if (ejecutar_update_partido(stmt))
+    {
+        printf("%s\n", mensaje_exito);
+    }
     free(valor);
     pause_console();
 }
@@ -3655,7 +3937,8 @@ static void modificar_cancha_partido(void)
     while (1)
     {
         cancha = input_int("Nuevo ID Cancha (0 para cancelar): ");
-        if (cancha == 0)
+        /* -1 es EOF o intentos agotados: sin esto el bucle no termina. */
+        if (cancha <= 0)
         {
             return;
         }
@@ -3666,128 +3949,194 @@ static void modificar_cancha_partido(void)
         printf("La cancha no existe o esta inactiva. Intente nuevamente.\n");
     }
 
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET cancha_id=? WHERE id=?", &stmt))
+    if (!actualizar_int_partido(current_partido_id, "cancha_id", cancha))
     {
         pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, cancha);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    reencolar_clima_partido_modificado();
     mostrar_alerta_operacion("Partido", "Cancha Modificada", NULL);
+}
+
+static int guardar_fecha_hora_partido(long long partido_id, const char *fecha, int dia)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_update_partido("UPDATE partido SET fecha_hora=?1, dia=?2, "
+                                 "mes_anio=substr(?1, 1, 7) WHERE id=?3",
+                                 &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_text(stmt, 1, fecha, -1, DB_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, dia);
+    sqlite3_bind_int64(stmt, 3, partido_id);
+    return ejecutar_update_partido(stmt);
+}
+
+/* Pide la fecha/hora (formato de almacenamiento) y calcula la franja. 0 si se cancelo. */
+static int pedir_fecha_hora_y_dia(char *fecha, size_t fecha_size, int *dia)
+{
+    if (!solicitar_fecha_hora_partido(fecha, fecha_size) || !calcular_dia_desde_fecha_hora(fecha, dia))
+    {
+        printf("Operacion cancelada\n");
+        return 0;
+    }
+    printf("Franja horaria calculada automaticamente: %s\n", dia_to_text(*dia));
+    return 1;
 }
 
 static void modificar_fecha_hora_partido(void)
 {
-    char fecha[20];
-    char hora[10];
-    char fecha_hora[30];
-    printf("Nueva fecha (dd/mm/yyyy): ");
-    fgets(fecha, sizeof(fecha), stdin);
-    fecha[strcspn(fecha, "\n")] = 0;
-    printf("Nueva hora (hh:mm): ");
-    fgets(hora, sizeof(hora), stdin);
-    hora[strcspn(hora, "\n")] = 0;
-    snprintf(fecha_hora, sizeof(fecha_hora), "%s %s", fecha, hora);
-    /* Convertir a formato de almacenamiento antes de actualizar */
-    char fecha_storage[64] = {0};
-    convert_display_date_to_storage(fecha_hora, fecha_storage, sizeof(fecha_storage));
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET fecha_hora=? WHERE id=?", &stmt))
+    char fecha[32];
+    int dia = 0;
+    if (!pedir_fecha_hora_y_dia(fecha, sizeof(fecha), &dia) ||
+            !guardar_fecha_hora_partido(current_partido_id, fecha, dia))
     {
         pause_console();
         return;
     }
-    sqlite3_bind_text(stmt, 1, fecha_storage, -1, DB_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    reencolar_clima_partido_modificado();
     mostrar_alerta_operacion("Partido", "Fecha y Hora Modificadas", NULL);
+}
+
+static void modificar_detalle_evento_partido(const char *campo, const char *etiqueta,
+        int es_asistencia, const char *mensaje_exito);
+
+/* Cambia goles o asistencias y mantiene el detalle acorde a la nueva cantidad. */
+static void modificar_cantidad_evento_partido(int es_asistencia)
+{
+    const char *campo = es_asistencia ? "asistencias" : "goles";
+    const char *campo_detalle = es_asistencia ? "asistencias_detalle" : "goles_detalle";
+    char hay_detalle_expr[48];
+    snprintf(hay_detalle_expr, sizeof(hay_detalle_expr), "%s <> ''", campo_detalle);
+
+    int anterior = 0;
+    int tenia_detalle = 0;
+    int valor = 0;
+    if (!leer_int_partido(current_partido_id, campo, &anterior) ||
+            !leer_int_partido(current_partido_id, hay_detalle_expr, &tenia_detalle) ||
+            !guardar_campo_partido(campo,
+                                   es_asistencia ? "Nuevas asistencias (0-99): "
+                                   : "Nuevos goles (0-99): ",
+                                   0, 99, &valor))
+    {
+        pause_console();
+        return;
+    }
+    printf("%s\n", es_asistencia ? "Asistencias modificadas correctamente"
+           : "Goles modificados correctamente");
+
+    if (valor == 0 && tenia_detalle)
+    {
+        char sql[96];
+        snprintf(sql, sizeof(sql), "UPDATE partido SET %s='' WHERE id=?", campo_detalle);
+        sqlite3_stmt *stmt;
+        if (preparar_update_partido(sql, &stmt))
+        {
+            sqlite3_bind_int(stmt, 1, current_partido_id);
+            if (ejecutar_update_partido(stmt))
+            {
+                printf("Se limpio el detalle de %s.\n", campo);
+            }
+        }
+    }
+    else if (valor > 0 && valor != anterior && tenia_detalle &&
+             confirmar("Desea actualizar el detalle para la nueva cantidad?"))
+    {
+        /* modificar_detalle_evento_partido ya pausa al terminar. */
+        modificar_detalle_evento_partido(campo_detalle, campo, es_asistencia,
+                                         es_asistencia ? "Detalle de asistencias modificado correctamente"
+                                         : "Detalle de goles modificado correctamente");
+        return;
+    }
+    pause_console();
 }
 
 static void modificar_goles_partido(void)
 {
-    modificar_campo_partido("goles", "Nuevos goles: ", "Goles modificados correctamente", 0, 0,
-                            NULL);
+    modificar_cantidad_evento_partido(0);
 }
 
 static void modificar_asistencias_partido(void)
 {
-    modificar_campo_partido(
-        "asistencias", "Nuevas asistencias: ", "Asistencias modificadas correctamente", 0, 0, NULL);
+    modificar_cantidad_evento_partido(1);
+}
+
+/* Guarda el resultado y reajusta el signo de la diferencia de gol existente. */
+static int guardar_resultado_partido(long long partido_id, int resultado)
+{
+    int diferencia = 0;
+    if (!leer_int_partido(partido_id, "diferencia_gol", &diferencia))
+    {
+        return 0;
+    }
+
+    sqlite3_stmt *stmt;
+    if (!preparar_update_partido("UPDATE partido SET resultado=?, diferencia_gol=? WHERE id=?",
+                                 &stmt))
+    {
+        return 0;
+    }
+    sqlite3_bind_int(stmt, 1, resultado);
+    sqlite3_bind_int(stmt, 2, partido_diferencia_con_signo(resultado, diferencia));
+    sqlite3_bind_int64(stmt, 3, partido_id);
+    return ejecutar_update_partido(stmt);
 }
 
 static void modificar_resultado_partido(void)
 {
-    modificar_campo_partido("resultado", "Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ",
-                            "Resultado modificado correctamente", 1, 3, NULL);
+    int resultado = 0;
+    if (pedir_entero_cancelable("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ", 1, 3,
+                                &resultado) &&
+            guardar_resultado_partido(current_partido_id, resultado))
+    {
+        printf("Resultado modificado correctamente\n");
+    }
+    pause_console();
 }
 
 static void modificar_diferencia_gol_partido(void)
 {
-    int diferencia = pedir_entero_minimo("Nueva diferencia de gol (0 o mas): ", 0,
-                                         "Diferencia invalida. Ingrese 0 o mas: ");
-
+    int diferencia = 0;
     int resultado = 0;
-    sqlite3_stmt *stmt_res;
-    if (preparar_stmt("SELECT resultado FROM partido WHERE id=?", &stmt_res))
-    {
-        sqlite3_bind_int(stmt_res, 1, current_partido_id);
-        if (sqlite3_step(stmt_res) == SQLITE_ROW)
-        {
-            resultado = sqlite3_column_int(stmt_res, 0);
-        }
-        sqlite3_finalize(stmt_res);
-    }
-
-    int valor = 0;
-    if (resultado == 1 && diferencia > 0)
-    {
-        valor = diferencia;
-    }
-    else if (resultado == 3 && diferencia > 0)
-    {
-        valor = -diferencia;
-    }
-    else
-    {
-        valor = 0;
-    }
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET diferencia_gol=? WHERE id=?", &stmt))
+    if (!pedir_entero_cancelable("Nueva diferencia de gol (0-99): ", 0, 99, &diferencia))
     {
         pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, valor);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!leer_int_partido(current_partido_id, "resultado", &resultado) ||
+            !actualizar_int_partido(current_partido_id, "diferencia_gol",
+                                    partido_diferencia_con_signo(resultado, diferencia)))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Diferencia de Gol Modificada", NULL);
 }
 
 static void modificar_camiseta_partido(void)
 {
     listar_camisetas_disponibles();
-    int camiseta = input_int("Nuevo ID camiseta: ");
-    if (!existe_id("camiseta", camiseta) || !entidad_esta_activa("camiseta", camiseta))
+    int camiseta = 0;
+    while (1)
     {
-        printf("La camiseta no existe o esta inactiva\n");
-        return;
+        camiseta = input_int("Nuevo ID camiseta (0 para cancelar): ");
+        if (camiseta <= 0)
+        {
+            return;
+        }
+        if (existe_id("camiseta", camiseta) && entidad_esta_activa("camiseta", camiseta))
+        {
+            break;
+        }
+        printf("La camiseta no existe o esta inactiva. Intente nuevamente.\n");
     }
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET camiseta_id=? WHERE id=?", &stmt))
+
+    if (!actualizar_int_partido(current_partido_id, "camiseta_id", camiseta))
     {
         pause_console();
         return;
     }
-    sqlite3_bind_int(stmt, 1, camiseta);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
     mostrar_alerta_operacion("Partido", "Camiseta Modificada", NULL);
 }
 
@@ -3811,8 +4160,20 @@ static void modificar_comentario_partido(void)
 
 static void modificar_precio_partido(void)
 {
-    modificar_campo_partido(
-        "precio", "Nuevo precio del partido: ", "Precio modificado correctamente", 0, 0, NULL);
+    int precio = 0;
+    if (guardar_campo_partido("precio", "Nuevo precio del partido (0-1000000): ", 0, 1000000,
+                              &precio))
+    {
+        if (partido_sincronizar_transaccion(current_partido_id, precio))
+        {
+            printf("Precio modificado correctamente\n");
+        }
+        else
+        {
+            printf("El precio se guardo, pero no se pudo actualizar su transaccion en Finanzas.\n");
+        }
+    }
+    pause_console();
 }
 
 static void modificar_rendimiento_general_partido(void)
@@ -3903,11 +4264,16 @@ static void modificar_posicion_jugada_partido(void)
 static void modificar_estado_cancha_partido(void)
 {
     mostrar_opciones_estado_cancha_partido();
-    int estado_cancha = pedir_entero_en_rango("Nuevo estado de cancha (1-5): ", 1, 5,
-                        "Valor invalido. Ingrese entre 1 y 5: ");
+    int estado_cancha = 0;
+    if (!pedir_entero_cancelable("Nuevo estado de cancha (1-5): ", 1, 5, &estado_cancha))
+    {
+        pause_console();
+        return;
+    }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET estado_cancha=?, condicion_cancha=? WHERE id=?", &stmt))
+    if (!preparar_update_partido("UPDATE partido SET estado_cancha=?, condicion_cancha=? WHERE id=?",
+                                 &stmt))
     {
         pause_console();
         return;
@@ -3916,8 +4282,11 @@ static void modificar_estado_cancha_partido(void)
     sqlite3_bind_int(stmt, 1, estado_cancha);
     sqlite3_bind_text(stmt, 2, estado_cancha_to_text(estado_cancha), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!ejecutar_update_partido(stmt))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Estado de Cancha Modificado", NULL);
 }
 
@@ -3942,7 +4311,8 @@ static void modificar_marcador_global_partido(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET goles_equipo=?, goles_rival=? WHERE id=?", &stmt))
+    if (!preparar_update_partido("UPDATE partido SET goles_equipo=?, goles_rival=? WHERE id=?",
+                                 &stmt))
     {
         pause_console();
         return;
@@ -3951,8 +4321,11 @@ static void modificar_marcador_global_partido(void)
     sqlite3_bind_int(stmt, 1, goles_equipo);
     sqlite3_bind_int(stmt, 2, goles_rival);
     sqlite3_bind_int(stmt, 3, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!ejecutar_update_partido(stmt))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Marcador Global Modificado", NULL);
 }
 
@@ -3965,7 +4338,7 @@ static void modificar_formato_partido_partido(void)
     }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET formato_partido=? WHERE id=?", &stmt))
+    if (!preparar_update_partido("UPDATE partido SET formato_partido=? WHERE id=?", &stmt))
     {
         pause_console();
         return;
@@ -3973,8 +4346,11 @@ static void modificar_formato_partido_partido(void)
 
     sqlite3_bind_text(stmt, 1, futbol, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!ejecutar_update_partido(stmt))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Futbol Modificado", NULL);
 }
 
@@ -3987,23 +4363,13 @@ static void modificar_tarjeta_partido(void)
 
 static void modificar_goles_en_contra_partido(void)
 {
-    int goles_en_contra = input_int("Nuevos goles en contra: ");
-    while (goles_en_contra < 0)
-    {
-        goles_en_contra = input_int("Valor invalido. Ingrese 0 o mas: ");
-    }
-
-    sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET goles_en_contra=? WHERE id=?", &stmt))
+    int goles_en_contra = 0;
+    if (!pedir_entero_cancelable("Nuevos goles en contra (0-99): ", 0, 99, &goles_en_contra) ||
+            !actualizar_int_partido(current_partido_id, "goles_en_contra", goles_en_contra))
     {
         pause_console();
         return;
     }
-
-    sqlite3_bind_int(stmt, 1, goles_en_contra);
-    sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
     mostrar_alerta_operacion("Partido", "Goles en Contra Modificados", NULL);
 }
 
@@ -4017,15 +4383,18 @@ static void modificar_temperatura_partido(void)
     sqlite3_stmt *stmt;
     if (buffer[0] == '\0')
     {
-        if (!preparar_stmt("UPDATE partido SET temperatura_c=NULL WHERE id=?", &stmt))
+        if (!preparar_update_partido("UPDATE partido SET temperatura_c=NULL WHERE id=?", &stmt))
         {
             pause_console();
             return;
         }
 
         sqlite3_bind_int(stmt, 1, current_partido_id);
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
+        if (!ejecutar_update_partido(stmt))
+        {
+            pause_console();
+            return;
+        }
         mostrar_alerta_operacion("Partido", "Temperatura Limpiada", NULL);
         return;
     }
@@ -4045,7 +4414,7 @@ static void modificar_temperatura_partido(void)
         return;
     }
 
-    if (!preparar_stmt("UPDATE partido SET temperatura_c=? WHERE id=?", &stmt))
+    if (!preparar_update_partido("UPDATE partido SET temperatura_c=? WHERE id=?", &stmt))
     {
         pause_console();
         return;
@@ -4053,19 +4422,27 @@ static void modificar_temperatura_partido(void)
 
     sqlite3_bind_double(stmt, 1, temperatura);
     sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!ejecutar_update_partido(stmt))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Temperatura Modificada", NULL);
 }
 
 static void modificar_arbitraje_score_partido(void)
 {
     mostrar_opciones_arbitraje_partido();
-    int arbitraje_score = pedir_entero_en_rango("Nuevo arbitraje (1-5): ", 1, 5,
-                          "Valor invalido. Ingrese entre 1 y 5: ");
+    int arbitraje_score = 0;
+    if (!pedir_entero_cancelable("Nuevo arbitraje (1-5): ", 1, 5, &arbitraje_score))
+    {
+        pause_console();
+        return;
+    }
 
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido SET arbitraje_score=?, arbitraje=? WHERE id=?", &stmt))
+    if (!preparar_update_partido("UPDATE partido SET arbitraje_score=?, arbitraje=? WHERE id=?",
+                                 &stmt))
     {
         pause_console();
         return;
@@ -4074,8 +4451,11 @@ static void modificar_arbitraje_score_partido(void)
     sqlite3_bind_int(stmt, 1, arbitraje_score);
     sqlite3_bind_text(stmt, 2, arbitraje_score_to_text(arbitraje_score), -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    if (!ejecutar_update_partido(stmt))
+    {
+        pause_console();
+        return;
+    }
     mostrar_alerta_operacion("Partido", "Arbitraje Modificado", NULL);
 }
 
@@ -4144,17 +4524,17 @@ static void modificar_detalle_evento_partido(const char *campo, const char *etiq
     char sql[256];
     snprintf(sql, sizeof(sql), "UPDATE partido SET %s=? WHERE id=?", campo);
 
-    if (!preparar_stmt(sql, &stmt))
+    if (!preparar_update_partido(sql, &stmt))
     {
         pause_console();
         return;
     }
     sqlite3_bind_text(stmt, 1, nuevo_detalle, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 2, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-
-    printf("%s\n", mensaje_exito);
+    if (ejecutar_update_partido(stmt))
+    {
+        printf("%s\n", mensaje_exito);
+    }
     pause_console();
 }
 
@@ -4267,7 +4647,7 @@ static void cargar_detalle_partido_actual(char *goles_detalle, size_t goles_size
     sqlite3_finalize(stmt);
 }
 
-static int recopilar_datos_completos_partido(DatosPartido *datos)
+static int recopilar_datos_completos_partido(DatosPartido *datos, char *fecha, size_t fecha_size)
 {
     if (!datos)
     {
@@ -4283,16 +4663,24 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         printf("La cancha no existe o esta inactiva\n");
         return 0;
     }
-    char fecha[20];
-    char hora[10];
-    input_date("Nueva fecha (DD/MM/AAAA, Enter=hoy): ", fecha, 20);
-    input_date("Nueva hora (HH:MM, Enter=ahora): ", hora, 10);
-    snprintf(datos->comentario_personal, sizeof(datos->comentario_personal), "%s %s", fecha, hora);
-    datos->goles = input_int("Nuevos goles: ");
-    datos->asistencias = input_int("Nuevas asistencias: ");
+    if (!pedir_fecha_hora_y_dia(fecha, fecha_size, &datos->dia) ||
+            !pedir_entero_cancelable("Nuevos goles (0-99): ", 0, 99, &datos->goles) ||
+            !pedir_entero_cancelable("Nuevas asistencias (0-99): ", 0, 99, &datos->asistencias))
+    {
+        return 0;
+    }
 
     cargar_detalle_partido_actual(datos->goles_detalle, sizeof(datos->goles_detalle),
                                   datos->asistencias_detalle, sizeof(datos->asistencias_detalle));
+    /* Sin goles o asistencias, el detalle anterior ya no describe nada. */
+    if (datos->goles == 0)
+    {
+        datos->goles_detalle[0] = '\0';
+    }
+    if (datos->asistencias == 0)
+    {
+        datos->asistencias_detalle[0] = '\0';
+    }
 
     if (datos->goles > 0)
     {
@@ -4315,9 +4703,22 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         }
     }
 
-    datos->resultado =
-        pedir_entero_en_rango("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ", 1, 3,
-                              "Resultado invalido. Ingrese 1, 2 o 3: ");
+    if (!pedir_entero_cancelable("Nuevo resultado (1=VICTORIA, 2=EMPATE, 3=DERROTA): ", 1, 3,
+                                 &datos->resultado))
+    {
+        return 0;
+    }
+    /* En empate la diferencia siempre es 0: no se pregunta. */
+    if (datos->resultado != 2)
+    {
+        int diferencia = 0;
+        if (!pedir_entero_cancelable("Nueva diferencia de gol (0-99): ", 0, 99, &diferencia))
+        {
+            return 0;
+        }
+        datos->formal.marcador.diferencia_gol =
+            partido_diferencia_con_signo(datos->resultado, diferencia);
+    }
     listar_camisetas_disponibles();
     datos->camiseta = input_int("Nuevo ID camiseta: ");
     if (!existe_id("camiseta", datos->camiseta) ||
@@ -4327,41 +4728,55 @@ static int recopilar_datos_completos_partido(DatosPartido *datos)
         return 0;
     }
     mostrar_opciones_clima_partido();
-    datos->clima = pedir_entero_en_rango("Nuevo clima (1-12): ", 1, 12,
-                                         "Clima invalido. Ingrese entre 1 y 12: ");
-    mostrar_opciones_dia_partido();
-    datos->dia =
-        pedir_entero_en_rango("Nuevo dia (1-6): ", 1, 6, "Dia invalido. Ingrese entre 1 y 6: ");
-    datos->precio = input_int("Nuevo precio del partido: ");
+    if (!pedir_entero_cancelable("Nuevo clima (1-12): ", 1, 12, &datos->clima) ||
+            !pedir_entero_cancelable("Nuevo precio del partido (0-1000000): ", 0, 1000000,
+                                     &datos->precio))
+    {
+        return 0;
+    }
     printf("Atajaste Todo el Partido:\n");
     printf("  0) No especificado\n");
     printf("  1) SI\n");
     printf("  2) NO\n");
-    datos->atajaste_todo_el_partido = pedir_entero_en_rango(
-                                          "Opcion (0-2): ", 0, 2, "Opcion invalida. Ingrese 0 (No esp.), 1 (SI) o 2 (NO): ");
-
-    return 1;
+    return pedir_entero_cancelable("Opcion (0-2): ", 0, 2, &datos->atajaste_todo_el_partido);
 }
 
-static void actualizar_partido_completo(DatosPartido const *datos, char const *fecha_hora)
+/* 1 si la cancha o la fecha nuevas difieren de las guardadas (o no se pudo leer). */
+static int cambia_cancha_o_fecha_partido(int cancha_id, const char *fecha)
 {
     sqlite3_stmt *stmt;
-    if (!preparar_stmt("UPDATE partido "
-                       "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, "
-                       "camiseta_id=?, resultado=?, clima=?, dia=?, precio=?, "
-                       "goles_detalle=?, asistencias_detalle=?, "
-                       "atajaste_todo_el_partido=?, diferencia_gol=? "
-                       "WHERE id=?",
-                       &stmt))
+    int cambia = 1;
+    if (preparar_stmt("SELECT cancha_id = ? AND fecha_hora = ? FROM partido WHERE id = ?", &stmt))
     {
-        pause_console();
-        return;
+        sqlite3_bind_int(stmt, 1, cancha_id);
+        sqlite3_bind_text(stmt, 2, fecha, -1, DB_TRANSIENT);
+        sqlite3_bind_int(stmt, 3, current_partido_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            cambia = !sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    return cambia;
+}
+
+/* fecha_hora llega en formato de almacenamiento (solicitar_fecha_hora_partido). */
+static int actualizar_partido_completo(DatosPartido const *datos, char const *fecha_hora)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_update_partido("UPDATE partido "
+                                 "SET cancha_id=?, fecha_hora=?, goles=?, asistencias=?, "
+                                 "camiseta_id=?, resultado=?, clima=?, dia=?, precio=?, "
+                                 "goles_detalle=?, asistencias_detalle=?, "
+                                 "atajaste_todo_el_partido=?, diferencia_gol=?, "
+                                 "mes_anio=substr(?2, 1, 7) "
+                                 "WHERE id=?",
+                                 &stmt))
+    {
+        return 0;
     }
     sqlite3_bind_int(stmt, 1, datos->cancha_id);
-    /* Asegurar formato de almacenamiento (YYYY-MM-DD HH:MM) */
-    char fecha_storage[64] = {0};
-    convert_display_date_to_storage(fecha_hora, fecha_storage, sizeof(fecha_storage));
-    sqlite3_bind_text(stmt, 2, fecha_storage, -1, DB_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, fecha_hora, -1, DB_TRANSIENT);
     sqlite3_bind_int(stmt, 3, datos->goles);
     sqlite3_bind_int(stmt, 4, datos->asistencias);
     sqlite3_bind_int(stmt, 5, datos->camiseta);
@@ -4374,9 +4789,7 @@ static void actualizar_partido_completo(DatosPartido const *datos, char const *f
     sqlite3_bind_int(stmt, 12, datos->atajaste_todo_el_partido);
     sqlite3_bind_int(stmt, 13, datos->formal.marcador.diferencia_gol);
     sqlite3_bind_int(stmt, 14, current_partido_id);
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    mostrar_alerta_operacion("Partido", "Modificado", NULL);
+    return ejecutar_update_partido(stmt);
 }
 
 static void modificar_atajaste_partido(void)
@@ -4388,12 +4801,72 @@ static void modificar_atajaste_partido(void)
 static void modificar_todo_partido(void)
 {
     DatosPartido datos;
-    if (!recopilar_datos_completos_partido(&datos))
+    char fecha[32];
+    if (!recopilar_datos_completos_partido(&datos, fecha, sizeof(fecha)))
     {
         pause_console();
         return;
     }
-    actualizar_partido_completo(&datos, datos.comentario_personal);
+    int cambia_cancha_o_fecha = cambia_cancha_o_fecha_partido(datos.cancha_id, fecha);
+    if (!actualizar_partido_completo(&datos, fecha))
+    {
+        pause_console();
+        return;
+    }
+    if (!partido_sincronizar_transaccion(current_partido_id, datos.precio))
+    {
+        printf("El partido se guardo, pero no se pudo actualizar su transaccion en Finanzas.\n");
+    }
+    if (cambia_cancha_o_fecha)
+    {
+        reencolar_clima_partido_modificado();
+    }
+    mostrar_alerta_operacion("Partido", "Modificado", NULL);
+}
+
+/* ejecutar_menu limpia la pantalla, asi que la ficha se muestra antes y con pausa. */
+static void mostrar_ficha_partido(int id)
+{
+    sqlite3_stmt *stmt;
+    if (!preparar_stmt("SELECT IFNULL(can.nombre, 'N/A'), p.fecha_hora, p.goles, p.asistencias, "
+                       "p.resultado, IFNULL(p.diferencia_gol, 0), IFNULL(cam.nombre, 'N/A'), "
+                       "p.clima, p.dia, p.precio, IFNULL(p.comentario_personal, ''), "
+                       "p.temperatura_c, p.weather_code "
+                       "FROM partido p LEFT JOIN cancha can ON can.id = p.cancha_id "
+                       "LEFT JOIN camiseta cam ON cam.id = p.camiseta_id WHERE p.id = ?",
+                       &stmt))
+    {
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        char fecha[32] = "N/A";
+        format_date_for_display((const char *)sqlite3_column_text(stmt, 1), fecha,
+                                (int)sizeof(fecha));
+
+        printf("\n--- Partido %d (valores actuales) ---\n", id);
+        printf("Cancha: %s\n", (const char *)sqlite3_column_text(stmt, 0));
+        printf("Fecha y hora: %s\n", fecha);
+        printf("Goles: %d | Asistencias: %d\n", sqlite3_column_int(stmt, 2),
+               sqlite3_column_int(stmt, 3));
+        printf("Resultado: %s | Diferencia de gol: %+d\n",
+               resultado_to_text(sqlite3_column_int(stmt, 4)), sqlite3_column_int(stmt, 5));
+        printf("Camiseta: %s\n", (const char *)sqlite3_column_text(stmt, 6));
+        printf("Clima percibido: %s\n", clima_to_text(sqlite3_column_int(stmt, 7)));
+        if (sqlite3_column_type(stmt, 11) != SQLITE_NULL)
+        {
+            printf("Clima real: %.1f C, %s\n", sqlite3_column_double(stmt, 11),
+                   sqlite3_column_type(stmt, 12) != SQLITE_NULL
+                   ? wmo_code_to_text(sqlite3_column_int(stmt, 12))
+                   : "N/A");
+        }
+        printf("Franja: %s\n", dia_to_text(sqlite3_column_int(stmt, 8)));
+        printf("Precio: %d\n", sqlite3_column_int(stmt, 9));
+        printf("Comentario: %s\n", (const char *)sqlite3_column_text(stmt, 10));
+    }
+    sqlite3_finalize(stmt);
+    pause_console();
 }
 
 void modificar_partido(void)
@@ -4425,6 +4898,7 @@ void modificar_partido(void)
     }
 
     current_partido_id = id;
+    mostrar_ficha_partido(id);
 
     MenuItem items[] = {{1, "Cancha", &modificar_cancha_partido},
         {2, "Fecha y Hora", &modificar_fecha_hora_partido},
@@ -4440,7 +4914,7 @@ void modificar_partido(void)
         {12, "Rendimiento y Estado", &menu_modificar_rendimiento_y_estado_partido},
         {13, "Detalle Ampliado", &menu_modificar_detalle_ampliado_partido},
         {14, "Atajaste Todo el Partido", &modificar_atajaste_partido},
-        {15, "Modificar Todo", &modificar_todo_partido},
+        {15, "Modificar Todo (datos principales)", &modificar_todo_partido},
         {0, "Volver", NULL}
     };
 
@@ -5783,11 +6257,14 @@ int partido_eliminar_por_id(long long partido_id)
 {
     sqlite3_stmt *stmt = NULL;
     int ok = 0;
+    int rc = SQLITE_ERROR;
 
+    g_error_eliminar[0] = '\0';
     /* SAVEPOINT en lugar de BEGIN: tambien funciona dentro de una transaccion
      * del llamador. */
     if (sqlite3_exec(db, "SAVEPOINT partido_eliminar", NULL, NULL, NULL) != SQLITE_OK)
     {
+        anotar_error_eliminar(sqlite3_errmsg(db));
         return 0;
     }
 
@@ -5795,15 +6272,56 @@ int partido_eliminar_por_id(long long partido_id)
             db_prepare_stmt(&stmt, "DELETE FROM partido WHERE id = ?"))
     {
         sqlite3_bind_int64(stmt, 1, partido_id);
-        ok = sqlite3_step(stmt) == SQLITE_DONE && sqlite3_changes(db) > 0;
+        rc = sqlite3_step(stmt);
+        ok = rc == SQLITE_DONE && sqlite3_changes(db) > 0;
         db_stmt_release(stmt);
     }
 
     if (!ok)
     {
+        anotar_error_eliminar(rc == SQLITE_DONE ? "el partido no existe" : sqlite3_errmsg(db));
         sqlite3_exec(db, "ROLLBACK TO partido_eliminar", NULL, NULL, NULL);
     }
     sqlite3_exec(db, "RELEASE partido_eliminar", NULL, NULL, NULL);
+    return ok;
+}
+
+int partido_eliminar_con_transaccion(long long partido_id, int borrar_gasto)
+{
+    g_error_eliminar[0] = '\0';
+    long long transaccion_id = borrar_gasto ? partido_buscar_transaccion(partido_id) : 0;
+    if (transaccion_id < 0 ||
+            sqlite3_exec(db, "SAVEPOINT partido_eliminar_gasto", NULL, NULL, NULL) != SQLITE_OK)
+    {
+        anotar_error_eliminar(transaccion_id < 0 ? "no se pudo buscar el gasto en Finanzas"
+                              : sqlite3_errmsg(db));
+        return 0;
+    }
+
+    int ok = 1;
+    if (transaccion_id > 0)
+    {
+        sqlite3_stmt *stmt = NULL;
+        ok = db_prepare_stmt(&stmt, "DELETE FROM financiamiento WHERE id = ?");
+        if (ok)
+        {
+            sqlite3_bind_int64(stmt, 1, transaccion_id);
+            ok = sqlite3_step(stmt) == SQLITE_DONE;
+            db_stmt_release(stmt);
+        }
+        if (!ok)
+        {
+            anotar_error_eliminar(sqlite3_errmsg(db));
+        }
+    }
+    /* Si el partido no se borra, el gasto vuelve con el ROLLBACK. */
+    ok = ok && partido_eliminar_por_id(partido_id);
+
+    if (!ok)
+    {
+        sqlite3_exec(db, "ROLLBACK TO partido_eliminar_gasto", NULL, NULL, NULL);
+    }
+    sqlite3_exec(db, "RELEASE partido_eliminar_gasto", NULL, NULL, NULL);
     return ok;
 }
 
@@ -6213,3 +6731,30 @@ void menu_partidos(void)
 
     ejecutar_menu("PARTIDOS", items, 10);
 }
+
+#ifdef UNIT_TEST
+int partido_test_actualizar_int(long long partido_id, const char *campo, int valor)
+{
+    return actualizar_int_partido(partido_id, campo, valor);
+}
+
+int partido_test_guardar_resultado(long long partido_id, int resultado)
+{
+    return guardar_resultado_partido(partido_id, resultado);
+}
+
+int partido_test_crear_transaccion(long long partido_id, int precio)
+{
+    return crear_transaccion_partido(partido_id, precio);
+}
+
+int partido_test_pedir_entero_en_rango(int min, int max)
+{
+    return pedir_entero_en_rango("Valor: ", min, max, "Valor invalido: ");
+}
+
+int partido_test_pedir_entero_minimo(int minimo)
+{
+    return pedir_entero_minimo("Valor: ", minimo, "Valor invalido: ");
+}
+#endif
