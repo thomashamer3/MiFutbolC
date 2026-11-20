@@ -379,6 +379,96 @@ static void test_pedir_enteros_eof(void)
     TEST_ASSERT_EQUAL_INT(3, g_valor_pedido);
 }
 
+/* Partido 1 en la cancha sin coordenadas: el menu no lanza consultas de clima. */
+static void preparar_flujo(int goles, const char *goles_detalle)
+{
+    char sql[256];
+    insertar_partido(1, 2, 1, 0);
+    snprintf(sql, sizeof(sql), "UPDATE partido SET goles = %d, goles_detalle = '%s' WHERE id = 1;",
+             goles, goles_detalle);
+    exec_ok(sql);
+    settings_get()->mode = MODE_SIMPLE;
+}
+
+/*
+ * Guion de modificar_partido: listado (0), id (1), pausa de la ficha, opciones
+ * del menu y "0" para volver. Cada pausa es una linea vacia: una pausa de mas
+ * se comeria la opcion siguiente y una de menos dejaria "Entrada vacia".
+ */
+static void test_flujo_goles_y_cancelar(void)
+{
+    int sobrante = 1;
+    preparar_flujo(1, "");
+    char *salida = correr_con_guion(modificar_partido,
+                                    "0\n1\n\n"
+                                    "3\n5\n\n"   /* Goles = 5 */
+                                    "3\n-1\n\n"  /* Goles cancelado */
+                                    "0\n",
+                                    &sobrante);
+
+    TEST_ASSERT_EQUAL_INT(5, int_de_partido(1, "goles"));
+    TEST_ASSERT_FALSE(sobrante);
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Partido 1 (valores actuales)"));
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Goles: 1 | Asistencias: 0"));
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Actual: 1"));
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Actual: 5"));
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Operacion cancelada"));
+    TEST_ASSERT_NULL(strstr(salida, "Entrada vacia"));
+    TEST_ASSERT_NULL(strstr(salida, "Entrada invalida"));
+    free(salida);
+}
+
+/* Con detalle cargado: 0 goles lo limpia y otra cantidad ofrece recargarlo,
+ * con una sola pausa en cada camino. */
+static void test_flujo_goles_con_detalle(void)
+{
+    int sobrante = 1;
+    preparar_flujo(2, "Derecha,Cabeza");
+    char *salida = correr_con_guion(modificar_partido,
+                                    "0\n1\n\n"
+                                    "3\n3\nS\n1\n2\n3\n\n" /* 3 goles y detalle nuevo */
+                                    "0\n",
+                                    &sobrante);
+    TEST_ASSERT_EQUAL_INT(3, int_de_partido(1, "goles"));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT goles_detalle = 'Derecha,Izquierda,Cabeza' "
+                                           "FROM partido WHERE id = 1;"));
+    TEST_ASSERT_FALSE(sobrante);
+    TEST_ASSERT_NULL(strstr(salida, "Entrada vacia"));
+    free(salida);
+
+    salida = correr_con_guion(modificar_partido, "0\n1\n\n3\n0\n\n0\n", &sobrante);
+    TEST_ASSERT_EQUAL_INT(0, int_de_partido(1, "goles"));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT goles_detalle = '' FROM partido WHERE id = 1;"));
+    TEST_ASSERT_FALSE(sobrante);
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Se limpio el detalle de goles"));
+    TEST_ASSERT_NULL(strstr(salida, "Entrada vacia"));
+    free(salida);
+}
+
+/* Fecha (franja recalculada) y precio (transaccion creada) por el menu. */
+static void test_flujo_fecha_y_precio(void)
+{
+    int sobrante = 1;
+    preparar_flujo(1, "");
+    char *salida = correr_con_guion(modificar_partido,
+                                    "0\n1\n\n"
+                                    "2\n25/05/2026 22:20\n\n" /* Fecha y hora */
+                                    "11\n800\n\n"            /* Precio */
+                                    "0\n",
+                                    &sobrante);
+
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT fecha_hora = '2026-05-25 22:20' AND "
+                                           "mes_anio = '2026-05' FROM partido WHERE id = 1;"));
+    TEST_ASSERT_EQUAL_INT(6, int_de_partido(1, "dia"));
+    TEST_ASSERT_EQUAL_INT(800, int_de_partido(1, "precio"));
+    TEST_ASSERT_EQUAL_INT(800, monto_de(1));
+    TEST_ASSERT_FALSE(sobrante);
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Franja horaria calculada automaticamente: Noche"));
+    TEST_ASSERT_NOT_NULL(strstr(salida, "Actual: 0"));
+    TEST_ASSERT_NULL(strstr(salida, "Entrada vacia"));
+    free(salida);
+}
+
 int main(void)
 {
     if (!fixture_iniciar(PERFIL_TEST, g_entrada_path, sizeof(g_entrada_path), "_entrada.txt"))
@@ -401,6 +491,9 @@ int main(void)
     RUN_TEST(test_eliminar_con_y_sin_gasto);
     RUN_TEST(test_eliminar_fallido_conserva_gasto);
     RUN_TEST(test_pedir_enteros_eof);
+    RUN_TEST(test_flujo_goles_y_cancelar);
+    RUN_TEST(test_flujo_goles_con_detalle);
+    RUN_TEST(test_flujo_fecha_y_precio);
 
     return fixture_terminar();
 }

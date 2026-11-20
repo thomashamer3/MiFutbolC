@@ -12,7 +12,9 @@ forma reciente en orden por fecha, top 3, años y escape de HTML/Markdown) y `re
 Anual: filtro por año con fechas mezcladas, mes a mes, mejor mes, tendencia, comparación con el año
 anterior con y sin datos, lesiones, clima real por año y los escritores TXT, HTML y PDF) y
 `partido_modificar` (Modificar Partido: signo de la diferencia de gol, UPDATE con chequeo, reajuste al
-cambiar el resultado, sincronización de la transacción de Finanzas y reencolado del clima real).
+cambiar el resultado, sincronización de la transacción de Finanzas, reencolado del clima real, borrado
+del partido con su gasto, EOF al pedir enteros y el flujo interactivo de `modificar_partido()` con
+`stdin`/`stdout` redirigidos a archivos y un guion de entradas con las pausas exactas).
 
 ## Ejecutar en Windows (CMake + Ninja)
 
