@@ -379,6 +379,33 @@ static void test_pedir_enteros_eof(void)
     TEST_ASSERT_EQUAL_INT(3, g_valor_pedido);
 }
 
+/* Con stdin en EOF el listado sale en vez de repetir el menu para siempre. */
+static void test_listado_sale_con_eof(void)
+{
+    int sobrante = 1;
+    insertar_partido(1, 1, 1, 0);
+    free(correr_con_guion(listar_partidos, "", &sobrante));
+    TEST_ASSERT_FALSE(sobrante);
+}
+
+/* Si el borrado falla, eliminar_partido muestra el motivo real y no el
+ * "not an error" que deja el ROLLBACK. */
+static void test_eliminar_muestra_motivo_real(void)
+{
+    int sobrante = 1;
+    insertar_partido(1, 1, 1, 0);
+    exec_ok("CREATE TRIGGER trg_test_no_borrar BEFORE DELETE ON partido "
+            "BEGIN SELECT RAISE(ABORT, 'rechazado'); END;");
+
+    char *salida = correr_con_guion(eliminar_partido, "0\n1\ns\n\n", &sobrante);
+
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT COUNT(*) FROM partido WHERE id = 1;"));
+    TEST_ASSERT_FALSE(sobrante);
+    TEST_ASSERT_NOT_NULL(strstr(salida, "No se pudo eliminar el partido: rechazado"));
+    TEST_ASSERT_NULL(strstr(salida, "not an error"));
+    free(salida);
+}
+
 /* Partido 1 en la cancha sin coordenadas: el menu no lanza consultas de clima. */
 static void preparar_flujo(int goles, const char *goles_detalle)
 {
@@ -491,6 +518,8 @@ int main(void)
     RUN_TEST(test_eliminar_con_y_sin_gasto);
     RUN_TEST(test_eliminar_fallido_conserva_gasto);
     RUN_TEST(test_pedir_enteros_eof);
+    RUN_TEST(test_listado_sale_con_eof);
+    RUN_TEST(test_eliminar_muestra_motivo_real);
     RUN_TEST(test_flujo_goles_y_cancelar);
     RUN_TEST(test_flujo_goles_con_detalle);
     RUN_TEST(test_flujo_fecha_y_precio);

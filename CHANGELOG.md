@@ -28,3 +28,5 @@ La última versión publicada es la 4.6.0.
 - Al modificar se informaba "modificado correctamente" aunque el guardado hubiera fallado.
 - El control de duplicados de Finanzas no encontraba nunca el gasto del partido: buscaba con la categoría equivocada (6 en vez de 5, Canchas) y con un texto que no coincidía con el que se guarda. Esto pasaba al crear un partido y al cargar un gasto de cancha a mano.
 - Varios pedidos de números (cancha, estado de cancha, arbitraje, goles en contra y los de crear partido) quedaban en un bucle infinito si se cerraba la entrada.
+- La lista de partidos (que se usa al listar, modificar y eliminar, y en Finanzas) quedaba en un bucle infinito si se cerraba la entrada.
+- Si fallaba el borrado de un partido, el mensaje de error no decía la causa real (mostraba "not an error"). Ahora muestra el motivo, por ejemplo "el partido no existe".

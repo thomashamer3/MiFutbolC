@@ -3545,6 +3545,12 @@ void listar_partidos(void)
 
         int opcion = input_int("Opcion: ");
 
+        /* Con la entrada cerrada no hay quien elija: se sale en vez de repetir. */
+        if (opcion == -1 && feof(stdin))
+        {
+            return;
+        }
+
         if (partido_listado_navegacion_deshabilitada(paginacion_todos, opcion))
         {
             continue;
@@ -3555,6 +3561,18 @@ void listar_partidos(void)
         {
             return;
         }
+    }
+}
+
+/* Motivo del ultimo borrado fallido: se guarda antes del ROLLBACK, que pisa
+ * el mensaje de sqlite3_errmsg con "not an error". */
+static char g_error_eliminar[256];
+
+static void anotar_error_eliminar(const char *motivo)
+{
+    if (!g_error_eliminar[0])
+    {
+        snprintf(g_error_eliminar, sizeof(g_error_eliminar), "%s", motivo);
     }
 }
 
@@ -3623,7 +3641,8 @@ void eliminar_partido(void)
      * Los IDs de los demas partidos no cambian. */
     if (!partido_eliminar_con_transaccion(id, borrar_gasto))
     {
-        printf("No se pudo eliminar el partido: %s\n", sqlite3_errmsg(db));
+        printf("No se pudo eliminar el partido: %s\n",
+               g_error_eliminar[0] ? g_error_eliminar : "error desconocido");
         pause_console();
         return;
     }
@@ -6238,11 +6257,14 @@ int partido_eliminar_por_id(long long partido_id)
 {
     sqlite3_stmt *stmt = NULL;
     int ok = 0;
+    int rc = SQLITE_ERROR;
 
+    g_error_eliminar[0] = '\0';
     /* SAVEPOINT en lugar de BEGIN: tambien funciona dentro de una transaccion
      * del llamador. */
     if (sqlite3_exec(db, "SAVEPOINT partido_eliminar", NULL, NULL, NULL) != SQLITE_OK)
     {
+        anotar_error_eliminar(sqlite3_errmsg(db));
         return 0;
     }
 
@@ -6250,12 +6272,14 @@ int partido_eliminar_por_id(long long partido_id)
             db_prepare_stmt(&stmt, "DELETE FROM partido WHERE id = ?"))
     {
         sqlite3_bind_int64(stmt, 1, partido_id);
-        ok = sqlite3_step(stmt) == SQLITE_DONE && sqlite3_changes(db) > 0;
+        rc = sqlite3_step(stmt);
+        ok = rc == SQLITE_DONE && sqlite3_changes(db) > 0;
         db_stmt_release(stmt);
     }
 
     if (!ok)
     {
+        anotar_error_eliminar(rc == SQLITE_DONE ? "el partido no existe" : sqlite3_errmsg(db));
         sqlite3_exec(db, "ROLLBACK TO partido_eliminar", NULL, NULL, NULL);
     }
     sqlite3_exec(db, "RELEASE partido_eliminar", NULL, NULL, NULL);
@@ -6264,10 +6288,13 @@ int partido_eliminar_por_id(long long partido_id)
 
 int partido_eliminar_con_transaccion(long long partido_id, int borrar_gasto)
 {
+    g_error_eliminar[0] = '\0';
     long long transaccion_id = borrar_gasto ? partido_buscar_transaccion(partido_id) : 0;
     if (transaccion_id < 0 ||
             sqlite3_exec(db, "SAVEPOINT partido_eliminar_gasto", NULL, NULL, NULL) != SQLITE_OK)
     {
+        anotar_error_eliminar(transaccion_id < 0 ? "no se pudo buscar el gasto en Finanzas"
+                              : sqlite3_errmsg(db));
         return 0;
     }
 
@@ -6281,6 +6308,10 @@ int partido_eliminar_con_transaccion(long long partido_id, int borrar_gasto)
             sqlite3_bind_int64(stmt, 1, transaccion_id);
             ok = sqlite3_step(stmt) == SQLITE_DONE;
             db_stmt_release(stmt);
+        }
+        if (!ok)
+        {
+            anotar_error_eliminar(sqlite3_errmsg(db));
         }
     }
     /* Si el partido no se borra, el gasto vuelve con el ROLLBACK. */
