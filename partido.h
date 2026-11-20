@@ -129,12 +129,33 @@ int partido_eliminar_por_id(long long partido_id);
  */
 int partido_diferencia_con_signo(int resultado, int diferencia);
 
+/**
+ * @brief Deja la transaccion de cancha del partido (financiamiento) acorde al precio.
+ *
+ * Si existe y @p precio > 0 actualiza el monto; si no existe y @p precio > 0 la
+ * crea; si existe y @p precio es 0 la borra.
+ * @return 1 si quedo sincronizada, 0 ante error.
+ */
+int partido_sincronizar_transaccion(long long partido_id, int precio);
+
+/**
+ * @brief Vuelve a pedir el clima real del partido tras cambiar fecha o cancha.
+ *
+ * Solo si la cancha del partido tiene coordenadas: limpia temperatura_c,
+ * apparent_temp_c, precip_mm, wind_kmh, weather_code y clima_json y lo encola
+ * en el clima diferido. Sin coordenadas no toca nada. No mira el modo.
+ * @return 1 si lo reencolo, 0 si no.
+ */
+int partido_reencolar_clima(long long partido_id);
+
 #ifdef UNIT_TEST
 /* Ganchos de prueba de "Modificar Partido" (logica sin interaccion). */
 /** @brief UPDATE partido SET campo=valor con chequeo; 1 si guardo la fila. */
 int partido_test_actualizar_int(long long partido_id, const char *campo, int valor);
 /** @brief Guarda el resultado y reajusta el signo de diferencia_gol. */
 int partido_test_guardar_resultado(long long partido_id, int resultado);
+/** @brief crear_transaccion_partido: 1 si creo la transaccion (0 si ya existia). */
+int partido_test_crear_transaccion(long long partido_id, int precio);
 #endif
 
 /**

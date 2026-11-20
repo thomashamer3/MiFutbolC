@@ -3,12 +3,15 @@
 #endif
 
 /*
- * "Modificar Partido": signo de la diferencia de gol, UPDATE con chequeo y
- * reajuste de la diferencia al cambiar el resultado. Usa un perfil propio
+ * "Modificar Partido": signo de la diferencia de gol, UPDATE con chequeo,
+ * reajuste de la diferencia al cambiar el resultado, sincronizacion de la
+ * transaccion de Finanzas y reencolado del clima real. Usa un perfil propio
  * (mifutbol_test_partido_mod.db en el directorio de datos) y lo borra al terminar.
  */
 
 #include "test_db_fixture.h"
+#include "clima_diferido.h"
+#include "financiamiento.h"
 #include "partido.h"
 #include <stdio.h>
 
@@ -45,8 +48,44 @@ void setUp(void)
     crear_cancha_y_camiseta();
 }
 
+/* Transaccion de cancha con el texto que arma crear_transaccion_partido.
+ * tipo 1 = GASTO y categoria 5 = CANCHAS (test_sincronizar_transaccion lo verifica). */
+static void insertar_transaccion(long long partido_id, int monto)
+{
+    char sql[320];
+    snprintf(sql, sizeof(sql),
+             "INSERT INTO financiamiento(fecha, tipo, categoria, descripcion, monto, "
+             "item_especifico) VALUES('2025-10-01', 1, 5, 'Pago por alquiler de cancha', %d, "
+             "'(%lld |Cancha:Con GPS |Fecha:01/10/2025 10:00 | G:1 A:0 |Camiseta:Titular | "
+             "VICTORIA)');",
+             monto, partido_id);
+    exec_ok(sql);
+}
+
+/* Monto de la transaccion del partido (formato normal), -1 si no hay. */
+static int monto_de(long long partido_id)
+{
+    char sql[200];
+    snprintf(sql, sizeof(sql),
+             "SELECT COALESCE((SELECT monto FROM financiamiento WHERE tipo = 1 AND categoria = 5 "
+             "AND item_especifico LIKE '(%lld |%%'), -1);",
+             partido_id);
+    return consultar_int(sql);
+}
+
+static int transacciones_de(long long partido_id)
+{
+    char sql[200];
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*) FROM financiamiento WHERE item_especifico LIKE '(%lld |%%';",
+             partido_id);
+    return consultar_int(sql);
+}
+
 void tearDown(void)
 {
+    /* Olvida la tabla de pendientes: la proxima base es nueva. */
+    clima_diferido_finalizar();
     cerrar_y_borrar_base();
 }
 
@@ -98,6 +137,107 @@ static void test_cambiar_resultado_reajusta_signo(void)
     TEST_ASSERT_EQUAL_INT(0, partido_test_guardar_resultado(99, 1));
 }
 
+/* Crear 0->500, actualizar 500->800 y borrar 800->0 sin tocar al partido 10. */
+static void test_sincronizar_transaccion(void)
+{
+    TEST_ASSERT_EQUAL_INT(1, GASTO);
+    TEST_ASSERT_EQUAL_INT(5, CANCHAS);
+    insertar_partido(1, 1, 1, 0);
+    insertar_partido(10, 1, 1, 0);
+    insertar_transaccion(10, 300);
+
+    TEST_ASSERT_EQUAL_INT(1, partido_sincronizar_transaccion(1, 0));
+    TEST_ASSERT_EQUAL_INT(0, transacciones_de(1));
+
+    TEST_ASSERT_EQUAL_INT(1, partido_sincronizar_transaccion(1, 500));
+    TEST_ASSERT_EQUAL_INT(1, transacciones_de(1));
+    TEST_ASSERT_EQUAL_INT(500, monto_de(1));
+
+    TEST_ASSERT_EQUAL_INT(1, partido_sincronizar_transaccion(1, 800));
+    TEST_ASSERT_EQUAL_INT(1, transacciones_de(1));
+    TEST_ASSERT_EQUAL_INT(800, monto_de(1));
+
+    TEST_ASSERT_EQUAL_INT(1, partido_sincronizar_transaccion(1, 0));
+    TEST_ASSERT_EQUAL_INT(0, transacciones_de(1));
+
+    TEST_ASSERT_EQUAL_INT(300, monto_de(10));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT COUNT(*) FROM financiamiento;"));
+}
+
+/* Los textos de respaldo "Partido ID: N" tambien se reconocen, con delimitador. */
+static void test_sincronizar_transaccion_texto_de_respaldo(void)
+{
+    insertar_partido(3, 1, 1, 0);
+    exec_ok("INSERT INTO financiamiento(fecha, tipo, categoria, descripcion, monto, "
+            "item_especifico) VALUES('2025-10-01', 1, 5, 'x', 100, 'Partido ID: 3');");
+    exec_ok("INSERT INTO financiamiento(fecha, tipo, categoria, descripcion, monto, "
+            "item_especifico) VALUES('2025-10-01', 1, 5, 'x', 200, 'Partido ID: 30');");
+
+    TEST_ASSERT_EQUAL_INT(1, partido_sincronizar_transaccion(3, 700));
+    TEST_ASSERT_EQUAL_INT(700, consultar_int("SELECT monto FROM financiamiento "
+                          "WHERE item_especifico = 'Partido ID: 3';"));
+    TEST_ASSERT_EQUAL_INT(200, consultar_int("SELECT monto FROM financiamiento "
+                          "WHERE item_especifico = 'Partido ID: 30';"));
+}
+
+/* crear_transaccion_partido reconoce la transaccion existente y no la duplica. */
+static void test_crear_transaccion_no_duplica(void)
+{
+    insertar_partido(1, 1, 1, 0);
+    insertar_partido(10, 1, 1, 0);
+    insertar_transaccion(10, 300);
+
+    TEST_ASSERT_EQUAL_INT(0, partido_test_crear_transaccion(10, 300));
+    TEST_ASSERT_EQUAL_INT(1, transacciones_de(10));
+
+    TEST_ASSERT_EQUAL_INT(1, partido_test_crear_transaccion(1, 400));
+    TEST_ASSERT_EQUAL_INT(0, partido_test_crear_transaccion(1, 400));
+    TEST_ASSERT_EQUAL_INT(1, transacciones_de(1));
+    TEST_ASSERT_EQUAL_INT(2, consultar_int("SELECT COUNT(*) FROM financiamiento;"));
+}
+
+static void poner_clima_real(long long id)
+{
+    char sql[256];
+    snprintf(sql, sizeof(sql),
+             "UPDATE partido SET temperatura_c = 20.5, apparent_temp_c = 19, precip_mm = 1, "
+             "wind_kmh = 10, weather_code = 61, clima_json = '{}' WHERE id = %lld;",
+             id);
+    exec_ok(sql);
+}
+
+static int pendiente_existe(long long partido_id)
+{
+    char sql[128];
+    snprintf(sql, sizeof(sql),
+             "SELECT COUNT(*) FROM partido_clima_pendiente WHERE partido_id = %lld;", partido_id);
+    return consultar_int(sql);
+}
+
+/* Con coordenadas limpia el clima real y deja el pendiente; sin ellas no toca nada. */
+static void test_reencolar_clima(void)
+{
+    insertar_partido(1, 1, 1, 0);
+    insertar_partido(2, 2, 1, 0);
+    poner_clima_real(1);
+    poner_clima_real(2);
+    TEST_ASSERT_TRUE(clima_diferido_init());
+
+    TEST_ASSERT_EQUAL_INT(1, partido_reencolar_clima(1));
+    TEST_ASSERT_EQUAL_INT(1, consultar_int("SELECT temperatura_c IS NULL AND "
+                          "apparent_temp_c IS NULL AND precip_mm IS NULL AND "
+                          "wind_kmh IS NULL AND weather_code IS NULL AND clima_json IS NULL "
+                          "FROM partido WHERE id = 1;"));
+    TEST_ASSERT_EQUAL_INT(1, pendiente_existe(1));
+
+    TEST_ASSERT_EQUAL_INT(0, partido_reencolar_clima(2));
+    TEST_ASSERT_EQUAL_INT(20, consultar_int("SELECT temperatura_c FROM partido WHERE id = 2;"));
+    TEST_ASSERT_EQUAL_INT(61, consultar_int("SELECT weather_code FROM partido WHERE id = 2;"));
+    TEST_ASSERT_EQUAL_INT(0, pendiente_existe(2));
+
+    TEST_ASSERT_EQUAL_INT(0, partido_reencolar_clima(99));
+}
+
 int main(void)
 {
     if (!fixture_iniciar(PERFIL_TEST, NULL, 0, NULL))
@@ -110,6 +250,10 @@ int main(void)
     RUN_TEST(test_diferencia_con_signo);
     RUN_TEST(test_update_con_chequeo);
     RUN_TEST(test_cambiar_resultado_reajusta_signo);
+    RUN_TEST(test_sincronizar_transaccion);
+    RUN_TEST(test_sincronizar_transaccion_texto_de_respaldo);
+    RUN_TEST(test_crear_transaccion_no_duplica);
+    RUN_TEST(test_reencolar_clima);
 
     return fixture_terminar();
 }
