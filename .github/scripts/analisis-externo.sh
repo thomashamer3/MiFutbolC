@@ -5,8 +5,19 @@
 set -uo pipefail
 repo=$1 pr=$2 sha=$3 sonar=$4 codefactor=$5
 api=https://sonarcloud.io/api
-auth=()
-[ -n "${SONAR_TOKEN:-}" ] && auth=(-u "$SONAR_TOKEN:")
+
+# Con token si hay; si lo rechaza (401), sin token: el proyecto es publico.
+sonar_get() {
+    if [ -n "${SONAR_TOKEN:-}" ] && curl -sSf -H "Authorization: Bearer $SONAR_TOKEN" "$api/$1" 2>/dev/null; then
+        return 0
+    fi
+    curl -sSf "$api/$1"
+}
+
+# Un fallo de la API queda escrito en el informe: una seccion vacia parece "sin issues".
+fallo() {
+    echo "- **No se pudo consultar $1**: faltan esos datos."
+}
 
 id_check() {
     gh api "repos/$repo/commits/$sha/check-runs?per_page=100" \
@@ -26,16 +37,25 @@ esperar() {
 
 echo "## SonarCloud"
 if esperar sonarqubecloud; then
-    curl -sSf "${auth[@]}" "$api/qualitygates/project_status?projectKey=$sonar&pullRequest=$pr" |
+    if datos=$(sonar_get "qualitygates/project_status?projectKey=$sonar&pullRequest=$pr"); then
         jq -r '"Quality Gate: \(.projectStatus.status)",
             (.projectStatus.conditions[]? | select(.status == "ERROR") |
-             "- Condición fallida: \(.metricKey) (valor \(.actualValue), umbral \(.errorThreshold))")'
+             "- Condición fallida: \(.metricKey) (valor \(.actualValue), umbral \(.errorThreshold))")' <<<"$datos"
+    else
+        fallo "el Quality Gate"
+    fi
     # shortcut: solo los primeros 100 issues y hotspots; si un PR tiene más, paginar
-    curl -sSf "${auth[@]}" "$api/issues/search?componentKeys=$sonar&pullRequest=$pr&issueStatuses=OPEN,CONFIRMED&ps=100" |
+    if datos=$(sonar_get "issues/search?componentKeys=$sonar&pullRequest=$pr&issueStatuses=OPEN,CONFIRMED&ps=100"); then
         jq -r '"Issues abiertos: \(.total)",
-            (.issues[] | "- `\(.component | sub("^[^:]*:"; "")):\(.line // "-")` [\(.impacts[0].severity // .severity)] \(.rule): \(.message)")'
-    curl -sSf "${auth[@]}" "$api/hotspots/search?projectKey=$sonar&pullRequest=$pr&ps=100" |
-        jq -r '(.hotspots // [])[] | "- Hotspot `\(.component | sub("^[^:]*:"; "")):\(.line // "-")` \(.ruleKey): \(.message)"'
+            (.issues[] | "- `\(.component | sub("^[^:]*:"; "")):\(.line // "-")` [\(.impacts[0].severity // .severity)] \(.rule): \(.message)")' <<<"$datos"
+    else
+        fallo "los issues"
+    fi
+    if datos=$(sonar_get "hotspots/search?projectKey=$sonar&pullRequest=$pr&ps=100"); then
+        jq -r '(.hotspots // [])[] | "- Hotspot `\(.component | sub("^[^:]*:"; "")):\(.line // "-")` \(.ruleKey): \(.message)"' <<<"$datos"
+    else
+        fallo "los hotspots"
+    fi
 else
     echo "El análisis no terminó a tiempo: no hay datos."
 fi
@@ -45,9 +65,10 @@ echo "## CodeFactor"
 if [ "$codefactor" != si ]; then
     echo "No corre en este PR: CodeFactor solo analiza los PR contra la rama principal."
 elif esperar codefactor-io; then
-    gh api "repos/$repo/check-runs/$id" --jq '.output.title'
+    gh api "repos/$repo/check-runs/$id" --jq '.output.title' || fallo "el resumen de CodeFactor"
     gh api "repos/$repo/check-runs/$id/annotations?per_page=100" \
-        --jq '.[] | "- `\(.path):\(.start_line)` [\(.annotation_level)] \(.title): \(.message)"'
+        --jq '.[] | "- `\(.path):\(.start_line)` [\(.annotation_level)] \(.title): \(.message)"' ||
+        fallo "las anotaciones de CodeFactor"
 else
     echo "El análisis no terminó a tiempo: no hay datos."
 fi
