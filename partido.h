@@ -171,6 +171,9 @@ int partido_test_actualizar_int(long long partido_id, const char *campo, int val
 int partido_test_guardar_resultado(long long partido_id, int resultado);
 /** @brief crear_transaccion_partido: 1 si creo la transaccion (0 si ya existia). */
 int partido_test_crear_transaccion(long long partido_id, int precio);
+/** @brief pedir_entero_en_rango / pedir_entero_minimo de los flujos de crear. */
+int partido_test_pedir_entero_en_rango(int min, int max);
+int partido_test_pedir_entero_minimo(int minimo);
 #endif
 
 /**

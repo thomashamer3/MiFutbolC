@@ -2333,6 +2333,12 @@ static int pedir_entero_minimo(const char *prompt_inicial, int minimo, const cha
     int valor = input_int(prompt_inicial);
     while (valor < minimo)
     {
+        /* shortcut: con stdin cerrado se usa el minimo en vez de cancelar la carga;
+         * cambiar a cancelable si estos flujos de crear pasan a poder abortar. */
+        if (feof(stdin))
+        {
+            return minimo;
+        }
         valor = input_int(prompt_error);
     }
     return valor;
@@ -2344,6 +2350,11 @@ static int pedir_entero_en_rango(const char *prompt_inicial, int min, int max,
     int valor = input_int(prompt_inicial);
     while (valor < min || valor > max)
     {
+        /* shortcut: igual que pedir_entero_minimo, en EOF devuelve min. */
+        if (feof(stdin))
+        {
+            return min;
+        }
         valor = input_int(prompt_error);
     }
     return valor;
@@ -6704,5 +6715,15 @@ int partido_test_guardar_resultado(long long partido_id, int resultado)
 int partido_test_crear_transaccion(long long partido_id, int precio)
 {
     return crear_transaccion_partido(partido_id, precio);
+}
+
+int partido_test_pedir_entero_en_rango(int min, int max)
+{
+    return pedir_entero_en_rango("Valor: ", min, max, "Valor invalido: ");
+}
+
+int partido_test_pedir_entero_minimo(int minimo)
+{
+    return pedir_entero_minimo("Valor: ", minimo, "Valor invalido: ");
 }
 #endif

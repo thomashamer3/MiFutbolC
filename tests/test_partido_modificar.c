@@ -5,7 +5,9 @@
 /*
  * "Modificar Partido": signo de la diferencia de gol, UPDATE con chequeo,
  * reajuste de la diferencia al cambiar el resultado, sincronizacion de la
- * transaccion de Finanzas y reencolado del clima real. Usa un perfil propio
+ * transaccion de Finanzas, reencolado del clima real, borrado con gasto, EOF
+ * en los pedidos de enteros y el flujo interactivo de modificar_partido con
+ * stdin/stdout redirigidos a archivos. Usa un perfil propio
  * (mifutbol_test_partido_mod.db en el directorio de datos) y lo borra al terminar.
  */
 
@@ -13,9 +15,63 @@
 #include "clima_diferido.h"
 #include "financiamiento.h"
 #include "partido.h"
+#include "settings.h"
 #include <stdio.h>
+#include <string.h>
+#ifdef _WIN32
+#include <io.h>
+#define fd_dup _dup
+#define fd_dup2 _dup2
+#define fd_close _close
+#define fd_fileno _fileno
+#else
+#include <unistd.h>
+#define fd_dup dup
+#define fd_dup2 dup2
+#define fd_close close
+#define fd_fileno fileno
+#endif
 
 #define PERFIL_TEST "test_partido_mod"
+
+static char g_entrada_path[1024];
+static char g_salida_path[1024];
+
+/*
+ * Corre @p accion con stdin leyendo @p guion y stdout a un archivo; despues
+ * restaura los dos. Devuelve la salida (malloc) y en @p sobrante si quedo
+ * entrada sin leer. No usa TEST_ASSERT mientras stdout esta redirigido.
+ */
+static char *correr_con_guion(void (*accion)(void), const char *guion, int *sobrante)
+{
+    FILE *f = NULL;
+    TEST_ASSERT_EQUAL_INT(0, fopen_s(&f, g_entrada_path, "wb"));
+    fputs(guion, f);
+    fclose(f);
+
+    fflush(stdout);
+    int stdin_guardado = fd_dup(fd_fileno(stdin));
+    int stdout_guardado = fd_dup(fd_fileno(stdout));
+    TEST_ASSERT_TRUE(stdin_guardado >= 0 && stdout_guardado >= 0);
+    int redirigido = freopen(g_entrada_path, "r", stdin) != NULL &&
+                     freopen(g_salida_path, "w", stdout) != NULL;
+    if (redirigido)
+    {
+        accion();
+        *sobrante = fgetc(stdin) != EOF;
+    }
+    fflush(stdout);
+    fd_dup2(stdout_guardado, fd_fileno(stdout));
+    fd_dup2(stdin_guardado, fd_fileno(stdin));
+    fd_close(stdout_guardado);
+    fd_close(stdin_guardado);
+    clearerr(stdin);
+    clearerr(stdout);
+    remove(g_entrada_path);
+
+    TEST_ASSERT_TRUE(redirigido);
+    return leer_y_borrar(g_salida_path, NULL);
+}
 
 static void crear_cancha_y_camiseta(void)
 {
@@ -292,12 +348,45 @@ static void test_eliminar_fallido_conserva_gasto(void)
     TEST_ASSERT_EQUAL_INT(900, monto_de(5));
 }
 
+static int g_valor_pedido;
+
+static void pedir_en_rango_1_10(void)
+{
+    g_valor_pedido = partido_test_pedir_entero_en_rango(1, 10);
+}
+
+static void pedir_minimo_0(void)
+{
+    g_valor_pedido = partido_test_pedir_entero_minimo(0);
+}
+
+/* Con stdin en EOF devuelven el minimo en vez de quedar en un bucle; un -1
+ * escrito a proposito sigue pidiendo de nuevo. */
+static void test_pedir_enteros_eof(void)
+{
+    int sobrante = 0;
+    free(correr_con_guion(pedir_en_rango_1_10, "", &sobrante));
+    TEST_ASSERT_EQUAL_INT(1, g_valor_pedido);
+
+    free(correr_con_guion(pedir_en_rango_1_10, "-1\n7\n", &sobrante));
+    TEST_ASSERT_EQUAL_INT(7, g_valor_pedido);
+    TEST_ASSERT_FALSE(sobrante);
+
+    free(correr_con_guion(pedir_minimo_0, "-5\n", &sobrante));
+    TEST_ASSERT_EQUAL_INT(0, g_valor_pedido);
+
+    free(correr_con_guion(pedir_minimo_0, "-1\n3\n", &sobrante));
+    TEST_ASSERT_EQUAL_INT(3, g_valor_pedido);
+}
+
 int main(void)
 {
-    if (!fixture_iniciar(PERFIL_TEST, NULL, 0, NULL))
+    if (!fixture_iniciar(PERFIL_TEST, g_entrada_path, sizeof(g_entrada_path), "_entrada.txt"))
     {
         return 1;
     }
+    snprintf(g_salida_path, sizeof(g_salida_path), "%s" TEST_SEP "%s_salida.txt", get_data_dir(),
+             PERFIL_TEST);
 
     UNITY_BEGIN();
 
@@ -311,6 +400,7 @@ int main(void)
     RUN_TEST(test_buscar_transaccion_formato_finanzas);
     RUN_TEST(test_eliminar_con_y_sin_gasto);
     RUN_TEST(test_eliminar_fallido_conserva_gasto);
+    RUN_TEST(test_pedir_enteros_eof);
 
     return fixture_terminar();
 }
