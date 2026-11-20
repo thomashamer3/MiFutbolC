@@ -42,7 +42,9 @@ jobs:
           echo "lineas=$lineas criticos=$criticos alto=$alto"
           echo "alto=$alto" >> "$GITHUB_OUTPUT"
 
+      # DeepSeek se prende con la variable del repo DEEPSEEK_ACTIVO=true; apagado, revisa solo Claude.
       - name: Instalar OpenCode
+        if: vars.DEEPSEEK_ACTIVO == 'true'
         # El paquete de la plataforma trae el binario listo; sin scripts de npm.
         run: |
           npm install -g --ignore-scripts @opencode/cli-linux-x64@2.3.2
@@ -80,6 +82,7 @@ jobs:
       # Si DeepSeek falla (por ejemplo, sin saldo) el PR no queda en rojo: revisa Claude.
       - name: Revision con DeepSeek
         id: ds
+        if: vars.DEEPSEEK_ACTIVO == 'true'
         continue-on-error: true
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK }}
@@ -94,7 +97,7 @@ jobs:
         run: bash .github/scripts/publicar-revision.sh "$PR" "### Revision automatica (DeepSeek)" review.md analisis.md
 
       - name: DeepSeek no pudo revisar
-        if: steps.ds.outcome != 'success'
+        if: steps.ds.outcome == 'failure'
         run: echo "::warning::DeepSeek no pudo revisar este PR (saldo o error de la API, ver el paso anterior). Si hay token de Claude, revisa Claude."
 
   claude-review:
