@@ -17,10 +17,12 @@ jobs:
   deepseek:
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Hasta 10 minutos esperando a SonarCloud y CodeFactor, mas la revision.
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
+      checks: read
     outputs:
       riesgo: ${{ steps.riesgo.outputs.alto }}
     steps:
@@ -47,6 +49,17 @@ jobs:
           chmod +x "$dir/opencode"
           echo "$dir" >> "$GITHUB_PATH"
 
+      - name: Hallazgos de SonarCloud y CodeFactor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          CODEFACTOR: ${{ github.event.pull_request.base.ref == github.event.repository.default_branch && 'si' || 'no' }}
+        run: |
+          bash .github/scripts/analisis-externo.sh "$GITHUB_REPOSITORY" "$PR" "$SHA"             "${{ github.repository_owner }}_${{ github.event.repository.name }}" "$CODEFACTOR" > analisis.md
+          cat analisis.md
+
       - name: Revision con DeepSeek
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK }}
@@ -56,8 +69,11 @@ jobs:
         run: |
           # shortcut: corta el diff en 200 KB; si los PR crecen, revisar por archivo
           git diff "$BASE"...HEAD -- . ':!MiFutbolC.layout' ':!.cache' | head -c 200000 > pr.diff
-          opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) siguiendo tus instrucciones." > review.md
-          { echo "### Revision automatica (DeepSeek)"; echo; cat review.md; } > comentario.md
+          opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) y analisis.md (SonarCloud y CodeFactor) siguiendo tus instrucciones." > review.md
+          {
+            echo "### Revision automatica (DeepSeek)"; echo; cat review.md; echo
+            echo "<details><summary>Datos de SonarCloud y CodeFactor</summary>"; echo; cat analisis.md; echo; echo "</details>"
+          } > comentario.md
           # Se edita el comentario propio por su titulo: --edit-last podria pisar el de Claude (mismo bot).
           id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
             --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("### Revision automatica (DeepSeek)"))) | .id' | head -1)
@@ -98,7 +114,7 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }} PR: ${{ github.event.pull_request.number }}
             Lee AGENTS.md, docs/ai-memory/ y .opencode/agents/reviewer.md (usa su formato de salida).
-            DeepSeek ya comento este PR: leelo con `gh pr view --comments`.
+            DeepSeek ya comento este PR (incluye SonarCloud y CodeFactor): leelo con `gh pr view --comments`.
             1) Confirma o refuta cada hallazgo de DeepSeek con evidencia archivo:linea.
             2) Agrega solo lo importante o bloqueante que DeepSeek no vio.
             3) Lee el resultado del CI (Windows) con `gh pr checks` y mencionalo; aca no se compila.

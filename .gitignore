@@ -27,8 +27,9 @@ cmake-build-*/
 .zed
 .opencode/*
 !.opencode/agents/
-# diff temporal que arma la revision de PRs con IA
+# archivos temporales que arma la revision de PRs con IA
 pr.diff
+analisis.md
 
 # Coverage and profiler outputs
 *.gcda

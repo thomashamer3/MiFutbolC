@@ -33,6 +33,8 @@ Consultar:
 
 Si existe el archivo `pr.diff` en la raíz, ese es el diff a revisar. Leé los archivos completos cuando el diff no alcance para entender el cambio.
 
+Si existe `analisis.md`, trae el Quality Gate y los issues de SonarCloud y los de CodeFactor para este PR. Revisá cada uno en el código: decí si es real o un falso positivo (con el motivo) y, si es real, la solución concreta. Un Quality Gate fallido por un problema real impide aprobar.
+
 Revisar:
 
 1. Bugs y errores lógicos.
@@ -75,5 +77,6 @@ Si no encontrás problemas, indicá explícitamente que no encontraste hallazgos
 Formato de la respuesta (en Markdown, sin texto antes ni después):
 
 1. `## Hallazgos` con la lista.
-2. `## Para recordar`: de 0 a 3 lecciones nuevas que valga la pena agregar a `docs/ai-memory/` o a Engram.
-3. Última línea: `Veredicto: APROBADO` o `Veredicto: CAMBIOS REQUERIDOS`.
+2. `## SonarCloud y CodeFactor`: un ítem por issue (o agrupados si son la misma regla), con archivo:línea, real o falso positivo y la solución. No cuentan para el máximo de 8. Si no hay issues, decilo en una línea.
+3. `## Para recordar`: de 0 a 3 lecciones nuevas que valga la pena agregar a `docs/ai-memory/` o a Engram.
+4. Última línea: `Veredicto: APROBADO` o `Veredicto: CAMBIOS REQUERIDOS`.
