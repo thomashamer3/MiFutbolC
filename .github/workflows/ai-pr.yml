@@ -1,0 +1,137 @@
+name: AI PR
+
+# Autonomia semi: las revisiones solo comentan. Solo "claude-comando" puede
+# escribir, y solo en la rama del PR cuando el dueno del repo escribe @claude.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths-ignore: ['**.md', 'video/**', 'videos/**', 'Imagenes/**', 'images/**', 'assets/**']
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ai-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  deepseek:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      riesgo: ${{ steps.riesgo.outputs.alto }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Riesgo alto: mas de 400 lineas o archivos que tocan datos del usuario.
+      - id: riesgo
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          lineas=$(git diff --numstat "$BASE"...HEAD | awk '{s+=$1+$2} END {print s+0}')
+          criticos=$(git diff --name-only "$BASE"...HEAD | grep -cE '^(db|db_integridad|backup|sync[a-z_]*|import|financiamiento)\.c$' || true)
+          if [ "$lineas" -gt 400 ] || [ "$criticos" -gt 0 ]; then alto=true; else alto=false; fi
+          echo "lineas=$lineas criticos=$criticos alto=$alto"
+          echo "alto=$alto" >> "$GITHUB_OUTPUT"
+
+      - name: Instalar OpenCode
+        run: npm install -g @opencode/cli@2.3.2
+
+      - name: Revision con DeepSeek
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK }}
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # shortcut: corta el diff en 200 KB; si los PR crecen, revisar por archivo
+          git diff "$BASE"...HEAD -- . ':!MiFutbolC.layout' ':!.cache' | head -c 200000 > pr.diff
+          opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) siguiendo tus instrucciones." > review.md
+          { echo "### Revision automatica (DeepSeek)"; echo; cat review.md; } > comentario.md
+          gh pr comment "$PR" --edit-last --create-if-none --body-file comentario.md
+
+  claude-review:
+    needs: deepseek
+    if: needs.deepseek.outputs.riesgo == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    steps:
+      - name: Sin token de Claude
+        if: env.CLAUDE_TOKEN == ''
+        run: echo "::notice::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; se saltea la revision de Claude."
+
+      - uses: actions/checkout@v5
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - if: env.CLAUDE_TOKEN != ''
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - uses: anthropics/claude-code-action@v1
+        if: env.CLAUDE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }} PR: ${{ github.event.pull_request.number }}
+            Lee AGENTS.md, docs/ai-memory/ y .opencode/agents/reviewer.md (usa su formato de salida).
+            DeepSeek ya comento este PR: leelo con `gh pr view --comments`.
+            1) Confirma o refuta cada hallazgo de DeepSeek con evidencia archivo:linea.
+            2) Agrega solo lo importante o bloqueante que DeepSeek no vio.
+            3) Compila y corre los tests (comandos de Linux en AGENTS.md) y reporta el resultado.
+            Publica un unico comentario con `gh pr comment`. No edites archivos.
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 25
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(cmake:*),Bash(ctest:*)"
+
+  claude-comando:
+    if: >
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == github.repository_owner &&
+      contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    env:
+      CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    steps:
+      - name: Sin token de Claude
+        if: env.CLAUDE_TOKEN == ''
+        run: echo "::notice::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; @claude no puede responder."
+
+      - uses: actions/checkout@v5
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - if: env.CLAUDE_TOKEN != ''
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - uses: anthropics/claude-code-action@v1
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 30
+            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(cmake:*),Bash(ctest:*)"
+            --append-system-prompt "Lee AGENTS.md y docs/ai-memory/. Nunca hagas merge ni toques master. Cada cambio va con su test y su entrada en CHANGELOG.md."

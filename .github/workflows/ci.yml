@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Dependencias
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configurar
+        run: cmake --preset linux-release -DMIFUTBOLC_BUILD_TESTS=ON
+
+      - name: Compilar
+        run: cmake --build --preset build-linux-release
+
+      - name: Tests
+        run: ctest --test-dir build/linux-release --output-on-failure
+
+      - name: CHANGELOG actualizado
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          cambios=$(git diff --name-only "$BASE"...HEAD)
+          if echo "$cambios" | grep -qE '\.(c|h)$' && ! echo "$cambios" | grep -qx 'CHANGELOG.md'; then
+            echo "::warning::El PR cambia codigo y no toca CHANGELOG.md"
+          fi
