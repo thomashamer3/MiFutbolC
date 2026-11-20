@@ -25,6 +25,7 @@ jobs:
       checks: read
     outputs:
       riesgo: ${{ steps.riesgo.outputs.alto }}
+      deepseek: ${{ steps.ds.outcome }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -55,37 +56,53 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
+          SONAR_PROYECTO: ${{ github.repository_owner }}_${{ github.event.repository.name }}
           CODEFACTOR: ${{ github.event.pull_request.base.ref == github.event.repository.default_branch && 'si' || 'no' }}
         run: |
-          bash .github/scripts/analisis-externo.sh "$GITHUB_REPOSITORY" "$PR" "$SHA"             "${{ github.repository_owner }}_${{ github.event.repository.name }}" "$CODEFACTOR" > analisis.md
+          bash .github/scripts/analisis-externo.sh "$GITHUB_REPOSITORY" "$PR" "$SHA" "$SONAR_PROYECTO" "$CODEFACTOR" > analisis.md
           cat analisis.md
 
+      - name: Diff del PR
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        # shortcut: corta el diff en 200 KB; si los PR crecen, revisar por archivo
+        run: git diff "$BASE"...HEAD -- . ':!MiFutbolC.layout' ':!.cache' | head -c 200000 > pr.diff
+
+      # Claude recibe el mismo contexto si tiene que revisar.
+      - uses: actions/upload-artifact@v6
+        with:
+          name: contexto-pr
+          path: |
+            pr.diff
+            analisis.md
+          retention-days: 1
+
+      # Si DeepSeek falla (por ejemplo, sin saldo) el PR no queda en rojo: revisa Claude.
       - name: Revision con DeepSeek
+        id: ds
+        continue-on-error: true
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK }}
-          GH_TOKEN: ${{ github.token }}
-          BASE: ${{ github.event.pull_request.base.sha }}
           PR: ${{ github.event.pull_request.number }}
-        run: |
-          # shortcut: corta el diff en 200 KB; si los PR crecen, revisar por archivo
-          git diff "$BASE"...HEAD -- . ':!MiFutbolC.layout' ':!.cache' | head -c 200000 > pr.diff
-          opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) y analisis.md (SonarCloud y CodeFactor) siguiendo tus instrucciones." > review.md
-          {
-            echo "### Revision automatica (DeepSeek)"; echo; cat review.md; echo
-            echo "<details><summary>Datos de SonarCloud y CodeFactor</summary>"; echo; cat analisis.md; echo; echo "</details>"
-          } > comentario.md
-          # Se edita el comentario propio por su titulo: --edit-last podria pisar el de Claude (mismo bot).
-          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
-            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("### Revision automatica (DeepSeek)"))) | .id' | head -1)
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comentario.md > /dev/null
-          else
-            gh pr comment "$PR" --body-file comentario.md
-          fi
+        run: opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) y analisis.md (SonarCloud y CodeFactor) siguiendo tus instrucciones." > review.md
+
+      - name: Publicar revision de DeepSeek
+        if: steps.ds.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/publicar-revision.sh "$PR" "### Revision automatica (DeepSeek)" review.md analisis.md
+
+      - name: DeepSeek no pudo revisar
+        if: steps.ds.outcome != 'success'
+        run: echo "::warning::DeepSeek no pudo revisar este PR (saldo o error de la API, ver el paso anterior). Si hay token de Claude, revisa Claude."
 
   claude-review:
     needs: deepseek
-    if: needs.deepseek.outputs.riesgo == 'true'
+    # Claude revisa los PR de riesgo y cualquier PR que DeepSeek no pudo revisar.
+    if: >
+      !cancelled() && needs.deepseek.result != 'skipped' &&
+      (needs.deepseek.outputs.riesgo == 'true' || needs.deepseek.outputs.deepseek != 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -98,12 +115,18 @@ jobs:
     steps:
       - name: Sin token de Claude
         if: env.CLAUDE_TOKEN == ''
-        run: echo "::notice::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; se saltea la revision de Claude."
+        run: echo "::warning::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; se saltea la revision de Claude."
 
       - uses: actions/checkout@v5
         if: env.CLAUDE_TOKEN != ''
         with:
           fetch-depth: 0
+
+      - uses: actions/download-artifact@v7
+        if: env.CLAUDE_TOKEN != ''
+        continue-on-error: true
+        with:
+          name: contexto-pr
 
       - uses: anthropics/claude-code-action@c84e279f859e2591391e95bd309286eb111c345f # v1
         if: env.CLAUDE_TOKEN != ''
@@ -111,18 +134,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Con el token del workflow la revision no depende de la GitHub App de Claude.
+          github_token: ${{ github.token }}
           prompt: |
             REPO: ${{ github.repository }} PR: ${{ github.event.pull_request.number }}
-            Lee AGENTS.md, docs/ai-memory/ y .opencode/agents/reviewer.md (usa su formato de salida).
-            DeepSeek ya comento este PR (incluye SonarCloud y CodeFactor): leelo con `gh pr view --comments`.
-            1) Confirma o refuta cada hallazgo de DeepSeek con evidencia archivo:linea.
-            2) Agrega solo lo importante o bloqueante que DeepSeek no vio.
-            3) Lee el resultado del CI (Windows) con `gh pr checks` y mencionalo; aca no se compila.
-            Publica un unico comentario con `gh pr comment`. No edites archivos.
+            Lee AGENTS.md, docs/ai-memory/ y .opencode/agents/reviewer.md: segui sus reglas y su formato de salida.
+            pr.diff es el diff del PR y analisis.md trae SonarCloud y CodeFactor: revisa cada issue como indica reviewer.md.
+            ${{ needs.deepseek.outputs.deepseek == 'success' && 'DeepSeek ya comento este PR (`gh pr view --comments`): confirma o refuta cada hallazgo suyo con evidencia archivo:linea y agrega solo lo importante que no vio.' || 'DeepSeek no pudo revisar este PR: hace vos la revision completa.' }}
+            Lee el resultado del CI (Windows) con `gh pr checks` y mencionalo; aca no se compila.
+            Escribi la revision en review-claude.md, sin texto antes ni despues. No modifiques ningun otro archivo ni publiques comentarios.
           claude_args: |
             --model claude-sonnet-5-5
-            --max-turns 25
-            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr checks:*)"
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*)"
+
+      - name: Publicar revision de Claude
+        if: env.CLAUDE_TOKEN != '' && hashFiles('review-claude.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/publicar-revision.sh "$PR" "### Revision automatica (Claude)" review-claude.md analisis.md
 
   claude-comando:
     if: >
