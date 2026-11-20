@@ -122,6 +122,22 @@ int partido_borrar_dependencias(long long partido_id);
 int partido_eliminar_por_id(long long partido_id);
 
 /**
+ * @brief Diferencia de gol con el signo que corresponde al resultado.
+ *
+ * Victoria (1) da +|diferencia|, derrota (3) da -|diferencia| y cualquier otro
+ * resultado (empate) da 0.
+ */
+int partido_diferencia_con_signo(int resultado, int diferencia);
+
+#ifdef UNIT_TEST
+/* Ganchos de prueba de "Modificar Partido" (logica sin interaccion). */
+/** @brief UPDATE partido SET campo=valor con chequeo; 1 si guardo la fila. */
+int partido_test_actualizar_int(long long partido_id, const char *campo, int valor);
+/** @brief Guarda el resultado y reajusta el signo de diferencia_gol. */
+int partido_test_guardar_resultado(long long partido_id, int resultado);
+#endif
+
+/**
  * @brief Muestra el submenu de ultimos partidos
  *
  * Presenta un menu con opciones para ver:
