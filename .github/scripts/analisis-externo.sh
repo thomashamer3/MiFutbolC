@@ -8,28 +8,32 @@ api=https://sonarcloud.io/api
 
 # Con token si hay; si lo rechaza (401), sin token: el proyecto es publico.
 sonar_get() {
-    if [ -n "${SONAR_TOKEN:-}" ] && curl -sSf -H "Authorization: Bearer $SONAR_TOKEN" "$api/$1" 2>/dev/null; then
+    local ruta=$1
+    if [[ -n "${SONAR_TOKEN:-}" ]] && curl -sSf -H "Authorization: Bearer $SONAR_TOKEN" "$api/$ruta" 2>/dev/null; then
         return 0
     fi
-    curl -sSf "$api/$1"
+    curl -sSf "$api/$ruta"
 }
 
 # Un fallo de la API queda escrito en el informe: una seccion vacia parece "sin issues".
 fallo() {
-    echo "- **No se pudo consultar $1**: faltan esos datos."
+    local que=$1
+    echo "- **No se pudo consultar $que**: faltan esos datos."
 }
 
 id_check() {
+    local app=$1
     gh api "repos/$repo/commits/$sha/check-runs?per_page=100" \
-        --jq ".check_runs[] | select(.app.slug == \"$1\" and .status == \"completed\") | .id" | head -1
+        --jq ".check_runs[] | select(.app.slug == \"$app\" and .status == \"completed\") | .id" | head -1
 }
 
 # Los dos analisis terminan despues de que arranca el job: se espera hasta 10 minutos en total.
 limite=$((SECONDS + 600))
 esperar() {
-    while [ $SECONDS -lt $limite ]; do
-        id=$(id_check "$1")
-        [ -n "$id" ] && return 0
+    local app=$1
+    while [[ $SECONDS -lt $limite ]]; do
+        id=$(id_check "$app")
+        [[ -n "$id" ]] && return 0
         sleep 15
     done
     return 1
@@ -62,7 +66,7 @@ fi
 
 echo
 echo "## CodeFactor"
-if [ "$codefactor" != si ]; then
+if [[ "$codefactor" != si ]]; then
     echo "No corre en este PR: CodeFactor solo analiza los PR contra la rama principal."
 elif esperar codefactor-io; then
     gh api "repos/$repo/check-runs/$id" --jq '.output.title' || fallo "el resumen de CodeFactor"
