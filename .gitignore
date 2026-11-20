@@ -25,7 +25,11 @@ obj/
 build/
 cmake-build-*/
 .zed
-.opencode/
+.opencode/*
+!.opencode/agents/
+# archivos temporales que arma la revision de PRs con IA
+pr.diff
+analisis.md
 
 # Coverage and profiler outputs
 *.gcda

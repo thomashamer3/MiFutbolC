@@ -1,0 +1,194 @@
+name: AI PR
+
+# Autonomia semi: las revisiones solo comentan. Solo "claude-comando" puede
+# escribir, y solo en la rama del PR cuando el dueno del repo escribe @claude.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths-ignore: ['**.md', 'video/**', 'videos/**', 'Imagenes/**', 'images/**', 'assets/**']
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ai-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  deepseek:
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    # Hasta 10 minutos esperando a SonarCloud y CodeFactor, mas la revision.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: read
+    outputs:
+      riesgo: ${{ steps.riesgo.outputs.alto }}
+      deepseek: ${{ steps.ds.outcome }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Riesgo alto: mas de 400 lineas o archivos que tocan datos del usuario.
+      - id: riesgo
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          lineas=$(git diff --numstat "$BASE"...HEAD | awk '{s+=$1+$2} END {print s+0}')
+          criticos=$(git diff --name-only "$BASE"...HEAD | grep -cE '^(db|db_integridad|backup|sync[a-z_]*|import|financiamiento)\.c$' || true)
+          if [ "$lineas" -gt 400 ] || [ "$criticos" -gt 0 ]; then alto=true; else alto=false; fi
+          echo "lineas=$lineas criticos=$criticos alto=$alto"
+          echo "alto=$alto" >> "$GITHUB_OUTPUT"
+
+      # DeepSeek se prende con la variable del repo DEEPSEEK_ACTIVO=true; apagado, revisa solo Claude.
+      - name: Instalar OpenCode
+        if: vars.DEEPSEEK_ACTIVO == 'true'
+        # El paquete de la plataforma trae el binario listo; sin scripts de npm.
+        run: |
+          npm install -g --ignore-scripts @opencode/cli-linux-x64@2.3.2
+          dir="$(npm root -g)/@opencode/cli-linux-x64/bin"
+          chmod +x "$dir/opencode"
+          echo "$dir" >> "$GITHUB_PATH"
+
+      - name: Hallazgos de SonarCloud y CodeFactor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          SONAR_PROYECTO: ${{ github.repository_owner }}_${{ github.event.repository.name }}
+          CODEFACTOR: ${{ github.event.pull_request.base.ref == github.event.repository.default_branch && 'si' || 'no' }}
+        run: |
+          bash .github/scripts/analisis-externo.sh "$GITHUB_REPOSITORY" "$PR" "$SHA" "$SONAR_PROYECTO" "$CODEFACTOR" > analisis.md
+          cat analisis.md
+
+      - name: Diff del PR
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        # shortcut: corta el diff en 200 KB; si los PR crecen, revisar por archivo
+        run: git diff "$BASE"...HEAD -- . ':!MiFutbolC.layout' ':!.cache' | head -c 200000 > pr.diff
+
+      # Claude recibe el mismo contexto si tiene que revisar.
+      - uses: actions/upload-artifact@v6
+        with:
+          name: contexto-pr
+          path: |
+            pr.diff
+            analisis.md
+          retention-days: 1
+
+      # Si DeepSeek falla (por ejemplo, sin saldo) el PR no queda en rojo: revisa Claude.
+      - name: Revision con DeepSeek
+        id: ds
+        if: vars.DEEPSEEK_ACTIVO == 'true'
+        continue-on-error: true
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK }}
+          PR: ${{ github.event.pull_request.number }}
+        run: opencode run --agent reviewer --archived "Revisa pr.diff (diff del PR #$PR) y analisis.md (SonarCloud y CodeFactor) siguiendo tus instrucciones." > review.md
+
+      - name: Publicar revision de DeepSeek
+        if: steps.ds.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/publicar-revision.sh "$PR" "### Revision automatica (DeepSeek)" review.md analisis.md
+
+      - name: DeepSeek no pudo revisar
+        if: steps.ds.outcome == 'failure'
+        run: echo "::warning::DeepSeek no pudo revisar este PR (saldo o error de la API, ver el paso anterior). Si hay token de Claude, revisa Claude."
+
+  claude-review:
+    needs: deepseek
+    # Claude revisa los PR de riesgo y cualquier PR que DeepSeek no pudo revisar.
+    if: >
+      !cancelled() && needs.deepseek.result != 'skipped' &&
+      (needs.deepseek.outputs.riesgo == 'true' || needs.deepseek.outputs.deepseek != 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: read
+      id-token: write
+    env:
+      CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    steps:
+      - name: Sin token de Claude
+        if: env.CLAUDE_TOKEN == ''
+        run: echo "::warning::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; se saltea la revision de Claude."
+
+      - uses: actions/checkout@v5
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v7
+        if: env.CLAUDE_TOKEN != ''
+        continue-on-error: true
+        with:
+          name: contexto-pr
+
+      - uses: anthropics/claude-code-action@c84e279f859e2591391e95bd309286eb111c345f # v1
+        if: env.CLAUDE_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Con el token del workflow la revision no depende de la GitHub App de Claude.
+          github_token: ${{ github.token }}
+          prompt: |
+            REPO: ${{ github.repository }} PR: ${{ github.event.pull_request.number }}
+            Lee AGENTS.md, docs/ai-memory/ y .opencode/agents/reviewer.md: segui sus reglas y su formato de salida.
+            pr.diff es el diff del PR y analisis.md trae SonarCloud y CodeFactor: revisa cada issue como indica reviewer.md.
+            ${{ needs.deepseek.outputs.deepseek == 'success' && 'DeepSeek ya comento este PR (`gh pr view --comments`): confirma o refuta cada hallazgo suyo con evidencia archivo:linea y agrega solo lo importante que no vio.' || 'DeepSeek no pudo revisar este PR: hace vos la revision completa.' }}
+            Lee el resultado del CI (Windows) con `gh pr checks` y mencionalo; aca no se compila.
+            Escribi la revision en review-claude.md, sin texto antes ni despues. No modifiques ningun otro archivo ni publiques comentarios.
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*)"
+
+      - name: Publicar revision de Claude
+        if: env.CLAUDE_TOKEN != '' && hashFiles('review-claude.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/publicar-revision.sh "$PR" "### Revision automatica (Claude)" review-claude.md analisis.md
+
+  claude-comando:
+    if: >
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == github.repository_owner &&
+      contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    env:
+      CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    steps:
+      - name: Sin token de Claude
+        if: env.CLAUDE_TOKEN == ''
+        run: echo "::notice::Falta el secreto CLAUDE_CODE_OAUTH_TOKEN; @claude no puede responder."
+
+      - uses: actions/checkout@v5
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@c84e279f859e2591391e95bd309286eb111c345f # v1
+        if: env.CLAUDE_TOKEN != ''
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 30
+            --allowedTools "Read,Grep,Glob,Edit,Write"
+            --append-system-prompt "Lee AGENTS.md y docs/ai-memory/. Nunca hagas merge ni toques master. Cada cambio va con su test y su entrada en CHANGELOG.md. Aca no se compila: el CI de Windows prueba cada push."

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Windows con MinGW UCRT, igual que el entorno de desarrollo. En Linux el
+  # proyecto todavia no compila (compat_port.h con -std=c11).
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        with:
+          msystem: UCRT64
+          update: false
+          pacboy: gcc:p cmake:p ninja:p
+
+      # El preset apunta al gcc local; en CI se usa el de MSYS2.
+      - name: Configurar
+        run: cmake --preset mingw-release -DMIFUTBOLC_BUILD_TESTS=ON -DCMAKE_C_COMPILER=gcc
+
+      - name: Compilar
+        run: cmake --build --preset build-release
+
+      - name: Tests
+        run: ctest --test-dir build/release --output-on-failure
+
+      - name: CHANGELOG actualizado
+        if: github.event_name == 'pull_request'
+        # MSYS2 no trae git; el Git Bash del runner si.
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          cambios=$(git diff --name-only "$BASE"...HEAD)
+          if echo "$cambios" | grep -qE '\.(c|h)$' && ! echo "$cambios" | grep -qx 'CHANGELOG.md'; then
+            echo "::warning::El PR cambia codigo y no toca CHANGELOG.md"
+          fi
