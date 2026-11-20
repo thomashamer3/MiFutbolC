@@ -44,6 +44,8 @@ jobs:
 
       - name: CHANGELOG actualizado
         if: github.event_name == 'pull_request'
+        # MSYS2 no trae git; el Git Bash del runner si.
+        shell: bash
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
