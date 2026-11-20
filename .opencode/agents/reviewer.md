@@ -6,6 +6,9 @@ temperature: 0.1
 permission:
   edit: deny
   webfetch: deny
+  # En CI no hay quien conteste: un permiso en "ask" cancela toda la corrida.
+  websearch: deny
+  question: deny
   task: deny
   bash:
     "*": deny

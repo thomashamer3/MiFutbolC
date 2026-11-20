@@ -76,9 +76,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - if: env.CLAUDE_TOKEN != ''
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
-
       - uses: anthropics/claude-code-action@v1
         if: env.CLAUDE_TOKEN != ''
         env:
@@ -91,12 +88,12 @@ jobs:
             DeepSeek ya comento este PR: leelo con `gh pr view --comments`.
             1) Confirma o refuta cada hallazgo de DeepSeek con evidencia archivo:linea.
             2) Agrega solo lo importante o bloqueante que DeepSeek no vio.
-            3) Compila y corre los tests (comandos de Linux en AGENTS.md) y reporta el resultado.
+            3) Lee el resultado del CI (Windows) con `gh pr checks` y mencionalo; aca no se compila.
             Publica un unico comentario con `gh pr comment`. No edites archivos.
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 25
-            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(cmake:*),Bash(ctest:*)"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr checks:*)"
 
   claude-comando:
     if: >
@@ -123,9 +120,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - if: env.CLAUDE_TOKEN != ''
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
-
       - uses: anthropics/claude-code-action@v1
         if: env.CLAUDE_TOKEN != ''
         with:
@@ -133,5 +127,5 @@ jobs:
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 30
-            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(cmake:*),Bash(ctest:*)"
-            --append-system-prompt "Lee AGENTS.md y docs/ai-memory/. Nunca hagas merge ni toques master. Cada cambio va con su test y su entrada en CHANGELOG.md."
+            --allowedTools "Read,Grep,Glob,Edit,Write"
+            --append-system-prompt "Lee AGENTS.md y docs/ai-memory/. Nunca hagas merge ni toques master. Cada cambio va con su test y su entrada en CHANGELOG.md. Aca no se compila: el CI de Windows prueba cada push."

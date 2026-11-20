@@ -13,7 +13,7 @@ cmake --build --preset build-release
 ctest --test-dir build/release --output-on-failure
 ```
 
-Linux:
+Linux (hoy no compila: `compat_port.h` no declara `strnlen`/`strerror_r` con `-std=c11` y `ascii_charts.c` usa `strnlen_s` sin incluirlo; el CI corre en Windows):
 
 ```bash
 cmake --preset linux-release -DMIFUTBOLC_BUILD_TESTS=ON

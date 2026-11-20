@@ -13,25 +13,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Windows con MinGW UCRT, igual que el entorno de desarrollo. En Linux el
+  # proyecto todavia no compila (compat_port.h con -std=c11).
   build-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Dependencias
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          pacboy: gcc:p cmake:p ninja:p
 
+      # El preset apunta al gcc local; en CI se usa el de MSYS2.
       - name: Configurar
-        run: cmake --preset linux-release -DMIFUTBOLC_BUILD_TESTS=ON
+        run: cmake --preset mingw-release -DMIFUTBOLC_BUILD_TESTS=ON -DCMAKE_C_COMPILER=gcc
 
       - name: Compilar
-        run: cmake --build --preset build-linux-release
+        run: cmake --build --preset build-release
 
       - name: Tests
-        run: ctest --test-dir build/linux-release --output-on-failure
+        run: ctest --test-dir build/release --output-on-failure
 
       - name: CHANGELOG actualizado
         if: github.event_name == 'pull_request'
